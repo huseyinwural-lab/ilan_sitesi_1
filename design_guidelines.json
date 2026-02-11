@@ -1,0 +1,137 @@
+{
+  "typography": {
+    "font_family": {
+      "headings": "Manrope, sans-serif",
+      "body": "Inter, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-3xl font-bold tracking-tight lg:text-4xl",
+      "h2": "text-2xl font-semibold tracking-tight",
+      "h3": "text-xl font-semibold tracking-tight",
+      "p": "text-sm leading-relaxed text-muted-foreground",
+      "small": "text-xs font-medium leading-none",
+      "mono_data": "font-mono text-xs tracking-wide"
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "light": "hsl(221, 83%, 53%)",
+        "dark": "hsl(217, 91%, 60%)",
+        "description": "Swiss Blue - Trust, Authority"
+      },
+      "accent": {
+        "light": "hsl(24, 94%, 50%)",
+        "dark": "hsl(24, 94%, 50%)",
+        "description": "International Orange - Action, Attention"
+      },
+      "background": {
+        "light": "hsl(210, 40%, 98%)",
+        "dark": "hsl(222, 47%, 11%)",
+        "description": "Cool Gray vs Deep Blue-Black"
+      },
+      "surface": {
+        "light": "hsl(0, 0%, 100%)",
+        "dark": "hsl(217, 33%, 17%)",
+        "description": "Card backgrounds"
+      }
+    },
+    "semantic": {
+      "success": "text-emerald-600 dark:text-emerald-400",
+      "warning": "text-amber-500 dark:text-amber-400",
+      "error": "text-rose-600 dark:text-rose-400",
+      "info": "text-sky-500 dark:text-sky-400"
+    }
+  },
+  "visual_enhancers": {
+    "radius": "rounded-md",
+    "shadows": {
+      "card": "shadow-sm hover:shadow-md transition-shadow",
+      "dropdown": "shadow-lg border border-border/50",
+      "focus": "ring-2 ring-primary/20 ring-offset-2 ring-offset-background"
+    },
+    "borders": {
+      "default": "border border-border",
+      "subtle": "border-b border-border/40",
+      "glass": "border border-white/10 bg-white/5 backdrop-blur-md"
+    },
+    "gradients": {
+      "primary_action": "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600",
+      "accent_badge": "bg-gradient-to-br from-orange-500/10 to-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-200/50 dark:border-orange-800/50"
+    }
+  },
+  "component_rules": {
+    "cards": "bg-card text-card-foreground rounded-md border shadow-sm p-6 relative overflow-hidden",
+    "tables": {
+      "wrapper": "rounded-md border bg-card",
+      "header": "bg-muted/50 px-4 py-3 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+      "row": "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+      "cell": "p-4 align-middle [&:has([role=checkbox])]:pr-0 font-medium"
+    },
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 rounded-md font-medium text-sm shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+      "outline": "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 rounded-md font-medium text-sm transition-colors",
+      "ghost": "hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 rounded-md font-medium text-sm transition-colors",
+      "destructive": "bg-destructive text-destructive-foreground hover:bg-destructive/90 h-9 px-4 py-2 rounded-md font-medium text-sm shadow-sm transition-colors"
+    },
+    "inputs": "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+    "badges": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+  },
+  "layout_strategies": {
+    "dashboard_grid": "grid gap-4 md:grid-cols-2 lg:grid-cols-4",
+    "detail_view": "grid grid-cols-1 lg:grid-cols-3 gap-6",
+    "form_layout": "space-y-8 max-w-2xl",
+    "spacing": {
+      "page_padding": "p-4 md:p-8 pt-6",
+      "section_gap": "gap-6",
+      "item_gap": "gap-2"
+    }
+  },
+  "motion": {
+    "hover": "transition-all duration-200 ease-in-out",
+    "accordion": "data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up",
+    "modal": "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]"
+  },
+  "accessibility": {
+    "focus_visible": "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+    "contrast_check": "Ensure text-muted-foreground is legible against card backgrounds in dark mode",
+    "aria_labels": "Required for all icon-only buttons"
+  },
+  "icons": {
+    "library": "lucide-react",
+    "style": "stroke-width={1.5} size={18} (default for buttons/menus)",
+    "hero": "stroke-width={1.5} size={24} (for cards/headers)"
+  },
+  "image_urls": {
+    "avatars": [
+      "https://ui.shadcn.com/avatars/01.png",
+      "https://ui.shadcn.com/avatars/02.png",
+      "https://ui.shadcn.com/avatars/03.png"
+    ],
+    "flags": {
+      "DE": "Use '🇩🇪' emoji or Lucide 'Flag' icon with label 'DE'",
+      "FR": "Use '🇫🇷' emoji or Lucide 'Flag' icon with label 'FR'",
+      "TR": "Use '🇹🇷' emoji or Lucide 'Flag' icon with label 'TR'",
+      "CH": "Use '🇨🇭' emoji or Lucide 'Flag' icon with label 'CH'"
+    }
+  },
+  "3d_libraries": {
+    "usage": "Minimal. Use Recharts for data visualization instead of 3D.",
+    "exceptions": "None required for this admin panel."
+  },
+  "universal_guidelines": {
+    "theme_toggle": "Must be present in Topbar or Sidebar footer",
+    "language_selector": "Must be present in Topbar",
+    "country_selector": "Prominent in Topbar - this is a multi-country platform",
+    "loading_states": "Use Skeleton components for all data-fetching states",
+    "error_states": "Use Sonner toasts for API errors, Alert components for critical page errors",
+    "empty_states": "Show clear 'No results found' with an action button when tables are empty"
+  },
+  "instructions_to_main_agent": {
+    "setup": "Update tailwind.config.js to use the HSL variables defined in 'colors' section. Ensure 'Manrope' and 'Inter' fonts are imported.",
+    "shadcn": "Customize default shadcn components to match the 'radius' and 'colors' defined here.",
+    "data_density": "For tables, use 'compact' density. Avoid excessive padding in data rows. Use 'whitespace-nowrap' for cells to keep rows aligned.",
+    "dark_mode": "Default to system preference but persist user choice. Ensure borders in dark mode are subtle (border-white/10) to avoid visual clutter."
+  }
+}
