@@ -243,8 +243,10 @@ class StripeService:
                         start_at=datetime.now(timezone.utc),
                         end_at=datetime.now(timezone.utc) + timedelta(days=package.duration_days),
                         status="active",
-                        remaining_listing_quota=package.listing_limit,
-                        remaining_premium_quota=package.premium_quota
+                        included_listing_quota=package.listing_limit,
+                        included_premium_quota=package.premium_quota,
+                        used_listing_quota=0,
+                        used_premium_quota=0
                     )
                     self.db.add(subscription)
                     
