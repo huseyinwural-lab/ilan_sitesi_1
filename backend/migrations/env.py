@@ -25,6 +25,7 @@ from app.models.menu import TopMenuItem, TopMenuSection, TopMenuLink
 from app.models.home import HomeLayoutSettings, HomeShowcaseItem, HomeSpecialListing, AdSlot
 
 from app.models.commercial import DealerPackage, DealerSubscription
+from app.models.pricing import PriceConfig, FreeQuotaConfig, Discount, ListingConsumptionLog, CountryCurrencyMap
 from app.models.payment import StripeSettings, PaymentAttempt, StripeEvent, Refund
 from app.models.dealer import DealerApplication, Dealer, DealerUser
 from app.models.premium import PremiumProduct, ListingPromotion, PremiumRankingRule
