@@ -140,7 +140,11 @@ async def test_over_refund_protection(local_client):
                 mock_event.data.object = mock_session
                 mock_construct.return_value = mock_event
                 with patch.dict(os.environ, {"STRIPE_WEBHOOK_SECRET": "whsec_test"}):
-                    await client.post("/api/v1/payments/webhook/stripe", content=b"dummy", headers={"Stripe-Signature": "dummy"})
+                    wh_res = await client.post("/api/v1/payments/webhook/stripe", content=b"dummy", headers={"Stripe-Signature": "dummy"})
+                    assert wh_res.status_code == 200, f"Webhook failed: {wh_res.text}"
+                    
+                    inv_res = await client.get(f"/api/invoices/{invoice_id}")
+                    assert inv_res.json()["status"] == "paid"
 
             # Attempt Refund > 119.0
             with patch("stripe.Refund.create"):
