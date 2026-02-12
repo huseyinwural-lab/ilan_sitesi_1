@@ -109,6 +109,33 @@ export default function Invoices() {
         window.location.href = response.data.checkout_url;
       }
     } catch (error) {
+  const handleRefund = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const amount = parseFloat(formData.get('amount'));
+    const reason = formData.get('reason');
+
+    if (!selectedInvoice) return;
+
+    try {
+      await axios.post(`${API}/payments/invoices/${selectedInvoice.id}/refund`, {
+        amount,
+        reason
+      });
+      setShowRefundModal(false);
+      // Refresh invoice detail
+      viewInvoice(selectedInvoice.id);
+      fetchInvoices();
+      toast({
+        title: "Refund Initiated",
+        description: "The refund request has been sent to Stripe.",
+        variant: "success"
+      });
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Refund failed');
+    }
+  };
+
       alert(error.response?.data?.detail || 'Payment initiation failed');
     }
   };
