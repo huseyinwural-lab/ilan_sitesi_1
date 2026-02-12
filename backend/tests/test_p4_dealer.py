@@ -14,6 +14,9 @@ from server import app
 from app.dependencies import get_current_user
 from app.database import engine, AsyncSessionLocal
 import pytest_asyncio
+from datetime import datetime, timezone, timedelta
+from decimal import Decimal
+from app.models.dealer import DealerApplication
 from decimal import Decimal
 
 @pytest_asyncio.fixture(autouse=True)
