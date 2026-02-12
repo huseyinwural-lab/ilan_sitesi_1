@@ -130,6 +130,8 @@ class RateLimiter:
         valid_history.append(now)
         _rate_limit_store[key] = valid_history
         
+        logger.debug(f"Rate limit recorded for {key}: {len(valid_history)}/{self.limit}")
+        
         # Cleanup occasionally (Naive: on write)
         if len(_rate_limit_store) > 10000:
              _rate_limit_store.clear() # Emergency dump
