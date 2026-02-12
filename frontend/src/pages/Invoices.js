@@ -179,12 +179,23 @@ export default function Invoices() {
                     </span>
                   </td>
                   <td className="p-4 text-right">
-                    <button 
-                      onClick={() => viewInvoice(inv.id)}
-                      className="p-2 hover:bg-muted rounded-md"
-                    >
-                      <Eye size={16} />
-                    </button>
+                    <div className="flex justify-end gap-1">
+                      {inv.status === 'draft' && (
+                        <button
+                          onClick={() => handlePay(inv.id)}
+                          className="p-2 hover:bg-emerald-100 text-emerald-600 rounded-md"
+                          title="Pay with Stripe"
+                        >
+                          <CreditCard size={16} />
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => viewInvoice(inv.id)}
+                        className="p-2 hover:bg-muted rounded-md"
+                      >
+                        <Eye size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
