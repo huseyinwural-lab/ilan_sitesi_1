@@ -259,20 +259,6 @@ class StripeService:
                     # It's in models/dealer.py, stripe_service is in services/. Should be fine.
                     pass
 
-            currency=invoice.currency,
-            reason=reason,
-            status=stripe_refund.status,
-            created_by_admin_id=uuid.UUID(admin_id)
-        )
-        self.db.add(refund_record)
-        
-        # We do NOT update invoice total here to avoid double counting with webhook. 
-        # But for UX, if status is succeeded, we COULD. 
-        # However, requirement says "Webhook idempotent... Aynı event ikinci kez tutar artırmamalı".
-        # Safe approach: Rely on Webhook for Invoice update OR update here and make webhook check if already applied.
-        # Let's update here IF successful to reflect immediately in UI, and handle idempotency in webhook.
-        
-        if stripe_refund.status == "succeeded":
             invoice.refunded_total = (invoice.refunded_total or 0) + refund_amount
             if invoice.refunded_total >= invoice.gross_total:
                 invoice.status = "refunded"
