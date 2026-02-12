@@ -12,6 +12,9 @@ backend:
         - working: true
           agent: "main"
           comment: "Implemented Waterfall logic, Idempotency, Concurrency. Tests Passed."
+        - working: true
+          agent: "testing"
+          comment: "✅ T2 Pricing Engine regression tests PASSED. Waterfall logic working correctly: 1) Free Quota → 2) Subscription Quota → 3) Pay-per-listing. All test_p5_pricing.py tests pass including missing config error handling."
   - task: "Integrate Pricing Service (P5 Hard Gate)"
     implemented: true
     working: true
@@ -23,6 +26,9 @@ backend:
         - working: true
           agent: "main"
           comment: "Updated create_dealer_listing to use PricingService as a hard gate. Fixed legacy tests in test_p4_dealer.py."
+        - working: true
+          agent: "testing"
+          comment: "✅ P4 Dealer integration with T2 Pricing PASSED. All test_p4_dealer.py tests pass. Confirmed 409 Conflict behavior for missing pricing configs (instead of old 403). Dealer package flow, quota enforcement, and pricing integration working correctly."
 
 metadata:
   created_by: "main_agent"
