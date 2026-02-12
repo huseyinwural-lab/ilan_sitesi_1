@@ -39,12 +39,16 @@ class DealerPackage(Base):
     premium_quota: Mapped[int] = mapped_column(Integer, default=0)
     highlight_quota: Mapped[int] = mapped_column(Integer, default=0)
     
+    # Tier (P6 S2)
+    tier: Mapped[str] = mapped_column(String(20), server_default="STANDARD", nullable=False)
+
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     
     __table_args__ = (
         Index('ix_dealer_packages_country_active', 'country', 'is_active'),
+        Index('ix_dealer_packages_tier', 'tier'),
     )
 
 class DealerSubscription(Base):
