@@ -2,7 +2,7 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
 from unittest.mock import patch, MagicMock
-from app.backend.server import app
+from server import app
 from app.dependencies import get_current_user
 import uuid
 import json
