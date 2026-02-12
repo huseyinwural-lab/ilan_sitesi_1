@@ -702,3 +702,78 @@ async def get_invoice_detail(invoice_id, db, current_user):
             "line_gross": float(item.line_gross)
         } for item in invoice.items]
     }
+
+
+class InvoiceCreate(BaseModel):
+    country: str
+    customer_type: str  # 'B2C' or 'B2B'
+    customer_name: str
+    customer_email: str
+    items: List[dict]
+
+async def create_invoice(data: InvoiceCreate, db, current_user):
+    from fastapi import HTTPException
+    
+    year = datetime.now().year
+    prefix = f"INV-{data.country}-{year}-"
+    
+    query = select(Invoice.invoice_no).where(Invoice.invoice_no.like(f"{prefix}%")).order_by(desc(Invoice.invoice_no)).limit(1)
+    result = await db.execute(query)
+    last_no = result.scalar_one_or_none()
+    
+    if last_no:
+        seq = int(last_no.split('-')[-1]) + 1
+    else:
+        seq = 1
+        
+    invoice_no = f"{prefix}{seq:06d}"
+    
+    exists = await db.execute(select(Invoice).where(Invoice.invoice_no == invoice_no))
+    if exists.scalar_one_or_none():
+         raise HTTPException(status_code=409, detail="Invoice number collision, please retry")
+
+    net_total = 0
+    tax_total = 0
+    
+    vat_query = select(VatRate).where(and_(VatRate.country == data.country, VatRate.is_active == True))
+    vat_result = await db.execute(vat_query)
+    vat = vat_result.scalars().first()
+    tax_rate = vat.rate if vat else Decimal(0)
+    
+    invoice = Invoice(
+        invoice_no=invoice_no,
+        country=data.country,
+        currency="EUR",
+        customer_type=data.customer_type,
+        customer_name=data.customer_name,
+        customer_email=data.customer_email,
+        status="issued",
+        issued_at=datetime.now(timezone.utc),
+        tax_rate_snapshot=tax_rate
+    )
+    db.add(invoice)
+    await db.flush()
+    
+    for item in data.items:
+        line_net = Decimal(str(item['unit_price'])) * item['quantity']
+        line_tax = line_net * (tax_rate / 100)
+        inv_item = InvoiceItem(
+            invoice_id=invoice.id,
+            item_type="custom",
+            description=item['description'],
+            quantity=item['quantity'],
+            unit_price_net=item['unit_price'],
+            line_net=line_net,
+            line_tax=line_tax,
+            line_gross=line_net + line_tax
+        )
+        db.add(inv_item)
+        net_total += line_net
+        tax_total += line_tax
+        
+    invoice.net_total = net_total
+    invoice.tax_total = tax_total
+    invoice.gross_total = net_total + tax_total
+    
+    await db.commit()
+    return {"id": str(invoice.id), "invoice_no": invoice_no}
