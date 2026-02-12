@@ -802,3 +802,45 @@ async def create_invoice(data: InvoiceCreate, db, current_user):
     
     await db.commit()
     return {"id": str(invoice.id), "invoice_no": invoice_no}
+
+
+async def get_invoice_detail(invoice_id, db, current_user):
+    from fastapi import HTTPException
+    result = await db.execute(select(Invoice).where(Invoice.id == uuid.UUID(invoice_id)))
+    invoice = result.scalar_one_or_none()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    return {
+        "id": str(invoice.id),
+        "invoice_no": invoice.invoice_no,
+        "country": invoice.country,
+        "currency": invoice.currency,
+        "customer_type": invoice.customer_type,
+        "customer_ref_id": str(invoice.customer_ref_id),
+        "customer_name": invoice.customer_name,
+        "customer_email": invoice.customer_email,
+        "customer_address": invoice.customer_address,
+        "customer_vat_no": invoice.customer_vat_no,
+        "status": invoice.status,
+        "net_total": float(invoice.net_total),
+        "tax_total": float(invoice.tax_total),
+        "gross_total": float(invoice.gross_total),
+        "tax_rate_snapshot": float(invoice.tax_rate_snapshot),
+        "issued_at": invoice.issued_at.isoformat() if invoice.issued_at else None,
+        "due_at": invoice.due_at.isoformat() if invoice.due_at else None,
+        "paid_at": invoice.paid_at.isoformat() if invoice.paid_at else None,
+        "notes": invoice.notes,
+        "stripe_payment_intent_id": invoice.stripe_payment_intent_id,
+        "payment_idempotency_key": invoice.payment_idempotency_key,
+        "items": [{
+            "id": str(item.id),
+            "item_type": item.item_type,
+            "description": item.description,
+            "quantity": item.quantity,
+            "unit_price_net": float(item.unit_price_net),
+            "line_net": float(item.line_net),
+            "line_tax": float(item.line_tax),
+            "line_gross": float(item.line_gross)
+        } for item in invoice.items]
+    }
