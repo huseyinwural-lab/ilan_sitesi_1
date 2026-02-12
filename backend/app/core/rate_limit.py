@@ -33,6 +33,7 @@ class RateLimiter:
 
     async def __call__(self, request: Request, user_id: Optional[str] = None):
         if not self.enabled:
+            logger.debug(f"Rate limiting disabled for {self.scope}")
             return
 
         # Determine Key (Tier 1 vs Tier 2)
@@ -46,8 +47,15 @@ class RateLimiter:
         # Our Auth dependency returns User object.
         # We'll use IP as fallback.
         
-        ip = request.client.host if request.client else "127.0.0.1"
+        # Get IP from various headers (for proxy/load balancer scenarios)
+        ip = (
+            request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or
+            request.headers.get("X-Real-IP") or
+            (request.client.host if request.client else "127.0.0.1")
+        )
         key_prefix = f"rl:{self.scope}"
+        
+        logger.debug(f"Rate limiter {self.scope}: IP={ip}, enabled={self.enabled}")
         
         # Try to find user in state (if attached by middleware)
         # OR we can parse Bearer header manually for a "Tier 1" guess without full verification (risky?)
