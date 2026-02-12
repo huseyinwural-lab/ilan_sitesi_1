@@ -108,7 +108,7 @@ async def test_stripe_webhook_processing(local_client):
                 assert res.json()["status"] == "success"
                 
                 # 4. Verify Invoice Status
-                res = await client.get(f"/api/v1/invoices/{invoice_id}")
+                res = await client.get(f"/api/invoices/{invoice_id}")
                 invoice = res.json()
                 assert invoice["status"] == "paid"
                 assert invoice["stripe_payment_intent_id"] == "pi_test_123"
