@@ -255,10 +255,6 @@ def user_to_response(user: User) -> UserResponse:
 
 # Seed data
 async def seed_default_data(db: AsyncSession):
-    result = await db.execute(select(func.count(Country.id)))
-    if result.scalar() > 0:
-        return
-    
     logger.info("Seeding default data...")
     
     # Countries
@@ -268,7 +264,9 @@ async def seed_default_data(db: AsyncSession):
         ("FR", {"tr": "Fransa", "de": "Frankreich", "fr": "France"}, "EUR", "fr", "support@platform.fr"),
         ("AT", {"tr": "Avusturya", "de": "Österreich", "fr": "Autriche"}, "EUR", "de", "support@platform.at"),
     ]:
-        db.add(Country(code=code, name=name, default_currency=currency, default_language=lang, support_email=email))
+        exists = await db.execute(select(Country).where(Country.code == code))
+        if not exists.scalar_one_or_none():
+            db.add(Country(code=code, name=name, default_currency=currency, default_language=lang, support_email=email))
     
     # Feature Flags
     modules = [
@@ -279,7 +277,9 @@ async def seed_default_data(db: AsyncSession):
         ("jobs", {"tr": "İş İlanları", "de": "Stellenangebote", "fr": "Emplois"}, False),
     ]
     for key, name, enabled in modules:
-        db.add(FeatureFlag(key=key, name=name, scope="module", is_enabled=enabled, enabled_countries=["DE", "CH", "FR", "AT"] if enabled else []))
+        exists = await db.execute(select(FeatureFlag).where(FeatureFlag.key == key))
+        if not exists.scalar_one_or_none():
+            db.add(FeatureFlag(key=key, name=name, scope="module", is_enabled=enabled, enabled_countries=["DE", "CH", "FR", "AT"] if enabled else []))
     
     features = [
         ("premium", {"tr": "Premium", "de": "Premium", "fr": "Premium"}),
@@ -292,17 +292,26 @@ async def seed_default_data(db: AsyncSession):
         ("billing", {"tr": "Faturalandırma", "de": "Abrechnung", "fr": "Facturation"}),
     ]
     for key, name in features:
-        db.add(FeatureFlag(key=key, name=name, scope="feature", is_enabled=True, enabled_countries=["DE", "CH", "FR", "AT"]))
+        exists = await db.execute(select(FeatureFlag).where(FeatureFlag.key == key))
+        if not exists.scalar_one_or_none():
+            db.add(FeatureFlag(key=key, name=name, scope="feature", is_enabled=True, enabled_countries=["DE", "CH", "FR", "AT"]))
     
     # Admin user - Password from env or default
     admin_password = os.environ.get('ADMIN_PASSWORD', 'Admin123!')
-    db.add(User(email="admin@platform.com", hashed_password=get_password_hash(admin_password), full_name="System Administrator", role="super_admin", country_scope=["*"], is_active=True, is_verified=True))
+    exists = await db.execute(select(User).where(User.email == "admin@platform.com"))
+    if not exists.scalar_one_or_none():
+        db.add(User(email="admin@platform.com", hashed_password=get_password_hash(admin_password), full_name="System Administrator", role="super_admin", country_scope=["*"], is_active=True, is_verified=True))
     
     # Demo users
     demo_password = os.environ.get('DEMO_PASSWORD', 'Demo123!')
-    db.add(User(email="moderator@platform.de", hashed_password=get_password_hash(demo_password), full_name="Hans Müller", role="moderator", country_scope=["DE"], is_active=True, is_verified=True))
-    db.add(User(email="finance@platform.com", hashed_password=get_password_hash(demo_password), full_name="Marie Dupont", role="finance", country_scope=["*"], is_active=True, is_verified=True))
-    db.add(User(email="support@platform.ch", hashed_password=get_password_hash(demo_password), full_name="Peter Schmidt", role="support", country_scope=["CH", "DE", "AT"], is_active=True, is_verified=True))
+    for email, name, role, scope in [
+        ("moderator@platform.de", "Hans Müller", "moderator", ["DE"]),
+        ("finance@platform.com", "Marie Dupont", "finance", ["*"]),
+        ("support@platform.ch", "Peter Schmidt", "support", ["CH", "DE", "AT"])
+    ]:
+        exists = await db.execute(select(User).where(User.email == email))
+        if not exists.scalar_one_or_none():
+            db.add(User(email=email, hashed_password=get_password_hash(demo_password), full_name=name, role=role, country_scope=scope, is_active=True, is_verified=True))
     
     # Top Menu Items
     menu_items = [
@@ -315,12 +324,16 @@ async def seed_default_data(db: AsyncSession):
         ("jobs", {"tr": "İş İlanları", "de": "Stellenangebote", "fr": "Emplois"}, "users", "jobs", 7),
     ]
     for key, name, icon, module, order in menu_items:
-        is_enabled = module in ["real_estate", "vehicle"] if module else key in ["spare_parts", "shopping", "hobby"]
-        db.add(TopMenuItem(key=key, name=name, icon=icon, required_module=module, sort_order=order, is_enabled=is_enabled, allowed_countries=["DE", "CH", "FR", "AT"]))
+        exists = await db.execute(select(TopMenuItem).where(TopMenuItem.key == key))
+        if not exists.scalar_one_or_none():
+            is_enabled = module in ["real_estate", "vehicle"] if module else key in ["spare_parts", "shopping", "hobby"]
+            db.add(TopMenuItem(key=key, name=name, icon=icon, required_module=module, sort_order=order, is_enabled=is_enabled, allowed_countries=["DE", "CH", "FR", "AT"]))
     
     # Home Layout Settings per country
     for code in ["DE", "CH", "FR", "AT"]:
-        db.add(HomeLayoutSettings(country_code=code, block_order=["showcase", "special", "ads"], mobile_nav_mode="drawer"))
+        exists = await db.execute(select(HomeLayoutSettings).where(HomeLayoutSettings.country_code == code))
+        if not exists.scalar_one_or_none():
+            db.add(HomeLayoutSettings(country_code=code, block_order=["showcase", "special", "ads"], mobile_nav_mode="drawer"))
     
     # P1: Premium Products (seed)
     from decimal import Decimal
@@ -332,7 +345,9 @@ async def seed_default_data(db: AsyncSession):
         ("FEATURED", {"tr": "Öne Çıkar", "de": "Hervorheben", "fr": "Mettre en avant"}, "CH", "CHF", 6.99, 3),
     ]
     for key, name, country, currency, price, days in premium_products:
-        db.add(PremiumProduct(key=key, name=name, country=country, currency=currency, price_net=Decimal(str(price)), duration_days=days))
+        exists = await db.execute(select(PremiumProduct).where(and_(PremiumProduct.key == key, PremiumProduct.country == country)))
+        if not exists.scalar_one_or_none():
+            db.add(PremiumProduct(key=key, name=name, country=country, currency=currency, price_net=Decimal(str(price)), duration_days=days))
     
     # P1: VAT Rates (seed)
     vat_rates = [
@@ -342,30 +357,38 @@ async def seed_default_data(db: AsyncSession):
         ("AT", Decimal("20.0"), "standard"),
     ]
     for country, rate, tax_type in vat_rates:
-        db.add(VatRate(country=country, rate=rate, valid_from=datetime.now(timezone.utc), tax_type=tax_type))
+        exists = await db.execute(select(VatRate).where(and_(VatRate.country == country, VatRate.tax_type == tax_type, VatRate.is_active == True)))
+        if not exists.scalar_one_or_none():
+            db.add(VatRate(country=country, rate=rate, valid_from=datetime.now(timezone.utc), tax_type=tax_type))
     
     # P1: Moderation Rules (seed)
     for code in ["DE", "CH", "FR", "AT"]:
-        db.add(ModerationRule(country=code, bad_words_enabled=True, bad_words_list=[], min_images_enabled=True, min_images_count=1))
+        exists = await db.execute(select(ModerationRule).where(ModerationRule.country == code))
+        if not exists.scalar_one_or_none():
+            db.add(ModerationRule(country=code, bad_words_enabled=True, bad_words_list=[], min_images_enabled=True, min_images_count=1))
     
     # P1: Premium Ranking Rules (seed)
     for code in ["DE", "CH", "FR", "AT"]:
-        db.add(PremiumRankingRule(country=code, premium_first=True, weight_priority=60, weight_recency=40))
+        exists = await db.execute(select(PremiumRankingRule).where(PremiumRankingRule.country == code))
+        if not exists.scalar_one_or_none():
+            db.add(PremiumRankingRule(country=code, premium_first=True, weight_priority=60, weight_recency=40))
     
     # P1: Demo Dealer Application (seed)
-    db.add(DealerApplication(
-        country="DE",
-        dealer_type="auto_dealer",
-        company_name="Auto Schmidt GmbH",
-        vat_tax_no="DE123456789",
-        address="Hauptstraße 1, 10115 Berlin",
-        city="Berlin",
-        website="https://auto-schmidt.de",
-        contact_name="Hans Schmidt",
-        contact_email="info@auto-schmidt.de",
-        contact_phone="+49 30 12345678",
-        status="pending"
-    ))
+    exists = await db.execute(select(DealerApplication).where(DealerApplication.company_name == "Auto Schmidt GmbH"))
+    if not exists.scalar_one_or_none():
+        db.add(DealerApplication(
+            country="DE",
+            dealer_type="auto_dealer",
+            company_name="Auto Schmidt GmbH",
+            vat_tax_no="DE123456789",
+            address="Hauptstraße 1, 10115 Berlin",
+            city="Berlin",
+            website="https://auto-schmidt.de",
+            contact_name="Hans Schmidt",
+            contact_email="info@auto-schmidt.de",
+            contact_phone="+49 30 12345678",
+            status="pending"
+        ))
     
     # P1: Demo Listings for moderation (seed)
     demo_user_result = await db.execute(select(User).where(User.email == "admin@platform.com"))
@@ -377,18 +400,20 @@ async def seed_default_data(db: AsyncSession):
             ("Appartement à Paris", "real_estate", "FR", 450000),
             ("Mercedes C200 zu verkaufen", "vehicle", "CH", 42000),
         ]):
-            db.add(Listing(
-                title=title,
-                description=f"Demo listing for moderation queue - {title}",
-                module=module,
-                country=country,
-                price=price,
-                currency="CHF" if country == "CH" else "EUR",
-                user_id=demo_user.id,
-                images=[f"https://picsum.photos/800/600?random={i}"],
-                image_count=1,
-                status="pending"
-            ))
+            exists = await db.execute(select(Listing).where(Listing.title == title))
+            if not exists.scalar_one_or_none():
+                db.add(Listing(
+                    title=title,
+                    description=f"Demo listing for moderation queue - {title}",
+                    module=module,
+                    country=country,
+                    price=price,
+                    currency="CHF" if country == "CH" else "EUR",
+                    user_id=demo_user.id,
+                    images=[f"https://picsum.photos/800/600?random={i}"],
+                    image_count=1,
+                    status="pending"
+                ))
     
     await db.commit()
     logger.info("Default data seeded")
