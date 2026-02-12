@@ -226,7 +226,7 @@ class StripeService:
         
         webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
         if not webhook_secret:
-             raise HTTPException(status_code=500, detail="Webhook secret not configured")
+            raise HTTPException(status_code=500, detail="Webhook secret not configured")
 
         try:
             event = stripe.Webhook.construct_event(
