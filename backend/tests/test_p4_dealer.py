@@ -343,16 +343,23 @@ async def test_missing_pricing_config_409_behavior(local_client):
         # Add VAT configuration for CH but NO price config
         from app.models.billing import VatRate
         from app.models.pricing import CountryCurrencyMap
+        from sqlalchemy import select
         
-        session.add(VatRate(
-            country="CH", 
-            rate=Decimal("8.1"), 
-            valid_from=datetime.now(timezone.utc),
-            is_active=True
-        ))
-        
-        session.add(CountryCurrencyMap(country="CH", currency="CHF"))
-        
+        # Check and add VAT for CH
+        existing_vat = (await session.execute(select(VatRate).where(VatRate.country == "CH").where(VatRate.is_active == True))).scalars().first()
+        if not existing_vat:
+            session.add(VatRate(
+                country="CH", 
+                rate=Decimal("8.1"), 
+                valid_from=datetime.now(timezone.utc),
+                is_active=True
+            ))
+
+        # Check and add Currency Map for CH
+        existing_currency = (await session.execute(select(CountryCurrencyMap).where(CountryCurrencyMap.country == "CH"))).scalars().first()
+        if not existing_currency:
+            session.add(CountryCurrencyMap(country="CH", currency="CHF"))
+
         # Create Dealer
         dealer_app = DealerApplication(
             country="CH",
