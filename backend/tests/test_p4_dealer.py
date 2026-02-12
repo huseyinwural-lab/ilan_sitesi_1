@@ -5,24 +5,21 @@ import stripe
 from app.services.stripe_service import StripeService
 from app.models.billing import Invoice
 from app.models.commercial import DealerPackage, DealerSubscription
+from app.models.dealer import Dealer
 from sqlalchemy import select
 import uuid
 import os
 from httpx import AsyncClient, ASGITransport
-from server import app, seed_default_data
+from server import app
 from app.dependencies import get_current_user
 from app.database import engine, AsyncSessionLocal
 import pytest_asyncio
+from decimal import Decimal
 
 @pytest_asyncio.fixture(autouse=True)
 async def cleanup_engine():
     yield
     await engine.dispose()
-
-@pytest_asyncio.fixture(autouse=True)
-async def run_seed():
-    async with AsyncSessionLocal() as session:
-        await seed_default_data(session)
 
 async def mock_get_current_user():
     user = MagicMock()
@@ -38,6 +35,37 @@ def local_client():
 
 @pytest.mark.asyncio
 async def test_dealer_package_flow(local_client):
+    # Setup Data manually to be safe
+    async with AsyncSessionLocal() as session:
+        # Create Package
+        pkg = DealerPackage(
+            key="TEST_PKG",
+            country="DE",
+            name={"en": "Test Package"},
+            price_net=Decimal("100.00"),
+            currency="EUR",
+            duration_days=30,
+            listing_limit=50,
+            premium_quota=5,
+            is_active=True
+        )
+        session.add(pkg)
+        
+        # Create Dealer
+        dealer = Dealer(
+            country="DE",
+            dealer_type="auto_dealer",
+            company_name="Test Dealer",
+            vat_tax_no="DE999",
+            status="active"
+        )
+        session.add(dealer)
+        await session.commit()
+        await session.refresh(pkg)
+        await session.refresh(dealer)
+        package_id = str(pkg.id)
+        dealer_id = str(dealer.id)
+
     with patch.dict(os.environ, {"STRIPE_API_KEY": "sk_test_mock", "STRIPE_WEBHOOK_SECRET": "whsec_test"}):
         async with local_client as client:
             # 1. List Packages (DE)
@@ -45,18 +73,8 @@ async def test_dealer_package_flow(local_client):
             assert res.status_code == 200, f"List packages failed: {res.text}"
             packages = res.json()
             assert len(packages) > 0, "No packages found for DE"
-            package_id = packages[0]["id"]
-            
-            # 2. Get a Dealer (Seeded)
-            # Need to find a dealer ID.
-            # Since we can't query DB easily without session fixture, let's hit dealers endpoint.
-            res = await client.get("/api/dealers")
-            dealers = res.json()
-            # If no dealers, we might fail. Seed data should have one.
-            # "Auto Schmidt GmbH"
-            if not dealers:
-                pytest.skip("No dealers seeded")
-            dealer_id = dealers[0]["id"]
+            found = next((p for p in packages if p["id"] == package_id), None)
+            assert found is not None
             
             # 3. Buy Package
             with patch("stripe.checkout.Session.create") as mock_create:
@@ -104,4 +122,10 @@ async def test_dealer_package_flow(local_client):
             res = await client.get(f"/api/invoices/{invoice_id}")
             assert res.json()["status"] == "paid"
             
-            # We assume subscription is active logic ran.
+            # Verify Subscription in DB
+            async with AsyncSessionLocal() as session:
+                sub = await session.execute(select(DealerSubscription).where(DealerSubscription.invoice_id == uuid.UUID(invoice_id)))
+                sub = sub.scalar_one_or_none()
+                assert sub is not None
+                assert sub.status == "active"
+                assert sub.remaining_listing_quota == 50
