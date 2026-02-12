@@ -12,8 +12,10 @@ from server import app
 from app.dependencies import get_current_user
 from app.database import engine
 
+import pytest_asyncio
+
 # Fix for "attached to a different loop" error with global engine
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def cleanup_engine():
     yield
     await engine.dispose()
