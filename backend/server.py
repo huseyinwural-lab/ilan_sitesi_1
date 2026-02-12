@@ -949,8 +949,17 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db), current_user: 
     }
 
 # ==================== P1 ROUTES ====================
-# Import P1 routes and inject dependencies
-from app.routers.p1_routes import router as p1_router
+# Import P1 functions
+from app.routers.p1_routes import (
+    get_dealer_applications, get_dealer_application, review_dealer_application,
+    get_dealers, update_dealer, DealerApplicationReview, DealerUpdate,
+    get_premium_products, create_premium_product, update_premium_product,
+    PremiumProductCreate, PremiumProductUpdate, get_ranking_rules, update_ranking_rule, RankingRuleUpdate,
+    get_moderation_queue, get_moderation_queue_count, get_listing_detail, moderate_listing,
+    ModerationActionCreate, get_moderation_rules, update_moderation_rule, ModerationRuleUpdate,
+    get_vat_rates, create_vat_rate, update_vat_rate, VatRateCreate, VatRateUpdate,
+    get_invoices, get_invoice_detail
+)
 
 # Wrapper to inject dependencies
 @api_router.get("/dealer-applications")
