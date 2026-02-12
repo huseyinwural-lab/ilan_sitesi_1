@@ -931,15 +931,132 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db), current_user: 
     logs_result = await db.execute(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(10))
     recent_logs = [{"id": str(l.id), "action": l.action, "resource_type": l.resource_type, "user_email": l.user_email, "created_at": l.created_at.isoformat() if l.created_at else None} for l in logs_result.scalars().all()]
     
+    # P1 stats
+    pending_applications = (await db.execute(select(func.count(DealerApplication.id)).where(DealerApplication.status == "pending"))).scalar()
+    pending_moderation = (await db.execute(select(func.count(Listing.id)).where(Listing.status == "pending"))).scalar()
+    dealers_count = (await db.execute(select(func.count(Dealer.id)).where(Dealer.is_active == True))).scalar()
+    
     return {
         "users": {"total": users_count, "active": active_users},
         "countries": {"enabled": countries_count},
         "feature_flags": {"enabled": flags_enabled, "total": flags_total},
         "categories": {"total": categories_count},
         "attributes": {"total": attributes_count},
+        "dealers": {"total": dealers_count or 0, "pending_applications": pending_applications or 0},
+        "moderation": {"pending": pending_moderation or 0},
         "users_by_role": role_stats,
         "recent_activity": recent_logs
     }
+
+# ==================== P1 ROUTES ====================
+# Import P1 routes and inject dependencies
+from app.routers.p1_routes import router as p1_router
+
+# Wrapper to inject dependencies
+@api_router.get("/dealer-applications")
+async def get_dealer_apps(country: Optional[str] = None, dealer_type: Optional[str] = None, status: Optional[str] = None, skip: int = 0, limit: int = 50, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "country_admin"]))):
+    from app.routers.p1_routes import get_dealer_applications
+    return await get_dealer_applications(country, dealer_type, status, skip, limit, db, current_user)
+
+@api_router.get("/dealer-applications/{app_id}")
+async def get_dealer_app(app_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "country_admin"]))):
+    from app.routers.p1_routes import get_dealer_application
+    return await get_dealer_application(app_id, db, current_user)
+
+@api_router.post("/dealer-applications/{app_id}/review")
+async def review_dealer_app(app_id: str, review: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "country_admin"]))):
+    from app.routers.p1_routes import review_dealer_application, DealerApplicationReview
+    return await review_dealer_application(app_id, DealerApplicationReview(**review), db, current_user)
+
+@api_router.get("/dealers")
+async def list_dealers(country: Optional[str] = None, is_active: Optional[bool] = None, skip: int = 0, limit: int = 50, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "country_admin"]))):
+    from app.routers.p1_routes import get_dealers
+    return await get_dealers(country, is_active, skip, limit, db, current_user)
+
+@api_router.patch("/dealers/{dealer_id}")
+async def update_dealer_endpoint(dealer_id: str, data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
+    from app.routers.p1_routes import update_dealer, DealerUpdate
+    return await update_dealer(dealer_id, DealerUpdate(**data), db, current_user)
+
+@api_router.get("/premium-products")
+async def list_premium_products(country: Optional[str] = None, is_active: Optional[bool] = None, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from app.routers.p1_routes import get_premium_products
+    return await get_premium_products(country, is_active, db, current_user)
+
+@api_router.post("/premium-products")
+async def create_premium_product_endpoint(data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
+    from app.routers.p1_routes import create_premium_product, PremiumProductCreate
+    return await create_premium_product(PremiumProductCreate(**data), db, current_user)
+
+@api_router.patch("/premium-products/{product_id}")
+async def update_premium_product_endpoint(product_id: str, data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
+    from app.routers.p1_routes import update_premium_product, PremiumProductUpdate
+    return await update_premium_product(product_id, PremiumProductUpdate(**data), db, current_user)
+
+@api_router.get("/moderation/queue")
+async def get_mod_queue(country: Optional[str] = None, module: Optional[str] = None, status: str = "pending", is_dealer: Optional[bool] = None, is_premium: Optional[bool] = None, skip: int = 0, limit: int = 50, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "country_admin", "moderator"]))):
+    from app.routers.p1_routes import get_moderation_queue
+    return await get_moderation_queue(country, module, status, is_dealer, is_premium, skip, limit, db, current_user)
+
+@api_router.get("/moderation/queue/count")
+async def get_mod_count(country: Optional[str] = None, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "country_admin", "moderator"]))):
+    from app.routers.p1_routes import get_moderation_queue_count
+    return await get_moderation_queue_count(country, db, current_user)
+
+@api_router.get("/moderation/listings/{listing_id}")
+async def get_mod_listing(listing_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "country_admin", "moderator"]))):
+    from app.routers.p1_routes import get_listing_detail
+    return await get_listing_detail(listing_id, db, current_user)
+
+@api_router.post("/moderation/listings/{listing_id}/action")
+async def moderate_listing_endpoint(listing_id: str, action: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "country_admin", "moderator"]))):
+    from app.routers.p1_routes import moderate_listing, ModerationActionCreate
+    return await moderate_listing(listing_id, ModerationActionCreate(**action), db, current_user)
+
+@api_router.get("/moderation/rules")
+async def get_mod_rules(db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "country_admin"]))):
+    from app.routers.p1_routes import get_moderation_rules
+    return await get_moderation_rules(db, current_user)
+
+@api_router.patch("/moderation/rules/{country}")
+async def update_mod_rule(country: str, data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
+    from app.routers.p1_routes import update_moderation_rule, ModerationRuleUpdate
+    return await update_moderation_rule(country, ModerationRuleUpdate(**data), db, current_user)
+
+@api_router.get("/vat-rates")
+async def list_vat_rates(country: Optional[str] = None, is_active: Optional[bool] = None, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "finance"]))):
+    from app.routers.p1_routes import get_vat_rates
+    return await get_vat_rates(country, is_active, db, current_user)
+
+@api_router.post("/vat-rates")
+async def create_vat_rate_endpoint(data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
+    from app.routers.p1_routes import create_vat_rate, VatRateCreate
+    return await create_vat_rate(VatRateCreate(**data), db, current_user)
+
+@api_router.patch("/vat-rates/{rate_id}")
+async def update_vat_rate_endpoint(rate_id: str, data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
+    from app.routers.p1_routes import update_vat_rate, VatRateUpdate
+    return await update_vat_rate(rate_id, VatRateUpdate(**data), db, current_user)
+
+@api_router.get("/invoices")
+async def list_invoices(country: Optional[str] = None, status: Optional[str] = None, customer_type: Optional[str] = None, skip: int = 0, limit: int = 50, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "finance"]))):
+    from app.routers.p1_routes import get_invoices
+    return await get_invoices(country, status, customer_type, skip, limit, db, current_user)
+
+@api_router.get("/invoices/{invoice_id}")
+async def get_invoice(invoice_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "finance"]))):
+    from app.routers.p1_routes import get_invoice_detail
+    return await get_invoice_detail(invoice_id, db, current_user)
+
+@api_router.get("/premium-ranking-rules")
+async def list_ranking_rules(db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
+    from app.routers.p1_routes import get_ranking_rules
+    return await get_ranking_rules(db, current_user)
+
+@api_router.patch("/premium-ranking-rules/{country}")
+async def update_ranking_rule_endpoint(country: str, data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
+    from app.routers.p1_routes import update_ranking_rule, RankingRuleUpdate
+    return await update_ranking_rule(country, RankingRuleUpdate(**data), db, current_user)
 
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
