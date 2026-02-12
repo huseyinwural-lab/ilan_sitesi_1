@@ -288,6 +288,21 @@ async def test_listing_quota_enforcement(local_client):
         if response_data["pricing"]["source"] == "subscription_quota":
             # This means subscription still has quota - check if first listing used free quota instead
             print("Second listing still using subscription quota - first listing may have used free quota")
+            
+            # Add a third listing to test overage pricing
+            res3 = await client.post(f"/api/v1/commercial/dealers/{dealer_id}/listings", json={
+                "title": "Test Car 3",
+                "description": "Desc",
+                "module": "vehicle", 
+                "price": 30000,
+                "currency": "EUR"
+            })
+            assert res3.status_code == 200
+            response_data3 = res3.json()
+            print(f"DEBUG: Third listing response: {response_data3}")
+            # Now this should use paid_extra since both free quota and subscription quota are exhausted
+            assert response_data3["pricing"]["source"] == "paid_extra"
+            assert response_data3["pricing"]["charge_amount"] == 5.0
         else:
             # Should be charged via overage pricing
             assert response_data["pricing"]["source"] == "paid_extra"
