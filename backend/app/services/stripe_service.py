@@ -358,8 +358,8 @@ try:
                 for ref_data in charge.refunds.data:
                     ref_res = await self.db.execute(select(Refund).where(Refund.stripe_refund_id == ref_data.id))
                     local_ref = ref_res.scalar_one_or_none()
-                        if local_ref and local_ref.status != "succeeded":
-                            local_ref.status = "succeeded"
+                    if local_ref and local_ref.status != "succeeded":
+                        local_ref.status = "succeeded"
             
             # Update Log
             log.status = "processed"
