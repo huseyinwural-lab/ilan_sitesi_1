@@ -11,6 +11,9 @@ import Users from "./pages/Users";
 import Countries from "./pages/Countries";
 import FeatureFlags from "./pages/FeatureFlags";
 import AuditLogs from "./pages/AuditLogs";
+import Categories from "./pages/Categories";
+import Attributes from "./pages/Attributes";
+import MenuManager from "./pages/MenuManager";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
