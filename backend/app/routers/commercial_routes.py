@@ -11,6 +11,7 @@ from app.models.billing import Invoice, InvoiceItem
 from app.services.stripe_service import StripeService
 from app.models.moderation import Listing
 from app.services.pricing_service import PricingService, PricingConfigError, PricingIdempotencyError, PricingConcurrencyError
+from app.core.rate_limit import RateLimiter
 from datetime import timedelta
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -21,6 +22,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/commercial", tags=["commercial"])
+
+# Rate Limiters
+limiter_listing_create = RateLimiter(limit=60, window_seconds=60, scope="listing_create")
+limiter_checkout_init = RateLimiter(limit=10, window_seconds=600, scope="checkout_init")
 
 class BuyPackageRequest(BaseModel):
     success_url: str
