@@ -8,7 +8,7 @@ from sqlalchemy import select
 import uuid
 import os
 from httpx import AsyncClient
-from app.backend.server import app
+from server import app
 from app.dependencies import get_current_user
 
 # Mock auth to bypass login for these unit tests
