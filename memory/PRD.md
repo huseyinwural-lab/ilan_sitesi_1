@@ -1,10 +1,10 @@
-# Multi-Country Admin Panel PRD
+# Multi-Country Admin Panel PRD (PostgreSQL)
 
 ## Original Problem Statement
-Build a comprehensive Admin Panel for a multi-country classified ads platform targeting European markets (DE/CH/FR/AT). Features include Feature Flags, Multi-Country management, RBAC, Audit Logs, and more.
+Build a comprehensive Admin Panel for a multi-country classified ads platform targeting European markets (DE/CH/FR/AT). Modular architecture with Feature Flags, Category System, Attribute Engine, Menu Management, and GDPR compliance.
 
-## Tech Stack
-- **Backend**: Python FastAPI + MongoDB
+## Tech Stack (Final)
+- **Backend**: Python FastAPI + PostgreSQL + SQLAlchemy + Alembic
 - **Frontend**: React + TailwindCSS
 - **Auth**: JWT + Refresh Tokens
 - **Design**: Modern/Minimal, Blue (Primary) + Orange (Accent)
@@ -16,58 +16,80 @@ Build a comprehensive Admin Panel for a multi-country classified ads platform ta
 4. **Support** - User support functions
 5. **Finance** - Billing and invoice access
 
-## Core Requirements (Static)
-- Multi-country support (DE/CH/FR/AT)
-- Multi-language (TR/DE/FR)
-- Feature Flags (module + feature level)
-- RBAC with 5 roles
-- Audit logging (GDPR compliant)
-- JWT authentication
+## What's Been Implemented (v1.0 - 2026-02-12)
 
-## What's Been Implemented (v1.0 - 2026-02-11)
-### Backend (FastAPI + MongoDB)
-- [x] Auth routes (login, register, refresh, me)
-- [x] Users CRUD + suspend/activate
-- [x] Feature Flags CRUD + toggle
-- [x] Countries CRUD + locale settings
-- [x] Audit Logs with filtering
-- [x] Dashboard stats endpoint
-- [x] Auto-seed data on startup
+### P0-0: MongoDB → PostgreSQL Migration ✅
+- [x] SQLAlchemy ORM models
+- [x] Alembic migration setup
+- [x] All entity tables created
+- [x] Seed data with env-based passwords
 
-### Frontend (React + TailwindCSS)
-- [x] Login page with i18n
-- [x] Dashboard with KPI cards, role distribution, recent activity
-- [x] Users management table
-- [x] Feature Flags with toggle cards
-- [x] Countries management cards
-- [x] Audit Logs with pagination
-- [x] Sidebar + Topbar layout
-- [x] Country selector, Language selector, Theme toggle
-- [x] Responsive design
+### P0-1: Category System ✅
+- [x] N-level hierarchy with Materialized Path
+- [x] Module association (real_estate, vehicle, etc.)
+- [x] Country scope inheritance
+- [x] Multi-language translations
+- [x] Soft delete support
 
-## Prioritized Backlog
+### P0-2: Attribute Engine ✅
+- [x] Dynamic attribute types (text, number, select, etc.)
+- [x] Options management for select fields
+- [x] Category-attribute mapping
+- [x] Filterable/Sortable flags
+- [x] Unit support
 
-### P0 - Next Phase (Core Business)
-- [ ] Category System (N-level with Materialized Path)
-- [ ] Attribute Engine (dynamic form fields)
-- [ ] Top Menu / Mega Menu management
-- [ ] Home Layout Manager (Vitrin/Özel İlan/Reklam)
+### P0-3: Menu Management ✅
+- [x] Top menu items with Feature Flag dependencies
+- [x] Mega menu sections and links
+- [x] Country scope filtering
+- [x] Link types (category, pre_filtered, external)
 
-### P1 - Business Features
-- [ ] Dealer Management (başvuru onay/red)
-- [ ] Premium Product Catalog
-- [ ] Moderation Queue
-- [ ] Tax/VAT Management
-- [ ] Invoice Core
+### P0-4: Home Layout ✅
+- [x] Per-country layout settings
+- [x] Showcase/Vitrin management
+- [x] Special listings
+- [x] Ad slots (direct, adsense, header bidding)
 
-### P2 - Enhancements
-- [ ] 2FA support
-- [ ] User profile settings
-- [ ] Advanced search/filtering
-- [ ] Export functionality
+### Core Features ✅
+- [x] Auth (JWT + Refresh)
+- [x] Users RBAC (5 roles)
+- [x] Feature Flags (module + feature level)
+- [x] Countries with locale settings
+- [x] Audit Logs (immutable)
+- [x] Dashboard with KPI stats
+
+## Database Schema
+- users, countries, feature_flags, audit_logs
+- categories, category_translations
+- attributes, attribute_options, category_attribute_map
+- top_menu_items, top_menu_sections, top_menu_links
+- home_layout_settings, home_showcase_items, home_special_listings, ad_slots
 
 ## Demo Credentials
 - Super Admin: admin@platform.com / Admin123!
 - Moderator: moderator@platform.de / Demo123!
 - Finance: finance@platform.com / Demo123!
 - Support: support@platform.ch / Demo123!
+
+## Prioritized Backlog
+
+### P1 - Business Features (Next)
+- [ ] Dealer Management (başvuru onay/red)
+- [ ] Premium Product Catalog
+- [ ] Moderation Queue
+- [ ] Tax/VAT Management (VAT rates per country)
+- [ ] Invoice Core (net/tax/gross)
+
+### P2 - Enhancements
+- [ ] 2FA support
+- [ ] User profile settings
+- [ ] Category drag-drop reordering
+- [ ] Attribute validation rules
+- [ ] Advanced search/filtering
+- [ ] Data export functionality
+
+### V2 Features
+- [ ] Stripe payment integration
+- [ ] Elasticsearch for search
+- [ ] Redis caching
+- [ ] RabbitMQ for async tasks
