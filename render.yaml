@@ -11,6 +11,7 @@ services:
     runtime: docker
     rootDir: backend # Context is backend folder
     plan: free # Upgrade for prod
+    preDeployCommand: ./migrate.sh
     envVars:
       - key: DATABASE_URL
         fromDatabase:
