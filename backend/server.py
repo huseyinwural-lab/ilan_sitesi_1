@@ -1084,6 +1084,8 @@ async def list_vat_rates(country: Optional[str] = None, is_active: Optional[bool
     from app.routers.p1_routes import get_vat_rates
     return await get_vat_rates(country, is_active, db, current_user)
 
+from app.routers import commercial_routes
+app.include_router(commercial_routes.router, prefix="/api/v1")
 @api_router.post("/vat-rates")
 async def create_vat_rate_endpoint(data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
     from app.routers.p1_routes import create_vat_rate, VatRateCreate
