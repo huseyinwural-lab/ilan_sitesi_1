@@ -1,12 +1,13 @@
 # UAT Defect Register
 
-**Status:** OPEN
+**Status:** UPDATED
 
 | Defect ID | Severity | Description | Component | Status | Owner |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **DEF-001** | **P1** | **Tier Change Delay:** Updating Tier in Admin UI reflects in DB immediately, but Redis Rate Limit context takes > 60s to update. | `RedisRateLimiter` / `commercial_routes` | **OPEN** | Backend Dev |
+| **DEF-001** | **P0** | **Tier Change Delay:** Updating Tier in Admin UI reflects in DB immediately, but Redis Rate Limit context takes > 60s to update. | `RedisRateLimiter` / `admin_routes` | **CLOSED** | Backend Dev |
 
-**Triage Notes:**
--   *Impact:* User might still be throttled for 1 minute after paying for upgrade.
--   *Root Cause:* Redis context caching `rl:context:{user_id}` TTL is likely 60s. Need immediate invalidation on Admin Action.
--   *Decision:* Must Fix for Go-Live.
+**Resolution:**
+-   Implemented `invalidate_context` in `RedisRateLimiter`.
+-   Admin `PATCH /tier` endpoint calls invalidation synchronously.
+-   Regression Test (`test_fix_def001.py`) verified flow.
+-   **Ready for Retest.**
