@@ -110,6 +110,8 @@ def upgrade() -> None:
     op.add_column('dealer_subscriptions', sa.Column('used_premium_quota', sa.Integer(), nullable=False, server_default='0'))
     op.add_column('dealer_subscriptions', sa.Column('included_listing_quota', sa.Integer(), nullable=False, server_default='0'))
     op.add_column('dealer_subscriptions', sa.Column('included_premium_quota', sa.Integer(), nullable=False, server_default='0'))
+    op.drop_column('dealer_subscriptions', 'remaining_listing_quota')
+    op.drop_column('dealer_subscriptions', 'remaining_premium_quota')
     op.add_column('invoice_items', sa.Column('price_source', sa.String(length=50), nullable=False, server_default='manual'))
     op.add_column('invoice_items', sa.Column('base_unit_price', sa.Numeric(precision=10, scale=2), nullable=False, server_default='0'))
     op.add_column('invoice_items', sa.Column('discount_amount', sa.Numeric(precision=10, scale=2), nullable=True)) # nullable True for existing
