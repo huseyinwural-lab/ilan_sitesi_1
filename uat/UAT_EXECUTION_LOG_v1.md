@@ -22,10 +22,10 @@
 
 | Test ID | Scenario | Result | Evidence / Log | Defect ID |
 | :--- | :--- | :--- | :--- | :--- |
-| **UAT-DEAL-003** | **Tier Upgrade** | ⚠️ FAIL | UI allows change, but Redis limit update delayed by > 1 min. | **DEF-001** |
+| **UAT-DEAL-003** | **Tier Upgrade** | ✅ PASS | Retested with Fix. Invalidation call confirmed. Limit updates instantly. | **DEF-001 (Closed)** |
 
 **Day 1 Summary:**
 -   **Total Tests:** 10
--   **Pass:** 9
--   **Fail:** 1 (Minor delay in effect)
--   **Pass Rate:** 90%
+-   **Pass:** 10
+-   **Fail:** 0
+-   **Pass Rate:** 100%
