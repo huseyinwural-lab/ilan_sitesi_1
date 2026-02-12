@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, Query, Request
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -14,9 +15,14 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from contextlib import asynccontextmanager
+from app.core.rate_limit import RateLimiter
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Rate Limiters
+limiter_auth_login = RateLimiter(limit=20, window_seconds=60, scope="auth_login")
+limiter_auth_register = RateLimiter(limit=10, window_seconds=60, scope="auth_register")
 
 # Import models
 from app.models.base import Base
@@ -518,7 +524,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=503, detail="Database unavailable")
 
 # ==================== AUTH ROUTES ====================
-@api_router.post("/auth/register", response_model=UserResponse, status_code=201)
+@api_router.post("/auth/register", response_model=UserResponse, status_code=201, dependencies=[Depends(limiter_auth_register)])
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == user_data.email))
     if result.scalar_one_or_none():
@@ -530,7 +536,7 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     await log_action(db, "CREATE", "user", str(user.id), new_values={"email": user.email, "role": user.role})
     return user_to_response(user)
 
-@api_router.post("/auth/login", response_model=TokenResponse)
+@api_router.post("/auth/login", response_model=TokenResponse, dependencies=[Depends(limiter_auth_login)])
 async def login(credentials: UserLogin, request: Request, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == credentials.email))
     user = result.scalar_one_or_none()
@@ -1149,45 +1155,17 @@ async def list_vat_rates(country: Optional[str] = None, is_active: Optional[bool
     return await get_vat_rates(country, is_active, db, current_user)
 
 from app.routers import commercial_routes
+app.include_router(api_router)
 app.include_router(commercial_routes.router, prefix="/api/v1")
-@api_router.post("/vat-rates")
-async def create_vat_rate_endpoint(data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
-    from app.routers.p1_routes import create_vat_rate, VatRateCreate
-    return await create_vat_rate(VatRateCreate(**data), db, current_user)
 
-@api_router.patch("/vat-rates/{rate_id}")
-async def update_vat_rate_endpoint(rate_id: str, data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
-    from app.routers.p1_routes import update_vat_rate, VatRateUpdate
-    return await update_vat_rate(rate_id, VatRateUpdate(**data), db, current_user)
-
+# P1: Invoice Routes
 @api_router.get("/invoices")
 async def list_invoices(country: Optional[str] = None, status: Optional[str] = None, customer_type: Optional[str] = None, skip: int = 0, limit: int = 50, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "finance"]))):
-    from app.routers.p1_routes import get_invoices
     return await get_invoices(country, status, customer_type, skip, limit, db, current_user)
 
 @api_router.get("/invoices/{invoice_id}")
 async def get_invoice(invoice_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "finance"]))):
-    from app.routers.p1_routes import get_invoice_detail
     return await get_invoice_detail(invoice_id, db, current_user)
-
-
-@api_router.post("/invoices")
-async def create_invoice_endpoint(data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "finance"]))):
-    from app.routers.p1_routes import create_invoice, InvoiceCreate
-    return await create_invoice(InvoiceCreate(**data), db, current_user)
-
-@api_router.get("/premium-ranking-rules")
-async def list_ranking_rules(db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
-    from app.routers.p1_routes import get_ranking_rules
-    return await get_ranking_rules(db, current_user)
-
-@api_router.patch("/premium-ranking-rules/{country}")
-async def update_ranking_rule_endpoint(country: str, data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
-    from app.routers.p1_routes import update_ranking_rule, RankingRuleUpdate
-    return await update_ranking_rule(country, RankingRuleUpdate(**data), db, current_user)
-
-app.include_router(api_router)
-app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
 
 from app.routers import payment_routes
 app.include_router(payment_routes.router, prefix="/api/v1")
