@@ -10,9 +10,14 @@ from app.models.billing import Invoice, InvoiceItem
 from app.services.stripe_service import StripeService
 from datetime import datetime, timezone
 from decimal import Decimal
+from pydantic import BaseModel
 import uuid
 
 router = APIRouter(prefix="/commercial", tags=["commercial"])
+
+class BuyPackageRequest(BaseModel):
+    success_url: str
+    cancel_url: str
 
 @router.get("/packages")
 async def list_packages(country: str, db: AsyncSession = Depends(get_db)):
@@ -36,8 +41,7 @@ async def list_packages(country: str, db: AsyncSession = Depends(get_db)):
 async def buy_package(
     dealer_id: str, 
     package_id: str, 
-    success_url: str,
-    cancel_url: str,
+    req: BuyPackageRequest,
     db: AsyncSession = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
@@ -85,7 +89,7 @@ async def buy_package(
         customer_type="dealer",
         customer_ref_id=dealer.id,
         customer_name=dealer.company_name,
-        customer_email=dealer.contact_email or current_user.email,
+        customer_email=dealer.vat_tax_no or current_user.email, # Fallback email
         status="draft",
         gross_total=package.price_net, # Assuming net=gross for simplicity or we add VAT?
         # Let's add VAT.
@@ -115,7 +119,7 @@ async def buy_package(
     stripe_service = StripeService(db)
     return await stripe_service.create_checkout_session(
         invoice_id=str(invoice.id),
-        success_url=success_url,
-        cancel_url=cancel_url,
+        success_url=req.success_url,
+        cancel_url=req.cancel_url,
         user_email=invoice.customer_email
     )
