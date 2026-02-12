@@ -781,6 +781,8 @@ async def create_invoice(data: InvoiceCreate, db, current_user):
     
     for item in data.items:
         line_net = Decimal(str(item['unit_price'])) * item['quantity']
+        "stripe_payment_intent_id": invoice.stripe_payment_intent_id,
+        "payment_idempotency_key": invoice.payment_idempotency_key,
         line_tax = line_net * (tax_rate / 100)
         inv_item = InvoiceItem(
             invoice_id=invoice.id,
