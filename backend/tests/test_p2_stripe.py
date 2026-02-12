@@ -75,7 +75,7 @@ async def test_stripe_webhook_processing(client, admin_headers):
         mock_construct.return_value = mock_event
         
         # 3. Call Webhook Endpoint
-        res = await client.post("/payments/webhook/stripe", 
+        res = await client.post("/v1/payments/webhook/stripe", 
                                content=b"dummy_payload", 
                                headers={"Stripe-Signature": "dummy_sig"})
         
