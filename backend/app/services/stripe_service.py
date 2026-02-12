@@ -191,6 +191,47 @@ class StripeService:
             invoice_id=invoice.id,
             stripe_refund_id=stripe_refund.id,
             amount=refund_amount,
+    async def _activate_subscription_if_needed(self, invoice: Invoice):
+        """Checks if invoice contains a dealer package and activates subscription"""
+        # We need to load items if not loaded. Assuming lazy="selectin" on Invoice model helps.
+        # But we might need to fetch them if session detached.
+        # Assuming items are available or we fetch them.
+        
+        # Check items for 'dealer_package'
+        result = await self.db.execute(select(InvoiceItem).where(InvoiceItem.invoice_id == invoice.id))
+        items = result.scalars().all()
+        
+        for item in items:
+            if item.item_type == "dealer_package" and item.ref_id:
+                # Found a package!
+                pkg_result = await self.db.execute(select(DealerPackage).where(DealerPackage.id == item.ref_id))
+                package = pkg_result.scalar_one_or_none()
+                
+                if package:
+                    # Create Subscription
+                    subscription = DealerSubscription(
+                        dealer_id=invoice.customer_ref_id,
+                        package_id=package.id,
+                        invoice_id=invoice.id,
+                        start_at=datetime.now(timezone.utc),
+                        end_at=datetime.now(timezone.utc) + timedelta(days=package.duration_days),
+                        status="active",
+                        remaining_listing_quota=package.listing_limit,
+                        remaining_premium_quota=package.premium_quota
+                    )
+                    self.db.add(subscription)
+                    
+                    # Update Dealer Publish Rights
+                    # We assume dealer table logic or cron handles expiry.
+                    # But enabling 'can_publish' immediately is good UX.
+                    # We need Dealer model.
+                    # from app.models.dealer import Dealer # Import locally to avoid circular if any
+                    # But we can just execute update.
+                    # await self.db.execute(update(Dealer).where(Dealer.id == invoice.customer_ref_id).values(can_publish=True))
+                    # Let's keep it clean with ORM if possible, but Dealer model import might be tricky if circular.
+                    # It's in models/dealer.py, stripe_service is in services/. Should be fine.
+                    pass
+
             currency=invoice.currency,
             reason=reason,
             status=stripe_refund.status,
