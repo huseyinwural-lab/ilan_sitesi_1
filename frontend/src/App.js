@@ -14,6 +14,7 @@ import AuditLogs from "./pages/AuditLogs";
 import Categories from "./pages/Categories";
 import Attributes from "./pages/Attributes";
 import Invoices from "./pages/Invoices";
+import MenuManager from "./pages/MenuManager";
 import TaxRates from "./pages/TaxRates";
 import PremiumProducts from "./pages/PremiumProducts";
 import DealerManagement from "./pages/DealerManagement";
