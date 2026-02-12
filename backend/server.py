@@ -31,6 +31,7 @@ from app.models.premium import PremiumProduct, ListingPromotion, PremiumRankingR
 from app.models.moderation import Listing, ModerationAction, ModerationRule
 from app.models.billing import VatRate, Invoice, InvoiceItem
 from app.models.payment import StripeSettings, PaymentAttempt, StripeEvent
+from app.models.payment import StripeSettings, PaymentAttempt, StripeEvent, Refund
 
 # Database setup
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://admin_user:admin_pass@localhost:5432/admin_panel')
