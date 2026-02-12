@@ -1080,6 +1080,8 @@ async def update_vat_rate_endpoint(rate_id: str, data: dict, db: AsyncSession = 
     return await update_vat_rate(rate_id, VatRateUpdate(**data), db, current_user)
 
 @api_router.get("/invoices")
+from app.routers import payment_routes
+app.include_router(payment_routes.router, prefix="/api/v1")
 async def list_invoices(country: Optional[str] = None, status: Optional[str] = None, customer_type: Optional[str] = None, skip: int = 0, limit: int = 50, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "finance"]))):
     from app.routers.p1_routes import get_invoices
     return await get_invoices(country, status, customer_type, skip, limit, db, current_user)
