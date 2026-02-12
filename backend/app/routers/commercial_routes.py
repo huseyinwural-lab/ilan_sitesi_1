@@ -176,7 +176,8 @@ async def create_dealer_listing(
         # Let's enforce Subscription for now based on P4 scope "Dealer Premium + Paket Modeli".
         raise HTTPException(status_code=403, detail="No active subscription found. Please buy a package.")
         
-    if subscription.remaining_listing_quota <= 0:
+    remaining_quota = subscription.included_listing_quota - subscription.used_listing_quota
+    if remaining_quota <= 0:
         raise HTTPException(status_code=403, detail="Listing quota exceeded.")
         
     # 3. Create Listing
