@@ -39,12 +39,18 @@ async def db_session():
 @pytest.mark.asyncio
 async def test_expiry_job_logic(db_session):
     # 1. Setup Data
-    # Dealer
-    app_id = uuid.uuid4()
-    dealer_id = uuid.uuid4()
-    db_session.add(DealerApplication(id=app_id, country="DE", dealer_type="auto", company_name="Test", contact_name="T", contact_email="t@t.com", status="approved"))
-    await db_session.flush()
-    db_session.add(Dealer(id=dealer_id, application_id=app_id, country="DE", dealer_type="auto", company_name="Test"))
+    # Dealer 1 (For expired sub)
+    app_id_1 = uuid.uuid4()
+    dealer_id_1 = uuid.uuid4()
+    db_session.add(DealerApplication(id=app_id_1, country="DE", dealer_type="auto", company_name="Test1", contact_name="T", contact_email="t1@t.com", status="approved"))
+    db_session.add(Dealer(id=dealer_id_1, application_id=app_id_1, country="DE", dealer_type="auto", company_name="Test1"))
+    
+    # Dealer 2 (For valid sub)
+    app_id_2 = uuid.uuid4()
+    dealer_id_2 = uuid.uuid4()
+    db_session.add(DealerApplication(id=app_id_2, country="DE", dealer_type="auto", company_name="Test2", contact_name="T", contact_email="t2@t.com", status="approved"))
+    db_session.add(Dealer(id=dealer_id_2, application_id=app_id_2, country="DE", dealer_type="auto", company_name="Test2"))
+    
     await db_session.flush()
     
     # Package
@@ -55,15 +61,15 @@ async def test_expiry_job_logic(db_session):
     # Invoice (Required for FK)
     inv_id_1 = uuid.uuid4()
     inv_id_2 = uuid.uuid4()
-    db_session.add(Invoice(id=inv_id_1, invoice_no="INV-1", country="DE", currency="EUR", customer_type="dealer", customer_ref_id=dealer_id, customer_name="T", status="paid", gross_total=10, net_total=10, tax_total=0, tax_rate_snapshot=0))
-    db_session.add(Invoice(id=inv_id_2, invoice_no="INV-2", country="DE", currency="EUR", customer_type="dealer", customer_ref_id=dealer_id, customer_name="T", status="paid", gross_total=10, net_total=10, tax_total=0, tax_rate_snapshot=0))
+    db_session.add(Invoice(id=inv_id_1, invoice_no="INV-1", country="DE", currency="EUR", customer_type="dealer", customer_ref_id=dealer_id_1, customer_name="T1", status="paid", gross_total=10, net_total=10, tax_total=0, tax_rate_snapshot=0))
+    db_session.add(Invoice(id=inv_id_2, invoice_no="INV-2", country="DE", currency="EUR", customer_type="dealer", customer_ref_id=dealer_id_2, customer_name="T2", status="paid", gross_total=10, net_total=10, tax_total=0, tax_rate_snapshot=0))
     await db_session.flush()
     
-    # Sub 1: EXPIRED (Active status, but end_at in past)
+    # Sub 1: EXPIRED (Active status, but end_at in past) -> Dealer 1
     sub_expired_id = uuid.uuid4()
     db_session.add(DealerSubscription(
         id=sub_expired_id,
-        dealer_id=dealer_id,
+        dealer_id=dealer_id_1,
         package_id=pkg_id,
         invoice_id=inv_id_1,
         start_at=datetime.now(timezone.utc) - timedelta(days=60),
@@ -72,11 +78,11 @@ async def test_expiry_job_logic(db_session):
         included_listing_quota=10
     ))
     
-    # Sub 2: VALID (Active status, end_at in future)
+    # Sub 2: VALID (Active status, end_at in future) -> Dealer 2
     sub_valid_id = uuid.uuid4()
     db_session.add(DealerSubscription(
         id=sub_valid_id,
-        dealer_id=dealer_id,
+        dealer_id=dealer_id_2,
         package_id=pkg_id,
         invoice_id=inv_id_2,
         start_at=datetime.now(timezone.utc),
