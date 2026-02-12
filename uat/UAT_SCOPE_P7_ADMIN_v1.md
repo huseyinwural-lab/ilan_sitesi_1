@@ -1,3 +1,4 @@
+
 # UAT Scope: P7 Admin Panel (v1.0)
 
 **Phase:** P7 (Final Polish & UAT)
