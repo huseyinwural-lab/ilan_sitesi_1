@@ -1,0 +1,81 @@
+
+"""
+P2: Stripe & Payment Models
+"""
+from sqlalchemy import String, Boolean, DateTime, JSON, Integer, Text, ForeignKey, Index, Numeric
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from datetime import datetime, timezone
+from typing import Optional
+import uuid
+from app.models.base import Base
+
+class StripeSettings(Base):
+    """Country-based Stripe Configuration"""
+    __tablename__ = "stripe_settings"
+    
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    country: Mapped[str] = mapped_column(String(5), unique=True, nullable=False, index=True)
+    
+    # Feature toggle
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    
+    # Credentials (References to ENV variables or Secret Manager, NOT actual keys if possible, 
+    # but for this MVP config, we might store them encrypted or assume they overwrite global envs.
+    # Requirement ADM-STP-001 says: "secret_key_ref (asla plaintext DB’de tutma)".
+    # So we store a reference key like "STRIPE_SECRET_KEY_DE" which looks up os.environ)
+    secret_key_env_key: Mapped[str] = mapped_column(String(100), nullable=False) # e.g. "STRIPE_SECRET_DE"
+    webhook_secret_env_key: Mapped[str] = mapped_column(String(100), nullable=False) # e.g. "STRIPE_WEBHOOK_SECRET_DE"
+    publishable_key: Mapped[Optional[str]] = mapped_column(String(255), nullable=True) # Safe to store
+    
+    # Account mode
+    account_mode: Mapped[str] = mapped_column(String(20), default="test") # test / live
+    
+    # Audit
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+class PaymentAttempt(Base):
+    """Log of payment attempts for an invoice"""
+    __tablename__ = "payment_attempts"
+    
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    invoice_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False, index=True)
+    
+    # Snapshot of attempt details
+    country: Mapped[str] = mapped_column(String(5), nullable=False)
+    currency: Mapped[str] = mapped_column(String(5), nullable=False)
+    amount_gross: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    
+    # Stripe Metadata
+    stripe_checkout_session_id: Mapped[Optional[str]] = mapped_column(String(100), index=True)
+    stripe_payment_intent_id: Mapped[Optional[str]] = mapped_column(String(100), index=True)
+    
+    # Status: created, processing, succeeded, failed, canceled
+    status: Mapped[str] = mapped_column(String(20), default="created", index=True)
+    
+    # Errors
+    failure_code: Mapped[Optional[str]] = mapped_column(String(50))
+    failure_message: Mapped[Optional[str]] = mapped_column(Text)
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    # Rel
+    # invoice = relationship("Invoice", back_populates="payment_attempts") # Add back_populates to Invoice model later
+
+class StripeEvent(Base):
+    """Idempotency log for Webhooks"""
+    __tablename__ = "stripe_events"
+    
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    event_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+    event_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    
+    status: Mapped[str] = mapped_column(String(20), default="processed") # processed, error
+    processing_error: Mapped[Optional[str]] = mapped_column(Text)
+    
+    processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
