@@ -134,6 +134,103 @@ async def test_dealer_package_flow(local_client):
                 assert res.status_code == 200, f"Webhook failed: {res.text}"
                 
             # 5. Verify Subscription
+@pytest.mark.asyncio
+async def test_listing_quota_enforcement(local_client):
+    # Setup Dealer & Subscription
+    async with AsyncSessionLocal() as session:
+        # Create Dealer
+        dealer_app = DealerApplication(
+            country="DE",
+            dealer_type="auto_dealer",
+            company_name="Quota Dealer App",
+            contact_name="Tester",
+            contact_email="quota@dealer.com",
+            status="approved"
+        )
+        session.add(dealer_app)
+        await session.flush()
+        
+        dealer = Dealer(
+            country="DE",
+            dealer_type="auto_dealer",
+            company_name="Quota Dealer",
+            vat_tax_no="DE888",
+            is_active=True,
+            application_id=dealer_app.id
+        )
+        session.add(dealer)
+        await session.flush()
+        
+        # Create Package
+        pkg = DealerPackage(
+            key="SMALL_PKG",
+            country="DE",
+            name={"en": "Small"},
+            price_net=Decimal("10.00"),
+            currency="EUR",
+            duration_days=30,
+            listing_limit=1, # Limit 1
+            premium_quota=0,
+            is_active=True
+        )
+        session.add(pkg)
+        await session.flush()
+        
+        # Create Active Subscription
+        # Need a mock invoice
+        invoice = Invoice(
+            invoice_no="INV-QUOTA-TEST",
+            country="DE",
+            currency="EUR",
+            customer_type="dealer",
+            customer_ref_id=dealer.id,
+            customer_name="Quota Dealer",
+            status="paid",
+            gross_total=10,
+            net_total=10,
+            tax_total=0,
+            tax_rate_snapshot=0
+        )
+        session.add(invoice)
+        await session.flush()
+        
+        sub = DealerSubscription(
+            dealer_id=dealer.id,
+            package_id=pkg.id,
+            invoice_id=invoice.id,
+            start_at=datetime.now(timezone.utc),
+            end_at=datetime.now(timezone.utc) + timedelta(days=30),
+            status="active",
+            remaining_listing_quota=1, # 1 remaining
+            remaining_premium_quota=0
+        )
+        session.add(sub)
+        await session.commit()
+        dealer_id = str(dealer.id)
+
+    async with local_client as client:
+        # 1. Post Listing (Success, Quota 1 -> 0)
+        res = await client.post(f"/api/v1/commercial/dealers/{dealer_id}/listings", json={
+            "title": "Test Car 1",
+            "description": "Desc",
+            "module": "vehicle",
+            "price": 10000,
+            "currency": "EUR"
+        })
+        assert res.status_code == 200
+        assert res.json()["remaining_quota"] == 0
+        
+        # 2. Post Listing (Fail, Quota 0)
+        res = await client.post(f"/api/v1/commercial/dealers/{dealer_id}/listings", json={
+            "title": "Test Car 2",
+            "description": "Desc",
+            "module": "vehicle",
+            "price": 20000,
+            "currency": "EUR"
+        })
+        assert res.status_code == 403
+        assert "exceeded" in res.json()["detail"]
+
             res = await client.get(f"/api/invoices/{invoice_id}")
             assert res.json()["status"] == "paid"
             
