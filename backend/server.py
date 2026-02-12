@@ -398,6 +398,28 @@ async def seed_default_data(db: AsyncSession):
         exists = await db.execute(select(StripeSettings).where(StripeSettings.country == country))
         if not exists.scalar_one_or_none():
             db.add(StripeSettings(
+    # P4: Dealer Packages (seed)
+    from app.models.commercial import DealerPackage
+    for country, currency in [("DE", "EUR"), ("CH", "CHF"), ("FR", "EUR"), ("AT", "EUR")]:
+        for key, price, days, limit, prem in [
+            ("BASIC", 49.00, 30, 10, 0),
+            ("PRO", 149.00, 30, 50, 5),
+            ("ENTERPRISE", 499.00, 30, 500, 20)
+        ]:
+            exists = await db.execute(select(DealerPackage).where(and_(DealerPackage.key == key, DealerPackage.country == country)))
+            if not exists.scalar_one_or_none():
+                db.add(DealerPackage(
+                    key=key,
+                    country=country,
+                    name={"en": f"{key} Package"},
+                    price_net=Decimal(str(price)),
+                    currency=currency,
+                    duration_days=days,
+                    listing_limit=limit,
+                    premium_quota=prem,
+                    highlight_quota=prem # Same for now
+                ))
+
                 country=country,
                 is_enabled=True,
                 secret_key_env_key=f"STRIPE_SECRET_KEY_{country}", # e.g. STRIPE_SECRET_KEY_DE
