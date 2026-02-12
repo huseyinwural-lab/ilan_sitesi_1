@@ -28,6 +28,25 @@ async def create_checkout(
     )
 
 @router.post("/webhook/stripe")
+class RefundRequest(BaseModel):
+    amount: float
+    reason: str = "requested_by_customer"
+
+@router.post("/invoices/{invoice_id}/refund")
+async def refund_invoice(
+    invoice_id: str,
+    req: RefundRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(check_permissions(["super_admin", "finance"]))
+):
+    service = StripeService(db)
+    return await service.create_refund(
+        invoice_id=invoice_id,
+        amount=req.amount,
+        reason=req.reason,
+        admin_id=str(current_user.id)
+    )
+
 async def stripe_webhook(
     request: Request,
     stripe_signature: str = Header(None),
