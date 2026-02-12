@@ -39,19 +39,21 @@ async def db_session():
 @pytest.mark.asyncio
 async def test_expiry_job_logic(db_session):
     # 1. Setup Data
-    # Dealer 1 (For expired sub)
+    # Dealer 1
     app_id_1 = uuid.uuid4()
     dealer_id_1 = uuid.uuid4()
     db_session.add(DealerApplication(id=app_id_1, country="DE", dealer_type="auto", company_name="Test1", contact_name="T", contact_email="t1@t.com", status="approved"))
+    await db_session.flush() # Explicit flush
     db_session.add(Dealer(id=dealer_id_1, application_id=app_id_1, country="DE", dealer_type="auto", company_name="Test1"))
+    await db_session.flush() # Explicit flush
     
-    # Dealer 2 (For valid sub)
+    # Dealer 2
     app_id_2 = uuid.uuid4()
     dealer_id_2 = uuid.uuid4()
     db_session.add(DealerApplication(id=app_id_2, country="DE", dealer_type="auto", company_name="Test2", contact_name="T", contact_email="t2@t.com", status="approved"))
+    await db_session.flush() # Explicit flush
     db_session.add(Dealer(id=dealer_id_2, application_id=app_id_2, country="DE", dealer_type="auto", company_name="Test2"))
-    
-    await db_session.flush()
+    await db_session.flush() # Explicit flush
     
     # Package
     pkg_id = uuid.uuid4()
