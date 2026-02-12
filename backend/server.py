@@ -428,13 +428,6 @@ async def seed_default_data(db: AsyncSession):
                     highlight_quota=prem # Same for now
                 ))
 
-                country=country,
-                is_enabled=True,
-                secret_key_env_key=f"STRIPE_SECRET_KEY_{country}", # e.g. STRIPE_SECRET_KEY_DE
-                webhook_secret_env_key=f"STRIPE_WEBHOOK_SECRET_{country}",
-                publishable_key=f"pk_test_mock_{country}", # Mock for now
-                account_mode="test"
-            ))
 
     logger.info("Default data seeded")
 
