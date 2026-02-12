@@ -234,13 +234,3 @@ async def test_listing_quota_enforcement(local_client):
         assert res.status_code == 403
         assert "exceeded" in res.json()["detail"]
 
-            res = await client.get(f"/api/invoices/{invoice_id}")
-            assert res.json()["status"] == "paid"
-            
-            # Verify Subscription in DB
-            async with AsyncSessionLocal() as session:
-                sub = await session.execute(select(DealerSubscription).where(DealerSubscription.invoice_id == uuid.UUID(invoice_id)))
-                sub = sub.scalar_one_or_none()
-                assert sub is not None
-                assert sub.status == "active"
-                assert sub.remaining_listing_quota == 50
