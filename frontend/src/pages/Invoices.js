@@ -28,6 +28,28 @@ export default function Invoices() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+      toast({
+        title: "Payment Successful",
+        description: "The invoice has been marked as paid.",
+        variant: "success"
+      });
+      // Clear params
+      setSearchParams({});
+    } else if (paymentStatus === 'cancelled') {
+      toast({
+        title: "Payment Cancelled",
+        description: "The payment process was cancelled.",
+        variant: "destructive"
+      });
+      setSearchParams({});
+    }
+  }, [searchParams]);
     fetchInvoices();
   }, [filters]);
 
