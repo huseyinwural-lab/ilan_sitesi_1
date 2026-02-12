@@ -154,16 +154,28 @@ async def seed_v2(allow_prod=False, dry_run=False):
                 # Fetch categories to debug slug matching
                 res = await session.execute(select(Category))
                 all_cats = res.scalars().all()
-                # logger.info(f"Available Categories: {[c.slug.get('en') for c in all_cats]}")
-
+                
                 async def link(cat_slug, attr_keys):
                     target_cat = None
-                    # Loose matching for "real-estate" vs "real_estate"
+                    # Loose matching: check English slug
                     for c in all_cats:
-                        slug = c.slug.get('en')
-                        if slug == cat_slug or slug == cat_slug.replace("-", "_") or slug == cat_slug.replace("_", "-"):
+                        # Handle both dict slug and legacy string slug
+                        slug_val = c.slug.get('en') if isinstance(c.slug, dict) else c.slug
+                        
+                        # Match variants (real-estate vs real_estate)
+                        if slug_val == cat_slug or \
+                           slug_val == cat_slug.replace("-", "_") or \
+                           slug_val == cat_slug.replace("_", "-"):
                             target_cat = c
                             break
+                    
+                    if not target_cat:
+                        # Fallback: Try matching module name if slug fails (for root)
+                        if cat_slug == "real-estate":
+                             for c in all_cats:
+                                 if c.module == "real_estate" and c.parent_id is None:
+                                     target_cat = c
+                                     break
                     
                     if not target_cat:
                         logger.warning(f"⚠️ Category not found: {cat_slug}")
@@ -182,20 +194,23 @@ async def seed_v2(allow_prod=False, dry_run=False):
                             )
                             session.add(mapping)
                             count += 1
-                    logger.info(f"🔗 Linked {count} attributes to {cat_slug}")
+                    logger.info(f"🔗 Linked {count} attributes to {target_cat.slug.get('en', 'cat')}")
                 
                 # Links
                 global_keys = [x[0] for x in global_attrs]
                 res_keys = [x[0] for x in res_attrs]
                 comm_keys = [x[0] for x in comm_attrs]
 
-                # Root Modules (Using correct slugs from seed_production_data.py)
-                # v1 seed used: "real-estate", "vehicles", "shopping", "services"
-                # v1 subcats: "housing", "commercial"
+                # Root Modules
+                # The slug in seed_production_data.py was "real-estate"
+                await link("real-estate", global_keys) 
                 
-                await link("real-estate", global_keys) # Adds Global to Root
-                await link("housing", res_keys)       # Adds Res to Housing
-                await link("commercial", comm_keys)   # Adds Comm to Commercial
+                # Sub categories
+                # housing -> slug "housing"
+                await link("housing", res_keys)       
+                
+                # commercial -> slug "commercial"
+                await link("commercial", comm_keys)   
 
             if not dry_run:
                 await session.commit()
