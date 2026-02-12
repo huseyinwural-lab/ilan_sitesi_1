@@ -308,7 +308,7 @@ class StripeService:
         status="processing"
     )
     self.db.add(log)
-        await self.db.commit()
+    await self.db.commit()
         
         # Process
         try:
