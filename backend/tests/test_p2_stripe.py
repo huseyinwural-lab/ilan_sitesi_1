@@ -28,7 +28,7 @@ async def test_create_checkout_session_flow(client, admin_headers):
         mock_create.return_value = mock_session
         
         # 3. Call Checkout Endpoint
-        res = await client.post(f"/payments/invoices/{invoice_id}/checkout", headers=admin_headers, json={
+        res = await client.post(f"/v1/payments/invoices/{invoice_id}/checkout", headers=admin_headers, json={
             "success_url": "http://localhost/success",
             "cancel_url": "http://localhost/cancel"
         })
