@@ -120,6 +120,87 @@ class StripeService:
             )
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
+    async def create_refund(self, invoice_id: str, amount: float, reason: str, admin_id: str):
+        # 1. Fetch Invoice
+        result = await self.db.execute(select(Invoice).where(Invoice.id == uuid.UUID(invoice_id)))
+        invoice = result.scalar_one_or_none()
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        
+        # 2. Validate Status & Amount
+        if invoice.status not in ["paid", "partially_refunded"]:
+            raise HTTPException(status_code=400, detail="Only paid invoices can be refunded")
+        
+        refund_amount = Decimal(str(amount))
+        if refund_amount <= 0:
+            raise HTTPException(status_code=400, detail="Refund amount must be positive")
+            
+        remaining_refundable = invoice.gross_total - (invoice.refunded_total or 0)
+        if refund_amount > remaining_refundable:
+            raise HTTPException(status_code=400, detail=f"Refund amount exceeds refundable total. Max: {remaining_refundable}")
+
+        # 3. Get Config & Stripe Key
+        config = await self.get_config(invoice.country)
+        if not config or not config["api_key"]:
+             # Fallback
+            api_key = os.environ.get("STRIPE_API_KEY")
+            if not api_key:
+                raise HTTPException(status_code=500, detail="Stripe configuration missing")
+        else:
+            api_key = config["api_key"]
+        
+        stripe.api_key = api_key
+
+        # 4. Call Stripe
+        if not invoice.stripe_payment_intent_id:
+             raise HTTPException(status_code=400, detail="No associated Stripe Payment Intent found")
+
+        try:
+            # Stripe expects integer cents
+            amount_cents = int(refund_amount * 100)
+            stripe_refund = stripe.Refund.create(
+                payment_intent=invoice.stripe_payment_intent_id,
+                amount=amount_cents,
+                reason=reason if reason in ["duplicate", "fraudulent", "requested_by_customer"] else "requested_by_customer",
+                metadata={"invoice_id": str(invoice.id), "admin_id": admin_id}
+            )
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Stripe Error: {str(e)}")
+
+        # 5. Create Refund Record (Status will be updated via webhook usually, but create response has status too)
+        # We assume 'succeeded' or 'pending' from Stripe immediately.
+        
+        refund_record = Refund(
+            invoice_id=invoice.id,
+            stripe_refund_id=stripe_refund.id,
+            amount=refund_amount,
+            currency=invoice.currency,
+            reason=reason,
+            status=stripe_refund.status,
+            created_by_admin_id=uuid.UUID(admin_id)
+        )
+        self.db.add(refund_record)
+        
+        # We do NOT update invoice total here to avoid double counting with webhook. 
+        # But for UX, if status is succeeded, we COULD. 
+        # However, requirement says "Webhook idempotent... Aynı event ikinci kez tutar artırmamalı".
+        # Safe approach: Rely on Webhook for Invoice update OR update here and make webhook check if already applied.
+        # Let's update here IF successful to reflect immediately in UI, and handle idempotency in webhook.
+        
+        if stripe_refund.status == "succeeded":
+            invoice.refunded_total = (invoice.refunded_total or 0) + refund_amount
+            if invoice.refunded_total >= invoice.gross_total:
+                invoice.status = "refunded"
+                invoice.refund_status = "full"
+            else:
+                invoice.status = "partially_refunded"
+                invoice.refund_status = "partial"
+            invoice.last_refund_at = datetime.now(timezone.utc)
+            invoice.refunded_at = datetime.now(timezone.utc) # Set last/main refunded date
+
+        await self.db.commit()
+        return {"id": str(refund_record.id), "status": refund_record.status}
+
 
         # 5. Log Attempt
         attempt = PaymentAttempt(
