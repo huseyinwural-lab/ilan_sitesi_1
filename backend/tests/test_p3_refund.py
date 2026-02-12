@@ -124,10 +124,13 @@ async def test_over_refund_protection(local_client):
             # Mark Paid
             with patch("stripe.Webhook.construct_event") as mock_construct:
                 mock_event = MagicMock()
+                mock_event.id = f"evt_test_{uuid.uuid4().hex}" # Unique ID
                 mock_event.type = "checkout.session.completed"
                 mock_session = MagicMock()
                 mock_session.metadata = {"invoice_id": invoice_id}
                 mock_session.payment_intent = "pi_test_over"
+                mock_session.client_reference_id = invoice_id # Add this
+                
                 mock_event.data.object = mock_session
                 mock_construct.return_value = mock_event
                 with patch.dict(os.environ, {"STRIPE_WEBHOOK_SECRET": "whsec_test"}):
