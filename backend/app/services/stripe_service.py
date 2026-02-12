@@ -260,6 +260,8 @@ class StripeService:
                     pass
 
 
+    
+        await self.db.commit()
 
     async def handle_webhook(self, payload: bytes, sig_header: str):
         # We need to know WHICH secret to use.
