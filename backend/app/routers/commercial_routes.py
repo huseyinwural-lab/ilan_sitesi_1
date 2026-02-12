@@ -49,7 +49,7 @@ async def list_packages(country: str, db: AsyncSession = Depends(get_db)):
         "premium_quota": p.premium_quota
     } for p in packages]
 
-@router.post("/dealers/{dealer_id}/packages/{package_id}/buy")
+@router.post("/dealers/{dealer_id}/packages/{package_id}/buy", dependencies=[Depends(limiter_checkout_init)])
 async def buy_package(
     dealer_id: str, 
     package_id: str, 
