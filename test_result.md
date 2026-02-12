@@ -34,6 +34,9 @@ backend:
         - working: true
           agent: "main"
           comment: "Implemented worker, DB index, and start script. Tests passed (test_p5_expiry.py)."
+        - working: true
+          agent: "testing"
+          comment: "✅ VERIFIED: Expiry job implementation fully working. DB index 'ix_dealer_subscriptions_status_end_at' correctly applied. Job expires subscriptions with status='active' and end_at<now, logs audit trail with SYSTEM_EXPIRE action. Start script /app/backend/start_cron.sh exists and executable. Original pytest test passes. Comprehensive testing shows 100% success rate."
 
 metadata:
   created_by: "main_agent"
