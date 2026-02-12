@@ -26,11 +26,25 @@ services:
         value: placeholder_replace_me
       - key: STRIPE_WEBHOOK_SECRET
         value: placeholder_replace_me
-      # Country Specific Keys (Examples)
+      # Country Specific Keys (Prod)
       - key: STRIPE_SECRET_KEY_DE
         value: placeholder_replace_me
       - key: STRIPE_WEBHOOK_SECRET_DE
         value: placeholder_replace_me
+      - key: STRIPE_SECRET_KEY_FR
+        value: placeholder_replace_me
+      - key: STRIPE_WEBHOOK_SECRET_FR
+        value: placeholder_replace_me
+      - key: STRIPE_SECRET_KEY_AT
+        value: placeholder_replace_me
+      - key: STRIPE_WEBHOOK_SECRET_AT
+        value: placeholder_replace_me
+      - key: STRIPE_SECRET_KEY_CH
+        value: placeholder_replace_me
+      - key: STRIPE_WEBHOOK_SECRET_CH
+        value: placeholder_replace_me
+      - key: ENV
+        value: production
 
   - type: static
     name: admin-panel-ui
