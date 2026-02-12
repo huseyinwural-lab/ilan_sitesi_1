@@ -87,6 +87,8 @@ class Invoice(Base):
     stripe_payment_intent_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
     billing_snapshot: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True) # Full snapshot of customer billing info at time of invoice
 
+    refunded_total: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0)
+    refund_status: Mapped[str] = mapped_column(String(20), default="none") # none, partial, full
     # Notes
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
