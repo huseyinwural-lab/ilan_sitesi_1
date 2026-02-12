@@ -365,10 +365,10 @@ class StripeService:
                 log.status = "processed"
                 await self.db.commit()
                 
-        except Exception as e:
-            log.status = "error"
-            log.processing_error = str(e)
-            await self.db.commit()
-            raise e
-    
-        return {"status": "success"}
+    except Exception as e:
+        log.status = "error"
+        log.processing_error = str(e)
+        await self.db.commit()
+        raise e
+
+    return {"status": "success"}
