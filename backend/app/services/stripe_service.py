@@ -277,7 +277,6 @@ class StripeService:
             elif event.type == "charge.refunded":
                 charge = event.data.object
                 # Find Refund Record by stripe_refund_id (if initiated by us) OR Payment Intent
-                refunds = charge.refunds.data if hasattr(charge, 'refunds') else []
                 # Actually charge.refunded event contains the refund object? No, it contains the Charge.
                 # Wait, event 'charge.refunded' data.object is a Charge.
                 # But we might need 'refund.created' or similar? 
