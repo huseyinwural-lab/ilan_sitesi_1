@@ -118,7 +118,7 @@ async def test_stripe_webhook_processing(local_client):
             with patch("stripe.Webhook.construct_event") as mock_construct:
                 # Mock Event Object
                 mock_event = MagicMock()
-                mock_event.id = "evt_test_123"
+                mock_event.id = f"evt_test_{uuid.uuid4().hex}" # Unique ID
                 mock_event.type = "checkout.session.completed"
                 
                 mock_session = MagicMock()
