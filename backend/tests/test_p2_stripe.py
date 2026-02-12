@@ -75,7 +75,7 @@ async def test_stripe_webhook_processing(local_client):
     with patch.dict(os.environ, {"STRIPE_WEBHOOK_SECRET": "whsec_test"}):
         async with local_client as client:
             # 1. Create Invoice
-            res = await client.post("/api/v1/invoices", json={
+            res = await client.post("/api/invoices", json={
                 "country": "DE",
                 "customer_type": "B2C",
                 "customer_name": "Webhook Test",
