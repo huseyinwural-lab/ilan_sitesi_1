@@ -7,8 +7,6 @@ from typing import Optional
 logger = logging.getLogger("rate_limit")
 
 # Lua Script for Token Bucket
-# Keys: {key}
-# Args: capacity, refill_rate, now_timestamp, requested_tokens
 LUA_TOKEN_BUCKET = """
 local key = KEYS[1]
 local capacity = tonumber(ARGV[1])
@@ -48,8 +46,6 @@ class RedisRateLimiter:
         self.redis = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
         self._script = self.redis.register_script(LUA_TOKEN_BUCKET)
 
-    async def check_limit(self, key: str, limit: int, burst: int = 0) -> bool:
-        """
     async def invalidate_context(self, user_id: str):
         """
         Invalidates cached context and limit counters for a user.
@@ -61,21 +57,14 @@ class RedisRateLimiter:
             await self.redis.delete(context_key)
             
             # 2. Delete Counters (Reset Burst)
-            # Since we don't know the exact old tier key easily without context,
-            # we rely on the fact that changing tier generates a NEW key.
-            # But we should try to clean up if possible.
-            # Pattern: rl:{scope}:{tier}:{user_id}
-            # We can use SCAN but it's slow. 
-            # Better: In this MVP, just deleting context forces a re-fetch.
-            # The old counter key will expire naturally (60s).
-            # The new request will generate a new key `rl:scope:NEW_TIER:id` which starts fresh.
-            # So deleting context is sufficient for "Immediate Effect".
-            
             logger.info(f"Invalidated rate limit context for user {user_id}")
             return True
         except Exception as e:
             logger.error(f"Redis Invalidation Error: {e}")
             return False
+
+    async def check_limit(self, key: str, limit: int, burst: int = 0) -> bool:
+        """
         Checks if request is allowed using Token Bucket.
         limit: Requests per minute (Rate).
         burst: Max concurrent requests (Capacity).
