@@ -145,7 +145,7 @@ class ListingCreate(BaseModel):
     images: list = []
     attributes: dict = {}
 
-@router.post("/dealers/{dealer_id}/listings")
+@router.post("/dealers/{dealer_id}/listings", dependencies=[Depends(limiter_listing_create)])
 async def create_dealer_listing(
     dealer_id: str,
     listing_data: ListingCreate,
