@@ -258,6 +258,33 @@ export default function Invoices() {
           </tbody>
         </table>
       </div>
+              </div>
+            </div>
+
+            {/* Refund Section */}
+            {(selectedInvoice.status === 'paid' || selectedInvoice.status === 'partially_refunded') && (
+              <div className="mb-8 border-t pt-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-semibold text-sm text-muted-foreground uppercase">Refunds</h3>
+                  <button 
+                    onClick={() => setShowRefundModal(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm hover:bg-muted"
+                  >
+                    <RotateCcw size={14} />
+                    Refund Transaction
+                  </button>
+                </div>
+                
+                {selectedInvoice.refunded_total > 0 && (
+                  <div className="bg-purple-50 p-3 rounded-md border border-purple-100 mb-4">
+                    <div className="flex justify-between text-sm font-medium text-purple-900">
+                      <span>Total Refunded</span>
+                      <span>{selectedInvoice.refunded_total} {selectedInvoice.currency}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
       {/* Detail Modal */}
       {selectedInvoice && (
