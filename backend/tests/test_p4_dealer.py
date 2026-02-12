@@ -182,7 +182,7 @@ async def test_listing_quota_enforcement(local_client):
         # Create Active Subscription
         # Need a mock invoice
         invoice = Invoice(
-            invoice_no="INV-QUOTA-TEST",
+            invoice_no=f"INV-QUOTA-{uuid.uuid4().hex[:6]}",
             country="DE",
             currency="EUR",
             customer_type="dealer",
