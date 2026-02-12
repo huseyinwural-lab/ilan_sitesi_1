@@ -5,7 +5,7 @@ import { useCountry } from '../contexts/CountryContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { 
   LayoutDashboard, Users, Globe, Flag, Clock, Settings,
-  LogOut, Menu, X, Sun, Moon, ChevronDown
+  LogOut, Menu, X, Sun, Moon, ChevronDown, FolderTree, Settings2, MenuSquare
 } from 'lucide-react';
 import { useState } from 'react';
 
