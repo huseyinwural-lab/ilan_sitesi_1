@@ -5,8 +5,10 @@ from datetime import datetime, timezone, timedelta
 from app.jobs.expiry_worker import run_expiry_job
 from app.models.commercial import DealerSubscription, DealerPackage
 from app.models.dealer import Dealer, DealerApplication
-from app.models.billing import Invoice
+from app.models.billing import Invoice, InvoiceItem
 from app.models.core import AuditLog
+from app.models.payment import PaymentAttempt, Refund
+from app.models.pricing import ListingConsumptionLog
 from app.database import AsyncSessionLocal, engine
 from sqlalchemy import select, delete
 import pytest_asyncio
@@ -21,6 +23,10 @@ async def db_session():
     async with AsyncSessionLocal() as session:
         # CLEANUP
         await session.execute(delete(AuditLog).where(AuditLog.action == "SYSTEM_EXPIRE"))
+        await session.execute(delete(Refund))
+        await session.execute(delete(PaymentAttempt))
+        await session.execute(delete(ListingConsumptionLog))
+        await session.execute(delete(InvoiceItem))
         await session.execute(delete(DealerSubscription))
         await session.execute(delete(DealerPackage))
         await session.execute(delete(Invoice))
