@@ -833,6 +833,9 @@ async def get_invoice_detail(invoice_id, db, current_user):
         "notes": invoice.notes,
         "stripe_payment_intent_id": invoice.stripe_payment_intent_id,
         "payment_idempotency_key": invoice.payment_idempotency_key,
+        "refunded_total": float(invoice.refunded_total or 0),
+        "refund_status": invoice.refund_status,
+        "refunded_at": invoice.refunded_at.isoformat() if invoice.refunded_at else None,
         "items": [{
             "id": str(item.id),
             "item_type": item.item_type,
