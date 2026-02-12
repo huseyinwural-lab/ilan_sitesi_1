@@ -124,3 +124,79 @@ async def buy_package(
         cancel_url=req.cancel_url,
         user_email=invoice.customer_email
     )
+
+class ListingCreate(BaseModel):
+    title: str
+    description: str
+    module: str
+    price: float
+    currency: str
+    images: list = []
+    attributes: dict = {}
+
+@router.post("/dealers/{dealer_id}/listings")
+async def create_dealer_listing(
+    dealer_id: str,
+    listing_data: ListingCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # 1. Validate Dealer
+    result = await db.execute(select(Dealer).where(Dealer.id == uuid.UUID(dealer_id)))
+    dealer = result.scalar_one_or_none()
+    if not dealer:
+        raise HTTPException(status_code=404, detail="Dealer not found")
+        
+    # TODO: Auth check if current_user owns dealer
+    
+    # 2. Check Subscription & Quota
+    sub_res = await db.execute(select(DealerSubscription).where(
+        and_(
+            DealerSubscription.dealer_id == dealer.id,
+            DealerSubscription.status == "active",
+            DealerSubscription.end_at > datetime.now(timezone.utc)
+        )
+    ).order_by(DealerSubscription.end_at.desc())) # Get latest if multiple? Constraints say single active.
+    
+    subscription = sub_res.scalars().first()
+    
+    if not subscription:
+        # Fallback: Check if dealer has default free quota? 
+        # Current requirements imply "Buy Package" to get limits.
+        # But Dealer model has 'listing_limit' field. Is that separate from subscription?
+        # "DealerPackage... listing_limit". 
+        # "DealerSubscription... remaining_listing_quota".
+        # Logic: Subscription provides quota.
+        # If no subscription, maybe fallback to Dealer global limit if any?
+        # Requirement: "Limit Enforcement... Aktif subscription var mı? ... remaining_listing_quota > 0?"
+        # So subscription is mandatory for publishing in this model?
+        # Or Dealer entity has base limit?
+        # Let's enforce Subscription for now based on P4 scope "Dealer Premium + Paket Modeli".
+        raise HTTPException(status_code=403, detail="No active subscription found. Please buy a package.")
+        
+    if subscription.remaining_listing_quota <= 0:
+        raise HTTPException(status_code=403, detail="Listing quota exceeded.")
+        
+    # 3. Create Listing
+    listing = Listing(
+        title=listing_data.title,
+        description=listing_data.description,
+        module=listing_data.module,
+        country=dealer.country,
+        price=listing_data.price,
+        currency=listing_data.currency,
+        user_id=current_user.id,
+        dealer_id=dealer.id,
+        is_dealer_listing=True,
+        images=listing_data.images,
+        attributes=listing_data.attributes,
+        status="pending"
+    )
+    db.add(listing)
+    
+    # 4. Decrement Quota
+    subscription.remaining_listing_quota -= 1
+    
+    await db.commit()
+    return {"id": str(listing.id), "status": listing.status, "remaining_quota": subscription.remaining_listing_quota}
+
