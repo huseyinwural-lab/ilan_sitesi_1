@@ -102,6 +102,8 @@ class RateLimiter:
         # Count
         current_usage = len(valid_history)
         
+        logger.debug(f"Rate limit check {key}: {current_usage}/{self.limit} requests in window")
+        
         if current_usage >= self.limit:
             retry_after = int(self.window_seconds - (now - valid_history[0])) if valid_history else self.window_seconds
             logger.warning(f"Rate Limit Exceeded: {key} ({current_usage}/{self.limit})")
