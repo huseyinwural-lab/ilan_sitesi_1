@@ -82,7 +82,7 @@ async def test_full_refund_flow(local_client):
             # 2. Refund Call
             with patch("stripe.Refund.create") as mock_refund:
                 mock_refund_obj = MagicMock()
-                mock_refund_obj.id = "re_test_123"
+                mock_refund_obj.id = f"re_test_{uuid.uuid4().hex}"
                 mock_refund_obj.status = "succeeded"
                 mock_refund.return_value = mock_refund_obj
                 
