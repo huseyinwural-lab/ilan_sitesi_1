@@ -7,7 +7,7 @@ from app.models.billing import Invoice
 from sqlalchemy import select
 import uuid
 import os
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from server import app
 from app.dependencies import get_current_user
 
@@ -24,7 +24,7 @@ async def mock_get_current_user():
 def local_client():
     # Override auth dependency
     app.dependency_overrides[get_current_user] = mock_get_current_user
-    return AsyncClient(app=app, base_url="http://test")
+    return AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
 
 @pytest.mark.asyncio
 async def test_create_checkout_session_flow(local_client):
