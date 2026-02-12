@@ -11,6 +11,7 @@ from app.models.commercial import DealerSubscription, DealerPackage
 from app.models.dealer import Dealer, DealerApplication
 from app.models.billing import Invoice, VatRate, InvoiceItem
 from app.models.moderation import Listing
+from app.models.user import User
 from app.database import AsyncSessionLocal, engine
 import pytest_asyncio
 from sqlalchemy import select, delete
@@ -24,19 +25,19 @@ async def cleanup_engine():
 async def db_session():
     async with AsyncSessionLocal() as session:
         # CLEANUP BEFORE TEST
-        # Order matters for FKs
         await session.execute(delete(ListingConsumptionLog))
         await session.execute(delete(InvoiceItem))
         await session.execute(delete(DealerSubscription))
         await session.execute(delete(DealerPackage))
         await session.execute(delete(Invoice))
-        await session.execute(delete(Listing)) # Deleted Listing
+        await session.execute(delete(Listing)) 
         await session.execute(delete(Dealer))
         await session.execute(delete(DealerApplication))
         await session.execute(delete(PriceConfig))
         await session.execute(delete(FreeQuotaConfig))
         await session.execute(delete(VatRate))
         await session.execute(delete(CountryCurrencyMap))
+        await session.execute(delete(User))
         await session.commit()
         
         yield session
@@ -53,6 +54,9 @@ async def test_waterfall_pricing_flow(db_session):
     db_session.add(FreeQuotaConfig(country="DE", segment="dealer", quota_amount=2, period_days=30, is_active=True))
     db_session.add(PriceConfig(country="DE", segment="dealer", pricing_type="pay_per_listing", unit_price_net=Decimal("5.00"), currency="EUR", valid_from=datetime.now(timezone.utc)))
     db_session.add(VatRate(country="DE", rate=Decimal("19.00"), valid_from=datetime.now(timezone.utc)))
+    
+    # Setup User
+    db_session.add(User(id=user_id, email="test@test.com", hashed_password="pw", full_name="Tester", role="admin"))
     
     pkg_id = uuid.uuid4()
     db_session.add(DealerPackage(id=pkg_id, key="TEST", country="DE", name={"en": "T"}, price_net=10, currency="EUR", duration_days=30, listing_limit=2))
@@ -149,8 +153,6 @@ async def test_waterfall_pricing_flow(db_session):
 async def test_missing_config_fails(db_session):
     dealer_id = uuid.uuid4()
     listing_id = uuid.uuid4()
-    # Need dummy listing logic? Not strictly if idempotency check passes (returns None)
-    # But if we check idempotency, we just query log.
     
     service = PricingService(db_session)
     
