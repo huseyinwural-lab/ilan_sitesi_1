@@ -945,6 +945,7 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db), current_user: 
     logs_result = await db.execute(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(10))
     recent_logs = [{"id": str(l.id), "action": l.action, "resource_type": l.resource_type, "user_email": l.user_email, "created_at": l.created_at.isoformat() if l.created_at else None} for l in logs_result.scalars().all()]
     
+        "payment_failures_24h": (await db.execute(select(func.count(PaymentAttempt.id)).where(and_(PaymentAttempt.status == 'failed', PaymentAttempt.created_at >= datetime.now(timezone.utc) - timedelta(hours=24))))).scalar() or 0,
     # P1 stats
     pending_applications = (await db.execute(select(func.count(DealerApplication.id)).where(DealerApplication.status == "pending"))).scalar()
     pending_moderation = (await db.execute(select(func.count(Listing.id)).where(Listing.status == "pending"))).scalar()
