@@ -13,7 +13,11 @@ import FeatureFlags from "./pages/FeatureFlags";
 import AuditLogs from "./pages/AuditLogs";
 import Categories from "./pages/Categories";
 import Attributes from "./pages/Attributes";
-import MenuManager from "./pages/MenuManager";
+import Invoices from "./pages/Invoices";
+import TaxRates from "./pages/TaxRates";
+import PremiumProducts from "./pages/PremiumProducts";
+import DealerManagement from "./pages/DealerManagement";
+import ModerationQueue from "./pages/ModerationQueue";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
