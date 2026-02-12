@@ -57,10 +57,13 @@ async def test_full_refund_flow(local_client):
             
             with patch("stripe.Webhook.construct_event") as mock_construct:
                 mock_event = MagicMock()
+                mock_event.id = f"evt_test_{uuid.uuid4().hex}" # Unique ID
                 mock_event.type = "checkout.session.completed"
                 mock_session = MagicMock()
                 mock_session.metadata = {"invoice_id": invoice_id}
                 mock_session.payment_intent = "pi_test_refund"
+                mock_session.client_reference_id = invoice_id # Add this
+                
                 mock_event.data.object = mock_session
                 mock_construct.return_value = mock_event
                 
