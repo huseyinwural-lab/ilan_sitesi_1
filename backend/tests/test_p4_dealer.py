@@ -147,7 +147,7 @@ async def test_listing_quota_enforcement(local_client):
         from sqlalchemy import select
         
         # Check and add VAT configuration for DE
-        existing_vat = (await session.execute(select(VatRate).where(VatRate.country == "DE"))).scalar_one_or_none()
+        existing_vat = (await session.execute(select(VatRate).where(VatRate.country == "DE").where(VatRate.is_active == True))).scalars().first()
         if not existing_vat:
             session.add(VatRate(
                 country="DE", 
@@ -157,7 +157,7 @@ async def test_listing_quota_enforcement(local_client):
             ))
         
         # Check and add Currency Map
-        existing_currency = (await session.execute(select(CountryCurrencyMap).where(CountryCurrencyMap.country == "DE"))).scalar_one_or_none()
+        existing_currency = (await session.execute(select(CountryCurrencyMap).where(CountryCurrencyMap.country == "DE"))).scalars().first()
         if not existing_currency:
             session.add(CountryCurrencyMap(country="DE", currency="EUR"))
         
@@ -165,8 +165,9 @@ async def test_listing_quota_enforcement(local_client):
         existing_price = (await session.execute(select(PriceConfig).where(
             PriceConfig.country == "DE",
             PriceConfig.segment == "dealer",
-            PriceConfig.pricing_type == "pay_per_listing"
-        ))).scalar_one_or_none()
+            PriceConfig.pricing_type == "pay_per_listing",
+            PriceConfig.is_active == True
+        ))).scalars().first()
         if not existing_price:
             session.add(PriceConfig(
                 country="DE",
