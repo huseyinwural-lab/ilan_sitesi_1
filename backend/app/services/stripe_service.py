@@ -99,12 +99,17 @@ class StripeService:
 
         # 4. Create Session
         try:
+            # P2-OPS-04: Redirect Logic with Params
+            # Append params to inform frontend
+            success_url_final = f"{success_url}?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
+            cancel_url_final = f"{cancel_url}?payment=cancelled"
+
             session = stripe.checkout.Session.create(
                 payment_method_types=["card"],
                 line_items=line_items,
                 mode="payment",
-                success_url=success_url,
-                cancel_url=cancel_url,
+                success_url=success_url_final,
+                cancel_url=cancel_url_final,
                 customer_email=user_email,
                 client_reference_id=str(invoice.id),
                 metadata={
