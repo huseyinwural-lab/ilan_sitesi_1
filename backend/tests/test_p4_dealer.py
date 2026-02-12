@@ -5,7 +5,7 @@ import stripe
 from app.services.stripe_service import StripeService
 from app.models.billing import Invoice
 from app.models.commercial import DealerPackage, DealerSubscription
-from app.models.dealer import Dealer
+from app.models.dealer import Dealer, DealerApplication
 from sqlalchemy import select
 import uuid
 import os
@@ -51,6 +51,20 @@ async def test_dealer_package_flow(local_client):
         )
         session.add(pkg)
         
+        # Create Application First (Required for Dealer FK)
+        app_id = uuid.uuid4()
+        dealer_app = DealerApplication(
+            id=app_id,
+            country="DE",
+            dealer_type="auto_dealer",
+            company_name="Test Dealer App",
+            contact_name="Tester",
+            contact_email="test@dealer.com",
+            status="approved"
+        )
+        session.add(dealer_app)
+        await session.flush()
+
         # Create Dealer
         dealer = Dealer(
             country="DE",
@@ -58,7 +72,7 @@ async def test_dealer_package_flow(local_client):
             company_name="Test Dealer",
             vat_tax_no="DE999",
             is_active=True,
-            application_id=uuid.uuid4() # Mock app id as it's required and unique
+            application_id=app_id
         )
         session.add(dealer)
         await session.commit()
