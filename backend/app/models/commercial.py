@@ -81,3 +81,5 @@ class DealerSubscription(Base):
         # P5: Unique Active Subscription Constraint
         Index('ix_dealer_active_subscription', 'dealer_id', unique=True, postgresql_where=(status == 'active')),
     )
+        # P5: Unique Invoice Constraint (One active sub per payment)
+        Index('ix_dealer_subscriptions_invoice', 'invoice_id', unique=True),
