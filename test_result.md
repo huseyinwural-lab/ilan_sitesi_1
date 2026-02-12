@@ -110,11 +110,14 @@ backend:
     file: "app/services/pricing_service.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
           agent: "main"
           comment: "Implemented Waterfall logic (Free->Sub->Overage), Idempotency, Concurrency, and Invoice Snapshots. Unit tests pass."
+        - working: true
+          agent: "testing"
+          comment: "✅ VERIFIED: All Phase T2 Pricing Engine tests pass. Waterfall logic working correctly (Free Quota -> Subscription Quota -> Pay-per-listing). Strict idempotency checks implemented and working. Fail-fast configuration validation working. Concurrency stress tests pass with proper quota enforcement. Fixed minor field name issues in commercial routes and test files. Core pricing engine implementation is robust and production-ready."
 
 metadata:
   created_by: "main_agent"
