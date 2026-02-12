@@ -141,6 +141,32 @@ async def test_dealer_package_flow(local_client):
 async def test_listing_quota_enforcement(local_client):
     # Setup Dealer & Subscription
     async with AsyncSessionLocal() as session:
+        # Add required pricing configurations
+        from app.models.billing import VatRate
+        from app.models.pricing import CountryCurrencyMap, PriceConfig
+        
+        # Add VAT configuration for DE
+        session.add(VatRate(
+            country="DE", 
+            rate=Decimal("19.00"), 
+            valid_from=datetime.now(timezone.utc),
+            is_active=True
+        ))
+        
+        # Add Currency Map
+        session.add(CountryCurrencyMap(country="DE", currency="EUR"))
+        
+        # Add Price Config for overage
+        session.add(PriceConfig(
+            country="DE",
+            segment="dealer", 
+            pricing_type="pay_per_listing",
+            unit_price_net=Decimal("5.00"),
+            currency="EUR",
+            valid_from=datetime.now(timezone.utc),
+            is_active=True
+        ))
+        
         # Create Dealer
         dealer_app = DealerApplication(
             country="DE",
