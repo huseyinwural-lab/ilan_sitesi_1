@@ -29,7 +29,7 @@ from app.models.dealer import DealerApplication, Dealer, DealerUser
 from app.models.premium import PremiumProduct, ListingPromotion, PremiumRankingRule
 from app.models.moderation import Listing, ModerationAction, ModerationRule
 from app.models.billing import VatRate, Invoice, InvoiceItem
-from app.models.payment import StripeSettings, PaymentAttempt, StripeEvent
+from app.models.payment import StripeSettings, PaymentAttempt, StripeEvent, Refund
 target_metadata = Base.metadata
 
 def get_url():
