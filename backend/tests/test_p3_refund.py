@@ -134,6 +134,7 @@ async def test_over_refund_protection(local_client):
                 mock_event.id = f"evt_test_{uuid.uuid4().hex}" # Unique ID
                 mock_event.type = "checkout.session.completed"
                 mock_session = MagicMock()
+                mock_session.id = f"cs_test_{uuid.uuid4().hex}"
                 mock_session.metadata = {"invoice_id": invoice_id}
                 mock_session.payment_intent = "pi_test_over"
                 mock_session.client_reference_id = invoice_id # Add this
