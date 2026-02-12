@@ -1002,6 +1002,12 @@ async def update_premium_product_endpoint(product_id: str, data: dict, db: Async
     from app.routers.p1_routes import update_premium_product, PremiumProductUpdate
     return await update_premium_product(product_id, PremiumProductUpdate(**data), db, current_user)
 
+@api_router.post("/premium-products/promotions")
+async def create_promotion_endpoint(data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
+    from app.routers.p1_routes import create_listing_promotion, ListingPromotionCreate
+    return await create_listing_promotion(ListingPromotionCreate(**data), db, current_user)
+
+
 @api_router.get("/moderation/queue")
 async def get_mod_queue(country: Optional[str] = None, module: Optional[str] = None, status: str = "pending", is_dealer: Optional[bool] = None, is_premium: Optional[bool] = None, skip: int = 0, limit: int = 50, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "country_admin", "moderator"]))):
     from app.routers.p1_routes import get_moderation_queue

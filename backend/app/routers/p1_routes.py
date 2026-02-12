@@ -348,6 +348,54 @@ async def update_ranking_rule(country, data: RankingRuleUpdate, db, current_user
     
     return {"country": rule.country, "version": rule.version}
 
+class ListingPromotionCreate(BaseModel):
+    listing_id: str
+    product_id: str
+    start_at: datetime
+    end_at: datetime
+    priority_score: int = 0
+
+async def create_listing_promotion(data: ListingPromotionCreate, db, current_user):
+    from fastapi import HTTPException
+    # Check if listing exists
+    listing_result = await db.execute(select(Listing).where(Listing.id == uuid.UUID(data.listing_id)))
+    listing = listing_result.scalar_one_or_none()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    # Check for overlap
+    overlap_result = await db.execute(select(ListingPromotion).where(
+        and_(
+            ListingPromotion.listing_id == uuid.UUID(data.listing_id),
+            ListingPromotion.is_active == True,
+            or_(
+                and_(ListingPromotion.start_at <= data.start_at, ListingPromotion.end_at >= data.start_at),
+                and_(ListingPromotion.start_at <= data.end_at, ListingPromotion.end_at >= data.end_at)
+            )
+        )
+    ))
+    if overlap_result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Active promotion already exists for this period")
+
+    promotion = ListingPromotion(
+        listing_id=uuid.UUID(data.listing_id),
+        product_id=uuid.UUID(data.product_id),
+        start_at=data.start_at,
+        end_at=data.end_at,
+        priority_score=data.priority_score,
+        is_active=True
+    )
+    db.add(promotion)
+    listing.is_premium = True
+    
+    await db.commit()
+    await log_action(db, "CREATE", "listing_promotion", str(promotion.id),
+                    user_id=current_user.id, user_email=current_user.email,
+                    new_values={"listing_id": str(listing.id), "product_id": str(data.product_id)})
+    
+    return {"id": str(promotion.id), "status": "active"}
+
+
 # ==================== MODERATION FUNCTIONS ====================
 
 async def get_moderation_queue(country, module, status, is_dealer, is_premium, skip, limit, db, current_user):
