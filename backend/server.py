@@ -322,6 +322,74 @@ async def seed_default_data(db: AsyncSession):
     for code in ["DE", "CH", "FR", "AT"]:
         db.add(HomeLayoutSettings(country_code=code, block_order=["showcase", "special", "ads"], mobile_nav_mode="drawer"))
     
+    # P1: Premium Products (seed)
+    from decimal import Decimal
+    premium_products = [
+        ("SHOWCASE", {"tr": "Vitrin", "de": "Schaufenster", "fr": "Vitrine"}, "DE", "EUR", 9.99, 7),
+        ("FEATURED", {"tr": "Öne Çıkar", "de": "Hervorheben", "fr": "Mettre en avant"}, "DE", "EUR", 4.99, 3),
+        ("BUMP", {"tr": "Üste Taşı", "de": "Nach oben", "fr": "Remonter"}, "DE", "EUR", 2.99, 1),
+        ("SHOWCASE", {"tr": "Vitrin", "de": "Schaufenster", "fr": "Vitrine"}, "CH", "CHF", 12.99, 7),
+        ("FEATURED", {"tr": "Öne Çıkar", "de": "Hervorheben", "fr": "Mettre en avant"}, "CH", "CHF", 6.99, 3),
+    ]
+    for key, name, country, currency, price, days in premium_products:
+        db.add(PremiumProduct(key=key, name=name, country=country, currency=currency, price_net=Decimal(str(price)), duration_days=days))
+    
+    # P1: VAT Rates (seed)
+    vat_rates = [
+        ("DE", Decimal("19.0"), "standard"),
+        ("CH", Decimal("8.1"), "standard"),
+        ("FR", Decimal("20.0"), "standard"),
+        ("AT", Decimal("20.0"), "standard"),
+    ]
+    for country, rate, tax_type in vat_rates:
+        db.add(VatRate(country=country, rate=rate, valid_from=datetime.now(timezone.utc), tax_type=tax_type))
+    
+    # P1: Moderation Rules (seed)
+    for code in ["DE", "CH", "FR", "AT"]:
+        db.add(ModerationRule(country=code, bad_words_enabled=True, bad_words_list=[], min_images_enabled=True, min_images_count=1))
+    
+    # P1: Premium Ranking Rules (seed)
+    for code in ["DE", "CH", "FR", "AT"]:
+        db.add(PremiumRankingRule(country=code, premium_first=True, weight_priority=60, weight_recency=40))
+    
+    # P1: Demo Dealer Application (seed)
+    db.add(DealerApplication(
+        country="DE",
+        dealer_type="auto_dealer",
+        company_name="Auto Schmidt GmbH",
+        vat_tax_no="DE123456789",
+        address="Hauptstraße 1, 10115 Berlin",
+        city="Berlin",
+        website="https://auto-schmidt.de",
+        contact_name="Hans Schmidt",
+        contact_email="info@auto-schmidt.de",
+        contact_phone="+49 30 12345678",
+        status="pending"
+    ))
+    
+    # P1: Demo Listings for moderation (seed)
+    demo_user_result = await db.execute(select(User).where(User.email == "admin@platform.com"))
+    demo_user = demo_user_result.scalar_one_or_none()
+    if demo_user:
+        for i, (title, module, country, price) in enumerate([
+            ("Schöne 3-Zimmer Wohnung in Berlin", "real_estate", "DE", 250000),
+            ("BMW 320i 2022 Modell", "vehicle", "DE", 35000),
+            ("Appartement à Paris", "real_estate", "FR", 450000),
+            ("Mercedes C200 zu verkaufen", "vehicle", "CH", 42000),
+        ]):
+            db.add(Listing(
+                title=title,
+                description=f"Demo listing for moderation queue - {title}",
+                module=module,
+                country=country,
+                price=price,
+                currency="CHF" if country == "CH" else "EUR",
+                user_id=demo_user.id,
+                images=[f"https://picsum.photos/800/600?random={i}"],
+                image_count=1,
+                status="pending"
+            ))
+    
     await db.commit()
     logger.info("Default data seeded")
 
