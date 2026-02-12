@@ -55,7 +55,7 @@ class RateLimiter:
         )
         key_prefix = f"rl:{self.scope}"
         
-        logger.info(f"Rate limiter {self.scope}: IP={ip}, enabled={self.enabled}")
+        logger.debug(f"Rate limiter {self.scope}: IP={ip}, enabled={self.enabled}")
         
         # Try to find user in state (if attached by middleware)
         # OR we can parse Bearer header manually for a "Tier 1" guess without full verification (risky?)
