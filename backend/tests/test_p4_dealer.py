@@ -57,7 +57,8 @@ async def test_dealer_package_flow(local_client):
             dealer_type="auto_dealer",
             company_name="Test Dealer",
             vat_tax_no="DE999",
-            status="active"
+            is_active=True,
+            application_id=uuid.uuid4() # Mock app id as it's required and unique
         )
         session.add(dealer)
         await session.commit()
