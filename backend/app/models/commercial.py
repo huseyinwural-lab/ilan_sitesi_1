@@ -72,3 +72,12 @@ class DealerSubscription(Base):
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    
+    __table_args__ = (
+        Index('ix_dealer_subscriptions_dealer_id', 'dealer_id'),
+        Index('ix_dealer_subscriptions_end_at', 'end_at'),
+        Index('ix_dealer_subscriptions_status', 'status'),
+        # P5: Unique Active Subscription Constraint
+        Index('ix_dealer_active_subscription', 'dealer_id', unique=True, postgresql_where=(status == 'active')),
+    )
