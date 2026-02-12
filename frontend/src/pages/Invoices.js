@@ -19,6 +19,8 @@ const statusColors = {
   cancelled: 'bg-rose-100 text-rose-800',
   overdue: 'bg-amber-100 text-amber-800',
 };
+  refunded: 'bg-purple-100 text-purple-800',
+  partially_refunded: 'bg-purple-50 text-purple-700',
 
 export default function Invoices() {
   const [invoices, setInvoices] = useState([]);
