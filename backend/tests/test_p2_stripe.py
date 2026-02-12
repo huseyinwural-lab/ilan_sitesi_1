@@ -32,7 +32,7 @@ async def test_create_checkout_session_flow(local_client):
     with patch.dict(os.environ, {"STRIPE_API_KEY": "sk_test_mock"}):
         async with local_client as client:
             # 1. Create Draft Invoice
-            res = await client.post("/api/v1/invoices", json={
+            res = await client.post("/api/invoices", json={
                 "country": "DE",
                 "customer_type": "B2C",
                 "customer_name": "Stripe Test",
