@@ -114,7 +114,7 @@ def upgrade() -> None:
     op.drop_column('dealer_subscriptions', 'remaining_premium_quota')
     op.add_column('invoice_items', sa.Column('price_source', sa.String(length=50), nullable=False, server_default='manual'))
     op.add_column('invoice_items', sa.Column('base_unit_price', sa.Numeric(precision=10, scale=2), nullable=False, server_default='0'))
-    op.add_column('invoice_items', sa.Column('discount_amount', sa.Numeric(precision=10, scale=2), nullable=True)) # nullable True for existing
+    op.add_column('invoice_items', sa.Column('discount_amount', sa.Numeric(precision=10, scale=2), nullable=False, server_default='0'))
     op.add_column('invoice_items', sa.Column('applied_vat_rate', sa.Numeric(precision=5, scale=2), nullable=False, server_default='0'))
     op.add_column('invoice_items', sa.Column('currency', sa.String(length=5), nullable=False, server_default='EUR'))
     op.add_column('invoice_items', sa.Column('country', sa.String(length=5), nullable=False, server_default='DE'))
