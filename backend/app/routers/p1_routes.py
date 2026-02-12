@@ -772,7 +772,7 @@ async def create_invoice(data: InvoiceCreate, db, current_user):
         customer_ref_id=customer_id,
         customer_name=data.customer_name,
         customer_email=data.customer_email,
-        status="issued",
+        status="draft",
         issued_at=datetime.now(timezone.utc),
         tax_rate_snapshot=tax_rate
     )
