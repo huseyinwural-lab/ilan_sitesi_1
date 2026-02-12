@@ -216,21 +216,6 @@ class StripeService:
         await self.db.commit()
         return {"id": str(refund_record.id), "status": refund_record.status}
 
-
-        # 5. Log Attempt
-        attempt = PaymentAttempt(
-            invoice_id=invoice.id,
-            country=invoice.country,
-            currency=invoice.currency,
-            amount_gross=invoice.gross_total,
-            stripe_checkout_session_id=session.id,
-            status="created"
-        )
-        self.db.add(attempt)
-        await self.db.commit()
-        
-        return {"checkout_url": session.url, "attempt_id": str(attempt.id)}
-
     async def handle_webhook(self, payload: bytes, sig_header: str):
         # We need to know WHICH secret to use.
         # This is tricky because we don't know the country yet.
