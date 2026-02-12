@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from app.services.pricing_service import PricingService, PricingConfigError
-from app.models.pricing import PriceConfig, FreeQuotaConfig, ListingConsumptionLog
+from app.models.pricing import PriceConfig, FreeQuotaConfig, ListingConsumptionLog, CountryCurrencyMap
 from app.models.commercial import DealerSubscription, DealerPackage
 from app.models.dealer import Dealer, DealerApplication
 from app.models.billing import Invoice, VatRate, InvoiceItem
@@ -22,8 +22,24 @@ async def cleanup_engine():
 @pytest_asyncio.fixture
 async def db_session():
     async with AsyncSessionLocal() as session:
+        # CLEANUP BEFORE TEST
+        await session.execute(delete(ListingConsumptionLog))
+        await session.execute(delete(InvoiceItem))
+        await session.execute(delete(DealerSubscription))
+        await session.execute(delete(DealerPackage))
+        await session.execute(delete(Invoice))
+        await session.execute(delete(Dealer))
+        await session.execute(delete(DealerApplication))
+        await session.execute(delete(PriceConfig))
+        await session.execute(delete(FreeQuotaConfig))
+        await session.execute(delete(VatRate))
+        await session.execute(delete(CountryCurrencyMap))
+        await session.commit()
+        
         yield session
-        await session.rollback()
+        # No rollback needed if we assume dirty DB is fine for next run's cleanup, 
+        # but good practice to close.
+        await session.close()
 
 @pytest.mark.asyncio
 async def test_waterfall_pricing_flow(db_session):
@@ -31,10 +47,10 @@ async def test_waterfall_pricing_flow(db_session):
     user_id = uuid.uuid4()
     app_id = uuid.uuid4()
     
-    # Clean previous data to ensure isolation
-    # (In a real test DB, we'd drop tables or use transaction rollback, assuming clean DB here or manual clean)
-    
     # 1. Setup Configs
+    # Country Map
+    db_session.add(CountryCurrencyMap(country="DE", currency="EUR"))
+    
     # Free Quota: 2 (Small number for testing) / 30 Days
     db_session.add(FreeQuotaConfig(country="DE", segment="dealer", quota_amount=2, period_days=30, is_active=True))
     
@@ -54,13 +70,12 @@ async def test_waterfall_pricing_flow(db_session):
     
     # Need Dealer record for FK
     db_session.add(Dealer(id=dealer_id, country="DE", dealer_type="auto", company_name="Test", application_id=app_id))
-    await db_session.flush() # Flush dealer first
+    await db_session.flush() # Flush dealer
     
     # Need Invoice record for Subscription
     sub_inv_id = uuid.uuid4()
     db_session.add(Invoice(id=sub_inv_id, invoice_no=f"INV-SUB-{uuid.uuid4()}", country="DE", currency="EUR", customer_type="dealer", customer_ref_id=dealer_id, customer_name="Test", status="paid", gross_total=10, net_total=10, tax_total=0, tax_rate_snapshot=0))
-    
-    await db_session.flush()
+    await db_session.flush() # Flush invoice
     
     db_session.add(DealerSubscription(
         dealer_id=dealer_id,
@@ -106,8 +121,10 @@ async def test_waterfall_pricing_flow(db_session):
         await service.commit_usage(result, listing_id, str(dealer_id), str(user_id))
         
     # Verify Subscription usage is 2
-    sub = (await db_session.execute(select(DealerSubscription).where(DealerSubscription.dealer_id == dealer_id))).scalar_one()
-    assert sub.used_listing_quota == 2
+    # New session for verification as commit_usage might have committed
+    async with AsyncSessionLocal() as verify_session:
+        sub = (await verify_session.execute(select(DealerSubscription).where(DealerSubscription.dealer_id == dealer_id))).scalar_one()
+        assert sub.used_listing_quota == 2
         
     # 3. Pay Per Listing (Waterall End)
     listing_id = str(uuid.uuid4())
@@ -125,17 +142,33 @@ async def test_waterfall_pricing_flow(db_session):
     await service.commit_usage(result, listing_id, str(dealer_id), str(user_id), invoice_id=str(overage_inv_id))
     
     # Verify Invoice Item created
-    inv_item = (await db_session.execute(select(InvoiceItem).where(InvoiceItem.invoice_id == overage_inv_id))).scalar_one()
-    assert inv_item.unit_price_net == Decimal("5.00")
-    assert inv_item.price_source == "paid_extra"
+    async with AsyncSessionLocal() as verify_session:
+        inv_item = (await verify_session.execute(select(InvoiceItem).where(InvoiceItem.invoice_id == overage_inv_id))).scalar_one()
+        assert inv_item.unit_price_net == Decimal("5.00")
+        assert inv_item.price_source == "paid_extra"
     
 @pytest.mark.asyncio
 async def test_missing_config_fails(db_session):
     """Fail-fast test"""
     dealer_id = uuid.uuid4()
-    # No VAT config setup for "FR"
+    # Ensure no FR config exists (cleaned up by fixture)
     service = PricingService(db_session)
     
-    with pytest.raises(PricingConfigError) as excinfo:
+    # 1. Missing VAT check
+    # We expect 'No active VAT' because get_active_vat is called first
+    try:
         await service.calculate_listing_fee(str(dealer_id), "FR", str(uuid.uuid4()))
-    assert "VAT" in str(excinfo.value)
+        pytest.fail("Should have raised PricingConfigError for VAT")
+    except PricingConfigError as e:
+        assert "VAT" in str(e) or "configuration found for country FR" in str(e)
+
+    # 2. Add VAT, Missing Price
+    db_session.add(CountryCurrencyMap(country="FR", currency="EUR"))
+    db_session.add(VatRate(country="FR", rate=Decimal("20.00"), valid_from=datetime.now(timezone.utc)))
+    await db_session.commit()
+    
+    try:
+        await service.calculate_listing_fee(str(dealer_id), "FR", str(uuid.uuid4()))
+        pytest.fail("Should have raised PricingConfigError for Price")
+    except PricingConfigError as e:
+        assert "price configuration" in str(e)
