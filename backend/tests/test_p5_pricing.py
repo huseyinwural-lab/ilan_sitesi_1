@@ -10,6 +10,7 @@ from app.models.pricing import PriceConfig, FreeQuotaConfig, ListingConsumptionL
 from app.models.commercial import DealerSubscription, DealerPackage
 from app.models.dealer import Dealer, DealerApplication
 from app.models.billing import Invoice, VatRate, InvoiceItem
+from app.models.payment import PaymentAttempt, Refund
 from app.models.moderation import Listing
 from app.models.user import User
 from app.database import AsyncSessionLocal, engine
@@ -25,6 +26,8 @@ async def cleanup_engine():
 async def db_session():
     async with AsyncSessionLocal() as session:
         # CLEANUP BEFORE TEST
+        await session.execute(delete(Refund))
+        await session.execute(delete(PaymentAttempt))
         await session.execute(delete(ListingConsumptionLog))
         await session.execute(delete(InvoiceItem))
         await session.execute(delete(DealerSubscription))
