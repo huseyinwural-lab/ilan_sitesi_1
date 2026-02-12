@@ -26,6 +26,10 @@ from app.models.category import Category, CategoryTranslation
 from app.models.attribute import Attribute, AttributeOption, CategoryAttributeMap
 from app.models.menu import TopMenuItem, TopMenuSection, TopMenuLink
 from app.models.home import HomeLayoutSettings, HomeShowcaseItem, HomeSpecialListing, AdSlot
+from app.models.dealer import DealerApplication, Dealer, DealerUser
+from app.models.premium import PremiumProduct, ListingPromotion, PremiumRankingRule
+from app.models.moderation import Listing, ModerationAction, ModerationRule
+from app.models.billing import VatRate, Invoice, InvoiceItem
 
 # Database setup
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://admin_user:admin_pass@localhost:5432/admin_panel')
