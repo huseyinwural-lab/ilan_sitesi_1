@@ -335,6 +335,8 @@ class StripeService:
                 charge = event.data.object
                 payment_intent_id = charge.payment_intent
                 amount_refunded = Decimal(charge.amount_refunded) / 100
+                        # P4: Check for Subscription Activation
+                        await self._activate_subscription_if_needed(invoice)
                 
                 # Find Invoice
                 result = await self.db.execute(select(Invoice).where(Invoice.stripe_payment_intent_id == payment_intent_id))
@@ -343,8 +345,6 @@ class StripeService:
                 if invoice:
                     invoice.refunded_total = amount_refunded
                     
-                        # P4: Check for Subscription Activation
-                        await self._activate_subscription_if_needed(invoice)
                     if invoice.refunded_total >= invoice.gross_total:
                         invoice.status = "refunded"
                         invoice.refund_status = "full"
