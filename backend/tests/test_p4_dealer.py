@@ -254,8 +254,8 @@ async def test_listing_quota_enforcement(local_client):
         # T2 returns "pricing" dict and "status"
         # assert res.json()["remaining_quota"] == 0 
         
-        # 2. Post Listing (Fail, Quota 0, No Overage Config)
-        # Should return 409 Conflict (Pricing Config Missing) instead of 403
+        # 2. Post Listing (Should succeed with overage pricing since we have config)
+        # With T2 pricing engine, this should now work and charge overage
         res = await client.post(f"/api/v1/commercial/dealers/{dealer_id}/listings", json={
             "title": "Test Car 2",
             "description": "Desc",
@@ -263,6 +263,9 @@ async def test_listing_quota_enforcement(local_client):
             "price": 20000,
             "currency": "EUR"
         })
-        assert res.status_code == 409
-        assert "Pricing configuration missing" in res.json()["detail"]
+        assert res.status_code == 200
+        response_data = res.json()
+        # Should be charged via overage pricing
+        assert response_data["pricing"]["source"] == "paid_extra"
+        assert response_data["pricing"]["charge_amount"] == 5.0  # 5.00 EUR as configured
 
