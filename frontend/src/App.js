@@ -130,6 +130,46 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/dealers"
+        element={
+          <ProtectedRoute>
+            <DealerManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/premium"
+        element={
+          <ProtectedRoute>
+            <PremiumProducts />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/moderation"
+        element={
+          <ProtectedRoute>
+            <ModerationQueue />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/invoices"
+        element={
+          <ProtectedRoute>
+            <Invoices />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tax-rates"
+        element={
+          <ProtectedRoute>
+            <TaxRates />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
