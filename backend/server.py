@@ -1063,6 +1063,12 @@ async def get_invoice(invoice_id: str, db: AsyncSession = Depends(get_db), curre
     from app.routers.p1_routes import get_invoice_detail
     return await get_invoice_detail(invoice_id, db, current_user)
 
+
+@api_router.post("/invoices")
+async def create_invoice_endpoint(data: dict, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "finance"]))):
+    from app.routers.p1_routes import create_invoice, InvoiceCreate
+    return await create_invoice(InvoiceCreate(**data), db, current_user)
+
 @api_router.get("/premium-ranking-rules")
 async def list_ranking_rules(db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin"]))):
     from app.routers.p1_routes import get_ranking_rules
