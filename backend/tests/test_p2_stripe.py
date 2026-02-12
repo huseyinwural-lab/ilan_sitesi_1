@@ -99,10 +99,10 @@ async def test_webhook_idempotency(client, admin_headers):
         mock_construct.return_value = mock_event
         
         # First Call
-        res = await client.post("/payments/webhook/stripe", content=b"1", headers={"Stripe-Signature": "1"})
+        res = await client.post("/v1/payments/webhook/stripe", content=b"1", headers={"Stripe-Signature": "1"})
         assert res.status_code == 200
         
         # Second Call
-        res = await client.post("/payments/webhook/stripe", content=b"1", headers={"Stripe-Signature": "1"})
+        res = await client.post("/v1/payments/webhook/stripe", content=b"1", headers={"Stripe-Signature": "1"})
         assert res.status_code == 200
         assert res.json()["status"] == "already_processed"
