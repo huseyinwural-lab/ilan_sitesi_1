@@ -68,9 +68,15 @@ async def test_full_refund_flow(local_client):
                 mock_construct.return_value = mock_event
                 
                 with patch.dict(os.environ, {"STRIPE_WEBHOOK_SECRET": "whsec_test"}):
-                    await client.post("/api/v1/payments/webhook/stripe", 
+                    wh_res = await client.post("/api/v1/payments/webhook/stripe", 
                                      content=b"dummy", 
                                      headers={"Stripe-Signature": "dummy"})
+                    assert wh_res.status_code == 200, f"Webhook failed: {wh_res.text}"
+                    assert wh_res.json()["status"] == "success"
+                    
+                    # Verify it is paid
+                    inv_res = await client.get(f"/api/invoices/{invoice_id}")
+                    assert inv_res.json()["status"] == "paid", "Invoice status not updated to paid"
             
             # 2. Refund Call
             with patch("stripe.Refund.create") as mock_refund:
