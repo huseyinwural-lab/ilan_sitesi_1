@@ -8,6 +8,7 @@ from app.models.commercial import DealerPackage, DealerSubscription
 from app.models.dealer import Dealer
 from app.models.billing import Invoice, InvoiceItem
 from app.services.stripe_service import StripeService
+from app.models.moderation import Listing
 from datetime import datetime, timezone
 from decimal import Decimal
 from pydantic import BaseModel
