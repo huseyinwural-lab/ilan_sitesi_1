@@ -12,6 +12,10 @@ class CheckoutRequest(BaseModel):
     success_url: str
     cancel_url: str
 
+class RefundRequest(BaseModel):
+    amount: float
+    reason: str = "requested_by_customer"
+
 @router.post("/invoices/{invoice_id}/checkout")
 async def create_checkout(
     invoice_id: str, 
@@ -26,11 +30,6 @@ async def create_checkout(
         cancel_url=req.cancel_url,
         user_email=current_user.email
     )
-
-@router.post("/webhook/stripe")
-class RefundRequest(BaseModel):
-    amount: float
-    reason: str = "requested_by_customer"
 
 @router.post("/invoices/{invoice_id}/refund")
 async def refund_invoice(
@@ -47,6 +46,7 @@ async def refund_invoice(
         admin_id=str(current_user.id)
     )
 
+@router.post("/webhook/stripe")
 async def stripe_webhook(
     request: Request,
     stripe_signature: str = Header(None),
