@@ -120,6 +120,21 @@ class StripeService:
             )
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
+
+        # 5. Log Attempt
+        attempt = PaymentAttempt(
+            invoice_id=invoice.id,
+            country=invoice.country,
+            currency=invoice.currency,
+            amount_gross=invoice.gross_total,
+            stripe_checkout_session_id=session.id,
+            status="created"
+        )
+        self.db.add(attempt)
+        await self.db.commit()
+        
+        return {"checkout_url": session.url, "attempt_id": str(attempt.id)}
+
     async def create_refund(self, invoice_id: str, amount: float, reason: str, admin_id: str):
         # 1. Fetch Invoice
         result = await self.db.execute(select(Invoice).where(Invoice.id == uuid.UUID(invoice_id)))
