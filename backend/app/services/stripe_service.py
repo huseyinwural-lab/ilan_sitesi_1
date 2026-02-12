@@ -277,6 +277,9 @@ class StripeService:
             )
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid payload")
+                        # P4: Check for Subscription Activation
+                        await self._activate_subscription_if_needed(invoice)
+
         except stripe.error.SignatureVerificationError:
             raise HTTPException(status_code=400, detail="Invalid signature")
 
