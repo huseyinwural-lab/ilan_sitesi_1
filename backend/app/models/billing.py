@@ -122,6 +122,17 @@ class InvoiceItem(Base):
     
     # Quantity & Pricing
     quantity: Mapped[int] = mapped_column(Integer, default=1)
+    # Snapshot Fields (P5-T2B)
+    price_source: Mapped[str] = mapped_column(String(50), nullable=False, default="manual") # package_fee, extra_listing_fee
+    base_unit_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False, default=0)
+    discount_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
+    applied_vat_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False, default=0)
+    
+    # Redundant but safe snapshot
+    currency: Mapped[str] = mapped_column(String(5), nullable=False, default="EUR")
+    country: Mapped[str] = mapped_column(String(5), nullable=False, default="DE")
+    
+    price_config_version: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     unit_price_net: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     
     # Line totals
