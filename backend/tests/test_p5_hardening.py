@@ -87,5 +87,6 @@ async def test_quota_concurrency_stress(local_client):
         # Verify DB State
         async with AsyncSessionLocal() as session:
             sub = (await session.execute(select(DealerSubscription).where(DealerSubscription.dealer_id == uuid.UUID(dealer_id)))).scalar_one()
-            assert sub.remaining_listing_quota == 0
-            assert sub.remaining_listing_quota >= 0 # Should never be negative
+            remaining = sub.included_listing_quota - sub.used_listing_quota
+            assert remaining == 0
+            assert sub.used_listing_quota >= 0 # Should never be negative
