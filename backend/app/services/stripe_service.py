@@ -260,8 +260,6 @@ class StripeService:
                     pass
 
 
-        await self.db.commit()
-        return {"id": str(refund_record.id), "status": refund_record.status}
 
     async def handle_webhook(self, payload: bytes, sig_header: str):
         # We need to know WHICH secret to use.
