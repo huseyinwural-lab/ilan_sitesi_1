@@ -50,9 +50,11 @@ async def test_waterfall_pricing_flow(db_session):
     
     # Need Dealer Application record for FK
     db_session.add(DealerApplication(id=app_id, country="DE", dealer_type="auto", company_name="Test App", contact_name="Tester", contact_email="t@t.com", status="approved"))
+    await db_session.flush() # Flush application first
     
     # Need Dealer record for FK
     db_session.add(Dealer(id=dealer_id, country="DE", dealer_type="auto", company_name="Test", application_id=app_id))
+    await db_session.flush() # Flush dealer first
     
     # Need Invoice record for Subscription
     sub_inv_id = uuid.uuid4()
