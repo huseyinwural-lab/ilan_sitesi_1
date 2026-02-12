@@ -31,3 +31,6 @@
     -   25% Pending (Moderation Queue)
     -   15% Rejected (Abuse testing)
 -   **Ownership:** Linked randomly to the 10 Dealers and 5 of the Individual users.
+
+## 4. Dependencies
+-   **Prerequisite:** `seed_production_data.py` MUST be run first to create Dealer Packages.
