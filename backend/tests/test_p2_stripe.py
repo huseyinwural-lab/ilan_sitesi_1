@@ -123,8 +123,8 @@ async def test_stripe_webhook_processing(local_client):
                 
                 mock_session = MagicMock()
                 mock_session.client_reference_id = invoice_id
-                mock_session.id = "cs_test_completed"
-                mock_session.payment_intent = "pi_test_123"
+                mock_session.id = f"cs_test_{uuid.uuid4().hex}"
+                mock_session.payment_intent = f"pi_test_{uuid.uuid4().hex}"
                 mock_session.metadata = {"invoice_id": invoice_id}
                 
                 mock_event.data.object = mock_session
@@ -142,7 +142,7 @@ async def test_stripe_webhook_processing(local_client):
                 res = await client.get(f"/api/invoices/{invoice_id}")
                 invoice = res.json()
                 assert invoice["status"] == "paid"
-                assert invoice["stripe_payment_intent_id"] == "pi_test_123"
+                assert invoice["stripe_payment_intent_id"] == mock_session.payment_intent
 
 @pytest.mark.asyncio
 async def test_webhook_idempotency(local_client):
