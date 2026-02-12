@@ -36,8 +36,8 @@ from app.models.payment import StripeSettings, PaymentAttempt, StripeEvent
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://admin_user:admin_pass@localhost:5432/admin_panel')
 ASYNC_DATABASE_URL = DATABASE_URL.replace('postgresql://', 'postgresql+asyncpg://')
 
-engine = create_async_engine(ASYNC_DATABASE_URL, echo=False)
-AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+from app.database import engine, AsyncSessionLocal
+from app.dependencies import get_db, get_current_user, check_permissions, decode_token, security
 
 # Settings
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-super-secret-key-change-in-production-2024')
