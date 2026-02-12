@@ -6,7 +6,7 @@ import os
 import asyncio
 
 # Use the internal service URL for testing within the container
-BASE_URL = "http://localhost:8001/api"
+BASE_URL = "http://127.0.0.1:8001/api"
 
 @pytest.fixture(scope="session")
 def event_loop():
