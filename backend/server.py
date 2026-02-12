@@ -462,8 +462,8 @@ async def root():
 @api_router.get("/health")
 async def health_check(db: AsyncSession = Depends(get_db)):
     try:
-        # P6-005: Real DB Ping
-        await db.execute(select(1))
+        # P6-005: Real DB Ping with Timeout (5 seconds)
+        await db.execute(select(1).execution_options(timeout=5))
         return {"status": "healthy", "supported_countries": SUPPORTED_COUNTRIES, "database": "connected"}
     except Exception as e:
         logger.error(f"Health check failed: {e}")
