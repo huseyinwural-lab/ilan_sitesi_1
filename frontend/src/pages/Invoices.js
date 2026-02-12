@@ -6,9 +6,9 @@ import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
 import { 
   FileText, Download, Filter, Eye, Plus, 
-  CheckCircle, Clock, AlertCircle, CreditCard
-} from 'lucide-react';
+  CheckCircle, Clock, AlertCircle, CreditCard,
   RotateCcw, History
+} from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -19,19 +19,18 @@ const statusColors = {
   paid: 'bg-emerald-100 text-emerald-800',
   cancelled: 'bg-rose-100 text-rose-800',
   overdue: 'bg-amber-100 text-amber-800',
-};
   refunded: 'bg-purple-100 text-purple-800',
   partially_refunded: 'bg-purple-50 text-purple-700',
+};
 
 export default function Invoices() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ country: '', status: '' });
-  const [showRefundModal, setShowRefundModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-
-  useEffect(() => {
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
 
@@ -54,6 +53,8 @@ export default function Invoices() {
       setSearchParams({});
     }
   }, [searchParams]);
+
+  useEffect(() => {
     fetchInvoices();
   }, [filters]);
 
@@ -109,6 +110,10 @@ export default function Invoices() {
         window.location.href = response.data.checkout_url;
       }
     } catch (error) {
+      alert(error.response?.data?.detail || 'Payment initiation failed');
+    }
+  };
+
   const handleRefund = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -133,10 +138,6 @@ export default function Invoices() {
       });
     } catch (error) {
       alert(error.response?.data?.detail || 'Refund failed');
-    }
-  };
-
-      alert(error.response?.data?.detail || 'Payment initiation failed');
     }
   };
 
@@ -258,33 +259,6 @@ export default function Invoices() {
           </tbody>
         </table>
       </div>
-              </div>
-            </div>
-
-            {/* Refund Section */}
-            {(selectedInvoice.status === 'paid' || selectedInvoice.status === 'partially_refunded') && (
-              <div className="mb-8 border-t pt-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-semibold text-sm text-muted-foreground uppercase">Refunds</h3>
-                  <button 
-                    onClick={() => setShowRefundModal(true)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm hover:bg-muted"
-                  >
-                    <RotateCcw size={14} />
-                    Refund Transaction
-                  </button>
-                </div>
-                
-                {selectedInvoice.refunded_total > 0 && (
-                  <div className="bg-purple-50 p-3 rounded-md border border-purple-100 mb-4">
-                    <div className="flex justify-between text-sm font-medium text-purple-900">
-                      <span>Total Refunded</span>
-                      <span>{selectedInvoice.refunded_total} {selectedInvoice.currency}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
 
       {/* Detail Modal */}
       {selectedInvoice && (
@@ -316,6 +290,31 @@ export default function Invoices() {
                 </div>
               </div>
             </div>
+
+            {/* Refund Section */}
+            {(selectedInvoice.status === 'paid' || selectedInvoice.status === 'partially_refunded') && (
+              <div className="mb-8 border-t pt-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-semibold text-sm text-muted-foreground uppercase">Refunds</h3>
+                  <button 
+                    onClick={() => setShowRefundModal(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm hover:bg-muted"
+                  >
+                    <RotateCcw size={14} />
+                    Refund Transaction
+                  </button>
+                </div>
+                
+                {selectedInvoice.refunded_total > 0 && (
+                  <div className="bg-purple-50 p-3 rounded-md border border-purple-100 mb-4">
+                    <div className="flex justify-between text-sm font-medium text-purple-900">
+                      <span>Total Refunded</span>
+                      <span>{selectedInvoice.refunded_total} {selectedInvoice.currency}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <table className="w-full mb-8">
               <thead>
@@ -383,6 +382,25 @@ export default function Invoices() {
               <div>
                 <label className="block text-sm font-medium mb-1">Customer Name</label>
                 <input name="customer_name" className="w-full rounded-md border px-3 py-2 bg-background" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Customer Email</label>
+                <input type="email" name="customer_email" className="w-full rounded-md border px-3 py-2 bg-background" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Item Description</label>
+                <input name="item_desc" className="w-full rounded-md border px-3 py-2 bg-background" required />
+              </div>
+
+              <div className="flex gap-2 justify-end pt-4">
+                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 rounded-md hover:bg-muted">Cancel</button>
+                <button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground">Create</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Refund Modal */}
       {showRefundModal && selectedInvoice && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -418,24 +436,6 @@ export default function Invoices() {
               <div className="flex gap-2 justify-end pt-4">
                 <button type="button" onClick={() => setShowRefundModal(false)} className="px-4 py-2 rounded-md hover:bg-muted">Cancel</button>
                 <button type="submit" className="px-4 py-2 rounded-md bg-rose-600 text-white hover:bg-rose-700">Process Refund</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Customer Email</label>
-                <input type="email" name="customer_email" className="w-full rounded-md border px-3 py-2 bg-background" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Item Description</label>
-                <input name="item_desc" className="w-full rounded-md border px-3 py-2 bg-background" required />
-              </div>
-
-              <div className="flex gap-2 justify-end pt-4">
-                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 rounded-md hover:bg-muted">Cancel</button>
-                <button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground">Create</button>
               </div>
             </form>
           </div>
