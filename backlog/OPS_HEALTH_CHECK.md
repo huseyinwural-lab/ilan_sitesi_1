@@ -1,36 +1,44 @@
-# Backlog: Operational Health Check (OPS-HC)
+# Ops Health Check v1 Scope (Blocking Gate)
 
-**Priority:** P5 (Critical for Operations)
-**Owner:** Operations / DevOps
+**Priority:** Critical (P0)
+**Type:** Blocking Gate for Release/Publish
 
-## Problem
-With the new "Fail-Fast" pricing engine, missing database configurations (VAT, PriceConfig) will immediately block revenue generation (Listing Creation). We need a proactive way to detect these gaps before users encounter them.
+## 1. Problem Statement
+The Pricing Engine adheres to a "Fail-Fast" philosophy. If configurations are missing, the API returns `409 Conflict` and blocks revenue. We must detect these gaps **proactively**.
 
-## Requirement
-Create an automated "Health Check" that verifies the integrity of the pricing configuration for all enabled countries.
+## 2. Health Check Criteria (Per Active Country)
+The system is considered "Healthy" only if ALL enabled countries pass the following checks:
 
-## Check Criteria
-For every `Country` where `is_enabled = True`:
-1.  [ ] **VAT Rate:** Is there an active `VatRate` (standard)?
-2.  [ ] **Currency Map:** Is there a `CountryCurrencyMap` entry?
-3.  [ ] **Dealer Price:** Is there an active `PriceConfig` for `segment=dealer` + `type=pay_per_listing`?
-4.  [ ] **Free Quota:** (Warning only) Is there a `FreeQuotaConfig`?
+### A. Core Finance
+- [ ] **VAT Rate:** Active `standard` rate exists for `[Country]`.
+- [ ] **Currency Map:** `CountryCurrencyMap` exists for `[Country]`.
 
-## Deliverables
-1.  **API Endpoint:** `GET /api/admin/health/pricing`
-    - Returns JSON report:
-      ```json
-      {
-        "status": "warning",
-        "issues": [
-          {"country": "IT", "error": "Missing VAT Rate"},
-          {"country": "FR", "error": "Missing Price Config"}
-        ]
-      }
-      ```
-2.  **Dashboard Widget:** Admin Panel > Dashboard shows a "Config Status" indicator (Green/Red).
-3.  **Alerting:** (Future) Integration with Slack/Email if status is Red.
+### B. Dealer Segment
+- [ ] **Price Config:** Active `PriceConfig` exists for:
+  - `country=[Country]`
+  - `segment='dealer'`
+  - `pricing_type='pay_per_listing'`
+  - `is_active=True`
+- [ ] **Free Quota:** (Warning) Check if `FreeQuotaConfig` exists. If not, log "Free Quota: 0".
 
-## Action Plan
-1.  Add logic to `app/routers/audit.py` or `admin.py`.
-2.  Frontend: Add simple fetch & display on Admin Dashboard.
+### C. System
+- [ ] **Database Connection:** Latency < 100ms.
+- [ ] **Stripe Config:** `StripeSettings` exists and `is_enabled=True`.
+
+## 3. Implementation (Ticket OPS-01)
+- **Endpoint:** `GET /api/admin/health/pricing`
+- **Access:** Super Admin / DevOps.
+- **Response:**
+  ```json
+  {
+    "status": "healthy", // or "degraded", "critical"
+    "issues": [],
+    "matrix": {
+      "DE": {"vat": true, "price": true, "quota": true},
+      "TR": {"vat": false, "price": false, "quota": false}
+    }
+  }
+  ```
+
+## 4. Alerting Rule
+- If `status != 'healthy'` -> Trigger PagerDuty/Slack Alert to Ops Team immediately.
