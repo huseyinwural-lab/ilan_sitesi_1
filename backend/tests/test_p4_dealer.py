@@ -178,6 +178,23 @@ async def test_listing_quota_enforcement(local_client):
                 valid_from=datetime.now(timezone.utc),
                 is_active=True
             ))
+            
+        # Add Free Quota Config for testing waterfall
+        from app.models.pricing import FreeQuotaConfig
+        existing_free = (await session.execute(select(FreeQuotaConfig).where(
+            FreeQuotaConfig.country == "DE",
+            FreeQuotaConfig.segment == "dealer",
+            FreeQuotaConfig.is_active == True
+        ))).scalars().first()
+        if not existing_free:
+            session.add(FreeQuotaConfig(
+                country="DE",
+                segment="dealer",
+                quota_amount=1,  # 1 free listing
+                period_days=30,
+                quota_scope="listing_only",
+                is_active=True
+            ))
         
         # Create Dealer
         dealer_app = DealerApplication(
