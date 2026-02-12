@@ -201,17 +201,17 @@ async def create_dealer_listing(
     stmt = (
         update(DealerSubscription)
         .where(DealerSubscription.id == subscription.id)
-        .where(DealerSubscription.remaining_listing_quota > 0)
-        .values(remaining_listing_quota=DealerSubscription.remaining_listing_quota - 1)
-        .returning(DealerSubscription.remaining_listing_quota)
+        .where((DealerSubscription.included_listing_quota - DealerSubscription.used_listing_quota) > 0)
+        .values(used_listing_quota=DealerSubscription.used_listing_quota + 1)
+        .returning(DealerSubscription.included_listing_quota - DealerSubscription.used_listing_quota)
     )
     result = await db.execute(stmt)
-    new_quota = result.scalar_one_or_none()
+    new_remaining_quota = result.scalar_one_or_none()
     
-    if new_quota is None:
+    if new_remaining_quota is None:
         # Race condition hit: quota was >0 when read, but 0 now
         raise HTTPException(status_code=403, detail="Listing quota exceeded (Race Condition).")
     
     await db.commit()
-    return {"id": str(listing.id), "status": listing.status, "remaining_quota": new_quota}
+    return {"id": str(listing.id), "status": listing.status, "remaining_quota": new_remaining_quota}
 
