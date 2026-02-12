@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from passlib.context import CryptContext
 
 # Add backend directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -19,7 +20,11 @@ from app.models.commercial import DealerPackage, DealerSubscription
 from app.models.moderation import Listing
 from app.models.category import Category
 from app.models.billing import Invoice
-from app.server import get_password_hash
+
+# Security Helper (Copied to avoid import loop or path issues)
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO)
@@ -49,6 +54,7 @@ async def seed_dummy_data():
             await session.execute(delete(Dealer)) # Linked to apps
             await session.execute(delete(DealerApplication).where(DealerApplication.company_name.like("Test %")))
             await session.execute(delete(User).where(User.email.like("user_%@example.com")))
+            await session.execute(delete(User).where(User.email.like("dealer_%@example.com")))
             await session.commit()
 
             # 2. Users (Individual)
@@ -73,7 +79,6 @@ async def seed_dummy_data():
             # 3. Dealers
             dealers = []
             # Ensure Packages Exist (P4 Requirement)
-            # We assume seed_production_data created them, or we verify here.
             # Fetch existing packages
             pkg_res = await session.execute(select(DealerPackage))
             packages = pkg_res.scalars().all()
@@ -89,7 +94,10 @@ async def seed_dummy_data():
                 tier = tiers[i]
                 
                 # Find matching package
-                pkg = next((p for p in packages if p.country == country and p.tier == tier), packages[0])
+                pkg = next((p for p in packages if p.country == country and p.tier == tier), None)
+                if not pkg:
+                    # Fallback
+                    pkg = packages[0]
 
                 # Create User for Dealer
                 dealer_user = User(
@@ -131,7 +139,7 @@ async def seed_dummy_data():
 
                 # Subscription
                 inv = Invoice(
-                    invoice_no=f"INV-DUMMY-{i}",
+                    invoice_no=f"INV-DUMMY-{i}-{uuid.uuid4().hex[:4]}",
                     country=country,
                     currency=pkg.currency,
                     customer_type="dealer",
@@ -173,11 +181,8 @@ async def seed_dummy_data():
                 # Random Owner (Dealer or User)
                 if random.random() < 0.7:
                     owner_dealer = random.choice(dealers)
-                    owner_user_id = uuid.uuid4() # Mock, or fetch user linked to dealer if we had link
-                    # In our model, Dealer doesn't have direct User link in this script scope easily accessible
-                    # So we pick a random user for user_id, but assign dealer_id
-                    # This is fine for listing display.
-                    owner_user = random.choice(users) # Just for FK
+                    # owner_user is just for the FK requirement
+                    owner_user = users[0] 
                 else:
                     owner_dealer = None
                     owner_user = random.choice(users)
@@ -187,8 +192,11 @@ async def seed_dummy_data():
                 
                 cat = random.choice(cats)
                 
+                # Slug handling
+                slug = cat.slug.get('en', 'item') if isinstance(cat.slug, dict) else str(cat.slug)
+
                 listing = Listing(
-                    title=f"Test Listing {i} - {cat.slug['en']}",
+                    title=f"Test Listing {i} - {slug}",
                     description="This is a generated dummy listing for testing purposes.",
                     module=cat.module,
                     country=random.choice(COUNTRIES),
