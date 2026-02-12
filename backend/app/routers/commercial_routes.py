@@ -155,37 +155,56 @@ async def create_dealer_listing(
         
     # TODO: Auth check if current_user owns dealer
     
-    # 2. Check Subscription & Quota
-    sub_res = await db.execute(select(DealerSubscription).where(
-        and_(
-            DealerSubscription.dealer_id == dealer.id,
-            DealerSubscription.status == "active",
-            DealerSubscription.end_at > datetime.now(timezone.utc)
+    # 2. Pricing Engine (Hard Gate)
+    listing_id = uuid.uuid4()
+    pricing_service = PricingService(db)
+    
+    try:
+        calculation = await pricing_service.calculate_listing_fee(
+            dealer_id=dealer_id,
+            country=dealer.country,
+            listing_id=str(listing_id)
         )
-    ).order_by(DealerSubscription.end_at.desc())) # Get latest if multiple? Constraints say single active.
-    
-    subscription = sub_res.scalars().first()
-    
-    if not subscription:
-        # Fallback: Check if dealer has default free quota? 
-        # Current requirements imply "Buy Package" to get limits.
-        # But Dealer model has 'listing_limit' field. Is that separate from subscription?
-        # "DealerPackage... listing_limit". 
-        # "DealerSubscription... remaining_listing_quota".
-        # Logic: Subscription provides quota.
-        # If no subscription, maybe fallback to Dealer global limit if any?
-        # Requirement: "Limit Enforcement... Aktif subscription var mı? ... remaining_listing_quota > 0?"
-        # So subscription is mandatory for publishing in this model?
-        # Or Dealer entity has base limit?
-        # Let's enforce Subscription for now based on P4 scope "Dealer Premium + Paket Modeli".
-        raise HTTPException(status_code=403, detail="No active subscription found. Please buy a package.")
+    except PricingConfigError as e:
+        logger.error(f"Pricing Config Error: {e}")
+        raise HTTPException(status_code=409, detail=f"Pricing configuration missing: {str(e)}")
+    except Exception as e:
+        logger.error(f"Pricing Calculation Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal pricing error")
+
+    # 3. Handle Invoice for Overage (If needed)
+    invoice_id = None
+    if calculation.source == "paid_extra":
+        # Create Overage Invoice
+        # Note: In a full implementation, this might aggregate into a monthly draft invoice.
+        # For T2 MVP, we create a discrete invoice.
+        year = datetime.now().year
+        prefix = f"INV-OV-{dealer.country}-{year}-"
+        invoice_no = f"{prefix}{uuid.uuid4().hex[:6].upper()}"
         
-    remaining_quota = subscription.included_listing_quota - subscription.used_listing_quota
-    if remaining_quota <= 0:
-        raise HTTPException(status_code=403, detail="Listing quota exceeded.")
-        
-    # 3. Create Listing
+        invoice = Invoice(
+            id=uuid.uuid4(),
+            invoice_no=invoice_no,
+            country=dealer.country,
+            currency=calculation.currency,
+            customer_type="dealer",
+            customer_ref_id=dealer.id,
+            customer_name=dealer.company_name,
+            customer_email=dealer.vat_tax_no or current_user.email,
+            status="draft", # Pending payment/aggregation
+            net_total=calculation.charge_amount,
+            tax_total=calculation.gross_amount - calculation.charge_amount,
+            gross_total=calculation.gross_amount,
+            tax_rate_snapshot=calculation.vat_rate,
+            issued_at=datetime.now(timezone.utc)
+        )
+        db.add(invoice)
+        await db.flush() # Get ID
+        invoice_id = str(invoice.id)
+
+    # 4. Create Listing Object (Pending Commit)
     listing = Listing(
+        id=listing_id,
         title=listing_data.title,
         description=listing_data.description,
         module=listing_data.module,
@@ -201,21 +220,28 @@ async def create_dealer_listing(
     )
     db.add(listing)
     
-    # 4. Decrement Quota Atomically (P5-003)
-    stmt = (
-        update(DealerSubscription)
-        .where(DealerSubscription.id == subscription.id)
-        .where((DealerSubscription.included_listing_quota - DealerSubscription.used_listing_quota) > 0)
-        .values(used_listing_quota=DealerSubscription.used_listing_quota + 1)
-        .returning(DealerSubscription.included_listing_quota - DealerSubscription.used_listing_quota)
-    )
-    result = await db.execute(stmt)
-    new_remaining_quota = result.scalar_one_or_none()
+    # 5. Commit Usage (Atomic Transaction)
+    # This commits listing, invoice, consumption log, and quota update
+    try:
+        await pricing_service.commit_usage(
+            calculation=calculation,
+            listing_id=str(listing_id),
+            dealer_id=dealer_id,
+            user_id=str(current_user.id),
+            invoice_id=invoice_id
+        )
+    except PricingConcurrencyError:
+        raise HTTPException(status_code=429, detail="System busy (Quota contention). Please retry.")
+    except PricingIdempotencyError:
+        # Already processed, return success (Idempotent)
+        pass 
+    except Exception as e:
+        logger.error(f"Commit Usage Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to process listing creation")
     
-    if new_remaining_quota is None:
-        # Race condition hit: quota was >0 when read, but 0 now
-        raise HTTPException(status_code=403, detail="Listing quota exceeded (Race Condition).")
-    
-    await db.commit()
-    return {"id": str(listing.id), "status": listing.status, "remaining_quota": new_remaining_quota}
+    return {
+        "id": str(listing.id),
+        "status": listing.status,
+        "pricing": calculation.to_dict()
+    }
 
