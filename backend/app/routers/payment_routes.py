@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.backend.server import get_db, get_current_user, check_permissions
+from app.dependencies import get_db, get_current_user, check_permissions
 from app.services.stripe_service import StripeService
 from app.models.user import User
 from pydantic import BaseModel
