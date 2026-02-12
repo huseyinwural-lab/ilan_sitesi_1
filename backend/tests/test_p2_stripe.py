@@ -124,7 +124,12 @@ async def test_webhook_idempotency(local_client):
                 mock_event = MagicMock()
                 mock_event.id = "evt_test_idempotent" # Fixed ID
                 mock_event.type = "checkout.session.completed"
-                mock_event.data.object.client_reference_id = None # Shouldn't matter for idempotency check
+                
+                mock_session = MagicMock()
+                mock_session.client_reference_id = None
+                mock_session.metadata = {} # Empty metadata to avoid recursion
+                mock_event.data.object = mock_session
+                
                 mock_construct.return_value = mock_event
         
                 # First Call
