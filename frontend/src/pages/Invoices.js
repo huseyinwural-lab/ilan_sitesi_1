@@ -383,6 +383,46 @@ export default function Invoices() {
               <div>
                 <label className="block text-sm font-medium mb-1">Customer Name</label>
                 <input name="customer_name" className="w-full rounded-md border px-3 py-2 bg-background" required />
+      {/* Refund Modal */}
+      {showRefundModal && selectedInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg border shadow-xl w-full max-w-sm p-6">
+            <h2 className="text-lg font-bold mb-4">Refund Invoice</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Processing refund for invoice {selectedInvoice.invoice_no}.
+              Max refundable: {selectedInvoice.net_total + selectedInvoice.tax_total - (selectedInvoice.refunded_total || 0)} {selectedInvoice.currency}
+            </p>
+            <form onSubmit={handleRefund} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Refund Amount</label>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  name="amount" 
+                  defaultValue={selectedInvoice.net_total + selectedInvoice.tax_total - (selectedInvoice.refunded_total || 0)}
+                  max={selectedInvoice.net_total + selectedInvoice.tax_total - (selectedInvoice.refunded_total || 0)}
+                  className="w-full rounded-md border px-3 py-2 bg-background" 
+                  required 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Reason</label>
+                <select name="reason" className="w-full rounded-md border px-3 py-2 bg-background">
+                  <option value="requested_by_customer">Requested by Customer</option>
+                  <option value="duplicate">Duplicate Charge</option>
+                  <option value="fraudulent">Fraudulent</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-4">
+                <button type="button" onClick={() => setShowRefundModal(false)} className="px-4 py-2 rounded-md hover:bg-muted">Cancel</button>
+                <button type="submit" className="px-4 py-2 rounded-md bg-rose-600 text-white hover:bg-rose-700">Process Refund</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Customer Email</label>
