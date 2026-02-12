@@ -399,10 +399,30 @@ async def create_listing_promotion(data: ListingPromotionCreate, db, current_use
 # ==================== MODERATION FUNCTIONS ====================
 
 async def get_moderation_queue(country, module, status, is_dealer, is_premium, skip, limit, db, current_user):
+    from fastapi import HTTPException
+    
+    # Security: Enforce Country Scope
+    if current_user.role != "super_admin":
+        user_scope = current_user.country_scope if current_user.country_scope else []
+        if "*" not in user_scope:
+            if country:
+                if country.upper() not in user_scope:
+                    return [] # Or raise 403, but empty list is safer for UI
+            else:
+                # If no country specified, filter by user's scope
+                pass # Logic below handles list filtering if needed, but for now we rely on explicit query construction
+    
     query = select(Listing).where(Listing.status == status)
     
     if country:
         query = query.where(Listing.country == country.upper())
+    
+    # Enforce scope on query level if not super_admin and no specific country requested (or even if requested)
+    if current_user.role != "super_admin":
+        user_scope = current_user.country_scope if current_user.country_scope else []
+        if "*" not in user_scope:
+             query = query.where(Listing.country.in_(user_scope))
+
     if module:
         query = query.where(Listing.module == module)
     if is_dealer is not None:
