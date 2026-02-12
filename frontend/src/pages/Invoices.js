@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
 import { 
   FileText, Download, Filter, Eye, Plus, 
-  CheckCircle, Clock, AlertCircle
+  CheckCircle, Clock, AlertCircle, CreditCard
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
