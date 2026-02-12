@@ -152,7 +152,30 @@ class P5ExpiryJobTester:
                     included_listing_quota=10
                 ))
 
-                # 6. Valid Subscription (for comparison)
+                # 6. Valid Subscription (for comparison) - Create separate dealer to avoid unique constraint
+                # Create second dealer for valid subscription
+                app_id_2 = uuid.uuid4()
+                session.add(DealerApplication(
+                    id=app_id_2,
+                    country="DE",
+                    dealer_type="auto_dealer",
+                    company_name="Test Valid Company",
+                    contact_name="Test Valid Contact",
+                    contact_email="valid@expiry.com",
+                    status="approved"
+                ))
+                await session.flush()
+
+                dealer_id_2 = uuid.uuid4()
+                session.add(Dealer(
+                    id=dealer_id_2,
+                    application_id=app_id_2,
+                    country="DE",
+                    dealer_type="auto_dealer",
+                    company_name="Test Valid Company"
+                ))
+                await session.flush()
+
                 valid_invoice_id = uuid.uuid4()
                 session.add(Invoice(
                     id=valid_invoice_id,
@@ -160,8 +183,8 @@ class P5ExpiryJobTester:
                     country="DE",
                     currency="EUR",
                     customer_type="dealer",
-                    customer_ref_id=dealer_id,
-                    customer_name="Test Expiry Company",
+                    customer_ref_id=dealer_id_2,
+                    customer_name="Test Valid Company",
                     status="paid",
                     gross_total=Decimal("50.00"),
                     net_total=Decimal("50.00"),
@@ -173,7 +196,7 @@ class P5ExpiryJobTester:
                 valid_sub_id = uuid.uuid4()
                 session.add(DealerSubscription(
                     id=valid_sub_id,
-                    dealer_id=dealer_id,
+                    dealer_id=dealer_id_2,
                     package_id=package_id,
                     invoice_id=valid_invoice_id,
                     start_at=datetime.now(timezone.utc),
