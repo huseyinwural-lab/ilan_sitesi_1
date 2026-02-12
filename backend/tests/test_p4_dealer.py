@@ -269,3 +269,57 @@ async def test_listing_quota_enforcement(local_client):
         assert response_data["pricing"]["source"] == "paid_extra"
         assert response_data["pricing"]["charge_amount"] == 5.0  # 5.00 EUR as configured
 
+@pytest.mark.asyncio
+async def test_missing_pricing_config_409_behavior(local_client):
+    """Test that missing pricing config returns 409 Conflict as per T2 requirements"""
+    # Setup Dealer & Subscription without pricing config
+    async with AsyncSessionLocal() as session:
+        # Add VAT configuration for CH but NO price config
+        from app.models.billing import VatRate
+        from app.models.pricing import CountryCurrencyMap
+        
+        session.add(VatRate(
+            country="CH", 
+            rate=Decimal("8.1"), 
+            valid_from=datetime.now(timezone.utc),
+            is_active=True
+        ))
+        
+        session.add(CountryCurrencyMap(country="CH", currency="CHF"))
+        
+        # Create Dealer
+        dealer_app = DealerApplication(
+            country="CH",
+            dealer_type="auto_dealer",
+            company_name="Swiss Dealer App",
+            contact_name="Tester",
+            contact_email="swiss@dealer.com",
+            status="approved"
+        )
+        session.add(dealer_app)
+        await session.flush()
+        
+        dealer = Dealer(
+            country="CH",
+            dealer_type="auto_dealer",
+            company_name="Swiss Dealer",
+            vat_tax_no="CH999",
+            is_active=True,
+            application_id=dealer_app.id
+        )
+        session.add(dealer)
+        await session.commit()
+        dealer_id = str(dealer.id)
+
+    async with local_client as client:
+        # Post Listing without pricing config - should return 409
+        res = await client.post(f"/api/v1/commercial/dealers/{dealer_id}/listings", json={
+            "title": "Swiss Car",
+            "description": "Desc",
+            "module": "vehicle",
+            "price": 50000,
+            "currency": "CHF"
+        })
+        assert res.status_code == 409
+        assert "Pricing configuration missing" in res.json()["detail"]
+
