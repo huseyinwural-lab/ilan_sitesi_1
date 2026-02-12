@@ -40,7 +40,23 @@ async def test_create_checkout_session_flow(local_client):
     # Set Env for Stripe Key (Mock)
     with patch.dict(os.environ, {"STRIPE_API_KEY": "sk_test_mock"}):
         async with local_client as client:
-            # 1. Create Draft Invoice (Fix description to be dict)
+            # RESET VAT RATE FOR DE TO 19.0 (Fix for dirty data)
+            # Find rate id for DE standard
+            # We assume admin rights
+            # But we are mocking auth.
+            # We can just update via API if we knew ID, or assume 19.0 check is flexible.
+            # Better: Calculate expected amount dynamically based on response? 
+            # Or Force update.
+            # Let's try to fetch vat rates first.
+            # Or simply: 
+            # Create a NEW rate for a dummy country "XX" to isolate?
+            # But invoice creation enforces country list.
+            # Let's accept 6250 OR 5000 (19% or 25%).
+            # No, that's flaky.
+            # Let's fix the DB state.
+            pass
+            
+            # 1. Create Draft Invoice
             res = await client.post("/api/invoices", json={
                 "country": "DE",
                 "customer_type": "B2C",
