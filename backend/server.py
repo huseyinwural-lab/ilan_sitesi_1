@@ -962,7 +962,8 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db), current_user: 
         "dealers": {"total": dealers_count or 0, "pending_applications": pending_applications or 0},
         "moderation": {"pending": pending_moderation or 0},
         "users_by_role": role_stats,
-        "recent_activity": recent_logs
+        "recent_activity": recent_logs,
+        "payment_failures_24h": payment_failures_24h
     }
 
 # ==================== P1 ROUTES ====================
