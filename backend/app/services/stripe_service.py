@@ -282,9 +282,9 @@ class StripeService:
         # For this MVP, we assume ONE global Stripe account (or we try all secrets).
         # Let's assume one env var STRIPE_WEBHOOK_SECRET for now.
         
-        webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
-        if not webhook_secret:
-            raise HTTPException(status_code=500, detail="Webhook secret not configured")
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+    if not webhook_secret:
+        raise HTTPException(status_code=500, detail="Webhook secret not configured")
 
         try:
             event = stripe.Webhook.construct_event(
