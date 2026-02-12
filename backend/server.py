@@ -434,10 +434,19 @@ async def seed_default_data(db: AsyncSession):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting application with PostgreSQL...")
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    async with AsyncSessionLocal() as session:
-        await seed_default_data(session)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        async with AsyncSessionLocal() as session:
+            try:
+                await seed_default_data(session)
+            except Exception as e:
+                logger.error(f"Seeding failed (non-fatal): {e}")
+                # Don't raise, allow app to start even if seed fails
+    except Exception as e:
+        logger.error(f"Critical startup error: {e}")
+        raise e
+        
     yield
     logger.info("Shutting down...")
     await engine.dispose()
