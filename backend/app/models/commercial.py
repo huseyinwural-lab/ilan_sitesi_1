@@ -66,9 +66,14 @@ class DealerSubscription(Base):
     # Status
     status: Mapped[str] = mapped_column(String(20), default="pending", index=True) # pending, active, expired, cancelled
     
-    # Consumption (Remaining Quotas)
-    remaining_listing_quota: Mapped[int] = mapped_column(Integer, default=0)
-    remaining_premium_quota: Mapped[int] = mapped_column(Integer, default=0)
+    # Consumption (Usage Tracking)
+    # Remaining is calculated: included - used
+    used_listing_quota: Mapped[int] = mapped_column(Integer, default=0)
+    used_premium_quota: Mapped[int] = mapped_column(Integer, default=0)
+    
+    # Snapshot of limits at time of purchase
+    included_listing_quota: Mapped[int] = mapped_column(Integer, default=0)
+    included_premium_quota: Mapped[int] = mapped_column(Integer, default=0)
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
