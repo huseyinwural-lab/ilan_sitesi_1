@@ -301,13 +301,13 @@ class StripeService:
         if existing.scalar_one_or_none():
             return {"status": "already_processed"}
     
-    # Log Event
-    log = StripeEvent(
-            event_id=event.id,
-            event_type=event.type,
-            status="processing"
-    )
-    self.db.add(log)
+        # Log Event
+        log = StripeEvent(
+                event_id=event.id,
+                event_type=event.type,
+                status="processing"
+        )
+        self.db.add(log)
     await self.db.commit()
     
     # Process
