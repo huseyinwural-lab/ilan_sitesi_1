@@ -10,11 +10,15 @@ from app.models.dealer import Dealer
 from app.models.billing import Invoice, InvoiceItem
 from app.services.stripe_service import StripeService
 from app.models.moderation import Listing
+from app.services.pricing_service import PricingService, PricingConfigError, PricingIdempotencyError, PricingConcurrencyError
 from datetime import timedelta
 from datetime import datetime, timezone
 from decimal import Decimal
 from pydantic import BaseModel
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/commercial", tags=["commercial"])
 
