@@ -10,6 +10,13 @@ import os
 from httpx import AsyncClient, ASGITransport
 from server import app
 from app.dependencies import get_current_user
+from app.database import engine
+
+# Fix for "attached to a different loop" error with global engine
+@pytest.fixture(autouse=True)
+async def cleanup_engine():
+    yield
+    await engine.dispose()
 
 # Mock auth to bypass login for these unit tests
 async def mock_get_current_user():
@@ -28,16 +35,16 @@ def local_client():
 
 @pytest.mark.asyncio
 async def test_create_checkout_session_flow(local_client):
-    # Set Env for Stripe Key (Mock) - NOW this works because app runs in process
+    # Set Env for Stripe Key (Mock)
     with patch.dict(os.environ, {"STRIPE_API_KEY": "sk_test_mock"}):
         async with local_client as client:
-            # 1. Create Draft Invoice
+            # 1. Create Draft Invoice (Fix description to be dict)
             res = await client.post("/api/invoices", json={
                 "country": "DE",
                 "customer_type": "B2C",
                 "customer_name": "Stripe Test",
                 "customer_email": "stripe@test.com",
-                "items": [{"description": "Service", "quantity": 1, "unit_price": 50.0}]
+                "items": [{"description": {"en": "Service"}, "quantity": 1, "unit_price": 50.0}]
             })
             assert res.status_code == 200
             invoice_id = res.json()["id"]
@@ -80,7 +87,7 @@ async def test_stripe_webhook_processing(local_client):
                 "customer_type": "B2C",
                 "customer_name": "Webhook Test",
                 "customer_email": "web@test.com",
-                "items": [{"description": "Item", "quantity": 1, "unit_price": 100.0}]
+                "items": [{"description": {"en": "Item"}, "quantity": 1, "unit_price": 100.0}]
             })
             invoice_id = res.json()["id"]
             
@@ -95,7 +102,7 @@ async def test_stripe_webhook_processing(local_client):
                 mock_session.client_reference_id = invoice_id
                 mock_session.id = "cs_test_completed"
                 mock_session.payment_intent = "pi_test_123"
-                mock_session.metadata = {"invoice_id": invoice_id} # Explicitly set metadata dict
+                mock_session.metadata = {"invoice_id": invoice_id}
                 
                 mock_event.data.object = mock_session
                 mock_construct.return_value = mock_event
@@ -127,7 +134,7 @@ async def test_webhook_idempotency(local_client):
                 
                 mock_session = MagicMock()
                 mock_session.client_reference_id = None
-                mock_session.metadata = {} # Empty metadata to avoid recursion
+                mock_session.metadata = {}
                 mock_event.data.object = mock_session
                 
                 mock_construct.return_value = mock_event
