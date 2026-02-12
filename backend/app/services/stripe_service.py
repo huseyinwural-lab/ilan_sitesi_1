@@ -308,67 +308,67 @@ class StripeService:
         status="processing"
     )
     self.db.add(log)
-        await self.db.commit()
-        
-        # Process
-        try:
-            if event.type == "checkout.session.completed":
-                session = event.data.object
-                invoice_id = session.client_reference_id or session.metadata.get("invoice_id")
-                
-                if invoice_id:
-                    # Update Invoice
-                    result = await self.db.execute(select(Invoice).where(Invoice.id == uuid.UUID(invoice_id)))
-                    invoice = result.scalar_one_or_none()
-                    if invoice:
-                        invoice.status = "paid"
-                        invoice.paid_at = datetime.now(timezone.utc)
-                        invoice.stripe_payment_intent_id = session.payment_intent
-                        invoice.payment_idempotency_key = session.id # Use session ID as idempotent key reference
-                        
-                        # Update attempt
-                        attempt_result = await self.db.execute(select(PaymentAttempt).where(PaymentAttempt.stripe_checkout_session_id == session.id))
-                        attempt = attempt_result.scalar_one_or_none()
-                        if attempt:
-                            attempt.status = "succeeded"
-                            attempt.stripe_payment_intent_id = session.payment_intent
+    await self.db.commit()
+    
+    # Process
+    try:
+        if event.type == "checkout.session.completed":
+            session = event.data.object
+            invoice_id = session.client_reference_id or session.metadata.get("invoice_id")
             
-            elif event.type == "charge.refunded":
-                charge = event.data.object
-                payment_intent_id = charge.payment_intent
-                amount_refunded = Decimal(charge.amount_refunded) / 100
-                
-                # Find Invoice
-                result = await self.db.execute(select(Invoice).where(Invoice.stripe_payment_intent_id == payment_intent_id))
+            if invoice_id:
+                # Update Invoice
+                result = await self.db.execute(select(Invoice).where(Invoice.id == uuid.UUID(invoice_id)))
                 invoice = result.scalar_one_or_none()
-                
                 if invoice:
-                    invoice.refunded_total = amount_refunded
+                    invoice.status = "paid"
+                    invoice.paid_at = datetime.now(timezone.utc)
+                    invoice.stripe_payment_intent_id = session.payment_intent
+                    invoice.payment_idempotency_key = session.id # Use session ID as idempotent key reference
                     
-                    if invoice.refunded_total >= invoice.gross_total:
-                        invoice.status = "refunded"
-                        invoice.refund_status = "full"
-                        invoice.refunded_at = datetime.now(timezone.utc)
-                    elif invoice.refunded_total > 0:
-                        invoice.status = "partially_refunded"
-                        invoice.refund_status = "partial"
-                        invoice.last_refund_at = datetime.now(timezone.utc)
-                    
-                    if hasattr(charge, 'refunds'):
-                        for ref_data in charge.refunds.data:
-                            ref_res = await self.db.execute(select(Refund).where(Refund.stripe_refund_id == ref_data.id))
-                            local_ref = ref_res.scalar_one_or_none()
-                            if local_ref and local_ref.status != "succeeded":
-                                local_ref.status = "succeeded"
-                    
-                    # Update Log
-                    log.status = "processed"
-                    await self.db.commit()
-                    
-            except Exception as e:
-                log.status = "error"
-                log.processing_error = str(e)
-                await self.db.commit()
-                raise e
+                    # Update attempt
+                    attempt_result = await self.db.execute(select(PaymentAttempt).where(PaymentAttempt.stripe_checkout_session_id == session.id))
+                    attempt = attempt_result.scalar_one_or_none()
+                    if attempt:
+                        attempt.status = "succeeded"
+                        attempt.stripe_payment_intent_id = session.payment_intent
         
-            return {"status": "success"}
+        elif event.type == "charge.refunded":
+            charge = event.data.object
+            payment_intent_id = charge.payment_intent
+            amount_refunded = Decimal(charge.amount_refunded) / 100
+            
+            # Find Invoice
+            result = await self.db.execute(select(Invoice).where(Invoice.stripe_payment_intent_id == payment_intent_id))
+            invoice = result.scalar_one_or_none()
+            
+            if invoice:
+                invoice.refunded_total = amount_refunded
+                
+                if invoice.refunded_total >= invoice.gross_total:
+                    invoice.status = "refunded"
+                    invoice.refund_status = "full"
+                    invoice.refunded_at = datetime.now(timezone.utc)
+                elif invoice.refunded_total > 0:
+                    invoice.status = "partially_refunded"
+                    invoice.refund_status = "partial"
+                    invoice.last_refund_at = datetime.now(timezone.utc)
+                
+                if hasattr(charge, 'refunds'):
+                    for ref_data in charge.refunds.data:
+                        ref_res = await self.db.execute(select(Refund).where(Refund.stripe_refund_id == ref_data.id))
+                        local_ref = ref_res.scalar_one_or_none()
+                        if local_ref and local_ref.status != "succeeded":
+                            local_ref.status = "succeeded"
+                
+                # Update Log
+                log.status = "processed"
+                await self.db.commit()
+                
+        except Exception as e:
+            log.status = "error"
+            log.processing_error = str(e)
+            await self.db.commit()
+            raise e
+    
+        return {"status": "success"}
