@@ -441,7 +441,7 @@ async def lifespan(app: FastAPI):
             try:
                 await seed_default_data(session)
             except Exception as e:
-                logger.error(f"Seeding failed (non-fatal): {e}")
+                logger.error(f"SEED_FAILED (non-fatal): {e}")
                 # Don't raise, allow app to start even if seed fails
     except Exception as e:
         logger.error(f"Critical startup error: {e}")
