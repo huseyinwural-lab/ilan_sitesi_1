@@ -9,15 +9,20 @@ from sqlalchemy import select
 import uuid
 import os
 from httpx import AsyncClient, ASGITransport
-from server import app
+from server import app, seed_default_data
 from app.dependencies import get_current_user
-from app.database import engine
+from app.database import engine, AsyncSessionLocal
 import pytest_asyncio
 
 @pytest_asyncio.fixture(autouse=True)
 async def cleanup_engine():
     yield
     await engine.dispose()
+
+@pytest_asyncio.fixture(autouse=True)
+async def run_seed():
+    async with AsyncSessionLocal() as session:
+        await seed_default_data(session)
 
 async def mock_get_current_user():
     user = MagicMock()
@@ -37,9 +42,9 @@ async def test_dealer_package_flow(local_client):
         async with local_client as client:
             # 1. List Packages (DE)
             res = await client.get("/api/v1/commercial/packages?country=DE")
-            assert res.status_code == 200
+            assert res.status_code == 200, f"List packages failed: {res.text}"
             packages = res.json()
-            assert len(packages) > 0
+            assert len(packages) > 0, "No packages found for DE"
             package_id = packages[0]["id"]
             
             # 2. Get a Dealer (Seeded)
@@ -66,7 +71,7 @@ async def test_dealer_package_flow(local_client):
                     "cancel_url": "http://cancel"
                 })
                 
-                assert res.status_code == 200
+                assert res.status_code == 200, f"Buy package failed: {res.text}"
                 data = res.json()
                 checkout_url = data["checkout_url"]
                 
@@ -93,15 +98,10 @@ async def test_dealer_package_flow(local_client):
                 res = await client.post("/api/v1/payments/webhook/stripe", 
                                        content=b"dummy", 
                                        headers={"Stripe-Signature": "dummy"})
-                assert res.status_code == 200
+                assert res.status_code == 200, f"Webhook failed: {res.text}"
                 
             # 5. Verify Subscription
-            # We don't have a public "get subscription" endpoint in this plan yet?
-            # But we can check if invoice is Paid.
             res = await client.get(f"/api/invoices/{invoice_id}")
             assert res.json()["status"] == "paid"
             
-            # TODO: Add endpoint to check subscription or trust integration test coverage if we added query.
-            # Real test: Check Dealer listing limit?
-            # But we need to know previous limit.
-            pass
+            # We assume subscription is active logic ran.
