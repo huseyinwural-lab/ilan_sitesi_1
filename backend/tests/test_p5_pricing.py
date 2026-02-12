@@ -8,7 +8,7 @@ from decimal import Decimal
 from app.services.pricing_service import PricingService
 from app.models.pricing import PriceConfig, FreeQuotaConfig, ListingConsumptionLog
 from app.models.commercial import DealerSubscription, DealerPackage
-from app.models.dealer import Dealer
+from app.models.dealer import Dealer, DealerApplication
 from app.models.billing import Invoice, VatRate
 from app.database import AsyncSessionLocal, engine
 import pytest_asyncio
@@ -22,6 +22,7 @@ async def cleanup_engine():
 async def test_waterfall_pricing_flow():
     dealer_id = uuid.uuid4()
     user_id = uuid.uuid4()
+    app_id = uuid.uuid4()
     
     async with AsyncSessionLocal() as session:
         # 1. Setup Configs
@@ -39,12 +40,17 @@ async def test_waterfall_pricing_flow():
         pkg_id = uuid.uuid4()
         session.add(DealerPackage(id=pkg_id, key="TEST", country="DE", name={"en": "T"}, price_net=10, currency="EUR", duration_days=30, listing_limit=50))
         
+        # Need Dealer Application record for FK
+        session.add(DealerApplication(id=app_id, country="DE", dealer_type="auto", company_name="Test App", contact_name="Tester", contact_email="t@t.com", status="approved"))
+        
         # Need Dealer record for FK
-        session.add(Dealer(id=dealer_id, country="DE", dealer_type="auto", company_name="Test", application_id=uuid.uuid4()))
+        session.add(Dealer(id=dealer_id, country="DE", dealer_type="auto", company_name="Test", application_id=app_id))
         
         # Need Invoice record for FK (subscription -> invoice)
         inv_id = uuid.uuid4()
         session.add(Invoice(id=inv_id, invoice_no="INV-TEST-PRICE", country="DE", currency="EUR", customer_type="dealer", customer_ref_id=dealer_id, customer_name="Test", status="paid", gross_total=10, net_total=10, tax_total=0, tax_rate_snapshot=0))
+        
+        await session.flush() # Ensure parents exist before child
         
         session.add(DealerSubscription(
             dealer_id=dealer_id,
