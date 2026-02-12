@@ -29,7 +29,7 @@ async def seed_v2(allow_prod=False, dry_run=False):
 
     async with AsyncSessionLocal() as session:
         try:
-            # === DEFINITIONS (Same as before) ===
+            # === DEFINITIONS ===
             global_attrs = [
                 ("m2_gross", "number", "m²", {"en": "Gross Area", "tr": "Brüt m²", "de": "Bruttofläche", "fr": "Surface Brute"}),
                 ("m2_net", "number", "m²", {"en": "Net Area", "tr": "Net m²", "de": "Nettofläche", "fr": "Surface Nette"}),
@@ -151,31 +151,18 @@ async def seed_v2(allow_prod=False, dry_run=False):
             if not dry_run:
                 logger.info("Linking Attributes to Categories...")
                 
-                # Fetch categories to debug slug matching
                 res = await session.execute(select(Category))
                 all_cats = res.scalars().all()
                 
                 async def link(cat_slug, attr_keys):
                     target_cat = None
-                    # Loose matching: check English slug
                     for c in all_cats:
-                        # Handle both dict slug and legacy string slug
                         slug_val = c.slug.get('en') if isinstance(c.slug, dict) else c.slug
                         
-                        # Match variants (real-estate vs real_estate)
-                        if slug_val == cat_slug or \
-                           slug_val == cat_slug.replace("-", "_") or \
-                           slug_val == cat_slug.replace("_", "-"):
+                        # Match variants based on inspect_categories.py output
+                        if slug_val == cat_slug:
                             target_cat = c
                             break
-                    
-                    if not target_cat:
-                        # Fallback: Try matching module name if slug fails (for root)
-                        if cat_slug == "real-estate":
-                             for c in all_cats:
-                                 if c.module == "real_estate" and c.parent_id is None:
-                                     target_cat = c
-                                     break
                     
                     if not target_cat:
                         logger.warning(f"⚠️ Category not found: {cat_slug}")
@@ -194,7 +181,7 @@ async def seed_v2(allow_prod=False, dry_run=False):
                             )
                             session.add(mapping)
                             count += 1
-                    logger.info(f"🔗 Linked {count} attributes to {target_cat.slug.get('en', 'cat')}")
+                    logger.info(f"🔗 Linked {count} attributes to {target_cat.slug.get('en')}")
                 
                 # Links
                 global_keys = [x[0] for x in global_attrs]
@@ -202,14 +189,9 @@ async def seed_v2(allow_prod=False, dry_run=False):
                 comm_keys = [x[0] for x in comm_attrs]
 
                 # Root Modules
-                # The slug in seed_production_data.py was "real-estate"
+                # Slug from DB inspection: "real-estate", "housing", "commercial"
                 await link("real-estate", global_keys) 
-                
-                # Sub categories
-                # housing -> slug "housing"
                 await link("housing", res_keys)       
-                
-                # commercial -> slug "commercial"
                 await link("commercial", comm_keys)   
 
             if not dry_run:
