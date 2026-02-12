@@ -297,9 +297,9 @@ class StripeService:
         raise HTTPException(status_code=400, detail="Invalid signature")
 
     # Idempotency
-    existing = await self.db.execute(select(StripeEvent).where(StripeEvent.event_id == event.id))
-    if existing.scalar_one_or_none():
-        return {"status": "already_processed"}
+existing = await self.db.execute(select(StripeEvent).where(StripeEvent.event_id == event.id))
+if existing.scalar_one_or_none():
+    return {"status": "already_processed"}
     
     # Log Event
     log = StripeEvent(
