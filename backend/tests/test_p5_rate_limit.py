@@ -47,7 +47,9 @@ async def test_rate_limit_ip_based(clean_rate_limit_store):
         res = await client.post("/api/auth/login", json={"email": "a@b.com", "password": "p"})
         assert res.status_code == 429
         data = res.json()
-        assert data["code"] == "rate_limit_exceeded"
+        # FastAPI wraps exception detail in "detail" key
+        error_info = data["detail"]
+        assert error_info["code"] == "rate_limit_exceeded"
         assert "Retry-After" in res.headers
 
 @pytest.mark.asyncio
@@ -56,7 +58,7 @@ async def test_rate_limit_token_based(clean_rate_limit_store, client_with_user):
     # Mocking higher load is slow.
     # We can patch the Limit value in the instance?
     
-    from app.backend.app.routers.commercial_routes import limiter_listing_create
+    from app.routers.commercial_routes import limiter_listing_create
     original_limit = limiter_listing_create.limit
     limiter_listing_create.limit = 2 # Set low limit
     
