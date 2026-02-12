@@ -191,6 +191,33 @@ class StripeService:
             invoice_id=invoice.id,
             stripe_refund_id=stripe_refund.id,
             amount=refund_amount,
+            currency=invoice.currency,
+            reason=reason,
+            status=stripe_refund.status,
+            created_by_admin_id=uuid.UUID(admin_id)
+        )
+        self.db.add(refund_record)
+        
+        # We do NOT update invoice total here to avoid double counting with webhook. 
+        # But for UX, if status is succeeded, we COULD. 
+        # However, requirement says "Webhook idempotent... Aynı event ikinci kez tutar artırmamalı".
+        # Safe approach: Rely on Webhook for Invoice update OR update here and make webhook check if already applied.
+        # Let's update here IF successful to reflect immediately in UI, and handle idempotency in webhook.
+        
+        if stripe_refund.status == "succeeded":
+            invoice.refunded_total = (invoice.refunded_total or 0) + refund_amount
+            if invoice.refunded_total >= invoice.gross_total:
+                invoice.status = "refunded"
+                invoice.refund_status = "full"
+            else:
+                invoice.status = "partially_refunded"
+                invoice.refund_status = "partial"
+            invoice.last_refund_at = datetime.now(timezone.utc)
+            invoice.refunded_at = datetime.now(timezone.utc) # Set last/main refunded date
+
+        await self.db.commit()
+        return {"id": str(refund_record.id), "status": refund_record.status}
+
     async def _activate_subscription_if_needed(self, invoice: Invoice):
         """Checks if invoice contains a dealer package and activates subscription"""
         # We need to load items if not loaded. Assuming lazy="selectin" on Invoice model helps.
