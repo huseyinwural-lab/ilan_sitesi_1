@@ -101,3 +101,34 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Implement Phase T2 Advanced Pricing Engine with strict waterfall logic and DB constraints."
+backend:
+  - task: "Implement Pricing Service (T2)"
+    implemented: true
+    working: true
+    file: "app/services/pricing_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Implemented Waterfall logic (Free->Sub->Overage), Idempotency, Concurrency, and Invoice Snapshots. Unit tests pass."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Implement Pricing Service (T2)"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+      message: "Implemented T2 Pricing Service. Please verify using unit tests in /app/backend/tests/test_p5_pricing.py. Strict DB constraints are active."
