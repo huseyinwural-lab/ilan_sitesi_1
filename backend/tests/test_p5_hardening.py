@@ -60,7 +60,7 @@ async def test_quota_concurrency_stress(local_client):
         await session.flush()
         
         # Subscription (Quota = 10)
-        sub = DealerSubscription(dealer_id=dealer.id, package_id=pkg.id, invoice_id=inv.id, start_at=datetime.now(timezone.utc), end_at=datetime.now(timezone.utc)+timedelta(days=30), status="active", remaining_listing_quota=10)
+        sub = DealerSubscription(dealer_id=dealer.id, package_id=pkg.id, invoice_id=inv.id, start_at=datetime.now(timezone.utc), end_at=datetime.now(timezone.utc)+timedelta(days=30), status="active", included_listing_quota=10, used_listing_quota=0)
         session.add(sub)
         await session.commit()
         dealer_id = str(dealer.id)
