@@ -30,6 +30,9 @@ export default function Layout({ children }) {
     { path: '/users', icon: Users, label: 'users', roles: ['super_admin', 'country_admin'] },
     { path: '/countries', icon: Globe, label: 'countries' },
     { path: '/feature-flags', icon: Flag, label: 'feature_flags' },
+    { path: '/categories', icon: FolderTree, label: 'Categories', roles: ['super_admin', 'country_admin'] },
+    { path: '/attributes', icon: Settings2, label: 'Attributes', roles: ['super_admin'] },
+    { path: '/menu', icon: MenuSquare, label: 'Menu', roles: ['super_admin'] },
     { path: '/audit-logs', icon: Clock, label: 'audit_logs', roles: ['super_admin', 'country_admin', 'finance'] },
   ];
 
