@@ -36,6 +36,14 @@ class StripeService:
         if invoice.status != "draft":
             raise HTTPException(status_code=400, detail="Invoice is not in draft status")
 
+        # P2-OPS-03: Currency Enforcement
+        # Check if invoice currency matches country requirements
+        # DE/FR/AT => EUR
+        # CH => CHF
+        required_currency = "CHF" if invoice.country == "CH" else "EUR"
+        if invoice.currency != required_currency:
+             raise HTTPException(status_code=400, detail=f"Invalid currency for {invoice.country}. Expected {required_currency}, got {invoice.currency}")
+
         # 2. Get Config
         config = await self.get_config(invoice.country)
         if not config or not config["api_key"]:
