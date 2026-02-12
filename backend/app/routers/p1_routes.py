@@ -366,7 +366,7 @@ async def create_listing_promotion(data: ListingPromotionCreate, db, current_use
     # Check for overlap
     overlap_result = await db.execute(select(ListingPromotion).where(
         and_(
-            ListingPromotion.listing_id == uuid.UUID(data.listing_id),
+            ListingPromotion.listing_id == str(data.listing_id),
             ListingPromotion.is_active == True,
             or_(
                 and_(ListingPromotion.start_at <= data.start_at, ListingPromotion.end_at >= data.start_at),
@@ -378,7 +378,7 @@ async def create_listing_promotion(data: ListingPromotionCreate, db, current_use
         raise HTTPException(status_code=400, detail="Active promotion already exists for this period")
 
     promotion = ListingPromotion(
-        listing_id=uuid.UUID(data.listing_id),
+        listing_id=str(data.listing_id),
         product_id=uuid.UUID(data.product_id),
         start_at=data.start_at,
         end_at=data.end_at,
@@ -709,6 +709,7 @@ class InvoiceCreate(BaseModel):
     customer_type: str  # 'B2C' or 'B2B'
     customer_name: str
     customer_email: str
+    customer_ref_id: Optional[str] = None
     items: List[dict]
 
 async def create_invoice(data: InvoiceCreate, db, current_user):
@@ -740,11 +741,15 @@ async def create_invoice(data: InvoiceCreate, db, current_user):
     vat = vat_result.scalars().first()
     tax_rate = vat.rate if vat else Decimal(0)
     
+    # Generate customer_ref_id if missing (e.g. guest)
+    customer_id = uuid.UUID(data.customer_ref_id) if data.customer_ref_id else uuid.uuid4()
+    
     invoice = Invoice(
         invoice_no=invoice_no,
         country=data.country,
         currency="EUR",
         customer_type=data.customer_type,
+        customer_ref_id=customer_id,
         customer_name=data.customer_name,
         customer_email=data.customer_email,
         status="issued",
