@@ -428,6 +428,54 @@ async def seed_default_data(db: AsyncSession):
                     highlight_quota=prem # Same for now
                 ))
 
+    
+    # P5: Pricing Engine Seeds (T2B)
+    from app.models.pricing import PriceConfig, FreeQuotaConfig, CountryCurrencyMap
+    
+    # Currency Map
+    for country, currency in [("DE", "EUR"), ("CH", "CHF"), ("FR", "EUR"), ("AT", "EUR")]:
+        exists = await db.execute(select(CountryCurrencyMap).where(CountryCurrencyMap.country == country))
+        if not exists.scalar_one_or_none():
+            db.add(CountryCurrencyMap(country=country, currency=currency))
+            
+    # Price Configs (DE example)
+    prices = [
+        ("DE", "dealer", "pay_per_listing", 5.00, "EUR"),
+        ("DE", "individual", "pay_per_listing", 2.00, "EUR"),
+        ("CH", "dealer", "pay_per_listing", 8.00, "CHF"),
+    ]
+    for country, segment, ptype, price, curr in prices:
+        exists = await db.execute(select(PriceConfig).where(and_(
+            PriceConfig.country == country,
+            PriceConfig.segment == segment,
+            PriceConfig.pricing_type == ptype,
+            PriceConfig.is_active == True
+        )))
+        if not exists.scalar_one_or_none():
+            db.add(PriceConfig(
+                country=country,
+                segment=segment,
+                pricing_type=ptype,
+                unit_price_net=Decimal(str(price)),
+                currency=curr,
+                valid_from=datetime.now(timezone.utc)
+            ))
+            
+    # Free Quota (DE Dealer)
+    exists = await db.execute(select(FreeQuotaConfig).where(and_(
+        FreeQuotaConfig.country == "DE",
+        FreeQuotaConfig.segment == "dealer",
+        FreeQuotaConfig.is_active == True
+    )))
+    if not exists.scalar_one_or_none():
+        db.add(FreeQuotaConfig(
+            country="DE",
+            segment="dealer",
+            quota_amount=10,
+            period_days=30,
+            quota_scope="listing_only"
+        ))
+
 
     logger.info("Default data seeded")
 
