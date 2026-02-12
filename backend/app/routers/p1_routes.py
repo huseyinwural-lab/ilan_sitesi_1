@@ -1,12 +1,12 @@
 """
-P1 API Routes: Dealer, Premium, Moderation, Billing
+P1 API Functions: Dealer, Premium, Moderation, Billing
+These are called from server.py with proper dependency injection
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, desc
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from decimal import Decimal
 import uuid
 
@@ -16,25 +16,10 @@ from app.models.moderation import Listing, ModerationAction, ModerationRule
 from app.models.billing import VatRate, Invoice, InvoiceItem
 from app.models.core import AuditLog
 
-router = APIRouter()
-
 # ==================== PYDANTIC MODELS ====================
 
-# Dealer
-class DealerApplicationCreate(BaseModel):
-    country: str
-    dealer_type: str
-    company_name: str
-    vat_tax_no: Optional[str] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    website: Optional[str] = None
-    contact_name: str
-    contact_email: str
-    contact_phone: Optional[str] = None
-
 class DealerApplicationReview(BaseModel):
-    action: str  # approve, reject
+    action: str
     reject_reason: Optional[str] = None
 
 class DealerUpdate(BaseModel):
@@ -43,7 +28,6 @@ class DealerUpdate(BaseModel):
     listing_limit: Optional[int] = None
     premium_limit: Optional[int] = None
 
-# Premium
 class PremiumProductCreate(BaseModel):
     key: str
     name: Dict[str, str]
@@ -73,9 +57,8 @@ class RankingRuleUpdate(BaseModel):
     weight_recency: Optional[int] = None
     is_active: Optional[bool] = None
 
-# Moderation
 class ModerationActionCreate(BaseModel):
-    action_type: str  # approve, reject, suspend
+    action_type: str
     reason: Optional[str] = None
     note: Optional[str] = None
 
@@ -91,7 +74,6 @@ class ModerationRuleUpdate(BaseModel):
     auto_approve_dealers: Optional[bool] = None
     is_active: Optional[bool] = None
 
-# Billing
 class VatRateCreate(BaseModel):
     country: str
     rate: float
@@ -105,30 +87,20 @@ class VatRateUpdate(BaseModel):
     valid_to: Optional[datetime] = None
     is_active: Optional[bool] = None
 
-# ==================== HELPER FUNCTIONS ====================
+# ==================== HELPER ====================
 
-async def log_action(db: AsyncSession, action: str, resource_type: str, resource_id: Optional[str] = None,
-                    user_id: Optional[uuid.UUID] = None, user_email: Optional[str] = None,
-                    old_values: Optional[dict] = None, new_values: Optional[dict] = None,
-                    country_scope: Optional[str] = None):
+async def log_action(db, action, resource_type, resource_id=None, user_id=None, user_email=None,
+                    old_values=None, new_values=None, country_scope=None):
     audit = AuditLog(action=action, resource_type=resource_type, resource_id=resource_id,
                      user_id=user_id, user_email=user_email, old_values=old_values,
                      new_values=new_values, country_scope=country_scope)
     db.add(audit)
     await db.commit()
 
-# ==================== DEALER ROUTES ====================
+# ==================== DEALER FUNCTIONS ====================
 
-@router.get("/dealer-applications")
-async def get_dealer_applications(
-    country: Optional[str] = None,
-    dealer_type: Optional[str] = None,
-    status: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 50,
-    db: AsyncSession = None,
-    current_user = None
-):
+async def get_dealer_applications(country, dealer_type, status, skip, limit, db, current_user):
+    from fastapi import HTTPException
     query = select(DealerApplication)
     if country:
         query = query.where(DealerApplication.country == country.upper())
@@ -152,8 +124,8 @@ async def get_dealer_applications(
         "created_at": a.created_at.isoformat() if a.created_at else None
     } for a in apps]
 
-@router.get("/dealer-applications/{app_id}")
-async def get_dealer_application(app_id: str, db: AsyncSession = None, current_user = None):
+async def get_dealer_application(app_id, db, current_user):
+    from fastapi import HTTPException
     result = await db.execute(select(DealerApplication).where(DealerApplication.id == uuid.UUID(app_id)))
     app = result.scalar_one_or_none()
     if not app:
@@ -177,8 +149,8 @@ async def get_dealer_application(app_id: str, db: AsyncSession = None, current_u
         "created_at": app.created_at.isoformat() if app.created_at else None
     }
 
-@router.post("/dealer-applications/{app_id}/review")
-async def review_dealer_application(app_id: str, review: DealerApplicationReview, db: AsyncSession = None, current_user = None):
+async def review_dealer_application(app_id, review: DealerApplicationReview, db, current_user):
+    from fastapi import HTTPException
     result = await db.execute(select(DealerApplication).where(DealerApplication.id == uuid.UUID(app_id)))
     app = result.scalar_one_or_none()
     if not app:
@@ -195,7 +167,6 @@ async def review_dealer_application(app_id: str, review: DealerApplicationReview
         app.reviewed_by_id = current_user.id
         app.reviewed_at = datetime.now(timezone.utc)
         
-        # Create Dealer entity
         dealer = Dealer(
             application_id=app.id,
             country=app.country,
@@ -219,15 +190,7 @@ async def review_dealer_application(app_id: str, review: DealerApplicationReview
     
     return {"message": f"Application {review.action}d", "status": app.status}
 
-@router.get("/dealers")
-async def get_dealers(
-    country: Optional[str] = None,
-    is_active: Optional[bool] = None,
-    skip: int = 0,
-    limit: int = 50,
-    db: AsyncSession = None,
-    current_user = None
-):
+async def get_dealers(country, is_active, skip, limit, db, current_user):
     query = select(Dealer)
     if country:
         query = query.where(Dealer.country == country.upper())
@@ -250,8 +213,8 @@ async def get_dealers(
         "created_at": d.created_at.isoformat() if d.created_at else None
     } for d in dealers]
 
-@router.patch("/dealers/{dealer_id}")
-async def update_dealer(dealer_id: str, data: DealerUpdate, db: AsyncSession = None, current_user = None):
+async def update_dealer(dealer_id, data: DealerUpdate, db, current_user):
+    from fastapi import HTTPException
     result = await db.execute(select(Dealer).where(Dealer.id == uuid.UUID(dealer_id)))
     dealer = result.scalar_one_or_none()
     if not dealer:
@@ -269,15 +232,9 @@ async def update_dealer(dealer_id: str, data: DealerUpdate, db: AsyncSession = N
     
     return {"id": str(dealer.id), "is_active": dealer.is_active, "can_publish": dealer.can_publish}
 
-# ==================== PREMIUM ROUTES ====================
+# ==================== PREMIUM FUNCTIONS ====================
 
-@router.get("/premium-products")
-async def get_premium_products(
-    country: Optional[str] = None,
-    is_active: Optional[bool] = None,
-    db: AsyncSession = None,
-    current_user = None
-):
+async def get_premium_products(country, is_active, db, current_user):
     query = select(PremiumProduct)
     if country:
         query = query.where(PremiumProduct.country == country.upper())
@@ -301,15 +258,13 @@ async def get_premium_products(
         "is_active": p.is_active
     } for p in products]
 
-@router.post("/premium-products", status_code=201)
-async def create_premium_product(data: PremiumProductCreate, db: AsyncSession = None, current_user = None):
-    # Enforce CH = CHF
+async def create_premium_product(data: PremiumProductCreate, db, current_user):
+    from fastapi import HTTPException
     if data.country.upper() == "CH" and data.currency != "CHF":
         raise HTTPException(status_code=400, detail="Switzerland requires CHF currency")
     if data.country.upper() in ["DE", "FR", "AT"] and data.currency != "EUR":
         raise HTTPException(status_code=400, detail="This country requires EUR currency")
     
-    # Check unique key per country
     result = await db.execute(select(PremiumProduct).where(
         and_(PremiumProduct.country == data.country.upper(), PremiumProduct.key == data.key)
     ))
@@ -336,8 +291,8 @@ async def create_premium_product(data: PremiumProductCreate, db: AsyncSession = 
     
     return {"id": str(product.id), "key": product.key}
 
-@router.patch("/premium-products/{product_id}")
-async def update_premium_product(product_id: str, data: PremiumProductUpdate, db: AsyncSession = None, current_user = None):
+async def update_premium_product(product_id, data: PremiumProductUpdate, db, current_user):
+    from fastapi import HTTPException
     result = await db.execute(select(PremiumProduct).where(PremiumProduct.id == uuid.UUID(product_id)))
     product = result.scalar_one_or_none()
     if not product:
@@ -357,88 +312,7 @@ async def update_premium_product(product_id: str, data: PremiumProductUpdate, db
     
     return {"id": str(product.id), "is_active": product.is_active}
 
-@router.get("/listing-promotions")
-async def get_listing_promotions(
-    listing_id: Optional[str] = None,
-    is_active: Optional[bool] = None,
-    skip: int = 0,
-    limit: int = 50,
-    db: AsyncSession = None,
-    current_user = None
-):
-    query = select(ListingPromotion)
-    if listing_id:
-        query = query.where(ListingPromotion.listing_id == listing_id)
-    if is_active is not None:
-        query = query.where(ListingPromotion.is_active == is_active)
-    
-    query = query.order_by(desc(ListingPromotion.created_at)).offset(skip).limit(limit)
-    result = await db.execute(query)
-    promos = result.scalars().all()
-    
-    return [{
-        "id": str(p.id),
-        "listing_id": p.listing_id,
-        "product_id": str(p.product_id),
-        "start_at": p.start_at.isoformat() if p.start_at else None,
-        "end_at": p.end_at.isoformat() if p.end_at else None,
-        "priority_score": p.priority_score,
-        "is_active": p.is_active
-    } for p in promos]
-
-@router.post("/listing-promotions", status_code=201)
-async def create_listing_promotion(data: ListingPromotionCreate, db: AsyncSession = None, current_user = None):
-    # Check for overlapping promotions
-    result = await db.execute(select(ListingPromotion).where(
-        and_(
-            ListingPromotion.listing_id == data.listing_id,
-            ListingPromotion.product_id == uuid.UUID(data.product_id),
-            ListingPromotion.is_active == True,
-            or_(
-                and_(ListingPromotion.start_at <= data.start_at, ListingPromotion.end_at >= data.start_at),
-                and_(ListingPromotion.start_at <= data.end_at, ListingPromotion.end_at >= data.end_at)
-            )
-        )
-    ))
-    if result.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Overlapping promotion exists for this listing and product")
-    
-    promo = ListingPromotion(
-        listing_id=data.listing_id,
-        product_id=uuid.UUID(data.product_id),
-        start_at=data.start_at,
-        end_at=data.end_at,
-        priority_score=data.priority_score,
-        created_by_admin_id=current_user.id
-    )
-    db.add(promo)
-    await db.commit()
-    await db.refresh(promo)
-    
-    await log_action(db, "CREATE", "listing_promotion", str(promo.id),
-                    user_id=current_user.id, user_email=current_user.email,
-                    new_values={"listing_id": promo.listing_id})
-    
-    return {"id": str(promo.id)}
-
-@router.post("/listing-promotions/{promo_id}/deactivate")
-async def deactivate_promotion(promo_id: str, db: AsyncSession = None, current_user = None):
-    result = await db.execute(select(ListingPromotion).where(ListingPromotion.id == uuid.UUID(promo_id)))
-    promo = result.scalar_one_or_none()
-    if not promo:
-        raise HTTPException(status_code=404, detail="Promotion not found")
-    
-    promo.is_active = False
-    promo.end_at = datetime.now(timezone.utc)
-    await db.commit()
-    
-    await log_action(db, "DEACTIVATE", "listing_promotion", promo_id,
-                    user_id=current_user.id, user_email=current_user.email)
-    
-    return {"message": "Promotion deactivated"}
-
-@router.get("/premium-ranking-rules")
-async def get_ranking_rules(db: AsyncSession = None, current_user = None):
+async def get_ranking_rules(db, current_user):
     result = await db.execute(select(PremiumRankingRule).order_by(PremiumRankingRule.country))
     rules = result.scalars().all()
     
@@ -452,13 +326,11 @@ async def get_ranking_rules(db: AsyncSession = None, current_user = None):
         "version": r.version
     } for r in rules]
 
-@router.patch("/premium-ranking-rules/{country}")
-async def update_ranking_rule(country: str, data: RankingRuleUpdate, db: AsyncSession = None, current_user = None):
+async def update_ranking_rule(country, data: RankingRuleUpdate, db, current_user):
     result = await db.execute(select(PremiumRankingRule).where(PremiumRankingRule.country == country.upper()))
     rule = result.scalar_one_or_none()
     
     if not rule:
-        # Create if not exists
         rule = PremiumRankingRule(country=country.upper())
         db.add(rule)
     
@@ -476,20 +348,9 @@ async def update_ranking_rule(country: str, data: RankingRuleUpdate, db: AsyncSe
     
     return {"country": rule.country, "version": rule.version}
 
-# ==================== MODERATION ROUTES ====================
+# ==================== MODERATION FUNCTIONS ====================
 
-@router.get("/moderation/queue")
-async def get_moderation_queue(
-    country: Optional[str] = None,
-    module: Optional[str] = None,
-    status: str = "pending",
-    is_dealer: Optional[bool] = None,
-    is_premium: Optional[bool] = None,
-    skip: int = 0,
-    limit: int = 50,
-    db: AsyncSession = None,
-    current_user = None
-):
+async def get_moderation_queue(country, module, status, is_dealer, is_premium, skip, limit, db, current_user):
     query = select(Listing).where(Listing.status == status)
     
     if country:
@@ -520,12 +381,7 @@ async def get_moderation_queue(
         "created_at": l.created_at.isoformat() if l.created_at else None
     } for l in listings]
 
-@router.get("/moderation/queue/count")
-async def get_moderation_queue_count(
-    country: Optional[str] = None,
-    db: AsyncSession = None,
-    current_user = None
-):
+async def get_moderation_queue_count(country, db, current_user):
     query = select(func.count(Listing.id)).where(Listing.status == "pending")
     if country:
         query = query.where(Listing.country == country.upper())
@@ -533,14 +389,13 @@ async def get_moderation_queue_count(
     result = await db.execute(query)
     return {"count": result.scalar()}
 
-@router.get("/moderation/listings/{listing_id}")
-async def get_listing_detail(listing_id: str, db: AsyncSession = None, current_user = None):
+async def get_listing_detail(listing_id, db, current_user):
+    from fastapi import HTTPException
     result = await db.execute(select(Listing).where(Listing.id == uuid.UUID(listing_id)))
     listing = result.scalar_one_or_none()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
     
-    # Get moderation history
     actions_result = await db.execute(
         select(ModerationAction)
         .where(ModerationAction.listing_id == listing.id)
@@ -576,20 +431,18 @@ async def get_listing_detail(listing_id: str, db: AsyncSession = None, current_u
         } for a in actions]
     }
 
-@router.post("/moderation/listings/{listing_id}/action")
-async def moderate_listing(listing_id: str, action: ModerationActionCreate, db: AsyncSession = None, current_user = None):
+async def moderate_listing(listing_id, action: ModerationActionCreate, db, current_user):
+    from fastapi import HTTPException
     result = await db.execute(select(Listing).where(Listing.id == uuid.UUID(listing_id)))
     listing = result.scalar_one_or_none()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
     
-    # Validate reject requires reason
     if action.action_type == "reject" and not action.reason:
         raise HTTPException(status_code=400, detail="Reject reason is required")
     
     old_status = listing.status
     
-    # Update listing status
     if action.action_type == "approve":
         listing.status = "active"
         listing.published_at = datetime.now(timezone.utc)
@@ -600,7 +453,6 @@ async def moderate_listing(listing_id: str, action: ModerationActionCreate, db: 
     
     listing.updated_at = datetime.now(timezone.utc)
     
-    # Create moderation action record
     mod_action = ModerationAction(
         listing_id=listing.id,
         action_type=action.action_type,
@@ -619,8 +471,7 @@ async def moderate_listing(listing_id: str, action: ModerationActionCreate, db: 
     
     return {"message": f"Listing {action.action_type}d", "status": listing.status}
 
-@router.get("/moderation/rules")
-async def get_moderation_rules(db: AsyncSession = None, current_user = None):
+async def get_moderation_rules(db, current_user):
     result = await db.execute(select(ModerationRule).order_by(ModerationRule.country))
     rules = result.scalars().all()
     
@@ -639,8 +490,7 @@ async def get_moderation_rules(db: AsyncSession = None, current_user = None):
         "is_active": r.is_active
     } for r in rules]
 
-@router.patch("/moderation/rules/{country}")
-async def update_moderation_rule(country: str, data: ModerationRuleUpdate, db: AsyncSession = None, current_user = None):
+async def update_moderation_rule(country, data: ModerationRuleUpdate, db, current_user):
     result = await db.execute(select(ModerationRule).where(ModerationRule.country == country.upper()))
     rule = result.scalar_one_or_none()
     
@@ -659,10 +509,9 @@ async def update_moderation_rule(country: str, data: ModerationRuleUpdate, db: A
     
     return {"country": rule.country, "is_active": rule.is_active}
 
-# ==================== BILLING ROUTES ====================
+# ==================== BILLING FUNCTIONS ====================
 
-@router.get("/vat-rates")
-async def get_vat_rates(country: Optional[str] = None, is_active: Optional[bool] = None, db: AsyncSession = None, current_user = None):
+async def get_vat_rates(country, is_active, db, current_user):
     query = select(VatRate)
     if country:
         query = query.where(VatRate.country == country.upper())
@@ -684,9 +533,8 @@ async def get_vat_rates(country: Optional[str] = None, is_active: Optional[bool]
         "is_active": r.is_active
     } for r in rates]
 
-@router.post("/vat-rates", status_code=201)
-async def create_vat_rate(data: VatRateCreate, db: AsyncSession = None, current_user = None):
-    # Check for overlapping rates
+async def create_vat_rate(data: VatRateCreate, db, current_user):
+    from fastapi import HTTPException
     result = await db.execute(select(VatRate).where(
         and_(
             VatRate.country == data.country.upper(),
@@ -720,8 +568,8 @@ async def create_vat_rate(data: VatRateCreate, db: AsyncSession = None, current_
     
     return {"id": str(rate.id), "country": rate.country, "rate": float(rate.rate)}
 
-@router.patch("/vat-rates/{rate_id}")
-async def update_vat_rate(rate_id: str, data: VatRateUpdate, db: AsyncSession = None, current_user = None):
+async def update_vat_rate(rate_id, data: VatRateUpdate, db, current_user):
+    from fastapi import HTTPException
     result = await db.execute(select(VatRate).where(VatRate.id == uuid.UUID(rate_id)))
     rate = result.scalar_one_or_none()
     if not rate:
@@ -741,16 +589,7 @@ async def update_vat_rate(rate_id: str, data: VatRateUpdate, db: AsyncSession = 
     
     return {"id": str(rate.id), "is_active": rate.is_active}
 
-@router.get("/invoices")
-async def get_invoices(
-    country: Optional[str] = None,
-    status: Optional[str] = None,
-    customer_type: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 50,
-    db: AsyncSession = None,
-    current_user = None
-):
+async def get_invoices(country, status, customer_type, skip, limit, db, current_user):
     query = select(Invoice)
     if country:
         query = query.where(Invoice.country == country.upper())
@@ -777,8 +616,8 @@ async def get_invoices(
         "issued_at": i.issued_at.isoformat() if i.issued_at else None
     } for i in invoices]
 
-@router.get("/invoices/{invoice_id}")
-async def get_invoice_detail(invoice_id: str, db: AsyncSession = None, current_user = None):
+async def get_invoice_detail(invoice_id, db, current_user):
+    from fastapi import HTTPException
     result = await db.execute(select(Invoice).where(Invoice.id == uuid.UUID(invoice_id)))
     invoice = result.scalar_one_or_none()
     if not invoice:
@@ -814,46 +653,4 @@ async def get_invoice_detail(invoice_id: str, db: AsyncSession = None, current_u
             "line_tax": float(item.line_tax),
             "line_gross": float(item.line_gross)
         } for item in invoice.items]
-    }
-
-@router.get("/invoices/export")
-async def export_invoices(
-    country: Optional[str] = None,
-    status: Optional[str] = None,
-    from_date: Optional[datetime] = None,
-    to_date: Optional[datetime] = None,
-    db: AsyncSession = None,
-    current_user = None
-):
-    query = select(Invoice)
-    if country:
-        query = query.where(Invoice.country == country.upper())
-    if status:
-        query = query.where(Invoice.status == status)
-    if from_date:
-        query = query.where(Invoice.issued_at >= from_date)
-    if to_date:
-        query = query.where(Invoice.issued_at <= to_date)
-    
-    query = query.order_by(Invoice.issued_at)
-    result = await db.execute(query)
-    invoices = result.scalars().all()
-    
-    # Return JSON export (CSV/PDF in V2)
-    return {
-        "export_type": "json",
-        "count": len(invoices),
-        "data": [{
-            "invoice_no": i.invoice_no,
-            "country": i.country,
-            "currency": i.currency,
-            "customer_name": i.customer_name,
-            "customer_vat_no": i.customer_vat_no,
-            "status": i.status,
-            "net_total": float(i.net_total),
-            "tax_total": float(i.tax_total),
-            "gross_total": float(i.gross_total),
-            "tax_rate": float(i.tax_rate_snapshot),
-            "issued_at": i.issued_at.isoformat() if i.issued_at else None
-        } for i in invoices]
     }
