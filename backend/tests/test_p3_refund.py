@@ -105,7 +105,7 @@ async def test_full_refund_flow(local_client):
                 res = await client.get(f"/api/invoices/{invoice_id}")
                 invoice = res.json()
                 assert invoice["status"] == "refunded"
-                assert invoice["net_total"] == 119.0 # Refunded amount logic: Wait, net_total is gross here? 
+                assert invoice["refunded_total"] == 119.0 
                 # Invoice serialized 'net_total' is line net sum. 'gross_total' is what matters.
                 # 'refunded_total' is new field.
                 # But our serializer doesn't return 'refunded_total' yet in p1_routes.get_invoice_detail?
