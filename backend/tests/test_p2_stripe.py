@@ -95,6 +95,7 @@ async def test_stripe_webhook_processing(local_client):
                 mock_session.client_reference_id = invoice_id
                 mock_session.id = "cs_test_completed"
                 mock_session.payment_intent = "pi_test_123"
+                mock_session.metadata = {"invoice_id": invoice_id} # Explicitly set metadata dict
                 
                 mock_event.data.object = mock_session
                 mock_construct.return_value = mock_event
