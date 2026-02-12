@@ -285,29 +285,29 @@ class StripeService:
         webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
         if not webhook_secret:
             raise HTTPException(status_code=500, detail="Webhook secret not configured")
-    
-            try:
-                event = stripe.Webhook.construct_event(
-                    payload, sig_header, webhook_secret
-                )
-            except ValueError:
-                raise HTTPException(status_code=400, detail="Invalid payload")
-    
-            except stripe.error.SignatureVerificationError:
-                raise HTTPException(status_code=400, detail="Invalid signature")
-    
-            # Idempotency
-            existing = await self.db.execute(select(StripeEvent).where(StripeEvent.event_id == event.id))
-            if existing.scalar_one_or_none():
-                return {"status": "already_processed"}
-    
-            # Log Event
-            log = StripeEvent(
-                event_id=event.id,
-                event_type=event.type,
-                status="processing"
+
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, webhook_secret
             )
-            self.db.add(log)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid payload")
+
+        except stripe.error.SignatureVerificationError:
+            raise HTTPException(status_code=400, detail="Invalid signature")
+
+        # Idempotency
+        existing = await self.db.execute(select(StripeEvent).where(StripeEvent.event_id == event.id))
+        if existing.scalar_one_or_none():
+            return {"status": "already_processed"}
+
+        # Log Event
+        log = StripeEvent(
+            event_id=event.id,
+            event_type=event.type,
+            status="processing"
+        )
+        self.db.add(log)
         await self.db.commit()
 
         # Process
