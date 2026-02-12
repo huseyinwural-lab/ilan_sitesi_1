@@ -71,6 +71,20 @@ export default function Invoices() {
     }
   };
 
+  const handlePay = async (invoiceId) => {
+    try {
+      const response = await axios.post(`${API}/payments/invoices/${invoiceId}/checkout`, {
+        success_url: window.location.origin + "/invoices",
+        cancel_url: window.location.origin + "/invoices"
+      });
+      if (response.data.checkout_url) {
+        window.location.href = response.data.checkout_url;
+      }
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Payment initiation failed');
+    }
+  };
+
   const viewInvoice = async (id) => {
     try {
       const response = await axios.get(`${API}/invoices/${id}`);
