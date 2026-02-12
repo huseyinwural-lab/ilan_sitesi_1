@@ -460,8 +460,14 @@ async def root():
     return {"message": "Admin Panel API", "version": "1.0.0", "status": "healthy", "database": "PostgreSQL"}
 
 @api_router.get("/health")
-async def health_check():
-    return {"status": "healthy", "supported_countries": SUPPORTED_COUNTRIES, "supported_languages": SUPPORTED_LANGUAGES, "database": "PostgreSQL"}
+async def health_check(db: AsyncSession = Depends(get_db)):
+    try:
+        # P6-005: Real DB Ping
+        await db.execute(select(1))
+        return {"status": "healthy", "supported_countries": SUPPORTED_COUNTRIES, "database": "connected"}
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        raise HTTPException(status_code=503, detail="Database unavailable")
 
 # ==================== AUTH ROUTES ====================
 @api_router.post("/auth/register", response_model=UserResponse, status_code=201)
