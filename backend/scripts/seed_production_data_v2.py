@@ -29,9 +29,7 @@ async def seed_v2(allow_prod=False, dry_run=False):
 
     async with AsyncSessionLocal() as session:
         try:
-            # === DEFINITIONS ===
-            
-            # 1. GLOBAL ATTRIBUTES
+            # === DEFINITIONS (Same as before) ===
             global_attrs = [
                 ("m2_gross", "number", "m²", {"en": "Gross Area", "tr": "Brüt m²", "de": "Bruttofläche", "fr": "Surface Brute"}),
                 ("m2_net", "number", "m²", {"en": "Net Area", "tr": "Net m²", "de": "Nettofläche", "fr": "Surface Nette"}),
@@ -42,7 +40,6 @@ async def seed_v2(allow_prod=False, dry_run=False):
                 ("dues", "number", "EUR", {"en": "Dues", "tr": "Aidat", "de": "Hausgeld", "fr": "Charges"}),
             ]
 
-            # 2. RESIDENTIAL ATTRIBUTES
             res_attrs = [
                 ("room_count", "select", None, {"en": "Rooms", "tr": "Oda Sayısı", "de": "Zimmer", "fr": "Pièces"}),
                 ("floor_location", "select", None, {"en": "Floor", "tr": "Bulunduğu Kat", "de": "Etage", "fr": "Étage"}),
@@ -52,7 +49,6 @@ async def seed_v2(allow_prod=False, dry_run=False):
                 ("in_complex", "boolean", None, {"en": "In Complex", "tr": "Site İçerisinde", "de": "In Wohnanlage", "fr": "Dans résidence"}),
             ]
 
-            # 3. COMMERCIAL ATTRIBUTES
             comm_attrs = [
                 ("ceiling_height", "number", "m", {"en": "Ceiling Height", "tr": "Tavan Yüksekliği", "de": "Deckenhöhe", "fr": "Hauteur plafond"}),
                 ("entrance_height", "number", "m", {"en": "Entrance Height", "tr": "Giriş Yüksekliği", "de": "Einfahrtshöhe", "fr": "Hauteur entrée"}),
@@ -62,7 +58,6 @@ async def seed_v2(allow_prod=False, dry_run=False):
                 ("ground_survey", "select", None, {"en": "Ground Survey", "tr": "Zemin Etüdü", "de": "Bodengutachten", "fr": "Étude de sol"}),
             ]
 
-            # 4. OPTIONS (Selects)
             options_map = {
                 "building_status": [
                     ("new", {"en": "New", "tr": "Sıfır", "de": "Neubau", "fr": "Neuf"}),
@@ -123,7 +118,7 @@ async def seed_v2(allow_prod=False, dry_run=False):
                         name=name,
                         is_active=True,
                         is_filterable=True,
-                        is_required=False # Will handle required via validation logic or category map
+                        is_required=False
                     )
                     session.add(attr)
                 
@@ -142,9 +137,7 @@ async def seed_v2(allow_prod=False, dry_run=False):
                     
                     # Options
                     if key in options_map:
-                        # Clear old options (Simplification for v2)
                         await session.execute(delete(AttributeOption).where(AttributeOption.attribute_id == attr.id))
-                        
                         for idx, (val, label) in enumerate(options_map[key]):
                             opt = AttributeOption(
                                 attribute_id=attr.id,
@@ -154,19 +147,21 @@ async def seed_v2(allow_prod=False, dry_run=False):
                             )
                             session.add(opt)
 
-            # === BINDING ===
+            # === BINDING FIX ===
             if not dry_run:
                 logger.info("Linking Attributes to Categories...")
                 
+                # Fetch categories to debug slug matching
+                res = await session.execute(select(Category))
+                all_cats = res.scalars().all()
+                # logger.info(f"Available Categories: {[c.slug.get('en') for c in all_cats]}")
+
                 async def link(cat_slug, attr_keys):
-                    # Find Category by English slug (assumption from v1 seed)
-                    # We query JSONB name or slug
-                    # For v2 speed, we scan. In prod, we use specific ID or index.
-                    res = await session.execute(select(Category))
-                    cats = res.scalars().all()
                     target_cat = None
-                    for c in cats:
-                        if c.slug.get('en') == cat_slug:
+                    # Loose matching for "real-estate" vs "real_estate"
+                    for c in all_cats:
+                        slug = c.slug.get('en')
+                        if slug == cat_slug or slug == cat_slug.replace("-", "_") or slug == cat_slug.replace("_", "-"):
                             target_cat = c
                             break
                     
@@ -177,6 +172,7 @@ async def seed_v2(allow_prod=False, dry_run=False):
                     # Delete old mappings
                     await session.execute(delete(CategoryAttributeMap).where(CategoryAttributeMap.category_id == target_cat.id))
                     
+                    count = 0
                     for key in attr_keys:
                         if key in attr_map:
                             mapping = CategoryAttributeMap(
@@ -185,13 +181,18 @@ async def seed_v2(allow_prod=False, dry_run=False):
                                 inherit_to_children=True
                             )
                             session.add(mapping)
+                            count += 1
+                    logger.info(f"🔗 Linked {count} attributes to {cat_slug}")
                 
                 # Links
                 global_keys = [x[0] for x in global_attrs]
                 res_keys = [x[0] for x in res_attrs]
                 comm_keys = [x[0] for x in comm_attrs]
 
-                # Root Modules
+                # Root Modules (Using correct slugs from seed_production_data.py)
+                # v1 seed used: "real-estate", "vehicles", "shopping", "services"
+                # v1 subcats: "housing", "commercial"
+                
                 await link("real-estate", global_keys) # Adds Global to Root
                 await link("housing", res_keys)       # Adds Res to Housing
                 await link("commercial", comm_keys)   # Adds Comm to Commercial
