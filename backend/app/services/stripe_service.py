@@ -273,6 +273,8 @@ class StripeService:
         return {"id": str(refund_record.id), "status": refund_record.status}
 
     async def handle_webhook(self, payload: bytes, sig_header: str):
+                        # P4: Check for Subscription Activation
+                        await self._activate_subscription_if_needed(invoice)
         # We need to know WHICH secret to use.
         # This is tricky because we don't know the country yet.
         # But usually we have one webhook endpoint per account.
@@ -335,8 +337,6 @@ class StripeService:
                 charge = event.data.object
                 payment_intent_id = charge.payment_intent
                 amount_refunded = Decimal(charge.amount_refunded) / 100
-                        # P4: Check for Subscription Activation
-                        await self._activate_subscription_if_needed(invoice)
                 
                 # Find Invoice
                 result = await self.db.execute(select(Invoice).where(Invoice.stripe_payment_intent_id == payment_intent_id))
