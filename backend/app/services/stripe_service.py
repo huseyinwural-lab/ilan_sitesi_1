@@ -259,15 +259,6 @@ class StripeService:
                     # It's in models/dealer.py, stripe_service is in services/. Should be fine.
                     pass
 
-            invoice.refunded_total = (invoice.refunded_total or 0) + refund_amount
-            if invoice.refunded_total >= invoice.gross_total:
-                invoice.status = "refunded"
-                invoice.refund_status = "full"
-            else:
-                invoice.status = "partially_refunded"
-                invoice.refund_status = "partial"
-            invoice.last_refund_at = datetime.now(timezone.utc)
-            invoice.refunded_at = datetime.now(timezone.utc) # Set last/main refunded date
 
         await self.db.commit()
         return {"id": str(refund_record.id), "status": refund_record.status}
