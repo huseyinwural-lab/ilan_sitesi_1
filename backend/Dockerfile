@@ -21,9 +21,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Copy start script and make executable
+# Copy scripts and make executable
 COPY start.sh .
-RUN chmod +x start.sh
+COPY migrate.sh .
+RUN chmod +x start.sh migrate.sh
 
 # Expose port (Render sets PORT env var)
 EXPOSE 10000
