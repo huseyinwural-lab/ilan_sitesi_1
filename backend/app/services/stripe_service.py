@@ -282,32 +282,32 @@ class StripeService:
         # For this MVP, we assume ONE global Stripe account (or we try all secrets).
         # Let's assume one env var STRIPE_WEBHOOK_SECRET for now.
         
-    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
-    if not webhook_secret:
-        raise HTTPException(status_code=500, detail="Webhook secret not configured")
-
-        try:
-            event = stripe.Webhook.construct_event(
-                payload, sig_header, webhook_secret
+        webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+        if not webhook_secret:
+            raise HTTPException(status_code=500, detail="Webhook secret not configured")
+    
+            try:
+                event = stripe.Webhook.construct_event(
+                    payload, sig_header, webhook_secret
+                )
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid payload")
+    
+            except stripe.error.SignatureVerificationError:
+                raise HTTPException(status_code=400, detail="Invalid signature")
+    
+            # Idempotency
+            existing = await self.db.execute(select(StripeEvent).where(StripeEvent.event_id == event.id))
+            if existing.scalar_one_or_none():
+                return {"status": "already_processed"}
+    
+            # Log Event
+            log = StripeEvent(
+                event_id=event.id,
+                event_type=event.type,
+                status="processing"
             )
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid payload")
-
-        except stripe.error.SignatureVerificationError:
-            raise HTTPException(status_code=400, detail="Invalid signature")
-
-        # Idempotency
-        existing = await self.db.execute(select(StripeEvent).where(StripeEvent.event_id == event.id))
-        if existing.scalar_one_or_none():
-            return {"status": "already_processed"}
-
-        # Log Event
-        log = StripeEvent(
-            event_id=event.id,
-            event_type=event.type,
-            status="processing"
-        )
-        self.db.add(log)
+            self.db.add(log)
         await self.db.commit()
 
         # Process
