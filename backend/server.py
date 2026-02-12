@@ -1080,3 +1080,6 @@ async def update_ranking_rule_endpoint(country: str, data: dict, db: AsyncSessio
 
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
+
+from app.routers import payment_routes
+app.include_router(payment_routes.router, prefix="/api/v1")
