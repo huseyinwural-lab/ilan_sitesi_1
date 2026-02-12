@@ -141,31 +141,42 @@ async def test_dealer_package_flow(local_client):
 async def test_listing_quota_enforcement(local_client):
     # Setup Dealer & Subscription
     async with AsyncSessionLocal() as session:
-        # Add required pricing configurations
+        # Add required pricing configurations (check if exists first)
         from app.models.billing import VatRate
         from app.models.pricing import CountryCurrencyMap, PriceConfig
+        from sqlalchemy import select
         
-        # Add VAT configuration for DE
-        session.add(VatRate(
-            country="DE", 
-            rate=Decimal("19.00"), 
-            valid_from=datetime.now(timezone.utc),
-            is_active=True
-        ))
+        # Check and add VAT configuration for DE
+        existing_vat = (await session.execute(select(VatRate).where(VatRate.country == "DE"))).scalar_one_or_none()
+        if not existing_vat:
+            session.add(VatRate(
+                country="DE", 
+                rate=Decimal("19.00"), 
+                valid_from=datetime.now(timezone.utc),
+                is_active=True
+            ))
         
-        # Add Currency Map
-        session.add(CountryCurrencyMap(country="DE", currency="EUR"))
+        # Check and add Currency Map
+        existing_currency = (await session.execute(select(CountryCurrencyMap).where(CountryCurrencyMap.country == "DE"))).scalar_one_or_none()
+        if not existing_currency:
+            session.add(CountryCurrencyMap(country="DE", currency="EUR"))
         
-        # Add Price Config for overage
-        session.add(PriceConfig(
-            country="DE",
-            segment="dealer", 
-            pricing_type="pay_per_listing",
-            unit_price_net=Decimal("5.00"),
-            currency="EUR",
-            valid_from=datetime.now(timezone.utc),
-            is_active=True
-        ))
+        # Check and add Price Config for overage
+        existing_price = (await session.execute(select(PriceConfig).where(
+            PriceConfig.country == "DE",
+            PriceConfig.segment == "dealer",
+            PriceConfig.pricing_type == "pay_per_listing"
+        ))).scalar_one_or_none()
+        if not existing_price:
+            session.add(PriceConfig(
+                country="DE",
+                segment="dealer", 
+                pricing_type="pay_per_listing",
+                unit_price_net=Decimal("5.00"),
+                currency="EUR",
+                valid_from=datetime.now(timezone.utc),
+                is_active=True
+            ))
         
         # Create Dealer
         dealer_app = DealerApplication(
