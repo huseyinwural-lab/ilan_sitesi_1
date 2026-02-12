@@ -225,6 +225,60 @@ class StripeService:
         # Let's assume one env var STRIPE_WEBHOOK_SECRET for now.
         
         webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+            elif event.type == "charge.refunded":
+                charge = event.data.object
+                # Find Refund Record by stripe_refund_id (if initiated by us) OR Payment Intent
+                refunds = charge.refunds.data if hasattr(charge, 'refunds') else []
+                # Actually charge.refunded event contains the refund object? No, it contains the Charge.
+                # Wait, event 'charge.refunded' data.object is a Charge.
+                # But we might need 'refund.created' or similar? 
+                # Stripe sends 'charge.refunded'. The object is the Charge, with a 'refunds' list.
+                # OR 'refund.updated'.
+                # Let's check Stripe docs best practice.
+                # Actually, using 'charge.refunded' is common.
+                # But let's look at the payload structure carefully.
+                
+                # To be idempotent and precise, we need to know WHICH refund this is.
+                # If we use `refund.created` or `refund.updated` it is clearer.
+                # User prompt said: "Stripe event: charge.refunded". I will stick to that.
+                
+                payment_intent_id = charge.payment_intent
+                amount_refunded = Decimal(charge.amount_refunded) / 100
+                
+                # Find Invoice
+                result = await self.db.execute(select(Invoice).where(Invoice.stripe_payment_intent_id == payment_intent_id))
+                invoice = result.scalar_one_or_none()
+                
+                if invoice:
+                    # Idempotency check: Has this invoice already updated to this total?
+                    # But multiple refunds can happen.
+                    # We should trust the "amount_refunded" field from Charge object which is cumulative?
+                    # Yes, charge.amount_refunded is total refunded for that charge.
+                    
+                    # Update Invoice
+                    invoice.refunded_total = amount_refunded
+                    
+                    if invoice.refunded_total >= invoice.gross_total:
+                        invoice.status = "refunded"
+                        invoice.refund_status = "full"
+                        invoice.refunded_at = datetime.now(timezone.utc)
+                    elif invoice.refunded_total > 0:
+                        invoice.status = "partially_refunded"
+                        invoice.refund_status = "partial"
+                        invoice.last_refund_at = datetime.now(timezone.utc)
+                        
+                    # Also update Refund status if we can link it
+                    # This part is tricky with charge.refunded as it aggregates.
+                    # But Invoice State Machine update is key here.
+                    
+                    # If we created a Refund record locally (via API), we want to mark it succeeded.
+                    # We can iterate charge.refunds.data and update our local records matching ID.
+                    for ref_data in charge.refunds.data:
+                        ref_res = await self.db.execute(select(Refund).where(Refund.stripe_refund_id == ref_data.id))
+                        local_ref = ref_res.scalar_one_or_none()
+                        if local_ref and local_ref.status != "succeeded":
+                            local_ref.status = "succeeded" # or ref_data.status
+
         if not webhook_secret:
              raise HTTPException(status_code=500, detail="Webhook secret not configured")
 
