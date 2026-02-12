@@ -1,4 +1,12 @@
 #!/bin/bash
 set -e
-echo "Running pre-deploy database migrations..."
-alembic upgrade head
+
+echo "Starting deployment migration..."
+echo "Applying alembic upgrade head..."
+
+if alembic upgrade head; then
+    echo "Migration completed successfully."
+else
+    echo "Migration FAILED. Aborting deployment."
+    exit 1
+fi
