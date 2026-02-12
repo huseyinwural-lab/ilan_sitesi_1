@@ -390,6 +390,21 @@ async def seed_default_data(db: AsyncSession):
                 ))
     
     await db.commit()
+    
+    # P2: Stripe Settings (seed)
+    # References to Env Vars - No real keys in DB!
+    for country in ["DE", "CH", "FR", "AT"]:
+        exists = await db.execute(select(StripeSettings).where(StripeSettings.country == country))
+        if not exists.scalar_one_or_none():
+            db.add(StripeSettings(
+                country=country,
+                is_enabled=True,
+                secret_key_env_key=f"STRIPE_SECRET_KEY_{country}", # e.g. STRIPE_SECRET_KEY_DE
+                webhook_secret_env_key=f"STRIPE_WEBHOOK_SECRET_{country}",
+                publishable_key=f"pk_test_mock_{country}", # Mock for now
+                account_mode="test"
+            ))
+
     logger.info("Default data seeded")
 
 @asynccontextmanager
