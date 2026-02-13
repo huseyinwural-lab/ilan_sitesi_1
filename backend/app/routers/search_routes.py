@@ -13,8 +13,19 @@ import logging
 import uuid
 import os
 
+from app.core.redis_cache import cache_service, build_cache_key
+import asyncio
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v2", tags=["search"])
+
+@router.on_event("startup")
+async def startup():
+    await cache_service.connect()
+
+@router.on_event("shutdown")
+async def shutdown():
+    await cache_service.close()
 
 # Rate Limiter
 # Public Search: 100 req/min (IP Based)
@@ -42,6 +53,16 @@ async def search_listings(
     """
     Search API v2: Typed Attribute Filtering & Faceting
     """
+    # 0. Check Cache
+    cache_key = build_cache_key("search:v2", 
+        q=q, category_slug=category_slug, sort=sort, page=page, limit=limit,
+        price_min=price_min, price_max=price_max, attrs=attrs
+    )
+    
+    cached = await cache_service.get(cache_key)
+    if cached:
+        return cached
+
     # Guardrail: Check Filter Count
     if attrs:
         try:
@@ -117,9 +138,9 @@ async def search_listings(
     # 7. Facet Generation (Aggregated from Filtered Result)
     facets = {}
     facet_meta = {}
+    
     if current_cat:
         # Resolve Inheritance
-        # Path format: "id1.id2.id3"
         if current_cat.path:
             cat_ids = [uuid.UUID(x) for x in current_cat.path.split('.')]
         else:
@@ -144,15 +165,16 @@ async def search_listings(
         for attr in target_attrs:
             facet_meta[attr.key] = {
                 "type": attr.attribute_type,
-                "label": attr.name.get('tr', attr.name.get('en', attr.key)), # Default TR
+                "label": attr.name.get('tr', attr.name.get('en', attr.key)),
                 "unit": attr.unit,
-                "min": 0, # Default for ranges (can be dynamic later)
+                "min": 0,
                 "max": 1000000 
             }
         
+        # P9 Optimization: Parallel Facet Aggregation using asyncio.gather
         filtered_subq = query.with_only_columns(Listing.id).subquery()
         
-        for attr in target_attrs:
+        async def fetch_facet(attr):
             if attr.attribute_type in ['select', 'multi_select']:
                 stmt = (
                     select(AttributeOption.value, AttributeOption.label, func.count(ListingAttribute.id))
@@ -162,20 +184,27 @@ async def search_listings(
                     .group_by(AttributeOption.id)
                 )
                 res = await db.execute(stmt)
-                rows = res.all()
-                
-                options = []
-                for val, label, count in rows:
-                    options.append({
-                        "value": val,
-                        "label": label.get('en', val),
-                        "count": count,
-                        "selected": False
-                    })
-                if options:
-                    facets[attr.key] = options
+                return attr.key, res.all()
+            return attr.key, []
 
-    return {
+        # Run all facet queries in parallel
+        tasks = [fetch_facet(attr) for attr in target_attrs]
+        results = await asyncio.gather(*tasks)
+        
+        for key, rows in results:
+            if not rows: continue
+            options = []
+            for val, label, count in rows:
+                options.append({
+                    "value": val,
+                    "label": label.get('en', val),
+                    "count": count,
+                    "selected": False
+                })
+            if options:
+                facets[key] = options
+
+    response = {
         "items": [{
             "id": str(i.id),
             "title": i.title,
@@ -191,3 +220,8 @@ async def search_listings(
             "pages": (total + limit - 1) // limit
         }
     }
+    
+    # Store in Cache (Background task usually, but here await is fine for now)
+    await cache_service.set(cache_key, response, ttl=60)
+    
+    return response
