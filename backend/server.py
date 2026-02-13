@@ -1154,10 +1154,11 @@ async def list_vat_rates(country: Optional[str] = None, is_active: Optional[bool
     from app.routers.p1_routes import get_vat_rates
     return await get_vat_rates(country, is_active, db, current_user)
 
-from app.routers import commercial_routes, admin_routes
+from app.routers import commercial_routes, admin_routes, search_routes
 app.include_router(api_router)
 app.include_router(commercial_routes.router, prefix="/api/v1")
 app.include_router(admin_routes.router, prefix="/api/v1")
+app.include_router(search_routes.router, prefix="/api")
 
 # P1: Invoice Routes
 @api_router.get("/invoices")
