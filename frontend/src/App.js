@@ -45,16 +45,18 @@ const ProtectedRoute = ({ children, roles = [] }) => {
 
 function App() {
   return (
-    <AuthProvider>
-      <LanguageProvider>
-        <CountryProvider>
-          <ThemeProvider>
-            <BrowserRouter>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/auth/login" element={<LoginPage />} />
+    <HelmetProvider>
+      <AuthProvider>
+        <LanguageProvider>
+          <CountryProvider>
+            <ThemeProvider>
+              <BrowserRouter>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/ilan/:slug" element={<DetailPage />} /> {/* P8: Detail Route */}
+                  <Route path="/auth/login" element={<LoginPage />} />
                 <Route path="/auth/register" element={<LoginPage />} /> {/* Temporary redirect to login */}
 
                 {/* Admin Routes */}
