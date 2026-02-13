@@ -65,19 +65,27 @@ export default function Layout({ children }) {
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4">
           <ul className="space-y-1">
-            {filteredNavItems.map((item) => (
-              <li key={item.path}>
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `sidebar-item ${isActive ? 'active' : ''}`
-                  }
-                  data-testid={`nav-${item.label}`}
-                >
-                  <item.icon size={18} />
-                  {t(item.label)}
-                </NavLink>
-              </li>
+            {filteredNavItems.map((item, index) => (
+              item.divider ? (
+                <li key={`divider-${index}`} className="pt-4 pb-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3">
+                    {item.label}
+                  </span>
+                </li>
+              ) : (
+                <li key={item.path}>
+                  <NavLink
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `sidebar-item ${isActive ? 'active' : ''}`
+                    }
+                    data-testid={`nav-${item.label}`}
+                  >
+                    <item.icon size={18} />
+                    {t(item.label)}
+                  </NavLink>
+                </li>
+              )
             ))}
           </ul>
         </nav>
