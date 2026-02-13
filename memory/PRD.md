@@ -92,11 +92,20 @@ Build a comprehensive Admin Panel for a multi-country classified ads platform ta
 
 ## Prioritized Backlog
 
-### P1 - P7.2: Admin UI Minimum Scope (Next)
-- [ ] Admin UI for Attributes management
-- [ ] Admin UI for Attribute Options management
-- [ ] Admin UI for Vehicle Makes/Models management
-- [ ] Wireframes at `/app/architecture/`
+### P1 - P7.2: Admin UI Minimum Scope (Next) 🔒 LOCKED
+**Prerequisites Complete:**
+- ✅ P7.0 Closure: `/app/release_notes/PHASE_CLOSE_P7_0_STABILIZATION.md`
+- ✅ Wireframe Freeze: `/app/architecture/ADMIN_UI_MIN_SCOPE_WIREFRAME_REVIEW_v1.md`
+- ✅ API Mapping: `/app/architecture/ADMIN_UI_API_MAPPING_v1.md`
+- ✅ RBAC Matrix: `/app/architecture/ADMIN_UI_RBAC_BEHAVIOR_MATRIX_v1.md`
+- ✅ Integration Scenarios: `/app/ops/ADMIN_TO_SEARCH_INTEGRATION_SCENARIOS_v1.md`
+- ✅ Sprint Backlog: `/app/tasks/P7_2_ADMIN_UI_SPRINT_BACKLOG_v1.md`
+
+**Screens:**
+- [ ] Screen 1: Attributes Management
+- [ ] Screen 2: Attribute Options Management
+- [ ] Screen 3: Vehicle Makes/Models Management
+- [ ] Screen 4: Audit Log Viewer (Optional)
 
 ### P2 - P7.3: Public UI Search Integration
 - [ ] Integrate Search API v2 into frontend
