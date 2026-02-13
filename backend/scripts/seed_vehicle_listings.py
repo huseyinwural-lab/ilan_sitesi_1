@@ -16,6 +16,7 @@ from app.models.user import User
 from app.models.dealer import Dealer
 from app.models.moderation import Listing
 from app.models.category import Category
+from app.models.vehicle_mdm import VehicleMake, VehicleModel
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("seed_vehicle_listings")
