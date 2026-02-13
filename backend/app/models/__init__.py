@@ -5,7 +5,7 @@ from app.models.billing import Invoice, InvoiceItem, VatRate
 from app.models.premium import PremiumProduct, ListingPromotion, PremiumRankingRule
 from app.models.moderation import Listing, ModerationAction, ModerationRule
 from app.models.category import Category, CategoryTranslation
-from app.models.attribute import Attribute, AttributeOption, CategoryAttributeMap
+from app.models.attribute import Attribute, AttributeOption, CategoryAttributeMap, ListingAttribute
 from app.models.home import HomeLayoutSettings, HomeShowcaseItem, HomeSpecialListing, AdSlot
 from app.models.menu import TopMenuItem, TopMenuSection, TopMenuLink
 from app.models.core import Country, FeatureFlag, AuditLog
@@ -20,7 +20,7 @@ __all__ = [
     "PremiumProduct", "ListingPromotion", "PremiumRankingRule",
     "Listing", "ModerationAction", "ModerationRule",
     "Category", "CategoryTranslation",
-    "Attribute", "AttributeOption", "CategoryAttributeMap",
+    "Attribute", "AttributeOption", "CategoryAttributeMap", "ListingAttribute",
     "HomeLayoutSettings", "HomeShowcaseItem", "HomeSpecialListing", "AdSlot",
     "TopMenuItem", "TopMenuSection", "TopMenuLink",
     "Country", "FeatureFlag", "AuditLog",
