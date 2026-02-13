@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from datetime import datetime, timezone
 from typing import Optional, List
+from decimal import Decimal
 import uuid
 from app.models.base import Base
 
