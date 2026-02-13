@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchState } from '@/hooks/useSearchState';
 import { FacetRenderer } from '@/components/search/FacetRenderer';
+import { CategorySidebar } from '@/components/search/CategorySidebar';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Layout from '@/components/Layout';
-import { Loader2, AlertCircle, ShoppingCart, Home, Car, Search } from 'lucide-react';
+import { Loader2, AlertCircle, ShoppingCart, Home, Car, Search, ChevronRight } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Select,
