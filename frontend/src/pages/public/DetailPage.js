@@ -53,6 +53,10 @@ export default function DetailPage() {
       setLoading(true);
       try {
         const res = await fetch(`${API_URL}/api/v2/listings/${realId}`);
+        console.log('DEBUG: URL Slug:', urlSlug);
+        console.log('DEBUG: API Slug:', canonicalSlug);
+        console.log('DEBUG: Real ID:', realId);
+
         if (!res.ok) {
           if (res.status === 404) throw new Error('İlan bulunamadı (404)');
           throw new Error('Bir hata oluştu');
