@@ -14,6 +14,50 @@ import { tr, de, fr } from 'date-fns/locale';
 
 // ==================== SUB-COMPONENTS ====================
 
+const LightweightCheckbox = ({ id, checked, onChange, disabled, label, count }) => {
+  return (
+    <div className={cn(
+      "flex items-center justify-between py-1.5 px-2 -mx-2 rounded-md transition-colors group",
+      !disabled && "hover:bg-muted/50 cursor-pointer",
+      disabled && "opacity-50 cursor-not-allowed"
+    )}>
+      <div className="flex items-center gap-2 flex-1 min-w-0" onClick={() => !disabled && onChange(!checked)}>
+        <div className={cn(
+          "h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-center transition-colors",
+          checked ? "bg-primary text-primary-foreground" : "bg-background",
+          disabled && "border-muted-foreground/30"
+        )}>
+          {checked && <Search className="h-3 w-3 stroke-[3]" style={{ maskImage: 'none', WebkitMaskImage: 'none' }} />} 
+          {/* Using a simple Check icon replica or lucide Check if imported */}
+          {checked && (
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="3" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="h-3 w-3"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
+        </div>
+        <label 
+          htmlFor={id} 
+          className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 truncate select-none cursor-pointer"
+        >
+          {label}
+        </label>
+      </div>
+      <span className="text-xs text-muted-foreground tabular-nums ml-2">
+        ({count})
+      </span>
+    </div>
+  );
+};
+
 const CheckboxFacet = ({ facet, onChange }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -38,51 +82,40 @@ const CheckboxFacet = ({ facet, onChange }) => {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {showSearch && (
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className="relative mb-2">
+          <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
           <Input 
             placeholder="Ara..." 
-            className="pl-8 h-9 text-sm" 
+            className="pl-8 h-8 text-xs bg-muted/20 border-none focus-visible:ring-1" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       )}
       
-      <div className="space-y-1.5">
+      <div className="flex flex-col">
         {visibleOptions.map((opt) => (
-          <div key={opt.value} className="flex items-center space-x-2">
-            <input 
-              type="checkbox"
-              id={`${facet.key}-${opt.value}`}
-              checked={facet.selectedValues?.includes(opt.value) || false}
-              onChange={(e) => handleCheck(opt.value, e.target.checked)}
-              disabled={opt.count === 0 && !facet.selectedValues?.includes(opt.value)}
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            <label 
-              htmlFor={`${facet.key}-${opt.value}`}
-              className={cn(
-                "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 flex-1 flex justify-between",
-                opt.count === 0 && !facet.selectedValues?.includes(opt.value) && "text-muted-foreground"
-              )}
-            >
-              <span>{opt.label}</span>
-              <span className="text-xs text-muted-foreground">({opt.count})</span>
-            </label>
-          </div>
+          <LightweightCheckbox 
+            key={opt.value}
+            id={`${facet.key}-${opt.value}`}
+            checked={facet.selectedValues?.includes(opt.value) || false}
+            onChange={(checked) => handleCheck(opt.value, checked)}
+            disabled={opt.count === 0 && !facet.selectedValues?.includes(opt.value)}
+            label={opt.label}
+            count={opt.count}
+          />
         ))}
       </div>
 
       {filteredOptions.length > MAX_VISIBLE && (
         <Button 
           variant="link" 
-          className="p-0 h-auto text-xs text-blue-600"
+          className="p-0 h-8 text-xs text-primary font-medium hover:no-underline pl-1"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          {isExpanded ? 'Daha az göster' : `Daha fazla göster (+${filteredOptions.length - MAX_VISIBLE})`}
+          {isExpanded ? 'Daha az göster' : `+ ${filteredOptions.length - MAX_VISIBLE} daha fazla`}
         </Button>
       )}
     </div>
