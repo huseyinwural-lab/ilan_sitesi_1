@@ -75,7 +75,10 @@ export default function SearchPage() {
         const json = await res.json();
         setData(json);
         
-        await fetchFacetMeta(Object.keys(json.facets));
+        // Use meta from API if available, otherwise fetch (fallback)
+        if (json.facet_meta) {
+            setFacetMeta(json.facet_meta);
+        }
 
       } catch (err) {
         console.error(err);
