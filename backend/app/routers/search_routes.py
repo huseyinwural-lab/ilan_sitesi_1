@@ -116,6 +116,7 @@ async def search_listings(
     
     # 7. Facet Generation (Aggregated from Filtered Result)
     facets = {}
+    facet_meta = {}
     if current_cat:
         # Resolve Inheritance
         # Path format: "id1.id2.id3"
@@ -138,6 +139,16 @@ async def search_listings(
         target_attr_ids = [b.attribute_id for b in bindings]
         
         target_attrs = (await db.execute(select(Attribute).where(Attribute.id.in_(target_attr_ids)))).scalars().all()
+        
+        # Populate Meta
+        for attr in target_attrs:
+            facet_meta[attr.key] = {
+                "type": attr.attribute_type,
+                "label": attr.name.get('tr', attr.name.get('en', attr.key)), # Default TR
+                "unit": attr.unit,
+                "min": 0, # Default for ranges (can be dynamic later)
+                "max": 1000000 
+            }
         
         filtered_subq = query.with_only_columns(Listing.id).subquery()
         
