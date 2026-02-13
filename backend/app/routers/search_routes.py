@@ -1,26 +1,39 @@
 
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func, desc, or_
 from app.dependencies import get_db
 from app.models.moderation import Listing
 from app.models.attribute import ListingAttribute, Attribute, AttributeOption, CategoryAttributeMap
 from app.models.category import Category
+from app.core.redis_rate_limit import RedisRateLimiter
 from typing import Optional, List, Dict
 import json
 import logging
 import uuid
+import os
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v2", tags=["search"])
 
-@router.get("/search")
+# Rate Limiter
+# Public Search: 100 req/min (IP Based)
+search_limiter = RedisRateLimiter(os.environ.get("REDIS_URL", "redis://localhost:6379/0"))
+
+async def limit_search(request: Request):
+    ip = request.client.host if request.client else "127.0.0.1"
+    key = f"rl:search:{ip}"
+    allowed = await search_limiter.check_limit(key, limit=100, burst=10)
+    if not allowed:
+        raise HTTPException(status_code=429, detail="Too Many Requests")
+
+@router.get("/search", dependencies=[Depends(limit_search)])
 async def search_listings(
-    q: Optional[str] = None,
+    q: Optional[str] = Query(None, max_length=100),
     category_slug: Optional[str] = None,
     sort: str = "date_desc",
-    page: int = 1,
-    limit: int = 20,
+    page: int = Query(1, ge=1, le=1000), # Guardrail: Max Page 1000
+    limit: int = Query(20, ge=1, le=100), # Guardrail: Max Page Size 100
     price_min: Optional[int] = None,
     price_max: Optional[int] = None,
     attrs: Optional[str] = Query(None, description="JSON encoded attribute filters"),
@@ -29,6 +42,17 @@ async def search_listings(
     """
     Search API v2: Typed Attribute Filtering & Faceting
     """
+    # Guardrail: Check Filter Count
+    if attrs:
+        try:
+            filters = json.loads(attrs)
+            if len(filters) > 10:
+                raise HTTPException(status_code=422, detail={"code": "query_too_complex", "message": "Too many filters"})
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail={"code": "bad_request", "message": "Invalid attributes format"})
+    else:
+        filters = {}
+
     # 1. Base Query
     query = select(Listing).where(Listing.status == 'active')
     
@@ -50,40 +74,34 @@ async def search_listings(
     if price_max: query = query.where(Listing.price <= price_max)
     
     # 5. Attribute Filters (The Core Logic)
-    if attrs:
-        try:
-            filters = json.loads(attrs)
+    if filters:
+        for key, val in filters.items():
+            attr_res = await db.execute(select(Attribute).where(Attribute.key == key))
+            attr = attr_res.scalar_one_or_none()
+            if not attr: continue
             
-            for key, val in filters.items():
-                attr_res = await db.execute(select(Attribute).where(Attribute.key == key))
-                attr = attr_res.scalar_one_or_none()
-                if not attr: continue
+            sub_q = select(ListingAttribute.listing_id).where(
+                ListingAttribute.attribute_id == attr.id
+            )
+            
+            if attr.attribute_type == 'select' or attr.attribute_type == 'multi_select':
+                if isinstance(val, list):
+                    opt_ids = (await db.execute(select(AttributeOption.id).where(
+                        AttributeOption.attribute_id == attr.id,
+                        AttributeOption.value.in_(val)
+                    ))).scalars().all()
+                    sub_q = sub_q.where(ListingAttribute.value_option_id.in_(opt_ids))
                 
-                sub_q = select(ListingAttribute.listing_id).where(
-                    ListingAttribute.attribute_id == attr.id
-                )
-                
-                if attr.attribute_type == 'select' or attr.attribute_type == 'multi_select':
-                    if isinstance(val, list):
-                        opt_ids = (await db.execute(select(AttributeOption.id).where(
-                            AttributeOption.attribute_id == attr.id,
-                            AttributeOption.value.in_(val)
-                        ))).scalars().all()
-                        sub_q = sub_q.where(ListingAttribute.value_option_id.in_(opt_ids))
+            elif attr.attribute_type == 'boolean':
+                if val is True:
+                    sub_q = sub_q.where(ListingAttribute.value_boolean == True)
                     
-                elif attr.attribute_type == 'boolean':
-                    if val is True:
-                        sub_q = sub_q.where(ListingAttribute.value_boolean == True)
-                        
-                elif attr.attribute_type == 'number':
-                    if isinstance(val, dict):
-                        if 'min' in val: sub_q = sub_q.where(ListingAttribute.value_number >= val['min'])
-                        if 'max' in val: sub_q = sub_q.where(ListingAttribute.value_number <= val['max'])
-                
-                query = query.where(Listing.id.in_(sub_q))
-                
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="Invalid attributes format")
+            elif attr.attribute_type == 'number':
+                if isinstance(val, dict):
+                    if 'min' in val: sub_q = sub_q.where(ListingAttribute.value_number >= val['min'])
+                    if 'max' in val: sub_q = sub_q.where(ListingAttribute.value_number <= val['max'])
+            
+            query = query.where(Listing.id.in_(sub_q))
 
     # 6. Pagination & Execution (Items)
     count_q = select(func.count()).select_from(query.subquery())
