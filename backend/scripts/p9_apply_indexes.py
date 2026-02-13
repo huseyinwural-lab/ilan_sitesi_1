@@ -1,4 +1,8 @@
 
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 import asyncio
 from sqlalchemy import text
 from app.database import engine
