@@ -182,6 +182,14 @@ export default function SearchPage() {
           <div className="hidden md:block md:col-span-1 space-y-6">
              <Card>
                <CardContent className="p-4">
+                 <CategorySidebar 
+                   categories={categories}
+                   activeCategorySlug={searchState.category}
+                   onCategoryChange={handleCategoryChange}
+                 />
+                 
+                 <div className="my-4 border-t" />
+
                  <FacetRenderer 
                     facets={data.facets} 
                     facetMeta={facetMeta}
