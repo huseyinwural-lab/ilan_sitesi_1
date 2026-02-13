@@ -55,7 +55,7 @@ class AttributeOption(Base):
     label: Mapped[dict] = mapped_column(JSON, nullable=False) # Display label {"en": "Red"}
     
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True) # FIX: Added missing column
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
     attribute: Mapped["Attribute"] = relationship("Attribute", back_populates="options")
 
@@ -70,6 +70,7 @@ class CategoryAttributeMap(Base):
     
     is_required_override: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
     inherit_to_children: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True) # FIX: Added missing column
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
