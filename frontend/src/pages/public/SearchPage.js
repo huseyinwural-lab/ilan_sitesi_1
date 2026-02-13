@@ -34,7 +34,6 @@ export default function SearchPage() {
   const [error, setError] = useState(null);
   const [data, setData] = useState({ items: [], facets: {}, pagination: {} });
   const [facetMeta, setFacetMeta] = useState({}); // To store types/labels
-  const { toast } = useToast();
 
   // Fetch Data
   useEffect(() => {
