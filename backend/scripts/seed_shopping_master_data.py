@@ -95,23 +95,10 @@ async def seed_shopping_master_data(allow_prod=False, dry_run=False):
                 await session.flush()
                 root.path = str(root.id)
 
-            # Define Subcats (Ensure they exist)
-            subcats = [
-                ("electronics", "Electronics", root),
-                ("fashion", "Fashion", root),
-                ("home-living", "Home & Living", root),
-                ("hobbies", "Hobbies", root)
-            ]
-            
-            # Level 2
-            # Electronics -> Smartphones, Computers
-            # Fashion -> Clothing, Shoes
-            # Home -> Furniture
-            
+            # Subcats
             # Helper to get/create cat
             async def get_create_cat(slug, name, parent):
-                res = await session.execute(select(Category).where(Category.slug['en'].astext == slug)) # JSONB query might differ per driver
-                # Simple python filter for seed reliability
+                # Simple python filter for seed reliability (Removed problematic SQL query)
                 all_c = (await session.execute(select(Category).where(Category.module == 'shopping'))).scalars().all()
                 cat = next((c for c in all_c if c.slug.get('en') == slug), None)
                 
