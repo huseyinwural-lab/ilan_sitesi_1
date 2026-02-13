@@ -39,18 +39,13 @@ async def seed_vehicle_listings_v5():
             # 1. Fetch Context
             users = (await session.execute(select(User))).scalars().all()
             dealers = (await session.execute(select(Dealer))).scalars().all()
-            cats = (await session.execute(select(Category).where(Category.module == 'vehicle'))).scalars().all()
-            makes = (await session.execute(select(VehicleMake))).scalars().all()
-            models = (await session.execute(select(VehicleModel))).scalars().all()
             
-            if not makes or not models:
-                logger.error("❌ Master Data not found! Run seed_vehicle_master_data.py first.")
-                return
-
+            # Use Fallback Logic for Categories
+            cats = (await session.execute(select(Category).where(Category.module == 'vehicle'))).scalars().all()
             if not cats:
                 logger.warning("No Vehicle Categories found in DB! Trying fallback fetch...")
                 cats = (await session.execute(select(Category))).scalars().all()
-                cats = [c for c in cats if c.module == 'vehicle'] # Filter manually if DB query failed
+                cats = [c for c in cats if c.module == 'vehicle']
             
             if not cats:
                 logger.error("❌ Still no categories found. Run seed_production_data_v4.py")
@@ -65,11 +60,16 @@ async def seed_vehicle_listings_v5():
             if not car_cats: car_cats = cats
             if not moto_cats: moto_cats = cats
             if not comm_cats: comm_cats = cats
+
+            makes = (await session.execute(select(VehicleMake))).scalars().all()
+            models = (await session.execute(select(VehicleModel))).scalars().all()
             
+            if not makes or not models:
+                logger.error("❌ Master Data not found! Run seed_vehicle_master_data.py first.")
+                return
+
             # Helper to get models for type
             def get_models(v_type):
-                # Filter models by vehicle_type
-                # v_type: 'car', 'moto', 'comm'
                 return [m for m in models if m.vehicle_type == v_type]
 
             # 2. Cleanup Old Vehicles
@@ -90,15 +90,13 @@ async def seed_vehicle_listings_v5():
                 return [f"{base}/{uuid.uuid4()}/800/600" for _ in range(count)]
 
             def generate_attributes(v_type, model_obj):
-                # Global
-                # We fetch Make name from model object to keep sync
                 # Find Make
                 make = next((m for m in makes if m.id == model_obj.make_id), None)
                 make_name = make.name if make else "Unknown"
                 
                 attrs = {
-                    "brand": make_name, # Legacy String (Deprecated but kept for v5 dual read)
-                    "model": model_obj.name, # Legacy String
+                    "brand": make_name,
+                    "model": model_obj.name,
                     "year": random.randint(2010, 2025),
                     "km": random.randint(0, 250000),
                     "condition": random.choice(["used", "new", "damaged"]),
@@ -107,7 +105,7 @@ async def seed_vehicle_listings_v5():
                     "fuel_type": random.choice(["gasoline", "diesel", "hybrid", "electric"])
                 }
 
-                if v_type == "car": # 'car' in MDM vs 'cars' in Seed v4. Using MDM types
+                if v_type == "car":
                     attrs.update({
                         "gear_type": random.choice(["manual", "automatic", "semi"]),
                         "body_type": random.choice(["sedan", "suv", "hatchback", "station"]),
@@ -141,7 +139,7 @@ async def seed_vehicle_listings_v5():
             if not car_models: logger.warning("No Car models found in Master Data!")
             
             for i in range(COUNT_CARS):
-                cat = random.choice(car_cats) if car_cats else cats[0]
+                cat = random.choice(car_cats)
                 country = random.choice(["DE", "TR", "FR"])
                 dealer_id, is_dealer, user_id = get_random_owner()
                 
@@ -177,7 +175,7 @@ async def seed_vehicle_listings_v5():
             if not moto_models: logger.warning("No Moto models found!")
 
             for i in range(COUNT_MOTO):
-                cat = random.choice(moto_cats) if moto_cats else cats[0]
+                cat = random.choice(moto_cats)
                 country = random.choice(["DE", "TR", "FR"])
                 dealer_id, is_dealer, user_id = get_random_owner()
                 
@@ -213,7 +211,7 @@ async def seed_vehicle_listings_v5():
             if not comm_models: logger.warning("No Commercial models found!")
 
             for i in range(COUNT_COMM):
-                cat = random.choice(comm_cats) if comm_cats else cats[0]
+                cat = random.choice(comm_cats)
                 country = random.choice(["DE", "TR", "FR"])
                 dealer_id, is_dealer, user_id = get_random_owner()
                 
