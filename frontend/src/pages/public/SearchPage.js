@@ -4,9 +4,8 @@ import { FacetRenderer } from '@/components/search/FacetRenderer';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Layout } from '@/components/layout/Layout';
-import { Loader2, AlertCircle, ShoppingCart, Home, Car } from 'lucide-react';
+import Layout from '@/components/Layout';
+import { Loader2, AlertCircle, ShoppingCart, Home, Car, Search } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Select,
@@ -16,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { format } from 'date-fns';
+import { tr } from 'date-fns/locale';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
@@ -76,16 +77,6 @@ export default function SearchPage() {
         const json = await res.json();
         setData(json);
         
-        // Simulate Meta (In a real app, this might come from a separate config or be enriched in response)
-        // For P7.3, we'll derive or fetch. For now, we mock metadata based on received facets + knowledge
-        // Ideally, the API should return `facet_meta`. If it doesn't, we can patch the API or infer.
-        // The spec says API returns "facet_meta". Let's check API code.
-        // Looking at backend/app/routers/search_routes.py, it DOES NOT return facet_meta in current implementation.
-        // It returns { items, facets, pagination }. 
-        // We need to fetch attribute definitions or infer type.
-        // For MVP P7.3, let's fetch attribute definitions separately or infer.
-        // Let's implement a quick fetch for attributes to build meta.
-        
         await fetchFacetMeta(Object.keys(json.facets));
 
       } catch (err) {
@@ -101,12 +92,7 @@ export default function SearchPage() {
 
   // Fetch Meta Data for Facets (Label, Type, etc.)
   const fetchFacetMeta = async (keys) => {
-    // In a real optimized app, we'd cache this or get it from initial bootstrap
-    // We'll call /api/attributes to get details for keys
     try {
-        // We can't query by list of keys easily in current API, but we can get all attributes
-        // Or we can rely on what we know.
-        // Let's fetch all active filterable attributes for now (caching in memory would be better)
         const res = await fetch(`${API_URL}/api/attributes?filterable_only=true`);
         if (res.ok) {
             const attrs = await res.json();

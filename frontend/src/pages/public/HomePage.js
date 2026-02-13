@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import { useNavigate } from 'react-router-dom';
 
 export default function HomePage() {

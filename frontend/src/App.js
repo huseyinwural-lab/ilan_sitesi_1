@@ -5,20 +5,19 @@ import { Toaster } from "@/components/ui/toaster";
 // Public Pages
 import HomePage from '@/pages/public/HomePage';
 import SearchPage from '@/pages/public/SearchPage';
-import LoginPage from '@/pages/auth/LoginPage';
-import RegisterPage from '@/pages/auth/RegisterPage';
+import LoginPage from '@/pages/Login';
 
 // Admin Pages
-import Dashboard from '@/pages/admin/Dashboard';
-import UserManagement from '@/pages/admin/UserManagement';
-import FeatureFlags from '@/pages/admin/FeatureFlags';
-import CountrySettings from '@/pages/admin/CountrySettings';
-import Categories from '@/pages/admin/Categories';
-import AdminAttributes from '@/pages/admin/AdminAttributes';
-import AdminOptions from '@/pages/admin/AdminOptions';
-import AdminVehicleMDM from '@/pages/admin/AdminVehicleMDM';
+import Dashboard from '@/pages/Dashboard';
+import UserManagement from '@/pages/Users';
+import FeatureFlags from '@/pages/FeatureFlags';
+import CountrySettings from '@/pages/Countries';
+import Categories from '@/pages/Categories';
+import AdminAttributes from '@/pages/AdminAttributes';
+import AdminOptions from '@/pages/AdminOptions';
+import AdminVehicleMDM from '@/pages/AdminVehicleMDM';
 
-import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 
 const ProtectedRoute = ({ children, roles = [] }) => {
   const { user, loading } = useAuth();
@@ -47,7 +46,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/auth/login" element={<LoginPage />} />
-          <Route path="/auth/register" element={<RegisterPage />} />
+          <Route path="/auth/register" element={<LoginPage />} /> {/* Temporary redirect to login */}
 
           {/* Admin Routes */}
           <Route
