@@ -13,6 +13,9 @@ import FeatureFlags from "./pages/FeatureFlags";
 import AuditLogs from "./pages/AuditLogs";
 import Categories from "./pages/Categories";
 import Attributes from "./pages/Attributes";
+import AdminAttributes from "./pages/AdminAttributes";
+import AdminOptions from "./pages/AdminOptions";
+import AdminVehicleMDM from "./pages/AdminVehicleMDM";
 import Invoices from "./pages/Invoices";
 import MenuManager from "./pages/MenuManager";
 import TaxRates from "./pages/TaxRates";
@@ -168,6 +171,38 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <TaxRates />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/master-data/attributes"
+        element={
+          <ProtectedRoute>
+            <AdminAttributes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/master-data/attributes/:attributeId/options"
+        element={
+          <ProtectedRoute>
+            <AdminOptions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/master-data/vehicle-makes"
+        element={
+          <ProtectedRoute>
+            <AdminVehicleMDM />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/master-data/vehicle-makes/:makeId/models"
+        element={
+          <ProtectedRoute>
+            <AdminVehicleMDM />
           </ProtectedRoute>
         }
       />
