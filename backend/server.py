@@ -54,6 +54,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://admin_user:admin_pas
 # Force password match if needed due to environment reset
 if 'admin_user' in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace('admin_pass', 'admin_pass') # No-op, just logic placeholder or env var override 
+from app.models.monetization import SubscriptionPlan, UserSubscription, QuotaUsage
 ASYNC_DATABASE_URL = DATABASE_URL.replace('postgresql://', 'postgresql+asyncpg://')
 
 from app.database import engine, AsyncSessionLocal
