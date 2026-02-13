@@ -35,14 +35,8 @@ async def apply_indexes():
         "ANALYZE listings"
     ]
 
-    async with engine.begin() as conn:
-        # CONCURRENTLY cannot run in transaction block usually, but asyncpg/sqlalchemy handling might vary.
-        # Standard SQLAlchemy `execute` is autocommit if text() is used without transaction?
-        # Actually `engine.begin()` starts transaction. 
-        # `CREATE INDEX CONCURRENTLY` cannot run inside a transaction block.
-        # We need isolation_level="AUTOCOMMIT".
-        pass
-
+    # Removed engine.begin() block which was causing recursion/connection issues in script context
+    
     # Use raw connection for isolation level
     async with engine.execution_options(isolation_level="AUTOCOMMIT").connect() as conn:
         for cmd in commands:
