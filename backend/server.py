@@ -15,7 +15,12 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from contextlib import asynccontextmanager
-from app.core.rate_limit import RateLimiter
+from asgi_correlation_id import CorrelationIdMiddleware
+from app.core.logging import configure_logging
+from app.middleware.logging_middleware import LoggingMiddleware
+
+# Configure Structlog
+configure_logging()
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
