@@ -84,12 +84,7 @@ class DealerSubscription(Base):
 
     
     __table_args__ = (
-        Index('ix_dealer_subscriptions_dealer_id', 'dealer_id'),
-        Index('ix_dealer_subscriptions_end_at', 'end_at'),
-        Index('ix_dealer_subscriptions_status', 'status'),
         Index('ix_dealer_subscriptions_status_end_at', 'status', 'end_at'), # P5-005: For Expiry Job
         # P5: Unique Active Subscription Constraint
         Index('ix_dealer_active_subscription', 'dealer_id', unique=True, postgresql_where=(status == 'active')),
     )
-    # P5: Unique Invoice Constraint (One active sub per payment)
-    Index('ix_dealer_subscriptions_invoice', 'invoice_id', unique=True),
