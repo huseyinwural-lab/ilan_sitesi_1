@@ -1,10 +1,11 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from app.dependencies import get_db, check_permissions
 from app.models.user import User
 from app.models.attribute import Attribute, AttributeOption, CategoryAttributeMap
+from app.models.vehicle_mdm import VehicleMake, VehicleModel
 from app.models.core import AuditLog
 from typing import List, Optional, Dict
 from pydantic import BaseModel
@@ -30,6 +31,18 @@ class BindingCreate(BaseModel):
     attribute_id: str
     is_required_override: Optional[bool] = None
     inherit_to_children: bool = True
+
+class VehicleMakeUpdate(BaseModel):
+    label_tr: Optional[str] = None
+    label_de: Optional[str] = None
+    label_fr: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class VehicleModelUpdate(BaseModel):
+    label_tr: Optional[str] = None
+    label_de: Optional[str] = None
+    label_fr: Optional[str] = None
+    is_active: Optional[bool] = None
 
 async def log_md_action(db, action, res_type, res_id, user, old, new):
     db.add(AuditLog(
