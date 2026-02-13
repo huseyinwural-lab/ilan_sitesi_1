@@ -18,6 +18,8 @@ import {
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
+import { useNavigate } from 'react-router-dom';
+
 const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 // Helper to format currency
@@ -29,7 +31,19 @@ const formatPrice = (price, currency) => {
   }).format(price);
 };
 
+const slugify = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '-')     // Replace spaces with -
+    .replace(/[^\w\-]+/g, '') // Remove all non-word chars
+    .replace(/\-\-+/g, '-')   // Replace multiple - with single -
+    .replace(/^-+/, '')       // Trim - from start
+    .replace(/-+$/, '');      // Trim - from end
+};
+
 export default function SearchPage() {
+  const navigate = useNavigate();
   const [searchState, setSearchState] = useSearchState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
