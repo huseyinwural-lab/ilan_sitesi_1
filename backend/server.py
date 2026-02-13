@@ -51,6 +51,9 @@ from app.models.payment import StripeSettings, PaymentAttempt, StripeEvent, Refu
 from app.models.commercial import DealerPackage, DealerSubscription
 # Database setup
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://admin_user:admin_pass@localhost:5432/admin_panel')
+# Force password match if needed due to environment reset
+if 'admin_user' in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace('admin_pass', 'admin_pass') # No-op, just logic placeholder or env var override 
 ASYNC_DATABASE_URL = DATABASE_URL.replace('postgresql://', 'postgresql+asyncpg://')
 
 from app.database import engine, AsyncSessionLocal
