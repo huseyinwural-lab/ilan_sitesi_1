@@ -40,6 +40,10 @@ async def seed_vehicle_listings_v5():
             users = (await session.execute(select(User))).scalars().all()
             dealers = (await session.execute(select(Dealer))).scalars().all()
             
+            if not users:
+                logger.error("❌ No Users found! Run seed_dummy_users.py first.")
+                return
+
             # Use Fallback Logic for Categories
             cats = (await session.execute(select(Category).where(Category.module == 'vehicle'))).scalars().all()
             if not cats:
