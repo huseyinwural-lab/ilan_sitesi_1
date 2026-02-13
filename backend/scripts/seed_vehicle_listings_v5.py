@@ -17,6 +17,7 @@ from app.models.dealer import Dealer
 from app.models.moderation import Listing
 from app.models.category import Category
 from app.models.vehicle_mdm import VehicleMake, VehicleModel
+from app.models.attribute import Attribute, AttributeOption, ListingAttribute
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("seed_vehicle_listings_v5")
@@ -32,7 +33,7 @@ async def seed_vehicle_listings_v5():
         logger.error("🚫 STOP: Production Requires --allow-prod flag.")
         return
 
-    logger.info("🚗 Starting Vehicle Listings Seed v5 (Master Data)...")
+    logger.info("🚗 Starting Vehicle Listings Seed v5 (Master Data + EAV)...")
 
     async with AsyncSessionLocal() as session:
         try:
@@ -68,6 +69,17 @@ async def seed_vehicle_listings_v5():
             makes = (await session.execute(select(VehicleMake))).scalars().all()
             models = (await session.execute(select(VehicleModel))).scalars().all()
             
+            # Fetch Attributes and Options for EAV
+            logger.info("Fetching Attributes and Options...")
+            all_attrs = (await session.execute(select(Attribute))).scalars().all()
+            all_opts = (await session.execute(select(AttributeOption))).scalars().all()
+            
+            # Create Maps
+            attr_map = {a.key: a for a in all_attrs}
+            opt_map = {} # (attr_id, value) -> option
+            for o in all_opts:
+                opt_map[(o.attribute_id, o.value)] = o
+            
             if not makes or not models:
                 logger.error("❌ Master Data not found! Run seed_vehicle_master_data.py first.")
                 return
@@ -99,8 +111,8 @@ async def seed_vehicle_listings_v5():
                 make_name = make.name if make else "Unknown"
                 
                 attrs = {
-                    "brand": make_name,
-                    "model": model_obj.name,
+                    "brand": make.slug if make else "unknown", # use slug for select
+                    "model": model_obj.name, # text
                     "year": random.randint(2010, 2025),
                     "km": random.randint(0, 250000),
                     "condition": random.choice(["used", "new", "damaged"]),
@@ -136,22 +148,15 @@ async def seed_vehicle_listings_v5():
                         "box_type": random.choice(["closed", "open", "frigo"])
                     })
                 
-                return attrs, make.id, model_obj.id
+                return attrs, make.id, model_obj.id, make.name
 
-            # 4. Create Cars
-            car_models = get_models("car")
-            if not car_models: logger.warning("No Car models found in Master Data!")
-            
-            for i in range(COUNT_CARS):
-                cat = random.choice(car_cats)
-                country = random.choice(["DE", "TR", "FR"])
+            async def create_listing(v_type, cat, model_obj):
                 dealer_id, is_dealer, user_id = get_random_owner()
+                attrs, make_id, model_id, make_name = generate_attributes(v_type, model_obj)
                 
-                model_obj = random.choice(car_models)
-                attrs, make_id, model_id = generate_attributes("car", model_obj)
-                
-                title = f"{attrs['brand'].upper()} {attrs['model']} {attrs['year']} - {country}"
-                
+                title = f"{make_name.upper()} {attrs['model']} {attrs['year']} {attrs.get('body_type', '')}"
+                country = random.choice(["DE", "TR", "FR"])
+
                 listing = Listing(
                     title=title,
                     description="Premium vehicle in great condition.",
@@ -167,12 +172,47 @@ async def seed_vehicle_listings_v5():
                     status="active",
                     images=generate_media(),
                     image_count=8,
-                    attributes=attrs,
+                    attributes=attrs, # JSON legacy/display
                     created_at=datetime.now(timezone.utc) - timedelta(days=random.randint(0, 30)),
-                    make_id=make_id,   # Master Data Link
-                    model_id=model_id  # Master Data Link
+                    make_id=make_id,
+                    model_id=model_id
                 )
                 session.add(listing)
+                await session.flush() # Need ID for ListingAttribute
+
+                # Create ListingAttributes (EAV)
+                for key, val in attrs.items():
+                    if key not in attr_map:
+                        continue
+                    
+                    attr_def = attr_map[key]
+                    la = ListingAttribute(listing_id=listing.id, attribute_id=attr_def.id)
+                    
+                    if attr_def.attribute_type == 'boolean':
+                        la.value_boolean = bool(val)
+                    elif attr_def.attribute_type == 'number':
+                        la.value_number = val
+                    elif attr_def.attribute_type in ['select', 'multi_select']:
+                        # Find Option
+                        opt = opt_map.get((attr_def.id, str(val)))
+                        if opt:
+                            la.value_option_id = opt.id
+                        else:
+                            # Fallback text if option not found (shouldn't happen with proper seed)
+                            la.value_text = str(val)
+                    else:
+                        la.value_text = str(val)
+                    
+                    session.add(la)
+
+            # 4. Create Cars
+            car_models = get_models("car")
+            if not car_models: logger.warning("No Car models found in Master Data!")
+            
+            for i in range(COUNT_CARS):
+                cat = random.choice(car_cats)
+                model_obj = random.choice(car_models)
+                await create_listing("car", cat, model_obj)
 
             # 5. Create Moto
             moto_models = get_models("moto")
@@ -180,35 +220,8 @@ async def seed_vehicle_listings_v5():
 
             for i in range(COUNT_MOTO):
                 cat = random.choice(moto_cats)
-                country = random.choice(["DE", "TR", "FR"])
-                dealer_id, is_dealer, user_id = get_random_owner()
-                
                 model_obj = random.choice(moto_models)
-                attrs, make_id, model_id = generate_attributes("moto", model_obj)
-                
-                title = f"{attrs['brand'].upper()} Moto {attrs['year']}"
-                
-                listing = Listing(
-                    title=title,
-                    description="Fast and reliable.",
-                    module="vehicle",
-                    category_id=cat.id,
-                    country=country,
-                    city="Munich",
-                    price=random.randint(2000, 20000),
-                    currency="EUR",
-                    user_id=user_id,
-                    dealer_id=dealer_id,
-                    is_dealer_listing=is_dealer,
-                    status="active",
-                    images=generate_media(),
-                    image_count=5,
-                    attributes=attrs,
-                    created_at=datetime.now(timezone.utc) - timedelta(days=random.randint(0, 30)),
-                    make_id=make_id,
-                    model_id=model_id
-                )
-                session.add(listing)
+                await create_listing("moto", cat, model_obj)
 
             # 6. Create Commercial
             comm_models = get_models("comm")
@@ -216,38 +229,11 @@ async def seed_vehicle_listings_v5():
 
             for i in range(COUNT_COMM):
                 cat = random.choice(comm_cats)
-                country = random.choice(["DE", "TR", "FR"])
-                dealer_id, is_dealer, user_id = get_random_owner()
-                
                 model_obj = random.choice(comm_models)
-                attrs, make_id, model_id = generate_attributes("comm", model_obj)
-                
-                title = f"{attrs['brand'].upper()} Transporter"
-                
-                listing = Listing(
-                    title=title,
-                    description="Heavy duty worker.",
-                    module="vehicle",
-                    category_id=cat.id,
-                    country=country,
-                    city="Hamburg",
-                    price=random.randint(15000, 80000),
-                    currency="EUR",
-                    user_id=user_id,
-                    dealer_id=dealer_id,
-                    is_dealer_listing=is_dealer,
-                    status="active",
-                    images=generate_media(),
-                    image_count=6,
-                    attributes=attrs,
-                    created_at=datetime.now(timezone.utc) - timedelta(days=random.randint(0, 30)),
-                    make_id=make_id,
-                    model_id=model_id
-                )
-                session.add(listing)
+                await create_listing("comm", cat, model_obj)
 
             await session.commit()
-            logger.info(f"✅ Created {COUNT_CARS + COUNT_MOTO + COUNT_COMM} Vehicle Listings (v5 Master Data).")
+            logger.info(f"✅ Created {COUNT_CARS + COUNT_MOTO + COUNT_COMM} Vehicle Listings (v5 Master Data + EAV).")
 
         except Exception as e:
             logger.error(f"❌ Seed Failed: {e}")
