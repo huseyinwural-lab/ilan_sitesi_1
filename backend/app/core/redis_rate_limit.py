@@ -47,6 +47,31 @@ class RedisRateLimiter:
         self._script = self.redis.register_script(LUA_TOKEN_BUCKET)
 
     async def invalidate_context(self, user_id: str):
+    async def __call__(self, request: Request = None, user_id: Optional[str] = None):
+        """
+        Dependency injection entry point.
+        """
+        # Determine Key
+        # If used as Depends(limiter), request is passed automatically by FastAPI?
+        # No, Depends(instance) calls instance().
+        # We need request object.
+        from fastapi import Request
+        
+        # If we are called via Depends(limiter), FastAPI injects dependencies defined in __call__ signature.
+        # So we need `request: Request`.
+        
+        if not request:
+             return # Safety
+             
+        ip = request.client.host if request.client else "127.0.0.1"
+        key = f"rl:auth:{ip}"
+        
+        # Check Limit
+        allowed = await self.check_limit(key, limit=20, burst=5) # Hardcoded limit for now or fetch from config
+        
+        if not allowed:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=429, detail="Too Many Requests")
         """
         Invalidates cached context and limit counters for a user.
         Used when Tier changes to ensure immediate effect.
