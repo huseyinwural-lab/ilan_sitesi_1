@@ -92,36 +92,20 @@ Build a comprehensive Admin Panel for a multi-country classified ads platform ta
 
 ## Prioritized Backlog
 
-### P1 - P7.2: Admin UI Minimum Scope 🚧 IN PROGRESS
-**Prerequisites Complete:**
-- ✅ P7.0 Closure: `/app/release_notes/PHASE_CLOSE_P7_0_STABILIZATION.md`
-- ✅ Wireframe Freeze: `/app/architecture/ADMIN_UI_MIN_SCOPE_WIREFRAME_REVIEW_v1.md`
-- ✅ API Mapping: `/app/architecture/ADMIN_UI_API_MAPPING_v1.md`
-- ✅ RBAC Matrix: `/app/architecture/ADMIN_UI_RBAC_BEHAVIOR_MATRIX_v1.md`
-- ✅ Integration Scenarios: `/app/ops/ADMIN_TO_SEARCH_INTEGRATION_SCENARIOS_v1.md`
-- ✅ Sprint Backlog: `/app/tasks/P7_2_ADMIN_UI_SPRINT_BACKLOG_v1.md`
-- ✅ Kickoff: `/app/release_notes/P7_2_KICKOFF_ADMIN_UI_MIN_SCOPE.md`
+### P1 - P7.2: Admin UI Minimum Scope ✅ COMPLETE (2026-02-13)
+**Delivered:**
+- ✅ Screen 1: Attributes Management (`/app/frontend/src/pages/AdminAttributes.js`)
+- ✅ Screen 2: Attribute Options Management (`/app/frontend/src/pages/AdminOptions.js`)
+- ✅ Screen 3: Vehicle Makes/Models Management (`/app/frontend/src/pages/AdminVehicleMDM.js`)
+- ✅ Backend API: Vehicle Makes/Models endpoints added
+- ✅ RBAC: Super Admin full access, Country Admin labels only
+- ✅ Soft-Delete: is_active toggle, no hard delete
+- ✅ Admin→Search Integration: Validated
 
-**Screens (2026-02-13):**
-- [x] Screen 1: Attributes Management (`/app/frontend/src/pages/AdminAttributes.js`)
-- [x] Screen 2: Attribute Options Management (`/app/frontend/src/pages/AdminOptions.js`)
-- [x] Screen 3: Vehicle Makes/Models Management (`/app/frontend/src/pages/AdminVehicleMDM.js`)
-- [ ] Screen 4: Audit Log Viewer (Optional - P1)
-
-**API Endpoints Added:**
-- [x] `GET/PATCH /api/v1/admin/master-data/vehicle-makes`
-- [x] `GET /api/v1/admin/master-data/vehicle-makes/{id}/models`
-- [x] `PATCH /api/v1/admin/master-data/vehicle-models/{id}`
-
-**Acceptance Documents:**
-- ✅ `/app/ops/P7_2_SCREEN1_ATTRIBUTES_UI_ACCEPTANCE.md`
-- ✅ `/app/ops/P7_2_SCREEN2_OPTIONS_UI_ACCEPTANCE.md`
-- ✅ `/app/ops/P7_2_SCREEN3_VEHICLE_MDM_UI_ACCEPTANCE.md`
-- ✅ `/app/ops/P7_2_UI_TO_API_SMOKE_REPORT.md`
-
-**Remaining:**
-- [ ] Admin→Search Staging Validation (P7.2 Close Gate)
-- [ ] Visual UI Testing (preview environment)
+**Documentation:**
+- `/app/release_notes/CHANGELOG_P7_2_ADMIN_UI_MIN_SCOPE.md`
+- `/app/ops/P7_2_UI_TO_API_SMOKE_REPORT.md`
+- `/app/ops/STAGING_VALIDATE_ADMIN_TO_SEARCH_P7_2.md`
 
 ### P2 - P7.3: Public UI Search Integration
 - [ ] Integrate Search API v2 into frontend
