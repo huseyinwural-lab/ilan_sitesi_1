@@ -1,229 +1,126 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { LanguageProvider } from "./contexts/LanguageContext";
-import { CountryProvider } from "./contexts/CountryContext";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from "@/components/ui/toaster";
 
-import Layout from "./components/Layout";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Users from "./pages/Users";
-import Countries from "./pages/Countries";
-import FeatureFlags from "./pages/FeatureFlags";
-import AuditLogs from "./pages/AuditLogs";
-import Categories from "./pages/Categories";
-import Attributes from "./pages/Attributes";
-import AdminAttributes from "./pages/AdminAttributes";
-import AdminOptions from "./pages/AdminOptions";
-import AdminVehicleMDM from "./pages/AdminVehicleMDM";
-import Invoices from "./pages/Invoices";
-import MenuManager from "./pages/MenuManager";
-import TaxRates from "./pages/TaxRates";
-import PremiumProducts from "./pages/PremiumProducts";
-import DealerManagement from "./pages/DealerManagement";
-import ModerationQueue from "./pages/ModerationQueue";
+// Public Pages
+import HomePage from '@/pages/public/HomePage';
+import SearchPage from '@/pages/public/SearchPage';
+import LoginPage from '@/pages/auth/LoginPage';
+import RegisterPage from '@/pages/auth/RegisterPage';
 
-function ProtectedRoute({ children }) {
+// Admin Pages
+import Dashboard from '@/pages/admin/Dashboard';
+import UserManagement from '@/pages/admin/UserManagement';
+import FeatureFlags from '@/pages/admin/FeatureFlags';
+import CountrySettings from '@/pages/admin/CountrySettings';
+import Categories from '@/pages/admin/Categories';
+import AdminAttributes from '@/pages/admin/AdminAttributes';
+import AdminOptions from '@/pages/admin/AdminOptions';
+import AdminVehicleMDM from '@/pages/admin/AdminVehicleMDM';
+
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+
+const ProtectedRoute = ({ children, roles = [] }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth/login" />;
   }
 
-  return <Layout>{children}</Layout>;
-}
-
-function PublicRoute({ children }) {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
-  if (user) {
-    return <Navigate to="/" replace />;
+  if (roles.length > 0 && !roles.includes(user.role)) {
+    return <Navigate to="/" />;
   }
 
   return children;
-}
-
-function AppRoutes() {
-  return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/users"
-        element={
-          <ProtectedRoute>
-            <Users />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/countries"
-        element={
-          <ProtectedRoute>
-            <Countries />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/feature-flags"
-        element={
-          <ProtectedRoute>
-            <FeatureFlags />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/audit-logs"
-        element={
-          <ProtectedRoute>
-            <AuditLogs />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/categories"
-        element={
-          <ProtectedRoute>
-            <Categories />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/attributes"
-        element={
-          <ProtectedRoute>
-            <Attributes />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/menu"
-        element={
-          <ProtectedRoute>
-            <MenuManager />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dealers"
-        element={
-          <ProtectedRoute>
-            <DealerManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/premium"
-        element={
-          <ProtectedRoute>
-            <PremiumProducts />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/moderation"
-        element={
-          <ProtectedRoute>
-            <ModerationQueue />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/invoices"
-        element={
-          <ProtectedRoute>
-            <Invoices />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tax-rates"
-        element={
-          <ProtectedRoute>
-            <TaxRates />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/master-data/attributes"
-        element={
-          <ProtectedRoute>
-            <AdminAttributes />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/master-data/attributes/:attributeId/options"
-        element={
-          <ProtectedRoute>
-            <AdminOptions />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/master-data/vehicle-makes"
-        element={
-          <ProtectedRoute>
-            <AdminVehicleMDM />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/master-data/vehicle-makes/:makeId/models"
-        element={
-          <ProtectedRoute>
-            <AdminVehicleMDM />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-}
+};
 
 function App() {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <CountryProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <AppRoutes />
-            </AuthProvider>
-          </BrowserRouter>
-        </CountryProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/auth/login" element={<LoginPage />} />
+          <Route path="/auth/register" element={<RegisterPage />} />
+
+          {/* Admin Routes */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute roles={['super_admin', 'country_admin', 'moderator', 'support', 'finance']}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                <UserManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/feature-flags"
+            element={
+              <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                <FeatureFlags />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/countries"
+            element={
+              <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                <CountrySettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/categories"
+            element={
+              <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                <Categories />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/attributes"
+            element={
+              <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                <AdminAttributes />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/attributes/options"
+            element={
+              <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                <AdminOptions />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/master-data/vehicles"
+            element={
+              <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                <AdminVehicleMDM />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+        <Toaster />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
