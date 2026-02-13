@@ -3,7 +3,7 @@ import asyncio
 import asyncpg
 import os
 
-DB_DSN = os.environ.get("DATABASE_URL", "postgresql://admin_user:admin_pass@localhost:5432/admin_panel").replace('+asyncpg', '')
+DB_DSN = "postgresql://admin_user:admin_pass@127.0.0.1:5432/admin_panel"
 
 async def apply_indexes():
     print("🏗️  Applying Composite Indexes (Raw AsyncPG)...")
