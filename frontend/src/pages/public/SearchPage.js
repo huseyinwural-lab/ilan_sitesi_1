@@ -35,6 +35,25 @@ export default function SearchPage() {
   const [error, setError] = useState(null);
   const [data, setData] = useState({ items: [], facets: {}, pagination: {} });
   const [facetMeta, setFacetMeta] = useState({}); // To store types/labels
+  const [categories, setCategories] = useState([]); // Flat list of categories
+
+  // Initial Bootstrap: Fetch Categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        // Fetch all categories (or just relevant module if known)
+        // For public search, we might want all.
+        const res = await fetch(`${API_URL}/api/categories`);
+        if (res.ok) {
+          const json = await res.json();
+          setCategories(json);
+        }
+      } catch (e) {
+        console.error("Category fetch error", e);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Fetch Data
   useEffect(() => {
