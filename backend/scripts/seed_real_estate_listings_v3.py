@@ -63,8 +63,18 @@ async def seed_real_estate_v3():
                 if is_housing: housing_cats.append(c)
                 if is_comm: comm_cats.append(c)
             
+            # Fallback logic if filtering by path/slug is too strict for seed v2 data structure
+            # Seed v2 creates categories with slugs 'apartment-sale', etc directly under housing
+            # Let's re-verify the slugs if lists empty
+            if not housing_cats:
+                 housing_cats = [c for c in cats if c.slug.get('en') in ['apartment-sale', 'house-sale', 'apartment-rent', 'house-rent']]
+            if not comm_cats:
+                 comm_cats = [c for c in cats if c.slug.get('en') in ['office', 'retail']] # simplified check
+
             if not housing_cats or not comm_cats:
                 logger.error("❌ Categories not found! Run seed_production_data_v3.py first.")
+                # Debug info
+                logger.info(f"Available Categories: {[c.slug for c in cats]}")
                 return
 
             # 2. Cleanup Old Seed
