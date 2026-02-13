@@ -22,16 +22,12 @@ const formatPrice = (price, currency) => {
 };
 
 export default function DetailPage() {
-  const { id } = useParams(); // URL format: :slug-:id or just :id if we extract
-  // Actually, our route will be /ilan/:slug-:id. We need to extract the UUID from the end.
-  // We can do this in the component.
+  const { id } = useParams(); // URL format: :slug-:id
   
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-  const [activeImage, setActiveImage] = useState(0);
+  // Extract UUID from end of string (Standard UUID has 36 chars)
+  const realId = id.substr(-36); 
 
-  const realId = id.split('-').pop(); // Get UUID from slug-uuid string
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
