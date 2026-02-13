@@ -9,8 +9,8 @@ import random
 API_URL = "http://localhost:8001/api/v2/search"
 
 # Concurrency Config
-CONCURRENT_USERS = 5 
-TOTAL_REQUESTS = 50
+CONCURRENT_USERS = 50
+TOTAL_REQUESTS = 1000
 
 async def user_session(client, scenarios):
     latencies = []
