@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { SEO } from '@/components/common/SEO';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, MapPin, Calendar, Phone, Share2, Heart, ShieldCheck, User } from 'lucide-react';
+import { Loader2, MapPin, Calendar, Phone, Share2, Heart, ShieldCheck, User, Car } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
@@ -21,15 +21,34 @@ const formatPrice = (price, currency) => {
   }).format(price);
 };
 
+const slugify = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '-')     // Replace spaces with -
+    .replace(/[^\w\-]+/g, '') // Remove all non-word chars
+    .replace(/\-\-+/g, '-')   // Replace multiple - with single -
+    .replace(/^-+/, '')       // Trim - from start
+    .replace(/-+$/, '');      // Trim - from end
+};
+
 export default function DetailPage() {
   const { id } = useParams(); // URL format: :slug-:id
+  const navigate = useNavigate();
+  const location = useLocation();
   
   // Extract UUID from end of string (Standard UUID has 36 chars)
-  const realId = id.substr(-36); 
+  const realId = id ? id.substr(-36) : null;
+  const urlSlug = id ? id.slice(0, -37) : ''; // Everything before -uuid
 
   const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
+    if (!realId) return;
+
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -40,6 +59,14 @@ export default function DetailPage() {
         }
         const json = await res.json();
         setData(json);
+
+        // Canonical Slug Check (SEO Guardrail)
+        const canonicalSlug = json.listing.slug;
+        if (urlSlug !== canonicalSlug) {
+          console.warn(`Slug mismatch. Redirecting: ${urlSlug} -> ${canonicalSlug}`);
+          navigate(`/ilan/${canonicalSlug}-${realId}`, { replace: true });
+        }
+
       } catch (err) {
         setError(err.message);
       } finally {
@@ -47,7 +74,7 @@ export default function DetailPage() {
       }
     };
     fetchData();
-  }, [realId]);
+  }, [realId]); // Depend on ID only to prevent loop on slug change (navigate handles url)
 
   if (error) {
     return (
@@ -55,7 +82,7 @@ export default function DetailPage() {
         <div className="container mx-auto py-20 text-center">
           <h1 className="text-4xl font-bold mb-4">404</h1>
           <p className="text-muted-foreground text-lg">{error}</p>
-          <Button variant="link" href="/search" className="mt-4">Aramaya Dön</Button>
+          <Button variant="link" onClick={() => navigate('/search')} className="mt-4">Aramaya Dön</Button>
         </div>
       </Layout>
     );
@@ -83,11 +110,12 @@ export default function DetailPage() {
   return (
     <Layout>
       <SEO 
-        title={`${listing.title} - ${formatPrice(listing.price, listing.currency)}`}
-        description={listing.description ? listing.description.substring(0, 160) : listing.title}
+        title={listing.seo.title}
+        description={listing.seo.description}
         image={listing.media[0]?.url}
         price={listing.price}
         currency={listing.currency}
+        canonical={`${window.location.origin}/ilan/${listing.slug}-${listing.id}`}
       />
 
       <div className="container mx-auto px-4 py-6">
@@ -137,30 +165,41 @@ export default function DetailPage() {
             {/* Gallery */}
             <div className="space-y-4">
               <div className="aspect-video bg-black rounded-xl overflow-hidden relative group">
-                <img 
-                  src={listing.media[activeImage]?.url} 
-                  alt={listing.title} 
-                  className="w-full h-full object-contain"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                  <p className="text-white text-sm">
-                    {activeImage + 1} / {listing.media.length}
-                  </p>
-                </div>
+                {listing.media.length > 0 ? (
+                  <img 
+                    src={listing.media[activeImage]?.url} 
+                    alt={listing.title} 
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted">
+                    <Car className="h-24 w-24 opacity-20" />
+                  </div>
+                )}
+                
+                {listing.media.length > 0 && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                    <p className="text-white text-sm">
+                      {activeImage + 1} / {listing.media.length}
+                    </p>
+                  </div>
+                )}
               </div>
               
               {/* Thumbs */}
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                {listing.media.map((m, i) => (
-                  <button 
-                    key={i}
-                    onClick={() => setActiveImage(i)}
-                    className={`relative w-20 h-16 flex-shrink-0 rounded-md overflow-hidden border-2 ${activeImage === i ? 'border-primary' : 'border-transparent'}`}
-                  >
-                    <img src={m.url} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
+              {listing.media.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                  {listing.media.map((m, i) => (
+                    <button 
+                      key={i}
+                      onClick={() => setActiveImage(i)}
+                      className={`relative w-20 h-16 flex-shrink-0 rounded-md overflow-hidden border-2 ${activeImage === i ? 'border-primary' : 'border-transparent'}`}
+                    >
+                      <img src={m.url} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Description */}
@@ -179,7 +218,6 @@ export default function DetailPage() {
                 <h2 className="text-xl font-semibold mb-6">Özellikler</h2>
                 {listing.attributes.map((group, i) => (
                   <div key={i} className="mb-6 last:mb-0">
-                    {/* <h3 className="font-medium text-muted-foreground mb-3">{group.group}</h3> */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
                       {group.items.map((item) => (
                         <div key={item.key} className="flex justify-between border-b pb-2">
@@ -252,6 +290,51 @@ export default function DetailPage() {
           </div>
 
         </div>
+
+        {/* Related Listings (New Section) */}
+        {related && related.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">Benzer İlanlar</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {related.map((item) => (
+                <Card 
+                  key={item.id} 
+                  className="overflow-hidden hover:shadow-md transition-shadow group cursor-pointer"
+                  onClick={() => {
+                    navigate(`/ilan/${slugify(item.title)}-${item.id}`);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <div className="aspect-[4/3] relative bg-gray-100 overflow-hidden">
+                    {item.image ? (
+                        <img 
+                          src={item.image} 
+                          alt={item.title} 
+                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <Car className="h-12 w-12 opacity-20" />
+                        </div>
+                    )}
+                    <Badge className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 backdrop-blur-sm border-none">
+                      {formatPrice(item.price, item.currency)}
+                    </Badge>
+                  </div>
+                  <CardHeader className="p-4 pb-2">
+                    <CardTitle className="text-sm font-semibold line-clamp-2 leading-tight">
+                      {item.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardFooter className="p-4 pt-0 text-xs text-muted-foreground flex justify-between">
+                      <span>Benzer İlan</span>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
     </Layout>
   );
