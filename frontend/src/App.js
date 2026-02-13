@@ -133,7 +133,7 @@ function App() {
           </ThemeProvider>
         </CountryProvider>
       </LanguageProvider>
-    </AuthProvider>
+    </HelmetProvider>
   );
 }
 
