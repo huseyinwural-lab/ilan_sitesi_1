@@ -36,7 +36,20 @@ async def scale_data():
         # 1. Fetch Context
         user_ids = await fetch_ids(conn, "users")
         cat_rows = await conn.fetch("SELECT id, slug, module FROM categories")
-        cats = {r['slug']['en']: r['id'] for r in cat_rows}
+        # asyncpg returns Record objects, accessing JSON field needs json.loads if it comes as string, 
+        # but asyncpg usually decodes JSONB automatically. 
+        # However, error "string indices must be integers" suggests r['slug'] might be a string.
+        # Let's inspect or use json.loads just in case if it's text.
+        cats = {}
+        for r in cat_rows:
+            slug_val = r['slug']
+            if isinstance(slug_val, str):
+                try:
+                    slug_val = json.loads(slug_val)
+                except:
+                    pass
+            if isinstance(slug_val, dict):
+                cats[slug_val.get('en', 'unknown')] = r['id']
         
         # Ensure we have users
         if not user_ids:
