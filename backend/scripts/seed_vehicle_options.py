@@ -10,6 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from app.database import AsyncSessionLocal
 from app.models.attribute import Attribute, AttributeOption
+from app.models.vehicle_mdm import VehicleMake
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("seed_options")
@@ -79,8 +80,8 @@ async def seed_options():
     }
 
     async with AsyncSessionLocal() as session:
+        # 1. Standard Options
         for key, opts in options_data.items():
-            # Find Attribute
             res = await session.execute(select(Attribute).where(Attribute.key == key))
             attr = res.scalar_one_or_none()
             
@@ -89,7 +90,6 @@ async def seed_options():
                 continue
                 
             for i, opt in enumerate(opts):
-                # Check exist
                 res_opt = await session.execute(select(AttributeOption).where(
                     AttributeOption.attribute_id == attr.id,
                     AttributeOption.value == opt["value"]
@@ -103,8 +103,30 @@ async def seed_options():
                     )
                     session.add(new_opt)
         
+        # 2. Sync Brand Options from VehicleMake
+        logger.info("Syncing Brand Options...")
+        res_brand = await session.execute(select(Attribute).where(Attribute.key == 'brand'))
+        attr_brand = res_brand.scalar_one_or_none()
+        
+        if attr_brand:
+            makes = (await session.execute(select(VehicleMake))).scalars().all()
+            for i, make in enumerate(makes):
+                # Check if option exists
+                res_opt = await session.execute(select(AttributeOption).where(
+                    AttributeOption.attribute_id == attr_brand.id,
+                    AttributeOption.value == make.slug
+                ))
+                if not res_opt.scalar_one_or_none():
+                    new_opt = AttributeOption(
+                        attribute_id=attr_brand.id,
+                        value=make.slug,
+                        label={"en": make.name, "tr": make.name, "de": make.name}, # Using name for all langs
+                        sort_order=i
+                    )
+                    session.add(new_opt)
+
         await session.commit()
-        logger.info("✅ Options Seeded.")
+        logger.info("✅ Options Seeded (including Brands).")
 
 if __name__ == "__main__":
     asyncio.run(seed_options())
