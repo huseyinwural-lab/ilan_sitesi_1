@@ -91,31 +91,6 @@ export default function SearchPage() {
     fetchData();
   }, [searchState]); // Re-run when URL state changes
 
-  // Fetch Meta Data for Facets (Label, Type, etc.)
-  const fetchFacetMeta = async (keys) => {
-    try {
-        const res = await fetch(`${API_URL}/api/attributes?filterable_only=true`);
-        if (res.ok) {
-            const attrs = await res.json();
-            const meta = {};
-            attrs.forEach(a => {
-                meta[a.key] = {
-                    label: a.name.tr || a.name.en || a.key,
-                    type: a.attribute_type,
-                    unit: a.unit,
-                    min: 0, // Default
-                    max: 1000000 // Default
-                };
-            });
-            // Manual overrides for Price
-            meta['price'] = { label: 'Fiyat', type: 'range', unit: 'EUR' }; // currency dynamic?
-            setFacetMeta(meta);
-        }
-    } catch (e) {
-        console.error("Meta fetch error", e);
-    }
-  };
-
   const handlePageChange = (newPage) => {
     setSearchState({ page: newPage });
     window.scrollTo({ top: 0, behavior: 'smooth' });
