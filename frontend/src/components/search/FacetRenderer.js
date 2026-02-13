@@ -54,11 +54,13 @@ const CheckboxFacet = ({ facet, onChange }) => {
       <div className="space-y-1.5">
         {visibleOptions.map((opt) => (
           <div key={opt.value} className="flex items-center space-x-2">
-            <Checkbox 
+            <input 
+              type="checkbox"
               id={`${facet.key}-${opt.value}`}
-              checked={facet.selectedValues?.includes(opt.value)}
-              onCheckedChange={(checked) => handleCheck(opt.value, checked)}
+              checked={facet.selectedValues?.includes(opt.value) || false}
+              onChange={(e) => handleCheck(opt.value, e.target.checked)}
               disabled={opt.count === 0 && !facet.selectedValues?.includes(opt.value)}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
             />
             <label 
               htmlFor={`${facet.key}-${opt.value}`}
