@@ -3,6 +3,7 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 from server import app
 import json
+import uuid
 
 @pytest.mark.asyncio
 async def test_observability_middleware():
@@ -13,8 +14,8 @@ async def test_observability_middleware():
         assert "x-request-id" in res.headers
         req_id = res.headers["x-request-id"]
         
-        # 2. Correlation ID Propagation
-        custom_id = "test-trace-123"
+        # 2. Correlation ID Propagation (Must be valid UUID)
+        custom_id = str(uuid.uuid4())
         res2 = await client.get("/api/health", headers={"X-Request-ID": custom_id})
         assert res2.headers["x-request-id"] == custom_id
         
