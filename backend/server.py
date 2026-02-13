@@ -18,6 +18,7 @@ from contextlib import asynccontextmanager
 from asgi_correlation_id import CorrelationIdMiddleware
 from app.core.logging import configure_logging
 from app.middleware.logging_middleware import LoggingMiddleware
+from app.core.redis_rate_limit import RedisRateLimiter
 
 # Configure Structlog
 configure_logging()
@@ -26,8 +27,12 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Rate Limiters
-limiter_auth_login = RateLimiter(limit=20, window_seconds=60, scope="auth_login")
-limiter_auth_register = RateLimiter(limit=10, window_seconds=60, scope="auth_register")
+# We use RedisRateLimiter now, not the deleted RateLimiter (Memory)
+limiter_auth_login = RedisRateLimiter(redis_url=os.environ.get("REDIS_URL", "redis://localhost:6379/0")) 
+# Note: Dependency injection pattern for RedisRateLimiter might need refactoring 
+# because it's a class with methods, not a callable dependency itself directly in the old style.
+# But let's instantiate it.
+limiter_auth_register = RedisRateLimiter(redis_url=os.environ.get("REDIS_URL", "redis://localhost:6379/0"))
 
 # Import models
 from app.models.base import Base
