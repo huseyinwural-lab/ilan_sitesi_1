@@ -43,6 +43,10 @@ class Listing(Base):
     # Attributes
     attributes: Mapped[dict] = mapped_column(JSON, default=dict)  # {"room_count": 3, "area": 120}
     
+    # Vehicle Master Data (Added in P6 S2)
+    make_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("vehicle_makes.id"), nullable=True)
+    model_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("vehicle_models.id"), nullable=True)
+    
     # Status: pending, active, rejected, suspended, expired
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False, index=True)
     
@@ -60,6 +64,8 @@ class Listing(Base):
         Index('ix_listings_country_status', 'country', 'status'),
         Index('ix_listings_module_status', 'module', 'status'),
         Index('ix_listings_moderation', 'status', 'country', 'module', 'created_at'),
+        Index('ix_listings_make_id', 'make_id'),
+        Index('ix_listings_model_id', 'model_id'),
     )
 
 class ModerationAction(Base):
