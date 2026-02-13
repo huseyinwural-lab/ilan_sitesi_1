@@ -23,7 +23,7 @@ search_limiter = RedisRateLimiter(os.environ.get("REDIS_URL", "redis://localhost
 async def limit_search(request: Request):
     ip = request.client.host if request.client else "127.0.0.1"
     key = f"rl:search:{ip}"
-    allowed = await search_limiter.check_limit(key, limit=100, burst=10)
+    allowed = await search_limiter.check_limit(key, limit=60, burst=5)
     if not allowed:
         raise HTTPException(status_code=429, detail="Too Many Requests")
 
