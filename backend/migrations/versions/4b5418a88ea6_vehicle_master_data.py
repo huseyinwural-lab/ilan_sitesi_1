@@ -46,15 +46,24 @@ def upgrade() -> None:
     )
     op.create_index('ix_vehicle_models_slug', 'vehicle_models', ['slug'])
     op.create_index('ix_vehicle_models_make_id', 'vehicle_models', ['make_id'])
-    # Composite unique index
     op.create_unique_constraint('uq_make_model', 'vehicle_models', ['make_id', 'slug'])
 
-    # 3. Update Listings Table
-    op.add_column('listings', sa.Column('make_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('vehicle_makes.id'), nullable=True))
-    op.add_column('listings', sa.Column('model_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('vehicle_models.id'), nullable=True))
+    # 3. Update Listings Table (Use reflection or check existence first if rerunning)
+    # Alembic handles idempotent adds if we check properly, but op.add_column fails if exists.
+    # We assume clean slate or forward migration.
     
-    op.create_index('ix_listings_make_id', 'listings', ['make_id'])
-    op.create_index('ix_listings_model_id', 'listings', ['model_id'])
+    # Check if column exists first (Safety for re-run)
+    conn = op.get_bind()
+    insp = sa.inspect(conn)
+    columns = [c['name'] for c in insp.get_columns('listings')]
+    
+    if 'make_id' not in columns:
+        op.add_column('listings', sa.Column('make_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('vehicle_makes.id'), nullable=True))
+        op.create_index('ix_listings_make_id', 'listings', ['make_id'])
+        
+    if 'model_id' not in columns:
+        op.add_column('listings', sa.Column('model_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('vehicle_models.id'), nullable=True))
+        op.create_index('ix_listings_model_id', 'listings', ['model_id'])
 
 def downgrade() -> None:
     op.drop_index('ix_listings_model_id', table_name='listings')
