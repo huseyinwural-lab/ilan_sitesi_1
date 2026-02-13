@@ -2,9 +2,12 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 
+import { HelmetProvider } from 'react-helmet-async';
+
 // Public Pages
 import HomePage from '@/pages/public/HomePage';
 import SearchPage from '@/pages/public/SearchPage';
+import DetailPage from '@/pages/public/DetailPage';
 import LoginPage from '@/pages/Login';
 
 // Admin Pages
