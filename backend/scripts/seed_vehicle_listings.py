@@ -190,7 +190,7 @@ async def seed_vehicle_listings():
                 session.add(listing)
 
             # 6. Create Commercial
-            for i in range(COUNT_COMM_CARS = 20): # Fixed var name
+            for i in range(COUNT_COMM): # Fixed var name
                 if not comm_cats: break
                 cat = random.choice(comm_cats)
                 country = random.choice(["DE", "TR", "FR"])
