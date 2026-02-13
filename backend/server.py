@@ -1098,9 +1098,6 @@ from app.routers.p1_routes import (
 
 # Wrapper to inject dependencies
 @api_router.get("/dealer-applications")
-# ==================== PUBLIC LISTING ROUTES (P8) ====================
-from app.routers import listing_routes
-api_router.include_router(listing_routes.router)
 
 async def get_dealer_apps(country: Optional[str] = None, dealer_type: Optional[str] = None, status: Optional[str] = None, skip: int = 0, limit: int = 50, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "country_admin"]))):
     from app.routers.p1_routes import get_dealer_applications
