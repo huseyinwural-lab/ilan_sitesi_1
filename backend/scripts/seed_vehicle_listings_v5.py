@@ -47,10 +47,24 @@ async def seed_vehicle_listings_v5():
                 logger.error("❌ Master Data not found! Run seed_vehicle_master_data.py first.")
                 return
 
+            if not cats:
+                logger.warning("No Vehicle Categories found in DB! Trying fallback fetch...")
+                cats = (await session.execute(select(Category))).scalars().all()
+                cats = [c for c in cats if c.module == 'vehicle'] # Filter manually if DB query failed
+            
+            if not cats:
+                logger.error("❌ Still no categories found. Run seed_production_data_v4.py")
+                return
+
             # Organize Cats
             car_cats = [c for c in cats if 'cars' in str(c.slug)]
             moto_cats = [c for c in cats if 'motorcycles' in str(c.slug)]
             comm_cats = [c for c in cats if 'commercial' in str(c.slug)]
+            
+            # Fallback if specific subs not found, use roots
+            if not car_cats: car_cats = cats
+            if not moto_cats: moto_cats = cats
+            if not comm_cats: comm_cats = cats
             
             # Helper to get models for type
             def get_models(v_type):
