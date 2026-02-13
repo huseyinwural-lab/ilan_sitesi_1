@@ -1,13 +1,12 @@
 # Pagination Determinism Policy v1
 
-**Problem:** `ORDER BY price` is unstable if prices are equal.
-**Solution:** Always append `id` or `created_at` as tie-breaker.
+**Rule:** Sort stability is mandatory.
 
-## 1. Rules
--   **Default:** `ORDER BY created_at DESC, id DESC`.
--   **Price Sort:** `ORDER BY price ASC, id DESC`.
--   **Relevance:** `ORDER BY rank DESC, id DESC`.
+## 1. Implementation
+-   **API Layer:** `search_routes.py` MUST append `, Listing.id` to every `order_by`.
+-   **DB Layer:** Ensure ID is unique/primary key (Already true).
 
-## 2. Enforcement
--   **Code Review:** Check all `order_by` clauses in `search_routes.py`.
--   **Test:** Create 20 listings with same price. Page 1 and Page 2 must have 0 overlap.
+## 2. Test Case
+-   Fetch Page 1 (Limit 10). Note IDs.
+-   Fetch Page 2 (Limit 10). Note IDs.
+-   **Pass:** Intersection is Empty.

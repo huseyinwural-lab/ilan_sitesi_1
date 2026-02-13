@@ -1,13 +1,12 @@
 # Healthcheck Policy v1
 
-**Endpoints:**
--   `/api/health/liveness`: Returns 200 OK (App is running).
--   `/api/health/readiness`: Checks Dependencies.
+**Endpoint:** `/api/health/readiness`
 
-## 1. Readiness Checks
--   **DB:** Select 1 (Timeout 2s).
--   **Redis:** Ping (Timeout 1s).
--   **Migrations:** Check `alembic_version` matches code head.
+## 1. Checks
+-   **DB:** `SELECT 1` (Critical).
+-   **Redis:** `PING` (Critical for Rate Limit, Fail-Open allowed but status should reflect Degraded).
+-   **Migrations:** Compare `alembic_version` with `code_head`.
 
-## 2. Deployment Gate
--   Kubernetes/Render probe must pass Readiness before routing traffic.
+## 2. Response
+-   **200 OK:** All Critical systems UP.
+-   **503 Service Unavailable:** DB Down.

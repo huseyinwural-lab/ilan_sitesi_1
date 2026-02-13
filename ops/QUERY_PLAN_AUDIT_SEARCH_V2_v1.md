@@ -1,13 +1,13 @@
 # Query Plan Audit Search v2 v1
 
-**Tool:** `EXPLAIN (ANALYZE, BUFFERS)`
+**Status:** PENDING EXECUTION
 
 ## 1. Critical Queries
--   [ ] **Facet Aggregation:** Group By `value_option_id`.
-    -   *Risk:* Hash Aggregate on large set.
--   [ ] **Attribute Filtering:** `EXISTS (SELECT 1 ...)`
-    -   *Risk:* Nested Loop vs Hash Join.
+-   **Q1:** Base Listing Fetch with Pagination.
+-   **Q2:** Facet Aggregation (Group By Attribute Option).
+-   **Q3:** Attribute Filtering (WHERE EXISTS).
 
-## 2. Index Verification
--   [ ] `ix_listing_attributes_attr_val_opt` usage confirmed.
--   [ ] `ix_listing_attributes_listing_id` usage confirmed.
+## 2. Findings
+*(To be filled after EXPLAIN ANALYZE run)*
+-   **Seq Scans Detected:** TBD
+-   **Index Usage:** TBD

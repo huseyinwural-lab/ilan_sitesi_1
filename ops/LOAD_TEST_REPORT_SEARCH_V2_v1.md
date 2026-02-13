@@ -1,15 +1,19 @@
 # Load Test Report Search v2 v1
 
-**Status:** PENDING
+**Status:** PENDING EXECUTION
 
-## 1. Scenarios
--   **A (Browse):** `GET /search?category=smartphones&page=1..5`
--   **B (Filter):** `GET /search?attrs={"brand":["apple"]}`
--   **C (Complex):** `GET /search?attrs={...} + q=iphone`
+## 1. Environment
+-   **DB:** PostgreSQL 15 (Local Container).
+-   **Data:** 10k Listings.
+-   **Tool:** Python Async Benchmark Script (`scripts/benchmark_search.py`).
 
-## 2. Results (Baseline)
-| Metric | Scenario A | Scenario B | Scenario C |
-| :--- | :--- | :--- | :--- |
-| **p50** | TBD | TBD | TBD |
-| **p95** | TBD | TBD | TBD |
-| **RPS** | TBD | TBD | TBD |
+## 2. Scenarios & Results
+| Scenario | Latency p50 | Latency p95 | RPS | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **A: Simple Browse** | TBD | TBD | TBD | |
+| **B: Facet Filter** | TBD | TBD | TBD | |
+| **C: Complex Query** | TBD | TBD | TBD | |
+
+## 3. Thresholds
+-   **Goal:** p95 < 150ms.
+-   **Fail Condition:** p95 > 500ms or Error Rate > 1%.
