@@ -125,10 +125,31 @@ export default function SearchPage() {
     setSearchState({ sort: val });
   };
 
+  const handlePageChange = (newPage) => {
+    setSearchState({ page: newPage });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-6">
         
+        {/* Breadcrumb */}
+        {searchState.category && (
+          <div className="flex items-center text-sm text-muted-foreground mb-4">
+            <span 
+              className="hover:text-foreground cursor-pointer"
+              onClick={() => handleCategoryChange(null)}
+            >
+              Ana Sayfa
+            </span>
+            <ChevronRight className="h-4 w-4 mx-1" />
+            <span className="font-medium text-foreground">
+              {categories.find(c => c.slug.en === searchState.category || c.slug.tr === searchState.category)?.translations?.find(t => t.language === 'tr')?.name || searchState.category}
+            </span>
+          </div>
+        )}
+
         {/* Header & Mobile Filter Toggle */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
