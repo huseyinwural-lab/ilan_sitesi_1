@@ -4,7 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.dependencies import get_db, check_permissions
 from app.models.user import User
-from app.server import get_password_hash
+# from app.server import get_password_hash # Circular import risk if server.py imports admin_routes
+# Import helper locally or from dependencies if moved
+from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
 import logging
 import uuid
 
