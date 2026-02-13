@@ -1,41 +1,43 @@
-# Search Filter API v2 Contract Final
+# Search Filter API v2 Contract (Final)
 
+**Status:** FROZEN
+**Version:** v2.0.0
 **Endpoint:** `GET /api/v2/search`
 
 ## 1. Request Parameters
-| Param | Type | Description |
+| Name | Type | Description |
 | :--- | :--- | :--- |
-| `q` | string | Full-text search (Title, Desc). |
-| `category_slug` | string | Filter by Category (and children). |
-| `sort` | enum | `price_asc`, `price_desc`, `date_desc` (default). |
-| `page` | int | Default 1. |
-| `limit` | int | Default 20. Max 100. |
-| `price_min` | int | |
-| `price_max` | int | |
-| `attrs` | dict | JSON-encoded string for attributes. |
+| `q` | string | Free-text search (Title, Description). Max 100 chars. |
+| `category_slug` | string | Category Slug (e.g. `smartphones`). |
+| `sort` | enum | `date_desc`, `price_asc`, `price_desc`. Default `date_desc`. |
+| `page` | int | 1-based index. Default 1. |
+| `limit` | int | Items per page. Default 20. Max 100. |
+| `price_min` | int | Filter range. |
+| `price_max` | int | Filter range. |
+| `attrs` | json | Map of filters. `{"brand": ["apple"], "screen_size": {"min": 5}}`. |
 
-**`attrs` Format:**
+## 2. Facet Response Schema
+The `facets` object in response follows this structure:
 ```json
-{
-  "brand_electronics": ["apple", "samsung"],  // Multi-Select
-  "screen_size": {"min": 5, "max": 7},       // Range
-  "shipping_available": true                 // Boolean
-}
-```
-
-## 2. Response Structure
-```json
-{
-  "items": [
-    { "id": "...", "title": "iPhone 13", "price": 900, "currency": "EUR", "image": "..." }
+"facets": {
+  "brand": [
+    { 
+      "value": "apple", 
+      "label": "Apple", 
+      "count": 42, 
+      "selected": true 
+    },
+    { "value": "samsung", "label": "Samsung", "count": 15, "selected": false }
   ],
-  "facets": {
-    "brand_electronics": [
-      { "value": "apple", "label": "Apple", "count": 12, "selected": true },
-      { "value": "samsung", "label": "Samsung", "count": 5, "selected": false }
-    ],
-    "screen_size": { "min": 4.0, "max": 13.0 } // Global bounds for range slider
-  },
-  "pagination": { "total": 17, "page": 1, "pages": 1 }
+  "screen_size": { 
+    "min": 4.5, 
+    "max": 6.9,
+    "unit": "inch" 
+  }
 }
 ```
+
+## 3. Error Behavior
+-   **Invalid JSON in `attrs`:** `400 Bad Request`.
+-   **Unknown Attribute Key:** Ignored (Soft fail).
+-   **Category Not Found:** Treated as Root search (or 404 if strict). *Decision: Treated as Global Search.*
