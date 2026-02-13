@@ -6,7 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { 
   LayoutDashboard, Users, Globe, Flag, Clock, Settings,
   LogOut, Menu, X, Sun, Moon, ChevronDown, FolderTree, Settings2, MenuSquare,
-  Building, Star, ShieldCheck, FileText, Percent
+  Building, Star, ShieldCheck, FileText, Percent, Database, Car
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -39,6 +39,10 @@ export default function Layout({ children }) {
     { path: '/categories', icon: FolderTree, label: 'Categories', roles: ['super_admin', 'country_admin'] },
     { path: '/attributes', icon: Settings2, label: 'Attributes', roles: ['super_admin'] },
     { path: '/menu', icon: MenuSquare, label: 'Menu', roles: ['super_admin'] },
+    // Master Data Management
+    { divider: true, label: 'Master Data', roles: ['super_admin', 'country_admin'] },
+    { path: '/admin/master-data/attributes', icon: Database, label: 'MDM Attributes', roles: ['super_admin', 'country_admin'] },
+    { path: '/admin/master-data/vehicle-makes', icon: Car, label: 'Vehicle Makes', roles: ['super_admin', 'country_admin'] },
     { path: '/audit-logs', icon: Clock, label: 'audit_logs', roles: ['super_admin', 'country_admin', 'finance'] },
   ];
 
