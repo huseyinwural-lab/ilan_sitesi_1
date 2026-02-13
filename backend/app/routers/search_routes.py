@@ -184,6 +184,7 @@ async def search_listings(
             "image": i.images[0] if i.images else None
         } for i in items],
         "facets": facets,
+        "facet_meta": facet_meta,
         "pagination": {
             "total": total,
             "page": page,
