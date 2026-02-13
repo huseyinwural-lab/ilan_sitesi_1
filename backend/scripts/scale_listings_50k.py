@@ -99,10 +99,22 @@ async def scale_data():
                 # We need valid attribute_ids.
                 
             # Bulk Insert Listings
+            # We need to map columns to tuple order
+            # Row: (id, title, desc, module, cat_id, country, city, price, currency, user_id, status, created_at, images)
+            # Table has: is_dealer_listing (bool), is_premium (bool) which are NOT NULL or default.
+            # copy_records_to_table expects columns to match data.
+            # Let's add is_dealer_listing=False, is_premium=False
+            
+            records_with_defaults = []
+            for r in listings:
+                # r is tuple of 13 items
+                # add is_dealer_listing (False), is_premium (False)
+                records_with_defaults.append(r + (False, False))
+
             await conn.copy_records_to_table(
                 'listings',
-                records=listings,
-                columns=['id', 'title', 'description', 'module', 'category_id', 'country', 'city', 'price', 'currency', 'user_id', 'status', 'created_at', 'images']
+                records=records_with_defaults,
+                columns=['id', 'title', 'description', 'module', 'category_id', 'country', 'city', 'price', 'currency', 'user_id', 'status', 'created_at', 'images', 'is_dealer_listing', 'is_premium']
             )
             logger.info(f"✅ Inserted {count} listings")
 
