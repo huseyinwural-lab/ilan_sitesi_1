@@ -29,6 +29,7 @@ class Attribute(Base):
     # Features
     is_filterable: Mapped[bool] = mapped_column(Boolean, default=True)
     is_sortable: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_searchable: Mapped[bool] = mapped_column(Boolean, default=True) # Added back to match DB Schema
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
     # P6 Shopping: Variant Logic
