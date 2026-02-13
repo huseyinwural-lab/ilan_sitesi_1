@@ -38,12 +38,8 @@ async def search_listings(
     # 3. Category Filter
     current_cat = None
     if category_slug:
-        # Find category ID by slug (assuming single lang 'en' for MVP or pass lang param)
-        # TODO: Proper locale handling.
-        cat_res = await db.execute(select(Category).where(Category.slug['en'].astext == category_slug)) # PG syntax
         # Fallback for SQLite/Generic if astext fails (Simulated)
         # In real code we use the python lookup if seed was consistent, but here we query DB.
-        # Let's use a simpler query for MVP compatibility
         cat_all = (await db.execute(select(Category))).scalars().all()
         current_cat = next((c for c in cat_all if c.slug.get('en') == category_slug), None)
         
