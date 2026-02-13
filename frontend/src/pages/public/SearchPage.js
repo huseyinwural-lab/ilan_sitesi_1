@@ -111,9 +111,9 @@ export default function SearchPage() {
     fetchData();
   }, [searchState]); // Re-run when URL state changes
 
-  const handlePageChange = (newPage) => {
-    setSearchState({ page: newPage });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleCategoryChange = (slug) => {
+    // Reset filters on category change (Architecture Decision 3)
+    setSearchState({ category: slug, filters: {}, page: 1 });
   };
 
   const handleFilterChange = (newFilters) => {
