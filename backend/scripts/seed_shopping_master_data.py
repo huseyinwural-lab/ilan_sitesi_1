@@ -57,6 +57,8 @@ async def seed_shopping_master_data(allow_prod=False, dry_run=False):
                 if not attr:
                     attr = Attribute(key=key, attribute_type=type_name, unit=unit, name=name, is_variant=is_variant, is_active=True, is_filterable=True)
                     session.add(attr)
+                # Ensure is_variant is updated if exists
+                attr.is_variant = is_variant
                 attr_map[key] = attr
             
             if not dry_run:
@@ -93,39 +95,71 @@ async def seed_shopping_master_data(allow_prod=False, dry_run=False):
                 await session.flush()
                 root.path = str(root.id)
 
-            # Subcats
-            def ensure_cat(slug, name, parent):
-                cat = Category(module="shopping", parent_id=parent.id, slug={"en": slug}, is_enabled=True, path=f"{parent.path}.NEW")
-                # Add logic to check existence first in real impl
-                session.add(cat)
+            # Define Subcats (Ensure they exist)
+            subcats = [
+                ("electronics", "Electronics", root),
+                ("fashion", "Fashion", root),
+                ("home-living", "Home & Living", root),
+                ("hobbies", "Hobbies", root)
+            ]
+            
+            # Level 2
+            # Electronics -> Smartphones, Computers
+            # Fashion -> Clothing, Shoes
+            # Home -> Furniture
+            
+            # Helper to get/create cat
+            async def get_create_cat(slug, name, parent):
+                res = await session.execute(select(Category).where(Category.slug['en'].astext == slug)) # JSONB query might differ per driver
+                # Simple python filter for seed reliability
+                all_c = (await session.execute(select(Category).where(Category.module == 'shopping'))).scalars().all()
+                cat = next((c for c in all_c if c.slug.get('en') == slug), None)
+                
+                if not cat:
+                    logger.info(f"🆕 Creating Category: {slug}")
+                    cat = Category(
+                        module="shopping",
+                        parent_id=parent.id,
+                        slug={"en": slug}, # Simplified
+                        is_enabled=True,
+                        path=f"{parent.path}.NEW"
+                    )
+                    session.add(cat)
+                    await session.flush()
+                    cat.path = f"{parent.path}.{cat.id}"
+                    session.add(CategoryTranslation(category_id=cat.id, language="en", name=name))
                 return cat
 
-            # Need robust Category Tree logic or reuse existing seed. 
-            # Assuming Categories exist from Seed v1/v2 or we just link to existing ones.
-            # Let's fetch existing subs.
+            # L1
+            cat_elec = await get_create_cat("electronics", "Electronics", root)
+            cat_fash = await get_create_cat("fashion", "Fashion", root)
+            cat_home = await get_create_cat("home-living", "Home & Living", root)
             
-            all_cats = (await session.execute(select(Category).where(Category.module == 'shopping'))).scalars().all()
-            
-            async def link(cat_slug, attr_keys):
-                cat = next((c for c in all_cats if c.slug.get('en') == cat_slug), None)
-                if not cat: 
-                    # If not found, skip or create. For seed v6, we assume categories exist from previous seed or we skip.
-                    logger.warning(f"⚠️ Category {cat_slug} not found. Skipping binding.")
-                    return
-                
-                await session.execute(delete(CategoryAttributeMap).where(CategoryAttributeMap.category_id == cat.id))
+            # L2
+            cat_phones = await get_create_cat("smartphones", "Smartphones", cat_elec)
+            cat_comps = await get_create_cat("computers", "Computers", cat_elec)
+            cat_cloth = await get_create_cat("clothing", "Clothing", cat_fash)
+            cat_shoes = await get_create_cat("shoes", "Shoes", cat_fash)
+            cat_furn = await get_create_cat("furniture", "Furniture", cat_home)
+
+            async def link(target_cat, attr_keys):
+                if not target_cat: return
+                await session.execute(delete(CategoryAttributeMap).where(CategoryAttributeMap.category_id == target_cat.id))
                 for key in attr_keys:
-                    session.add(CategoryAttributeMap(category_id=cat.id, attribute_id=attr_map[key].id, inherit_to_children=True))
-                logger.info(f"🔗 Linked to {cat_slug}")
+                    session.add(CategoryAttributeMap(category_id=target_cat.id, attribute_id=attr_map[key].id, inherit_to_children=True))
+                logger.info(f"🔗 Linked to {target_cat.slug.get('en')}")
 
             # Bindings
-            await link("shopping", ["condition_shopping", "shipping_available"])
-            await link("electronics", ["brand_electronics", "warranty"])
-            await link("smartphones", ["storage_capacity", "ram", "screen_size"])
-            await link("computers", ["storage_capacity", "ram", "screen_size"])
+            await link(root, ["condition_shopping", "shipping_available"])
+            await link(cat_elec, ["brand_electronics", "warranty"])
+            await link(cat_phones, ["storage_capacity", "ram", "screen_size"])
+            await link(cat_comps, ["storage_capacity", "ram", "screen_size"])
             
-            # Fashion (Need to ensure 'fashion' cat exists, v1 seed had 'shopping' -> 'electronics', 'home'. Fashion might be missing)
-            # If missing, script ends here for Fashion.
+            await link(cat_fash, ["gender", "brand_fashion", "color"])
+            await link(cat_cloth, ["size_apparel"])
+            await link(cat_shoes, ["size_shoes"])
+            
+            await link(cat_furn, ["material"])
             
             if not dry_run:
                 await session.commit()
