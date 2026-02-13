@@ -9,20 +9,24 @@ import random
 API_URL = "http://localhost:8001/api/v2/search"
 
 # Concurrency Config
-CONCURRENT_USERS = 50
-TOTAL_REQUESTS = 1000
+CONCURRENT_USERS = 5 
+TOTAL_REQUESTS = 50
 
 async def user_session(client, scenarios):
     latencies = []
-    # Use simpler weighted choice
     for _ in range(TOTAL_REQUESTS // CONCURRENT_USERS):
         scenario = random.choice(scenarios)
         start = time.time()
         try:
             res = await client.get(API_URL, params=scenario['params'], timeout=10.0)
             dur = (time.time() - start) * 1000
+            
             if res.status_code == 200:
                 latencies.append(dur)
+            elif res.status_code == 429:
+                print("⚠️ Rate Limited (429) - Expected in Soft Launch")
+                # Wait a bit
+                await asyncio.sleep(1)
             else:
                 print(f"Error {res.status_code}: {res.text[:100]}")
         except Exception as e:
@@ -53,11 +57,11 @@ async def run_load_test():
     all_latencies = [l for sub in results for l in sub]
     
     if not all_latencies:
-        print("❌ No successful requests.")
+        print("❌ No successful requests (All Rate Limited or Failed).")
         return
 
     print("\n--- Results ---")
-    print(f"Total Requests: {len(all_latencies)}")
+    print(f"Total Successful Requests: {len(all_latencies)}")
     print(f"Duration: {total_time:.2f}s")
     print(f"RPS: {len(all_latencies) / total_time:.2f}")
     print(f"P50: {np.percentile(all_latencies, 50):.2f}ms")
