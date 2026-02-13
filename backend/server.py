@@ -511,6 +511,11 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 app = FastAPI(title="Admin Panel API", description="Multi-country Admin Panel (PostgreSQL + Alembic)", version="1.0.0", lifespan=lifespan)
+
+# Observability Middleware
+app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(LoggingMiddleware)
+
 api_router = APIRouter(prefix="/api")
 
 # Health check
