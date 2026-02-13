@@ -20,6 +20,7 @@ from app.models.commercial import DealerPackage, DealerSubscription
 from app.models.moderation import Listing
 from app.models.category import Category
 from app.models.billing import Invoice
+from app.models.vehicle_mdm import VehicleMake, VehicleModel # FIX: Import for FK resolution
 
 # Security Helper (Copied to avoid import loop or path issues)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -49,7 +50,7 @@ async def seed_dummy_data():
             # 1. Cleanup (Optional, but good for idempotent runs in dev)
             # Only delete dummy data, preserve config
             logger.info("Cleaning old dummy data...")
-            await session.execute(delete(Listing).where(Listing.title.like("Test %")))
+            await session.execute(delete(Listing).where(Listing.title.like("Test Listing%")))
             await session.execute(delete(DealerSubscription)) # Cascades usually, but safe to be explicit
             await session.execute(delete(Dealer)) # Linked to apps
             await session.execute(delete(DealerApplication).where(DealerApplication.company_name.like("Test %")))
@@ -199,6 +200,7 @@ async def seed_dummy_data():
                     title=f"Test Listing {i} - {slug}",
                     description="This is a generated dummy listing for testing purposes.",
                     module=cat.module,
+                    category_id=cat.id,
                     country=random.choice(COUNTRIES),
                     price=random.randint(1000, 500000),
                     currency="EUR",
