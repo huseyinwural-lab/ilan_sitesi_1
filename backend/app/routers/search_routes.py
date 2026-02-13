@@ -9,6 +9,7 @@ from app.models.category import Category
 from typing import Optional, List, Dict
 import json
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v2", tags=["search"])
@@ -38,14 +39,10 @@ async def search_listings(
     # 3. Category Filter
     current_cat = None
     if category_slug:
-        # Fallback for SQLite/Generic if astext fails (Simulated)
-        # In real code we use the python lookup if seed was consistent, but here we query DB.
         cat_all = (await db.execute(select(Category))).scalars().all()
         current_cat = next((c for c in cat_all if c.slug.get('en') == category_slug), None)
         
         if current_cat:
-            # TODO: Include children categories logic (recursive CTE or path match)
-            # For MVP: Exact match or simple path containment
             query = query.where(Listing.category_id == current_cat.id)
     
     # 4. Standard Filters
@@ -56,23 +53,17 @@ async def search_listings(
     if attrs:
         try:
             filters = json.loads(attrs)
-            # filters example: {"brand": ["apple", "samsung"], "screen_size": {"min": 5}}
             
             for key, val in filters.items():
-                # Find Attribute ID
                 attr_res = await db.execute(select(Attribute).where(Attribute.key == key))
                 attr = attr_res.scalar_one_or_none()
                 if not attr: continue
                 
-                # Subquery for Filter
                 sub_q = select(ListingAttribute.listing_id).where(
                     ListingAttribute.attribute_id == attr.id
                 )
                 
                 if attr.attribute_type == 'select' or attr.attribute_type == 'multi_select':
-                    # Value is list of slugs? Or IDs? 
-                    # Contract says: slug values (e.g. "apple")
-                    # Need to resolve Option IDs from Slugs
                     if isinstance(val, list):
                         opt_ids = (await db.execute(select(AttributeOption.id).where(
                             AttributeOption.attribute_id == attr.id,
@@ -85,7 +76,6 @@ async def search_listings(
                         sub_q = sub_q.where(ListingAttribute.value_boolean == True)
                         
                 elif attr.attribute_type == 'number':
-                    # Range
                     if isinstance(val, dict):
                         if 'min' in val: sub_q = sub_q.where(ListingAttribute.value_number >= val['min'])
                         if 'max' in val: sub_q = sub_q.where(ListingAttribute.value_number <= val['max'])
@@ -96,11 +86,9 @@ async def search_listings(
             raise HTTPException(status_code=400, detail="Invalid attributes format")
 
     # 6. Pagination & Execution (Items)
-    # Total count (Separate query)
     count_q = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_q)).scalar()
     
-    # Sorting
     if sort == 'price_asc': query = query.order_by(Listing.price.asc())
     elif sort == 'price_desc': query = query.order_by(Listing.price.desc())
     else: query = query.order_by(Listing.created_at.desc())
@@ -109,27 +97,34 @@ async def search_listings(
     items = items_res.scalars().all()
     
     # 7. Facet Generation (Aggregated from Filtered Result)
-    # Strategy: We need to know which attributes are RELEVANT for the current category context.
     facets = {}
     if current_cat:
-        # Fetch bound attributes
-        bindings = (await db.execute(select(CategoryAttributeMap).where(CategoryAttributeMap.category_id == current_cat.id))).scalars().all()
+        # Resolve Inheritance
+        # Path format: "id1.id2.id3"
+        if current_cat.path:
+            cat_ids = [uuid.UUID(x) for x in current_cat.path.split('.')]
+        else:
+            cat_ids = [current_cat.id]
+            
+        # Fetch bindings for current OR ancestors with inheritance
+        bindings_query = select(CategoryAttributeMap).where(
+            or_(
+                CategoryAttributeMap.category_id == current_cat.id,
+                and_(
+                    CategoryAttributeMap.category_id.in_(cat_ids),
+                    CategoryAttributeMap.inherit_to_children == True
+                )
+            )
+        )
+        bindings = (await db.execute(bindings_query)).scalars().all()
         target_attr_ids = [b.attribute_id for b in bindings]
         
-        # Fetch Attributes Defs
         target_attrs = (await db.execute(select(Attribute).where(Attribute.id.in_(target_attr_ids)))).scalars().all()
-        
-        # Filtered Listing IDs (for aggregation scope)
-        # Note: Ideally we run aggregation on the query, but SQL complexity high. 
-        # MVP: If total results < 1000, we can aggregate in Python or 
-        # fetch simplified aggregation.
-        # Let's do SQL Aggregation for Selects.
         
         filtered_subq = query.with_only_columns(Listing.id).subquery()
         
         for attr in target_attrs:
             if attr.attribute_type in ['select', 'multi_select']:
-                # Aggregation Query
                 stmt = (
                     select(AttributeOption.value, AttributeOption.label, func.count(ListingAttribute.id))
                     .join(ListingAttribute, ListingAttribute.value_option_id == AttributeOption.id)
@@ -144,9 +139,9 @@ async def search_listings(
                 for val, label, count in rows:
                     options.append({
                         "value": val,
-                        "label": label.get('en', val), # Locale handling needed
+                        "label": label.get('en', val),
                         "count": count,
-                        "selected": False # Logic to check if in current filter
+                        "selected": False
                     })
                 if options:
                     facets[attr.key] = options
