@@ -55,7 +55,7 @@ function App() {
                   {/* Public Routes */}
                   <Route path="/" element={<HomePage />} />
                   <Route path="/search" element={<SearchPage />} />
-                  <Route path="/ilan/:slug" element={<DetailPage />} /> {/* P8: Detail Route */}
+                  <Route path="/ilan/:id" element={<DetailPage />} /> {/* P8: Detail Route (captures slug-id) */}
                   <Route path="/auth/login" element={<LoginPage />} />
                 <Route path="/auth/register" element={<LoginPage />} /> {/* Temporary redirect to login */}
 
