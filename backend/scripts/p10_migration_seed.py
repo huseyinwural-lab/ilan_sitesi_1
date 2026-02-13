@@ -79,9 +79,11 @@ async def seed_plans():
     ]
 
     async with AsyncSessionLocal() as session:
-        for p in plans:
-            # Check exist
-            res = await session.execute(text(f"SELECT id FROM subscription_plans WHERE code = '{p['code']}'"))
+        # P10 Optimization: Ensure transaction is active for queries
+        async with session.begin():
+            for p in plans:
+                # Check exist
+                res = await session.execute(text(f"SELECT id FROM subscription_plans WHERE code = '{p['code']}'"))
             if not res.scalar_one_or_none():
                 plan = SubscriptionPlan(
                     code=p['code'],
