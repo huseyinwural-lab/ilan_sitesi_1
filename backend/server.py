@@ -517,9 +517,18 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Admin Panel API", description="Multi-country Admin Panel (PostgreSQL + Alembic)", version="1.0.0", lifespan=lifespan)
 
+from app.core.exceptions import global_exception_handler
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 # Observability Middleware
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(LoggingMiddleware)
+
+# Exception Handlers
+app.add_exception_handler(RequestValidationError, global_exception_handler)
+app.add_exception_handler(StarletteHTTPException, global_exception_handler)
+app.add_exception_handler(Exception, global_exception_handler)
 
 api_router = APIRouter(prefix="/api")
 
