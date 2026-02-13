@@ -1188,7 +1188,6 @@ app.include_router(search_routes.router, prefix="/api")
 
 # P1: Invoice Routes
 @api_router.get("/invoices")
-app.include_router(listing_routes.router, prefix="/api")
 async def list_invoices(country: Optional[str] = None, status: Optional[str] = None, customer_type: Optional[str] = None, skip: int = 0, limit: int = 50, db: AsyncSession = Depends(get_db), current_user: User = Depends(check_permissions(["super_admin", "finance"]))):
     return await get_invoices(country, status, customer_type, skip, limit, db, current_user)
 
