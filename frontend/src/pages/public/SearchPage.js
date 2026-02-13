@@ -247,7 +247,11 @@ export default function SearchPage() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {data.items.map((item) => (
-                      <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow group cursor-pointer">
+                      <Card 
+                        key={item.id} 
+                        className="overflow-hidden hover:shadow-md transition-shadow group cursor-pointer"
+                        onClick={() => navigate(`/ilan/${slugify(item.title)}-${item.id}`)}
+                      >
                         <div className="aspect-[4/3] relative bg-gray-100 overflow-hidden">
                           {item.image ? (
                              <img 
