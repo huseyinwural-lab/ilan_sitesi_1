@@ -3,174 +3,148 @@ The user wants to build a multi-country, multi-language classifieds platform adm
 
 **PRODUCT REQUIREMENTS (Locked Decisions):**
 
-*   **Phase 1 (P0): Core Infrastructure:** FastAPI, PostgreSQL, SQLAlchemy, Alembic, JWT Auth, RBAC, Multi-Country System, N-level Categories, Attribute Engine, Menu/Layout Management. (Completed)
-*   **Phase 1 (P1): Business Logic:** Dealer Management, Premium Products, Moderation Queue, Tax/VAT & Invoice Core. (Completed)
-*   **Phase 2 (P2): Stripe Integration:** Implemented using Stripe Checkout Session flow for secure payments. (Completed)
-*   **Phase 3 (P3): Refund/Cancel Flow:** Implemented full and partial refunds via Stripe, with corresponding DB models and UI elements. (Completed)
-*   **Phase 4 (P4): Dealer Packages:** Implemented a fixed-duration package model for dealers to purchase listing quotas via Stripe. (Completed)
-*   **Phase 5 (P5): Scale Hardening:** Implemented critical database constraints (partial unique indexes), atomic transactions (), and concurrent-safe quota logic to ensure data integrity under load. (Partially Completed, some tasks remain).
-*   **Phase 6 (P6): Deployment Preparation:** Created , , , and  to facilitate a production-grade deployment on Render. (Completed)
-*   **Phase T2: Advanced Pricing Engine:** A new, highly detailed requirement to build a dynamic, database-driven pricing and quota engine based on a waterfall model (Free Quota -> Package Quota -> Pay-per-listing Overage). This phase includes managing prices, free tiers, and discounts via the database rather than hardcoding them.
+*   **Phase 1-4 (Completed):** Core Infrastructure, Business Logic, Stripe Integration, Refund Flow, Dealer Packages.
+*   **Phase 5 (Completed):** Scale Hardening - Implemented atomic transactions, DB constraints, an Expiry Job for subscriptions, and Rate Limiting.
+*   **Phase 6 (Completed):** Deployment Preparation - Created , , etc.
+*   **Phase T2 (Completed):** Advanced Pricing Engine - Implemented a database-driven waterfall pricing model.
+*   **Data & Domain Modeling (In Progress/Completed):**
+    *   **Emlak (Real-Estate):** Standardized attributes to EU norms (e.g., Total Rooms instead of 3+1).
+    *   **Vasıta (Vehicle):** Implemented a full Master Data Management (MDM) system for Makes and Models, moving away from simple attributes.
+    *   **Alışveriş (Shopping):** Designed and implemented an Attribute System v2 using typed columns for high performance and flexibility, moving away from a generic JSONB approach.
+*   **Current Phase (P7.0 - Stabilization):** A hardening sprint focused on adding production-grade observability (structured logging, correlation IDs), API contract hardening (error standards), security guardrails (rate limits, param validation), and performance validation (load testing, query plan auditing) before frontend integration.
 
 **User's preferred language**: Turkish. The next agent MUST respond in Turkish.
 
 **what currently exists?**
-A robust FastAPI backend and React frontend application for a classifieds admin panel. The backend uses PostgreSQL with SQLAlchemy and Alembic for migrations. Core features from P0 through P4 are fully implemented and tested. Phase 5 hardening has added critical DB constraints and atomic operations. Phase 6 has produced all necessary artifacts (, ) for a production deployment. The agent has just begun implementing the new, complex pricing engine (Phase T2), creating the necessary database models and migration files.
+A sophisticated full-stack application for a classifieds admin panel using FastAPI, PostgreSQL, and React. All major features from P0-P6 are complete. The agent has just finished a massive data modeling and seeding effort for all major verticals (Real Estate, Vehicle, Shopping), implementing an MDM for vehicles and a typed-column attribute system for shopping. A new Search API v2 has been built to leverage this new data structure. The project is currently in the middle of a Stabilization phase (P7.0) to harden the new APIs before frontend integration. The environment was recently reset, and the database was re-initialized.
 
 **Last working item**:
-- **Last item agent was working:** The agent was in the initial stages of implementing the new **Advanced Pricing Engine (Phase T2)**. It had just created the DB models (, , etc.), updated existing models (, ), and generated and fixed a complex Alembic migration () to apply these schema changes. The agent then created a skeleton for the  and a new test file . The last action was to run this new test, which failed because the core logic in  is not yet implemented.
-- **Status**: IN PROGRESS
+- **Last item agent was working:** The agent was in the middle of the **P7.0 Stabilization Phase**, specifically trying to perform a **Query Plan Audit** on a 10k listing dataset to validate the performance of the new Search API v2. The audit script () failed due to an environment reset (PostgreSQL service was not running). The agent has since re-installed and initialized PostgreSQL.
+- **Status**: BLOCKED
 - **Agent Testing Done**: N
-- **Which testing method agent to use?**: backend testing agent. The agent must implement the logic in  and then fix and pass the tests in .
+- **Which testing method agent to use?**: manual testing by running the python scripts.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1:** The new Pricing Engine tests are failing. (P0 - HIGHEST PRIORITY)
+- **Issue 1:** The database is empty after an environment reset, blocking all further progress. (P0 - HIGHEST PRIORITY)
 
 **Issues Detail:**
 - **Issue 1:**
-  - **Attempted fixes:** The agent created the models and a failing test case in . The core service logic in  is still a skeleton and needs to be implemented.
-  - **Next debug checklist:**
-    1.  Open .
-    2.  Implement the  method based on the user's Waterfall logic (check free quota, then subscription quota, then pay-per-listing from ).
-    3.  Open .
-    4.  Fix the test to accurately simulate the waterfall scenario: a) consume free listings, b) consume package listings, c) trigger a pay-per-listing charge.
-    5.  Run the test and ensure it passes.
-  - **Why fix this issue and what will be achieved with the fix?**: This is the core task for implementing the new dynamic pricing engine, a key business requirement.
-  - **Status**: IN PROGRESS
-  - **Is recurring issue?**: N
+  - **Attempted fixes:** The agent correctly identified that PostgreSQL was missing, installed it, created the database and user, and ran the latest Alembic migrations. However, none of the seed data has been re-inserted.
+  - **Next debug checklist:** The database is currently empty. Before any other task (including re-running the failed query audit), the database MUST be fully re-seeded in the correct order.
+    1.  Run  (for dealer packages).
+    2.  Run  (for users and dealers).
+    3.  Run  (for Emlak/Vasıta categories & v2 attributes).
+    4.  Run  (for vehicle makes/models).
+    5.  Run  (for shopping attributes).
+    6.  Run  (for real estate listings).
+    7.  Run  (for vehicle listings with MDM IDs).
+    8.  Run  (for shopping listings with typed attributes).
+    9.  Run  to scale the data to 10k for performance testing.
+    10. After all data is seeded, re-run .
+  - **Why fix this issue and what will be achieved with the fix?**: The entire application's functionality and the current stabilization task depend on this data. Fixing this will unblock the P7.0 phase and allow performance validation to complete.
+  - **Status**: NOT STARTED
+  - **Is recurring issue?**: Y (Environment resets can cause this).
   - **Should Test frontend/backend/both after fix?**: backend
   - **Blocked on other issue**: None.
 
 **In progress Task List**:
-- **Task 1:** Implement and Test the New Pricing Engine (P0)
-  - **Where to resume:** The primary focus is . The agent must implement the pricing calculation logic as per the user's detailed specifications (FAZ-T2A & T2B). Subsequently, the test file  needs to be completed and passed.
-  - **What will be achieved with this?**: A fully functional, database-driven pricing and quota system that allows for dynamic price management from the admin panel.
-  - **Status**: IN PROGRESS
+- **Task 1:** Complete P7.0 Stabilization Phase (P1)
+  - **Where to resume:** After resolving the Empty Database issue, resume with the Query Plan Audit.
+    1.  Run .
+    2.  Analyze the output for  issues as per .
+    3.  Implement Index Hardening if required.
+    4.  Run a benchmark test to measure p95 latency against the 150ms target.
+    5.  Implement and verify Deterministic Pagination and Healthcheck endpoints.
+  - **What will be achieved with this?**: A production-ready, performant, secure, and observable Search API v2.
+  - **Status**: BLOCKED
   - **Should Test frontend/backend/both after fix?**: backend
-  - **Blocked on something**: None.
+  - **Blocked on something**: Issue 1: The database is empty.
 
 **Upcoming and Future Tasks**
-- **Upcoming Tasks (P5 - Scale Hardening Completion):**
-  - **P5-005 (P1):** Create a daily cron job/worker to expire subscriptions ( -> ,  -> ).
-  - **P5-007 (P2):** Implement rate limiting for checkout abuse protection (e.g., 5 checkouts per 10 mins).
-  - **P5-008 (P2):** Expand the dashboard observability with new metrics (, , , etc.).
-  - **P5-010 (P2):** Create and run a synthetic load test to simulate concurrent publishing, checkouts, and webhooks.
+- **Upcoming Tasks:**
+    - **P7.2: Admin UI Minimum Scope (P1):** Implement the Frontend UI for managing the new Master Data entities (Attributes, Options, Vehicle Makes/Models) based on the created handoff documents and wireframes.
+    - **P7.3: Public UI Search Integration (P2):** Integrate the new, performant Search API v2 into the public-facing frontend, including dynamic facets.
 
 - **Future Tasks:**
-  - **Self-Serve for Individuals:** Allow individual users (not just dealers) to purchase listings.
-  - **Stripe Recurring Subscriptions:** Upgrade the current fixed-duration package model to a full recurring subscription model using Stripe Subscriptions.
-  - **Search Performance:** Implement advanced search capabilities using PostgreSQL GIN indexes or a dedicated search engine.
-  - **Caching:** Introduce a caching layer (e.g., Redis) for read-heavy endpoints to improve performance.
+    - **Provider-Driven Master Data Sync:** Implement a recurring job to sync vehicle Make/Model data from an external provider to ensure it stays up-to-date.
+    - **Alışveriş (Shopping) Dikeyi:** Fully flesh out this vertical with more detailed attributes and potentially its own MDM for brands.
+    - **V2 Roadmap:** Implement advanced features like dynamic rate limiting, ML-based abuse scoring, and self-service analytics.
 
 **Completed work in this session**
-- **P1 Hardening:** Secured the application by fixing seed idempotency, adding country isolation security patches, and making E2E tests robust.
-- **P2 Stripe Checkout Integration:** Successfully integrated the Stripe Checkout flow for payments, including models for  and .
-- **P3 Refund Flow:** Implemented full and partial refund functionality through Stripe, including the  webhook and necessary UI/DB updates.
-- **P4 Dealer Package Model:** Built the system for dealers to buy fixed-duration packages, including the purchase flow, webhook activation, and DB models.
-- **P5 Scale Hardening (Core):** Implemented critical data integrity features, including DB-level unique constraints and atomic, concurrent-safe logic for quota management.
-- **P6 Deployment Preparation:** Created a full set of production-ready deployment artifacts (, , , ) for Render.
-- **T2 Pricing Engine (Foundation):** Designed and created the initial database schema and migration for the new advanced pricing engine.
-
-**Earlier issues found/mentioned but not fixed**
-- None. All previously mentioned issues were either resolved or intentionally de-prioritized by the user.
-
-**Known issue recurrence from previous fork**
-- None.
+- **Phase P5-T2 Completion:** Finalized the Advanced Pricing Engine, Expiry Job, and Rate Limiting.
+- **Go-Live Readiness:** Created extensive documentation for deployment, operations, and architecture decisions (P6, P7).
+- **Domain Model Refactoring:**
+    - **Emlak (Real Estate):** Standardized attributes to EU norms (e.g.,  as a number).
+    - **Vasıta (Vehicle):** Implemented a full Master Data Management (MDM) system (, ) and migrated existing listings.
+    - **Alışveriş (Shopping):** Designed and implemented a high-performance Attribute System v2 using typed columns instead of a generic JSONB field.
+- **Data Seeding:** Created a comprehensive suite of idempotent seed scripts to populate the database with realistic categories, attributes, users, and thousands of listings across all verticals.
+- **Search API v2:** Built a new, performant search endpoint that leverages the new typed attribute and MDM data structures.
+- **Admin Master Data API:** Created a secure, role-based API for managing attributes, options, and bindings.
+- **P7.0 Stabilization (Part 1):** Implemented foundational observability (structured JSON logging, correlation IDs), API contract hardening (standardized error responses), and security guardrails (rate limiting, parameter validation).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Backend:** Python, FastAPI, SQLAlchemy (ORM), Alembic (DB Migrations).
-- **Database:** PostgreSQL with advanced features like Partial Unique Indexes.
-- **Concurrency:** Atomic updates () and row-level locking () to prevent race conditions.
-- **Frontend:** React.js, React Router.
-- **Deployment:** Docker, Render (Infrastructure as Code via ).
-- **Architecture:** Modular Monolith, Database-driven configuration (pricing, quotas).
+- **Backend:** FastAPI, SQLAlchemy, Alembic.
+- **Database:** PostgreSQL.
+- **Data Modeling:**
+    - **Master Data Management (MDM):** For Vehicle Makes/Models, using dedicated  and  tables.
+    - **Typed-Column Attributes:** A move away from generic JSONB to a structured  table with typed columns (, , ) for performance.
+    - **Attribute Inheritance:** A system where attributes defined on parent categories are inherited by child categories.
+- **Observability:** Structured JSON logging via  and request tracing via .
+- **API Hardening:** Standardized error responses, rate limiting, and parameter validation guardrails.
 
 **key DB schema**
-- **price_configs**: {country, segment, pricing_type, unit_price_net, currency, version, valid_from, valid_to}
-- **free_quota_configs**: {country, segment, quota_amount, period_days, version}
-- **discounts**: {code, discount_type, value, valid_from, valid_to, stacking_allowed}
-- **listing_consumption_logs**: {listing_id, user_id, consumed_source, price_config_id, invoice_item_id}
-- **dealer_subscriptions**: {dealer_id, package_id, status, used_listing_quota, included_listing_quota} (NOTE:  is now calculated as )
-- **invoice_items**: Adds snapshot fields {price_source, base_unit_price, discount_amount, applied_vat_rate, price_config_version}
-- **refunds**: {invoice_id, stripe_refund_id, amount, reason, status}
-
-**changes in tech stack**
-- None.
+- **vehicle_makes**: {id, slug, label_tr, label_de, label_fr, is_active}
+- **vehicle_models**: {id, make_id, slug, label_tr, label_de, label_fr, is_active}
+- **attributes**: {id, code, name, type, is_variant, is_filterable, ...}
+- **attribute_options**: {id, attribute_id, value, label_tr, ...}
+- **listing_attributes**: {listing_id, attribute_id, value_string, value_number, value_boolean, value_date, value_option_id} (The new typed-column store)
+- **listings**: Adds ,  (Foreign Keys to MDM tables).
 
 **All files of reference**
-- : **(NEEDS IMPLEMENTATION)** Core logic for the new pricing engine.
-- : **(NEEDS FIXING)** Test file for the new pricing engine.
-- : Contains the new DB models for the pricing engine.
-- : Contains updated  model.
-- : Contains updated  model.
-- : The last successful migration file that added the pricing engine schema.
-- : Contains the updated seeding logic for default prices and quotas.
-- : Infrastructure-as-Code file for deploying the entire application on Render.
-
-**Areas that need refactoring**:
-- The test file naming is inconsistent (e.g.,  for a Phase T2 feature). It would be beneficial to align test file names with the feature phases they are testing.
+- : This directory contains all the new, critical scripts for seeding and auditing data. The next agent must run them in the correct order to restore the database state.
+- , , , : These directories contain extensive documentation, plans, and architectural decisions made throughout the session. They are the source of truth for the project's direction.
+- : The new Search API v2 implementation.
+- : The new Admin API for master data.
 
 **key api endpoints**
-- : Initiates the purchase flow for a dealer package.
-- : Lists available dealer packages for a country.
-- : Initiates a full or partial refund for an invoice.
-- : Handles all Stripe webhooks (, ).
+- : The new, performant, and filterable public search endpoint.
+- : Admin endpoint for managing attributes.
+- : Admin endpoint for managing attribute options.
 
 **Critical Info for New Agent**
-- **Follow User Specs Religiously:** The user provides extremely detailed, phased requirements (P1, P2...P6, T2). These are considered locked-in and must be followed precisely. Do not deviate.
-- **Data Integrity is Paramount:** The architecture has been hardened with DB-level constraints, atomic operations, and transactional safety. Any new code, especially related to finance or quotas, must uphold this standard.
-- **DB-Driven Logic:** The system is moving away from hardcoded values. Prices, quotas, and configurations should be read from the database (, ).
-- **Waterfall Pricing Model:** The current task is to implement a specific pricing calculation order: 1. Free Quota, 2. Subscription Quota, 3. Pay-per-listing (Overage).
-- **Deployment Strategy:** The project is configured for deployment on Render using the provided  file.
+- **The database is currently EMPTY.** You MUST re-run all the seed scripts in the correct order (see All Pending/In progress Issue list) before attempting any other action. Failure to do so will cause all subsequent steps to fail.
+- The user is highly technical and drives the project via detailed Görev Listesi (Task Lists) and Mimari Karar Seti (Architecture Decision Sets). You must follow these directives precisely.
+- The project has made a significant architectural shift from generic JSONB attributes to a high-performance model using **Master Data Management (MDM)** for vehicles and **Typed-Columns** for other attributes. This structure must be respected and utilized.
+- The current phase is **P7.0 - Stabilization**. The goal is not to add new features but to harden the existing system (performance, observability, security) before the frontend integration sprint (P7.2).
 
 **documents and test reports created in this job**
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
+An extensive set of documents has been created in , , , , and . These documents detail every decision, plan, and report from the session and should be consulted for context.
 
 **Last 10 User Messages and any pending HUMAN messages**
-10. **(Summary):** Agent confirms P4 is complete and asks to fix a frontend visibility issue.
-9.  **User:** Requests admin panel visibility, reporting a frontend compilation error in . (Status: Resolved)
-8.  **User:** Confirms P4 is done, provides an extremely detailed spec for **P5 (Scale Hardening)**, focusing on atomic transactions, DB constraints, concurrency tests, and expiry jobs. (Status: Partially Implemented)
-7.  **(Summary):** Agent confirms P5 hardening is complete and ready for deployment.
-6.  **User:** Approves P5, provides a detailed **P6 (Go-Live on Render)** checklist, specifying DNS, DB, Backend/Frontend services, and smoke tests. (Status: Implemented)
-5.  **(Summary):** Agent confirms P6 deployment preparation is complete.
-4.  **User:** Provides a **Final Go-Live Gate** checklist, adding stricter checks for the  script, health endpoints, and seed safety. (Status: Implemented)
-3.  **(Summary):** Agent confirms all final checks are cleared and the project is ready for deployment.
-2.  **User:** Introduces a new, complex requirement for a **Pricing Engine (FAZ-T2A)**, defining the business mathematics for a waterfall model (Free -> Package -> Overage) and a pay-per-listing option with manual price adjustments. (Status: In Progress)
-1.  **User:** Approves the math and provides a detailed **DB design and task list (FAZ-T2B)** to implement the pricing engine, including new tables, constraints, and service logic. (Status: In Progress - This is the current task)
+The last 10 user messages consist of highly structured, Turkish instructions confirming architectural decisions and outlining the next set of tasks for the agent. The user is driving the project with extreme clarity, defining scopes for data modeling, seeding, migration, stabilization, and performance testing. The very last message confirms the plan to move forward with the Query Plan Audit after the data scaling is complete.
 
 **Project Health Check:**
-- **Working:**
-  - The entire application from Phase 0 to Phase 6 (Deployment Prep) is code-complete and has passed extensive testing.
-  - The database schema is hardened with constraints for data integrity.
-- **Broken:**
-  - The new **Advanced Pricing Engine** is non-functional. The core logic in  is missing, and its corresponding test in  is failing.
+- **Broken:** The database is empty due to an environment reset. All application functionality that relies on data is currently non-operational.
+- **Mocked:** None.
 
 **3rd Party Integrations**
-- **Stripe:** Used for payment processing via the secure **Stripe Checkout Session** flow. API keys are expected as environment variables.
+- **Stripe:** For payment processing.
+- **Redis:** For rate limiting.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. Unit and integration tests were written and passed for every major phase (P1-P5).
-- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Testing agent used after significant changes:** No, the agent used self-written test files.
+- **Troubleshoot agent used after agent stuck in loop:** No.
 - **Test files created:**
-  - 
-  - 
-  - 
-  - 
-  - 
-  -  (Currently Failing)
+    - 
+    - 
+    - 
+    - 
+    - 
+    - And numerous ad-hoc scripts for auditing and smoke testing in .
 - **Known regressions:** None.
 
 **Credentials to test flow:**
@@ -178,4 +152,4 @@ A robust FastAPI backend and React frontend application for a classifieds admin 
 - **Password:** 
 
 **What agent forgot to execute**
-The agent has been diligent in following the user's detailed instructions. No tasks were forgotten. The current job forked in the middle of a complex implementation (the new pricing engine), which is the main pending item.</analysis>
+The agent did not forget to execute tasks. Its workflow was interrupted by an environment reset that wiped the database. The critical next step, which the agent was preparing for, is to re-seed the entire database before continuing with the planned performance audit.</analysis>
