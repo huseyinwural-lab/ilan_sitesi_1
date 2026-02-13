@@ -18,6 +18,9 @@ import AdminOptions from '@/pages/AdminOptions';
 import AdminVehicleMDM from '@/pages/AdminVehicleMDM';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
+import { CountryProvider } from '@/contexts/CountryContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 const ProtectedRoute = ({ children, roles = [] }) => {
   const { user, loading } = useAuth();
@@ -40,85 +43,91 @@ const ProtectedRoute = ({ children, roles = [] }) => {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/auth/login" element={<LoginPage />} />
-          <Route path="/auth/register" element={<LoginPage />} /> {/* Temporary redirect to login */}
+      <LanguageProvider>
+        <CountryProvider>
+          <ThemeProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/search" element={<SearchPage />} />
+                <Route path="/auth/login" element={<LoginPage />} />
+                <Route path="/auth/register" element={<LoginPage />} /> {/* Temporary redirect to login */}
 
-          {/* Admin Routes */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute roles={['super_admin', 'country_admin', 'moderator', 'support', 'finance']}>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                <UserManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/feature-flags"
-            element={
-              <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                <FeatureFlags />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/countries"
-            element={
-              <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                <CountrySettings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/categories"
-            element={
-              <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                <Categories />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/attributes"
-            element={
-              <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                <AdminAttributes />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/attributes/options"
-            element={
-              <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                <AdminOptions />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/master-data/vehicles"
-            element={
-              <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                <AdminVehicleMDM />
-              </ProtectedRoute>
-            }
-          />
+                {/* Admin Routes */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute roles={['super_admin', 'country_admin', 'moderator', 'support', 'finance']}>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                      <UserManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/feature-flags"
+                  element={
+                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                      <FeatureFlags />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/countries"
+                  element={
+                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                      <CountrySettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/categories"
+                  element={
+                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                      <Categories />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/attributes"
+                  element={
+                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                      <AdminAttributes />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/attributes/options"
+                  element={
+                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                      <AdminOptions />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/master-data/vehicles"
+                  element={
+                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                      <AdminVehicleMDM />
+                    </ProtectedRoute>
+                  }
+                />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-        <Toaster />
-      </BrowserRouter>
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+              <Toaster />
+            </BrowserRouter>
+          </ThemeProvider>
+        </CountryProvider>
+      </LanguageProvider>
     </AuthProvider>
   );
 }
