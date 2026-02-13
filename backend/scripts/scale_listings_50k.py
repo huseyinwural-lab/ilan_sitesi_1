@@ -108,13 +108,13 @@ async def scale_data():
             records_with_defaults = []
             for r in listings:
                 # r is tuple of 13 items
-                # add is_dealer_listing (False), is_premium (False), image_count (1), attributes ({})
-                records_with_defaults.append(r + (False, False, 1, json.dumps({})))
+                # add is_dealer_listing (False), is_premium (False), image_count (1), attributes ({}), updated_at (now)
+                records_with_defaults.append(r + (False, False, 1, json.dumps({}), now))
 
             await conn.copy_records_to_table(
                 'listings',
                 records=records_with_defaults,
-                columns=['id', 'title', 'description', 'module', 'category_id', 'country', 'city', 'price', 'currency', 'user_id', 'status', 'created_at', 'images', 'is_dealer_listing', 'is_premium', 'image_count', 'attributes']
+                columns=['id', 'title', 'description', 'module', 'category_id', 'country', 'city', 'price', 'currency', 'user_id', 'status', 'created_at', 'images', 'is_dealer_listing', 'is_premium', 'image_count', 'attributes', 'updated_at']
             )
             logger.info(f"✅ Inserted {count} listings")
 
