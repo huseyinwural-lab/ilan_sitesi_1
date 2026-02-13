@@ -55,6 +55,7 @@ class AttributeOption(Base):
     label: Mapped[dict] = mapped_column(JSON, nullable=False) # Display label {"en": "Red"}
     
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True) # FIX: Added missing column
     
     attribute: Mapped["Attribute"] = relationship("Attribute", back_populates="options")
 
