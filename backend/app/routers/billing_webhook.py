@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter, Header, Request, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import uuid
 from app.dependencies import get_db
 from app.models.billing import StripeEvent, StripeSubscription, BillingCustomer
 from app.models.monetization import UserSubscription, SubscriptionPlan
