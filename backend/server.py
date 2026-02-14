@@ -45,8 +45,8 @@ from app.models.home import HomeLayoutSettings, HomeShowcaseItem, HomeSpecialLis
 from app.models.dealer import DealerApplication, Dealer, DealerUser
 from app.models.premium import PremiumProduct, ListingPromotion, PremiumRankingRule
 from app.models.moderation import Listing, ModerationAction, ModerationRule
-from app.models.billing import VatRate, Invoice, InvoiceItem
-from app.models.payment import StripeSettings, PaymentAttempt, StripeEvent, Refund
+from app.models.billing import VatRate, Invoice, InvoiceItem, StripeEvent
+from app.models.payment import StripeSettings, PaymentAttempt, Refund
 
 from app.models.commercial import DealerPackage, DealerSubscription
 # Database setup
