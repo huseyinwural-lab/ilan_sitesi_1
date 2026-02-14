@@ -3,7 +3,7 @@ import Layout from '@/components/Layout';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, Loader2 } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/toaster";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
