@@ -125,6 +125,24 @@ function App() {
                     <ProtectedRoute roles={['super_admin', 'country_admin']}>
                       <AdminVehicleMDM />
                     </ProtectedRoute>
+
+                <Route
+                  path="/admin/billing"
+                  element={
+                    <ProtectedRoute roles={['super_admin', 'country_admin', 'dealer']}>
+                      <BillingPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/plans"
+                  element={
+                    <ProtectedRoute roles={['super_admin', 'country_admin', 'dealer', 'individual']}>
+                      <PlansPage />
+                    </ProtectedRoute>
+                  }
+                />
+
                   }
                 />
 
