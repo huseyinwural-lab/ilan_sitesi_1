@@ -1207,6 +1207,9 @@ from app.routers import billing_routes
 from app.routers import billing_webhook
 app.include_router(billing_webhook.router, prefix="/api")
 
+from app.routers import billing_read_routes
+app.include_router(billing_read_routes.router, prefix="/api")
+
 app.include_router(billing_routes.router, prefix="/api")
 
 
