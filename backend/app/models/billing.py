@@ -36,6 +36,16 @@ class StripeSubscription(Base):
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
+
+class StripeEvent(Base):
+    __tablename__ = "stripe_events"
+    __table_args__ = {'extend_existing': True}
+    
+    id: Mapped[str] = mapped_column(String(100), primary_key=True) # evt_...
+    type: Mapped[str] = mapped_column(String(100), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="processed")
+    processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
 # --- P1 Legacy/Compat Definitions (Redefined here to break circular dependency) ---
 # In a real refactor, we would move these to app.models.invoice or similar.
 # For now, we define them here if not already defined in metadata by another import.
