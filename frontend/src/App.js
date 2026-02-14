@@ -28,6 +28,9 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 const ProtectedRoute = ({ children, roles = [] }) => {
   const { user, loading } = useAuth();
 
+import BillingPage from '@/pages/admin/Billing';
+import PlansPage from '@/pages/admin/Plans';
+
   if (loading) {
     return <div>Loading...</div>;
   }
