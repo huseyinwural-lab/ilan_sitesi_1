@@ -1204,6 +1204,9 @@ app.include_router(payment_routes.router, prefix="/api/v1")
 
 # P11: Billing Routes
 from app.routers import billing_routes
+from app.routers import billing_webhook
+app.include_router(billing_webhook.router, prefix="/api")
+
 app.include_router(billing_routes.router, prefix="/api")
 
 
