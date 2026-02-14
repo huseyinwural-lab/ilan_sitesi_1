@@ -34,40 +34,21 @@ class StripeSubscription(Base):
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-# StripeEvent already defined in app.models.payment?
-# If so, we should reuse or fix the import. 
-# Error says: Table 'stripe_events' is already defined
-# Let's remove StripeEvent from here if it exists in payment.py or use extend_existing=True if we want to override.
-# Given P11 redefines billing, let's use extend_existing=True to be safe or check import structure.
-# But better practice is to consolidate. 
-# We'll comment it out here and rely on payment.py if it's imported, OR use extend_existing.
+# StripeEvent was defined in app.models.payment with a different schema (UUID PK vs String PK in P11)
+# P11 redefinition wants String PK (evt_...) to match Stripe ID directly.
+# Option 1: Drop old table and recreate with new schema (since it's dev/beta).
+# Option 2: Use extend_existing=True but that doesn't change column type if table exists.
+# We will define it here with a DIFFERENT name to avoid conflict in metadata if both imported, 
+# OR we rely on the migration script to handle the schema change.
+# Let's use `BillingStripeEvent` or rely on `app.models.payment` if it's sufficient.
+# `app.models.payment` has: id(UUID), event_id(String), event_type(String).
+# This is actually fine. We can use `event_id` for idempotency check.
+# So we DON'T need to redefine `StripeEvent` here if we import `app.models.payment`.
+# BUT, P11 architecture spec asked for `stripe_events` table.
+# Let's assume we use `app.models.payment.StripeEvent` for P11 too.
 
-class StripeEvent(Base):
-    __tablename__ = "stripe_events"
-    __table_args__ = {'extend_existing': True}
-    
-    id: Mapped[str] = mapped_column(String(100), primary_key=True) # evt_...
-    type: Mapped[str] = mapped_column(String(100), nullable=False)
-    status: Mapped[str] = mapped_column(String(20), default="processed")
-    processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+# Re-exporting for convenience if needed, but avoiding redefinition.
+from app.models.payment import StripeEvent
 
-class Invoice(Base):
-    __tablename__ = "invoices"
-    __table_args__ = {'extend_existing': True}
-    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    # Minimal fields to satisfy import if needed
-    
-class InvoiceItem(Base):
-    __tablename__ = "invoice_items"
-    __table_args__ = {'extend_existing': True}
-    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-class VatRate(Base):
-    __tablename__ = "vat_rates"
-    __table_args__ = {'extend_existing': True}
-    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    country: Mapped[str] = mapped_column(String(5))
-    rate: Mapped[Numeric] = mapped_column(Numeric(5, 2))
-    tax_type: Mapped[str] = mapped_column(String(20))
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+# Similarly for Invoice
+from app.models.billing import Invoice, InvoiceItem, VatRate
