@@ -21,10 +21,7 @@ class StripeSettings(Base):
     # Feature toggle
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     
-    # Credentials (References to ENV variables or Secret Manager, NOT actual keys if possible, 
-    # but for this MVP config, we might store them encrypted or assume they overwrite global envs.
-    # Requirement ADM-STP-001 says: "secret_key_ref (asla plaintext DB’de tutma)".
-    # So we store a reference key like "STRIPE_SECRET_KEY_DE" which looks up os.environ)
+    # Credentials
     secret_key_env_key: Mapped[str] = mapped_column(String(100), nullable=False) # e.g. "STRIPE_SECRET_DE"
     webhook_secret_env_key: Mapped[str] = mapped_column(String(100), nullable=False) # e.g. "STRIPE_WEBHOOK_SECRET_DE"
     publishable_key: Mapped[Optional[str]] = mapped_column(String(255), nullable=True) # Safe to store
@@ -63,11 +60,8 @@ class PaymentAttempt(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
-    # Rel
-    # invoice = relationship("Invoice", back_populates="payment_attempts") # Add back_populates to Invoice model later
-
-# Removed StripeEvent to avoid conflict with P11 Billing Domain
-# P11 uses a different schema for idempotency
+# P11: StripeEvent defined in app.models.billing now
+# Removed here to avoid conflict
 
 class Refund(Base):
     """Refund records"""
