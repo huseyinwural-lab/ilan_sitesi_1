@@ -1,9 +1,9 @@
 import * as React from "react"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast as useToastOriginal } from "@/components/ui/use-toast"
 import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast"
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts } = useToastOriginal()
 
   return (
     <ToastProvider>
@@ -26,4 +26,6 @@ export function Toaster() {
   )
 }
 
-export { useToast }
+export function useToast() {
+  return useToastOriginal()
+}
