@@ -41,3 +41,22 @@ class StripeEvent(Base):
     type: Mapped[str] = mapped_column(String(100), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="processed")
     processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+# Placeholder for backward compatibility if needed, or remove references
+class Invoice(Base):
+    __tablename__ = "invoices"
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # Minimal fields to satisfy import if needed
+    
+class InvoiceItem(Base):
+    __tablename__ = "invoice_items"
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+class VatRate(Base):
+    __tablename__ = "vat_rates"
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    country: Mapped[str] = mapped_column(String(5))
+    rate: Mapped[Numeric] = mapped_column(Numeric(5, 2))
+    tax_type: Mapped[str] = mapped_column(String(20))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True))
