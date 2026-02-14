@@ -38,9 +38,10 @@ async def test_expiration_flow():
         )
         session.add(listing)
         
-        # Manually consume quota (Use service in transaction to avoid autoflush issues)
-        async with session.begin():
+        # Manually consume quota (Use nested transaction)
+        async with session.begin_nested():
              await qs.consume_quota(user_id, "listing_active", 1)
+        await session.commit()
         
         usage_before = await qs.get_usage(user_id, "listing_active")
         print(f"Usage Before: {usage_before}")
