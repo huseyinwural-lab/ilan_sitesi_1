@@ -66,20 +66,8 @@ class PaymentAttempt(Base):
     # Rel
     # invoice = relationship("Invoice", back_populates="payment_attempts") # Add back_populates to Invoice model later
 
-class StripeEvent(Base):
-    """Idempotency log for Webhooks"""
-    __tablename__ = "stripe_events"
-    
-    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    
-    event_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
-    event_type: Mapped[str] = mapped_column(String(100), nullable=False)
-    
-    status: Mapped[str] = mapped_column(String(20), default="processed") # processed, error
-    processing_error: Mapped[Optional[str]] = mapped_column(Text)
-    
-    processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-
+# Removed StripeEvent to avoid conflict with P11 Billing Domain
+# P11 uses a different schema for idempotency
 
 class Refund(Base):
     """Refund records"""
