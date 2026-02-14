@@ -44,6 +44,8 @@ export default function Layout({ children }) {
     { path: '/admin/master-data/attributes', icon: Database, label: 'MDM Attributes', roles: ['super_admin', 'country_admin'] },
     { path: '/admin/master-data/vehicle-makes', icon: Car, label: 'Vehicle Makes', roles: ['super_admin', 'country_admin'] },
     { path: '/audit-logs', icon: Clock, label: 'audit_logs', roles: ['super_admin', 'country_admin', 'finance'] },
+    { path: '/admin/plans', icon: Star, label: 'Plans', roles: ['super_admin', 'country_admin', 'dealer', 'individual'] },
+
     { path: '/admin/billing', icon: FileText, label: 'Billing', roles: ['super_admin', 'country_admin', 'dealer'] },
 
   ];
