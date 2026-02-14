@@ -9,7 +9,7 @@ from app.models.home import HomeLayoutSettings, HomeShowcaseItem, HomeSpecialLis
 from app.models.dealer import DealerApplication, Dealer, DealerUser
 from app.models.premium import PremiumProduct, ListingPromotion, PremiumRankingRule
 from app.models.moderation import Listing, ModerationAction, ModerationRule
-# Use P11 Billing Models instead of old Payment if possible, or both
+# Use P11 Billing Models
 from app.models.billing import Invoice, InvoiceItem, VatRate, StripeEvent
 from app.models.payment import StripeSettings, PaymentAttempt, Refund
 from app.models.commercial import DealerPackage, DealerSubscription
