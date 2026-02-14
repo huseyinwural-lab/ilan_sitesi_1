@@ -19,6 +19,8 @@ import Categories from '@/pages/Categories';
 import AdminAttributes from '@/pages/AdminAttributes';
 import AdminOptions from '@/pages/AdminOptions';
 import AdminVehicleMDM from '@/pages/AdminVehicleMDM';
+import BillingPage from '@/pages/admin/Billing';
+import PlansPage from '@/pages/admin/Plans';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
@@ -27,9 +29,6 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 
 const ProtectedRoute = ({ children, roles = [] }) => {
   const { user, loading } = useAuth();
-
-import BillingPage from '@/pages/admin/Billing';
-import PlansPage from '@/pages/admin/Plans';
 
   if (loading) {
     return <div>Loading...</div>;
@@ -60,101 +59,99 @@ function App() {
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/ilan/:id" element={<DetailPage />} /> {/* P8: Detail Route (captures slug-id) */}
                   <Route path="/auth/login" element={<LoginPage />} />
-                <Route path="/auth/register" element={<LoginPage />} /> {/* Temporary redirect to login */}
+                  <Route path="/auth/register" element={<LoginPage />} /> {/* Temporary redirect to login */}
 
-                {/* Admin Routes */}
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute roles={['super_admin', 'country_admin', 'moderator', 'support', 'finance']}>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/users"
-                  element={
-                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                      <UserManagement />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/feature-flags"
-                  element={
-                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                      <FeatureFlags />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/countries"
-                  element={
-                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                      <CountrySettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/categories"
-                  element={
-                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                      <Categories />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/attributes"
-                  element={
-                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                      <AdminAttributes />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/attributes/options"
-                  element={
-                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                      <AdminOptions />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/master-data/vehicles"
-                  element={
-                    <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                      <AdminVehicleMDM />
-                    </ProtectedRoute>
+                  {/* Admin Routes */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute roles={['super_admin', 'country_admin', 'moderator', 'support', 'finance']}>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/users"
+                    element={
+                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                        <UserManagement />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/feature-flags"
+                    element={
+                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                        <FeatureFlags />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/countries"
+                    element={
+                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                        <CountrySettings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/categories"
+                    element={
+                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                        <Categories />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/attributes"
+                    element={
+                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                        <AdminAttributes />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/attributes/options"
+                    element={
+                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                        <AdminOptions />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/master-data/vehicles"
+                    element={
+                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
+                        <AdminVehicleMDM />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/billing"
+                    element={
+                      <ProtectedRoute roles={['super_admin', 'country_admin', 'dealer']}>
+                        <BillingPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/plans"
+                    element={
+                      <ProtectedRoute roles={['super_admin', 'country_admin', 'dealer', 'individual']}>
+                        <PlansPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                <Route
-                  path="/admin/billing"
-                  element={
-                    <ProtectedRoute roles={['super_admin', 'country_admin', 'dealer']}>
-                      <BillingPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/plans"
-                  element={
-                    <ProtectedRoute roles={['super_admin', 'country_admin', 'dealer', 'individual']}>
-                      <PlansPage />
-                    </ProtectedRoute>
-                  }
-                />
-
-                  }
-                />
-
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-              <Toaster />
-            </BrowserRouter>
-          </ThemeProvider>
-        </CountryProvider>
-      </LanguageProvider>
-    </AuthProvider>
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+                <Toaster />
+              </BrowserRouter>
+            </ThemeProvider>
+          </CountryProvider>
+        </LanguageProvider>
+      </AuthProvider>
     </HelmetProvider>
   );
 }
