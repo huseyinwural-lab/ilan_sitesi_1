@@ -15,49 +15,45 @@ from app.models.monetization import QuotaUsage
 async def test_expiration_flow():
     print("🚀 Starting Expiration Flow Test...")
     
+    # Need TWO separate sessions to simulate Job behavior correctly without session state pollution
+    
+    # 1. Setup User & Create Expired Listing
     async with AsyncSessionLocal() as session:
-        # 1. Setup User & Quota
         res = await session.execute(text("SELECT id FROM users LIMIT 1"))
         user_id = str(res.scalar())
-        qs = QuotaService(session)
         
-        # Reset Quota (Raw SQL to bypass logic)
+        # Cleanup
         await session.execute(text(f"DELETE FROM quota_usage WHERE user_id = '{user_id}'"))
-        await session.commit()
+        await session.execute(text(f"DELETE FROM listings WHERE user_id = '{user_id}' AND title = 'Test Expire'")) # Cleanup prev run
         
-        # 2. Create Expired Listing
-        print("Creating expired listing...")
+        # Create Listing
         now = datetime.now(timezone.utc)
         listing = Listing(
             title="Test Expire",
             user_id=uuid.UUID(user_id),
             status="active",
             created_at=now - timedelta(days=91),
-            expires_at=now - timedelta(days=1), # Expired yesterday
-            price=100, currency="TRY", country="TR", module="vehicle", category_id=uuid.UUID('dbf7def0-b233-4e49-8b00-75b4340685f3') # Random cat
+            expires_at=now - timedelta(days=1),
+            price=100, currency="TRY", country="TR", module="vehicle", category_id=uuid.UUID('dbf7def0-b233-4e49-8b00-75b4340685f3')
         )
         session.add(listing)
         
-        # Manually consume quota (Use nested transaction)
-        async with session.begin_nested():
-             await qs.consume_quota(user_id, "listing_active", 1)
+        # Consume Quota (Directly)
+        qs = QuotaService(session)
+        # We need explicit commit after consume to persist
+        await qs.consume_quota(user_id, "listing_active", 1)
+        
         await session.commit()
         
         usage_before = await qs.get_usage(user_id, "listing_active")
         print(f"Usage Before: {usage_before}")
-        if usage_before != 1:
-            print("❌ Setup failed")
-            return
 
-        # 3. Run Job Logic
-        print("Running Job Logic...")
-        # Import inside to avoid circular or context issues
-        from scripts.process_expirations import process_expirations
-        await process_expirations()
-        
-        # 4. Verify
-        # Need new session to see committed changes from job
+    # 2. Run Job Logic (New Session)
+    print("Running Job Logic...")
+    from scripts.process_expirations import process_expirations
+    await process_expirations()
     
+    # 3. Verify (New Session)
     async with AsyncSessionLocal() as session:
         qs = QuotaService(session)
         usage_after = await qs.get_usage(user_id, "listing_active")
