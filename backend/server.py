@@ -1202,6 +1202,11 @@ async def get_invoice(invoice_id: str, db: AsyncSession = Depends(get_db), curre
 from app.routers import payment_routes
 app.include_router(payment_routes.router, prefix="/api/v1")
 
+# P11: Billing Routes
+from app.routers import billing_routes
+app.include_router(billing_routes.router, prefix="/api")
+
+
 
 from app.routers import listing_routes
 app.include_router(listing_routes.router, prefix="/api")
