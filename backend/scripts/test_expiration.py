@@ -21,8 +21,9 @@ async def test_expiration_flow():
         user_id = str(res.scalar())
         qs = QuotaService(session)
         
-        # Reset Quota
+        # Reset Quota (Raw SQL to bypass logic)
         await session.execute(text(f"DELETE FROM quota_usage WHERE user_id = '{user_id}'"))
+        await session.commit()
         
         # 2. Create Expired Listing
         print("Creating expired listing...")
@@ -33,13 +34,13 @@ async def test_expiration_flow():
             status="active",
             created_at=now - timedelta(days=91),
             expires_at=now - timedelta(days=1), # Expired yesterday
-            price=100, currency="TRY", country="TR", category_id=uuid.UUID('dbf7def0-b233-4e49-8b00-75b4340685f3') # Random cat
+            price=100, currency="TRY", country="TR", module="vehicle", category_id=uuid.UUID('dbf7def0-b233-4e49-8b00-75b4340685f3') # Random cat
         )
         session.add(listing)
         
-        # Manually consume quota
-        await qs.consume_quota(user_id, "listing_active", 1)
-        await session.commit()
+        # Manually consume quota (Use service in transaction to avoid autoflush issues)
+        async with session.begin():
+             await qs.consume_quota(user_id, "listing_active", 1)
         
         usage_before = await qs.get_usage(user_id, "listing_active")
         print(f"Usage Before: {usage_before}")
@@ -49,16 +50,24 @@ async def test_expiration_flow():
 
         # 3. Run Job Logic
         print("Running Job Logic...")
+        # Import inside to avoid circular or context issues
         from scripts.process_expirations import process_expirations
         await process_expirations()
         
         # 4. Verify
-        await session.refresh(listing)
+        # Need new session to see committed changes from job
+    
+    async with AsyncSessionLocal() as session:
+        qs = QuotaService(session)
         usage_after = await qs.get_usage(user_id, "listing_active")
-        print(f"Usage After: {usage_after}")
-        print(f"Listing Status: {listing.status}")
         
-        if listing.status == 'expired' and usage_after == 0:
+        res = await session.execute(select(Listing).where(Listing.title == "Test Expire"))
+        listing = res.scalar_one_or_none()
+        
+        print(f"Usage After: {usage_after}")
+        print(f"Listing Status: {listing.status if listing else 'None'}")
+        
+        if listing and listing.status == 'expired' and usage_after == 0:
             print("✅ Expiration Successful (Status Changed & Quota Released)")
         else:
             print("❌ Expiration Failed")
