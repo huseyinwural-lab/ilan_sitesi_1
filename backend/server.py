@@ -475,6 +475,140 @@ async def update_country(country_id: str, data: dict, request: Request, current_
 
 
 # =====================
+# Public Search v2 (Mongo)
+# =====================
+
+@api_router.get("/v2/search")
+async def public_search_v2(
+    request: Request,
+    country: str,
+    q: Optional[str] = None,
+    category: Optional[str] = None,
+    sort: str = "date_desc",
+    page: int = 1,
+    limit: int = 20,
+    price_min: Optional[int] = None,
+    price_max: Optional[int] = None,
+):
+    """Mongo-backed search endpoint for Public Portal.
+
+    Contract (minimal, to match existing SearchPage.js):
+    - Requires ?country=XX
+    - Returns: { items: [], facets: {}, facet_meta: {}, pagination: {total,page,pages} }
+
+    Notes:
+    - For v1.0.0 release blocker fix, we search only published vehicle listings.
+    - Facets are returned empty for now (UI will still render; facet list stays empty).
+    """
+
+    db = request.app.state.db
+
+    country_norm = (country or "").strip().upper()
+    if not country_norm:
+        raise HTTPException(status_code=400, detail="country is required")
+
+    # Base query: published listings only
+    query: Dict = {
+        "status": "published",
+        "country": country_norm,
+    }
+
+    if q:
+        query["title"] = {"$regex": q, "$options": "i"}
+
+    if category:
+        # category value comes from SearchPage's `category` URL param (slug)
+        # We store `category_key` as category id for vehicle listings, so we map slug -> id.
+        cat = await db.categories.find_one(
+            {
+                "module": "vehicle",
+                "$or": [
+                    {"slug.tr": category},
+                    {"slug.de": category},
+                    {"slug.fr": category},
+                ],
+            },
+            {"_id": 0},
+        )
+        if cat:
+            query["category_key"] = cat["id"]
+        else:
+            # if unknown category slug, force empty result set deterministically
+            query["category_key"] = "__none__"
+
+    # Price filters: stored as attributes.price_eur
+    if price_min is not None or price_max is not None:
+        price_q: Dict = {}
+        if price_min is not None:
+            price_q["$gte"] = int(price_min)
+        if price_max is not None:
+            price_q["$lte"] = int(price_max)
+        query["attributes.price_eur"] = price_q
+
+    # Pagination guardrails
+    page = max(1, int(page))
+    limit = min(100, max(1, int(limit)))
+
+    # Sorting
+    sort_spec = [("created_at", -1)]
+    if sort == "price_asc":
+        sort_spec = [("attributes.price_eur", 1), ("created_at", -1)]
+    elif sort == "price_desc":
+        sort_spec = [("attributes.price_eur", -1), ("created_at", -1)]
+    elif sort == "date_asc":
+        sort_spec = [("created_at", 1)]
+
+    total = await db.vehicle_listings.count_documents(query)
+
+    cursor = (
+        db.vehicle_listings.find(query, {"_id": 0})
+        .sort(sort_spec)
+        .skip((page - 1) * limit)
+        .limit(limit)
+    )
+    docs = await cursor.to_list(length=limit)
+
+    items = []
+    for d in docs:
+        v = d.get("vehicle") or {}
+        attrs = d.get("attributes") or {}
+        title = (d.get("title") or "").strip()
+        if not title:
+            title = f"{(v.get('make_key') or '').upper()} {v.get('model_key') or ''} {v.get('year') or ''}".strip()
+
+        media = d.get("media") or []
+        cover = next((m for m in media if m.get("is_cover")), media[0] if media else None)
+        image_url = None
+        if cover and cover.get("file"):
+            image_url = f"/media/listings/{d['id']}/{cover['file']}"
+
+        items.append(
+            {
+                "id": d["id"],
+                "title": title,
+                "price": attrs.get("price_eur"),
+                "currency": "EUR",
+                "image": image_url,
+                "city": "",
+            }
+        )
+
+    pages = (total + limit - 1) // limit if total else 0
+
+    return {
+        "items": items,
+        "facets": {},
+        "facet_meta": {},
+        "pagination": {
+            "total": total,
+            "page": page,
+            "pages": pages,
+        },
+    }
+
+
+
+# =====================
 # Vehicle Master Data (File-Based) APIs
 # =====================
 
