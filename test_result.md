@@ -295,6 +295,62 @@
 ### Agent Communication:
 - **Agent**: testing
 - **Message**: Admin Panel IA v2 smoke + navigation consistency test SUCCESSFULLY COMPLETED. All requested test scenarios verified and passing. Login flow, sidebar grouped sections, collapse functionality, countries UX (table, toggles, edit), breadcrumb navigation, and disabled item handling all working correctly. Admin panel demonstrates proper IA v2 structure with domain-based grouping and consistent navigation patterns. No critical issues found.
+
+## Admin Country Context v2 E2E Verification Results (Feb 17, 2026)
+
+### Test Flow Executed:
+1. ✅ **Login Flow** - admin@platform.com / Admin123! authentication successful
+2. ✅ **Test Case 1a** - Global/Country mode switch: Navigate to /admin/users (no param) shows Global mode correctly
+3. ✅ **Test Case 1b** - Switch to Country mode: URL updates to include ?country=DE and country dropdown enabled
+4. ❌ **Test Case 1c** - Switch back to Global mode: FAILED - Switch remains in Country mode, URL keeps country param
+5. ✅ **Test Case 2** - Deep link: /admin/users?country=DE correctly shows Country mode with DE selected
+6. ✅ **Test Case 3** - Param removal enforcement: Navigating to /admin/users without param redirects to include ?country=DE
+7. ✅ **Test Case 4** - Sidebar navigation query preservation: Clicking 'Ülkeler' from /admin/users?country=DE preserves country param
+8. ✅ **Test Case 5** - Basic error handling: /admin/users?country=ZZ loads gracefully without crashes
+
+### Critical Findings:
+
+#### ✅ WORKING FEATURES (4/5 test cases PASS):
+- **Deep Link Support**: Direct navigation to /admin/users?country=DE correctly sets Country mode and shows DE
+- **Param Enforcement**: When in Country mode, navigating without country param automatically adds it
+- **Query Preservation**: Sidebar navigation maintains country parameter across page transitions
+- **Error Handling**: Invalid country codes (ZZ) don't crash the application
+- **Initial Global Mode**: Fresh navigation to /admin/users correctly shows Global mode
+
+#### ❌ CRITICAL ISSUE FOUND (1/5 test cases FAIL):
+- **Global Mode Switch Bug**: Once switched to Country mode, the toggle cannot switch back to Global mode
+  - **Symptom**: Switch remains checked (True) and URL keeps country parameter
+  - **Impact**: Users cannot return to Global mode after switching to Country mode
+  - **Root Cause**: Switch click events not properly updating URL state or component state
+  - **Tested Multiple Times**: Switch consistently fails to change state after initial Country mode activation
+
+#### ⚠️ NON-CRITICAL ISSUES:
+- **React Hydration Warnings**: 4 hydration errors for nested HTML elements (non-blocking)
+  - `<li>` cannot be descendant of `<li>` in breadcrumbs
+  - `<span>` cannot be child of `<option>` in dropdowns
+  - `<tr>` and `<span>` nesting issues in tables
+  - These don't affect functionality but should be addressed for clean console
+
+### Network Analysis:
+- **Authentication**: All login and API calls successful
+- **URL Management**: Country parameter handling works correctly for most scenarios
+- **Page Loading**: All admin pages load without network errors
+- **No Console Errors**: No JavaScript errors that would prevent switch functionality
+
+### Test Results Summary:
+- **Test Success Rate**: 80% (4/5 test cases passed)
+- **Login & Authentication**: ✅ WORKING
+- **Deep Link Support**: ✅ WORKING
+- **Param Enforcement**: ✅ WORKING  
+- **Query Preservation**: ✅ WORKING
+- **Error Handling**: ✅ WORKING
+- **Global Mode Switch**: ❌ BROKEN (critical bug)
+
+### Final Status:
+- **Core Country Context Features**: ✅ MOSTLY WORKING (4/5 scenarios)
+- **Critical Bug**: ❌ Global mode switch functionality broken
+- **User Impact**: HIGH - Users cannot return to Global mode once they switch to Country mode
+- **Recommendation**: Fix Global mode switch before production deployment
 ## FAZ-V3 Phase 1 Testing Results (Feb 17, 2026)
 
 ### Test Flow Executed:
