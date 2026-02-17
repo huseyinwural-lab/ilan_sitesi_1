@@ -39,7 +39,7 @@ from app.vehicle_media_storage import store_image, resolve_public_media_path
 
 # Vehicle Master Data (file-based REV-B)
 from app.vehicle_master_file import get_vehicle_master_dir, load_current_master
-from app.vehicle_master_admin_file import validate_upload, activate_staging, rollback as vehicle_master_rollback, get_status as vehicle_master_status
+from app.vehicle_master_admin_file import validate_upload, rollback as vehicle_master_rollback, get_status as vehicle_master_status
 
 
 ROOT_DIR = Path(__file__).parent
