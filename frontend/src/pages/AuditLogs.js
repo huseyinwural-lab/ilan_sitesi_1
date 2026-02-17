@@ -27,7 +27,12 @@ export default function AuditLogs() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionFilter, setActionFilter] = useState('');
+  const [eventTypeFilter, setEventTypeFilter] = useState('');
   const [resourceFilter, setResourceFilter] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
+  const [adminUserFilter, setAdminUserFilter] = useState('');
+  const [dateStart, setDateStart] = useState('');
+  const [dateEnd, setDateEnd] = useState('');
   const [page, setPage] = useState(0);
   const [expandedLog, setExpandedLog] = useState(null);
   const { t } = useLanguage();
