@@ -355,6 +355,9 @@ export default function Layout({ children }) {
 
         {/* Page Content */}
         <main className="p-4 lg:p-8">
+          <div className="mb-4">
+            <AdminBreadcrumbs />
+          </div>
           {children}
         </main>
       </div>
