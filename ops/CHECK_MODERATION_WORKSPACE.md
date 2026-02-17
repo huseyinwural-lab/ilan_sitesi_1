@@ -32,3 +32,4 @@ Moderation Workspace’in form ekranı değil, workflow ekranı olup olmadığı
 
 ## Ön Karar
 - Moderation Workspace: FAIL (route + backend yok)
+- Ek Gap: Individual/Dealer queue ayrımı, aksiyon standardı (approve/reject/request-fix), reason enum ve audit zorunluluğu tanımlı değil.
