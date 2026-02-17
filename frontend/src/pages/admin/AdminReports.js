@@ -410,6 +410,7 @@ export default function AdminReportsPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground" data-testid="report-status-note-label">Not (zorunlu)</p>
                     <textarea
                       value={statusNote}
                       onChange={(e) => setStatusNote(e.target.value)}
