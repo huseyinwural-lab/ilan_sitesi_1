@@ -285,6 +285,7 @@ async def get_me(current_user=Depends(get_current_user)):
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(request: Request, current_user=Depends(get_current_user)):
     db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
     users_total = await db.users.count_documents({})
     users_active = await db.users.count_documents({"is_active": True})
