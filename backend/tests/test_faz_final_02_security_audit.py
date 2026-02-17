@@ -55,15 +55,18 @@ class TestFAZFinal02SecurityAudit:
             request_headers['Authorization'] = f'Bearer {self.admin_token}'
             
         try:
+            print(f"    Making {method} request to: {url}")
             if method == 'GET':
-                response = requests.get(url, headers=request_headers, params=data)
+                response = requests.get(url, headers=request_headers, params=data, timeout=30)
             elif method == 'POST':
-                response = requests.post(url, json=data, headers=request_headers)
+                response = requests.post(url, json=data, headers=request_headers, timeout=30)
             elif method == 'PATCH':
-                response = requests.patch(url, json=data, headers=request_headers)
+                response = requests.patch(url, json=data, headers=request_headers, timeout=30)
             else:
                 raise ValueError(f"Unsupported method: {method}")
                 
+            print(f"    Response status: {response.status_code}")
+            
             if expected_status and response.status_code != expected_status:
                 print(f"    Expected {expected_status}, got {response.status_code}")
                 try:
