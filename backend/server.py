@@ -681,10 +681,23 @@ async def list_audit_logs(
     q: Dict = {}
     if action:
         q["action"] = action
+    if event_type:
+        q["event_type"] = event_type
     if resource_type:
         q["resource_type"] = resource_type
     if user_id:
         q["user_id"] = user_id
+    if admin_user_id:
+        q["admin_user_id"] = admin_user_id
+    if country:
+        q["country_code"] = country.strip().upper()
+    if start or end:
+        created_at_q: Dict = {}
+        if start:
+            created_at_q["$gte"] = start
+        if end:
+            created_at_q["$lte"] = end
+        q["created_at"] = created_at_q
     if country_scope:
         q["country_scope"] = country_scope
 
