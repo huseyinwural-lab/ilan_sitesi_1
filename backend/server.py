@@ -324,7 +324,7 @@ async def login(credentials: UserLogin, request: Request):
     db = request.app.state.db
 
     email = (credentials.email or "").lower().strip()
-    ip_address = request.client.host if request.client else None
+    ip_address = _get_client_ip(request)
     user_agent = request.headers.get("user-agent")
 
     # Rate-limit key: IP + email (email may be empty but EmailStr should be present)
