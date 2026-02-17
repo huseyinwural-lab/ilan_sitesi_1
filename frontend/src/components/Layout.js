@@ -138,7 +138,7 @@ export default function Layout({ children }) {
 
     // İlan & Moderasyon
     { divider: true, label: 'İlan & Moderasyon' },
-    { path: '/admin/moderation', icon: ShieldCheck, label: 'Moderation Queue', comingSoon: true, roles: ['super_admin', 'country_admin', 'moderator'] },
+    { path: '/admin/moderation', icon: ShieldCheck, label: 'Moderation Queue', roles: ['super_admin', 'country_admin', 'moderator'] },
     { path: '/admin/listings', icon: FolderTree, label: 'İlanlar', comingSoon: true, roles: ['super_admin', 'country_admin', 'moderator'] },
     { path: '/admin/reports', icon: Flag, label: 'Şikayetler', comingSoon: true, roles: ['super_admin', 'country_admin', 'moderator'] },
 
