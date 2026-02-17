@@ -373,9 +373,6 @@ async def login(credentials: UserLogin, request: Request):
             _failed_login_block_audited[rl_key] = False
 
 
-        if len(attempts) > FAILED_LOGIN_MAX_ATTEMPTS:
-            _failed_login_blocked_until[rl_key] = now + FAILED_LOGIN_BLOCK_SECONDS
-            _failed_login_block_audited[rl_key] = False
 
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
