@@ -79,7 +79,7 @@ export default function ModerationQueue() {
           },
         });
       } else if (actionType === 'needs_revision') {
-        await axios.post(`${API}/admin/listings/${listingId}/needs_revision`, reason, {
+        await axios.post(`${API}/admin/listings/${listingId}/needs_revision`, reasonPayload, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
