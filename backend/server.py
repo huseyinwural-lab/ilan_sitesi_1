@@ -287,8 +287,12 @@ async def get_dashboard_stats(request: Request, current_user=Depends(get_current
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
-    users_total = await db.users.count_documents({})
-    users_active = await db.users.count_documents({"is_active": True})
+    users_query = {}
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        users_query = {"country_code": ctx.country}
+
+    users_total = await db.users.count_documents(users_query)
+    users_active = await db.users.count_documents({**users_query, "is_active": True})
 
     # Minimal response compatible with Dashboard.js usage
     return {
