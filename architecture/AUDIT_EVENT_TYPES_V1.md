@@ -33,6 +33,12 @@ Bu doküman **v1.0.0 / FAZ-FINAL-02 (P1)** kapsamında audit `event_type` isimle
 - `REPORT_STATUS_CHANGE`
 - `REPORT_CREATED`
 
+### Finance Domain
+- `INVOICE_STATUS_CHANGE`
+- `TAX_RATE_CHANGE`
+- `PLAN_CHANGE`
+- `ADMIN_PLAN_ASSIGNMENT`
+
 ---
 
 ## Alan Politikası
