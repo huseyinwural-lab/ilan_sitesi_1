@@ -1,4 +1,14 @@
 # PORTAL_SPLIT_V1_EVIDENCE
+## Evidence Result (Automated)
+- Re-test PASS: No-chunk-load acceptance verified by frontend testing agent.
+- Logged-out redirects:
+  - /admin/users → /admin/login: backoffice chunk requests = 0
+  - /dealer → /dealer/login: dealer chunk requests = 0
+- Authorized access:
+  - admin → /admin/users: backoffice chunk requested (expected)
+  - admin/moderator → /dealer: dealer chunk requests = 0 (expected)
+
+
 
 ## Kanıt Paketi (Toplanacak)
 
