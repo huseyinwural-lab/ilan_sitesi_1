@@ -9,8 +9,9 @@ FAZ-UI-CHECK-02 sonuçlarını PASS/PARTIAL/FAIL olarak kapatmak ve Fix Sprint-1
 - Neden: Public Search UI `/api/v2/search` çağırıyor fakat server.py bu endpoint’i expose etmiyor (endpoint uyumsuzluğu + backend entegrasyon riski).
 - "Refactor yok" kapsamında kapatılmadı; Fix Sprint-1’e taşındı.
 
-2) User Panel: **PARTIAL/FAIL**
-- Layout var; auth guard ve core modüller eksik.
+2) User Panel: **PARTIAL**
+- Layout var; core modüller eksik.
+- Not: auth guard bu fazda kapatıldı (FIXED).
 
 3) Dealer Panel: **FAIL**
 - Ayrı dealer panel görünmüyor.
