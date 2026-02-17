@@ -125,6 +125,7 @@ async def _ensure_admin_user(db):
             "is_active": True,
             "is_verified": True,
             "country_scope": ["*"],
+            "country_code": "TR",
             "preferred_language": "tr",
             "created_at": now_iso,
             "last_login": None,
