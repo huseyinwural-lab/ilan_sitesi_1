@@ -476,6 +476,20 @@ async def update_country(country_id: str, data: dict, request: Request, current_
                 "event_type": "UPDATE",
                 "resource_type": "country",
                 "resource_id": country_id,
+                "mode": getattr(ctx, "mode", "global"),
+                "country_scope": getattr(ctx, "country", None),
+                "path": str(request.url.path),
+                "previous_status": None,
+                "new_status": None,
+            }
+        )
+    except Exception:
+        # audit should not block the operation
+        pass
+
+    return {"ok": True}
+
+
 
 
 # =====================
