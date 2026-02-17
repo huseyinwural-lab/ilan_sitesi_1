@@ -96,7 +96,11 @@ export default function ModerationQueue() {
 
   const viewListingDetail = async (listingId) => {
     try {
-      const response = await axios.get(`${API}/moderation/listings/${listingId}`);
+      const response = await axios.get(`${API}/admin/moderation/listings/${listingId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
       setSelectedListing(response.data);
     } catch (error) {
       console.error('Failed to fetch listing:', error);
