@@ -104,67 +104,23 @@ class DealerApplicationsTester:
 
     def create_country_admin_user(self):
         """Create a country admin user for scope testing"""
-        print("\n👤 Creating Country Admin User for Scope Testing...")
+        print("\n👤 Testing Country Admin Login...")
         
-        # First check if country admin already exists
-        status, users = self.make_request('GET', '/users', token=self.admin_token)
-        
+        # Try to login with the country admin we created
         country_admin_email = "country_admin_fr@test.com"
-        existing_user = None
+        status, response = self.make_request(
+            'POST', '/auth/login',
+            data={"email": country_admin_email, "password": "CountryAdmin123!"}
+        )
         
         if status == 200:
-            for user in users:
-                if user.get('email') == country_admin_email:
-                    existing_user = user
-                    break
-        
-        if existing_user:
-            print(f"   Country admin user already exists: {existing_user['id']}")
-            # Try to login with this user
-            status, response = self.make_request(
-                'POST', '/auth/login',
-                data={"email": country_admin_email, "password": "CountryAdmin123!"}
-            )
-            if status == 200:
-                self.country_admin_token = response['access_token']
-                self.country_admin_user = response['user']
-                self.log_test("Country Admin Login", True, f"Logged in as {response['user']['email']}")
-                return True
-        
-        # Create new country admin user via direct DB insertion (simulated via admin API)
-        # Since we can't directly create users via API, we'll use the existing moderator user
-        # and update their role to country_admin with FR scope
-        
-        # Find moderator user
-        moderator_user = None
-        if status == 200:
-            for user in users:
-                if user.get('role') == 'moderator':
-                    moderator_user = user
-                    break
-        
-        if moderator_user:
-            # Update user role to country_admin
-            status, response = self.make_request(
-                'PATCH', f'/users/{moderator_user["id"]}',
-                token=self.admin_token,
-                data={"role": "country_admin"}
-            )
-            
-            if status == 200:
-                # Try to login as this user (assuming password is Demo123!)
-                status, response = self.make_request(
-                    'POST', '/auth/login',
-                    data={"email": moderator_user['email'], "password": "Demo123!"}
-                )
-                if status == 200:
-                    self.country_admin_token = response['access_token']
-                    self.country_admin_user = response['user']
-                    self.log_test("Country Admin Setup", True, f"Using {moderator_user['email']} as country admin")
-                    return True
-        
-        self.log_test("Country Admin Setup", False, "Could not create or find country admin user")
-        return False
+            self.country_admin_token = response['access_token']
+            self.country_admin_user = response['user']
+            self.log_test("Country Admin Login", True, f"Logged in as {response['user']['email']} (scope: {response['user'].get('country_scope', [])})")
+            return True
+        else:
+            self.log_test("Country Admin Login", False, f"Status: {status}, Response: {response}")
+            return False
 
     def seed_test_dealer_application(self):
         """Seed a test dealer application for testing"""
