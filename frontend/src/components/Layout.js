@@ -103,11 +103,19 @@ export default function Layout({ children }) {
       {/* Sidebar - Desktop */}
       <aside className={`fixed left-0 top-0 z-40 hidden lg:flex h-screen ${sidebarCollapsed ? 'w-16' : 'w-64'} flex-col border-r bg-card transition-all duration-200`}>
         {/* Logo */}
-        <div className="flex h-16 items-center gap-2 border-b px-6">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+        <div className={`flex h-16 items-center gap-2 border-b ${sidebarCollapsed ? 'px-3' : 'px-6'}`}>
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
             <span className="text-primary-foreground font-bold">A</span>
           </div>
-          <span className="font-semibold text-lg tracking-tight">Admin Panel</span>
+          {!sidebarCollapsed && <span className="font-semibold text-lg tracking-tight">Admin Panel</span>}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="ml-auto p-2 rounded-md hover:bg-muted transition-colors"
+            title={sidebarCollapsed ? 'Expand' : 'Collapse'}
+            data-testid="sidebar-collapse"
+          >
+            {sidebarCollapsed ? <ChevronDown size={16} /> : <ChevronDown size={16} className="rotate-90" />}
+          </button>
         </div>
 
         {/* Navigation */}
