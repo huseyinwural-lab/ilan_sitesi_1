@@ -77,9 +77,36 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm" data-testid="login-error">
-                <AlertCircle size={16} />
-                {error}
+              <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm" data-testid="login-error">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  <div className="font-medium">
+                    {error.code === 'INVALID_CREDENTIALS' && 'E-posta veya şifre hatalı'}
+                    {error.code === 'RATE_LIMITED' && 'Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin.'}
+                    {error.code === 'UNKNOWN' && (t('login_error') || 'Giriş başarısız. Lütfen tekrar deneyin.')}
+                  </div>
+                </div>
+
+                {/* Helper CTAs */}
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                  <a href="/help/forgot-password" className="underline underline-offset-2 hover:opacity-80">
+                    Şifremi unuttum
+                  </a>
+
+                  {error.code === 'RATE_LIMITED' && (
+                    <>
+                      <span className="text-destructive/80">Güvenlik nedeniyle geçici olarak engellendi.</span>
+                      <a href="/help/account-locked" className="underline underline-offset-2 hover:opacity-80">
+                        Hesap kilitlendi mi?
+                      </a>
+                      {typeof error.retry_after_seconds === 'number' && (
+                        <span className="text-destructive/80">
+                          ~{Math.max(1, Math.ceil(error.retry_after_seconds / 60))} dk
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             )}
 
