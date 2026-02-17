@@ -351,6 +351,7 @@ REPORT_REASONS_V1 = {
 }
 
 REPORT_STATUS_SET = {"open", "in_review", "resolved", "dismissed"}
+INVOICE_STATUS_SET = {"unpaid", "paid", "cancelled"}
 
 REPORT_STATUS_TRANSITIONS = {
     "open": {"in_review"},
