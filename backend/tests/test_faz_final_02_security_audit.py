@@ -143,6 +143,9 @@ class TestFAZFinal02SecurityAudit:
             print(f"    ✅ Attempt 4: Got 429 (rate limited) as expected")
         else:
             print(f"    ❌ Attempt 4: Expected 429, got {response.status_code if response else 'None'}")
+            # Check if we got 401 instead - this might mean rate limiting isn't working as expected
+            if response and response.status_code == 401:
+                print(f"    ⚠️  Got 401 instead of 429 - rate limiting may need more attempts or different timing")
         
         # Check audit logs for FAILED_LOGIN entries
         print("    Checking audit logs for FAILED_LOGIN entries...")
