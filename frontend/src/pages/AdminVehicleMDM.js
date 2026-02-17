@@ -9,84 +9,94 @@ import {
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api/v1/admin/master-data`;
+const API = `${BACKEND_URL}/api/v1/admin/vehicle-master`;
 
 export default function AdminVehicleMDM() {
-  const { makeId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [makes, setMakes] = useState([]);
-  const [models, setModels] = useState([]);
-  const [selectedMake, setSelectedMake] = useState(null);
+  const [status, setStatus] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [validation, setValidation] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showInactive, setShowInactive] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [editingField, setEditingField] = useState(null);
-  const [editValue, setEditValue] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [viewMode, setViewMode] = useState(makeId ? 'models' : 'makes');
+  const [activating, setActivating] = useState(false);
+  const [rollingBack, setRollingBack] = useState(false);
+  const [error, setError] = useState('');
 
-  const isSuperAdmin = user?.role === 'super_admin';
+  const canManage = ['super_admin', 'country_admin'].includes(user?.role);
 
-  const fetchMakes = useCallback(async () => {
+  const fetchStatus = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API}/vehicle-makes`);
-      let data = response.data;
-      if (!showInactive) {
-        data = data.filter(m => m.is_active);
-      }
-      setMakes(data);
-    } catch (error) {
-      console.error('Failed to fetch makes:', error);
-      if (error.response?.status === 401) {
-        toast.error('Oturum süresi doldu');
-      } else if (error.response?.status === 403) {
-        toast.error('Bu sayfaya erişim yetkiniz yok');
-      } else {
-        toast.error('Markalar yüklenemedi');
-      }
+      const response = await axios.get(`${API}/status`);
+      setStatus(response.data);
+    } catch (e) {
+      console.error('Failed to fetch status', e);
+      setError(e.response?.data?.detail || 'Durum bilgisi alınamadı');
     } finally {
       setLoading(false);
     }
-  }, [showInactive]);
-
-  const fetchModels = useCallback(async (makeIdParam) => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${API}/vehicle-makes/${makeIdParam}/models`);
-      let data = response.data;
-      if (!showInactive) {
-        data = data.filter(m => m.is_active);
-      }
-      setModels(data);
-      
-      // Also fetch make info
-      const makesResponse = await axios.get(`${API}/vehicle-makes`);
-      const make = makesResponse.data.find(m => m.id === makeIdParam);
-      setSelectedMake(make);
-    } catch (error) {
-      console.error('Failed to fetch models:', error);
-      if (error.response?.status === 404) {
-        toast.error('Marka bulunamadı');
-        navigate('/admin/master-data/vehicle-makes');
-      } else {
-        toast.error('Modeller yüklenemedi');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [showInactive, navigate]);
+  }, []);
 
   useEffect(() => {
-    if (makeId) {
-      setViewMode('models');
-      fetchModels(makeId);
-    } else {
-      setViewMode('makes');
-      fetchMakes();
+    fetchStatus();
+  }, [fetchStatus]);
+
+  const handleValidate = async () => {
+    if (!selectedFile) return;
+    setError('');
+    setValidation(null);
+
+    const form = new FormData();
+    form.append('file', selectedFile);
+
+    try {
+      const response = await axios.post(`${API}/validate`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setValidation(response.data);
+      if (response.data.ok) {
+        toast.success('Validasyon başarılı');
+      } else {
+        toast.error('Validasyon hatalı');
+      }
+    } catch (e) {
+      console.error(e);
+      setError(e.response?.data?.detail || 'Validasyon başarısız');
     }
-  }, [makeId, fetchMakes, fetchModels]);
+  };
+
+  const handleActivate = async () => {
+    if (!validation?.staging_id) return;
+    setActivating(true);
+    setError('');
+    try {
+      await axios.post(`${API}/activate`, { staging_id: validation.staging_id });
+      toast.success('Aktif versiyon güncellendi');
+      setValidation(null);
+      setSelectedFile(null);
+      fetchStatus();
+    } catch (e) {
+      console.error(e);
+      setError(e.response?.data?.detail || 'Aktivasyon başarısız');
+    } finally {
+      setActivating(false);
+    }
+  };
+
+  const handleRollback = async () => {
+    setRollingBack(true);
+    setError('');
+    try {
+      await axios.post(`${API}/rollback`, {});
+      toast.success('Rollback tamamlandı');
+      fetchStatus();
+    } catch (e) {
+      console.error(e);
+      setError(e.response?.data?.detail || 'Rollback başarısız');
+    } finally {
+      setRollingBack(false);
+    }
+  };
 
   const handleEdit = (item, field, value) => {
     setEditingId(item.id);
@@ -218,75 +228,173 @@ export default function AdminVehicleMDM() {
     }
   };
 
-  const EditableCell = ({ item, field, value, onSave, type = 'text' }) => {
-    const isEditing = editingId === item.id && editingField === field;
-    const isConfigField = field === 'is_active';
-    const canEdit = !isConfigField || isSuperAdmin;
-
-    if (type === 'toggle') {
-      return (
-        <button
-          onClick={() => canEdit && (viewMode === 'makes' ? handleToggleMake(item) : handleToggleModel(item))}
-          disabled={!canEdit || saving}
-          className={`p-1 rounded transition-colors ${
-            canEdit 
-              ? 'hover:bg-muted cursor-pointer' 
-              : 'cursor-not-allowed opacity-50'
-          }`}
-          title={!canEdit ? 'Sadece Super Admin değiştirebilir' : (value ? 'Pasifleştir' : 'Aktifleştir')}
-          data-testid={`toggle-${item.slug}`}
-        >
-          {value ? (
-            <ToggleRight className="w-6 h-6 text-green-500" />
-          ) : (
-            <ToggleLeft className="w-6 h-6 text-muted-foreground" />
-          )}
-        </button>
-      );
-    }
-
-    if (isEditing) {
-      return (
-        <div className="flex items-center gap-1">
-          <input
-            type="text"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            className="h-8 px-2 text-sm border rounded w-full min-w-[100px]"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') onSave(item);
-              if (e.key === 'Escape') handleCancel();
-            }}
-            data-testid={`edit-input-${field}-${item.slug}`}
-          />
-          <button
-            onClick={() => onSave(item)}
-            disabled={saving}
-            className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-          </button>
-          <button
-            onClick={handleCancel}
-            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <span
-        onClick={() => handleEdit(item, field, value || '')}
-        className="cursor-pointer hover:bg-muted px-2 py-1 rounded transition-colors inline-block min-w-[60px]"
-        data-testid={`cell-${field}-${item.slug}`}
-      >
-        {value || <span className="text-muted-foreground italic">-</span>}
-      </span>
-    );
+  const downloadValidationReport = () => {
+    if (!validation) return;
+    const blob = new Blob([JSON.stringify(validation, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'validation_report.json';
+    a.click();
+    URL.revokeObjectURL(url);
   };
+
+  const current = status?.current;
+  const recent = status?.recent_jobs || [];
+
+  return (
+    <div className="space-y-6" data-testid="admin-vehicle-master-import">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Car className="w-6 h-6" />
+            Vehicle Master Data Import
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            File-based JSON master data (ZIP veya Bundle). DB kullanılmaz.
+          </p>
+        </div>
+      </div>
+
+      {!canManage && (
+        <div className="p-3 rounded bg-amber-50 text-amber-900 border border-amber-200 text-sm">
+          Bu ekran için yetkiniz yok.
+        </div>
+      )}
+
+      {error && (
+        <div className="p-3 rounded bg-destructive/10 text-destructive text-sm border">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="border rounded-lg bg-card p-4 space-y-3">
+            <h2 className="font-semibold">Upload</h2>
+            <input
+              type="file"
+              accept=".zip,.json,application/zip,application/json"
+              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+              disabled={!canManage}
+              data-testid="vehicle-master-upload"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleValidate}
+                disabled={!canManage || !selectedFile}
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+                data-testid="vehicle-master-validate"
+              >
+                Validate
+              </button>
+              {validation && (
+                <button
+                  onClick={downloadValidationReport}
+                  className="inline-flex items-center gap-2 h-9 px-4 rounded-md border text-sm font-medium hover:bg-muted"
+                  data-testid="vehicle-master-download-report"
+                >
+                  Report indir
+                </button>
+              )}
+              <button
+                onClick={handleActivate}
+                disabled={!canManage || !validation?.ok || activating}
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
+                data-testid="vehicle-master-activate"
+              >
+                {activating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Activate
+              </button>
+            </div>
+          </div>
+
+          {validation && (
+            <div className="border rounded-lg bg-card p-4 space-y-3" data-testid="vehicle-master-preview">
+              <h2 className="font-semibold">Validation Preview</h2>
+              <div className="text-sm">
+                <div>OK: <strong>{String(validation.ok)}</strong></div>
+                <div>Version: <strong>{validation.version || '-'}</strong></div>
+                <div>Staging: <code className="px-2 py-0.5 rounded bg-muted text-xs">{validation.staging_id}</code></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="p-3 rounded bg-muted/50">
+                  Make: <strong>{validation.summary?.make_count ?? '-'}</strong>
+                </div>
+                <div className="p-3 rounded bg-muted/50">
+                  Model: <strong>{validation.summary?.model_count ?? '-'}</strong>
+                </div>
+                <div className="p-3 rounded bg-muted/50">
+                  Inactive: <strong>{validation.summary?.inactive_count ?? '-'}</strong>
+                </div>
+                <div className="p-3 rounded bg-muted/50">
+                  Aliases: <strong>{validation.summary?.alias_count ?? '-'}</strong>
+                </div>
+              </div>
+
+              {!validation.ok && Array.isArray(validation.errors) && validation.errors.length > 0 && (
+                <div className="space-y-2">
+                  <div className="font-medium text-sm">Errors (sample)</div>
+                  <ul className="text-sm list-disc pl-5 text-destructive">
+                    {validation.errors.slice(0, 10).map((er, idx) => (
+                      <li key={idx}><code>{er.code}</code> — {er.message}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <div className="border rounded-lg bg-card p-4 space-y-2" data-testid="vehicle-master-current">
+            <h2 className="font-semibold">Active Version</h2>
+            {loading ? (
+              <div className="text-sm text-muted-foreground">Loading...</div>
+            ) : current ? (
+              <div className="text-sm space-y-1">
+                <div>Version: <strong>{current.active_version}</strong></div>
+                <div>Activated at: <span className="text-muted-foreground">{current.activated_at}</span></div>
+                <div>By: <span className="text-muted-foreground">{current.activated_by}</span></div>
+                <div>Source: <span className="text-muted-foreground">{current.source}</span></div>
+                <div>Checksum: <code className="text-xs">{current.checksum}</code></div>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">No active version</div>
+            )}
+            <button
+              onClick={handleRollback}
+              disabled={!canManage || rollingBack}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-md border text-sm font-medium hover:bg-muted disabled:opacity-50"
+              data-testid="vehicle-master-rollback"
+            >
+              {rollingBack ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              Rollback
+            </button>
+          </div>
+
+          <div className="border rounded-lg bg-card p-4 space-y-2" data-testid="vehicle-master-recent">
+            <h2 className="font-semibold">Recent Jobs (Last 5)</h2>
+            {recent.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No jobs yet</div>
+            ) : (
+              <div className="space-y-2">
+                {recent.map((j, idx) => (
+                  <div key={idx} className="text-xs p-2 rounded bg-muted/50">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{j.event}</span>
+                      <span className="text-muted-foreground">{j.ts}</span>
+                    </div>
+                    <div className="text-muted-foreground">v={j.version} status={j.status}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   // MAKES VIEW
   if (viewMode === 'makes') {

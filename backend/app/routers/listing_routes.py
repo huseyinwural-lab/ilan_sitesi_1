@@ -2,17 +2,21 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
-from app.dependencies import get_db
+from app.dependencies import get_db, get_current_user
 from app.models.moderation import Listing
 from app.models.user import User
 from app.models.dealer import Dealer
 from app.models.attribute import ListingAttribute, Attribute, AttributeOption
 from app.models.category import Category
 from app.models.vehicle_mdm import VehicleMake, VehicleModel
+from app.services.quota_service import QuotaService, QuotaExceededError
 from typing import Optional, List, Dict, Any
 import uuid
 import logging
+from datetime import datetime, timezone, timedelta
 
+from fastapi import Request
+from app.services.analytics_service import AnalyticsService
 router = APIRouter(prefix="/v2/listings", tags=["listings"])
 logger = logging.getLogger(__name__)
 
@@ -90,7 +94,7 @@ def normalize_slug(text: str) -> str:
     return text.strip('-')
 
 @router.get("/{listing_id}", response_model=ListingResponse)
-async def get_listing_detail(listing_id: str, db: AsyncSession = Depends(get_db)):
+async def get_listing_detail(listing_id: str, request: Request, db: AsyncSession = Depends(get_db)):
     try:
         uuid_id = uuid.UUID(listing_id)
     except ValueError:
@@ -103,7 +107,30 @@ async def get_listing_detail(listing_id: str, db: AsyncSession = Depends(get_db)
 
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
-        
+    
+    # Track View (Fire & Forget logic via await but non-blocking error)
+    # We pass user_id if token is present, but this endpoint is public.
+    # Extract user from token manually if present?
+    # Or rely on client-side analytics? Server-side is more robust against ad-blockers.
+    # We can try to get user from request state if auth middleware ran?
+    # Since this is public endpoint, Depends(get_current_user) is not forced.
+    # Let's inspect authorization header manually for lightweight check or skip user_id if anon.
+    
+    # Simple Token Decode for Analytics (Non-blocking)
+    viewer_id = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        try:
+            from app.dependencies import decode_token
+            token = auth_header.split(" ")[1]
+            payload = decode_token(token)
+            if payload:
+                viewer_id = payload.get("sub")
+        except:
+            pass # Ignore auth errors for tracking
+
+    await AnalyticsService(db).track_view(listing, request, viewer_id)
+
     # Check Status (Guardrail)
     if listing.status != 'active':
         # In a real app, we might return 410 or a specific schema for sold items
@@ -244,4 +271,55 @@ async def get_listing_detail(listing_id: str, db: AsyncSession = Depends(get_db)
         )
     )
 
+    logger.info(f"Returning detail for {listing.id}")
     return ListingResponse(listing=detail, related=related_items)
+
+
+@router.post("/{listing_id}/renew")
+async def renew_listing(listing_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    try:
+        uuid_id = uuid.UUID(listing_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+
+    # 1. Fetch
+    stmt = select(Listing).where(Listing.id == uuid_id)
+    result = await db.execute(stmt)
+    listing = result.scalar_one_or_none()
+    
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+        
+    # 2. Ownership
+    if listing.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    # 3. Status Check
+    if listing.status not in ['active', 'expired']:
+         raise HTTPException(status_code=400, detail="Cannot renew a listing that is not active or expired (e.g. pending/rejected)")
+         
+    # 4. Quota
+    qs = QuotaService(db)
+    
+    # Logic: Only consume quota if the listing was previously expired (quota released).
+    # If active, it's already holding a slot, so we don't consume/increment.
+    if listing.status == 'expired':
+        try:
+            await qs.consume_quota(str(current_user.id), "listing_active", 1)
+        except QuotaExceededError as e:
+            raise HTTPException(status_code=402, detail=str(e))
+    # else: Active listings don't need new quota slot
+        
+    # 5. Update
+    now = datetime.now(timezone.utc)
+    listing.status = 'active'
+    listing.expires_at = now + timedelta(days=30) # Default policy 30 days
+    listing.updated_at = now
+    
+    # If it was expired, we effectively re-published it
+    if listing.status == 'expired':
+        listing.published_at = now
+    
+    await db.commit()
+    
+    return {"message": "Listing renewed successfully", "expires_at": listing.expires_at}

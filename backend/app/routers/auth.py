@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime, timezone
 
-from app.core.database import get_db
+from app.dependencies import get_db, get_current_user
 from app.core.security import (
     verify_password, get_password_hash, create_access_token, 
-    create_refresh_token, decode_token, get_current_user
+    create_refresh_token, decode_token
 )
 from app.models.user import User
 from app.schemas.user import (

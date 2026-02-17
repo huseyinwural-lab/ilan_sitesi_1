@@ -4,6 +4,7 @@ P1-3: Moderation Queue Models
 from sqlalchemy import String, Boolean, DateTime, JSON, Integer, Text, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy import Float
 from datetime import datetime, timezone
 from typing import Optional, List
 import uuid
@@ -40,6 +41,7 @@ class Listing(Base):
     images: Mapped[list] = mapped_column(JSON, default=list)  # ["url1", "url2"]
     image_count: Mapped[int] = mapped_column(Integer, default=0)
     
+    view_count: Mapped[int] = mapped_column(Integer, default=0)
     # Attributes
     attributes: Mapped[dict] = mapped_column(JSON, default=dict)  # {"room_count": 3, "area": 120}
     
@@ -54,6 +56,14 @@ class Listing(Base):
     is_premium: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     premium_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
+    
+    # Showcase (Added in P13)
+    is_showcase: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    showcase_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Showcase (Added in P13)
+    is_showcase: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    showcase_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

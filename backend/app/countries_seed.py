@@ -1,0 +1,63 @@
+from datetime import datetime, timezone
+
+
+def default_countries(now_iso: str | None = None) -> list[dict]:
+    now_iso = now_iso or datetime.now(timezone.utc).isoformat()
+    return [
+        {
+            "id": "DE",
+            "code": "DE",
+            "name": {"tr": "Almanya", "de": "Deutschland", "fr": "Allemagne"},
+            "default_currency": "EUR",
+            "default_language": "de",
+            "date_format": "DD.MM.YYYY",
+            "number_format": "de-DE",
+            "area_unit": "m2",
+            "distance_unit": "km",
+            "is_enabled": True,
+            "created_at": now_iso,
+            "updated_at": now_iso,
+        },
+        {
+            "id": "CH",
+            "code": "CH",
+            "name": {"tr": "İsviçre", "de": "Schweiz", "fr": "Suisse"},
+            "default_currency": "CHF",
+            "default_language": "de",
+            "date_format": "DD.MM.YYYY",
+            "number_format": "de-CH",
+            "area_unit": "m2",
+            "distance_unit": "km",
+            "is_enabled": True,
+            "created_at": now_iso,
+            "updated_at": now_iso,
+        },
+        {
+            "id": "FR",
+            "code": "FR",
+            "name": {"tr": "Fransa", "de": "Frankreich", "fr": "France"},
+            "default_currency": "EUR",
+            "default_language": "fr",
+            "date_format": "DD/MM/YYYY",
+            "number_format": "fr-FR",
+            "area_unit": "m2",
+            "distance_unit": "km",
+            "is_enabled": True,
+            "created_at": now_iso,
+            "updated_at": now_iso,
+        },
+        {
+            "id": "AT",
+            "code": "AT",
+            "name": {"tr": "Avusturya", "de": "Österreich", "fr": "Autriche"},
+            "default_currency": "EUR",
+            "default_language": "de",
+            "date_format": "DD.MM.YYYY",
+            "number_format": "de-AT",
+            "area_unit": "m2",
+            "distance_unit": "km",
+            "is_enabled": True,
+            "created_at": now_iso,
+            "updated_at": now_iso,
+        },
+    ]

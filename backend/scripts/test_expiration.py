@@ -2,6 +2,7 @@
 import asyncio
 import os
 import sys
+import uuid
 from sqlalchemy import text, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta, timezone
@@ -9,8 +10,10 @@ from datetime import datetime, timedelta, timezone
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from app.database import AsyncSessionLocal
 from app.models.moderation import Listing
+from app.models.vehicle_mdm import VehicleMake, VehicleModel
 from app.services.quota_service import QuotaService
 from app.models.monetization import QuotaUsage
+from app.models.category import Category
 
 async def test_expiration_flow():
     print("🚀 Starting Expiration Flow Test...")
@@ -19,32 +22,51 @@ async def test_expiration_flow():
     async with AsyncSessionLocal() as session:
         # Enable commit
         res = await session.execute(text("SELECT id FROM users LIMIT 1"))
-        user_id = str(res.scalar())
+        user_id_res = res.scalar()
+        if not user_id_res:
+            print("❌ No users found. Run seed script.")
+            return
+        user_id = str(user_id_res)
         
+        # Get a valid Category
+        cat_res = await session.execute(select(Category).limit(1))
+        category = cat_res.scalar_one_or_none()
+        if not category:
+            print("❌ No categories found. Run seed first.")
+            return
+        category_id = category.id
+
         # Cleanup
         await session.execute(text(f"DELETE FROM quota_usage WHERE user_id = '{user_id}'"))
         await session.execute(text(f"DELETE FROM listings WHERE user_id = '{user_id}' AND title = 'Test Expire'"))
         await session.commit()
     
     async with AsyncSessionLocal() as session:
-        # Create Listing
-        now = datetime.now(timezone.utc)
-        listing = Listing(
-            title="Test Expire",
-            user_id=uuid.UUID(user_id),
-            status="active",
-            created_at=now - timedelta(days=91),
-            expires_at=now - timedelta(days=1),
-            price=100, currency="TRY", country="TR", module="vehicle", category_id=uuid.UUID('dbf7def0-b233-4e49-8b00-75b4340685f3')
-        )
-        session.add(listing)
-        await session.commit()
+        try:
+            # Create Listing
+            now = datetime.now(timezone.utc)
+            listing = Listing(
+                title="Test Expire",
+                user_id=uuid.UUID(user_id),
+                status="active",
+                created_at=now - timedelta(days=91),
+                expires_at=now - timedelta(days=1),
+                price=100, currency="TRY", country="TR", module="vehicle", category_id=category_id
+            )
+            session.add(listing)
+            await session.commit()
+        except Exception as e:
+            print(f"❌ Error creating listing: {e}")
+            raise e
         
     async with AsyncSessionLocal() as session:
         # Consume Quota
         qs = QuotaService(session)
-        async with session.begin():
-             await qs.consume_quota(user_id, "listing_active", 1)
+        # Use simple update to avoid service transaction complexity in test script
+        # Service uses with_for_update inside which needs transaction.
+        # But here we are simulating usage.
+        await session.execute(text(f"INSERT INTO quota_usage (id, user_id, resource, used, updated_at) VALUES ('{uuid.uuid4()}', '{user_id}', 'listing_active', 1, NOW())"))
+        await session.commit()
         
         usage_before = await qs.get_usage(user_id, "listing_active")
         print(f"Usage Before: {usage_before}")
@@ -70,6 +92,5 @@ async def test_expiration_flow():
         else:
             print("❌ Expiration Failed")
 
-import uuid
 if __name__ == "__main__":
     asyncio.run(test_expiration_flow())

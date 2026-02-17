@@ -5,7 +5,7 @@ import { CategorySidebar } from '@/components/search/CategorySidebar';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import Layout from '@/components/Layout';
+import PublicLayout from '@/layouts/PublicLayout';
 import { Loader2, AlertCircle, ShoppingCart, Home, Car, Search, ChevronRight } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
@@ -20,7 +20,8 @@ import { tr } from 'date-fns/locale';
 
 import { useNavigate } from 'react-router-dom';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${API_URL}/api`;
 
 // Helper to format currency
 const formatPrice = (price, currency) => {
@@ -57,7 +58,7 @@ export default function SearchPage() {
       try {
         // Fetch all categories (or just relevant module if known)
         // For public search, we might want all.
-        const res = await fetch(`${API_URL}/api/categories`);
+        const res = await fetch(`${API}/categories?module=${selectedVertical === 'vehicle' ? 'vehicle' : 'real_estate'}`);
         if (res.ok) {
           const json = await res.json();
           setCategories(json);
@@ -100,7 +101,7 @@ export default function SearchPage() {
            queryParams.set('attrs', JSON.stringify(attrFilters));
         }
 
-        const res = await fetch(`${API_URL}/api/v2/search?${queryParams.toString()}`);
+        const res = await fetch(`${API}/v2/search?${queryParams.toString()}`);
         
         if (!res.ok) {
            throw new Error('Search failed');
@@ -145,7 +146,7 @@ export default function SearchPage() {
   };
 
   return (
-    <Layout>
+    <PublicLayout>
       <div className="container mx-auto px-4 py-6">
         
         {/* Breadcrumb */}
@@ -311,6 +312,6 @@ export default function SearchPage() {
 
         </div>
       </div>
-    </Layout>
+    </PublicLayout>
   );
 }

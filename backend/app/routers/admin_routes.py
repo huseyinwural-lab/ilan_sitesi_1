@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 from app.models.commercial import DealerPackage, DealerSubscription
 from app.models.dealer import Dealer
 from app.core.redis_rate_limit import RedisRateLimiter
-from app.routers.commercial_routes import limiter_listing_create 
 import os
 
+from app.models.user import SignupAllowlist
 # Helper from previous implementation
 async def log_action(db, action, res_type, res_id, user_id, new_values):
     from app.models.core import AuditLog
@@ -159,3 +159,77 @@ async def create_system_user(
         "role": new_user.role,
         "status": "created"
     }
+
+
+# --- ALLOWLIST ENDPOINTS ---
+
+class AllowlistCreate(BaseModel):
+    email: EmailStr
+
+@router.get("/allowlist")
+async def get_allowlist(
+    skip: int = 0, 
+    limit: int = 50, 
+    search: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(check_permissions(["super_admin", "country_admin"]))
+):
+    query = select(SignupAllowlist).order_by(SignupAllowlist.created_at.desc())
+    if search:
+        query = query.where(SignupAllowlist.email.ilike(f"%{search}%"))
+    
+    query = query.offset(skip).limit(limit)
+    result = await db.execute(query)
+    items = result.scalars().all()
+    
+    return [{
+        "id": str(i.id),
+        "email": i.email,
+        "is_used": i.is_used,
+        "created_at": i.created_at.isoformat() if i.created_at else None
+    } for i in items]
+
+@router.post("/allowlist", status_code=201)
+async def add_to_allowlist(
+    data: AllowlistCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(check_permissions(["super_admin", "country_admin"]))
+):
+    # Check if exists
+    exists = await db.execute(select(SignupAllowlist).where(SignupAllowlist.email == data.email))
+    if exists.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already in allowlist")
+        
+    entry = SignupAllowlist(
+        email=data.email,
+        created_by=current_user.id
+    )
+    db.add(entry)
+    await db.commit()
+    await db.refresh(entry)
+    
+    await log_action(db, "ADMIN_ADD_ALLOWLIST", "signup_allowlist", str(entry.id),
+                     user_id=current_user.id,
+                     new_values={"email": entry.email})
+                     
+    return {"id": str(entry.id), "email": entry.email, "status": "added"}
+
+@router.delete("/allowlist/{entry_id}")
+async def remove_from_allowlist(
+    entry_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(check_permissions(["super_admin"]))
+):
+    result = await db.execute(select(SignupAllowlist).where(SignupAllowlist.id == uuid.UUID(entry_id)))
+    entry = result.scalar_one_or_none()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+        
+    await db.delete(entry)
+    await db.commit()
+    
+    await log_action(db, "ADMIN_REMOVE_ALLOWLIST", "signup_allowlist", entry_id,
+                     user_id=current_user.id,
+                     old_values={"email": entry.email})
+                     
+    return {"message": "Removed from allowlist"}

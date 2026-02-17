@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from app.core.database import get_db
-from app.core.security import check_permissions
+from app.dependencies import check_permissions
 from app.models.user import User
 from app.models.core import AuditLog
 from app.schemas.core import AuditLogResponse

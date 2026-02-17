@@ -16,8 +16,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import all models
-from app.models.base import Base
+from app.models import Base
 from app.models.user import User
+from app.models.user import User, SignupAllowlist
 from app.models.core import Country, FeatureFlag, AuditLog
 from app.models.category import Category, CategoryTranslation
 from app.models.attribute import Attribute, AttributeOption, CategoryAttributeMap
@@ -26,13 +27,23 @@ from app.models.home import HomeLayoutSettings, HomeShowcaseItem, HomeSpecialLis
 
 from app.models.commercial import DealerPackage, DealerSubscription
 from app.models.pricing import PriceConfig, FreeQuotaConfig, Discount, ListingConsumptionLog, CountryCurrencyMap
-from app.models.payment import StripeSettings, PaymentAttempt, StripeEvent, Refund
+from app.models.payment import StripeSettings, PaymentAttempt, Refund
 from app.models.dealer import DealerApplication, Dealer, DealerUser
 from app.models.premium import PremiumProduct, ListingPromotion, PremiumRankingRule
 from app.models.moderation import Listing, ModerationAction, ModerationRule
-from app.models.billing import VatRate, Invoice, InvoiceItem
-from app.models.payment import StripeSettings, PaymentAttempt, StripeEvent, Refund
+from app.models.billing import VatRate, Invoice, InvoiceItem, StripeEvent, BillingCustomer, StripeSubscription
+from app.models.vehicle_mdm import VehicleMake, VehicleModel
+from app.models.monetization import SubscriptionPlan, UserSubscription, QuotaUsage
+from app.models.promotion import Promotion, Coupon, CouponRedemption
+
+from app.models.referral import ReferralReward, ConversionEvent
+from app.models.analytics import ListingView
+from app.models.ledger import RewardLedger
+from app.models.referral_tier import ReferralTier
+from app.models.affiliate import Affiliate, AffiliateClick
 target_metadata = Base.metadata
+from app.models.blog import BlogPost
+from app.models.growth import GrowthEvent
 
 def get_url():
     return os.environ.get("DATABASE_URL", "postgresql://admin_user:admin_pass@localhost:5432/admin_panel")

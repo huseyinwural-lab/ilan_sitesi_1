@@ -1,345 +1,145 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import Layout from '@/components/Layout';
-import { SEO } from '@/components/common/SEO';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, MapPin, Calendar, Phone, Share2, Heart, ShieldCheck, User, Car } from 'lucide-react';
-import { format } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
-
-const formatPrice = (price, currency) => {
-  return new Intl.NumberFormat('tr-TR', {
-    style: 'currency',
-    currency: currency || 'TRY',
-    maximumFractionDigits: 0,
-  }).format(price);
-};
-
-const slugify = (text) => {
-  return text
-    .toString()
-    .toLowerCase()
-    .replace(/\s+/g, '-')     // Replace spaces with -
-    .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-    .replace(/\-\-+/g, '-')   // Replace multiple - with single -
-    .replace(/^-+/, '')       // Trim - from start
-    .replace(/-+$/, '');      // Trim - from end
-};
-
-export default function DetailPage() {
-  const { id } = useParams(); // URL format: :slug-:id
-  const navigate = useNavigate();
-  const location = useLocation();
+const DetailPage = () => {
+  const { id } = useParams(); // Expects :id (uuid) or :id-slug? 
+  // Router in App.js is /ilan/:id. 
+  // If we use /ilan/UUID-slug, we need to parse.
   
-  // Extract UUID from end of string (Standard UUID has 36 chars)
-  const realId = id ? id.substr(-36) : null;
-  const urlSlug = id ? id.slice(0, -37) : ''; // Everything before -uuid
-
+  const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-  const [activeImage, setActiveImage] = useState(0);
+  const [phone, setPhone] = useState(null);
+
+  // ID parsing is now handled inside useEffect
 
   useEffect(() => {
-    if (!realId) return;
+    // Extract UUID id from /ilan/vasita/{id}-{slug} or /ilan/{id}
+    const match = id.match(/^([a-f0-9\-]{36})/i);
+    const realId = match ? match[1] : id;
 
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_URL}/api/v2/listings/${realId}`);
-        console.log('DEBUG: URL Slug:', urlSlug);
-        console.log('DEBUG: API Slug:', canonicalSlug);
-        console.log('DEBUG: Real ID:', realId);
+    setLoading(true);
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle/${realId}`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error('not found');
+        return r.json();
+      })
+      .then((data) => {
+        setListing(data);
+      })
+      .catch(() => {
+        setListing(null);
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
 
-        if (!res.ok) {
-          if (res.status === 404) throw new Error('İlan bulunamadı (404)');
-          throw new Error('Bir hata oluştu');
-        }
-        const json = await res.json();
-        setData(json);
+  const handleRevealPhone = async () => {
+    // API Call
+    // const res = await fetch(`/api/v1/contact/${realId}/phone`);
+    setPhone("+49 170 1234567");
+  };
 
-        // Canonical Slug Check (SEO Guardrail)
-        const canonicalSlug = json.listing.slug;
-        if (urlSlug !== canonicalSlug) {
-          console.warn(`Slug mismatch. Redirecting: ${urlSlug} -> ${canonicalSlug}`);
-          navigate(`/ilan/${canonicalSlug}-${realId}`, { replace: true });
-        }
-
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [realId]); // Depend on ID only to prevent loop on slug change (navigate handles url)
-
-  if (error) {
-    return (
-      <Layout>
-        <div className="container mx-auto py-20 text-center">
-          <h1 className="text-4xl font-bold mb-4">404</h1>
-          <p className="text-muted-foreground text-lg">{error}</p>
-          <Button variant="link" onClick={() => navigate('/search')} className="mt-4">Aramaya Dön</Button>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (loading || !data) {
-    return (
-      <Layout>
-        <div className="container mx-auto py-8 space-y-8">
-          <Skeleton className="h-12 w-3/4" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Skeleton className="h-96 md:col-span-2 rounded-xl" />
-            <div className="space-y-4">
-              <Skeleton className="h-32 rounded-xl" />
-              <Skeleton className="h-64 rounded-xl" />
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  const { listing, related } = data;
+  if (loading) return <div className="p-8 text-center">Loading...</div>;
+  if (!listing) return <div className="p-8 text-center">Not Found</div>;
 
   return (
-    <Layout>
-      <SEO 
-        title={listing.seo.title}
-        description={listing.seo.description}
-        image={listing.media[0]?.url}
-        price={listing.price}
-        currency={listing.currency}
-        canonical={`${window.location.origin}/ilan/${listing.slug}-${listing.id}`}
-      />
+    <>
+      <Helmet>
+        <title>{`${listing.title} | ${listing.location.city}`}</title>
+        <meta name="description" content={`${listing.title}. Price: ${listing.price} ${listing.currency}`} />
+        <link rel="canonical" href={`https://platform.com/ilan/vasita/${listing.id}`} />
+      </Helmet>
 
-      <div className="container mx-auto px-4 py-6">
-        
-        {/* Breadcrumb */}
-        <div className="flex items-center text-sm text-muted-foreground mb-4 overflow-x-auto whitespace-nowrap pb-2">
-          {listing.breadcrumbs.map((b, i) => (
-            <React.Fragment key={i}>
-              <a href={b.slug ? `/search?category=${b.slug}` : '/'} className="hover:text-foreground">
-                {b.label}
-              </a>
-              {i < listing.breadcrumbs.length - 1 && <span className="mx-2">/</span>}
-            </React.Fragment>
-          ))}
-        </div>
-
-        {/* Title Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold leading-tight">{listing.title}</h1>
-            <div className="flex items-center gap-4 mt-2 text-muted-foreground text-sm">
-              <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" /> 
-                {listing.location.city}, {listing.location.country}
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                {format(new Date(listing.created_at), 'd MMMM yyyy', { locale: tr })}
-              </span>
-              <span className="text-xs px-2 py-0.5 bg-muted rounded">
-                İlan No: {listing.id.split('-')[0]}
-              </span>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-primary">
-              {formatPrice(listing.price, listing.currency)}
-            </div>
-          </div>
-        </div>
-
+      <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            
+          <div className="lg:col-span-2 space-y-6">
             {/* Gallery */}
-            <div className="space-y-4">
-              <div className="aspect-video bg-black rounded-xl overflow-hidden relative group">
-                {listing.media.length > 0 ? (
-                  <img 
-                    src={listing.media[activeImage]?.url} 
-                    alt={listing.title} 
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted">
-                    <Car className="h-24 w-24 opacity-20" />
-                  </div>
-                )}
-                
-                {listing.media.length > 0 && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                    <p className="text-white text-sm">
-                      {activeImage + 1} / {listing.media.length}
-                    </p>
-                  </div>
-                )}
+            <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden">
+              <img src={listing.media[0].url} alt={listing.title} className="w-full h-full object-cover" />
+            </div>
+
+            {/* Header */}
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{listing.title}</h1>
+              <div className="text-2xl font-bold text-blue-600">
+                {listing.price.toLocaleString()} {listing.currency}
               </div>
-              
-              {/* Thumbs */}
-              {listing.media.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {listing.media.map((m, i) => (
-                    <button 
-                      key={i}
-                      onClick={() => setActiveImage(i)}
-                      className={`relative w-20 h-16 flex-shrink-0 rounded-md overflow-hidden border-2 ${activeImage === i ? 'border-primary' : 'border-transparent'}`}
-                    >
-                      <img src={m.url} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="text-gray-500 mt-1">
+                {listing.location.city || ''} {listing.location.country || ''}
+              </div>
+            </div>
+
+            {/* Attributes */}
+            <div className="bg-white border rounded-xl p-6">
+              <h3 className="font-bold text-lg mb-4">Details</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {Object.entries(listing.attributes).map(([key, val]) => (
+                  <div key={key}>
+                    <span className="text-gray-500 text-sm block capitalize">{key.replace('_', ' ')}</span>
+                    <span className="font-medium">{val}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Description */}
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Açıklama</h2>
-                <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap">
-                  {listing.description}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Attributes */}
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-xl font-semibold mb-6">Özellikler</h2>
-                {listing.attributes.map((group, i) => (
-                  <div key={i} className="mb-6 last:mb-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
-                      {group.items.map((item) => (
-                        <div key={item.key} className="flex justify-between border-b pb-2">
-                          <span className="text-muted-foreground">{item.label}</span>
-                          <span className="font-medium text-right">
-                            {item.value === true ? 'Evet' : item.value === false ? 'Hayır' : item.value} 
-                            {item.unit && ` ${item.unit}`}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
+            <div className="bg-white border rounded-xl p-6">
+              <h3 className="font-bold text-lg mb-4">Description</h3>
+              <p className="text-gray-700 whitespace-pre-line">{listing.description || ''}</p>
+            </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            
             {/* Seller Card */}
-            <Card className="border-l-4 border-l-primary">
-              <CardContent className="p-6 space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg">{listing.seller.name}</h3>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {listing.seller.type === 'dealer' ? listing.seller.dealer_name : 'Bireysel Satıcı'}
-                    </p>
-                  </div>
+            <div className="bg-white border rounded-xl p-6 shadow-sm">
+              <h3 className="font-bold text-lg mb-2">Seller</h3>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-xl">
+                  👤
                 </div>
-
-                <div className="space-y-3">
-                  <Button className="w-full h-12 text-lg gap-2">
-                    <Phone className="h-5 w-5" />
-                    Ara
-                  </Button>
-                  <Button variant="outline" className="w-full h-12 gap-2">
-                    Mesaj Gönder
-                  </Button>
+                <div>
+                  <div className="font-bold">{listing.seller.name || ''}</div>
+                  {listing.seller.is_verified && (
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Verified</span>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Safety Tips */}
-            <Card className="bg-muted/30 border-none shadow-none">
-              <CardContent className="p-4 flex gap-3">
-                <ShieldCheck className="h-6 w-6 text-green-600 shrink-0" />
-                <div className="text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground mb-1">Güvenli Alışveriş İpuçları</p>
-                  <p>Kapora göndermeyin. Ürünü görmeden ödeme yapmayın.</p>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="space-y-3">
+                {listing.contact.phone_protected ? (
+                  !phone ? (
+                    <button 
+                      onClick={handleRevealPhone}
+                      className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition"
+                    >
+                      Show Phone Number
+                    </button>
+                  ) : (
+                    <div className="w-full bg-gray-100 py-3 rounded-lg font-bold text-center text-gray-800 border border-green-500">
+                      {phone}
+                    </div>
+                  )
+                ) : (
+                  <div>Phone hidden by seller</div>
+                )}
 
-            {/* Actions */}
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1 gap-2">
-                <Heart className="h-4 w-4" /> Favorile
-              </Button>
-              <Button variant="outline" className="flex-1 gap-2">
-                <Share2 className="h-4 w-4" /> Paylaş
-              </Button>
+                <Link 
+                  to={`/account/messages/new?listing=${listing.id}`} 
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold block text-center hover:bg-blue-700 transition"
+                >
+                  Send Message
+                </Link>
+              </div>
             </div>
-
           </div>
 
         </div>
-
-        {/* Related Listings (New Section) */}
-        {related && related.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6">Benzer İlanlar</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {related.map((item) => (
-                <Card 
-                  key={item.id} 
-                  className="overflow-hidden hover:shadow-md transition-shadow group cursor-pointer"
-                  onClick={() => {
-                    navigate(`/ilan/${slugify(item.title)}-${item.id}`);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                >
-                  <div className="aspect-[4/3] relative bg-gray-100 overflow-hidden">
-                    {item.image ? (
-                        <img 
-                          src={item.image} 
-                          alt={item.title} 
-                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                          <Car className="h-12 w-12 opacity-20" />
-                        </div>
-                    )}
-                    <Badge className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 backdrop-blur-sm border-none">
-                      {formatPrice(item.price, item.currency)}
-                    </Badge>
-                  </div>
-                  <CardHeader className="p-4 pb-2">
-                    <CardTitle className="text-sm font-semibold line-clamp-2 leading-tight">
-                      {item.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardFooter className="p-4 pt-0 text-xs text-muted-foreground flex justify-between">
-                      <span>Benzer İlan</span>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
       </div>
-    </Layout>
+    </>
   );
-}
+};
+
+export default DetailPage;

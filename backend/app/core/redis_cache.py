@@ -51,6 +51,22 @@ class RedisCache:
         except Exception as e:
             logger.warning(f"Cache SET error: {e}")
 
+    async def clear_by_pattern(self, pattern: str):
+        """Clear keys matching pattern (e.g. 'search:v2:*')"""
+        if not self.client: return
+        try:
+            # SCAN is safer than KEYS for production
+            cursor = 0
+            while True:
+                cursor, keys = await self.client.scan(cursor, match=pattern, count=100)
+                if keys:
+                    await self.client.delete(*keys)
+                if cursor == 0:
+                    break
+            logger.info(f"🧹 Cache cleared for pattern: {pattern}")
+        except Exception as e:
+            logger.error(f"❌ Cache CLEAR error: {e}")
+
 # Singleton
 cache_service = RedisCache()
 

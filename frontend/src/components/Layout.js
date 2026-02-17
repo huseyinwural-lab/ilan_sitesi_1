@@ -23,27 +23,27 @@ export default function Layout({ children }) {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/auth/login');
   };
 
   const navItems = [
-    { path: '/', icon: LayoutDashboard, label: 'dashboard' },
-    { path: '/users', icon: Users, label: 'users', roles: ['super_admin', 'country_admin'] },
-    { path: '/countries', icon: Globe, label: 'countries' },
-    { path: '/dealers', icon: Building, label: 'Dealers', roles: ['super_admin', 'country_admin'] },
-    { path: '/moderation', icon: ShieldCheck, label: 'Moderation', roles: ['super_admin', 'country_admin', 'moderator'] },
-    { path: '/premium', icon: Star, label: 'Premium', roles: ['super_admin', 'country_admin'] },
-    { path: '/invoices', icon: FileText, label: 'Invoices', roles: ['super_admin', 'finance'] },
-    { path: '/tax-rates', icon: Percent, label: 'Tax Rates', roles: ['super_admin', 'finance'] },
-    { path: '/feature-flags', icon: Flag, label: 'feature_flags' },
-    { path: '/categories', icon: FolderTree, label: 'Categories', roles: ['super_admin', 'country_admin'] },
-    { path: '/attributes', icon: Settings2, label: 'Attributes', roles: ['super_admin'] },
-    { path: '/menu', icon: MenuSquare, label: 'Menu', roles: ['super_admin'] },
+    { path: '/admin', icon: LayoutDashboard, label: 'dashboard' },
+    { path: '/admin/users', icon: Users, label: 'users', roles: ['super_admin', 'country_admin'] },
+    { path: '/admin/countries', icon: Globe, label: 'countries' },
+    { path: '/admin/dealers', icon: Building, label: 'Dealers', roles: ['super_admin', 'country_admin'] },
+    { path: '/admin/moderation', icon: ShieldCheck, label: 'Moderation', roles: ['super_admin', 'country_admin', 'moderator'] },
+    { path: '/admin/premium', icon: Star, label: 'Premium', roles: ['super_admin', 'country_admin'] },
+    { path: '/admin/invoices', icon: FileText, label: 'Invoices', roles: ['super_admin', 'finance'] },
+    { path: '/admin/tax-rates', icon: Percent, label: 'Tax Rates', roles: ['super_admin', 'finance'] },
+    { path: '/admin/feature-flags', icon: Flag, label: 'feature_flags' },
+    { path: '/admin/categories', icon: FolderTree, label: 'Categories', roles: ['super_admin', 'country_admin'] },
+    { path: '/admin/attributes', icon: Settings2, label: 'Attributes', roles: ['super_admin'] },
+    { path: '/admin/menu', icon: MenuSquare, label: 'Menu', roles: ['super_admin'] },
     // Master Data Management
     { divider: true, label: 'Master Data', roles: ['super_admin', 'country_admin'] },
     { path: '/admin/master-data/attributes', icon: Database, label: 'MDM Attributes', roles: ['super_admin', 'country_admin'] },
-    { path: '/admin/master-data/vehicle-makes', icon: Car, label: 'Vehicle Makes', roles: ['super_admin', 'country_admin'] },
-    { path: '/audit-logs', icon: Clock, label: 'audit_logs', roles: ['super_admin', 'country_admin', 'finance'] },
+    { path: '/admin/master-data/vehicles', icon: Car, label: 'Vehicle Makes', roles: ['super_admin', 'country_admin'] },
+    { path: '/admin/audit-logs', icon: Clock, label: 'audit_logs', roles: ['super_admin', 'country_admin', 'finance'] },
     { path: '/admin/plans', icon: Star, label: 'Plans', roles: ['super_admin', 'country_admin', 'dealer', 'individual'] },
 
     { path: '/admin/billing', icon: FileText, label: 'Billing', roles: ['super_admin', 'country_admin', 'dealer'] },
@@ -129,19 +129,27 @@ export default function Layout({ children }) {
             </div>
             <nav className="p-4">
               <ul className="space-y-1">
-                {filteredNavItems.map((item) => (
-                  <li key={item.path}>
-                    <NavLink
-                      to={item.path}
-                      onClick={() => setSidebarOpen(false)}
-                      className={({ isActive }) =>
-                        `sidebar-item ${isActive ? 'active' : ''}`
-                      }
-                    >
-                      <item.icon size={18} />
-                      {t(item.label)}
-                    </NavLink>
-                  </li>
+                {filteredNavItems.map((item, index) => (
+                  item.divider ? (
+                    <li key={`divider-mobile-${index}`} className="pt-4 pb-2">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3">
+                        {item.label}
+                      </span>
+                    </li>
+                  ) : (
+                    <li key={item.path}>
+                      <NavLink
+                        to={item.path}
+                        onClick={() => setSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `sidebar-item ${isActive ? 'active' : ''}`
+                        }
+                      >
+                        <item.icon size={18} />
+                        {t(item.label)}
+                      </NavLink>
+                    </li>
+                  )
                 ))}
               </ul>
             </nav>

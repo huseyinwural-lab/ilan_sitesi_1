@@ -14,3 +14,10 @@ from app.models.billing import Invoice, InvoiceItem, VatRate, StripeEvent
 from app.models.payment import StripeSettings, PaymentAttempt, Refund
 from app.models.commercial import DealerPackage, DealerSubscription
 from app.models.monetization import SubscriptionPlan, UserSubscription, QuotaUsage
+
+from app.models.messaging import Conversation, Message
+from app.models.trust import UserReview
+from app.models.escrow import EscrowTransaction, Dispute
+from app.models.dealer_profile import DealerProfile
+from app.models.legal import LegalConsent
+from app.models.vehicle_mdm import VehicleMake, VehicleModel

@@ -5,7 +5,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from app.core.database import get_db
-from app.core.security import get_current_user, check_permissions
+from app.dependencies import get_current_user, check_permissions
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate, UserRole
 from app.services.audit import log_action

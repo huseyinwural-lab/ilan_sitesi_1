@@ -3,6 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from datetime import datetime, timezone
 from typing import Optional
+from sqlalchemy import Float, Integer
 import uuid
 from app.models.base import Base
 
@@ -23,3 +24,26 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Country (P19)
+    country_code: Mapped[str] = mapped_column(String(5), server_default="TR", nullable=False, index=True)
+    device_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    # Referral (P14)
+    referral_code: Mapped[Optional[str]] = mapped_column(String(20), unique=True, index=True, nullable=True)
+    referred_by: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    # Referral Tier (P18)
+    referral_tier_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("referral_tiers.id"), nullable=True)
+    referral_count_confirmed: Mapped[int] = mapped_column(Integer, default=0)
+    # Affiliate (P18)
+    is_affiliate: Mapped[bool] = mapped_column(Boolean, default=False)
+    referred_by_affiliate_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("affiliates.id"), nullable=True)
+
+class SignupAllowlist(Base):
+    """Soft Launch Invite List"""
+    __tablename__ = "signup_allowlist"
+    
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), nullable=True) # Admin ID
+    is_used: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

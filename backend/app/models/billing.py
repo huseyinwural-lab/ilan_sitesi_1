@@ -60,6 +60,12 @@ class Invoice(Base):
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    stripe_payment_intent_id: Mapped[str] = mapped_column(String(100), nullable=True, index=True)
+    payment_idempotency_key: Mapped[str] = mapped_column(String(100), nullable=True)
+    refunded_total: Mapped[Numeric] = mapped_column(Numeric(12, 2), default=0)
+    refund_status: Mapped[str] = mapped_column(String(20), nullable=True) # full, partial
+    refunded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_refund_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
 class InvoiceItem(Base):
     __tablename__ = "invoice_items"

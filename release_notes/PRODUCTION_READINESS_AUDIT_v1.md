@@ -1,38 +1,31 @@
-# Production Readiness Audit
+# Production Readiness Audit (v1)
 
-**Document ID:** PRODUCTION_READINESS_AUDIT_v1  
-**Date:** 2026-02-13  
-**Status:** 🟡 IN PROGRESS  
+**Tarih:** 14 Şubat 2026
+**Faz:** Soft Launch Hazırlığı
 
----
+## 1. Kritik Akışlar (Critical Flows)
+| Akış | Durum | Notlar |
+|------|-------|--------|
+| **Kullanıcı Kaydı** | ✅ **HAZIR** | Invite-Only (Allowlist) aktif. Public kayıt kapalı. |
+| **İlan Oluşturma** | ✅ **HAZIR** | Quota enforcement ve Moderation (P1-P3) aktif. |
+| **Arama (Search)** | ✅ **HAZIR** | Redis cache, self-cleaning (expire invalidation) aktif. |
+| **Ödeme (Stripe)** | ⚠️ **MOCKED** | Test modunda çalışıyor. Canlı anahtarlar (Live Keys) henüz girilmedi. |
+| **Expiration** | ✅ **HAZIR** | Lifecycle job ve renew endpoint test edildi. |
 
-## 1. Stripe & Payment Configuration
-- [ ] **Live Keys:** Configured in Production Environment (`STRIPE_SECRET_KEY` starts with `sk_live_`).
-- [ ] **Webhook Endpoint:** Configured in Stripe Dashboard (`https://api.platform.com/api/v1/billing/webhook`).
-- [ ] **Webhook Secret:** Synced between Stripe Dashboard and Backend Env (`STRIPE_WEBHOOK_SECRET`).
-- [ ] **Product Mapping:** Production Product/Price IDs mapped correctly in `billing_routes.py` (or DB config).
+## 2. Altyapı & Monitoring
+*   **Database:** PostgreSQL 15 (Managed/Container). Backup politikası platform sağlayıcı (Emergent) standardında.
+*   **Cache:** Redis 7 (Container).
+*   **Logs:** `/var/log/supervisor/` ve `AuditLog` tablosu.
+*   **Alerts:** Henüz aktif alert mekanizması yok (P14 Backlog).
 
-## 2. Infrastructure & Security
-- [x] **Rate Limiting:** `60 req/min` active on Search API.
-- [ ] **SSL:** Valid certificate for `api.platform.com` and `platform.com`.
-- [ ] **HSTS:** Enabled on Nginx/Ingress.
-- [ ] **Database Backup:** Daily snapshots + WAL archiving configured (Point-in-time recovery).
+## 3. Güvenlik
+*   **Auth:** JWT (HS256).
+*   **Access:** Rol tabanlı (RBAC). Invite-Only ile ek güvenlik katmanı.
+*   **API:** Rate Limiting (Redis) aktif.
 
-## 3. Critical Flow Verification (Smoke Test)
-*These must be verified manually in the Live environment before public announcement.*
+## 4. Eksikler & Riskler
+*   **Stripe Live:** Canlı ödeme testi yapılmadı (Soft Launch öncesi yapılmalı).
+*   **Mail Servisi:** E-posta gönderimi (SMTP/Resend) entegre edilmedi (Mock). Şifre sıfırlama çalışmayabilir.
 
-1. **Sign Up:** Create a new user.
-2. **Quota Check:** Create 3 listings -> 4th blocked (Free Tier).
-3. **Upgrade:** Purchase "Basic Plan" (Real card, small amount/refund).
-4. **Unlock:** Create 4th listing -> Success.
-5. **Cancel:** Cancel subscription -> Status updates.
-
-## 4. Monitoring Baseline
-- **Alerts:**
-  - `quota_block_rate > 10%` (Investigate abuse or UX friction).
-  - `payment_failure_rate > 5%`.
-  - `webhook_error_rate > 1%`.
-
----
-
-**Next Step:** Implement Monitoring Alerts.
+## 5. Karar
+**SOFT LAUNCH ONAYI:** Platform, davetli kullanıcılar ("Friends & Family" veya "Beta Testers") için kullanıma açılabilir. Ödemeler test kartlarıyla yapılmalıdır.

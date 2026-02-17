@@ -2,15 +2,23 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 
+import UserPanelLayout from './layouts/UserPanelLayout';
+import MyListings from './pages/user/MyListings';
+import CreateListing from './pages/user/CreateListing';
+import WizardContainer from './pages/user/wizard/WizardContainer';
 import { HelmetProvider } from 'react-helmet-async';
 
 // Public Pages
 import HomePage from '@/pages/public/HomePage';
 import SearchPage from '@/pages/public/SearchPage';
 import DetailPage from '@/pages/public/DetailPage';
+import VehicleLandingPage from '@/pages/public/VehicleLandingPage';
+import VehicleSegmentPage from '@/pages/public/VehicleSegmentPage';
+import RedirectToCountry from '@/pages/public/RedirectToCountry';
 import LoginPage from '@/pages/Login';
 
 // Admin Pages
+import Layout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
 import UserManagement from '@/pages/Users';
 import FeatureFlags from '@/pages/FeatureFlags';
@@ -58,15 +66,33 @@ function App() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/ilan/:id" element={<DetailPage />} /> {/* P8: Detail Route (captures slug-id) */}
+
+                  {/* Vehicle (country-aware) */}
+                  <Route path="/:country/vasita" element={<VehicleLandingPage />} />
+                  <Route path="/:country/vasita/:segment" element={<VehicleSegmentPage />} />
+                  {/* Convenience redirect */}
+                  <Route path="/vasita" element={<RedirectToCountry to="/{country}/vasita" />} />
+
                   <Route path="/auth/login" element={<LoginPage />} />
                   <Route path="/auth/register" element={<LoginPage />} /> {/* Temporary redirect to login */}
+
+                  {/* User Panel Routes */}
+                  <Route path="/account" element={<UserPanelLayout />}
+                  >
+                    <Route index element={<Navigate to="/account/listings" />} />
+                    <Route path="listings" element={<MyListings />} />
+                    <Route path="create" element={<CreateListing />} />
+                    <Route path="create/vehicle-wizard" element={<WizardContainer />} />
+                  </Route>
 
                   {/* Admin Routes */}
                   <Route
                     path="/admin"
                     element={
                       <ProtectedRoute roles={['super_admin', 'country_admin', 'moderator', 'support', 'finance']}>
-                        <Dashboard />
+                        <Layout>
+                          <Dashboard />
+                        </Layout>
                       </ProtectedRoute>
                     }
                   />
@@ -74,7 +100,9 @@ function App() {
                     path="/admin/users"
                     element={
                       <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <UserManagement />
+                        <Layout>
+                          <UserManagement />
+                        </Layout>
                       </ProtectedRoute>
                     }
                   />
@@ -82,7 +110,9 @@ function App() {
                     path="/admin/feature-flags"
                     element={
                       <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <FeatureFlags />
+                        <Layout>
+                          <FeatureFlags />
+                        </Layout>
                       </ProtectedRoute>
                     }
                   />
@@ -90,7 +120,9 @@ function App() {
                     path="/admin/countries"
                     element={
                       <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <CountrySettings />
+                        <Layout>
+                          <CountrySettings />
+                        </Layout>
                       </ProtectedRoute>
                     }
                   />
@@ -98,7 +130,9 @@ function App() {
                     path="/admin/categories"
                     element={
                       <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <Categories />
+                        <Layout>
+                          <Categories />
+                        </Layout>
                       </ProtectedRoute>
                     }
                   />
@@ -106,7 +140,9 @@ function App() {
                     path="/admin/attributes"
                     element={
                       <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <AdminAttributes />
+                        <Layout>
+                          <AdminAttributes />
+                        </Layout>
                       </ProtectedRoute>
                     }
                   />
@@ -114,7 +150,9 @@ function App() {
                     path="/admin/attributes/options"
                     element={
                       <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <AdminOptions />
+                        <Layout>
+                          <AdminOptions />
+                        </Layout>
                       </ProtectedRoute>
                     }
                   />
@@ -122,7 +160,9 @@ function App() {
                     path="/admin/master-data/vehicles"
                     element={
                       <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <AdminVehicleMDM />
+                        <Layout>
+                          <AdminVehicleMDM />
+                        </Layout>
                       </ProtectedRoute>
                     }
                   />
@@ -130,7 +170,9 @@ function App() {
                     path="/admin/billing"
                     element={
                       <ProtectedRoute roles={['super_admin', 'country_admin', 'dealer']}>
-                        <BillingPage />
+                        <Layout>
+                          <BillingPage />
+                        </Layout>
                       </ProtectedRoute>
                     }
                   />
@@ -138,7 +180,9 @@ function App() {
                     path="/admin/plans"
                     element={
                       <ProtectedRoute roles={['super_admin', 'country_admin', 'dealer', 'individual']}>
-                        <PlansPage />
+                        <Layout>
+                          <PlansPage />
+                        </Layout>
                       </ProtectedRoute>
                     }
                   />
