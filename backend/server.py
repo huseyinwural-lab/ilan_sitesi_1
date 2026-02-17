@@ -403,6 +403,27 @@ async def update_country(country_id: str, data: dict, request: Request, current_
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Country not found")
 
+
+    # Minimal audit log (country-aware)
+    try:
+        await db.admin_audit_logs.insert_one(
+            {
+                "id": str(uuid.uuid4()),
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "user_id": current_user.get("id"),
+                "user_email": current_user.get("email"),
+                "action": "UPDATE",
+                "resource_type": "country",
+                "resource_id": country_id,
+                "mode": getattr(ctx, "mode", "global"),
+                "country_scope": getattr(ctx, "country", None),
+                "path": str(request.url.path),
+            }
+        )
+    except Exception:
+        # audit should not block the operation
+        pass
+
     return {"ok": True}
 
 
