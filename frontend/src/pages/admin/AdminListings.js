@@ -162,6 +162,10 @@ export default function AdminListingsPage() {
     return categoryMap.get(key) || key;
   };
 
+  const toTestId = (value) => String(value || 'all')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-');
+
   return (
     <div className="space-y-6" data-testid="admin-listings-page">
       <div className="flex flex-col gap-2">
