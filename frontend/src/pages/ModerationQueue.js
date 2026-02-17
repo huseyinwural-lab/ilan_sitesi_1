@@ -73,7 +73,7 @@ export default function ModerationQueue() {
           },
         });
       } else if (actionType === 'reject') {
-        await axios.post(`${API}/admin/listings/${listingId}/reject`, reason, {
+        await axios.post(`${API}/admin/listings/${listingId}/reject`, reasonPayload, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
