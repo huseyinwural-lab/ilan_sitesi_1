@@ -274,6 +274,13 @@ api_router = APIRouter(prefix="/api")
 
 
 @api_router.get("/health")
+
+# Moderation reasons (v1.0.0 single-source contract)
+REJECT_REASONS_V1 = {"duplicate", "spam", "illegal", "wrong_category"}
+NEEDS_REVISION_REASONS_V1 = {"missing_photos", "insufficient_description", "wrong_price", "other"}
+
+ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
+
 async def health_check(request: Request):
     db = request.app.state.db
     await db.command("ping")
@@ -463,9 +470,313 @@ async def update_country(country_id: str, data: dict, request: Request, current_
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "user_id": current_user.get("id"),
                 "user_email": current_user.get("email"),
+                # Backoffice AuditLogs UI expects `action`, while moderation spec requires `event_type`.
+                # We store both for compatibility.
+                "action": "UPDATE",
                 "event_type": "UPDATE",
                 "resource_type": "country",
                 "resource_id": country_id,
+
+
+# =====================
+# Audit Logs (Mongo) - Backoffice
+# =====================
+
+@api_router.get("/audit-logs")
+async def list_audit_logs(
+    request: Request,
+    skip: int = 0,
+    limit: int = 50,
+    action: Optional[str] = None,
+    resource_type: Optional[str] = None,
+    user_id: Optional[str] = None,
+    country_scope: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "finance"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    q: Dict = {}
+    if action:
+        q["action"] = action
+    if resource_type:
+        q["resource_type"] = resource_type
+    if user_id:
+        q["user_id"] = user_id
+    if country_scope:
+        q["country_scope"] = country_scope
+
+    cursor = db.audit_logs.find(q, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(int(limit))
+    docs = await cursor.to_list(length=int(limit))
+    return docs
+
+
+# =====================
+# Moderation (Mongo) - Backoffice
+# =====================
+
+def _ensure_moderation_rbac(current_user: dict):
+    role = current_user.get("role")
+    if role not in ALLOWED_MODERATION_ROLES:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+
+def _validate_reason(reason: str, allowed: set[str]) -> str:
+    r = (reason or "").strip()
+    if not r:
+        raise HTTPException(status_code=400, detail="reason is required")
+    if r not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid reason")
+    return r
+
+
+async def _moderation_transition(
+    *,
+    db,
+    listing_id: str,
+    current_user: dict,
+    event_type: str,
+    new_status: str,
+    reason: Optional[str] = None,
+    reason_note: Optional[str] = None,
+) -> dict:
+    """Apply listing moderation transition + write audit log.
+
+    Mongo standalone environments may not support multi-document transactions.
+    To keep the invariant "no state change without an audit row", we insert audit
+    first with `applied=False`, then update listing, then mark audit as applied.
+    """
+
+    _ensure_moderation_rbac(current_user)
+
+    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    # Country-scope enforcement for country_admin
+    if current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope and listing.get("country") not in scope:
+            raise HTTPException(status_code=403, detail="Country scope forbidden")
+
+    prev_status = listing.get("status")
+    if prev_status != "pending_moderation":
+        raise HTTPException(status_code=400, detail="Listing not pending_moderation")
+
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "event_type": event_type,
+        # keep `action` for existing AuditLogs UI
+        "action": event_type.upper(),
+        "listing_id": listing_id,
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "country_code": listing.get("country"),
+        "country_scope": current_user.get("country_scope") or [],
+        "reason": reason,
+        "reason_note": reason_note,
+        "previous_status": prev_status,
+        "new_status": new_status,
+        "resource_type": "listing",
+        "resource_id": listing_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+
+    res = await db.vehicle_listings.update_one(
+        {"id": listing_id, "status": prev_status},
+        {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    if res.matched_count == 0:
+        # Listing changed concurrently; keep audit row as applied=false
+        raise HTTPException(status_code=409, detail="Listing status changed")
+
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    updated = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    return updated
+
+
+@api_router.get("/admin/moderation/queue")
+async def moderation_queue(
+    request: Request,
+    status: str = "pending_moderation",
+    country: Optional[str] = None,
+    module: Optional[str] = None,
+    limit: int = 50,
+    skip: int = 0,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    _ensure_moderation_rbac(current_user)
+
+    q: Dict = {"status": status}
+    if country:
+        q["country"] = country.strip().upper()
+    if module and module != "vehicle":
+        # Only vehicle listings exist in Mongo MVP
+        return []
+
+    cursor = db.vehicle_listings.find(q, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(int(limit))
+    docs = await cursor.to_list(length=int(limit))
+
+    out = []
+    for d in docs:
+        v = d.get("vehicle") or {}
+        attrs = d.get("attributes") or {}
+        media = d.get("media") or []
+        title = (d.get("title") or "").strip() or f"{(v.get('make_key') or '').upper()} {v.get('model_key') or ''} {v.get('year') or ''}".strip()
+        out.append(
+            {
+                "id": d["id"],
+                "title": title,
+                "status": d.get("status"),
+                "country": d.get("country"),
+                "module": "vehicle",
+                "city": "",
+                "price": attrs.get("price_eur"),
+                "currency": "EUR",
+                "image_count": len(media),
+                "created_at": d.get("created_at"),
+                "is_dealer_listing": False,
+                "is_premium": False,
+            }
+        )
+
+    return out
+
+
+@api_router.get("/admin/moderation/queue/count")
+async def moderation_queue_count(
+    request: Request,
+    status: str = "pending_moderation",
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    _ensure_moderation_rbac(current_user)
+    count = await db.vehicle_listings.count_documents({"status": status})
+    return {"count": count}
+
+
+@api_router.get("/admin/moderation/listings/{listing_id}")
+async def moderation_listing_detail(
+    listing_id: str,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    _ensure_moderation_rbac(current_user)
+
+    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    # country-scope check for country_admin
+    if current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope and listing.get("country") not in scope:
+            raise HTTPException(status_code=403, detail="Country scope forbidden")
+
+    v = listing.get("vehicle") or {}
+    attrs = listing.get("attributes") or {}
+    media = listing.get("media") or []
+
+    title = (listing.get("title") or "").strip() or f"{(v.get('make_key') or '').upper()} {v.get('model_key') or ''} {v.get('year') or ''}".strip()
+
+    moderation_history = await db.audit_logs.find(
+        {"listing_id": listing_id, "resource_type": "listing"}, {"_id": 0}
+    ).sort("created_at", -1).to_list(length=50)
+
+    return {
+        "id": listing_id,
+        "title": title,
+        "status": listing.get("status"),
+        "module": "vehicle",
+        "country": listing.get("country"),
+        "city": "",
+        "price": attrs.get("price_eur"),
+        "currency": "EUR",
+        "description": "",
+        "attributes": {**(v or {}), **(attrs or {})},
+        "images": [],
+        "image_count": len(media),
+        "created_at": listing.get("created_at"),
+        "moderation_history": moderation_history,
+    }
+
+
+class ModerationReasonPayload(BaseModel):
+    reason: Optional[str] = None
+    reason_note: Optional[str] = None
+
+
+@api_router.post("/admin/listings/{listing_id}/approve")
+async def admin_approve_listing(
+    listing_id: str,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    updated = await _moderation_transition(
+        db=db,
+        listing_id=listing_id,
+        current_user=current_user,
+        event_type="approve",
+        new_status="published",
+    )
+    return {"ok": True, "listing": {"id": updated["id"], "status": updated.get("status")}}
+
+
+@api_router.post("/admin/listings/{listing_id}/reject")
+async def admin_reject_listing(
+    listing_id: str,
+    payload: ModerationReasonPayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    reason = _validate_reason(payload.reason, REJECT_REASONS_V1)
+    updated = await _moderation_transition(
+        db=db,
+        listing_id=listing_id,
+        current_user=current_user,
+        event_type="reject",
+        new_status="rejected",
+        reason=reason,
+        reason_note=(payload.reason_note or None),
+    )
+    return {"ok": True, "listing": {"id": updated["id"], "status": updated.get("status")}}
+
+
+@api_router.post("/admin/listings/{listing_id}/needs_revision")
+async def admin_needs_revision_listing(
+    listing_id: str,
+    payload: ModerationReasonPayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    reason = _validate_reason(payload.reason, NEEDS_REVISION_REASONS_V1)
+    reason_note = (payload.reason_note or "").strip() or None
+    if reason == "other" and not reason_note:
+        raise HTTPException(status_code=400, detail="reason_note is required when reason=other")
+
+    updated = await _moderation_transition(
+        db=db,
+        listing_id=listing_id,
+        current_user=current_user,
+        event_type="needs_revision",
+        new_status="needs_revision",
+        reason=reason,
+        reason_note=reason_note,
+    )
+    return {"ok": True, "listing": {"id": updated["id"], "status": updated.get("status")}}
+
                 "mode": getattr(ctx, "mode", "global"),
                 "country_scope": getattr(ctx, "country", None),
                 "path": str(request.url.path),
@@ -795,10 +1106,9 @@ async def submit_vehicle_listing(listing_id: str, request: Request, current_user
     slug = f"{v.get('make_key','')}-{v.get('model_key','')}-{v.get('year','')}".strip('-')
     return {
         "id": listing_id,
-        "status": "published",
+        "status": "pending_moderation",
         "validation_errors": [],
-        "next_actions": ["view_detail"],
-        "detail_url": f"/ilan/vasita/{listing_id}-{slug}",
+        "next_actions": ["wait_moderation"],
     }
 
 
