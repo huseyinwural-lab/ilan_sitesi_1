@@ -25,6 +25,11 @@ export function CountryProvider({ children }) {
     localStorage.setItem('selected_country', selectedCountry);
   }, [selectedCountry]);
 
+  useEffect(() => {
+    // Keep a separate last_selected_country for Admin URL-based context.
+    localStorage.setItem('last_selected_country', selectedCountry);
+  }, [selectedCountry]);
+
   const getFlag = (code) => countryFlags[code] || '🌍';
   const getCurrency = (code) => countryCurrencies[code] || 'EUR';
 
