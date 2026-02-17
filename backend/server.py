@@ -378,6 +378,8 @@ async def list_categories(request: Request, module: str, current_user=Depends(ge
 @api_router.get("/countries")
 async def list_countries(request: Request, current_user=Depends(get_current_user)):
     db = request.app.state.db
+    # Countries list is global; still resolve context for uniform audit/error handling
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
     docs = await db.countries.find({}, {"_id": 0}).to_list(length=200)
     docs.sort(key=lambda x: x.get("code", ""))
     return docs
