@@ -416,8 +416,12 @@ async def toggle_menu_item(item_id: str, data: dict, request: Request, current_u
 @api_router.get("/categories")
 async def list_categories(request: Request, module: str, current_user=Depends(get_current_user_optional)):
     db = request.app.state.db
-    # Country context resolved for enforcement consistency (categories are global in v2)
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    # Categories are public (read-only) for the Public portal. If user is logged in,
+    # we still resolve context for consistency.
+    if current_user:
+        await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
     docs = await db.categories.find({"module": module}, {"_id": 0}).to_list(length=500)
     # Stable ordering: sort_order then name
     docs.sort(key=lambda x: (x.get("sort_order", 0), x.get("slug", {}).get("tr", "")))
