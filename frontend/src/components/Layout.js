@@ -23,9 +23,42 @@ export default function Layout({ children }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const urlCountry = (searchParams.get('country') || '').toUpperCase();
-  const isCountryMode = !!urlCountry;
+  const [adminPreferredMode, setAdminPreferredMode] = useState(() => {
+    return localStorage.getItem('admin_mode') || (urlCountry ? 'country' : 'global');
+  });
+
+  const isCountryMode = adminPreferredMode === 'country';
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Persist preferred mode (UX only)
+  if (localStorage.getItem('admin_mode') !== adminPreferredMode) {
+    localStorage.setItem('admin_mode', adminPreferredMode);
+  }
+
+  // Enforce: if user prefers country mode, URL must include ?country=XX
+  if (location.pathname.startsWith('/admin') && adminPreferredMode === 'country' && !urlCountry) {
+    const last = (localStorage.getItem('last_selected_country') || '').toUpperCase();
+    const fallback = last || (selectedCountry || 'DE');
+    const params = new URLSearchParams(searchParams);
+    params.set('country', fallback);
+    setSearchParams(params, { replace: true });
+  }
+
+  // Deep-link: if URL has ?country, ensure switch reflects country mode
+  if (urlCountry && adminPreferredMode !== 'country') {
+    setAdminPreferredMode('country');
+  }
+
+  const effectiveCountry = (urlCountry || selectedCountry || 'DE').toUpperCase();
+
+  const withCountryParam = (path) => {
+    if (!path || !path.startsWith('/admin')) return path;
+    if (!isCountryMode) return path;
+    const joiner = path.includes('?') ? '&' : '?';
+    return `${path}${joiner}country=${encodeURIComponent(effectiveCountry)}`;
+  };
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
@@ -35,12 +68,14 @@ export default function Layout({ children }) {
   const setMode = (nextMode) => {
     const params = new URLSearchParams(searchParams);
     if (nextMode === 'global') {
+      setAdminPreferredMode('global');
       params.delete('country');
       setSearchParams(params, { replace: true });
       return;
     }
 
     // country mode
+    setAdminPreferredMode('country');
     const last = (localStorage.getItem('last_selected_country') || '').toUpperCase();
     const fallback = last || (selectedCountry || 'DE');
     params.set('country', fallback);
@@ -53,6 +88,7 @@ export default function Layout({ children }) {
     params.set('country', c);
     setSearchParams(params, { replace: true });
     localStorage.setItem('last_selected_country', c);
+    setSelectedCountry(c);
   };
 
   // Keep CountryContext in sync for UX (flags etc.)
