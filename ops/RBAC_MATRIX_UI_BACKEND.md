@@ -26,7 +26,7 @@ Bu doküman mevcut repo baz alınarak UI + backend erişim matrisini çıkarır.
 - `/admin/plans` roles: `super_admin, country_admin, dealer, individual` *(muhtemelen yanlış scope; gap)*
 
 ### User Panel
-- `/account/*` şu an ProtectedRoute yok (gap)
+- `/account/*` ProtectedRoute ile korunuyor (FIXED)
 
 ### Dealer Panel
 - Dedicated dealer panel route yok (gap)
