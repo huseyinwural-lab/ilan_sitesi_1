@@ -24,6 +24,30 @@ export default function Layout({ children }) {
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  // URL is source of truth (Admin Country Context v2)
+  const setMode = (nextMode) => {
+    const params = new URLSearchParams(searchParams);
+    if (nextMode === 'global') {
+      params.delete('country');
+      setSearchParams(params, { replace: true });
+      return;
+    }
+
+    // country mode
+    const last = (localStorage.getItem('last_selected_country') || '').toUpperCase();
+    const fallback = last || (selectedCountry || 'DE');
+    params.set('country', fallback);
+    setSearchParams(params, { replace: true });
+  };
+
+  const setCountryInUrl = (code) => {
+    const c = (code || '').toUpperCase();
+    const params = new URLSearchParams(searchParams);
+    params.set('country', c);
+    setSearchParams(params, { replace: true });
+    localStorage.setItem('last_selected_country', c);
+  };
+
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
