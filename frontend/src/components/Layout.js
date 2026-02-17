@@ -12,6 +12,8 @@ import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import { Switch } from '@/components/ui/switch';
 
 import { useState } from 'react';
+import { useEffect } from 'react';
+
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
