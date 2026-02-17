@@ -13,6 +13,9 @@ import AdminVehicleMDM from '@/pages/AdminVehicleMDM';
 import BillingPage from '@/pages/admin/Billing';
 import PlansPage from '@/pages/admin/Plans';
 
+import AuditLogs from '@/pages/AuditLogs';
+import ModerationQueue from '@/pages/ModerationQueue';
+
 export default function BackofficePortalApp() {
   return (
     <Routes>
@@ -23,6 +26,9 @@ export default function BackofficePortalApp() {
       <Route path="/categories" element={<Layout><Categories /></Layout>} />
       <Route path="/attributes" element={<Layout><AdminAttributes /></Layout>} />
       <Route path="/attributes/options" element={<Layout><AdminOptions /></Layout>} />
+      <Route path="/audit-logs" element={<Layout><AuditLogs /></Layout>} />
+      <Route path="/moderation" element={<Layout><ModerationQueue /></Layout>} />
+
       <Route path="/master-data/vehicles" element={<Layout><AdminVehicleMDM /></Layout>} />
       <Route path="/billing" element={<Layout><BillingPage /></Layout>} />
       <Route path="/plans" element={<Layout><PlansPage /></Layout>} />
