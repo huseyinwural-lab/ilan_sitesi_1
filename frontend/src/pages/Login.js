@@ -9,7 +9,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null); // { code, retry_after_seconds }
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const { t, language, setLanguage } = useLanguage();
