@@ -2069,6 +2069,662 @@ async def admin_report_status_change(
 
 
 # =====================
+# Sprint 3 — Finance Domain
+# =====================
+
+
+@api_router.post("/admin/invoices")
+async def admin_create_invoice(
+    payload: InvoiceCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    country_code = (payload.country_code or "").upper()
+    _assert_country_scope(country_code, current_user)
+    if payload.amount_net <= 0:
+        raise HTTPException(status_code=400, detail="amount_net must be positive")
+    if not (0 <= payload.tax_rate <= 100):
+        raise HTTPException(status_code=400, detail="tax_rate must be between 0 and 100")
+
+    dealer = await db.users.find_one({"id": payload.dealer_user_id, "role": "dealer"}, {"_id": 0})
+    if not dealer:
+        raise HTTPException(status_code=404, detail="Dealer not found")
+
+    plan = await db.plans.find_one({"id": payload.plan_id}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    tax_amount = round(payload.amount_net * (payload.tax_rate / 100), 2)
+    amount_gross = round(payload.amount_net + tax_amount, 2)
+    now_iso = datetime.now(timezone.utc).isoformat()
+    issued_at = payload.issued_at or now_iso
+    invoice_id = str(uuid.uuid4())
+
+    invoice_doc = {
+        "id": invoice_id,
+        "dealer_user_id": payload.dealer_user_id,
+        "country_code": country_code,
+        "plan_id": payload.plan_id,
+        "amount_net": payload.amount_net,
+        "tax_rate": payload.tax_rate,
+        "tax_amount": tax_amount,
+        "amount_gross": amount_gross,
+        "currency": payload.currency,
+        "status": "unpaid",
+        "issued_at": issued_at,
+        "paid_at": None,
+        "created_at": now_iso,
+    }
+
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": "INVOICE_STATUS_CHANGE",
+        "action": "INVOICE_CREATE",
+        "invoice_id": invoice_id,
+        "dealer_user_id": payload.dealer_user_id,
+        "plan_id": payload.plan_id,
+        "country_code": country_code,
+        "previous_status": None,
+        "new_status": "unpaid",
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "invoice",
+        "resource_id": invoice_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.invoices.insert_one(invoice_doc)
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    return {"ok": True, "invoice": invoice_doc}
+
+
+@api_router.get("/admin/invoices")
+async def admin_list_invoices(
+    request: Request,
+    country: Optional[str] = None,
+    dealer_user_id: Optional[str] = None,
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    if not country:
+        raise HTTPException(status_code=400, detail="country is required")
+    country_code = country.upper()
+    _assert_country_scope(country_code, current_user)
+
+    q: Dict = {"country_code": country_code}
+    if dealer_user_id:
+        q["dealer_user_id"] = dealer_user_id
+    if status:
+        if status not in INVOICE_STATUS_SET:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        q["status"] = status
+
+    limit = min(100, max(1, int(limit)))
+    cursor = db.invoices.find(q, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(limit)
+    docs = await cursor.to_list(length=limit)
+
+    dealer_ids = [d.get("dealer_user_id") for d in docs]
+    plan_ids = [d.get("plan_id") for d in docs]
+    dealers = await db.users.find({"id": {"$in": dealer_ids}}, {"_id": 0, "id": 1, "email": 1}).to_list(length=len(dealer_ids))
+    plans = await db.plans.find({"id": {"$in": plan_ids}}, {"_id": 0, "id": 1, "name": 1}).to_list(length=len(plan_ids))
+    dealer_map = {d.get("id"): d for d in dealers}
+    plan_map = {p.get("id"): p for p in plans}
+
+    items = []
+    for doc in docs:
+        dealer = dealer_map.get(doc.get("dealer_user_id"), {})
+        plan = plan_map.get(doc.get("plan_id"), {})
+        items.append({
+            **doc,
+            "dealer_email": dealer.get("email"),
+            "plan_name": plan.get("name"),
+        })
+
+    total = await db.invoices.count_documents(q)
+    return {"items": items, "pagination": {"total": total, "skip": int(skip), "limit": limit}}
+
+
+@api_router.get("/admin/invoices/{invoice_id}")
+async def admin_invoice_detail(
+    invoice_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    invoice = await db.invoices.find_one({"id": invoice_id}, {"_id": 0})
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    _assert_country_scope(invoice.get("country_code"), current_user)
+
+    dealer = await db.users.find_one({"id": invoice.get("dealer_user_id")}, {"_id": 0, "id": 1, "email": 1, "dealer_status": 1})
+    plan = await db.plans.find_one({"id": invoice.get("plan_id")}, {"_id": 0})
+
+    return {"invoice": invoice, "dealer": dealer, "plan": plan}
+
+
+@api_router.post("/admin/invoices/{invoice_id}/status")
+async def admin_invoice_status_change(
+    invoice_id: str,
+    payload: InvoiceStatusPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    invoice = await db.invoices.find_one({"id": invoice_id}, {"_id": 0})
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    _assert_country_scope(invoice.get("country_code"), current_user)
+
+    target_status = (payload.target_status or "").strip()
+    if target_status not in {"paid", "cancelled"}:
+        raise HTTPException(status_code=400, detail="Invalid target_status")
+    if invoice.get("status") != "unpaid":
+        raise HTTPException(status_code=400, detail="Only unpaid invoices can be updated")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": "INVOICE_STATUS_CHANGE",
+        "action": "INVOICE_STATUS_CHANGE",
+        "invoice_id": invoice_id,
+        "dealer_user_id": invoice.get("dealer_user_id"),
+        "plan_id": invoice.get("plan_id"),
+        "country_code": invoice.get("country_code"),
+        "previous_status": invoice.get("status"),
+        "new_status": target_status,
+        "note": payload.note,
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "invoice",
+        "resource_id": invoice_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+
+    update_fields = {"status": target_status, "updated_at": now_iso}
+    if target_status == "paid":
+        update_fields["paid_at"] = now_iso
+    else:
+        update_fields["paid_at"] = None
+
+    await db.invoices.update_one({"id": invoice_id}, {"$set": update_fields})
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    return {"ok": True, "invoice": {"id": invoice_id, "status": target_status}}
+
+
+@api_router.get("/admin/finance/revenue")
+async def admin_revenue(
+    request: Request,
+    country: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    if not country:
+        raise HTTPException(status_code=400, detail="country is required")
+    country_code = country.upper()
+    _assert_country_scope(country_code, current_user)
+
+    start_dt = _parse_iso_datetime(start_date, "start_date")
+    end_dt = _parse_iso_datetime(end_date, "end_date")
+    start_iso = start_dt.astimezone(timezone.utc).isoformat()
+    end_iso = end_dt.astimezone(timezone.utc).isoformat()
+
+    q = {
+        "country_code": country_code,
+        "status": "paid",
+        "paid_at": {"$gte": start_iso, "$lte": end_iso},
+    }
+    docs = await db.invoices.find(q, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
+    totals: Dict[str, float] = {}
+    for doc in docs:
+        currency = doc.get("currency") or "UNKNOWN"
+        totals[currency] = totals.get(currency, 0) + float(doc.get("amount_gross") or 0)
+    total_gross = sum(totals.values())
+
+    return {
+        "country_code": country_code,
+        "start_date": start_iso,
+        "end_date": end_iso,
+        "total_gross": round(total_gross, 2),
+        "totals_by_currency": {k: round(v, 2) for k, v in totals.items()},
+    }
+
+
+@api_router.get("/admin/tax-rates")
+async def admin_list_tax_rates(
+    request: Request,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    q: Dict = {}
+    if country:
+        country_code = country.upper()
+        _assert_country_scope(country_code, current_user)
+        q["country_code"] = country_code
+    elif current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope:
+            q["country_code"] = {"$in": scope}
+
+    items = await db.tax_rates.find(q, {"_id": 0}).sort("effective_date", -1).to_list(length=500)
+    return {"items": items}
+
+
+@api_router.post("/admin/tax-rates")
+async def admin_create_tax_rate(
+    payload: TaxRateCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    country_code = payload.country_code.upper()
+    _assert_country_scope(country_code, current_user)
+    if not (0 <= payload.rate <= 100):
+        raise HTTPException(status_code=400, detail="rate must be between 0 and 100")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    tax_id = str(uuid.uuid4())
+    tax_doc = {
+        "id": tax_id,
+        "country_code": country_code,
+        "rate": payload.rate,
+        "effective_date": payload.effective_date,
+        "active_flag": True if payload.active_flag is None else payload.active_flag,
+        "created_at": now_iso,
+        "updated_at": None,
+    }
+
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": "TAX_RATE_CHANGE",
+        "action": "TAX_RATE_CREATE",
+        "tax_rate_id": tax_id,
+        "country_code": country_code,
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "tax_rate",
+        "resource_id": tax_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.tax_rates.insert_one(tax_doc)
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    return {"ok": True, "tax_rate": tax_doc}
+
+
+@api_router.patch("/admin/tax-rates/{tax_id}")
+async def admin_update_tax_rate(
+    tax_id: str,
+    payload: TaxRateUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    tax_rate = await db.tax_rates.find_one({"id": tax_id}, {"_id": 0})
+    if not tax_rate:
+        raise HTTPException(status_code=404, detail="Tax rate not found")
+    _assert_country_scope(tax_rate.get("country_code"), current_user)
+
+    updates: Dict = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    if payload.rate is not None:
+        if not (0 <= payload.rate <= 100):
+            raise HTTPException(status_code=400, detail="rate must be between 0 and 100")
+        updates["rate"] = payload.rate
+    if payload.effective_date is not None:
+        updates["effective_date"] = payload.effective_date
+    if payload.active_flag is not None:
+        updates["active_flag"] = payload.active_flag
+
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": updates["updated_at"],
+        "event_type": "TAX_RATE_CHANGE",
+        "action": "TAX_RATE_UPDATE",
+        "tax_rate_id": tax_id,
+        "country_code": tax_rate.get("country_code"),
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "tax_rate",
+        "resource_id": tax_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.tax_rates.update_one({"id": tax_id}, {"$set": updates})
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    updated = await db.tax_rates.find_one({"id": tax_id}, {"_id": 0})
+    return {"ok": True, "tax_rate": updated}
+
+
+@api_router.delete("/admin/tax-rates/{tax_id}")
+async def admin_delete_tax_rate(
+    tax_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    tax_rate = await db.tax_rates.find_one({"id": tax_id}, {"_id": 0})
+    if not tax_rate:
+        raise HTTPException(status_code=404, detail="Tax rate not found")
+    _assert_country_scope(tax_rate.get("country_code"), current_user)
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": "TAX_RATE_CHANGE",
+        "action": "TAX_RATE_DELETE",
+        "tax_rate_id": tax_id,
+        "country_code": tax_rate.get("country_code"),
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "tax_rate",
+        "resource_id": tax_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.tax_rates.update_one({"id": tax_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    return {"ok": True}
+
+
+@api_router.get("/admin/plans")
+async def admin_list_plans(
+    request: Request,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    q: Dict = {}
+    if country:
+        country_code = country.upper()
+        _assert_country_scope(country_code, current_user)
+        q["country_code"] = country_code
+    elif current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope:
+            q["country_code"] = {"$in": scope}
+
+    items = await db.plans.find(q, {"_id": 0}).sort("created_at", -1).to_list(length=500)
+    return {"items": items}
+
+
+@api_router.post("/admin/plans")
+async def admin_create_plan(
+    payload: PlanCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    country_code = payload.country_code.upper()
+    _assert_country_scope(country_code, current_user)
+    if payload.price < 0:
+        raise HTTPException(status_code=400, detail="price must be >= 0")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    plan_id = str(uuid.uuid4())
+    plan_doc = {
+        "id": plan_id,
+        "name": payload.name,
+        "country_code": country_code,
+        "price": payload.price,
+        "currency": payload.currency,
+        "listing_quota": payload.listing_quota,
+        "showcase_quota": payload.showcase_quota,
+        "active_flag": True if payload.active_flag is None else payload.active_flag,
+        "created_at": now_iso,
+        "updated_at": None,
+    }
+
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": "PLAN_CHANGE",
+        "action": "PLAN_CREATE",
+        "plan_id": plan_id,
+        "country_code": country_code,
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "plan",
+        "resource_id": plan_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.plans.insert_one(plan_doc)
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    return {"ok": True, "plan": plan_doc}
+
+
+@api_router.patch("/admin/plans/{plan_id}")
+async def admin_update_plan(
+    plan_id: str,
+    payload: PlanUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    plan = await db.plans.find_one({"id": plan_id}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    _assert_country_scope(plan.get("country_code"), current_user)
+
+    updates: Dict = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    for field in ["name", "country_code", "price", "currency", "listing_quota", "showcase_quota", "active_flag"]:
+        value = getattr(payload, field)
+        if value is not None:
+            if field == "price" and value < 0:
+                raise HTTPException(status_code=400, detail="price must be >= 0")
+            if field == "country_code":
+                value = value.upper()
+                _assert_country_scope(value, current_user)
+            updates[field] = value
+
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": updates["updated_at"],
+        "event_type": "PLAN_CHANGE",
+        "action": "PLAN_UPDATE",
+        "plan_id": plan_id,
+        "country_code": plan.get("country_code"),
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "plan",
+        "resource_id": plan_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.plans.update_one({"id": plan_id}, {"$set": updates})
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    updated = await db.plans.find_one({"id": plan_id}, {"_id": 0})
+    return {"ok": True, "plan": updated}
+
+
+@api_router.delete("/admin/plans/{plan_id}")
+async def admin_delete_plan(
+    plan_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    plan = await db.plans.find_one({"id": plan_id}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    _assert_country_scope(plan.get("country_code"), current_user)
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": "PLAN_CHANGE",
+        "action": "PLAN_DELETE",
+        "plan_id": plan_id,
+        "country_code": plan.get("country_code"),
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "plan",
+        "resource_id": plan_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.plans.update_one({"id": plan_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    return {"ok": True}
+
+
+@api_router.get("/admin/dealers/{dealer_id}")
+async def admin_dealer_detail(
+    dealer_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    dealer = await db.users.find_one({"id": dealer_id, "role": "dealer"}, {"_id": 0})
+    if not dealer:
+        raise HTTPException(status_code=404, detail="Dealer not found")
+    _assert_country_scope(dealer.get("country_code"), current_user)
+
+    plan = None
+    if dealer.get("plan_id"):
+        plan = await db.plans.find_one({"id": dealer.get("plan_id")}, {"_id": 0})
+
+    last_invoice = await db.invoices.find({"dealer_user_id": dealer_id}, {"_id": 0}).sort("issued_at", -1).limit(1).to_list(length=1)
+    unpaid_count = await db.invoices.count_documents({"dealer_user_id": dealer_id, "status": "unpaid"})
+
+    return {
+        "dealer": dealer,
+        "active_plan": plan,
+        "last_invoice": last_invoice[0] if last_invoice else None,
+        "unpaid_count": unpaid_count,
+    }
+
+
+@api_router.post("/admin/dealers/{dealer_id}/plan")
+async def admin_assign_dealer_plan(
+    dealer_id: str,
+    payload: DealerPlanAssignmentPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    dealer = await db.users.find_one({"id": dealer_id, "role": "dealer"}, {"_id": 0})
+    if not dealer:
+        raise HTTPException(status_code=404, detail="Dealer not found")
+    _assert_country_scope(dealer.get("country_code"), current_user)
+
+    plan_id = payload.plan_id
+    plan = None
+    if plan_id:
+        plan = await db.plans.find_one({"id": plan_id}, {"_id": 0})
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
+        if plan.get("country_code") != dealer.get("country_code"):
+            raise HTTPException(status_code=400, detail="Plan country mismatch")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": "ADMIN_PLAN_ASSIGNMENT",
+        "action": "ADMIN_PLAN_ASSIGNMENT",
+        "dealer_user_id": dealer_id,
+        "country_code": dealer.get("country_code"),
+        "previous_plan_id": dealer.get("plan_id"),
+        "new_plan_id": plan_id,
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "dealer",
+        "resource_id": dealer_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.users.update_one({"id": dealer_id}, {"$set": {"plan_id": plan_id, "updated_at": now_iso}})
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    return {"ok": True, "plan_id": plan_id}
+
+
+# =====================
 # Public Search v2 (Mongo)
 # =====================
 
