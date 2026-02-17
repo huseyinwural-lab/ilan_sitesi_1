@@ -377,65 +377,6 @@ export default function ModerationQueue() {
                 </div>
 
 
-      {/* Action Dialog */}
-      {actionDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg border shadow-xl w-full max-w-md">
-            <div className="p-4 border-b">
-              <h3 className="text-lg font-semibold">
-                {actionDialog.actionType === 'reject' ? 'Reject Listing' : 'Needs Revision'}
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Please select a reason
-              </p>
-            </div>
-
-            <div className="p-4 space-y-4">
-              <div>
-                <label className="text-sm font-medium">Reason</label>
-                <select
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  className="mt-1 w-full h-9 px-3 rounded-md border bg-background text-sm"
-                >
-                  <option value="">Select…</option>
-                  {(actionDialog.actionType === 'reject' ? REJECT_REASONS_V1 : NEEDS_REVISION_REASONS_V1).map(r => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {actionDialog.actionType === 'needs_revision' && reason === 'other' && (
-                <div>
-                  <label className="text-sm font-medium">Reason note (required for other)</label>
-                  <textarea
-                    value={reasonNote}
-                    onChange={(e) => setReasonNote(e.target.value)}
-                    className="mt-1 w-full min-h-[90px] p-3 rounded-md border bg-background text-sm"
-                    placeholder="Explain what needs to be changed…"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 border-t flex items-center justify-end gap-2">
-              <button
-                onClick={() => setActionDialog(null)}
-                className="h-9 px-3 rounded-md border hover:bg-muted text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={submitActionDialog}
-                className="h-9 px-3 rounded-md bg-primary text-primary-foreground hover:opacity-90 text-sm"
-              >
-                Submit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
               )}
               
               {selectedListing.moderation_history && selectedListing.moderation_history.length > 0 && (
