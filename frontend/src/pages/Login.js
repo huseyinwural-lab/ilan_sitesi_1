@@ -61,13 +61,11 @@ export default function Login() {
 
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-primary text-primary-foreground mb-4">
-            <Lock size={32} strokeWidth={1.5} />
+        <div className="bg-card rounded-lg shadow-lg border p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold tracking-tight">Giriş Yap</h1>
+            <p className="text-muted-foreground text-sm mt-2">Hesabınıza giriş yapın.</p>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('welcome_back')}</h1>
-          <p className="text-muted-foreground mt-2">{t('login_subtitle')}</p>
-        </div>
 
         {/* Login Form */}
         <div className="bg-card rounded-lg border shadow-sm p-8">
