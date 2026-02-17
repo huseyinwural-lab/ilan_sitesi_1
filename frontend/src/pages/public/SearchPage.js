@@ -98,16 +98,8 @@ export default function SearchPage() {
         if (searchState.filters.price_min) queryParams.set('price_min', searchState.filters.price_min);
         if (searchState.filters.price_max) queryParams.set('price_max', searchState.filters.price_max);
 
-        // Handle Attributes (JSON encoded for API v2)
-        const attrFilters = {};
-        Object.entries(searchState.filters).forEach(([key, val]) => {
-           if (key === 'price_min' || key === 'price_max') return;
-           attrFilters[key] = val;
-        });
-        
-        if (Object.keys(attrFilters).length > 0) {
-           queryParams.set('attrs', JSON.stringify(attrFilters));
-        }
+        // Attribute filters are not supported in the Mongo search MVP yet.
+        // Keep URL state, but do not send attrs to backend for now.
 
         const res = await fetch(`${API}/v2/search?${queryParams.toString()}`);
         
