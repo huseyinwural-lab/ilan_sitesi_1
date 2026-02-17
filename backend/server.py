@@ -47,6 +47,16 @@ load_dotenv(ROOT_DIR / ".env")
 
 SUPPORTED_COUNTRIES = ["DE", "CH", "FR", "AT"]
 
+# P1 Failed-login rate limit (in-process)
+FAILED_LOGIN_WINDOW_SECONDS = 10 * 60  # 10 min sliding window
+FAILED_LOGIN_MAX_ATTEMPTS = 3
+FAILED_LOGIN_BLOCK_SECONDS = 15 * 60  # 15 min block
+
+_failed_login_attempts: Dict[str, List[float]] = {}
+_failed_login_blocked_until: Dict[str, float] = {}
+_failed_login_block_audited: Dict[str, bool] = {}
+
+
 
 class UserLogin(BaseModel):
     email: EmailStr
