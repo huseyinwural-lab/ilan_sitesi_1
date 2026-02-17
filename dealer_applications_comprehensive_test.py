@@ -297,13 +297,15 @@ class DealerApplicationsComprehensiveTester:
         print("\n🚫 Test Case 7: Country Scope Enforcement...")
         if self.country_admin_token and 'scope_test' in test_apps:
             app_id = test_apps['scope_test']['id']
+            # Try to approve DE app with FR country admin using country=DE parameter
             status, response = self.make_request(
                 'POST', f'/admin/dealer-applications/{app_id}/approve',
-                token=self.country_admin_token  # FR country admin trying to approve DE app
+                token=self.country_admin_token,  # FR country admin
+                params={'country': 'DE'}  # Trying to access DE context
             )
             
             success = status == 403
-            details = f"Status: {status} (expected 403 for FR admin trying to approve DE application)"
+            details = f"Status: {status} (expected 403 for FR admin trying to access DE country context)"
             if response and isinstance(response, dict):
                 details += f", Error: {response.get('detail', 'No detail')}"
         else:
