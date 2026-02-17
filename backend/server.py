@@ -457,7 +457,7 @@ async def update_country(country_id: str, data: dict, request: Request, current_
 
     # Minimal audit log (country-aware)
     try:
-        await db.admin_audit_logs.insert_one(
+        await db.audit_logs.insert_one(
             {
                 "id": str(uuid.uuid4()),
                 "ts": datetime.now(timezone.utc).isoformat(),
