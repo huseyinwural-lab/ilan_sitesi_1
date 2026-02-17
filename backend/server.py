@@ -282,8 +282,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Audit event taxonomy (v1)
-AUDIT_EVENT_TYPES_V1 = {
 
 
 def _get_client_ip(request: Request) -> str | None:
@@ -293,6 +291,9 @@ def _get_client_ip(request: Request) -> str | None:
         return xff.split(",")[0].strip() or None
     return request.client.host if request.client else None
 
+
+# Audit event taxonomy (v1)
+AUDIT_EVENT_TYPES_V1 = {
     "MODERATION_APPROVE",
     "MODERATION_REJECT",
     "MODERATION_NEEDS_REVISION",
