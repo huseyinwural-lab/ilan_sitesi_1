@@ -350,7 +350,11 @@ async def login(credentials: UserLogin, request: Request):
                 }
             )
             _failed_login_block_audited[rl_key] = True
-        raise HTTPException(status_code=429, detail="Too many login attempts")
+        retry_after_seconds = int(blocked_until - now)
+        raise HTTPException(
+            status_code=429,
+            detail={"code": "RATE_LIMITED", "retry_after_seconds": retry_after_seconds},
+        )
 
     user = await db.users.find_one({"email": email}, {"_id": 0})
     if not user or not verify_password(credentials.password, user.get("hashed_password", "")):
