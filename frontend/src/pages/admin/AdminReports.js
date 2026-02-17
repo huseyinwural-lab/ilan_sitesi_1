@@ -414,7 +414,7 @@ export default function AdminReportsPage() {
                       value={statusNote}
                       onChange={(e) => setStatusNote(e.target.value)}
                       className="w-full min-h-[80px] p-3 rounded-md border bg-background text-sm"
-                      placeholder="Not zorunlu"
+                      placeholder="Not giriniz (zorunlu)"
                       data-testid="report-status-note-input"
                     />
                     {statusError && (
