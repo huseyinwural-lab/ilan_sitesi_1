@@ -1355,6 +1355,58 @@ class ReportStatusPayload(BaseModel):
     note: str
 
 
+class InvoiceCreatePayload(BaseModel):
+    dealer_user_id: str
+    country_code: str
+    plan_id: str
+    amount_net: float
+    tax_rate: float
+    currency: str
+    issued_at: Optional[str] = None
+
+
+class InvoiceStatusPayload(BaseModel):
+    target_status: str
+    note: Optional[str] = None
+
+
+class TaxRateCreatePayload(BaseModel):
+    country_code: str
+    rate: float
+    effective_date: str
+    active_flag: Optional[bool] = True
+
+
+class TaxRateUpdatePayload(BaseModel):
+    rate: Optional[float] = None
+    effective_date: Optional[str] = None
+    active_flag: Optional[bool] = None
+
+
+class PlanCreatePayload(BaseModel):
+    name: str
+    country_code: str
+    price: float
+    currency: str
+    listing_quota: int
+    showcase_quota: int
+    active_flag: Optional[bool] = True
+
+
+class PlanUpdatePayload(BaseModel):
+    name: Optional[str] = None
+    country_code: Optional[str] = None
+    price: Optional[float] = None
+    currency: Optional[str] = None
+    listing_quota: Optional[int] = None
+    showcase_quota: Optional[int] = None
+    active_flag: Optional[bool] = None
+
+
+class DealerPlanAssignmentPayload(BaseModel):
+    plan_id: Optional[str] = None
+
+
 def _resolve_listing_title(listing: dict) -> str:
     title = (listing.get("title") or "").strip()
     if title:
