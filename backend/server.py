@@ -1337,6 +1337,17 @@ class ListingAdminActionPayload(BaseModel):
     reason_note: Optional[str] = None
 
 
+class ReportCreatePayload(BaseModel):
+    listing_id: str
+    reason: str
+    reason_note: Optional[str] = None
+
+
+class ReportStatusPayload(BaseModel):
+    target_status: str
+    note: str
+
+
 def _resolve_listing_title(listing: dict) -> str:
     title = (listing.get("title") or "").strip()
     if title:
