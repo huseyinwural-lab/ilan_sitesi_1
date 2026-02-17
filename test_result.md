@@ -1006,6 +1006,62 @@
 - **Agent**: testing  
 - **Message**: Portal Split v1 no-chunk-load acceptance verification RE-TEST SUCCESSFUL. MAJOR IMPROVEMENT CONFIRMED: All critical requirements now passing. No chunks are loaded during logged-out user redirects (/admin/users → /admin/login, /dealer → /dealer/login). Authorized admin access correctly loads backoffice chunks. Cross-portal access properly blocked without loading inappropriate chunks. The portal isolation is now working as expected - chunks only load when authorized access is granted.
 
+## Dealer Portal Positive Smoke + Chunk Assertions Test Results (Feb 17, 2026)
+
+### Test Flow Executed:
+**Base URL**: https://marketlane-1.preview.emergentagent.com
+**Credentials**: dealer@platform.com / Dealer123! ✅ WORKING
+
+1. ✅ **Dealer Login Page Access** - /dealer/login loads successfully with login form
+2. ✅ **Dealer Authentication** - dealer@platform.com / Dealer123! login successful (no errors)
+3. ✅ **Redirect Verification** - Successfully redirected to /dealer (not /dealer/dashboard)
+4. ✅ **Dealer Portal Content** - Dealer portal placeholder loads with "Dealer Panel" and "Yakında: dashboard, lead yönetimi, kota, faturalama."
+5. ✅ **Cross-Portal Access Control** - While logged in as dealer, /admin/users correctly redirects to /dealer (403 behavior)
+
+### Network Assertions Results:
+
+#### ✅ ALL CHUNK REQUIREMENTS MET:
+- **Dealer Portal Chunk Requests**: 1 > 0 ✅ (dealer chunk loaded)
+  - File: `src_portals_dealer_DealerPortalApp_jsx.chunk.js`
+- **Backoffice Portal Chunk Requests**: 0 = 0 ✅ (no backoffice chunks)
+- **Cross-Portal Test**: Backoffice chunk requests remained 0 during /admin/users access attempt ✅
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+1. **Login Flow**: ✅ dealer@platform.com / Dealer123! authentication working correctly
+2. **Portal Redirect**: ✅ Redirects to /dealer (not /dealer/dashboard as that's not implemented)
+3. **Portal Content**: ✅ Dealer portal placeholder loads with proper content and data-testid="dealer-home"
+4. **Chunk Loading**: ✅ Dealer portal chunk loaded (1 chunk: DealerPortalApp)
+5. **Chunk Isolation**: ✅ No backoffice chunks loaded during dealer session
+6. **Cross-Portal Security**: ✅ /admin/users access denied, redirected to /dealer
+7. **Persistent Isolation**: ✅ Backoffice chunks remain 0 even during cross-portal access attempts
+
+### Network Evidence Summary:
+- **Chunk Files Requested**: Only dealer-specific chunks
+  - Dealer login → dealer portal: 1 dealer chunk (✅ CORRECT)
+  - Cross-portal access attempt: 0 backoffice chunks (✅ CORRECT)
+- **Portal Isolation**: Perfect - no unauthorized chunk loading detected
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (4/4 core requirements verified)
+- **Login & Authentication**: ✅ WORKING
+- **Portal Redirect**: ✅ WORKING (/dealer)
+- **Portal Content Loading**: ✅ WORKING (placeholder with proper messaging)
+- **Chunk Assertions**: ✅ WORKING (dealer > 0, backoffice = 0)
+- **Cross-Portal Security**: ✅ WORKING (403 redirect behavior)
+- **Chunk Isolation**: ✅ WORKING (no unauthorized chunks)
+
+### Final Status:
+- **Overall Result**: ✅ **PASS** - Dealer portal positive smoke + chunk assertions
+- **All Requirements**: ✅ VERIFIED (login, redirect, content, chunks, security)
+- **Portal Isolation**: ✅ PERFECT (proper chunk loading boundaries)
+- **Security Model**: ✅ WORKING (cross-portal access properly blocked)
+
+### Agent Communication:
+- **Agent**: testing
+- **Message**: Dealer portal positive smoke + chunk assertions test SUCCESSFULLY COMPLETED. All requirements verified and passing (100% success rate). dealer@platform.com / Dealer123! login works correctly, redirects to /dealer with proper placeholder content. Network assertions confirmed: dealer chunk loaded (1 > 0), backoffice chunks not loaded (0 = 0), and cross-portal access properly blocked with no unauthorized chunk loading. Portal isolation working perfectly as designed.
+
 ## Stage-4 Frontend E2E Re-run After Wiring Changes (Feb 17, 2026)
 
 ### Test Flow Executed:
