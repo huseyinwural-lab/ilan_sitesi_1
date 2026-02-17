@@ -3,7 +3,7 @@ import sys
 import json
 from datetime import datetime
 
-class AdminPanelAPITester:
+class AdminListingsAPITester:
     def __init__(self, base_url="https://multilist.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
@@ -13,6 +13,7 @@ class AdminPanelAPITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.failures = []
+        self.test_results = []
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
