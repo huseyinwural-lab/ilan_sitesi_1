@@ -309,6 +309,12 @@ ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
 async def health_check(request: Request):
     db = request.app.state.db
     await db.command("ping")
+
+    # successful login: reset failed-login counters
+    _failed_login_attempts.pop(rl_key, None)
+    _failed_login_blocked_until.pop(rl_key, None)
+    _failed_login_block_audited.pop(rl_key, None)
+
     return {"status": "healthy", "supported_countries": SUPPORTED_COUNTRIES, "database": "mongo"}
 
 
