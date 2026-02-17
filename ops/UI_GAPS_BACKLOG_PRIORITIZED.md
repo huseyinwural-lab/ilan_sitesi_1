@@ -24,6 +24,8 @@ Bu backlog FAZ-UI-CHECK-02 çıktılarındaki gap’leri birleştirir.
 4) **Moderation aksiyonları: audit zorunluluğu + reason enum zorunluluğu (Release Blocker)**
 - Problem: Moderation state change event’leri için audit zorunluluğu ve Red/Düzeltme reason enum standardı tanımlı değil.
 - Etki: denetlenebilirlik/hukuki risk; itiraz süreçleri zayıf.
+- Önerilen fix: Moderation aksiyonlarında (approve/reject/request-fix) reason enum zorunlu + her aksiyonu audit log’a yaz.
+- Kabul kriteri: reason boş geçilemez; audit log’da mode+country_scope+reason ile event kaydı oluşur.
 
 ## 🟠 Orta
 7) **Moderation Queue ayrımı (INDIVIDUAL / DEALER) + Dealer info panel**
@@ -31,9 +33,6 @@ Bu backlog FAZ-UI-CHECK-02 çıktılarındaki gap’leri birleştirir.
 - Etki: operasyon verimliliği düşer, SLA/önceliklendirme zayıflar.
 - Önerilen fix: Queue filtreleri + dealer bağlam paneli (ticari bilgiler, geçmiş) + ayrı kuyruk görünümü.
 - Kabul kriteri: individual/dealer queue filtrelenebilir; dealer listing’lerinde bağlam paneli görünür.
-
-- Önerilen fix: Moderation aksiyonlarında (approve/reject/request-fix) reason enum zorunlu + her aksiyonu audit log’a yaz.
-- Kabul kriteri: reason boş geçilemez; audit log’da mode+country_scope+reason ile event kaydı oluşur.
 
 5) **Dealer public profil yok**
 - Problem: Public dealer profil route yok.
