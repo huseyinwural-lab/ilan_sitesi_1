@@ -662,21 +662,22 @@ async def _moderation_transition(
         raise HTTPException(status_code=400, detail="Listing not pending_moderation")
 
     audit_id = str(uuid.uuid4())
+
+    # action is for Backoffice AuditLogs UI compatibility
+    if event_type.startswith("MODERATION_"):
+        action_map = {
+            "MODERATION_APPROVE": "APPROVE",
+            "MODERATION_REJECT": "REJECT",
+            "MODERATION_NEEDS_REVISION": "NEEDS_REVISION",
+        }
+        action_val = action_map.get(event_type, event_type)
+    else:
+        action_val = event_type
+
     audit_doc = {
         "id": audit_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "event_type": event_type,
-        # action is for Backoffice AuditLogs UI compatibility
-        if event_type.startswith("MODERATION_"):
-            action_map = {
-                "MODERATION_APPROVE": "APPROVE",
-                "MODERATION_REJECT": "REJECT",
-                "MODERATION_NEEDS_REVISION": "NEEDS_REVISION",
-            }
-            action_val = action_map.get(event_type, event_type)
-        else:
-            action_val = event_type
-
         "action": action_val,
         "listing_id": listing_id,
         "admin_user_id": current_user.get("id"),
