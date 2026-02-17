@@ -318,6 +318,24 @@
 
 ### Final Status:
 - **Login Flow**: ✅ WORKING
+
+
+## P1 Login UI — 401/429 Banner + CTA + Response Contract — TESTED
+
+### Backend Contract (locked)
+- 401 → `{ detail: { code: "INVALID_CREDENTIALS" } }`
+- 429 → `{ detail: { code: "RATE_LIMITED", retry_after_seconds: X } }`
+
+### Frontend (tüm portallar)
+- `/login`, `/dealer/login`, `/admin/login` aynı Login component’ini kullanır.
+- 401 banner: “E-posta veya şifre hatalı”
+- 429 banner: “Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin.” + alt açıklama + CTA’lar
+- retry_after_seconds → “~X dk” görünür.
+
+### Kanıt
+- Backend curl: 401 ve 429 body doğrulandı.
+- UI screenshot: banner görünürlüğü kontrol edildi.
+
 - **Admin Dashboard**: ✅ WORKING
 - **Users Management**: ✅ WORKING
 - **Countries Management**: ✅ WORKING (FIXED - was previously broken)
