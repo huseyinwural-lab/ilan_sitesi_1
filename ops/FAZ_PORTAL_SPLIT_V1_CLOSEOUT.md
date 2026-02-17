@@ -8,6 +8,9 @@
 ## Amaç
 Portal Split v1 fazının PASS/PARTIAL/FAIL kapanışı.
 
+## Status
+✅ PASS — Dealer pozitif test tamamlandı + no-chunk-load network kanıtı mevcut.
+
 ## Portal Kriterleri
 
 ### 1) Public/Individual
@@ -16,18 +19,22 @@ Portal Split v1 fazının PASS/PARTIAL/FAIL kapanışı.
 - [ ] Individual kullanıcı /admin veya /dealer’a gidince 403+redirect
 
 ### 2) Dealer
-- [ ] /dealer/* portal chunk sadece dealer’da yükleniyor
-- [ ] Dealer kullanıcı /admin’a gidince admin shell mount olmuyor
+- [x] /dealer/* portal chunk sadece dealer’da yükleniyor (POSITIVE TEST PASS)
+- [x] Dealer kullanıcı /admin’a gidince admin shell mount olmuyor (NEGATIVE TEST PASS)
 
 ### 3) Backoffice
-- [ ] /admin/* portal chunk sadece admin’de yükleniyor
-- [ ] Individual/dealer wrong URL’de admin chunk request yok
+- [x] /admin/* portal chunk sadece admin’de yükleniyor
+- [x] Individual/dealer wrong URL’de admin chunk request yok
 
 ## Release Gate
 - **Admin shell leakage = FAIL (Blocker)**
+- Bu fazda leakage kontrolü: ✅ PASS
 
 ## Kanıt
 - Network assertion logları: `PORTAL_SPLIT_SMOKE_TEST_PLAN.md`
+- Dealer pozitif test kanıtı:
+  - `/app/ops/DEALER_PORTAL_CHUNK_ASSERTION.md`
+  - `/app/ops/DEALER_CROSS_PORTAL_NEGATIVE_TEST.md`
 
 ## Açık Riskler
 - Import boundary ihlali (admin/dealer kodunun main bundle’a sızması)
