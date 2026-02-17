@@ -127,6 +127,7 @@ class TestFAZFinal02SecurityAudit:
                 print(f"    ✅ Attempt {i+1}: Got 401 as expected")
             else:
                 print(f"    ❌ Attempt {i+1}: Expected 401, got {response.status_code if response else 'None'}")
+                print(f"    Debug: response object = {response}")
         
         # Test 4th attempt should be rate limited (429)
         print(f"    Attempt 4: Should be rate limited")
