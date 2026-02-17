@@ -284,6 +284,15 @@ app.add_middleware(
 
 # Audit event taxonomy (v1)
 AUDIT_EVENT_TYPES_V1 = {
+
+
+def _get_client_ip(request: Request) -> str | None:
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        # first IP in list is the original client
+        return xff.split(",")[0].strip() or None
+    return request.client.host if request.client else None
+
     "MODERATION_APPROVE",
     "MODERATION_REJECT",
     "MODERATION_NEEDS_REVISION",
