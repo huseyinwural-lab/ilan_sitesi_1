@@ -791,19 +791,6 @@ async def admin_needs_revision_listing(
     )
     return {"ok": True, "listing": {"id": updated["id"], "status": updated.get("status")}}
 
-                "mode": getattr(ctx, "mode", "global"),
-                "country_scope": getattr(ctx, "country", None),
-                "path": str(request.url.path),
-                "previous_status": None,
-                "new_status": None,
-            }
-        )
-    except Exception:
-        # audit should not block the operation
-        pass
-
-    return {"ok": True}
-
 
 # =====================
 # Public Search v2 (Mongo)
