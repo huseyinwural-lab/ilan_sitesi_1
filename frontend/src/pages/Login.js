@@ -133,22 +133,24 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 pt-6 border-t">
-            <p className="text-xs text-muted-foreground text-center mb-3">Demo Credentials</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2 rounded bg-muted/50">
-                <p className="font-medium">Super Admin</p>
-                <p className="text-muted-foreground">admin@platform.com</p>
-                <p className="text-muted-foreground">Admin123!</p>
-              </div>
-              <div className="p-2 rounded bg-muted/50">
-                <p className="font-medium">Moderator</p>
-                <p className="text-muted-foreground">moderator@platform.de</p>
-                <p className="text-muted-foreground">Demo123!</p>
+          {/* Demo Credentials (non-prod only) */}
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="mt-6 pt-6 border-t">
+              <p className="text-xs text-muted-foreground text-center mb-3">Demo Credentials</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2 rounded bg-muted/50">
+                  <p className="font-medium">Super Admin</p>
+                  <p className="text-muted-foreground">admin@platform.com</p>
+                  <p className="text-muted-foreground">Admin123!</p>
+                </div>
+                <div className="p-2 rounded bg-muted/50">
+                  <p className="font-medium">Moderator</p>
+                  <p className="text-muted-foreground">moderator@platform.de</p>
+                  <p className="text-muted-foreground">Demo123!</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
