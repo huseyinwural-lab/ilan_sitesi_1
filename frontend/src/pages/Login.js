@@ -26,7 +26,16 @@ export default function Login() {
       const { defaultHomeForRole } = await import('@/shared/types/portals');
       navigate(defaultHomeForRole(u?.role));
     } catch (err) {
-      setError(err.response?.data?.detail || t('login_error'));
+      const status = err.response?.status;
+      const detail = err.response?.data?.detail;
+
+      if (status === 401 && detail?.code === 'INVALID_CREDENTIALS') {
+        setError({ code: 'INVALID_CREDENTIALS' });
+      } else if (status === 429 && detail?.code === 'RATE_LIMITED') {
+        setError({ code: 'RATE_LIMITED', retry_after_seconds: detail?.retry_after_seconds });
+      } else {
+        setError({ code: 'UNKNOWN' });
+      }
     } finally {
       setLoading(false);
     }
