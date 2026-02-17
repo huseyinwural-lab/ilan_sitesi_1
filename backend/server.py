@@ -1537,6 +1537,24 @@ def _validate_report_reason(reason: str, reason_note: Optional[str]) -> tuple[st
     return r, note
 
 
+def _assert_country_scope(country_code: str, current_user: dict) -> None:
+    if country_code not in SUPPORTED_COUNTRIES:
+        raise HTTPException(status_code=400, detail="Invalid country code")
+    if current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope and country_code not in scope:
+            raise HTTPException(status_code=403, detail="Country scope forbidden")
+
+
+def _parse_iso_datetime(value: str, field_name: str) -> datetime:
+    if not value:
+        raise HTTPException(status_code=400, detail=f"{field_name} is required")
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid {field_name}") from exc
+
+
 async def _report_transition(
     *,
     db,
