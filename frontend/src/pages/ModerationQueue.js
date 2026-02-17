@@ -66,10 +66,25 @@ export default function ModerationQueue() {
 
   const handleAction = async (listingId, actionType, reason = null) => {
     try {
-      await axios.post(`${API}/moderation/listings/${listingId}/action`, {
-        action_type: actionType,
-        reason: reason
-      });
+      if (actionType === 'approve') {
+        await axios.post(`${API}/admin/listings/${listingId}/approve`, {}, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+      } else if (actionType === 'reject') {
+        await axios.post(`${API}/admin/listings/${listingId}/reject`, reason, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+      } else if (actionType === 'needs_revision') {
+        await axios.post(`${API}/admin/listings/${listingId}/needs_revision`, reason, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+      }
       fetchQueue();
       fetchCount();
       setSelectedListing(null);
