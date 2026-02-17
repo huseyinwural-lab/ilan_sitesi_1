@@ -70,6 +70,60 @@ export default function AuditLogs() {
   };
 
   return (
+
+        <select
+          value={eventTypeFilter}
+          onChange={(e) => { setEventTypeFilter(e.target.value); setPage(0); }}
+          className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="audit-event-type-filter"
+        >
+          <option value="">All Event Types</option>
+          <option value="FAILED_LOGIN">FAILED_LOGIN</option>
+          <option value="RATE_LIMIT_BLOCK">RATE_LIMIT_BLOCK</option>
+          <option value="ADMIN_ROLE_CHANGE">ADMIN_ROLE_CHANGE</option>
+          <option value="UNAUTHORIZED_ROLE_CHANGE_ATTEMPT">UNAUTHORIZED_ROLE_CHANGE_ATTEMPT</option>
+          <option value="MODERATION_APPROVE">MODERATION_APPROVE</option>
+          <option value="MODERATION_REJECT">MODERATION_REJECT</option>
+          <option value="MODERATION_NEEDS_REVISION">MODERATION_NEEDS_REVISION</option>
+        </select>
+
+        <select
+          value={countryFilter}
+          onChange={(e) => { setCountryFilter(e.target.value); setPage(0); }}
+          className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="audit-country-filter"
+        >
+          <option value="">All Countries</option>
+          <option value="DE">DE</option>
+          <option value="CH">CH</option>
+          <option value="FR">FR</option>
+          <option value="AT">AT</option>
+        </select>
+
+        <input
+          value={adminUserFilter}
+          onChange={(e) => { setAdminUserFilter(e.target.value); setPage(0); }}
+          placeholder="admin_user_id"
+          className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="audit-admin-user-filter"
+        />
+
+        <input
+          type="date"
+          value={dateStart}
+          onChange={(e) => { setDateStart(e.target.value); setPage(0); }}
+          className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="audit-date-start"
+        />
+
+        <input
+          type="date"
+          value={dateEnd}
+          onChange={(e) => { setDateEnd(e.target.value); setPage(0); }}
+          className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="audit-date-end"
+        />
+
     <div className="space-y-6" data-testid="audit-logs-page">
       {/* Header */}
       <div>
