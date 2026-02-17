@@ -17,6 +17,21 @@ const statusColors = {
   expired: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
 };
 
+const REJECT_REASONS_V1 = [
+  { value: 'duplicate', label: 'duplicate' },
+  { value: 'spam', label: 'spam' },
+  { value: 'illegal', label: 'illegal' },
+  { value: 'wrong_category', label: 'wrong_category' },
+];
+
+const NEEDS_REVISION_REASONS_V1 = [
+  { value: 'missing_photos', label: 'missing_photos' },
+  { value: 'insufficient_description', label: 'insufficient_description' },
+  { value: 'wrong_price', label: 'wrong_price' },
+  { value: 'other', label: 'other' },
+];
+
+
 export default function ModerationQueue() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
