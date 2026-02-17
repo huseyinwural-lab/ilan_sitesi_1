@@ -118,7 +118,7 @@ export default function Layout({ children }) {
 
   const handleLogout = () => {
     logout();
-    navigate('/auth/login');
+    navigate('/admin/login');
   };
 
   const navItems = [

@@ -22,7 +22,7 @@ export default function HomePage() {
           
           <Button 
             className="w-full sm:w-auto bg-gray-800 hover:bg-gray-900 text-white border border-gray-700" 
-            onClick={() => navigate('/auth/login')}
+            onClick={() => navigate('/login')}
           >
             Admin / Giriş Yap
           </Button>

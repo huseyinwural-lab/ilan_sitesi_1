@@ -104,7 +104,7 @@ export default function PublicLayout({ children }) {
 
           <div className="flex items-center gap-2">
             <Button variant="outline" className="hidden sm:inline-flex" asChild>
-              <Link to="/auth/login">Admin</Link>
+              <Link to="/admin/login">Admin</Link>
             </Button>
             <Button data-testid="public-mobile-menu" variant="outline" className="md:hidden" onClick={() => setMobileOpen((v) => !v)}>
               Menü
@@ -141,7 +141,7 @@ export default function PublicLayout({ children }) {
                 </div>
               )}
 
-              <Link to="/auth/login" className="block px-3 py-2 rounded-md hover:bg-muted text-sm">
+              <Link to="/admin/login" className="block px-3 py-2 rounded-md hover:bg-muted text-sm">
                 Admin
               </Link>
             </div>
