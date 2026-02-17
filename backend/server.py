@@ -301,6 +301,7 @@ AUDIT_EVENT_TYPES_V1 = {
     "RATE_LIMIT_BLOCK",
     "ADMIN_ROLE_CHANGE",
     "UNAUTHORIZED_ROLE_CHANGE_ATTEMPT",
+    "DEALER_STATUS_CHANGE",
 }
 
 api_router = APIRouter(prefix="/api")
