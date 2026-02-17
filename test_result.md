@@ -118,6 +118,46 @@
 - /app/architecture/vehicle/* (payload contract, enforcement, required fields matrix, sanity rules)
 - /app/architecture/media/VEHICLE_PHOTO_QUALITY_POLICY_v1.md
 - /app/architecture/ui/VEHICLE_MEDIA_UPLOAD_UI_SPEC.md
+
+
+## FAZ-FINAL-01 (P0) — Public Search Fix + Moderation State Machine + Audit Logs — MANUAL VERIFIED
+
+### 1) Public Search Fix (P0 Release Blocker)
+- Backend: **GET /api/v2/search** (Mongo) eklendi
+  - `country` parametresi zorunlu (yoksa 400)
+  - Sadece `status=published` ilanlar döner
+  - Filtreler: `q`, `category` (slug), `price_min/max`, `sort`, pagination
+- Frontend: `/search` artık `/api/v2/search` ile entegre
+  - `country` query param otomatik eklenir (localStorage.selected_country yoksa DE)
+  - Facet UI render’ı kapatıldı (MVP), crash engellendi
+- Backend: `/api/categories?module=vehicle` public okuma açıldı (auth opsiyonel)
+
+### 2) Moderation v1.0.0 (P0 Release Blocker)
+- Submit: `POST /api/v1/listings/vehicle/{id}/submit` → `status=pending_moderation`
+- Backoffice moderation endpoints:
+  - `GET /api/admin/moderation/queue`
+  - `GET /api/admin/moderation/queue/count`
+  - `GET /api/admin/moderation/listings/{id}`
+  - `POST /api/admin/listings/{id}/approve` → `published`
+  - `POST /api/admin/listings/{id}/reject` (reason enum zorunlu) → `rejected`
+  - `POST /api/admin/listings/{id}/needs_revision` (reason enum zorunlu; reason=other => reason_note zorunlu) → `needs_revision`
+- RBAC:
+  - roller: `moderator`, `country_admin`, `super_admin`
+  - `country_admin` için country_scope enforcement (scope dışı → 403)
+
+### 3) Audit Logs (P0)
+- Moderation aksiyonlarının tamamı `audit_logs` koleksiyonuna yazılır (min alan seti)
+- Backoffice AuditLogs UI uyumu için moderation log’ları `action` alanını da içerir (APPROVE/REJECT/NEEDS_REVISION)
+- `GET /api/audit-logs` endpoint’i eklendi (admin)
+
+### 4) UI Wiring (Backoffice)
+- `/admin/moderation` route eklendi ve sidebar’dan erişilebilir
+- Reject/Needs revision için reason dropdown + other => note zorunlu modal eklendi
+
+### 5) Manual Verification (bu fork)
+- Curl ile: queue → approve/reject/needs_revision → search görünürlüğü kontrol edildi ✅
+- UI screenshots ile: admin login → moderation queue → reject/revision dialog → audit logs sayfası ✅
+
 - /app/ops/V3_STAGE3_ACCEPTANCE_GATE.md (PASSED)
 
 ### Frontend
