@@ -1,127 +1,53 @@
-# Multi-Country Admin Panel PRD (PostgreSQL)
+# FAZ Admin Domain Complete — PRD
 
-## Original Problem Statement
-Build a comprehensive Admin Panel for a multi-country classified ads platform targeting European markets (DE/CH/FR/AT/TR). Modular architecture with Feature Flags, Category System, Attribute Engine, Menu Management, Master Data Management (MDM), and GDPR compliance.
+**Son güncelleme:** 2026-02-17
 
-## Tech Stack (Final)
-- **Backend**: Python FastAPI + PostgreSQL + SQLAlchemy + Alembic
-- **Frontend**: React + TailwindCSS
-- **Auth**: JWT + Refresh Tokens
-- **Payments**: Stripe
-- **Rate Limiting**: Redis
-- **Design**: Modern/Minimal, Blue (Primary) + Orange (Accent)
+## Orijinal Problem Tanımı
+Çok ülkeli, çok dilli bir seri ilan platformunda (Public, Dealer, Backoffice/Admin) **admin domainindeki tüm “yakında” modüllerin** gerçek veriler ve tam işlevsellikle hayata geçirilmesi. Tüm admin mutasyonları **audit-first** ve **country-scope** kurallarına uymalıdır.
 
-## User Personas
-1. **Super Admin** - Full access to all features and countries
-2. **Country Admin** - Manage specific countries
-3. **Moderator** - Content moderation
-4. **Support** - User support functions
-5. **Finance** - Billing and invoice access
+## Hedefler
+- Admin panelinde tüm kritik alanların (Bayiler, Başvurular, İlanlar, Finans, Sistem, Master Data) canlı veriyle yönetilebilmesi
+- Country-scope ile ülke bazlı yetkilendirme
+- Audit-first standartlarında denetim kayıtları
 
-## What's Been Implemented
+## Kullanıcı Personaları
+- **Super Admin:** Global yetkili yönetici
+- **Country Admin:** Ülke bazlı yetkili yönetici
+- **Moderator:** Moderasyon işlemleri
+- **Dealer:** Bayi hesabı
 
-### P0-P4: Core Infrastructure ✅
-- [x] PostgreSQL + SQLAlchemy ORM + Alembic migrations
-- [x] Category System (N-level hierarchy, Materialized Path)
-- [x] Attribute Engine (dynamic types, options, category mappings)
-- [x] Menu Management (feature flag dependencies)
-- [x] Home Layout (per-country settings)
-- [x] Auth (JWT + Refresh), RBAC (5 roles)
-- [x] Feature Flags, Audit Logs, Countries
+## Temel Gereksinimler
+- URL tabanlı country context (`?country=XX`)
+- Tüm admin mutasyonlarında audit-first kayıt zorunluluğu
+- Rol tabanlı erişim (RBAC)
+- Çok dilli UI (TR/DE/FR)
 
-### P5: Scale Hardening ✅
-- [x] Atomic transactions for subscriptions
-- [x] DB constraints for data integrity
-- [x] Expiry Job for subscriptions
-- [x] Rate Limiting (Redis-based)
+## Mimari
+- **Frontend:** React (portal bazlı code-splitting)
+- **Backend:** FastAPI
+- **Database:** MongoDB (motor)
+- **Portallar:** Public / Dealer / Backoffice
+- **Kritik Koleksiyonlar:** `users`, `dealer_applications`, `vehicle_listings`, `audit_logs`, `categories`, `countries`
 
-### P6: Deployment Preparation ✅
-- [x] Dockerfile, render.yaml
-- [x] Deployment documentation
+## Uygulanan Özellikler
+- **Sprint 0:** Admin domain şema ve audit-first standardı
+- **Sprint 1.1:** Bayi Yönetimi (listeleme + durum değiştirme)
+- **Sprint 1.2:** Bayi Başvuruları (listeleme + onay/red akışı)
+- **Sprint 2.1:** Admin Global Listing Yönetimi
+  - Filtreler: country-scope, status, search, dealer_only, category_id
+  - Aksiyonlar: soft-delete, force-unpublish
+- Moderation Queue + audit log altyapısı
+- Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
-### T2: Advanced Pricing Engine ✅
-- [x] Database-driven "waterfall" pricing model
-- [x] Dealer Packages & Subscriptions
+## Öncelikli Backlog
+### P0 (Sıradaki)
+- **Sprint 2.2:** Reports Engine (şikayet yönetimi)
+- **Sprint 3:** Finance Domain (Invoices, TaxRates, Plans)
 
-### Domain Modeling (Completed 2026-02-13) ✅
-- **Emlak (Real Estate)**: EU standard attributes (room_count as number, not "3+1")
-- **Vasıta (Vehicle)**: Full MDM system (vehicle_makes, vehicle_models tables)
-- **Alışveriş (Shopping)**: Attribute System v2 (typed columns: value_string, value_number, value_option_id)
+### P1
+- **Sprint 4:** System + Dashboard KPI’ları
+- **Sprint 5:** Master Data Engines (Categories, Attributes, Vehicle Make/Model)
 
-### P7.0: Stabilization (Completed 2026-02-13) ✅
-- [x] Structured JSON logging (structlog)
-- [x] Correlation IDs (asgi-correlation-id)
-- [x] Standardized error responses
-- [x] Rate limiting guardrails
-- [x] Parameter validation
-- [x] **Query Plan Audit** - All queries using Index Scan (<5ms execution)
-- [x] Database seeded with 10K+ listings
-
-## Database Schema
-
-### Core Tables
-- users, countries, feature_flags, audit_logs
-- categories, category_translations
-- attributes, attribute_options, category_attribute_map
-
-### MDM Tables (Vehicle)
-- vehicle_makes: {id, slug, label_tr, label_de, label_fr, is_active}
-- vehicle_models: {id, make_id, slug, labels, is_active}
-
-### Attribute v2 Tables
-- listing_attributes: {listing_id, attribute_id, value_string, value_number, value_boolean, value_date, value_option_id}
-
-### Business Tables
-- dealer_packages, dealer_subscriptions
-- listings (with make_id, model_id FK to MDM)
-
-## Key API Endpoints
-- `GET /api/v2/search` - Performant search with typed attribute filtering
-- `GET/PATCH /api/v1/admin/master-data/attributes` - Admin attribute management
-- `GET /api/health` - Health check
-
-## Demo Credentials
-- Super Admin: admin@platform.com / admin
-
-## Current Data (2026-02-13)
-- **Listings**: 10,270
-- **Categories**: 23 (Real Estate + Vehicle + Shopping)
-- **Vehicle Makes**: 10 (BMW, Mercedes, VW, Audi, Tesla, etc.)
-- **Vehicle Models**: 27
-- **Attributes**: 57
-
-## Prioritized Backlog
-
-### P1 - P7.2: Admin UI Minimum Scope ✅ COMPLETE (2026-02-13)
-**Delivered:**
-- ✅ Screen 1: Attributes Management (`/app/frontend/src/pages/AdminAttributes.js`)
-- ✅ Screen 2: Attribute Options Management (`/app/frontend/src/pages/AdminOptions.js`)
-- ✅ Screen 3: Vehicle Makes/Models Management (`/app/frontend/src/pages/AdminVehicleMDM.js`)
-- ✅ Backend API: Vehicle Makes/Models endpoints added
-- ✅ RBAC: Super Admin full access, Country Admin labels only
-- ✅ Soft-Delete: is_active toggle, no hard delete
-- ✅ Admin→Search Integration: Validated
-
-**Documentation:**
-- `/app/release_notes/CHANGELOG_P7_2_ADMIN_UI_MIN_SCOPE.md`
-- `/app/ops/P7_2_UI_TO_API_SMOKE_REPORT.md`
-- `/app/ops/STAGING_VALIDATE_ADMIN_TO_SEARCH_P7_2.md`
-
-### P2 - P7.3: Public UI Search Integration
-- [ ] Integrate Search API v2 into frontend
-- [ ] Dynamic facets based on category
-
-### P3 - Future
-- [ ] Provider-Driven Master Data Sync (Vehicle data)
-- [ ] Shopping vertical MDM (brands)
-- [ ] ML-based abuse scoring
-- [ ] Self-service analytics
-
-## Performance Metrics
-| Query | Execution Time | Status |
-|-------|----------------|--------|
-| Base Category Paging | 1.7ms | ✅ |
-| Filter by Brand | 0.4ms | ✅ |
-| Facet Aggregation | 2.0ms | ✅ |
-
-Target: <150ms p95 | Achieved: <5ms
+### P2
+- **Sprint 6:** Final Integration Gate (RBAC + audit + country-scope E2E)
+- V3 genişletmeler (gelişmiş arama, güven katmanı, bayi genişletmeleri)
