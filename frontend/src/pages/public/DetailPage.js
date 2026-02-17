@@ -113,11 +113,12 @@ const DetailPage = () => {
   const contact = listing.contact || {};
   const seller = listing.seller || {};
   const location = listing.location || {};
+  const phoneProtected = contact?.phone_protected;
 
   return (
     <>
       <Helmet>
-        <title>{`${listing.title} | ${listing.location.city}`}</title>
+        <title>{`${listing.title} | ${location?.city || ''}`}</title>
         <meta name="description" content={`${listing.title}. Price: ${listing.price} ${listing.currency}`} />
         <link rel="canonical" href={`https://platform.com/ilan/vasita/${listing.id}`} />
       </Helmet>
@@ -181,7 +182,7 @@ const DetailPage = () => {
               </div>
 
               <div className="space-y-3">
-                {contact.phone_protected ? (
+                {phoneProtected ? (
                   !phone ? (
                     <button
                       onClick={handleRevealPhone}
