@@ -19,6 +19,8 @@ const actionColors = {
   ACTIVATE: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
   APPROVE: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
   REJECT: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  NEEDS_REVISION: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+
 };
 
 export default function AuditLogs() {
