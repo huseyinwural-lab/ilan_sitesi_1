@@ -158,6 +158,8 @@ export default function Layout({ children }) {
     // Finans
     { divider: true, label: 'Finans' },
     { path: '/admin/plans', icon: Star, label: 'Plans', roles: ['super_admin', 'country_admin', 'finance'] },
+    { path: '/admin/dealers', icon: Users, label: 'Dealers', roles: ['super_admin', 'country_admin'] },
+
     { path: '/admin/invoices', icon: FileText, label: 'Invoices', comingSoon: true, roles: ['super_admin', 'finance'] },
     { path: '/admin/billing', icon: FileText, label: 'Billing', roles: ['super_admin', 'country_admin', 'finance'] },
     { path: '/admin/tax-rates', icon: Percent, label: 'Tax Rates', comingSoon: true, roles: ['super_admin', 'finance'] },
