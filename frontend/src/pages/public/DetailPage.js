@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { Helmet } from 'react-helmet-async';
 import {
   Select,
   SelectContent,
@@ -120,9 +121,16 @@ const DetailPage = () => {
   const location = listing.location || {};
   const phoneEnabled = Boolean(listing.contact_option_phone);
   const messageEnabled = listing.contact_option_message !== false;
+  const pageTitle = `${listing?.title || ''} | ${location?.city || ''}`.trim() || 'Listing';
+  const pageDescription = `${listing?.title || ''}. Price: ${listing?.price || ''} ${listing?.currency || ''}`.trim();
 
   return (
     <>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <link rel="canonical" href={`https://platform.com/ilan/vasita/${listing.id}`} />
+      </Helmet>
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
