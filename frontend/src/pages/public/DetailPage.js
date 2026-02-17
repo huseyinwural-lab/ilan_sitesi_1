@@ -117,10 +117,10 @@ const DetailPage = () => {
   if (loading) return <div className="p-8 text-center">Loading...</div>;
   if (!listing) return <div className="p-8 text-center">Not Found</div>;
 
-  const contact = listing.contact || {};
   const seller = listing.seller || {};
   const location = listing.location || {};
-  const phoneProtected = contact?.phone_protected;
+  const phoneEnabled = Boolean(listing.contact_option_phone);
+  const messageEnabled = listing.contact_option_message !== false;
 
   return (
     <>
@@ -189,7 +189,7 @@ const DetailPage = () => {
               </div>
 
               <div className="space-y-3">
-                {phoneProtected ? (
+                {phoneEnabled ? (
                   !phone ? (
                     <button
                       onClick={handleRevealPhone}
@@ -207,13 +207,19 @@ const DetailPage = () => {
                   <div data-testid="listing-phone-hidden">Phone hidden by seller</div>
                 )}
 
-                <Link 
-                  to={`/account/messages/new?listing=${listing.id}`} 
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold block text-center hover:bg-blue-700 transition"
-                  data-testid="listing-send-message-button"
-                >
-                  Send Message
-                </Link>
+                {messageEnabled ? (
+                  <Link 
+                    to={`/account/messages/new?listing=${listing.id}`} 
+                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold block text-center hover:bg-blue-700 transition"
+                    data-testid="listing-send-message-button"
+                  >
+                    Send Message
+                  </Link>
+                ) : (
+                  <div className="w-full bg-gray-100 py-3 rounded-lg font-bold text-center text-gray-500 border" data-testid="listing-message-disabled">
+                    Messaging disabled
+                  </div>
+                )}
 
                 <button
                   onClick={() => { setReportOpen(true); setReportError(null); }}
