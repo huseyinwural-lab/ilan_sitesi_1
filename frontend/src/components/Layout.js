@@ -11,7 +11,7 @@ import {
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import { Switch } from '@/components/ui/switch';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 
 export default function Layout({ children }) {
@@ -29,18 +29,27 @@ export default function Layout({ children }) {
   });
 
 
+  const prevUrlCountryRef = useRef(urlCountry);
+
+  useEffect(() => {
+    // Deep-link support: URL drives mode when a country param appears.
+    // Important: do NOT tie this to adminPreferredMode changes (otherwise toggling to
+    // global may get instantly overridden before URL updates propagate).
+    if (urlCountry && prevUrlCountryRef.current !== urlCountry) {
+      if (adminPreferredMode !== 'country') {
+        setAdminPreferredMode('country');
+      }
+    }
+    prevUrlCountryRef.current = urlCountry;
+  }, [urlCountry]);
+
+
   useEffect(() => {
     // Persist preferred mode (UX only)
     localStorage.setItem('admin_mode', adminPreferredMode);
   }, [adminPreferredMode]);
 
   useEffect(() => {
-    // Deep-link: if URL has ?country, ensure switch reflects country mode
-    if (urlCountry && adminPreferredMode !== 'country') {
-      setAdminPreferredMode('country');
-      return;
-    }
-
     // Enforce: if user prefers country mode, URL must include ?country=XX
     if (location.pathname.startsWith('/admin') && adminPreferredMode === 'country' && !urlCountry) {
       const last = (localStorage.getItem('last_selected_country') || '').toUpperCase();
