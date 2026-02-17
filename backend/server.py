@@ -868,7 +868,7 @@ async def admin_needs_revision_listing(
         db=db,
         listing_id=listing_id,
         current_user=current_user,
-        event_type="needs_revision",
+        event_type="MODERATION_NEEDS_REVISION",
         new_status="needs_revision",
         reason=reason,
         reason_note=reason_note,
