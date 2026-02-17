@@ -824,7 +824,7 @@ async def admin_approve_listing(
         db=db,
         listing_id=listing_id,
         current_user=current_user,
-        event_type="approve",
+        event_type="MODERATION_APPROVE",
         new_status="published",
     )
     return {"ok": True, "listing": {"id": updated["id"], "status": updated.get("status")}}
