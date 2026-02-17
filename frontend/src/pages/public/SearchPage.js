@@ -52,13 +52,18 @@ export default function SearchPage() {
   const [facetMeta, setFacetMeta] = useState({}); // To store types/labels
   const [categories, setCategories] = useState([]); // Flat list of categories
 
-  // Initial Bootstrap: Fetch Categories
+  // Initial Bootstrap: Fetch Categories (vehicle only for now)
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        // Fetch all categories (or just relevant module if known)
-        // For public search, we might want all.
-        const res = await fetch(`${API}/categories?module=${selectedVertical === 'vehicle' ? 'vehicle' : 'real_estate'}`);
+        const res = await fetch(`${API}/categories?module=vehicle`, {
+          headers: {
+            // categories endpoint currently requires auth; use token if available
+            ...(localStorage.getItem('access_token')
+              ? { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
+              : {}),
+          },
+        });
         if (res.ok) {
           const json = await res.json();
           setCategories(json);
