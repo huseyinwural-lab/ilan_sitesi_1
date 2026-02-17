@@ -2,9 +2,16 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCountry } from '../contexts/CountryContext';
-import { 
-  Globe, Plus, Pencil, Trash2, Check, X, Settings
-} from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Globe, Pencil } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -13,7 +20,8 @@ export default function Countries() {
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingCountry, setEditingCountry] = useState(null);
-  const { t, getTranslated, language } = useLanguage();
+  const [saving, setSaving] = useState(false);
+  const { t, getTranslated } = useLanguage();
   const { getFlag } = useCountry();
 
   useEffect(() => {
