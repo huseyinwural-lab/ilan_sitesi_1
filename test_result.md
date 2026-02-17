@@ -318,6 +318,23 @@
 - **URL Parameter Management**: ✅ WORKING - Country parameter correctly added/removed from URL
 - **Switch State Synchronization**: ✅ WORKING - Switch visual state matches URL state perfectly
 
+
+## Admin Country Context v2 — Implementation & Testing (Feb 17, 2026)
+
+### Implemented:
+- URL primary source: `?country=XX`
+- Header UI: Global/Country mode switch + country dropdown
+- Sidebar navigation preserves query in Country mode
+- Backend enforcement (MVP):
+  - GET /api/users?country=XX => country_code filtre
+  - GET /api/dashboard/stats?country=XX => country-aware count
+  - Invalid country => 400
+  - Scope forbidden => 403
+- Minimal audit log: Countries PATCH işlemi `admin_audit_logs` koleksiyonuna mode+country_scope yazar
+
+### Status:
+- ✅ PASS (E2E)
+
 ### Test Results Summary:
 - **Test Success Rate**: 100% (4/4 test steps passed)
 - **Login & Authentication**: ✅ WORKING
