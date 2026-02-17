@@ -188,6 +188,7 @@ export default function Layout({ children }) {
       '/admin/audit-logs',
       '/admin/plans',
       '/admin/billing',
+      '/admin/moderation',
     ]);
     return !known.has(path);
   };
