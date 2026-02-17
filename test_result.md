@@ -1128,6 +1128,66 @@
 - **Agent**: testing  
 - **Message**: Portal Split v1 no-chunk-load acceptance verification RE-TEST SUCCESSFUL. MAJOR IMPROVEMENT CONFIRMED: All critical requirements now passing. No chunks are loaded during logged-out user redirects (/admin/users → /admin/login, /dealer → /dealer/login). Authorized admin access correctly loads backoffice chunks. Cross-portal access properly blocked without loading inappropriate chunks. The portal isolation is now working as expected - chunks only load when authorized access is granted.
 
+## Admin Dealers Module Testing Results (Feb 17, 2026)
+
+### Test Flow Executed:
+**Base URL**: https://listing-portal-12.preview.emergentagent.com
+**Credentials**: admin@platform.com / Admin123! ✅ WORKING
+
+1. ✅ **Admin Login** - Authentication successful, redirected to /admin
+2. ✅ **Sidebar Navigation** - "Bayiler" found in sidebar under "KULLANICI & SATICI" section
+3. ✅ **Navigation to Dealers Page** - Clicking "Bayiler" successfully navigates to /admin/dealers
+4. ✅ **Dealers Page Loading** - Page loads with title "Dealers" and subtitle "Dealer Management (Sprint 1)"
+5. ✅ **Table Display** - Dealers table found with proper structure (Email, Country, Status, Actions columns)
+6. ✅ **Data Display** - 1 dealer record found: dealer@platform.com (DE country)
+7. ✅ **Status Change Functionality** - Suspend/Activate buttons working correctly
+8. ✅ **UI Updates** - Status badge changes color and button text updates after API calls
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+1. **Sidebar Contains "Bayiler"**: ✅ Found in sidebar navigation under "KULLANICI & SATICI" section with Building icon
+2. **Navigation Works**: ✅ Clicking "Bayiler" successfully navigates to /admin/dealers
+3. **Dealers Page Loads**: ✅ Page loads with proper title and table structure
+4. **Table Shows Rows**: ✅ Table displays dealer data with 1 record (dealer@platform.com)
+5. **Suspend/Activate Functionality**: ✅ WORKING CORRECTLY
+   - Initial status: "suspended" (red badge) with "Activate" button
+   - After clicking "Activate": Status changed to "active" (green badge) with "Suspend" button
+   - API call successful: `POST /api/admin/dealers/{id}/status` returns 200 OK
+   - UI updates correctly after API response
+6. **No Console Errors**: ✅ Only React 19 hydration warnings (non-critical)
+
+### Network Analysis:
+- **API Endpoint**: `POST /api/admin/dealers/{id}/status` working correctly
+- **Request Payload**: `{"dealer_status":"active"}` sent successfully
+- **Response**: HTTP 200 OK confirmed in backend logs
+- **UI Refresh**: `GET /api/admin/dealers` called after status change to refresh data
+
+### Backend Logs Verification:
+```
+INFO: POST /api/admin/dealers/fe1fc1b1-c8a7-4cd1-b457-7aaed927e34d/status HTTP/1.1" 200 OK
+INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
+```
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (6/6 requirements verified)
+- **Login & Authentication**: ✅ WORKING
+- **Sidebar Navigation**: ✅ WORKING ("Bayiler" present and clickable)
+- **Page Loading**: ✅ WORKING (proper title, table structure)
+- **Data Display**: ✅ WORKING (dealer records shown in table)
+- **Status Change**: ✅ WORKING (API calls successful, UI updates correctly)
+- **Console Errors**: ✅ CLEAN (no critical errors)
+
+### Final Status:
+- **Overall Result**: ✅ **PASS** - Admin Dealers module fully functional
+- **All Requirements**: ✅ VERIFIED (sidebar navigation, page loading, table display, status changes)
+- **API Integration**: ✅ WORKING (backend endpoints responding correctly)
+- **UI Responsiveness**: ✅ WORKING (status badges and buttons update after API calls)
+
+### Agent Communication:
+- **Agent**: testing
+- **Message**: Admin Dealers module testing SUCCESSFULLY COMPLETED. All requirements verified and passing (100% success rate). Sidebar contains "Bayiler" navigation which works correctly to /admin/dealers. Dealers page loads with proper table showing dealer data. Suspend/Activate functionality working perfectly - API calls successful (HTTP 200), UI updates correctly with status badge color changes and button text updates. No critical console errors detected. Backend logs confirm successful API operations.
+
 ## Dealer Portal Positive Smoke + Chunk Assertions Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
