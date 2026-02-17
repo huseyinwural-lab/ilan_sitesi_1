@@ -460,7 +460,7 @@ async def update_country(country_id: str, data: dict, request: Request, current_
         await db.audit_logs.insert_one(
             {
                 "id": str(uuid.uuid4()),
-                "ts": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "user_id": current_user.get("id"),
                 "user_email": current_user.get("email"),
                 "action": "UPDATE",
