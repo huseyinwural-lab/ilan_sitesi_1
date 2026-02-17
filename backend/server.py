@@ -707,8 +707,8 @@ async def upload_vehicle_media(
         raise HTTPException(status_code=404, detail="Listing not found")
     if listing.get("created_by") != current_user.get("id"):
         raise HTTPException(status_code=403, detail="Forbidden")
-    if listing.get("status") != "draft":
-        raise HTTPException(status_code=400, detail="Only draft can accept media")
+    if listing.get("status") not in ["pending_moderation", "needs_revision"]:
+        raise HTTPException(status_code=400, detail="Only pending_moderation/needs_revision can accept media")
 
     stored = []
     for f in files:
