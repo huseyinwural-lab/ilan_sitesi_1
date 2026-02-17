@@ -207,15 +207,18 @@ export default function SearchPage() {
                    activeCategorySlug={searchState.category}
                    onCategoryChange={handleCategoryChange}
                  />
-                 
-                 <div className="my-4 border-t" />
 
-                 <FacetRenderer 
-                    facets={data.facets} 
-                    facetMeta={facetMeta}
-                    selections={searchState.filters}
-                    onFilterChange={handleFilterChange}
-                 />
+                 {facetsEnabled && (
+                   <>
+                     <div className="my-4 border-t" />
+                     <FacetRenderer 
+                        facets={data.facets} 
+                        facetMeta={facetMeta}
+                        selections={searchState.filters}
+                        onFilterChange={handleFilterChange}
+                     />
+                   </>
+                 )}
                </CardContent>
              </Card>
           </div>
