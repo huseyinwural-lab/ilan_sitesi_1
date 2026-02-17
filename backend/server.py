@@ -665,8 +665,13 @@ async def list_audit_logs(
     skip: int = 0,
     limit: int = 50,
     action: Optional[str] = None,
+    event_type: Optional[str] = None,
     resource_type: Optional[str] = None,
     user_id: Optional[str] = None,
+    admin_user_id: Optional[str] = None,
+    country: Optional[str] = None,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
     country_scope: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "finance"])),
 ):
