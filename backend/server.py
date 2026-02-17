@@ -1102,9 +1102,6 @@ async def submit_vehicle_listing(listing_id: str, request: Request, current_user
     # If publish guard passes, listing is ready for moderation queue
     listing = await set_vehicle_status(db, listing_id, "pending_moderation")
 
-    # simplistic slug
-    v = listing.get("vehicle") or {}
-    slug = f"{v.get('make_key','')}-{v.get('model_key','')}-{v.get('year','')}".strip('-')
     return {
         "id": listing_id,
         "status": "pending_moderation",
