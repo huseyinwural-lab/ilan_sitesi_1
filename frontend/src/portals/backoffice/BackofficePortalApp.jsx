@@ -16,6 +16,7 @@ import PlansPage from '@/pages/admin/Plans';
 import AuditLogs from '@/pages/AuditLogs';
 import ModerationQueue from '@/pages/ModerationQueue';
 import DealersPage from '@/pages/admin/Dealers';
+import DealerApplicationsPage from '@/pages/admin/DealerApplications';
 
 export default function BackofficePortalApp() {
   return (
