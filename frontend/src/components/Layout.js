@@ -161,9 +161,9 @@ export default function Layout({ children }) {
     { path: '/admin/plans', icon: Star, label: 'Plans', roles: ['super_admin', 'country_admin', 'finance'] },
     { divider: true },
 
-    { path: '/admin/invoices', icon: FileText, label: 'Invoices', comingSoon: true, roles: ['super_admin', 'finance'] },
+    { path: '/admin/invoices', icon: FileText, label: 'Invoices', roles: ['super_admin', 'country_admin', 'finance'] },
     { path: '/admin/billing', icon: FileText, label: 'Billing', roles: ['super_admin', 'country_admin', 'finance'] },
-    { path: '/admin/tax-rates', icon: Percent, label: 'Tax Rates', comingSoon: true, roles: ['super_admin', 'finance'] },
+    { path: '/admin/tax-rates', icon: Percent, label: 'Tax Rates', roles: ['super_admin', 'country_admin', 'finance'] },
 
     // Sistem
     { divider: true, label: 'Sistem' },
