@@ -300,11 +300,11 @@ async def get_dashboard_stats(request: Request, current_user=Depends(get_current
         "countries": {"enabled": len(SUPPORTED_COUNTRIES)},
         "feature_flags": {"enabled": 0, "total": 0},
         "users_by_role": {
-            "super_admin": await db.users.count_documents({"role": "super_admin"}),
-            "country_admin": await db.users.count_documents({"role": "country_admin"}),
-            "moderator": await db.users.count_documents({"role": "moderator"}),
-            "support": await db.users.count_documents({"role": "support"}),
-            "finance": await db.users.count_documents({"role": "finance"}),
+            "super_admin": await db.users.count_documents({**users_query, "role": "super_admin"}),
+            "country_admin": await db.users.count_documents({**users_query, "role": "country_admin"}),
+            "moderator": await db.users.count_documents({**users_query, "role": "moderator"}),
+            "support": await db.users.count_documents({**users_query, "role": "support"}),
+            "finance": await db.users.count_documents({**users_query, "role": "finance"}),
         },
         "recent_activity": [],
     }
