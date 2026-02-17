@@ -296,6 +296,46 @@
 - **Agent**: testing
 - **Message**: Admin Panel IA v2 smoke + navigation consistency test SUCCESSFULLY COMPLETED. All requested test scenarios verified and passing. Login flow, sidebar grouped sections, collapse functionality, countries UX (table, toggles, edit), breadcrumb navigation, and disabled item handling all working correctly. Admin panel demonstrates proper IA v2 structure with domain-based grouping and consistent navigation patterns. No critical issues found.
 
+## Global/Country Mode Switch Re-Test Results (Feb 17, 2026)
+
+### Test Flow Executed:
+1. ✅ **Login Flow** - admin@platform.com / Admin123! authentication successful
+2. ✅ **Navigate to /admin/users (no query)** - Page loads with Global mode (switch unchecked)
+3. ✅ **Switch to Country Mode** - Switch toggles to checked, URL updates to include ?country=DE
+4. ✅ **Switch back to Global Mode** - Switch toggles to unchecked, URL removes country parameter
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED:
+- **Initial Global Mode**: ✅ Switch unchecked, URL has no country parameter (/admin/users)
+- **Switch to Country**: ✅ Switch becomes checked, URL updates to /admin/users?country=DE
+- **Switch back to Global**: ✅ Switch becomes unchecked, URL removes country param back to /admin/users
+- **No Console Errors**: ✅ No error messages detected during switch operations
+- **URL State Management**: ✅ Perfect synchronization between switch state and URL parameters
+
+#### 🔧 PREVIOUS ISSUE RESOLVED:
+- **Global Mode Switch Bug**: ✅ FIXED - Previously reported issue where switch couldn't return to Global mode has been resolved
+- **URL Parameter Management**: ✅ WORKING - Country parameter correctly added/removed from URL
+- **Switch State Synchronization**: ✅ WORKING - Switch visual state matches URL state perfectly
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (4/4 test steps passed)
+- **Login & Authentication**: ✅ WORKING
+- **Initial Global Mode**: ✅ WORKING (switch unchecked, no country param)
+- **Switch to Country Mode**: ✅ WORKING (switch checked, ?country=DE added)
+- **Switch back to Global Mode**: ✅ WORKING (switch unchecked, country param removed)
+- **No Console Errors**: ✅ CONFIRMED
+
+### Final Status:
+- **Global/Country Mode Switch**: ✅ FULLY OPERATIONAL
+- **URL State Management**: ✅ WORKING (perfect sync between switch and URL)
+- **Previous Bug**: ✅ RESOLVED (can now switch back to Global mode)
+- **No Runtime Errors**: ✅ CONFIRMED
+
+### Agent Communication:
+- **Agent**: testing
+- **Message**: Global/Country mode switch re-test SUCCESSFULLY COMPLETED. The previously reported critical bug where users couldn't return to Global mode after switching to Country mode has been RESOLVED. All test scenarios now pass: initial Global state (unchecked, no country param), switch to Country (checked, ?country=DE), and switch back to Global (unchecked, country param removed). URL state management working perfectly with no console errors detected.
+
 ## Admin Country Context v2 E2E Verification Results (Feb 17, 2026)
 
 ### Test Flow Executed:
