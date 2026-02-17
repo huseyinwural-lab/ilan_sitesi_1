@@ -24,6 +24,12 @@ export default function Layout({ children }) {
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const urlCountry = (searchParams.get('country') || '').toUpperCase();
+  const isCountryMode = !!urlCountry;
+
 
   const handleLogout = () => {
     logout();
