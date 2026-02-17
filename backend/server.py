@@ -63,6 +63,10 @@ DEALER_APP_REJECT_REASONS_V1 = {
 
     "incomplete_documents",
     "invalid_company_info",
+
+# Dealer Application audit event types
+DEALER_APPLICATION_EVENT_TYPES = {"DEALER_APPLICATION_APPROVED", "DEALER_APPLICATION_REJECTED"}
+
     "duplicate_application",
     "compliance_issue",
     "other",
