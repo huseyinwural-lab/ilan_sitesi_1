@@ -1443,6 +1443,96 @@ async def _admin_listing_action(
     return updated
 
 
+def _check_report_rate_limit(request: Request, listing_id: str, reporter_user_id: Optional[str]) -> None:
+    ip_address = _get_client_ip(request) or "unknown"
+    key = f"{ip_address}:{reporter_user_id or 'anon'}:{listing_id}"
+    now = time.time()
+    attempts = _report_submit_attempts.get(key, [])
+    attempts = [ts for ts in attempts if (now - ts) <= REPORT_RATE_LIMIT_WINDOW_SECONDS]
+    if len(attempts) >= REPORT_RATE_LIMIT_MAX_ATTEMPTS:
+        retry_after_seconds = int(REPORT_RATE_LIMIT_WINDOW_SECONDS - (now - attempts[0]))
+        raise HTTPException(
+            status_code=429,
+            detail={"code": "RATE_LIMITED", "retry_after_seconds": max(retry_after_seconds, 1)},
+        )
+    attempts.append(now)
+    _report_submit_attempts[key] = attempts
+
+
+def _validate_report_reason(reason: str, reason_note: Optional[str]) -> tuple[str, Optional[str]]:
+    r = _validate_reason(reason, REPORT_REASONS_V1)
+    note = (reason_note or "").strip() or None
+    if r == "other" and not note:
+        raise HTTPException(status_code=400, detail="reason_note is required when reason=other")
+    return r, note
+
+
+async def _report_transition(
+    *,
+    db,
+    report_id: str,
+    current_user: dict,
+    target_status: str,
+    note: str,
+) -> dict:
+    report = await db.reports.find_one({"id": report_id}, {"_id": 0})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    if current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope and report.get("country_code") not in scope:
+            raise HTTPException(status_code=403, detail="Country scope forbidden")
+
+    prev_status = report.get("status")
+    allowed = REPORT_STATUS_TRANSITIONS.get(prev_status, set())
+    if target_status not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid status transition")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": "REPORT_STATUS_CHANGE",
+        "action": "REPORT_STATUS_CHANGE",
+        "report_id": report_id,
+        "listing_id": report.get("listing_id"),
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "country_code": report.get("country_code"),
+        "country_scope": current_user.get("country_scope") or [],
+        "note": note,
+        "previous_status": prev_status,
+        "new_status": target_status,
+        "resource_type": "report",
+        "resource_id": report_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+
+    res = await db.reports.update_one(
+        {"id": report_id, "status": prev_status},
+        {
+            "$set": {
+                "status": target_status,
+                "updated_at": now_iso,
+                "handled_by_admin_id": current_user.get("id"),
+                "status_note": note,
+            }
+        },
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=409, detail="Report status changed concurrently")
+
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    updated = await db.reports.find_one({"id": report_id}, {"_id": 0})
+    return updated
+
+
 @api_router.post("/admin/listings/{listing_id}/approve")
 async def admin_approve_listing(
     listing_id: str,
