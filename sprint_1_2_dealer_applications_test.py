@@ -291,33 +291,46 @@ class DealerApplicationsTester:
             self.log_test("Verify Dealer User", False, "No approved dealer ID available")
             return False
         
-        # Get users list and find our dealer
+        # Get dealers list via admin/dealers endpoint (which includes dealer_status)
+        status, response = self.make_request(
+            'GET', '/admin/dealers',
+            token=self.admin_token
+        )
+        
+        if status != 200:
+            self.log_test("Verify Dealer User", False, f"Failed to get dealers: {status}")
+            return False
+        
+        dealer_user = None
+        for dealer in response.get('items', []):
+            if dealer.get('id') == self.approved_dealer_id:
+                dealer_user = dealer
+                break
+        
+        if not dealer_user:
+            self.log_test("Verify Dealer User", False, "Dealer user not found in dealers list")
+            return False
+        
+        # Check if user also exists in users list with role=dealer
         status, users = self.make_request(
             'GET', '/users',
             token=self.admin_token
         )
         
-        if status != 200:
-            self.log_test("Verify Dealer User", False, f"Failed to get users: {status}")
-            return False
+        user_record = None
+        if status == 200:
+            for user in users:
+                if user.get('id') == self.approved_dealer_id:
+                    user_record = user
+                    break
         
-        dealer_user = None
-        for user in users:
-            if user.get('id') == self.approved_dealer_id:
-                dealer_user = user
-                break
-        
-        if not dealer_user:
-            self.log_test("Verify Dealer User", False, "Dealer user not found in users list")
-            return False
-        
-        success = (dealer_user.get('role') == 'dealer' and 
-                  dealer_user.get('dealer_status') == 'active')
+        success = (dealer_user.get('dealer_status') == 'active' and 
+                  user_record and user_record.get('role') == 'dealer')
         
         if success:
-            details = f"User {dealer_user['email']}: role={dealer_user['role']}, status={dealer_user.get('dealer_status')}"
+            details = f"User {dealer_user['email']}: role=dealer, dealer_status=active"
         else:
-            details = f"User {dealer_user['email']}: role={dealer_user.get('role')}, status={dealer_user.get('dealer_status')} (expected role=dealer, status=active)"
+            details = f"User {dealer_user['email']}: dealer_status={dealer_user.get('dealer_status')}, role={user_record.get('role') if user_record else 'NOT_FOUND'}"
         
         self.log_test("Verify Dealer User Properties", success, details)
         return success
