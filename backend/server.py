@@ -463,7 +463,7 @@ async def update_country(country_id: str, data: dict, request: Request, current_
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "user_id": current_user.get("id"),
                 "user_email": current_user.get("email"),
-                "action": "UPDATE",
+                "event_type": "UPDATE",
                 "resource_type": "country",
                 "resource_id": country_id,
                 "mode": getattr(ctx, "mode", "global"),
