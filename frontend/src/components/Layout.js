@@ -28,6 +28,29 @@ export default function Layout({ children }) {
     return localStorage.getItem('admin_mode') || (urlCountry ? 'country' : 'global');
   });
 
+
+  useEffect(() => {
+    // Persist preferred mode (UX only)
+    localStorage.setItem('admin_mode', adminPreferredMode);
+  }, [adminPreferredMode]);
+
+  useEffect(() => {
+    // Deep-link: if URL has ?country, ensure switch reflects country mode
+    if (urlCountry && adminPreferredMode !== 'country') {
+      setAdminPreferredMode('country');
+      return;
+    }
+
+    // Enforce: if user prefers country mode, URL must include ?country=XX
+    if (location.pathname.startsWith('/admin') && adminPreferredMode === 'country' && !urlCountry) {
+      const last = (localStorage.getItem('last_selected_country') || '').toUpperCase();
+      const fallback = last || (selectedCountry || 'DE');
+      const params = new URLSearchParams(searchParams);
+      params.set('country', fallback);
+      setSearchParams(params, { replace: true });
+    }
+  }, [adminPreferredMode, urlCountry, location.pathname]);
+
   const isCountryMode = adminPreferredMode === 'country';
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
