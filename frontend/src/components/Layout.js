@@ -231,7 +231,7 @@ export default function Layout({ children }) {
                     </div>
                   ) : (
                     <NavLink
-                      to={item.path}
+                      to={withCountryParam(item.path)}
                       className={({ isActive }) =>
                         `sidebar-item ${isActive ? 'active' : ''}`
                       }
@@ -299,7 +299,7 @@ export default function Layout({ children }) {
                         </div>
                       ) : (
                         <NavLink
-                          to={item.path}
+                          to={withCountryParam(item.path)}
                           onClick={() => setSidebarOpen(false)}
                           className={({ isActive }) =>
                             `sidebar-item ${isActive ? 'active' : ''}`
