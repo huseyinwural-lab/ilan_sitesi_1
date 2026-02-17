@@ -100,7 +100,7 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar - Desktop */}
-      <aside className="fixed left-0 top-0 z-40 hidden lg:flex h-screen w-64 flex-col border-r bg-card">
+      <aside className={`fixed left-0 top-0 z-40 hidden lg:flex h-screen ${sidebarCollapsed ? 'w-16' : 'w-64'} flex-col border-r bg-card transition-all duration-200`}>
         {/* Logo */}
         <div className="flex h-16 items-center gap-2 border-b px-6">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
