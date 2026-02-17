@@ -128,13 +128,13 @@ class DealerApplicationsComprehensiveTester:
         
         for app in apps:
             email = app.get('email', '')
-            if 'test_reject_other@example.com' in email:
+            if 'test_reject_other_final@example.com' in email:
                 test_apps['reject_other'] = app
-            elif 'test_reject_duplicate@example.com' in email:
+            elif 'test_reject_duplicate_final@example.com' in email:
                 test_apps['reject_duplicate'] = app
-            elif 'test_approve_new@example.com' in email:
+            elif 'test_approve_final@example.com' in email:
                 test_apps['approve'] = app
-            elif 'test_scope_de@example.com' in email:
+            elif 'test_scope_de_final@example.com' in email:
                 test_apps['scope_test'] = app
         
         print(f"   Found {len(test_apps)} test applications")
