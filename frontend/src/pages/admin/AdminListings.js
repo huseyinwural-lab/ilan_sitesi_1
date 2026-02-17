@@ -1,0 +1,379 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { EyeOff, Trash2 } from 'lucide-react';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const statusColors = {
+  draft: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+  pending_moderation: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  published: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+  rejected: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400',
+  needs_revision: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  unpublished: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+  archived: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+};
+
+const statusOptions = [
+  { value: '', label: 'Tümü' },
+  { value: 'draft', label: 'draft' },
+  { value: 'pending_moderation', label: 'pending_moderation' },
+  { value: 'published', label: 'published' },
+  { value: 'rejected', label: 'rejected' },
+  { value: 'needs_revision', label: 'needs_revision' },
+  { value: 'unpublished', label: 'unpublished' },
+  { value: 'archived', label: 'archived' },
+];
+
+export default function AdminListingsPage() {
+  const { t } = useLanguage();
+  const [searchParams] = useSearchParams();
+  const urlCountry = (searchParams.get('country') || '').toUpperCase();
+
+  const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+
+  const [status, setStatus] = useState('');
+  const [search, setSearch] = useState('');
+  const [dealerOnly, setDealerOnly] = useState(false);
+  const [categoryId, setCategoryId] = useState('');
+  const [page, setPage] = useState(0);
+  const limit = 20;
+
+  const [actionDialog, setActionDialog] = useState(null); // { listing, action }
+  const [actionReason, setActionReason] = useState('');
+  const [actionNote, setActionNote] = useState('');
+
+  const authHeader = useMemo(() => ({
+    Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+  }), []);
+
+  const categoryMap = useMemo(() => {
+    const map = new Map();
+    categories.forEach((cat) => {
+      const label = cat?.name?.tr || cat?.name?.en || cat?.slug?.tr || cat?.slug?.en || cat?.slug?.de || cat?.slug?.fr || cat?.id;
+      if (cat?.id) map.set(cat.id, label);
+      const slug = cat?.slug?.tr || cat?.slug?.en || cat?.slug?.de || cat?.slug?.fr;
+      if (slug) map.set(slug, label);
+    });
+    return map;
+  }, [categories]);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(`${API}/categories?module=vehicle`);
+      setCategories(res.data || []);
+    } catch (e) {
+      console.error('Failed to load categories', e);
+    }
+  };
+
+  const fetchListings = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('skip', String(page * limit));
+      params.set('limit', String(limit));
+      if (status) params.set('status', status);
+      if (search) params.set('q', search);
+      if (dealerOnly) params.set('dealer_only', 'true');
+      if (categoryId) params.set('category_id', categoryId);
+      if (urlCountry) params.set('country', urlCountry);
+
+      const res = await axios.get(`${API}/admin/listings?${params.toString()}`, {
+        headers: authHeader,
+      });
+      setItems(res.data.items || []);
+      setTotal(res.data.pagination?.total ?? 0);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    fetchListings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, search, dealerOnly, categoryId, page, urlCountry]);
+
+  const openActionDialog = (listing, action) => {
+    setActionDialog({ listing, action });
+    setActionReason('');
+    setActionNote('');
+  };
+
+  const submitAction = async () => {
+    if (!actionDialog) return;
+    const payload = {
+      reason: actionReason.trim() || undefined,
+      reason_note: actionNote.trim() || undefined,
+    };
+
+    try {
+      if (actionDialog.action === 'soft_delete') {
+        await axios.post(
+          `${API}/admin/listings/${actionDialog.listing.id}/soft-delete`,
+          payload,
+          { headers: authHeader }
+        );
+      }
+      if (actionDialog.action === 'force_unpublish') {
+        await axios.post(
+          `${API}/admin/listings/${actionDialog.listing.id}/force-unpublish`,
+          payload,
+          { headers: authHeader }
+        );
+      }
+      await fetchListings();
+      setActionDialog(null);
+    } catch (e) {
+      alert(e.response?.data?.detail || 'Aksiyon başarısız');
+    }
+  };
+
+  const clearFilters = () => {
+    setStatus('');
+    setSearch('');
+    setDealerOnly(false);
+    setCategoryId('');
+    setPage(0);
+  };
+
+  const resolveCategoryLabel = (key) => {
+    if (!key) return '-';
+    return categoryMap.get(key) || key;
+  };
+
+  return (
+    <div className="space-y-6" data-testid="admin-listings-page">
+      <div className="flex flex-col gap-2">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight" data-testid="admin-listings-title">İlanlar</h1>
+          <p className="text-sm text-muted-foreground">Global Listing Yönetimi (Sprint 2.1)</p>
+        </div>
+        <div className="text-xs text-muted-foreground" data-testid="admin-listings-context">
+          Mod: <span className="font-semibold">{urlCountry ? `Country (${urlCountry})` : 'Global'}</span>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3 items-center" data-testid="listings-filters">
+        <input
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+          placeholder="ID / Başlık / Marka / Model"
+          className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="listings-search-input"
+        />
+        <select
+          value={status}
+          onChange={(e) => { setStatus(e.target.value); setPage(0); }}
+          className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="listings-status-select"
+        >
+          {statusOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        <select
+          value={categoryId}
+          onChange={(e) => { setCategoryId(e.target.value); setPage(0); }}
+          className="h-9 px-3 rounded-md border bg-background text-sm min-w-[200px]"
+          data-testid="listings-category-select"
+        >
+          <option value="">Tüm Kategoriler</option>
+          {categories.map((cat) => {
+            const label = cat?.name?.tr || cat?.name?.en || cat?.slug?.tr || cat?.slug?.en || cat?.slug?.de || cat?.slug?.fr || cat?.id;
+            return (
+              <option key={cat.id || label} value={cat.id || label}>{label}</option>
+            );
+          })}
+        </select>
+        <label className="flex items-center gap-2 text-sm" data-testid="listings-dealer-only-toggle">
+          <input
+            type="checkbox"
+            checked={dealerOnly}
+            onChange={(e) => { setDealerOnly(e.target.checked); setPage(0); }}
+            className="h-4 w-4"
+            data-testid="listings-dealer-only-checkbox"
+          />
+          Dealer Only
+        </label>
+        <button
+          onClick={clearFilters}
+          className="h-9 px-3 rounded-md border text-sm hover:bg-muted"
+          data-testid="listings-clear-filters-button"
+        >
+          Filtreleri Temizle
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between text-sm text-muted-foreground" data-testid="listings-summary">
+        <span data-testid="listings-total-count">Toplam: {total}</span>
+        <span data-testid="listings-page-indicator">Sayfa: {page + 1}</span>
+      </div>
+
+      <div className="rounded-md border bg-card overflow-hidden" data-testid="listings-table">
+        <table className="w-full text-sm">
+          <thead className="bg-muted">
+            <tr>
+              <th className="text-left p-3">İlan</th>
+              <th className="text-left p-3">Sahip</th>
+              <th className="text-left p-3">Ülke / Kategori</th>
+              <th className="text-left p-3">Durum</th>
+              <th className="text-right p-3">Aksiyon</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="p-6 text-center" data-testid="listings-loading-state">Yükleniyor…</td>
+              </tr>
+            ) : items.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-6 text-center text-muted-foreground" data-testid="listings-empty-state">
+                  Kayıt bulunamadı
+                </td>
+              </tr>
+            ) : (
+              items.map((listing) => (
+                <tr key={listing.id} className="border-t" data-testid={`listing-row-${listing.id}`}>
+                  <td className="p-3">
+                    <div className="font-medium" data-testid={`listing-title-${listing.id}`}>{listing.title}</div>
+                    <div className="text-xs text-muted-foreground" data-testid={`listing-id-${listing.id}`}>{listing.id}</div>
+                    <div className="text-xs text-muted-foreground" data-testid={`listing-price-${listing.id}`}>
+                      {listing.price ? `${listing.price.toLocaleString()} ${listing.currency || 'EUR'}` : '—'}
+                    </div>
+                  </td>
+                  <td className="p-3" data-testid={`listing-owner-${listing.id}`}>
+                    <div className="font-medium">{listing.owner_email || '—'}</div>
+                    <div className="text-xs text-muted-foreground">{listing.owner_role || 'unknown'}</div>
+                  </td>
+                  <td className="p-3" data-testid={`listing-country-${listing.id}`}>
+                    <div className="font-medium">{listing.country || '—'}</div>
+                    <div className="text-xs text-muted-foreground" data-testid={`listing-category-${listing.id}`}>
+                      {resolveCategoryLabel(listing.category_key)}
+                    </div>
+                  </td>
+                  <td className="p-3" data-testid={`listing-status-${listing.id}`}>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[listing.status] || 'bg-muted text-foreground'}`}>
+                      {listing.status}
+                    </span>
+                  </td>
+                  <td className="p-3 text-right">
+                    <div className="inline-flex gap-2">
+                      <button
+                        onClick={() => openActionDialog(listing, 'force_unpublish')}
+                        className="h-8 px-2.5 rounded-md border text-xs text-orange-700 hover:bg-orange-50 disabled:opacity-50"
+                        disabled={listing.status !== 'published'}
+                        data-testid={`listing-force-unpublish-${listing.id}`}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          <EyeOff size={14} />
+                          Yayından Kaldır
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => openActionDialog(listing, 'soft_delete')}
+                        className="h-8 px-2.5 rounded-md border text-xs text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                        disabled={listing.status === 'archived'}
+                        data-testid={`listing-soft-delete-${listing.id}`}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          <Trash2 size={14} />
+                          Soft Delete
+                        </span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex items-center justify-end gap-2">
+        <button
+          onClick={() => setPage(Math.max(0, page - 1))}
+          disabled={page === 0}
+          className="h-9 px-3 rounded-md border text-sm disabled:opacity-50"
+          data-testid="listings-prev-page-button"
+        >
+          Prev
+        </button>
+        <button
+          onClick={() => setPage(page + 1)}
+          className="h-9 px-3 rounded-md border text-sm"
+          data-testid="listings-next-page-button"
+        >
+          Next
+        </button>
+      </div>
+
+      {actionDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="listing-action-modal">
+          <div className="bg-card rounded-lg border shadow-xl w-full max-w-md">
+            <div className="p-4 border-b">
+              <h3 className="text-lg font-semibold" data-testid="listing-action-title">
+                {actionDialog.action === 'soft_delete' ? 'Soft Delete' : 'Force Unpublish'}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1" data-testid="listing-action-subtitle">
+                {actionDialog.listing?.title}
+              </p>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="text-sm font-medium">Reason (optional)</label>
+                <input
+                  value={actionReason}
+                  onChange={(e) => setActionReason(e.target.value)}
+                  className="mt-1 w-full h-9 px-3 rounded-md border bg-background text-sm"
+                  placeholder="Kısa sebep"
+                  data-testid="listing-action-reason-input"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Note (optional)</label>
+                <textarea
+                  value={actionNote}
+                  onChange={(e) => setActionNote(e.target.value)}
+                  className="mt-1 w-full min-h-[90px] p-3 rounded-md border bg-background text-sm"
+                  placeholder="Detaylı açıklama"
+                  data-testid="listing-action-note-input"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t flex items-center justify-end gap-2">
+              <button
+                onClick={() => setActionDialog(null)}
+                className="h-9 px-3 rounded-md border hover:bg-muted text-sm"
+                data-testid="listing-action-cancel-button"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitAction}
+                className="h-9 px-3 rounded-md bg-primary text-primary-foreground hover:opacity-90 text-sm"
+                data-testid="listing-action-confirm-button"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
