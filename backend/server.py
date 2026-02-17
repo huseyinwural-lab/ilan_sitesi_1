@@ -425,27 +425,6 @@ async def public_vehicle_makes(country: str | None = None, request: Request = No
     return {"version": vm["version"], "items": items}
 
 
-    # Minimal audit log (country-aware)
-    try:
-        await db.admin_audit_logs.insert_one(
-            {
-                "id": str(uuid.uuid4()),
-                "ts": datetime.now(timezone.utc).isoformat(),
-                "user_id": current_user.get("id"),
-                "user_email": current_user.get("email"),
-                "action": "UPDATE",
-                "resource_type": "country",
-                "resource_id": country_id,
-                "mode": getattr(ctx, "mode", "global"),
-                "country_scope": getattr(ctx, "country", None),
-                "path": str(request.url.path),
-            }
-        )
-    except Exception:
-        # audit should not block the operation
-        pass
-
-
 @api_router.get("/v1/vehicle/models")
 async def public_vehicle_models(make: str, country: str | None = None, request: Request = None):
     vm = request.app.state.vehicle_master
