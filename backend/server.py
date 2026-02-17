@@ -346,6 +346,8 @@ REPORT_REASONS_V1 = {
     "other",
 }
 
+REPORT_STATUS_SET = {"open", "in_review", "resolved", "dismissed"}
+
 REPORT_STATUS_TRANSITIONS = {
     "open": {"in_review"},
     "in_review": {"resolved", "dismissed"},
