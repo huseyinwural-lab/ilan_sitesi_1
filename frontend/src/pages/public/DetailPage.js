@@ -121,12 +121,14 @@ const DetailPage = () => {
   const location = listing.location || {};
   const phoneEnabled = Boolean(listing.contact_option_phone);
   const messageEnabled = listing.contact_option_message !== false;
+  const pageTitle = `${listing?.title || ''} | ${location?.city || ''}`.trim() || 'Listing';
+  const pageDescription = `${listing?.title || ''}. Price: ${listing?.price || ''} ${listing?.currency || ''}`.trim();
 
   return (
     <>
       <Helmet>
-        <title>{`${listing.title} | ${location?.city || ''}`}</title>
-        <meta name="description" content={`${listing.title}. Price: ${listing.price} ${listing.currency}`} />
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
         <link rel="canonical" href={`https://platform.com/ilan/vasita/${listing.id}`} />
       </Helmet>
 
