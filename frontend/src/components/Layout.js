@@ -8,6 +8,8 @@ import {
   LogOut, Menu, X, Sun, Moon, ChevronDown, FolderTree, Settings2, MenuSquare,
   Building, Star, ShieldCheck, FileText, Percent, Database, Car, TrendingUp, Activity
 } from 'lucide-react';
+import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
+
 import { useState } from 'react';
 
 export default function Layout({ children }) {
