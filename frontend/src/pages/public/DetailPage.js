@@ -110,6 +110,10 @@ const DetailPage = () => {
   if (loading) return <div className="p-8 text-center">Loading...</div>;
   if (!listing) return <div className="p-8 text-center">Not Found</div>;
 
+  const contact = listing.contact || {};
+  const seller = listing.seller || {};
+  const location = listing.location || {};
+
   return (
     <>
       <Helmet>
@@ -135,7 +139,7 @@ const DetailPage = () => {
                 {listing.price.toLocaleString()} {listing.currency}
               </div>
               <div className="text-gray-500 mt-1" data-testid="listing-location">
-                {listing.location.city || ''} {listing.location.country || ''}
+                {location.city || ''} {location.country || ''}
               </div>
             </div>
 
@@ -169,15 +173,15 @@ const DetailPage = () => {
                   👤
                 </div>
                 <div>
-                  <div className="font-bold" data-testid="listing-seller-name">{listing.seller.name || ''}</div>
-                  {listing.seller.is_verified && (
+                  <div className="font-bold" data-testid="listing-seller-name">{seller.name || ''}</div>
+                  {seller.is_verified && (
                     <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full" data-testid="listing-seller-verified">Verified</span>
                   )}
                 </div>
               </div>
 
               <div className="space-y-3">
-                {listing.contact.phone_protected ? (
+                {contact.phone_protected ? (
                   !phone ? (
                     <button
                       onClick={handleRevealPhone}
