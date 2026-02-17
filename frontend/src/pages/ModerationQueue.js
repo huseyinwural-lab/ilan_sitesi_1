@@ -64,7 +64,7 @@ export default function ModerationQueue() {
     }
   };
 
-  const handleAction = async (listingId, actionType, reason = null) => {
+  const handleAction = async (listingId, actionType, reasonPayload = null) => {
     try {
       if (actionType === 'approve') {
         await axios.post(`${API}/admin/listings/${listingId}/approve`, {}, {
