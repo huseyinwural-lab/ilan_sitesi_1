@@ -277,6 +277,19 @@ origins = ["*"] if cors_origins == "*" else [o.strip() for o in cors_origins.spl
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+
+# Audit event taxonomy (v1)
+AUDIT_EVENT_TYPES_V1 = {
+    "MODERATION_APPROVE",
+    "MODERATION_REJECT",
+    "MODERATION_NEEDS_REVISION",
+    "FAILED_LOGIN",
+    "RATE_LIMIT_BLOCK",
+    "ADMIN_ROLE_CHANGE",
+    "UNAUTHORIZED_ROLE_CHANGE_ATTEMPT",
+}
+
+
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
