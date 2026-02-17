@@ -11,7 +11,7 @@ async def create_vehicle_listing(db, payload: dict, user: dict) -> dict:
     doc = {
         "id": listing_id,
         "type": "vehicle",
-        "status": "pending_moderation",
+        "status": "draft",
         "created_at": now_iso(),
         "updated_at": now_iso(),
         "created_by": user.get("id"),
