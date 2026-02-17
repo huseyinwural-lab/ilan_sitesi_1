@@ -846,6 +846,91 @@
 - **Agent**: testing
 - **Message**: Stage-4 backend E2E tests RE-RUN SUCCESSFULLY COMPLETED. All requested test scenarios verified and still passing after latest changes. Core positive flow (create draft → upload 3 images → submit publish → detail → public media) working perfectly. Negative validation scenarios (invalid make, insufficient photos) working correctly with proper error codes. Only minor issue with draft media access control remains (non-critical). Backend APIs fully operational and stable for vehicle listing workflow.
 
+## Portal Split v1 No-Chunk-Load Acceptance Verification Results (Feb 17, 2026)
+
+### Test Flow Executed:
+**Base URL**: https://marketlane-1.preview.emergentagent.com
+
+**Credentials Tested**:
+- Admin: admin@platform.com / Admin123! ✅ WORKING
+- Dealer: dealer@platform.com / Demo123! ❌ NOT FOUND
+- Alternative: moderator@platform.de / Demo123! ✅ WORKING (but has admin access)
+- Individual: Logged-out user simulation ✅ TESTED
+
+### Critical Findings:
+
+#### ❌ MAJOR ISSUES FOUND:
+
+**1. Chunk Loading During Redirects (CRITICAL)**:
+- **Logged-out /admin/users → /admin/login**: ❌ Admin portal chunk WAS requested
+  - File: `src_portals_backoffice_BackofficeLogin_jsx.chunk.js`
+  - **Expected**: NO chunk loading during redirect
+  - **Actual**: Chunk loaded unnecessarily
+
+- **Logged-out /dealer → /dealer/login**: ❌ Dealer portal chunk WAS requested  
+  - File: `src_portals_dealer_DealerLogin_jsx.chunk.js`
+  - **Expected**: NO chunk loading during redirect
+  - **Actual**: Chunk loaded unnecessarily
+
+**2. Role-Based Access Control Issues**:
+- **No Valid Dealer Role**: dealer@platform.com credentials not found
+- **Moderator Role Confusion**: moderator@platform.de has admin access instead of dealer access
+- **Admin Shell DOM Mounting**: Admin shell DOM mounts on wrong routes when access is denied
+
+**3. Portal Isolation Failures**:
+- **Admin accessing /dealer**: Redirects correctly but admin shell remains mounted
+- **Moderator accessing /dealer**: Redirects to /admin instead of dealer portal
+- **Cross-portal chunk loading**: Backoffice chunks load when they shouldn't
+
+#### ✅ WORKING FEATURES:
+
+**1. Authentication & Redirects**:
+- Admin login (admin@platform.com / Admin123!) working correctly
+- Logged-out users properly redirected to appropriate login pages
+- Basic access control redirects functioning
+
+**2. Authorized Access**:
+- Admin can access /admin/users with proper backoffice chunk loading
+- Admin portal chunk (`src_portals_backoffice_BackofficePortalApp_jsx.chunk.js`) loads correctly for authorized admin access
+
+### Network Request Evidence Summary:
+
+**Chunk Files Identified**:
+- Admin Login: `src_portals_backoffice_BackofficeLogin_jsx.chunk.js`
+- Admin Portal: `src_portals_backoffice_BackofficePortalApp_jsx.chunk.js`  
+- Dealer Login: `src_portals_dealer_DealerLogin_jsx.chunk.js`
+- Dealer Portal: Not tested (no valid dealer user)
+
+**Test Results by Scenario**:
+
+1. **Logged-out user**:
+   - ✅ /admin/users → /admin/login redirect
+   - ❌ Admin chunk requested during redirect (should be NO chunk)
+   - ✅ /dealer → /dealer/login redirect  
+   - ❌ Dealer chunk requested during redirect (should be NO chunk)
+
+2. **Admin role**:
+   - ✅ Login successful
+   - ✅ /admin/users access with backoffice chunk loading
+   - ✅ /dealer access denied (redirected to /admin)
+   - ✅ Dealer chunk NOT requested when admin accesses /dealer
+   - ❌ Admin shell DOM still mounted on wrong route
+
+3. **Dealer role**:
+   - ❌ No valid dealer credentials found
+   - ❌ Moderator has admin access instead of dealer access
+   - ❌ Cannot test proper dealer portal chunk loading
+
+### Final Assessment:
+- **Overall Result**: ❌ **FAIL** - Portal Split v1 no-chunk-load acceptance
+- **Critical Issues**: 5 major issues found
+- **Success Rate**: ~40% (partial functionality working)
+- **Primary Concern**: Unnecessary chunk loading during redirects violates no-chunk-load requirement
+
+### Agent Communication:
+- **Agent**: testing  
+- **Message**: Portal Split v1 no-chunk-load acceptance verification FAILED. Critical issue: Portal chunks are being loaded during redirects when they should NOT be loaded. Logged-out users visiting /admin/users or /dealer trigger chunk downloads before redirect to login pages. Additionally, no valid dealer role user exists for complete testing, and role-based access control has issues with moderator role having admin access. The portal isolation is not working as expected - chunks load unnecessarily during access denial scenarios.
+
 ## Stage-4 Frontend E2E Re-run After Wiring Changes (Feb 17, 2026)
 
 ### Test Flow Executed:
