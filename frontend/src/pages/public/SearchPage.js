@@ -95,8 +95,12 @@ export default function SearchPage() {
         queryParams.set('limit', searchState.limit);
         
         // Handle Price
-        if (searchState.filters.price_min) queryParams.set('price_min', searchState.filters.price_min);
-        if (searchState.filters.price_max) queryParams.set('price_max', searchState.filters.price_max);
+        if (searchState.filters.price_min !== undefined && searchState.filters.price_min !== null) {
+          queryParams.set('price_min', searchState.filters.price_min);
+        }
+        if (searchState.filters.price_max !== undefined && searchState.filters.price_max !== null) {
+          queryParams.set('price_max', searchState.filters.price_max);
+        }
 
         // Attribute filters are not supported in the Mongo search MVP yet.
         // Keep URL state, but do not send attrs to backend for now.
