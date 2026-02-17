@@ -85,6 +85,9 @@ export default function AuditLogs() {
           <option value="TOGGLE">TOGGLE</option>
           <option value="SUSPEND">SUSPEND</option>
           <option value="ACTIVATE">ACTIVATE</option>
+          <option value="APPROVE">APPROVE</option>
+          <option value="REJECT">REJECT</option>
+          <option value="NEEDS_REVISION">NEEDS_REVISION</option>
         </select>
 
         <select
