@@ -1458,3 +1458,81 @@
 ### Latest Agent Communication:
 - **Agent**: testing
 - **Message**: FAZ-FINAL-02 (P1) Security & Permission Audit backend testing SUCCESSFULLY COMPLETED. All 4 core security requirements verified and working correctly: 1) Failed login audit with 3x 401 responses and proper FAILED_LOGIN audit entries, 2) Role change audit with ADMIN_ROLE_CHANGE entries containing previous_role/new_role/applied=true, 3) Audit logs filtering by event_type working correctly, 4) Moderation taxonomy validation passed with proper MODERATION_* event types and APPROVE/REJECT/NEEDS_REVISION actions. Rate limiting is implemented and audited (RATE_LIMIT_BLOCK entries exist) though timing may vary. Security audit framework is production-ready.
+
+## P1 Login UI — 401/429 Banner E2E Testing Results (Feb 17, 2026)
+
+### Test Flow Executed:
+**Base URLs Tested**:
+- Public: https://listing-portal-12.preview.emergentagent.com/login
+- Dealer: https://listing-portal-12.preview.emergentagent.com/dealer/login  
+- Admin: https://listing-portal-12.preview.emergentagent.com/admin/login
+
+**Test Credentials**: admin@platform.com with wrong passwords + test@example.com
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS SUCCESSFULLY VERIFIED:
+
+**1. 401 Error Banner Testing**:
+- ✅ **Message Text**: "E-posta veya şifre hatalı" displayed correctly
+- ✅ **Banner Element**: Uses correct `data-testid="login-error"` selector
+- ✅ **Forgot Password Link**: "Şifremi unuttum" link present and visible
+- ✅ **Link Target**: Points to `/help/forgot-password` as expected
+- ✅ **Cross-Portal Consistency**: Same behavior across all three portals
+
+**2. 429 Rate Limit Error Banner Testing**:
+- ✅ **Main Message**: "Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin." ✓
+- ✅ **Helper Text**: "Güvenlik nedeniyle geçici olarak engellendi." ✓
+- ✅ **Forgot Password Link**: "Şifremi unuttum" link present ✓
+- ✅ **Account Locked Link**: "Hesap kilitlendi mi?" link present ✓
+- ✅ **Retry Timer**: "~X dk" format displayed correctly (e.g., "~13 dk") ✓
+- ✅ **Banner Persistence**: Error banner remains visible and persistent
+
+**3. Portal Consistency Verification**:
+- ✅ **Public Portal** (/login): All login form elements present with correct data-testids
+- ✅ **Dealer Portal** (/dealer/login): Identical login component and error handling
+- ✅ **Admin Portal** (/admin/login): Same login component with consistent behavior
+- ✅ **Shared Component**: All portals use same Login.js component as verified
+
+**4. Error Handling Requirements**:
+- ✅ **No Generic Errors**: No "system error" messages found
+- ✅ **No Navigation**: Pages remain on login routes after errors
+- ✅ **Proper Error Codes**: Backend returns correct 401/429 status codes
+- ✅ **Error Banner Visibility**: Error banners are clearly visible and accessible
+
+### Backend Contract Verification:
+- ✅ **401 Response**: `{ detail: { code: "INVALID_CREDENTIALS" } }` ✓
+- ✅ **429 Response**: `{ detail: { code: "RATE_LIMITED", retry_after_seconds: X } }` ✓
+- ✅ **Rate Limiting**: Triggers after multiple failed attempts as designed
+- ✅ **Retry Timer**: Converts `retry_after_seconds` to "~X dk" format correctly
+
+### UI Implementation Verification:
+- ✅ **Error Banner Structure**: Proper destructive styling with AlertCircle icon
+- ✅ **Conditional Rendering**: Shows different content based on error.code
+- ✅ **Link Styling**: Underlined links with hover effects
+- ✅ **Responsive Design**: Error banners work correctly on desktop viewport
+- ✅ **Data Testids**: All required selectors present (login-error, login-email, login-password, login-submit)
+
+### Screenshots Captured:
+- Public portal with 401 error banner showing "E-posta veya şifre hatalı" + "Şifremi unuttum" link
+- Dealer portal with 429 rate limit error showing full message with both links and retry timer
+- Admin portal with 429 rate limit error demonstrating cross-portal consistency
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (12/12 requirements verified)
+- **401 Error Handling**: ✅ FULLY WORKING (correct message + forgot password link)
+- **429 Error Handling**: ✅ FULLY WORKING (main message + helper text + both links + retry timer)
+- **Cross-Portal Consistency**: ✅ VERIFIED (all three portals behave identically)
+- **Backend Integration**: ✅ WORKING (proper error codes and response structure)
+- **UI/UX Requirements**: ✅ MET (persistent banners, no navigation, proper styling)
+
+### Final Status:
+- **P1 Login UI Requirements**: ✅ ALL PASSED
+- **Error Banner Implementation**: ✅ COMPLETE AND WORKING
+- **Backend Contract Compliance**: ✅ VERIFIED
+- **Cross-Portal Functionality**: ✅ CONSISTENT
+- **Production Ready**: ✅ CONFIRMED
+
+### Agent Communication:
+- **Agent**: testing
+- **Message**: P1 Login UI 401/429 banner E2E testing SUCCESSFULLY COMPLETED. All requirements verified across all three portals (Public/Dealer/Admin). 401 errors correctly show "E-posta veya şifre hatalı" with "Şifremi unuttum" link. 429 errors show complete message "Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin." with helper text "Güvenlik nedeniyle geçici olarak engellendi.", both required links ("Şifremi unuttum" and "Hesap kilitlendi mi?"), and retry timer in "~X dk" format. Backend contract compliance verified. No generic system errors. Pages don't navigate away. Error banners are persistent and properly styled. All data-testids present and working. Cross-portal consistency confirmed - all three login pages use same Login component with identical behavior.
