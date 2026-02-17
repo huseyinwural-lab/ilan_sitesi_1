@@ -1180,6 +1180,89 @@
 - **Agent**: testing
 - **Message**: Sprint 1.2 Dealer Applications UI E2E test SUCCESSFULLY COMPLETED. All requirements verified and passing (100% success rate). Fixed route configuration issue where /admin/dealer-applications was missing from enabled routes. Sidebar contains "Başvurular" navigation which works correctly. Page shows pending applications with proper table structure. Reject flow opens modal with reason dropdown and validation. Approve flow has functional buttons. No critical console errors detected. All Sprint 1.2 dealer application requirements are working as expected.
 
+## Sprint 1.2 Dealer Applications Backend E2E Test Results (Feb 17, 2026)
+
+### Test Flow Executed:
+**Base URL**: https://listing-portal-12.preview.emergentagent.com
+**Credentials**: admin@platform.com / Admin123! ✅ WORKING
+**Country Admin**: country_admin_fr@test.com / CountryAdmin123! ✅ WORKING
+
+### Test Cases Executed:
+
+#### ✅ ALL 7 TEST CASES PASSED (100% SUCCESS):
+
+1. **GET /api/admin/dealer-applications?limit=5 -> 200 with items/pagination** ✅
+   - Status: 200, Found 5 items, total: 14
+   - Response includes proper pagination structure with items array
+
+2. **POST reject with reason=other and missing note -> 400** ✅
+   - Status: 400 (expected 400)
+   - Error: "reason_note is required when reason=other"
+   - Proper validation enforced
+
+3. **POST reject with reason=duplicate_application -> 200 ok** ✅
+   - Status: 200 - Application rejected successfully
+   - Valid rejection reason accepted
+
+4. **POST approve -> 200 ok and returns dealer_user temp_password** ✅
+   - Status: 200, Created dealer: test_approve_final@example.com
+   - Returns dealer_user object with temp_password field
+   - New dealer user ID: 9e9b32b5-56d1-4f7d-8672-f6a48b1338c6
+
+5. **Verify new dealer user exists with role=dealer and dealer_status=active** ✅
+   - Dealer user verified via /api/admin/dealers endpoint
+   - Confirmed: role=dealer, dealer_status=active
+   - User properly created in system
+
+6. **Verify audit_logs has event_type DEALER_APPLICATION_APPROVED/REJECTED with applied=true** ✅
+   - Found 5 approved events, 6 rejected events (applied=true)
+   - Audit logging working correctly for all dealer application actions
+
+7. **Scope enforcement: country_admin scoped FR attempting approve DE app -> 403** ✅
+   - Status: 403 (expected 403 for FR admin trying to access DE country context)
+   - Error: "Country scope forbidden"
+   - Country scope enforcement working correctly with ?country= parameter
+
+### Critical Findings:
+
+#### ✅ ALL BACKEND REQUIREMENTS VERIFIED:
+- **Authentication**: Both admin and country_admin login working correctly
+- **API Endpoints**: All dealer application endpoints functional
+- **Validation**: Proper validation for reject reasons and required fields
+- **User Creation**: Dealer user creation working with correct role and status
+- **Audit Logging**: Complete audit trail for all actions with applied=true
+- **Scope Enforcement**: Country-based access control working correctly
+- **Error Handling**: Proper HTTP status codes and error messages
+
+### API Response Verification:
+- **GET /api/admin/dealer-applications**: Returns items array and pagination object
+- **POST reject**: Returns {"ok": true} on success, 400 on validation errors
+- **POST approve**: Returns {"ok": true, "dealer_user": {"id": "...", "email": "...", "temp_password": "..."}}
+- **Audit Logs**: Proper event_type values (DEALER_APPLICATION_APPROVED/REJECTED) with applied=true
+
+### Network Analysis:
+- **All API Calls**: Successful HTTP responses
+- **Base URL**: https://listing-portal-12.preview.emergentagent.com/api (from frontend/.env)
+- **Authentication**: Bearer token authentication working
+- **Country Context**: Scope enforcement via ?country= query parameter working
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (9/9 tests passed including auth setup)
+- **Core API Functionality**: ✅ FULLY WORKING
+- **Validation Logic**: ✅ WORKING (proper error handling)
+- **User Management**: ✅ WORKING (dealer creation with correct attributes)
+- **Audit System**: ✅ WORKING (complete audit trail)
+- **Security**: ✅ WORKING (country scope enforcement)
+
+### Final Status:
+- **Sprint 1.2 Dealer Applications Backend**: ✅ FULLY OPERATIONAL
+- **All Required Endpoints**: ✅ WORKING (list, reject, approve)
+- **Data Integrity**: ✅ WORKING (proper user creation and status management)
+- **Security Controls**: ✅ WORKING (authentication, authorization, scope enforcement)
+- **Audit Compliance**: ✅ WORKING (complete audit logging with applied=true)
+
+### Agent Communication:
+
 ## Admin Dealers Module Testing Results (Feb 17, 2026)
 
 ### Test Flow Executed:
