@@ -113,10 +113,14 @@ class TestFAZFinal02SecurityAudit:
         failed_attempts = 0
         for i in range(3):
             print(f"    Attempt {i+1}: Wrong password")
+            # Don't use admin token for login attempts
+            temp_token = self.admin_token
+            self.admin_token = None
             response = self.make_request('POST', '/auth/login', {
                 'email': 'admin@platform.com',
                 'password': 'WrongPassword123!'
             })
+            self.admin_token = temp_token
             
             if response and response.status_code == 401:
                 failed_attempts += 1
@@ -126,10 +130,13 @@ class TestFAZFinal02SecurityAudit:
         
         # Test 4th attempt should be rate limited (429)
         print(f"    Attempt 4: Should be rate limited")
+        temp_token = self.admin_token
+        self.admin_token = None
         response = self.make_request('POST', '/auth/login', {
             'email': 'admin@platform.com',
             'password': 'WrongPassword123!'
         })
+        self.admin_token = temp_token
         
         rate_limited = response and response.status_code == 429
         if rate_limited:
