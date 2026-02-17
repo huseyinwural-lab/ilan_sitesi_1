@@ -37,6 +37,9 @@ export default function Users() {
       if (search) params.append('search', search);
       if (roleFilter) params.append('role', roleFilter);
       
+      const country = new URLSearchParams(window.location.search).get('country');
+      if (country) params.append('country', country);
+
       const response = await axios.get(`${API}/users?${params}`);
       setUsers(response.data);
     } catch (error) {
