@@ -78,6 +78,25 @@ export default function Layout({ children }) {
     !item.roles || item.roles.includes(user?.role)
   );
 
+  const isAdminPathDisabled = (path) => {
+    if (!path) return false;
+    // If route is not registered, treat as disabled (prevents 404 navigation)
+    const known = new Set([
+      '/admin',
+      '/admin/users',
+      '/admin/countries',
+      '/admin/feature-flags',
+      '/admin/categories',
+      '/admin/attributes',
+      '/admin/master-data/attributes',
+      '/admin/master-data/vehicles',
+      '/admin/audit-logs',
+      '/admin/plans',
+      '/admin/billing',
+    ]);
+    return !known.has(path);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar - Desktop */}
