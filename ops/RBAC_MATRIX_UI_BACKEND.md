@@ -42,7 +42,13 @@ Bu doküman mevcut repo baz alınarak UI + backend erişim matrisini çıkarır.
 - Invalid country => 400
 - Scope forbidden => 403
 
+## Moderation (RBAC notları)
+- moderator rolü:
+  - Hangi queue’lara erişir? (INDIVIDUAL / DEALER ayrımı şu an yok → GAP)
+  - Eğer dealer queue ayrı olacaksa “senior moderator” gibi ayrı bir rol ihtiyacı doğabilir → GAP
+
 ## Kritik Gap’ler (Özet)
 - finance_admin/support_admin/moderator ayrımları UI menüde var ama backend endpoint kapsamı net değil.
-- /account (user panel) auth guard eksik.
+- /account (user panel) auth guard eksik. (FIXED)
 - dealer/individual rollerinin admin finance sayfalarına erişimi şüpheli.
+- Moderation: audit + reason enum + queue ayrımı eksik.
