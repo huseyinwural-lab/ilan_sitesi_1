@@ -19,6 +19,10 @@ import DealersPage from '@/pages/admin/Dealers';
 import DealerApplicationsPage from '@/pages/admin/DealerApplications';
 import AdminListingsPage from '@/pages/admin/AdminListings';
 import AdminReportsPage from '@/pages/admin/AdminReports';
+import AdminInvoicesPage from '@/pages/admin/AdminInvoices';
+import AdminTaxRatesPage from '@/pages/admin/AdminTaxRates';
+import AdminPlansPage from '@/pages/admin/AdminPlans';
+import AdminDealerDetailPage from '@/pages/admin/AdminDealerDetail';
 
 export default function BackofficePortalApp() {
   return (
@@ -34,6 +38,10 @@ export default function BackofficePortalApp() {
       <Route path="/moderation" element={<Layout><ModerationQueue /></Layout>} />
       <Route path="/listings" element={<Layout><AdminListingsPage /></Layout>} />
       <Route path="/reports" element={<Layout><AdminReportsPage /></Layout>} />
+      <Route path="/invoices" element={<Layout><AdminInvoicesPage /></Layout>} />
+      <Route path="/tax-rates" element={<Layout><AdminTaxRatesPage /></Layout>} />
+      <Route path="/plans" element={<Layout><AdminPlansPage /></Layout>} />
+      <Route path="/dealers/:dealerId" element={<Layout><AdminDealerDetailPage /></Layout>} />
 
       <Route path="/dealers" element={<Layout><DealersPage /></Layout>} />
       <Route path="/dealer-applications" element={<Layout><DealerApplicationsPage /></Layout>} />
