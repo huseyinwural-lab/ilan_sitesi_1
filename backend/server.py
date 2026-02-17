@@ -1305,6 +1305,106 @@ class ModerationReasonPayload(BaseModel):
     reason_note: Optional[str] = None
 
 
+class ListingAdminActionPayload(BaseModel):
+    reason: Optional[str] = None
+    reason_note: Optional[str] = None
+
+
+def _resolve_listing_title(listing: dict) -> str:
+    title = (listing.get("title") or "").strip()
+    if title:
+        return title
+    v = listing.get("vehicle") or {}
+    return f"{(v.get('make_key') or '').upper()} {v.get('model_key') or ''} {v.get('year') or ''}".strip()
+
+
+def _parse_bool_flag(value: Optional[str | bool]) -> Optional[bool]:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    raw = str(value).strip().lower()
+    if raw in {"1", "true", "yes", "y"}:
+        return True
+    if raw in {"0", "false", "no", "n"}:
+        return False
+    return None
+
+
+async def _admin_listing_action(
+    *,
+    db,
+    listing_id: str,
+    current_user: dict,
+    event_type: str,
+    new_status: str,
+    reason: Optional[str] = None,
+    reason_note: Optional[str] = None,
+) -> dict:
+    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    if current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope and listing.get("country") not in scope:
+            raise HTTPException(status_code=403, detail="Country scope forbidden")
+
+    prev_status = listing.get("status")
+    if prev_status == new_status:
+        raise HTTPException(status_code=400, detail="Listing already in target status")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": event_type,
+        "action": event_type,
+        "listing_id": listing_id,
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "country_code": listing.get("country"),
+        "country_scope": current_user.get("country_scope") or [],
+        "reason": reason,
+        "reason_note": reason_note,
+        "previous_status": prev_status,
+        "new_status": new_status,
+        "resource_type": "listing",
+        "resource_id": listing_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+
+    update_payload = {
+        "status": new_status,
+        "updated_at": now_iso,
+        "admin_last_action": event_type,
+        "admin_last_action_at": now_iso,
+    }
+    if event_type == "LISTING_SOFT_DELETE":
+        update_payload["archived_at"] = now_iso
+        update_payload["archived_by"] = current_user.get("id")
+    if event_type == "LISTING_FORCE_UNPUBLISH":
+        update_payload["unpublished_at"] = now_iso
+        update_payload["unpublished_by"] = current_user.get("id")
+
+    res = await db.vehicle_listings.update_one(
+        {"id": listing_id, "status": prev_status},
+        {"$set": update_payload},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=409, detail="Listing changed concurrently")
+
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    updated = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    return updated
+
+
 @api_router.post("/admin/listings/{listing_id}/approve")
 async def admin_approve_listing(
     listing_id: str,
