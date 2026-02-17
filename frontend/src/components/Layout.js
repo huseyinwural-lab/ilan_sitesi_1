@@ -189,6 +189,8 @@ export default function Layout({ children }) {
       '/admin/plans',
       '/admin/billing',
       '/admin/moderation',
+      '/admin/dealers',
+
     ]);
     return !known.has(path);
   };
