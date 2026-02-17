@@ -26,6 +26,89 @@ def _ensure_dirs(data_dir: Path):
     (data_dir / "logs").mkdir(parents=True, exist_ok=True)
 
 
+
+def ensure_default_master_data(data_dir: Path):
+    """Creates a minimal, valid file-based vehicle master dataset if missing.
+
+    This is required for preview/dev pods where /data volume may start empty.
+    """
+
+    _ensure_dirs(data_dir)
+    current_path = data_dir / "current.json"
+    if current_path.exists():
+        return
+
+    version_id = "seed-v1"
+    ver_dir = data_dir / "versions" / version_id
+    ver_dir.mkdir(parents=True, exist_ok=True)
+
+    makes = {
+        "version": version_id,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "source": "default-seed",
+        "items": [
+            {"make_key": "audi", "display_name": "Audi", "aliases": ["audi"], "is_active": True, "sort_order": 1},
+            {"make_key": "bmw", "display_name": "BMW", "aliases": ["bmw"], "is_active": True, "sort_order": 2},
+            {"make_key": "vw", "display_name": "Volkswagen", "aliases": ["volkswagen", "vw"], "is_active": True, "sort_order": 3},
+        ],
+    }
+    makes["checksum"] = compute_checksum(makes)
+
+    models = {
+        "version": version_id,
+        "generated_at": makes["generated_at"],
+        "source": "default-seed",
+        "items": [
+            {"make_key": "audi", "model_key": "a3", "display_name": "A3", "aliases": ["a3"], "is_active": True, "year_from": 1996, "year_to": None},
+            {"make_key": "audi", "model_key": "a4", "display_name": "A4", "aliases": ["a4"], "is_active": True, "year_from": 1994, "year_to": None},
+            {"make_key": "bmw", "model_key": "3-series", "display_name": "3 Series", "aliases": ["3 series"], "is_active": True, "year_from": 1975, "year_to": None},
+            {"make_key": "vw", "model_key": "golf", "display_name": "Golf", "aliases": ["golf"], "is_active": True, "year_from": 1974, "year_to": None},
+        ],
+    }
+    models["checksum"] = compute_checksum(models)
+
+    report = validate_master_data(makes, models)
+    if not report.get("ok"):
+        raise RuntimeError("Default vehicle master seed is invalid")
+
+    (ver_dir / "makes.json").write_text(json.dumps(makes, ensure_ascii=False, indent=2), encoding="utf-8")
+    (ver_dir / "models.json").write_text(json.dumps(models, ensure_ascii=False, indent=2), encoding="utf-8")
+    (ver_dir / "validation_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    manifest = {
+        "version": version_id,
+        "generated_at": makes["generated_at"],
+        "source": "default-seed",
+        "checksum": makes["checksum"],
+        "activated_at": datetime.now(timezone.utc).isoformat(),
+        "activated_by": "system",
+    }
+    (ver_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    current = {
+        "active_version": version_id,
+        "activated_at": manifest["activated_at"],
+        "activated_by": manifest["activated_by"],
+        "source": manifest["source"],
+        "checksum": manifest["checksum"],
+    }
+    _atomic_write(current_path, json.dumps(current, ensure_ascii=False, indent=2))
+
+    _append_jsonl(
+        data_dir / "logs" / "audit.jsonl",
+        {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "event": "BOOTSTRAP_DEFAULT",
+            "user_id": "system",
+            "source": "default-seed",
+            "version": version_id,
+            "checksum": manifest["checksum"],
+            "status": "OK",
+            "diff_summary": report.get("summary", {}),
+        },
+    )
+
+
 def _append_jsonl(log_path: Path, entry: dict):
     log_path.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(entry, ensure_ascii=False) + "\n"
