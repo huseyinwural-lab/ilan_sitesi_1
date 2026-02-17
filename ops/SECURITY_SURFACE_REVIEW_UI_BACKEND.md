@@ -18,6 +18,10 @@ UI + backend güvenlik yüzeyi ön kontrolü (kurumsal).
 - [ ] Listing detail PII minimizasyonu
 - [ ] Admin listelerinde gereksiz PII var mı?
 
+## 3.1) Moderation Audit (Kritik)
+- [ ] Moderation state change event’leri audit log’a düşüyor mu?
+- [ ] Red/Düzeltme reason tam mı? (boş reason engeli var mı?)
+
 ## 4) Draft Media Erişim
 - [ ] Draft medya public erişilebilir mi?
 - [ ] Media preview URL auth ister mi?
