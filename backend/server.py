@@ -388,7 +388,7 @@ async def login(credentials: UserLogin, request: Request):
 
 
 
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail={"code": "INVALID_CREDENTIALS"})
 
     if not user.get("is_active", True):
         raise HTTPException(status_code=400, detail="User account is disabled")
