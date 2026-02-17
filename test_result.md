@@ -558,7 +558,7 @@
 
 ### Network Analysis:
 - **All API Endpoints**: Return successful HTTP responses as expected
-- **Base URL**: https://marketlane-1.preview.emergentagent.com/api (from frontend/.env)
+- **Base URL**: https://listing-portal-12.preview.emergentagent.com/api (from frontend/.env)
 - **Authentication**: admin@platform.com / Admin123! login successful
 - **No Network Errors**: All requests completed successfully
 
@@ -849,7 +849,7 @@
 ## Portal Split v1 No-Chunk-Load Acceptance Verification Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://marketlane-1.preview.emergentagent.com
+**Base URL**: https://listing-portal-12.preview.emergentagent.com
 
 **Credentials Tested**:
 - Admin: admin@platform.com / Admin123! ✅ WORKING
@@ -934,7 +934,7 @@
 ## Portal Split v1 No-Chunk-Load Re-Test Results (Feb 17, 2026) - MAJOR IMPROVEMENT
 
 ### Test Flow Re-executed:
-**Base URL**: https://marketlane-1.preview.emergentagent.com
+**Base URL**: https://listing-portal-12.preview.emergentagent.com
 
 **Credentials Tested**:
 - Admin: admin@platform.com / Admin123! ✅ WORKING
@@ -1009,7 +1009,7 @@
 ## Dealer Portal Positive Smoke + Chunk Assertions Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://marketlane-1.preview.emergentagent.com
+**Base URL**: https://listing-portal-12.preview.emergentagent.com
 **Credentials**: dealer@platform.com / Dealer123! ✅ WORKING
 
 1. ✅ **Dealer Login Page Access** - /dealer/login loads successfully with login form

@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class ExtendedAdminAPITester:
-    def __init__(self, base_url="https://marketlane-1.preview.emergentagent.com"):
+    def __init__(self, base_url="https://listing-portal-12.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None

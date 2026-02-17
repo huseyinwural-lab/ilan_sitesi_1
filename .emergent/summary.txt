@@ -1,222 +1,207 @@
 <analysis>**original_problem_statement:**
-Kullanıcının hedefi, çok ülkeli, çok dilli bir seri ilan platformu oluşturmaktır. Mevcut odak noktası, Vasıta (Vehicle) dikeyini üretim kalitesinde bir özellik setiyle tamamlamaktır.
+Kullanıcının birincil hedefi, çok ülkeli, çok dilli bir seri ilan platformu oluşturmaktır. Mevcut geliştirme, FAZ (Faz) olarak adlandırılan bir dizi planla yönlendirilmektedir. Proje, v1.0.0 sürümüne ulaşmak için son aşama olan FAZ-FINAL-01 — Release Blocker Temizliği sprint'ine girmiştir. Bu sprint, daha önceki denetimlerde tespit edilen ve sürüm çıkmasını engelleyen kritik hataların (Public Search arızası ve denetlenebilir bir moderasyon akışının eksikliği) giderilmesine odaklanmaktadır.
 
-Kullanıcı, bu hedefi FAZ-V3 — Vasıta Tamamlama olarak adlandırılan ve aşağıdaki aşamaları içeren son derece ayrıntılı bir planla yönlendirmektedir:
-*   **FAZ-V3 / Aşama 1:** Menü & Kategori Finalizasyonu (Tamamlandı)
-*   **FAZ-V3 / Aşama 2:** Araç Ana Veri Altyapısı (Provider-Ready) - Harici JSON dosyası tabanlı (Tamamlandı)
-*   **FAZ-V3 / Aşama 3:** Araç Sihirbazı v2 (Kaliteli İlan Üretimi) (Tamamlandı)
-*   **FAZ-V3 / Aşama 4:** Sihirbaz Yayınlama (Gerçek İlan) + Yayınlama Koruması + Medya Depolama Bağlantısı (Devam Ediyor)
-*   **FAZ-V3 / Aşama 5:** Araç Arama v2 (Gerçek Otomotiv Araması)
-*   **FAZ-V3 / Aşama 6:** Araç Güven Katmanı
-*   **FAZ-V3 / Aşama 7:** Otomotiv Bayi Genişletmesi
-*   **FAZ-V3 / Aşama 8:** Performans & SEO Sertifikasyonu
+Kullanıcı ayrıca, sistemin üç ayrı arayüze (portal) ayrılması gerektiğini belirtmiştir:
+1.  **Public/Bireysel Arayüz:** Ziyaretçiler ve bireysel kullanıcılar için.
+2.  **Ticari Arayüz (Dealer Panel):** Bayiler için özel panel.
+3.  **Sistem Admin Paneli (Backoffice):** Yöneticiler için.
 
-Kullanıcının son talebi, elektrikli kategorisinin ayrı bir segment olmadığını, bunun yerine bir  özelliği olduğunu netleştirmek ve bu değişikliği yansıttıktan sonra Aşama 3 ve 4'e devam etmektir.
+Bu portalların, hem kod paketleri (bundle) hem de giriş (login) yolları olarak birbirinden tamamen izole edilmesi kritik bir gereksinimdir.
 
 **User's preferred language**: Turkish. The next agent MUST respond in Turkish.
 
 **what currently exists?**
-Uygulama, React (frontend) ve FastAPI (backend) üzerine kurulu, veritabanı olarak MongoDB kullanan tam yığın bir seri ilan platformudur.
-Önceki oturumdaki kritik admin girişi ve backend çökme sorunu, tüm veri katmanının PostgreSQL'den MongoDB'ye geçirilmesiyle tamamen çözülmüştür. Sistem şu anda stabildir.
-Kullanıcının FAZ-V3 planı kapsamında ilk üç aşama tamamlanmıştır:
-1.  Vasıta dikeyinin menü ve kategori yapısı finalize edildi.
-2.  Araç marka/model ana verileri için veritabanı yerine harici, versiyonlanmış JSON dosyalarını yöneten bir backend ve admin arayüzü oluşturuldu.
-3.  İlan oluşturmak için çok adımlı bir wizard (sihirbaz) arayüzü geliştirildi.
+Uygulama, React (frontend) ve FastAPI (backend) üzerine kurulu, veritabanı olarak MongoDB kullanan tam yığın bir seri ilan platformudur. Önceki oturumlarda, kritik bir usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
+           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
+           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+           [--super-prefix=<path>] [--config-env=<name>=<envvar>]
+           <command> [<args>]
+
+These are common Git commands used in various situations:
+
+start a working area (see also: git help tutorial)
+   clone     Clone a repository into a new directory
+   init      Create an empty Git repository or reinitialize an existing one
+
+work on the current change (see also: git help everyday)
+   add       Add file contents to the index
+   mv        Move or rename a file, a directory, or a symlink
+   restore   Restore working tree files
+   rm        Remove files from the working tree and from the index
+
+examine the history and state (see also: git help revisions)
+   bisect    Use binary search to find the commit that introduced a bug
+   diff      Show changes between commits, commit and working tree, etc
+   grep      Print lines matching a pattern
+   log       Show commit logs
+   show      Show various types of objects
+   status    Show the working tree status
+
+grow, mark and tweak your common history
+   branch    List, create, or delete branches
+   commit    Record changes to the repository
+   merge     Join two or more development histories together
+   rebase    Reapply commits on top of another base tip
+   reset     Reset current HEAD to the specified state
+   switch    Switch branches
+   tag       Create, list, delete or verify a tag object signed with GPG
+
+collaborate (see also: git help workflows)
+   fetch     Download objects and refs from another repository
+   pull      Fetch from and integrate with another repository or a local branch
+   push      Update remote refs along with associated objects
+
+'git help -a' and 'git help -g' list available subcommands and some
+concept guides. See 'git help <command>' or 'git help <concept>'
+to read about a specific subcommand or concept.
+See 'git help git' for an overview of the system. repo bozulması sorunu giderilmiş ve kullanıcı tarafından talep edilen büyük mimari değişiklikler uygulanmıştır:
+
+1.  **Admin Panel IA v2:** Admin paneli, alan bazlı gruplandırılmış bir menü, daraltılabilir sidebar, zorunlu breadcrumb ve standartlaştırılmış sayfa düzenleri ile tamamen yeniden yapılandırıldı.
+2.  **Admin Country Context v2:** Admin operasyonlarının ülke bazlı yönetimi için,  URL parametresini kullanan ve backend tarafından zorunlu kılınan sağlam bir country scope sistemi uygulandı.
+3.  **Portal Split v1:** En kritik değişikliklerden biri olarak, uygulama mantıksal olarak üç portala ayrıldı: Public/Individual, Dealer ve Backoffice (Admin). Bu portallar,  kullanılarak ayrı JavaScript chunklarına bölündü.  adlı bir bileşen, kullanıcının rolüne göre doğru portalın kodunu yükler ve yetkisiz erişimi engeller. Bu, yanlış roldeki bir kullanıcının alakasız (örn: admin) kodunu indirmesini önler.
 
 **Last working item**:
-- **Last item agent was working:** Kullanıcının FAZ-V3 planının 4. Aşaması olan Wizard Publish özelliğini geliştiriyordu. Bu aşama, sihirbazda girilen verilerle gerçek bir ilan oluşturulmasını, medya dosyalarının sunucuya yüklenmesini ve ilanın yayınlanmasını içerir.
-    - **Backend:** Gerekli API endpoint'leri (, , ) ve iş mantığı (, , ) oluşturuldu ve birim testleri yapıldı.
-    - **Frontend:** Sihirbazın son adımları (, ) bu yeni backend endpoint'lerini çağıracak şekilde güncellenmeye başlandı. 'da  yerine  kullanılması gibi önemli bir hata ayıklama adımı tamamlandı.
-- **Status**: IN PROGRESS
-- **Agent Testing Done**: Y (Backend kısmı için ============================= test session starts ==============================
-platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0
-rootdir: /app
-plugins: locust-2.43.3, asyncio-1.3.0, anyio-4.12.1
-asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 61 items / 2 errors
-
-==================================== ERRORS ====================================
-_____________ ERROR collecting backend/scripts/seed_mobile_test.py _____________
-ImportError while importing test module '/app/backend/scripts/seed_mobile_test.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-/usr/local/lib/python3.11/importlib/__init__.py:126: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-backend/scripts/seed_mobile_test.py:5: in <module>
-    from app.database import AsyncSessionLocal
-E   ModuleNotFoundError: No module named 'app'
-_________ ERROR collecting backend/scripts/test_billing_integration.py _________
-ImportError while importing test module '/app/backend/scripts/test_billing_integration.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-/usr/local/lib/python3.11/importlib/__init__.py:126: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-backend/scripts/test_billing_integration.py:15: in <module>
-    from app.routers.billing_webhook import handle_checkout_completed
-backend/app/routers/__init__.py:1: in <module>
-    from app.routers.auth import router as auth_router
-backend/app/routers/auth.py:6: in <module>
-    from app.dependencies import get_db, get_current_user
-E   ImportError: cannot import name 'get_db' from 'app.dependencies' (/app/backend/scripts/../app/dependencies.py)
-=============================== warnings summary ===============================
-../root/.venv/lib/python3.11/site-packages/starlette/formparsers.py:12
-  /root/.venv/lib/python3.11/site-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
-    import multipart
-
-../root/.venv/lib/python3.11/site-packages/passlib/utils/__init__.py:854
-  /root/.venv/lib/python3.11/site-packages/passlib/utils/__init__.py:854: DeprecationWarning: 'crypt' is deprecated and slated for removal in Python 3.13
-    from crypt import crypt as _crypt
-
-backend/app/vehicle_media_storage.py:3
-  /app/backend/scripts/../app/vehicle_media_storage.py:3: DeprecationWarning: 'imghdr' is deprecated and slated for removal in Python 3.13
-    import imghdr
-
-../root/.venv/lib/python3.11/site-packages/starlette/routing.py:655
-  /root/.venv/lib/python3.11/site-packages/starlette/routing.py:655: DeprecationWarning: async generator function lifespans are deprecated, use an @contextlib.asynccontextmanager function instead
-    warnings.warn(
-
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-=========================== short test summary info ============================
-ERROR backend/scripts/seed_mobile_test.py
-ERROR backend/scripts/test_billing_integration.py
-!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
-======================== 4 warnings, 2 errors in 2.31s ========================= ile E2E testleri yazıldı ve çalıştırıldı. Frontend için manuel ve Playwright tabanlı testler yapıldı.)
-- **Which testing method agent to use?**: Frontend testing agent. Frontend'deki tüm kablolama tamamlandıktan sonra, bir kullanıcının baştan sona (giriş yap, sihirbazı doldur, resim yükle, yayınla, ilan detayını gör) başarılı bir şekilde ilan oluşturabildiğini doğrulamak için tam bir E2E testi yapılmalıdır.
+- **Last item agent was working:** **Portal Split v1** fazının tamamlanması ve doğrulanması. Bu, dealer rolü için pozitif testlerin yapılmasını ve tüm roller için portal izolasyonunun (bir rolün diğer portalın kodunu yükleyememesi) kanıtlanmasını içeriyordu.
+- **Status**: USER VERIFICATION PENDING
+- **Agent Testing Done**: Y (Agent, dealer rolüyle bir kullanıcı oluşturdu, başarılı bir şekilde dealer portalına giriş yaptı ve dealer'a özel kod chunk'larının yüklendiğini, ancak backoffice chunk'larının yüklenmediğini doğruladı. Tüm izolasyon matrisi testlerinin başarılı olduğunu bildirdi.)
+- **Which testing method agent to use?**: manual testing by curl. Kullanıcı, ajanın son özetini ve testi geçtiğini doğruladı. Şimdi, yeni faz olan FAZ-FINAL-01in uygulanmasına geçilebilir.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: FAZ-V3 / Aşama 4: Wizard Publish Frontend Entegrasyonunu Tamamla (P0)**
+- **Issue 1: Public Search Sayfası Kırık (P0 - RELEASE BLOCKER)**
+- **Issue 2: Moderasyon Akışı ve Denetim Kaydı Eksik (P0 - RELEASE BLOCKER)**
+- **Issue 3: Minimal Prod Audit Standardı Eksik (P1)**
 
 **Issues Detail:**
-- **Issue 1:**
-  - **Description**: Araç oluşturma sihirbazının (Vehicle Wizard) backend ile entegrasyonunun tamamlanması gerekiyor. Backend API'leri hazır ve test edilmiş durumda, ancak frontend tarafının bu API'leri kullanarak ilanı ve medya dosyalarını göndermesi, hataları işlemesi ve başarılı olduğunda kullanıcıyı ilan detay sayfasına yönlendirmesi gerekiyor.
-  - **Attempted fixes**: Agent, 'i yeni durumlar (, , ) ile güncelledi. 'de medya yükleme ve 'de yayınlama mantığını bağlamaya başladı. Ayrıca 'yi API'den gerçek veri çekecek şekilde güncelledi.
+- **Issue 1: Public Search Sayfası Kırık**
+  - **Why fix this issue and what will be achieved with the fix?**: Public arama, platformun temel kullanıcı hunisidir. Bu sayfanın çalışmaması, kullanıcıların ilan bulmasını engeller ve platformu işlevsiz kılar. Bu bir sürüm engelleyicidir.
+  - **Attempted fixes**: Önceki ajan, frontend'in çağırdığı  endpoint'ini backend'e eklemeye çalıştı ancak  tabanlı eski bir router'ı  tabanlı 'ye dahil etmeye çalışınca bağımlılık çakışmaları nedeniyle backend çöktü. Düzeltme geri alındı.
   - **Next debug checklist**:
-    1.  **'de  fonksiyonunu gözden geçir:** Bu fonksiyonun sırasıyla draft oluşturma, medya yükleme ve ilanı submit etme adımlarını yönettiğinden emin ol.
-    2.  **'yi onayla:**  oluşturulduktan sonra dosyaların doğru  endpoint'ine yüklendiğini doğrula.
-    3.  **'yi onayla:** Yayınla butonunun  fonksiyonunu tetiklediğini ve backend'den gelebilecek doğrulama hatalarını (örn: eksik fotoğraf, geçersiz marka) kullanıcıya gösterdiğini doğrula.
-    4.  **Başarılı Yönlendirme:** Yayınlama başarılı olduğunda, kullanıcının  ile yeni oluşturulan ilan detay sayfasına () yönlendirildiğini kontrol et.
-    5.  **'yi Test Et:** Yeni oluşturulan ilanın tüm bilgileri ve resimleriyle bu sayfada doğru bir şekilde göründüğünü doğrula.
-  - **Status**: IN PROGRESS
+    1.  Backend'de  içinde, MongoDB ile uyumlu yeni bir  endpoint'i oluştur.
+    2.  Bu endpoint'in  parametresini zorunlu kılmasını sağla. Parametre yoksa  döndürmeli.
+    3.  Endpoint'in, veritabanından sadece  veya  olan ilanları getirdiğinden emin ol.
+    4.  Pagination, sıralama ve temel filtreleme (kategori, anahtar kelime vb.) mantığını implemente et.
+    5.  Frontend'deki  veya 'nin bu yeni endpoint'i doğru şekilde çağırdığından ve  parametresini gönderdiğinden emin ol.
+  - **Status**: NOT STARTED
+  - **Is recurring issue?**: Y
+  - **Should Test frontend/backend/both after fix?**: both
+
+- **Issue 2: Moderasyon Akışı ve Denetim Kaydı Eksik**
+  - **Why fix this issue and what will be achieved with the fix?**: Mevcut moderasyon bir yer tutucudur. Gerçek bir platformun, ilan kalitesini yönetmek, spam'i önlemek ve yasal denetlenebilirliği sağlamak için sağlam bir moderasyon akışına ihtiyacı vardır. Bu bir sürüm engelleyicidir.
+  - **Attempted fixes**: None. This is a new implementation based on the user's plan.
+  - **Next debug checklist**:
+    1.   koleksiyonuna bir  alanı ekle (, , , ).
+    2.  Backend'de admin için üç yeni endpoint oluştur: , , .
+    3.   ve  endpoint'lerinin  (gerekçe) parametresini zorunlu kılmasını sağla. Gerekçeler bir enum listesinden gelmeli (örn: , ).
+    4.  Yeni bir  koleksiyonu oluştur. Moderasyon ile ilgili her state değişikliğinde bu koleksiyona bir kayıt at: .
+    5.  Frontend'de bir Moderation Workspace sayfası (veya mevcutun geliştirilmesi) ile bu endpoint'leri kullanacak arayüzü oluştur.
+  - **Status**: NOT STARTED
   - **Is recurring issue?**: N
-  - **Should Test frontend/backend/both after fix?**: frontend
-  - **Blocked on other issue**: None
+  - **Should Test frontend/backend/both after fix?**: both
+
+- **Issue 3: Minimal Prod Audit Standardı Eksik**
+  - **Why fix this issue and what will be achieved with the fix?**: Güvenlik ve operasyonel takip için moderasyon dışındaki kritik olayların da loglanması gerekir.
+  - **Next debug checklist**:
+    1.  Admin rol değişikliklerini  koleksiyonuna kaydet.
+    2.  Başarısız giriş denemelerini logla (bu, rate-limiting için de temel oluşturur).
+  - **Status**: NOT STARTED
+  - **Is recurring issue?**: N
+  - **Should Test frontend/backend/both after fix?**: backend
 
 **In progress Task List**:
-- **Task 1: FAZ-V3 / Aşama 4: Wizard Publish (Real Listing) + Publish Guard + Media Storage Binding**
-  - **Where to resume**: Frontend implementasyonuna devam et. Özellikle ,  ve  dosyalarını birbirine bağlayarak tam yayınlama akışını tamamla.
-  - **What will be achieved with this?**: Kullanıcıların araç ilanı oluşturma sihirbazı aracılığıyla resimleriyle birlikte kalıcı ve gerçek ilanlar oluşturmasını sağlayacak.
-  - **Status**: IN PROGRESS
-  - **Should Test frontend/backend/both after fix?**: both (backend zaten test edildi, frontend E2E testi yapılmalı)
-  - **Blocked on something**: None
+- None.
 
 **Upcoming and Future Tasks**
-- **Upcoming Tasks (P1):**
-    - **FAZ-V3 / Aşama 5:** Vehicle Search v2 (Gelişmiş filtreler, Yıl/KM aralığı, SEO uyumlu marka/model sayfaları).
-    - **FAZ-V3 / Aşama 6:** Vehicle Trust Layer (KM anomali kontrolü, ilan kalite skoru, Doğrulanmış Bayi Aracı rozeti).
-    - **FAZ-V3 / Aşama 7:** Otomotiv Dealer Genişletmesi (Toplu araç yükleme, bayi paneline özel metrikler).
-- **Future Tasks (P2):**
-    - **FAZ-V3 / Aşama 8:** Performans & SEO Sertifikasyonu (Veritabanı index optimizasyonu,  doğrulaması ile sitemap üretimi).
-    - **FAZ-V3 Acceptance Gate:** Tüm Vasıta dikeyinin bittiğini doğrulayan kabul kriterlerinin karşılanması.
+- **Upcoming Tasks (P0):**
+    - **FAZ-FINAL-01: Release Blocker Temizliği Sprinti:** Yukarıda listelenen 3 konunun (Public Search, Moderasyon, Audit Log) tamamlanması.
+    - **FAZ-FINAL-02: Release Stabilizasyonu Sprinti:**
+        - Tüm portallar (Public, User, Dealer, Admin, vb.) için tam regresyon testi.
+        - Üretim ortamı için hardening (demo bilgilerini kaldırma, debug flag'lerini kapatma).
+    - **FAZ-FINAL-03: Go-Live Gate:** Sürüm notlarını oluşturma ve son sürüm kararını belgeleme.
+
+- **Future Tasks (Backlog):**
+    - FAZ-V3'ün kalan adımları (Gelişmiş Araç Arama, Güven Katmanı, Bayi Genişletmeleri).
+    - Moderasyon arayüzünde Dealer ve Individual ilan kuyruklarını ayırma.
+    - Destek/CRM ve Analitik panellerinin yer tutucu verilerden gerçek verilere geçirilmesi.
 
 **Completed work in this session**
-- **Kritik Bloker Çözüldü:** Sistemin çökmesine neden olan ve admin girişini engelleyen sorun, backend'in PostgreSQL'den MongoDB'ye tamamen geçirilmesiyle giderildi.
-- **Frontend Çökmesi Düzeltildi:** Backend düzeltmesinden sonra ortaya çıkan React  bileşeni hatası çözüldü.
-- **FAZ-V3 / Aşama 1 Tamamlandı:** Vasıta menü ve kategori yapısı, tohumlama (seeding) script'leri ve ilgili frontend landing sayfaları ile birlikte tamamlandı. Elektrikli kategorisi isteğe göre kaldırıldı.
-- **FAZ-V3 / Aşama 2 Tamamlandı:** Araç marka/model verileri için veritabanı yerine, versiyonlu JSON dosyalarından okuma yapan File-Based Master Data sistemi kuruldu. Bu sistemi yönetmek için bir admin arayüzü () ve backend servisleri oluşturuldu.
-- **FAZ-V3 / Aşama 3 Tamamlandı:** Kullanıcının araç ilanı girmesini sağlayan çok adımlı sihirbaz arayüzü (Wizard UI) oluşturuldu (Adım 1: Kategori, Adım 2: Özellikler, Adım 3: Medya, Adım 4: Önizleme).
-
-**Earlier issues found/mentioned but not fixed**
-- None. Önceki oturumdan kalan kritik hatalar bu oturumda çözüldü.
-
-**Known issue recurrence from previous fork**
-- **Backend Instability:** Bu sorun, PostgreSQL'den MongoDB'ye geçişle büyük ölçüde çözüldü. Mevcut altyapı daha stabil.
+- **Git Repository Corruption Fix:** Projenin kaydedilmesini engelleyen  bozulma hatası onarıldı.
+- **Admin Panel IA v2:** Admin panelinin bilgi mimarisi ve navigasyonu, kullanıcı planına göre tamamen yeniden yapılandırıldı (gruplu menü, breadcrumb, collapse özelliği vb.).
+- **Admin Country Context v2:** Admin panelinde ülke bazlı veri izolasyonu için URL tabanlı () ve backend tarafından zorunlu kılınan bir context sistemi kuruldu.
+- **Portal Split v1 (MİMARİ DEĞİŞİKLİK):** Uygulama, **Public/Individual**, **Dealer** ve **Backoffice (Admin)** olmak üzere 3 ayrı portala bölündü. Bu, React lazy loading ile ayrı kod paketleri (chunks) oluşturularak ve  ile rol bazlı yetkilendirme yapılarak sağlandı. Bu, gereksiz kod yüklenmesini ve yetkisiz portal erişimini engeller.
+- **Dealer Portal Testi:** Portal ayrımının kanıtı olarak,  rolüne sahip bir test kullanıcısı oluşturuldu ve bu kullanıcının yalnızca dealer portalına erişebildiği, admin kodunu indirmediği doğrulandı.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Database Migration:** Tüm veri kalıcılık katmanı, çalışmayan bir PostgreSQL uygulamasından  kütüphanesi kullanılarak asenkron MongoDB'ye geçirildi.
-- **File-Based Master Data:** Araç markaları ve modelleri gibi ana veriler, veritabanında değil,  dizinindeki versiyonlanmış JSON dosyalarında tutulur. Bu, kullanıcının özel bir mimari kararıdır.
-- **Multi-Step Wizard:** İlan oluşturma süreci, state yönetimi için  kullanan çok adımlı bir sihirbaz arayüzü ile yönetilmektedir.
-- **Local File Storage:** Kullanıcının kararı doğrultusunda, yüklenen ilan resimleri v1'de bulut depolama yerine sunucudaki yerel dosya sisteminde () saklanır.
+- **Database:** Asynchronous MongoDB with .
+- **Backend:** FastAPI.
+- **Frontend:** React (Create React App).
+- **Portal-based Code Splitting:**  ile uygulama, kullanıcı rolüne göre yüklenen (Public, Dealer, Admin) ayrı JavaScript chunklarına bölünmüştür. Bu, hem performansı artırır hem de güvenliği sağlar.
+- **Centralized Auth Guard ():** Hangi portalın yükleneceğine karar veren ve yetkisiz erişimleri (yanlış kod chunk'ını indirmeden) engelleyen merkezi bir yönlendirici bileşen.
+- **URL-based Country Context:** Admin panelindeki tüm işlemler, URL'deki  parametresi ile ülke bazında filtrelenir ve bu kural backend tarafından zorunlu kılınır.
 
 **key DB schema**
-- Veritabanı MongoDB'dir.
-- **users**: Kullanıcı bilgilerini saklar (kimlik doğrulama, roller vb.).
-- **listings**: İlan ana verilerini saklar. Vasıta sihirbazından gelen yeni alanlarla (make_key, model_key, year, media vb.) genişletilecektir.
-- **categories**: Kategori ağacını saklar.
-- **menu_top_items**: Ana menü öğelerini saklar.
-
-**changes in tech stack**
-- **PostgreSQL → MongoDB:** En kritik değişiklik, backend veritabanının tamamen değiştirilmesidir.  ve ilgili PostgreSQL sürücüleri yerine artık  ve  kullanılmaktadır.
+- **users**: .  alanı, adminlerin hangi ülkelerde yetkili olduğunu tanımlar.
+- **listings**: İlanlar.  alanı eklenecek.
+- **audit_logs**: Yapılacak moderasyon ve admin işlemleri için denetim kayıtları.  yapısında olacak.
 
 **All files of reference**
-- **Wizard Logic:**
-  -  (State yönetimi)
-  -  (Yayınlama butonunun olduğu son adım)
-  -  (Resim yükleme mantığı)
-- **Backend Listing API:**
-  -  (Yeni ilan endpoint'lerinin tanımlandığı yer)
-  -  (İlanları DB'ye yazan mantık)
-  -  (Yayınlama kurallarını uygulayan mantık)
-  -  (Resimleri diske kaydeden mantık)
-- **Backend Testing:**
-  - 
-- **Master Data (File-Based):**
-  -  (Dosyadan marka/model okuyan servis)
-  -  (Admin yönetim arayüzü)
-
-**Areas that need refactoring**:
-- Kullanıcı tarafından talep edilen çok sayıda mimari doküman ( dosyaları) doğrudan  ve  klasörlerinde oluşturulmuştur. Bu dosyalar proje yapısını kalabalıklaştırmaktadır ve proje kodundan ayrı bir yerde tutulabilir.
-
-**key api endpoints**
-- **Master Data:**
-  - 
-  - 
-  - 
-- **Listing Creation:**
-  -  (Draft oluşturur)
-  -  (Resim yükler)
-  -  (İlanı yayınlar)
-  -  (İlan detaylarını getirir)
+- **Portal & Auth Logic:**
+  -  (Portalları  ile yükleyen ana router)
+  -  (Rol bazlı portal erişimini yöneten guard)
+  -  (Kullanıcı ve rol bilgisini tutar)
+- **Country Context Logic:**
+  -  (Backend'de ülke kısıtını uygulayan middleware/dependency)
+  -  (Header'daki Global/Country mod anahtarını içerir)
+- **Upcoming Search Fix:**
+  -  (Hata veren frontend sayfası)
+  -  (Yeni  endpoint'inin ekleneceği yer)
+- **Planning Docs:**
+  -  (Tüm bekleyen işlerin listesi)
+  -  (Son faz için alınan kararlar)
 
 **Critical Info for New Agent**
-- **Kullanıcının Planına Sadık Kal:** Kullanıcı, FAZ-V3 planı aracılığıyla ne istediğini son derece ayrıntılı bir şekilde belirtmektedir. Bu plana harfiyen uyun.
-- **MongoDB Mimarisi:** Backend artık tamamen MongoDB üzerinedir. Tüm veritabanı işlemleri  (async) kütüphanesi ile yapılmalıdır.  veya PostgreSQL ile ilgili hiçbir kod kalmamıştır.
-- **Dosya Tabanlı Ana Veri:** Araç markaları ve modelleri veritabanında DEĞİLDİR. Bu veriler,  dizinindeki JSON dosyalarından okunur. Bu bilinçli bir mimari karardır.
-- **Mevcut Görev:** Öncelikli görev, araç oluşturma sihirbazının frontend tarafını, halihazırda oluşturulmuş olan backend API'lerine bağlayarak FAZ-V3 Aşama 4'ü tamamlamaktır.
+- **Yeni Faz: Sürüm Kapatma.** Artık yeni özellik veya büyük mimari değişiklikler yapılmayacak. Tek odak,  dosyasında listelenen **Release Blocker**'ları (Public Search ve Moderasyon) temizlemektir.
+- **Portal Mimarisi Esastır.** Artık tüm frontend yapısı 3 portal (Public, Dealer, Backoffice) üzerine kuruludur. Değişiklikler bu izolasyonu bozmamalıdır.
+- **Kullanıcı Planına Sadık Kal.** Kullanıcı, FAZ-FINAL-01 için çok net adımlar ve kabul kriterleri sunmuştur. Bu plana harfiyen uyun. Özellikle  parametresi zorunluluğu ve  sonrası yayınlama gibi kararlar kesindir.
+- **Veritabanı MongoDB'dir.** Tüm veritabanı işlemleri  (async) kullanmalıdır. SQLAlchemy/PostgreSQL ile ilgili hiçbir kod kalmamıştır.
 
 **documents and test reports created in this job**
-- **/app/architecture/ & /app/ops/:** FAZ-V3 planının tüm aşamaları için onlarca  mimari ve planlama dokümanı oluşturuldu.
-- **/app/backend/tests/test_stage4_vehicle_listing_e2e.py:** Araç ilanı oluşturma akışını test eden yeni bir backend test dosyası.
+Bu oturumda, özellikle  ve  altında proje planlaması, denetimi ve mimari kararlarla ilgili çok sayıda  dokümanı oluşturulmuştur. En önemlileri:
+-  (Portal ayrım fazının kapanış raporu)
+-  (v1.0.0 için yapılacak tüm işleri içeren öncelikli backlog)
+-  (Son sprint için kilitlenmiş kararlar)
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **User:** Asks to proceed with Phase 4 (Wizard Publish).
-- **Agent:** Proposes a plan for Phase 4, including a decision to use local filesystem for media storage.
-- **User:** Agrees with the local storage decision and provides an extremely detailed execution plan for Phase 4.
-- **Agent:** Implements the backend part of Phase 4 and confirms completion. Starts working on the frontend.
-- **Agent:** Finishes the frontend implementation for Phase 3 and Phase 4.
-- **User:** Provides a detailed task list for the next phase (Phase 4: Wizard Publish).
-- **User:** Approves the plan to implement Phase 4.
-- **User:** Asks the agent to continue until the task is finished.
-- **User:** Corrects the agent's assumption about the Elektrikli (Electric) category. It's a , not a segment. Instructs the agent to update documents and proceed.
-- **Agent:** Confirms understanding and starts implementing the Vehicle Wizard based on the corrected logic.
+- User provided a detailed plan for a final quality check sprint (FAZ-UI-CHECK-02).
+- Agent created numerous audit/checklist documents based on the plan.
+- Agent identified and fixed a critical security gap ( was public).
+- Agent identified that the Public Search page was broken due to a backend endpoint mismatch.
+- User and Agent agreed to classify the Search issue as a Release Blocker and move it to a final fix sprint, instead of doing a temporary fix.
+- User provided a detailed plan to add more granularity to the Moderation workflow requirements.
+- Agent updated the planning documents with the new moderation requirements.
+- User provided a highly detailed plan to architecturally split the application into three portals (Public/Individual, Dealer, Backoffice).
+- Agent confirmed understanding and broke down the portal split plan into actionable steps for CRA (Create React App).
+- Agent implemented and successfully tested the Portal Split v1, including positive tests for the new Dealer portal. The user has given the go-ahead to start the final sprint to fix release blockers.
 
 **Project Health Check:**
-- **Working:** Core platform, admin/user authentication, country management, vehicle category/menu structure, file-based master data management, and the UI for the vehicle creation wizard.
-- **In Progress:** The final step of the vehicle creation wizard, which involves connecting the frontend publish button to the backend APIs to create a real listing with images.
+- **Broken**:
+    - **Public Search:** The main search functionality is completely broken due to a backend endpoint mismatch. **(P0 Release Blocker)**.
+- **Mocked / Placeholder**:
+    - **Moderation Workflow**: No real state machine or audit logging exists.
+    - **Dealer, Support, Analytics Panels**: Most data is placeholder.
 
 **3rd Party Integrations**
 - **FastAPI**: Backend framework.
 - **React**: Frontend library.
 - **MongoDB**: Primary database (via  async driver).
-- **Pillow**: Python imaging library (kullanıcı tarafından istendi).
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. Agent, backend API'leri doğrulamak için ============================= test session starts ==============================
+- **Testing agent used after significant changes**: YES, the screenshot tool was used extensively to verify UI changes after the Admin IA, Country Context, and Portal Split implementations.
+- **Test files created**: No new ============================= test session starts ==============================
 platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0
 rootdir: /app
 plugins: locust-2.43.3, asyncio-1.3.0, anyio-4.12.1
@@ -270,15 +255,9 @@ backend/app/vehicle_media_storage.py:3
 ERROR backend/scripts/seed_mobile_test.py
 ERROR backend/scripts/test_billing_integration.py
 !!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
-======================== 4 warnings, 2 errors in 2.02s ========================= kullanarak bir test dosyası yazdı. Frontend akışları için Playwright tabanlı  kullanıldı.
-- **Troubleshoot agent used after agent stuck in loop:** NO. The major blocker (DB issue) was solved without it.
-- **Test files created:**
-  - 
-- **Known regressions:** None currently. Previous major regressions (login failure, frontend crash) have been resolved.
+======================== 4 warnings, 2 errors in 1.88s ========================= or Playwright test *files* were created, but numerous  documents for manual test plans and acceptance criteria were generated in  and .
 
 **Credentials to test flow:**
-- **User:** 
-- **Password:** 
-
-**What agent forgot to execute**
-The agent has been diligent in following the user's detailed instructions. A minor lapse was initially misinterpreting the elektrikli category, but this was quickly corrected based on user feedback. The agent also correctly identified and fixed a subtle bug where  was being accessed with the wrong key ( instead of ), which was crucial for getting the E2E flow to work.</analysis>
+- **Admin:**  / 
+- **Dealer:**  / 
+- **Individual User:**  / </analysis>
