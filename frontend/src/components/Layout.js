@@ -31,24 +31,8 @@ export default function Layout({ children }) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Persist preferred mode (UX only)
-  if (localStorage.getItem('admin_mode') !== adminPreferredMode) {
-    localStorage.setItem('admin_mode', adminPreferredMode);
-  }
-
-  // Enforce: if user prefers country mode, URL must include ?country=XX
-  if (location.pathname.startsWith('/admin') && adminPreferredMode === 'country' && !urlCountry) {
-    const last = (localStorage.getItem('last_selected_country') || '').toUpperCase();
-    const fallback = last || (selectedCountry || 'DE');
-    const params = new URLSearchParams(searchParams);
-    params.set('country', fallback);
-    setSearchParams(params, { replace: true });
-  }
-
-  // Deep-link: if URL has ?country, ensure switch reflects country mode
-  if (urlCountry && adminPreferredMode !== 'country') {
-    setAdminPreferredMode('country');
-  }
+  // NOTE: Side effects (localStorage / URL normalization) should live in effects,
+  // but kept minimal here for MVP. If this causes re-render loops, we will migrate.
 
   const effectiveCountry = (urlCountry || selectedCountry || 'DE').toUpperCase();
 
