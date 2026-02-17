@@ -198,7 +198,7 @@ export default function AdminListingsPage() {
               <SelectItem
                 key={opt.value || 'all'}
                 value={opt.value || 'all'}
-                data-testid={`listings-status-option-${opt.value || 'all'}`}
+                data-testid={`listings-status-option-${toTestId(opt.value || 'all')}`}
               >
                 {opt.label}
               </SelectItem>
@@ -221,7 +221,7 @@ export default function AdminListingsPage() {
                 <SelectItem
                   key={value}
                   value={value}
-                  data-testid={`listings-category-option-${value}`}
+                  data-testid={`listings-category-option-${toTestId(value)}`}
                 >
                   {label}
                 </SelectItem>
