@@ -103,13 +103,46 @@ export default function ModerationQueue() {
           },
         });
       }
-      fetchQueue();
-      fetchCount();
+
+      await fetchQueue();
+      await fetchCount();
       setSelectedListing(null);
     } catch (error) {
       console.error('Failed to moderate:', error);
       alert(error.response?.data?.detail || 'Failed to moderate');
     }
+  };
+
+  const openActionDialog = (listingId, actionType) => {
+    setActionDialog({ listingId, actionType });
+    setReason('');
+    setReasonNote('');
+  };
+
+  const submitActionDialog = async () => {
+    if (!actionDialog) return;
+
+    if (actionDialog.actionType === 'reject') {
+      if (!reason) {
+        alert('Reason is required');
+        return;
+      }
+      await handleAction(actionDialog.listingId, 'reject', { reason });
+    }
+
+    if (actionDialog.actionType === 'needs_revision') {
+      if (!reason) {
+        alert('Reason is required');
+        return;
+      }
+      if (reason === 'other' && !reasonNote.trim()) {
+        alert('Reason note is required when reason=other');
+        return;
+      }
+      await handleAction(actionDialog.listingId, 'needs_revision', { reason, reason_note: reason === 'other' ? reasonNote.trim() : undefined });
+    }
+
+    setActionDialog(null);
   };
 
   const viewListingDetail = async (listingId) => {
