@@ -1,0 +1,137 @@
+{
+  "summary": {
+    "tests_run": 19,
+    "tests_passed": 17,
+    "success_rate": "89.5%"
+  },
+  "results": [
+    {
+      "test": "Admin Login",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:17.504656"
+    },
+    {
+      "test": "Get Published Listings",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:17.650484"
+    },
+    {
+      "test": "Create Report (Public)",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:17.789004"
+    },
+    {
+      "test": "Admin Reports List",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:17.900290"
+    },
+    {
+      "test": "Admin Reports with Status Filter",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:18.022760"
+    },
+    {
+      "test": "Admin Reports with Reason Filter",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:18.142435"
+    },
+    {
+      "test": "Admin Reports with Listing ID Filter",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:18.250654"
+    },
+    {
+      "test": "Admin Report Detail",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:18.380291"
+    },
+    {
+      "test": "Report Status Change",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:18.523942"
+    },
+    {
+      "test": "Country Scope Test (DE)",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:18.644712"
+    },
+    {
+      "test": "Invalid Status Transition (should fail)",
+      "status": "FAIL",
+      "details": "Status: 200 (expected 400) - {'ok': True, 'report': {'id': 'e8b44aa3-c1bf-4fc1-ae15-549b1a61c32d', 'status': 'resolved'}}",
+      "timestamp": "2026-02-17T23:33:18.797321"
+    },
+    {
+      "test": "Rate Limit Test 1",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:18.911542"
+    },
+    {
+      "test": "Rate Limit Test 2",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:19.032709"
+    },
+    {
+      "test": "Rate Limit Test 3",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:19.156545"
+    },
+    {
+      "test": "Rate Limit Test 4",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-17T23:33:19.284176"
+    },
+    {
+      "test": "Rate Limit Test 5",
+      "status": "FAIL",
+      "details": "Status: 429 (expected 200) - {'detail': {'code': 'RATE_LIMITED', 'retry_after_seconds': 598}}",
+      "timestamp": "2026-02-17T23:33:19.421181"
+    },
+    {
+      "test": "Rate Limit Test 6",
+      "status": "PASS",
+      "details": "Status: 429",
+      "timestamp": "2026-02-17T23:33:19.555647"
+    },
+    {
+      "test": "Invalid Reason Test (should fail)",
+      "status": "PASS",
+      "details": "Status: 400",
+      "timestamp": "2026-02-17T23:33:19.699825"
+    },
+    {
+      "test": "Other Reason Without Note (should fail)",
+      "status": "PASS",
+      "details": "Status: 400",
+      "timestamp": "2026-02-17T23:33:19.811719"
+    }
+  ],
+  "failures": [
+    {
+      "test": "Invalid Status Transition (should fail)",
+      "status": "FAIL",
+      "details": "Status: 200 (expected 400) - {'ok': True, 'report': {'id': 'e8b44aa3-c1bf-4fc1-ae15-549b1a61c32d', 'status': 'resolved'}}",
+      "timestamp": "2026-02-17T23:33:18.797321"
+    },
+    {
+      "test": "Rate Limit Test 5",
+      "status": "FAIL",
+      "details": "Status: 429 (expected 200) - {'detail': {'code': 'RATE_LIMITED', 'retry_after_seconds': 598}}",
+      "timestamp": "2026-02-17T23:33:19.421181"
+    }
+  ]
+}
