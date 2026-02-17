@@ -140,7 +140,9 @@ export default function Layout({ children }) {
                       {!sidebarCollapsed && (
                         <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
                       )}
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
+                      {!sidebarCollapsed && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
+                      )}
                     </div>
                   ) : (
                     <NavLink
