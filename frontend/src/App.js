@@ -97,105 +97,27 @@ function App() {
                     <Route path="create/vehicle-wizard" element={<WizardContainer />} />
                   </Route>
 
-                  {/* Admin Routes */}
+                  {/* Backoffice Portal (lazy chunk) */}
                   <Route
-                    path="/admin"
+                    path="/admin/*"
                     element={
-                      <ProtectedRoute roles={['super_admin', 'country_admin', 'moderator', 'support', 'finance']}>
-                        <Layout>
-                          <Dashboard />
-                        </Layout>
-                      </ProtectedRoute>
+                      <PortalGate portal={PORTALS.BACKOFFICE} loginPath="/admin/login">
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <BackofficePortalApp />
+                        </Suspense>
+                      </PortalGate>
                     }
                   />
+
+                  {/* Dealer Portal (lazy chunk) */}
                   <Route
-                    path="/admin/users"
+                    path="/dealer/*"
                     element={
-                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <Layout>
-                          <UserManagement />
-                        </Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/feature-flags"
-                    element={
-                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <Layout>
-                          <FeatureFlags />
-                        </Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/countries"
-                    element={
-                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <Layout>
-                          <CountrySettings />
-                        </Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/categories"
-                    element={
-                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <Layout>
-                          <Categories />
-                        </Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/attributes"
-                    element={
-                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <Layout>
-                          <AdminAttributes />
-                        </Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/attributes/options"
-                    element={
-                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <Layout>
-                          <AdminOptions />
-                        </Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/master-data/vehicles"
-                    element={
-                      <ProtectedRoute roles={['super_admin', 'country_admin']}>
-                        <Layout>
-                          <AdminVehicleMDM />
-                        </Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/billing"
-                    element={
-                      <ProtectedRoute roles={['super_admin', 'country_admin', 'dealer']}>
-                        <Layout>
-                          <BillingPage />
-                        </Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/plans"
-                    element={
-                      <ProtectedRoute roles={['super_admin', 'country_admin', 'dealer', 'individual']}>
-                        <Layout>
-                          <PlansPage />
-                        </Layout>
-                      </ProtectedRoute>
+                      <PortalGate portal={PORTALS.DEALER} loginPath="/dealer/login">
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <DealerPortalApp />
+                        </Suspense>
+                      </PortalGate>
                     }
                   />
 
