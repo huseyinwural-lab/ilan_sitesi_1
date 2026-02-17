@@ -18,17 +18,18 @@ import RedirectToCountry from '@/pages/public/RedirectToCountry';
 import LoginPage from '@/pages/Login';
 
 // Admin Pages
-import Layout from '@/components/Layout';
-import Dashboard from '@/pages/Dashboard';
-import UserManagement from '@/pages/Users';
-import FeatureFlags from '@/pages/FeatureFlags';
-import CountrySettings from '@/pages/Countries';
-import Categories from '@/pages/Categories';
-import AdminAttributes from '@/pages/AdminAttributes';
-import AdminOptions from '@/pages/AdminOptions';
-import AdminVehicleMDM from '@/pages/AdminVehicleMDM';
-import BillingPage from '@/pages/admin/Billing';
-import PlansPage from '@/pages/admin/Plans';
+import React, { Suspense, lazy } from 'react';
+
+import PortalGate from '@/shared/auth/PortalGate';
+import { PORTALS } from '@/shared/types/portals';
+
+const BackofficePortalApp = lazy(() => import('@/portals/backoffice/BackofficePortalApp'));
+const DealerPortalApp = lazy(() => import('@/portals/dealer/DealerPortalApp'));
+
+// Login shells (kept simple; same Login component for now)
+import PublicLogin from '@/portals/public/PublicLogin';
+import DealerLogin from '@/portals/dealer/DealerLogin';
+import BackofficeLogin from '@/portals/backoffice/BackofficeLogin';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
