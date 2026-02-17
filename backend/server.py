@@ -469,6 +469,8 @@ async def update_country(country_id: str, data: dict, request: Request, current_
                 "mode": getattr(ctx, "mode", "global"),
                 "country_scope": getattr(ctx, "country", None),
                 "path": str(request.url.path),
+                "previous_status": None,
+                "new_status": None,
             }
         )
     except Exception:
