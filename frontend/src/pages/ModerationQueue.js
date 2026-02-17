@@ -34,7 +34,7 @@ export default function ModerationQueue() {
   const fetchQueue = async () => {
     try {
       const params = new URLSearchParams();
-      params.append('status', 'pending');
+      params.append('status', 'pending_moderation');
       if (countryFilter) params.append('country', countryFilter);
       if (moduleFilter) params.append('module', moduleFilter);
       
