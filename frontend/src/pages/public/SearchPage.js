@@ -85,8 +85,11 @@ export default function SearchPage() {
         const queryParams = new URLSearchParams();
         
         // Map State to API Params
+        const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
+        queryParams.set('country', country);
+
         if (searchState.q) queryParams.set('q', searchState.q);
-        if (searchState.category) queryParams.set('category_slug', searchState.category);
+        if (searchState.category) queryParams.set('category', searchState.category);
         if (searchState.sort) queryParams.set('sort', searchState.sort);
         queryParams.set('page', searchState.page);
         queryParams.set('limit', searchState.limit);
