@@ -1,5 +1,12 @@
 # P1_SECURITY_E2E_EVIDENCE
 
+## Ek Kanıt — Login UI (401/429)
+- Doküman: `/app/ops/P1_LOGIN_UI_E2E_EVIDENCE.md`
+- Public `/login`, Dealer `/dealer/login`, Admin `/admin/login` ekranlarında:
+  - 401 banner + “Şifremi unuttum” doğrulandı
+  - 429 banner + retry-after + “Hesap kilitlendi mi?” doğrulandı
+
+
 ## Amaç
 FAZ-FINAL-02 (P1) güvenlik/yetki audit kapsamı için negatif test kanıt paketi.
 
