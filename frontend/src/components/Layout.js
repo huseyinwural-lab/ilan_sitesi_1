@@ -119,7 +119,7 @@ export default function Layout({ children }) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4">
+        <nav className={`flex-1 overflow-y-auto ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
           <ul className="space-y-1">
             {filteredNavItems.map((item, index) => (
               item.divider ? (
