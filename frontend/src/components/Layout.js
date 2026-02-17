@@ -295,7 +295,11 @@ export default function Layout({ children }) {
           <aside className="fixed left-0 top-0 h-screen w-64 bg-card border-r">
             <div className="flex h-16 items-center justify-between border-b px-6">
               <span className="font-semibold text-lg">Admin Panel</span>
-              <button onClick={() => setSidebarOpen(false)} className="p-1 rounded hover:bg-muted">
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-1 rounded hover:bg-muted"
+                data-testid="mobile-sidebar-close-button"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -311,7 +315,11 @@ export default function Layout({ children }) {
                   ) : (
                     <li key={item.path}>
                       {item.comingSoon || isAdminPathDisabled(item.path) ? (
-                        <div className="sidebar-item opacity-60 cursor-not-allowed" title="Coming soon">
+                        <div
+                          className="sidebar-item opacity-60 cursor-not-allowed"
+                          title="Coming soon"
+                          data-testid={`nav-mobile-${item.label}`}
+                        >
                           <item.icon size={18} />
                           <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
@@ -323,6 +331,7 @@ export default function Layout({ children }) {
                           className={({ isActive }) =>
                             `sidebar-item ${isActive ? 'active' : ''}`
                           }
+                          data-testid={`nav-mobile-${item.label}`}
                         >
                           <item.icon size={18} />
                           {typeof item.label === 'string' ? t(item.label) : item.label}
@@ -434,6 +443,7 @@ export default function Layout({ children }) {
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted ${
                         language === lang ? 'bg-muted' : ''
                       }`}
+                      data-testid={`language-option-${lang}`}
                     >
                       <span className="uppercase font-medium">{lang}</span>
                       <span className="text-muted-foreground">
@@ -467,6 +477,7 @@ export default function Layout({ children }) {
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted rounded"
+                      data-testid="user-menu-logout-button"
                     >
                       <LogOut size={14} />
                       {t('logout')}
