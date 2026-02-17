@@ -73,8 +73,14 @@ function App() {
                   {/* Convenience redirect */}
                   <Route path="/vasita" element={<RedirectToCountry to="/{country}/vasita" />} />
 
-                  <Route path="/auth/login" element={<LoginPage />} />
-                  <Route path="/auth/register" element={<LoginPage />} /> {/* Temporary redirect to login */}
+                  {/* Portal login surfaces */}
+                  <Route path="/login" element={<PublicLogin />} />
+                  <Route path="/dealer/login" element={<DealerLogin />} />
+                  <Route path="/admin/login" element={<BackofficeLogin />} />
+
+                  {/* Back-compat: old auth paths redirect to /login */}
+                  <Route path="/auth/login" element={<Navigate to="/login" replace />} />
+                  <Route path="/auth/register" element={<Navigate to="/login" replace />} />
 
                   {/* User Panel Routes */}
                   <Route
