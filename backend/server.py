@@ -414,7 +414,7 @@ async def toggle_menu_item(item_id: str, data: dict, request: Request, current_u
 
 
 @api_router.get("/categories")
-async def list_categories(request: Request, module: str, current_user=Depends(get_current_user)):
+async def list_categories(request: Request, module: str, current_user=Depends(get_current_user_optional)):
     db = request.app.state.db
     # Country context resolved for enforcement consistency (categories are global in v2)
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
