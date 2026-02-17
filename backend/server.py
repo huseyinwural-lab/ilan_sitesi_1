@@ -187,6 +187,12 @@ async def lifespan(app: FastAPI):
     # Vehicle master data (file-based) preload (fail-fast)
     vehicle_data_dir = get_vehicle_master_dir()
     app.state.vehicle_master_dir = vehicle_data_dir
+
+    # Ensure minimal default master data exists in preview/dev environments
+    # so the API can boot even if /data/vehicle_master is not provisioned yet.
+    from app.vehicle_master_admin_file import ensure_default_master_data
+
+    ensure_default_master_data(vehicle_data_dir)
     app.state.vehicle_master = load_current_master(vehicle_data_dir)
 
     app.state.mongo_client = client
