@@ -677,5 +677,7 @@ async def vehicle_master_rollback_endpoint(payload: dict, request: Request, curr
 
     return {"ok": True, "current": current}
 
+app.include_router(search_router, prefix="/api")
+
 
 app.include_router(api_router)
