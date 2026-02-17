@@ -843,7 +843,7 @@ async def admin_reject_listing(
         db=db,
         listing_id=listing_id,
         current_user=current_user,
-        event_type="reject",
+        event_type="MODERATION_REJECT",
         new_status="rejected",
         reason=reason,
         reason_note=(payload.reason_note or None),
