@@ -90,16 +90,18 @@ class SubscriptionPlanDoc(BaseModel):
 # Ops: Reports
 # ===============
 
-ReportStatus = Literal["open", "in_review", "closed"]
+ReportStatus = Literal["open", "in_review", "resolved", "dismissed"]
 
 
 class ReportDoc(BaseModel):
     id: str
     listing_id: str
+    reporter_user_id: Optional[str] = None
     country_code: str
     status: ReportStatus
     reason: str
-    note: Optional[str] = None
+    reason_note: Optional[str] = None
+    handled_by_admin_id: Optional[str] = None
     created_at: str
     updated_at: Optional[str] = None
 
