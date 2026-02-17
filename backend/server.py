@@ -495,16 +495,6 @@ async def update_user(
 
     return {"ok": True}
 
-        raise HTTPException(status_code=401, detail="User not found or inactive")
-
-    token_data = {"sub": user["id"], "email": user["email"], "role": user.get("role")}
-
-    return TokenResponse(
-        access_token=create_access_token(token_data),
-        refresh_token=create_refresh_token(token_data),
-        user=_user_to_response(user),
-    )
-
 
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_me(current_user=Depends(get_current_user)):
