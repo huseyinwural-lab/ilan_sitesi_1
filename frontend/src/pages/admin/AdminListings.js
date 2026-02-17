@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { EyeOff, Trash2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -29,7 +28,6 @@ const statusOptions = [
 ];
 
 export default function AdminListingsPage() {
-  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const urlCountry = (searchParams.get('country') || '').toUpperCase();
 
