@@ -254,83 +254,85 @@ export default function AdminListingsPage() {
       </div>
 
       <div className="rounded-md border bg-card overflow-hidden" data-testid="listings-table">
-        <table className="w-full text-sm">
-          <thead className="bg-muted">
-            <tr>
-              <th className="text-left p-3">İlan</th>
-              <th className="text-left p-3">Sahip</th>
-              <th className="text-left p-3">Ülke / Kategori</th>
-              <th className="text-left p-3">Durum</th>
-              <th className="text-right p-3">Aksiyon</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="p-6 text-center" data-testid="listings-loading-state">Yükleniyor…</td>
-              </tr>
-            ) : items.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="p-6 text-center text-muted-foreground" data-testid="listings-empty-state">
-                  Kayıt bulunamadı
-                </td>
-              </tr>
-            ) : (
-              items.map((listing) => (
-                <tr key={listing.id} className="border-t" data-testid={`listing-row-${listing.id}`}>
-                  <td className="p-3">
-                    <div className="font-medium" data-testid={`listing-title-${listing.id}`}>{listing.title}</div>
-                    <div className="text-xs text-muted-foreground" data-testid={`listing-id-${listing.id}`}>{listing.id}</div>
-                    <div className="text-xs text-muted-foreground" data-testid={`listing-price-${listing.id}`}>
-                      {listing.price ? `${listing.price.toLocaleString()} ${listing.currency || 'EUR'}` : '—'}
-                    </div>
-                  </td>
-                  <td className="p-3" data-testid={`listing-owner-${listing.id}`}>
-                    <div className="font-medium">{listing.owner_email || '—'}</div>
-                    <div className="text-xs text-muted-foreground">{listing.owner_role || 'unknown'}</div>
-                  </td>
-                  <td className="p-3" data-testid={`listing-country-${listing.id}`}>
-                    <div className="font-medium">{listing.country || '—'}</div>
-                    <div className="text-xs text-muted-foreground" data-testid={`listing-category-${listing.id}`}>
-                      {resolveCategoryLabel(listing.category_key)}
-                    </div>
-                  </td>
-                  <td className="p-3" data-testid={`listing-status-${listing.id}`}>
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[listing.status] || 'bg-muted text-foreground'}`}>
-                      {listing.status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-right">
-                    <div className="inline-flex gap-2">
-                      <button
-                        onClick={() => openActionDialog(listing, 'force_unpublish')}
-                        className="h-8 px-2.5 rounded-md border text-xs text-orange-700 hover:bg-orange-50 disabled:opacity-50"
-                        disabled={listing.status !== 'published'}
-                        data-testid={`listing-force-unpublish-${listing.id}`}
-                      >
-                        <span className="inline-flex items-center gap-1">
-                          <EyeOff size={14} />
-                          Yayından Kaldır
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => openActionDialog(listing, 'soft_delete')}
-                        className="h-8 px-2.5 rounded-md border text-xs text-rose-600 hover:bg-rose-50 disabled:opacity-50"
-                        disabled={listing.status === 'archived'}
-                        data-testid={`listing-soft-delete-${listing.id}`}
-                      >
-                        <span className="inline-flex items-center gap-1">
-                          <Trash2 size={14} />
-                          Soft Delete
-                        </span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <div className="hidden lg:grid grid-cols-[2fr_1.2fr_1.2fr_0.8fr_1fr] gap-4 bg-muted px-4 py-3 text-sm font-medium">
+          <div>İlan</div>
+          <div>Sahip</div>
+          <div>Ülke / Kategori</div>
+          <div>Durum</div>
+          <div className="text-right">Aksiyon</div>
+        </div>
+
+        <div className="divide-y">
+          {loading ? (
+            <div className="p-6 text-center" data-testid="listings-loading-state">Yükleniyor…</div>
+          ) : items.length === 0 ? (
+            <div className="p-6 text-center text-muted-foreground" data-testid="listings-empty-state">
+              Kayıt bulunamadı
+            </div>
+          ) : (
+            items.map((listing) => (
+              <div
+                key={listing.id}
+                className="grid grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-[2fr_1.2fr_1.2fr_0.8fr_1fr]"
+                data-testid={`listing-row-${listing.id}`}
+              >
+                <div>
+                  <div className="text-xs uppercase text-muted-foreground lg:hidden">İlan</div>
+                  <div className="font-medium" data-testid={`listing-title-${listing.id}`}>{listing.title}</div>
+                  <div className="text-xs text-muted-foreground" data-testid={`listing-id-${listing.id}`}>{listing.id}</div>
+                  <div className="text-xs text-muted-foreground" data-testid={`listing-price-${listing.id}`}>
+                    {listing.price ? `${listing.price.toLocaleString()} ${listing.currency || 'EUR'}` : '—'}
+                  </div>
+                </div>
+                <div data-testid={`listing-owner-${listing.id}`}>
+                  <div className="text-xs uppercase text-muted-foreground lg:hidden">Sahip</div>
+                  <div className="font-medium">{listing.owner_email || '—'}</div>
+                  <div className="text-xs text-muted-foreground">{listing.owner_role || 'unknown'}</div>
+                </div>
+                <div data-testid={`listing-country-${listing.id}`}>
+                  <div className="text-xs uppercase text-muted-foreground lg:hidden">Ülke / Kategori</div>
+                  <div className="font-medium">{listing.country || '—'}</div>
+                  <div className="text-xs text-muted-foreground" data-testid={`listing-category-${listing.id}`}>
+                    {resolveCategoryLabel(listing.category_key)}
+                  </div>
+                </div>
+                <div data-testid={`listing-status-${listing.id}`}>
+                  <div className="text-xs uppercase text-muted-foreground lg:hidden">Durum</div>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[listing.status] || 'bg-muted text-foreground'}`}>
+                    {listing.status}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-2 lg:items-end">
+                  <div className="text-xs uppercase text-muted-foreground lg:hidden">Aksiyon</div>
+                  <div className="inline-flex flex-wrap gap-2 lg:justify-end">
+                    <button
+                      onClick={() => openActionDialog(listing, 'force_unpublish')}
+                      className="h-8 px-2.5 rounded-md border text-xs text-orange-700 hover:bg-orange-50 disabled:opacity-50"
+                      disabled={listing.status !== 'published'}
+                      data-testid={`listing-force-unpublish-${listing.id}`}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        <EyeOff size={14} />
+                        Yayından Kaldır
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => openActionDialog(listing, 'soft_delete')}
+                      className="h-8 px-2.5 rounded-md border text-xs text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                      disabled={listing.status === 'archived'}
+                      data-testid={`listing-soft-delete-${listing.id}`}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        <Trash2 size={14} />
+                        Soft Delete
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       <div className="flex items-center justify-end gap-2">
