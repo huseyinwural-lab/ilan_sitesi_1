@@ -13,6 +13,30 @@ Bu doküman mevcut repo baz alınarak UI + backend erişim matrisini çıkarır.
 - dealer
 - individual
 
+## Portal eligibility (v1)
+Her rol için `allowed_portals` ve `default_home`:
+- super_admin:
+  - allowed_portals: backoffice
+  - default_home: /admin
+- country_admin:
+  - allowed_portals: backoffice
+  - default_home: /admin
+- moderator:
+  - allowed_portals: backoffice
+  - default_home: /admin
+- finance / finance_admin:
+  - allowed_portals: backoffice
+  - default_home: /admin
+- support / support_admin:
+  - allowed_portals: backoffice
+  - default_home: /admin
+- dealer:
+  - allowed_portals: dealer
+  - default_home: /dealer
+- individual:
+  - allowed_portals: public/individual
+  - default_home: /account
+
 ## UI Erişim (frontend ProtectedRoute)
 ### Admin
 - `/admin` roles: `super_admin, country_admin, moderator, support, finance`
