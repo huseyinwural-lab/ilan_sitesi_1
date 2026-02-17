@@ -335,6 +335,26 @@ api_router = APIRouter(prefix="/api")
 REJECT_REASONS_V1 = {"duplicate", "spam", "illegal", "wrong_category"}
 NEEDS_REVISION_REASONS_V1 = {"missing_photos", "insufficient_description", "wrong_price", "other"}
 
+# Report reasons (v1)
+REPORT_REASONS_V1 = {
+    "spam",
+    "scam_fraud",
+    "prohibited_item",
+    "wrong_category",
+    "harassment",
+    "copyright",
+    "other",
+}
+
+REPORT_STATUS_TRANSITIONS = {
+    "open": {"in_review"},
+    "in_review": {"resolved", "dismissed"},
+}
+
+REPORT_RATE_LIMIT_WINDOW_SECONDS = 10 * 60
+REPORT_RATE_LIMIT_MAX_ATTEMPTS = 5
+_report_submit_attempts: Dict[str, List[float]] = {}
+
 ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
 
 
