@@ -56,6 +56,16 @@ FAILED_LOGIN_BLOCK_SECONDS = 15 * 60  # 15 min block
 
 _failed_login_attempts: Dict[str, List[float]] = {}
 _failed_login_blocked_until: Dict[str, float] = {}
+
+# Dealer Application reasons (v1)
+DEALER_APP_REJECT_REASONS_V1 = {
+    "incomplete_documents",
+    "invalid_company_info",
+    "duplicate_application",
+    "compliance_issue",
+    "other",
+}
+
 _failed_login_block_audited: Dict[str, bool] = {}
 
 
