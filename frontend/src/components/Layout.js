@@ -24,6 +24,15 @@ export default function Layout({ children }) {
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  // If user removed ?country while in country-mode UX expectation is redirect.
+  // Here, country-mode is defined by the mode switch; so we keep it deterministic by
+  // restoring last_selected when user navigates to an admin page that expects it.
+  // (MVP: if URL has no country, we are in global mode.)
+  // Keep CountryContext in sync for UX (flags etc.)
+  if (isCountryMode && urlCountry && selectedCountry !== urlCountry) {
+    setSelectedCountry(urlCountry);
+  }
+
   // URL is source of truth (Admin Country Context v2)
   const setMode = (nextMode) => {
     const params = new URLSearchParams(searchParams);
