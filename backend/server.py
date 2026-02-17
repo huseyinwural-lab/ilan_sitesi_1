@@ -2337,8 +2337,9 @@ async def get_vehicle_detail(listing_id: str, request: Request):
         "location": {"city": "", "country": listing.get("country")},
         "description": "",
         "seller": {"name": "", "is_verified": False},
-        "contact_option_phone": False,
-        "contact_option_message": True,
+        "contact_option_phone": listing.get("contact_option_phone", False),
+        "contact_option_message": listing.get("contact_option_message", True),
+        "contact": {"phone_protected": not listing.get("contact_option_phone", False)},
     }
 
 
