@@ -6,7 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { 
   LayoutDashboard, Users, Globe, Flag, Clock, Settings,
   LogOut, Menu, X, Sun, Moon, ChevronDown, FolderTree, Settings2, MenuSquare,
-  Building, Star, ShieldCheck, FileText, Percent, Database, Car
+  Building, Star, ShieldCheck, FileText, Percent, Database, Car, TrendingUp, Activity
 } from 'lucide-react';
 import { useState } from 'react';
 
