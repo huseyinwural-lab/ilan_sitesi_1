@@ -289,14 +289,18 @@ export default function ModerationQueue() {
                     <CheckCircle size={16} />
                   </button>
                   <button
-                    onClick={() => {
-                      const reason = prompt('Enter reject reason:');
-                      if (reason) handleAction(listing.id, 'reject', reason);
-                    }}
+                    onClick={() => openActionDialog(listing.id, 'reject')}
                     className="p-2 rounded-md border text-rose-600 hover:bg-rose-50"
                     title="Reject"
                   >
                     <XCircle size={16} />
+                  </button>
+                  <button
+                    onClick={() => openActionDialog(listing.id, 'needs_revision')}
+                    className="p-2 rounded-md border text-amber-600 hover:bg-amber-50"
+                    title="Needs Revision"
+                  >
+                    <AlertTriangle size={16} />
                   </button>
                 </div>
               </div>
