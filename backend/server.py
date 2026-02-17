@@ -320,7 +320,10 @@ async def list_users(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
     query: Dict = {}
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        query["country_code"] = ctx.country
     if role:
         query["role"] = role
     if search:
