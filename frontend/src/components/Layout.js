@@ -9,6 +9,7 @@ import {
   Building, Star, ShieldCheck, FileText, Percent, Database, Car, TrendingUp, Activity
 } from 'lucide-react';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
+import { Switch } from '@/components/ui/switch';
 
 import { useState } from 'react';
 
