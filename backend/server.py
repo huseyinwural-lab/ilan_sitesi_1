@@ -355,10 +355,6 @@ async def login(credentials: UserLogin, request: Request):
                 "resource_id": None,
                 "email": email,
 
-    # successful login: reset failed-login counters
-    _failed_login_attempts.pop(rl_key, None)
-    _failed_login_blocked_until.pop(rl_key, None)
-    _failed_login_block_audited.pop(rl_key, None)
 
                 "ip_address": ip_address,
                 "user_agent": user_agent,
