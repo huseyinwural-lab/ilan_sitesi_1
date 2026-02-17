@@ -24,6 +24,9 @@ export default function ModerationQueue() {
   const [moduleFilter, setModuleFilter] = useState('');
   const [selectedListing, setSelectedListing] = useState(null);
   const [pendingCount, setPendingCount] = useState(0);
+  const [actionDialog, setActionDialog] = useState(null); // { listingId, actionType }
+  const [reason, setReason] = useState('');
+  const [reasonNote, setReasonNote] = useState('');
   const { t, getTranslated, language } = useLanguage();
 
   useEffect(() => {
