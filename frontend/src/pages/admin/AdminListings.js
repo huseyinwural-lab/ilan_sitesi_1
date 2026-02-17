@@ -2,6 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { EyeOff, Trash2 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -46,6 +53,9 @@ export default function AdminListingsPage() {
   const [actionDialog, setActionDialog] = useState(null); // { listing, action }
   const [actionReason, setActionReason] = useState('');
   const [actionNote, setActionNote] = useState('');
+
+  const statusValue = status || 'all';
+  const categoryValue = categoryId || 'all';
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
