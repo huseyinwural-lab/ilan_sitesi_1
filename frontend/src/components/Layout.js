@@ -140,7 +140,7 @@ export default function Layout({ children }) {
     // İlan & Moderasyon
     { divider: true, label: 'İlan & Moderasyon' },
     { path: '/admin/moderation', icon: ShieldCheck, label: 'Moderation Queue', roles: ['super_admin', 'country_admin', 'moderator'] },
-    { path: '/admin/listings', icon: FolderTree, label: 'İlanlar', comingSoon: true, roles: ['super_admin', 'country_admin', 'moderator'] },
+    { path: '/admin/listings', icon: FolderTree, label: 'İlanlar', roles: ['super_admin', 'country_admin', 'moderator'] },
     { path: '/admin/reports', icon: Flag, label: 'Şikayetler', comingSoon: true, roles: ['super_admin', 'country_admin', 'moderator'] },
 
     // Katalog & Yapılandırma
@@ -192,6 +192,7 @@ export default function Layout({ children }) {
       '/admin/plans',
       '/admin/billing',
       '/admin/moderation',
+      '/admin/listings',
       '/admin/dealers',
       '/admin/dealer-applications',
 
