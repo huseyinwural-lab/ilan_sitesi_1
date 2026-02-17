@@ -22,8 +22,9 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      navigate('/');
+      const u = await login(email, password);
+      const { defaultHomeForRole } = await import('@/shared/types/portals');
+      navigate(defaultHomeForRole(u?.role));
     } catch (err) {
       setError(err.response?.data?.detail || t('login_error'));
     } finally {
