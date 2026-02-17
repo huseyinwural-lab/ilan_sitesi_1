@@ -70,6 +70,35 @@ export default function AuditLogs() {
   };
 
   return (
+    <div className="space-y-6" data-testid="audit-logs-page">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">{t('audit_logs')}</h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          System activity and change history
+        </p>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
+        <select
+          value={actionFilter}
+          onChange={(e) => { setActionFilter(e.target.value); setPage(0); }}
+          className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="audit-action-filter"
+        >
+          <option value="">All Actions</option>
+          <option value="CREATE">CREATE</option>
+          <option value="UPDATE">UPDATE</option>
+          <option value="DELETE">DELETE</option>
+          <option value="LOGIN">LOGIN</option>
+          <option value="TOGGLE">TOGGLE</option>
+          <option value="SUSPEND">SUSPEND</option>
+          <option value="ACTIVATE">ACTIVATE</option>
+          <option value="APPROVE">APPROVE</option>
+          <option value="REJECT">REJECT</option>
+          <option value="NEEDS_REVISION">NEEDS_REVISION</option>
+        </select>
 
         <select
           value={eventTypeFilter}
@@ -85,6 +114,20 @@ export default function AuditLogs() {
           <option value="MODERATION_APPROVE">MODERATION_APPROVE</option>
           <option value="MODERATION_REJECT">MODERATION_REJECT</option>
           <option value="MODERATION_NEEDS_REVISION">MODERATION_NEEDS_REVISION</option>
+        </select>
+
+        <select
+          value={resourceFilter}
+          onChange={(e) => { setResourceFilter(e.target.value); setPage(0); }}
+          className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="audit-resource-filter"
+        >
+          <option value="">All Resources</option>
+          <option value="user">User</option>
+          <option value="feature_flag">Feature Flag</option>
+          <option value="country">Country</option>
+          <option value="listing">Listing</option>
+          <option value="auth">Auth</option>
         </select>
 
         <select
@@ -123,6 +166,7 @@ export default function AuditLogs() {
           className="h-9 px-3 rounded-md border bg-background text-sm"
           data-testid="audit-date-end"
         />
+      </div>
 
     <div className="space-y-6" data-testid="audit-logs-page">
       {/* Header */}
