@@ -50,6 +50,7 @@ export default function SearchPage() {
   const [error, setError] = useState(null);
   const [data, setData] = useState({ items: [], facets: {}, pagination: {} });
   const [facetMeta, setFacetMeta] = useState({}); // To store types/labels
+  const facetsEnabled = false; // Mongo search MVP: facets disabled
   const [categories, setCategories] = useState([]); // Flat list of categories
 
   // Initial Bootstrap: Fetch Categories (vehicle only for now)
