@@ -731,6 +731,10 @@ async def admin_set_dealer_status(
 
     prev_status = dealer.get("dealer_status", "active")
 
+    # Normalize missing field
+    if "dealer_status" not in dealer:
+        await db.users.update_one({"id": dealer_id}, {"$set": {"dealer_status": prev_status}})
+
     audit_id = str(uuid.uuid4())
     audit_doc = {
         "id": audit_id,
