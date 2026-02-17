@@ -777,8 +777,8 @@ async def submit_vehicle_listing(listing_id: str, request: Request, current_user
         raise HTTPException(status_code=404, detail="Listing not found")
     if listing.get("created_by") != current_user.get("id"):
         raise HTTPException(status_code=403, detail="Forbidden")
-    if listing.get("status") != "draft":
-        raise HTTPException(status_code=400, detail="Listing not draft")
+    if listing.get("status") not in ["pending_moderation", "needs_revision"]:
+        raise HTTPException(status_code=400, detail="Listing not pending_moderation/needs_revision")
 
     errs = validate_publish(listing, request.app.state.vehicle_master)
     if errs:
