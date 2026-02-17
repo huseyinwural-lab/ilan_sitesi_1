@@ -514,7 +514,11 @@ async def public_search_v2(
     }
 
     if q:
-        query["title"] = {"$regex": q, "$options": "i"}
+        query["$or"] = [
+            {"title": {"$regex": q, "$options": "i"}},
+            {"vehicle.make_key": {"$regex": q, "$options": "i"}},
+            {"vehicle.model_key": {"$regex": q, "$options": "i"}},
+        ]
 
     if category:
         # category value comes from SearchPage's `category` URL param (slug)
