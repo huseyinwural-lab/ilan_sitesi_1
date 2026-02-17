@@ -17,12 +17,15 @@ class TestFAZFinal02SecurityAudit:
     
     def __init__(self):
         # Read base URL from frontend/.env
-        with open('/app/frontend/.env', 'r') as f:
-            for line in f:
-                if line.startswith('REACT_APP_BACKEND_URL='):
-                    self.base_url = line.split('=', 1)[1].strip()
-                    break
-        else:
+        try:
+            with open('/app/frontend/.env', 'r') as f:
+                for line in f:
+                    if line.startswith('REACT_APP_BACKEND_URL='):
+                        self.base_url = line.split('=', 1)[1].strip()
+                        break
+                else:
+                    self.base_url = "https://listing-portal-12.preview.emergentagent.com"
+        except FileNotFoundError:
             self.base_url = "https://listing-portal-12.preview.emergentagent.com"
         
         self.api_url = f"{self.base_url}/api"
