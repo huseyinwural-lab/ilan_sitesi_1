@@ -521,8 +521,11 @@ async def public_search_v2(
         ]
 
     if category:
-        # category value comes from SearchPage's `category` URL param (slug)
-        # We store `category_key` as category id for vehicle listings, so we map slug -> id.
+        # category comes from URL as slug (e.g. "otomobil").
+        # In current Stage-4 vehicle drafts, `category_key` is stored as the slug.
+        # For safety, also accept seeded category ids if any legacy data exists.
+        keys = [category]
+
         cat = await db.categories.find_one(
             {
                 "module": "vehicle",
@@ -532,13 +535,12 @@ async def public_search_v2(
                     {"slug.fr": category},
                 ],
             },
-            {"_id": 0},
+            {"_id": 0, "id": 1},
         )
-        if cat:
-            query["category_key"] = cat["id"]
-        else:
-            # if unknown category slug, force empty result set deterministically
-            query["category_key"] = "__none__"
+        if cat and cat.get("id"):
+            keys.append(cat["id"])
+
+        query["category_key"] = {"$in": keys}
 
     # Price filters: stored as attributes.price_eur
     if price_min is not None or price_max is not None:
