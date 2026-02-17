@@ -55,6 +55,13 @@ const DetailPage = () => {
         return r.json();
       })
       .then((data) => {
+        if (data) {
+          data.contact = data.contact || { phone_protected: false };
+          data.seller = data.seller || {};
+          data.location = data.location || {};
+          data.attributes = data.attributes || {};
+          data.media = data.media || [];
+        }
         setListing(data);
       })
       .catch(() => {
