@@ -481,7 +481,7 @@ async def update_country(country_id: str, data: dict, request: Request, current_
 @api_router.get("/v2/search")
 async def public_search_v2(
     request: Request,
-    country: str,
+    country: str | None = None,
     q: Optional[str] = None,
     category: Optional[str] = None,
     sort: str = "date_desc",
