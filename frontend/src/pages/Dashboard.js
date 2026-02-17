@@ -121,7 +121,9 @@ export default function Dashboard() {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${API}/dashboard/stats`);
+      const country = new URLSearchParams(window.location.search).get('country');
+      const qs = country ? `?country=${encodeURIComponent(country)}` : '';
+      const response = await axios.get(`${API}/dashboard/stats${qs}`);
       setStats(response.data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
