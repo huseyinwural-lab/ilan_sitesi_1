@@ -367,7 +367,7 @@ async def login(credentials: UserLogin, request: Request):
         attempts.append(now)
         _failed_login_attempts[rl_key] = attempts
 
-        if len(attempts) >= FAILED_LOGIN_MAX_ATTEMPTS:
+        if len(attempts) > FAILED_LOGIN_MAX_ATTEMPTS:
             _failed_login_blocked_until[rl_key] = now + FAILED_LOGIN_BLOCK_SECONDS
             _failed_login_block_audited[rl_key] = False
 
