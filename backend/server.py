@@ -783,9 +783,10 @@ async def submit_vehicle_listing(listing_id: str, request: Request, current_user
     errs = validate_publish(listing, request.app.state.vehicle_master)
     if errs:
         # return normalized 422 payload for FE
-        raise HTTPException(status_code=422, detail={"id": listing_id, "status": "draft", "validation_errors": errs, "next_actions": ["fix_form", "upload_media"]})
+        raise HTTPException(status_code=422, detail={"id": listing_id, "status": listing.get("status"), "validation_errors": errs, "next_actions": ["fix_form", "upload_media"]})
 
-    listing = await set_vehicle_status(db, listing_id, "published")
+    # If publish guard passes, listing is ready for moderation queue
+    listing = await set_vehicle_status(db, listing_id, "pending_moderation")
 
     # simplistic slug
     v = listing.get("vehicle") or {}
