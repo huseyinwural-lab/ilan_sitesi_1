@@ -666,8 +666,18 @@ async def _moderation_transition(
         "id": audit_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "event_type": event_type,
-        # keep `action` for existing AuditLogs UI
-        "action": event_type.upper(),
+        # action is for Backoffice AuditLogs UI compatibility
+        if event_type.startswith("MODERATION_"):
+            action_map = {
+                "MODERATION_APPROVE": "APPROVE",
+                "MODERATION_REJECT": "REJECT",
+                "MODERATION_NEEDS_REVISION": "NEEDS_REVISION",
+            }
+            action_val = action_map.get(event_type, event_type)
+        else:
+            action_val = event_type
+
+        "action": action_val,
         "listing_id": listing_id,
         "admin_user_id": current_user.get("id"),
         "user_id": current_user.get("id"),
