@@ -1177,3 +1177,69 @@
 ### Agent Communication:
 - **Agent**: testing
 - **Message**: Stage-4 frontend E2E re-run reveals CRITICAL AUTHENTICATION REGRESSION. While the UI structure is correct (all 6 segments present, elektrikli correctly absent), the wizard cannot progress beyond Step 1 due to 401 authentication errors when creating drafts. This appears to be a regression from the previous working state. The authentication token management between login and wizard context needs investigation. Cannot test positive/negative publish flows until authentication is fixed.
+
+## FAZ-FINAL-01 P0 Backend Regression Tests (Feb 17, 2026) - ALL PASSED
+
+### Test Flow Executed:
+**Base URL**: https://listing-portal-12.preview.emergentagent.com/api
+**Credentials**: admin@platform.com / Admin123! ✅ WORKING
+
+### Critical Findings:
+
+#### ✅ ALL P0 REQUIREMENTS VERIFIED (100% SUCCESS):
+
+**1. Public Search v2 API:**
+- ✅ GET /api/v2/search without country → HTTP 400 with detail "country is required"
+- ✅ GET /api/v2/search?country=DE&limit=5 → HTTP 200 with keys: items, facets, facet_meta, pagination
+- ✅ GET /api/v2/search?country=DE&q=bmw → HTTP 200 with BMW results (4 listings found)
+- ✅ GET /api/v2/search?country=DE&category=otomobil → HTTP 200 with category filtering
+
+**2. Categories Public Access:**
+- ✅ GET /api/categories?module=vehicle WITHOUT auth → HTTP 200 returns 7 categories
+- ✅ No authentication required for categories endpoint
+
+**3. Moderation Queue + Actions (Admin):**
+- ✅ Admin login successful → access_token obtained
+- ✅ GET /api/admin/moderation/queue/count → HTTP 200 with count key (count: 0)
+- ✅ GET /api/admin/moderation/queue?status=pending_moderation&limit=5 → HTTP 200 returns list
+- ✅ POST /api/admin/listings/{id}/reject with invalid reason → HTTP 400 "Invalid reason"
+- ✅ POST /api/admin/listings/{id}/needs_revision with reason=other but no reason_note → HTTP 400 "reason_note is required when reason=other"
+
+**4. Audit Logs Endpoint:**
+- ✅ GET /api/audit-logs?limit=5 → HTTP 200 returns list with 5 entries
+- ✅ Latest moderation audit rows contain ALL required fields:
+  - event_type ✅ (approve, reject, needs_revision)
+  - action ✅ (APPROVE, REJECT, NEEDS_REVISION)
+  - listing_id ✅
+  - admin_user_id ✅
+  - role ✅ (super_admin)
+  - country_code ✅ (DE)
+  - country_scope ✅ (["*"])
+  - previous_status ✅ (pending_moderation)
+  - new_status ✅ (published, rejected, needs_revision)
+  - created_at ✅
+
+### Network Evidence Summary:
+- **Search API**: Returns proper JSON structure with items array, facets object, facet_meta object, pagination object
+- **Categories API**: Returns 7 vehicle categories without authentication
+- **Moderation API**: Proper RBAC enforcement and validation error handling
+- **Audit Logs**: Complete audit trail with all required fields for compliance
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (9/9 core requirements verified)
+- **Public Search v2**: ✅ FULLY WORKING (country validation, filtering, pagination)
+- **Categories Public Access**: ✅ WORKING (no auth required)
+- **Moderation Queue**: ✅ WORKING (count, list, validation)
+- **Moderation Actions**: ✅ WORKING (proper validation errors)
+- **Audit Logs**: ✅ WORKING (complete audit trail with all required fields)
+
+### Final Status:
+- **FAZ-FINAL-01 P0 Release Blockers**: ✅ ALL PASSED
+- **Backend APIs**: ✅ FULLY OPERATIONAL
+- **Validation Logic**: ✅ WORKING (proper error handling)
+- **Audit Compliance**: ✅ WORKING (complete audit trail)
+- **Authentication**: ✅ WORKING (admin login successful)
+
+### Agent Communication:
+- **Agent**: testing
+- **Message**: FAZ-FINAL-01 P0 backend regression tests SUCCESSFULLY COMPLETED. All 9 core requirements verified and passing (100% success rate). Public search v2 API working correctly with proper country validation and response structure. Categories endpoint accessible without authentication. Moderation queue and actions working with proper validation errors. Audit logs endpoint returning complete audit trail with all required fields for compliance. Backend APIs are fully operational and ready for P0 release.
