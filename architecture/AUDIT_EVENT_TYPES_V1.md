@@ -25,6 +25,10 @@ Bu doküman **v1.0.0 / FAZ-FINAL-02 (P1)** kapsamında audit `event_type` isimle
 ### Dealer Domain
 - `DEALER_STATUS_CHANGE`
 
+### Listing Ops (Admin)
+- `LISTING_SOFT_DELETE`
+- `LISTING_FORCE_UNPUBLISH`
+
 ---
 
 ## Alan Politikası
