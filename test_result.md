@@ -336,6 +336,29 @@
 - Backend curl: 401 ve 429 body doğrulandı.
 - UI screenshot: banner görünürlüğü kontrol edildi.
 
+
+
+## SPRINT 1.2 — Dealer Applications Domain (P0) — TESTED
+
+### Backend
+- Reason enum locked: `/app/architecture/DEALER_APPLICATION_REASON_ENUMS_V1.md`
+- List: `GET /api/admin/dealer-applications` (scope + status + pagination + search) ✅
+- Reject: `POST /api/admin/dealer-applications/{id}/reject` (reason required; other=>note required) ✅
+- Approve: `POST /api/admin/dealer-applications/{id}/approve` → dealer user created ✅
+- Audit events: `DEALER_APPLICATION_APPROVED` / `DEALER_APPLICATION_REJECTED` (applied=true) ✅
+- Scope negative: country_admin(FR) → DE app approve => 403 ✅
+- Approve sonrası login (temp_password) ✅
+
+### Frontend (Backoffice)
+- Route: `/admin/dealer-applications` ✅
+- Sidebar “Başvurular” aktive ✅
+- Reject modal: dropdown + other=>textarea enforced ✅
+- Approve/reject sonrası liste refresh ✅
+
+### Testing
+- Frontend testing subagent: PASSED
+- Backend testing subagent: PASSED
+
 - **Admin Dashboard**: ✅ WORKING
 - **Users Management**: ✅ WORKING
 - **Countries Management**: ✅ WORKING (FIXED - was previously broken)
