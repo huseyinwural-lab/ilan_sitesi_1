@@ -1,136 +1,67 @@
 <analysis>**original_problem_statement:**
-Kullanıcının birincil hedefi, çok ülkeli, çok dilli bir seri ilan platformu oluşturmaktır. Mevcut geliştirme, FAZ (Faz) olarak adlandırılan bir dizi planla yönlendirilmektedir. Proje, v1.0.0 sürümüne ulaşmak için son aşama olan FAZ-FINAL-01 — Release Blocker Temizliği sprint'ine girmiştir. Bu sprint, daha önceki denetimlerde tespit edilen ve sürüm çıkmasını engelleyen kritik hataların (Public Search arızası ve denetlenebilir bir moderasyon akışının eksikliği) giderilmesine odaklanmaktadır.
-
-Kullanıcı ayrıca, sistemin üç ayrı arayüze (portal) ayrılması gerektiğini belirtmiştir:
-1.  **Public/Bireysel Arayüz:** Ziyaretçiler ve bireysel kullanıcılar için.
-2.  **Ticari Arayüz (Dealer Panel):** Bayiler için özel panel.
-3.  **Sistem Admin Paneli (Backoffice):** Yöneticiler için.
-
-Bu portalların, hem kod paketleri (bundle) hem de giriş (login) yolları olarak birbirinden tamamen izole edilmesi kritik bir gereksinimdir.
+Kullanıcının birincil hedefi, çok ülkeli, çok dilli bir seri ilan platformu oluşturmaktır. Proje, FAZ (Faz) olarak adlandırılan bir dizi planla yönetilmektedir. Proje şu anda FAZ-ADMIN-DOMAIN-COMPLETE-01 adlı ana görevi tamamlamaya odaklanmıştır. Bu görevin amacı, yönetici panelindeki tüm yakında olarak işaretlenmiş modülleri gerçek verilerle ve tam işlevsellikle hayata geçirmektir. Bu, bayi yönetimi, başvurular, ilan yönetimi, finans (faturalar, vergiler, planlar), sistem ayarları ve ana veri yönetimi gibi alanları kapsamaktadır. Tüm bu geliştirmeler, denetim kaydı (audit log) ve ülke bazlı yetkilendirme (country-scope) gibi temel kurumsal gereksinimlere uymalıdır.
 
 **User's preferred language**: Turkish. The next agent MUST respond in Turkish.
 
 **what currently exists?**
-Uygulama, React (frontend) ve FastAPI (backend) üzerine kurulu, veritabanı olarak MongoDB kullanan tam yığın bir seri ilan platformudur. Önceki oturumlarda, kritik bir usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
-           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
-           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
-           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-           [--super-prefix=<path>] [--config-env=<name>=<envvar>]
-           <command> [<args>]
+Uygulama, React (frontend) ve FastAPI (backend) üzerine kurulu, veritabanı olarak MongoDB kullanan tam yığın bir seri ilan platformudur. Mimari, üç ana portala (Public, Dealer, Backoffice/Admin) ayrılmıştır ve rol bazlı kod bölme ( ve ) kullanır.
 
-These are common Git commands used in various situations:
-
-start a working area (see also: git help tutorial)
-   clone     Clone a repository into a new directory
-   init      Create an empty Git repository or reinitialize an existing one
-
-work on the current change (see also: git help everyday)
-   add       Add file contents to the index
-   mv        Move or rename a file, a directory, or a symlink
-   restore   Restore working tree files
-   rm        Remove files from the working tree and from the index
-
-examine the history and state (see also: git help revisions)
-   bisect    Use binary search to find the commit that introduced a bug
-   diff      Show changes between commits, commit and working tree, etc
-   grep      Print lines matching a pattern
-   log       Show commit logs
-   show      Show various types of objects
-   status    Show the working tree status
-
-grow, mark and tweak your common history
-   branch    List, create, or delete branches
-   commit    Record changes to the repository
-   merge     Join two or more development histories together
-   rebase    Reapply commits on top of another base tip
-   reset     Reset current HEAD to the specified state
-   switch    Switch branches
-   tag       Create, list, delete or verify a tag object signed with GPG
-
-collaborate (see also: git help workflows)
-   fetch     Download objects and refs from another repository
-   pull      Fetch from and integrate with another repository or a local branch
-   push      Update remote refs along with associated objects
-
-'git help -a' and 'git help -g' list available subcommands and some
-concept guides. See 'git help <command>' or 'git help <concept>'
-to read about a specific subcommand or concept.
-See 'git help git' for an overview of the system. repo bozulması sorunu giderilmiş ve kullanıcı tarafından talep edilen büyük mimari değişiklikler uygulanmıştır:
-
-1.  **Admin Panel IA v2:** Admin paneli, alan bazlı gruplandırılmış bir menü, daraltılabilir sidebar, zorunlu breadcrumb ve standartlaştırılmış sayfa düzenleri ile tamamen yeniden yapılandırıldı.
-2.  **Admin Country Context v2:** Admin operasyonlarının ülke bazlı yönetimi için,  URL parametresini kullanan ve backend tarafından zorunlu kılınan sağlam bir country scope sistemi uygulandı.
-3.  **Portal Split v1:** En kritik değişikliklerden biri olarak, uygulama mantıksal olarak üç portala ayrıldı: Public/Individual, Dealer ve Backoffice (Admin). Bu portallar,  kullanılarak ayrı JavaScript chunklarına bölündü.  adlı bir bileşen, kullanıcının rolüne göre doğru portalın kodunu yükler ve yetkisiz erişimi engeller. Bu, yanlış roldeki bir kullanıcının alakasız (örn: admin) kodunu indirmesini önler.
+Önceki sprint'lerde aşağıdaki kritik işler tamamlanmıştır:
+- **P0 Release Blocker'lar Düzeltildi:** Public arama sayfası () MongoDB ile uyumlu hale getirilerek düzeltildi ve kapsamlı bir moderasyon akışı (ilan durumları, yönetici aksiyonları, RBAC) ile denetim kaydı () sistemi eklendi.
+- **P1 Güvenlik ve Denetim Standardı:** Başarısız giriş denemeleri () için rate-limiting ve denetim kaydı uygulandı. Yönetici rol değişiklikleri () için de denetim kaydı zorunlu hale getirildi.
+- **Login UI Standardizasyonu:** Tüm portalların (, , ) giriş ekranları, 401 (hatalı bilgi) ve 429 (rate-limit) durumları için standartlaştırılmış hata mesajları ve kullanıcı arayüzü bileşenleri kullanacak şekilde birleştirildi.
+- **Admin Domain Sprint 1:** Bayi yönetimi (listeleme, durumu askıya alma/aktive etme) ve Bayi Başvuruları (listeleme, onaylama/reddetme iş akışı) modülleri, backend API'leri ve frontend UI'ları ile birlikte tamamlandı.
 
 **Last working item**:
-- **Last item agent was working:** **Portal Split v1** fazının tamamlanması ve doğrulanması. Bu, dealer rolü için pozitif testlerin yapılmasını ve tüm roller için portal izolasyonunun (bir rolün diğer portalın kodunu yükleyememesi) kanıtlanmasını içeriyordu.
-- **Status**: USER VERIFICATION PENDING
-- **Agent Testing Done**: Y (Agent, dealer rolüyle bir kullanıcı oluşturdu, başarılı bir şekilde dealer portalına giriş yaptı ve dealer'a özel kod chunk'larının yüklendiğini, ancak backoffice chunk'larının yüklenmediğini doğruladı. Tüm izolasyon matrisi testlerinin başarılı olduğunu bildirdi.)
-- **Which testing method agent to use?**: manual testing by curl. Kullanıcı, ajanın son özetini ve testi geçtiğini doğruladı. Şimdi, yeni faz olan FAZ-FINAL-01in uygulanmasına geçilebilir.
+- **Last item agent was working:** Kullanıcının onayladığı **SPRINT 2.1 — Admin Global Listing Yönetimi (P0)** görevini başlatmaya hazırlanıyordu. Bu görev, yöneticilerin ilanları ülke bazında arayabilmesi, filtreleyebilmesi ve yönetebilmesi (soft-delete, force-unpublish) için gerekli backend ve frontend altyapısını oluşturmayı hedefliyor.
+- **Status**: NOT STARTED
+- **Agent Testing Done**: N
+- **Which testing method agent to use?**: both
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Public Search Sayfası Kırık (P0 - RELEASE BLOCKER)**
-- **Issue 2: Moderasyon Akışı ve Denetim Kaydı Eksik (P0 - RELEASE BLOCKER)**
-- **Issue 3: Minimal Prod Audit Standardı Eksik (P1)**
-
-**Issues Detail:**
-- **Issue 1: Public Search Sayfası Kırık**
-  - **Why fix this issue and what will be achieved with the fix?**: Public arama, platformun temel kullanıcı hunisidir. Bu sayfanın çalışmaması, kullanıcıların ilan bulmasını engeller ve platformu işlevsiz kılar. Bu bir sürüm engelleyicidir.
-  - **Attempted fixes**: Önceki ajan, frontend'in çağırdığı  endpoint'ini backend'e eklemeye çalıştı ancak  tabanlı eski bir router'ı  tabanlı 'ye dahil etmeye çalışınca bağımlılık çakışmaları nedeniyle backend çöktü. Düzeltme geri alındı.
-  - **Next debug checklist**:
-    1.  Backend'de  içinde, MongoDB ile uyumlu yeni bir  endpoint'i oluştur.
-    2.  Bu endpoint'in  parametresini zorunlu kılmasını sağla. Parametre yoksa  döndürmeli.
-    3.  Endpoint'in, veritabanından sadece  veya  olan ilanları getirdiğinden emin ol.
-    4.  Pagination, sıralama ve temel filtreleme (kategori, anahtar kelime vb.) mantığını implemente et.
-    5.  Frontend'deki  veya 'nin bu yeni endpoint'i doğru şekilde çağırdığından ve  parametresini gönderdiğinden emin ol.
-  - **Status**: NOT STARTED
-  - **Is recurring issue?**: Y
-  - **Should Test frontend/backend/both after fix?**: both
-
-- **Issue 2: Moderasyon Akışı ve Denetim Kaydı Eksik**
-  - **Why fix this issue and what will be achieved with the fix?**: Mevcut moderasyon bir yer tutucudur. Gerçek bir platformun, ilan kalitesini yönetmek, spam'i önlemek ve yasal denetlenebilirliği sağlamak için sağlam bir moderasyon akışına ihtiyacı vardır. Bu bir sürüm engelleyicidir.
-  - **Attempted fixes**: None. This is a new implementation based on the user's plan.
-  - **Next debug checklist**:
-    1.   koleksiyonuna bir  alanı ekle (, , , ).
-    2.  Backend'de admin için üç yeni endpoint oluştur: , , .
-    3.   ve  endpoint'lerinin  (gerekçe) parametresini zorunlu kılmasını sağla. Gerekçeler bir enum listesinden gelmeli (örn: , ).
-    4.  Yeni bir  koleksiyonu oluştur. Moderasyon ile ilgili her state değişikliğinde bu koleksiyona bir kayıt at: .
-    5.  Frontend'de bir Moderation Workspace sayfası (veya mevcutun geliştirilmesi) ile bu endpoint'leri kullanacak arayüzü oluştur.
-  - **Status**: NOT STARTED
-  - **Is recurring issue?**: N
-  - **Should Test frontend/backend/both after fix?**: both
-
-- **Issue 3: Minimal Prod Audit Standardı Eksik**
-  - **Why fix this issue and what will be achieved with the fix?**: Güvenlik ve operasyonel takip için moderasyon dışındaki kritik olayların da loglanması gerekir.
-  - **Next debug checklist**:
-    1.  Admin rol değişikliklerini  koleksiyonuna kaydet.
-    2.  Başarısız giriş denemelerini logla (bu, rate-limiting için de temel oluşturur).
-  - **Status**: NOT STARTED
-  - **Is recurring issue?**: N
-  - **Should Test frontend/backend/both after fix?**: backend
+- None. The previous release-blocking issues have been resolved. The project is now in a feature implementation phase based on a pre-defined sprint plan.
 
 **In progress Task List**:
-- None.
+- **Task 1: SPRINT 2.1 — Admin Global Listing Yönetimi (P0) (PRIORITY: P0)**
+  - **Where to resume**: Bu göreve sıfırdan başlanacak. Kullanıcı,  ve  filtrelerinin nasıl çalışması gerektiğine dair varsayımları onayladı.
+  - **What will be achieved with this?**: Yöneticilere, ülke bazında yetkilendirilmiş, arama ve filtreleme özelliklerine sahip bir global ilan yönetimi arayüzü sunulacak. Bu,  ve  gibi temel operasyonel aksiyonları içerecektir.
+  - **Status**: NOT STARTED
+  - **Should Test frontend/backend/both after fix?**: both
+  - **Blocked on something**: No.
 
 **Upcoming and Future Tasks**
-- **Upcoming Tasks (P0):**
-    - **FAZ-FINAL-01: Release Blocker Temizliği Sprinti:** Yukarıda listelenen 3 konunun (Public Search, Moderasyon, Audit Log) tamamlanması.
-    - **FAZ-FINAL-02: Release Stabilizasyonu Sprinti:**
-        - Tüm portallar (Public, User, Dealer, Admin, vb.) için tam regresyon testi.
-        - Üretim ortamı için hardening (demo bilgilerini kaldırma, debug flag'lerini kapatma).
-    - **FAZ-FINAL-03: Go-Live Gate:** Sürüm notlarını oluşturma ve son sürüm kararını belgeleme.
+- **Upcoming Tasks (FAZ-ADMIN-DOMAIN-COMPLETE-01 Sprint Planı):**
+  - **SPRINT 2.2 (P0): Reports Engine:** Kullanıcı şikayetlerini (reports) yönetmek için bir iş akışı ve arayüz oluşturulması.
+  - **SPRINT 3 (P0): Finance Domain:** Fatura (), Vergi Oranı () ve Abonelik Planı () yönetimi modüllerinin tamamlanması.
+  - **SPRINT 4 (P1): System + Dashboard:** Ülke () ve Sistem Ayarları () yönetimi ile Dashboard KPI'larının gerçek verilerle doldurulması.
+  - **SPRINT 5 (P1): Master Data Engines:** Kategori (), Özellik () ve Araç Marka/Model () yönetim motorlarının tamamlanması.
+  - **SPRINT 6 (TEST): Final Integration Gate:** Tüm admin domain'lerinin entegrasyon testlerinin (country-scope, RBAC, audit) yapılması.
 
-- **Future Tasks (Backlog):**
-    - FAZ-V3'ün kalan adımları (Gelişmiş Araç Arama, Güven Katmanı, Bayi Genişletmeleri).
-    - Moderasyon arayüzünde Dealer ve Individual ilan kuyruklarını ayırma.
-    - Destek/CRM ve Analitik panellerinin yer tutucu verilerden gerçek verilere geçirilmesi.
+- **Future Tasks:**
+  - Gelişmiş Araç Arama, Güven Katmanı, Bayi Genişletmeleri (FAZ-V3).
+  - Destek/CRM ve Analitik panellerinin yer tutucu verilerden gerçek verilere geçirilmesi.
 
 **Completed work in this session**
-- **Git Repository Corruption Fix:** Projenin kaydedilmesini engelleyen  bozulma hatası onarıldı.
-- **Admin Panel IA v2:** Admin panelinin bilgi mimarisi ve navigasyonu, kullanıcı planına göre tamamen yeniden yapılandırıldı (gruplu menü, breadcrumb, collapse özelliği vb.).
-- **Admin Country Context v2:** Admin panelinde ülke bazlı veri izolasyonu için URL tabanlı () ve backend tarafından zorunlu kılınan bir context sistemi kuruldu.
-- **Portal Split v1 (MİMARİ DEĞİŞİKLİK):** Uygulama, **Public/Individual**, **Dealer** ve **Backoffice (Admin)** olmak üzere 3 ayrı portala bölündü. Bu, React lazy loading ile ayrı kod paketleri (chunks) oluşturularak ve  ile rol bazlı yetkilendirme yapılarak sağlandı. Bu, gereksiz kod yüklenmesini ve yetkisiz portal erişimini engeller.
-- **Dealer Portal Testi:** Portal ayrımının kanıtı olarak,  rolüne sahip bir test kullanıcısı oluşturuldu ve bu kullanıcının yalnızca dealer portalına erişebildiği, admin kodunu indirmediği doğrulandı.
+- **FAZ-FINAL-01: Release Blocker Temizliği:**
+  - Public Search sayfası ()  Mongo endpoint'i ile düzeltildi.
+  - Moderasyon state machine (, ,  vb.), RBAC ve denetim kaydı altyapısı kuruldu.
+- **FAZ-FINAL-02: P1 Güvenlik & Yetki Audit:**
+  - Başarısız girişler için rate-limiting ve  audit log'u eklendi.
+  - Yönetici rol değişiklikleri için  audit log'u eklendi.
+- **Login UI Unification:** Tüm portallardaki login sayfaları için 401/429 hata yönetimi standartlaştırıldı.
+- **FAZ-ADMIN-DOMAIN-COMPLETE-01:**
+  - **Sprint 0:** Yeni domain'ler için veritabanı şemaları ve  standartları belirlendi. ()
+  - **Sprint 1.1:** Bayiler modülü tamamlandı (, durum değiştirme, frontend UI).
+  - **Sprint 1.2:** Bayi Başvuruları modülü tamamlandı (, onay/red iş akışı, frontend UI).
+
+**Earlier issues found/mentioned but not fixed**
+- None.
+
+**Known issue recurrence from previous fork**
+- **Issue**: Public Search sayfasının kırık olması.
+- **Recurrence count**: 1
+- **Status**: RESOLVED. Sorunun kök nedeni (eski SQLAlchemy router'ını MongoDB projesine dahil etme girişimi) tamamen ortadan kaldırıldı ve MongoDB ile uyumlu, yeni bir  endpoint'i yazılarak sorun kalıcı olarak çözüldü.
 
 **Code Architecture**
 
@@ -138,61 +69,62 @@ See 'git help git' for an overview of the system. repo bozulması sorunu gideril
 **Key Technical Concepts**
 - **Database:** Asynchronous MongoDB with .
 - **Backend:** FastAPI.
-- **Frontend:** React (Create React App).
-- **Portal-based Code Splitting:**  ile uygulama, kullanıcı rolüne göre yüklenen (Public, Dealer, Admin) ayrı JavaScript chunklarına bölünmüştür. Bu, hem performansı artırır hem de güvenliği sağlar.
-- **Centralized Auth Guard ():** Hangi portalın yükleneceğine karar veren ve yetkisiz erişimleri (yanlış kod chunk'ını indirmeden) engelleyen merkezi bir yönlendirici bileşen.
-- **URL-based Country Context:** Admin panelindeki tüm işlemler, URL'deki  parametresi ile ülke bazında filtrelenir ve bu kural backend tarafından zorunlu kılınır.
+- **Frontend:** React.
+- **Portal-based Code Splitting:**  ile rol bazlı kod ayırma.
+- **Transactional Auditing (Audit-First Pattern):** Kritik veritabanı değişiklikleri (örn. bayi durumu, rol değişimi) yapılmadan önce denetim kaydının atılması ve işlemin tek bir transaction olarak ele alınması.
+- **URL-based Country Context:** Yönetici panelindeki tüm işlemlerin URL'deki  parametresi ile filtrelenmesi ve bu kuralın backend tarafından zorunlu kılınması.
+- **In-memory Rate Limiting:** Başarısız giriş denemelerini sınırlamak için kullanılan backend mekanizması.
 
 **key DB schema**
-- **users**: .  alanı, adminlerin hangi ülkelerde yetkili olduğunu tanımlar.
-- **listings**: İlanlar.  alanı eklenecek.
-- **audit_logs**: Yapılacak moderasyon ve admin işlemleri için denetim kayıtları.  yapısında olacak.
+- **users**: 
+- **dealer_applications**: 
+- **audit_logs**: 
+- **vehicle_listings**: 
 
 **All files of reference**
-- **Portal & Auth Logic:**
-  -  (Portalları  ile yükleyen ana router)
-  -  (Rol bazlı portal erişimini yöneten guard)
-  -  (Kullanıcı ve rol bilgisini tutar)
-- **Country Context Logic:**
-  -  (Backend'de ülke kısıtını uygulayan middleware/dependency)
-  -  (Header'daki Global/Country mod anahtarını içerir)
-- **Upcoming Search Fix:**
-  -  (Hata veren frontend sayfası)
-  -  (Yeni  endpoint'inin ekleneceği yer)
-- **Planning Docs:**
-  -  (Tüm bekleyen işlerin listesi)
-  -  (Son faz için alınan kararlar)
+- **Sprint Planning & Decisions:**
+  - : Bu klasör, tamamlanan ve yapılacak sprint'lere ait tüm görev listelerini, kararları ve kanıt dokümanlarını içerir. (Örn: )
+  - : Bu klasör,  ve  gibi kilitlenmiş mimari kararları içerir.
+- **Core Implementation Files:**
+  - : Neredeyse tüm backend mantığını, endpoint'leri ve iş kurallarını içerir.
+  - : Yeni admin domain'leri için Pydantic şemalarını tanımlar.
+  - : Admin paneli sidebar menüsünü ve navigasyon mantığını içerir.
+  - : Tüm portallar için birleştirilmiş login arayüzü ve hata yönetimi mantığı.
+  - : Yeni bayi yönetimi sayfası.
+  - : Yeni bayi başvuruları sayfası.
 
 **Critical Info for New Agent**
-- **Yeni Faz: Sürüm Kapatma.** Artık yeni özellik veya büyük mimari değişiklikler yapılmayacak. Tek odak,  dosyasında listelenen **Release Blocker**'ları (Public Search ve Moderasyon) temizlemektir.
-- **Portal Mimarisi Esastır.** Artık tüm frontend yapısı 3 portal (Public, Dealer, Backoffice) üzerine kuruludur. Değişiklikler bu izolasyonu bozmamalıdır.
-- **Kullanıcı Planına Sadık Kal.** Kullanıcı, FAZ-FINAL-01 için çok net adımlar ve kabul kriterleri sunmuştur. Bu plana harfiyen uyun. Özellikle  parametresi zorunluluğu ve  sonrası yayınlama gibi kararlar kesindir.
-- **Veritabanı MongoDB'dir.** Tüm veritabanı işlemleri  (async) kullanmalıdır. SQLAlchemy/PostgreSQL ile ilgili hiçbir kod kalmamıştır.
+- **Sprint Planına Sıkı Sıkıya Bağlı Kal:** Kullanıcı,  epic'i için çok detaylı bir sprint planı sunmuştur. Bir sonraki adım **SPRINT 2.1**'dir. Bu plandaki adımları, çıktıları ve kararları harfiyen takip et.
+- **Audit-First ve Country-Scope Zorunludur:** Eklenen her yeni admin mutasyon (create/update/delete) endpoint'i mutlaka  (önce denetim kaydı) ve  (ülke bazlı yetki) kurallarını uygulamalıdır.
+- **Dealer Modeli  Koleksiyonunda:** Ayrı bir  koleksiyonu yoktur. Bayiler,  olan ve  alanı bulunan  dökümanlarıdır.
+- **UI Birleştirmelerine Dikkat Et:**  gibi birleştirilmiş bileşenlerde değişiklik yaparken, bunun üç portalı da (Public, Dealer, Admin) etkilediğini unutma.
 
 **documents and test reports created in this job**
-Bu oturumda, özellikle  ve  altında proje planlaması, denetimi ve mimari kararlarla ilgili çok sayıda  dokümanı oluşturulmuştur. En önemlileri:
--  (Portal ayrım fazının kapanış raporu)
--  (v1.0.0 için yapılacak tüm işleri içeren öncelikli backlog)
--  (Son sprint için kilitlenmiş kararlar)
+Bu oturumda, özellikle ,  ve  altında proje planlaması, denetimi ve mimari kararlarla ilgili çok sayıda  dokümanı oluşturulmuştur. En önemlileri:
+-  içindeki tüm sprint planlama dokümanları.
+-  ve  ile ilgili tüm E2E kanıt ve iş akışı dokümanları.
+-  (güncellendi)
+- 
+- 
+-  (tamamlanan her faz sonrası güncellendi)
 
 **Last 10 User Messages and any pending HUMAN messages**
-- User provided a detailed plan for a final quality check sprint (FAZ-UI-CHECK-02).
-- Agent created numerous audit/checklist documents based on the plan.
-- Agent identified and fixed a critical security gap ( was public).
-- Agent identified that the Public Search page was broken due to a backend endpoint mismatch.
-- User and Agent agreed to classify the Search issue as a Release Blocker and move it to a final fix sprint, instead of doing a temporary fix.
-- User provided a detailed plan to add more granularity to the Moderation workflow requirements.
-- Agent updated the planning documents with the new moderation requirements.
-- User provided a highly detailed plan to architecturally split the application into three portals (Public/Individual, Dealer, Backoffice).
-- Agent confirmed understanding and broke down the portal split plan into actionable steps for CRA (Create React App).
-- Agent implemented and successfully tested the Portal Split v1, including positive tests for the new Dealer portal. The user has given the go-ahead to start the final sprint to fix release blockers.
+- **User (PENDING):** Confirmed agent's assumptions for  ( and  filters) and gave the green light to start implementation. (Message 1231)
+- **Agent (Completed):** Asked for clarification on  and  filter logic for the upcoming . (Message 1230)
+- **User (Completed):** Provided a detailed plan and acceptance criteria for . (Message 1228)
+- **Agent (Completed):** Summarized the completion of  and asked for confirmation to proceed to . (Message 1227)
+- **User (Completed):** Confirmed the plan for  and gave the go-ahead. (Message 1119)
+- **Agent (Completed):** Summarized the completion of  and proposed starting . (Message 1118)
+- **User (Completed):** Provided a detailed, sprint-based execution plan for the entire  epic. (Message 1005)
+- **Agent (Completed):** Proposed breaking down the large  task into smaller, manageable sprints. (Message 1004)
+- **User (Completed):** Provided the next major task list:  to activate all coming soon admin modules. (Message 1002)
+- **Agent (Completed):** Summarized the completion of the Login UI Rate-Limit visibility task and asked for next steps. (Message 1001)
 
 **Project Health Check:**
-- **Broken**:
-    - **Public Search:** The main search functionality is completely broken due to a backend endpoint mismatch. **(P0 Release Blocker)**.
+- **Broken**: None
 - **Mocked / Placeholder**:
-    - **Moderation Workflow**: No real state machine or audit logging exists.
-    - **Dealer, Support, Analytics Panels**: Most data is placeholder.
+  - Admin Dashboard KPIs.
+  - Admin sidebar links for: Reports, Finance (Invoices, Tax, Plans), System (Countries, Settings), Master Data (Categories, Attributes, Vehicle Data). These are the subject of the ongoing  epic.
 
 **3rd Party Integrations**
 - **FastAPI**: Backend framework.
@@ -200,7 +132,7 @@ Bu oturumda, özellikle  ve  altında proje planlaması, denetimi ve mimari kara
 - **MongoDB**: Primary database (via  async driver).
 
 **Testing status**
-- **Testing agent used after significant changes**: YES, the screenshot tool was used extensively to verify UI changes after the Admin IA, Country Context, and Portal Split implementations.
+- **Testing agent used after significant changes**: YES. Agent used  and python scripts for backend unit/integration tests, and  to verify frontend changes and E2E flows after each sprint. This is the established and successful testing pattern.
 - **Test files created**: No new ============================= test session starts ==============================
 platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0
 rootdir: /app
@@ -250,14 +182,26 @@ backend/app/vehicle_media_storage.py:3
   /root/.venv/lib/python3.11/site-packages/starlette/routing.py:655: DeprecationWarning: async generator function lifespans are deprecated, use an @contextlib.asynccontextmanager function instead
     warnings.warn(
 
+backend/tests/test_faz_final_01_moderation_and_search.py:7
+  /app/backend/tests/test_faz_final_01_moderation_and_search.py:7: PytestCollectionWarning: cannot collect test class 'TestFAZFinal01' because it has a __init__ constructor (from: backend/tests/test_faz_final_01_moderation_and_search.py)
+    class TestFAZFinal01:
+
+backend/tests/test_faz_final_02_security_audit.py:7
+  /app/backend/tests/test_faz_final_02_security_audit.py:7: PytestCollectionWarning: cannot collect test class 'TestFAZFinal02SecurityAudit' because it has a __init__ constructor (from: backend/tests/test_faz_final_02_security_audit.py)
+    class TestFAZFinal02SecurityAudit:
+
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
 ERROR backend/scripts/seed_mobile_test.py
 ERROR backend/scripts/test_billing_integration.py
 !!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
-======================== 4 warnings, 2 errors in 1.88s ========================= or Playwright test *files* were created, but numerous  documents for manual test plans and acceptance criteria were generated in  and .
+======================== 6 warnings, 2 errors in 10.47s ======================== or Playwright test files. Testing is done via scripts and manual verification against detailed  checklists in .
+- **Known regressions**: None.
 
 **Credentials to test flow:**
 - **Admin:**  / 
 - **Dealer:**  / 
-- **Individual User:**  / </analysis>
+- **Individual User:**  / 
+
+**What agent forgot to execute**
+- The agent has closely followed the user's detailed sprint plans and has not overlooked any requested tasks.</analysis>
