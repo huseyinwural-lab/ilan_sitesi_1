@@ -210,7 +210,9 @@ export default function Layout({ children }) {
                         <div className="sidebar-item opacity-60 cursor-not-allowed" title="Coming soon">
                           <item.icon size={18} />
                           <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
+                          {!sidebarCollapsed && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
+                          )}
                         </div>
                       ) : (
                         <NavLink
