@@ -124,9 +124,11 @@ export default function Layout({ children }) {
             {filteredNavItems.map((item, index) => (
               item.divider ? (
                 <li key={`divider-${index}`} className="pt-4 pb-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3">
-                    {item.label}
-                  </span>
+                  {!sidebarCollapsed && (
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3">
+                      {item.label}
+                    </span>
+                  )}
                 </li>
               ) : (
                 <li key={item.path}>
