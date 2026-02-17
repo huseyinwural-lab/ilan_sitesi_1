@@ -151,7 +151,7 @@ export default function Layout({ children }) {
                       data-testid={`nav-${item.label}`}
                     >
                       <item.icon size={18} />
-                      {typeof item.label === 'string' ? t(item.label) : item.label}
+                      {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
                     </NavLink>
                   )}
                 </li>
