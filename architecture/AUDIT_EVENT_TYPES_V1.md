@@ -22,6 +22,9 @@ Bu doküman **v1.0.0 / FAZ-FINAL-02 (P1)** kapsamında audit `event_type` isimle
 - `ADMIN_ROLE_CHANGE`
 - `UNAUTHORIZED_ROLE_CHANGE_ATTEMPT`
 
+### Dealer Domain
+- `DEALER_STATUS_CHANGE`
+
 ---
 
 ## Alan Politikası
