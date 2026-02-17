@@ -28,10 +28,12 @@ FAZ-UI-CHECK-02 sonuçlarını PASS/PARTIAL/FAIL olarak kapatmak ve Fix Sprint-1
 - Yok.
 
 ## Kritik Açıklar (Kapanmadan release yok)
-- 🔴 User panel auth guard
+- 🔴 Public Search FAIL (Release Blocker) — endpoint uyumsuzluğu
 - 🔴 Rate limit/brute force koruma
+- 🔴 Moderation audit + reason enum standardı eksik (Release Blocker)
 - 🔴 Moderation workflow eksik
 - 🔴 Dealer public profil eksik
+- ✅ User panel auth guard (FIXED)
 
 ## Bir Sonraki Faz Önerisi: Fix Sprint-1 (P0)
 - /account auth guard + temel user listings entegrasyonu
