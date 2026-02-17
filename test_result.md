@@ -338,6 +338,15 @@
 ### Test Results Summary:
 - **Test Success Rate**: 100% (4/4 test steps passed)
 - **Login & Authentication**: ✅ WORKING
+
+## FAZ-UI-CHECK-02 — Smoke Test Notları (Feb 17, 2026)
+
+- Public Home: ✅ PASS
+- Public Search: ❌ FAIL (API /api/v2/search endpoint server.py tarafından expose edilmiyor; frontend bunu çağırıyor)
+- Public Detail route: ✅ PASS (crash yok)
+- Admin: ✅ PASS
+- User Panel Guard: ✅ FIXED (ProtectedRoute eklendi) — tekrar doğrulama gerekli
+
 - **Initial Global Mode**: ✅ WORKING (switch unchecked, no country param)
 - **Switch to Country Mode**: ✅ WORKING (switch checked, ?country=DE added)
 - **Switch back to Global Mode**: ✅ WORKING (switch unchecked, country param removed)
