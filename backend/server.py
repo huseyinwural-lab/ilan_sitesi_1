@@ -1747,6 +1747,242 @@ async def admin_force_unpublish_listing(
 
 
 # =====================
+# Sprint 2.2 — Reports Engine
+# =====================
+
+
+@api_router.post("/reports")
+async def create_report(
+    payload: ReportCreatePayload,
+    request: Request,
+    current_user=Depends(get_current_user_optional),
+):
+    db = request.app.state.db
+    listing_id = payload.listing_id
+    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if listing.get("status") != "published":
+        raise HTTPException(status_code=400, detail="Only published listings can be reported")
+
+    reason, reason_note = _validate_report_reason(payload.reason, payload.reason_note)
+    reporter_user_id = current_user.get("id") if current_user else None
+    _check_report_rate_limit(request, listing_id, reporter_user_id)
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    report_id = str(uuid.uuid4())
+    report_doc = {
+        "id": report_id,
+        "listing_id": listing_id,
+        "reporter_user_id": reporter_user_id,
+        "reason": reason,
+        "reason_note": reason_note,
+        "status": "open",
+        "country_code": listing.get("country"),
+        "created_at": now_iso,
+        "updated_at": None,
+        "handled_by_admin_id": None,
+    }
+
+    await db.reports.insert_one(report_doc)
+
+    await db.audit_logs.insert_one(
+        {
+            "id": str(uuid.uuid4()),
+            "created_at": now_iso,
+            "event_type": "REPORT_CREATED",
+            "action": "REPORT_CREATED",
+            "report_id": report_id,
+            "listing_id": listing_id,
+            "user_id": reporter_user_id,
+            "user_email": current_user.get("email") if current_user else None,
+            "country_code": listing.get("country"),
+            "reason": reason,
+            "resource_type": "report",
+            "resource_id": report_id,
+        }
+    )
+
+    return {"ok": True, "report_id": report_id, "status": "open"}
+
+
+@api_router.get("/admin/reports")
+async def admin_reports(
+    request: Request,
+    status: Optional[str] = None,
+    reason: Optional[str] = None,
+    listing_id: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    q: Dict = {}
+    if status:
+        if status not in REPORT_STATUS_SET:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        q["status"] = status
+    if reason:
+        _validate_reason(reason, REPORT_REASONS_V1)
+        q["reason"] = reason
+    if listing_id:
+        q["listing_id"] = listing_id
+
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        q["country_code"] = ctx.country
+    elif current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope:
+            q["country_code"] = {"$in": scope}
+
+    limit = min(100, max(1, int(limit)))
+    cursor = db.reports.find(q, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(limit)
+    docs = await cursor.to_list(length=limit)
+
+    listing_ids = [d.get("listing_id") for d in docs if d.get("listing_id")]
+    listing_map: Dict[str, dict] = {}
+    if listing_ids:
+        listings = await db.vehicle_listings.find({"id": {"$in": listing_ids}}, {"_id": 0}).to_list(length=len(listing_ids))
+        listing_map = {l.get("id"): l for l in listings}
+
+    reporter_ids = [d.get("reporter_user_id") for d in docs if d.get("reporter_user_id")]
+    seller_ids = [l.get("created_by") for l in listing_map.values() if l.get("created_by")]
+    user_ids = list({*reporter_ids, *seller_ids})
+    user_map: Dict[str, dict] = {}
+    if user_ids:
+        users = await db.users.find({"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "email": 1, "role": 1, "dealer_status": 1}).to_list(length=len(user_ids))
+        user_map = {u.get("id"): u for u in users}
+
+    items = []
+    for d in docs:
+        listing = listing_map.get(d.get("listing_id"), {})
+        seller = user_map.get(listing.get("created_by"), {})
+        reporter = user_map.get(d.get("reporter_user_id"), {})
+        items.append(
+            {
+                "id": d.get("id"),
+                "listing_id": d.get("listing_id"),
+                "reason": d.get("reason"),
+                "reason_note": d.get("reason_note"),
+                "status": d.get("status"),
+                "country_code": d.get("country_code"),
+                "created_at": d.get("created_at"),
+                "updated_at": d.get("updated_at"),
+                "reporter_user_id": d.get("reporter_user_id"),
+                "reporter_email": reporter.get("email"),
+                "listing_title": _resolve_listing_title(listing) if listing else None,
+                "listing_status": listing.get("status"),
+                "seller_id": listing.get("created_by"),
+                "seller_email": seller.get("email"),
+                "seller_role": seller.get("role"),
+                "seller_dealer_status": seller.get("dealer_status"),
+            }
+        )
+
+    total = await db.reports.count_documents(q)
+    return {"items": items, "pagination": {"total": total, "skip": int(skip), "limit": limit}}
+
+
+@api_router.get("/admin/reports/{report_id}")
+async def admin_report_detail(
+    report_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    report = await db.reports.find_one({"id": report_id}, {"_id": 0})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        if report.get("country_code") != ctx.country:
+            raise HTTPException(status_code=403, detail="Country scope forbidden")
+    elif current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope and report.get("country_code") not in scope:
+            raise HTTPException(status_code=403, detail="Country scope forbidden")
+
+    listing = await db.vehicle_listings.find_one({"id": report.get("listing_id")}, {"_id": 0})
+    seller = None
+    if listing and listing.get("created_by"):
+        seller = await db.users.find_one({"id": listing.get("created_by")}, {"_id": 0, "id": 1, "email": 1, "role": 1, "dealer_status": 1, "country_code": 1})
+
+    reporter = None
+    if report.get("reporter_user_id"):
+        reporter = await db.users.find_one({"id": report.get("reporter_user_id")}, {"_id": 0, "id": 1, "email": 1, "role": 1})
+
+    listing_snapshot = None
+    if listing:
+        attrs = listing.get("attributes") or {}
+        listing_snapshot = {
+            "id": listing.get("id"),
+            "title": _resolve_listing_title(listing),
+            "status": listing.get("status"),
+            "country": listing.get("country"),
+            "category_key": listing.get("category_key"),
+            "price": attrs.get("price_eur"),
+            "currency": "EUR",
+            "created_at": listing.get("created_at"),
+        }
+
+    seller_summary = None
+    if seller:
+        seller_summary = {
+            "id": seller.get("id"),
+            "email": seller.get("email"),
+            "role": seller.get("role"),
+            "dealer_status": seller.get("dealer_status"),
+            "country_code": seller.get("country_code"),
+        }
+
+    reporter_summary = None
+    if reporter:
+        reporter_summary = {
+            "id": reporter.get("id"),
+            "email": reporter.get("email"),
+            "role": reporter.get("role"),
+        }
+
+    return {
+        **report,
+        "listing_snapshot": listing_snapshot,
+        "seller_summary": seller_summary,
+        "reporter_summary": reporter_summary,
+    }
+
+
+@api_router.post("/admin/reports/{report_id}/status")
+async def admin_report_status_change(
+    report_id: str,
+    payload: ReportStatusPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    target_status = (payload.target_status or "").strip()
+    if target_status not in REPORT_STATUS_SET:
+        raise HTTPException(status_code=400, detail="Invalid target_status")
+    note = (payload.note or "").strip()
+    if not note:
+        raise HTTPException(status_code=400, detail="note is required")
+
+    updated = await _report_transition(
+        db=db,
+        report_id=report_id,
+        current_user=current_user,
+        target_status=target_status,
+        note=note,
+    )
+    return {"ok": True, "report": {"id": updated["id"], "status": updated.get("status")}}
+
+
+# =====================
 # Public Search v2 (Mongo)
 # =====================
 
