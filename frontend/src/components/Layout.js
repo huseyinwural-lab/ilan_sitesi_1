@@ -121,16 +121,28 @@ export default function Layout({ children }) {
                 </li>
               ) : (
                 <li key={item.path}>
-                  <NavLink
-                    to={item.path}
-                    className={({ isActive }) =>
-                      `sidebar-item ${isActive ? 'active' : ''}`
-                    }
-                    data-testid={`nav-${item.label}`}
-                  >
-                    <item.icon size={18} />
-                    {t(item.label)}
-                  </NavLink>
+                  {item.comingSoon || isAdminPathDisabled(item.path) ? (
+                    <div
+                      className="sidebar-item opacity-60 cursor-not-allowed"
+                      title="Coming soon"
+                      data-testid={`nav-${item.label}`}
+                    >
+                      <item.icon size={18} />
+                      <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
+                    </div>
+                  ) : (
+                    <NavLink
+                      to={item.path}
+                      className={({ isActive }) =>
+                        `sidebar-item ${isActive ? 'active' : ''}`
+                      }
+                      data-testid={`nav-${item.label}`}
+                    >
+                      <item.icon size={18} />
+                      {typeof item.label === 'string' ? t(item.label) : item.label}
+                    </NavLink>
+                  )}
                 </li>
               )
             ))}
