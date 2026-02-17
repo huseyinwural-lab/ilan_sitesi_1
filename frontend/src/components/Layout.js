@@ -236,7 +236,7 @@ export default function Layout({ children }) {
       )}
 
       {/* Main Content */}
-      <div className="lg:pl-64">
+      <div className={sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}>
         {/* Topbar */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-card/95 backdrop-blur px-4 lg:px-8">
           {/* Left - Mobile menu + Country selector */}
