@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Breadcrumb,
@@ -43,16 +44,18 @@ export default function AdminBreadcrumbs({ overrideItems }) {
         {items.map((it, idx) => {
           const isLast = idx === items.length - 1;
           return (
-            <BreadcrumbItem key={it.to}>
-              {isLast ? (
-                <BreadcrumbPage>{it.label}</BreadcrumbPage>
-              ) : (
-                <BreadcrumbLink asChild>
-                  <Link to={it.to}>{it.label}</Link>
-                </BreadcrumbLink>
-              )}
+            <Fragment key={it.to}>
+              <BreadcrumbItem>
+                {isLast ? (
+                  <BreadcrumbPage>{it.label}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link to={it.to}>{it.label}</Link>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
               {!isLast && <BreadcrumbSeparator />}
-            </BreadcrumbItem>
+            </Fragment>
           );
         })}
       </BreadcrumbList>
