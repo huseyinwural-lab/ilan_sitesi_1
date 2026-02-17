@@ -219,6 +219,11 @@ async def lifespan(app: FastAPI):
     await db.vehicle_listings.create_index("created_by")
     await db.vehicle_listings.create_index("country")
     await db.vehicle_listings.create_index("category_key")
+    await db.reports.create_index("id", unique=True)
+    await db.reports.create_index("status")
+    await db.reports.create_index("listing_id")
+    await db.reports.create_index("country_code")
+    await db.reports.create_index("reason")
 
     # Seed admin user
     await _ensure_admin_user(db)
