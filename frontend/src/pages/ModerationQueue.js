@@ -401,31 +401,28 @@ export default function ModerationQueue() {
                 </div>
               )}
               
-              {selectedListing.status === 'pending' && (
-                <div className="flex gap-2 pt-4 border-t">
+              {selectedListing.status === 'pending_moderation' && (
+                <div className="flex flex-wrap gap-2 pt-4 border-t">
                   <button
                     onClick={() => handleAction(selectedListing.id, 'approve')}
-                    className="flex-1 px-4 py-2 rounded-md bg-emerald-600 text-white font-medium hover:bg-emerald-700 flex items-center justify-center gap-2"
+                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md bg-emerald-600 text-white font-medium hover:bg-emerald-700 flex items-center justify-center gap-2"
                   >
                     <CheckCircle size={18} />
                     Approve
                   </button>
                   <button
-                    onClick={() => {
-                      const reason = prompt('Enter reject reason:');
-                      if (reason) handleAction(selectedListing.id, 'reject', reason);
-                    }}
-                    className="flex-1 px-4 py-2 rounded-md bg-rose-600 text-white font-medium hover:bg-rose-700 flex items-center justify-center gap-2"
+                    onClick={() => openActionDialog(selectedListing.id, 'reject')}
+                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md bg-rose-600 text-white font-medium hover:bg-rose-700 flex items-center justify-center gap-2"
                   >
                     <XCircle size={18} />
                     Reject
                   </button>
                   <button
-                    onClick={() => handleAction(selectedListing.id, 'suspend')}
-                    className="px-4 py-2 rounded-md border text-amber-600 hover:bg-amber-50 flex items-center justify-center gap-2"
+                    onClick={() => openActionDialog(selectedListing.id, 'needs_revision')}
+                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md border text-amber-700 hover:bg-amber-50 flex items-center justify-center gap-2"
                   >
                     <AlertTriangle size={18} />
-                    Suspend
+                    Needs Revision
                   </button>
                 </div>
               )}
