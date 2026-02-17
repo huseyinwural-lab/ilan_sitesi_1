@@ -102,6 +102,7 @@ class ReportDoc(BaseModel):
     reason: str
     reason_note: Optional[str] = None
     handled_by_admin_id: Optional[str] = None
+    status_note: Optional[str] = None
     created_at: str
     updated_at: Optional[str] = None
 
