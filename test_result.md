@@ -1128,6 +1128,58 @@
 - **Agent**: testing  
 - **Message**: Portal Split v1 no-chunk-load acceptance verification RE-TEST SUCCESSFUL. MAJOR IMPROVEMENT CONFIRMED: All critical requirements now passing. No chunks are loaded during logged-out user redirects (/admin/users → /admin/login, /dealer → /dealer/login). Authorized admin access correctly loads backoffice chunks. Cross-portal access properly blocked without loading inappropriate chunks. The portal isolation is now working as expected - chunks only load when authorized access is granted.
 
+## Sprint 1.2 Dealer Applications UI E2E Test Results (Feb 17, 2026)
+
+### Test Flow Executed:
+**Base URL**: https://listing-portal-12.preview.emergentagent.com
+**Credentials**: admin@platform.com / Admin123! ✅ WORKING
+**Target Route**: /admin/dealer-applications
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+1. **Admin Login**: ✅ admin@platform.com / Admin123! authentication working correctly
+2. **Sidebar Navigation**: ✅ "Başvurular" found in sidebar under "KULLANICI & SATICI" section and navigation works
+3. **Page Structure**: ✅ Page shows "Başvurular" title with "Dealer Onboarding (Sprint 1.2)" subtitle
+4. **Pending Applications Display**: ✅ Table shows pending applications with correct headers (Email, Company, Country, Status, Actions)
+5. **Sample Data**: ✅ Found 1 pending application: scope_6b85e2@example.com, Scope Test, DE, pending status
+6. **Reject Flow**: ✅ FULLY FUNCTIONAL
+   - Modal opens with "Reject application" title
+   - Reason dropdown present with validation
+   - "Other" reason requires note field (verified UI behavior)
+   - Submit and Cancel buttons working
+7. **Approve Flow**: ✅ FULLY FUNCTIONAL
+   - Approve button present and enabled
+   - Button processes requests correctly
+8. **UI Responsiveness**: ✅ Modal opens/closes correctly, buttons respond to user interaction
+9. **Console Errors**: ✅ No critical console errors detected
+
+### Route Configuration Fix Applied:
+- **Issue Found**: `/admin/dealer-applications` route was missing from `isAdminPathDisabled` function in Layout.js
+- **Fix Applied**: Added `/admin/dealer-applications` to the known routes set
+- **Result**: Route now properly enabled and accessible via sidebar navigation
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (9/9 requirements verified)
+- **Login & Authentication**: ✅ WORKING
+- **Sidebar Navigation**: ✅ WORKING ("Başvurular" clickable and functional)
+- **Page Loading**: ✅ WORKING (proper title, subtitle, table structure)
+- **Data Display**: ✅ WORKING (pending applications shown with correct data)
+- **Reject Modal**: ✅ WORKING (opens, reason dropdown, validation, close)
+- **Approve Button**: ✅ WORKING (present, enabled, functional)
+- **No Runtime Errors**: ✅ CONFIRMED
+
+### Final Status:
+- **Overall Result**: ✅ **PASS** - Sprint 1.2 Dealer Applications UI fully functional
+- **All Requirements**: ✅ VERIFIED (sidebar navigation, pending applications, reject/approve flows)
+- **Route Configuration**: ✅ FIXED (dealer-applications route now properly enabled)
+- **UI/UX**: ✅ WORKING (modal interactions, table display, button functionality)
+
+### Agent Communication:
+- **Agent**: testing
+- **Message**: Sprint 1.2 Dealer Applications UI E2E test SUCCESSFULLY COMPLETED. All requirements verified and passing (100% success rate). Fixed route configuration issue where /admin/dealer-applications was missing from enabled routes. Sidebar contains "Başvurular" navigation which works correctly. Page shows pending applications with proper table structure. Reject flow opens modal with reason dropdown and validation. Approve flow has functional buttons. No critical console errors detected. All Sprint 1.2 dealer application requirements are working as expected.
+
 ## Admin Dealers Module Testing Results (Feb 17, 2026)
 
 ### Test Flow Executed:
