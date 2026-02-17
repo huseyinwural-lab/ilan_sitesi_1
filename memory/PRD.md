@@ -36,12 +36,16 @@
 - **Sprint 2.1:** Admin Global Listing Yönetimi
   - Filtreler: country-scope, status, search, dealer_only, category_id
   - Aksiyonlar: soft-delete, force-unpublish
+- **Sprint 2.2:** Reports Engine (Şikayet Yönetimi)
+  - Report reason enum + lifecycle
+  - Admin list/detail/status API + audit-first
+  - Public report submit (rate limit)
+  - Admin UI /admin/reports + listing detail “Şikayet Et”
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- **Sprint 2.2:** Reports Engine (şikayet yönetimi)
 - **Sprint 3:** Finance Domain (Invoices, TaxRates, Plans)
 
 ### P1
