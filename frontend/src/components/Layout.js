@@ -194,6 +194,9 @@ export default function Layout({ children }) {
       '/admin/moderation',
       '/admin/listings',
       '/admin/reports',
+      '/admin/invoices',
+      '/admin/tax-rates',
+      '/admin/plans',
       '/admin/dealers',
       '/admin/dealer-applications',
 
