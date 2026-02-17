@@ -193,6 +193,7 @@ export default function Layout({ children }) {
       '/admin/billing',
       '/admin/moderation',
       '/admin/dealers',
+      '/admin/dealer-applications',
 
     ]);
     return !known.has(path);
