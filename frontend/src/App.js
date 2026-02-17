@@ -25,10 +25,11 @@ import { PORTALS } from '@/shared/types/portals';
 const BackofficePortalApp = lazy(() => import('@/portals/backoffice/BackofficePortalApp'));
 const DealerPortalApp = lazy(() => import('@/portals/dealer/DealerPortalApp'));
 
-// Login shells (kept simple; same Login component for now)
+// Login shells
 import PublicLogin from '@/portals/public/PublicLogin';
-import DealerLogin from '@/portals/dealer/DealerLogin';
-import BackofficeLogin from '@/portals/backoffice/BackofficeLogin';
+
+const DealerLogin = lazy(() => import('@/portals/dealer/DealerLogin'));
+const BackofficeLogin = lazy(() => import('@/portals/backoffice/BackofficeLogin'));
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
@@ -75,8 +76,22 @@ function App() {
 
                   {/* Portal login surfaces */}
                   <Route path="/login" element={<PublicLogin />} />
-                  <Route path="/dealer/login" element={<DealerLogin />} />
-                  <Route path="/admin/login" element={<BackofficeLogin />} />
+                  <Route
+                    path="/dealer/login"
+                    element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <DealerLogin />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="/admin/login"
+                    element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <BackofficeLogin />
+                      </Suspense>
+                    }
+                  />
 
                   {/* Back-compat: old auth paths redirect to /login */}
                   <Route path="/auth/login" element={<Navigate to="/login" replace />} />
