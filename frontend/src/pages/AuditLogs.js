@@ -48,7 +48,12 @@ export default function AuditLogs() {
       params.append('skip', page * limit);
       params.append('limit', limit);
       if (actionFilter) params.append('action', actionFilter);
+      if (eventTypeFilter) params.append('event_type', eventTypeFilter);
       if (resourceFilter) params.append('resource_type', resourceFilter);
+      if (countryFilter) params.append('country', countryFilter);
+      if (adminUserFilter) params.append('admin_user_id', adminUserFilter);
+      if (dateStart) params.append('start', dateStart);
+      if (dateEnd) params.append('end', dateEnd);
       
       const response = await axios.get(`${API}/audit-logs?${params}`);
       setLogs(response.data);
