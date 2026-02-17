@@ -40,7 +40,7 @@ export default function AuditLogs() {
 
   useEffect(() => {
     fetchLogs();
-  }, [actionFilter, resourceFilter, page]);
+  }, [actionFilter, eventTypeFilter, resourceFilter, countryFilter, adminUserFilter, dateStart, dateEnd, page]);
 
   const fetchLogs = async () => {
     try {
