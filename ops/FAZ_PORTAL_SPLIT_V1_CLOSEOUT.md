@@ -1,15 +1,14 @@
 # FAZ_PORTAL_SPLIT_V1_CLOSEOUT
-## Status
-- ✅ PortalGate no-chunk-load acceptance: PASS (automated network verification)
-- Release gate: admin shell leakage = PASS
-
-
-
-## Amaç
-Portal Split v1 fazının PASS/PARTIAL/FAIL kapanışı.
 
 ## Status
 ✅ PASS — Dealer pozitif test tamamlandı + no-chunk-load network kanıtı mevcut.
+
+### Kanıt Özeti
+- PortalGate no-chunk-load acceptance: PASS (automated network verification)
+- Release gate: admin shell leakage: PASS
+
+## Amaç
+Portal Split v1 fazının PASS/PARTIAL/FAIL kapanışı.
 
 ## Portal Kriterleri
 
