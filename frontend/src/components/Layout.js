@@ -134,6 +134,7 @@ export default function Layout({ children }) {
     { divider: true, label: 'Kullanıcı & Satıcı' },
     { path: '/admin/users', icon: Users, label: 'users', roles: ['super_admin', 'country_admin'] },
     { path: '/admin/dealers', icon: Building, label: 'Bayiler', roles: ['super_admin', 'country_admin'] },
+    { path: '/admin/dealer-applications', icon: Clock, label: 'Başvurular', roles: ['super_admin', 'country_admin'] },
     { path: '/admin/onboarding', icon: FileText, label: 'Başvurular', comingSoon: true, roles: ['super_admin', 'country_admin'] },
 
     // İlan & Moderasyon
