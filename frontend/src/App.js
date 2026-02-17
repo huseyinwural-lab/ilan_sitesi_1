@@ -77,7 +77,13 @@ function App() {
                   <Route path="/auth/register" element={<LoginPage />} /> {/* Temporary redirect to login */}
 
                   {/* User Panel Routes */}
-                  <Route path="/account" element={<UserPanelLayout />}
+                  <Route
+                    path="/account"
+                    element={
+                      <ProtectedRoute roles={['individual', 'dealer', 'super_admin', 'country_admin']}>
+                        <UserPanelLayout />
+                      </ProtectedRoute>
+                    }
                   >
                     <Route index element={<Navigate to="/account/listings" />} />
                     <Route path="listings" element={<MyListings />} />
