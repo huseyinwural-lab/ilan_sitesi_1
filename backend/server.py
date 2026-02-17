@@ -273,14 +273,14 @@ app.add_middleware(
 api_router = APIRouter(prefix="/api")
 
 
-@api_router.get("/health")
-
 # Moderation reasons (v1.0.0 single-source contract)
 REJECT_REASONS_V1 = {"duplicate", "spam", "illegal", "wrong_category"}
 NEEDS_REVISION_REASONS_V1 = {"missing_photos", "insufficient_description", "wrong_price", "other"}
 
 ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
 
+
+@api_router.get("/health")
 async def health_check(request: Request):
     db = request.app.state.db
     await db.command("ping")
