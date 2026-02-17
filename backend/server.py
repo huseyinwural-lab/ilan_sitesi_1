@@ -615,6 +615,152 @@ async def list_categories(request: Request, module: str, current_user=Depends(ge
     return docs
 
 
+# =====================
+# Sprint 1.1 — Dealer Management (Admin)
+# =====================
+
+@api_router.get("/admin/dealers")
+async def admin_list_dealers(
+    request: Request,
+    skip: int = 0,
+    limit: int = 50,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    query: Dict = {"role": "dealer"}
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        query["country_code"] = ctx.country
+    if status:
+        query["dealer_status"] = status
+    if search:
+        query["email"] = {"$regex": search, "$options": "i"}
+
+    limit = min(100, max(1, int(limit)))
+    cursor = db.users.find(query, {"_id": 0}).skip(int(skip)).limit(limit)
+    docs = await cursor.to_list(length=limit)
+
+    out = []
+    for u in docs:
+        out.append(
+            {
+                "id": u.get("id"),
+                "email": u.get("email"),
+                "dealer_status": u.get("dealer_status", "active"),
+                "country_code": u.get("country_code"),
+                "plan_id": u.get("plan_id"),
+                "created_at": u.get("created_at"),
+            }
+        )
+
+    total = await db.users.count_documents(query)
+    return {"items": out, "pagination": {"total": total, "skip": int(skip), "limit": limit}}
+
+
+@api_router.get("/admin/dealers/{dealer_id}")
+async def admin_get_dealer_detail(
+    dealer_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    query: Dict = {"id": dealer_id, "role": "dealer"}
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        query["country_code"] = ctx.country
+
+    dealer = await db.users.find_one(query, {"_id": 0})
+    if not dealer:
+        raise HTTPException(status_code=404, detail="Dealer not found")
+
+    # Basic finance linkage (MVP)
+    last_invoice = (
+        await db.invoices.find({"dealer_user_id": dealer_id}, {"_id": 0})
+        .sort("created_at", -1)
+        .limit(1)
+        .to_list(1)
+    )
+    last_invoice = last_invoice[0] if last_invoice else None
+
+    return {
+        "dealer": {
+            "id": dealer.get("id"),
+            "email": dealer.get("email"),
+            "dealer_status": dealer.get("dealer_status", "active"),
+            "country_code": dealer.get("country_code"),
+            "plan_id": dealer.get("plan_id"),
+            "created_at": dealer.get("created_at"),
+        },
+        "package": {
+            "plan_id": dealer.get("plan_id"),
+            "last_invoice": last_invoice,
+        },
+    }
+
+
+class DealerStatusPayload(BaseModel):
+    dealer_status: str
+
+
+@api_router.post("/admin/dealers/{dealer_id}/status")
+async def admin_set_dealer_status(
+    dealer_id: str,
+    payload: DealerStatusPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    new_status = (payload.dealer_status or "").strip().lower()
+    if new_status not in ["active", "suspended"]:
+        raise HTTPException(status_code=400, detail="Invalid dealer_status")
+
+    query: Dict = {"id": dealer_id, "role": "dealer"}
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        query["country_code"] = ctx.country
+
+    dealer = await db.users.find_one(query, {"_id": 0})
+    if not dealer:
+        raise HTTPException(status_code=404, detail="Dealer not found")
+
+    prev_status = dealer.get("dealer_status", "active")
+
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "event_type": "DEALER_STATUS_CHANGE",
+        "action": "DEALER_STATUS_CHANGE",
+        "resource_type": "user",
+        "resource_id": dealer_id,
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "country_code": dealer.get("country_code"),
+        "country_scope": current_user.get("country_scope") or [],
+        "previous_status": prev_status,
+        "new_status": new_status,
+        "applied": False,
+    }
+
+    # audit-first
+    await db.audit_logs.insert_one(audit_doc)
+
+    res = await db.users.update_one({"id": dealer_id, "dealer_status": prev_status}, {"$set": {"dealer_status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=409, detail="Dealer status changed concurrently")
+
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    return {"ok": True}
+
+
+
 
 @api_router.get("/countries")
 async def list_countries(request: Request, current_user=Depends(get_current_user)):
