@@ -376,6 +376,12 @@ async def login(credentials: UserLogin, request: Request):
     if not user.get("is_active", True):
         raise HTTPException(status_code=400, detail="User account is disabled")
 
+
+    # successful login: reset failed-login counters
+    _failed_login_attempts.pop(rl_key, None)
+    _failed_login_blocked_until.pop(rl_key, None)
+    _failed_login_block_audited.pop(rl_key, None)
+
     now_iso = datetime.now(timezone.utc).isoformat()
     await db.users.update_one({"id": user["id"]}, {"$set": {"last_login": now_iso}})
     user["last_login"] = now_iso
