@@ -316,8 +316,61 @@ async def health_check(request: Request):
 async def login(credentials: UserLogin, request: Request):
     db = request.app.state.db
 
-    user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+    email = (credentials.email or "").lower().strip()
+    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+
+    # Rate-limit key: IP + email (email may be empty but EmailStr should be present)
+    rl_key = f"{ip_address}:{email}"
+    now = time.time()
+
+    blocked_until = _failed_login_blocked_until.get(rl_key)
+    if blocked_until and now < blocked_until:
+        # Log RATE_LIMIT_BLOCK only once per block window
+        if not _failed_login_block_audited.get(rl_key):
+            await db.audit_logs.insert_one(
+                {
+                    "id": str(uuid.uuid4()),
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "event_type": "RATE_LIMIT_BLOCK",
+                    "action": "RATE_LIMIT_BLOCK",
+                    "resource_type": "auth",
+                    "resource_id": None,
+                    "email": email,
+                    "ip_address": ip_address,
+                    "user_agent": user_agent,
+                }
+            )
+            _failed_login_block_audited[rl_key] = True
+        raise HTTPException(status_code=429, detail="Too many login attempts")
+
+    user = await db.users.find_one({"email": email}, {"_id": 0})
     if not user or not verify_password(credentials.password, user.get("hashed_password", "")):
+        # FAILED_LOGIN audit (always)
+        await db.audit_logs.insert_one(
+            {
+                "id": str(uuid.uuid4()),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "event_type": "FAILED_LOGIN",
+                "action": "FAILED_LOGIN",
+                "resource_type": "auth",
+                "resource_id": None,
+                "email": email,
+                "ip_address": ip_address,
+                "user_agent": user_agent,
+            }
+        )
+
+        # Update attempts window
+        attempts = _failed_login_attempts.get(rl_key, [])
+        attempts = [ts for ts in attempts if (now - ts) <= FAILED_LOGIN_WINDOW_SECONDS]
+        attempts.append(now)
+        _failed_login_attempts[rl_key] = attempts
+
+        if len(attempts) > FAILED_LOGIN_MAX_ATTEMPTS:
+            _failed_login_blocked_until[rl_key] = now + FAILED_LOGIN_BLOCK_SECONDS
+            _failed_login_block_audited[rl_key] = False
+
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     if not user.get("is_active", True):
