@@ -100,6 +100,7 @@ export default function AuditLogs() {
           <option value="user">User</option>
           <option value="feature_flag">Feature Flag</option>
           <option value="country">Country</option>
+          <option value="listing">Listing</option>
         </select>
       </div>
 
