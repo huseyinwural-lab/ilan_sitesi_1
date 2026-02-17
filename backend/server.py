@@ -277,6 +277,10 @@ origins = ["*"] if cors_origins == "*" else [o.strip() for o in cors_origins.spl
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Audit event taxonomy (v1)
 AUDIT_EVENT_TYPES_V1 = {
@@ -288,12 +292,6 @@ AUDIT_EVENT_TYPES_V1 = {
     "ADMIN_ROLE_CHANGE",
     "UNAUTHORIZED_ROLE_CHANGE_ATTEMPT",
 }
-
-
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 api_router = APIRouter(prefix="/api")
 
