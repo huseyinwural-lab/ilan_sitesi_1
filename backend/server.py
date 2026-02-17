@@ -1469,6 +1469,154 @@ async def admin_needs_revision_listing(
 
 
 # =====================
+# Sprint 2.1 — Admin Global Listing Management
+# =====================
+
+
+@api_router.get("/admin/listings")
+async def admin_listings(
+    request: Request,
+    skip: int = 0,
+    limit: int = 50,
+    status: Optional[str] = None,
+    q: Optional[str] = None,
+    dealer_only: Optional[str] = None,
+    category_id: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    query: Dict = {}
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        query["country"] = ctx.country
+    if status:
+        query["status"] = status
+
+    if q:
+        query["$or"] = [
+            {"title": {"$regex": q, "$options": "i"}},
+            {"id": {"$regex": q, "$options": "i"}},
+            {"vehicle.make_key": {"$regex": q, "$options": "i"}},
+            {"vehicle.model_key": {"$regex": q, "$options": "i"}},
+        ]
+
+    if category_id:
+        keys = [category_id]
+        cat = await db.categories.find_one(
+            {
+                "module": "vehicle",
+                "$or": [
+                    {"slug.tr": category_id},
+                    {"slug.de": category_id},
+                    {"slug.fr": category_id},
+                    {"slug.en": category_id},
+                ],
+            },
+            {"_id": 0, "id": 1},
+        )
+        if cat and cat.get("id"):
+            keys.append(cat["id"])
+        query["category_key"] = {"$in": keys}
+
+    dealer_only_flag = _parse_bool_flag(dealer_only)
+    if dealer_only_flag:
+        dealer_query: Dict = {"role": "dealer"}
+        if getattr(ctx, "mode", "global") == "country" and ctx.country:
+            dealer_query["country_code"] = ctx.country
+        dealer_users = await db.users.find(dealer_query, {"_id": 0, "id": 1}).to_list(length=5000)
+        dealer_ids = [u.get("id") for u in dealer_users if u.get("id")]
+        if not dealer_ids:
+            return {"items": [], "pagination": {"total": 0, "skip": int(skip), "limit": min(100, max(1, int(limit)))}}
+        query["created_by"] = {"$in": dealer_ids}
+
+    limit = min(100, max(1, int(limit)))
+    cursor = db.vehicle_listings.find(query, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(limit)
+    docs = await cursor.to_list(length=limit)
+
+    owner_ids = [d.get("created_by") for d in docs if d.get("created_by")]
+    user_map: Dict[str, dict] = {}
+    if owner_ids:
+        users = await db.users.find({"id": {"$in": owner_ids}}, {"_id": 0, "id": 1, "email": 1, "role": 1}).to_list(length=len(owner_ids))
+        user_map = {u.get("id"): u for u in users}
+
+    items = []
+    for d in docs:
+        v = d.get("vehicle") or {}
+        attrs = d.get("attributes") or {}
+        media = d.get("media") or []
+        owner = user_map.get(d.get("created_by"), {})
+        items.append(
+            {
+                "id": d.get("id"),
+                "title": _resolve_listing_title(d),
+                "status": d.get("status"),
+                "country": d.get("country"),
+                "category_key": d.get("category_key"),
+                "price": attrs.get("price_eur"),
+                "currency": "EUR",
+                "image_count": len(media),
+                "created_at": d.get("created_at"),
+                "owner_id": d.get("created_by"),
+                "owner_email": owner.get("email"),
+                "owner_role": owner.get("role"),
+                "is_dealer_listing": owner.get("role") == "dealer",
+            }
+        )
+
+    total = await db.vehicle_listings.count_documents(query)
+    return {"items": items, "pagination": {"total": total, "skip": int(skip), "limit": limit}}
+
+
+@api_router.post("/admin/listings/{listing_id}/soft-delete")
+async def admin_soft_delete_listing(
+    listing_id: str,
+    payload: ListingAdminActionPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    updated = await _admin_listing_action(
+        db=db,
+        listing_id=listing_id,
+        current_user=current_user,
+        event_type="LISTING_SOFT_DELETE",
+        new_status="archived",
+        reason=(payload.reason or None),
+        reason_note=(payload.reason_note or None),
+    )
+    return {"ok": True, "listing": {"id": updated["id"], "status": updated.get("status")}}
+
+
+@api_router.post("/admin/listings/{listing_id}/force-unpublish")
+async def admin_force_unpublish_listing(
+    listing_id: str,
+    payload: ListingAdminActionPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0, "status": 1})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if listing.get("status") != "published":
+        raise HTTPException(status_code=400, detail="Only published listings can be force-unpublished")
+
+    updated = await _admin_listing_action(
+        db=db,
+        listing_id=listing_id,
+        current_user=current_user,
+        event_type="LISTING_FORCE_UNPUBLISH",
+        new_status="unpublished",
+        reason=(payload.reason or None),
+        reason_note=(payload.reason_note or None),
+    )
+    return {"ok": True, "listing": {"id": updated["id"], "status": updated.get("status")}}
+
+
+# =====================
 # Public Search v2 (Mongo)
 # =====================
 
