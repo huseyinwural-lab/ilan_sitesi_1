@@ -406,6 +406,15 @@ async def refresh_token_endpoint(data: RefreshTokenRequest, request: Request):
     user_id = payload.get("sub")
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user or not user.get("is_active", True):
+        raise HTTPException(status_code=401, detail="User not found or inactive")
+
+    token_data = {"sub": user["id"], "email": user["email"], "role": user.get("role")}
+
+    return TokenResponse(
+        access_token=create_access_token(token_data),
+        refresh_token=create_refresh_token(token_data),
+        user=_user_to_response(user),
+    )
 
 
 class UpdateUserPayload(BaseModel):
