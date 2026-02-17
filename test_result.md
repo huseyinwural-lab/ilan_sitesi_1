@@ -221,6 +221,23 @@
 - **Logout Flow**: ✅ WORKING
 - **No Runtime Crashes**: ✅ CONFIRMED
 
+
+## Admin Panel IA v2 — Testing Snapshot (Feb 17, 2026)
+
+### Test Flow Executed:
+1) ✅ Login: /auth/login (admin@platform.com)
+2) ✅ Admin Dashboard: /admin (sidebar grouped + breadcrumb visible)
+3) ✅ Sidebar collapse: desktop collapse/expand toggle works
+4) ✅ Countries UX v2: /admin/countries table view + enabled switch + edit modal opens
+
+### Observations:
+- Sidebar artık domain bazlı gruplu.
+- "Yakında" (coming soon) sayfalar disabled görünüyor (404’e gitmiyor).
+- Countries sayfası artık card grid yerine yönetim tablosu.
+
+### Status:
+- ✅ PASS (smoke)
+
 ### Agent Communication:
 - **Agent**: testing
 - **Message**: P0 verification COMPLETE. All critical functionality is working correctly. The Countries API issue has been resolved and the page now loads data successfully. Only minor React 19 hydration warnings remain, which are non-blocking and don't affect user experience.
