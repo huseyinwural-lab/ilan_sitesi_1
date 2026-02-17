@@ -18,6 +18,7 @@ import ModerationQueue from '@/pages/ModerationQueue';
 import DealersPage from '@/pages/admin/Dealers';
 import DealerApplicationsPage from '@/pages/admin/DealerApplications';
 import AdminListingsPage from '@/pages/admin/AdminListings';
+import AdminReportsPage from '@/pages/admin/AdminReports';
 
 export default function BackofficePortalApp() {
   return (
@@ -32,6 +33,7 @@ export default function BackofficePortalApp() {
       <Route path="/audit-logs" element={<Layout><AuditLogs /></Layout>} />
       <Route path="/moderation" element={<Layout><ModerationQueue /></Layout>} />
       <Route path="/listings" element={<Layout><AdminListingsPage /></Layout>} />
+      <Route path="/reports" element={<Layout><AdminReportsPage /></Layout>} />
 
       <Route path="/dealers" element={<Layout><DealersPage /></Layout>} />
       <Route path="/dealer-applications" element={<Layout><DealerApplicationsPage /></Layout>} />
