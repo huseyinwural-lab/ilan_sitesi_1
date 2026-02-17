@@ -29,6 +29,10 @@ Bu doküman **v1.0.0 / FAZ-FINAL-02 (P1)** kapsamında audit `event_type` isimle
 - `LISTING_SOFT_DELETE`
 - `LISTING_FORCE_UNPUBLISH`
 
+### Reports
+- `REPORT_STATUS_CHANGE`
+- `REPORT_CREATED`
+
 ---
 
 ## Alan Politikası
