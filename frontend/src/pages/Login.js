@@ -60,15 +60,12 @@ export default function Login() {
       </div>
 
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="bg-card rounded-lg shadow-lg border p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold tracking-tight">Giriş Yap</h1>
             <p className="text-muted-foreground text-sm mt-2">Hesabınıza giriş yapın.</p>
           </div>
 
-        {/* Login Form */}
-        <div className="bg-card rounded-lg border shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm" data-testid="login-error">
