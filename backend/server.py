@@ -976,13 +976,6 @@ async def admin_approve_dealer_application(
     # Return temp password for MVP testing (in real prod, send email)
     return {"ok": True, "dealer_user": {"id": new_user_id, "email": app.get("email"), "temp_password": raw_password}}
 
-    res = await db.users.update_one({"id": dealer_id}, {"$set": {"dealer_status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}})
-    if res.matched_count == 0:
-        raise HTTPException(status_code=409, detail="Dealer status changed concurrently")
-
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-
-    return {"ok": True}
 
 
 
