@@ -182,30 +182,49 @@ export default function AdminListingsPage() {
           className="h-9 px-3 rounded-md border bg-background text-sm"
           data-testid="listings-search-input"
         />
-        <select
-          value={status}
-          onChange={(e) => { setStatus(e.target.value); setPage(0); }}
-          className="h-9 px-3 rounded-md border bg-background text-sm"
-          data-testid="listings-status-select"
+        <Select
+          value={statusValue}
+          onValueChange={(value) => { setStatus(value === 'all' ? '' : value); setPage(0); }}
         >
-          {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-        <select
-          value={categoryId}
-          onChange={(e) => { setCategoryId(e.target.value); setPage(0); }}
-          className="h-9 px-3 rounded-md border bg-background text-sm min-w-[200px]"
-          data-testid="listings-category-select"
+          <SelectTrigger className="h-9 w-[180px]" data-testid="listings-status-select">
+            <SelectValue placeholder="Tümü" />
+          </SelectTrigger>
+          <SelectContent>
+            {statusOptions.map((opt) => (
+              <SelectItem
+                key={opt.value || 'all'}
+                value={opt.value || 'all'}
+                data-testid={`listings-status-option-${opt.value || 'all'}`}
+              >
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={categoryValue}
+          onValueChange={(value) => { setCategoryId(value === 'all' ? '' : value); setPage(0); }}
         >
-          <option value="">Tüm Kategoriler</option>
-          {categories.map((cat) => {
-            const label = cat?.name?.tr || cat?.name?.en || cat?.slug?.tr || cat?.slug?.en || cat?.slug?.de || cat?.slug?.fr || cat?.id;
-            return (
-              <option key={cat.id || label} value={cat.id || label}>{label}</option>
-            );
-          })}
-        </select>
+          <SelectTrigger className="h-9 min-w-[200px]" data-testid="listings-category-select">
+            <SelectValue placeholder="Tüm Kategoriler" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" data-testid="listings-category-option-all">Tüm Kategoriler</SelectItem>
+            {categories.map((cat) => {
+              const label = cat?.name?.tr || cat?.name?.en || cat?.slug?.tr || cat?.slug?.en || cat?.slug?.de || cat?.slug?.fr || cat?.id;
+              const value = cat?.id || label;
+              return (
+                <SelectItem
+                  key={value}
+                  value={value}
+                  data-testid={`listings-category-option-${value}`}
+                >
+                  {label}
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
         <label className="flex items-center gap-2 text-sm" data-testid="listings-dealer-only-toggle">
           <input
             type="checkbox"
