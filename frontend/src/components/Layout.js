@@ -99,10 +99,12 @@ export default function Layout({ children }) {
     setSelectedCountry(c);
   };
 
-  // Keep CountryContext in sync for UX (flags etc.)
-  if (isCountryMode && urlCountry && selectedCountry !== urlCountry) {
-    setSelectedCountry(urlCountry);
-  }
+  useEffect(() => {
+    // Keep CountryContext in sync for UX (flags etc.)
+    if (isCountryMode && urlCountry && selectedCountry !== urlCountry) {
+      setSelectedCountry(urlCountry);
+    }
+  }, [isCountryMode, urlCountry]);
 
 
   const handleLogout = () => {
