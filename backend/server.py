@@ -756,7 +756,7 @@ async def admin_set_dealer_status(
     # audit-first
     await db.audit_logs.insert_one(audit_doc)
 
-    res = await db.users.update_one({"id": dealer_id, "dealer_status": prev_status}, {"$set": {"dealer_status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}})
+    res = await db.users.update_one({"id": dealer_id}, {"$set": {"dealer_status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}})
     if res.matched_count == 0:
         raise HTTPException(status_code=409, detail="Dealer status changed concurrently")
 
