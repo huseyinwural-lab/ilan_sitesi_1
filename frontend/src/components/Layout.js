@@ -288,33 +288,56 @@ export default function Layout({ children }) {
               <Menu size={20} />
             </button>
 
-            {/* Country Selector */}
-            <div className="relative">
-              <button
-                onClick={() => setCountryDropdownOpen(!countryDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-md border hover:bg-muted transition-colors"
-                data-testid="country-selector"
-              >
-                <span className="text-xl">{getFlag(selectedCountry)}</span>
-                <span className="font-medium">{selectedCountry}</span>
-                <ChevronDown size={16} className="text-muted-foreground" />
-              </button>
-              {countryDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1 w-40 rounded-md border bg-popover shadow-lg">
-                  {Object.entries(countryFlags).map(([code, flag]) => (
-                    <button
-                      key={code}
-                      onClick={() => { setSelectedCountry(code); setCountryDropdownOpen(false); }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted ${
-                        selectedCountry === code ? 'bg-muted' : ''
-                      }`}
-                    >
-                      <span>{flag}</span>
-                      <span>{code}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+            {/* Admin Country Context v2 (URL-based) */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 border rounded-md px-2 py-1" data-testid="admin-mode-toggle">
+                <span className={`text-xs ${!isCountryMode ? 'font-semibold' : 'text-muted-foreground'}`}>Global</span>
+                <Switch
+                  checked={isCountryMode}
+                  onCheckedChange={(checked) => setMode(checked ? 'country' : 'global')}
+                  data-testid="admin-mode-switch"
+                />
+                <span className={`text-xs ${isCountryMode ? 'font-semibold' : 'text-muted-foreground'}`}>Country</span>
+              </div>
+
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setCountryDropdownOpen(!countryDropdownOpen);
+                    setLangDropdownOpen(false);
+                    setUserDropdownOpen(false);
+                  }}
+                  disabled={!isCountryMode}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors ${!isCountryMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  data-testid="country-selector"
+                  title={!isCountryMode ? 'Country mode kapalı' : 'Country seç'}
+                >
+                  <span className="text-lg">{getFlag(isCountryMode ? (urlCountry || selectedCountry) : selectedCountry)}</span>
+                  <span className="text-sm font-medium">{isCountryMode ? (urlCountry || selectedCountry) : selectedCountry}</span>
+                  <ChevronDown size={16} className={`transition-transform ${countryDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {countryDropdownOpen && isCountryMode && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-md border bg-card shadow-lg z-50">
+                    {Object.entries(countryFlags).map(([code]) => (
+                      <button
+                        key={code}
+                        onClick={() => {
+                          setCountryInUrl(code);
+                          setCountryDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors ${
+                          (urlCountry || selectedCountry) === code ? 'bg-muted' : ''
+                        }`}
+                        data-testid={`country-select-${code}`}
+                      >
+                        <span className="text-lg">{getFlag(code)}</span>
+                        <span className="font-medium">{code}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
