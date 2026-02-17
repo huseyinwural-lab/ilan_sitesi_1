@@ -55,11 +55,15 @@ class InvoiceDoc(BaseModel):
     id: str
     dealer_user_id: str
     country_code: str
-    status: InvoiceStatus
-    amount_cents: int
+    plan_id: str
+    amount_net: float
+    tax_rate: float
+    tax_amount: float
+    amount_gross: float
     currency: str
-    period_start: Optional[str] = None
-    period_end: Optional[str] = None
+    status: InvoiceStatus
+    issued_at: str
+    paid_at: Optional[str] = None
     created_at: str
     updated_at: Optional[str] = None
 
@@ -67,8 +71,9 @@ class InvoiceDoc(BaseModel):
 class TaxRateDoc(BaseModel):
     id: str
     country_code: str
-    rate_percent: float
+    rate: float
     effective_date: str
+    active_flag: bool = True
     created_at: str
     updated_at: Optional[str] = None
 
@@ -76,12 +81,12 @@ class TaxRateDoc(BaseModel):
 class SubscriptionPlanDoc(BaseModel):
     id: str
     name: str
-    country_codes: List[str] = []  # empty => global
-    price_cents: int
+    country_code: str
+    price: float
     currency: str
-    feature_flags: Dict[str, Any] = {}
-    quota: Dict[str, Any] = {}
-    is_active: bool = True
+    listing_quota: int
+    showcase_quota: int
+    active_flag: bool = True
     created_at: str
     updated_at: Optional[str] = None
 
