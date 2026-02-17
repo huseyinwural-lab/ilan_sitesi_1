@@ -32,6 +32,8 @@ export default function BackofficePortalApp() {
       <Route path="/moderation" element={<Layout><ModerationQueue /></Layout>} />
 
       <Route path="/dealers" element={<Layout><DealersPage /></Layout>} />
+      <Route path="/dealer-applications" element={<Layout><DealerApplicationsPage /></Layout>} />
+
 
       <Route path="/master-data/vehicles" element={<Layout><AdminVehicleMDM /></Layout>} />
       <Route path="/billing" element={<Layout><BillingPage /></Layout>} />
