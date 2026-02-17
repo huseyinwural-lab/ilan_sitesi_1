@@ -109,6 +109,7 @@ async def _ensure_admin_user(db):
                     "hashed_password": hashed,
                     "is_active": True,
                     "role": existing.get("role") or "super_admin",
+                    "country_code": existing.get("country_code") or "TR",
                     "updated_at": now_iso,
                 }
             },
