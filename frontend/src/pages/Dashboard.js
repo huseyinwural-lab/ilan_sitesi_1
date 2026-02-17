@@ -179,7 +179,7 @@ export default function Dashboard() {
         <h3 className="font-semibold mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <a 
-            href="/users" 
+            href="/admin/users" 
             className="flex items-center gap-2 p-3 rounded-md border hover:bg-muted/50 transition-colors"
             data-testid="quick-action-users"
           >
@@ -187,7 +187,7 @@ export default function Dashboard() {
             <span className="text-sm font-medium">{t('users')}</span>
           </a>
           <a 
-            href="/feature-flags" 
+            href="/admin/feature-flags" 
             className="flex items-center gap-2 p-3 rounded-md border hover:bg-muted/50 transition-colors"
             data-testid="quick-action-flags"
           >
@@ -195,7 +195,7 @@ export default function Dashboard() {
             <span className="text-sm font-medium">{t('feature_flags')}</span>
           </a>
           <a 
-            href="/countries" 
+            href="/admin/countries" 
             className="flex items-center gap-2 p-3 rounded-md border hover:bg-muted/50 transition-colors"
             data-testid="quick-action-countries"
           >
@@ -203,7 +203,7 @@ export default function Dashboard() {
             <span className="text-sm font-medium">{t('countries')}</span>
           </a>
           <a 
-            href="/audit-logs" 
+            href="/admin/audit-logs" 
             className="flex items-center gap-2 p-3 rounded-md border hover:bg-muted/50 transition-colors"
             data-testid="quick-action-audit"
           >
