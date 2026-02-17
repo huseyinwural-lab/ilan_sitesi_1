@@ -5,7 +5,9 @@ FAZ-UI-CHECK-02 sonuçlarını PASS/PARTIAL/FAIL olarak kapatmak ve Fix Sprint-1
 
 ## Portal Sonuçları (Ön Değerlendirme)
 1) Public Site: **PARTIAL**
-- Arama/detay mevcut; SEO + dealer profil + trust layer eksik.
+- Arama/detay mevcut; **Public Search: FAIL (Release Blocker)**.
+- Neden: Public Search UI `/api/v2/search` çağırıyor fakat server.py bu endpoint’i expose etmiyor (endpoint uyumsuzluğu + backend entegrasyon riski).
+- "Refactor yok" kapsamında kapatılmadı; Fix Sprint-1’e taşındı.
 
 2) User Panel: **PARTIAL/FAIL**
 - Layout var; auth guard ve core modüller eksik.
