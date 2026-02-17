@@ -219,6 +219,35 @@
 - **Agent**: testing
 - **Message**: Re-test completed. Main admin flow working correctly. Layout issue from previous tests has been resolved - all admin routes now properly use Layout component with sidebar. Only critical issue is missing /api/countries endpoint causing Countries page data loading to fail.
 
+
+## FAZ-FINAL-02 (P1) — Security & Permission Audit — TESTED
+
+### Backend
+- Failed login audit:
+  - `POST /api/auth/login` invalid creds → `FAILED_LOGIN` audit row
+  - Rate limit policy (P1): 3 fails in 10min → **4th attempt** blocked (429) + **single** `RATE_LIMIT_BLOCK` row (block start only)
+  - country alanı P1 kararı gereği NULL
+- Audit taxonomy standardı:
+  - /app/architecture/AUDIT_EVENT_TYPES_V1.md
+- Admin role change audit:
+  - `PATCH /api/users/{user_id}` → `ADMIN_ROLE_CHANGE` audit row (prev/new + applied=true)
+  - Audit insert başarısızsa role değişimi commit edilmez (audit-first garanti)
+  - Scope dışı attempt → 403 + `UNAUTHORIZED_ROLE_CHANGE_ATTEMPT`
+- Moderation event standardizasyonu:
+  - `MODERATION_APPROVE/REJECT/NEEDS_REVISION` event_type + UI uyumu için action: APPROVE/REJECT/NEEDS_REVISION
+
+### Frontend
+- `/admin/audit-logs` filtreler eklendi: event_type, country, date range, admin_user_id
+
+### Docs
+- /app/ops/IMPLEMENT_FAILED_LOGIN_AUDIT.md
+- /app/ops/FAILED_LOGIN_RATE_LIMIT_INTEGRATION.md
+- /app/ops/IMPLEMENT_ADMIN_ROLE_CHANGE_AUDIT.md
+- /app/ops/AUDIT_LOG_UI_FILTERS.md
+- /app/ops/P1_SECURITY_E2E_EVIDENCE.md
+- /app/release_notes/GO_LIVE_DECISION_v1.0.0.md (P1 gate eklendi)
+
+
 ## Final P0 Verification Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
