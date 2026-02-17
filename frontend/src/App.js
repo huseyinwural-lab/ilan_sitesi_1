@@ -17,8 +17,7 @@ import VehicleSegmentPage from '@/pages/public/VehicleSegmentPage';
 import RedirectToCountry from '@/pages/public/RedirectToCountry';
 import LoginPage from '@/pages/Login';
 
-// Admin Pages
-import React, { Suspense, lazy } from 'react';
+// Admin/Dealer Portal (lazy)
 
 import PortalGate from '@/shared/auth/PortalGate';
 import { PORTALS } from '@/shared/types/portals';
