@@ -353,6 +353,60 @@
 - **Agent**: testing
 - **Message**: Global/Country mode switch re-test SUCCESSFULLY COMPLETED. The previously reported critical bug where users couldn't return to Global mode after switching to Country mode has been RESOLVED. All test scenarios now pass: initial Global state (unchecked, no country param), switch to Country (checked, ?country=DE), and switch back to Global (unchecked, country param removed). URL state management working perfectly with no console errors detected.
 
+## FAZ-UI-CHECK-02 Smoke Validation Results (Feb 17, 2026)
+
+### Test Flow Executed:
+**Test 1 (Public Portal):**
+1. ✅ **Homepage Navigation** - Top nav renders with Emlak and Vasıta items
+2. ❌ **Search Page** - Search UI not found, shows error "İlanlar yüklenirken bir hata oluştu"
+3. ✅ **Detail Page** - /ilan/test loads without crashes (shows "Not Found" but no errors)
+
+**Test 2 (Admin Portal):**
+1. ✅ **Admin Login** - admin@platform.com / Admin123! authentication successful
+2. ✅ **Admin Dashboard** - /admin loads with sidebar and dashboard content
+3. ✅ **Admin Users** - /admin/users loads with user management table
+4. ✅ **Admin Countries** - /admin/countries loads with countries table (4 countries)
+5. ✅ **Country Mode Switch** - Switch successfully adds ?country=DE to URL
+
+**Test 3 (User Panel Guard):**
+1. ❌ **Access Control** - /account/listings accessible without authentication, shows user data
+
+### Critical Findings:
+
+#### ✅ WORKING FEATURES:
+- **Public Navigation**: Homepage top nav renders correctly with Emlak/Vasıta
+- **Admin Authentication**: Login flow working with correct credentials
+- **Admin Panel**: All admin routes accessible and functional
+- **Country Mode Switch**: Successfully toggles and adds ?country=DE parameter
+- **Detail Page Routing**: /ilan/* routes handle gracefully without crashes
+
+#### ❌ CRITICAL ISSUES FOUND:
+- **Search Functionality**: Search page shows error "İlanlar yüklenirken bir hata oluştu" (404 API failures)
+- **User Panel Security**: /account/listings accessible without authentication - SECURITY VULNERABILITY
+  - Shows actual user data (BMW 320i, Draft Laptop listings) without login
+  - No redirect to login page for protected routes
+
+#### ⚠️ CONSOLE ERRORS (19 total):
+- Category fetch errors (selectedVertical undefined)
+- Search API failures (404 responses)
+- React hydration warnings (nested HTML elements)
+- Non-blocking but should be addressed
+
+### Portal Results:
+- **Public Portal**: PARTIAL (2/3 tests passed)
+- **Admin Portal**: PASS (5/5 tests passed)  
+- **User Panel Guard**: FAIL (security vulnerability)
+
+### Final Status:
+- **Test Success Rate**: 70% (7/10 core tests passed)
+- **Security Issue**: HIGH PRIORITY - User panel accessible without authentication
+- **Search Functionality**: BROKEN - API endpoints returning 404
+- **Admin Features**: FULLY OPERATIONAL
+
+### Agent Communication:
+- **Agent**: testing
+- **Message**: FAZ-UI-CHECK-02 smoke validation COMPLETED. Admin portal fully functional with working country switch. CRITICAL SECURITY ISSUE: User panel (/account/listings) accessible without authentication, exposing user data. Search functionality broken with 404 API errors. Public navigation working correctly.
+
 ## Admin Country Context v2 E2E Verification Results (Feb 17, 2026)
 
 ### Test Flow Executed:
