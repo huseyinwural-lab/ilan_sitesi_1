@@ -53,7 +53,11 @@ export default function ModerationQueue() {
 
   const fetchCount = async () => {
     try {
-      const response = await axios.get(`${API}/moderation/queue/count`);
+      const response = await axios.get(`${API}/admin/moderation/queue/count?status=pending_moderation`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
       setPendingCount(response.data.count);
     } catch (error) {
       console.error('Failed to fetch count:', error);
