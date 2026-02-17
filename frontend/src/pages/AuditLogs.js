@@ -351,3 +351,5 @@ export default function AuditLogs() {
     </div>
   );
 }
+
+export {}
