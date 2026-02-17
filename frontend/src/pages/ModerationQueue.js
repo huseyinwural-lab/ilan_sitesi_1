@@ -38,7 +38,11 @@ export default function ModerationQueue() {
       if (countryFilter) params.append('country', countryFilter);
       if (moduleFilter) params.append('module', moduleFilter);
       
-      const response = await axios.get(`${API}/moderation/queue?${params}`);
+      const response = await axios.get(`${API}/admin/moderation/queue?${params}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
       setListings(response.data);
     } catch (error) {
       console.error('Failed to fetch queue:', error);
