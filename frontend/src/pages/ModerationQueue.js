@@ -13,8 +13,11 @@ const statusColors = {
   pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
   active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
   rejected: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400',
+  needs_revision: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
   suspended: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
   expired: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
+  pending_moderation: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  published: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
 };
 
 const REJECT_REASONS_V1 = [
