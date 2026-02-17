@@ -15,7 +15,7 @@ import DetailPage from '@/pages/public/DetailPage';
 import VehicleLandingPage from '@/pages/public/VehicleLandingPage';
 import VehicleSegmentPage from '@/pages/public/VehicleSegmentPage';
 import RedirectToCountry from '@/pages/public/RedirectToCountry';
-import LoginPage from '@/pages/Login';
+// Login moved under portal-specific paths
 
 // Admin/Dealer Portal (lazy)
 
