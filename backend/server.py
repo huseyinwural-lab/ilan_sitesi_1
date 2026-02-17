@@ -59,6 +59,8 @@ _failed_login_blocked_until: Dict[str, float] = {}
 
 # Dealer Application reasons (v1)
 DEALER_APP_REJECT_REASONS_V1 = {
+
+
     "incomplete_documents",
     "invalid_company_info",
     "duplicate_application",
