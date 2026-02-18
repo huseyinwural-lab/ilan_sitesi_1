@@ -86,6 +86,11 @@
 - **Backlog:** Dashboard View Audit
 - **Backlog:** Master Data CSV Import/Export
 - **Backlog:** Audit Dashboard Widget (Son 24 Saat Kritik Event)
+- **Backlog:** Kampanyalar CRUD + uygulama noktaları
+- **Backlog:** Billing/Ödeme kayıtları entegrasyonu
+- **Backlog:** Menü yönetimi gerçek ihtiyaç doğrulaması
+- **Backlog:** Bireysel üye başvuruları veri kaynağı
+- **Backlog:** Moderation Queue için individual/kurumsal filtre
 
 ### P2
 - V3 genişletmeler (gelişmiş arama, güven katmanı, bayi genişletmeleri)
