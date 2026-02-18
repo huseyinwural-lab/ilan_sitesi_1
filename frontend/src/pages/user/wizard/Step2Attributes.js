@@ -280,6 +280,25 @@ const AttributeForm = () => {
         </div>
       </div>
 
+      {attributeDefs.length > 0 && (
+        <div className="mt-6" data-testid="listing-dynamic-attributes">
+          <h3 className="text-lg font-semibold mb-3">Ek Özellikler</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {attributeDefs.map((attr) => (
+              <div key={attr.id}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {attr.name}{attr.required_flag ? ' *' : ''}
+                </label>
+                {renderAttributeInput(attr)}
+              </div>
+            ))}
+          </div>
+          {errors.attributes && (
+            <div className="text-xs text-red-600 mt-2" data-testid="listing-attributes-error">{errors.attributes}</div>
+          )}
+        </div>
+      )}
+
       <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
         <h3 className="font-semibold text-gray-900">Temel Bilgiler</h3>
 
@@ -367,6 +386,7 @@ const AttributeForm = () => {
           type="submit" 
           disabled={loading}
           className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-medium"
+          data-testid="listing-attributes-submit"
         >
           Sonraki: Fotoğraflar
         </button>
