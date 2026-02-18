@@ -146,3 +146,55 @@ class SystemSettingDoc(BaseModel):
     is_read_only: bool = False
     created_at: str
     updated_at: Optional[str] = None
+
+
+# ===============
+# Master Data (Categories / Attributes / Vehicle)
+# ===============
+
+
+class CategoryDoc(BaseModel):
+    id: str
+    parent_id: Optional[str] = None
+    name: str
+    slug: str
+    country_code: Optional[str] = None
+    active_flag: bool = True
+    sort_order: int = 0
+    created_at: str
+    updated_at: Optional[str] = None
+
+
+class AttributeDoc(BaseModel):
+    id: str
+    category_id: str
+    name: str
+    key: str
+    type: str
+    required_flag: bool = False
+    filterable_flag: bool = False
+    options: Optional[List[str]] = None
+    country_code: Optional[str] = None
+    active_flag: bool = True
+    created_at: str
+    updated_at: Optional[str] = None
+
+
+class VehicleMakeDoc(BaseModel):
+    id: str
+    name: str
+    slug: str
+    country_code: str
+    active_flag: bool = True
+    created_at: str
+    updated_at: Optional[str] = None
+
+
+class VehicleModelDoc(BaseModel):
+    id: str
+    make_id: str
+    name: str
+    slug: str
+    active_flag: bool = True
+    created_at: str
+    updated_at: Optional[str] = None
