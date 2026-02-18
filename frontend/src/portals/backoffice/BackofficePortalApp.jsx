@@ -5,10 +5,10 @@ import Layout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
 import UserManagement from '@/pages/Users';
 import FeatureFlags from '@/pages/FeatureFlags';
-import Categories from '@/pages/Categories';
-import AdminAttributes from '@/pages/AdminAttributes';
-import AdminOptions from '@/pages/AdminOptions';
-import AdminVehicleMDM from '@/pages/AdminVehicleMDM';
+import AdminCategories from '@/pages/admin/AdminCategories';
+import AdminAttributes from '@/pages/admin/AdminAttributes';
+import AdminVehicleMakes from '@/pages/admin/AdminVehicleMakes';
+import AdminVehicleModels from '@/pages/admin/AdminVehicleModels';
 
 import AuditLogs from '@/pages/AuditLogs';
 import ModerationQueue from '@/pages/ModerationQueue';
@@ -31,9 +31,8 @@ export default function BackofficePortalApp() {
       <Route path="/" element={<Layout><Dashboard /></Layout>} />
       <Route path="/users" element={<Layout><UserManagement /></Layout>} />
       <Route path="/feature-flags" element={<Layout><FeatureFlags /></Layout>} />
-      <Route path="/categories" element={<Layout><Categories /></Layout>} />
+      <Route path="/categories" element={<Layout><AdminCategories /></Layout>} />
       <Route path="/attributes" element={<Layout><AdminAttributes /></Layout>} />
-      <Route path="/attributes/options" element={<Layout><AdminOptions /></Layout>} />
       <Route path="/audit-logs" element={<Layout><AuditLogs /></Layout>} />
       <Route path="/moderation" element={<Layout><ModerationQueue /></Layout>} />
       <Route path="/dashboard" element={<Layout><AdminDashboardPage /></Layout>} />
@@ -49,9 +48,8 @@ export default function BackofficePortalApp() {
 
       <Route path="/dealers" element={<Layout><DealersPage /></Layout>} />
       <Route path="/dealer-applications" element={<Layout><DealerApplicationsPage /></Layout>} />
-
-
-      <Route path="/master-data/vehicles" element={<Layout><AdminVehicleMDM /></Layout>} />
+      <Route path="/vehicle-makes" element={<Layout><AdminVehicleMakes /></Layout>} />
+      <Route path="/vehicle-models" element={<Layout><AdminVehicleModels /></Layout>} />
       
 
       <Route path="*" element={<Navigate to="/admin" replace />} />
