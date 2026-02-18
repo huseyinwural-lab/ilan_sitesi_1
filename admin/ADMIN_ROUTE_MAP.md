@@ -14,8 +14,8 @@
 | Bireysel Üye Başvurular | /admin/individual-applications | DONE | Liste + approve/reject |
 | Kurumsal Üye Başvurular | /admin/dealer-applications | DONE | Onay/ret akışı |
 | Moderation Queue | /admin/moderation | DONE | Moderasyon listesi |
-| Bireysel İlan Başvuruları | /admin/individual-listing-applications | PLACEHOLDER | Moderation Queue filtresi bekleniyor |
-| Kurumsal İlan Başvuruları | /admin/corporate-listing-applications | PLACEHOLDER | Moderation Queue filtresi bekleniyor |
+| Bireysel İlan Başvuruları | /admin/individual-listing-applications | DONE | Moderation Queue filtresi (dealer_only=false) |
+| Kurumsal İlan Başvuruları | /admin/corporate-listing-applications | DONE | Moderation Queue filtresi (dealer_only=true) |
 | Bireysel Kampanyalar | /admin/individual-campaigns | PLACEHOLDER | P1 CRUD |
 | Kurumsal Kampanyalar | /admin/corporate-campaigns | PLACEHOLDER | P1 CRUD |
 | Şikayetler | /admin/reports | DONE | Liste + detay + status |
