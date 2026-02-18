@@ -177,9 +177,17 @@ export default function SearchPage() {
     fetchData();
   }, [searchState]); // Re-run when URL state changes
 
-  const handleCategoryChange = (slug) => {
+  const handleCategoryChange = (categoryId) => {
     // Reset filters on category change (Architecture Decision 3)
-    setSearchState({ category: slug, filters: {}, page: 1 });
+    setSearchState({ category: categoryId, filters: {}, page: 1 });
+  };
+
+  const handleMakeChange = (makeKey) => {
+    setSearchState({ make: makeKey || null, model: null, page: 1 });
+  };
+
+  const handleModelChange = (modelKey) => {
+    setSearchState({ model: modelKey || null, page: 1 });
   };
 
   const handleFilterChange = (newFilters) => {
@@ -210,8 +218,8 @@ export default function SearchPage() {
               Ana Sayfa
             </span>
             <ChevronRight className="h-4 w-4 mx-1" />
-            <span className="font-medium text-foreground">
-              {categories.find(c => c.slug.en === searchState.category || c.slug.tr === searchState.category)?.translations?.find(t => t.language === 'tr')?.name || searchState.category}
+            <span className="font-medium text-foreground" data-testid="search-breadcrumb-category">
+              {categories.find(c => c.id === searchState.category || c.slug === searchState.category)?.name || searchState.category}
             </span>
           </div>
         )}
@@ -219,8 +227,8 @@ export default function SearchPage() {
         {/* Header & Mobile Filter Toggle */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-               {searchState.category ? `Kategori: ${searchState.category}` : 'Tüm İlanlar'}
+            <h1 className="text-2xl font-bold tracking-tight" data-testid="search-results-title">
+               {searchState.category ? `Kategori: ${categories.find(c => c.id === searchState.category || c.slug === searchState.category)?.name || searchState.category}` : 'Tüm İlanlar'}
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
               {data.pagination.total || 0} sonuç bulundu
