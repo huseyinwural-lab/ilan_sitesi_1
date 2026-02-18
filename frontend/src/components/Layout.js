@@ -149,7 +149,7 @@ export default function Layout({ children }) {
     { divider: true, label: 'Üyeler', roles: roles.userOps },
   { path: '/admin/individual-users', icon: Users, label: 'Bireysel Kullanıcılar', roles: roles.userOps, testId: 'members-individual-users' },
     { path: '/admin/dealers', icon: Building, label: 'Kurumsal Kullanıcılar', roles: roles.userOps, testId: 'members-corporate-users' },
-    { path: '/admin/individual-applications', icon: Clock, label: 'Bireysel Üye Başvurular', roles: roles.userOps, comingSoon: true, testId: 'members-individual-applications' },
+  { path: '/admin/individual-applications', icon: Clock, label: 'Bireysel Üye Başvurular', roles: roles.userOps, testId: 'members-individual-applications' },
     { path: '/admin/dealer-applications', icon: Clock, label: 'Kurumsal Üye Başvurular', roles: roles.userOps, testId: 'members-corporate-applications' },
 
     { divider: true, label: 'İlan & Moderasyon', roles: roles.moderationWithSupport },
