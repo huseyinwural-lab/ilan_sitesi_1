@@ -1,4 +1,4 @@
 ## Kurumsal İlan Başvuruları
 - Route: /admin/corporate-listing-applications
-- Durum: PLACEHOLDER
-- Not: Moderation Queue filtresi bekleniyor
+- Durum: DONE
+- Not: Moderation Queue filtreli görünüm (dealer_only=true)
