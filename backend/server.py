@@ -4083,6 +4083,8 @@ async def public_search_v2(
     country: str | None = None,
     q: Optional[str] = None,
     category: Optional[str] = None,
+    make: Optional[str] = None,
+    model: Optional[str] = None,
     sort: str = "date_desc",
     page: int = 1,
     limit: int = 20,
@@ -4144,6 +4146,11 @@ async def public_search_v2(
                 keys.append(slug_value)
 
         query["category_key"] = {"$in": list(set(keys))}
+
+    if make:
+        query["vehicle.make_key"] = make
+    if model:
+        query["vehicle.model_key"] = model
 
     # Price filters: stored as attributes.price_eur
     if price_min is not None or price_max is not None:
