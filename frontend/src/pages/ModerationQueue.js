@@ -171,12 +171,12 @@ export default function ModerationQueue({
   };
 
   return (
-    <div className="space-y-6" data-testid="moderation-queue-page">
+    <div className="space-y-6" data-testid={pageTestId}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Moderation Queue</h1>
+          <h1 className="text-2xl font-bold tracking-tight" data-testid="moderation-queue-title">{title}</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            <span className="font-semibold text-amber-600">{pendingCount}</span> listings pending review
+            {description} · <span className="font-semibold text-amber-600">{pendingCount}</span>
           </p>
         </div>
       </div>
