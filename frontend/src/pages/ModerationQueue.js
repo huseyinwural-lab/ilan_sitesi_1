@@ -329,7 +329,7 @@ export default function ModerationQueue({
           <div className="bg-card rounded-lg border shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-card">
               <h2 className="text-lg font-semibold">Listing Review</h2>
-              <button onClick={() => setSelectedListing(null)} className="p-1 rounded hover:bg-muted">×</button>
+              <button onClick={() => setSelectedListing(null)} className="p-1 rounded hover:bg-muted" data-testid="moderation-detail-close">×</button>
             </div>
             
             <div className="p-4 space-y-4">
