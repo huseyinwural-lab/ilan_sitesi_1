@@ -2818,7 +2818,7 @@ async def admin_get_country(
     return {"country": _normalize_country_doc(doc)}
 
 
-@api_router.post("/admin/countries")
+@api_router.post("/admin/countries", status_code=201)
 async def admin_create_country(
     payload: CountryCreatePayload,
     request: Request,
@@ -2982,7 +2982,7 @@ async def admin_list_system_settings(
     return {"items": items}
 
 
-@api_router.post("/admin/system-settings")
+@api_router.post("/admin/system-settings", status_code=201)
 async def admin_create_system_setting(
     payload: SystemSettingCreatePayload,
     request: Request,
