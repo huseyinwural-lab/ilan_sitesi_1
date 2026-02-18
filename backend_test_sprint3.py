@@ -332,7 +332,31 @@ class Sprint3FinanceAPITester:
         if not success:
             return False
 
-        # Change invoice status to cancelled
+        # Create another invoice for cancelled test
+        invoice_data_2 = {
+            "dealer_user_id": self.dealer_user_id,
+            "country_code": "DE",
+            "plan_id": self.created_plan_id,
+            "amount_net": 500.0,
+            "tax_rate": 19.0,
+            "currency": "EUR",
+            "issued_at": datetime.now().isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Second Invoice for Cancel Test",
+            "POST",
+            "admin/invoices",
+            200,
+            data=invoice_data_2
+        )
+        
+        if not success or not response.get('invoice', {}).get('id'):
+            return False
+        
+        second_invoice_id = response['invoice']['id']
+
+        # Change second invoice status to cancelled
         status_data = {
             "target_status": "cancelled",
             "note": "Cancelled for testing"
@@ -341,7 +365,7 @@ class Sprint3FinanceAPITester:
         success, response = self.run_test(
             "Change Invoice Status to Cancelled",
             "POST",
-            f"admin/invoices/{self.created_invoice_id}/status",
+            f"admin/invoices/{second_invoice_id}/status",
             200,
             data=status_data
         )
