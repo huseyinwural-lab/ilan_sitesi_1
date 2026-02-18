@@ -171,12 +171,14 @@ export default function MenuManagement() {
       )}
 
       <div className="rounded-xl border bg-white" data-testid="menu-management-table">
-        <div className="grid grid-cols-6 gap-4 px-4 py-3 text-xs font-semibold text-muted-foreground">
+        <div className="grid grid-cols-8 gap-4 px-4 py-3 text-xs font-semibold text-muted-foreground">
           <div>Label</div>
           <div>Slug</div>
           <div>URL</div>
           <div>Parent</div>
           <div>Country</div>
+          <div>Order</div>
+          <div>Durum</div>
           <div>İşlem</div>
         </div>
         <div className="divide-y">
@@ -186,12 +188,18 @@ export default function MenuManagement() {
             <div className="px-4 py-6 text-sm text-muted-foreground">Kayıt bulunamadı.</div>
           ) : (
             filteredItems.map((item) => (
-              <div key={item.id} className="grid grid-cols-6 gap-4 px-4 py-3 text-sm items-center">
+              <div key={item.id} className="grid grid-cols-8 gap-4 px-4 py-3 text-sm items-center">
                 <div className="font-medium">{item.label}</div>
                 <div>{item.slug}</div>
                 <div className="truncate" title={item.url || ""}>{item.url || "—"}</div>
                 <div>{items.find((parent) => parent.id === item.parent_id)?.label || "—"}</div>
                 <div>{item.country_code || "global"}</div>
+                <div>{item.sort_order ?? 0}</div>
+                <div>
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${item.active_flag ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                    {item.active_flag ? "Aktif" : "Pasif"}
+                  </span>
+                </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => openEdit(item)}
