@@ -4789,12 +4789,18 @@ async def public_search_v2(
         if cover and cover.get("file"):
             image_url = f"/media/listings/{d['id']}/{cover['file']}"
 
+        price_data = d.get("price") or {}
+        primary_price = price_data.get("amount")
+        if primary_price is None:
+            primary_price = attrs.get("price_eur")
         items.append(
             {
                 "id": d["id"],
                 "title": title,
-                "price": attrs.get("price_eur"),
-                "currency": "EUR",
+                "price": primary_price,
+                "currency": price_data.get("currency_primary") or "EUR",
+                "secondary_price": price_data.get("secondary_amount"),
+                "secondary_currency": price_data.get("currency_secondary"),
                 "image": image_url,
                 "city": "",
             }
