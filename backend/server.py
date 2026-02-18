@@ -1854,10 +1854,18 @@ async def _build_vehicle_master_from_db(db, country_code: str) -> dict:
         {"country_code": country_code, "active_flag": True},
         {"_id": 0, "id": 1, "slug": 1, "name": 1},
     ).to_list(length=500)
-    make_map = {doc["slug"]: doc.get("name") for doc in make_docs if doc.get("slug")}
+    makes = [
+        {
+            "make_key": doc.get("slug"),
+            "name": doc.get("name"),
+            "is_active": doc.get("active_flag", True),
+        }
+        for doc in make_docs
+        if doc.get("slug")
+    ]
     make_ids = [doc["id"] for doc in make_docs if doc.get("id")]
     if not make_ids:
-        return {"makes": make_map, "models": {}}
+        return {"makes": makes, "models": {}}
     model_docs = await db.vehicle_models.find(
         {"make_id": {"$in": make_ids}, "active_flag": True},
         {"_id": 0, "make_id": 1, "slug": 1},
@@ -1868,8 +1876,14 @@ async def _build_vehicle_master_from_db(db, country_code: str) -> dict:
         make_slug = make_slug_by_id.get(model.get("make_id"))
         if not make_slug or not model.get("slug"):
             continue
-        models_by_make.setdefault(make_slug, []).append(model.get("slug"))
-    return {"makes": make_map, "models": models_by_make}
+        models_by_make.setdefault(make_slug, []).append(
+            {
+                "model_key": model.get("slug"),
+                "name": model.get("name"),
+                "is_active": model.get("active_flag", True),
+            }
+        )
+    return {"makes": makes, "models": models_by_make}
 
 
 async def _report_transition(
