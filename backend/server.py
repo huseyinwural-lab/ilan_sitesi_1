@@ -2826,6 +2826,8 @@ async def admin_create_country(
     code = payload.country_code.strip().upper()
     if not re.match(r"^[A-Z]{2}$", code):
         raise HTTPException(status_code=400, detail="country_code must be 2-letter ISO")
+    if not payload.default_currency:
+        raise HTTPException(status_code=400, detail="default_currency is required")
 
     existing = await db.countries.find_one({"$or": [{"country_code": code}, {"code": code}]})
     if existing:
