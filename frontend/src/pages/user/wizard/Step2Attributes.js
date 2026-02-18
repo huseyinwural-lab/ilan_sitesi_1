@@ -82,7 +82,7 @@ const AttributeForm = () => {
 
   useEffect(() => {
     let mounted = true;
-    fetch(`${API}/v1/vehicle/makes?country=${(basicInfo.country || 'DE').toUpperCase()}`)
+    fetch(`${API}/api/v1/vehicle/makes?country=${(basicInfo.country || 'DE').toUpperCase()}`)
       .then((r) => r.json())
       .then((d) => {
         if (!mounted) return;
@@ -105,7 +105,7 @@ const AttributeForm = () => {
     }
 
     let mounted = true;
-    fetch(`${API}/v1/vehicle/models?make=${encodeURIComponent(makeKey)}&country=${(basicInfo.country || 'DE').toUpperCase()}`)
+    fetch(`${API}/api/v1/vehicle/models?make=${encodeURIComponent(makeKey)}&country=${(basicInfo.country || 'DE').toUpperCase()}`)
       .then((r) => r.json())
       .then((d) => {
         if (!mounted) return;
@@ -126,7 +126,7 @@ const AttributeForm = () => {
       return;
     }
     let mounted = true;
-    fetch(`${API}/attributes?category_id=${category.id}&country=${(basicInfo.country || 'DE').toUpperCase()}`)
+    fetch(`${API}/api/attributes?category_id=${category.id}&country=${(basicInfo.country || 'DE').toUpperCase()}`)
       .then((r) => r.json())
       .then((d) => {
         if (!mounted) return;
