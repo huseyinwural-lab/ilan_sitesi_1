@@ -3723,6 +3723,188 @@ async def admin_delete_category(
     return {"category": _normalize_category_doc(category)}
 
 
+@api_router.get("/admin/menu-items")
+async def admin_list_menu_items(
+    request: Request,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
+    query: Dict[str, Any] = {}
+    if country:
+        country_code = country.upper()
+        _assert_country_scope(country_code, current_user)
+        query["country_code"] = country_code
+    elif ctx.mode == "country" and ctx.country:
+        query["country_code"] = ctx.country
+
+    items = await db.menu_items.find(query, {"_id": 0}).sort("sort_order", 1).to_list(length=1000)
+    return {"items": items}
+
+
+@api_router.post("/admin/menu-items")
+async def admin_create_menu_item(
+    payload: MenuItemCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
+    now_iso = datetime.now(timezone.utc).isoformat()
+    slug = payload.slug.strip()
+    if not slug:
+        raise HTTPException(status_code=400, detail="Slug is required")
+
+    country_code = payload.country_code.upper() if payload.country_code else None
+    if ctx.mode == "country" and ctx.country:
+        country_code = country_code or ctx.country
+    if country_code:
+        _assert_country_scope(country_code, current_user)
+
+    if payload.parent_id:
+        parent = await db.menu_items.find_one({"id": payload.parent_id}, {"_id": 0})
+        if not parent:
+            raise HTTPException(status_code=404, detail="Parent menu item not found")
+
+    existing = await db.menu_items.find_one({"slug": slug, "country_code": country_code}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=409, detail="Menu slug already exists")
+
+    menu_id = str(uuid.uuid4())
+    doc = {
+        "id": menu_id,
+        "label": payload.label.strip(),
+        "slug": slug,
+        "url": payload.url.strip() if payload.url else None,
+        "parent_id": payload.parent_id,
+        "country_code": country_code,
+        "active_flag": payload.active_flag if payload.active_flag is not None else True,
+        "sort_order": payload.sort_order or 0,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+    }
+    audit_doc = {
+        "id": str(uuid.uuid4()),
+        "event_type": "MENU_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": country_code,
+        "subject_type": "menu_item",
+        "subject_id": menu_id,
+        "action": "create",
+        "created_at": now_iso,
+        "metadata": {"label": doc["label"], "slug": doc["slug"], "url": doc["url"]},
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    await db.menu_items.insert_one(doc)
+    return {"menu_item": doc}
+
+
+@api_router.patch("/admin/menu-items/{menu_id}")
+async def admin_update_menu_item(
+    menu_id: str,
+    payload: MenuItemUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
+    existing = await db.menu_items.find_one({"id": menu_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Menu item not found")
+
+    updates: Dict[str, Any] = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    if payload.label is not None:
+        updates["label"] = payload.label.strip()
+    if payload.slug is not None:
+        slug = payload.slug.strip()
+        if not slug:
+            raise HTTPException(status_code=400, detail="Slug is required")
+        updates["slug"] = slug
+    if payload.url is not None:
+        updates["url"] = payload.url.strip() if payload.url else None
+    if payload.parent_id is not None:
+        if payload.parent_id == menu_id:
+            raise HTTPException(status_code=400, detail="Menu item cannot be its own parent")
+        if payload.parent_id:
+            parent = await db.menu_items.find_one({"id": payload.parent_id}, {"_id": 0})
+            if not parent:
+                raise HTTPException(status_code=404, detail="Parent menu item not found")
+        updates["parent_id"] = payload.parent_id or None
+    if payload.country_code is not None:
+        country_code = payload.country_code.upper() if payload.country_code else None
+        if ctx.mode == "country" and ctx.country:
+            country_code = country_code or ctx.country
+        if country_code:
+            _assert_country_scope(country_code, current_user)
+        updates["country_code"] = country_code
+    if payload.active_flag is not None:
+        updates["active_flag"] = payload.active_flag
+    if payload.sort_order is not None:
+        updates["sort_order"] = payload.sort_order
+
+    new_slug = updates.get("slug", existing.get("slug"))
+    new_country = updates.get("country_code", existing.get("country_code"))
+    if new_slug != existing.get("slug") or new_country != existing.get("country_code"):
+        conflict = await db.menu_items.find_one(
+            {"slug": new_slug, "country_code": new_country, "id": {"$ne": menu_id}},
+            {"_id": 0},
+        )
+        if conflict:
+            raise HTTPException(status_code=409, detail="Menu slug already exists")
+
+    audit_doc = {
+        "id": str(uuid.uuid4()),
+        "event_type": "MENU_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": updates.get("country_code", existing.get("country_code")),
+        "subject_type": "menu_item",
+        "subject_id": menu_id,
+        "action": "update",
+        "created_at": updates["updated_at"],
+        "metadata": updates,
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    await db.menu_items.update_one({"id": menu_id}, {"$set": updates})
+    updated = await db.menu_items.find_one({"id": menu_id}, {"_id": 0})
+    return {"menu_item": updated}
+
+
+@api_router.delete("/admin/menu-items/{menu_id}")
+async def admin_delete_menu_item(
+    menu_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    existing = await db.menu_items.find_one({"id": menu_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Menu item not found")
+
+    updates = {
+        "active_flag": False,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "deleted_at": datetime.now(timezone.utc).isoformat(),
+    }
+    audit_doc = {
+        "id": str(uuid.uuid4()),
+        "event_type": "MENU_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": existing.get("country_code"),
+        "subject_type": "menu_item",
+        "subject_id": menu_id,
+        "action": "delete",
+        "created_at": updates["updated_at"],
+        "metadata": {"label": existing.get("label"), "slug": existing.get("slug")},
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    await db.menu_items.update_one({"id": menu_id}, {"$set": updates})
+    return {"success": True}
+
+
 @api_router.get("/attributes")
 async def public_attributes(category_id: str, country: Optional[str] = None, request: Request = None):
     db = request.app.state.db
