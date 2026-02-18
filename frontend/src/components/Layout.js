@@ -256,7 +256,7 @@ export default function Layout({ children }) {
                     <div
                       className="sidebar-item opacity-60 cursor-not-allowed"
                       title="Coming soon"
-                      data-testid={`nav-${item.label}`}
+                    data-testid={`nav-${item.testId}`}
                     >
                       <item.icon size={18} />
                       {!sidebarCollapsed && (
@@ -272,7 +272,7 @@ export default function Layout({ children }) {
                       className={({ isActive }) =>
                         `sidebar-item ${isActive ? 'active' : ''}`
                       }
-                      data-testid={`nav-${item.label}`}
+                    data-testid={`nav-${item.testId}`}
                     >
                       <item.icon size={18} />
                       {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
@@ -336,7 +336,7 @@ export default function Layout({ children }) {
                         <div
                           className="sidebar-item opacity-60 cursor-not-allowed"
                           title="Coming soon"
-                          data-testid={`nav-mobile-${item.label}`}
+                    data-testid={`nav-mobile-${item.testId}`}
                         >
                           <item.icon size={18} />
                           <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
@@ -349,7 +349,7 @@ export default function Layout({ children }) {
                           className={({ isActive }) =>
                             `sidebar-item ${isActive ? 'active' : ''}`
                           }
-                          data-testid={`nav-mobile-${item.label}`}
+                    data-testid={`nav-mobile-${item.testId}`}
                         >
                           <item.icon size={18} />
                           {typeof item.label === 'string' ? t(item.label) : item.label}
