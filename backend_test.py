@@ -151,9 +151,11 @@ class MasterDataAPITester:
             return False
             
         # Create category
+        import time
+        unique_suffix = str(int(time.time()))
         category_data = {
-            "name": "Test Category",
-            "slug": "test-category",
+            "name": f"Test Category {unique_suffix}",
+            "slug": f"test-category-{unique_suffix}",
             "country_code": "DE",
             "active_flag": True,
             "sort_order": 100
