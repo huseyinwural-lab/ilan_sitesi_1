@@ -1,0 +1,23 @@
+{
+  "summary": {
+    "tests_run": 1,
+    "tests_passed": 0,
+    "success_rate": "0.0%"
+  },
+  "results": [
+    {
+      "test": "Admin Login",
+      "status": "FAIL",
+      "details": "Error: HTTPSConnectionPool(host='multilist.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2026-02-18T03:30:00.341841"
+    }
+  ],
+  "failures": [
+    {
+      "test": "Admin Login",
+      "status": "FAIL",
+      "details": "Error: HTTPSConnectionPool(host='multilist.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2026-02-18T03:30:00.341841"
+    }
+  ]
+}
