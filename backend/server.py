@@ -1725,6 +1725,67 @@ def _normalize_country_doc(doc: dict) -> dict:
     }
 
 
+def _pick_label(value) -> Optional[str]:
+    if isinstance(value, dict):
+        return value.get("tr") or value.get("en") or value.get("de") or value.get("fr") or next(iter(value.values()), None)
+    return value
+
+
+def _normalize_category_doc(doc: dict) -> dict:
+    return {
+        "id": doc.get("id"),
+        "parent_id": doc.get("parent_id"),
+        "name": _pick_label(doc.get("name")) or _pick_label(doc.get("translations", [{}])[0].get("name") if doc.get("translations") else None),
+        "slug": _pick_label(doc.get("slug")) or doc.get("segment"),
+        "country_code": doc.get("country_code"),
+        "active_flag": doc.get("active_flag", doc.get("is_enabled", True)),
+        "sort_order": doc.get("sort_order", 0),
+        "created_at": doc.get("created_at"),
+        "updated_at": doc.get("updated_at"),
+    }
+
+
+def _normalize_attribute_doc(doc: dict) -> dict:
+    return {
+        "id": doc.get("id"),
+        "category_id": doc.get("category_id"),
+        "name": doc.get("name"),
+        "key": doc.get("key"),
+        "type": doc.get("type"),
+        "required_flag": doc.get("required_flag", False),
+        "filterable_flag": doc.get("filterable_flag", False),
+        "options": doc.get("options"),
+        "country_code": doc.get("country_code"),
+        "active_flag": doc.get("active_flag", True),
+        "created_at": doc.get("created_at"),
+        "updated_at": doc.get("updated_at"),
+    }
+
+
+def _normalize_vehicle_make_doc(doc: dict) -> dict:
+    return {
+        "id": doc.get("id"),
+        "name": doc.get("name"),
+        "slug": doc.get("slug"),
+        "country_code": doc.get("country_code"),
+        "active_flag": doc.get("active_flag", True),
+        "created_at": doc.get("created_at"),
+        "updated_at": doc.get("updated_at"),
+    }
+
+
+def _normalize_vehicle_model_doc(doc: dict) -> dict:
+    return {
+        "id": doc.get("id"),
+        "make_id": doc.get("make_id"),
+        "name": doc.get("name"),
+        "slug": doc.get("slug"),
+        "active_flag": doc.get("active_flag", True),
+        "created_at": doc.get("created_at"),
+        "updated_at": doc.get("updated_at"),
+    }
+
+
 async def _report_transition(
     *,
     db,
