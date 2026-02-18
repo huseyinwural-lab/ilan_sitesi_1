@@ -2842,7 +2842,7 @@ async def admin_list_plans(
 async def admin_create_plan(
     payload: PlanCreatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
