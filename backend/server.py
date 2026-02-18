@@ -309,13 +309,20 @@ async def lifespan(app: FastAPI):
     await db.categories.create_index("id", unique=True)
     await db.categories.create_index([("module", 1), ("parent_id", 1)])
     # remove deprecated vehicle segments (e.g., elektrikli)
-    await db.categories.delete_many({"module": "vehicle", "slug.tr": "elektrikli"})
+    await db.categories.delete_many(
+        {"module": "vehicle", "$or": [{"slug.tr": "elektrikli"}, {"slug": "elektrikli"}]}
+    )
     for cat in vehicle_category_tree(now_iso):
         await db.categories.update_one(
             {"id": cat["id"]},
             {"$setOnInsert": cat},
             upsert=True,
         )
+
+    if await db.vehicle_makes.count_documents({}) == 0:
+        await db.vehicle_makes.insert_many(default_vehicle_makes(now_iso))
+    if await db.vehicle_models.count_documents({}) == 0:
+        await db.vehicle_models.insert_many(default_vehicle_models(now_iso))
 
     # Vehicle master data (file-based) preload (fail-fast)
     vehicle_data_dir = get_vehicle_master_dir()
