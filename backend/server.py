@@ -3516,7 +3516,7 @@ async def public_attributes(category_id: str, country: Optional[str] = None, req
     db = request.app.state.db
     query: Dict = {
         "category_id": category_id,
-        "active_flag": True,
+        "$or": [{"active_flag": True}, {"active_flag": {"$exists": False}}],
     }
     if country:
         code = country.upper()
