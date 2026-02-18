@@ -17,7 +17,13 @@ const roleColors = {
   finance: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
 };
 
-export default function Users() {
+export default function Users({
+  title,
+  allowedRoles = null,
+  readOnly = false,
+  showRoleFilter = true,
+  emptyStateLabel,
+}) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
