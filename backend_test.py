@@ -217,10 +217,12 @@ class MasterDataAPITester:
         )
         
         # Create attribute
+        import time
+        unique_suffix = str(int(time.time()))
         attribute_data = {
             "category_id": category_id,
-            "name": "Test Attribute",
-            "key": "test_attribute",
+            "name": f"Test Attribute {unique_suffix}",
+            "key": f"test_attribute_{unique_suffix}",
             "type": "text",
             "required_flag": False,
             "filterable_flag": True,
