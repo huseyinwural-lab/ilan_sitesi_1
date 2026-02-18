@@ -2789,7 +2789,12 @@ async def admin_list_countries(
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
-    docs = await db.countries.find({}, {"_id": 0}).sort("code", 1).to_list(length=500)
+    q: Dict = {}
+    if current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope:
+            q["$or"] = [{"country_code": {"$in": scope}}, {"code": {"$in": scope}}]
+    docs = await db.countries.find(q, {"_id": 0}).sort("code", 1).to_list(length=500)
     items = [_normalize_country_doc(doc) for doc in docs]
     return {"items": items}
 
@@ -2960,7 +2965,13 @@ async def admin_list_system_settings(
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
     q: Dict = {}
     if country:
-        q["country_code"] = country.upper()
+        code = country.upper()
+        _assert_country_scope(code, current_user)
+        q["country_code"] = code
+    elif current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope:
+            q["$or"] = [{"country_code": None}, {"country_code": ""}, {"country_code": {"$in": scope}}]
     items = await db.system_settings.find(q, {"_id": 0}).sort("key", 1).to_list(length=1000)
     return {"items": items}
 
