@@ -3925,6 +3925,7 @@ async def admin_create_vehicle_model(
         "updated_at": now_iso,
     }
     audit_doc = {
+        "id": str(uuid.uuid4()),
         "event_type": "VEHICLE_MASTER_DATA_CHANGE",
         "actor_id": current_user["id"],
         "actor_role": current_user.get("role"),
