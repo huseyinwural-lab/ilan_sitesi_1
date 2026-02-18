@@ -2662,35 +2662,6 @@ async def admin_delete_plan(
     return {"ok": True}
 
 
-@api_router.get("/admin/dealers/{dealer_id}")
-async def admin_dealer_detail(
-    dealer_id: str,
-    request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
-):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
-
-    dealer = await db.users.find_one({"id": dealer_id, "role": "dealer"}, {"_id": 0})
-    if not dealer:
-        raise HTTPException(status_code=404, detail="Dealer not found")
-    _assert_country_scope(dealer.get("country_code"), current_user)
-
-    plan = None
-    if dealer.get("plan_id"):
-        plan = await db.plans.find_one({"id": dealer.get("plan_id")}, {"_id": 0})
-
-    last_invoice = await db.invoices.find({"dealer_user_id": dealer_id}, {"_id": 0}).sort("issued_at", -1).limit(1).to_list(length=1)
-    unpaid_count = await db.invoices.count_documents({"dealer_user_id": dealer_id, "status": "unpaid"})
-
-    return {
-        "dealer": dealer,
-        "active_plan": plan,
-        "last_invoice": last_invoice[0] if last_invoice else None,
-        "unpaid_count": unpaid_count,
-    }
-
-
 @api_router.post("/admin/dealers/{dealer_id}/plan")
 async def admin_assign_dealer_plan(
     dealer_id: str,
