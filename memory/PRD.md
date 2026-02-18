@@ -70,6 +70,7 @@
   - Finance RBAC sıkılaştırma + publish guard uyumu
 - **Admin IA v2:** Sol menü bilgi mimarisi yeniden yapılandırma + RBAC görünürlük matrisi
 - **Admin UI v1:** Admin kullanıcıları, rol tanımları, RBAC matrix (read-only) + placeholder ekranlar + nav smoke
+- **Admin Nav Smoke:** Menü route doğrulaması (Playwright)
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
