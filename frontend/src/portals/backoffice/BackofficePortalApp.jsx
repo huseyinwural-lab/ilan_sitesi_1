@@ -23,6 +23,10 @@ import AdminInvoicesPage from '@/pages/admin/AdminInvoices';
 import AdminTaxRatesPage from '@/pages/admin/AdminTaxRates';
 import AdminPlansPage from '@/pages/admin/AdminPlans';
 import AdminDealerDetailPage from '@/pages/admin/AdminDealerDetail';
+import AdminCountriesPage from '@/pages/admin/AdminCountries';
+import AdminSystemSettingsPage from '@/pages/admin/AdminSystemSettings';
+import AdminDashboardPage from '@/pages/admin/AdminDashboard';
+import AdminCountryComparePage from '@/pages/admin/AdminCountryCompare';
 
 export default function BackofficePortalApp() {
   return (
@@ -36,6 +40,10 @@ export default function BackofficePortalApp() {
       <Route path="/attributes/options" element={<Layout><AdminOptions /></Layout>} />
       <Route path="/audit-logs" element={<Layout><AuditLogs /></Layout>} />
       <Route path="/moderation" element={<Layout><ModerationQueue /></Layout>} />
+      <Route path="/dashboard" element={<Layout><AdminDashboardPage /></Layout>} />
+      <Route path="/country-compare" element={<Layout><AdminCountryComparePage /></Layout>} />
+      <Route path="/countries" element={<Layout><AdminCountriesPage /></Layout>} />
+      <Route path="/system-settings" element={<Layout><AdminSystemSettingsPage /></Layout>} />
       <Route path="/listings" element={<Layout><AdminListingsPage /></Layout>} />
       <Route path="/reports" element={<Layout><AdminReportsPage /></Layout>} />
       <Route path="/invoices" element={<Layout><AdminInvoicesPage /></Layout>} />
