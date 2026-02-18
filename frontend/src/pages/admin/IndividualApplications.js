@@ -34,6 +34,9 @@ export default function IndividualApplications() {
       if (statusFilter) {
         params.append("status", statusFilter);
       }
+      if (search) {
+        params.append("search", search);
+      }
       const response = await axios.get(`${API_URL}/api/admin/individual-applications?${params.toString()}`);
       setApplications(response.data.items || []);
     } catch (error) {
