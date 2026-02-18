@@ -10,6 +10,7 @@
 
 ### Karar
 - PASS / PARTIAL / FAIL: TBD
+- Stabilite onayı: TBD
 
 ### Notlar
 - TBD
