@@ -15,16 +15,16 @@ const ROLE_MATRIX = {
   super_admin: ["Dashboard", "Yönetim", "Üyeler", "İlan & Moderasyon", "Katalog & İçerik", "Araç Verisi", "Finans", "Sistem"],
   country_admin: ["Dashboard", "Üyeler", "İlan & Moderasyon", "Katalog & İçerik", "Araç Verisi", "Sistem"],
   moderator: ["İlan & Moderasyon", "Katalog & İçerik"],
-  finance_admin: ["Dashboard", "Finans"],
-  support_admin: ["Üyeler", "İlan & Moderasyon"],
+  finance: ["Dashboard", "Finans"],
+  support: ["Üyeler", "İlan & Moderasyon"],
 };
 
 const ROLE_LABELS = {
   super_admin: "Super Admin",
   country_admin: "Country Admin",
   moderator: "Moderator",
-  finance_admin: "Finance Admin",
-  support_admin: "Support Admin",
+  finance: "Finance Admin",
+  support: "Support Admin",
 };
 
 export default function RBACMatrix() {
