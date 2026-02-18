@@ -21,7 +21,7 @@
 | Şikayetler | /admin/reports | DONE | Liste + detay + status |
 | Kategoriler | /admin/categories | DONE | CRUD |
 | Özellikler | /admin/attributes | DONE | CRUD |
-| Menü Yönetimi | /admin/menu-management | PLACEHOLDER | v1 read-only |
+| Menü Yönetimi | /admin/menu-management | DONE | CRUD + audit-first |
 | Araç Markaları | /admin/vehicle-makes | DONE | JSON seed |
 | Araç Modelleri | /admin/vehicle-models | DONE | Make filtreli |
 | Planlar | /admin/plans | DONE | CRUD |
