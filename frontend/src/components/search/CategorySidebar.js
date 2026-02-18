@@ -88,7 +88,9 @@ export const CategorySidebar = ({
             variant="ghost"
             className={cn(
               "w-full justify-between h-8 px-2 text-sm font-normal",
-              activeCategorySlug === cat.id ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground"
+              (activeCategorySlug === cat.id || activeCategorySlug === cat.slug)
+                ? "bg-accent text-accent-foreground font-medium"
+                : "text-muted-foreground"
             )}
             onClick={() => onCategoryChange(cat.id || cat.slug)}
             data-testid={`category-select-${cat.id}`}
