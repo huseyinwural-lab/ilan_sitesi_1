@@ -35,6 +35,15 @@ def validate_segment_required(category_key: str, attrs: dict) -> list[dict]:
     return errs
 
 
+def validate_required_attributes(required_keys: list[str], attrs: dict) -> list[dict]:
+    errs = []
+    for k in required_keys:
+        v = attrs.get(k)
+        if v is None or v == "":
+            errs.append(_error(k, "REQUIRED", f"{k} zorunlu"))
+    return errs
+
+
 def enforce_make_model(vehicle_master: dict, make_key: str, model_key: str) -> list[dict]:
     errs = []
 
@@ -71,11 +80,17 @@ def enforce_media_policy(media: list[dict]) -> list[dict]:
     return errs
 
 
-def validate_publish(listing: dict, vehicle_master: dict) -> list[dict]:
+def validate_publish(
+    listing: dict,
+    vehicle_master: dict,
+    required_attribute_keys: list[str] | None = None,
+    supported_countries: set | None = None,
+) -> list[dict]:
     errs: list[dict] = []
 
     country = listing.get("country")
-    if not country or country not in SUPPORTED_COUNTRIES:
+    supported = supported_countries or SUPPORTED_COUNTRIES
+    if not country or country not in supported:
         errs.append(_error("country", "COUNTRY_INVALID", "country zorunlu (DE/CH/FR/AT)"))
 
     category_key = listing.get("category_key")
@@ -100,6 +115,8 @@ def validate_publish(listing: dict, vehicle_master: dict) -> list[dict]:
     attrs = listing.get("attributes") or {}
     if category_key:
         errs.extend(validate_segment_required(category_key, attrs))
+    if required_attribute_keys:
+        errs.extend(validate_required_attributes(required_attribute_keys, attrs))
 
     errs.extend(enforce_media_policy(listing.get("media") or []))
 
