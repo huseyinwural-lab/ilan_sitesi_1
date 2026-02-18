@@ -11,6 +11,7 @@
 - /app/admin/evidence/ADMIN_NAV_SMOKE.jpeg
 - /app/admin/evidence/ADMIN_USERS_PAGE.jpeg
 - /app/admin/evidence/ADMIN_DASHBOARD_TITLE.jpeg
+- /app/admin/evidence/ADMIN_MENU_MANAGEMENT_ACTIVE.jpeg
 
 ### Not
 - Nav smoke test: Playwright (login + menu route navigation)
