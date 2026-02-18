@@ -2769,6 +2769,391 @@ async def admin_assign_dealer_plan(
 
 
 # =====================
+# Sprint 4 — System + Dashboard
+# =====================
+
+
+@api_router.get("/admin/countries")
+async def admin_list_countries(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    docs = await db.countries.find({}, {"_id": 0}).sort("code", 1).to_list(length=500)
+    items = [_normalize_country_doc(doc) for doc in docs]
+    return {"items": items}
+
+
+@api_router.get("/admin/countries/{code}")
+async def admin_get_country(
+    code: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    code_upper = code.upper()
+    doc = await db.countries.find_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Country not found")
+    return {"country": _normalize_country_doc(doc)}
+
+
+@api_router.post("/admin/countries")
+async def admin_create_country(
+    payload: CountryCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    code = payload.country_code.strip().upper()
+    if not re.match(r"^[A-Z]{2}$", code):
+        raise HTTPException(status_code=400, detail="country_code must be 2-letter ISO")
+
+    existing = await db.countries.find_one({"$or": [{"country_code": code}, {"code": code}]})
+    if existing:
+        raise HTTPException(status_code=409, detail="Country already exists")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    country_doc = {
+        "id": code,
+        "code": code,
+        "country_code": code,
+        "name": payload.name,
+        "active_flag": True if payload.active_flag is None else payload.active_flag,
+        "is_enabled": True if payload.active_flag is None else payload.active_flag,
+        "default_currency": payload.default_currency.upper(),
+        "default_language": payload.default_language,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+    }
+
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": "COUNTRY_CHANGE",
+        "action": "COUNTRY_CREATE",
+        "country_code": code,
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "country",
+        "resource_id": code,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.countries.insert_one(country_doc)
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    country_doc.pop("_id", None)
+    SUPPORTED_COUNTRIES.add(code)
+    return {"ok": True, "country": _normalize_country_doc(country_doc)}
+
+
+@api_router.patch("/admin/countries/{code}")
+async def admin_update_country(
+    code: str,
+    payload: CountryUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    code_upper = code.upper()
+    country = await db.countries.find_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"_id": 0})
+    if not country:
+        raise HTTPException(status_code=404, detail="Country not found")
+
+    updates: Dict = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    if payload.name is not None:
+        updates["name"] = payload.name
+    if payload.default_currency is not None:
+        updates["default_currency"] = payload.default_currency.upper()
+    if payload.default_language is not None:
+        updates["default_language"] = payload.default_language
+    if payload.active_flag is not None:
+        updates["active_flag"] = payload.active_flag
+        updates["is_enabled"] = payload.active_flag
+
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": updates["updated_at"],
+        "event_type": "COUNTRY_CHANGE",
+        "action": "COUNTRY_UPDATE",
+        "country_code": code_upper,
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "country",
+        "resource_id": code_upper,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.countries.update_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"$set": updates})
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    updated = await db.countries.find_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"_id": 0})
+    return {"ok": True, "country": _normalize_country_doc(updated)}
+
+
+@api_router.delete("/admin/countries/{code}")
+async def admin_delete_country(
+    code: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    code_upper = code.upper()
+    country = await db.countries.find_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"_id": 0})
+    if not country:
+        raise HTTPException(status_code=404, detail="Country not found")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": "COUNTRY_CHANGE",
+        "action": "COUNTRY_DELETE",
+        "country_code": code_upper,
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "country",
+        "resource_id": code_upper,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.countries.update_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"$set": {"active_flag": False, "is_enabled": False, "updated_at": now_iso}})
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    return {"ok": True}
+
+
+@api_router.get("/admin/system-settings")
+async def admin_list_system_settings(
+    request: Request,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    q: Dict = {}
+    if country:
+        q["country_code"] = country.upper()
+    items = await db.system_settings.find(q, {"_id": 0}).sort("key", 1).to_list(length=1000)
+    return {"items": items}
+
+
+@api_router.post("/admin/system-settings")
+async def admin_create_system_setting(
+    payload: SystemSettingCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    key = payload.key.strip()
+    if not KEY_NAMESPACE_REGEX.match(key):
+        raise HTTPException(status_code=400, detail="Invalid key namespace")
+    country_code = payload.country_code.upper() if payload.country_code else None
+
+    existing = await db.system_settings.find_one({"key": key, "country_code": country_code})
+    if existing:
+        raise HTTPException(status_code=409, detail="Setting already exists")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    setting_id = str(uuid.uuid4())
+    setting_doc = {
+        "id": setting_id,
+        "key": key,
+        "value": payload.value,
+        "country_code": country_code,
+        "is_readonly": bool(payload.is_readonly),
+        "description": payload.description,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+    }
+
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": now_iso,
+        "event_type": "SYSTEM_SETTING_CHANGE",
+        "action": "SYSTEM_SETTING_CREATE",
+        "setting_id": setting_id,
+        "key": key,
+        "country_code": country_code,
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "system_setting",
+        "resource_id": setting_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.system_settings.insert_one(setting_doc)
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    setting_doc.pop("_id", None)
+    return {"ok": True, "setting": setting_doc}
+
+
+@api_router.patch("/admin/system-settings/{setting_id}")
+async def admin_update_system_setting(
+    setting_id: str,
+    payload: SystemSettingUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    setting = await db.system_settings.find_one({"id": setting_id}, {"_id": 0})
+    if not setting:
+        raise HTTPException(status_code=404, detail="Setting not found")
+    if setting.get("is_readonly") and payload.value is not None:
+        raise HTTPException(status_code=400, detail="Setting is read-only")
+
+    updates: Dict = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    if payload.value is not None:
+        updates["value"] = payload.value
+    if payload.country_code is not None:
+        updates["country_code"] = payload.country_code.upper() if payload.country_code else None
+    if payload.is_readonly is not None:
+        updates["is_readonly"] = payload.is_readonly
+    if payload.description is not None:
+        updates["description"] = payload.description
+
+    audit_id = str(uuid.uuid4())
+    audit_doc = {
+        "id": audit_id,
+        "created_at": updates["updated_at"],
+        "event_type": "SYSTEM_SETTING_CHANGE",
+        "action": "SYSTEM_SETTING_UPDATE",
+        "setting_id": setting_id,
+        "key": setting.get("key"),
+        "country_code": setting.get("country_code"),
+        "admin_user_id": current_user.get("id"),
+        "user_id": current_user.get("id"),
+        "user_email": current_user.get("email"),
+        "role": current_user.get("role"),
+        "resource_type": "system_setting",
+        "resource_id": setting_id,
+        "applied": False,
+    }
+
+    await db.audit_logs.insert_one(audit_doc)
+    await db.system_settings.update_one({"id": setting_id}, {"$set": updates})
+    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+
+    updated = await db.system_settings.find_one({"id": setting_id}, {"_id": 0})
+    return {"ok": True, "setting": updated}
+
+
+@api_router.get("/system-settings/effective")
+async def system_settings_effective(country: Optional[str] = None, request: Request = None):
+    db = request.app.state.db
+    country_code = country.upper() if country else None
+    global_settings = await db.system_settings.find({"$or": [{"country_code": None}, {"country_code": ""}]}, {"_id": 0}).to_list(length=1000)
+    country_settings = []
+    if country_code:
+        country_settings = await db.system_settings.find({"country_code": country_code}, {"_id": 0}).to_list(length=1000)
+
+    merged: Dict[str, dict] = {}
+    for item in global_settings:
+        merged[item["key"]] = {**item, "source": "global"}
+    for item in country_settings:
+        merged[item["key"]] = {**item, "source": "country"}
+
+    items = sorted(merged.values(), key=lambda x: x.get("key"))
+    return {"country_code": country_code, "items": items}
+
+
+async def _dashboard_metrics(db, country_code: str) -> dict:
+    total_listings = await db.vehicle_listings.count_documents({"country": country_code})
+    published_listings = await db.vehicle_listings.count_documents({"country": country_code, "status": "published"})
+    pending_moderation = await db.vehicle_listings.count_documents({"country": country_code, "status": "pending_moderation"})
+    active_dealers = await db.users.count_documents({"role": "dealer", "dealer_status": "active", "country_code": country_code})
+
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_start_iso = month_start.isoformat()
+    invoices = await db.invoices.find({
+        "country_code": country_code,
+        "status": "paid",
+        "paid_at": {"$gte": month_start_iso},
+    }, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
+    totals: Dict[str, float] = {}
+    for inv in invoices:
+        currency = inv.get("currency") or "UNKNOWN"
+        totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
+    revenue_mtd = sum(totals.values())
+
+    return {
+        "total_listings": total_listings,
+        "published_listings": published_listings,
+        "pending_moderation": pending_moderation,
+        "active_dealers": active_dealers,
+        "revenue_mtd": round(revenue_mtd, 2),
+        "revenue_currency_totals": {k: round(v, 2) for k, v in totals.items()},
+        "month_start_utc": month_start_iso,
+    }
+
+
+@api_router.get("/admin/dashboard/summary")
+async def admin_dashboard_summary(
+    request: Request,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    if not country:
+        raise HTTPException(status_code=400, detail="country is required")
+    country_code = country.upper()
+    _assert_country_scope(country_code, current_user)
+    metrics = await _dashboard_metrics(db, country_code)
+    return {"country_code": country_code, **metrics}
+
+
+@api_router.get("/admin/dashboard/country-compare")
+async def admin_dashboard_country_compare(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    docs = await db.countries.find({}, {"_id": 0, "country_code": 1, "code": 1, "active_flag": 1, "is_enabled": 1}).to_list(length=200)
+    items = []
+    for doc in docs:
+        code = (doc.get("country_code") or doc.get("code") or "").upper()
+        if not code:
+            continue
+        if current_user.get("role") == "country_admin":
+            scope = current_user.get("country_scope") or []
+            if "*" not in scope and code not in scope:
+                continue
+        metrics = await _dashboard_metrics(db, code)
+        items.append({"country_code": code, **metrics})
+    return {"items": items}
+
+
+# =====================
 # Public Search v2 (Mongo)
 # =====================
 
