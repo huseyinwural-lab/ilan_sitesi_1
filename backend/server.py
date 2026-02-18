@@ -3533,17 +3533,19 @@ async def admin_delete_category(
 @api_router.get("/attributes")
 async def public_attributes(category_id: str, country: Optional[str] = None, request: Request = None):
     db = request.app.state.db
-    query: Dict = {
-        "category_id": category_id,
-        "$or": [{"active_flag": True}, {"active_flag": {"$exists": False}}],
-    }
+    query: Dict = {"category_id": category_id}
+    filters = [{"$or": [{"active_flag": True}, {"active_flag": {"$exists": False}}]}]
     if country:
         code = country.upper()
-        query["$or"] = [
-            {"country_code": None},
-            {"country_code": ""},
-            {"country_code": code},
-        ]
+        filters.append({
+            "$or": [
+                {"country_code": None},
+                {"country_code": ""},
+                {"country_code": code},
+            ]
+        })
+    if filters:
+        query["$and"] = filters
     docs = await db.attributes.find(query, {"_id": 0}).sort("name", 1).to_list(length=500)
     return {"items": [_normalize_attribute_doc(doc) for doc in docs]}
 
