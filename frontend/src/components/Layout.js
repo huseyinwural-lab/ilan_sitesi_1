@@ -121,54 +121,66 @@ export default function Layout({ children }) {
     navigate('/admin/login');
   };
 
+  const roles = {
+    dashboard: ['super_admin', 'country_admin', 'finance'],
+    adminOnly: ['super_admin'],
+    userOps: ['super_admin', 'country_admin', 'support'],
+    moderation: ['super_admin', 'country_admin', 'moderator'],
+    moderationWithSupport: ['super_admin', 'country_admin', 'moderator', 'support'],
+    catalogView: ['super_admin', 'country_admin', 'moderator'],
+    catalogAdmin: ['super_admin', 'country_admin'],
+    vehicleAdmin: ['super_admin', 'country_admin'],
+    finance: ['super_admin', 'finance'],
+    system: ['super_admin', 'country_admin'],
+  };
+
   const navItems = [
-    // Dashboard
-    { path: '/admin', icon: LayoutDashboard, label: 'dashboard' },
+    { divider: true, label: 'Dashboard', roles: roles.dashboard },
+    { path: '/admin', icon: LayoutDashboard, label: 'Kontrol Paneli', roles: roles.dashboard, testId: 'dashboard-control-panel' },
+    { path: '/admin/dashboard', icon: TrendingUp, label: 'Genel Bakış', roles: roles.dashboard, testId: 'dashboard-overview' },
+    { path: '/admin/country-compare', icon: Activity, label: 'Ülke Karşılaştırma', roles: roles.dashboard, testId: 'dashboard-country-compare' },
 
-    // Genel Bakış
-    { divider: true, label: 'Genel Bakış' },
-    { path: '/admin/dashboard', icon: TrendingUp, label: 'Genel Bakış', roles: ['super_admin', 'country_admin', 'support'] },
-    { path: '/admin/country-compare', icon: Activity, label: 'Ülke Karşılaştırma', roles: ['super_admin', 'country_admin', 'support'] },
+    { divider: true, label: 'Yönetim', roles: roles.userOps },
+    { path: '/admin/admin-users', icon: Users, label: 'Admin Kullanıcıları', roles: roles.adminOnly, comingSoon: true, testId: 'management-admin-users' },
+    { path: '/admin/roles', icon: ShieldCheck, label: 'Rol Tanımları', roles: roles.adminOnly, comingSoon: true, testId: 'management-roles' },
+    { path: '/admin/rbac-matrix', icon: MenuSquare, label: 'Yetki Atama (RBAC Matrix)', roles: roles.adminOnly, comingSoon: true, testId: 'management-rbac-matrix' },
+    { path: '/admin/users', icon: Users, label: 'Kullanıcı Yönetimi', roles: roles.userOps, testId: 'management-users' },
 
-    // Kullanıcı & Satıcı
-    { divider: true, label: 'Kullanıcı & Satıcı' },
-    { path: '/admin/users', icon: Users, label: 'users', roles: ['super_admin', 'country_admin'] },
-    { path: '/admin/dealers', icon: Building, label: 'Bayiler', roles: ['super_admin', 'country_admin'] },
-    { path: '/admin/dealer-applications', icon: Clock, label: 'Başvurular', roles: ['super_admin', 'country_admin'] },
-    { path: '/admin/onboarding', icon: FileText, label: 'Başvurular', comingSoon: true, roles: ['super_admin', 'country_admin'] },
+    { divider: true, label: 'Üyeler', roles: roles.userOps },
+    { path: '/admin/individual-users', icon: Users, label: 'Bireysel Kullanıcılar', roles: roles.userOps, comingSoon: true, testId: 'members-individual-users' },
+    { path: '/admin/dealers', icon: Building, label: 'Kurumsal Kullanıcılar', roles: roles.userOps, testId: 'members-corporate-users' },
+    { path: '/admin/individual-applications', icon: Clock, label: 'Bireysel Üye Başvurular', roles: roles.userOps, comingSoon: true, testId: 'members-individual-applications' },
+    { path: '/admin/dealer-applications', icon: Clock, label: 'Kurumsal Üye Başvurular', roles: roles.userOps, testId: 'members-corporate-applications' },
 
-    // İlan & Moderasyon
-    { divider: true, label: 'İlan & Moderasyon' },
-    { path: '/admin/moderation', icon: ShieldCheck, label: 'Moderation Queue', roles: ['super_admin', 'country_admin', 'moderator'] },
-    { path: '/admin/listings', icon: FolderTree, label: 'İlanlar', roles: ['super_admin', 'country_admin', 'moderator'] },
-    { path: '/admin/reports', icon: Flag, label: 'Şikayetler', roles: ['super_admin', 'country_admin', 'moderator'] },
+    { divider: true, label: 'İlan & Moderasyon', roles: roles.moderationWithSupport },
+    { path: '/admin/moderation', icon: ShieldCheck, label: 'Moderation Queue', roles: roles.moderation, testId: 'listings-moderation-queue' },
+    { path: '/admin/individual-listing-applications', icon: FileText, label: 'Bireysel İlan Başvuruları', roles: roles.moderation, comingSoon: true, testId: 'listings-individual-applications' },
+    { path: '/admin/corporate-listing-applications', icon: FileText, label: 'Kurumsal İlan Başvuruları', roles: roles.moderation, comingSoon: true, testId: 'listings-corporate-applications' },
 
-    // Katalog & Yapılandırma
-    { divider: true, label: 'Katalog & Yapılandırma' },
-    { path: '/admin/categories', icon: FolderTree, label: 'Kategoriler', roles: ['super_admin', 'country_admin'] },
-    { path: '/admin/attributes', icon: Settings2, label: 'Özellikler', roles: ['super_admin'] },
-    { path: '/admin/menu', icon: MenuSquare, label: 'Menü Yönetimi', roles: ['super_admin'] },
-    { path: '/admin/feature-flags', icon: Flag, label: 'Özellik Bayrakları', roles: ['super_admin', 'country_admin'] },
+    { divider: true, label: 'Kampanyalar', roles: roles.moderation },
+    { path: '/admin/individual-campaigns', icon: Flag, label: 'Bireysel Kampanyalar', roles: roles.moderation, comingSoon: true, testId: 'campaigns-individual' },
+    { path: '/admin/corporate-campaigns', icon: Flag, label: 'Kurumsal Kampanyalar', roles: roles.moderation, comingSoon: true, testId: 'campaigns-corporate' },
+    { path: '/admin/reports', icon: Flag, label: 'Şikayetler', roles: roles.moderationWithSupport, testId: 'listings-reports' },
 
-    // Araç Verisi
-    { divider: true, label: 'Araç Verisi', roles: ['super_admin', 'country_admin'] },
-    { path: '/admin/vehicle-makes', icon: Car, label: 'Araç Markaları', roles: ['super_admin', 'country_admin'] },
-    { path: '/admin/vehicle-models', icon: Car, label: 'Araç Modelleri', roles: ['super_admin', 'country_admin'] },
+    { divider: true, label: 'Katalog & İçerik', roles: roles.catalogView },
+    { path: '/admin/categories', icon: FolderTree, label: 'Kategoriler', roles: roles.catalogView, testId: 'catalog-categories' },
+    { path: '/admin/attributes', icon: Settings2, label: 'Özellikler', roles: roles.catalogAdmin, testId: 'catalog-attributes' },
+    { path: '/admin/menu-management', icon: MenuSquare, label: 'Menü Yönetimi', roles: roles.adminOnly, comingSoon: true, testId: 'catalog-menu-management' },
 
-    // Finans
-    { divider: true, label: 'Finans' },
-    { path: '/admin/plans', icon: Star, label: 'Plans', roles: ['super_admin', 'country_admin', 'finance'] },
-    { divider: true },
+    { divider: true, label: 'Araç Verisi', roles: roles.vehicleAdmin },
+    { path: '/admin/vehicle-makes', icon: Car, label: 'Araç Markaları', roles: roles.vehicleAdmin, testId: 'vehicle-makes' },
+    { path: '/admin/vehicle-models', icon: Car, label: 'Araç Modelleri', roles: roles.vehicleAdmin, testId: 'vehicle-models' },
 
-    { path: '/admin/invoices', icon: FileText, label: 'Invoices', roles: ['super_admin', 'country_admin', 'finance'] },
-    { path: '/admin/billing', icon: FileText, label: 'Billing', roles: ['super_admin', 'country_admin', 'finance'] },
-    { path: '/admin/tax-rates', icon: Percent, label: 'Tax Rates', roles: ['super_admin', 'country_admin', 'finance'] },
+    { divider: true, label: 'Finans', roles: roles.finance },
+    { path: '/admin/plans', icon: Star, label: 'Planlar', roles: roles.finance, testId: 'finance-plans' },
+    { path: '/admin/invoices', icon: FileText, label: 'Faturalar', roles: roles.finance, testId: 'finance-invoices' },
+    { path: '/admin/billing', icon: FileText, label: 'Ödemeler', roles: roles.finance, comingSoon: true, testId: 'finance-billing' },
+    { path: '/admin/tax-rates', icon: Percent, label: 'Vergi Oranları', roles: roles.finance, testId: 'finance-tax-rates' },
 
-    // Sistem
-    { divider: true, label: 'Sistem' },
-    { path: '/admin/countries', icon: Globe, label: 'Ülkeler', roles: ['super_admin', 'country_admin'] },
-    { path: '/admin/audit-logs', icon: Clock, label: 'Denetim Kayıtları', roles: ['super_admin', 'country_admin', 'finance'] },
-    { path: '/admin/system-settings', icon: Settings, label: 'Sistem Ayarları', roles: ['super_admin', 'country_admin'] },
+    { divider: true, label: 'Sistem', roles: roles.system },
+    { path: '/admin/countries', icon: Globe, label: 'Ülkeler', roles: roles.system, testId: 'system-countries' },
+    { path: '/admin/audit-logs', icon: Clock, label: 'Denetim Kayıtları', roles: roles.adminOnly, testId: 'system-audit-logs' },
+    { path: '/admin/system-settings', icon: Settings, label: 'Sistem Ayarları', roles: roles.system, testId: 'system-settings' },
   ];
 
   const filteredNavItems = navItems.filter(item => 
