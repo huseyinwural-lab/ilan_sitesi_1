@@ -24,17 +24,38 @@ import AdminCountriesPage from '@/pages/admin/AdminCountries';
 import AdminSystemSettingsPage from '@/pages/admin/AdminSystemSettings';
 import AdminDashboardPage from '@/pages/admin/AdminDashboard';
 import AdminCountryComparePage from '@/pages/admin/AdminCountryCompare';
+import AdminUsersPage from '@/pages/admin/AdminUsers';
+import AdminRolesPage from '@/pages/admin/AdminRoles';
+import RBACMatrixPage from '@/pages/admin/RBACMatrix';
+import IndividualUsersPage from '@/pages/admin/IndividualUsers';
+import IndividualApplicationsPage from '@/pages/admin/IndividualApplications';
+import IndividualListingApplicationsPage from '@/pages/admin/IndividualListingApplications';
+import CorporateListingApplicationsPage from '@/pages/admin/CorporateListingApplications';
+import IndividualCampaignsPage from '@/pages/admin/IndividualCampaigns';
+import CorporateCampaignsPage from '@/pages/admin/CorporateCampaigns';
+import MenuManagementPage from '@/pages/admin/MenuManagement';
+import BillingPlaceholderPage from '@/pages/admin/BillingPlaceholder';
 
 export default function BackofficePortalApp() {
   return (
     <Routes>
       <Route path="/" element={<Layout><Dashboard /></Layout>} />
       <Route path="/users" element={<Layout><UserManagement /></Layout>} />
+      <Route path="/admin-users" element={<Layout><AdminUsersPage /></Layout>} />
+      <Route path="/roles" element={<Layout><AdminRolesPage /></Layout>} />
+      <Route path="/rbac-matrix" element={<Layout><RBACMatrixPage /></Layout>} />
+      <Route path="/individual-users" element={<Layout><IndividualUsersPage /></Layout>} />
+      <Route path="/individual-applications" element={<Layout><IndividualApplicationsPage /></Layout>} />
       <Route path="/feature-flags" element={<Layout><FeatureFlags /></Layout>} />
       <Route path="/categories" element={<Layout><AdminCategories /></Layout>} />
       <Route path="/attributes" element={<Layout><AdminAttributes /></Layout>} />
+      <Route path="/menu-management" element={<Layout><MenuManagementPage /></Layout>} />
       <Route path="/audit-logs" element={<Layout><AuditLogs /></Layout>} />
       <Route path="/moderation" element={<Layout><ModerationQueue /></Layout>} />
+      <Route path="/individual-listing-applications" element={<Layout><IndividualListingApplicationsPage /></Layout>} />
+      <Route path="/corporate-listing-applications" element={<Layout><CorporateListingApplicationsPage /></Layout>} />
+      <Route path="/individual-campaigns" element={<Layout><IndividualCampaignsPage /></Layout>} />
+      <Route path="/corporate-campaigns" element={<Layout><CorporateCampaignsPage /></Layout>} />
       <Route path="/dashboard" element={<Layout><AdminDashboardPage /></Layout>} />
       <Route path="/country-compare" element={<Layout><AdminCountryComparePage /></Layout>} />
       <Route path="/countries" element={<Layout><AdminCountriesPage /></Layout>} />
@@ -42,6 +63,7 @@ export default function BackofficePortalApp() {
       <Route path="/listings" element={<Layout><AdminListingsPage /></Layout>} />
       <Route path="/reports" element={<Layout><AdminReportsPage /></Layout>} />
       <Route path="/invoices" element={<Layout><AdminInvoicesPage /></Layout>} />
+      <Route path="/billing" element={<Layout><BillingPlaceholderPage /></Layout>} />
       <Route path="/tax-rates" element={<Layout><AdminTaxRatesPage /></Layout>} />
       <Route path="/plans" element={<Layout><AdminPlansPage /></Layout>} />
       <Route path="/dealers/:dealerId" element={<Layout><AdminDealerDetailPage /></Layout>} />
