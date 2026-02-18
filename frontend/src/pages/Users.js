@@ -183,13 +183,21 @@ export default function Users({
                   </td>
                   <td className="text-muted-foreground">{user.email}</td>
                   <td>
-                    {editingUser === user.id ? (
+                    {readOnly ? (
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${roleColors[user.role] || 'bg-muted'}`}
+                        data-testid={`user-role-${user.id}`}
+                      >
+                        {t(user.role)}
+                      </span>
+                    ) : editingUser === user.id ? (
                       <select
                         defaultValue={user.role}
                         onChange={(e) => handleUpdateRole(user.id, e.target.value)}
                         onBlur={() => setEditingUser(null)}
                         autoFocus
                         className="h-8 px-2 rounded border text-xs"
+                        data-testid={`user-role-select-${user.id}`}
                       >
                         <option value="super_admin">{t('super_admin')}</option>
                         <option value="country_admin">{t('country_admin')}</option>
@@ -198,13 +206,14 @@ export default function Users({
                         <option value="finance">{t('finance')}</option>
                       </select>
                     ) : (
-                      <span 
+                      <button
+                        type="button"
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${roleColors[user.role] || 'bg-muted'}`}
                         onClick={() => setEditingUser(user.id)}
-                        style={{ cursor: 'pointer' }}
+                        data-testid={`user-role-${user.id}`}
                       >
                         {t(user.role)}
-                      </span>
+                      </button>
                     )}
                   </td>
                   <td>
