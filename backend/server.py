@@ -4120,26 +4120,30 @@ async def public_search_v2(
         ]
 
     if category:
-        # category comes from URL as slug (e.g. "otomobil").
-        # In current Stage-4 vehicle drafts, `category_key` is stored as the slug.
-        # For safety, also accept seeded category ids if any legacy data exists.
         keys = [category]
-
         cat = await db.categories.find_one(
             {
-                "module": "vehicle",
                 "$or": [
-                    {"slug.tr": category},
-                    {"slug.de": category},
-                    {"slug.fr": category},
+                    {"slug": category},
+                    {"id": category},
+                ],
+                "active_flag": True,
+                "$or": [
+                    {"country_code": None},
+                    {"country_code": ""},
+                    {"country_code": country_norm},
                 ],
             },
-            {"_id": 0, "id": 1},
+            {"_id": 0, "id": 1, "slug": 1},
         )
-        if cat and cat.get("id"):
-            keys.append(cat["id"])
+        if cat:
+            if cat.get("id"):
+                keys.append(cat["id"])
+            slug_value = _pick_label(cat.get("slug"))
+            if slug_value:
+                keys.append(slug_value)
 
-        query["category_key"] = {"$in": keys}
+        query["category_key"] = {"$in": list(set(keys))}
 
     # Price filters: stored as attributes.price_eur
     if price_min is not None or price_max is not None:
