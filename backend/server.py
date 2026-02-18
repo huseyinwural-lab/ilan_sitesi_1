@@ -1549,6 +1549,7 @@ def _assert_country_scope(country_code: str, current_user: dict) -> None:
 def _parse_iso_datetime(value: str, field_name: str) -> datetime:
     if not value:
         raise HTTPException(status_code=400, detail=f"{field_name} is required")
+    value = value.replace(" ", "+")
     try:
         return datetime.fromisoformat(value.replace("Z", "+00:00"))
     except Exception as exc:
