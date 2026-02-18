@@ -4244,7 +4244,10 @@ async def public_vehicle_makes(country: str | None = None, request: Request = No
     code = country.upper()
     db = request.app.state.db
     docs = await db.vehicle_makes.find(
-        {"country_code": code, "active_flag": True},
+        {
+            "country_code": code,
+            "$or": [{"active_flag": True}, {"active_flag": {"$exists": False}}],
+        },
         {"_id": 0, "id": 1, "slug": 1, "name": 1},
     ).sort("name", 1).to_list(length=500)
     items = [
@@ -4259,7 +4262,10 @@ async def public_vehicle_makes(country: str | None = None, request: Request = No
 async def public_vehicle_models(make: str, country: str | None = None, request: Request = None):
     db = request.app.state.db
     make_doc = await db.vehicle_makes.find_one(
-        {"slug": make, "active_flag": True},
+        {
+            "slug": make,
+            "$or": [{"active_flag": True}, {"active_flag": {"$exists": False}}],
+        },
         {"_id": 0, "id": 1, "slug": 1, "country_code": 1},
     )
     if not make_doc:
