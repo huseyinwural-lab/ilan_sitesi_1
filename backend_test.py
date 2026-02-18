@@ -337,10 +337,12 @@ class MasterDataAPITester:
         )
         
         # Create model
+        import time
+        unique_suffix = str(int(time.time()))
         model_data = {
             "make_id": make_id,
-            "name": "Test Model",
-            "slug": "test-model",
+            "name": f"Test Model {unique_suffix}",
+            "slug": f"test-model-{unique_suffix}",
             "active_flag": True
         }
         success, response = self.run_test(
