@@ -75,6 +75,7 @@
 - **Yönetim Menüsü:** Admin/roles/RBAC menüleri aktif ve “yakında” etiketi kaldırıldı
 - **Bireysel Üye Başvuruları:** Admin liste + approve/reject akışı aktif
 - **İlan Başvuruları:** Moderation Queue filtreleriyle bireysel/kurumsal başvuru sayfaları aktif
+- **Menü Yönetimi:** CRUD + audit-first + country-scope aktif
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
@@ -93,8 +94,6 @@
 - **Backlog:** Audit Dashboard Widget (Son 24 Saat Kritik Event)
 - **Backlog:** Kampanyalar CRUD + uygulama noktaları
 - **Backlog:** Billing/Ödeme kayıtları entegrasyonu
-- **Backlog:** Menü yönetimi gerçek ihtiyaç doğrulaması
-- **Backlog:** Moderation Queue için individual/kurumsal filtre
 
 ### P2
 - V3 genişletmeler (gelişmiş arama, güven katmanı, bayi genişletmeleri)
