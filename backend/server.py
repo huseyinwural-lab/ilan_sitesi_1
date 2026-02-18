@@ -1953,8 +1953,8 @@ def _pick_label(value) -> Optional[str]:
     return value
 
 
-def _normalize_category_doc(doc: dict) -> dict:
-    return {
+def _normalize_category_doc(doc: dict, include_schema: bool = False) -> dict:
+    payload = {
         "id": doc.get("id"),
         "parent_id": doc.get("parent_id"),
         "name": _pick_label(doc.get("name")) or _pick_label(doc.get("translations", [{}])[0].get("name") if doc.get("translations") else None),
@@ -1965,6 +1965,146 @@ def _normalize_category_doc(doc: dict) -> dict:
         "created_at": doc.get("created_at"),
         "updated_at": doc.get("updated_at"),
     }
+    if include_schema:
+        payload["form_schema"] = _normalize_category_schema(doc.get("form_schema"))
+    return payload
+
+
+def _deep_merge_schema(base: Dict[str, Any], override: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not override:
+        return base
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            base[key] = _deep_merge_schema(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
+def _default_category_schema() -> Dict[str, Any]:
+    return {
+        "core_fields": {
+            "title": {
+                "required": True,
+                "min": 10,
+                "max": 80,
+                "messages": {
+                    "required": "Başlık zorunludur.",
+                    "min": "Başlık çok kısa.",
+                    "max": "Başlık çok uzun.",
+                    "duplicate": "Bu başlık zaten kullanılıyor.",
+                },
+                "ui": {"bold": True},
+            },
+            "description": {
+                "required": True,
+                "min": 30,
+                "max": 2000,
+                "messages": {
+                    "required": "Açıklama zorunludur.",
+                    "min": "Açıklama çok kısa.",
+                    "max": "Açıklama çok uzun.",
+                },
+                "ui": {"min_rows": 6, "max_rows": 8, "auto_grow": True, "show_counter": True},
+            },
+            "price": {
+                "required": True,
+                "currency_primary": "EUR",
+                "currency_secondary": "CHF",
+                "secondary_enabled": False,
+                "decimal_places": 0,
+                "range": {"min": None, "max": None},
+                "messages": {
+                    "required": "Fiyat zorunludur.",
+                    "numeric": "Geçerli bir fiyat girin.",
+                    "range": "Fiyat aralık dışında.",
+                },
+                "input_mask": {"thousand_separator": True},
+            },
+        },
+        "title_uniqueness": {"enabled": False, "scope": "category"},
+        "dynamic_fields": [],
+        "detail_groups": [],
+        "modules": {
+            "address": {"enabled": True},
+            "photos": {"enabled": True, "max_uploads": 10},
+            "contact": {"enabled": True},
+            "payment": {"enabled": True},
+        },
+        "payment_options": {"package": True, "doping": False},
+        "module_order": [
+            "core_fields",
+            "dynamic_fields",
+            "address",
+            "detail_groups",
+            "photos",
+            "contact",
+            "payment",
+        ],
+    }
+
+
+def _normalize_category_schema(schema: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    base = _default_category_schema()
+    merged = _deep_merge_schema(base, schema or {})
+    title_messages = merged["core_fields"]["title"].setdefault("messages", {})
+    desc_messages = merged["core_fields"]["description"].setdefault("messages", {})
+    price_messages = merged["core_fields"]["price"].setdefault("messages", {})
+    title_messages.setdefault("required", "Başlık zorunludur.")
+    title_messages.setdefault("min", "Başlık çok kısa.")
+    title_messages.setdefault("max", "Başlık çok uzun.")
+    title_messages.setdefault("duplicate", "Bu başlık zaten kullanılıyor.")
+    desc_messages.setdefault("required", "Açıklama zorunludur.")
+    desc_messages.setdefault("min", "Açıklama çok kısa.")
+    desc_messages.setdefault("max", "Açıklama çok uzun.")
+    price_messages.setdefault("required", "Fiyat zorunludur.")
+    price_messages.setdefault("numeric", "Geçerli bir fiyat girin.")
+    price_messages.setdefault("range", "Fiyat aralık dışında.")
+    return merged
+
+
+def _validate_category_schema(schema: Dict[str, Any]) -> None:
+    core = schema.get("core_fields") or {}
+    title = core.get("title") or {}
+    description = core.get("description") or {}
+    price = core.get("price") or {}
+    if not title.get("required", True):
+        raise HTTPException(status_code=400, detail="Başlık alanı zorunlu olmalıdır.")
+    if not description.get("required", True):
+        raise HTTPException(status_code=400, detail="Açıklama alanı zorunlu olmalıdır.")
+    if not price.get("required", True):
+        raise HTTPException(status_code=400, detail="Fiyat alanı zorunlu olmalıdır.")
+
+    currency_primary = price.get("currency_primary")
+    if currency_primary not in {"EUR", "CHF"}:
+        raise HTTPException(status_code=400, detail="Fiyat para birimi EUR veya CHF olmalıdır.")
+    secondary = price.get("currency_secondary")
+    if secondary and secondary not in {"EUR", "CHF"}:
+        raise HTTPException(status_code=400, detail="İkincil para birimi EUR veya CHF olmalıdır.")
+    if secondary and secondary == currency_primary:
+        raise HTTPException(status_code=400, detail="Birincil ve ikincil para birimi aynı olamaz.")
+
+    for field in schema.get("dynamic_fields", []):
+        field_type = field.get("type")
+        if field_type not in {"radio", "select"}:
+            raise HTTPException(status_code=400, detail="Parametre alanı tipi radio/select olmalıdır.")
+        options = field.get("options") or []
+        if not options:
+            raise HTTPException(status_code=400, detail="Parametre alanı için seçenek listesi zorunludur.")
+        if not field.get("key"):
+            raise HTTPException(status_code=400, detail="Parametre alanı anahtarı zorunludur.")
+
+    for group in schema.get("detail_groups", []):
+        if not group.get("title"):
+            raise HTTPException(status_code=400, detail="Detay grubu başlığı zorunludur.")
+        options = group.get("options") or []
+        if not options:
+            raise HTTPException(status_code=400, detail="Detay grubu için seçenek listesi zorunludur.")
+
+    modules = schema.get("modules") or {}
+    photos = modules.get("photos") or {}
+    if photos.get("enabled") and not photos.get("max_uploads"):
+        raise HTTPException(status_code=400, detail="Fotoğraf modülü için upload limiti zorunludur.")
 
 
 def _normalize_attribute_doc(doc: dict) -> dict:
