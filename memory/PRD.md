@@ -72,6 +72,7 @@
 - **Admin UI v1:** Admin kullanıcıları, rol tanımları, RBAC matrix (read-only) + placeholder ekranlar + nav smoke
 - **Admin Nav Smoke:** Menü route doğrulaması (Playwright)
 - **Admin UI v1 Closeout:** Evidence pack + RC checklist güncellendi
+- **Yönetim Menüsü:** Admin/roles/RBAC menüleri aktif ve “yakında” etiketi kaldırıldı
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
