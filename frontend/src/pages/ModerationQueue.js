@@ -468,6 +468,7 @@ export default function ModerationQueue({
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   className="mt-1 w-full h-9 px-3 rounded-md border bg-background text-sm"
+                  data-testid="moderation-action-reason"
                 >
                   <option value="">Select…</option>
                   {(actionDialog.actionType === 'reject' ? REJECT_REASONS_V1 : NEEDS_REVISION_REASONS_V1).map((r) => (
@@ -484,6 +485,7 @@ export default function ModerationQueue({
                     onChange={(e) => setReasonNote(e.target.value)}
                     className="mt-1 w-full min-h-[90px] p-3 rounded-md border bg-background text-sm"
                     placeholder="Explain what needs to be changed…"
+                    data-testid="moderation-action-reason-note"
                   />
                 </div>
               )}
@@ -493,12 +495,14 @@ export default function ModerationQueue({
               <button
                 onClick={() => setActionDialog(null)}
                 className="h-9 px-3 rounded-md border hover:bg-muted text-sm"
+                data-testid="moderation-action-cancel"
               >
                 Cancel
               </button>
               <button
                 onClick={submitActionDialog}
                 className="h-9 px-3 rounded-md bg-primary text-primary-foreground hover:opacity-90 text-sm"
+                data-testid="moderation-action-submit"
               >
                 Submit
               </button>
