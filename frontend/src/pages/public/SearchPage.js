@@ -238,8 +238,8 @@ export default function SearchPage() {
           </div>
 
           <div className="flex items-center gap-2 w-full md:w-auto">
-            <Select value={searchState.sort} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-full md:w-[180px]">
+            <Select value={searchState.sort} onValueChange={handleSortChange} data-testid="search-sort-select">
+              <SelectTrigger className="w-full md:w-[180px]" data-testid="search-sort-trigger">
                 <SelectValue placeholder="Sıralama" />
               </SelectTrigger>
               <SelectContent>
