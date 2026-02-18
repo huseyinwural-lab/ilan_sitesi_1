@@ -2,7 +2,6 @@
 
 | Menü | Route | Sebep | Hedef Sprint |
 | --- | --- | --- | --- |
-| Bireysel Üye Başvurular | /admin/individual-applications | Veri kaynağı yok (koleksiyon yok) | P1 |
 | Bireysel İlan Başvuruları | /admin/individual-listing-applications | Moderation Queue’da filtre yok | P1 |
 | Kurumsal İlan Başvuruları | /admin/corporate-listing-applications | Moderation Queue’da filtre yok | P1 |
 | Bireysel Kampanyalar | /admin/individual-campaigns | Kampanya CRUD P1 | P1 |
