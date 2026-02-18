@@ -1,113 +1,106 @@
 {
   "summary": {
     "tests_run": 16,
-    "tests_passed": 15,
-    "success_rate": "93.8%"
+    "tests_passed": 16,
+    "success_rate": "100.0%"
   },
   "results": [
     {
       "test": "Admin Login",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:54.824447"
+      "timestamp": "2026-02-18T03:37:27.259671"
     },
     {
       "test": "List Categories",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:54.977106"
+      "timestamp": "2026-02-18T03:37:27.410271"
     },
     {
       "test": "Create Category",
-      "status": "FAIL",
-      "details": "Status: 409 (expected 201) - {'detail': 'Category slug already exists'}",
-      "timestamp": "2026-02-18T03:36:55.128862"
+      "status": "PASS",
+      "details": "Status: 201",
+      "timestamp": "2026-02-18T03:37:27.549345"
     },
     {
       "test": "Get Categories for Attributes",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:55.307384"
+      "timestamp": "2026-02-18T03:37:27.680500"
     },
     {
       "test": "List Attributes",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:55.448403"
+      "timestamp": "2026-02-18T03:37:27.803140"
     },
     {
       "test": "Create Attribute",
       "status": "PASS",
       "details": "Status: 201",
-      "timestamp": "2026-02-18T03:36:55.590711"
+      "timestamp": "2026-02-18T03:37:27.955937"
     },
     {
       "test": "List Vehicle Makes",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:55.739577"
+      "timestamp": "2026-02-18T03:37:28.090573"
     },
     {
       "test": "Create Vehicle Make",
       "status": "PASS",
       "details": "Status: 201",
-      "timestamp": "2026-02-18T03:36:55.872575"
+      "timestamp": "2026-02-18T03:37:28.228183"
     },
     {
       "test": "Get Makes for Models",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:56.027084"
+      "timestamp": "2026-02-18T03:37:28.396932"
     },
     {
       "test": "List Vehicle Models",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:56.173709"
+      "timestamp": "2026-02-18T03:37:28.519812"
     },
     {
       "test": "Create Vehicle Model",
       "status": "PASS",
       "details": "Status: 201",
-      "timestamp": "2026-02-18T03:36:56.307168"
+      "timestamp": "2026-02-18T03:37:28.657228"
     },
     {
       "test": "Public Categories List",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:56.437502"
+      "timestamp": "2026-02-18T03:37:28.795956"
     },
     {
       "test": "Search with Category Filter",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:56.579677"
+      "timestamp": "2026-02-18T03:37:28.927945"
     },
     {
       "test": "Search with Make Filter",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:56.701582"
+      "timestamp": "2026-02-18T03:37:29.062300"
     },
     {
       "test": "Search with Make and Model Filter",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:56.830939"
+      "timestamp": "2026-02-18T03:37:29.186737"
     },
     {
       "test": "Wizard Categories List",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:36:56.988737"
+      "timestamp": "2026-02-18T03:37:29.318756"
     }
   ],
-  "failures": [
-    {
-      "test": "Create Category",
-      "status": "FAIL",
-      "details": "Status: 409 (expected 201) - {'detail': 'Category slug already exists'}",
-      "timestamp": "2026-02-18T03:36:55.128862"
-    }
-  ]
+  "failures": []
 }
