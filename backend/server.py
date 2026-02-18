@@ -3893,13 +3893,20 @@ async def admin_delete_vehicle_make(
 async def admin_list_vehicle_models(
     request: Request,
     make_id: Optional[str] = None,
+    country: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, db=db, country=country)
     query: Dict = {}
     if make_id:
         query["make_id"] = make_id
+    elif country:
+        country_code = country.upper()
+        make_ids = await db.vehicle_makes.find(
+            {"country_code": country_code}, {"_id": 0, "id": 1}
+        ).to_list(length=500)
+        query["make_id"] = {"$in": [m["id"] for m in make_ids]}
     docs = await db.vehicle_models.find(query, {"_id": 0}).sort("name", 1).to_list(length=1000)
     return {"items": [_normalize_vehicle_model_doc(doc) for doc in docs]}
 
