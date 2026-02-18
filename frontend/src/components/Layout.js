@@ -182,6 +182,8 @@ export default function Layout({ children }) {
     const known = new Set([
       '/admin',
       '/admin/users',
+      '/admin/dashboard',
+      '/admin/country-compare',
       '/admin/countries',
       '/admin/feature-flags',
       '/admin/categories',
@@ -199,6 +201,7 @@ export default function Layout({ children }) {
       '/admin/plans',
       '/admin/dealers',
       '/admin/dealer-applications',
+      '/admin/system-settings',
 
     ]);
     return !known.has(path);
