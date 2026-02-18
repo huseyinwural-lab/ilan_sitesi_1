@@ -3798,6 +3798,7 @@ async def admin_create_menu_item(
     }
     await db.audit_logs.insert_one(audit_doc)
     await db.menu_items.insert_one(doc)
+    doc.pop("_id", None)
     return {"menu_item": doc}
 
 
