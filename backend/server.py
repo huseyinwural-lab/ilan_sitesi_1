@@ -1788,6 +1788,49 @@ def _normalize_vehicle_model_doc(doc: dict) -> dict:
     }
 
 
+async def _get_required_attribute_keys(db, category_id: str, country_code: Optional[str]) -> list[str]:
+    if not category_id:
+        return []
+    query = {
+        "category_id": category_id,
+        "required_flag": True,
+        "active_flag": True,
+    }
+    if country_code:
+        query["$or"] = [
+            {"country_code": None},
+            {"country_code": ""},
+            {"country_code": country_code},
+        ]
+    docs = await db.attributes.find(query, {"_id": 0, "key": 1}).to_list(length=500)
+    return [doc.get("key") for doc in docs if doc.get("key")]
+
+
+async def _build_vehicle_master_from_db(db, country_code: str) -> dict:
+    if not country_code:
+        return {"makes": {}, "models": {}}
+    make_docs = await db.vehicle_makes.find(
+        {"country_code": country_code, "active_flag": True},
+        {"_id": 0, "id": 1, "slug": 1, "name": 1},
+    ).to_list(length=500)
+    make_map = {doc["slug"]: doc.get("name") for doc in make_docs if doc.get("slug")}
+    make_ids = [doc["id"] for doc in make_docs if doc.get("id")]
+    if not make_ids:
+        return {"makes": make_map, "models": {}}
+    model_docs = await db.vehicle_models.find(
+        {"make_id": {"$in": make_ids}, "active_flag": True},
+        {"_id": 0, "make_id": 1, "slug": 1},
+    ).to_list(length=1000)
+    models_by_make: dict = {}
+    make_slug_by_id = {doc["id"]: doc["slug"] for doc in make_docs if doc.get("id")}
+    for model in model_docs:
+        make_slug = make_slug_by_id.get(model.get("make_id"))
+        if not make_slug or not model.get("slug"):
+            continue
+        models_by_make.setdefault(make_slug, []).append(model.get("slug"))
+    return {"makes": make_map, "models": models_by_make}
+
+
 async def _report_transition(
     *,
     db,
