@@ -3360,7 +3360,7 @@ async def system_settings_effective(request: Request, country: Optional[str] = N
 async def admin_list_categories(
     request: Request,
     country: Optional[str] = None,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -3377,7 +3377,7 @@ async def admin_list_categories(
 async def admin_create_category(
     payload: CategoryCreatePayload,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
@@ -3437,7 +3437,7 @@ async def admin_update_category(
     category_id: str,
     payload: CategoryUpdatePayload,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
@@ -3501,7 +3501,7 @@ async def admin_update_category(
 async def admin_delete_category(
     category_id: str,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
@@ -3551,7 +3551,7 @@ async def admin_list_attributes(
     request: Request,
     category_id: Optional[str] = None,
     country: Optional[str] = None,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -3574,7 +3574,7 @@ async def admin_list_attributes(
 async def admin_create_attribute(
     payload: AttributeCreatePayload,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
@@ -3638,7 +3638,7 @@ async def admin_update_attribute(
     attribute_id: str,
     payload: AttributeUpdatePayload,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
@@ -3705,7 +3705,7 @@ async def admin_update_attribute(
 async def admin_delete_attribute(
     attribute_id: str,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
@@ -3736,7 +3736,7 @@ async def admin_delete_attribute(
 async def admin_list_vehicle_makes(
     request: Request,
     country: Optional[str] = None,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -3753,7 +3753,7 @@ async def admin_list_vehicle_makes(
 async def admin_create_vehicle_make(
     payload: VehicleMakeCreatePayload,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
@@ -3802,7 +3802,7 @@ async def admin_update_vehicle_make(
     make_id: str,
     payload: VehicleMakeUpdatePayload,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
@@ -3854,7 +3854,7 @@ async def admin_update_vehicle_make(
 async def admin_delete_vehicle_make(
     make_id: str,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
@@ -3885,7 +3885,7 @@ async def admin_delete_vehicle_make(
 async def admin_list_vehicle_models(
     request: Request,
     make_id: Optional[str] = None,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -3900,7 +3900,7 @@ async def admin_list_vehicle_models(
 async def admin_create_vehicle_model(
     payload: VehicleModelCreatePayload,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
@@ -3951,7 +3951,7 @@ async def admin_update_vehicle_model(
     model_id: str,
     payload: VehicleModelUpdatePayload,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
@@ -4005,7 +4005,7 @@ async def admin_update_vehicle_model(
 async def admin_delete_vehicle_model(
     model_id: str,
     request: Request,
-    current_user=Depends(get_current_admin_user),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
