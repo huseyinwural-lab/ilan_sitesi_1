@@ -289,6 +289,7 @@ export default function ModerationQueue({
                     onClick={() => viewListingDetail(listing.id)}
                     className="p-2 rounded-md border hover:bg-muted"
                     title="View Details"
+                    data-testid={`moderation-view-${listing.id}`}
                   >
                     <Eye size={16} />
                   </button>
