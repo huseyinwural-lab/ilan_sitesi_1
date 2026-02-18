@@ -3835,6 +3835,7 @@ async def admin_update_vehicle_make(
         return {"make": _normalize_vehicle_make_doc(make)}
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     audit_doc = {
+        "id": str(uuid.uuid4()),
         "event_type": "VEHICLE_MASTER_DATA_CHANGE",
         "actor_id": current_user["id"],
         "actor_role": current_user.get("role"),
@@ -3870,6 +3871,7 @@ async def admin_delete_vehicle_make(
         raise HTTPException(status_code=404, detail="Make not found")
     now_iso = datetime.now(timezone.utc).isoformat()
     audit_doc = {
+        "id": str(uuid.uuid4()),
         "event_type": "VEHICLE_MASTER_DATA_CHANGE",
         "actor_id": current_user["id"],
         "actor_role": current_user.get("role"),
@@ -3987,6 +3989,7 @@ async def admin_update_vehicle_model(
     make_lookup_id = updates.get("make_id", model.get("make_id"))
     make_doc = await db.vehicle_makes.find_one({"id": make_lookup_id}, {"_id": 0, "country_code": 1})
     audit_doc = {
+        "id": str(uuid.uuid4()),
         "event_type": "VEHICLE_MASTER_DATA_CHANGE",
         "actor_id": current_user["id"],
         "actor_role": current_user.get("role"),
@@ -4023,6 +4026,7 @@ async def admin_delete_vehicle_model(
     now_iso = datetime.now(timezone.utc).isoformat()
     make_doc = await db.vehicle_makes.find_one({"id": model.get("make_id")}, {"_id": 0, "country_code": 1})
     audit_doc = {
+        "id": str(uuid.uuid4()),
         "event_type": "VEHICLE_MASTER_DATA_CHANGE",
         "actor_id": current_user["id"],
         "actor_role": current_user.get("role"),
