@@ -161,6 +161,7 @@ class CategoryDoc(BaseModel):
     country_code: Optional[str] = None
     active_flag: bool = True
     sort_order: int = 0
+    form_schema: Optional[Dict[str, Any]] = None
     created_at: str
     updated_at: Optional[str] = None
 
@@ -207,6 +208,7 @@ class CategoryCreatePayload(BaseModel):
     country_code: Optional[str] = None
     active_flag: Optional[bool] = True
     sort_order: Optional[int] = 0
+    form_schema: Optional[Dict[str, Any]] = None
 
 
 class CategoryUpdatePayload(BaseModel):
@@ -216,6 +218,7 @@ class CategoryUpdatePayload(BaseModel):
     country_code: Optional[str] = None
     active_flag: Optional[bool] = None
     sort_order: Optional[int] = None
+    form_schema: Optional[Dict[str, Any]] = None
 
 
 class MenuItemCreatePayload(BaseModel):
