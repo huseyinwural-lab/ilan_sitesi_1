@@ -1487,6 +1487,7 @@ async def _moderation_transition(
 async def moderation_queue(
     request: Request,
     status: str = "pending_moderation",
+    dealer_only: Optional[bool] = None,
     country: Optional[str] = None,
     module: Optional[str] = None,
     limit: int = 50,
@@ -1497,6 +1498,8 @@ async def moderation_queue(
     _ensure_moderation_rbac(current_user)
 
     q: Dict = {"status": status}
+    if dealer_only is not None:
+        q["dealer_only"] = dealer_only
     if country:
         q["country"] = country.strip().upper()
     if module and module != "vehicle":
@@ -1524,7 +1527,8 @@ async def moderation_queue(
                 "currency": "EUR",
                 "image_count": len(media),
                 "created_at": d.get("created_at"),
-                "is_dealer_listing": False,
+                "is_dealer_listing": bool(d.get("dealer_only")),
+                "dealer_only": bool(d.get("dealer_only")),
                 "is_premium": False,
             }
         )
