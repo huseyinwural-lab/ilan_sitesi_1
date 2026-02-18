@@ -12,7 +12,7 @@ export const CategorySidebar = ({
   // Assuming categories is a flat list for now, or we traverse tree.
   // API returns flat list on /api/categories which is easier for lookup.
   
-  const activeCategory = categories.find(c => c.slug.en === activeCategorySlug || c.slug.tr === activeCategorySlug); // fallback logic
+  const activeCategory = categories.find(c => c.id === activeCategorySlug || c.slug === activeCategorySlug);
   
   // Find Parent
   const parentCategory = activeCategory?.parent_id 
@@ -49,10 +49,11 @@ export const CategorySidebar = ({
               variant="ghost"
               size="sm"
               className="w-full justify-start px-0 text-muted-foreground hover:text-foreground h-auto py-1"
-              onClick={() => onCategoryChange(parentCategory.slug.en || parentCategory.slug.tr)}
+              onClick={() => onCategoryChange(parentCategory.id || parentCategory.slug)}
+              data-testid="category-parent-back"
             >
               <ChevronLeft className="h-3 w-3 mr-1" />
-              {parentCategory.translations?.find(t => t.language === 'tr')?.name || parentCategory.slug.en}
+              {parentCategory.name}
             </Button>
           ) : (
             <Button
@@ -60,6 +61,7 @@ export const CategorySidebar = ({
               size="sm"
               className="w-full justify-start px-0 text-muted-foreground hover:text-foreground h-auto py-1"
               onClick={() => onCategoryChange(null)}
+              data-testid="category-all-back"
             >
               <ChevronLeft className="h-3 w-3 mr-1" />
               Tüm Kategoriler
@@ -67,7 +69,7 @@ export const CategorySidebar = ({
           )}
           
           <div className="font-bold text-lg px-1">
-            {activeCategory.translations?.find(t => t.language === 'tr')?.name || activeCategory.slug.en}
+            {activeCategory.name}
           </div>
         </div>
       )}
@@ -76,7 +78,7 @@ export const CategorySidebar = ({
       <div className="space-y-1">
         {activeCategory && childCategories.length === 0 && (
            <div className="px-2 py-1.5 text-sm font-medium bg-primary/10 text-primary rounded-md">
-             {activeCategory.translations?.find(t => t.language === 'tr')?.name || activeCategory.slug.en}
+             {activeCategory.name}
            </div>
         )}
         
@@ -86,11 +88,12 @@ export const CategorySidebar = ({
             variant="ghost"
             className={cn(
               "w-full justify-between h-8 px-2 text-sm font-normal",
-              activeCategorySlug === cat.slug.en ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground"
+              activeCategorySlug === cat.id ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground"
             )}
-            onClick={() => onCategoryChange(cat.slug.en || cat.slug.tr)}
+            onClick={() => onCategoryChange(cat.id || cat.slug)}
+            data-testid={`category-select-${cat.id}`}
           >
-            <span>{cat.translations?.find(t => t.language === 'tr')?.name || cat.slug.en}</span>
+            <span>{cat.name}</span>
             {cat.listing_count > 0 && (
               <span className="text-xs text-muted-foreground ml-2">({cat.listing_count})</span>
             )}
