@@ -178,6 +178,10 @@ const AttributeForm = () => {
     });
   };
 
+  const handleAttributeChange = (key, value) => {
+    setAttributeValues((prev) => ({ ...prev, [key]: value }));
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold">Araç Bilgileri</h2>
