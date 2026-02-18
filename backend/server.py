@@ -25,7 +25,8 @@ from app.admin_country_context import resolve_admin_country_context
 from app.dependencies import get_current_user, get_current_user_optional, check_permissions
 from app.countries_seed import default_countries
 from app.menu_seed import default_top_menu
-from app.categories_seed import vehicle_category_tree
+from app.categories_seed import vehicle_category_tree, default_categories
+from app.master_data_seed import default_vehicle_makes, default_vehicle_models
 
 
 from fastapi import UploadFile, File
