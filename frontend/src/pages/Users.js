@@ -238,45 +238,52 @@ export default function Users({
                     </span>
                   </td>
                   <td className="text-right">
-                    <div className="relative inline-block">
-                      <button
-                        onClick={() => setActionMenuOpen(actionMenuOpen === user.id ? null : user.id)}
-                        className="p-1.5 rounded hover:bg-muted transition-colors"
-                        data-testid={`user-actions-${user.id}`}
-                      >
-                        <MoreHorizontal size={16} />
-                      </button>
-                      {actionMenuOpen === user.id && (
-                        <div className="absolute right-0 top-full mt-1 w-40 rounded-md border bg-popover shadow-lg z-10">
-                          <div className="p-1">
-                            {user.is_active ? (
+                    {readOnly ? (
+                      <span className="text-xs text-muted-foreground" data-testid={`user-actions-${user.id}`}>—</span>
+                    ) : (
+                      <div className="relative inline-block">
+                        <button
+                          onClick={() => setActionMenuOpen(actionMenuOpen === user.id ? null : user.id)}
+                          className="p-1.5 rounded hover:bg-muted transition-colors"
+                          data-testid={`user-actions-${user.id}`}
+                        >
+                          <MoreHorizontal size={16} />
+                        </button>
+                        {actionMenuOpen === user.id && (
+                          <div className="absolute right-0 top-full mt-1 w-40 rounded-md border bg-popover shadow-lg z-10">
+                            <div className="p-1">
+                              {user.is_active ? (
+                                <button
+                                  onClick={() => handleSuspend(user.id)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-amber-600"
+                                  data-testid={`user-suspend-${user.id}`}
+                                >
+                                  <UserX size={14} />
+                                  Suspend
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleActivate(user.id)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-emerald-600"
+                                  data-testid={`user-activate-${user.id}`}
+                                >
+                                  <UserCheck size={14} />
+                                  Activate
+                                </button>
+                              )}
                               <button
-                                onClick={() => handleSuspend(user.id)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-amber-600"
+                                onClick={() => handleDelete(user.id)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive"
+                                data-testid={`user-delete-${user.id}`}
                               >
-                                <UserX size={14} />
-                                Suspend
+                                <Trash2 size={14} />
+                                {t('delete')}
                               </button>
-                            ) : (
-                              <button
-                                onClick={() => handleActivate(user.id)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-emerald-600"
-                              >
-                                <UserCheck size={14} />
-                                Activate
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleDelete(user.id)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive"
-                            >
-                              <Trash2 size={14} />
-                              {t('delete')}
-                            </button>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))
