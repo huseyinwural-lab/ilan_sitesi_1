@@ -183,11 +183,13 @@ export default function SearchPage() {
   };
 
   const handleMakeChange = (makeKey) => {
-    setSearchState({ make: makeKey || null, model: null, page: 1 });
+    const nextMake = makeKey === 'all' ? null : makeKey;
+    setSearchState({ make: nextMake, model: null, page: 1 });
   };
 
   const handleModelChange = (modelKey) => {
-    setSearchState({ model: modelKey || null, page: 1 });
+    const nextModel = modelKey === 'all' ? null : modelKey;
+    setSearchState({ model: nextModel, page: 1 });
   };
 
   const handleFilterChange = (newFilters) => {
@@ -275,7 +277,7 @@ export default function SearchPage() {
                   <SelectValue placeholder={loadingMakes ? 'Yükleniyor...' : 'Tüm Markalar'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tümü</SelectItem>
+                  <SelectItem value="all">Tümü</SelectItem>
                   {makes.map((make) => (
                     <SelectItem key={make.id} value={make.key} data-testid={`search-make-option-${make.key}`}>
                       {make.label}
@@ -296,7 +298,7 @@ export default function SearchPage() {
                   <SelectValue placeholder={!searchState.make ? 'Önce marka seçin' : (loadingModels ? 'Yükleniyor...' : 'Tüm Modeller')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tümü</SelectItem>
+                  <SelectItem value="all">Tümü</SelectItem>
                   {models.map((model) => (
                     <SelectItem key={model.id} value={model.key} data-testid={`search-model-option-${model.key}`}>
                       {model.label}
