@@ -2294,6 +2294,8 @@ async def admin_revenue(
 
     start_dt = _parse_iso_datetime(start_date, "start_date")
     end_dt = _parse_iso_datetime(end_date, "end_date")
+    if end_dt < start_dt:
+        raise HTTPException(status_code=400, detail="end_date must be after start_date")
     start_iso = start_dt.astimezone(timezone.utc).isoformat()
     end_iso = end_dt.astimezone(timezone.utc).isoformat()
 
