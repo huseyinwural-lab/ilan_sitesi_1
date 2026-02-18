@@ -10,4 +10,6 @@
   - /app/admin/evidence/ADMIN_MENU_MANAGEMENT_ACTIVE.jpeg
   - /app/admin/evidence/INDIVIDUAL_APPLICATIONS_DONE.md
   - /app/admin/evidence/INDIVIDUAL_APPLICATIONS_PAGE.jpeg
+  - /app/admin/evidence/INDIVIDUAL_LISTING_APPLICATIONS_PAGE.jpeg
+  - /app/admin/evidence/CORPORATE_LISTING_APPLICATIONS_PAGE.jpeg
   - /app/ops/RELEASE_EVIDENCE_PACK_ADMIN.md
