@@ -3066,7 +3066,7 @@ async def admin_update_system_setting(
 
 
 @api_router.get("/system-settings/effective")
-async def system_settings_effective(country: Optional[str] = None, request: Request = None):
+async def system_settings_effective(request: Request, country: Optional[str] = None):
     db = request.app.state.db
     country_code = country.upper() if country else None
     global_settings = await db.system_settings.find({"$or": [{"country_code": None}, {"country_code": ""}]}, {"_id": 0}).to_list(length=1000)
