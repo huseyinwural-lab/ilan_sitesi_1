@@ -3596,7 +3596,7 @@ async def admin_create_attribute(
         _assert_country_scope(country_code, current_user)
 
     now_iso = datetime.now(timezone.utc).isoformat()
-    attr_id = str(uuid4())
+    attr_id = str(uuid.uuid4())
     doc = {
         "id": attr_id,
         "category_id": payload.category_id,
@@ -3765,7 +3765,7 @@ async def admin_create_vehicle_make(
     _assert_country_scope(code, current_user)
 
     now_iso = datetime.now(timezone.utc).isoformat()
-    make_id = str(uuid4())
+    make_id = str(uuid.uuid4())
     doc = {
         "id": make_id,
         "name": payload.name.strip(),
@@ -3914,7 +3914,7 @@ async def admin_create_vehicle_model(
         raise HTTPException(status_code=400, detail="make_id not found")
 
     now_iso = datetime.now(timezone.utc).isoformat()
-    model_id = str(uuid4())
+    model_id = str(uuid.uuid4())
     doc = {
         "id": model_id,
         "make_id": payload.make_id,
