@@ -57,18 +57,12 @@ export default function SearchPage() {
   const [loadingMakes, setLoadingMakes] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
 
-  // Initial Bootstrap: Fetch Categories (vehicle only for now)
+  // Initial Bootstrap: Fetch Categories + Make/Model options
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`${API}/categories?module=vehicle`, {
-          headers: {
-            // categories endpoint currently requires auth; use token if available
-            ...(localStorage.getItem('access_token')
-              ? { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
-              : {}),
-          },
-        });
+        const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
+        const res = await fetch(`${API}/categories?module=vehicle&country=${country}`);
         if (res.ok) {
           const json = await res.json();
           setCategories(json);
@@ -79,6 +73,52 @@ export default function SearchPage() {
     };
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    const fetchMakes = async () => {
+      setLoadingMakes(true);
+      try {
+        const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
+        const res = await fetch(`${API}/v1/vehicle/makes?country=${country}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (alive) setMakes(json.items || []);
+        }
+      } catch (e) {
+        console.error('Make fetch error', e);
+      } finally {
+        if (alive) setLoadingMakes(false);
+      }
+    };
+    fetchMakes();
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    const fetchModels = async () => {
+      if (!searchState.make) {
+        setModels([]);
+        return;
+      }
+      setLoadingModels(true);
+      try {
+        const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
+        const res = await fetch(`${API}/v1/vehicle/models?make=${searchState.make}&country=${country}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (alive) setModels(json.items || []);
+        }
+      } catch (e) {
+        console.error('Model fetch error', e);
+      } finally {
+        if (alive) setLoadingModels(false);
+      }
+    };
+    fetchModels();
+    return () => { alive = false; };
+  }, [searchState.make]);
 
   // Fetch Data
   useEffect(() => {
