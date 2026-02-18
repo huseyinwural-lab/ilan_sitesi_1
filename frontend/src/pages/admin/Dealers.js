@@ -97,21 +97,22 @@ export default function DealersPage() {
               <tr><td colSpan={4} className="p-6 text-center text-muted-foreground">No dealers</td></tr>
             ) : (
               items.map((d) => (
-                <tr key={d.id} className="border-t">
-                  <td className="p-3">{d.email}</td>
-                  <td className="p-3 text-muted-foreground">{d.country_code || '-'}</td>
+                <tr key={d.id} className="border-t" data-testid={`dealer-row-${d.id}`}>
+                  <td className="p-3" data-testid={`dealer-email-${d.id}`}>{d.email}</td>
+                  <td className="p-3 text-muted-foreground" data-testid={`dealer-country-${d.id}`}>{d.country_code || '-'}</td>
                   <td className="p-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                       d.dealer_status === 'active'
                         ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
                         : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'
-                    }`}>{d.dealer_status}</span>
+                    }`} data-testid={`dealer-status-${d.id}`}>{d.dealer_status}</span>
                   </td>
                   <td className="p-3 text-right">
                     {d.dealer_status === 'active' ? (
                       <button
                         onClick={() => setDealerStatus(d.id, 'suspended')}
                         className="h-8 px-3 rounded-md border text-xs hover:bg-muted"
+                        data-testid={`dealer-suspend-${d.id}`}
                       >
                         Suspend
                       </button>
@@ -119,10 +120,18 @@ export default function DealersPage() {
                       <button
                         onClick={() => setDealerStatus(d.id, 'active')}
                         className="h-8 px-3 rounded-md border text-xs hover:bg-muted"
+                        data-testid={`dealer-activate-${d.id}`}
                       >
                         Activate
                       </button>
                     )}
+                    <Link
+                      to={`/admin/dealers/${d.id}`}
+                      className="ml-2 h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center"
+                      data-testid={`dealer-detail-link-${d.id}`}
+                    >
+                      Detay
+                    </Link>
                   </td>
                 </tr>
               ))
