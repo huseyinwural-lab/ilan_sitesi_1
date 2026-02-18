@@ -70,6 +70,14 @@ DEALER_APP_REJECT_REASONS_V1 = {
     "other",
 }
 
+INDIVIDUAL_APP_REJECT_REASONS_V1 = {
+    "incomplete_documents",
+    "failed_verification",
+    "duplicate_application",
+    "country_not_supported",
+    "other",
+}
+
 # Dealer Application audit event types
 DEALER_APPLICATION_EVENT_TYPES = {"DEALER_APPLICATION_APPROVED", "DEALER_APPLICATION_REJECTED"}
 
