@@ -964,6 +964,11 @@ class DealerApplicationRejectPayload(BaseModel):
     reason_note: Optional[str] = None
 
 
+class IndividualApplicationRejectPayload(BaseModel):
+    reason: str
+    reason_note: Optional[str] = None
+
+
 @api_router.post("/admin/dealer-applications/{app_id}/reject")
 async def admin_reject_dealer_application(
     app_id: str,
