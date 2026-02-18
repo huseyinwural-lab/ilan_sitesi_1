@@ -49,7 +49,7 @@ export default function IndividualApplications() {
 
   useEffect(() => {
     fetchApplications();
-  }, [statusFilter]);
+  }, [statusFilter, search]);
 
   const filteredApplications = useMemo(() => {
     if (!search) return applications;
