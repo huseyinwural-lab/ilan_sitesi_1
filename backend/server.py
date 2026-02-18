@@ -3899,12 +3899,13 @@ async def admin_list_vehicle_models(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, country=country)
+    await resolve_admin_country_context(request, current_user=current_user, db=db)
     query: Dict = {}
     if make_id:
         query["make_id"] = make_id
     elif country:
         country_code = country.upper()
+        _assert_country_scope(current_user, country_code)
         make_ids = await db.vehicle_makes.find(
             {"country_code": country_code}, {"_id": 0, "id": 1}
         ).to_list(length=500)
