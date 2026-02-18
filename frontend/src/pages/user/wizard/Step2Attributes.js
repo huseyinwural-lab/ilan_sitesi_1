@@ -74,6 +74,8 @@ const AttributeForm = () => {
   const [condition, setCondition] = useState(basicInfo.condition || '');
 
   const [errors, setErrors] = useState({});
+  const [attributeDefs, setAttributeDefs] = useState([]);
+  const [attributeValues, setAttributeValues] = useState(basicInfo.attributes || {});
 
   const API_URL = process.env.REACT_APP_BACKEND_URL;
   const API = `${API_URL}/api`;
