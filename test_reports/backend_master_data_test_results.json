@@ -1,23 +1,41 @@
 {
   "summary": {
-    "tests_run": 1,
-    "tests_passed": 0,
-    "success_rate": "0.0%"
+    "tests_run": 4,
+    "tests_passed": 3,
+    "success_rate": "75.0%"
   },
   "results": [
     {
       "test": "Admin Login",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:33:14.780021"
+    },
+    {
+      "test": "List Categories",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:33:14.957548"
+    },
+    {
+      "test": "Create Category",
       "status": "FAIL",
-      "details": "Error: HTTPSConnectionPool(host='multilist.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)",
-      "timestamp": "2026-02-18T03:30:00.341841"
+      "details": "Status: 520 (expected 201) - {'raw_content': '<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 8]>    <html class=\"no-'}",
+      "timestamp": "2026-02-18T03:33:15.114063"
+    },
+    {
+      "test": "Get Categories for Attributes",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:33:15.257236"
     }
   ],
   "failures": [
     {
-      "test": "Admin Login",
+      "test": "Create Category",
       "status": "FAIL",
-      "details": "Error: HTTPSConnectionPool(host='multilist.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)",
-      "timestamp": "2026-02-18T03:30:00.341841"
+      "details": "Status: 520 (expected 201) - {'raw_content': '<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 8]>    <html class=\"no-'}",
+      "timestamp": "2026-02-18T03:33:15.114063"
     }
   ]
 }
