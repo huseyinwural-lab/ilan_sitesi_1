@@ -47,17 +47,24 @@
   - Plan CRUD (audit-first)
   - Dealer plan assignment (users.plan_id) + dealer detail finance summary
   - Admin UI: /admin/invoices, /admin/tax-rates, /admin/plans
+- **Sprint 4:** System + Dashboard
+  - Country CRUD (country_code PK, audit-first)
+  - System Settings KV + effective view
+  - Dashboard KPI API (summary + country compare)
+  - Admin UI: /admin/countries, /admin/system-settings, /admin/dashboard, /admin/country-compare
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- **Sprint 4:** System + Dashboard (Countries, Settings, KPI)
+- **Sprint 5:** Master Data Engines (Categories, Attributes, Vehicle Make/Model)
 
 ### P1
-- **Sprint 5:** Master Data Engines (Categories, Attributes, Vehicle Make/Model)
 - **Backlog:** Admin Listing Preview Drawer
 - **Backlog:** Bulk Report Status Update
+- **Backlog:** Finance CSV Export
+- **Backlog:** Revenue Chart
+- **Backlog:** Dashboard View Audit
 
 ### P2
 - **Sprint 6:** Final Integration Gate (RBAC + audit + country-scope E2E)
