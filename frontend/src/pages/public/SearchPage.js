@@ -135,6 +135,8 @@ export default function SearchPage() {
 
         if (searchState.q) queryParams.set('q', searchState.q);
         if (searchState.category) queryParams.set('category', searchState.category);
+        if (searchState.make) queryParams.set('make', searchState.make);
+        if (searchState.model) queryParams.set('model', searchState.model);
         if (searchState.sort) queryParams.set('sort', searchState.sort);
         queryParams.set('page', searchState.page);
         queryParams.set('limit', searchState.limit);
