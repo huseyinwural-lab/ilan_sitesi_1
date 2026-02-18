@@ -4255,6 +4255,8 @@ async def public_vehicle_models(make: str, country: str | None = None, request: 
     )
     if not make_doc:
         raise HTTPException(status_code=404, detail="Make not found")
+    if country and make_doc.get("country_code") != country.upper():
+        raise HTTPException(status_code=404, detail="Make not found")
     models = await db.vehicle_models.find(
         {"make_id": make_doc.get("id"), "active_flag": True},
         {"_id": 0, "id": 1, "slug": 1, "name": 1},
