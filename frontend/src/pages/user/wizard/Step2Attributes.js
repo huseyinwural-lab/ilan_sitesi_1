@@ -225,7 +225,7 @@ const AttributeForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto" data-testid="listing-attributes-form">
       <h2 className="text-2xl font-bold">Araç Bilgileri</h2>
 
       <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
