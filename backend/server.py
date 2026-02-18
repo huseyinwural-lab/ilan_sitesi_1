@@ -2819,7 +2819,7 @@ async def admin_delete_tax_rate(
 async def admin_list_plans(
     request: Request,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
