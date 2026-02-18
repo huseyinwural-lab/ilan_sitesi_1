@@ -50,7 +50,7 @@ export default function ModerationQueue() {
   useEffect(() => {
     fetchQueue();
     fetchCount();
-  }, [countryFilter, moduleFilter]);
+  }, [countryFilter, moduleFilter, dealerOnly]);
 
   const fetchQueue = async () => {
     try {
@@ -58,6 +58,7 @@ export default function ModerationQueue() {
       params.append('status', 'pending_moderation');
       if (countryFilter) params.append('country', countryFilter);
       if (moduleFilter) params.append('module', moduleFilter);
+      if (dealerOnly !== null) params.append('dealer_only', dealerOnly);
       
       const response = await axios.get(`${API}/admin/moderation/queue?${params}`, {
         headers: {
