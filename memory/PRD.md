@@ -66,9 +66,10 @@
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- Release hazırlığı / prod geçiş onayı
+- Production rollout + hypercare aktivasyonu (ops onayı bekliyor)
 
 ### P1
+- **Backlog:** P1 sprint planlama + kickoff
 - **Backlog:** Admin Listing Preview Drawer
 - **Backlog:** Bulk Report Status Update
 - **Backlog:** Finance CSV Export
