@@ -272,9 +272,11 @@ class MasterDataAPITester:
         )
         
         # Create make
+        import time
+        unique_suffix = str(int(time.time()))
         make_data = {
-            "name": "Test Make",
-            "slug": "test-make",
+            "name": f"Test Make {unique_suffix}",
+            "slug": f"test-make-{unique_suffix}",
             "country_code": "DE",
             "active_flag": True
         }
