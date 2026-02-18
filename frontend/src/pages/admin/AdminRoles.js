@@ -17,12 +17,12 @@ const ROLE_DEFINITIONS = [
     summary: "Moderation queue + şikayet yönetimi",
   },
   {
-    key: "finance_admin",
+    key: "finance",
     label: "Finance Admin",
     summary: "Finans (planlar, faturalar, vergi oranları)",
   },
   {
-    key: "support_admin",
+    key: "support",
     label: "Support Admin",
     summary: "Kullanıcı yönetimi + şikayetler",
   },
