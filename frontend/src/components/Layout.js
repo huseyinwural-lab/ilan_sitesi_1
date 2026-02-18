@@ -154,12 +154,12 @@ export default function Layout({ children }) {
 
     { divider: true, label: 'İlan & Moderasyon', roles: roles.moderationWithSupport },
     { path: '/admin/moderation', icon: ShieldCheck, label: 'Moderation Queue', roles: roles.moderation, testId: 'listings-moderation-queue' },
-    { path: '/admin/individual-listing-applications', icon: FileText, label: 'Bireysel İlan Başvuruları', roles: roles.moderation, comingSoon: true, testId: 'listings-individual-applications' },
-    { path: '/admin/corporate-listing-applications', icon: FileText, label: 'Kurumsal İlan Başvuruları', roles: roles.moderation, comingSoon: true, testId: 'listings-corporate-applications' },
+  { path: '/admin/individual-listing-applications', icon: FileText, label: 'Bireysel İlan Başvuruları', roles: roles.moderation, testId: 'listings-individual-applications' },
+  { path: '/admin/corporate-listing-applications', icon: FileText, label: 'Kurumsal İlan Başvuruları', roles: roles.moderation, testId: 'listings-corporate-applications' },
 
     { divider: true, label: 'Kampanyalar', roles: roles.moderation },
-    { path: '/admin/individual-campaigns', icon: Flag, label: 'Bireysel Kampanyalar', roles: roles.moderation, comingSoon: true, testId: 'campaigns-individual' },
-    { path: '/admin/corporate-campaigns', icon: Flag, label: 'Kurumsal Kampanyalar', roles: roles.moderation, comingSoon: true, testId: 'campaigns-corporate' },
+  { path: '/admin/individual-campaigns', icon: Flag, label: 'Bireysel Kampanyalar', roles: roles.moderation, testId: 'campaigns-individual' },
+  { path: '/admin/corporate-campaigns', icon: Flag, label: 'Kurumsal Kampanyalar', roles: roles.moderation, testId: 'campaigns-corporate' },
     { path: '/admin/reports', icon: Flag, label: 'Şikayetler', roles: roles.moderationWithSupport, testId: 'listings-reports' },
 
     { divider: true, label: 'Katalog & İçerik', roles: roles.catalogView },
