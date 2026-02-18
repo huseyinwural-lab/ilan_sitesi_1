@@ -1164,6 +1164,111 @@ async def admin_approve_dealer_application(
     return {"ok": True, "dealer_user": {"id": new_user_id, "email": app.get("email"), "temp_password": raw_password}}
 
 
+@api_router.post("/admin/individual-applications/{app_id}/approve")
+async def admin_approve_individual_application(
+    app_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
+
+    app = await db.individual_applications.find_one({"id": app_id})
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+    if getattr(ctx, "mode", "global") == "country" and app.get("country_code") != ctx.country:
+        raise HTTPException(status_code=403, detail="Country scope violation")
+    if app.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="Application not pending")
+
+    existing_user = await db.users.find_one({"email": app.get("email")})
+    if not existing_user:
+        await db.users.insert_one(
+            {
+                "id": str(uuid.uuid4()),
+                "email": app.get("email"),
+                "name": app.get("full_name") or app.get("email"),
+                "password": get_password_hash("User123!"),
+                "role": "user",
+                "country_code": app.get("country_code"),
+                "is_active": True,
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat(),
+            }
+        )
+
+    res = await db.individual_applications.update_one(
+        {"id": app_id, "status": "pending"},
+        {"$set": {
+            "status": "approved",
+            "reviewed_at": datetime.utcnow().isoformat(),
+            "reviewed_by": current_user.get("id"),
+            "updated_at": datetime.utcnow().isoformat(),
+        }},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=409, detail="Application changed concurrently")
+
+    audit_entry = await build_audit_entry(
+        event_type="INDIVIDUAL_APPLICATION_APPROVED",
+        actor=current_user,
+        target_id=app.get("id"),
+        target_type="individual_application",
+        country_code=app.get("country_code"),
+        details={"email": app.get("email")},
+        request=request,
+    )
+    await db.audit_logs.insert_one(audit_entry)
+    return {"ok": True}
+
+
+@api_router.post("/admin/individual-applications/{app_id}/reject")
+async def admin_reject_individual_application(
+    app_id: str,
+    payload: IndividualApplicationRejectPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
+
+    app = await db.individual_applications.find_one({"id": app_id})
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+    if getattr(ctx, "mode", "global") == "country" and app.get("country_code") != ctx.country:
+        raise HTTPException(status_code=403, detail="Country scope violation")
+    if app.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="Application not pending")
+    if payload.reason not in INDIVIDUAL_APP_REJECT_REASONS_V1:
+        raise HTTPException(status_code=400, detail="Invalid reject reason")
+
+    res = await db.individual_applications.update_one(
+        {"id": app_id, "status": "pending"},
+        {"$set": {
+            "status": "rejected",
+            "reason": payload.reason,
+            "reason_note": payload.reason_note,
+            "reviewed_at": datetime.utcnow().isoformat(),
+            "reviewed_by": current_user.get("id"),
+            "updated_at": datetime.utcnow().isoformat(),
+        }},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=409, detail="Application changed concurrently")
+
+    audit_entry = await build_audit_entry(
+        event_type="INDIVIDUAL_APPLICATION_REJECTED",
+        actor=current_user,
+        target_id=app.get("id"),
+        target_type="individual_application",
+        country_code=app.get("country_code"),
+        details={"email": app.get("email"), "reason": payload.reason},
+        request=request,
+    )
+    await db.audit_logs.insert_one(audit_entry)
+    return {"ok": True}
+
+
 
 
 
