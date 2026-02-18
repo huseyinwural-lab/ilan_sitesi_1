@@ -157,12 +157,6 @@ export default function Dashboard() {
           subtitle="DE, CH, FR, AT"
         />
         <StatCard 
-          icon={Flag} 
-          title={t('enabled_features')} 
-          value={stats?.feature_flags?.enabled || 0}
-          subtitle={`of ${stats?.feature_flags?.total || 0} total`}
-        />
-        <StatCard 
           icon={Shield} 
           title="Active Modules" 
           value="2"
@@ -187,14 +181,6 @@ export default function Dashboard() {
           >
             <Users size={18} className="text-primary" />
             <span className="text-sm font-medium">{t('users')}</span>
-          </a>
-          <a 
-            href="/admin/feature-flags" 
-            className="flex items-center gap-2 p-3 rounded-md border hover:bg-muted/50 transition-colors"
-            data-testid="quick-action-flags"
-          >
-            <Flag size={18} className="text-primary" />
-            <span className="text-sm font-medium">{t('feature_flags')}</span>
           </a>
           <a 
             href="/admin/countries" 
