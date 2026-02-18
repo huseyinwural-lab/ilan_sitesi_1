@@ -323,6 +323,23 @@ async def lifespan(app: FastAPI):
             upsert=True,
         )
 
+    legacy_cats = await db.categories.find({"slug": {"$type": "object"}}).to_list(length=200)
+    for legacy in legacy_cats:
+        slug_obj = legacy.get("slug") or {}
+        slug_value = slug_obj.get("tr") or slug_obj.get("en") or slug_obj.get("de") or slug_obj.get("fr")
+        name_value = legacy.get("name")
+        if not name_value:
+            translations = legacy.get("translations") or []
+            for t in translations:
+                if t.get("language") == "tr":
+                    name_value = t.get("name")
+                    break
+        if slug_value:
+            await db.categories.update_one(
+                {"id": legacy.get("id")},
+                {"$set": {"slug": slug_value, "name": name_value or slug_value, "active_flag": True}},
+            )
+
     if await db.vehicle_makes.count_documents({}) == 0:
         await db.vehicle_makes.insert_many(default_vehicle_makes(now_iso))
     if await db.vehicle_models.count_documents({}) == 0:
