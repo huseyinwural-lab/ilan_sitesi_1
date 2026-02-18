@@ -49,6 +49,7 @@ Bu doküman **v1.0.0 / FAZ-FINAL-02 (P1)** kapsamında audit `event_type` isimle
 
 ### Master Data Domain
 - `CATEGORY_CHANGE`
+- `MENU_CHANGE`
 - `ATTRIBUTE_CHANGE`
 - `VEHICLE_MASTER_DATA_CHANGE`
 
