@@ -1,0 +1,143 @@
+{
+  "test_run_timestamp": "2026-02-18T00:19:06.751664",
+  "total_tests": 18,
+  "passed_tests": 15,
+  "failed_tests": 3,
+  "success_rate": "83.3%",
+  "test_results": [
+    {
+      "test": "Admin Login",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T00:19:04.797756"
+    },
+    {
+      "test": "Country Admin Login",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T00:19:05.189405"
+    },
+    {
+      "test": "Get Dealers List",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T00:19:05.328506"
+    },
+    {
+      "test": "Found Dealer User ID",
+      "status": "PASS",
+      "details": "ID: fe1fc1b1-c8a7-4cd1-b457-7aaed927e34d",
+      "timestamp": "2026-02-18T00:19:05.329154"
+    },
+    {
+      "test": "Create Tax Rate",
+      "status": "FAIL",
+      "details": "Status: 200, Error: No detail",
+      "timestamp": "2026-02-18T00:19:05.450812"
+    },
+    {
+      "test": "Create Plan",
+      "status": "FAIL",
+      "details": "Status: 200, Error: No detail",
+      "timestamp": "2026-02-18T00:19:05.589348"
+    },
+    {
+      "test": "Invoice CRUD Prerequisites",
+      "status": "FAIL",
+      "details": "Missing dealer_user_id or plan_id",
+      "timestamp": "2026-02-18T00:19:05.589997"
+    },
+    {
+      "test": "Get Revenue Report",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T00:19:05.705287"
+    },
+    {
+      "test": "Revenue Response Format",
+      "status": "PASS",
+      "details": "Total gross: 1190.0",
+      "timestamp": "2026-02-18T00:19:05.705921"
+    },
+    {
+      "test": "Get Dealer Detail with Finance Info",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T00:19:05.821855"
+    },
+    {
+      "test": "Dealer Detail Finance Fields",
+      "status": "PASS",
+      "details": "active_plan: True, last_invoice: True, unpaid_count: True",
+      "timestamp": "2026-02-18T00:19:05.822486"
+    },
+    {
+      "test": "Country Scope Violation - Invoice List",
+      "status": "PASS",
+      "details": "Status: 403",
+      "timestamp": "2026-02-18T00:19:05.938528"
+    },
+    {
+      "test": "Country Scope Violation - Tax Rates",
+      "status": "PASS",
+      "details": "Status: 403",
+      "timestamp": "2026-02-18T00:19:06.065847"
+    },
+    {
+      "test": "Country Scope Violation - Plans",
+      "status": "PASS",
+      "details": "Status: 403",
+      "timestamp": "2026-02-18T00:19:06.186684"
+    },
+    {
+      "test": "Check Invoice Status Change Audit",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T00:19:06.353100"
+    },
+    {
+      "test": "Check Tax Rate Change Audit",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T00:19:06.495364"
+    },
+    {
+      "test": "Check Plan Change Audit",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T00:19:06.627165"
+    },
+    {
+      "test": "Check Plan Assignment Audit",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T00:19:06.751022"
+    }
+  ],
+  "failures": [
+    {
+      "test": "Create Tax Rate",
+      "status": "FAIL",
+      "details": "Status: 200, Error: No detail",
+      "timestamp": "2026-02-18T00:19:05.450812"
+    },
+    {
+      "test": "Create Plan",
+      "status": "FAIL",
+      "details": "Status: 200, Error: No detail",
+      "timestamp": "2026-02-18T00:19:05.589348"
+    },
+    {
+      "test": "Invoice CRUD Prerequisites",
+      "status": "FAIL",
+      "details": "Missing dealer_user_id or plan_id",
+      "timestamp": "2026-02-18T00:19:05.589997"
+    }
+  ],
+  "test_data": {
+    "created_invoice_id": null,
+    "created_tax_rate_id": null,
+    "created_plan_id": null,
+    "dealer_user_id": "fe1fc1b1-c8a7-4cd1-b457-7aaed927e34d"
+  }
+}
