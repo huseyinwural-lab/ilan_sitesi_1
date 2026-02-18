@@ -3680,7 +3680,14 @@ async def submit_vehicle_listing(listing_id: str, request: Request, current_user
     if listing.get("status") not in ["draft", "needs_revision"]:
         raise HTTPException(status_code=400, detail="Listing not draft/needs_revision")
 
-    errs = validate_publish(listing, request.app.state.vehicle_master)
+    vehicle_master = await _build_vehicle_master_from_db(db, listing.get("country"))
+    required_keys = await _get_required_attribute_keys(db, listing.get("category_key"), listing.get("country"))
+    errs = validate_publish(
+        listing,
+        vehicle_master,
+        required_attribute_keys=required_keys,
+        supported_countries=SUPPORTED_COUNTRIES,
+    )
     if errs:
         # return normalized 422 payload for FE
         raise HTTPException(status_code=422, detail={"id": listing_id, "status": listing.get("status"), "validation_errors": errs, "next_actions": ["fix_form", "upload_media"]})
