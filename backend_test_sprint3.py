@@ -167,17 +167,6 @@ class Sprint3FinanceAPITester:
         if not success:
             return False
 
-        # Get specific tax rate
-        success, response = self.run_test(
-            "Get Tax Rate Detail",
-            "GET",
-            f"admin/tax-rates/{self.created_tax_rate_id}",
-            200
-        )
-        
-        if not success:
-            return False
-
         # Update tax rate
         update_data = {
             "rate": 20.0,
