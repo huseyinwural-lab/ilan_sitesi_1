@@ -739,15 +739,20 @@ async def admin_get_dealer_detail(
     dealer = await db.users.find_one(query, {"_id": 0})
     if not dealer:
         raise HTTPException(status_code=404, detail="Dealer not found")
+    _assert_country_scope(dealer.get("country_code"), current_user)
 
     # Basic finance linkage (MVP)
     last_invoice = (
         await db.invoices.find({"dealer_user_id": dealer_id}, {"_id": 0})
-        .sort("created_at", -1)
+        .sort("issued_at", -1)
         .limit(1)
         .to_list(1)
     )
     last_invoice = last_invoice[0] if last_invoice else None
+    unpaid_count = await db.invoices.count_documents({"dealer_user_id": dealer_id, "status": "unpaid"})
+    active_plan = None
+    if dealer.get("plan_id"):
+        active_plan = await db.plans.find_one({"id": dealer.get("plan_id")}, {"_id": 0})
 
     return {
         "dealer": {
@@ -758,6 +763,9 @@ async def admin_get_dealer_detail(
             "plan_id": dealer.get("plan_id"),
             "created_at": dealer.get("created_at"),
         },
+        "active_plan": active_plan,
+        "last_invoice": last_invoice,
+        "unpaid_count": unpaid_count,
         "package": {
             "plan_id": dealer.get("plan_id"),
             "last_invoice": last_invoice,
