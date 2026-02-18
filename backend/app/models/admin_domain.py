@@ -218,6 +218,26 @@ class CategoryUpdatePayload(BaseModel):
     sort_order: Optional[int] = None
 
 
+class MenuItemCreatePayload(BaseModel):
+    label: str
+    slug: str
+    url: Optional[str] = None
+    parent_id: Optional[str] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = True
+    sort_order: Optional[int] = 0
+
+
+class MenuItemUpdatePayload(BaseModel):
+    label: Optional[str] = None
+    slug: Optional[str] = None
+    url: Optional[str] = None
+    parent_id: Optional[str] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
 class AttributeCreatePayload(BaseModel):
     category_id: str
     name: str
