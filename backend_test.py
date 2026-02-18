@@ -428,7 +428,7 @@ class MasterDataAPITester:
     def print_summary(self):
         """Print test summary"""
         print("\n" + "=" * 60)
-        print(f"📊 REPORTS ENGINE TEST SUMMARY")
+        print(f"📊 MASTER DATA ENGINES TEST SUMMARY")
         print("=" * 60)
         print(f"Tests Run: {self.tests_run}")
         print(f"Tests Passed: {self.tests_passed}")
@@ -445,14 +445,14 @@ class MasterDataAPITester:
 
 def main():
     """Main test execution"""
-    tester = ReportsEngineAPITester()
+    tester = MasterDataAPITester()
     
     try:
-        success = tester.test_reports_engine()
+        success = tester.test_master_data_engines()
         tester.print_summary()
         
         # Save detailed results
-        with open('/app/test_reports/backend_reports_test_results.json', 'w') as f:
+        with open('/app/test_reports/backend_master_data_test_results.json', 'w') as f:
             json.dump({
                 'summary': {
                     'tests_run': tester.tests_run,
