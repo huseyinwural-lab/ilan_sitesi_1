@@ -959,6 +959,36 @@ async def admin_list_dealer_applications(
     return {"items": docs, "pagination": {"total": total, "skip": int(skip), "limit": limit}}
 
 
+@api_router.get("/admin/individual-applications")
+async def admin_list_individual_applications(
+    request: Request,
+    skip: int = 0,
+    limit: int = 50,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    query: Dict = {}
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        query["country_code"] = ctx.country
+    if status:
+        query["status"] = status
+    if search:
+        query["$or"] = [
+            {"email": {"$regex": search, "$options": "i"}},
+            {"full_name": {"$regex": search, "$options": "i"}},
+        ]
+
+    limit = min(100, max(1, int(limit)))
+    cursor = db.individual_applications.find(query, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(limit)
+    docs = await cursor.to_list(length=limit)
+    total = await db.individual_applications.count_documents(query)
+    return {"items": docs, "pagination": {"total": total, "skip": int(skip), "limit": limit}}
+
+
 class DealerApplicationRejectPayload(BaseModel):
     reason: str
     reason_note: Optional[str] = None
