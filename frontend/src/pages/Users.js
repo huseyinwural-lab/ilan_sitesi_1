@@ -105,8 +105,8 @@ export default function Users({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('users')}</h1>
-          <p className="text-muted-foreground text-sm mt-1">{users.length} {t('users').toLowerCase()} found</p>
+          <h1 className="text-2xl font-bold tracking-tight">{title || t('users')}</h1>
+          <p className="text-muted-foreground text-sm mt-1">{users.length} {title ? title.toLowerCase() : t('users').toLowerCase()} found</p>
         </div>
       </div>
 
@@ -123,19 +123,23 @@ export default function Users({
             data-testid="users-search"
           />
         </div>
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="h-10 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          data-testid="users-role-filter"
-        >
-          <option value="">{t('all')} {t('role')}</option>
-          <option value="super_admin">{t('super_admin')}</option>
-          <option value="country_admin">{t('country_admin')}</option>
-          <option value="moderator">{t('moderator')}</option>
-          <option value="support">{t('support')}</option>
-          <option value="finance">{t('finance')}</option>
-        </select>
+        {showRoleFilter && (
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="h-10 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            data-testid="users-role-filter"
+          >
+            <option value="">{t('all')} {t('role')}</option>
+            <option value="super_admin">{t('super_admin')}</option>
+            <option value="country_admin">{t('country_admin')}</option>
+            <option value="moderator">{t('moderator')}</option>
+            <option value="support">{t('support')}</option>
+            <option value="finance">{t('finance')}</option>
+            <option value="dealer">{t('dealer')}</option>
+            <option value="user">{t('user')}</option>
+          </select>
+        )}
       </div>
 
       {/* Table */}
