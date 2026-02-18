@@ -68,6 +68,7 @@
   - Kritik akışlar E2E (public/dealer/individual/report/finance)
   - Non-functional kontroller (empty/403/404/draft erişim)
   - Finance RBAC sıkılaştırma + publish guard uyumu
+- **Admin IA v2:** Sol menü bilgi mimarisi yeniden yapılandırma + RBAC görünürlük matrisi
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
