@@ -1,6 +1,6 @@
 # FAZ Admin Domain Complete — PRD
 
-**Son güncelleme:** 2026-02-18 (Sprint 5)
+**Son güncelleme:** 2026-02-18 (Sprint 6)
 
 ## Orijinal Problem Tanımı
 Çok ülkeli, çok dilli bir seri ilan platformunda (Public, Dealer, Backoffice/Admin) **admin domainindeki tüm “yakında” modüllerin** gerçek veriler ve tam işlevsellikle hayata geçirilmesi. Tüm admin mutasyonları **audit-first** ve **country-scope** kurallarına uymalıdır.
@@ -56,12 +56,17 @@
   - Category + Attribute + Vehicle Make/Model CRUD (audit-first)
   - Search filtreleri master data’dan (category/make/model)
   - Admin UI: /admin/categories, /admin/attributes, /admin/vehicle-makes, /admin/vehicle-models
+- **Sprint 6:** Final Integration Gate
+  - RBAC + Country-scope + Audit coverage kanıtları
+  - Kritik akışlar E2E (public/dealer/individual/report/finance)
+  - Non-functional kontroller (empty/403/404/draft erişim)
+  - Finance RBAC sıkılaştırma + publish guard uyumu
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- **Sprint 6:** Final Integration Gate (RBAC + audit + country-scope E2E)
+- Release hazırlığı / prod geçiş onayı
 
 ### P1
 - **Backlog:** Admin Listing Preview Drawer
@@ -69,6 +74,7 @@
 - **Backlog:** Finance CSV Export
 - **Backlog:** Revenue Chart
 - **Backlog:** Dashboard View Audit
+- **Backlog:** Master Data CSV Import/Export
 
 ### P2
 - V3 genişletmeler (gelişmiş arama, güven katmanı, bayi genişletmeleri)
