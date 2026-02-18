@@ -2732,7 +2732,7 @@ async def admin_update_tax_rate(
     tax_id: str,
     payload: TaxRateUpdatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2781,7 +2781,7 @@ async def admin_update_tax_rate(
 async def admin_delete_tax_rate(
     tax_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
