@@ -11,11 +11,11 @@ const STATUS_LABELS = {
 };
 
 const REJECT_REASONS = [
-  "INCOMPLETE_DOCUMENTS",
-  "FAILED_VERIFICATION",
-  "DUPLICATE_APPLICATION",
-  "COUNTRY_NOT_SUPPORTED",
-  "OTHER",
+  "incomplete_documents",
+  "failed_verification",
+  "duplicate_application",
+  "country_not_supported",
+  "other",
 ];
 
 export default function IndividualApplications() {
@@ -74,7 +74,7 @@ export default function IndividualApplications() {
     try {
       await axios.post(`${API_URL}/api/admin/individual-applications/${rejecting}/reject`, {
         reason: rejectReason,
-        note: rejectNote,
+        reason_note: rejectNote,
       });
       toast.success("Başvuru reddedildi.");
       setRejecting(null);
