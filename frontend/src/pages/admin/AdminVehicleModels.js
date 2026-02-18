@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -11,6 +12,8 @@ const emptyForm = {
 };
 
 const AdminVehicleModels = () => {
+  const [searchParams] = useSearchParams();
+  const urlCountry = (searchParams.get('country') || '').toUpperCase();
   const [items, setItems] = useState([]);
   const [makes, setMakes] = useState([]);
   const [filterMake, setFilterMake] = useState('');
@@ -26,7 +29,8 @@ const AdminVehicleModels = () => {
 
   const fetchMakes = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/admin/vehicle-makes`, { headers: authHeader });
+      const params = urlCountry ? `?country=${urlCountry}` : '';
+      const res = await axios.get(`${API_BASE_URL}/api/admin/vehicle-makes${params}`, { headers: authHeader });
       setMakes(res.data.items || []);
     } catch (e) {
       console.error('Failed to load makes', e);
@@ -36,8 +40,11 @@ const AdminVehicleModels = () => {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      const params = filterMake ? `?make_id=${filterMake}` : '';
-      const res = await axios.get(`${API_BASE_URL}/api/admin/vehicle-models${params}`, { headers: authHeader });
+      const params = new URLSearchParams();
+      if (filterMake) params.set('make_id', filterMake);
+      if (urlCountry) params.set('country', urlCountry);
+      const query = params.toString();
+      const res = await axios.get(`${API_BASE_URL}/api/admin/vehicle-models${query ? `?${query}` : ''}`, { headers: authHeader });
       setItems(res.data.items || []);
     } catch (e) {
       console.error('Failed to load models', e);
@@ -48,11 +55,11 @@ const AdminVehicleModels = () => {
 
   useEffect(() => {
     fetchMakes();
-  }, []);
+  }, [urlCountry]);
 
   useEffect(() => {
     fetchItems();
-  }, [filterMake]);
+  }, [filterMake, urlCountry]);
 
   const openCreate = () => {
     setEditing(null);
@@ -114,7 +121,10 @@ const AdminVehicleModels = () => {
   return (
     <div className="p-6 space-y-6" data-testid="admin-vehicle-models-page">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Araç Modelleri</h1>
+        <div>
+          <h1 className="text-2xl font-semibold">Araç Modelleri</h1>
+          <p className="text-sm text-muted-foreground">Country: {urlCountry || 'Global'}</p>
+        </div>
         <button
           onClick={openCreate}
           className="bg-blue-600 text-white px-4 py-2 rounded-md"
