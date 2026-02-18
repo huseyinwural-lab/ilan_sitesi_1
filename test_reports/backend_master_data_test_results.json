@@ -1,41 +1,125 @@
 {
   "summary": {
-    "tests_run": 4,
-    "tests_passed": 3,
-    "success_rate": "75.0%"
+    "tests_run": 16,
+    "tests_passed": 13,
+    "success_rate": "81.2%"
   },
   "results": [
     {
       "test": "Admin Login",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:33:14.780021"
+      "timestamp": "2026-02-18T03:34:54.998528"
     },
     {
       "test": "List Categories",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:33:14.957548"
+      "timestamp": "2026-02-18T03:34:55.134615"
     },
     {
       "test": "Create Category",
-      "status": "FAIL",
-      "details": "Status: 520 (expected 201) - {'raw_content': '<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 8]>    <html class=\"no-'}",
-      "timestamp": "2026-02-18T03:33:15.114063"
+      "status": "PASS",
+      "details": "Status: 201",
+      "timestamp": "2026-02-18T03:34:55.258532"
     },
     {
       "test": "Get Categories for Attributes",
       "status": "PASS",
       "details": "Status: 200",
-      "timestamp": "2026-02-18T03:33:15.257236"
+      "timestamp": "2026-02-18T03:34:55.427048"
+    },
+    {
+      "test": "List Attributes",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:34:55.532397"
+    },
+    {
+      "test": "Create Attribute",
+      "status": "FAIL",
+      "details": "Status: 520 (expected 201) - {'raw_content': '<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 8]>    <html class=\"no-'}",
+      "timestamp": "2026-02-18T03:34:55.636360"
+    },
+    {
+      "test": "List Vehicle Makes",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:34:55.744848"
+    },
+    {
+      "test": "Create Vehicle Make",
+      "status": "FAIL",
+      "details": "Status: 520 (expected 201) - {'raw_content': '<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 8]>    <html class=\"no-'}",
+      "timestamp": "2026-02-18T03:34:55.874035"
+    },
+    {
+      "test": "Get Makes for Models",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:34:55.981979"
+    },
+    {
+      "test": "List Vehicle Models",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:34:56.095975"
+    },
+    {
+      "test": "Create Vehicle Model",
+      "status": "FAIL",
+      "details": "Status: 520 (expected 201) - {'raw_content': '<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 8]>    <html class=\"no-'}",
+      "timestamp": "2026-02-18T03:34:56.215456"
+    },
+    {
+      "test": "Public Categories List",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:34:56.335573"
+    },
+    {
+      "test": "Search with Category Filter",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:34:56.512128"
+    },
+    {
+      "test": "Search with Make Filter",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:34:56.626184"
+    },
+    {
+      "test": "Search with Make and Model Filter",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:34:56.760596"
+    },
+    {
+      "test": "Wizard Categories List",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T03:34:56.884739"
     }
   ],
   "failures": [
     {
-      "test": "Create Category",
+      "test": "Create Attribute",
       "status": "FAIL",
       "details": "Status: 520 (expected 201) - {'raw_content': '<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 8]>    <html class=\"no-'}",
-      "timestamp": "2026-02-18T03:33:15.114063"
+      "timestamp": "2026-02-18T03:34:55.636360"
+    },
+    {
+      "test": "Create Vehicle Make",
+      "status": "FAIL",
+      "details": "Status: 520 (expected 201) - {'raw_content': '<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 8]>    <html class=\"no-'}",
+      "timestamp": "2026-02-18T03:34:55.874035"
+    },
+    {
+      "test": "Create Vehicle Model",
+      "status": "FAIL",
+      "details": "Status: 520 (expected 201) - {'raw_content': '<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\\n<!--[if IE 8]>    <html class=\"no-'}",
+      "timestamp": "2026-02-18T03:34:56.215456"
     }
   ]
 }
