@@ -3703,7 +3703,7 @@ async def admin_list_categories(
         _assert_country_scope(code, current_user)
         query["country_code"] = code
     docs = await db.categories.find(query, {"_id": 0}).sort("sort_order", 1).to_list(length=1000)
-    return {"items": [_normalize_category_doc(doc) for doc in docs]}
+    return {"items": [_normalize_category_doc(doc, include_schema=True) for doc in docs]}
 
 
 @api_router.post("/admin/categories", status_code=201)
@@ -3762,7 +3762,7 @@ async def admin_create_category(
         if "E11000" in str(e):
             raise HTTPException(status_code=409, detail="Category slug already exists")
         raise
-    return {"category": _normalize_category_doc(doc)}
+    return {"category": _normalize_category_doc(doc, include_schema=True)}
 
 
 @api_router.patch("/admin/categories/{category_id}")
@@ -3805,7 +3805,7 @@ async def admin_update_category(
         updates["sort_order"] = payload.sort_order
 
     if not updates:
-        return {"category": _normalize_category_doc(category)}
+        return {"category": _normalize_category_doc(category, include_schema=True)}
 
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     audit_doc = {
@@ -3828,7 +3828,7 @@ async def admin_update_category(
             raise HTTPException(status_code=409, detail="Category slug already exists")
         raise
     category.update(updates)
-    return {"category": _normalize_category_doc(category)}
+    return {"category": _normalize_category_doc(category, include_schema=True)}
 
 
 @api_router.delete("/admin/categories/{category_id}")
@@ -3860,7 +3860,7 @@ async def admin_delete_category(
     await db.categories.update_one({"id": category_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
     category["active_flag"] = False
     category["updated_at"] = now_iso
-    return {"category": _normalize_category_doc(category)}
+    return {"category": _normalize_category_doc(category, include_schema=True)}
 
 
 @api_router.get("/admin/menu-items")
