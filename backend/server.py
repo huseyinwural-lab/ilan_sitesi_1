@@ -2517,6 +2517,8 @@ async def admin_create_plan(
     _assert_country_scope(country_code, current_user)
     if payload.price < 0:
         raise HTTPException(status_code=400, detail="price must be >= 0")
+    if payload.listing_quota < 0 or payload.showcase_quota < 0:
+        raise HTTPException(status_code=400, detail="quota must be >= 0")
 
     now_iso = datetime.now(timezone.utc).isoformat()
     plan_id = str(uuid.uuid4())
@@ -2578,6 +2580,8 @@ async def admin_update_plan(
         if value is not None:
             if field == "price" and value < 0:
                 raise HTTPException(status_code=400, detail="price must be >= 0")
+            if field in {"listing_quota", "showcase_quota"} and value < 0:
+                raise HTTPException(status_code=400, detail="quota must be >= 0")
             if field == "country_code":
                 value = value.upper()
                 _assert_country_scope(value, current_user)
