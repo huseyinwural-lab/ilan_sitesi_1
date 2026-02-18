@@ -1,4 +1,5 @@
 ## Menü Yönetimi
 - Route: /admin/menu-management
-- Durum: PLACEHOLDER
-- Not: v1 read-only placeholder
+- Durum: DONE
+- Not: CRUD + audit-first + country-scope aktif
+- Screenshot: /app/admin/evidence/MENU_MANAGEMENT_PAGE.jpeg
