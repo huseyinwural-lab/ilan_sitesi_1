@@ -3902,6 +3902,9 @@ async def admin_list_vehicle_models(
     await resolve_admin_country_context(request, current_user=current_user, db=db)
     query: Dict = {}
     if make_id:
+        make_doc = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0, "country_code": 1})
+        if make_doc:
+            _assert_country_scope(current_user, make_doc.get("country_code"))
         query["make_id"] = make_id
     elif country:
         country_code = country.upper()
