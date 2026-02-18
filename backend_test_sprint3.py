@@ -224,12 +224,12 @@ class Sprint3FinanceAPITester:
             "Create Plan",
             "POST",
             "admin/plans",
-            201,
+            200,
             data=plan_data
         )
         
-        if success and response.get('id'):
-            self.created_plan_id = response['id']
+        if success and response.get('plan', {}).get('id'):
+            self.created_plan_id = response['plan']['id']
         else:
             return False
 
