@@ -1540,11 +1540,15 @@ async def moderation_queue(
 async def moderation_queue_count(
     request: Request,
     status: str = "pending_moderation",
+    dealer_only: Optional[bool] = None,
     current_user=Depends(get_current_user),
 ):
     db = request.app.state.db
     _ensure_moderation_rbac(current_user)
-    count = await db.vehicle_listings.count_documents({"status": status})
+    query: Dict[str, Any] = {"status": status}
+    if dealer_only is not None:
+        query["dealer_only"] = dealer_only
+    count = await db.vehicle_listings.count_documents(query)
     return {"count": count}
 
 
