@@ -35,7 +35,7 @@ export default function Users({
 
   useEffect(() => {
     fetchUsers();
-  }, [search, roleFilter]);
+  }, [search, roleFilter, allowedRoles]);
 
   const fetchUsers = async () => {
     try {
