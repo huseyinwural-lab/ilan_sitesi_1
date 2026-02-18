@@ -256,6 +256,15 @@ async def lifespan(app: FastAPI):
             {"$setOnInsert": c},
             upsert=True,
         )
+    existing_countries = await db.countries.find({}, {"_id": 0, "code": 1, "country_code": 1}).to_list(length=500)
+    SUPPORTED_COUNTRIES.clear()
+    SUPPORTED_COUNTRIES.update(
+        [
+            (doc.get("country_code") or doc.get("code") or "").upper()
+            for doc in existing_countries
+            if doc.get("country_code") or doc.get("code")
+        ]
+    )
 
     # Seed menu
     await db.menu_top_items.create_index("key", unique=True)
