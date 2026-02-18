@@ -262,6 +262,51 @@ export default function SearchPage() {
                    onCategoryChange={handleCategoryChange}
                  />
 
+          <div className="my-4 border-t border-border" />
+          <div className="space-y-3" data-testid="search-make-model-filters">
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Marka</div>
+              <Select
+                value={searchState.make || ''}
+                onValueChange={handleMakeChange}
+                data-testid="search-make-select"
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingMakes ? 'Yükleniyor...' : 'Tüm Markalar'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Tümü</SelectItem>
+                  {makes.map((make) => (
+                    <SelectItem key={make.id} value={make.key} data-testid={`search-make-option-${make.key}`}>
+                      {make.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Model</div>
+              <Select
+                value={searchState.model || ''}
+                onValueChange={handleModelChange}
+                disabled={!searchState.make || loadingModels}
+                data-testid="search-model-select"
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={!searchState.make ? 'Önce marka seçin' : (loadingModels ? 'Yükleniyor...' : 'Tüm Modeller')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Tümü</SelectItem>
+                  {models.map((model) => (
+                    <SelectItem key={model.id} value={model.key} data-testid={`search-model-option-${model.key}`}>
+                      {model.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
                  {facetsEnabled && (
                    <>
                      <div className="my-4 border-t" />
