@@ -52,12 +52,16 @@
   - System Settings KV + effective view
   - Dashboard KPI API (summary + country compare)
   - Admin UI: /admin/countries, /admin/system-settings, /admin/dashboard, /admin/country-compare
+- **Sprint 5:** Master Data Engines
+  - Category + Attribute + Vehicle Make/Model CRUD (audit-first)
+  - Search filtreleri master data’dan (category/make/model)
+  - Admin UI: /admin/categories, /admin/attributes, /admin/vehicle-makes, /admin/vehicle-models
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- **Sprint 5:** Master Data Engines (Categories, Attributes, Vehicle Make/Model)
+- **Sprint 6:** Final Integration Gate (RBAC + audit + country-scope E2E)
 
 ### P1
 - **Backlog:** Admin Listing Preview Drawer
@@ -67,5 +71,4 @@
 - **Backlog:** Dashboard View Audit
 
 ### P2
-- **Sprint 6:** Final Integration Gate (RBAC + audit + country-scope E2E)
 - V3 genişletmeler (gelişmiş arama, güven katmanı, bayi genişletmeleri)
