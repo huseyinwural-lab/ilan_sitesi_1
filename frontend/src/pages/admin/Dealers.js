@@ -61,17 +61,19 @@ export default function DealersPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <input
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          placeholder="Search by email"
-          className="h-9 px-3 rounded-md border bg-background text-sm"
-        />
-        <select
-          value={status}
-          onChange={(e) => { setStatus(e.target.value); setPage(0); }}
-          className="h-9 px-3 rounded-md border bg-background text-sm"
-        >
+          <input
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            placeholder="Search by email"
+            className="h-9 px-3 rounded-md border bg-background text-sm"
+            data-testid="dealers-search-input"
+          />
+          <select
+            value={status}
+            onChange={(e) => { setStatus(e.target.value); setPage(0); }}
+            className="h-9 px-3 rounded-md border bg-background text-sm"
+            data-testid="dealers-status-select"
+          >
           <option value="">All statuses</option>
           <option value="active">active</option>
           <option value="suspended">suspended</option>
