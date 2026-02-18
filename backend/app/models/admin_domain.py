@@ -198,3 +198,73 @@ class VehicleModelDoc(BaseModel):
     active_flag: bool = True
     created_at: str
     updated_at: Optional[str] = None
+
+
+class CategoryCreatePayload(BaseModel):
+    name: str
+    slug: str
+    parent_id: Optional[str] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = True
+    sort_order: Optional[int] = 0
+
+
+class CategoryUpdatePayload(BaseModel):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    parent_id: Optional[str] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
+class AttributeCreatePayload(BaseModel):
+    category_id: str
+    name: str
+    key: str
+    type: Literal["text", "number", "select", "boolean"]
+    required_flag: Optional[bool] = False
+    filterable_flag: Optional[bool] = False
+    options: Optional[List[str]] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = True
+
+
+class AttributeUpdatePayload(BaseModel):
+    category_id: Optional[str] = None
+    name: Optional[str] = None
+    key: Optional[str] = None
+    type: Optional[Literal["text", "number", "select", "boolean"]] = None
+    required_flag: Optional[bool] = None
+    filterable_flag: Optional[bool] = None
+    options: Optional[List[str]] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = None
+
+
+class VehicleMakeCreatePayload(BaseModel):
+    name: str
+    slug: str
+    country_code: str
+    active_flag: Optional[bool] = True
+
+
+class VehicleMakeUpdatePayload(BaseModel):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = None
+
+
+class VehicleModelCreatePayload(BaseModel):
+    make_id: str
+    name: str
+    slug: str
+    active_flag: Optional[bool] = True
+
+
+class VehicleModelUpdatePayload(BaseModel):
+    make_id: Optional[str] = None
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    active_flag: Optional[bool] = None
