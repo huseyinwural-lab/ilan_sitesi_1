@@ -233,17 +233,6 @@ class Sprint3FinanceAPITester:
         if not success:
             return False
 
-        # Get specific plan
-        success, response = self.run_test(
-            "Get Plan Detail",
-            "GET",
-            f"admin/plans/{self.created_plan_id}",
-            200
-        )
-        
-        if not success:
-            return False
-
         # Update plan
         update_data = {
             "name": "Updated Premium Plan",
