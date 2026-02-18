@@ -5,8 +5,8 @@ const ADMIN_ROLES = [
   "super_admin",
   "country_admin",
   "moderator",
-  "finance_admin",
-  "support_admin",
+  "finance",
+  "support",
 ];
 
 export default function AdminUsers() {
