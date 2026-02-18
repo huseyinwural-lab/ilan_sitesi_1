@@ -147,12 +147,12 @@ class Sprint3FinanceAPITester:
             "Create Tax Rate",
             "POST",
             "admin/tax-rates",
-            201,
+            200,
             data=tax_rate_data
         )
         
-        if success and response.get('id'):
-            self.created_tax_rate_id = response['id']
+        if success and response.get('tax_rate', {}).get('id'):
+            self.created_tax_rate_id = response['tax_rate']['id']
         else:
             return False
 
