@@ -151,6 +151,10 @@ const AttributeForm = () => {
     if (!fuelType) e.fuel_type = 'Yakıt tipi zorunlu';
     if (!transmission) e.transmission = 'Vites zorunlu';
     if (!condition) e.condition = 'Kondisyon zorunlu';
+    const missingAttr = attributeDefs.find(
+      (attr) => attr.required_flag && (attributeValues[attr.key] === undefined || attributeValues[attr.key] === null || attributeValues[attr.key] === '')
+    );
+    if (missingAttr) e.attributes = `${missingAttr.name} zorunlu`;
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -169,6 +173,7 @@ const AttributeForm = () => {
         fuel_type: fuelType,
         transmission,
         condition,
+        attributes: attributeValues,
       },
     });
   };
