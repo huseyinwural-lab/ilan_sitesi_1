@@ -215,8 +215,8 @@ export default function AdminListingsPage() {
           <SelectContent>
             <SelectItem value="all" data-testid="listings-category-option-all">Tüm Kategoriler</SelectItem>
             {categories.map((cat) => {
-              const label = cat?.name?.tr || cat?.name?.en || cat?.slug?.tr || cat?.slug?.en || cat?.slug?.de || cat?.slug?.fr || cat?.id;
-              const value = cat?.id || label;
+              const label = cat?.name || cat?.slug || cat?.id;
+              const value = cat?.id || cat?.slug || label;
               return (
                 <SelectItem
                   key={value}
