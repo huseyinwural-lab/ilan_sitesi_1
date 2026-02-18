@@ -73,6 +73,7 @@
 - **Admin Nav Smoke:** Menü route doğrulaması (Playwright)
 - **Admin UI v1 Closeout:** Evidence pack + RC checklist güncellendi
 - **Yönetim Menüsü:** Admin/roles/RBAC menüleri aktif ve “yakında” etiketi kaldırıldı
+- **Bireysel Üye Başvuruları:** Admin liste + approve/reject akışı aktif
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
