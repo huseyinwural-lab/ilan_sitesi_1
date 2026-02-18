@@ -91,6 +91,27 @@ class SubscriptionPlanDoc(BaseModel):
     updated_at: Optional[str] = None
 
 
+class CountryDoc(BaseModel):
+    country_code: str
+    name: str
+    active_flag: bool = True
+    default_currency: str
+    default_language: Optional[str] = None
+    created_at: str
+    updated_at: Optional[str] = None
+
+
+class SystemSettingDoc(BaseModel):
+    id: str
+    key: str
+    value: Any
+    country_code: Optional[str] = None
+    is_readonly: bool = False
+    description: Optional[str] = None
+    created_at: str
+    updated_at: Optional[str] = None
+
+
 # ===============
 # Ops: Reports
 # ===============
