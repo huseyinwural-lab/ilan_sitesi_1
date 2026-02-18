@@ -1430,6 +1430,36 @@ class DealerPlanAssignmentPayload(BaseModel):
     plan_id: Optional[str] = None
 
 
+class CountryCreatePayload(BaseModel):
+    country_code: str
+    name: str
+    active_flag: Optional[bool] = True
+    default_currency: str
+    default_language: Optional[str] = None
+
+
+class CountryUpdatePayload(BaseModel):
+    name: Optional[str] = None
+    active_flag: Optional[bool] = None
+    default_currency: Optional[str] = None
+    default_language: Optional[str] = None
+
+
+class SystemSettingCreatePayload(BaseModel):
+    key: str
+    value: Any
+    country_code: Optional[str] = None
+    is_readonly: Optional[bool] = False
+    description: Optional[str] = None
+
+
+class SystemSettingUpdatePayload(BaseModel):
+    value: Optional[Any] = None
+    country_code: Optional[str] = None
+    is_readonly: Optional[bool] = None
+    description: Optional[str] = None
+
+
 def _resolve_listing_title(listing: dict) -> str:
     title = (listing.get("title") or "").strip()
     if title:
