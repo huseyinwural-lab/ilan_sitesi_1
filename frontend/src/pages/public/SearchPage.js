@@ -62,7 +62,7 @@ export default function SearchPage() {
     const fetchCategories = async () => {
       try {
         const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
-        const res = await fetch(`${API}/categories?module=vehicle&country=${country}`);
+        const res = await fetch(`${API}/api/categories?module=vehicle&country=${country}`);
         if (res.ok) {
           const json = await res.json();
           setCategories(json);
@@ -80,7 +80,7 @@ export default function SearchPage() {
       setLoadingMakes(true);
       try {
         const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
-        const res = await fetch(`${API}/v1/vehicle/makes?country=${country}`);
+        const res = await fetch(`${API}/api/v1/vehicle/makes?country=${country}`);
         if (res.ok) {
           const json = await res.json();
           if (alive) setMakes(json.items || []);
@@ -105,7 +105,7 @@ export default function SearchPage() {
       setLoadingModels(true);
       try {
         const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
-        const res = await fetch(`${API}/v1/vehicle/models?make=${searchState.make}&country=${country}`);
+        const res = await fetch(`${API}/api/v1/vehicle/models?make=${searchState.make}&country=${country}`);
         if (res.ok) {
           const json = await res.json();
           if (alive) setModels(json.items || []);
