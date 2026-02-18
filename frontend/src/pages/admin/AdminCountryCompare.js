@@ -7,6 +7,7 @@ const API = `${BACKEND_URL}/api`;
 export default function AdminCountryComparePage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -19,8 +20,10 @@ export default function AdminCountryComparePage() {
       setItems(res.data.items || []);
     } catch (e) {
       console.error('Failed to fetch country compare', e);
+      setItems([]);
     } finally {
       setLoading(false);
+      setHasLoaded(true);
     }
   };
 
@@ -45,7 +48,7 @@ export default function AdminCountryComparePage() {
           <div>Revenue MTD</div>
         </div>
         <div className="divide-y">
-          {loading ? (
+          {loading && !hasLoaded ? (
             <div className="p-6 text-center" data-testid="country-compare-loading">Yükleniyor…</div>
           ) : items.length === 0 ? (
             <div className="p-6 text-center text-muted-foreground" data-testid="country-compare-empty">Kayıt yok</div>
