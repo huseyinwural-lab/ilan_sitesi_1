@@ -169,7 +169,7 @@ export default function Layout({ children }) {
     { divider: true, label: 'Sistem' },
     { path: '/admin/countries', icon: Globe, label: 'Ülkeler', roles: ['super_admin', 'country_admin'] },
     { path: '/admin/audit-logs', icon: Clock, label: 'Denetim Kayıtları', roles: ['super_admin', 'country_admin', 'finance'] },
-    { path: '/admin/system-settings', icon: Settings, label: 'Sistem Ayarları', comingSoon: true, roles: ['super_admin'] },
+    { path: '/admin/system-settings', icon: Settings, label: 'Sistem Ayarları', roles: ['super_admin', 'country_admin'] },
   ];
 
   const filteredNavItems = navItems.filter(item => 
