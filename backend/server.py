@@ -3324,6 +3324,685 @@ async def system_settings_effective(request: Request, country: Optional[str] = N
     return {"country_code": country_code, "items": items}
 
 
+# =====================
+# Master Data: Categories / Attributes / Vehicle
+# =====================
+
+
+@api_router.get("/admin/categories")
+async def admin_list_categories(
+    request: Request,
+    country: Optional[str] = None,
+    current_user=Depends(get_current_admin_user),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    query: Dict = {}
+    if country:
+        code = country.upper()
+        _assert_country_scope(code, current_user)
+        query["country_code"] = code
+    docs = await db.categories.find(query, {"_id": 0}).sort("sort_order", 1).to_list(length=1000)
+    return {"items": [_normalize_category_doc(doc) for doc in docs]}
+
+
+@api_router.post("/admin/categories", status_code=201)
+async def admin_create_category(
+    payload: CategoryCreatePayload,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    slug = payload.slug.strip().lower()
+    if not SLUG_PATTERN.match(slug):
+        raise HTTPException(status_code=400, detail="slug format invalid")
+
+    parent_id = payload.parent_id
+    if parent_id:
+        parent = await db.categories.find_one({"id": parent_id}, {"_id": 0, "id": 1})
+        if not parent:
+            raise HTTPException(status_code=400, detail="parent_id not found")
+
+    country_code = payload.country_code.upper() if payload.country_code else None
+    if country_code:
+        _assert_country_scope(country_code, current_user)
+
+    now_iso = utc_now_iso()
+    category_id = str(uuid4())
+    doc = {
+        "id": category_id,
+        "parent_id": parent_id,
+        "name": payload.name.strip(),
+        "slug": slug,
+        "country_code": country_code,
+        "active_flag": payload.active_flag if payload.active_flag is not None else True,
+        "sort_order": payload.sort_order or 0,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+        "module": "vehicle",
+    }
+    audit_doc = {
+        "event_type": "CATEGORY_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": country_code,
+        "subject_type": "category",
+        "subject_id": category_id,
+        "action": "create",
+        "created_at": now_iso,
+        "metadata": {"name": doc["name"], "slug": doc["slug"]},
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    try:
+        await db.categories.insert_one(doc)
+    except Exception as e:
+        if "E11000" in str(e):
+            raise HTTPException(status_code=409, detail="Category slug already exists")
+        raise
+    return {"category": _normalize_category_doc(doc)}
+
+
+@api_router.patch("/admin/categories/{category_id}")
+async def admin_update_category(
+    category_id: str,
+    payload: CategoryUpdatePayload,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    updates: Dict = {}
+    if payload.name is not None:
+        updates["name"] = payload.name.strip()
+    if payload.slug is not None:
+        slug = payload.slug.strip().lower()
+        if not SLUG_PATTERN.match(slug):
+            raise HTTPException(status_code=400, detail="slug format invalid")
+        updates["slug"] = slug
+    if payload.parent_id is not None:
+        if payload.parent_id:
+            parent = await db.categories.find_one({"id": payload.parent_id}, {"_id": 0})
+            if not parent:
+                raise HTTPException(status_code=400, detail="parent_id not found")
+        updates["parent_id"] = payload.parent_id
+    if payload.country_code is not None:
+        code = payload.country_code.upper() if payload.country_code else None
+        if code:
+            _assert_country_scope(code, current_user)
+        updates["country_code"] = code
+    if payload.active_flag is not None:
+        updates["active_flag"] = payload.active_flag
+    if payload.sort_order is not None:
+        updates["sort_order"] = payload.sort_order
+
+    if not updates:
+        return {"category": _normalize_category_doc(category)}
+
+    updates["updated_at"] = utc_now_iso()
+    audit_doc = {
+        "event_type": "CATEGORY_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": updates.get("country_code", category.get("country_code")),
+        "subject_type": "category",
+        "subject_id": category_id,
+        "action": "update",
+        "created_at": updates["updated_at"],
+        "metadata": updates,
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    try:
+        await db.categories.update_one({"id": category_id}, {"$set": updates})
+    except Exception as e:
+        if "E11000" in str(e):
+            raise HTTPException(status_code=409, detail="Category slug already exists")
+        raise
+    category.update(updates)
+    return {"category": _normalize_category_doc(category)}
+
+
+@api_router.delete("/admin/categories/{category_id}")
+async def admin_delete_category(
+    category_id: str,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    now_iso = utc_now_iso()
+    audit_doc = {
+        "event_type": "CATEGORY_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": category.get("country_code"),
+        "subject_type": "category",
+        "subject_id": category_id,
+        "action": "delete",
+        "created_at": now_iso,
+        "metadata": {"active_flag": False},
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    await db.categories.update_one({"id": category_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
+    category["active_flag"] = False
+    category["updated_at"] = now_iso
+    return {"category": _normalize_category_doc(category)}
+
+
+@api_router.get("/attributes")
+async def public_attributes(category_id: str, country: Optional[str] = None, request: Request = None):
+    db = request.app.state.db
+    query: Dict = {
+        "category_id": category_id,
+        "active_flag": True,
+    }
+    if country:
+        code = country.upper()
+        query["$or"] = [
+            {"country_code": None},
+            {"country_code": ""},
+            {"country_code": code},
+        ]
+    docs = await db.attributes.find(query, {"_id": 0}).sort("name", 1).to_list(length=500)
+    return {"items": [_normalize_attribute_doc(doc) for doc in docs]}
+
+
+@api_router.get("/admin/attributes")
+async def admin_list_attributes(
+    request: Request,
+    category_id: Optional[str] = None,
+    country: Optional[str] = None,
+    current_user=Depends(get_current_admin_user),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    query: Dict = {}
+    if category_id:
+        query["category_id"] = category_id
+    if country:
+        code = country.upper()
+        _assert_country_scope(code, current_user)
+        query["$or"] = [
+            {"country_code": None},
+            {"country_code": ""},
+            {"country_code": code},
+        ]
+    docs = await db.attributes.find(query, {"_id": 0}).sort("name", 1).to_list(length=1000)
+    return {"items": [_normalize_attribute_doc(doc) for doc in docs]}
+
+
+@api_router.post("/admin/attributes", status_code=201)
+async def admin_create_attribute(
+    payload: AttributeCreatePayload,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    key = payload.key.strip().lower()
+    if not ATTRIBUTE_KEY_PATTERN.match(key):
+        raise HTTPException(status_code=400, detail="key format invalid")
+    if payload.type not in {"text", "number", "select", "boolean"}:
+        raise HTTPException(status_code=400, detail="type invalid")
+    if payload.type == "select" and not payload.options:
+        raise HTTPException(status_code=400, detail="options required for select")
+
+    category = await db.categories.find_one({"id": payload.category_id}, {"_id": 0, "id": 1})
+    if not category:
+        raise HTTPException(status_code=400, detail="category_id not found")
+
+    country_code = payload.country_code.upper() if payload.country_code else None
+    if country_code:
+        _assert_country_scope(country_code, current_user)
+
+    now_iso = utc_now_iso()
+    attr_id = str(uuid4())
+    doc = {
+        "id": attr_id,
+        "category_id": payload.category_id,
+        "name": payload.name.strip(),
+        "key": key,
+        "type": payload.type,
+        "required_flag": bool(payload.required_flag),
+        "filterable_flag": bool(payload.filterable_flag),
+        "options": payload.options,
+        "country_code": country_code,
+        "active_flag": payload.active_flag if payload.active_flag is not None else True,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+    }
+    audit_doc = {
+        "event_type": "ATTRIBUTE_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": country_code,
+        "subject_type": "attribute",
+        "subject_id": attr_id,
+        "action": "create",
+        "created_at": now_iso,
+        "metadata": {"key": doc["key"], "category_id": doc["category_id"]},
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    try:
+        await db.attributes.insert_one(doc)
+    except Exception as e:
+        if "E11000" in str(e):
+            raise HTTPException(status_code=409, detail="Attribute key already exists")
+        raise
+    return {"attribute": _normalize_attribute_doc(doc)}
+
+
+@api_router.patch("/admin/attributes/{attribute_id}")
+async def admin_update_attribute(
+    attribute_id: str,
+    payload: AttributeUpdatePayload,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    attr = await db.attributes.find_one({"id": attribute_id}, {"_id": 0})
+    if not attr:
+        raise HTTPException(status_code=404, detail="Attribute not found")
+
+    updates: Dict = {}
+    if payload.name is not None:
+        updates["name"] = payload.name.strip()
+    if payload.key is not None:
+        key = payload.key.strip().lower()
+        if not ATTRIBUTE_KEY_PATTERN.match(key):
+            raise HTTPException(status_code=400, detail="key format invalid")
+        updates["key"] = key
+    if payload.type is not None:
+        if payload.type not in {"text", "number", "select", "boolean"}:
+            raise HTTPException(status_code=400, detail="type invalid")
+        updates["type"] = payload.type
+    if payload.options is not None:
+        updates["options"] = payload.options
+    if payload.required_flag is not None:
+        updates["required_flag"] = payload.required_flag
+    if payload.filterable_flag is not None:
+        updates["filterable_flag"] = payload.filterable_flag
+    if payload.country_code is not None:
+        code = payload.country_code.upper() if payload.country_code else None
+        if code:
+            _assert_country_scope(code, current_user)
+        updates["country_code"] = code
+    if payload.active_flag is not None:
+        updates["active_flag"] = payload.active_flag
+    if not updates:
+        return {"attribute": _normalize_attribute_doc(attr)}
+
+    if updates.get("type") == "select" and not (updates.get("options") or attr.get("options")):
+        raise HTTPException(status_code=400, detail="options required for select")
+
+    updates["updated_at"] = utc_now_iso()
+    audit_doc = {
+        "event_type": "ATTRIBUTE_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": updates.get("country_code", attr.get("country_code")),
+        "subject_type": "attribute",
+        "subject_id": attribute_id,
+        "action": "update",
+        "created_at": updates["updated_at"],
+        "metadata": updates,
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    try:
+        await db.attributes.update_one({"id": attribute_id}, {"$set": updates})
+    except Exception as e:
+        if "E11000" in str(e):
+            raise HTTPException(status_code=409, detail="Attribute key already exists")
+        raise
+    attr.update(updates)
+    return {"attribute": _normalize_attribute_doc(attr)}
+
+
+@api_router.delete("/admin/attributes/{attribute_id}")
+async def admin_delete_attribute(
+    attribute_id: str,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    attr = await db.attributes.find_one({"id": attribute_id}, {"_id": 0})
+    if not attr:
+        raise HTTPException(status_code=404, detail="Attribute not found")
+    now_iso = utc_now_iso()
+    audit_doc = {
+        "event_type": "ATTRIBUTE_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": attr.get("country_code"),
+        "subject_type": "attribute",
+        "subject_id": attribute_id,
+        "action": "delete",
+        "created_at": now_iso,
+        "metadata": {"active_flag": False},
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    await db.attributes.update_one({"id": attribute_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
+    attr["active_flag"] = False
+    attr["updated_at"] = now_iso
+    return {"attribute": _normalize_attribute_doc(attr)}
+
+
+@api_router.get("/admin/vehicle-makes")
+async def admin_list_vehicle_makes(
+    request: Request,
+    country: Optional[str] = None,
+    current_user=Depends(get_current_admin_user),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    query: Dict = {}
+    if country:
+        code = country.upper()
+        _assert_country_scope(code, current_user)
+        query["country_code"] = code
+    docs = await db.vehicle_makes.find(query, {"_id": 0}).sort("name", 1).to_list(length=1000)
+    return {"items": [_normalize_vehicle_make_doc(doc) for doc in docs]}
+
+
+@api_router.post("/admin/vehicle-makes", status_code=201)
+async def admin_create_vehicle_make(
+    payload: VehicleMakeCreatePayload,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    slug = payload.slug.strip().lower()
+    if not SLUG_PATTERN.match(slug):
+        raise HTTPException(status_code=400, detail="slug format invalid")
+    code = payload.country_code.upper()
+    _assert_country_scope(code, current_user)
+
+    now_iso = utc_now_iso()
+    make_id = str(uuid4())
+    doc = {
+        "id": make_id,
+        "name": payload.name.strip(),
+        "slug": slug,
+        "country_code": code,
+        "active_flag": payload.active_flag if payload.active_flag is not None else True,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+    }
+    audit_doc = {
+        "event_type": "VEHICLE_MASTER_DATA_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": code,
+        "subject_type": "vehicle_make",
+        "subject_id": make_id,
+        "action": "create",
+        "created_at": now_iso,
+        "metadata": {"slug": doc["slug"], "name": doc["name"]},
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    try:
+        await db.vehicle_makes.insert_one(doc)
+    except Exception as e:
+        if "E11000" in str(e):
+            raise HTTPException(status_code=409, detail="Make slug already exists")
+        raise
+    return {"make": _normalize_vehicle_make_doc(doc)}
+
+
+@api_router.patch("/admin/vehicle-makes/{make_id}")
+async def admin_update_vehicle_make(
+    make_id: str,
+    payload: VehicleMakeUpdatePayload,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    make = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0})
+    if not make:
+        raise HTTPException(status_code=404, detail="Make not found")
+    updates: Dict = {}
+    if payload.name is not None:
+        updates["name"] = payload.name.strip()
+    if payload.slug is not None:
+        slug = payload.slug.strip().lower()
+        if not SLUG_PATTERN.match(slug):
+            raise HTTPException(status_code=400, detail="slug format invalid")
+        updates["slug"] = slug
+    if payload.country_code is not None:
+        code = payload.country_code.upper() if payload.country_code else None
+        if code:
+            _assert_country_scope(code, current_user)
+        updates["country_code"] = code
+    if payload.active_flag is not None:
+        updates["active_flag"] = payload.active_flag
+    if not updates:
+        return {"make": _normalize_vehicle_make_doc(make)}
+    updates["updated_at"] = utc_now_iso()
+    audit_doc = {
+        "event_type": "VEHICLE_MASTER_DATA_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": updates.get("country_code", make.get("country_code")),
+        "subject_type": "vehicle_make",
+        "subject_id": make_id,
+        "action": "update",
+        "created_at": updates["updated_at"],
+        "metadata": updates,
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    try:
+        await db.vehicle_makes.update_one({"id": make_id}, {"$set": updates})
+    except Exception as e:
+        if "E11000" in str(e):
+            raise HTTPException(status_code=409, detail="Make slug already exists")
+        raise
+    make.update(updates)
+    return {"make": _normalize_vehicle_make_doc(make)}
+
+
+@api_router.delete("/admin/vehicle-makes/{make_id}")
+async def admin_delete_vehicle_make(
+    make_id: str,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    make = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0})
+    if not make:
+        raise HTTPException(status_code=404, detail="Make not found")
+    now_iso = utc_now_iso()
+    audit_doc = {
+        "event_type": "VEHICLE_MASTER_DATA_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": make.get("country_code"),
+        "subject_type": "vehicle_make",
+        "subject_id": make_id,
+        "action": "delete",
+        "created_at": now_iso,
+        "metadata": {"active_flag": False},
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    await db.vehicle_makes.update_one({"id": make_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
+    make["active_flag"] = False
+    make["updated_at"] = now_iso
+    return {"make": _normalize_vehicle_make_doc(make)}
+
+
+@api_router.get("/admin/vehicle-models")
+async def admin_list_vehicle_models(
+    request: Request,
+    make_id: Optional[str] = None,
+    current_user=Depends(get_current_admin_user),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    query: Dict = {}
+    if make_id:
+        query["make_id"] = make_id
+    docs = await db.vehicle_models.find(query, {"_id": 0}).sort("name", 1).to_list(length=1000)
+    return {"items": [_normalize_vehicle_model_doc(doc) for doc in docs]}
+
+
+@api_router.post("/admin/vehicle-models", status_code=201)
+async def admin_create_vehicle_model(
+    payload: VehicleModelCreatePayload,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    slug = payload.slug.strip().lower()
+    if not SLUG_PATTERN.match(slug):
+        raise HTTPException(status_code=400, detail="slug format invalid")
+
+    make = await db.vehicle_makes.find_one({"id": payload.make_id}, {"_id": 0, "id": 1, "country_code": 1})
+    if not make:
+        raise HTTPException(status_code=400, detail="make_id not found")
+
+    now_iso = utc_now_iso()
+    model_id = str(uuid4())
+    doc = {
+        "id": model_id,
+        "make_id": payload.make_id,
+        "name": payload.name.strip(),
+        "slug": slug,
+        "active_flag": payload.active_flag if payload.active_flag is not None else True,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+    }
+    audit_doc = {
+        "event_type": "VEHICLE_MASTER_DATA_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": make.get("country_code"),
+        "subject_type": "vehicle_model",
+        "subject_id": model_id,
+        "action": "create",
+        "created_at": now_iso,
+        "metadata": {"slug": doc["slug"], "name": doc["name"], "make_id": payload.make_id},
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    try:
+        await db.vehicle_models.insert_one(doc)
+    except Exception as e:
+        if "E11000" in str(e):
+            raise HTTPException(status_code=409, detail="Model slug already exists")
+        raise
+    return {"model": _normalize_vehicle_model_doc(doc)}
+
+
+@api_router.patch("/admin/vehicle-models/{model_id}")
+async def admin_update_vehicle_model(
+    model_id: str,
+    payload: VehicleModelUpdatePayload,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    model = await db.vehicle_models.find_one({"id": model_id}, {"_id": 0})
+    if not model:
+        raise HTTPException(status_code=404, detail="Model not found")
+    updates: Dict = {}
+    if payload.name is not None:
+        updates["name"] = payload.name.strip()
+    if payload.slug is not None:
+        slug = payload.slug.strip().lower()
+        if not SLUG_PATTERN.match(slug):
+            raise HTTPException(status_code=400, detail="slug format invalid")
+        updates["slug"] = slug
+    if payload.make_id is not None:
+        make = await db.vehicle_makes.find_one({"id": payload.make_id}, {"_id": 0})
+        if not make:
+            raise HTTPException(status_code=400, detail="make_id not found")
+        updates["make_id"] = payload.make_id
+    if payload.active_flag is not None:
+        updates["active_flag"] = payload.active_flag
+    if not updates:
+        return {"model": _normalize_vehicle_model_doc(model)}
+    updates["updated_at"] = utc_now_iso()
+    audit_doc = {
+        "event_type": "VEHICLE_MASTER_DATA_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": None,
+        "subject_type": "vehicle_model",
+        "subject_id": model_id,
+        "action": "update",
+        "created_at": updates["updated_at"],
+        "metadata": updates,
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    try:
+        await db.vehicle_models.update_one({"id": model_id}, {"$set": updates})
+    except Exception as e:
+        if "E11000" in str(e):
+            raise HTTPException(status_code=409, detail="Model slug already exists")
+        raise
+    model.update(updates)
+    return {"model": _normalize_vehicle_model_doc(model)}
+
+
+@api_router.delete("/admin/vehicle-models/{model_id}")
+async def admin_delete_vehicle_model(
+    model_id: str,
+    request: Request,
+    current_user=Depends(get_current_admin_user),
+):
+    check_permissions(current_user, allowed_roles={"super_admin"})
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    model = await db.vehicle_models.find_one({"id": model_id}, {"_id": 0})
+    if not model:
+        raise HTTPException(status_code=404, detail="Model not found")
+    now_iso = utc_now_iso()
+    audit_doc = {
+        "event_type": "VEHICLE_MASTER_DATA_CHANGE",
+        "actor_id": current_user["id"],
+        "actor_role": current_user.get("role"),
+        "country_code": None,
+        "subject_type": "vehicle_model",
+        "subject_id": model_id,
+        "action": "delete",
+        "created_at": now_iso,
+        "metadata": {"active_flag": False},
+    }
+    await db.audit_logs.insert_one(audit_doc)
+    await db.vehicle_models.update_one({"id": model_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
+    model["active_flag"] = False
+    model["updated_at"] = now_iso
+    return {"model": _normalize_vehicle_model_doc(model)}
+
+
 async def _dashboard_metrics(db, country_code: str) -> dict:
     total_listings = await db.vehicle_listings.count_documents({"country": country_code})
     published_listings = await db.vehicle_listings.count_documents({"country": country_code, "status": "published"})
