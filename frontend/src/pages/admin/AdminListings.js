@@ -64,18 +64,18 @@ export default function AdminListingsPage() {
   const categoryMap = useMemo(() => {
     const map = new Map();
     categories.forEach((cat) => {
-      const label = cat?.name?.tr || cat?.name?.en || cat?.slug?.tr || cat?.slug?.en || cat?.slug?.de || cat?.slug?.fr || cat?.id;
+      const label = cat?.name || cat?.slug || cat?.id;
       if (cat?.id) map.set(cat.id, label);
-      const slug = cat?.slug?.tr || cat?.slug?.en || cat?.slug?.de || cat?.slug?.fr;
-      if (slug) map.set(slug, label);
+      if (cat?.slug) map.set(cat.slug, label);
     });
     return map;
   }, [categories]);
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(`${API}/categories?module=vehicle`);
-      setCategories(res.data || []);
+      const params = urlCountry ? `?country=${urlCountry}` : '';
+      const res = await axios.get(`${API}/admin/categories${params}`, { headers: authHeader });
+      setCategories(res.data.items || []);
     } catch (e) {
       console.error('Failed to load categories', e);
     }
