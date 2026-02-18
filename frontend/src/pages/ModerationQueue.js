@@ -75,7 +75,10 @@ export default function ModerationQueue() {
 
   const fetchCount = async () => {
     try {
-      const response = await axios.get(`${API}/admin/moderation/queue/count?status=pending_moderation`, {
+      const params = new URLSearchParams();
+      params.append('status', 'pending_moderation');
+      if (dealerOnly !== null) params.append('dealer_only', dealerOnly);
+      const response = await axios.get(`${API}/admin/moderation/queue/count?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
         },
