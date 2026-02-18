@@ -3438,7 +3438,7 @@ async def admin_update_category(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
+    # Permission check already handled by dependency
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
@@ -3502,7 +3502,7 @@ async def admin_delete_category(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
+    # Permission check already handled by dependency
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
     category = await db.categories.find_one({"id": category_id}, {"_id": 0})
@@ -3575,7 +3575,7 @@ async def admin_create_attribute(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
+    # Permission check already handled by dependency
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
@@ -3639,7 +3639,7 @@ async def admin_update_attribute(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
+    # Permission check already handled by dependency
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
     attr = await db.attributes.find_one({"id": attribute_id}, {"_id": 0})
@@ -3706,7 +3706,7 @@ async def admin_delete_attribute(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
+    # Permission check already handled by dependency
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
     attr = await db.attributes.find_one({"id": attribute_id}, {"_id": 0})
@@ -3754,7 +3754,7 @@ async def admin_create_vehicle_make(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
+    # Permission check already handled by dependency
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
@@ -3803,7 +3803,7 @@ async def admin_update_vehicle_make(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
+    # Permission check already handled by dependency
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
     make = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0})
@@ -3855,7 +3855,7 @@ async def admin_delete_vehicle_make(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
+    # Permission check already handled by dependency
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
     make = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0})
@@ -3901,7 +3901,7 @@ async def admin_create_vehicle_model(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
+    # Permission check already handled by dependency
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
@@ -3952,7 +3952,7 @@ async def admin_update_vehicle_model(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
+    # Permission check already handled by dependency
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
     model = await db.vehicle_models.find_one({"id": model_id}, {"_id": 0})
@@ -4006,7 +4006,7 @@ async def admin_delete_vehicle_model(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
+    # Permission check already handled by dependency
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
     model = await db.vehicle_models.find_one({"id": model_id}, {"_id": 0})
