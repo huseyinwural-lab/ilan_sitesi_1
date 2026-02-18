@@ -92,7 +92,6 @@
 - **Backlog:** Kampanyalar CRUD + uygulama noktaları
 - **Backlog:** Billing/Ödeme kayıtları entegrasyonu
 - **Backlog:** Menü yönetimi gerçek ihtiyaç doğrulaması
-- **Backlog:** Bireysel üye başvuruları veri kaynağı
 - **Backlog:** Moderation Queue için individual/kurumsal filtre
 
 ### P2
