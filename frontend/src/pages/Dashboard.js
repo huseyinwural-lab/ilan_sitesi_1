@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCountry } from '../contexts/CountryContext';
 import { 
-  Users, Globe, Flag, Activity, TrendingUp, 
+  Users, Globe, Activity, TrendingUp, 
   Shield, Clock, ArrowUpRight, ArrowDownRight 
 } from 'lucide-react';
 
