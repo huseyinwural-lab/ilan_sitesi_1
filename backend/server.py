@@ -1602,6 +1602,23 @@ def _parse_iso_datetime(value: str, field_name: str) -> datetime:
         raise HTTPException(status_code=400, detail=f"Invalid {field_name}") from exc
 
 
+def _normalize_country_doc(doc: dict) -> dict:
+    name = doc.get("name")
+    if isinstance(name, dict):
+        name_value = name.get("tr") or name.get("en") or name.get("de") or name.get("fr") or next(iter(name.values()), None)
+    else:
+        name_value = name
+    return {
+        "country_code": (doc.get("country_code") or doc.get("code") or "").upper(),
+        "name": name_value,
+        "active_flag": doc.get("active_flag", doc.get("is_enabled", True)),
+        "default_currency": doc.get("default_currency"),
+        "default_language": doc.get("default_language"),
+        "updated_at": doc.get("updated_at"),
+        "created_at": doc.get("created_at"),
+    }
+
+
 async def _report_transition(
     *,
     db,
