@@ -3960,11 +3960,13 @@ async def admin_update_vehicle_model(
     if not updates:
         return {"model": _normalize_vehicle_model_doc(model)}
     updates["updated_at"] = utc_now_iso()
+    make_lookup_id = updates.get("make_id", model.get("make_id"))
+    make_doc = await db.vehicle_makes.find_one({"id": make_lookup_id}, {"_id": 0, "country_code": 1})
     audit_doc = {
         "event_type": "VEHICLE_MASTER_DATA_CHANGE",
         "actor_id": current_user["id"],
         "actor_role": current_user.get("role"),
-        "country_code": None,
+        "country_code": make_doc.get("country_code") if make_doc else None,
         "subject_type": "vehicle_model",
         "subject_id": model_id,
         "action": "update",
