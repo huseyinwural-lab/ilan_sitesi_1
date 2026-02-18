@@ -3904,11 +3904,11 @@ async def admin_list_vehicle_models(
     if make_id:
         make_doc = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0, "country_code": 1})
         if make_doc:
-            _assert_country_scope(current_user, make_doc.get("country_code"))
+            _assert_country_scope(make_doc.get("country_code"), current_user)
         query["make_id"] = make_id
     elif country:
         country_code = country.upper()
-        _assert_country_scope(current_user, country_code)
+        _assert_country_scope(country_code, current_user)
         make_ids = await db.vehicle_makes.find(
             {"country_code": country_code}, {"_id": 0, "id": 1}
         ).to_list(length=500)
