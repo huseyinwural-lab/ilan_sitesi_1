@@ -1865,7 +1865,7 @@ async def _build_vehicle_master_from_db(db, country_code: str) -> dict:
     ]
     make_ids = [doc["id"] for doc in make_docs if doc.get("id")]
     if not make_ids:
-        return {"makes": makes, "models": {}}
+        return {"makes": makes, "models_by_make": {}}
     model_docs = await db.vehicle_models.find(
         {"make_id": {"$in": make_ids}, "active_flag": True},
         {"_id": 0, "make_id": 1, "slug": 1},
@@ -1883,7 +1883,7 @@ async def _build_vehicle_master_from_db(db, country_code: str) -> dict:
                 "is_active": model.get("active_flag", True),
             }
         )
-    return {"makes": makes, "models": models_by_make}
+    return {"makes": makes, "models_by_make": models_by_make}
 
 
 async def _report_transition(
