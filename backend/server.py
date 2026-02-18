@@ -1480,6 +1480,75 @@ class SystemSettingUpdatePayload(BaseModel):
     description: Optional[str] = None
 
 
+class CategoryCreatePayload(BaseModel):
+    name: str
+    slug: str
+    parent_id: Optional[str] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = True
+    sort_order: Optional[int] = 0
+
+
+class CategoryUpdatePayload(BaseModel):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    parent_id: Optional[str] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
+class AttributeCreatePayload(BaseModel):
+    category_id: str
+    name: str
+    key: str
+    type: str
+    required_flag: Optional[bool] = False
+    filterable_flag: Optional[bool] = False
+    options: Optional[List[str]] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = True
+
+
+class AttributeUpdatePayload(BaseModel):
+    name: Optional[str] = None
+    key: Optional[str] = None
+    type: Optional[str] = None
+    required_flag: Optional[bool] = None
+    filterable_flag: Optional[bool] = None
+    options: Optional[List[str]] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = None
+
+
+class VehicleMakeCreatePayload(BaseModel):
+    name: str
+    slug: str
+    country_code: str
+    active_flag: Optional[bool] = True
+
+
+class VehicleMakeUpdatePayload(BaseModel):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    country_code: Optional[str] = None
+    active_flag: Optional[bool] = None
+
+
+class VehicleModelCreatePayload(BaseModel):
+    make_id: str
+    name: str
+    slug: str
+    active_flag: Optional[bool] = True
+
+
+class VehicleModelUpdatePayload(BaseModel):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    make_id: Optional[str] = None
+    active_flag: Optional[bool] = None
+
+
 def _resolve_listing_title(listing: dict) -> str:
     title = (listing.get("title") or "").strip()
     if title:
