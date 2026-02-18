@@ -341,6 +341,8 @@ AUDIT_EVENT_TYPES_V1 = {
     "TAX_RATE_CHANGE",
     "PLAN_CHANGE",
     "ADMIN_PLAN_ASSIGNMENT",
+    "COUNTRY_CHANGE",
+    "SYSTEM_SETTING_CHANGE",
 }
 
 api_router = APIRouter(prefix="/api")
