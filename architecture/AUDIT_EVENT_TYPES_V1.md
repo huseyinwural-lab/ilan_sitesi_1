@@ -39,6 +39,10 @@ Bu doküman **v1.0.0 / FAZ-FINAL-02 (P1)** kapsamında audit `event_type` isimle
 - `PLAN_CHANGE`
 - `ADMIN_PLAN_ASSIGNMENT`
 
+### System Domain
+- `COUNTRY_CHANGE`
+- `SYSTEM_SETTING_CHANGE`
+
 ---
 
 ## Alan Politikası
