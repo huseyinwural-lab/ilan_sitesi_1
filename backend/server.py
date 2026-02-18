@@ -245,7 +245,11 @@ async def lifespan(app: FastAPI):
     await db.system_settings.create_index("id", unique=True)
     await db.system_settings.create_index([("key", 1), ("country_code", 1)], unique=True)
     await db.categories.create_index("id", unique=True)
-    await db.categories.create_index([("slug", 1), ("country_code", 1)], unique=True)
+    await db.categories.create_index(
+        [("slug", 1), ("country_code", 1)],
+        unique=True,
+        partialFilterExpression={"slug": {"$type": "string"}},
+    )
     await db.categories.create_index("parent_id")
     await db.categories.create_index("active_flag")
     await db.attributes.create_index("id", unique=True)
