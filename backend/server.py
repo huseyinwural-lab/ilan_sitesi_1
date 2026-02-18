@@ -3473,7 +3473,7 @@ async def admin_update_category(
     if not updates:
         return {"category": _normalize_category_doc(category)}
 
-    updates["updated_at"] = utc_now_iso()
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     audit_doc = {
         "event_type": "CATEGORY_CHANGE",
         "actor_id": current_user["id"],
@@ -3508,7 +3508,7 @@ async def admin_delete_category(
     category = await db.categories.find_one({"id": category_id}, {"_id": 0})
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    now_iso = utc_now_iso()
+    now_iso = datetime.now(timezone.utc).isoformat()
     audit_doc = {
         "event_type": "CATEGORY_CHANGE",
         "actor_id": current_user["id"],
@@ -3595,7 +3595,7 @@ async def admin_create_attribute(
     if country_code:
         _assert_country_scope(country_code, current_user)
 
-    now_iso = utc_now_iso()
+    now_iso = datetime.now(timezone.utc).isoformat()
     attr_id = str(uuid4())
     doc = {
         "id": attr_id,
@@ -3677,7 +3677,7 @@ async def admin_update_attribute(
     if updates.get("type") == "select" and not (updates.get("options") or attr.get("options")):
         raise HTTPException(status_code=400, detail="options required for select")
 
-    updates["updated_at"] = utc_now_iso()
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     audit_doc = {
         "event_type": "ATTRIBUTE_CHANGE",
         "actor_id": current_user["id"],
@@ -3712,7 +3712,7 @@ async def admin_delete_attribute(
     attr = await db.attributes.find_one({"id": attribute_id}, {"_id": 0})
     if not attr:
         raise HTTPException(status_code=404, detail="Attribute not found")
-    now_iso = utc_now_iso()
+    now_iso = datetime.now(timezone.utc).isoformat()
     audit_doc = {
         "event_type": "ATTRIBUTE_CHANGE",
         "actor_id": current_user["id"],
@@ -3764,7 +3764,7 @@ async def admin_create_vehicle_make(
     code = payload.country_code.upper()
     _assert_country_scope(code, current_user)
 
-    now_iso = utc_now_iso()
+    now_iso = datetime.now(timezone.utc).isoformat()
     make_id = str(uuid4())
     doc = {
         "id": make_id,
@@ -3826,7 +3826,7 @@ async def admin_update_vehicle_make(
         updates["active_flag"] = payload.active_flag
     if not updates:
         return {"make": _normalize_vehicle_make_doc(make)}
-    updates["updated_at"] = utc_now_iso()
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     audit_doc = {
         "event_type": "VEHICLE_MASTER_DATA_CHANGE",
         "actor_id": current_user["id"],
@@ -3861,7 +3861,7 @@ async def admin_delete_vehicle_make(
     make = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0})
     if not make:
         raise HTTPException(status_code=404, detail="Make not found")
-    now_iso = utc_now_iso()
+    now_iso = datetime.now(timezone.utc).isoformat()
     audit_doc = {
         "event_type": "VEHICLE_MASTER_DATA_CHANGE",
         "actor_id": current_user["id"],
@@ -3913,7 +3913,7 @@ async def admin_create_vehicle_model(
     if not make:
         raise HTTPException(status_code=400, detail="make_id not found")
 
-    now_iso = utc_now_iso()
+    now_iso = datetime.now(timezone.utc).isoformat()
     model_id = str(uuid4())
     doc = {
         "id": model_id,
@@ -3975,7 +3975,7 @@ async def admin_update_vehicle_model(
         updates["active_flag"] = payload.active_flag
     if not updates:
         return {"model": _normalize_vehicle_model_doc(model)}
-    updates["updated_at"] = utc_now_iso()
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     make_lookup_id = updates.get("make_id", model.get("make_id"))
     make_doc = await db.vehicle_makes.find_one({"id": make_lookup_id}, {"_id": 0, "country_code": 1})
     audit_doc = {
@@ -4012,7 +4012,7 @@ async def admin_delete_vehicle_model(
     model = await db.vehicle_models.find_one({"id": model_id}, {"_id": 0})
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-    now_iso = utc_now_iso()
+    now_iso = datetime.now(timezone.utc).isoformat()
     make_doc = await db.vehicle_makes.find_one({"id": model.get("make_id")}, {"_id": 0, "country_code": 1})
     audit_doc = {
         "event_type": "VEHICLE_MASTER_DATA_CHANGE",
