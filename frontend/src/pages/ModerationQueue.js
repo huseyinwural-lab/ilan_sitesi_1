@@ -296,6 +296,7 @@ export default function ModerationQueue({
                     onClick={() => handleAction(listing.id, 'approve')}
                     className="p-2 rounded-md border text-emerald-600 hover:bg-emerald-50"
                     title="Approve"
+                    data-testid={`moderation-approve-${listing.id}`}
                   >
                     <CheckCircle size={16} />
                   </button>
@@ -303,6 +304,7 @@ export default function ModerationQueue({
                     onClick={() => openActionDialog(listing.id, 'reject')}
                     className="p-2 rounded-md border text-rose-600 hover:bg-rose-50"
                     title="Reject"
+                    data-testid={`moderation-reject-${listing.id}`}
                   >
                     <XCircle size={16} />
                   </button>
@@ -310,6 +312,7 @@ export default function ModerationQueue({
                     onClick={() => openActionDialog(listing.id, 'needs_revision')}
                     className="p-2 rounded-md border text-amber-600 hover:bg-amber-50"
                     title="Needs Revision"
+                    data-testid={`moderation-needs-revision-${listing.id}`}
                   >
                     <AlertTriangle size={16} />
                   </button>
