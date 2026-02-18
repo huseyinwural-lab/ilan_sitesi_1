@@ -150,11 +150,10 @@ export default function Layout({ children }) {
     { path: '/admin/menu', icon: MenuSquare, label: 'Menü Yönetimi', roles: ['super_admin'] },
     { path: '/admin/feature-flags', icon: Flag, label: 'Özellik Bayrakları', roles: ['super_admin', 'country_admin'] },
 
-    // Master Data
-    { divider: true, label: 'Master Data', roles: ['super_admin', 'country_admin'] },
-    { path: '/admin/master-data/attributes', icon: Database, label: 'MDM Attributes', roles: ['super_admin', 'country_admin'] },
-    { path: '/admin/master-data/vehicles', icon: Car, label: 'Vehicle Makes', roles: ['super_admin', 'country_admin'] },
-    { path: '/admin/master-data/import-jobs', icon: Clock, label: 'Import / Upload Jobs', comingSoon: true, roles: ['super_admin', 'country_admin'] },
+    // Araç Verisi
+    { divider: true, label: 'Araç Verisi', roles: ['super_admin', 'country_admin'] },
+    { path: '/admin/vehicle-makes', icon: Car, label: 'Araç Markaları', roles: ['super_admin', 'country_admin'] },
+    { path: '/admin/vehicle-models', icon: Car, label: 'Araç Modelleri', roles: ['super_admin', 'country_admin'] },
 
     // Finans
     { divider: true, label: 'Finans' },
