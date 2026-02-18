@@ -11,7 +11,7 @@
 - /app/admin/evidence/ADMIN_NAV_SMOKE.jpeg
 - /app/admin/evidence/ADMIN_USERS_PAGE.jpeg
 - /app/admin/evidence/ADMIN_DASHBOARD_TITLE.jpeg
-- /app/admin/evidence/ADMIN_MENU_MANAGEMENT_ACTIVE.jpeg
+- /app/admin/evidence/MENU_MANAGEMENT_PAGE.jpeg
 - /app/admin/evidence/INDIVIDUAL_APPLICATIONS_PAGE.jpeg
 - /app/admin/evidence/INDIVIDUAL_LISTING_APPLICATIONS_PAGE.jpeg
 - /app/admin/evidence/CORPORATE_LISTING_APPLICATIONS_PAGE.jpeg
