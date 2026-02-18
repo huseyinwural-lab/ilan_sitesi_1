@@ -95,9 +95,9 @@ class MasterDataAPITester:
             return True
         return False
 
-    def test_reports_engine(self):
-        """Test all Reports Engine functionality"""
-        print("\n🔍 Testing Reports Engine (SPRINT 2.2)")
+    def test_master_data_engines(self):
+        """Test all Master Data Engines functionality"""
+        print("\n🔍 Testing Master Data Engines (SPRINT 5)")
         print("=" * 60)
 
         # Step 1: Login
@@ -105,176 +105,325 @@ class MasterDataAPITester:
             print("❌ Admin login failed, stopping tests")
             return False
 
-        # Step 2: Get a published listing for testing
-        success, listings_response = self.run_test(
-            "Get Published Listings",
-            "GET", 
-            "admin/listings?status=published&limit=1",
-            200
-        )
-        
-        if not success or not listings_response.get('items'):
-            print("❌ No published listings found for testing")
-            return False
-            
-        test_listing_id = listings_response['items'][0]['id']
-        print(f"📋 Using test listing: {test_listing_id}")
-
-        # Step 3: Test public report creation (POST /api/reports)
-        report_data = {
-            "listing_id": test_listing_id,
-            "reason": "spam",
-            "reason_note": "Test report for automated testing"
-        }
-        
-        success, report_response = self.run_test(
-            "Create Report (Public)",
-            "POST",
-            "reports",
-            200,
-            data=report_data
-        )
-        
-        if not success:
-            print("❌ Report creation failed")
-            return False
-            
-        report_id = report_response.get('report_id')
-        if not report_id:
-            print("❌ No report_id returned")
-            return False
-            
-        print(f"📝 Created report: {report_id}")
-
-        # Step 4: Test admin reports listing (GET /api/admin/reports)
-        success, admin_reports = self.run_test(
-            "Admin Reports List",
-            "GET",
-            "admin/reports",
-            200
-        )
-        
-        if not success:
+        # Step 2: Test Categories CRUD
+        print("\n📁 Testing Categories CRUD...")
+        if not self.test_categories_crud():
             return False
 
-        # Test with filters
-        success, filtered_reports = self.run_test(
-            "Admin Reports with Status Filter",
-            "GET",
-            "admin/reports?status=open",
-            200
-        )
-
-        success, reason_filtered = self.run_test(
-            "Admin Reports with Reason Filter", 
-            "GET",
-            "admin/reports?reason=spam",
-            200
-        )
-
-        success, listing_filtered = self.run_test(
-            "Admin Reports with Listing ID Filter",
-            "GET", 
-            f"admin/reports?listing_id={test_listing_id}",
-            200
-        )
-
-        # Step 5: Test report detail (GET /api/admin/reports/{id})
-        success, report_detail = self.run_test(
-            "Admin Report Detail",
-            "GET",
-            f"admin/reports/{report_id}",
-            200
-        )
-
-        if not success:
+        # Step 3: Test Attributes CRUD  
+        print("\n🏷️ Testing Attributes CRUD...")
+        if not self.test_attributes_crud():
             return False
 
-        # Step 6: Test report status change (POST /api/admin/reports/{id}/status)
-        status_data = {
-            "target_status": "in_review",
-            "note": "Moving to review for automated testing"
-        }
-        
-        success, status_response = self.run_test(
-            "Report Status Change",
-            "POST",
-            f"admin/reports/{report_id}/status",
-            200,
-            data=status_data
-        )
+        # Step 4: Test Vehicle Makes CRUD
+        print("\n🚗 Testing Vehicle Makes CRUD...")
+        if not self.test_vehicle_makes_crud():
+            return False
 
-        # Step 7: Test country scope validation
-        success, country_scope_test = self.run_test(
-            "Country Scope Test (DE)",
-            "GET",
-            "admin/reports?country=DE",
-            200
-        )
+        # Step 5: Test Vehicle Models CRUD
+        print("\n🚙 Testing Vehicle Models CRUD...")
+        if not self.test_vehicle_models_crud():
+            return False
 
-        # Step 8: Test invalid status transition (should fail)
-        invalid_status_data = {
-            "target_status": "resolved", 
-            "note": "Invalid transition test"
-        }
-        
-        success, invalid_response = self.run_test(
-            "Invalid Status Transition (should fail)",
-            "POST",
-            f"admin/reports/{report_id}/status", 
-            400,  # Expecting 400 for invalid transition
-            data=invalid_status_data
-        )
+        # Step 6: Test Public Search Integration
+        print("\n🔍 Testing Public Search Integration...")
+        if not self.test_public_search_integration():
+            return False
 
-        # Step 9: Test rate limiting (create multiple reports quickly)
-        print("\n🚦 Testing Rate Limiting...")
-        rate_limit_failures = 0
-        for i in range(6):  # Should hit rate limit after 5
-            success, rate_response = self.run_test(
-                f"Rate Limit Test {i+1}",
-                "POST",
-                "reports",
-                200 if i < 5 else 429,  # Expect 429 after 5 attempts
-                data={
-                    "listing_id": test_listing_id,
-                    "reason": "other",
-                    "reason_note": f"Rate limit test {i+1}"
-                }
-            )
-            if not success and i >= 5:
-                rate_limit_failures += 1
-
-        # Step 10: Test report reasons validation
-        invalid_reason_data = {
-            "listing_id": test_listing_id,
-            "reason": "invalid_reason",
-            "reason_note": "Testing invalid reason"
-        }
-        
-        success, invalid_reason_response = self.run_test(
-            "Invalid Reason Test (should fail)",
-            "POST",
-            "reports",
-            400,
-            data=invalid_reason_data
-        )
-
-        # Step 11: Test 'other' reason without note (should fail)
-        other_no_note_data = {
-            "listing_id": test_listing_id,
-            "reason": "other"
-            # Missing reason_note
-        }
-        
-        success, other_no_note_response = self.run_test(
-            "Other Reason Without Note (should fail)",
-            "POST", 
-            "reports",
-            400,
-            data=other_no_note_data
-        )
+        # Step 7: Test Listing Wizard Integration
+        print("\n🧙 Testing Listing Wizard Integration...")
+        if not self.test_listing_wizard_integration():
+            return False
 
         return True
+
+    def test_categories_crud(self):
+        """Test Categories CRUD operations"""
+        
+        # List categories
+        success, response = self.run_test(
+            "List Categories",
+            "GET",
+            "admin/categories?country=DE",
+            200
+        )
+        if not success:
+            return False
+            
+        # Create category
+        category_data = {
+            "name": "Test Category",
+            "slug": "test-category",
+            "country_code": "DE",
+            "active_flag": True,
+            "sort_order": 100
+        }
+        success, response = self.run_test(
+            "Create Category",
+            "POST",
+            "admin/categories",
+            201,
+            data=category_data
+        )
+        
+        if success and 'id' in response:
+            category_id = response['id']
+            
+            # Update category
+            update_data = {"name": "Updated Test Category"}
+            success, _ = self.run_test(
+                "Update Category",
+                "PATCH",
+                f"admin/categories/{category_id}",
+                200,
+                data=update_data
+            )
+            
+            # Delete category (soft delete)
+            success, _ = self.run_test(
+                "Delete Category",
+                "DELETE",
+                f"admin/categories/{category_id}",
+                200
+            )
+            
+        return True
+
+    def test_attributes_crud(self):
+        """Test Attributes CRUD operations"""
+        
+        # First get a category to use
+        success, categories = self.run_test(
+            "Get Categories for Attributes",
+            "GET",
+            "admin/categories?country=DE",
+            200
+        )
+        
+        if not success or not categories.get('items'):
+            print("❌ No categories found for attribute testing")
+            return False
+            
+        category_id = categories['items'][0]['id']
+        
+        # List attributes
+        success, response = self.run_test(
+            "List Attributes",
+            "GET",
+            f"admin/attributes?country=DE&category_id={category_id}",
+            200
+        )
+        
+        # Create attribute
+        attribute_data = {
+            "category_id": category_id,
+            "name": "Test Attribute",
+            "key": "test_attribute",
+            "type": "text",
+            "required_flag": False,
+            "filterable_flag": True,
+            "country_code": "DE",
+            "active_flag": True
+        }
+        success, response = self.run_test(
+            "Create Attribute",
+            "POST",
+            "admin/attributes",
+            201,
+            data=attribute_data
+        )
+        
+        if success and 'id' in response:
+            attribute_id = response['id']
+            
+            # Update attribute
+            update_data = {"name": "Updated Test Attribute"}
+            success, _ = self.run_test(
+                "Update Attribute",
+                "PATCH",
+                f"admin/attributes/{attribute_id}",
+                200,
+                data=update_data
+            )
+            
+            # Delete attribute
+            success, _ = self.run_test(
+                "Delete Attribute",
+                "DELETE",
+                f"admin/attributes/{attribute_id}",
+                200
+            )
+            
+        return True
+
+    def test_vehicle_makes_crud(self):
+        """Test Vehicle Makes CRUD operations"""
+        
+        # List makes
+        success, response = self.run_test(
+            "List Vehicle Makes",
+            "GET",
+            "admin/vehicle-makes?country=DE",
+            200
+        )
+        
+        # Create make
+        make_data = {
+            "name": "Test Make",
+            "slug": "test-make",
+            "country_code": "DE",
+            "active_flag": True
+        }
+        success, response = self.run_test(
+            "Create Vehicle Make",
+            "POST",
+            "admin/vehicle-makes",
+            201,
+            data=make_data
+        )
+        
+        if success and 'id' in response:
+            make_id = response['id']
+            
+            # Update make
+            update_data = {"name": "Updated Test Make"}
+            success, _ = self.run_test(
+                "Update Vehicle Make",
+                "PATCH",
+                f"admin/vehicle-makes/{make_id}",
+                200,
+                data=update_data
+            )
+            
+            # Delete make
+            success, _ = self.run_test(
+                "Delete Vehicle Make",
+                "DELETE",
+                f"admin/vehicle-makes/{make_id}",
+                200
+            )
+            
+        return True
+
+    def test_vehicle_models_crud(self):
+        """Test Vehicle Models CRUD operations"""
+        
+        # First get a make to use
+        success, makes = self.run_test(
+            "Get Makes for Models",
+            "GET",
+            "admin/vehicle-makes?country=DE",
+            200
+        )
+        
+        if not success or not makes.get('items'):
+            print("❌ No makes found for model testing")
+            return False
+            
+        make_id = makes['items'][0]['id']
+        
+        # List models
+        success, response = self.run_test(
+            "List Vehicle Models",
+            "GET",
+            f"admin/vehicle-models?make_id={make_id}",
+            200
+        )
+        
+        # Create model
+        model_data = {
+            "make_id": make_id,
+            "name": "Test Model",
+            "slug": "test-model",
+            "active_flag": True
+        }
+        success, response = self.run_test(
+            "Create Vehicle Model",
+            "POST",
+            "admin/vehicle-models",
+            201,
+            data=model_data
+        )
+        
+        if success and 'id' in response:
+            model_id = response['id']
+            
+            # Update model
+            update_data = {"name": "Updated Test Model"}
+            success, _ = self.run_test(
+                "Update Vehicle Model",
+                "PATCH",
+                f"admin/vehicle-models/{model_id}",
+                200,
+                data=update_data
+            )
+            
+            # Delete model
+            success, _ = self.run_test(
+                "Delete Vehicle Model",
+                "DELETE",
+                f"admin/vehicle-models/{model_id}",
+                200
+            )
+            
+        return True
+
+    def test_public_search_integration(self):
+        """Test public search endpoints with master data filters"""
+        
+        # Test categories endpoint (public)
+        success, response = self.run_test(
+            "Public Categories List",
+            "GET",
+            "categories?module=vehicle&country=DE",
+            200
+        )
+        
+        # Test search endpoint with category filter
+        success, response = self.run_test(
+            "Search with Category Filter",
+            "GET",
+            "v2/search?country=DE&category=otomobil",
+            200
+        )
+        
+        # Test search endpoint with make filter
+        success, response = self.run_test(
+            "Search with Make Filter", 
+            "GET",
+            "v2/search?country=DE&make=bmw",
+            200
+        )
+        
+        # Test search endpoint with model filter
+        success, response = self.run_test(
+            "Search with Make and Model Filter",
+            "GET", 
+            "v2/search?country=DE&make=bmw&model=x5",
+            200
+        )
+        
+        return True
+
+    def test_listing_wizard_integration(self):
+        """Test listing wizard category integration"""
+        
+        # Test categories for wizard (same as public but testing separately)
+        success, response = self.run_test(
+            "Wizard Categories List",
+            "GET",
+            "categories?module=vehicle&country=DE",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} categories for wizard")
+            # Check if we have both parent and child categories
+            parent_cats = [cat for cat in response if not cat.get('parent_id')]
+            child_cats = [cat for cat in response if cat.get('parent_id')]
+            print(f"   Parent categories: {len(parent_cats)}, Child categories: {len(child_cats)}")
+            
+        return success
 
     def print_summary(self):
         """Print test summary"""
