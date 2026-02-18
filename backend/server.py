@@ -3519,44 +3519,46 @@ async def public_search_v2(
 
 
 # =====================
-# Vehicle Master Data (File-Based) APIs
+# Vehicle Master Data (DB)
 # =====================
 
 @api_router.get("/v1/vehicle/makes")
 async def public_vehicle_makes(country: str | None = None, request: Request = None):
-    vm = request.app.state.vehicle_master
+    if not country:
+        raise HTTPException(status_code=400, detail="country is required")
+    code = country.upper()
+    db = request.app.state.db
+    docs = await db.vehicle_makes.find(
+        {"country_code": code, "active_flag": True},
+        {"_id": 0, "id": 1, "slug": 1, "name": 1},
+    ).sort("name", 1).to_list(length=500)
     items = [
-        {
-            "key": m["make_key"],
-            "label": m["display_name"],
-            "popular_rank": m.get("sort_order"),
-        }
-        for m in vm["makes"]
-        if m.get("is_active", True)
+        {"id": doc.get("id"), "key": doc.get("slug"), "label": doc.get("name")}
+        for doc in docs
+        if doc.get("slug")
     ]
-    return {"version": vm["version"], "items": items}
+    return {"version": "db", "items": items}
 
 
 @api_router.get("/v1/vehicle/models")
 async def public_vehicle_models(make: str, country: str | None = None, request: Request = None):
-    vm = request.app.state.vehicle_master
-    models = vm["models_by_make"].get(make)
-    if models is None:
+    db = request.app.state.db
+    make_doc = await db.vehicle_makes.find_one(
+        {"slug": make, "active_flag": True},
+        {"_id": 0, "id": 1, "slug": 1, "country_code": 1},
+    )
+    if not make_doc:
         raise HTTPException(status_code=404, detail="Make not found")
-
+    models = await db.vehicle_models.find(
+        {"make_id": make_doc.get("id"), "active_flag": True},
+        {"_id": 0, "id": 1, "slug": 1, "name": 1},
+    ).sort("name", 1).to_list(length=1000)
     items = [
-        {
-            "key": m["model_key"],
-            "label": m["display_name"],
-            "year_from": m.get("year_from"),
-            "year_to": m.get("year_to"),
-            "popular_rank": None,
-        }
-        for m in models
-        if m.get("is_active", True)
+        {"id": doc.get("id"), "key": doc.get("slug"), "label": doc.get("name")}
+        for doc in models
+        if doc.get("slug")
     ]
-
-    return {"version": vm["version"], "make": make, "items": items}
+    return {"version": "db", "make": make, "items": items}
 
 
 @api_router.get("/v1/admin/vehicle-master/status")
