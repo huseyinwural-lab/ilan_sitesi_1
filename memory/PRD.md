@@ -1,6 +1,6 @@
 # FAZ Admin Domain Complete — PRD
 
-**Son güncelleme:** 2026-02-23 (Release Phase Closed)
+**Son güncelleme:** 2026-02-18 (Admin UI v1 tamamlandı)
 
 ## Program Status (23.02.2026)
 - Foundation Phase: **OFFICIALLY CLOSED**
@@ -69,6 +69,7 @@
   - Non-functional kontroller (empty/403/404/draft erişim)
   - Finance RBAC sıkılaştırma + publish guard uyumu
 - **Admin IA v2:** Sol menü bilgi mimarisi yeniden yapılandırma + RBAC görünürlük matrisi
+- **Admin UI v1:** Admin kullanıcıları, rol tanımları, RBAC matrix (read-only) + placeholder ekranlar + nav smoke
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
