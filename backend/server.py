@@ -3683,6 +3683,7 @@ async def admin_update_attribute(
 
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     audit_doc = {
+        "id": str(uuid.uuid4()),
         "event_type": "ATTRIBUTE_CHANGE",
         "actor_id": current_user["id"],
         "actor_role": current_user.get("role"),
@@ -3718,6 +3719,7 @@ async def admin_delete_attribute(
         raise HTTPException(status_code=404, detail="Attribute not found")
     now_iso = datetime.now(timezone.utc).isoformat()
     audit_doc = {
+        "id": str(uuid.uuid4()),
         "event_type": "ATTRIBUTE_CHANGE",
         "actor_id": current_user["id"],
         "actor_role": current_user.get("role"),
