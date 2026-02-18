@@ -75,6 +75,7 @@
 - **Backlog:** Revenue Chart
 - **Backlog:** Dashboard View Audit
 - **Backlog:** Master Data CSV Import/Export
+- **Backlog:** Audit Dashboard Widget (Son 24 Saat Kritik Event)
 
 ### P2
 - V3 genişletmeler (gelişmiş arama, güven katmanı, bayi genişletmeleri)
