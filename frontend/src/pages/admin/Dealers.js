@@ -145,12 +145,14 @@ export default function DealersPage() {
           onClick={() => setPage(Math.max(0, page - 1))}
           disabled={page === 0}
           className="h-9 px-3 rounded-md border text-sm disabled:opacity-50"
+          data-testid="dealers-prev-page"
         >
           Prev
         </button>
         <button
           onClick={() => setPage(page + 1)}
           className="h-9 px-3 rounded-md border text-sm"
+          data-testid="dealers-next-page"
         >
           Next
         </button>
