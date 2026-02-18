@@ -141,13 +141,13 @@ export default function Layout({ children }) {
     { path: '/admin/country-compare', icon: Activity, label: 'Ülke Karşılaştırma', roles: roles.dashboard, testId: 'dashboard-country-compare' },
 
     { divider: true, label: 'Yönetim', roles: roles.userOps },
-    { path: '/admin/admin-users', icon: Users, label: 'Admin Kullanıcıları', roles: roles.adminOnly, comingSoon: true, testId: 'management-admin-users' },
-    { path: '/admin/roles', icon: ShieldCheck, label: 'Rol Tanımları', roles: roles.adminOnly, comingSoon: true, testId: 'management-roles' },
-    { path: '/admin/rbac-matrix', icon: MenuSquare, label: 'Yetki Atama (RBAC Matrix)', roles: roles.adminOnly, comingSoon: true, testId: 'management-rbac-matrix' },
+  { path: '/admin/admin-users', icon: Users, label: 'Admin Kullanıcıları', roles: roles.adminOnly, testId: 'management-admin-users' },
+  { path: '/admin/roles', icon: ShieldCheck, label: 'Rol Tanımları', roles: roles.adminOnly, testId: 'management-roles' },
+  { path: '/admin/rbac-matrix', icon: MenuSquare, label: 'Yetki Atama (RBAC Matrix)', roles: roles.adminOnly, testId: 'management-rbac-matrix' },
     { path: '/admin/users', icon: Users, label: 'Kullanıcı Yönetimi', roles: roles.userOps, testId: 'management-users' },
 
     { divider: true, label: 'Üyeler', roles: roles.userOps },
-    { path: '/admin/individual-users', icon: Users, label: 'Bireysel Kullanıcılar', roles: roles.userOps, comingSoon: true, testId: 'members-individual-users' },
+  { path: '/admin/individual-users', icon: Users, label: 'Bireysel Kullanıcılar', roles: roles.userOps, testId: 'members-individual-users' },
     { path: '/admin/dealers', icon: Building, label: 'Kurumsal Kullanıcılar', roles: roles.userOps, testId: 'members-corporate-users' },
     { path: '/admin/individual-applications', icon: Clock, label: 'Bireysel Üye Başvurular', roles: roles.userOps, comingSoon: true, testId: 'members-individual-applications' },
     { path: '/admin/dealer-applications', icon: Clock, label: 'Kurumsal Üye Başvurular', roles: roles.userOps, testId: 'members-corporate-applications' },
