@@ -192,30 +192,48 @@ const AttributeForm = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Marka *</label>
-            <select className="w-full p-2 border rounded-md" value={makeKey} onChange={(e) => setMakeKey(e.target.value)}>
+            <select
+              className="w-full p-2 border rounded-md"
+              value={makeKey}
+              onChange={(e) => setMakeKey(e.target.value)}
+              data-testid="listing-make-select"
+            >
               <option value="">Seç...</option>
               {makes.map((m) => (
                 <option key={m.key} value={m.key}>{m.label}</option>
               ))}
             </select>
-            {errors.make_key && <div className="text-xs text-red-600 mt-1">{errors.make_key}</div>}
+            {errors.make_key && <div className="text-xs text-red-600 mt-1" data-testid="listing-make-error">{errors.make_key}</div>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Model *</label>
-            <select className="w-full p-2 border rounded-md" value={modelKey} onChange={(e) => setModelKey(e.target.value)} disabled={!makeKey}>
+            <select
+              className="w-full p-2 border rounded-md"
+              value={modelKey}
+              onChange={(e) => setModelKey(e.target.value)}
+              disabled={!makeKey}
+              data-testid="listing-model-select"
+            >
               <option value="">Seç...</option>
               {models.map((m) => (
                 <option key={m.key} value={m.key}>{m.label}</option>
               ))}
             </select>
-            {errors.model_key && <div className="text-xs text-red-600 mt-1">{errors.model_key}</div>}
+            {errors.model_key && <div className="text-xs text-red-600 mt-1" data-testid="listing-model-error">{errors.model_key}</div>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Yıl *</label>
-            <input type="number" className="w-full p-2 border rounded-md" value={year} onChange={(e) => setYear(e.target.value)} placeholder="2020" />
-            {errors.year && <div className="text-xs text-red-600 mt-1">{errors.year}</div>}
+            <input
+              type="number"
+              className="w-full p-2 border rounded-md"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              placeholder="2020"
+              data-testid="listing-year-input"
+            />
+            {errors.year && <div className="text-xs text-red-600 mt-1" data-testid="listing-year-error">{errors.year}</div>}
           </div>
         </div>
       </div>
@@ -226,19 +244,38 @@ const AttributeForm = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">KM *</label>
-            <input type="number" className="w-full p-2 border rounded-md" value={mileageKm} onChange={(e) => setMileageKm(e.target.value)} placeholder="85000" />
-            {errors.mileage_km && <div className="text-xs text-red-600 mt-1">{errors.mileage_km}</div>}
+            <input
+              type="number"
+              className="w-full p-2 border rounded-md"
+              value={mileageKm}
+              onChange={(e) => setMileageKm(e.target.value)}
+              placeholder="85000"
+              data-testid="listing-mileage-input"
+            />
+            {errors.mileage_km && <div className="text-xs text-red-600 mt-1" data-testid="listing-mileage-error">{errors.mileage_km}</div>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fiyat (€) *</label>
-            <input type="number" className="w-full p-2 border rounded-md" value={priceEur} onChange={(e) => setPriceEur(e.target.value)} placeholder="15000" />
-            {errors.price_eur && <div className="text-xs text-red-600 mt-1">{errors.price_eur}</div>}
+            <input
+              type="number"
+              className="w-full p-2 border rounded-md"
+              value={priceEur}
+              onChange={(e) => setPriceEur(e.target.value)}
+              placeholder="15000"
+              data-testid="listing-price-input"
+            />
+            {errors.price_eur && <div className="text-xs text-red-600 mt-1" data-testid="listing-price-error">{errors.price_eur}</div>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Yakıt Tipi *</label>
-            <select className="w-full p-2 border rounded-md" value={fuelType} onChange={(e) => setFuelType(e.target.value)}>
+            <select
+              className="w-full p-2 border rounded-md"
+              value={fuelType}
+              onChange={(e) => setFuelType(e.target.value)}
+              data-testid="listing-fuel-select"
+            >
               <option value="">Seç...</option>
               <option value="petrol">Benzin</option>
               <option value="diesel">Dizel</option>
@@ -246,29 +283,39 @@ const AttributeForm = () => {
               <option value="electric">Elektrikli</option>
               <option value="lpg">LPG</option>
             </select>
-            {errors.fuel_type && <div className="text-xs text-red-600 mt-1">{errors.fuel_type}</div>}
+            {errors.fuel_type && <div className="text-xs text-red-600 mt-1" data-testid="listing-fuel-error">{errors.fuel_type}</div>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Vites *</label>
-            <select className="w-full p-2 border rounded-md" value={transmission} onChange={(e) => setTransmission(e.target.value)}>
+            <select
+              className="w-full p-2 border rounded-md"
+              value={transmission}
+              onChange={(e) => setTransmission(e.target.value)}
+              data-testid="listing-transmission-select"
+            >
               <option value="">Seç...</option>
               <option value="manual">Manuel</option>
               <option value="automatic">Otomatik</option>
               <option value="semi-automatic">Yarı otomatik</option>
             </select>
-            {errors.transmission && <div className="text-xs text-red-600 mt-1">{errors.transmission}</div>}
+            {errors.transmission && <div className="text-xs text-red-600 mt-1" data-testid="listing-transmission-error">{errors.transmission}</div>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Kondisyon *</label>
-            <select className="w-full p-2 border rounded-md" value={condition} onChange={(e) => setCondition(e.target.value)}>
+            <select
+              className="w-full p-2 border rounded-md"
+              value={condition}
+              onChange={(e) => setCondition(e.target.value)}
+              data-testid="listing-condition-select"
+            >
               <option value="">Seç...</option>
               <option value="new">Sıfır</option>
               <option value="used">İkinci el</option>
               <option value="damaged">Hasarlı</option>
             </select>
-            {errors.condition && <div className="text-xs text-red-600 mt-1">{errors.condition}</div>}
+            {errors.condition && <div className="text-xs text-red-600 mt-1" data-testid="listing-condition-error">{errors.condition}</div>}
           </div>
         </div>
       </div>
