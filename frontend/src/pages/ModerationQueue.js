@@ -187,6 +187,7 @@ export default function ModerationQueue({
           value={countryFilter}
           onChange={(e) => { setCountryFilter(e.target.value); setLoading(true); }}
           className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="moderation-country-filter"
         >
           <option value="">All Countries</option>
           <option value="DE">Germany (DE)</option>
@@ -199,6 +200,7 @@ export default function ModerationQueue({
           value={moduleFilter}
           onChange={(e) => { setModuleFilter(e.target.value); setLoading(true); }}
           className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="moderation-module-filter"
         >
           <option value="">All Modules</option>
           <option value="real_estate">Real Estate</option>
