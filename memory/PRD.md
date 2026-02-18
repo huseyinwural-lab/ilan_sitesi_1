@@ -73,7 +73,7 @@
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- Production rollout + hypercare aktivasyonu (ops onayı bekliyor)
+- P1 sprint başlangıç tarihi netleştirme
 
 ### P1
 - **Backlog:** P1 sprint planlama + kickoff
