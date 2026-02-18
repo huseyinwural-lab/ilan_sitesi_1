@@ -41,16 +41,23 @@
   - Admin list/detail/status API + audit-first
   - Public report submit (rate limit)
   - Admin UI /admin/reports + listing detail “Şikayet Et”
+- **Sprint 3:** Finance Domain
+  - Invoice Engine: create/list/detail/status + revenue endpoint
+  - TaxRate CRUD (audit-first)
+  - Plan CRUD (audit-first)
+  - Dealer plan assignment (users.plan_id) + dealer detail finance summary
+  - Admin UI: /admin/invoices, /admin/tax-rates, /admin/plans
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- **Sprint 3:** Finance Domain (Invoices, TaxRates, Plans)
+- **Sprint 4:** System + Dashboard (Countries, Settings, KPI)
 
 ### P1
-- **Sprint 4:** System + Dashboard KPI’ları
 - **Sprint 5:** Master Data Engines (Categories, Attributes, Vehicle Make/Model)
+- **Backlog:** Admin Listing Preview Drawer
+- **Backlog:** Bulk Report Status Update
 
 ### P2
 - **Sprint 6:** Final Integration Gate (RBAC + audit + country-scope E2E)
