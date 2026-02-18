@@ -2029,7 +2029,7 @@ async def admin_listings(
     q: Optional[str] = None,
     dealer_only: Optional[str] = None,
     category_id: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2121,7 +2121,7 @@ async def admin_soft_delete_listing(
     listing_id: str,
     payload: ListingAdminActionPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2142,7 +2142,7 @@ async def admin_force_unpublish_listing(
     listing_id: str,
     payload: ListingAdminActionPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2232,7 +2232,7 @@ async def admin_reports(
     listing_id: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2307,7 +2307,7 @@ async def admin_reports(
 async def admin_report_detail(
     report_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2378,7 +2378,7 @@ async def admin_report_status_change(
     report_id: str,
     payload: ReportStatusPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2488,7 +2488,7 @@ async def admin_list_invoices(
     status: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2535,7 +2535,7 @@ async def admin_list_invoices(
 async def admin_invoice_detail(
     invoice_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2556,7 +2556,7 @@ async def admin_invoice_status_change(
     invoice_id: str,
     payload: InvoiceStatusPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2615,7 +2615,7 @@ async def admin_revenue(
     country: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2657,7 +2657,7 @@ async def admin_revenue(
 async def admin_list_tax_rates(
     request: Request,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
