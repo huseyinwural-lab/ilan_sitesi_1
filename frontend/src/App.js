@@ -93,7 +93,7 @@ function App() {
                   >
                     <Route index element={<Navigate to="/account/listings" />} />
                     <Route path="listings" element={<MyListings />} />
-                    <Route path="create" element={<CreateListing />} />
+                    <Route path="create" element={<Navigate to="/account/create/vehicle-wizard" />} />
                     <Route path="create/vehicle-wizard" element={<WizardContainer />} />
                   </Route>
 
