@@ -3613,6 +3613,7 @@ async def admin_create_attribute(
         "updated_at": now_iso,
     }
     audit_doc = {
+        "id": str(uuid.uuid4()),
         "event_type": "ATTRIBUTE_CHANGE",
         "actor_id": current_user["id"],
         "actor_role": current_user.get("role"),
