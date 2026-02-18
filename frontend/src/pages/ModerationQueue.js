@@ -35,7 +35,12 @@ const NEEDS_REVISION_REASONS_V1 = [
 ];
 
 
-export default function ModerationQueue() {
+export default function ModerationQueue({
+  title = 'Moderation Queue',
+  description = 'Review pending listings and apply moderation decisions.',
+  dealerOnly = null,
+  pageTestId = 'moderation-queue-page',
+}) {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [countryFilter, setCountryFilter] = useState('');
