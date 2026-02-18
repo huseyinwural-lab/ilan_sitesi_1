@@ -269,7 +269,7 @@ export default function SearchPage() {
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Marka</div>
               <Select
-                value={searchState.make || ''}
+                value={searchState.make || 'all'}
                 onValueChange={handleMakeChange}
                 data-testid="search-make-select"
               >
@@ -289,7 +289,7 @@ export default function SearchPage() {
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Model</div>
               <Select
-                value={searchState.model || ''}
+                value={searchState.model || 'all'}
                 onValueChange={handleModelChange}
                 disabled={!searchState.make || loadingModels}
                 data-testid="search-model-select"
