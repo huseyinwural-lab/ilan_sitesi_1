@@ -422,6 +422,7 @@ export default function ModerationQueue({
                   <button
                     onClick={() => handleAction(selectedListing.id, 'approve')}
                     className="flex-1 min-w-[160px] px-4 py-2 rounded-md bg-emerald-600 text-white font-medium hover:bg-emerald-700 flex items-center justify-center gap-2"
+                    data-testid="moderation-detail-approve"
                   >
                     <CheckCircle size={18} />
                     Approve
@@ -429,6 +430,7 @@ export default function ModerationQueue({
                   <button
                     onClick={() => openActionDialog(selectedListing.id, 'reject')}
                     className="flex-1 min-w-[160px] px-4 py-2 rounded-md bg-rose-600 text-white font-medium hover:bg-rose-700 flex items-center justify-center gap-2"
+                    data-testid="moderation-detail-reject"
                   >
                     <XCircle size={18} />
                     Reject
@@ -436,6 +438,7 @@ export default function ModerationQueue({
                   <button
                     onClick={() => openActionDialog(selectedListing.id, 'needs_revision')}
                     className="flex-1 min-w-[160px] px-4 py-2 rounded-md border text-amber-700 hover:bg-amber-50 flex items-center justify-center gap-2"
+                    data-testid="moderation-detail-needs-revision"
                   >
                     <AlertTriangle size={18} />
                     Needs Revision
