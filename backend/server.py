@@ -255,6 +255,7 @@ async def lifespan(app: FastAPI):
         [("slug", 1), ("country_code", 1)],
         unique=True,
         partialFilterExpression={"slug": {"$type": "string"}},
+        name="slug_country_code_partial_idx"
     )
     await db.categories.create_index("parent_id")
     await db.categories.create_index("active_flag")
