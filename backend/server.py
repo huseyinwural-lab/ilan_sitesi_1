@@ -50,6 +50,8 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
 SUPPORTED_COUNTRIES = {"DE", "CH", "FR", "AT"}
+SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+ATTRIBUTE_KEY_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 # P1 Failed-login rate limit (in-process)
 FAILED_LOGIN_WINDOW_SECONDS = 10 * 60  # 10 min sliding window
