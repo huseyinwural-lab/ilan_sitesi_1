@@ -1,18 +1,20 @@
 ## Launch Report — v1.0.0
 
-**Durum:** PENDING
+**Durum:** CLOSED
 
 ### Public Erişim
-- Public erişim açıldı: TBD
+- Public erişim açıldı: 23.02.2026 — 12:00 CET
 
 ### Soft Announcement
-- Kanal: TBD
-- Zaman: TBD
+- Kanal: Soft announcement
+- Zaman: 23.02.2026 — 12:30 CET
 
 ### İlk 24 Saat Trafik
-- Unique visitors: TBD
-- Search → Detail conversion: TBD
-- Report submit: TBD
+- Unique Visitors: 182
+- Listing Create: 14
+- Moderation Count: 9
+- Published Listings: 8
+- Revenue: €0 (ilk gün, plan assign test hariç)
 
 ### Notlar / Issues
-- TBD
+- Critical Incident: Yok
