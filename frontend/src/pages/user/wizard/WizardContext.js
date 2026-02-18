@@ -90,6 +90,7 @@ export const WizardProvider = ({ children }) => {
     try {
       if (step === 2) {
         setBasicInfo((prev) => ({ ...prev, ...data.basic }));
+        if (data.basic?.attributes) setAttributes(data.basic.attributes);
       } else if (step === 3) {
         setMedia(data);
       }
