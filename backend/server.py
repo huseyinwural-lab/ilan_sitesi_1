@@ -3731,6 +3731,8 @@ async def admin_create_category(
 
     now_iso = datetime.now(timezone.utc).isoformat()
     category_id = str(uuid.uuid4())
+    schema = _normalize_category_schema(payload.form_schema)
+    _validate_category_schema(schema)
     doc = {
         "id": category_id,
         "parent_id": parent_id,
@@ -3739,6 +3741,7 @@ async def admin_create_category(
         "country_code": country_code,
         "active_flag": payload.active_flag if payload.active_flag is not None else True,
         "sort_order": payload.sort_order or 0,
+        "form_schema": schema,
         "created_at": now_iso,
         "updated_at": now_iso,
         "module": "vehicle",
@@ -3803,6 +3806,10 @@ async def admin_update_category(
         updates["active_flag"] = payload.active_flag
     if payload.sort_order is not None:
         updates["sort_order"] = payload.sort_order
+    if payload.form_schema is not None:
+        schema = _normalize_category_schema(payload.form_schema)
+        _validate_category_schema(schema)
+        updates["form_schema"] = schema
 
     if not updates:
         return {"category": _normalize_category_doc(category, include_schema=True)}
