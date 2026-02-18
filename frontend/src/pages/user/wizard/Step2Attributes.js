@@ -182,6 +182,48 @@ const AttributeForm = () => {
     setAttributeValues((prev) => ({ ...prev, [key]: value }));
   };
 
+  const renderAttributeInput = (attr) => {
+    const value = attributeValues[attr.key] ?? '';
+    if (attr.type === 'select') {
+      return (
+        <select
+          className="w-full p-2 border rounded-md"
+          value={value}
+          onChange={(e) => handleAttributeChange(attr.key, e.target.value)}
+          data-testid={`listing-attr-${attr.key}-select`}
+        >
+          <option value="">Seç...</option>
+          {(attr.options || []).map((opt) => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+      );
+    }
+    if (attr.type === 'boolean') {
+      return (
+        <label className="inline-flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={!!attributeValues[attr.key]}
+            onChange={(e) => handleAttributeChange(attr.key, e.target.checked)}
+            data-testid={`listing-attr-${attr.key}-boolean`}
+          />
+          <span className="text-sm">Evet</span>
+        </label>
+      );
+    }
+    const inputType = attr.type === 'number' ? 'number' : 'text';
+    return (
+      <input
+        type={inputType}
+        className="w-full p-2 border rounded-md"
+        value={value}
+        onChange={(e) => handleAttributeChange(attr.key, e.target.value)}
+        data-testid={`listing-attr-${attr.key}-input`}
+      />
+    );
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold">Araç Bilgileri</h2>
