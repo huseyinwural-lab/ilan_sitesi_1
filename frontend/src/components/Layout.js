@@ -127,8 +127,8 @@ export default function Layout({ children }) {
 
     // Genel Bakış
     { divider: true, label: 'Genel Bakış' },
-    { path: '/admin/overview', icon: TrendingUp, label: 'Genel Bakış', comingSoon: true, roles: ['super_admin', 'country_admin', 'support'] },
-    { path: '/admin/country-compare', icon: Activity, label: 'Ülke Karşılaştırma', comingSoon: true, roles: ['super_admin', 'support'] },
+    { path: '/admin/dashboard', icon: TrendingUp, label: 'Genel Bakış', roles: ['super_admin', 'country_admin', 'support'] },
+    { path: '/admin/country-compare', icon: Activity, label: 'Ülke Karşılaştırma', roles: ['super_admin', 'country_admin', 'support'] },
 
     // Kullanıcı & Satıcı
     { divider: true, label: 'Kullanıcı & Satıcı' },
