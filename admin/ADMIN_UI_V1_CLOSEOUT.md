@@ -7,3 +7,4 @@
   - /app/admin/evidence/ADMIN_NAV_SMOKE.jpeg
   - /app/admin/evidence/ADMIN_USERS_PAGE.jpeg
   - /app/admin/evidence/ADMIN_DASHBOARD_TITLE.jpeg
+  - /app/ops/RELEASE_EVIDENCE_PACK_ADMIN.md
