@@ -1,0 +1,264 @@
+import { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const parseValue = (raw) => {
+  if (raw === '') return '';
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+};
+
+const formatValue = (value) => {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+};
+
+export default function AdminSystemSettingsPage() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({
+    key: '',
+    value: '',
+    country_code: '',
+    is_readonly: false,
+    description: '',
+  });
+  const [filterKey, setFilterKey] = useState('');
+  const [filterCountry, setFilterCountry] = useState('');
+  const [error, setError] = useState(null);
+
+  const authHeader = useMemo(() => ({
+    Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+  }), []);
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filterCountry) params.set('country', filterCountry.toUpperCase());
+      const res = await axios.get(`${API}/admin/system-settings?${params.toString()}`, { headers: authHeader });
+      setItems(res.data.items || []);
+    } catch (e) {
+      console.error('Failed to fetch system settings', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ key: '', value: '', country_code: '', is_readonly: false, description: '' });
+    setError(null);
+    setModalOpen(true);
+  };
+
+  const openEdit = (item) => {
+    setEditing(item);
+    setForm({
+      key: item.key,
+      value: formatValue(item.value),
+      country_code: item.country_code || '',
+      is_readonly: item.is_readonly || false,
+      description: item.description || '',
+    });
+    setError(null);
+    setModalOpen(true);
+  };
+
+  const submitForm = async () => {
+    if (!form.key || form.value === '') {
+      setError('Key ve value zorunlu');
+      return;
+    }
+    try {
+      if (editing) {
+        await axios.patch(
+          `${API}/admin/system-settings/${editing.id}`,
+          {
+            value: parseValue(form.value),
+            country_code: form.country_code || null,
+            is_readonly: form.is_readonly,
+            description: form.description || null,
+          },
+          { headers: authHeader }
+        );
+      } else {
+        await axios.post(
+          `${API}/admin/system-settings`,
+          {
+            key: form.key,
+            value: parseValue(form.value),
+            country_code: form.country_code || null,
+            is_readonly: form.is_readonly,
+            description: form.description || null,
+          },
+          { headers: authHeader }
+        );
+      }
+      setModalOpen(false);
+      fetchSettings();
+    } catch (e) {
+      setError(e.response?.data?.detail || 'Kaydedilemedi');
+    }
+  };
+
+  useEffect(() => {
+    fetchSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterCountry]);
+
+  const filteredItems = items.filter((item) =>
+    item.key.toLowerCase().includes(filterKey.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-6" data-testid="admin-system-settings-page">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold" data-testid="system-settings-title">System Settings</h1>
+          <div className="text-xs text-muted-foreground">Key namespace: domain.section.key</div>
+        </div>
+        <button
+          onClick={openCreate}
+          className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
+          data-testid="system-settings-create-open"
+        >
+          Yeni Setting
+        </button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3" data-testid="system-settings-filters">
+        <input
+          value={filterKey}
+          onChange={(e) => setFilterKey(e.target.value)}
+          placeholder="Key ara"
+          className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="system-settings-filter-key"
+        />
+        <input
+          value={filterCountry}
+          onChange={(e) => setFilterCountry(e.target.value)}
+          placeholder="Country (opsiyonel)"
+          className="h-9 px-3 rounded-md border bg-background text-sm"
+          data-testid="system-settings-filter-country"
+        />
+      </div>
+
+      <div className="rounded-md border bg-card overflow-hidden" data-testid="system-settings-table">
+        <div className="hidden lg:grid grid-cols-[1.6fr_1.2fr_0.8fr_0.6fr_1.2fr_0.6fr] gap-4 bg-muted px-4 py-3 text-sm font-medium">
+          <div>Key</div>
+          <div>Value</div>
+          <div>Country</div>
+          <div>Readonly</div>
+          <div>Description</div>
+          <div className="text-right">Aksiyon</div>
+        </div>
+        <div className="divide-y">
+          {loading ? (
+            <div className="p-6 text-center" data-testid="system-settings-loading">Yükleniyor…</div>
+          ) : filteredItems.length === 0 ? (
+            <div className="p-6 text-center text-muted-foreground" data-testid="system-settings-empty">Kayıt yok</div>
+          ) : (
+            filteredItems.map((item) => (
+              <div
+                key={item.id}
+                className="grid grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-[1.6fr_1.2fr_0.8fr_0.6fr_1.2fr_0.6fr]"
+                data-testid={`system-setting-row-${item.id}`}
+              >
+                <div className="font-medium">{item.key}</div>
+                <div className="text-xs text-muted-foreground break-all">{formatValue(item.value)}</div>
+                <div>{item.country_code || 'global'}</div>
+                <div>{item.is_readonly ? 'yes' : 'no'}</div>
+                <div className="text-xs text-muted-foreground">{item.description || '—'}</div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => openEdit(item)}
+                    className="h-8 px-2.5 rounded-md border text-xs"
+                    data-testid={`system-setting-edit-${item.id}`}
+                  >
+                    Düzenle
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="system-settings-modal">
+          <div className="bg-card rounded-lg border shadow-xl w-full max-w-xl">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="text-lg font-semibold" data-testid="system-settings-modal-title">{editing ? 'Setting Güncelle' : 'Setting Oluştur'}</h3>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="h-8 px-2.5 rounded-md border text-xs"
+                data-testid="system-settings-modal-close"
+              >
+                Kapat
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <input
+                value={form.key}
+                onChange={(e) => setForm({ ...form, key: e.target.value })}
+                placeholder="Key (domain.section.key)"
+                className="h-9 px-3 rounded-md border bg-background text-sm w-full"
+                disabled={!!editing}
+                data-testid="system-settings-form-key"
+              />
+              <textarea
+                value={form.value}
+                onChange={(e) => setForm({ ...form, value: e.target.value })}
+                placeholder="Value (string veya JSON)"
+                className="w-full min-h-[90px] p-3 rounded-md border bg-background text-sm"
+                data-testid="system-settings-form-value"
+              />
+              <input
+                value={form.country_code}
+                onChange={(e) => setForm({ ...form, country_code: e.target.value.toUpperCase() })}
+                placeholder="Country Code (opsiyonel)"
+                className="h-9 px-3 rounded-md border bg-background text-sm w-full"
+                data-testid="system-settings-form-country"
+              />
+              <input
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder="Description"
+                className="h-9 px-3 rounded-md border bg-background text-sm w-full"
+                data-testid="system-settings-form-description"
+              />
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.is_readonly}
+                  onChange={(e) => setForm({ ...form, is_readonly: e.target.checked })}
+                  data-testid="system-settings-form-readonly"
+                />
+                Readonly
+              </label>
+              {error && (
+                <div className="text-xs text-destructive" data-testid="system-settings-form-error">{error}</div>
+              )}
+              <button
+                onClick={submitForm}
+                className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
+                data-testid="system-settings-form-submit"
+              >
+                {editing ? 'Güncelle' : 'Oluştur'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
