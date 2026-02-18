@@ -1,16 +1,13 @@
 import React from "react";
-import AdminPlaceholder from "../../components/AdminPlaceholder";
+import ModerationQueue from "../ModerationQueue";
 
 export default function CorporateListingApplications() {
   return (
-    <AdminPlaceholder
+    <ModerationQueue
       title="Kurumsal İlan Başvuruları"
-      description="Bu görünüm Moderation Queue filtresi üzerinden yönetilir. Şimdilik Moderation Queue kullanınız."
-      status="PLACEHOLDER"
-      note="Dealer/individual ayrımı API’de netleştiğinde filtreli görünüm aktive edilecek."
-      testId="corporate-listing-applications-placeholder"
-      actionLabel="Moderation Queue'a Git"
-      actionHref="/admin/moderation"
+      description="Kurumsal (dealer) ilan başvuruları ve moderasyon aksiyonları."
+      dealerOnly={true}
+      pageTestId="corporate-listing-applications-page"
     />
   );
 }
