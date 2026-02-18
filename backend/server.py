@@ -2144,6 +2144,7 @@ async def admin_create_invoice(
     await db.invoices.insert_one(invoice_doc)
     await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
 
+    invoice_doc.pop("_id", None)
     return {"ok": True, "invoice": invoice_doc}
 
 
@@ -2390,6 +2391,7 @@ async def admin_create_tax_rate(
     await db.tax_rates.insert_one(tax_doc)
     await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
 
+    tax_doc.pop("_id", None)
     return {"ok": True, "tax_rate": tax_doc}
 
 
@@ -2556,6 +2558,7 @@ async def admin_create_plan(
     await db.plans.insert_one(plan_doc)
     await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
 
+    plan_doc.pop("_id", None)
     return {"ok": True, "plan": plan_doc}
 
 
