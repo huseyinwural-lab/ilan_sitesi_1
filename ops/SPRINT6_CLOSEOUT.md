@@ -38,4 +38,4 @@
 - Release onayı (GO/NO-GO) sonrası prod hazırlığı.
 
 ### Release Phase
-- Release Phase CLOSED: **PENDING** (rollout + hypercare + launch raporları tamamlandıktan sonra işaretlenecek)
+- Release Phase CLOSED: **OFFICIALLY CLOSED**
