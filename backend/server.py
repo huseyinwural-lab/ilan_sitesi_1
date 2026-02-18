@@ -3997,11 +3997,12 @@ async def admin_delete_vehicle_model(
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
     now_iso = utc_now_iso()
+    make_doc = await db.vehicle_makes.find_one({"id": model.get("make_id")}, {"_id": 0, "country_code": 1})
     audit_doc = {
         "event_type": "VEHICLE_MASTER_DATA_CHANGE",
         "actor_id": current_user["id"],
         "actor_role": current_user.get("role"),
-        "country_code": None,
+        "country_code": make_doc.get("country_code") if make_doc else None,
         "subject_type": "vehicle_model",
         "subject_id": model_id,
         "action": "delete",
