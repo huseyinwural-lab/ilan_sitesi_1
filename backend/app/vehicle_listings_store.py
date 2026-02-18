@@ -37,6 +37,10 @@ async def create_vehicle_listing(db, payload: dict, user: dict) -> dict:
         "media": [],
     }
 
+    extra_attrs = payload.get("attributes") or {}
+    if isinstance(extra_attrs, dict):
+        doc["attributes"].update(extra_attrs)
+
     await db.vehicle_listings.insert_one(doc)
     return doc
 
