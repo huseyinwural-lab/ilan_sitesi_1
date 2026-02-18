@@ -1,11 +1,8 @@
 ## Bireysel Üye Başvuruları Veri Kaynağı
 
-### Mevcut Durum
-- Ayrı koleksiyon yok; başvuru akışı tanımlı değil.
-
 ### Karar
-- v1’de placeholder/empty state kalır.
+- Veri kaynağı: `individual_applications` koleksiyonu
 
-### P1 Seçenekleri
-- Yeni koleksiyon: individual_applications
-- Alternatif: users üzerinde application_status alanı
+### Akış
+- Admin: liste + approve/reject (audit-first)
+- Approved → users koleksiyonunda `role=user`
