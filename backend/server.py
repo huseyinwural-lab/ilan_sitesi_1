@@ -2012,19 +2012,20 @@ async def admin_listings(
         keys = [category_id]
         cat = await db.categories.find_one(
             {
-                "module": "vehicle",
                 "$or": [
-                    {"slug.tr": category_id},
-                    {"slug.de": category_id},
-                    {"slug.fr": category_id},
-                    {"slug.en": category_id},
+                    {"slug": category_id},
+                    {"id": category_id},
                 ],
             },
-            {"_id": 0, "id": 1},
+            {"_id": 0, "id": 1, "slug": 1},
         )
-        if cat and cat.get("id"):
-            keys.append(cat["id"])
-        query["category_key"] = {"$in": keys}
+        if cat:
+            if cat.get("id"):
+                keys.append(cat["id"])
+            slug_value = _pick_label(cat.get("slug"))
+            if slug_value:
+                keys.append(slug_value)
+        query["category_key"] = {"$in": list(set(keys))}
 
     dealer_only_flag = _parse_bool_flag(dealer_only)
     if dealer_only_flag:
