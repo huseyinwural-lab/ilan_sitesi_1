@@ -142,6 +142,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6" data-testid="dashboard">
+      <h1 className="text-2xl font-bold text-gray-900" data-testid="dashboard-title">Kontrol Paneli</h1>
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard 
