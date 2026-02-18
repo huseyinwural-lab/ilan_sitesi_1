@@ -739,11 +739,9 @@ async def list_categories(
 
     query = {
         "module": module,
-        "active_flag": True,
-        "$or": [
-            {"country_code": None},
-            {"country_code": ""},
-            {"country_code": code},
+        "$and": [
+            {"$or": [{"country_code": None}, {"country_code": ""}, {"country_code": code}]},
+            {"$or": [{"active_flag": True}, {"active_flag": {"$exists": False}}]},
         ],
     }
     docs = await db.categories.find(query, {"_id": 0}).to_list(length=500)
