@@ -1,6 +1,7 @@
 ## Hypercare Log — v1.0.0 (48 Saat)
 
 **Durum:** PENDING (hypercare henüz başlatılmadı)
+**Başlangıç Timestamp:** TBD
 
 | Zaman | Audit error rate | 403 spike | Country-scope violation | Finance revenue doğrulama | Notlar |
 | --- | --- | --- | --- | --- | --- |
