@@ -11,7 +11,7 @@
 | Kullanıcı Yönetimi | /admin/users | DONE | Tam liste yönetimi |
 | Bireysel Kullanıcılar | /admin/individual-users | DONE | Read-only v1 |
 | Kurumsal Kullanıcılar | /admin/dealers | DONE | Dealer yönetimi |
-| Bireysel Üye Başvurular | /admin/individual-applications | PLACEHOLDER | Veri yok (empty state) |
+| Bireysel Üye Başvurular | /admin/individual-applications | DONE | Liste + approve/reject |
 | Kurumsal Üye Başvurular | /admin/dealer-applications | DONE | Onay/ret akışı |
 | Moderation Queue | /admin/moderation | DONE | Moderasyon listesi |
 | Bireysel İlan Başvuruları | /admin/individual-listing-applications | PLACEHOLDER | Moderation Queue filtresi bekleniyor |
