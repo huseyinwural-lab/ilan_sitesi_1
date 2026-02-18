@@ -1,0 +1,165 @@
+{
+  "summary": "Sprint 4 API Testing - 19/22 tests passed",
+  "timestamp": "2026-02-18T01:02:28.064965",
+  "total_tests": 22,
+  "passed_tests": 19,
+  "failed_tests": 3,
+  "test_results": [
+    {
+      "test": "Admin Login (super_admin)",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:25.522827"
+    },
+    {
+      "test": "Country Admin Login (DE scope)",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:25.898618"
+    },
+    {
+      "test": "List Countries",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:26.048580"
+    },
+    {
+      "test": "Create Country (TR)",
+      "status": "FAIL",
+      "details": "Status: 409 (expected 201) - {'detail': 'Country already exists'}",
+      "timestamp": "2026-02-18T01:02:26.177787"
+    },
+    {
+      "test": "Update Country (TR)",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:26.331848"
+    },
+    {
+      "test": "Delete Country (TR)",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:26.473788"
+    },
+    {
+      "test": "List System Settings",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:26.621203"
+    },
+    {
+      "test": "Create Global System Setting",
+      "status": "FAIL",
+      "details": "Status: 409 (expected 201) - {'detail': 'Setting already exists'}",
+      "timestamp": "2026-02-18T01:02:26.739943"
+    },
+    {
+      "test": "Create Country-Specific System Setting (DE)",
+      "status": "FAIL",
+      "details": "Status: 200 (expected 201) - {'ok': True, 'setting': {'id': 'd8724767-6c23-4f2f-a6c7-19675cd69c4e', 'key': 'billing.vat_rate_default', 'value': 20, 'country_code': 'DE', 'is_readonly': False, 'description': 'Germany-specific VAT rate', 'created_at': '2026-02-18T01:02:26.844889+00:00', 'updated_at': '2026-02-18T01:02:26.844889+00:00'}}",
+      "timestamp": "2026-02-18T01:02:26.871563"
+    },
+    {
+      "test": "Get Effective Settings (Global)",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:26.982110"
+    },
+    {
+      "test": "Get Effective Settings (DE)",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:27.115535"
+    },
+    {
+      "test": "Get Effective Settings (FR)",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:27.226335"
+    },
+    {
+      "test": "Dashboard Summary (DE)",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:27.349148"
+    },
+    {
+      "test": "Dashboard Summary KPI Structure",
+      "status": "PASS",
+      "details": "All expected KPI fields present",
+      "timestamp": "2026-02-18T01:02:27.349707"
+    },
+    {
+      "test": "Dashboard Country Compare",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:27.498018"
+    },
+    {
+      "test": "Country Compare Structure",
+      "status": "PASS",
+      "details": "Found 5 countries",
+      "timestamp": "2026-02-18T01:02:27.498647"
+    },
+    {
+      "test": "Country Scope Violation - Dashboard Summary (FR)",
+      "status": "PASS",
+      "details": "Status: 403",
+      "timestamp": "2026-02-18T01:02:27.699869"
+    },
+    {
+      "test": "Country Scope Authorized - Dashboard Summary (DE)",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:27.829243"
+    },
+    {
+      "test": "Country Scope Violation - Countries (FR)",
+      "status": "PASS",
+      "details": "Status: 403",
+      "timestamp": "2026-02-18T01:02:27.945953"
+    },
+    {
+      "test": "Get Recent Audit Logs",
+      "status": "PASS",
+      "details": "Status: 200",
+      "timestamp": "2026-02-18T01:02:28.064321"
+    },
+    {
+      "test": "Country Change Audit Logs",
+      "status": "PASS",
+      "details": "Found 4 COUNTRY_CHANGE events",
+      "timestamp": "2026-02-18T01:02:28.064919"
+    },
+    {
+      "test": "System Setting Change Audit Logs",
+      "status": "PASS",
+      "details": "Found 3 SYSTEM_SETTING_CHANGE events",
+      "timestamp": "2026-02-18T01:02:28.064937"
+    }
+  ],
+  "failures": [
+    {
+      "test": "Create Country (TR)",
+      "status": "FAIL",
+      "details": "Status: 409 (expected 201) - {'detail': 'Country already exists'}",
+      "timestamp": "2026-02-18T01:02:26.177787"
+    },
+    {
+      "test": "Create Global System Setting",
+      "status": "FAIL",
+      "details": "Status: 409 (expected 201) - {'detail': 'Setting already exists'}",
+      "timestamp": "2026-02-18T01:02:26.739943"
+    },
+    {
+      "test": "Create Country-Specific System Setting (DE)",
+      "status": "FAIL",
+      "details": "Status: 200 (expected 201) - {'ok': True, 'setting': {'id': 'd8724767-6c23-4f2f-a6c7-19675cd69c4e', 'key': 'billing.vat_rate_default', 'value': 20, 'country_code': 'DE', 'is_readonly': False, 'description': 'Germany-specific VAT rate', 'created_at': '2026-02-18T01:02:26.844889+00:00', 'updated_at': '2026-02-18T01:02:26.844889+00:00'}}",
+      "timestamp": "2026-02-18T01:02:26.871563"
+    }
+  ],
+  "created_resources": {
+    "countries": [],
+    "system_settings": []
+  }
+}
