@@ -3411,6 +3411,7 @@ async def admin_create_category(
         "module": "vehicle",
     }
     audit_doc = {
+        "id": str(uuid.uuid4()),
         "event_type": "CATEGORY_CHANGE",
         "actor_id": current_user["id"],
         "actor_role": current_user.get("role"),
