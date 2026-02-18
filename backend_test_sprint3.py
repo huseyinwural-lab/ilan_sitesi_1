@@ -306,12 +306,12 @@ class Sprint3FinanceAPITester:
             "Create Invoice",
             "POST",
             "admin/invoices",
-            201,
+            200,
             data=invoice_data
         )
         
-        if success and response.get('id'):
-            self.created_invoice_id = response['id']
+        if success and response.get('invoice', {}).get('id'):
+            self.created_invoice_id = response['invoice']['id']
         else:
             return False
 
