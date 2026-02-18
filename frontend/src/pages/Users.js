@@ -47,7 +47,11 @@ export default function Users({
       if (country) params.append('country', country);
 
       const response = await axios.get(`${API}/users?${params}`);
-      setUsers(response.data);
+      let fetchedUsers = response.data || [];
+      if (allowedRoles?.length) {
+        fetchedUsers = fetchedUsers.filter((user) => allowedRoles.includes(user.role));
+      }
+      setUsers(fetchedUsers);
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {
