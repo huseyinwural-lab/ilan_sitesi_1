@@ -3379,7 +3379,6 @@ async def admin_create_category(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    check_permissions(current_user, allowed_roles={"super_admin"})
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
@@ -3397,8 +3396,8 @@ async def admin_create_category(
     if country_code:
         _assert_country_scope(country_code, current_user)
 
-    now_iso = utc_now_iso()
-    category_id = str(uuid4())
+    now_iso = datetime.now(timezone.utc).isoformat()
+    category_id = str(uuid.uuid4())
     doc = {
         "id": category_id,
         "parent_id": parent_id,
