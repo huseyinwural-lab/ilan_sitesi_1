@@ -2386,6 +2386,254 @@ def _serialize_category_version(doc: dict, include_snapshot: bool = False) -> di
     return payload
 
 
+def _schema_version_for_export(db, category_id: str) -> int:
+    latest = db.categories_versions.find({"category_id": category_id}, {"_id": 0, "version": 1}).sort("version", -1)
+    return latest.to_list(length=1)
+
+
+def _extract_schema_version(latest_docs: list[dict]) -> int:
+    if not latest_docs:
+        return 0
+    return int(latest_docs[0].get("version") or 0)
+
+
+def _schema_to_csv_rows(schema: Dict[str, Any]) -> list[list[str]]:
+    rows = []
+    rows.append([
+        "section",
+        "field_key",
+        "label",
+        "type",
+        "required",
+        "enabled",
+        "options",
+        "messages_required",
+        "messages_invalid",
+        "messages_min",
+        "messages_max",
+        "messages_range",
+        "messages_duplicate",
+    ])
+
+    core = schema.get("core_fields") or {}
+    for key in ["title", "description", "price"]:
+        cfg = core.get(key) or {}
+        messages = cfg.get("messages") or {}
+        rows.append([
+            "core_fields",
+            key,
+            key,
+            cfg.get("type") or ("price" if key == "price" else "text"),
+            str(bool(cfg.get("required"))),
+            "",
+            "",
+            str(messages.get("required", "")),
+            str(messages.get("invalid", "")),
+            str(messages.get("min", "")),
+            str(messages.get("max", "")),
+            str(messages.get("range", "")),
+            str(messages.get("duplicate", "")),
+        ])
+
+    for field in schema.get("dynamic_fields", []) or []:
+        messages = field.get("messages") or {}
+        options = ",".join(field.get("options") or [])
+        rows.append([
+            "dynamic_fields",
+            str(field.get("key")),
+            str(field.get("label")),
+            str(field.get("type")),
+            str(bool(field.get("required"))),
+            "",
+            options,
+            str(messages.get("required", "")),
+            str(messages.get("invalid", "")),
+            str(messages.get("min", "")),
+            str(messages.get("max", "")),
+            str(messages.get("range", "")),
+            str(messages.get("duplicate", "")),
+        ])
+
+    for group in schema.get("detail_groups", []) or []:
+        messages = group.get("messages") or {}
+        options = ",".join(group.get("options") or [])
+        rows.append([
+            "detail_groups",
+            str(group.get("id") or group.get("title")),
+            str(group.get("title")),
+            "checkbox_group",
+            str(bool(group.get("required"))),
+            "",
+            options,
+            str(messages.get("required", "")),
+            str(messages.get("invalid", "")),
+            str(messages.get("min", "")),
+            str(messages.get("max", "")),
+            str(messages.get("range", "")),
+            str(messages.get("duplicate", "")),
+        ])
+
+    modules = schema.get("modules") or {}
+    for key, module in modules.items():
+        enabled = bool(module.get("enabled")) if isinstance(module, dict) else bool(module)
+        rows.append([
+            "modules",
+            str(key),
+            str(key),
+            "module",
+            "",
+            str(enabled),
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ])
+
+    payment = schema.get("payment_options") or {}
+    if payment:
+        rows.append([
+            "payment_options",
+            "package",
+            "package",
+            "payment",
+            "",
+            str(bool(payment.get("package"))),
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ])
+        rows.append([
+            "payment_options",
+            "doping",
+            "doping",
+            "payment",
+            "",
+            str(bool(payment.get("doping"))),
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ])
+
+    title_uniqueness = schema.get("title_uniqueness") or {}
+    if title_uniqueness.get("enabled"):
+        rows.append([
+            "rules",
+            "title_uniqueness",
+            "title_uniqueness",
+            "rule",
+            "",
+            str(bool(title_uniqueness.get("enabled"))),
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            str(title_uniqueness.get("scope") or ""),
+        ])
+
+    return rows
+
+
+def _build_schema_pdf(schema: Dict[str, Any], category: dict, version: int) -> bytes:
+    styles = getSampleStyleSheet()
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, title="Schema Export")
+    elements = []
+    elements.append(Paragraph(f"Kategori Şema Export", styles["Title"]))
+    elements.append(Paragraph(f"Kategori: {category.get('name')} ({category.get('slug')})", styles["Normal"]))
+    elements.append(Paragraph(f"Versiyon: v{version}", styles["Normal"]))
+    elements.append(Paragraph(f"Durum: {schema.get('status')}", styles["Normal"]))
+    elements.append(Spacer(1, 12))
+
+    def add_table(title: str, rows: list[list[str]]):
+        if not rows:
+            return
+        elements.append(Paragraph(title, styles["Heading3"]))
+        table = Table(rows, hAlign="LEFT")
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ]))
+        elements.append(table)
+        elements.append(Spacer(1, 10))
+
+    core_rows = [["Alan", "Required", "Min", "Max", "Range", "Messages"]]
+    for key, cfg in (schema.get("core_fields") or {}).items():
+        messages = cfg.get("messages") or {}
+        range_cfg = cfg.get("range") or {}
+        core_rows.append([
+            key,
+            str(cfg.get("required")),
+            str(cfg.get("min", "")),
+            str(cfg.get("max", "")),
+            f"{range_cfg.get('min', '')}-{range_cfg.get('max', '')}",
+            ", ".join([str(v) for v in messages.values() if v]),
+        ])
+    add_table("Çekirdek Alanlar", core_rows)
+
+    dynamic_rows = [["Key", "Label", "Type", "Required", "Options", "Messages"]]
+    for field in schema.get("dynamic_fields", []) or []:
+        messages = field.get("messages") or {}
+        dynamic_rows.append([
+            str(field.get("key")),
+            str(field.get("label")),
+            str(field.get("type")),
+            str(field.get("required")),
+            ",".join(field.get("options") or []),
+            ", ".join([str(v) for v in messages.values() if v]),
+        ])
+    add_table("Parametre Alanları (2a)", dynamic_rows)
+
+    detail_rows = [["Group", "Required", "Options", "Messages"]]
+    for group in schema.get("detail_groups", []) or []:
+        messages = group.get("messages") or {}
+        detail_rows.append([
+            str(group.get("title")),
+            str(group.get("required")),
+            ",".join(group.get("options") or []),
+            ", ".join([str(v) for v in messages.values() if v]),
+        ])
+    add_table("Detay Grupları (2c)", detail_rows)
+
+    modules_rows = [["Module", "Enabled"]]
+    for key, module in (schema.get("modules") or {}).items():
+        enabled = bool(module.get("enabled")) if isinstance(module, dict) else bool(module)
+        modules_rows.append([str(key), str(enabled)])
+    add_table("Modüller", modules_rows)
+
+    if (schema.get("payment_options") or {}):
+        payment = schema.get("payment_options") or {}
+        payment_rows = [["Option", "Enabled"]]
+        payment_rows.append(["package", str(bool(payment.get("package")))])
+        payment_rows.append(["doping", str(bool(payment.get("doping")))])
+        add_table("Ödeme Seçenekleri", payment_rows)
+
+    title_uniqueness = schema.get("title_uniqueness") or {}
+    if title_uniqueness:
+        rule_rows = [["Rule", "Enabled", "Scope"]]
+        rule_rows.append(["title_uniqueness", str(bool(title_uniqueness.get("enabled"))), str(title_uniqueness.get("scope") or "")])
+        add_table("Duplicate Kuralı", rule_rows)
+
+    doc.build(elements)
+    return buffer.getvalue()
+
+
 
 def _validate_category_schema(schema: Dict[str, Any]) -> None:
     core = schema.get("core_fields") or {}
