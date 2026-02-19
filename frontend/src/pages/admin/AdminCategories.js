@@ -1249,77 +1249,75 @@ const AdminCategories = () => {
                     </div>
                   </div>
 
-                  {!editing && (
-                    <div className="rounded-lg border p-4 space-y-3" data-testid="categories-subcategory-section">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-md font-semibold">Alt Kategoriler</h3>
-                        <button
-                          type="button"
-                          className="px-3 py-1 border rounded text-sm"
-                          onClick={addSubcategory}
-                          data-testid="categories-subcategory-add"
-                        >
-                          Alt kategori ekle
-                        </button>
-                      </div>
-                      {subcategories.length === 0 ? (
-                        <div className="text-sm text-slate-500" data-testid="categories-subcategory-empty">Henüz alt kategori eklenmedi.</div>
-                      ) : (
-                        <div className="space-y-3">
-                          {subcategories.map((sub, index) => (
-                            <div key={`sub-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-end" data-testid={`categories-subcategory-row-${index}`}>
-                              <div className="space-y-1">
-                                <label className={labelClassName}>Ad</label>
-                                <input
-                                  className={inputClassName}
-                                  value={sub.name}
-                                  onChange={(e) => updateSubcategory(index, { name: e.target.value })}
-                                  data-testid={`categories-subcategory-name-${index}`}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <label className={labelClassName}>Slug</label>
-                                <input
-                                  className={inputClassName}
-                                  value={sub.slug}
-                                  onChange={(e) => updateSubcategory(index, { slug: e.target.value })}
-                                  data-testid={`categories-subcategory-slug-${index}`}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <label className={labelClassName}>Sıra</label>
-                                <input
-                                  type="number"
-                                  min={0}
-                                  className={inputClassName}
-                                  value={sub.sort_order}
-                                  onChange={(e) => updateSubcategory(index, { sort_order: e.target.value })}
-                                  data-testid={`categories-subcategory-sort-${index}`}
-                                />
-                              </div>
-                              <label className="flex items-center gap-2 text-sm text-slate-800" data-testid={`categories-subcategory-active-${index}`}>
-                                <input
-                                  type="checkbox"
-                                  checked={sub.active_flag}
-                                  onChange={(e) => updateSubcategory(index, { active_flag: e.target.checked })}
-                                  data-testid={`categories-subcategory-active-input-${index}`}
-                                />
-                                Aktif
-                              </label>
-                              <button
-                                type="button"
-                                className="text-sm text-rose-600 border rounded px-2 py-1"
-                                onClick={() => removeSubcategory(index)}
-                                data-testid={`categories-subcategory-remove-${index}`}
-                              >
-                                Sil
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                  <div className="rounded-lg border p-4 space-y-3" data-testid="categories-subcategory-section">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-md font-semibold">Alt Kategoriler</h3>
+                      <button
+                        type="button"
+                        className="px-3 py-1 border rounded text-sm"
+                        onClick={addSubcategory}
+                        data-testid="categories-subcategory-add"
+                      >
+                        Alt kategori ekle
+                      </button>
                     </div>
-                  )}
+                    {subcategories.length === 0 ? (
+                      <div className="text-sm text-slate-500" data-testid="categories-subcategory-empty">Henüz alt kategori eklenmedi.</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {subcategories.map((sub, index) => (
+                          <div key={`sub-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-end" data-testid={`categories-subcategory-row-${index}`}>
+                            <div className="space-y-1">
+                              <label className={labelClassName}>Ad</label>
+                              <input
+                                className={inputClassName}
+                                value={sub.name}
+                                onChange={(e) => updateSubcategory(index, { name: e.target.value })}
+                                data-testid={`categories-subcategory-name-${index}`}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className={labelClassName}>Slug</label>
+                              <input
+                                className={inputClassName}
+                                value={sub.slug}
+                                onChange={(e) => updateSubcategory(index, { slug: e.target.value })}
+                                data-testid={`categories-subcategory-slug-${index}`}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className={labelClassName}>Sıra</label>
+                              <input
+                                type="number"
+                                min={0}
+                                className={inputClassName}
+                                value={sub.sort_order}
+                                onChange={(e) => updateSubcategory(index, { sort_order: e.target.value })}
+                                data-testid={`categories-subcategory-sort-${index}`}
+                              />
+                            </div>
+                            <label className="flex items-center gap-2 text-sm text-slate-800" data-testid={`categories-subcategory-active-${index}`}>
+                              <input
+                                type="checkbox"
+                                checked={sub.active_flag}
+                                onChange={(e) => updateSubcategory(index, { active_flag: e.target.checked })}
+                                data-testid={`categories-subcategory-active-input-${index}`}
+                              />
+                              Aktif
+                            </label>
+                            <button
+                              type="button"
+                              className="text-sm text-rose-600 border rounded px-2 py-1"
+                              onClick={() => removeSubcategory(index)}
+                              data-testid={`categories-subcategory-remove-${index}`}
+                            >
+                              Sil
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   {editing && (
                     <div className="rounded-lg border border-dashed p-4 text-sm text-slate-600" data-testid="categories-hierarchy-locked">
