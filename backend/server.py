@@ -38,7 +38,7 @@ from app.vehicle_listings_store import (
     add_media as add_vehicle_media,
     set_status as set_vehicle_status,
 )
-from app.vehicle_publish_guard import validate_publish
+from app.vehicle_publish_guard import validate_publish, validate_listing_schema
 from app.vehicle_media_storage import store_image, resolve_public_media_path
 
 # Vehicle Master Data (file-based REV-B)
