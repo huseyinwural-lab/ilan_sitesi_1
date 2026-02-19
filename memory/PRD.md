@@ -169,6 +169,7 @@
 - Preview adımında özet + modül listesi + validation uyarıları + JSON accordion
 - Draft/Pubish API assertion’lı wizard E2E senaryosu
 - FAZ-7 auth edge-case Playwright senaryoları
+- Wizard step unlock fix: hierarchy_complete backend flag ile guard + draft save sonrası refetch
 - Lint debt yol haritası ve versiyonlama tasarım başlangıcı
 
 ### Test Kanıtı
