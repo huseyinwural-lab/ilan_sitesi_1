@@ -120,9 +120,9 @@
 - Dashboard canlı veri + Quick Actions + E2E PASS (Dashboard fazı kapatıldı)
 - Dashboard health: uptime + restart zamanı eklendi
 - Dashboard summary endpoint (/api/admin/dashboard/summary) + RBAC + cache
-- Dashboard v2: KPI (Bugün/Son 7 Gün), trend grafikleri (ilan/gelir), risk & alarm paneli (çoklu IP/SLA/bekleyen ödeme)
-- Sistem sağlığına API/DB gecikme metrikleri + finance RBAC (sadece finance/super_admin)
-- /admin ve /admin/dashboard birleşik kontrol merkezi görünümü
+- 2026-02-19: Dashboard v2 KPI (Bugün/Son 7 Gün) + trend grafikleri (ilan/gelir)
+- 2026-02-19: Risk & alarm paneli (çoklu IP/SLA/bekleyen ödeme) + sistem sağlığı gecikme metrikleri
+- 2026-02-19: Finans verileri RBAC (sadece finance/super_admin) + /admin ve /admin/dashboard birleşik görünüm
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
