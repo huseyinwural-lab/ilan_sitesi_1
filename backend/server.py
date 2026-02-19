@@ -2135,7 +2135,87 @@ def _normalize_category_schema(schema: Optional[Dict[str, Any]]) -> Dict[str, An
     return merged
 
 
-def _validate_category_schema(schema: Dict[str, Any]) -> None:
+async def _record_category_version(
+    db,
+    category_id: str,
+    schema_snapshot: Dict[str, Any],
+    actor: dict,
+    status: str,
+    max_versions: int = 20,
+) -> dict:
+    latest = await db.categories_versions.find(
+        {"category_id": category_id},
+        {"_id": 0, "version": 1},
+    ).sort("version", -1).to_list(length=1)
+    next_version = (latest[0].get("version", 0) if latest else 0) + 1
+    now_iso = datetime.now(timezone.utc).isoformat()
+    doc = {
+        "id": str(uuid.uuid4()),
+        "category_id": category_id,
+        "version": next_version,
+        "status": status,
+        "schema_snapshot": schema_snapshot,
+        "created_at": now_iso,
+        "created_by": actor.get("id"),
+        "created_by_role": actor.get("role"),
+        "created_by_email": actor.get("email"),
+    }
+    await db.categories_versions.insert_one(doc)
+
+    if max_versions and max_versions > 0:
+        overflow = await db.categories_versions.find(
+            {"category_id": category_id},
+            {"_id": 0, "id": 1},
+        ).sort("version", -1).skip(max_versions).to_list(length=200)
+        if overflow:
+            await db.categories_versions.delete_many({"id": {"$in": [v.get("id") for v in overflow if v.get("id")]}})
+
+    return doc
+
+
+async def _mark_latest_category_version_published(
+    db,
+    category_id: str,
+    schema_snapshot: Dict[str, Any],
+    actor: dict,
+    max_versions: int = 20,
+) -> dict:
+    latest = await db.categories_versions.find(
+        {"category_id": category_id},
+        {"_id": 0},
+    ).sort("version", -1).to_list(length=1)
+    now_iso = datetime.now(timezone.utc).isoformat()
+    if latest:
+        latest_doc = latest[0]
+        await db.categories_versions.update_one(
+            {"id": latest_doc.get("id")},
+            {"$set": {"status": "published", "published_at": now_iso, "published_by": actor.get("id")}},
+        )
+        latest_doc.update({"status": "published", "published_at": now_iso, "published_by": actor.get("id")})
+        return latest_doc
+
+    return await _record_category_version(db, category_id, schema_snapshot, actor, "published", max_versions=max_versions)
+
+
+def _serialize_category_version(doc: dict, include_snapshot: bool = False) -> dict:
+    payload = {
+        "id": doc.get("id"),
+        "category_id": doc.get("category_id"),
+        "version": doc.get("version"),
+        "status": doc.get("status"),
+        "created_at": doc.get("created_at"),
+        "created_by": doc.get("created_by"),
+        "created_by_role": doc.get("created_by_role"),
+        "created_by_email": doc.get("created_by_email"),
+        "published_at": doc.get("published_at"),
+        "published_by": doc.get("published_by"),
+    }
+    if include_snapshot:
+        payload["schema_snapshot"] = doc.get("schema_snapshot")
+    return payload
+
+
+
     core = schema.get("core_fields") or {}
     title = core.get("title") or {}
     description = core.get("description") or {}
