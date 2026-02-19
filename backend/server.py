@@ -780,13 +780,14 @@ async def list_categories(
 @api_router.get("/catalog/schema")
 async def get_catalog_schema(
     category_id: str,
-    country: str,
-    db=Depends(get_db),
+    country: str | None = None,
+    request: Request = None,
 ):
+    db = request.app.state.db
     category = await db.categories.find_one({"id": category_id, "active_flag": True})
     if not category:
         raise HTTPException(status_code=404, detail="Kategori bulunamadı")
-    if category.get("country_code") and category.get("country_code") != country:
+    if country and category.get("country_code") and category.get("country_code") != country:
         raise HTTPException(status_code=403, detail="Kategori ülke kapsamı dışında")
     schema = _normalize_category_schema(category.get("form_schema"))
     return {"category": _normalize_category_doc(category), "schema": schema}
