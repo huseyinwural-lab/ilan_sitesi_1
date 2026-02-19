@@ -578,6 +578,21 @@ def _get_client_ip(request: Request) -> str | None:
     return request.client.host if request.client else None
 
 
+def _enforce_export_rate_limit(request: Request, user_id: str) -> None:
+    now = time.time()
+    key = f"{user_id}:{_get_client_ip(request)}"
+    attempts = _export_attempts.get(key, [])
+    attempts = [ts for ts in attempts if (now - ts) <= EXPORT_RATE_LIMIT_WINDOW_SECONDS]
+    if len(attempts) >= EXPORT_RATE_LIMIT_MAX_ATTEMPTS:
+        retry_after_seconds = int(EXPORT_RATE_LIMIT_WINDOW_SECONDS - (now - attempts[0]))
+        raise HTTPException(
+            status_code=429,
+            detail={"code": "RATE_LIMITED", "retry_after_seconds": max(retry_after_seconds, 1)},
+        )
+    attempts.append(now)
+    _export_attempts[key] = attempts
+
+
 # Audit event taxonomy (v1)
 AUDIT_EVENT_TYPES_V1 = {
     "MODERATION_APPROVE",
