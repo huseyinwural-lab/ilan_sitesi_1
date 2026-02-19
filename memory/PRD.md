@@ -73,6 +73,7 @@
   - GET /api/admin/session/health (token doğrulama + expires_at)
   - Sidebar bootstrap health-check sonrası render
   - Playwright admin login smoke testi (dashboard → kategoriler)
+  - Test yolu: /app/frontend/tests/e2e/admin-login.spec.js
 - **Sprint 6:** Final Integration Gate
   - RBAC + Country-scope + Audit coverage kanıtları
   - Kritik akışlar E2E (public/dealer/individual/report/finance)
