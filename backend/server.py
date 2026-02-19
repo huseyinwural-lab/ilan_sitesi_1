@@ -2662,10 +2662,10 @@ async def admin_reports(
     listing_map: Dict[str, dict] = {}
     if listing_ids:
         listings = await db.vehicle_listings.find({"id": {"$in": listing_ids}}, {"_id": 0}).to_list(length=len(listing_ids))
-        listing_map = {l.get("id"): l for l in listings}
+        listing_map = {listing_doc.get("id"): listing_doc for listing_doc in listings}
 
     reporter_ids = [d.get("reporter_user_id") for d in docs if d.get("reporter_user_id")]
-    seller_ids = [l.get("created_by") for l in listing_map.values() if l.get("created_by")]
+    seller_ids = [listing_doc.get("created_by") for listing_doc in listing_map.values() if listing_doc.get("created_by")]
     user_ids = list({*reporter_ids, *seller_ids})
     user_map: Dict[str, dict] = {}
     if user_ids:
