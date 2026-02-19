@@ -168,6 +168,8 @@ const AdminCategories = () => {
   const [versionsError, setVersionsError] = useState("");
   const [selectedVersions, setSelectedVersions] = useState([]);
   const [versionDetails, setVersionDetails] = useState({});
+
+  const effectiveHierarchyComplete = editing ? Boolean(editing.hierarchy_complete) : hierarchyComplete;
   const inputClassName = "w-full border rounded p-2 text-slate-900 placeholder-slate-600 disabled:text-slate-500 disabled:bg-slate-100";
   const selectClassName = "w-full border rounded p-2 text-slate-900 disabled:text-slate-500 disabled:bg-slate-100";
   const labelClassName = "text-sm text-slate-800";
@@ -478,11 +480,11 @@ const AdminCategories = () => {
     }
   };
 
-  const handleSave = async (status = "draft", overrideEditing = null) => {
+  const handleSave = async (status = "draft", overrideEditing = null, closeOnSuccess = true) => {
     setHierarchyError("");
     setPublishError("");
     const activeEditing = overrideEditing ?? editing;
-    const hierarchyOk = hierarchyComplete || Boolean(activeEditing);
+    const hierarchyOk = effectiveHierarchyComplete || Boolean(activeEditing);
     if (!hierarchyOk) {
       setHierarchyError("Önce kategori hiyerarşisini tamamlayın.");
       return;
@@ -513,14 +515,35 @@ const AdminCategories = () => {
       },
       body: JSON.stringify(payload),
     });
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
       setHierarchyError(data?.detail || "Kaydetme sırasında hata oluştu.");
       return;
     }
-    setModalOpen(false);
-    resetForm();
+    const savedCategory = data?.category || activeEditing;
+    if (savedCategory) {
+      setEditing(savedCategory);
+      setForm({
+        name: savedCategory.name || form.name,
+        slug: savedCategory.slug || form.slug,
+        parent_id: savedCategory.parent_id || form.parent_id,
+        country_code: savedCategory.country_code || form.country_code,
+        active_flag: savedCategory.active_flag ?? form.active_flag,
+        sort_order: savedCategory.sort_order ?? form.sort_order,
+      });
+      if (savedCategory.form_schema) {
+        setSchema(applySchemaDefaults(savedCategory.form_schema));
+      }
+      setHierarchyComplete(Boolean(savedCategory.hierarchy_complete));
+      if (wizardStep === "hierarchy" && savedCategory.hierarchy_complete) {
+        setWizardStep("core");
+      }
+    }
     fetchItems();
+    if (closeOnSuccess) {
+      setModalOpen(false);
+      resetForm();
+    }
   };
 
   const handleDraftSave = async () => {
