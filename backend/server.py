@@ -4816,15 +4816,21 @@ async def public_search_v2(
         keys = [category]
         cat = await db.categories.find_one(
             {
-                "$or": [
-                    {"slug": category},
-                    {"id": category},
-                ],
-                "active_flag": True,
-                "$or": [
-                    {"country_code": None},
-                    {"country_code": ""},
-                    {"country_code": country_norm},
+                "$and": [
+                    {
+                        "$or": [
+                            {"slug": category},
+                            {"id": category},
+                        ],
+                    },
+                    {
+                        "$or": [
+                            {"country_code": None},
+                            {"country_code": ""},
+                            {"country_code": country_norm},
+                        ],
+                    },
+                    {"active_flag": True},
                 ],
             },
             {"_id": 0, "id": 1, "slug": 1},
