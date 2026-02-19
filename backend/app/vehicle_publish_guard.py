@@ -140,6 +140,9 @@ def validate_listing_schema(listing: dict, schema: dict) -> list[dict]:
             errs.append(_error("title", "MIN", title_cfg.get("messages", {}).get("min", "Başlık çok kısa")))
         if max_len and len(title) > max_len:
             errs.append(_error("title", "MAX", title_cfg.get("messages", {}).get("max", "Başlık çok uzun")))
+        custom_rule = title_cfg.get("custom")
+        if custom_rule and not re.match(custom_rule, title):
+            errs.append(_error("title", "CUSTOM", title_cfg.get("custom_message", "Başlık formatı geçersiz")))
 
     description = (listing.get("description") or "").strip()
     if desc_cfg.get("required") and not description:
@@ -151,6 +154,9 @@ def validate_listing_schema(listing: dict, schema: dict) -> list[dict]:
             errs.append(_error("description", "MIN", desc_cfg.get("messages", {}).get("min", "Açıklama çok kısa")))
         if max_len and len(description) > max_len:
             errs.append(_error("description", "MAX", desc_cfg.get("messages", {}).get("max", "Açıklama çok uzun")))
+        custom_rule = desc_cfg.get("custom")
+        if custom_rule and not re.match(custom_rule, description):
+            errs.append(_error("description", "CUSTOM", desc_cfg.get("custom_message", "Açıklama formatı geçersiz")))
 
     price_data = listing.get("price") or {}
     price_amount = price_data.get("amount")
@@ -173,7 +179,7 @@ def validate_listing_schema(listing: dict, schema: dict) -> list[dict]:
             if decimal_places == 0 and price_amount % 1 != 0:
                 errs.append(_error("price", "DECIMAL", price_cfg.get("messages", {}).get("numeric", "Fiyat ondalık içeremez")))
 
-    attrs = listing.get("attributes") or {}
+    attrs = listing.get("dynamic_fields") or listing.get("attributes") or {}
     for field in schema.get("dynamic_fields", []):
         key = field.get("key")
         if not key:
