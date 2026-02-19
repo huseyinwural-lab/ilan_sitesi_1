@@ -397,7 +397,7 @@ const AttributeForm = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {field.label || field.key} {field.required ? '*' : ''}
                 </label>
-                {field.type === 'radio' ? (
+                {field.type === 'radio' && (
                   <div className="flex flex-wrap gap-3" data-testid={`listing-dynamic-radio-${index}`}>
                     {field.options?.map((opt) => (
                       <label key={opt} className="flex items-center gap-2 text-sm">
@@ -412,7 +412,8 @@ const AttributeForm = () => {
                       </label>
                     ))}
                   </div>
-                ) : (
+                )}
+                {field.type === 'select' && (
                   <select
                     className="w-full p-2 border rounded-md"
                     value={dynamicValues[field.key] || ''}
@@ -424,6 +425,24 @@ const AttributeForm = () => {
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
+                )}
+                {field.type === 'text' && (
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded-md"
+                    value={dynamicValues[field.key] || ''}
+                    onChange={(e) => handleDynamicValueChange(field.key, e.target.value)}
+                    data-testid={`listing-dynamic-text-${field.key}`}
+                  />
+                )}
+                {field.type === 'number' && (
+                  <input
+                    type="number"
+                    className="w-full p-2 border rounded-md"
+                    value={dynamicValues[field.key] || ''}
+                    onChange={(e) => handleDynamicValueChange(field.key, e.target.value)}
+                    data-testid={`listing-dynamic-number-${field.key}`}
+                  />
                 )}
                 {errors[field.key] && <div className="text-xs text-red-600 mt-1" data-testid={`listing-dynamic-error-${field.key}`}>{errors[field.key]}</div>}
               </div>
