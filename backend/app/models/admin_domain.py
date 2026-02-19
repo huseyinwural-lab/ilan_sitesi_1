@@ -220,6 +220,7 @@ class CategoryUpdatePayload(BaseModel):
     country_code: Optional[str] = None
     active_flag: Optional[bool] = None
     sort_order: Optional[int] = None
+    hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
 
 
