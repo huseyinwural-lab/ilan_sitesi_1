@@ -3776,7 +3776,12 @@ async def admin_create_category(
     now_iso = datetime.now(timezone.utc).isoformat()
     category_id = str(uuid.uuid4())
     schema = _normalize_category_schema(payload.form_schema)
-    _validate_category_schema(schema)
+    schema_status = schema.get("status", "published")
+    hierarchy_complete = payload.hierarchy_complete if payload.hierarchy_complete is not None else True
+    if schema_status != "draft":
+        if not hierarchy_complete:
+            raise HTTPException(status_code=409, detail="Kategori hiyerarşisi tamamlanmadan yayınlanamaz")
+        _validate_category_schema(schema)
     doc = {
         "id": category_id,
         "parent_id": parent_id,
@@ -3785,6 +3790,7 @@ async def admin_create_category(
         "country_code": country_code,
         "active_flag": payload.active_flag if payload.active_flag is not None else True,
         "sort_order": payload.sort_order or 0,
+        "hierarchy_complete": hierarchy_complete,
         "form_schema": schema,
         "created_at": now_iso,
         "updated_at": now_iso,
