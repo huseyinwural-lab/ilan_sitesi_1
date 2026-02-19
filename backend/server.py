@@ -5274,6 +5274,19 @@ async def public_vehicle_models(make: str, country: str | None = None, request: 
     return {"version": "db", "make": make, "items": items}
 
 
+@api_router.get("/v2/vehicle/makes")
+async def public_vehicle_makes_v2(country: str | None = None, request: Request = None):
+    return await public_vehicle_makes(country, request)
+
+
+@api_router.get("/v2/vehicle/models")
+async def public_vehicle_models_v2(make_key: str | None = None, make: str | None = None, country: str | None = None, request: Request = None):
+    key = make_key or make
+    if not key:
+        raise HTTPException(status_code=400, detail="make_key is required")
+    return await public_vehicle_models(key, country, request)
+
+
 @api_router.get("/v1/admin/vehicle-master/status")
 async def vehicle_master_status_endpoint(current_user=Depends(check_permissions(["super_admin", "country_admin"]))):
     return vehicle_master_status()
