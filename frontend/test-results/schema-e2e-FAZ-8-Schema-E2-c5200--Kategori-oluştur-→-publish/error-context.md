@@ -391,18 +391,18 @@
                     - button "Pasif Et" [ref=e474] [cursor=pointer]
                     - button "Sil" [ref=e475] [cursor=pointer]
                 - generic [ref=e476]:
-                  - generic [ref=e477]: Alt Kategori 1
-                  - generic [ref=e478]: alt-kategori-1
+                  - generic [ref=e477]: e2e-test-category-1771523960402
+                  - generic [ref=e478]: e2e-test-category-1771523960402
                   - generic [ref=e479]: DE
-                  - generic [ref=e480]: "1"
+                  - generic [ref=e480]: "0"
                   - generic [ref=e482]: Aktif
                   - generic [ref=e483]:
                     - button "Düzenle" [ref=e484] [cursor=pointer]
                     - button "Pasif Et" [ref=e485] [cursor=pointer]
                     - button "Sil" [ref=e486] [cursor=pointer]
                 - generic [ref=e487]:
-                  - generic [ref=e488]: deneme
-                  - generic [ref=e489]: de
+                  - generic [ref=e488]: Alt Kategori 1
+                  - generic [ref=e489]: alt-kategori-1
                   - generic [ref=e490]: DE
                   - generic [ref=e491]: "1"
                   - generic [ref=e493]: Aktif
@@ -411,28 +411,28 @@
                     - button "Pasif Et" [ref=e496] [cursor=pointer]
                     - button "Sil" [ref=e497] [cursor=pointer]
                 - generic [ref=e498]:
-                  - generic [ref=e499]: Test Kategori
-                  - generic [ref=e500]: test-kategori
+                  - generic [ref=e499]: deneme
+                  - generic [ref=e500]: de
                   - generic [ref=e501]: DE
-                  - generic [ref=e502]: "10"
+                  - generic [ref=e502]: "1"
                   - generic [ref=e504]: Aktif
                   - generic [ref=e505]:
                     - button "Düzenle" [ref=e506] [cursor=pointer]
                     - button "Pasif Et" [ref=e507] [cursor=pointer]
                     - button "Sil" [ref=e508] [cursor=pointer]
                 - generic [ref=e509]:
-                  - generic [ref=e510]: Test Category
-                  - generic [ref=e511]: test-category
+                  - generic [ref=e510]: Test Kategori
+                  - generic [ref=e511]: test-kategori
                   - generic [ref=e512]: DE
-                  - generic [ref=e513]: "100"
+                  - generic [ref=e513]: "10"
                   - generic [ref=e515]: Aktif
                   - generic [ref=e516]:
                     - button "Düzenle" [ref=e517] [cursor=pointer]
                     - button "Pasif Et" [ref=e518] [cursor=pointer]
                     - button "Sil" [ref=e519] [cursor=pointer]
                 - generic [ref=e520]:
-                  - generic [ref=e521]: Test Category 1771385847
-                  - generic [ref=e522]: test-category-1771385847
+                  - generic [ref=e521]: Test Category
+                  - generic [ref=e522]: test-category
                   - generic [ref=e523]: DE
                   - generic [ref=e524]: "100"
                   - generic [ref=e526]: Aktif
@@ -440,123 +440,133 @@
                     - button "Düzenle" [ref=e528] [cursor=pointer]
                     - button "Pasif Et" [ref=e529] [cursor=pointer]
                     - button "Sil" [ref=e530] [cursor=pointer]
-            - generic [ref=e533]:
-              - generic [ref=e534]:
-                - heading "Kategori Düzenle" [level=2] [ref=e535]
-                - button "✕" [ref=e536] [cursor=pointer]
-              - generic [ref=e537]:
-                - generic [ref=e538]:
-                  - generic [ref=e540]:
-                    - button "Hiyerarşi" [ref=e541] [cursor=pointer]
-                    - button "Çekirdek Alanlar" [ref=e542] [cursor=pointer]
-                    - button "Parametre Alanları (2a)" [ref=e543] [cursor=pointer]
-                    - button "Detay Grupları (2c)" [ref=e544] [cursor=pointer]
-                    - button "Modüller" [ref=e545] [cursor=pointer]
-                    - button "Önizleme" [ref=e546] [cursor=pointer]
-                  - generic [ref=e547]: Taslak
+                - generic [ref=e531]:
+                  - generic [ref=e532]: Test Category 1771385847
+                  - generic [ref=e533]: test-category-1771385847
+                  - generic [ref=e534]: DE
+                  - generic [ref=e535]: "100"
+                  - generic [ref=e537]: Aktif
+                  - generic [ref=e538]:
+                    - button "Düzenle" [ref=e539] [cursor=pointer]
+                    - button "Pasif Et" [ref=e540] [cursor=pointer]
+                    - button "Sil" [ref=e541] [cursor=pointer]
+            - generic [ref=e544]:
+              - generic [ref=e545]:
+                - heading "Kategori Düzenle" [level=2] [ref=e546]
+                - button "✕" [ref=e547] [cursor=pointer]
+              - generic [ref=e548]:
                 - generic [ref=e549]:
-                  - generic [ref=e550]:
-                    - generic [ref=e551]:
-                      - generic [ref=e552]:
-                        - generic [ref=e553]: Ana Kategori
-                        - generic [ref=e554]: e2e-test-category-1771523838519
-                      - generic [ref=e555]:
-                        - generic [ref=e556]: Slug
-                        - generic [ref=e557]: e2e-test-category-1771523838519
-                      - generic [ref=e558]:
-                        - generic [ref=e559]: Ülke
-                        - generic [ref=e560]: DE
-                      - generic [ref=e561]:
-                        - generic [ref=e562]: Durum
-                        - generic [ref=e563]: Aktif
-                    - generic [ref=e564]: "Sıra: 0"
-                  - generic [ref=e566]:
-                    - heading "Çekirdek Alanlar" [level=3] [ref=e567]
-                    - generic [ref=e568]:
-                      - heading "Başlık" [level=4] [ref=e569]
-                      - generic [ref=e570]:
-                        - generic [ref=e571]:
-                          - checkbox "Başlık zorunlu" [checked] [ref=e572]
+                  - generic [ref=e551]:
+                    - button "Hiyerarşi" [ref=e552] [cursor=pointer]
+                    - button "Çekirdek Alanlar" [ref=e553] [cursor=pointer]
+                    - button "Parametre Alanları (2a)" [ref=e554] [cursor=pointer]
+                    - button "Detay Grupları (2c)" [ref=e555] [cursor=pointer]
+                    - button "Modüller" [ref=e556] [cursor=pointer]
+                    - button "Önizleme" [ref=e557] [cursor=pointer]
+                  - generic [ref=e558]: Taslak
+                - generic [ref=e560]:
+                  - generic [ref=e561]:
+                    - generic [ref=e562]:
+                      - generic [ref=e563]:
+                        - generic [ref=e564]: Ana Kategori
+                        - generic [ref=e565]: e2e-test-category-1771523960402
+                      - generic [ref=e566]:
+                        - generic [ref=e567]: Slug
+                        - generic [ref=e568]: e2e-test-category-1771523960402
+                      - generic [ref=e569]:
+                        - generic [ref=e570]: Ülke
+                        - generic [ref=e571]: DE
+                      - generic [ref=e572]:
+                        - generic [ref=e573]: Durum
+                        - generic [ref=e574]: Aktif
+                    - generic [ref=e575]: "Sıra: 0"
+                  - generic [ref=e577]:
+                    - heading "Çekirdek Alanlar" [level=3] [ref=e578]
+                    - generic [ref=e579]:
+                      - heading "Başlık" [level=4] [ref=e580]
+                      - generic [ref=e581]:
+                        - generic [ref=e582]:
+                          - checkbox "Başlık zorunlu" [checked] [ref=e583]
                           - text: Başlık zorunlu
-                        - generic [ref=e573]:
-                          - checkbox "Başlık benzersizliği" [ref=e574]
+                        - generic [ref=e584]:
+                          - checkbox "Başlık benzersizliği" [ref=e585]
                           - text: Başlık benzersizliği
-                      - generic [ref=e575]:
-                        - generic [ref=e576]:
+                      - generic [ref=e586]:
+                        - generic [ref=e587]:
                           - text: Başlık min
-                          - spinbutton "Başlık min" [active] [ref=e577]: "10"
-                        - generic [ref=e578]:
+                          - spinbutton "Başlık min" [active] [ref=e588]: "10"
+                        - generic [ref=e589]:
                           - text: Başlık max
-                          - spinbutton "Başlık max" [ref=e579]: "120"
-                        - generic [ref=e580]:
+                          - spinbutton "Başlık max" [ref=e590]: "120"
+                        - generic [ref=e591]:
                           - text: Başlık custom rule (regex)
-                          - textbox [ref=e581]
-                      - generic [ref=e582]:
-                        - textbox "Başlık required mesajı" [ref=e583]: Başlık zorunludur.
-                        - textbox "Başlık min mesajı" [ref=e584]: Başlık çok kısa.
-                        - textbox "Başlık max mesajı" [ref=e585]: Başlık çok uzun.
-                        - textbox "Başlık custom mesaj" [ref=e586]
-                    - generic [ref=e587]:
-                      - heading "Açıklama" [level=4] [ref=e588]
-                      - generic [ref=e589]:
-                        - checkbox "Açıklama zorunlu" [checked] [ref=e590]
+                          - textbox [ref=e592]
+                      - generic [ref=e593]:
+                        - textbox "Başlık required mesajı" [ref=e594]: Başlık zorunludur.
+                        - textbox "Başlık min mesajı" [ref=e595]: Başlık çok kısa.
+                        - textbox "Başlık max mesajı" [ref=e596]: Başlık çok uzun.
+                        - textbox "Başlık custom mesaj" [ref=e597]
+                    - generic [ref=e598]:
+                      - heading "Açıklama" [level=4] [ref=e599]
+                      - generic [ref=e600]:
+                        - checkbox "Açıklama zorunlu" [checked] [ref=e601]
                         - text: Açıklama zorunlu
-                      - generic [ref=e591]:
-                        - generic [ref=e592]:
+                      - generic [ref=e602]:
+                        - generic [ref=e603]:
                           - text: Açıklama min
-                          - spinbutton "Açıklama min" [ref=e593]: "30"
-                        - generic [ref=e594]:
+                          - spinbutton "Açıklama min" [ref=e604]: "30"
+                        - generic [ref=e605]:
                           - text: Açıklama max
-                          - spinbutton "Açıklama max" [ref=e595]: "4000"
-                        - generic [ref=e596]:
+                          - spinbutton "Açıklama max" [ref=e606]: "4000"
+                        - generic [ref=e607]:
                           - text: Açıklama custom rule (regex)
-                          - textbox [ref=e597]
-                      - generic [ref=e598]:
-                        - textbox "Açıklama required mesajı" [ref=e599]: Açıklama zorunludur.
-                        - textbox "Açıklama min mesajı" [ref=e600]: Açıklama çok kısa.
-                        - textbox "Açıklama max mesajı" [ref=e601]: Açıklama çok uzun.
-                        - textbox "Açıklama custom mesaj" [ref=e602]
-                    - generic [ref=e603]:
-                      - heading "Fiyat" [level=4] [ref=e604]
-                      - generic [ref=e605]:
-                        - checkbox "Fiyat zorunlu" [checked] [ref=e606]
+                          - textbox [ref=e608]
+                      - generic [ref=e609]:
+                        - textbox "Açıklama required mesajı" [ref=e610]: Açıklama zorunludur.
+                        - textbox "Açıklama min mesajı" [ref=e611]: Açıklama çok kısa.
+                        - textbox "Açıklama max mesajı" [ref=e612]: Açıklama çok uzun.
+                        - textbox "Açıklama custom mesaj" [ref=e613]
+                    - generic [ref=e614]:
+                      - heading "Fiyat" [level=4] [ref=e615]
+                      - generic [ref=e616]:
+                        - checkbox "Fiyat zorunlu" [checked] [ref=e617]
                         - text: Fiyat zorunlu
-                      - generic [ref=e607]:
-                        - generic [ref=e608]:
+                      - generic [ref=e618]:
+                        - generic [ref=e619]:
                           - text: Birincil para
-                          - combobox [ref=e609]:
+                          - combobox [ref=e620]:
                             - option "EUR" [selected]
                             - option "CHF"
-                        - generic [ref=e610]:
-                          - checkbox "İkincil para" [ref=e611]
+                        - generic [ref=e621]:
+                          - checkbox "İkincil para" [ref=e622]
                           - text: İkincil para
-                      - generic [ref=e612]:
-                        - generic [ref=e613]:
+                      - generic [ref=e623]:
+                        - generic [ref=e624]:
                           - text: Ondalık basamak
-                          - combobox "Ondalık basamak" [ref=e614]:
+                          - combobox "Ondalık basamak" [ref=e625]:
                             - option "0 basamak" [selected]
                             - option "1 basamak"
                             - option "2 basamak"
-                        - generic [ref=e615]:
+                        - generic [ref=e626]:
                           - text: Min fiyat
-                          - spinbutton "Min fiyat" [ref=e616]: "0"
-                        - generic [ref=e617]:
+                          - spinbutton "Min fiyat" [ref=e627]: "0"
+                        - generic [ref=e628]:
                           - text: Max fiyat
-                          - spinbutton "Max fiyat" [ref=e618]
-                      - generic [ref=e619]:
-                        - textbox "Fiyat required mesajı" [ref=e620]: Fiyat zorunludur.
-                        - textbox "Fiyat numeric mesajı" [ref=e621]: Fiyat sayısal olmalıdır.
-                        - textbox "Fiyat range mesajı" [ref=e622]: Fiyat aralık dışında.
-                - generic [ref=e623]:
-                  - button "Vazgeç" [ref=e624] [cursor=pointer]
-                  - generic [ref=e625]:
-                    - button "Geri" [ref=e627] [cursor=pointer]
-                    - button "Taslak Kaydet" [ref=e628] [cursor=pointer]
-                    - button "Devam" [ref=e630] [cursor=pointer]
+                          - spinbutton "Max fiyat" [ref=e629]
+                      - generic [ref=e630]:
+                        - textbox "Fiyat required mesajı" [ref=e631]: Fiyat zorunludur.
+                        - textbox "Fiyat numeric mesajı" [ref=e632]: Fiyat sayısal olmalıdır.
+                        - textbox "Fiyat range mesajı" [ref=e633]: Fiyat aralık dışında.
+                - generic [ref=e634]:
+                  - button "Vazgeç" [ref=e635] [cursor=pointer]
+                  - generic [ref=e636]:
+                    - button "Geri" [ref=e638] [cursor=pointer]
+                    - button "Taslak Kaydet" [ref=e639] [cursor=pointer]
+                    - button "Devam" [ref=e641] [cursor=pointer]
     - region "Notifications (F8)":
       - list
-  - link "Made with Emergent" [ref=e631] [cursor=pointer]:
+  - link "Made with Emergent" [ref=e642] [cursor=pointer]:
     - /url: https://app.emergent.sh/?utm_source=emergent-badge
-    - img [ref=e632]
-    - paragraph [ref=e635]: Made with Emergent
+    - img [ref=e643]
+    - paragraph [ref=e646]: Made with Emergent
 ```
