@@ -1891,6 +1891,7 @@ const AdminCategories = () => {
             </div>
           </div>
         </div>
+      </div>
       )}
     </div>
     </div>
