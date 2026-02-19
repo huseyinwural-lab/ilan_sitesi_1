@@ -59,7 +59,7 @@ const ReviewSubmit = () => {
       </div>
 
       <div className="flex justify-end gap-4">
-        <button className="px-6 py-3 text-gray-600 hover:bg-gray-100 rounded-lg">Edit</button>
+        <button className="px-6 py-3 text-gray-600 hover:bg-gray-100 rounded-lg" data-testid="wizard-review-edit">Edit</button>
         <button 
           onClick={publishListing}
           disabled={loading}
