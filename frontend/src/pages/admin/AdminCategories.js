@@ -547,13 +547,13 @@ const AdminCategories = () => {
   };
 
   const handleDraftSave = async () => {
-    if (!hierarchyComplete && !editing) {
+    if (!effectiveHierarchyComplete && !editing) {
       const result = await handleHierarchyComplete();
       if (!result?.success) return;
-      await handleSave("draft", result.parent || null);
+      await handleSave("draft", result.parent || null, false);
       return;
     }
-    await handleSave("draft");
+    await handleSave("draft", null, false);
   };
 
   const handleToggle = async (item) => {
