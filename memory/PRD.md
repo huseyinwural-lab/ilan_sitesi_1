@@ -90,6 +90,10 @@
   - Expired token health-check → 401 + UI logout doğrulandı
   - Multi-tab logout → ikinci sekme login ekranına düştü
   - Test yolu: /app/frontend/tests/e2e/admin-auth-edge.spec.js
+- **Kategori Sihirbazı Full E2E (2026-02-19):**
+  - Hierarchy → Core → 2a → 2c → Modules → Preview → Draft → Publish akışı
+  - Draft/Publish API assertion’ları
+  - Test yolu: /app/frontend/tests/e2e/schema-e2e.spec.js
 - **Admin Kategori Modal Kontrast Düzeltmesi:**
   - Modal input/label/placeholder renkleri koyu tona çekildi (WCAG uyumlu)
   - Playwright görsel regresyon testi eklendi
