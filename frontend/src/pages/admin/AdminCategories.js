@@ -2411,6 +2411,27 @@ const AdminCategories = () => {
                     </span>
                   </div>
 
+                  <div className="flex flex-wrap gap-2" data-testid="categories-export-actions">
+                    <button
+                      type="button"
+                      className="px-3 py-2 border rounded text-sm text-slate-900"
+                      onClick={() => handleExport('pdf')}
+                      disabled={!editing?.id}
+                      data-testid="categories-export-pdf"
+                    >
+                      PDF indir
+                    </button>
+                    <button
+                      type="button"
+                      className="px-3 py-2 border rounded text-sm text-slate-900"
+                      onClick={() => handleExport('csv')}
+                      disabled={!editing?.id}
+                      data-testid="categories-export-csv"
+                    >
+                      CSV indir
+                    </button>
+                  </div>
+
                   <div className="rounded-lg border p-4 space-y-3" data-testid="categories-preview-summary">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
                       <div>
