@@ -566,7 +566,7 @@ const AdminCategories = () => {
       setDetailError("Grup başlığı ve key zorunludur.");
       return;
     }
-    if (detailOptions.length === 0) {
+    if ((detailDraft.options || []).length === 0) {
       setDetailError("En az 1 checkbox seçeneği ekleyin.");
       return;
     }
@@ -577,7 +577,7 @@ const AdminCategories = () => {
     const payload = {
       id,
       title,
-      options: detailOptions,
+      options: detailDraft.options || [],
       required: detailDraft.required,
       sort_order: Number(detailDraft.sort_order || 0),
       messages,
