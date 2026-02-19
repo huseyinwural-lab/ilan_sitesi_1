@@ -611,9 +611,9 @@ const AdminCategories = () => {
       title: group.title || "",
       required: group.required || false,
       sort_order: group.sort_order || 0,
+      options: group.options || [],
       messages: { required: group.messages?.required || "", invalid: group.messages?.invalid || "" },
     });
-    setDetailOptions(group.options || []);
     setDetailOptionInput("");
     setDetailError("");
   };
