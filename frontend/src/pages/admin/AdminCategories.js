@@ -890,7 +890,7 @@ const AdminCategories = () => {
                       />
                     </div>
                     <div className="flex items-center gap-3 text-sm">
-                      <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 text-slate-800">
                         <input
                           type="checkbox"
                           checked={field.required}
@@ -1060,7 +1060,7 @@ const AdminCategories = () => {
                 )}
                 {schema.modules.payment?.enabled && (
                   <div className="flex gap-4 text-sm">
-                    <label className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-slate-800">
                       <input
                         type="checkbox"
                         checked={schema.payment_options.package}
@@ -1072,7 +1072,7 @@ const AdminCategories = () => {
                       />
                       Paket
                     </label>
-                    <label className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-slate-800">
                       <input
                         type="checkbox"
                         checked={schema.payment_options.doping}
