@@ -2386,12 +2386,11 @@ def _serialize_category_version(doc: dict, include_snapshot: bool = False) -> di
     return payload
 
 
-def _schema_version_for_export(db, category_id: str) -> int:
-    latest = db.categories_versions.find({"category_id": category_id}, {"_id": 0, "version": 1}).sort("version", -1)
-    return latest.to_list(length=1)
-
-
-def _extract_schema_version(latest_docs: list[dict]) -> int:
+async def _get_schema_version_for_export(db, category_id: str) -> int:
+    latest_docs = await db.categories_versions.find(
+        {"category_id": category_id},
+        {"_id": 0, "version": 1},
+    ).sort("version", -1).to_list(length=1)
     if not latest_docs:
         return 0
     return int(latest_docs[0].get("version") or 0)
