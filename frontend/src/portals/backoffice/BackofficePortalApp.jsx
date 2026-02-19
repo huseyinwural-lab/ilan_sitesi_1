@@ -78,7 +78,13 @@ export default function BackofficePortalApp() {
       <Route path="/corporate-campaigns" element={<Layout><CorporateCampaignsPage /></Layout>} />
       <Route path="/dashboard" element={<Layout><AdminDashboardPage /></Layout>} />
       <Route path="/country-compare" element={<Layout><AdminCountryComparePage /></Layout>} />
-      <Route path="/countries" element={<Layout><AdminCountriesPage /></Layout>} />
+      <Route path="/countries" element={
+        <Layout>
+          <AdminRouteGuard roles={["super_admin", "country_admin"]}>
+            <AdminCountriesPage />
+          </AdminRouteGuard>
+        </Layout>
+      } />
       <Route path="/system-settings" element={<Layout><AdminSystemSettingsPage /></Layout>} />
       <Route path="/listings" element={<Layout><AdminListingsPage /></Layout>} />
       <Route path="/reports" element={<Layout><AdminReportsPage /></Layout>} />
