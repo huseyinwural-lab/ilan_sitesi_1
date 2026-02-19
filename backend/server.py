@@ -6606,11 +6606,13 @@ async def admin_dashboard_country_compare(
     end_date: Optional[str] = None,
     sort_by: Optional[str] = None,
     sort_dir: Optional[str] = None,
+    countries: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
-    return await _build_country_compare_payload(db, current_user, period, start_date, end_date, sort_by, sort_dir)
+    selected_codes = _parse_country_codes(countries)
+    return await _build_country_compare_payload(db, current_user, period, start_date, end_date, sort_by, sort_dir, selected_codes)
 
 
 @api_router.get("/admin/dashboard/country-compare/export/csv")
@@ -6621,13 +6623,15 @@ async def admin_dashboard_country_compare_export_csv(
     end_date: Optional[str] = None,
     sort_by: Optional[str] = None,
     sort_dir: Optional[str] = None,
+    countries: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
     _enforce_export_rate_limit(request, current_user.get("id"))
 
-    payload = await _build_country_compare_payload(db, current_user, period, start_date, end_date, sort_by, sort_dir)
+    selected_codes = _parse_country_codes(countries)
+    payload = await _build_country_compare_payload(db, current_user, period, start_date, end_date, sort_by, sort_dir, selected_codes)
     items = payload.get("items") or []
 
     buffer = io.StringIO()
