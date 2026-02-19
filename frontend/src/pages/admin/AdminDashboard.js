@@ -39,15 +39,9 @@ export default function AdminDashboardPage() {
       <div>
         <h1 className="text-2xl font-bold" data-testid="admin-dashboard-title">Genel Bakış</h1>
         <div className="text-xs text-muted-foreground" data-testid="admin-dashboard-context">
-          Country: <span className="font-semibold">{urlCountry || 'Seçilmedi'}</span>
+          Country: <span className="font-semibold">{urlCountry || 'Global'}</span>
         </div>
       </div>
-
-      {!urlCountry && (
-        <div className="border rounded-md p-4 text-sm text-muted-foreground" data-testid="dashboard-country-required">
-          KPI görmek için country seçimi yapın.
-        </div>
-      )}
 
       {loading ? (
         <div className="p-6 text-center" data-testid="dashboard-loading">Yükleniyor…</div>
