@@ -790,6 +790,8 @@ async def get_catalog_schema(
     if country and category.get("country_code") and category.get("country_code") != country:
         raise HTTPException(status_code=403, detail="Kategori ülke kapsamı dışında")
     schema = _normalize_category_schema(category.get("form_schema"))
+    if schema.get("status") == "draft":
+        raise HTTPException(status_code=409, detail="Kategori şeması taslak durumda")
     return {"category": _normalize_category_doc(category), "schema": schema}
 
 
