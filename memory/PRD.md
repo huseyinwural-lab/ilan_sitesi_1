@@ -183,6 +183,10 @@
 - Hiyerarşi kriteri: ana ad + slug + en az 1 alt kategori
 - Lint debt yol haritası ve versiyonlama tasarım başlangıcı
 - Unlock state tek kaynak: isHierarchyComplete only, persist sonrası unlock
+- Admin Kategoriler ekranı metin kontrastları koyulaştırıldı
+- E2E fixture kullanıcı + fixture kategori şeması seed edildi (user@platform.com)
+- v2 vehicle makes/models endpoint alias eklendi (wizard test stabil)
+- SKIPPED E2E Senaryo 2/3 aktif edildi ve PASS
 
 ### Test Kanıtı
 - playwright: tests/e2e/admin-auth-edge.spec.js → ✅ 2 test geçti
