@@ -225,7 +225,7 @@ const AdminCategories = () => {
   }, [effectiveHierarchyComplete, schema, previewComplete]);
   const isPaymentEnabled = Boolean(schema.modules?.payment?.enabled);
   const isPhotosEnabled = Boolean(schema.modules?.photos?.enabled);
-  const autosaveEnabled = Boolean(modalOpen && editing && schema.status === "draft");
+  const autosaveEnabled = Boolean(modalOpen && editing && schema.status === "draft" && effectiveHierarchyComplete);
   const autosaveSnapshot = useMemo(() => JSON.stringify({
     form,
     schema,
@@ -255,7 +255,7 @@ const AdminCategories = () => {
   const buildSavePayload = (status, activeEditing) => ({
     ...form,
     sort_order: Number(form.sort_order || 0),
-    hierarchy_complete: true,
+    hierarchy_complete: effectiveHierarchyComplete,
     form_schema: { ...schema, status },
     expected_updated_at: activeEditing?.updated_at,
   });
@@ -599,7 +599,7 @@ const AdminCategories = () => {
     setHierarchyError("");
     setPublishError("");
     const activeEditing = overrideEditing ?? editing;
-    const hierarchyOk = effectiveHierarchyComplete || Boolean(activeEditing);
+    const hierarchyOk = effectiveHierarchyComplete;
     if (!hierarchyOk) {
       setHierarchyError("Önce kategori hiyerarşisini tamamlayın.");
       return;
