@@ -766,8 +766,17 @@ DASHBOARD_MULTI_IP_THRESHOLD = 3
 DASHBOARD_SLA_HOURS = 24
 DASHBOARD_PENDING_PAYMENT_DAYS = 7
 
+ECB_DAILY_URL = os.environ.get("ECB_DAILY_URL")
+ECB_CACHE_TTL_SECONDS = int(os.environ.get("ECB_CACHE_TTL_SECONDS", "0"))
+ECB_RATE_BASE = "EUR"
+
+if not ECB_DAILY_URL or ECB_CACHE_TTL_SECONDS <= 0:
+    raise RuntimeError("ECB_DAILY_URL and ECB_CACHE_TTL_SECONDS must be set")
+
 DASHBOARD_CACHE_TTL_SECONDS = int(os.environ.get("DASHBOARD_CACHE_TTL_SECONDS", "60"))
+COUNTRY_COMPARE_CACHE_TTL_SECONDS = 60
 _dashboard_summary_cache: Dict[str, Dict[str, Any]] = {}
+_country_compare_cache: Dict[str, Dict[str, Any]] = {}
 _dashboard_cache_hits = 0
 _dashboard_cache_misses = 0
 
