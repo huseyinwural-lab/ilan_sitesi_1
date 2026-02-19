@@ -266,6 +266,8 @@ const AdminCategories = () => {
 
   const handleCreate = () => {
     resetForm();
+    setWizardStep("hierarchy");
+    setHierarchyComplete(false);
     setModalOpen(true);
   };
 
