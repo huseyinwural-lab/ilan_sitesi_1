@@ -63,11 +63,12 @@ export default function AdminCountriesPage() {
     setEditing(item);
     setForm({
       country_code: item.country_code,
-      name: item.name,
+      name: formatName(item.name),
       default_currency: item.default_currency,
       default_language: item.default_language || '',
       active_flag: item.active_flag,
     });
+    setIsoSearch('');
     setError(null);
     setModalOpen(true);
   };
