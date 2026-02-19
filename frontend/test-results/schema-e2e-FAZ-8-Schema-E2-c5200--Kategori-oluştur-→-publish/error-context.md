@@ -1,7 +1,7 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e1]:
+- generic [active] [ref=e1]:
   - generic [ref=e2]:
     - generic [ref=e3]:
       - complementary [ref=e4]:
@@ -261,18 +261,18 @@
                     - button "Pasif Et" [ref=e331] [cursor=pointer]
                     - button "Sil" [ref=e332] [cursor=pointer]
                 - generic [ref=e333]:
-                  - generic [ref=e334]: Test Category
-                  - generic [ref=e335]: test-category
+                  - generic [ref=e334]: e2e-test-category-1771519018242
+                  - generic [ref=e335]: e2e-test-category-1771519018242
                   - generic [ref=e336]: DE
-                  - generic [ref=e337]: "100"
+                  - generic [ref=e337]: "0"
                   - generic [ref=e339]: Aktif
                   - generic [ref=e340]:
                     - button "Düzenle" [ref=e341] [cursor=pointer]
                     - button "Pasif Et" [ref=e342] [cursor=pointer]
                     - button "Sil" [ref=e343] [cursor=pointer]
                 - generic [ref=e344]:
-                  - generic [ref=e345]: Test Category 1771385847
-                  - generic [ref=e346]: test-category-1771385847
+                  - generic [ref=e345]: Test Category
+                  - generic [ref=e346]: test-category
                   - generic [ref=e347]: DE
                   - generic [ref=e348]: "100"
                   - generic [ref=e350]: Aktif
@@ -280,98 +280,20 @@
                     - button "Düzenle" [ref=e352] [cursor=pointer]
                     - button "Pasif Et" [ref=e353] [cursor=pointer]
                     - button "Sil" [ref=e354] [cursor=pointer]
-            - generic [ref=e357]:
-              - generic [ref=e358]:
-                - heading "Kategori Düzenle" [level=2] [ref=e359]
-                - button "✕" [ref=e360] [cursor=pointer]
-              - generic [ref=e361]:
-                - generic [ref=e362]:
-                  - generic [ref=e364]:
-                    - button "Hiyerarşi" [ref=e365] [cursor=pointer]
-                    - button "Çekirdek Alanlar" [ref=e366] [cursor=pointer]
-                    - button "Parametre Alanları (2a)" [ref=e367] [cursor=pointer]
-                    - button "Detay Grupları (2c)" [ref=e368] [cursor=pointer]
-                    - button "Modüller" [ref=e369] [cursor=pointer]
-                    - button "Önizleme" [ref=e370] [cursor=pointer]
-                  - generic [ref=e371]: Taslak
-                - generic [ref=e373]:
-                  - generic [ref=e374]:
-                    - generic [ref=e375]:
-                      - generic [ref=e376]:
-                        - generic [ref=e377]: Ana Kategori
-                        - generic [ref=e378]: e2e-test-category-1771518990918
-                      - generic [ref=e379]:
-                        - generic [ref=e380]: Slug
-                        - generic [ref=e381]: e2e-test-category-1771518990918
-                      - generic [ref=e382]:
-                        - generic [ref=e383]: Ülke
-                        - generic [ref=e384]: DE
-                      - generic [ref=e385]:
-                        - generic [ref=e386]: Durum
-                        - generic [ref=e387]: Aktif
-                    - generic [ref=e388]: "Sıra: 0"
-                  - generic [ref=e390]:
-                    - generic [ref=e391]:
-                      - heading "Önizleme" [level=3] [ref=e392]
-                      - generic [ref=e393]: Onaylandı
-                    - generic [ref=e394]:
-                      - generic [ref=e395]:
-                        - generic [ref=e396]:
-                          - generic [ref=e397]: Kategori
-                          - generic [ref=e398]: e2e-test-category-1771518990918
-                        - generic [ref=e399]:
-                          - generic [ref=e400]: Slug
-                          - generic [ref=e401]: e2e-test-category-1771518990918
-                        - generic [ref=e402]:
-                          - generic [ref=e403]: Ülke
-                          - generic [ref=e404]: DE
-                        - generic [ref=e405]:
-                          - generic [ref=e406]: Durum
-                          - generic [ref=e407]: Aktif
-                      - generic [ref=e408]:
-                        - generic [ref=e409]:
-                          - generic [ref=e410]: Parametre Alanı
-                          - generic [ref=e411]: "1"
-                        - generic [ref=e412]:
-                          - generic [ref=e413]: Detay Grubu
-                          - generic [ref=e414]: "1"
-                        - generic [ref=e415]:
-                          - generic [ref=e416]: Aktif Modül
-                          - generic [ref=e417]: "2"
-                    - generic [ref=e418]:
-                      - generic [ref=e419]: Modül Listesi
-                      - generic [ref=e421]:
-                        - generic [ref=e422]:
-                          - generic [ref=e423]: Adres
-                          - generic [ref=e424]: Aktif
-                        - generic [ref=e425]:
-                          - generic [ref=e426]: Fotoğraf
-                          - generic [ref=e427]: Aktif
-                        - generic [ref=e428]:
-                          - generic [ref=e429]: İletişim
-                          - generic [ref=e430]: Kapalı
-                        - generic [ref=e431]:
-                          - generic [ref=e432]: Ödeme
-                          - generic [ref=e433]: Kapalı
-                    - generic [ref=e434]:
-                      - generic [ref=e435]: Validation Uyarıları
-                      - generic [ref=e437]: Tüm kontroller tamam.
-                    - generic [ref=e438]:
-                      - button "Önizleme Onaylandı" [disabled] [ref=e439]
-                      - generic [ref=e441]: Onay tamamlandı.
-                    - group [ref=e442]:
-                      - generic "JSON şema (salt okunur / debug)" [ref=e443] [cursor=pointer]
-                      - text: "{ \"core_fields\": { \"title\": { \"required\": true, \"min\": 10, \"max\": 120, \"custom_rule\": \"\", \"custom_message\": \"\", \"messages\": { \"required\": \"Başlık zorunludur.\", \"min\": \"Başlık çok kısa.\", \"max\": \"Başlık çok uzun.\", \"duplicate\": \"Bu başlık zaten kullanılıyor.\" }, \"ui\": { \"bold\": true, \"high_contrast\": true } }, \"description\": { \"required\": true, \"min\": 30, \"max\": 4000, \"custom_rule\": \"\", \"custom_message\": \"\", \"messages\": { \"required\": \"Açıklama zorunludur.\", \"min\": \"Açıklama çok kısa.\", \"max\": \"Açıklama çok uzun.\" }, \"ui\": { \"min_rows\": 6, \"auto_grow\": true, \"show_counter\": true, \"max_rows\": 8 } }, \"price\": { \"required\": true, \"currency_primary\": \"EUR\", \"currency_secondary\": \"CHF\", \"secondary_enabled\": false, \"decimal_places\": 0, \"range\": { \"min\": 0, \"max\": null }, \"messages\": { \"required\": \"Fiyat zorunludur.\", \"numeric\": \"Fiyat sayısal olmalıdır.\", \"range\": \"Fiyat aralık dışında.\" }, \"input_mask\": { \"thousand_separator\": true } } }, \"dynamic_fields\": [ { \"id\": \"field-1771518995280-8383\", \"label\": \"Ekstra Seçim\", \"key\": \"extra_option\", \"type\": \"select\", \"options\": [ \"A\", \"B\" ], \"required\": true, \"sort_order\": 0, \"messages\": { \"required\": \"\", \"invalid\": \"\" } } ], \"detail_groups\": [ { \"id\": \"features\", \"title\": \"Donanım\", \"options\": [ \"ABS\", \"Airbag\", \"Klima\", \"ESP\" ], \"required\": true, \"sort_order\": 0, \"messages\": { \"required\": \"\", \"invalid\": \"\" } } ], \"modules\": { \"address\": { \"enabled\": true }, \"photos\": { \"enabled\": true, \"max_uploads\": 12 }, \"contact\": { \"enabled\": false }, \"payment\": { \"enabled\": false } }, \"payment_options\": { \"package\": false, \"doping\": false }, \"module_order\": [ \"core_fields\", \"dynamic_fields\", \"address\", \"detail_groups\", \"photos\", \"contact\", \"payment\" ], \"title_uniqueness\": { \"enabled\": false, \"scope\": \"category\" }, \"status\": \"draft\", \"validation_messages\": { \"core_fields\": { \"title\": { \"required\": \"Başlık zorunludur.\", \"min\": \"Başlık çok kısa.\", \"max\": \"Başlık çok uzun.\", \"duplicate\": \"Bu başlık zaten kullanılıyor.\" }, \"description\": { \"required\": \"Açıklama zorunludur.\", \"min\": \"Açıklama çok kısa.\", \"max\": \"Açıklama çok uzun.\" }, \"price\": { \"required\": \"Fiyat zorunludur.\", \"numeric\": \"Fiyat sayısal olmalıdır.\", \"range\": \"Fiyat aralık dışında.\" } }, \"dynamic_fields\": { \"extra_option\": { \"required\": \"\", \"invalid\": \"\" } }, \"detail_groups\": { \"features\": { \"required\": \"\", \"invalid\": \"\" } } } }"
-                - generic [ref=e444]:
-                  - button "Vazgeç" [ref=e445] [cursor=pointer]
-                  - generic [ref=e446]:
-                    - button "Geri" [ref=e448] [cursor=pointer]
-                    - button "Taslak Kaydet" [ref=e449] [cursor=pointer]
-                    - button "Yayınla" [active] [ref=e451] [cursor=pointer]
+                - generic [ref=e355]:
+                  - generic [ref=e356]: Test Category 1771385847
+                  - generic [ref=e357]: test-category-1771385847
+                  - generic [ref=e358]: DE
+                  - generic [ref=e359]: "100"
+                  - generic [ref=e361]: Aktif
+                  - generic [ref=e362]:
+                    - button "Düzenle" [ref=e363] [cursor=pointer]
+                    - button "Pasif Et" [ref=e364] [cursor=pointer]
+                    - button "Sil" [ref=e365] [cursor=pointer]
     - region "Notifications (F8)":
       - list
-  - link "Made with Emergent" [ref=e452] [cursor=pointer]:
+  - link "Made with Emergent" [ref=e366] [cursor=pointer]:
     - /url: https://app.emergent.sh/?utm_source=emergent-badge
-    - img [ref=e453]
-    - paragraph [ref=e456]: Made with Emergent
+    - img [ref=e367]
+    - paragraph [ref=e370]: Made with Emergent
 ```
