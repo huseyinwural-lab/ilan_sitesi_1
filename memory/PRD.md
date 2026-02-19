@@ -1,6 +1,6 @@
 # FAZ Admin Domain Complete — PRD
 
-**Son güncelleme:** 2026-02-19 (Dashboard trend filtresi + PDF export)
+**Son güncelleme:** 2026-02-19 (Country compare analitik + ECB normalizasyonu)
 
 ## Program Status (23.02.2026)
 - Foundation Phase: **OFFICIALLY CLOSED**
