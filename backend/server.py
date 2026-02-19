@@ -5155,7 +5155,8 @@ async def submit_vehicle_listing(
 
     listing, updates = _apply_listing_payload(listing, payload)
     if updates:
-        updates["updated_at"] = now_iso()
+        now_iso = datetime.now(timezone.utc).isoformat()
+        updates["updated_at"] = now_iso
         await db.vehicle_listings.update_one({"id": listing_id}, {"$set": updates})
 
     vehicle_master = await _build_vehicle_master_from_db(db, listing.get("country"))
