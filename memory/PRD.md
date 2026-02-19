@@ -123,6 +123,7 @@
 - 2026-02-19: Dashboard v2 KPI (Bugün/Son 7 Gün) + trend grafikleri (ilan/gelir)
 - 2026-02-19: Risk & alarm paneli (çoklu IP/SLA/bekleyen ödeme) + sistem sağlığı gecikme metrikleri
 - 2026-02-19: Finans verileri RBAC (sadece finance/super_admin) + /admin ve /admin/dashboard birleşik görünüm
+- 2026-02-19: Trend aralığı filtresi (7-365) + Dashboard PDF export (super_admin)
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
