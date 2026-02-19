@@ -649,6 +649,19 @@ def _dashboard_cache_key(role: str, country_codes: Optional[List[str]], trend_da
     return f"{role}:{joined}:{trend_label}"
 
 
+def _country_compare_cache_key(
+    role: str,
+    country_codes: Optional[List[str]],
+    period: str,
+    start_date: Optional[str],
+    end_date: Optional[str],
+    sort_by: Optional[str],
+    sort_dir: Optional[str],
+) -> str:
+    joined = ",".join(sorted(country_codes)) if country_codes else "global"
+    return f"{role}:{joined}:{period}:{start_date or ''}:{end_date or ''}:{sort_by or ''}:{sort_dir or ''}"
+
+
 def _get_cached_dashboard_summary(cache_key: str) -> Optional[Dict[str, Any]]:
     entry = _dashboard_summary_cache.get(cache_key)
     if not entry:
