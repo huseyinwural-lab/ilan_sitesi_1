@@ -153,9 +153,9 @@ const AdminCategories = () => {
     title: "",
     required: false,
     sort_order: 0,
+    options: [],
     messages: { required: "", invalid: "" },
   });
-  const [detailOptions, setDetailOptions] = useState([]);
   const [detailOptionInput, setDetailOptionInput] = useState("");
   const [detailEditIndex, setDetailEditIndex] = useState(null);
   const [detailError, setDetailError] = useState("");
