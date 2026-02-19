@@ -224,12 +224,37 @@ export default function AdminCountriesPage() {
               </button>
             </div>
             <div className="p-4 space-y-3">
+              {!editing && (
+                <div className="space-y-2" data-testid="countries-iso-picker">
+                  <div className="text-xs text-muted-foreground">ISO 3166 ülke seç</div>
+                  <input
+                    value={isoSearch}
+                    onChange={(e) => setIsoSearch(e.target.value)}
+                    placeholder="Ülke ara (örn: Germany, DE)"
+                    className="h-9 px-3 rounded-md border bg-background text-sm w-full"
+                    data-testid="countries-iso-search"
+                  />
+                  <select
+                    className="h-9 rounded-md border bg-background px-3 text-sm w-full"
+                    onChange={(e) => handleIsoSelect(e.target.value)}
+                    data-testid="countries-iso-select"
+                  >
+                    <option value="">Ülke seç</option>
+                    {filteredIsoCountries.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.code} · {country.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <input
                 value={form.country_code}
                 onChange={(e) => setForm({ ...form, country_code: e.target.value.toUpperCase() })}
                 placeholder="Country Code"
                 className="h-9 px-3 rounded-md border bg-background text-sm w-full"
                 disabled={!!editing}
+                readOnly={!editing}
                 data-testid="countries-form-code"
               />
               <input
