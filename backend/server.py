@@ -5204,6 +5204,12 @@ async def get_vehicle_detail(listing_id: str, request: Request):
     if primary_price is None:
         primary_price = attrs.get("price_eur")
 
+    modules = None
+    if listing.get("category_id"):
+        category = await db.categories.find_one({"id": listing.get("category_id")})
+        if category and category.get("form_schema"):
+            modules = _normalize_category_schema(category.get("form_schema")).get("modules")
+
     return {
         "id": listing_id,
         "status": "published",
@@ -5220,6 +5226,7 @@ async def get_vehicle_detail(listing_id: str, request: Request):
         "location": {"city": "", "country": listing.get("country")},
         "description": listing.get("description") or "",
         "seller": {"name": "", "is_verified": False},
+        "modules": modules or {},
         "contact_option_phone": listing.get("contact_option_phone", False),
         "contact_option_message": listing.get("contact_option_message", True),
         "contact": {"phone_protected": not listing.get("contact_option_phone", False)},
