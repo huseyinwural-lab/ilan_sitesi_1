@@ -1019,23 +1019,25 @@ const AdminCategories = () => {
                     }))}
                     data-testid="categories-title-max-message"
                   />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Başlık duplicate mesajı"
-                    value={schema.core_fields.title.messages.duplicate}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        title: {
-                          ...prev.core_fields.title,
-                          messages: { ...prev.core_fields.title.messages, duplicate: e.target.value },
+                  {schema.title_uniqueness.enabled && (
+                    <input
+                      type="text"
+                      className={inputClassName}
+                      placeholder="Başlık duplicate mesajı"
+                      value={schema.core_fields.title.messages.duplicate}
+                      onChange={(e) => setSchema((prev) => ({
+                        ...prev,
+                        core_fields: {
+                          ...prev.core_fields,
+                          title: {
+                            ...prev.core_fields.title,
+                            messages: { ...prev.core_fields.title.messages, duplicate: e.target.value },
+                          },
                         },
-                      },
-                    }))}
-                    data-testid="categories-title-duplicate-message"
-                  />
+                      }))}
+                      data-testid="categories-title-duplicate-message"
+                    />
+                  )}
                   <input
                     type="text"
                     className={inputClassName}
