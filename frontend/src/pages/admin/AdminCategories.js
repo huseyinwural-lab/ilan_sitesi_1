@@ -1036,6 +1036,34 @@ const AdminCategories = () => {
                     data-testid="categories-photos-max"
                   />
                 )}
+                {schema.modules.payment?.enabled && (
+                  <div className="flex gap-4 text-sm">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={schema.payment_options.package}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          payment_options: { ...prev.payment_options, package: e.target.checked },
+                        }))}
+                        data-testid="categories-payment-package"
+                      />
+                      Paket
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={schema.payment_options.doping}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          payment_options: { ...prev.payment_options, doping: e.target.checked },
+                        }))}
+                        data-testid="categories-payment-doping"
+                      />
+                      Doping
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
 
