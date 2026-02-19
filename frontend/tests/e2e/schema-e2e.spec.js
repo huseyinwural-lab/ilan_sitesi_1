@@ -169,7 +169,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await expect(page.getByText(categorySlug).first()).toBeVisible({ timeout: 30000 });
   });
 
-  test.skip('Senaryo 2: Wizard step-2 validation tetikleme', async ({ page }) => {
+  test('Senaryo 2: Wizard step-2 validation tetikleme', async ({ page }) => {
     await page.goto('/login');
     await page.getByTestId('login-email').fill(userCreds.email);
     await page.getByTestId('login-password').fill(userCreds.password);
@@ -199,7 +199,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await expect(page.getByTestId(`listing-dynamic-error-${dynamicKey}`)).toBeVisible({ timeout: 30000 });
   });
 
-  test.skip('Senaryo 3: Listing detail modül görünürlüğü', async ({ page }) => {
+  test('Senaryo 3: Listing detail modül görünürlüğü', async ({ page }) => {
     await page.goto('/login');
     await page.getByTestId('login-email').fill(userCreds.email);
     await page.getByTestId('login-password').fill(userCreds.password);
