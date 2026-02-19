@@ -635,14 +635,14 @@ const AdminCategories = () => {
           description: "Başka bir sekmede güncellendi.",
           variant: "destructive",
         });
-        dismissDraftToast(3000);
+        dismissDraftToast(4000);
       } else if (status === "draft") {
         showDraftToast({
           title: "Kaydetme başarısız",
           description: "Taslak kaydedilemedi.",
           variant: "destructive",
         });
-        dismissDraftToast(3000);
+        dismissDraftToast(4000);
       }
       if (!autosave) {
         setHierarchyError(data?.detail || "Kaydetme sırasında hata oluştu.");
