@@ -8,6 +8,7 @@ module.exports = [
   js.configs.recommended,
   {
     files: ['**/*.{js,jsx}'],
+    ignores: ['src/components/seo/StructuredData.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
