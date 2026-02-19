@@ -714,7 +714,7 @@ const AdminCategories = () => {
         }
       }
 
-      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${parent.id}`, {
+      const patchRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${parent.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -722,15 +722,21 @@ const AdminCategories = () => {
         },
         body: JSON.stringify({ hierarchy_complete: true }),
       });
+      const patchData = await patchRes.json().catch(() => ({}));
+      if (!patchRes.ok) {
+        setHierarchyError(patchData?.detail || "Hiyerarşi güncellenemedi.");
+        return { success: false };
+      }
+      const updatedParent = patchData?.category || parent;
 
-      setEditing(parent);
+      setEditing(updatedParent);
       setForm({
-        name: parent.name || name,
-        slug: parent.slug || slug,
-        parent_id: parent.parent_id || "",
-        country_code: parent.country_code || country,
-        active_flag: parent.active_flag ?? true,
-        sort_order: parent.sort_order || 0,
+        name: updatedParent.name || name,
+        slug: updatedParent.slug || slug,
+        parent_id: updatedParent.parent_id || "",
+        country_code: updatedParent.country_code || country,
+        active_flag: updatedParent.active_flag ?? true,
+        sort_order: updatedParent.sort_order || 0,
       });
       setHierarchyComplete(true);
       setWizardStep("core");
