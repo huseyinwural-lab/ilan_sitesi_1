@@ -125,14 +125,15 @@
 - (Boş) — Preview gate + FAZ-7 auth kontrolleri + wizard E2E tamamlandı
 
 ### P1
-- Taslak versiyon geçmişi + diff paneli (MVP)
 - Lint debt cleanup (LINT-1/2)
 
 ### P2
+- Versioning diff highlight + rollback (aktif faz)
 - Lint debt cleanup (LINT-3/4/5)
 - Şema versiyonlama + audit log sertleştirme
 
 ### P3
+- Admin imzası (export rapor imzası) — backlog
 - Dinamik modül adımları (ilan verme sihirbazında modül bazlı step)
 
 ## Lint Debt Roadmap (Backend)
