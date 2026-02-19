@@ -462,7 +462,7 @@ export default function AdminCountryComparePage() {
           <div className="divide-y">
             {loading && !hasLoaded ? (
               <div className="p-6 text-center" data-testid="country-compare-loading">Yükleniyor…</div>
-            ) : items.length === 0 ? (
+            ) : filteredItems.length === 0 ? (
               <div className="p-6 text-center text-muted-foreground" data-testid="country-compare-empty">Kayıt yok</div>
             ) : (
               filteredItems.map((item) => {
