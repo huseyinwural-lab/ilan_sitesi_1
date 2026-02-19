@@ -779,6 +779,11 @@ const AdminCategories = () => {
       }))
       .filter((item) => item.name || item.slug);
 
+    if (cleanedSubs.length === 0) {
+      setHierarchyError("En az 1 alt kategori eklenmelidir.");
+      return { success: false };
+    }
+
     const invalidSub = cleanedSubs.find((item) => !item.name || !item.slug);
     if (invalidSub) {
       setHierarchyError("Alt kategorilerde ad + slug zorunludur.");
@@ -808,6 +813,38 @@ const AdminCategories = () => {
           setHierarchyError(data?.detail || "Hiyerarşi güncellenemedi.");
           return { success: false };
         }
+
+        for (const child of cleanedSubs) {
+          const childPayload = {
+            name: child.name,
+            slug: child.slug,
+            parent_id: editing.id,
+            country_code: country,
+            active_flag: child.active_flag,
+            sort_order: Number(child.sort_order || 0),
+            hierarchy_complete: true,
+          };
+          if (child.id) {
+            await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${child.id}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                ...authHeader,
+              },
+              body: JSON.stringify(childPayload),
+            });
+          } else {
+            await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...authHeader,
+              },
+              body: JSON.stringify(childPayload),
+            });
+          }
+        }
+
         const updated = data?.category || editing;
         setEditing(updated);
         setHierarchyComplete(true);
