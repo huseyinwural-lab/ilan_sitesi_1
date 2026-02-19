@@ -1692,8 +1692,8 @@ const AdminCategories = () => {
                       </button>
                     </div>
 
-                    {detailOptions.length > 0 && (
-                      <div className="flex flex-wrap gap-2" data-testid="categories-detail-options">
+                    {(detailDraft.options || []).length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2" data-testid="categories-detail-options">
                         {detailOptions.map((opt, index) => (
                           <div key={`${opt}-${index}`} className="flex items-center gap-2 border rounded px-2 py-1 text-xs" data-testid={`categories-detail-option-${index}`}>
                             <span>{opt}</span>
