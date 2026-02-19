@@ -172,6 +172,39 @@ const AdminCategories = () => {
   const nextStep = WIZARD_STEPS[currentStepIndex + 1]?.id;
   const prevStep = WIZARD_STEPS[currentStepIndex - 1]?.id;
   const schemaStatusLabel = schema.status === "published" ? "Yayında" : "Taslak";
+  const publishValidation = useMemo(() => {
+    const errors = [];
+    if (!hierarchyComplete) {
+      errors.push("Hiyerarşi tamamlanmalı.");
+    }
+    const titleRangeValid = schema.core_fields.title.min <= schema.core_fields.title.max;
+    const descriptionRangeValid = schema.core_fields.description.min <= schema.core_fields.description.max;
+    const priceRange = schema.core_fields.price.range || { min: 0, max: null };
+    const priceRangeValid = priceRange.max === null || priceRange.max === undefined || priceRange.min <= priceRange.max;
+    const coreRequiredValid = schema.core_fields.title.required && schema.core_fields.description.required && schema.core_fields.price.required;
+    if (!coreRequiredValid || !titleRangeValid || !descriptionRangeValid || !priceRangeValid) {
+      errors.push("Çekirdek alanlarda zorunlu ve aralık kontrolleri tamamlanmalı.");
+    }
+    const dynamicValid = (schema.dynamic_fields || []).every((field) => {
+      if (!field.label || !field.key) return false;
+      if (field.type === "select" || field.type === "radio") {
+        return Array.isArray(field.options) && field.options.length > 0;
+      }
+      return true;
+    });
+    if (!dynamicValid) {
+      errors.push("Parametre alanlarında type-driven kurallar geçerli olmalı.");
+    }
+    const detailValid = (schema.detail_groups || []).length > 0 && (schema.detail_groups || []).every((group) => (
+      group.title && group.id && Array.isArray(group.options) && group.options.length > 0
+    ));
+    if (!detailValid) {
+      errors.push("Detay gruplarında en az 1 seçenekli grup bulunmalı.");
+    }
+    return { canPublish: errors.length === 0, errors };
+  }, [hierarchyComplete, schema]);
+  const isPaymentEnabled = Boolean(schema.modules?.payment?.enabled);
+  const isPhotosEnabled = Boolean(schema.modules?.photos?.enabled);
 
   const fetchItems = async () => {
     setLoading(true);
