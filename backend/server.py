@@ -1978,6 +1978,7 @@ def _normalize_category_doc(doc: dict, include_schema: bool = False) -> dict:
         "country_code": doc.get("country_code"),
         "active_flag": doc.get("active_flag", doc.get("is_enabled", True)),
         "sort_order": doc.get("sort_order", 0),
+        "hierarchy_complete": doc.get("hierarchy_complete", True),
         "created_at": doc.get("created_at"),
         "updated_at": doc.get("updated_at"),
     }
