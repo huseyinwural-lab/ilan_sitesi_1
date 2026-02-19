@@ -2216,6 +2216,7 @@ def _serialize_category_version(doc: dict, include_snapshot: bool = False) -> di
 
 
 
+def _validate_category_schema(schema: Dict[str, Any]) -> None:
     core = schema.get("core_fields") or {}
     title = core.get("title") or {}
     description = core.get("description") or {}
