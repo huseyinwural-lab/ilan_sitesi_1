@@ -1367,7 +1367,7 @@ const AdminCategories = () => {
                   </div>
 
                   {editing && (
-                    <div className="rounded-lg border border-dashed p-4 text-sm text-slate-600" data-testid="categories-hierarchy-locked">
+                    <div className="rounded-lg border border-dashed p-4 text-sm text-slate-700" data-testid="categories-hierarchy-locked">
                       Mevcut kategori üzerinde hiyerarşi düzenleme devre dışı. Devam ederek form şemasını güncelleyebilirsiniz.
                     </div>
                   )}
@@ -2545,7 +2545,7 @@ const AdminCategories = () => {
                         <div className="text-xs text-emerald-700" data-testid="categories-version-diff-empty">Fark bulunamadı.</div>
                       )}
                       {versionCompare.diffPaths.length > 0 && (
-                        <ul className="list-disc pl-5 space-y-1 text-xs text-slate-600 max-h-32 overflow-auto" data-testid="categories-version-diff-list">
+                        <ul className="list-disc pl-5 space-y-1 text-xs text-slate-700 max-h-32 overflow-auto" data-testid="categories-version-diff-list">
                           {versionCompare.diffPaths.slice(0, 20).map((path, index) => (
                             <li key={`diff-${index}`} data-testid={`categories-version-diff-${index}`}>{path}</li>
                           ))}
@@ -2553,13 +2553,13 @@ const AdminCategories = () => {
                       )}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="space-y-2">
-                          <div className="text-xs font-semibold text-slate-600" data-testid="categories-version-left-label">v{versionCompare.left.version}</div>
+                          <div className="text-xs font-semibold text-slate-700" data-testid="categories-version-left-label">v{versionCompare.left.version}</div>
                           <pre className="text-xs bg-slate-900 text-slate-100 p-3 rounded overflow-auto max-h-64" data-testid="categories-version-left-json">
                             {JSON.stringify(versionCompare.left.schema_snapshot, null, 2)}
                           </pre>
                         </div>
                         <div className="space-y-2">
-                          <div className="text-xs font-semibold text-slate-600" data-testid="categories-version-right-label">v{versionCompare.right.version}</div>
+                          <div className="text-xs font-semibold text-slate-700" data-testid="categories-version-right-label">v{versionCompare.right.version}</div>
                           <pre className="text-xs bg-slate-900 text-slate-100 p-3 rounded overflow-auto max-h-64" data-testid="categories-version-right-json">
                             {JSON.stringify(versionCompare.right.schema_snapshot, null, 2)}
                           </pre>
