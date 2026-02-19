@@ -319,21 +319,7 @@ const AdminCategories = () => {
     fetchItems();
   };
 
-  const updateDynamicField = (index, patch) => {
-    setSchema((prev) => {
-      const updated = [...prev.dynamic_fields];
-      updated[index] = { ...updated[index], ...patch };
-      return { ...prev, dynamic_fields: updated };
-    });
-  };
 
-  const updateDetailGroup = (index, patch) => {
-    setSchema((prev) => {
-      const updated = [...prev.detail_groups];
-      updated[index] = { ...updated[index], ...patch };
-      return { ...prev, detail_groups: updated };
-    });
-  };
 
   return (
     <div className="p-6" data-testid="categories-page">
