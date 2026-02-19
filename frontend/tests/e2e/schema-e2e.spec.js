@@ -72,7 +72,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
 
     await page.getByTestId('categories-detail-draft-title').fill('Donanım');
     await page.getByTestId('categories-detail-draft-key').fill(detailGroupId);
-    await page.getByTestId('categories-detail-draft-required').click();
+    await page.getByTestId('categories-detail-draft-required-input').check();
 
     for (const option of detailOptions) {
       await page.getByTestId('categories-detail-option-input').fill(option);
