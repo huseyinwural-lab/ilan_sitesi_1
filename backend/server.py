@@ -704,6 +704,8 @@ APP_START_TIME = datetime.now(timezone.utc)
 
 DASHBOARD_CACHE_TTL_SECONDS = int(os.environ.get("DASHBOARD_CACHE_TTL_SECONDS", "60"))
 _dashboard_summary_cache: Dict[str, Dict[str, Any]] = {}
+_dashboard_cache_hits = 0
+_dashboard_cache_misses = 0
 
 ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
 
