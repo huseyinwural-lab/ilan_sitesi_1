@@ -283,6 +283,11 @@ const AdminCategories = () => {
     setDetailError("");
     setPreviewComplete(false);
     setJsonCopyStatus("");
+    setVersions([]);
+    setVersionsLoading(false);
+    setVersionsError("");
+    setSelectedVersions([]);
+    setVersionDetails({});
   };
 
   const handleEdit = (item) => {
@@ -324,6 +329,11 @@ const AdminCategories = () => {
     setDetailError("");
     setPreviewComplete(false);
     setJsonCopyStatus("");
+    setVersions([]);
+    setVersionsLoading(false);
+    setVersionsError("");
+    setSelectedVersions([]);
+    setVersionDetails({});
     setModalOpen(true);
   };
 
