@@ -37,7 +37,7 @@ const createDefaultSchema = () => ({
       currency_secondary: "CHF",
       secondary_enabled: false,
       decimal_places: 0,
-      range: { min: 0, max: None },
+      range: { min: 0, max: null },
       messages: {
         required: "Fiyat zorunludur.",
         numeric: "Fiyat sayısal olmalıdır.",
