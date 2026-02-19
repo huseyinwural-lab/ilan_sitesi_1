@@ -47,9 +47,12 @@ const DetailPage = () => {
     // Extract UUID id from /ilan/vasita/{id}-{slug} or /ilan/{id}
     const match = id.match(/^([a-f0-9\-]{36})/i);
     const realId = match ? match[1] : id;
+    const query = new URLSearchParams(search);
+    const preview = query.get('preview') === '1';
+    const previewParam = preview ? '?preview=1' : '';
 
     setLoading(true);
-    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle/${realId}`)
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle/${realId}${previewParam}`)
       .then(async (r) => {
         if (!r.ok) throw new Error('not found');
         return r.json();
@@ -68,7 +71,7 @@ const DetailPage = () => {
         setListing(null);
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, search]);
 
   const handleRevealPhone = async () => {
     // API Call
