@@ -118,6 +118,10 @@ const DetailPage = () => {
 
   const seller = listing.seller || {};
   const location = listing.location || {};
+  const modules = listing.modules || {};
+  const showPhotos = modules.photos?.enabled !== false;
+  const showAddress = modules.address?.enabled !== false;
+  const showContact = modules.contact?.enabled !== false;
   const phoneEnabled = Boolean(listing.contact_option_phone);
   const messageEnabled = listing.contact_option_message !== false;
 
