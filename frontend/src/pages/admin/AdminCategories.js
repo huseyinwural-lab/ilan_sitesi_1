@@ -1498,101 +1498,172 @@ const AdminCategories = () => {
                 </div>
               )}
 
-              <div className="border-t pt-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-md font-semibold">Özel Detay Grupları (2c)</h3>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setSchema((prev) => ({
-                        ...prev,
-                        detail_groups: [
-                          ...prev.detail_groups,
-                          {
-                            id: createId('group'),
-                            title: "",
-                            options: [],
-                            required: false,
-                            sort_order: 0,
-                            messages: { required: "", invalid: "" },
-                          },
-                        ],
-                      }));
-                    }}
-                    data-testid="categories-add-detail-group"
-                  >
-                    Grup Ekle
-                  </button>
-                </div>
+              {wizardStep === "detail" && (
+                <div className="border-t pt-4 space-y-4" data-testid="categories-detail-step">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-md font-semibold">Detay Grupları (2c)</h3>
+                    <span className="text-xs text-slate-500">Önce grup tanımı → checkbox listesi</span>
+                  </div>
 
-                {schema.detail_groups.map((group, index) => (
-                  <div key={group.id} className="border rounded p-3 space-y-2">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                      <input
-                        className={inputClassName}
-                        placeholder="Grup başlığı"
-                        value={group.title}
-                        onChange={(e) => updateDetailGroup(index, { title: e.target.value })}
-                        data-testid={`categories-group-title-${index}`}
-                      />
-                      <input
-                        className={inputClassName}
-                        placeholder="Seçenekler (virgülle)"
-                        value={(group.options || []).join(', ')}
-                        onChange={(e) => updateDetailGroup(index, { options: e.target.value.split(',').map((o) => o.trim()).filter(Boolean) })}
-                        data-testid={`categories-group-options-${index}`}
-                      />
-                      <input
-                        type="number"
-                        className={inputClassName}
-                        placeholder="Sıra"
-                        value={group.sort_order}
-                        onChange={(e) => updateDetailGroup(index, { sort_order: Number(e.target.value) })}
-                        data-testid={`categories-group-sort-${index}`}
-                      />
+                  {detailError && (
+                    <div className="p-2 rounded border border-rose-200 bg-rose-50 text-rose-700 text-sm" data-testid="categories-detail-error">
+                      {detailError}
                     </div>
-                    <label className="flex items-center gap-2 text-sm text-slate-800">
+                  )}
+
+                  <div className="rounded-lg border p-4 space-y-3" data-testid="categories-detail-draft">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Grup başlığı</label>
+                        <input
+                          className={inputClassName}
+                          value={detailDraft.title}
+                          onChange={(e) => setDetailDraft((prev) => ({ ...prev, title: e.target.value }))}
+                          data-testid="categories-detail-draft-title"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Key (teknik)</label>
+                        <input
+                          className={inputClassName}
+                          value={detailDraft.id}
+                          onChange={(e) => setDetailDraft((prev) => ({ ...prev, id: e.target.value }))}
+                          data-testid="categories-detail-draft-key"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Sıra</label>
+                        <input
+                          type="number"
+                          min={0}
+                          className={inputClassName}
+                          value={detailDraft.sort_order}
+                          onChange={(e) => setDetailDraft((prev) => ({ ...prev, sort_order: e.target.value }))}
+                          data-testid="categories-detail-draft-sort"
+                        />
+                      </div>
+                    </div>
+
+                    <label className="flex items-center gap-2 text-sm text-slate-800" data-testid="categories-detail-draft-required">
                       <input
                         type="checkbox"
-                        checked={group.required}
-                        onChange={(e) => updateDetailGroup(index, { required: e.target.checked })}
-                        data-testid={`categories-group-required-${index}`}
+                        checked={detailDraft.required}
+                        onChange={(e) => setDetailDraft((prev) => ({ ...prev, required: e.target.checked }))}
                       />
                       Zorunlu
                     </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <input
-                        className={inputClassName}
-                        placeholder="Required mesajı"
-                        value={group.messages?.required || ''}
-                        onChange={(e) => updateDetailGroup(index, { messages: { ...group.messages, required: e.target.value } })}
-                        data-testid={`categories-group-required-message-${index}`}
-                      />
-                      <input
-                        className={inputClassName}
-                        placeholder="Invalid mesajı"
-                        value={group.messages?.invalid || ''}
-                        onChange={(e) => updateDetailGroup(index, { messages: { ...group.messages, invalid: e.target.value } })}
-                        data-testid={`categories-group-invalid-message-${index}`}
-                      />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {detailDraft.required && (
+                        <div className="space-y-1">
+                          <label className={labelClassName}>Required mesajı</label>
+                          <input
+                            className={inputClassName}
+                            value={detailDraft.messages.required}
+                            onChange={(e) => setDetailDraft((prev) => ({
+                              ...prev,
+                              messages: { ...prev.messages, required: e.target.value },
+                            }))}
+                            data-testid="categories-detail-draft-required-message"
+                          />
+                        </div>
+                      )}
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Invalid mesajı</label>
+                        <input
+                          className={inputClassName}
+                          value={detailDraft.messages.invalid}
+                          onChange={(e) => setDetailDraft((prev) => ({
+                            ...prev,
+                            messages: { ...prev.messages, invalid: e.target.value },
+                          }))}
+                          data-testid="categories-detail-draft-invalid-message"
+                        />
+                      </div>
                     </div>
-                    <button
-                      className="text-sm text-red-500"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setSchema((prev) => ({
-                          ...prev,
-                          detail_groups: prev.detail_groups.filter((_, i) => i != index),
-                        }));
-                      }}
-                      data-testid={`categories-group-remove-${index}`}
-                    >
-                      Sil
-                    </button>
+
+                    <div className="flex flex-wrap gap-2 items-end">
+                      <div className="flex-1 space-y-1">
+                        <label className={labelClassName}>Checkbox seçeneği</label>
+                        <input
+                          className={inputClassName}
+                          value={detailOptionInput}
+                          onChange={(e) => setDetailOptionInput(e.target.value)}
+                          data-testid="categories-detail-option-input"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="px-3 py-2 border rounded text-sm"
+                        onClick={handleDetailOptionAdd}
+                        data-testid="categories-detail-option-add"
+                      >
+                        Ekle
+                      </button>
+                    </div>
+
+                    {detailOptions.length > 0 && (
+                      <div className="flex flex-wrap gap-2" data-testid="categories-detail-options">
+                        {detailOptions.map((opt, index) => (
+                          <div key={`${opt}-${index}`} className="flex items-center gap-2 border rounded px-2 py-1 text-xs" data-testid={`categories-detail-option-${index}`}>
+                            <span>{opt}</span>
+                            <button
+                              type="button"
+                              className="text-rose-600"
+                              onClick={() => setDetailOptions((prev) => prev.filter((_, i) => i !== index))}
+                              data-testid={`categories-detail-option-remove-${index}`}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-slate-900 text-white rounded text-sm"
+                        onClick={handleDetailNext}
+                        data-testid="categories-detail-next"
+                      >
+                        {detailEditIndex !== null ? 'Güncelle' : 'Next grup'}
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="space-y-2" data-testid="categories-detail-list">
+                    {schema.detail_groups.length === 0 ? (
+                      <div className="text-sm text-slate-500">Henüz detay grubu eklenmedi.</div>
+                    ) : (
+                      schema.detail_groups.map((group, index) => (
+                        <div key={group.id || group.title} className="border rounded p-3 flex flex-wrap items-center gap-3">
+                          <div className="flex-1">
+                            <div className="font-medium">{group.title} ({group.id})</div>
+                            <div className="text-xs text-slate-500">Seçenek: {group.options?.length || 0} · Sıra: {group.sort_order || 0}</div>
+                          </div>
+                          <button
+                            type="button"
+                            className="text-sm px-3 py-1 border rounded"
+                            onClick={() => handleDetailEdit(index)}
+                            data-testid={`categories-detail-edit-${index}`}
+                          >
+                            Düzenle
+                          </button>
+                          <button
+                            type="button"
+                            className="text-sm px-3 py-1 border rounded text-rose-600"
+                            onClick={() => handleDetailRemove(index)}
+                            data-testid={`categories-detail-remove-${index}`}
+                          >
+                            Sil
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="border-t pt-4 space-y-4">
                 <h3 className="text-md font-semibold">Sabit Modüller</h3>
