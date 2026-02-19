@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Suspense, lazy } from 'react';
 import axios from 'axios';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCountry } from '../contexts/CountryContext';
+import { useAuth } from '../contexts/AuthContext';
 import {
   Users,
   Globe,
@@ -13,10 +14,26 @@ import {
   ArrowDownRight,
   Server,
   AlertTriangle,
+  BarChart3,
+  Lock,
 } from 'lucide-react';
+
+const TrendsSection = lazy(() => import('../components/admin/dashboard/TrendsSection'));
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+const formatNumber = (value) => {
+  if (value === null || value === undefined) return '-';
+  return Number(value).toLocaleString('tr-TR');
+};
+
+const formatCurrencyTotals = (totals) => {
+  if (!totals || Object.keys(totals).length === 0) return '-';
+  return Object.entries(totals)
+    .map(([currency, amount]) => `${Number(amount).toLocaleString('tr-TR')} ${currency}`)
+    .join(' · ');
+};
 
 const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendUp, testId }) => (
   <div className="stat-card" data-testid={testId}>
@@ -173,6 +190,18 @@ const HealthCard = ({ health }) => (
         </span>
       </div>
       <div className="flex items-center justify-between">
+        <span>API gecikmesi</span>
+        <span className="font-semibold" data-testid="dashboard-health-api-latency">
+          {health?.api_latency_ms !== null && health?.api_latency_ms !== undefined ? `${health.api_latency_ms} ms` : 'unknown'}
+        </span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span>DB yanıt süresi</span>
+        <span className="font-semibold" data-testid="dashboard-health-db-latency">
+          {health?.db_latency_ms !== null && health?.db_latency_ms !== undefined ? `${health.db_latency_ms} ms` : 'unknown'}
+        </span>
+      </div>
+      <div className="flex items-center justify-between">
         <span>Son deploy</span>
         <span className="font-semibold" data-testid="dashboard-health-deploy">
           {health?.deployed_at || 'unknown'}
@@ -194,12 +223,136 @@ const HealthCard = ({ health }) => (
   </div>
 );
 
-export default function Dashboard() {
+const KpiCard = ({ title, subtitle, data, canViewFinance, testId }) => (
+  <div className="bg-card rounded-md border p-6" data-testid={testId}>
+    <div className="flex items-start justify-between mb-4">
+      <div>
+        <p className="text-xs text-muted-foreground" data-testid={`${testId}-subtitle`}>{subtitle}</p>
+        <h3 className="text-lg font-semibold" data-testid={`${testId}-title`}>{title}</h3>
+      </div>
+      <div className="p-2 rounded-md bg-primary/10">
+        <BarChart3 size={18} className="text-primary" />
+      </div>
+    </div>
+    <div className="space-y-3 text-sm">
+      <div className="flex items-center justify-between">
+        <span>Yeni ilan</span>
+        <span className="font-semibold" data-testid={`${testId}-listings`}>{formatNumber(data?.new_listings || 0)}</span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span>Yeni kullanıcı</span>
+        <span className="font-semibold" data-testid={`${testId}-users`}>{formatNumber(data?.new_users || 0)}</span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span>Gelir</span>
+        {canViewFinance ? (
+          <span className="font-semibold" data-testid={`${testId}-revenue`}>{formatNumber(data?.revenue_total || 0)}</span>
+        ) : (
+          <span className="text-xs text-muted-foreground flex items-center gap-1" data-testid={`${testId}-revenue-locked`}>
+            <Lock size={14} /> Yetki yok
+          </span>
+        )}
+      </div>
+      {canViewFinance && (
+        <div className="text-xs text-muted-foreground" data-testid={`${testId}-revenue-currency`}>
+          {formatCurrencyTotals(data?.revenue_currency_totals)}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+const RiskPanel = ({ data, canViewFinance }) => {
+  const suspicious = data?.suspicious_logins;
+  const sla = data?.sla_breaches;
+  const pending = data?.pending_payments;
+
+  return (
+    <div className="bg-card rounded-md border p-6" data-testid="dashboard-risk-panel">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold">Risk & Alarm Merkezi</h3>
+        <AlertTriangle size={18} className="text-muted-foreground" />
+      </div>
+      <div className="space-y-4 text-sm">
+        <div className="border rounded-md p-3" data-testid="risk-multi-ip">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">Çoklu IP girişleri</div>
+              <div className="text-xs text-muted-foreground">≥ {suspicious?.threshold || '-'} IP / {suspicious?.window_hours || '-'} saat</div>
+            </div>
+            <div className="text-lg font-semibold" data-testid="risk-multi-ip-count">{formatNumber(suspicious?.count || 0)}</div>
+          </div>
+          {suspicious?.items?.length ? (
+            <div className="mt-2 space-y-1">
+              {suspicious.items.map((item, idx) => (
+                <div key={`${item.user_id}-${idx}`} className="text-xs text-muted-foreground" data-testid={`risk-multi-ip-item-${idx}`}>
+                  {item.user_email || item.user_id} · {item.ip_count} IP
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-2 text-xs text-muted-foreground" data-testid="risk-multi-ip-empty">Kayıt yok</div>
+          )}
+        </div>
+
+        <div className="border rounded-md p-3" data-testid="risk-sla">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">Moderasyon SLA ihlali</div>
+              <div className="text-xs text-muted-foreground">> {sla?.threshold || '-'} saat bekleyen ilan</div>
+            </div>
+            <div className="text-lg font-semibold" data-testid="risk-sla-count">{formatNumber(sla?.count || 0)}</div>
+          </div>
+          {sla?.items?.length ? (
+            <div className="mt-2 space-y-1">
+              {sla.items.map((item, idx) => (
+                <div key={`${item.listing_id}-${idx}`} className="text-xs text-muted-foreground" data-testid={`risk-sla-item-${idx}`}>
+                  {item.listing_id} · {item.country || '-'} · {item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-2 text-xs text-muted-foreground" data-testid="risk-sla-empty">Kayıt yok</div>
+          )}
+        </div>
+
+        <div className="border rounded-md p-3" data-testid="risk-payments">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">Bekleyen ödemeler</div>
+              <div className="text-xs text-muted-foreground">> {pending?.threshold_days || '-'} gün geciken faturalar</div>
+            </div>
+            <div className="text-lg font-semibold" data-testid="risk-payments-count">
+              {canViewFinance ? formatNumber(pending?.count || 0) : '-'}
+            </div>
+          </div>
+          {canViewFinance ? (
+            <>
+              <div className="mt-2 text-xs text-muted-foreground" data-testid="risk-payments-total">
+                Toplam: {formatNumber(pending?.total_amount || 0)}
+              </div>
+              <div className="text-xs text-muted-foreground" data-testid="risk-payments-currency">
+                {formatCurrencyTotals(pending?.currency_totals)}
+              </div>
+            </>
+          ) : (
+            <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1" data-testid="risk-payments-locked">
+              <Lock size={14} /> Finans verisi için yetki gerekiyor
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function Dashboard({ title = 'Kontrol Paneli' }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { t } = useLanguage();
   const { selectedCountry } = useCountry();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
 
   const adminMode = useMemo(() => {
@@ -233,6 +386,7 @@ export default function Dashboard() {
 
   const activeModulesLabel = summary?.active_modules?.items?.join(', ') || '-';
   const activeCountriesLabel = summary?.active_countries?.codes?.join(', ') || '-';
+  const canViewFinance = summary?.finance_visible ?? ['finance', 'super_admin'].includes(user?.role);
 
   if (loading) {
     return (
@@ -243,8 +397,18 @@ export default function Dashboard() {
           ))}
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="bg-card rounded-md border p-6 animate-pulse h-64" />
-          <div className="bg-card rounded-md border p-6 animate-pulse h-64" />
+          <div className="bg-card rounded-md border p-6 animate-pulse h-48" data-testid="dashboard-kpi-skeleton-1" />
+          <div className="bg-card rounded-md border p-6 animate-pulse h-48" data-testid="dashboard-kpi-skeleton-2" />
+        </div>
+        <div className="bg-card rounded-md border p-6 animate-pulse h-64" data-testid="dashboard-trends-skeleton" />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="bg-card rounded-md border p-6 animate-pulse h-64" data-testid="dashboard-risk-skeleton" />
+          <div className="bg-card rounded-md border p-6 animate-pulse h-64" data-testid="dashboard-health-skeleton" />
+          <div className="bg-card rounded-md border p-6 animate-pulse h-64" data-testid="dashboard-roles-skeleton" />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="bg-card rounded-md border p-6 animate-pulse h-64" data-testid="dashboard-activity-skeleton" />
+          <div className="bg-card rounded-md border p-6 animate-pulse h-64" data-testid="dashboard-quick-actions-skeleton" />
         </div>
       </div>
     );
@@ -253,7 +417,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6" data-testid="dashboard">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-gray-900" data-testid="dashboard-title">Kontrol Paneli</h1>
+        <h1 className="text-2xl font-bold text-gray-900" data-testid="dashboard-title">{title}</h1>
         <div className="text-xs text-muted-foreground" data-testid="dashboard-scope">
           Kapsam: {isCountryMode ? `Country (${effectiveCountry})` : 'Global'}
         </div>
@@ -296,14 +460,46 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <ActivitySummaryCard summary={summary?.activity_24h} />
+      <div className="grid gap-6 lg:grid-cols-2" data-testid="dashboard-kpi-section">
+        <KpiCard
+          title="Bugün"
+          subtitle="Günlük KPI"
+          data={summary?.kpis?.today}
+          canViewFinance={canViewFinance}
+          testId="dashboard-kpi-today"
+        />
+        <KpiCard
+          title="Son 7 Gün"
+          subtitle="Haftalık KPI"
+          data={summary?.kpis?.last_7_days}
+          canViewFinance={canViewFinance}
+          testId="dashboard-kpi-week"
+        />
+      </div>
+
+      {summary?.trends ? (
+        <Suspense
+          fallback={
+            <div className="bg-card rounded-md border p-6 animate-pulse h-64" data-testid="dashboard-trends-loading" />
+          }
+        >
+          <TrendsSection trends={summary.trends} canViewFinance={canViewFinance} />
+        </Suspense>
+      ) : (
+        <div className="bg-card rounded-md border p-6 text-sm text-muted-foreground" data-testid="dashboard-trends-empty">
+          Trend verisi bulunamadı.
+        </div>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <RiskPanel data={summary?.risk_panel} canViewFinance={canViewFinance} />
         <HealthCard health={summary?.health} />
+        <RoleDistribution data={summary?.role_distribution || {}} t={t} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <RoleDistribution data={summary?.role_distribution || {}} t={t} />
         <RecentActivity logs={summary?.recent_activity || []} />
+        <ActivitySummaryCard summary={summary?.activity_24h} />
       </div>
 
       <div className="bg-card rounded-md border p-6" data-testid="dashboard-quick-actions">
@@ -332,6 +528,14 @@ export default function Dashboard() {
           >
             <Clock size={18} className="text-primary" />
             <span className="text-sm font-medium">Denetim Kayıtları</span>
+          </Link>
+          <Link
+            to="/admin/moderation"
+            className="flex items-center gap-2 p-3 rounded-md border hover:bg-muted/50 transition-colors"
+            data-testid="quick-action-moderation"
+          >
+            <Shield size={18} className="text-primary" />
+            <span className="text-sm font-medium">Moderasyon Kuyruğu</span>
           </Link>
         </div>
       </div>
