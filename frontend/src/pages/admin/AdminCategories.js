@@ -1426,7 +1426,7 @@ const AdminCategories = () => {
                 </div>
               )}
 
-              {wizardStep === "dynamic" && (              {wizardStep === "dynamic" && (
+              {wizardStep === "dynamic" && (
                 <div className="border-t pt-4 space-y-4" data-testid="categories-dynamic-step">
                   <div className="flex items-center justify-between">
                     <h3 className="text-md font-semibold">Parametre Alanları (2a)</h3>
