@@ -137,7 +137,8 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
       (res.request().postData() || '').includes('"status":"published"')
     ));
     await page.getByTestId('categories-publish').click();
-    const publishData = await publishResponsePromise.json();
+    const publishResponse = await publishResponsePromise;
+    const publishData = await publishResponse.json();
     expect(publishData.category.form_schema.status).toBe('published');
 
     await expect(page.getByTestId('categories-page')).toBeVisible({ timeout: 60000 });
