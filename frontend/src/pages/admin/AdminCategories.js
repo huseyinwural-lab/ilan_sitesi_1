@@ -682,7 +682,7 @@ const AdminCategories = () => {
         title: "Taslak kaydedildi",
         description: "Değişiklikler kaydedildi.",
       });
-      dismissDraftToast(2000);
+      dismissDraftToast(4000);
     }
     setAutosaveStatus("idle");
     fetchItems();
