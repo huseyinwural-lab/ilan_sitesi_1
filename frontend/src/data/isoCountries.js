@@ -62,31 +62,6 @@ const BASE_COUNTRIES = [
   { code: 'PH', name: 'Philippines', currency: 'PHP', locale: 'en-PH' }
 ];
 
-const BASE_MAP = new Map(BASE_COUNTRIES.map((country) => [country.code, country]));
-
-const buildIsoCountries = () => {
-  const hasIntlRegions = typeof Intl !== 'undefined' && typeof Intl.supportedValuesOf === 'function';
-  const regions = hasIntlRegions ? Intl.supportedValuesOf('region') : BASE_COUNTRIES.map((country) => country.code);
-  const displayNames = typeof Intl !== 'undefined' && typeof Intl.DisplayNames === 'function'
-    ? new Intl.DisplayNames(['tr', 'en'], { type: 'region' })
-    : null;
-
-  const list = regions.map((code) => {
-    const upper = code.toUpperCase();
-    const base = BASE_MAP.get(upper);
-    return {
-      code: upper,
-      name: base?.name || (displayNames ? displayNames.of(upper) : upper),
-      currency: base?.currency || '',
-      locale: base?.locale || '',
-    };
-  });
-
-  return list
-    .filter((item) => item.code && item.name)
-    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-};
-
-const ISO_COUNTRIES = buildIsoCountries();
+const ISO_COUNTRIES = [...BASE_COUNTRIES].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
 export default ISO_COUNTRIES;
