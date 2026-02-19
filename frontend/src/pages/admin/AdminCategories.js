@@ -793,6 +793,7 @@ const AdminCategories = () => {
             active_flag: form.active_flag,
             sort_order: Number(form.sort_order || 0),
             hierarchy_complete: true,
+            expected_updated_at: editing.updated_at,
           }),
         });
         const data = await res.json().catch(() => ({}));
