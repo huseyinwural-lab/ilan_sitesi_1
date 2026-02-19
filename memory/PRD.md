@@ -118,6 +118,7 @@
 ## Release Notes
 - Dashboard summary gerçek veriye bağlandı + Quick Actions aktif (users/countries/audit)
 - Dashboard canlı veri + Quick Actions + E2E PASS (Dashboard fazı kapatıldı)
+- Dashboard health: uptime + restart zamanı eklendi
 - Dashboard summary endpoint (/api/admin/dashboard/summary) + RBAC + cache
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
