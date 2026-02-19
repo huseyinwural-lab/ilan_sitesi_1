@@ -5946,10 +5946,11 @@ async def admin_dashboard_summary(
 @api_router.get("/admin/dashboard/country-compare")
 async def admin_dashboard_country_compare(
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    can_view_finance = current_user.get("role") in {"finance", "super_admin"}
     docs = await db.countries.find({}, {"_id": 0, "country_code": 1, "code": 1, "active_flag": 1, "is_enabled": 1}).to_list(length=200)
     items = []
     for doc in docs:
@@ -5960,9 +5961,9 @@ async def admin_dashboard_country_compare(
             scope = current_user.get("country_scope") or []
             if "*" not in scope and code not in scope:
                 continue
-        metrics = await _dashboard_metrics(db, code)
+        metrics = await _dashboard_metrics(db, code, include_revenue=can_view_finance)
         items.append({"country_code": code, **metrics})
-    return {"items": items}
+    return {"items": items, "finance_visible": can_view_finance}
 
 
 @api_router.get("/admin/session/health")
