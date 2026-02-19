@@ -745,7 +745,10 @@ const AdminCategories = () => {
     fetchItems();
   };
 
-  const canAccessStep = () => true;
+  const canAccessStep = (stepId) => {
+    if (stepId === "hierarchy") return true;
+    return effectiveHierarchyComplete;
+  };
 
   const addSubcategory = () => {
     setSubcategories((prev) => ([
@@ -1370,7 +1373,7 @@ const AdminCategories = () => {
                   )}
 
                   <div className="text-xs text-slate-500" data-testid="categories-hierarchy-warning">
-                    Kaydetmek için hiyerarşiyi tamamlamalısınız.
+                    Hiyerarşi tamamlanmadan çekirdek alanlara geçilemez.
                   </div>
                 </div>
               )}
