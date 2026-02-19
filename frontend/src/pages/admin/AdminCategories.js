@@ -1599,6 +1599,7 @@ const AdminCategories = () => {
                           type="checkbox"
                           checked={dynamicDraft.required}
                           onChange={(e) => setDynamicDraft((prev) => ({ ...prev, required: e.target.checked }))}
+                          data-testid="categories-dynamic-draft-required-input"
                         />
                         Zorunlu
                       </label>
