@@ -36,7 +36,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     }
   });
 
-  test('Senaryo 1: Kategori oluştur → publish', async ({ page }) => {
+  test('Senaryo 1: Kategori oluştur → publish', async ({ page, request }) => {
     await page.goto('/admin/login');
     await page.getByTestId('login-email').fill(adminCreds.email);
     await page.getByTestId('login-password').fill(adminCreds.password);
