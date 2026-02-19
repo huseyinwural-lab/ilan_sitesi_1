@@ -5426,10 +5426,19 @@ def _apply_listing_payload(listing: dict, payload: dict) -> tuple[dict, dict]:
     dynamic_fields = payload.get("dynamic_fields") or {}
     if isinstance(dynamic_fields, dict):
         attributes.update(dynamic_fields)
+    extra_attrs = payload.get("attributes")
+    if isinstance(extra_attrs, dict):
+        attributes.update(extra_attrs)
     price_amount = updates.get("price", {}).get("amount") if updates.get("price") else None
     if price_amount is not None:
         attributes["price_eur"] = price_amount
     updates["attributes"] = attributes
+
+    vehicle_payload = payload.get("vehicle") or {}
+    if vehicle_payload:
+        vehicle = dict(listing.get("vehicle") or {})
+        vehicle.update({k: v for k, v in vehicle_payload.items() if v is not None})
+        updates["vehicle"] = vehicle
 
     if payload.get("detail_groups") is not None:
         updates["detail_groups"] = payload.get("detail_groups")
