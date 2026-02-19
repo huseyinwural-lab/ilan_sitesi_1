@@ -1835,20 +1835,17 @@ const AdminCategories = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     {Object.keys(schema.modules).map((key) => (
                       <div key={key} className="flex items-center justify-between border rounded p-3" data-testid={`categories-module-row-${key}`}>
-                        <div>
-                          <div className="font-medium">{MODULE_LABELS[key] || key}</div>
-                          <div className="text-xs text-slate-500">Key: {key} · Kaynak: schema.modules</div>
+                        <div className="space-y-1">
+                          <div className="font-medium" data-testid={`categories-module-label-${key}`}>{MODULE_LABELS[key] || key}</div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700" data-testid={`categories-module-key-${key}`}>{key}</span>
+                            <span data-testid={`categories-module-source-${key}`}>Kaynak: schema.modules</span>
+                          </div>
                         </div>
                         <input
                           type="checkbox"
                           checked={schema.modules[key].enabled}
-                          onChange={(e) => setSchema((prev) => ({
-                            ...prev,
-                            modules: {
-                              ...prev.modules,
-                              [key]: { ...prev.modules[key], enabled: e.target.checked },
-                            },
-                          }))}
+                          onChange={(e) => handleModuleToggle(key, e.target.checked)}
                           data-testid={`categories-module-${key}`}
                         />
                       </div>
