@@ -1337,121 +1337,166 @@ const AdminCategories = () => {
                 </div>
               </div>
 
-              <div className="border-t pt-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-md font-semibold">Parametre Alanları (2a)</h3>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setSchema((prev) => ({
-                        ...prev,
-                        dynamic_fields: [
-                          ...prev.dynamic_fields,
-                          {
-                            id: createId('field'),
-                            label: "",
-                            key: "",
-                            type: "select",
-                            options: [],
-                            required: false,
-                            sort_order: 0,
-                            messages: { required: "", invalid: "" },
-                          },
-                        ],
-                      }));
-                    }}
-                    data-testid="categories-add-dynamic-field"
-                  >
-                    Alan Ekle
-                  </button>
-                </div>
+              </div>
+              )}
 
-                {schema.dynamic_fields.map((field, index) => (
-                  <div key={field.id} className="border rounded p-3 space-y-2">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                      <input
-                        className={inputClassName}
-                        placeholder="Etiket"
-                        value={field.label}
-                        onChange={(e) => updateDynamicField(index, { label: e.target.value })}
-                        data-testid={`categories-dynamic-label-${index}`}
-                      />
-                      <input
-                        className={inputClassName}
-                        placeholder="Key"
-                        value={field.key}
-                        onChange={(e) => updateDynamicField(index, { key: e.target.value })}
-                        data-testid={`categories-dynamic-key-${index}`}
-                      />
-                      <select
-                        className={inputClassName}
-                        value={field.type}
-                        onChange={(e) => updateDynamicField(index, { type: e.target.value })}
-                        data-testid={`categories-dynamic-type-${index}`}
-                      >
-                        <option value="select">Select</option>
-                        <option value="radio">Radio</option>
-                      </select>
+              {wizardStep === "dynamic" && (
+                <div className="border-t pt-4 space-y-4" data-testid="categories-dynamic-step">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-md font-semibold">Parametre Alanları (2a)</h3>
+                    <span className="text-xs text-slate-500">Tek tek ekleme + Next</span>
+                  </div>
+
+                  {dynamicError && (
+                    <div className="p-2 rounded border border-rose-200 bg-rose-50 text-rose-700 text-sm" data-testid="categories-dynamic-error">
+                      {dynamicError}
                     </div>
-                    <input
-                      className={inputClassName}
-                      placeholder="Seçenekler (virgülle)"
-                      value={(field.options || []).join(', ')}
-                      onChange={(e) => updateDynamicField(index, { options: e.target.value.split(',').map((o) => o.trim()).filter(Boolean) })}
-                      data-testid={`categories-dynamic-options-${index}`}
-                    />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <input
-                        className={inputClassName}
-                        placeholder="Required mesajı"
-                        value={field.messages?.required || ''}
-                        onChange={(e) => updateDynamicField(index, { messages: { ...field.messages, required: e.target.value } })}
-                        data-testid={`categories-dynamic-required-message-${index}`}
-                      />
-                      <input
-                        className={inputClassName}
-                        placeholder="Invalid mesajı"
-                        value={field.messages?.invalid || ''}
-                        onChange={(e) => updateDynamicField(index, { messages: { ...field.messages, invalid: e.target.value } })}
-                        data-testid={`categories-dynamic-invalid-message-${index}`}
-                      />
+                  )}
+
+                  <div className="rounded-lg border p-4 space-y-3" data-testid="categories-dynamic-draft">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Etiket</label>
+                        <input
+                          className={inputClassName}
+                          value={dynamicDraft.label}
+                          onChange={(e) => setDynamicDraft((prev) => ({ ...prev, label: e.target.value }))}
+                          data-testid="categories-dynamic-draft-label"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Key</label>
+                        <input
+                          className={inputClassName}
+                          value={dynamicDraft.key}
+                          onChange={(e) => setDynamicDraft((prev) => ({ ...prev, key: e.target.value }))}
+                          data-testid="categories-dynamic-draft-key"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Tip</label>
+                        <select
+                          className={selectClassName}
+                          value={dynamicDraft.type}
+                          onChange={(e) => setDynamicDraft((prev) => ({
+                            ...prev,
+                            type: e.target.value,
+                            optionsInput: ['text', 'number'].includes(e.target.value) ? '' : prev.optionsInput,
+                          }))}
+                          data-testid="categories-dynamic-draft-type"
+                        >
+                          <option value="select">Select</option>
+                          <option value="radio">Radio</option>
+                          <option value="text">Text</option>
+                          <option value="number">Number</option>
+                        </select>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 text-sm">
-                <label className="flex items-center gap-2 text-slate-800">
+
+                    {(dynamicDraft.type === 'select' || dynamicDraft.type === 'radio') && (
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Seçenekler (virgülle)</label>
+                        <input
+                          className={inputClassName}
+                          value={dynamicDraft.optionsInput}
+                          onChange={(e) => setDynamicDraft((prev) => ({ ...prev, optionsInput: e.target.value }))}
+                          data-testid="categories-dynamic-draft-options"
+                        />
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {dynamicDraft.required && (
+                        <div className="space-y-1">
+                          <label className={labelClassName}>Required mesajı</label>
+                          <input
+                            className={inputClassName}
+                            value={dynamicDraft.messages.required}
+                            onChange={(e) => setDynamicDraft((prev) => ({
+                              ...prev,
+                              messages: { ...prev.messages, required: e.target.value },
+                            }))}
+                            data-testid="categories-dynamic-draft-required-message"
+                          />
+                        </div>
+                      )}
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Invalid mesajı</label>
+                        <input
+                          className={inputClassName}
+                          value={dynamicDraft.messages.invalid}
+                          onChange={(e) => setDynamicDraft((prev) => ({
+                            ...prev,
+                            messages: { ...prev.messages, invalid: e.target.value },
+                          }))}
+                          data-testid="categories-dynamic-draft-invalid-message"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className="flex items-center gap-2 text-sm text-slate-800" data-testid="categories-dynamic-draft-required">
                         <input
                           type="checkbox"
-                          checked={field.required}
-                          onChange={(e) => updateDynamicField(index, { required: e.target.checked })}
-                          data-testid={`categories-dynamic-required-${index}`}
+                          checked={dynamicDraft.required}
+                          onChange={(e) => setDynamicDraft((prev) => ({ ...prev, required: e.target.checked }))}
                         />
                         Zorunlu
                       </label>
-                      <input
-                        type="number"
-                        className={`${inputClassName} w-32`}
-                        placeholder="Sıra"
-                        value={field.sort_order}
-                        onChange={(e) => updateDynamicField(index, { sort_order: Number(e.target.value) })}
-                        data-testid={`categories-dynamic-sort-${index}`}
-                      />
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Sıra</label>
+                        <input
+                          type="number"
+                          min={0}
+                          className={`${inputClassName} w-32`}
+                          value={dynamicDraft.sort_order}
+                          onChange={(e) => setDynamicDraft((prev) => ({ ...prev, sort_order: e.target.value }))}
+                          data-testid="categories-dynamic-draft-sort"
+                        />
+                      </div>
                       <button
-                        className="ml-auto text-sm text-red-500"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setSchema((prev) => ({
-                            ...prev,
-                            dynamic_fields: prev.dynamic_fields.filter((_, i) => i != index),
-                          }));
-                        }}
-                        data-testid={`categories-dynamic-remove-${index}`}
+                        type="button"
+                        className="ml-auto px-4 py-2 bg-slate-900 text-white rounded text-sm"
+                        onClick={handleDynamicNext}
+                        data-testid="categories-dynamic-next"
                       >
-                        Sil
+                        {dynamicEditIndex !== null ? 'Güncelle' : 'Next'}
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="space-y-2" data-testid="categories-dynamic-list">
+                    {schema.dynamic_fields.length === 0 ? (
+                      <div className="text-sm text-slate-500">Henüz parametre alanı eklenmedi.</div>
+                    ) : (
+                      schema.dynamic_fields.map((field, index) => (
+                        <div key={field.id || field.key} className="border rounded p-3 flex flex-wrap items-center gap-3">
+                          <div className="flex-1">
+                            <div className="font-medium">{field.label} ({field.key})</div>
+                            <div className="text-xs text-slate-500">Tip: {field.type} · Sıra: {field.sort_order || 0}</div>
+                          </div>
+                          <button
+                            type="button"
+                            className="text-sm px-3 py-1 border rounded"
+                            onClick={() => handleDynamicEdit(index)}
+                            data-testid={`categories-dynamic-edit-${index}`}
+                          >
+                            Düzenle
+                          </button>
+                          <button
+                            type="button"
+                            className="text-sm px-3 py-1 border rounded text-rose-600"
+                            onClick={() => handleDynamicRemove(index)}
+                            data-testid={`categories-dynamic-remove-${index}`}
+                          >
+                            Sil
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="border-t pt-4 space-y-4">
                 <div className="flex items-center justify-between">
