@@ -4032,6 +4032,48 @@ async def admin_update_category(
     return {"category": _normalize_category_doc(category, include_schema=True)}
 
 
+@api_router.get("/admin/categories/{category_id}/versions")
+async def admin_list_category_versions(
+    category_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    if category.get("country_code"):
+        _assert_country_scope(category.get("country_code"), current_user)
+
+    docs = await db.categories_versions.find({"category_id": category_id}, {"_id": 0}).sort("version", -1).to_list(length=100)
+    return {"items": [_serialize_category_version(doc) for doc in docs]}
+
+
+@api_router.get("/admin/categories/{category_id}/versions/{version_id}")
+async def admin_get_category_version(
+    category_id: str,
+    version_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    if category.get("country_code"):
+        _assert_country_scope(category.get("country_code"), current_user)
+
+    doc = await db.categories_versions.find_one({"id": version_id, "category_id": category_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Category version not found")
+
+    return {"version": _serialize_category_version(doc, include_snapshot=True)}
+
+
 @api_router.delete("/admin/categories/{category_id}")
 async def admin_delete_category(
     category_id: str,
