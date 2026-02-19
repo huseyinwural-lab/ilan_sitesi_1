@@ -394,7 +394,7 @@ const AdminCategories = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <input
                     type="number"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Başlık min"
                     value={schema.core_fields.title.min}
                     onChange={(e) => setSchema((prev) => ({
@@ -408,7 +408,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="number"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Başlık max"
                     value={schema.core_fields.title.max}
                     onChange={(e) => setSchema((prev) => ({
@@ -422,7 +422,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Başlık custom rule (regex)"
                     value={schema.core_fields.title.custom_rule}
                     onChange={(e) => setSchema((prev) => ({
@@ -436,7 +436,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Başlık required mesajı"
                     value={schema.core_fields.title.messages.required}
                     onChange={(e) => setSchema((prev) => ({
@@ -453,7 +453,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Başlık min mesajı"
                     value={schema.core_fields.title.messages.min}
                     onChange={(e) => setSchema((prev) => ({
@@ -470,7 +470,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Başlık max mesajı"
                     value={schema.core_fields.title.messages.max}
                     onChange={(e) => setSchema((prev) => ({
@@ -487,7 +487,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Başlık duplicate mesajı"
                     value={schema.core_fields.title.messages.duplicate}
                     onChange={(e) => setSchema((prev) => ({
@@ -504,7 +504,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Başlık custom mesajı"
                     value={schema.core_fields.title.custom_message}
                     onChange={(e) => setSchema((prev) => ({
@@ -521,7 +521,7 @@ const AdminCategories = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <input
                     type="number"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Açıklama min"
                     value={schema.core_fields.description.min}
                     onChange={(e) => setSchema((prev) => ({
@@ -535,7 +535,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="number"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Açıklama max"
                     value={schema.core_fields.description.max}
                     onChange={(e) => setSchema((prev) => ({
@@ -549,7 +549,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Açıklama custom rule (regex)"
                     value={schema.core_fields.description.custom_rule}
                     onChange={(e) => setSchema((prev) => ({
@@ -563,7 +563,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Açıklama required mesajı"
                     value={schema.core_fields.description.messages.required}
                     onChange={(e) => setSchema((prev) => ({
@@ -580,7 +580,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Açıklama min mesajı"
                     value={schema.core_fields.description.messages.min}
                     onChange={(e) => setSchema((prev) => ({
@@ -597,7 +597,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Açıklama max mesajı"
                     value={schema.core_fields.description.messages.max}
                     onChange={(e) => setSchema((prev) => ({
@@ -614,7 +614,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Açıklama custom mesajı"
                     value={schema.core_fields.description.custom_message}
                     onChange={(e) => setSchema((prev) => ({
@@ -630,7 +630,7 @@ const AdminCategories = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <select
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     value={schema.core_fields.price.currency_primary}
                     onChange={(e) => setSchema((prev) => ({
                       ...prev,
@@ -645,7 +645,7 @@ const AdminCategories = () => {
                     <option value="CHF">CHF</option>
                   </select>
                   <select
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     value={schema.core_fields.price.currency_secondary}
                     onChange={(e) => setSchema((prev) => ({
                       ...prev,
@@ -660,7 +660,7 @@ const AdminCategories = () => {
                     <option value="EUR">EUR</option>
                   </select>
                   <select
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     value={schema.core_fields.price.decimal_places}
                     onChange={(e) => setSchema((prev) => ({
                       ...prev,
@@ -676,7 +676,7 @@ const AdminCategories = () => {
                   </select>
                   <input
                     type="number"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Min fiyat"
                     value={schema.core_fields.price.range.min ?? ''}
                     onChange={(e) => setSchema((prev) => ({
@@ -693,7 +693,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="number"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Max fiyat"
                     value={schema.core_fields.price.range.max ?? ''}
                     onChange={(e) => setSchema((prev) => ({
@@ -712,7 +712,7 @@ const AdminCategories = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Fiyat required mesajı"
                     value={schema.core_fields.price.messages.required}
                     onChange={(e) => setSchema((prev) => ({
@@ -729,7 +729,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Fiyat numeric mesajı"
                     value={schema.core_fields.price.messages.numeric}
                     onChange={(e) => setSchema((prev) => ({
@@ -746,7 +746,7 @@ const AdminCategories = () => {
                   />
                   <input
                     type="text"
-                    className="w-full border rounded p-2"
+                    className={inputClassName}
                     placeholder="Fiyat range mesajı"
                     value={schema.core_fields.price.messages.range}
                     onChange={(e) => setSchema((prev) => ({
