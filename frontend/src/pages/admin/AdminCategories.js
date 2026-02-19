@@ -1181,7 +1181,7 @@ const AdminCategories = () => {
                   {item.active_flag ? "Aktif" : "Pasif"}
                 </span>
               </div>
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 text-slate-900">
                 <button className="text-sm px-3 py-1 border rounded" onClick={() => handleEdit(item)} data-testid={`categories-edit-${item.id}`}>
                   Düzenle
                 </button>
