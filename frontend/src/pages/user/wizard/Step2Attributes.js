@@ -438,7 +438,9 @@ const AttributeForm = () => {
           <div className="space-y-4">
             {schema.detail_groups.map((group, index) => (
               <details key={group.id || group.title} className="border rounded-lg p-4" data-testid={`listing-detail-group-${index}`}>
-                <summary className="font-medium text-gray-800 cursor-pointer">{group.title}</summary>
+                <summary className="font-medium text-gray-800 cursor-pointer" data-testid={`listing-detail-group-summary-${group.id}`}>
+                  {group.title}
+                </summary>
                 <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
                   {group.options?.map((opt) => (
                     <label key={opt} className="flex items-center gap-2 text-sm">
