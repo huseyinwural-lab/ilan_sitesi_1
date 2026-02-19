@@ -521,6 +521,7 @@ async def lifespan(app: FastAPI):
         seed_payload = dict(c)
         seed_payload.pop("active_flag", None)
         seed_payload.pop("is_enabled", None)
+        seed_payload.pop("updated_at", None)
         await db.countries.update_one(
             {"$or": [{"code": c["code"]}, {"country_code": c["code"]}]},
             {"$setOnInsert": seed_payload, "$set": {"active_flag": True, "is_enabled": True, "updated_at": now_iso}},
