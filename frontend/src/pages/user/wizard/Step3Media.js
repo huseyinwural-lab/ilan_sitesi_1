@@ -124,6 +124,7 @@ const MediaUploader = () => {
               <button 
                 onClick={() => setFiles(files.filter(x => x.id !== f.id))}
                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                data-testid={`wizard-photo-remove-${index}`}
               >
                 ×
               </button>
