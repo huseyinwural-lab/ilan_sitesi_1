@@ -214,7 +214,7 @@ export default function AdminCountriesPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="countries-modal">
           <div className="bg-card rounded-lg border shadow-xl w-full max-w-lg">
             <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="text-lg font-semibold" data-testid="countries-modal-title">{editing ? 'Country Güncelle' : 'Country Oluştur'}</h3>
+              <h3 className="text-lg font-semibold" data-testid="countries-modal-title">{editing ? 'Ülke Güncelle' : 'Ülke Oluştur'}</h3>
               <button
                 onClick={() => setModalOpen(false)}
                 className="h-8 px-2.5 rounded-md border text-xs"
