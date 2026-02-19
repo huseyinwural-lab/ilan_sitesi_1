@@ -242,6 +242,148 @@ async def _ensure_dealer_user(db):
     )
 
 
+async def _ensure_test_user(db):
+    now_iso = datetime.now(timezone.utc).isoformat()
+    user_email = "user@platform.com"
+    user_password = "User123!"
+
+    existing = await db.users.find_one({"email": user_email}, {"_id": 0})
+    hashed = get_password_hash(user_password)
+
+    if existing:
+        await db.users.update_one(
+            {"email": user_email},
+            {
+                "$set": {
+                    "hashed_password": hashed,
+                    "is_active": True,
+                    "role": "individual",
+                    "country_scope": existing.get("country_scope") or ["DE"],
+                    "country_code": existing.get("country_code") or "DE",
+                    "updated_at": now_iso,
+                }
+            },
+        )
+        return
+
+    await db.users.insert_one(
+        {
+            "id": str(uuid.uuid4()),
+            "email": user_email,
+            "hashed_password": hashed,
+            "full_name": "Test User",
+            "role": "individual",
+            "is_active": True,
+            "is_verified": True,
+            "country_scope": ["DE"],
+            "country_code": "DE",
+            "preferred_language": "tr",
+            "created_at": now_iso,
+            "last_login": None,
+        }
+    )
+
+
+async def _ensure_fixture_category_schema(db):
+    now_iso = datetime.now(timezone.utc).isoformat()
+    slug = "e2e-fixture-category"
+    name = "E2E Fixture Category"
+    country_code = "DE"
+
+    schema = {
+        "status": "published",
+        "core_fields": {
+            "title": {
+                "required": True,
+                "min": 10,
+                "max": 120,
+                "messages": {
+                    "required": "Başlık zorunludur.",
+                    "min": "Başlık çok kısa.",
+                    "max": "Başlık çok uzun.",
+                },
+            },
+            "description": {
+                "required": True,
+                "min": 30,
+                "max": 4000,
+                "messages": {
+                    "required": "Açıklama zorunludur.",
+                    "min": "Açıklama çok kısa.",
+                    "max": "Açıklama çok uzun.",
+                },
+            },
+            "price": {
+                "required": True,
+                "range": {"min": 1, "max": 100000},
+                "currency_primary": "EUR",
+                "currency_secondary": "CHF",
+                "secondary_enabled": False,
+                "decimal_places": 0,
+                "messages": {
+                    "required": "Fiyat zorunludur.",
+                    "range": "Fiyat aralık dışında",
+                },
+            },
+        },
+        "dynamic_fields": [
+            {
+                "id": "extra_option",
+                "label": "Ekstra Seçim",
+                "key": "extra_option",
+                "type": "select",
+                "required": True,
+                "options": ["A", "B"],
+                "messages": {"required": "Ekstra seçim zorunlu"},
+            }
+        ],
+        "detail_groups": [
+            {
+                "id": "features",
+                "title": "Donanım",
+                "required": True,
+                "options": ["ABS", "Airbag", "Klima", "ESP"],
+                "messages": {"required": "Donanım seçimi zorunlu"},
+            }
+        ],
+        "modules": {
+            "address": {"enabled": True},
+            "photos": {"enabled": True},
+            "contact": {"enabled": False},
+            "payment": {"enabled": False},
+        },
+        "photo_config": {"max": 12},
+        "payment_options": {"package": False, "doping": False},
+    }
+
+    existing = await db.categories.find_one({"slug": slug, "country_code": country_code}, {"_id": 0})
+    payload = {
+        "name": name,
+        "slug": slug,
+        "module": "vehicle",
+        "country_code": country_code,
+        "active_flag": True,
+        "sort_order": 0,
+        "parent_id": None,
+        "hierarchy_complete": True,
+        "form_schema": schema,
+        "updated_at": now_iso,
+    }
+
+    if existing:
+        await db.categories.update_one({"id": existing["id"]}, {"$set": payload})
+        return
+
+    payload.update(
+        {
+            "id": str(uuid.uuid4()),
+            "created_at": now_iso,
+        }
+    )
+    await db.categories.insert_one(payload)
+
+
+
 async def lifespan(app: FastAPI):
     client = get_mongo_client()
     db = client[get_db_name()]
