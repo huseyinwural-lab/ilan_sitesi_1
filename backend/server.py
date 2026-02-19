@@ -5477,7 +5477,7 @@ async def admin_delete_vehicle_model(
     return {"model": _normalize_vehicle_model_doc(model)}
 
 
-async def _dashboard_metrics(db, country_code: str) -> dict:
+async def _dashboard_metrics(db, country_code: str, include_revenue: bool = True) -> dict:
     total_listings = await db.vehicle_listings.count_documents({"country": country_code})
     published_listings = await db.vehicle_listings.count_documents({"country": country_code, "status": "published"})
     pending_moderation = await db.vehicle_listings.count_documents({"country": country_code, "status": "pending_moderation"})
@@ -5486,60 +5486,32 @@ async def _dashboard_metrics(db, country_code: str) -> dict:
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     month_start_iso = month_start.isoformat()
-    invoices = await db.invoices.find({
-        "country_code": country_code,
-        "status": "paid",
-        "paid_at": {"$gte": month_start_iso},
-    }, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
+
+    revenue_mtd = None
     totals: Dict[str, float] = {}
-    for inv in invoices:
-        currency = inv.get("currency") or "UNKNOWN"
-        totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
-    revenue_mtd = sum(totals.values())
+    if include_revenue:
+        invoices = await db.invoices.find({
+            "country_code": country_code,
+            "status": "paid",
+            "paid_at": {"$gte": month_start_iso},
+        }, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
+        for inv in invoices:
+            currency = inv.get("currency") or "UNKNOWN"
+            totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
+        revenue_mtd = sum(totals.values())
 
     return {
         "total_listings": total_listings,
         "published_listings": published_listings,
         "pending_moderation": pending_moderation,
         "active_dealers": active_dealers,
-        "revenue_mtd": round(revenue_mtd, 2),
-        "revenue_currency_totals": {k: round(v, 2) for k, v in totals.items()},
+        "revenue_mtd": round(revenue_mtd, 2) if revenue_mtd is not None else None,
+        "revenue_currency_totals": {k: round(v, 2) for k, v in totals.items()} if include_revenue else None,
         "month_start_utc": month_start_iso,
     }
 
 
-async def _dashboard_metrics(db, country_code: str) -> dict:
-    total_listings = await db.vehicle_listings.count_documents({"country": country_code})
-    published_listings = await db.vehicle_listings.count_documents({"country": country_code, "status": "published"})
-    pending_moderation = await db.vehicle_listings.count_documents({"country": country_code, "status": "pending_moderation"})
-    active_dealers = await db.users.count_documents({"role": "dealer", "dealer_status": "active", "country_code": country_code})
-
-    now = datetime.now(timezone.utc)
-    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    month_start_iso = month_start.isoformat()
-    invoices = await db.invoices.find({
-        "country_code": country_code,
-        "status": "paid",
-        "paid_at": {"$gte": month_start_iso},
-    }, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
-    totals: Dict[str, float] = {}
-    for inv in invoices:
-        currency = inv.get("currency") or "UNKNOWN"
-        totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
-    revenue_mtd = sum(totals.values())
-
-    return {
-        "total_listings": total_listings,
-        "published_listings": published_listings,
-        "pending_moderation": pending_moderation,
-        "active_dealers": active_dealers,
-        "revenue_mtd": round(revenue_mtd, 2),
-        "revenue_currency_totals": {k: round(v, 2) for k, v in totals.items()},
-        "month_start_utc": month_start_iso,
-    }
-
-
-async def _dashboard_metrics_scope(db, country_codes: Optional[List[str]]) -> dict:
+async def _dashboard_metrics_scope(db, country_codes: Optional[List[str]], include_revenue: bool = True) -> dict:
     listing_query: Dict[str, Any] = {}
     user_query: Dict[str, Any] = {}
     invoice_query: Dict[str, Any] = {"status": "paid"}
@@ -5556,21 +5528,24 @@ async def _dashboard_metrics_scope(db, country_codes: Optional[List[str]]) -> di
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     month_start_iso = month_start.isoformat()
-    invoice_query["paid_at"] = {"$gte": month_start_iso}
-    invoices = await db.invoices.find(invoice_query, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
+
+    revenue_mtd = None
     totals: Dict[str, float] = {}
-    for inv in invoices:
-        currency = inv.get("currency") or "UNKNOWN"
-        totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
-    revenue_mtd = sum(totals.values())
+    if include_revenue:
+        invoice_query["paid_at"] = {"$gte": month_start_iso}
+        invoices = await db.invoices.find(invoice_query, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
+        for inv in invoices:
+            currency = inv.get("currency") or "UNKNOWN"
+            totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
+        revenue_mtd = sum(totals.values())
 
     return {
         "total_listings": total_listings,
         "published_listings": published_listings,
         "pending_moderation": pending_moderation,
         "active_dealers": active_dealers,
-        "revenue_mtd": round(revenue_mtd, 2),
-        "revenue_currency_totals": {k: round(v, 2) for k, v in totals.items()},
+        "revenue_mtd": round(revenue_mtd, 2) if revenue_mtd is not None else None,
+        "revenue_currency_totals": {k: round(v, 2) for k, v in totals.items()} if include_revenue else None,
         "month_start_utc": month_start_iso,
     }
 
