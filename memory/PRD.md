@@ -155,6 +155,17 @@
 - Optimistic locking: `expected_updated_at` ile 409 conflict → “Başka bir sekmede güncellendi” toast
 - Sayfadan çıkışta tek seferlik flush save (keepalive/sendBeacon)
 
+## Preview Export Mini-Spec (P1)
+- PDF export zorunlu; preview gate onayı sonrası üretilecek
+- CSV export opsiyonel (sadece modül + alan listesi, sadeleştirilmiş)
+- İçerik: kategori özeti, modül listesi, dinamik alanlar, detay grupları, validation uyarıları, timestamp
+- Yetki: super_admin + country_admin
+- Formatlar: PDF (tam rapor), CSV (modül/alan matrisi)
+- Not: Export snapshot, preview-onaylı schema üzerinden üretilecek
+
+## P1 Tasarım Dokümanları
+- Draft Versioning + Diff MVP: /app/memory/DESIGN_DRAFT_VERSIONING.md
+
 
 ## Appendix: P0 Stabilizasyon Final Raporu
 ### Kapsam
