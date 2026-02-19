@@ -17,14 +17,10 @@ export default function AdminDashboardPage() {
   }), []);
 
   const fetchSummary = async () => {
-    if (!urlCountry) {
-      setData(null);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/admin/dashboard/summary?country=${urlCountry}`, { headers: authHeader });
+      const qs = urlCountry ? `?country=${urlCountry}` : '';
+      const res = await axios.get(`${API}/admin/dashboard/summary${qs}`, { headers: authHeader });
       setData(res.data);
     } catch (e) {
       console.error('Failed to fetch dashboard summary', e);
