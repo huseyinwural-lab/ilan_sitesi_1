@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../../contexts/AuthContext";
 import { useCountry } from "../../contexts/CountryContext";
 
 const createDefaultSchema = () => ({
@@ -87,7 +86,6 @@ const applySchemaDefaults = (incoming) => {
 const createId = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
 const AdminCategories = () => {
-  const { token } = useAuth();
   const { selectedCountry } = useCountry();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -103,10 +101,16 @@ const AdminCategories = () => {
   });
   const [schema, setSchema] = useState(createDefaultSchema());
 
+  const authHeader = useMemo(() => ({
+    Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+  }), []);
+
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories?country=${selectedCountry}`);
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories?country=${selectedCountry}`, {
+        headers: authHeader,
+      });
       const data = await res.json();
       setItems(data.items || []);
     } finally {
@@ -169,7 +173,7 @@ const AdminCategories = () => {
       method,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...authHeader,
       },
       body: JSON.stringify(payload),
     });
@@ -183,7 +187,7 @@ const AdminCategories = () => {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...authHeader,
       },
       body: JSON.stringify({ active_flag: !item.active_flag }),
     });
@@ -194,7 +198,7 @@ const AdminCategories = () => {
     await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${item.id}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeader,
       },
     });
     fetchItems();
