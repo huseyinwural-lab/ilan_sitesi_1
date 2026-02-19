@@ -178,8 +178,8 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await page.goto('/account/create/vehicle-wizard');
     await expect(page.getByTestId('listing-category-selector')).toBeVisible({ timeout: 60000 });
 
-    await page.getByRole('button', { name: categoryName }).click();
-    await page.getByRole('button', { name: `${categoryName} seç` }).click();
+    await page.getByRole('button', { name: fixtureCategoryName }).click();
+    await page.getByRole('button', { name: `${fixtureCategoryName} seç` }).click();
 
     await expect(page.getByTestId('listing-attributes-form')).toBeVisible({ timeout: 60000 });
 
@@ -208,8 +208,8 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await page.goto('/account/create/vehicle-wizard');
     await expect(page.getByTestId('listing-category-selector')).toBeVisible({ timeout: 60000 });
 
-    await page.getByRole('button', { name: categoryName }).click();
-    await page.getByRole('button', { name: `${categoryName} seç` }).click();
+    await page.getByRole('button', { name: fixtureCategoryName }).click();
+    await page.getByRole('button', { name: `${fixtureCategoryName} seç` }).click();
 
     await expect(page.getByTestId('listing-attributes-form')).toBeVisible({ timeout: 60000 });
 
