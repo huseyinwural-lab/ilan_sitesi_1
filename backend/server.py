@@ -6342,6 +6342,7 @@ async def _build_country_compare_payload(
     end_date: Optional[str],
     sort_by: Optional[str],
     sort_dir: Optional[str],
+    selected_codes: Optional[List[str]],
 ) -> Dict[str, Any]:
     role = current_user.get("role")
     can_view_finance = role in {"finance", "super_admin"}
