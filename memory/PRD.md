@@ -76,6 +76,11 @@
   - Taslak kaydet tüm adımlar + publish guard (hierarchy/core/2a/2c)
   - Preview gate: özet + modül listesi + uyarı listesi + JSON accordion
   - Backend kategori payload: hierarchy_complete + form_schema alanları
+- **Preview Gate Acceptance Criteria (UI/UX):**
+  - Şema özeti + modül listesi + validation uyarıları görünür (zorunlu)
+  - JSON schema accordion (default kapalı) + salt okunur / debug etiketi
+  - “Önizlemeyi Onayla” ile publish aktifleşir
+  - Publish butonu preview tamamlanmadan pasif kalır
 - **FAZ-7 Admin Login Stabilizasyonu:**
   - GET /api/admin/session/health (token doğrulama + expires_at)
   - Sidebar bootstrap health-check sonrası render
