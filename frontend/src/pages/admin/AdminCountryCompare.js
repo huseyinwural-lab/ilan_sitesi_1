@@ -133,6 +133,15 @@ export default function AdminCountryComparePage() {
   }, [period, customStart, customEnd, sortBy, sortDir]);
 
   useEffect(() => {
+    if (selectionInitialized || items.length === 0) return;
+    const defaults = ['DE', 'CH', 'AT'];
+    const available = items.map((item) => item.country_code);
+    const initial = defaults.filter((code) => available.includes(code));
+    setSelectedCountries(initial.length ? initial : available.slice(0, 3));
+    setSelectionInitialized(true);
+  }, [items, selectionInitialized]);
+
+  useEffect(() => {
     if (!showRevenue && compareMetric === 'revenue_eur') {
       setCompareMetric('total_listings');
     }
