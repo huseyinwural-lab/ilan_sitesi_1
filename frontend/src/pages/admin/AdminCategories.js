@@ -223,9 +223,9 @@ const AdminCategories = () => {
       title: "",
       required: false,
       sort_order: 0,
+      options: [],
       messages: { required: "", invalid: "" },
     });
-    setDetailOptions([]);
     setDetailOptionInput("");
     setDetailEditIndex(null);
     setDetailError("");
@@ -262,9 +262,9 @@ const AdminCategories = () => {
       title: "",
       required: false,
       sort_order: 0,
+      options: [],
       messages: { required: "", invalid: "" },
     });
-    setDetailOptions([]);
     setDetailOptionInput("");
     setDetailEditIndex(null);
     setDetailError("");
@@ -593,9 +593,9 @@ const AdminCategories = () => {
       title: "",
       required: false,
       sort_order: 0,
+      options: [],
       messages: { required: "", invalid: "" },
     });
-    setDetailOptions([]);
     setDetailOptionInput("");
     setDetailEditIndex(null);
   };
