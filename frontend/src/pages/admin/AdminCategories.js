@@ -94,6 +94,7 @@ const applySchemaDefaults = (incoming) => {
     payment_options: { ...base.payment_options, ...(incoming.payment_options || {}) },
     module_order: incoming.module_order || base.module_order,
     title_uniqueness: { ...base.title_uniqueness, ...(incoming.title_uniqueness || {}) },
+    status: incoming.status || base.status,
     dynamic_fields: incoming.dynamic_fields || base.dynamic_fields,
     detail_groups: incoming.detail_groups || base.detail_groups,
   };
