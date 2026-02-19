@@ -115,7 +115,7 @@ const AdminCategories = () => {
     sort_order: 0,
   });
   const [schema, setSchema] = useState(createDefaultSchema());
-  const inputClassName = "w-full border rounded p-2 text-slate-900 placeholder-slate-500 disabled:text-slate-500 disabled:bg-slate-100";
+  const inputClassName = "w-full border rounded p-2 text-slate-900 placeholder-slate-600 disabled:text-slate-500 disabled:bg-slate-100";
   const selectClassName = "w-full border rounded p-2 text-slate-900 disabled:text-slate-500 disabled:bg-slate-100";
   const labelClassName = "text-sm text-slate-800";
 
