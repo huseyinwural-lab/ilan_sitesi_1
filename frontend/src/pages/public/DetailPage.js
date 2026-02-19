@@ -135,7 +135,7 @@ const DetailPage = () => {
 
             {/* Header */}
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="listing-title">{listing.title}</h1>
+              <h1 className="text-4xl font-extrabold text-gray-900 mb-2" data-testid="listing-title">{listing.title}</h1>
               <div className="text-2xl font-bold text-blue-600" data-testid="listing-price">
                 {listing.price ? listing.price.toLocaleString() : '-'} {listing.currency || ''}
               </div>
