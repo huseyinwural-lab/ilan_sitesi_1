@@ -216,7 +216,7 @@ export default function AdminCountryComparePage() {
   };
 
   const comparisonMax = Math.max(...comparisonCountries.map(metricValue), 1);
-  const heatmapMax = Math.max(...items.map(metricValue), 1);
+  const heatmapMax = Math.max(...filteredItems.map(metricValue), 1);
 
   const gridCols = showRevenue
     ? 'grid-cols-[0.7fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]'
