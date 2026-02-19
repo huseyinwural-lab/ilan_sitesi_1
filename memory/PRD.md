@@ -190,19 +190,15 @@
 
 ### Test Kanıtı
 - playwright: tests/e2e/admin-auth-edge.spec.js → ✅ 2 test geçti
-- playwright: tests/e2e/schema-e2e.spec.js → ✅ Senaryo 1 geçti; Senaryo 2/3 SKIPPED
+- playwright: tests/e2e/schema-e2e.spec.js → ✅ Senaryo 1/2/3 geçti
 - UI regresyon: auto_frontend_testing_agent ✅
 
-### Açık Kalanlar (SKIPPED) + Fixture Gereksinimleri
-- Senaryo 2/3 (user listing wizard) şu an SKIPPED.
-- Gereksinimler:
-  - user@platform.com (role: individual) hesabı aktif olmalı
-  - /account/create/vehicle-wizard route erişilebilir olmalı
-  - Published kategori schema’sı public contract üzerinden çekilebilir olmalı
-  - Vehicle master data (make/model) seed’leri yüklü olmalı
+### Fixture Durumu
+- user@platform.com (role: individual) seed ✅
+- Published fixture kategori şeması ✅
+- Vehicle master data (make/model) seed ✅
 
 ### Risk / Önlem
-- Risk: SKIPPED senaryolar regresyonu yakalayamaz → Fixture hazır olduğunda P2’de aktive edilecek
 - Risk: Export/PDF gelecekte schema ile uyumsuz olabilir → snapshot tabanlı üretim şartı
 
 ### Kapanış Kriterleri
