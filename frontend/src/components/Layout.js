@@ -216,7 +216,7 @@ export default function Layout({ children }) {
 
     { divider: true, label: 'Sistem', roles: roles.system },
     { path: '/admin/countries', icon: Globe, label: 'Ülkeler', roles: roles.system, testId: 'system-countries' },
-    { path: '/admin/audit-logs', icon: Clock, label: 'Denetim Kayıtları', roles: roles.adminOnly, testId: 'system-audit-logs' },
+    { path: '/admin/audit', icon: Clock, label: 'Denetim Kayıtları', roles: roles.adminOnly, testId: 'system-audit-logs' },
     { path: '/admin/system-settings', icon: Settings, label: 'Sistem Ayarları', roles: roles.system, testId: 'system-settings' },
   ];
 
