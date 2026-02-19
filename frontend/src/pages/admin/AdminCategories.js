@@ -326,6 +326,25 @@ const AdminCategories = () => {
     setPublishError("");
   }, [wizardStep]);
 
+  useEffect(() => {
+    if (modalOpen && editing?.id) {
+      fetchVersions();
+      return;
+    }
+    setVersions([]);
+    setVersionsError("");
+    setSelectedVersions([]);
+    setVersionDetails({});
+  }, [modalOpen, editing?.id]);
+
+  useEffect(() => {
+    selectedVersions.forEach((versionId) => {
+      if (!versionDetails[versionId]) {
+        fetchVersionDetail(versionId);
+      }
+    });
+  }, [selectedVersions, versionDetails]);
+
   const parentOptions = useMemo(() => items.filter((item) => item.id !== editing?.id), [items, editing]);
 
   const resetForm = () => {
