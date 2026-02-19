@@ -1,40 +1,114 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import React, { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { useCountry } from "../../contexts/CountryContext";
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const createDefaultSchema = () => ({
+  core_fields: {
+    title: {
+      required: True,
+      min: 10,
+      max: 120,
+      custom_rule: "",
+      custom_message: "",
+      messages: {
+        required: "Başlık zorunludur.",
+        min: "Başlık çok kısa.",
+        max: "Başlık çok uzun.",
+        duplicate: "Bu başlık zaten kullanılıyor.",
+      },
+      ui: { bold: True, high_contrast: True },
+    },
+    description: {
+      required: True,
+      min: 30,
+      max: 4000,
+      custom_rule: "",
+      custom_message: "",
+      messages: {
+        required: "Açıklama zorunludur.",
+        min: "Açıklama çok kısa.",
+        max: "Açıklama çok uzun.",
+      },
+      ui: { min_rows: 6, auto_grow: True, show_counter: True },
+    },
+    price: {
+      required: True,
+      currency_primary: "EUR",
+      currency_secondary: "CHF",
+      secondary_enabled: False,
+      decimal_places: 0,
+      range: { min: 0, max: None },
+      messages: {
+        required: "Fiyat zorunludur.",
+        numeric: "Fiyat sayısal olmalıdır.",
+        range: "Fiyat aralık dışında.",
+      },
+    },
+  },
+  dynamic_fields: [],
+  detail_groups: [],
+  modules: {
+    address: { enabled: True },
+    photos: { enabled: True, max_uploads: 12 },
+    contact: { enabled: True },
+    payment: { enabled: True },
+  },
+  payment_options: { package: True, doping: False },
+  module_order: ["core_fields", "dynamic_fields", "address", "detail_groups", "photos", "contact", "payment"],
+  title_uniqueness: { enabled: False, scope: "category" },
+});
 
-const emptyForm = {
-  name: '',
-  slug: '',
-  parent_id: '',
-  country_code: '',
-  sort_order: 0,
-  active_flag: true,
+const applySchemaDefaults = (incoming) => {
+  const base = createDefaultSchema();
+  if (!incoming) return base;
+  return {
+    ...base,
+    ...incoming,
+    core_fields: {
+      ...base.core_fields,
+      ...incoming.core_fields,
+      title: { ...base.core_fields.title, ...(incoming.core_fields?.title || {}) },
+      description: { ...base.core_fields.description, ...(incoming.core_fields?.description || {}) },
+      price: { ...base.core_fields.price, ...(incoming.core_fields?.price || {}) },
+    },
+    modules: {
+      ...base.modules,
+      ...incoming.modules,
+      photos: { ...base.modules.photos, ...(incoming.modules?.photos || {}) },
+    },
+    payment_options: { ...base.payment_options, ...(incoming.payment_options || {}) },
+    module_order: incoming.module_order || base.module_order,
+    title_uniqueness: { ...base.title_uniqueness, ...(incoming.title_uniqueness || {}) },
+    dynamic_fields: incoming.dynamic_fields || base.dynamic_fields,
+    detail_groups: incoming.detail_groups || base.detail_groups,
+  };
 };
 
+const createId = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
 const AdminCategories = () => {
-  const [searchParams] = useSearchParams();
-  const urlCountry = (searchParams.get('country') || '').toUpperCase();
+  const { token } = useAuth();
+  const { selectedCountry } = useCountry();
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ ...emptyForm });
-  const [error, setError] = useState(null);
-
-  const authHeader = useMemo(() => ({
-    Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-  }), []);
+  const [form, setForm] = useState({
+    name: "",
+    slug: "",
+    parent_id: "",
+    country_code: "",
+    active_flag: true,
+    sort_order: 0,
+  });
+  const [schema, setSchema] = useState(createDefaultSchema());
 
   const fetchItems = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const params = urlCountry ? `?country=${urlCountry}` : '';
-      const res = await axios.get(`${API_BASE_URL}/api/admin/categories${params}`, { headers: authHeader });
-      setItems(res.data.items || []);
-    } catch (e) {
-      console.error('Failed to load categories', e);
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories?country=${selectedCountry}`);
+      const data = await res.json();
+      setItems(data.items || []);
     } finally {
       setLoading(false);
     }
@@ -42,194 +116,645 @@ const AdminCategories = () => {
 
   useEffect(() => {
     fetchItems();
-  }, [urlCountry]);
+  }, [selectedCountry]);
 
-  const parentOptions = useMemo(() => {
-    return items.filter((item) => !editing || item.id !== editing.id);
-  }, [items, editing]);
+  const parentOptions = useMemo(() => items.filter((item) => item.id !== editing?.id), [items, editing]);
 
-  const openCreate = () => {
+  const resetForm = () => {
+    setForm({
+      name: "",
+      slug: "",
+      parent_id: "",
+      country_code: "",
+      active_flag: true,
+      sort_order: 0,
+    });
+    setSchema(createDefaultSchema());
     setEditing(null);
-    setForm({ ...emptyForm, country_code: urlCountry || '' });
-    setError(null);
+  };
+
+  const handleEdit = (item) => {
+    setEditing(item);
+    setForm({
+      name: item.name || "",
+      slug: item.slug || "",
+      parent_id: item.parent_id || "",
+      country_code: item.country_code || "",
+      active_flag: item.active_flag ?? true,
+      sort_order: item.sort_order || 0,
+    });
+    setSchema(applySchemaDefaults(item.form_schema));
     setModalOpen(true);
   };
 
-  const openEdit = (item) => {
-    setEditing(item);
-    setForm({
-      name: item.name || '',
-      slug: item.slug || '',
-      parent_id: item.parent_id || '',
-      country_code: item.country_code || '',
-      sort_order: item.sort_order || 0,
-      active_flag: item.active_flag !== false,
-    });
-    setError(null);
+  const handleCreate = () => {
+    resetForm();
     setModalOpen(true);
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.slug) {
-      setError('Name ve slug zorunlu');
-      return;
-    }
     const payload = {
       ...form,
-      slug: form.slug.trim().toLowerCase(),
-      parent_id: form.parent_id || null,
-      country_code: form.country_code || null,
       sort_order: Number(form.sort_order || 0),
+      form_schema: schema,
     };
-    try {
-      if (editing) {
-        await axios.patch(`${API_BASE_URL}/api/admin/categories/${editing.id}`, payload, { headers: authHeader });
-      } else {
-        await axios.post(`${API_BASE_URL}/api/admin/categories`, payload, { headers: authHeader });
-      }
-      setModalOpen(false);
-      fetchItems();
-    } catch (e) {
-      setError(e?.response?.data?.detail || 'Kaydetme başarısız');
+    if (!payload.name || !payload.slug) {
+      return;
     }
+    const url = editing
+      ? `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`
+      : `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`;
+    const method = editing ? "PATCH" : "POST";
+    await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    setModalOpen(false);
+    resetForm();
+    fetchItems();
+  };
+
+  const handleToggle = async (item) => {
+    await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${item.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ active_flag: !item.active_flag }),
+    });
+    fetchItems();
   };
 
   const handleDelete = async (item) => {
-    if (!window.confirm('Kategori pasif edilsin mi?')) return;
-    try {
-      await axios.delete(`${API_BASE_URL}/api/admin/categories/${item.id}`, { headers: authHeader });
-      fetchItems();
-    } catch (e) {
-      alert('Silme başarısız');
-    }
+    await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${item.id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    fetchItems();
+  };
+
+  const updateDynamicField = (index, patch) => {
+    setSchema((prev) => {
+      const updated = [...prev.dynamic_fields];
+      updated[index] = { ...updated[index], ...patch };
+      return { ...prev, dynamic_fields: updated };
+    });
+  };
+
+  const updateDetailGroup = (index, patch) => {
+    setSchema((prev) => {
+      const updated = [...prev.detail_groups];
+      updated[index] = { ...updated[index], ...patch };
+      return { ...prev, detail_groups: updated };
+    });
   };
 
   return (
-    <div className="p-6 space-y-6" data-testid="admin-categories-page">
-      <div className="flex items-center justify-between">
+    <div className="p-6" data-testid="categories-page">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-semibold">Kategoriler</h1>
-          <p className="text-sm text-muted-foreground">Country: {urlCountry || 'Global'}</p>
+          <p className="text-sm text-gray-500">İlan form şablonlarını yönetin.</p>
         </div>
         <button
-          onClick={openCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md"
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+          onClick={handleCreate}
           data-testid="categories-create-open"
         >
           Yeni Kategori
         </button>
       </div>
 
-      <div className="border rounded-lg overflow-hidden" data-testid="categories-table">
-        <table className="min-w-full text-sm">
-          <thead className="bg-muted">
-            <tr>
-              <th className="text-left px-3 py-2">Name</th>
-              <th className="text-left px-3 py-2">Slug</th>
-              <th className="text-left px-3 py-2">Parent</th>
-              <th className="text-left px-3 py-2">Country</th>
-              <th className="text-left px-3 py-2">Active</th>
-              <th className="text-left px-3 py-2">Sort</th>
-              <th className="text-right px-3 py-2">Aksiyon</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td className="px-3 py-4" colSpan="7">Yükleniyor...</td></tr>
-            ) : items.length === 0 ? (
-              <tr><td className="px-3 py-4" colSpan="7">Kayıt yok</td></tr>
-            ) : (
-              items.map((item) => (
-                <tr key={item.id} className="border-t" data-testid={`categories-row-${item.id}`}>
-                  <td className="px-3 py-2">{item.name}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{item.slug}</td>
-                  <td className="px-3 py-2">{items.find((c) => c.id === item.parent_id)?.name || '-'}</td>
-                  <td className="px-3 py-2">{item.country_code || 'global'}</td>
-                  <td className="px-3 py-2">{item.active_flag ? 'yes' : 'no'}</td>
-                  <td className="px-3 py-2">{item.sort_order}</td>
-                  <td className="px-3 py-2 text-right space-x-2">
-                    <button
-                      className="px-2 py-1 border rounded"
-                      onClick={() => openEdit(item)}
-                      data-testid={`categories-edit-${item.id}`}
-                    >
-                      Düzenle
-                    </button>
-                    <button
-                      className="px-2 py-1 border rounded text-red-600"
-                      onClick={() => handleDelete(item)}
-                      data-testid={`categories-delete-${item.id}`}
-                    >
-                      Sil
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div className="bg-white border rounded-lg">
+        <div className="grid grid-cols-6 text-xs font-semibold uppercase px-4 py-2 border-b bg-gray-50">
+          <div>Ad</div>
+          <div>Slug</div>
+          <div>Ülke</div>
+          <div>Sıra</div>
+          <div>Durum</div>
+          <div className="text-right">Aksiyon</div>
+        </div>
+        {loading ? (
+          <div className="p-4 text-sm" data-testid="categories-loading">Yükleniyor...</div>
+        ) : items.length === 0 ? (
+          <div className="p-4 text-sm" data-testid="categories-empty">Kayıt yok.</div>
+        ) : (
+          items.map((item) => (
+            <div key={item.id} className="grid grid-cols-6 px-4 py-3 border-b text-sm items-center">
+              <div className="font-medium">{item.name}</div>
+              <div className="text-gray-600">{item.slug}</div>
+              <div className="text-gray-600">{item.country_code || "global"}</div>
+              <div>{item.sort_order}</div>
+              <div>
+                <span className={`px-2 py-1 rounded text-xs ${item.active_flag ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                  {item.active_flag ? "Aktif" : "Pasif"}
+                </span>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button className="text-sm px-3 py-1 border rounded" onClick={() => handleEdit(item)} data-testid={`categories-edit-${item.id}`}>
+                  Düzenle
+                </button>
+                <button className="text-sm px-3 py-1 border rounded" onClick={() => handleToggle(item)} data-testid={`categories-toggle-${item.id}`}>
+                  {item.active_flag ? "Pasif Et" : "Aktif Et"}
+                </button>
+                <button className="text-sm px-3 py-1 border rounded" onClick={() => handleDelete(item)} data-testid={`categories-delete-${item.id}`}>
+                  Sil
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center" data-testid="categories-modal">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" data-testid="categories-modal">
+          <div className="bg-white p-6 rounded-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">{editing ? 'Kategori Düzenle' : 'Kategori Oluştur'}</h2>
-              <button onClick={() => setModalOpen(false)} data-testid="categories-modal-close">Kapat</button>
+              <h2 className="text-lg font-semibold">{editing ? "Kategori Düzenle" : "Yeni Kategori"}</h2>
+              <button onClick={() => setModalOpen(false)} data-testid="categories-modal-close">✕</button>
             </div>
 
-            {error && <div className="text-sm text-red-600 mb-2" data-testid="categories-error">{error}</div>}
-
-            <div className="space-y-3">
-              <input
-                className="w-full border rounded p-2"
-                placeholder="Name"
-                value={form.name}
-                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                data-testid="categories-name-input"
-              />
-              <input
-                className="w-full border rounded p-2"
-                placeholder="Slug"
-                value={form.slug}
-                onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
-                data-testid="categories-slug-input"
-              />
-              <select
-                className="w-full border rounded p-2"
-                value={form.parent_id}
-                onChange={(e) => setForm((prev) => ({ ...prev, parent_id: e.target.value }))}
-                data-testid="categories-parent-select"
-              >
-                <option value="">Parent (optional)</option>
-                {parentOptions.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-              <input
-                className="w-full border rounded p-2"
-                placeholder="Country code (optional)"
-                value={form.country_code}
-                onChange={(e) => setForm((prev) => ({ ...prev, country_code: e.target.value.toUpperCase() }))}
-                data-testid="categories-country-input"
-              />
-              <input
-                type="number"
-                className="w-full border rounded p-2"
-                placeholder="Sort order"
-                value={form.sort_order}
-                onChange={(e) => setForm((prev) => ({ ...prev, sort_order: e.target.value }))}
-                data-testid="categories-sort-input"
-              />
-              <label className="flex items-center gap-2 text-sm">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
-                  type="checkbox"
-                  checked={form.active_flag}
-                  onChange={(e) => setForm((prev) => ({ ...prev, active_flag: e.target.checked }))}
-                  data-testid="categories-active-checkbox"
+                  className="w-full border rounded p-2"
+                  placeholder="Kategori adı"
+                  value={form.name}
+                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                  data-testid="categories-name-input"
                 />
-                Aktif
-              </label>
+                <input
+                  className="w-full border rounded p-2"
+                  placeholder="Slug"
+                  value={form.slug}
+                  onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
+                  data-testid="categories-slug-input"
+                />
+                <select
+                  className="w-full border rounded p-2"
+                  value={form.parent_id}
+                  onChange={(e) => setForm((prev) => ({ ...prev, parent_id: e.target.value }))}
+                  data-testid="categories-parent-select"
+                >
+                  <option value="">Parent (optional)</option>
+                  {parentOptions.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+                <input
+                  className="w-full border rounded p-2"
+                  placeholder="Country code (optional)"
+                  value={form.country_code}
+                  onChange={(e) => setForm((prev) => ({ ...prev, country_code: e.target.value.toUpperCase() }))}
+                  data-testid="categories-country-input"
+                />
+                <input
+                  type="number"
+                  className="w-full border rounded p-2"
+                  placeholder="Sort order"
+                  value={form.sort_order}
+                  onChange={(e) => setForm((prev) => ({ ...prev, sort_order: e.target.value }))}
+                  data-testid="categories-sort-input"
+                />
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.active_flag}
+                    onChange={(e) => setForm((prev) => ({ ...prev, active_flag: e.target.checked }))}
+                    data-testid="categories-active-checkbox"
+                  />
+                  Aktif
+                </label>
+              </div>
+
+              <div className="border-t pt-4 space-y-4">
+                <h3 className="text-md font-semibold">Çekirdek Alanlar</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={schema.core_fields.title.required}
+                      onChange={(e) => setSchema((prev) => ({
+                        ...prev,
+                        core_fields: {
+                          ...prev.core_fields,
+                          title: { ...prev.core_fields.title, required: e.target.checked },
+                        },
+                      }))}
+                      data-testid="categories-title-required"
+                    />
+                    Başlık zorunlu
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={schema.core_fields.description.required}
+                      onChange={(e) => setSchema((prev) => ({
+                        ...prev,
+                        core_fields: {
+                          ...prev.core_fields,
+                          description: { ...prev.core_fields.description, required: e.target.checked },
+                        },
+                      }))}
+                      data-testid="categories-description-required"
+                    />
+                    Açıklama zorunlu
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <input
+                    type="number"
+                    className="w-full border rounded p-2"
+                    placeholder="Başlık min"
+                    value={schema.core_fields.title.min}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        title: { ...prev.core_fields.title, min: Number(e.target.value) },
+                      },
+                    }))}
+                    data-testid="categories-title-min"
+                  />
+                  <input
+                    type="number"
+                    className="w-full border rounded p-2"
+                    placeholder="Başlık max"
+                    value={schema.core_fields.title.max}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        title: { ...prev.core_fields.title, max: Number(e.target.value) },
+                      },
+                    }))}
+                    data-testid="categories-title-max"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Başlık custom rule (regex)"
+                    value={schema.core_fields.title.custom_rule}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        title: { ...prev.core_fields.title, custom_rule: e.target.value },
+                      },
+                    }))}
+                    data-testid="categories-title-custom-rule"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <input
+                    type="number"
+                    className="w-full border rounded p-2"
+                    placeholder="Açıklama min"
+                    value={schema.core_fields.description.min}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        description: { ...prev.core_fields.description, min: Number(e.target.value) },
+                      },
+                    }))}
+                    data-testid="categories-description-min"
+                  />
+                  <input
+                    type="number"
+                    className="w-full border rounded p-2"
+                    placeholder="Açıklama max"
+                    value={schema.core_fields.description.max}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        description: { ...prev.core_fields.description, max: Number(e.target.value) },
+                      },
+                    }))}
+                    data-testid="categories-description-max"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Açıklama custom rule (regex)"
+                    value={schema.core_fields.description.custom_rule}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        description: { ...prev.core_fields.description, custom_rule: e.target.value },
+                      },
+                    }))}
+                    data-testid="categories-description-custom-rule"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <select
+                    className="w-full border rounded p-2"
+                    value={schema.core_fields.price.currency_primary}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        price: { ...prev.core_fields.price, currency_primary: e.target.value },
+                      },
+                    }))}
+                    data-testid="categories-price-primary"
+                  >
+                    <option value="EUR">EUR</option>
+                    <option value="CHF">CHF</option>
+                  </select>
+                  <select
+                    className="w-full border rounded p-2"
+                    value={schema.core_fields.price.currency_secondary}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        price: { ...prev.core_fields.price, currency_secondary: e.target.value },
+                      },
+                    }))}
+                    data-testid="categories-price-secondary"
+                  >
+                    <option value="CHF">CHF</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                  <select
+                    className="w-full border rounded p-2"
+                    value={schema.core_fields.price.decimal_places}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        price: { ...prev.core_fields.price, decimal_places: Number(e.target.value) },
+                      },
+                    }))}
+                    data-testid="categories-price-decimals"
+                  >
+                    <option value={0}>0 basamak</option>
+                    <option value={2}>2 basamak</option>
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={schema.core_fields.price.secondary_enabled}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        price: { ...prev.core_fields.price, secondary_enabled: e.target.checked },
+                      },
+                    }))}
+                    data-testid="categories-price-secondary-toggle"
+                  />
+                  İkincil para birimi göster
+                </label>
+              </div>
+
+              <div className="border-t pt-4 space-y-4">
+                <h3 className="text-md font-semibold">Başlık Benzersizliği</h3>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={schema.title_uniqueness.enabled}
+                      onChange={(e) => setSchema((prev) => ({
+                        ...prev,
+                        title_uniqueness: { ...prev.title_uniqueness, enabled: e.target.checked },
+                      }))}
+                      data-testid="categories-title-unique-toggle"
+                    />
+                    Aynı başlıkla ilanı engelle
+                  </label>
+                  <select
+                    className="border rounded p-2 text-sm"
+                    value={schema.title_uniqueness.scope}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      title_uniqueness: { ...prev.title_uniqueness, scope: e.target.value },
+                    }))}
+                    data-testid="categories-title-unique-scope"
+                  >
+                    <option value="category">Kategori genelinde</option>
+                    <option value="category_user">Kategori + kullanıcı</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="border-t pt-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-md font-semibold">Parametre Alanları (2a)</h3>
+                  <button
+                    className="px-3 py-1 border rounded"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSchema((prev) => ({
+                        ...prev,
+                        dynamic_fields: [
+                          ...prev.dynamic_fields,
+                          {
+                            id: createId('field'),
+                            label: "",
+                            key: "",
+                            type: "select",
+                            options: [],
+                            required: False,
+                            sort_order: 0,
+                            messages: { required: "", invalid: "" },
+                          },
+                        ],
+                      }));
+                    }}
+                    data-testid="categories-add-dynamic-field"
+                  >
+                    Alan Ekle
+                  </button>
+                </div>
+
+                {schema.dynamic_fields.map((field, index) => (
+                  <div key={field.id} className="border rounded p-3 space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <input
+                        className="border rounded p-2"
+                        placeholder="Etiket"
+                        value={field.label}
+                        onChange={(e) => updateDynamicField(index, { label: e.target.value })}
+                        data-testid={`categories-dynamic-label-${index}`}
+                      />
+                      <input
+                        className="border rounded p-2"
+                        placeholder="Key"
+                        value={field.key}
+                        onChange={(e) => updateDynamicField(index, { key: e.target.value })}
+                        data-testid={`categories-dynamic-key-${index}`}
+                      />
+                      <select
+                        className="border rounded p-2"
+                        value={field.type}
+                        onChange={(e) => updateDynamicField(index, { type: e.target.value })}
+                        data-testid={`categories-dynamic-type-${index}`}
+                      >
+                        <option value="select">Select</option>
+                        <option value="radio">Radio</option>
+                      </select>
+                    </div>
+                    <input
+                      className="border rounded p-2 w-full"
+                      placeholder="Seçenekler (virgülle)"
+                      value={(field.options || []).join(', ')}
+                      onChange={(e) => updateDynamicField(index, { options: e.target.value.split(',').map((o) => o.strip()).filter(Boolean) })}
+                      data-testid={`categories-dynamic-options-${index}`}
+                    />
+                    <div className="flex items-center gap-3 text-sm">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={field.required}
+                          onChange={(e) => updateDynamicField(index, { required: e.target.checked })}
+                          data-testid={`categories-dynamic-required-${index}`}
+                        />
+                        Zorunlu
+                      </label>
+                      <input
+                        type="number"
+                        className="border rounded p-2 w-32"
+                        placeholder="Sıra"
+                        value={field.sort_order}
+                        onChange={(e) => updateDynamicField(index, { sort_order: Number(e.target.value) })}
+                        data-testid={`categories-dynamic-sort-${index}`}
+                      />
+                      <button
+                        className="ml-auto text-sm text-red-500"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSchema((prev) => ({
+                            ...prev,
+                            dynamic_fields: prev.dynamic_fields.filter((_, i) => i != index),
+                          }));
+                        }}
+                        data-testid={`categories-dynamic-remove-${index}`}
+                      >
+                        Sil
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t pt-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-md font-semibold">Özel Detay Grupları (2c)</h3>
+                  <button
+                    className="px-3 py-1 border rounded"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSchema((prev) => ({
+                        ...prev,
+                        detail_groups: [
+                          ...prev.detail_groups,
+                          {
+                            id: createId('group'),
+                            title: "",
+                            options: [],
+                            required: False,
+                            sort_order: 0,
+                            messages: { required: "", invalid: "" },
+                          },
+                        ],
+                      }));
+                    }}
+                    data-testid="categories-add-detail-group"
+                  >
+                    Grup Ekle
+                  </button>
+                </div>
+
+                {schema.detail_groups.map((group, index) => (
+                  <div key={group.id} className="border rounded p-3 space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <input
+                        className="border rounded p-2"
+                        placeholder="Grup başlığı"
+                        value={group.title}
+                        onChange={(e) => updateDetailGroup(index, { title: e.target.value })}
+                        data-testid={`categories-group-title-${index}`}
+                      />
+                      <input
+                        className="border rounded p-2"
+                        placeholder="Seçenekler (virgülle)"
+                        value={(group.options || []).join(', ')}
+                        onChange={(e) => updateDetailGroup(index, { options: e.target.value.split(',').map((o) => o.strip()).filter(Boolean) })}
+                        data-testid={`categories-group-options-${index}`}
+                      />
+                      <input
+                        type="number"
+                        className="border rounded p-2"
+                        placeholder="Sıra"
+                        value={group.sort_order}
+                        onChange={(e) => updateDetailGroup(index, { sort_order: Number(e.target.value) })}
+                        data-testid={`categories-group-sort-${index}`}
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={group.required}
+                        onChange={(e) => updateDetailGroup(index, { required: e.target.checked })}
+                        data-testid={`categories-group-required-${index}`}
+                      />
+                      Zorunlu
+                    </label>
+                    <button
+                      className="text-sm text-red-500"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSchema((prev) => ({
+                          ...prev,
+                          detail_groups: prev.detail_groups.filter((_, i) => i != index),
+                        }));
+                      }}
+                      data-testid={`categories-group-remove-${index}`}
+                    >
+                      Sil
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t pt-4 space-y-4">
+                <h3 className="text-md font-semibold">Sabit Modüller</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                  {Object.keys(schema.modules).map((key) => (
+                    <label key={key} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={schema.modules[key].enabled}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          modules: {
+                            ...prev.modules,
+                            [key]: { ...prev.modules[key], enabled: e.target.checked },
+                          },
+                        }))}
+                        data-testid={`categories-module-${key}`}
+                      />
+                      {key}
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 mt-6">
