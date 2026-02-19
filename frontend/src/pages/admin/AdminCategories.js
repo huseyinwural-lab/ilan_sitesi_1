@@ -1235,6 +1235,8 @@ const AdminCategories = () => {
                   />
                   <input
                     type="number"
+                    min={0}
+                    aria-label="Max fiyat"
                     className={inputClassName}
                     placeholder="Max fiyat"
                     value={schema.core_fields.price.range.max ?? ''}
