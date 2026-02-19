@@ -1874,8 +1874,8 @@ const AdminCategories = () => {
                     </div>
                   )}
 
-                  {schema.modules.payment?.enabled && (
-                    <div className="flex gap-4 text-sm">
+                  {isPaymentEnabled ? (
+                    <div className="flex flex-wrap gap-4 text-sm" data-testid="categories-payment-options">
                       <label className="flex items-center gap-2 text-slate-800">
                         <input
                           type="checkbox"
@@ -1900,6 +1900,10 @@ const AdminCategories = () => {
                         />
                         Doping
                       </label>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-500" data-testid="categories-payment-options-collapsed">
+                      Ödeme modülü kapalı. Paket/doping seçenekleri pasif.
                     </div>
                   )}
                 </div>
