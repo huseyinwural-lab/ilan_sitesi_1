@@ -1,22 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCountry } from '../contexts/CountryContext';
-import { 
-  Users, Globe, Activity, TrendingUp, 
-  Shield, Clock, ArrowUpRight, ArrowDownRight 
+import {
+  Users,
+  Globe,
+  Activity,
+  Shield,
+  Clock,
+  ArrowUpRight,
+  ArrowDownRight,
+  Server,
+  AlertTriangle,
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendUp }) => (
-  <div className="stat-card" data-testid={`stat-card-${title.toLowerCase().replace(/\s/g, '-')}`}>
+const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendUp, testId }) => (
+  <div className="stat-card" data-testid={testId}>
     <div className="flex items-start justify-between">
       <div>
-        <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <p className="text-3xl font-bold mt-2 tracking-tight">{value}</p>
-        {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
+        <p className="text-sm font-medium text-muted-foreground" data-testid={`${testId}-title`}>{title}</p>
+        <p className="text-3xl font-bold mt-2 tracking-tight" data-testid={`${testId}-value`}>{value}</p>
+        {subtitle && <p className="text-xs text-muted-foreground mt-1" data-testid={`${testId}-subtitle`}>{subtitle}</p>}
       </div>
       <div className="p-2 rounded-md bg-primary/10">
         <Icon className="text-primary" size={20} />
@@ -31,29 +39,37 @@ const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendUp }) => (
   </div>
 );
 
+const SkeletonCard = ({ testId }) => (
+  <div className="stat-card animate-pulse" data-testid={testId}>
+    <div className="h-4 w-24 bg-muted rounded" />
+    <div className="h-8 w-20 bg-muted rounded mt-3" />
+    <div className="h-3 w-32 bg-muted rounded mt-2" />
+  </div>
+);
+
 const RoleDistribution = ({ data, t }) => {
   const roles = [
     { key: 'super_admin', color: 'bg-blue-500' },
     { key: 'country_admin', color: 'bg-indigo-500' },
     { key: 'moderator', color: 'bg-purple-500' },
     { key: 'support', color: 'bg-amber-500' },
-    { key: 'finance', color: 'bg-emerald-500' }
+    { key: 'finance', color: 'bg-emerald-500' },
   ];
-  
+
   const total = Object.values(data).reduce((a, b) => a + b, 0) || 1;
 
   return (
-    <div className="bg-card rounded-md border p-6">
+    <div className="bg-card rounded-md border p-6" data-testid="dashboard-role-distribution">
       <h3 className="font-semibold mb-4">{t('role')} Distribution</h3>
       <div className="space-y-3">
         {roles.map(({ key, color }) => (
           <div key={key} className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${color}`} />
             <span className="text-sm flex-1">{t(key)}</span>
-            <span className="text-sm font-medium">{data[key] || 0}</span>
+            <span className="text-sm font-medium" data-testid={`dashboard-role-${key}`}>{data[key] || 0}</span>
             <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-              <div 
-                className={`h-full ${color}`} 
+              <div
+                className={`h-full ${color}`}
                 style={{ width: `${((data[key] || 0) / total) * 100}%` }}
               />
             </div>
@@ -64,7 +80,7 @@ const RoleDistribution = ({ data, t }) => {
   );
 };
 
-const RecentActivity = ({ logs, t, getTranslated }) => {
+const RecentActivity = ({ logs }) => {
   const actionColors = {
     CREATE: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30',
     UPDATE: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30',
@@ -76,29 +92,34 @@ const RecentActivity = ({ logs, t, getTranslated }) => {
   };
 
   return (
-    <div className="bg-card rounded-md border p-6">
+    <div className="bg-card rounded-md border p-6" data-testid="dashboard-recent-activity">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold">{t('recent_activity')}</h3>
+        <h3 className="font-semibold">Son Aktivite</h3>
         <Activity size={18} className="text-muted-foreground" />
       </div>
       <div className="space-y-3">
         {logs.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+          <div className="text-sm text-muted-foreground text-center py-4" data-testid="dashboard-activity-empty">
+            Son aktivite bulunamadı.
+            <Link to="/admin/audit" className="block mt-2 text-primary font-medium" data-testid="dashboard-activity-cta">
+              Denetim Kayıtlarına Git
+            </Link>
+          </div>
         ) : (
-          logs.slice(0, 8).map((log, idx) => (
-            <div key={log.id || idx} className="flex items-start gap-3 text-sm">
+          logs.slice(0, 10).map((log, idx) => (
+            <div key={log.id || idx} className="flex items-start gap-3 text-sm" data-testid={`dashboard-activity-row-${idx}`}>
               <span className={`px-2 py-0.5 rounded text-xs font-medium ${actionColors[log.action] || 'bg-muted'}`}>
-                {log.action}
+                {log.action || log.event_type}
               </span>
               <div className="flex-1 min-w-0">
                 <p className="truncate">
-                  <span className="font-medium">{log.resource_type}</span>
+                  <span className="font-medium">{log.resource_type || '-'}</span>
                   {log.user_email && (
-                    <span className="text-muted-foreground"> by {log.user_email}</span>
+                    <span className="text-muted-foreground"> · {log.user_email}</span>
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(log.created_at).toLocaleString()}
+                  {log.created_at ? new Date(log.created_at).toLocaleString() : '-'}
                 </p>
               </div>
             </div>
@@ -109,96 +130,197 @@ const RecentActivity = ({ logs, t, getTranslated }) => {
   );
 };
 
+const ActivitySummaryCard = ({ summary }) => (
+  <div className="bg-card rounded-md border p-6" data-testid="dashboard-activity-summary">
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="font-semibold">Son 24 Saat İşlem Özeti</h3>
+      <Clock size={18} className="text-muted-foreground" />
+    </div>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+      <div>
+        <div className="text-muted-foreground">Yeni ilan</div>
+        <div className="text-xl font-semibold" data-testid="dashboard-activity-new-listings">{summary?.new_listings || 0}</div>
+      </div>
+      <div>
+        <div className="text-muted-foreground">Yeni kullanıcı</div>
+        <div className="text-xl font-semibold" data-testid="dashboard-activity-new-users">{summary?.new_users || 0}</div>
+      </div>
+      <div>
+        <div className="text-muted-foreground">Silinen içerik</div>
+        <div className="text-xl font-semibold" data-testid="dashboard-activity-deleted">{summary?.deleted_content || 0}</div>
+      </div>
+    </div>
+  </div>
+);
+
+const HealthCard = ({ health }) => (
+  <div className="bg-card rounded-md border p-6" data-testid="dashboard-health-card">
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="font-semibold">Sistem Sağlığı</h3>
+      <Server size={18} className="text-muted-foreground" />
+    </div>
+    <div className="space-y-3 text-sm">
+      <div className="flex items-center justify-between">
+        <span>API status</span>
+        <span className={`font-semibold ${health?.api_status === 'ok' ? 'text-emerald-600' : 'text-rose-600'}`} data-testid="dashboard-health-api">
+          {health?.api_status || 'unknown'}
+        </span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span>DB bağlantı</span>
+        <span className={`font-semibold ${health?.db_status === 'ok' ? 'text-emerald-600' : 'text-rose-600'}`} data-testid="dashboard-health-db">
+          {health?.db_status || 'unknown'}
+        </span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span>Son deploy</span>
+        <span className="font-semibold" data-testid="dashboard-health-deploy">
+          {health?.deployed_at || 'unknown'}
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
 export default function Dashboard() {
-  const [stats, setStats] = useState(null);
+  const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { t, getTranslated } = useLanguage();
-  const { selectedCountry, getFlag } = useCountry();
+  const [error, setError] = useState('');
+  const { t } = useLanguage();
+  const { selectedCountry } = useCountry();
+  const [searchParams] = useSearchParams();
+
+  const adminMode = useMemo(() => {
+    return localStorage.getItem('admin_mode') || (searchParams.get('country') ? 'country' : 'global');
+  }, [searchParams]);
+
+  const isCountryMode = adminMode === 'country';
+  const urlCountry = searchParams.get('country');
+  const effectiveCountry = (urlCountry || selectedCountry || 'DE').toUpperCase();
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    fetchSummary();
+  }, [isCountryMode, effectiveCountry]);
 
-  const fetchStats = async () => {
+  const fetchSummary = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const country = new URLSearchParams(window.location.search).get('country');
-      const qs = country ? `?country=${encodeURIComponent(country)}` : '';
-      const response = await axios.get(`${API}/dashboard/stats${qs}`);
-      setStats(response.data);
+      const token = localStorage.getItem('access_token');
+      const qs = isCountryMode ? `?country=${encodeURIComponent(effectiveCountry)}` : '';
+      const response = await axios.get(`${API}/admin/dashboard/summary${qs}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSummary(response.data);
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      setError('Dashboard verileri yüklenemedi.');
     } finally {
       setLoading(false);
     }
   };
 
+  const activeModulesLabel = summary?.active_modules?.items?.join(', ') || '-';
+  const activeCountriesLabel = summary?.active_countries?.codes?.join(', ') || '-';
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="space-y-6" data-testid="dashboard-loading">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <SkeletonCard key={index} testId={`dashboard-skeleton-${index}`} />
+          ))}
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="bg-card rounded-md border p-6 animate-pulse h-64" />
+          <div className="bg-card rounded-md border p-6 animate-pulse h-64" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6" data-testid="dashboard">
-      <h1 className="text-2xl font-bold text-gray-900" data-testid="dashboard-title">Kontrol Paneli</h1>
-      {/* Stats Grid */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-gray-900" data-testid="dashboard-title">Kontrol Paneli</h1>
+        <div className="text-xs text-muted-foreground" data-testid="dashboard-scope">
+          Kapsam: {isCountryMode ? `Country (${effectiveCountry})` : 'Global'}
+        </div>
+      </div>
+
+      {error && (
+        <div className="text-sm text-rose-600 flex items-center gap-2" data-testid="dashboard-error">
+          <AlertTriangle size={16} /> {error}
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard 
-          icon={Users} 
-          title={t('total_users')} 
-          value={stats?.users?.total || 0}
-          subtitle={`${stats?.users?.active || 0} ${t('active').toLowerCase()}`}
+        <StatCard
+          icon={Users}
+          title={t('total_users')}
+          value={summary?.users?.total || 0}
+          subtitle={`Aktif ${summary?.users?.active || 0} / Pasif ${summary?.users?.inactive || 0}`}
+          testId="dashboard-total-users"
         />
-        <StatCard 
-          icon={Globe} 
-          title={t('enabled_countries')} 
-          value={stats?.countries?.enabled || 0}
-          subtitle="DE, CH, FR, AT"
+        <StatCard
+          icon={Globe}
+          title="Aktif Ülkeler"
+          value={summary?.active_countries?.count || 0}
+          subtitle={activeCountriesLabel}
+          testId="dashboard-active-countries"
         />
-        <StatCard 
-          icon={Shield} 
-          title="Active Modules" 
-          value="2"
-          subtitle="Emlak, Vasıta"
+        <StatCard
+          icon={Shield}
+          title="Active Modules"
+          value={summary?.active_modules?.count || 0}
+          subtitle={activeModulesLabel}
+          testId="dashboard-active-modules"
+        />
+        <StatCard
+          icon={Activity}
+          title="Toplam İlan"
+          value={summary?.metrics?.total_listings || 0}
+          subtitle={`Yayınlı ${summary?.metrics?.published_listings || 0}`}
+          testId="dashboard-total-listings"
         />
       </div>
 
-      {/* Role Distribution & Recent Activity */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <RoleDistribution data={stats?.users_by_role || {}} t={t} />
-        <RecentActivity logs={stats?.recent_activity || []} t={t} getTranslated={getTranslated} />
+        <ActivitySummaryCard summary={summary?.activity_24h} />
+        <HealthCard health={summary?.health} />
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-card rounded-md border p-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <RoleDistribution data={summary?.role_distribution || {}} t={t} />
+        <RecentActivity logs={summary?.recent_activity || []} />
+      </div>
+
+      <div className="bg-card rounded-md border p-6" data-testid="dashboard-quick-actions">
         <h3 className="font-semibold mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <a 
-            href="/admin/users" 
+          <Link
+            to="/admin/users"
             className="flex items-center gap-2 p-3 rounded-md border hover:bg-muted/50 transition-colors"
             data-testid="quick-action-users"
           >
             <Users size={18} className="text-primary" />
             <span className="text-sm font-medium">{t('users')}</span>
-          </a>
-          <a 
-            href="/admin/countries" 
+          </Link>
+          <Link
+            to="/admin/countries"
             className="flex items-center gap-2 p-3 rounded-md border hover:bg-muted/50 transition-colors"
             data-testid="quick-action-countries"
           >
             <Globe size={18} className="text-primary" />
             <span className="text-sm font-medium">{t('countries')}</span>
-          </a>
-          <a 
-            href="/admin/audit-logs" 
+          </Link>
+          <Link
+            to="/admin/audit"
             className="flex items-center gap-2 p-3 rounded-md border hover:bg-muted/50 transition-colors"
             data-testid="quick-action-audit"
           >
             <Clock size={18} className="text-primary" />
-            <span className="text-sm font-medium">{t('audit_logs')}</span>
-          </a>
+            <span className="text-sm font-medium">Denetim Kayıtları</span>
+          </Link>
         </div>
       </div>
     </div>
