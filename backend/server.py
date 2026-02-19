@@ -5813,7 +5813,7 @@ async def admin_dashboard_summary(
     else:
         effective_countries = [country_code] if country_code else None
 
-    cache_key = _dashboard_cache_key(role, effective_countries)
+    cache_key = _dashboard_cache_key(role, effective_countries, trend_window)
     cached = _get_cached_dashboard_summary(cache_key)
     if cached:
         response = {**cached}
