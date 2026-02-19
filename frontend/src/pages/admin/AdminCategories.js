@@ -412,6 +412,88 @@ const AdminCategories = () => {
                     }))}
                     data-testid="categories-title-custom-rule"
                   />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Başlık required mesajı"
+                    value={schema.core_fields.title.messages.required}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        title: {
+                          ...prev.core_fields.title,
+                          messages: { ...prev.core_fields.title.messages, required: e.target.value },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-title-required-message"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Başlık min mesajı"
+                    value={schema.core_fields.title.messages.min}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        title: {
+                          ...prev.core_fields.title,
+                          messages: { ...prev.core_fields.title.messages, min: e.target.value },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-title-min-message"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Başlık max mesajı"
+                    value={schema.core_fields.title.messages.max}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        title: {
+                          ...prev.core_fields.title,
+                          messages: { ...prev.core_fields.title.messages, max: e.target.value },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-title-max-message"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Başlık duplicate mesajı"
+                    value={schema.core_fields.title.messages.duplicate}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        title: {
+                          ...prev.core_fields.title,
+                          messages: { ...prev.core_fields.title.messages, duplicate: e.target.value },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-title-duplicate-message"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Başlık custom mesajı"
+                    value={schema.core_fields.title.custom_message}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        title: { ...prev.core_fields.title, custom_message: e.target.value },
+                      },
+                    }))}
+                    data-testid="categories-title-custom-message"
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -456,6 +538,71 @@ const AdminCategories = () => {
                       },
                     }))}
                     data-testid="categories-description-custom-rule"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Açıklama required mesajı"
+                    value={schema.core_fields.description.messages.required}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        description: {
+                          ...prev.core_fields.description,
+                          messages: { ...prev.core_fields.description.messages, required: e.target.value },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-description-required-message"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Açıklama min mesajı"
+                    value={schema.core_fields.description.messages.min}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        description: {
+                          ...prev.core_fields.description,
+                          messages: { ...prev.core_fields.description.messages, min: e.target.value },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-description-min-message"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Açıklama max mesajı"
+                    value={schema.core_fields.description.messages.max}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        description: {
+                          ...prev.core_fields.description,
+                          messages: { ...prev.core_fields.description.messages, max: e.target.value },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-description-max-message"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Açıklama custom mesajı"
+                    value={schema.core_fields.description.custom_message}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        description: { ...prev.core_fields.description, custom_message: e.target.value },
+                      },
+                    }))}
+                    data-testid="categories-description-custom-message"
                   />
                 </div>
 
@@ -505,6 +652,59 @@ const AdminCategories = () => {
                     <option value={0}>0 basamak</option>
                     <option value={2}>2 basamak</option>
                   </select>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Fiyat required mesajı"
+                    value={schema.core_fields.price.messages.required}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        price: {
+                          ...prev.core_fields.price,
+                          messages: { ...prev.core_fields.price.messages, required: e.target.value },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-price-required-message"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Fiyat numeric mesajı"
+                    value={schema.core_fields.price.messages.numeric}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        price: {
+                          ...prev.core_fields.price,
+                          messages: { ...prev.core_fields.price.messages, numeric: e.target.value },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-price-numeric-message"
+                  />
+                  <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    placeholder="Fiyat range mesajı"
+                    value={schema.core_fields.price.messages.range}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        price: {
+                          ...prev.core_fields.price,
+                          messages: { ...prev.core_fields.price.messages, range: e.target.value },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-price-range-message"
+                  />
                 </div>
                 <label className="flex items-center gap-2 text-sm">
                   <input
