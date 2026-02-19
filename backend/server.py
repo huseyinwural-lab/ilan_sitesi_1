@@ -660,6 +660,9 @@ EXPORT_RATE_LIMIT_WINDOW_SECONDS = 60
 EXPORT_RATE_LIMIT_MAX_ATTEMPTS = 10
 _export_attempts: Dict[str, List[float]] = {}
 
+DASHBOARD_CACHE_TTL_SECONDS = 60
+_dashboard_summary_cache: Dict[str, Dict[str, Any]] = {}
+
 ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
 
 
