@@ -445,6 +445,8 @@ async def lifespan(app: FastAPI):
     await db.categories.create_index("active_flag")
     await db.categories_versions.create_index("id", unique=True)
     await db.categories_versions.create_index([("category_id", 1), ("version", -1)], unique=True)
+    await db.audit_logs.create_index("event_type")
+    await db.audit_logs.create_index([("event_type", 1), ("created_at", -1)])
     await db.attributes.create_index("id", unique=True)
     await db.attributes.create_index([("key", 1), ("category_id", 1), ("country_code", 1)], unique=True)
     await db.attributes.create_index("category_id")
