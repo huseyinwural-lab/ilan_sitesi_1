@@ -551,7 +551,10 @@ const AdminCategories = () => {
   const handleDetailOptionAdd = () => {
     const value = detailOptionInput.trim();
     if (!value) return;
-    setDetailOptions((prev) => [...prev, value]);
+    setDetailDraft((prev) => ({
+      ...prev,
+      options: [...(prev.options || []), value],
+    }));
     setDetailOptionInput("");
   };
 
