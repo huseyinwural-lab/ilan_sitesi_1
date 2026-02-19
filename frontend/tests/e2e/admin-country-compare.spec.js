@@ -9,6 +9,11 @@ test('country compare filters and sorting', async ({ page }) => {
   await page.goto('/admin/country-compare');
   await expect(page.getByTestId('admin-country-compare-page')).toBeVisible({ timeout: 60000 });
 
+  await expect(page.getByTestId('country-compare-row-DE')).toBeVisible();
+  await expect(page.getByTestId('country-compare-row-CH')).toBeVisible();
+  await expect(page.getByTestId('country-compare-row-AT')).toBeVisible();
+  await expect(page.getByTestId('country-compare-row-PL')).toHaveCount(0);
+
   await page.getByTestId('country-compare-period-select').selectOption('7d');
   await expect(page.getByTestId('country-compare-period-label')).toContainText('Son 7 Gün');
 
