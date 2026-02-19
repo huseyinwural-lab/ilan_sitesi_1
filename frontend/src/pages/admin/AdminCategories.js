@@ -1327,8 +1327,6 @@ const AdminCategories = () => {
                   />
                   İkincil para birimi göster
                 </label>
-              </div>
-
               <div className="border-t pt-4 space-y-4">
                 <h3 className="text-md font-semibold">Başlık Benzersizliği</h3>
                 <div className="flex items-center gap-4">
