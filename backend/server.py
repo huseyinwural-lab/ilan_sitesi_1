@@ -4691,7 +4691,7 @@ async def admin_dashboard_country_compare(
 
 
 @api_router.get("/admin/session/health")
-async def admin_session_health(request: Request, current_user=Depends(get_current_user)):
+async def admin_session_health(request: Request, response: Response, current_user=Depends(get_current_user)):
     auth_header = request.headers.get("Authorization", "")
     token = auth_header.split(" ", 1)[1] if auth_header.startswith("Bearer ") else None
     expires_at = None
@@ -4701,6 +4701,7 @@ async def admin_session_health(request: Request, current_user=Depends(get_curren
         if exp:
             expires_at = datetime.fromtimestamp(exp, tz=timezone.utc).isoformat()
     roles = current_user.get("roles") or [current_user.get("role")]
+    response.headers["Cache-Control"] = "no-store"
     return {
         "user_id": current_user.get("id"),
         "roles": roles,
