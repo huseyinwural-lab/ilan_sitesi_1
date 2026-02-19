@@ -5900,7 +5900,7 @@ async def admin_dashboard_summary(
     deleted_content = await db.audit_logs.count_documents(delete_query)
 
     kpis = await _dashboard_kpis(db, effective_countries, include_revenue=can_view_finance)
-    trends = await _dashboard_trends(db, effective_countries, include_revenue=can_view_finance)
+    trends = await _dashboard_trends(db, effective_countries, include_revenue=can_view_finance, window_days=trend_window)
     risk_panel = await _dashboard_risk_panel(db, effective_countries, include_finance=can_view_finance)
 
     db_status, db_latency_ms = await _dashboard_db_health(db)
