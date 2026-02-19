@@ -21,6 +21,9 @@ module.exports = [
         ...globals.node,
       },
     },
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
     plugins: {
       react,
       'react-hooks': reactHooks,
