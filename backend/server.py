@@ -5625,7 +5625,9 @@ async def _dashboard_kpis(db, effective_countries: Optional[List[str]], include_
     }
 
 
-async def _dashboard_trends(db, effective_countries: Optional[List[str]], include_revenue: bool) -> Dict[str, Any]:
+async def _dashboard_trends(
+    db, effective_countries: Optional[List[str]], include_revenue: bool, window_days: int
+) -> Dict[str, Any]:
     now = datetime.now(timezone.utc)
     listings_trend: List[Dict[str, Any]] = []
     revenue_trend: List[Dict[str, Any]] = []
@@ -5634,8 +5636,8 @@ async def _dashboard_trends(db, effective_countries: Optional[List[str]], includ
     if effective_countries:
         invoice_base["country_code"] = {"$in": effective_countries}
 
-    for offset in range(DASHBOARD_TREND_DAYS):
-        day = (now - timedelta(days=(DASHBOARD_TREND_DAYS - 1 - offset))).replace(hour=0, minute=0, second=0, microsecond=0)
+    for offset in range(window_days):
+        day = (now - timedelta(days=(window_days - 1 - offset))).replace(hour=0, minute=0, second=0, microsecond=0)
         day_end = day + timedelta(days=1)
         start_iso = day.isoformat()
         end_iso = day_end.isoformat()
@@ -5658,7 +5660,7 @@ async def _dashboard_trends(db, effective_countries: Optional[List[str]], includ
             })
 
     return {
-        "window_days": DASHBOARD_TREND_DAYS,
+        "window_days": window_days,
         "listings": listings_trend,
         "revenue": revenue_trend if include_revenue else None,
     }
