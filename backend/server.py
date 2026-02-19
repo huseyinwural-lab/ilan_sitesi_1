@@ -2075,6 +2075,21 @@ def _normalize_category_schema(schema: Optional[Dict[str, Any]]) -> Dict[str, An
     price_messages.setdefault("required", "Fiyat zorunludur.")
     price_messages.setdefault("numeric", "Geçerli bir fiyat girin.")
     price_messages.setdefault("range", "Fiyat aralık dışında.")
+    merged["validation_messages"] = {
+        "core_fields": {
+            "title": title_messages,
+            "description": desc_messages,
+            "price": price_messages,
+        },
+        "dynamic_fields": {
+            field.get("key"): field.get("messages", {})
+            for field in merged.get("dynamic_fields", [])
+        },
+        "detail_groups": {
+            group.get("id"): group.get("messages", {})
+            for group in merged.get("detail_groups", [])
+        },
+    }
     return merged
 
 
