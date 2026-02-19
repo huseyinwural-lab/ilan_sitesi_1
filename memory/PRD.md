@@ -74,6 +74,9 @@
   - Sidebar bootstrap health-check sonrası render
   - Playwright admin login smoke testi (dashboard → kategoriler)
   - Test yolu: /app/frontend/tests/e2e/admin-login.spec.js
+- **Admin Kategori Modal Kontrast Düzeltmesi:**
+  - Modal input/label/placeholder renkleri koyu tona çekildi (WCAG uyumlu)
+  - Playwright görsel regresyon testi eklendi
 - **Sprint 6:** Final Integration Gate
   - RBAC + Country-scope + Audit coverage kanıtları
   - Kritik akışlar E2E (public/dealer/individual/report/finance)
