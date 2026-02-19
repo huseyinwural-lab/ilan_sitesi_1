@@ -43,6 +43,12 @@ export default function Layout({ children }) {
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/session/health`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 401 || res.status === 403) {
+        setSessionStatus('error');
+        setSessionError('Oturum süresi doldu. Lütfen tekrar giriş yapın.');
+        logout();
+        return;
+      }
       if (!res.ok) {
         setSessionStatus('error');
         setSessionError('Oturum doğrulanamadı. Lütfen tekrar deneyin.');
