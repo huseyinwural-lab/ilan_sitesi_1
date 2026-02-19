@@ -1144,8 +1144,8 @@ const AdminCategories = () => {
     <div className="p-6" data-testid="categories-page">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-semibold">Kategoriler</h1>
-          <p className="text-sm text-gray-500">İlan form şablonlarını yönetin.</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Kategoriler</h1>
+          <p className="text-sm text-slate-700">İlan form şablonlarını yönetin.</p>
         </div>
         <button
           className="px-4 py-2 bg-blue-600 text-white rounded"
@@ -1156,8 +1156,8 @@ const AdminCategories = () => {
         </button>
       </div>
 
-      <div className="bg-white border rounded-lg">
-        <div className="grid grid-cols-6 text-xs font-semibold uppercase px-4 py-2 border-b bg-gray-50">
+      <div className="bg-white border rounded-lg text-slate-900">
+        <div className="grid grid-cols-6 text-xs font-semibold uppercase px-4 py-2 border-b bg-gray-50 text-slate-800">
           <div>Ad</div>
           <div>Slug</div>
           <div>Ülke</div>
@@ -1171,7 +1171,7 @@ const AdminCategories = () => {
           <div className="p-4 text-sm" data-testid="categories-empty">Kayıt yok.</div>
         ) : (
           items.map((item) => (
-            <div key={item.id} className="grid grid-cols-6 px-4 py-3 border-b text-sm items-center">
+            <div key={item.id} className="grid grid-cols-6 px-4 py-3 border-b text-sm items-center text-slate-900">
               <div className="font-medium">{item.name}</div>
               <div className="text-gray-600">{item.slug}</div>
               <div className="text-gray-600">{item.country_code || "global"}</div>
