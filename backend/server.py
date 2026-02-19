@@ -616,6 +616,24 @@ def _set_cached_dashboard_summary(cache_key: str, data: Dict[str, Any]) -> None:
     _dashboard_summary_cache[cache_key] = {"timestamp": time.time(), "data": data}
 
 
+def _format_uptime(seconds: int) -> str:
+    if seconds < 0:
+        return "0s"
+    days, rem = divmod(seconds, 86400)
+    hours, rem = divmod(rem, 3600)
+    minutes, secs = divmod(rem, 60)
+    parts = []
+    if days:
+        parts.append(f"{days}d")
+    if hours:
+        parts.append(f"{hours}h")
+    if minutes:
+        parts.append(f"{minutes}m")
+    if secs or not parts:
+        parts.append(f"{secs}s")
+    return " ".join(parts)
+
+
 # Audit event taxonomy (v1)
 AUDIT_EVENT_TYPES_V1 = {
     "MODERATION_APPROVE",
@@ -680,6 +698,8 @@ _report_submit_attempts: Dict[str, List[float]] = {}
 EXPORT_RATE_LIMIT_WINDOW_SECONDS = 60
 EXPORT_RATE_LIMIT_MAX_ATTEMPTS = 10
 _export_attempts: Dict[str, List[float]] = {}
+
+APP_START_TIME = datetime.now(timezone.utc)
 
 DASHBOARD_CACHE_TTL_SECONDS = int(os.environ.get("DASHBOARD_CACHE_TTL_SECONDS", "60"))
 _dashboard_summary_cache: Dict[str, Dict[str, Any]] = {}
@@ -5571,7 +5591,8 @@ async def admin_dashboard_summary(
         for log in recent_logs
     ]
 
-    since_iso = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    now = datetime.now(timezone.utc)
+    since_iso = (now - timedelta(hours=24)).isoformat()
     listing_recent_query = {"created_at": {"$gte": since_iso}}
     if effective_countries:
         listing_recent_query["country"] = {"$in": effective_countries}
