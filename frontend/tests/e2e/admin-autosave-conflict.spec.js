@@ -19,12 +19,30 @@ test('Autosave conflict uyarısı gösterir', async ({ page, request }) => {
     headers: { Authorization: `Bearer ${token}` },
   });
   const listData = await listRes.json();
-  let targetCategory = (listData.items || []).find(
+  const items = listData.items || [];
+  let targetCategory = items.find(
     (item) => item.hierarchy_complete && item.form_schema && item.form_schema.status === 'draft'
   );
 
   if (!targetCategory) {
     throw new Error('Draft kategori bulunamadı');
+  }
+
+  const hasChild = items.some((child) => child.parent_id === targetCategory.id);
+  if (!hasChild) {
+    const childSlug = `${targetCategory.slug}-child-${Date.now()}`;
+    await request.post('/api/admin/categories', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        name: `${targetCategory.name} Child`,
+        slug: childSlug,
+        parent_id: targetCategory.id,
+        country_code: targetCategory.country_code || 'DE',
+        active_flag: true,
+        sort_order: 0,
+        hierarchy_complete: true,
+      },
+    });
   }
 
   if (!targetCategory.form_schema || targetCategory.form_schema.status !== 'draft') {
@@ -53,6 +71,15 @@ test('Autosave conflict uyarısı gösterir', async ({ page, request }) => {
   }
 
   await editLocator.click({ force: true });
+  await expect(page.getByTestId('category-hierarchy-step')).toBeVisible({ timeout: 60000 });
+
+  if (await page.getByTestId('categories-subcategory-empty').isVisible()) {
+    await page.getByTestId('categories-subcategory-add').click();
+    await page.getByTestId('categories-subcategory-name-0').fill('Alt Kategori');
+    await page.getByTestId('categories-subcategory-slug-0').fill(`alt-${Date.now()}`);
+  }
+
+  await page.getByTestId('categories-step-next').click();
   await expect(page.getByTestId('categories-core-step')).toBeVisible({ timeout: 60000 });
 
   await request.patch(`/api/admin/categories/${targetCategory.id}`, {
