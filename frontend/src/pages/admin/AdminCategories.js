@@ -594,6 +594,45 @@ const AdminCategories = () => {
     }
   };
 
+  const parseExportFilename = (contentDisposition, fallback) => {
+    if (!contentDisposition) return fallback;
+    const match = contentDisposition.match(/filename="?([^";]+)"?/i);
+    return match ? match[1] : fallback;
+  };
+
+  const handleExport = async (format) => {
+    if (!editing?.id) {
+      toast({ title: "Export başarısız", description: "Önce taslak kaydedin.", variant: "destructive" });
+      return;
+    }
+    try {
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}/export/${format}`,
+        { headers: authHeader }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast({ title: "Export başarısız", description: data?.detail || "Dosya indirilemedi.", variant: "destructive" });
+        return;
+      }
+      const blob = await res.blob();
+      const filename = parseExportFilename(
+        res.headers.get("content-disposition"),
+        `schema-${editing.id}.${format}`
+      );
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast({ title: "Export başarısız", description: "Dosya indirilemedi.", variant: "destructive" });
+    }
+  };
+
   const handleSave = async (status = "draft", overrideEditing = null, closeOnSuccess = true, options = {}) => {
     const { autosave = false } = options;
     setHierarchyError("");
