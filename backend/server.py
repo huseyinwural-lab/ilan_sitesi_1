@@ -2,6 +2,8 @@ import os
 import re
 import io
 import csv
+import urllib.request
+import xml.etree.ElementTree as ET
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
