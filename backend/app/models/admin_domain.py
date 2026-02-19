@@ -294,3 +294,77 @@ class VehicleModelUpdatePayload(BaseModel):
     name: Optional[str] = None
     slug: Optional[str] = None
     active_flag: Optional[bool] = None
+
+
+# ===============
+# Dashboard Analytics (KPI / Trend / Risk / Health)
+# ===============
+
+
+class KpiRange(BaseModel):
+    new_listings: int
+    new_users: int
+    revenue_total: Optional[float] = None
+    revenue_currency_totals: Optional[Dict[str, float]] = None
+
+
+class KpiMetrics(BaseModel):
+    today: KpiRange
+    last_7_days: KpiRange
+
+
+class TrendPoint(BaseModel):
+    date: str
+    count: Optional[int] = None
+    amount: Optional[float] = None
+    currency_totals: Optional[Dict[str, float]] = None
+
+
+class TrendData(BaseModel):
+    window_days: int
+    listings: List[TrendPoint]
+    revenue: Optional[List[TrendPoint]] = None
+
+
+class RiskItem(BaseModel):
+    count: int
+    threshold: Optional[int] = None
+    window_hours: Optional[int] = None
+    threshold_days: Optional[int] = None
+    items: Optional[List[Dict[str, Any]]] = None
+    hidden: Optional[bool] = None
+
+
+class RiskPanel(BaseModel):
+    suspicious_logins: RiskItem
+    sla_breaches: RiskItem
+    pending_payments: Optional[RiskItem] = None
+    finance_visible: bool = False
+
+
+class HealthMetrics(BaseModel):
+    api_status: str
+    db_status: str
+    api_latency_ms: Optional[int] = None
+    db_latency_ms: Optional[int] = None
+    deployed_at: Optional[str] = None
+    restart_at: Optional[str] = None
+    uptime_seconds: Optional[int] = None
+    uptime_human: Optional[str] = None
+
+
+class DashboardSummaryResponse(BaseModel):
+    scope: str
+    country_codes: List[str]
+    users: Dict[str, int]
+    active_countries: Dict[str, Any]
+    active_modules: Dict[str, Any]
+    recent_activity: List[Dict[str, Any]]
+    role_distribution: Dict[str, int]
+    activity_24h: Dict[str, int]
+    metrics: Dict[str, Any]
+    kpis: Optional[KpiMetrics] = None
+    trends: Optional[TrendData] = None
+    risk_panel: Optional[RiskPanel] = None
+    health: HealthMetrics
+    finance_visible: bool = False
