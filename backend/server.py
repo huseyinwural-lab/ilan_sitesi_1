@@ -1988,7 +1988,7 @@ def _normalize_category_doc(doc: dict, include_schema: bool = False) -> dict:
         "updated_at": doc.get("updated_at"),
     }
     if include_schema:
-        payload["form_schema"] = _normalize_category_schema(doc.get("form_schema"))
+        payload["form_schema"] = _normalize_category_schema(doc.get("form_schema")) if doc.get("form_schema") else None
     return payload
 
 
