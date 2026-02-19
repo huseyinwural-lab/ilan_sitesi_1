@@ -33,6 +33,28 @@ export default function AdminCountriesPage() {
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
   }), []);
 
+  const filteredIsoCountries = useMemo(() => {
+    const term = isoSearch.trim().toLowerCase();
+    if (!term) return isoCountries.slice(0, 50);
+    return isoCountries
+      .filter((country) =>
+        country.code.toLowerCase().includes(term) || (country.name || '').toLowerCase().includes(term)
+      )
+      .slice(0, 50);
+  }, [isoSearch]);
+
+  const handleIsoSelect = (code) => {
+    const selected = isoCountries.find((country) => country.code === code);
+    if (!selected) return;
+    setForm((prev) => ({
+      ...prev,
+      country_code: selected.code,
+      name: selected.name,
+      default_currency: selected.currency || prev.default_currency || 'EUR',
+      default_language: selected.locale || prev.default_language || '',
+    }));
+  };
+
   const fetchCountries = async () => {
     setLoading(true);
     try {
