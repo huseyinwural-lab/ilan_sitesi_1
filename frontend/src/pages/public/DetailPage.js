@@ -150,9 +150,11 @@ const DetailPage = () => {
                   {listing.secondary_price.toLocaleString()} {listing.secondary_currency}
                 </div>
               )}
-              <div className="text-gray-500 mt-1" data-testid="listing-location">
-                {location.city || ''} {location.country || ''}
-              </div>
+              {showAddress && (
+                <div className="text-gray-500 mt-1" data-testid="listing-address-section">
+                  {location.city || ''} {location.country || ''}
+                </div>
+              )}
             </div>
 
             {/* Attributes */}
