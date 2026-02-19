@@ -595,6 +595,27 @@ def _enforce_export_rate_limit(request: Request, user_id: str) -> None:
     _export_attempts[key] = attempts
 
 
+def _dashboard_cache_key(role: str, country_codes: Optional[List[str]]) -> str:
+    if not country_codes:
+        return f"{role}:global"
+    joined = ",".join(sorted(country_codes))
+    return f"{role}:{joined}"
+
+
+def _get_cached_dashboard_summary(cache_key: str) -> Optional[Dict[str, Any]]:
+    entry = _dashboard_summary_cache.get(cache_key)
+    if not entry:
+        return None
+    if (time.time() - entry.get("timestamp", 0)) > DASHBOARD_CACHE_TTL_SECONDS:
+        _dashboard_summary_cache.pop(cache_key, None)
+        return None
+    return entry.get("data")
+
+
+def _set_cached_dashboard_summary(cache_key: str, data: Dict[str, Any]) -> None:
+    _dashboard_summary_cache[cache_key] = {"timestamp": time.time(), "data": data}
+
+
 # Audit event taxonomy (v1)
 AUDIT_EVENT_TYPES_V1 = {
     "MODERATION_APPROVE",
