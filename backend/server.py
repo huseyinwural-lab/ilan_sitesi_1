@@ -2064,6 +2064,7 @@ def _default_category_schema() -> Dict[str, Any]:
 def _normalize_category_schema(schema: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     base = _default_category_schema()
     merged = _deep_merge_schema(base, schema or {})
+    merged.setdefault("status", "published")
     title_messages = merged["core_fields"]["title"].setdefault("messages", {})
     desc_messages = merged["core_fields"]["description"].setdefault("messages", {})
     price_messages = merged["core_fields"]["price"].setdefault("messages", {})
