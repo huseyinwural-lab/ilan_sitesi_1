@@ -26,7 +26,7 @@ test('FAZ-7 auth edge: expired token health-check', async ({ page }) => {
     res.url().includes('/api/admin/session/health') && res.status() === 401
   ));
 
-  await loginAdmin(page);
+  await loginAdmin(page, { waitForPortal: false });
   await healthResponsePromise;
 
   await expect(page).toHaveURL(/\/admin\/login/);
