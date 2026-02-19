@@ -639,6 +639,10 @@ REPORT_RATE_LIMIT_WINDOW_SECONDS = 10 * 60
 REPORT_RATE_LIMIT_MAX_ATTEMPTS = 5
 _report_submit_attempts: Dict[str, List[float]] = {}
 
+EXPORT_RATE_LIMIT_WINDOW_SECONDS = 60
+EXPORT_RATE_LIMIT_MAX_ATTEMPTS = 10
+_export_attempts: Dict[str, List[float]] = {}
+
 ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
 
 
