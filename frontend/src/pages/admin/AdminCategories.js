@@ -204,8 +204,11 @@ const AdminCategories = () => {
     if (!detailValid) {
       errors.push("Detay gruplarında en az 1 seçenekli grup bulunmalı.");
     }
+    if (!previewComplete) {
+      errors.push("Önizleme adımı tamamlanmalı.");
+    }
     return { canPublish: errors.length === 0, errors };
-  }, [hierarchyComplete, schema]);
+  }, [hierarchyComplete, schema, previewComplete]);
   const isPaymentEnabled = Boolean(schema.modules?.payment?.enabled);
   const isPhotosEnabled = Boolean(schema.modules?.photos?.enabled);
 
