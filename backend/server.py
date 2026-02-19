@@ -639,11 +639,12 @@ def _enforce_export_rate_limit(request: Request, user_id: str) -> None:
     _export_attempts[key] = attempts
 
 
-def _dashboard_cache_key(role: str, country_codes: Optional[List[str]]) -> str:
+def _dashboard_cache_key(role: str, country_codes: Optional[List[str]], trend_days: int) -> str:
+    trend_label = f"trend{trend_days}"
     if not country_codes:
-        return f"{role}:global"
+        return f"{role}:global:{trend_label}"
     joined = ",".join(sorted(country_codes))
-    return f"{role}:{joined}"
+    return f"{role}:{joined}:{trend_label}"
 
 
 def _get_cached_dashboard_summary(cache_key: str) -> Optional[Dict[str, Any]]:
