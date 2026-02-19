@@ -534,8 +534,10 @@ const AdminCategories = () => {
       setHierarchyComplete(true);
       setWizardStep("core");
       fetchItems();
+      return { success: true, parent };
     } catch (error) {
       setHierarchyError("Hiyerarşi oluşturulurken hata oluştu.");
+      return { success: false };
     }
   };
 
