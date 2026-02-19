@@ -538,6 +538,58 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
         />
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-card rounded-md border p-4" data-testid="dashboard-trend-controls">
+        <div>
+          <div className="text-xs text-muted-foreground" data-testid="dashboard-trend-controls-label">Trend aralığı (gün)</div>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            {TREND_PRESETS.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setTrendDays(preset)}
+                className={`px-3 py-1 rounded-full text-xs border transition-colors ${trendDays === preset ? 'bg-primary text-primary-foreground border-primary' : 'border-muted text-muted-foreground hover:bg-muted/60'}`}
+                data-testid={`dashboard-trend-preset-${preset}`}
+              >
+                {preset}
+              </button>
+            ))}
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={7}
+                max={365}
+                value={trendDays}
+                onChange={(e) => handleTrendDaysInput(e.target.value)}
+                className="w-24 h-8 rounded-md border bg-background text-xs px-2"
+                data-testid="dashboard-trend-days-input"
+              />
+              <span className="text-xs text-muted-foreground">gün</span>
+            </div>
+          </div>
+        </div>
+        {isSuperAdmin && (
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            disabled={exporting}
+            className="flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+            data-testid="dashboard-export-pdf-button"
+          >
+            <Download size={16} />
+            {exporting ? (
+              <span data-testid="dashboard-export-pdf-loading">PDF hazırlanıyor...</span>
+            ) : (
+              'PDF Dışa Aktar'
+            )}
+          </button>
+        )}
+      </div>
+      {exportError && (
+        <div className="text-sm text-rose-600" data-testid="dashboard-export-error">
+          {exportError}
+        </div>
+      )}
+
       {summary?.trends ? (
         <Suspense
           fallback={
