@@ -74,6 +74,7 @@
   - Modüller: Adres/Fotoğraf/İletişim/Ödeme + key badge + kaynak etiketi
   - Modül bağımlılıkları (payment off → paket/doping pasif + collapse, photos on → foto limit görünür)
   - Taslak kaydet tüm adımlar + publish guard (hierarchy/core/2a/2c)
+  - Preview gate: özet + modül listesi + uyarı listesi + JSON accordion
   - Backend kategori payload: hierarchy_complete + form_schema alanları
 - **FAZ-7 Admin Login Stabilizasyonu:**
   - GET /api/admin/session/health (token doğrulama + expires_at)
