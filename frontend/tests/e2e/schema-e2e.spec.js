@@ -169,12 +169,13 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await expect(page.getByText(categorySlug).first()).toBeVisible({ timeout: 30000 });
   });
 
-  test('Senaryo 2: Wizard step-2 validation tetikleme', async ({ page }) => {
+  test('Senaryo 2: Wizard step-2 validation tetikleme', async ({ page, request }) => {
+    const loginRes = await request.post('/api/auth/login', { data: userCreds });
+    const loginData = await loginRes.json();
+    const token = loginData.access_token;
+
+    await page.addInitScript((value) => localStorage.setItem('access_token', value), token);
     await page.addInitScript(() => localStorage.setItem('selected_country', 'DE'));
-    await page.goto('/login');
-    await page.getByTestId('login-email').fill(userCreds.email);
-    await page.getByTestId('login-password').fill(userCreds.password);
-    await page.getByTestId('login-submit').click();
 
     await page.goto('/account/create/vehicle-wizard');
     await expect(page.getByTestId('listing-category-selector')).toBeVisible({ timeout: 60000 });
