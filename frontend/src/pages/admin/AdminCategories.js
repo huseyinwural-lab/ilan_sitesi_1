@@ -795,7 +795,7 @@ const AdminCategories = () => {
                     Aynı başlıkla ilanı engelle
                   </label>
                   <select
-                    className="border rounded p-2 text-sm"
+                    className={`${inputClassName} text-sm`}
                     value={schema.title_uniqueness.scope}
                     onChange={(e) => setSchema((prev) => ({
                       ...prev,
@@ -843,21 +843,21 @@ const AdminCategories = () => {
                   <div key={field.id} className="border rounded p-3 space-y-2">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <input
-                        className="border rounded p-2"
+                        className={inputClassName}
                         placeholder="Etiket"
                         value={field.label}
                         onChange={(e) => updateDynamicField(index, { label: e.target.value })}
                         data-testid={`categories-dynamic-label-${index}`}
                       />
                       <input
-                        className="border rounded p-2"
+                        className={inputClassName}
                         placeholder="Key"
                         value={field.key}
                         onChange={(e) => updateDynamicField(index, { key: e.target.value })}
                         data-testid={`categories-dynamic-key-${index}`}
                       />
                       <select
-                        className="border rounded p-2"
+                        className={inputClassName}
                         value={field.type}
                         onChange={(e) => updateDynamicField(index, { type: e.target.value })}
                         data-testid={`categories-dynamic-type-${index}`}
@@ -867,7 +867,7 @@ const AdminCategories = () => {
                       </select>
                     </div>
                     <input
-                      className="border rounded p-2 w-full"
+                      className={inputClassName}
                       placeholder="Seçenekler (virgülle)"
                       value={(field.options || []).join(', ')}
                       onChange={(e) => updateDynamicField(index, { options: e.target.value.split(',').map((o) => o.trim()).filter(Boolean) })}
@@ -875,14 +875,14 @@ const AdminCategories = () => {
                     />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       <input
-                        className="border rounded p-2"
+                        className={inputClassName}
                         placeholder="Required mesajı"
                         value={field.messages?.required || ''}
                         onChange={(e) => updateDynamicField(index, { messages: { ...field.messages, required: e.target.value } })}
                         data-testid={`categories-dynamic-required-message-${index}`}
                       />
                       <input
-                        className="border rounded p-2"
+                        className={inputClassName}
                         placeholder="Invalid mesajı"
                         value={field.messages?.invalid || ''}
                         onChange={(e) => updateDynamicField(index, { messages: { ...field.messages, invalid: e.target.value } })}
@@ -901,7 +901,7 @@ const AdminCategories = () => {
                       </label>
                       <input
                         type="number"
-                        className="border rounded p-2 w-32"
+                        className={`${inputClassName} w-32`}
                         placeholder="Sıra"
                         value={field.sort_order}
                         onChange={(e) => updateDynamicField(index, { sort_order: Number(e.target.value) })}
@@ -957,14 +957,14 @@ const AdminCategories = () => {
                   <div key={group.id} className="border rounded p-3 space-y-2">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <input
-                        className="border rounded p-2"
+                        className={inputClassName}
                         placeholder="Grup başlığı"
                         value={group.title}
                         onChange={(e) => updateDetailGroup(index, { title: e.target.value })}
                         data-testid={`categories-group-title-${index}`}
                       />
                       <input
-                        className="border rounded p-2"
+                        className={inputClassName}
                         placeholder="Seçenekler (virgülle)"
                         value={(group.options || []).join(', ')}
                         onChange={(e) => updateDetailGroup(index, { options: e.target.value.split(',').map((o) => o.trim()).filter(Boolean) })}
@@ -972,7 +972,7 @@ const AdminCategories = () => {
                       />
                       <input
                         type="number"
-                        className="border rounded p-2"
+                        className={inputClassName}
                         placeholder="Sıra"
                         value={group.sort_order}
                         onChange={(e) => updateDetailGroup(index, { sort_order: Number(e.target.value) })}
@@ -990,14 +990,14 @@ const AdminCategories = () => {
                     </label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       <input
-                        className="border rounded p-2"
+                        className={inputClassName}
                         placeholder="Required mesajı"
                         value={group.messages?.required || ''}
                         onChange={(e) => updateDetailGroup(index, { messages: { ...group.messages, required: e.target.value } })}
                         data-testid={`categories-group-required-message-${index}`}
                       />
                       <input
-                        className="border rounded p-2"
+                        className={inputClassName}
                         placeholder="Invalid mesajı"
                         value={group.messages?.invalid || ''}
                         onChange={(e) => updateDetailGroup(index, { messages: { ...group.messages, invalid: e.target.value } })}
@@ -1045,7 +1045,7 @@ const AdminCategories = () => {
                 {schema.modules.photos?.enabled && (
                   <input
                     type="number"
-                    className="border rounded p-2 w-48"
+                    className={`${inputClassName} w-48`}
                     placeholder="Fotoğraf limiti"
                     value={schema.modules.photos.max_uploads}
                     onChange={(e) => setSchema((prev) => ({
