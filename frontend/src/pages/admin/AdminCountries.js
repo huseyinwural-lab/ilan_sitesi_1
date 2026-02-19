@@ -274,7 +274,7 @@ export default function AdminCountriesPage() {
               <input
                 value={form.default_language}
                 onChange={(e) => setForm({ ...form, default_language: e.target.value })}
-                placeholder="Default Language (optional)"
+                placeholder="Locale (örn: de-DE)"
                 className="h-9 px-3 rounded-md border bg-background text-sm w-full"
                 data-testid="countries-form-language"
               />
