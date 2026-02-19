@@ -2105,6 +2105,11 @@ def _validate_category_schema(schema: Dict[str, Any]) -> None:
     if not price.get("required", True):
         raise HTTPException(status_code=400, detail="Fiyat alanı zorunlu olmalıdır.")
 
+    if title.get("min") and title.get("max") and title.get("min") > title.get("max"):
+        raise HTTPException(status_code=400, detail="Başlık min değeri max değerinden büyük olamaz.")
+    if description.get("min") and description.get("max") and description.get("min") > description.get("max"):
+        raise HTTPException(status_code=400, detail="Açıklama min değeri max değerinden büyük olamaz.")
+
     currency_primary = price.get("currency_primary")
     if currency_primary not in {"EUR", "CHF"}:
         raise HTTPException(status_code=400, detail="Fiyat para birimi EUR veya CHF olmalıdır.")
@@ -2113,6 +2118,10 @@ def _validate_category_schema(schema: Dict[str, Any]) -> None:
         raise HTTPException(status_code=400, detail="İkincil para birimi EUR veya CHF olmalıdır.")
     if secondary and secondary == currency_primary:
         raise HTTPException(status_code=400, detail="Birincil ve ikincil para birimi aynı olamaz.")
+    price_range = price.get("range") or {}
+    if price_range.get("max") is not None and price_range.get("min") is not None:
+        if price_range.get("min") > price_range.get("max"):
+            raise HTTPException(status_code=400, detail="Fiyat aralığı min/max hatalı.")
 
     for field in schema.get("dynamic_fields", []):
         field_type = field.get("type")
