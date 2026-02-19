@@ -754,6 +754,13 @@ _export_attempts: Dict[str, List[float]] = {}
 
 APP_START_TIME = datetime.now(timezone.utc)
 
+DASHBOARD_TREND_DAYS = 14
+DASHBOARD_KPI_DAYS = 7
+DASHBOARD_MULTI_IP_WINDOW_HOURS = 24
+DASHBOARD_MULTI_IP_THRESHOLD = 3
+DASHBOARD_SLA_HOURS = 24
+DASHBOARD_PENDING_PAYMENT_DAYS = 7
+
 DASHBOARD_CACHE_TTL_SECONDS = int(os.environ.get("DASHBOARD_CACHE_TTL_SECONDS", "60"))
 _dashboard_summary_cache: Dict[str, Dict[str, Any]] = {}
 _dashboard_cache_hits = 0
