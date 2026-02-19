@@ -209,6 +209,7 @@ class CategoryCreatePayload(BaseModel):
     country_code: Optional[str] = None
     active_flag: Optional[bool] = True
     sort_order: Optional[int] = 0
+    hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
 
 
