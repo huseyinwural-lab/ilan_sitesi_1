@@ -143,6 +143,7 @@ const MediaUploader = () => {
           onClick={handleNext}
           disabled={loading || files.length === 0}
           className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50"
+          data-testid="wizard-photos-next"
         >
           Next: Review
         </button>
