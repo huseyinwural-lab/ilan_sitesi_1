@@ -147,16 +147,14 @@
 - Diff MVP: JSON side-by-side (read-only), highlight changed keys
 - Risk/Önlem: Draft şişmesi → versiyon limiti (örn. son 25); rollback MVP dışında
 
-## Preview Export Mini-Spec (P1)
-- PDF export zorunlu; preview gate onayı sonrası üretilecek
-- CSV export opsiyonel (sadece modül + alan listesi, sadeleştirilmiş)
-- İçerik: kategori özeti, modül listesi, dinamik alanlar, detay grupları, validation uyarıları, timestamp
-- Yetki: super_admin + country_admin
-- Formatlar: PDF (tam rapor), CSV (modül/alan matrisi)
-- Not: Export snapshot, preview-onaylı schema üzerinden üretilecek
+## Autosave Spec (P1)
+- Draft modunda event-driven autosave: field change → 2.5s debounce → draft save
+- Autosave sadece `status=draft` iken aktif; publish sonrası pasif
+- Toast durumları: “Kaydediliyor…”, “Taslak kaydedildi”, “Kaydetme başarısız”
+- Preview header: “Son kaydetme: HH:mm:ss”
+- Optimistic locking: `expected_updated_at` ile 409 conflict → “Başka bir sekmede güncellendi” toast
+- Sayfadan çıkışta tek seferlik flush save (keepalive/sendBeacon)
 
-## P1 Tasarım Dokümanları
-- Draft Versioning + Diff MVP: /app/memory/DESIGN_DRAFT_VERSIONING.md
 
 ## Appendix: P0 Stabilizasyon Final Raporu
 ### Kapsam
