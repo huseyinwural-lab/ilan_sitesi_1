@@ -1372,7 +1372,7 @@ const AdminCategories = () => {
                     </div>
                   )}
 
-                  <div className="text-xs text-slate-500" data-testid="categories-hierarchy-warning">
+                  <div className="text-xs text-slate-700" data-testid="categories-hierarchy-warning">
                     Hiyerarşi tamamlanmadan çekirdek alanlara geçilemez.
                   </div>
                 </div>
