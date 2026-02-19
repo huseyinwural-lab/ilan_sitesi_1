@@ -63,7 +63,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
       res.request().method() === 'PATCH' &&
       res.status() >= 200 && res.status() < 300
     ));
-    await page.getByTestId('categories-title-min').fill('10');
+    await page.getByTestId('categories-title-min').fill('11');
     await autosaveResponsePromise;
     await expect(page.getByText('Taslak kaydedildi')).toBeVisible({ timeout: 10000 });
 

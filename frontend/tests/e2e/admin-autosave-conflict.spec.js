@@ -7,7 +7,7 @@ const loginAdmin = async (page) => {
   await page.getByTestId('login-email').fill(adminCreds.email);
   await page.getByTestId('login-password').fill(adminCreds.password);
   await page.getByTestId('login-submit').click();
-  await page.waitForURL(/\/admin/, { timeout: 60000 });
+  await expect(page.getByTestId('nav-catalog-categories')).toBeVisible({ timeout: 60000 });
 };
 
 test('Autosave conflict uyarısı gösterir', async ({ page, request }) => {
@@ -33,7 +33,7 @@ test('Autosave conflict uyarısı gösterir', async ({ page, request }) => {
 
   await page.addInitScript(() => localStorage.setItem('selected_country', 'DE'));
   await loginAdmin(page);
-  await page.goto('/admin/categories');
+  await page.getByTestId('nav-catalog-categories').click();
   await expect(page.getByTestId('categories-page')).toBeVisible({ timeout: 60000 });
   await page.waitForSelector('[data-testid="categories-loading"]', { state: 'detached' });
 
