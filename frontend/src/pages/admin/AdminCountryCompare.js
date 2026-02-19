@@ -332,10 +332,22 @@ export default function AdminCountryComparePage() {
       </div>
 
       <div className="bg-card rounded-md border p-4" data-testid="country-compare-selection">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Filter size={16} /> Karşılaştırma Ülkeleri (2-3)
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3" data-testid="country-compare-country-list">
+        [1m [0m[1m[0m[1m [0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m [0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m
+          [1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m
+          [1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m
+          [1m[0m[1m[0m
+          [1m[0m          [1m[0m
+          [1m[0m[1m[0m
+          [1m[0m          [1m[0m[1m[0m
+          [1m[0m[1m[0m
+          [1m[0m          [1m[0m[1m[0m
+          [1m[0m[1m[0m
+          [1m[0m          [1m[0m[1m[0m
+          [1m[0m[1m[0m
+          [1m[0m          [1m[0m[1m[0m
+          [1m[0m[1m[0m
+          [1m[0m          [1m[0m
+        [1m[0m        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3" data-testid="country-compare-country-list">
           {availableCountries.map((code) => (
             <label key={code} className="flex items-center gap-2 text-sm" data-testid={`country-compare-country-${code}`}>
               <input
