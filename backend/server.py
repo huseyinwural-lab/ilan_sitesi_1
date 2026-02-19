@@ -5889,14 +5889,14 @@ def _build_dashboard_pdf(summary: Dict[str, Any], trend_window: int) -> bytes:
     risk_rows.append([
         "Moderasyon SLA ihlali",
         str(sla.get("count", 0)),
-        f">e {sla.get('threshold', '-') } saat",
+        f"> {sla.get('threshold', '-') } saat",
         "Örnek kayıtlar: " + str(len(sla.get("items") or [])),
     ])
     if finance_visible:
         risk_rows.append([
             "Bekleyen ödemeler",
             str(pending.get("count", 0)),
-            f">e {pending.get('threshold_days', '-') } gün",
+            f"> {pending.get('threshold_days', '-') } gün",
             f"Toplam: {format_number(pending.get('total_amount'))} | {format_currency_totals(pending.get('currency_totals'))}",
         ])
     else:
@@ -5906,7 +5906,7 @@ def _build_dashboard_pdf(summary: Dict[str, Any], trend_window: int) -> bytes:
             "-",
             "Gizli",
         ])
-    add_table("Risk 6 Alarm Merkezi", risk_rows)
+    add_table("Risk & Alarm Merkezi", risk_rows)
 
     trends = summary.get("trends") or {}
     listings = trends.get("listings") or []
