@@ -114,7 +114,8 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     const draftData = await draftResponse.json();
     expect(draftData.category.form_schema.status).toBe('draft');
 
-    await expect(page.getByTestId('categories-page')).toBeVisible({ timeout: 60000 });
+    await page.getByTestId('categories-modal-close').click();
+    await expect(page.getByTestId('categories-modal')).toHaveCount(0);
 
     const listRes = await request.get('/api/admin/categories?country=DE', {
       headers: { Authorization: `Bearer ${adminToken}` },
