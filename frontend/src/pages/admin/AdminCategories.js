@@ -338,6 +338,20 @@ const AdminCategories = () => {
     });
   };
 
+  const handleCopySchema = () => {
+    try {
+      const text = JSON.stringify(schema, null, 2);
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(text);
+        setJsonCopyStatus("Kopyalandı");
+      } else {
+        setJsonCopyStatus("Kopyalanamadı");
+      }
+    } catch (error) {
+      setJsonCopyStatus("Kopyalanamadı");
+    }
+  };
+
   const handleSave = async (status = "draft", overrideEditing = null) => {
     setHierarchyError("");
     setPublishError("");
