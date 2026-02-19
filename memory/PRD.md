@@ -93,6 +93,7 @@
 - **Kategori Sihirbazı Full E2E (2026-02-19):**
   - Hierarchy → Core → 2a → 2c → Modules → Preview → Draft → Publish akışı
   - Draft/Publish API assertion’ları
+  - Admin wizard senaryosu aktif; user listing senaryoları fixture tamamlanınca açılacak
   - Test yolu: /app/frontend/tests/e2e/schema-e2e.spec.js
 - **Admin Kategori Modal Kontrast Düzeltmesi:**
   - Modal input/label/placeholder renkleri koyu tona çekildi (WCAG uyumlu)
