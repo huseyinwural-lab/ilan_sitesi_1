@@ -161,6 +161,7 @@ class CategoryDoc(BaseModel):
     country_code: Optional[str] = None
     active_flag: bool = True
     sort_order: int = 0
+    hierarchy_complete: Optional[bool] = True
     form_schema: Optional[Dict[str, Any]] = None
     created_at: str
     updated_at: Optional[str] = None
