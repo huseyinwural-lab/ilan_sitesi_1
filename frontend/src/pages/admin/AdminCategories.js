@@ -1216,6 +1216,8 @@ const AdminCategories = () => {
                   </select>
                   <input
                     type="number"
+                    min={0}
+                    aria-label="Min fiyat"
                     className={inputClassName}
                     placeholder="Min fiyat"
                     value={schema.core_fields.price.range.min ?? ''}
