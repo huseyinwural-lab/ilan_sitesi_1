@@ -13,6 +13,7 @@ const DetailPage = () => {
   const { id } = useParams(); // Expects :id (uuid) or :id-slug? 
   // Router in App.js is /ilan/:id. 
   // If we use /ilan/UUID-slug, we need to parse.
+  const { search } = useLocation();
 
   const { token } = useAuth();
   
