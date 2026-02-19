@@ -2132,6 +2132,8 @@ def _validate_category_schema(schema: Dict[str, Any]) -> None:
             raise HTTPException(status_code=400, detail="Parametre alanı için seçenek listesi zorunludur.")
         if not field.get("key"):
             raise HTTPException(status_code=400, detail="Parametre alanı anahtarı zorunludur.")
+        if not field.get("label"):
+            raise HTTPException(status_code=400, detail="Parametre alanı etiketi zorunludur.")
 
     for group in schema.get("detail_groups", []):
         if not group.get("title"):
