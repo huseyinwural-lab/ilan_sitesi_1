@@ -235,6 +235,32 @@ const AdminCategories = () => {
       sort_order: item.sort_order || 0,
     });
     setSchema(applySchemaDefaults(item.form_schema));
+    setWizardStep("core");
+    setHierarchyComplete(item.hierarchy_complete ?? true);
+    setHierarchyError("");
+    setSubcategories([]);
+    setDynamicDraft({
+      label: "",
+      key: "",
+      type: "select",
+      required: false,
+      sort_order: 0,
+      optionsInput: "",
+      messages: { required: "", invalid: "" },
+    });
+    setDynamicEditIndex(null);
+    setDynamicError("");
+    setDetailDraft({
+      id: "",
+      title: "",
+      required: false,
+      sort_order: 0,
+      messages: { required: "", invalid: "" },
+    });
+    setDetailOptions([]);
+    setDetailOptionInput("");
+    setDetailEditIndex(null);
+    setDetailError("");
     setModalOpen(true);
   };
 
