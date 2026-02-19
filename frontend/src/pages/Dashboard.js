@@ -404,9 +404,50 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
     }
   };
 
+  const handleTrendDaysInput = (value) => {
+    setTrendDays(clampTrendDays(value));
+  };
+
+  const handleExportPdf = async () => {
+    setExportError('');
+    setExporting(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const params = new URLSearchParams();
+      if (isCountryMode) {
+        params.set('country', effectiveCountry);
+      }
+      if (trendDays) {
+        params.set('trend_days', String(trendDays));
+      }
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      const response = await axios.get(`${API}/admin/dashboard/export/pdf${qs}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+      const disposition = response.headers?.['content-disposition'] || '';
+      const match = disposition.match(/filename="([^"]+)"/);
+      const fallbackName = `dashboard-${trendDays}d-${new Date().toISOString().slice(0, 10)}.pdf`;
+      const filename = match?.[1] || fallbackName;
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      setExportError('PDF dışa aktarma başarısız.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const activeModulesLabel = summary?.active_modules?.items?.join(', ') || '-';
   const activeCountriesLabel = summary?.active_countries?.codes?.join(', ') || '-';
   const canViewFinance = summary?.finance_visible ?? ['finance', 'super_admin'].includes(user?.role);
+  const isSuperAdmin = user?.role === 'super_admin';
 
   if (loading) {
     return (
