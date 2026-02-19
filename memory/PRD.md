@@ -1,6 +1,6 @@
 # FAZ Admin Domain Complete — PRD
 
-**Son güncelleme:** 2026-02-18 (Admin UI v1 tamamlandı)
+**Son güncelleme:** 2026-02-18 (Kategori Form Şablonu v2)
 
 ## Program Status (23.02.2026)
 - Foundation Phase: **OFFICIALLY CLOSED**
@@ -63,6 +63,11 @@
   - Category + Attribute + Vehicle Make/Model CRUD (audit-first)
   - Search filtreleri master data’dan (category/make/model)
   - Admin UI: /admin/categories, /admin/attributes, /admin/vehicle-makes, /admin/vehicle-models
+- **Kategori Form Şablonu v2:**
+  - Core fields: başlık/açıklama/fiyat + EUR/CHF + input masking + secondary currency
+  - Dynamic fields (2a) + detail groups (2c) + sabit modüller (adres/foto/iletişim/ödeme)
+  - Validation mesajları + duplicate title toggle + schema publish guard
+  - Frontend listing wizard schema tabanlı form üretimi
 - **Sprint 6:** Final Integration Gate
   - RBAC + Country-scope + Audit coverage kanıtları
   - Kritik akışlar E2E (public/dealer/individual/report/finance)
