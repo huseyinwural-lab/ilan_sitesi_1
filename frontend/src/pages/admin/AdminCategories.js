@@ -461,7 +461,7 @@ const AdminCategories = () => {
     if (editing) {
       setHierarchyComplete(true);
       setWizardStep("core");
-      return;
+      return { success: true, parent: editing };
     }
 
     try {
