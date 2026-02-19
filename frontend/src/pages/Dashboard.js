@@ -378,7 +378,7 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
 
   useEffect(() => {
     fetchSummary();
-  }, [isCountryMode, effectiveCountry]);
+  }, [isCountryMode, effectiveCountry, trendDays]);
 
   const fetchSummary = async () => {
     setLoading(true);
