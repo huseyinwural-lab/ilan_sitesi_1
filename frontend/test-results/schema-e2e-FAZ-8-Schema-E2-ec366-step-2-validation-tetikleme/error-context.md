@@ -1,7 +1,7 @@
 # Page snapshot
 
 ```yaml
-- generic [active] [ref=e1]:
+- generic [ref=e1]:
   - generic [ref=e2]:
     - generic [ref=e3]:
       - complementary [ref=e4]:
@@ -28,82 +28,96 @@
         - generic [ref=e19]:
           - generic [ref=e21]:
             - heading "Vasıta İlanı Oluştur" [level=1] [ref=e22]
-            - generic [ref=e23]: Adım 1 / 4
+            - generic [ref=e23]: Adım 2 / 4
           - generic [ref=e28]:
-            - heading "Kategori Seç" [level=2] [ref=e29]
-            - generic [ref=e30]:
-              - generic [ref=e32]:
-                - button "E2E Fixture Category" [ref=e33] [cursor=pointer]:
-                  - generic [ref=e34]: E2E Fixture Category
-                - button "Regression Test Category" [ref=e35] [cursor=pointer]:
-                  - generic [ref=e36]: Regression Test Category
-                - button "Test Autosave Cat" [ref=e37] [cursor=pointer]:
-                  - generic [ref=e38]: Test Autosave Cat
-                - button "Test Autosave Category" [ref=e39] [cursor=pointer]:
-                  - generic [ref=e40]: Test Autosave Category
-                - button "Test Category Guard" [ref=e41] [cursor=pointer]:
-                  - generic [ref=e42]: Test Category Guard
-                - button "Test Kategori 1771526723" [ref=e43] [cursor=pointer]:
-                  - generic [ref=e44]: Test Kategori 1771526723
-                - button "Test Kategori Wizard" [ref=e45] [cursor=pointer]:
-                  - generic [ref=e46]: Test Kategori Wizard
-                - button "Test Wizard Core Edit" [ref=e47] [cursor=pointer]:
-                  - generic [ref=e48]: Test Wizard Core Edit
-                - button "Vasıta" [ref=e49] [cursor=pointer]:
-                  - generic [ref=e50]: Vasıta
-                - button "d" [ref=e51] [cursor=pointer]:
-                  - generic [ref=e52]: d
-                - button "e2e-test-category-1771518990918" [ref=e53] [cursor=pointer]:
-                  - generic [ref=e54]: e2e-test-category-1771518990918
-                - button "e2e-test-category-1771519018242" [ref=e55] [cursor=pointer]:
-                  - generic [ref=e56]: e2e-test-category-1771519018242
-                - button "e2e-test-category-1771519111219" [ref=e57] [cursor=pointer]:
-                  - generic [ref=e58]: e2e-test-category-1771519111219
-                - button "e2e-test-category-1771519136738" [ref=e59] [cursor=pointer]:
-                  - generic [ref=e60]: e2e-test-category-1771519136738
-                - button "e2e-test-category-1771519240131" [ref=e61] [cursor=pointer]:
-                  - generic [ref=e62]: e2e-test-category-1771519240131
-                - button "e2e-test-category-1771520762927" [ref=e63] [cursor=pointer]:
-                  - generic [ref=e64]: e2e-test-category-1771520762927
-                - button "e2e-test-category-1771522324115" [ref=e65] [cursor=pointer]:
-                  - generic [ref=e66]: e2e-test-category-1771522324115
-                - button "e2e-test-category-1771522428912" [ref=e67] [cursor=pointer]:
-                  - generic [ref=e68]: e2e-test-category-1771522428912
-                - button "e2e-test-category-1771523838519" [ref=e69] [cursor=pointer]:
-                  - generic [ref=e70]: e2e-test-category-1771523838519
-                - button "e2e-test-category-1771523960402" [ref=e71] [cursor=pointer]:
-                  - generic [ref=e72]: e2e-test-category-1771523960402
-                - button "e2e-test-category-1771524202809" [ref=e73] [cursor=pointer]:
-                  - generic [ref=e74]: e2e-test-category-1771524202809
-                - button "e2e-test-category-1771524362608" [ref=e75] [cursor=pointer]:
-                  - generic [ref=e76]: e2e-test-category-1771524362608
-                - button "e2e-test-category-1771525461226" [ref=e77] [cursor=pointer]:
-                  - generic [ref=e78]: e2e-test-category-1771525461226
-                - button "e2e-test-category-1771525565425" [ref=e79] [cursor=pointer]:
-                  - generic [ref=e80]: e2e-test-category-1771525565425
-                - button "e2e-test-category-1771526204822" [ref=e81] [cursor=pointer]:
-                  - generic [ref=e82]: e2e-test-category-1771526204822
-                - button "e2e-test-category-1771527380583" [ref=e83] [cursor=pointer]:
-                  - generic [ref=e84]: e2e-test-category-1771527380583
-                - button "e2e-test-category-1771528143316" [ref=e85] [cursor=pointer]:
-                  - generic [ref=e86]: e2e-test-category-1771528143316
-                - button "e2e-test-category-1771528613477" [ref=e87] [cursor=pointer]:
-                  - generic [ref=e88]: e2e-test-category-1771528613477
-                - button "deneme" [ref=e89] [cursor=pointer]:
-                  - generic [ref=e90]: deneme
-                - button "Test Kategori" [ref=e91] [cursor=pointer]:
-                  - generic [ref=e92]: Test Kategori
-                - button "Test Category" [ref=e93] [cursor=pointer]:
-                  - generic [ref=e94]: Test Category
-                - button "Test Category 1771385847" [ref=e95] [cursor=pointer]:
-                  - generic [ref=e96]: Test Category 1771385847
-              - generic [ref=e99]:
-                - paragraph [ref=e100]: Bu kategori altında alt kategori yok.
-                - button "E2E Fixture Category seç" [ref=e102] [cursor=pointer]
+            - generic [ref=e29]:
+              - heading "İlan Çekirdek Alanları" [level=3] [ref=e30]
+              - generic [ref=e31]:
+                - generic [ref=e32]: Başlık *
+                - textbox "İlan başlığı" [ref=e33]: E2E Test Başlık
+              - generic [ref=e34]:
+                - generic [ref=e35]: Açıklama *
+                - textbox "Açıklama" [ref=e36]: Bu açıklama FAZ-8 E2E test senaryosu için yeterince uzundur.
+                - generic [ref=e37]:
+                  - generic [ref=e38]: "60"
+                  - generic [ref=e39]: "min: 30 / max: 4000"
+              - generic [ref=e40]:
+                - generic [ref=e41]:
+                  - generic [ref=e42]: Fiyat ( EUR ) *
+                  - textbox "15.000" [active] [ref=e43]
+                - generic [ref=e44]:
+                  - generic [ref=e45]: Birincil Para Birimi
+                  - combobox [ref=e46]:
+                    - option "EUR" [selected]
+                    - option "CHF"
+            - generic [ref=e47]:
+              - heading "Araç Bilgileri" [level=3] [ref=e48]
+              - generic [ref=e49]:
+                - generic [ref=e50]:
+                  - generic [ref=e51]: Marka *
+                  - combobox [ref=e52]:
+                    - option "Seç..." [selected]
+                - generic [ref=e53]:
+                  - generic [ref=e54]: Model *
+                  - combobox [ref=e55]:
+                    - option "Seç..." [selected]
+                - generic [ref=e56]:
+                  - generic [ref=e57]: Yıl *
+                  - spinbutton [ref=e58]
+            - generic [ref=e60]:
+              - heading "Kategori Parametre Alanları" [level=3] [ref=e61]
+              - generic [ref=e64]:
+                - generic [ref=e65]: Ekstra Seçim *
+                - combobox [ref=e67]:
+                  - option "Seç..." [selected]
+                  - generic:
+                    - option
+                    - option
+            - generic [ref=e69]:
+              - heading "Özel Detay Grupları" [level=3] [ref=e70]
+              - group [ref=e73]:
+                - generic "Donanım" [ref=e74] [cursor=pointer]
+                - text: ABS Airbag Klima ESP
+            - generic [ref=e76]:
+              - heading "Adres Bilgileri" [level=3] [ref=e77]
+              - generic [ref=e78]:
+                - textbox "Sokak" [ref=e79]
+                - textbox "Şehir" [ref=e80]
+                - textbox "Posta Kodu" [ref=e81]
+            - generic [ref=e82]:
+              - heading "Temel Bilgiler" [level=3] [ref=e83]
+              - generic [ref=e84]:
+                - generic [ref=e85]:
+                  - generic [ref=e86]: KM *
+                  - spinbutton [ref=e87]
+                - generic [ref=e88]:
+                  - generic [ref=e89]: Yakıt Tipi *
+                  - combobox [ref=e90]:
+                    - option "Seç..." [selected]
+                    - option "Benzin"
+                    - option "Dizel"
+                    - option "Hibrit"
+                    - option "Elektrikli"
+                    - option "LPG"
+                - generic [ref=e91]:
+                  - generic [ref=e92]: Vites *
+                  - combobox [ref=e93]:
+                    - option "Seç..." [selected]
+                    - option "Manuel"
+                    - option "Otomatik"
+                    - option "Yarı otomatik"
+                - generic [ref=e94]:
+                  - generic [ref=e95]: Kondisyon *
+                  - combobox [ref=e96]:
+                    - option "Seç..." [selected]
+                    - option "Sıfır"
+                    - option "İkinci el"
+                    - option "Hasarlı"
+            - 'button "Sonraki: Fotoğraflar" [ref=e98] [cursor=pointer]'
     - region "Notifications (F8)":
       - list
-  - link "Made with Emergent" [ref=e103] [cursor=pointer]:
+  - link "Made with Emergent" [ref=e99] [cursor=pointer]:
     - /url: https://app.emergent.sh/?utm_source=emergent-badge
-    - img [ref=e104]
-    - paragraph [ref=e107]: Made with Emergent
+    - img [ref=e100]
+    - paragraph [ref=e103]: Made with Emergent
 ```
