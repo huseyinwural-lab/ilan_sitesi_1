@@ -5789,6 +5789,7 @@ async def _dashboard_db_health(db) -> tuple[str, int]:
 async def admin_dashboard_summary(
     request: Request,
     country: Optional[str] = None,
+    trend_days: Optional[int] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "finance"])),
 ):
     start_perf = time.perf_counter()
