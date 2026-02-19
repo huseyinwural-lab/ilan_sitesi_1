@@ -1020,6 +1020,22 @@ const AdminCategories = () => {
                     </label>
                   ))}
                 </div>
+                {schema.modules.photos?.enabled && (
+                  <input
+                    type="number"
+                    className="border rounded p-2 w-48"
+                    placeholder="Fotoğraf limiti"
+                    value={schema.modules.photos.max_uploads}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      modules: {
+                        ...prev.modules,
+                        photos: { ...prev.modules.photos, max_uploads: Number(e.target.value) },
+                      },
+                    }))}
+                    data-testid="categories-photos-max"
+                  />
+                )}
               </div>
             </div>
 
