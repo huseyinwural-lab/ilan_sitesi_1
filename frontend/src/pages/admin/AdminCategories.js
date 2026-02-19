@@ -633,9 +633,36 @@ const AdminCategories = () => {
     }
 
     if (editing) {
-      setHierarchyComplete(true);
-      setWizardStep("core");
-      return { success: true, parent: editing };
+      try {
+        const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeader,
+          },
+          body: JSON.stringify({
+            name,
+            slug,
+            country_code: country,
+            active_flag: form.active_flag,
+            sort_order: Number(form.sort_order || 0),
+            hierarchy_complete: true,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setHierarchyError(data?.detail || "Hiyerarşi güncellenemedi.");
+          return { success: false };
+        }
+        const updated = data?.category || editing;
+        setEditing(updated);
+        setHierarchyComplete(true);
+        setWizardStep("core");
+        return { success: true, parent: updated };
+      } catch (error) {
+        setHierarchyError("Hiyerarşi güncellenemedi.");
+        return { success: false };
+      }
     }
 
     try {
