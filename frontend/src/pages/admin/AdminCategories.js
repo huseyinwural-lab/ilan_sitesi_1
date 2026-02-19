@@ -1201,6 +1201,7 @@ const AdminCategories = () => {
                   </select>
                   <select
                     className={inputClassName}
+                    aria-label="Ondalık basamak"
                     value={schema.core_fields.price.decimal_places}
                     onChange={(e) => setSchema((prev) => ({
                       ...prev,
