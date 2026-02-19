@@ -1,160 +1,167 @@
 <analysis>**original_problem_statement:**
 Kullanıcının birincil hedefi, çok ülkeli, çok dilli bir seri ilan platformu oluşturmaktır. Proje, FAZ (Faz) adı verilen fazlarla yönetilmektedir.
 
-Mevcut odak, yönetici panelindeki ilan kategorisi oluşturma ve yönetme sürecini temelden yeniden yapılandırmaktır. Kullanıcı, bu sürecin tek ve büyük bir form olmasından, kullanıcı deneyimini (UX) karmaşıklaştıran ve hatalara açık bir yapıya sahip olmasından şikayetçidir.
+Başlangıçta, yönetici panelindeki kategori oluşturma süreci, karmaşık tek bir formdan kullanıcı dostu, çok adımlı bir Sihirbaza dönüştürülmüştür. Bu sihirbaz, taslak/yayınla akışları, otomatik kaydetme ve şema dışa aktarma (PDF/CSV) gibi gelişmiş özelliklerle tamamlanmıştır.
 
-Bu sorunu çözmek için kullanıcı, aşağıdaki maddeleri içeren son derece ayrıntılı bir görev ve mimari karar listesi sunmuştur:
-- **Hiyerarşi Sihirbazı Olarak Yeniden Kurgulama:** Kategori oluşturma akışı, adımlara bölünmüş bir sihirbaza (wizard) dönüştürülecektir:
-    1.  **Hiyerarşi Adımı:** Önce ana kategori, ardından aynı ekranda alt kategoriler oluşturulur. Diğer adımlara geçiş kilitlenir.
-    2.  **Çekirdek Alanlar Adımı:** Başlık, açıklama, fiyat gibi temel form alanları tanımlanır.
-    3.  **Dinamik Parametreler (2a) Adımı:** Form alanları (select, text, number vb.) tek tek ekle + sonraki mantığıyla, UI'ı şişirmeden eklenir.
-    4.  **Detay Grupları (2c) Adımı:** Checkbox grupları, grup tanımı - listesi mantığıyla oluşturulur.
-    5.  **Modüller Adımı:** Adres, fotoğraf gibi ek modüller yapılandırılır.
-- **Type-Driven Zorunluluk:** UI, geçersiz şema kombinasyonlarının oluşturulmasını engellemelidir (örneğin,  tipi için seçenekler zorunludur).
-- **Draft/Publish Ayrımı:** Kategoriler Taslak olarak kaydedilebilmeli ve yalnızca doğrulama ve (ileride) önizlemeden sonra Yayınlanabilmelidir. Bu, hatalı şemaların canlıya çıkmasını engeller.
-- **Görsel Düzen Kuralları:** Checkbox listeleri, okunabilirlik için satır başına 4 öğe olacak şekilde bir grid yapısında görüntülenmelidir.
-
-Bu kapsamlı yeniden yapılandırma, mevcut FAZ planındaki tüm diğer görevlerden daha yüksek öncelik olarak atanmıştır.
+Mevcut odak, yönetici Dashboard (Kontrol Paneli) sayfasını tamamen işlevsel ve veri odaklı bir kurumsal kontrol merkezine dönüştürmektir. İlk olarak statik olan bu sayfa, temel metrikler için canlı veriye bağlanmıştır. Şimdi ise, kullanıcı talebi üzerine, aşağıdaki gibi çok daha kapsamlı özelliklerle genişletilmektedir:
+-   **Gelişmiş KPI'lar:** Bugün ve Son 7 Gün gibi zaman aralıkları için yeni ilan, yeni kullanıcı ve gelir metrikleri.
+-   **Trend Grafikleri:** İlan sayısı ve gelir için zaman içindeki değişimi gösteren görsel grafikler.
+-   **Risk ve Alarm Paneli:** Şüpheli aktiviteleri (örn: çoklu IP'den giriş), moderasyon SLA ihlallerini ve bekleyen ödemeleri izleyen bir panel.
+-   **Sistem Sağlığı Kartı:** API gecikmesi, veritabanı yanıt süresi ve son dağıtım zamanı gibi teknik metrikleri gösteren bir bileşen.
+-   **Rol Tabanlı Erişim (RBAC):** Finansal verilerin yalnızca yetkili roller (örn: , ) tarafından görülebilmesi.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-Uygulama, React (frontend) ve FastAPI (backend) üzerine kurulu tam yığın bir seri ilan platformudur. Admin panelindeki Kategori Yönetimi sayfası, kullanıcının talebi üzerine tek bir büyük formdan çok adımlı bir sihirbaza (wizard) dönüştürülmek üzere kapsamlı bir yeniden yapılandırma sürecindedir.
+Uygulama, React (frontend) ve FastAPI (backend) üzerine kurulu tam yığın bir seri ilan platformudur.
 
-Bu kapsamda aşağıdaki altyapı çalışmaları büyük ölçüde tamamlanmıştır:
--   **Frontend:**  sayfası, sihirbaz adımlarını yöneten bir ana bileşene dönüştürülmüştür. Her adım için ayrı React bileşenleri oluşturulmuştur (, , , , ).
--   **Backend:** Kategori şemalarının canlıya çıkışını kontrol etmek için  koleksiyonuna bir  alanı eklenmiştir. Taslak kaydetme ve yayınlama işlemlerini yönetmek için API endpoint'leri () güncellenmiş veya oluşturulmuştur.
+-   **Kategori Yönetimi:** Admin panelindeki Kategori Yönetimi, çok adımlı bir sihirbaza (wizard) dönüştürülmüştür. Bu sihirbazda taslak/yayınla akışı, otomatik kaydetme, versiyon çakışma kontrolü (optimistic locking) ve şemayı PDF/CSV olarak dışa aktarma özellikleri tamamlanmıştır.
+-   **Admin Dashboard:** Başlangıçta statik olan kontrol paneli, artık verilerini merkezi bir  endpoint'inden alan dinamik bir sayfadır. Temel metrik kartları (toplam kullanıcı vb.) ve çalışmayan Hızlı Eylemler (Quick Actions) butonları işlevsel hale getirilmiştir.
+-   **Yeni Sayfalar:** Dashboard'daki butonlara bağlı olarak  (Denetim Kayıtları) ve  (Ülke Yönetimi) için yeni sayfalar oluşturulmuştur.
+-   **Mevcut Geliştirme:** Agent, kullanıcı talebi doğrultusunda Dashboard'u yeni KPI'lar, trend grafikleri, risk paneli ve sistem sağlığı kartı ile genişletmek üzere backend modellerini hazırlamıştır.
 
 **Last working item**:
--   **Last item agent was working:** Agent, yeni Kategori Oluşturma Sihirbazı'nın 2c - Detay Grupları adımını () uyguluyordu. Spesifik olarak, bir detay grubuna birden çok checkbox seçeneği ekleme, düzenleme ve silme mantığı üzerinde çalışıyordu. Agent, bu checkbox listesini alt bileşenden () ana sihirbaz bileşenine () güncellerken state (durum) yönetimiyle ilgili bir sorunla karşılaştı ve bunu çözmeye çalışıyordu.
+-   **Last item agent was working:** Agent, Admin Dashboard genişletme görevinin backend kısmını uyguluyordu.  dosyasına, yeni metrikleri (KPI, Trend, Risk, Health) modellemek için gerekli olan , , ,  ve ana yanıt modeli  gibi yeni Pydantic modellerini eklemiştir.
 -   **Status**: IN PROGRESS
 -   **Agent Testing Done**: N
--   **Which testing method agent to use?** Frontend testing agent
+-   **Which testing method agent to use?** backend testing agent (önce 'deki yeni endpoint mantığını test etmek için), ardından frontend testing agent (yeni UI bileşenlerini doğrulamak için).
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Sihirbazdaki Detay Grubu Durum (State) Güncelleme Hatası (P0)**
-    -   **Description:** Detay Grupları adımında bir gruba eklenen/güncellenen checkbox seçenekleri, ana  bileşenindeki  durumuna doğru şekilde yansıtılmıyor. Bu, adım tamamlandığında verilerin kaybolmasına veya yanlış kaydedilmesine neden oluyor ve tüm sihirbazın tamamlanmasını engelliyor.
+-   **Issue 1: Admin Dashboard Genişletmesini Tamamla (P0)**
+    -   **Description:** Admin kontrol panelini, kullanıcının  ve 'te detaylandırdığı yeni KPI'lar, trend grafikleri, risk paneli ve sistem sağlığı kartı ile zenginleştirme görevi yarım kalmıştır. Backend modelleri oluşturulmuş, ancak API mantığı ve frontend UI'ı henüz tamamlanmamıştır.
     -   **Next debug checklist:**
-        1.   bileşeninden üst bileşene ()  prop'u aracılığıyla gönderilen veri yapısını incele.
-        2.   içindeki  (veya benzeri) fonksiyonunun, state'i immutable (değişmez) bir şekilde güncellediğinden emin ol. Özellikle iç içe geçmiş dizileri ve nesneleri doğru kopyalayıp kopyalamadığını kontrol et.
-        3.  React Developer Tools kullanarak her iki bileşenin  ve 'larını adım adım izleyerek verinin nerede kaybolduğunu veya bozulduğunu tespit et.
-    -   **Why fix this issue and what will be achieved with the fix?** Bu hatanın düzeltilmesi, Kategori Sihirbazı'nın Detay Grupları adımının işlevsel hale gelmesini ve sihirbazın geliştirilmesine devam edilebilmesini sağlayacaktır. Bu, mevcut ana görevin tamamlanması için kritik bir engeldir.
+        1.   dosyasını aç ve  endpoint'ini bul.
+        2.  Farklı veritabanı koleksiyonlarından (kullanıcılar, ilanlar, audit_logs vb.) veri toplayarak yeni oluşturulan Pydantic modellerini (,  vb.) dolduracak aggregation (toplama) mantığını uygula.
+        3.  Rol tabanlı erişim kontrolünü (RBAC) bu endpoint'e entegre et, böylece finansal veriler yalnızca yetkili roller tarafından görülebilir.
+        4.  Endpoint'i  ile test ettikten sonra  dosyasına geç.
+        5.  Yeni veri yapısını işleyecek şekilde  mantığını güncelle.
+        6.  Yeni UI bileşenlerini (grafikler, KPI kartları, risk paneli) oluştur ve verilerle doldur.
+        7.  Grafikler için  ve tüm yeni bileşenler için  ekle.
+    -   **Why fix this issue and what will be achieved with the fix?** Bu görevin tamamlanması, admin panelini basit bir bilgi ekranından, analitik içgörüler, operasyonel uyarılar ve gerçek zamanlı trend takibi sağlayan kapsamlı bir kontrol merkezine dönüştürecektir.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** frontend
+    -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1: Kategori Oluşturma Sihirbazı Refactor'ünü Tamamlama (P0)**
-    -   **Description:** Kullanıcının detaylı spesifikasyonlarına göre başlatılan Kategori Yönetimi sayfasının çok adımlı sihirbaza dönüştürülmesi işini tamamlamak.
-    -   **Where to resume:**
-        1.  Öncelikle Issue 1de belirtilen state yönetimi hatasını  ve  dosyalarında düzelt.
-        2.  Hata düzeltildikten sonra,  içinde, kullanıcı tarafından talep edilen satırda 4 checkbox grid düzenini CSS () ile uygula.
-        3.   bileşenini tamamla ve modüllerin kaynağının () görünür olmasını sağla.
-        4.   ana bileşenine Taslak Olarak Kaydet ve Yayınla butonlarını ekle. Bu butonları, backend'deki ilgili ( ve ) endpoint'lere bağla. Yayınla butonunun, yayınlamadan önce (ileride eklenecek) doğrulama ve önizleme adımlarını tetikleyecek şekilde altyapısını kur.
-    -   **What will be achieved with this?** Admin panelindeki en karmaşık form, kullanıcı dostu, yönetilebilir ve hataya daha az açık bir sihirbaza dönüşecek. Veri tutarlılığı artacak ve hatalı kategori şemalarının canlıya çıkması engellenecek.
+-   **Task 1: Genişletilmiş Admin Dashboard'unu Uygulama (P0)**
+    -   **Where to resume:** Göreve  dosyasındaki  endpoint'i için veri toplama ve işleme mantığını yazarak devam edilmelidir. Modeller  içinde zaten hazırdır. Backend tamamlandıktan sonra frontend geliştirmesine geçilmelidir.
+    -   **What will be achieved with this?** Kullanıcının talep ettiği tüm analitik ve operasyonel metrikleri içeren, tam işlevsel bir admin kontrol paneli.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** Blocked by Issue 1.
+    -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **FAZ-7 Kapanış Kontrolleri (P1):** Kategori sihirbazı tamamlandıktan sonra, admin oturum yönetimi stabilitesini doğrulamak için ertelenen testlerin yapılması. Bunlar: süresi dolmuş token ile API isteği ve paralel sekmelerde logout senaryosu testleridir.
-    -   **FAZ-8: Şema E2E Doğrulama (P1):** Yeni Kategori Oluşturma Sihirbazı'nın tüm akışını (hiyerarşi oluşturma, alan ekleme, kaydetme, yayınlama) kapsayan yeni Playwright E2E test senaryolarının yazılması.
-    -   **FAZ-9: Form Önizleme Paneli (P2):** Admin bir kategori şemasını düzenlerken, formun son kullanıcıya nasıl görüneceğini gösteren bir önizleme paneli eklenmesi.
-    -   **FAZ-10: Dinamik Modül Adımları (P3):** İlan *verme* sihirbazındaki adımların (Adres, Fotoğraf vb.) kategori şemasına göre dinamik olarak gösterilip gizlenmesi.
-    -   **FAZ-11: Güvenlik ve Stabilite Sertleştirme (P4):** Kategori şeması için versiyonlama ve denetim kaydı (audit log) mekanizmasının eklenmesi.
-
+    -   **P1 - Şema Versiyonlama, Fark (Diff) ve Geri Alma (Rollback):** Kategori şemalarının taslak geçmişini listeleyen, iki versiyon arasındaki farkları görsel olarak gösteren ve yöneticiye seçili bir versiyona geri dönme imkanı sunan bir özellik geliştirilmesi. Bu, kullanıcı tarafından bir sonraki ana faz olarak belirlenmiştir.
 -   **Future Tasks:**
-    -   Master Data için CSV ile toplu içe/dışa aktarma.
-    -   Finans sayfalarına CSV export ve gelir grafiği.
-    -   Admin paneline rol bazlı Hızlı Eylemler widget'ı.
+    -   **CSV ile Alt Kategori Toplu Ekleme:** Kategori sihirbazına CSV dosyası ile toplu alt kategori ekleme özelliği.
+    -   **Dışa Aktarımlara Admin İmzası:** Oluşturulan PDF/CSV dosyalarına dışa aktaran yöneticinin kimlik bilgilerini içeren bir imza eklenmesi.
+    -   **Panelden Yönetilebilir Cache TTL:** Dashboard özet verilerinin cache süresinin (TTL) admin panelindeki bir ayar sayfasından değiştirilebilmesi.
 
 **Completed work in this session**
--   **Kategori Yönetimi Sihirbaz Altyapısı:**
-    -    sayfası, tek bir formdan çok adımlı bir sihirbaza dönüştürüldü.
-    -   Sihirbazın her adımı için ayrı React bileşenleri oluşturuldu: , , , , , .
-    -   Bu adımlar arasındaki geçişi ve genel durumu yöneten temel state mantığı kuruldu.
--   **Taslak/Yayınla (Draft/Publish) Backend Desteği:**
-    -    içindeki  modeline  alanı eklendi.
-    -    içinde, bir kategoriyi published statüsüne geçirecek olan  endpoint'i oluşturuldu.
-    -   Mevcut kategori kaydetme endpoint'i, varsayılan olarak draft statüsünde kayıt yapacak şekilde güncellendi.
+-   **Kategori Sihirbazı Tamamlandı:**
+    -   Adımlar arası geçişi zorunlu kılan kilit mekanizması eklendi.
+    -   Otomatik kaydetme (autosave) ve versiyon çakışmasını önleyen optimistic locking mekanizması ( kullanarak) uygulandı.
+    -   Önizleme adımına şemayı PDF ve CSV olarak dışa aktarma özelliği eklendi. İlgili backend endpoint'leri, audit log ve rate limit ile birlikte oluşturuldu.
+-   **Admin Paneli İyileştirmeleri:**
+    -   Uygulama genelinde düşük kontrastlı metin renkleri düzeltildi.
+    -   Admin Dashboard sayfası statik yapıdan dinamik yapıya geçirildi; temel kartlar  endpoint'ine bağlandı.
+    -   Dashboard'daki Hızlı Eylemler için  ve  adında yeni sayfalar oluşturuldu ve yönlendirmeler yapıldı.
+-   **E2E Testleri Güçlendirildi:**
+    -   Atlanan (skipped) test senaryoları için gerekli test verileri (fixture) oluşturularak test kapsamı genişletildi ve CI/CD süreci daha güvenilir hale getirildi.
 
 **Earlier issues found/mentioned but not fixed**
--   None. The agent prioritized the user's massive new request, which superseded all other pending items.
+-   None.
 
 **Known issue recurrence from previous fork**
 -   **Issue:** Admin paneline giriş sonrası sayfanın/sidebar'ın yüklenmemesi.
 -   **Recurrence count:** 2
--   **Status:** RESOLVED. This was fixed in the previous session (FAZ-7). The pending FAZ-7 Kapanış Kontrolleri task is to formally verify and certify this fix, not because the issue has recurred.
+-   **Status:** RESOLVED. Bu sorun önceki oturumlarda düzeltilmiş ve FAZ-7 kapanış kontrolleri kapsamında yapılan testlerle doğrulanmıştır. Tekrar etmemiştir.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Multi-Step Wizard UI:** Karmaşık bir formu, yönetilebilir ve sıralı adımlara bölerek kullanıcı deneyimini iyileştiren bir UI deseni. State (durum), adımlar arasında geçiş yapıldıkça korunur ve en sonunda toplu olarak gönderilir.
--   **Draft/Publish Workflow:** Verilerin (bu durumda kategori şemalarının) anında canlıya çıkmasını engelleyen bir güvenlik katmanı. Kullanıcılar değişiklikleri Taslak olarak kaydedebilir ve yalnızca kasıtlı bir Yayınla eyleminden sonra bu değişiklikler production'da aktif hale gelir.
--   **Dynamic Form Generation:** Admin panelinde tanımlanan bir JSON şemasına dayanarak, kullanıcıya gösterilen ilan formlarının dinamik olarak oluşturulması.
--   **Schema-Driven Validation:** Hem frontend'in hem de backend'in, veri doğruluğunu sağlamak için aynı merkezi şemayı kullanması.
+-   **Aggregate API Endpoint:** Karmaşık bir UI'ı beslemek için birden çok veri kaynağını tek bir backend endpoint'inde () birleştirerek performansı artırma.
+-   **Role-Based Access Control (RBAC):** Kullanıcı rolüne göre veri ve UI bileşenlerine erişimi filtreleme (örneğin, finansal verileri gizleme).
+-   **Server-Side PDF/CSV Generation:** Tutarlılık ve denetlenebilirlik için dışa aktarılabilir belgeleri sunucu tarafında oluşturma ( kütüphanesi ile).
+-   **Optimistic Locking:** Eşzamanlı düzenlemelerden kaynaklanan veri bozulmasını önlemek için bir sürüm veya zaman damgası () kullanma.
+-   **Multi-Step Wizard UI:** Karmaşık formları yönetilebilir adımlara bölerek kullanıcı deneyimini iyileştirme.
+-   **Draft/Publish Workflow:** Verilerin anında canlıya çıkmasını engelleyerek bir doğrulama ve güvenlik katmanı ekleme.
 
 **key DB schema**
 -   **categories**: 
+-   **audit_logs**: 
+-   **users**: 
+
+**changes in tech stack**
+-   **Backend:**  PDF oluşturmak için eklendi.
 
 **All files of reference**
 -   **Files Under Active Development:**
-    -    (The main wizard container)
-    -    (The step currently being worked on)
-    -    (Styling for the new wizard)
--   **Supporting New Component Files:**
+    -    (Dashboard summary endpoint mantığı eklenecek)
+    -    (Yeni dashboard modelleri eklendi)
+    -    (Yeni UI bileşenleri ve veri çekme mantığı eklenecek)
+-   **Supporting New Files:**
     -   
     -   
-    -   
-    -   
--   **Modified Backend Files:**
-    -   
-    -   
--   **User Requirement Source:**
-    -   : Kategori sihirbazı için tüm gereksinimleri, adımları ve mimari kararları içeren temel doküman.
+-   **Key Requirement Sources:**
+    -   ,  (Genişletilmiş Dashboard için detaylı gereksinimler)
 
 **Areas that need refactoring**:
--   The state management logic in  is becoming very complex due to the nested nature of the . Once the wizard is functional, it might be beneficial to refactor the state updates using a reducer () or a state management library for better predictability and maintainability.
+-    içindeki  endpoint'i, yeni metriklerin eklenmesiyle çok büyüyebilir. Veri toplama mantığının, okunabilirliği artırmak için yardımcı fonksiyonlara veya ayrı bir servis katmanına bölünmesi düşünülebilir.
+-   , eklenecek yeni bileşenlerle (grafikler, kartlar) oldukça karmaşık hale gelecektir. Bu bileşenlerin her birinin kendi state ve veri çekme mantığını yöneten alt bileşenlere ayrılması, kodun sürdürülebilirliğini artıracaktır.
 
 **key api endpoints**
--   : Saves a category schema as a draft.
--   : Updates a category schema as a draft.
--   : Validates and changes a category's status from draft to published.
--   : (Still relevant for FAZ-7 closing checks).
+-   : Admin kontrol paneli için tüm birleştirilmiş verileri getirir. Cache ve RBAC içerir.
+-   : Bir kategori şemasının taslağını PDF olarak dışa aktarır.
+-   : Bir kategori şemasının taslağını CSV olarak dışa aktarır.
+-   : Kategori taslağını günceller. Artık optimistic locking için  parametresini içerir.
 
 **Critical Info for New Agent**
--   **Follow the New Spec:** The user's message (ID  in the history) containing the detailed plan for the Category Creation Wizard is now the **single source of truth** for this entire feature. All work must align with the steps and decisions outlined in that message.
--   **You are Mid-Refactor:** The  page is currently in a broken, half-finished state. Your first priority is to fix the state management bug in the  to make the wizard functional again before proceeding with the remaining requirements.
--   **Postponed Tasks:** The original P0 task (FAZ-7 Closing Checks) has been intentionally postponed to accommodate the user's new, higher-priority request. Plan to address it after the wizard is complete and stable.
+-   **Kullanıcı Direktifleri Kaynaktır:** Kullanıcı, Görev Listesi (Task List) ve Mimari Karar Seti (Architecture Decision Set) başlıkları altında son derece ayrıntılı talimatlar vermektedir. Bu talimatlar projenin tek doğruluk kaynağıdır ve harfiyen uyulmalıdır.
+-   **Öncelik Dashboard'u Bitirmektir:** Mevcut en önemli görev, Admin Dashboard genişletmesini tamamlamaktır. Backend modelleri hazırdır; ilk adımınız  içinde bu modelleri dolduracak veri toplama mantığını yazmak olmalıdır.
+-   **Bir Sonraki Büyük Adım Versiyonlamadır:** Dashboard görevi tamamlanıp kullanıcı tarafından onaylandıktan sonra, bir sonraki büyük fazın kategori şemaları için Versiyonlama, Fark Gösterme ve Geri Alma özellikleri olacağını unutmayın.
 
 **documents and test reports created in this job**
--   None in this session, as the work was entirely focused on development and refactoring.
+-    (Önemli ölçüde güncellendi)
+-    (P1 fazı için tasarım belgesi oluşturuldu)
+-    (Bir hata ayıklama sırasında kanıt olarak oluşturuldu)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (Active Requirement):** Provided a very long, detailed specification document for refactoring the Category Creation page into a multi-step wizard. This includes the exact steps, UI/UX rules, and architectural decisions (like Draft/Publish). The agent has been working on implementing this specification for the entire session. This is the main pending task.
+1.  ****: Kullanıcı, talep ettiği yeni dashboard metrikleri (SLA, Risk, KPI) için kesin eşik değerlerini ve hesaplama mantığını netleştirdi.
+2.  ****: Kullanıcı, dashboard'un enterprise-grade bir kontrol merkezine dönüşmesi için gereken tüm yeni KPI, trend grafiği, risk paneli ve sistem sağlığı bileşenlerini içeren kapsamlı bir görev listesi sundu.
+3.  ****: Agent'ın dashboard modellerine  ekleme planını ekle diyerek onayladı.
+4.  ****: Agent'ın dashboard modellerine  ve  ekleme planını ekle diyerek onayladı.
+5.  ****: Kullanıcı, dashboard'un ilk fazının (canlı veriye bağlanması) kapatılması ve cache TTL yönetiminin backlog'a alınması talimatını verdi.
+6.  ****: Kullanıcı, agent'ın dashboard'u canlı veriye bağlama planını onayladı.
+7.  ****: Kullanıcı, statik dashboard'u canlı hale getirmek için gereken metrikleri ve bağlanması gereken endpoint'leri listeleyen ilk görev listesini verdi.
+8.  ****: Kullanıcı, Export (PDF/CSV) fazını bitirme ve kapatma talimatı verdi.
+9.  ****: Kullanıcı, Export fazının resmi olarak kapatıldığını ve bir sonraki göreve geçilebileceğini belirtti.
+10. ****: Kullanıcı, agent'a PDF/CSV export görevini tamamlayıp konuyu kapatmasını söyledi.
 
 **Project Health Check:**
--   **Broken**: The Admin Category Management feature () is currently broken and non-functional due to the ongoing refactoring.
--   **Mocked / Placeholder**: No new placeholders were added. Existing placeholders from the previous session remain.
+-   **Broken**: Admin Dashboard () sayfası, yeni metrikler ve bileşenler için yapılan genişletme çalışması nedeniyle şu anda kısmen bozuk veya eksik veri gösteriyor olabilir.
+-   **Mocked**: Yeni KPI kartları, trend grafikleri ve risk paneli gibi UI bileşenleri henüz frontend'e eklenmemiştir.
 
 **3rd Party Integrations**
 -   FastAPI
 -   React
 -   MongoDB (via )
--   Playwright (for E2E tests)
+-   Playwright (E2E testleri için)
+-    (Sunucu tarafında PDF oluşturmak için)
 
 **Testing status**
--   **Testing agent used after significant changes**: NO (Not yet, development is in progress)
+-   **Testing agent used after significant changes**: YES (Önceki fazlarda E2E testlerini çalıştırmak ve genişletmek için kullanıldı)
 -   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: None in this session.
--   **Known regressions**: The entire category management page is a regression by design, as it's being rebuilt.
+-   **Test files created**:  altında kategori sihirbazı, dışa aktarma ve dashboard için smoke testler oluşturuldu/güncellendi.
+-   **Known regressions**: Admin Dashboard UI, devam eden geliştirme nedeniyle kararsızdır.
 
 **Credentials to test flow:**
 -   **Admin:**  / 
+-   **E2E Test User:**  / 
 
 **What agent forgot to execute**
--   The agent correctly prioritized the user's new, massive request to refactor the category creation flow. It did not forget tasks, but rather postponed the previously planned  to focus on the new Ek Öncelik (Additional Priority) task, which was the correct decision given the user's directive.</analysis>
+-   The agent has been closely following the user's detailed and directive task lists. No tasks were forgotten; the current work is simply in progress as part of a large, user-defined feature expansion.</analysis>

@@ -37,7 +37,7 @@ Aşağıdaki klasör, agent otomasyon çıktılarının **statik** kanıtların�
 ## C) API Response Kanıtı (örnek payload)
 
 Base URL:
-- `https://cat-wizard-draft.preview.emergentagent.com`
+- `https://admin-dashboard-v2-16.preview.emergentagent.com`
 
 ### 1) GET /api/menu/top-items
 Örnek response (kısaltılmış):
