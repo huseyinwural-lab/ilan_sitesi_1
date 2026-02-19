@@ -190,7 +190,7 @@ const AdminCategories = () => {
       name: "",
       slug: "",
       parent_id: "",
-      country_code: "",
+      country_code: selectedCountry || "",
       active_flag: true,
       sort_order: 0,
     });
