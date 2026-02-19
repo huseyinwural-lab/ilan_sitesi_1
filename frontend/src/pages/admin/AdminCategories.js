@@ -688,7 +688,181 @@ const AdminCategories = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap gap-2" data-testid="category-wizard-steps">
+                  {WIZARD_STEPS.map((step) => {
+                    const active = wizardStep === step.id;
+                    const disabled = !canAccessStep(step.id);
+                    return (
+                      <button
+                        key={step.id}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => !disabled && setWizardStep(step.id)}
+                        className={`px-3 py-1 rounded text-xs border ${active ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        data-testid={`category-step-${step.id}`}
+                      >
+                        {step.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div
+                  className={`text-xs px-2 py-1 rounded ${schema.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}
+                  data-testid="schema-status-badge"
+                >
+                  {schemaStatusLabel}
+                </div>
+              </div>
+
+              {hierarchyError && (
+                <div className="p-3 rounded border border-rose-200 bg-rose-50 text-rose-700 text-sm" data-testid="categories-hierarchy-error">
+                  {hierarchyError}
+                </div>
+              )}
+
+              {wizardStep === "hierarchy" && (
+                <div className="space-y-4" data-testid="category-hierarchy-step">
+                  <div className="rounded-lg border p-4 space-y-4">
+                    <h3 className="text-md font-semibold">Ana Kategori</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Ana kategori adı</label>
+                        <input
+                          className={inputClassName}
+                          value={form.name}
+                          onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                          data-testid="categories-name-input"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Slug</label>
+                        <input
+                          className={inputClassName}
+                          value={form.slug}
+                          onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
+                          data-testid="categories-slug-input"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Ülke</label>
+                        <input
+                          className={inputClassName}
+                          value={form.country_code}
+                          onChange={(e) => setForm((prev) => ({ ...prev, country_code: e.target.value.toUpperCase() }))}
+                          data-testid="categories-country-input"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Sıra</label>
+                        <input
+                          type="number"
+                          min={0}
+                          className={inputClassName}
+                          value={form.sort_order}
+                          onChange={(e) => setForm((prev) => ({ ...prev, sort_order: e.target.value }))}
+                          data-testid="categories-sort-input"
+                        />
+                      </div>
+                      <label className="flex items-center gap-2 text-sm text-slate-800" data-testid="categories-active-wrapper">
+                        <input
+                          type="checkbox"
+                          checked={form.active_flag}
+                          onChange={(e) => setForm((prev) => ({ ...prev, active_flag: e.target.checked }))}
+                          data-testid="categories-active-checkbox"
+                        />
+                        Aktif
+                      </label>
+                    </div>
+                  </div>
+
+                  {!editing && (
+                    <div className="rounded-lg border p-4 space-y-3" data-testid="categories-subcategory-section">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-md font-semibold">Alt Kategoriler</h3>
+                        <button
+                          type="button"
+                          className="px-3 py-1 border rounded text-sm"
+                          onClick={addSubcategory}
+                          data-testid="categories-subcategory-add"
+                        >
+                          Alt kategori ekle
+                        </button>
+                      </div>
+                      {subcategories.length === 0 ? (
+                        <div className="text-sm text-slate-500" data-testid="categories-subcategory-empty">Henüz alt kategori eklenmedi.</div>
+                      ) : (
+                        <div className="space-y-3">
+                          {subcategories.map((sub, index) => (
+                            <div key={`sub-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-end" data-testid={`categories-subcategory-row-${index}`}>
+                              <div className="space-y-1">
+                                <label className={labelClassName}>Ad</label>
+                                <input
+                                  className={inputClassName}
+                                  value={sub.name}
+                                  onChange={(e) => updateSubcategory(index, { name: e.target.value })}
+                                  data-testid={`categories-subcategory-name-${index}`}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className={labelClassName}>Slug</label>
+                                <input
+                                  className={inputClassName}
+                                  value={sub.slug}
+                                  onChange={(e) => updateSubcategory(index, { slug: e.target.value })}
+                                  data-testid={`categories-subcategory-slug-${index}`}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className={labelClassName}>Sıra</label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  className={inputClassName}
+                                  value={sub.sort_order}
+                                  onChange={(e) => updateSubcategory(index, { sort_order: e.target.value })}
+                                  data-testid={`categories-subcategory-sort-${index}`}
+                                />
+                              </div>
+                              <label className="flex items-center gap-2 text-sm text-slate-800" data-testid={`categories-subcategory-active-${index}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={sub.active_flag}
+                                  onChange={(e) => updateSubcategory(index, { active_flag: e.target.checked })}
+                                />
+                                Aktif
+                              </label>
+                              <button
+                                type="button"
+                                className="text-sm text-rose-600 border rounded px-2 py-1"
+                                onClick={() => removeSubcategory(index)}
+                                data-testid={`categories-subcategory-remove-${index}`}
+                              >
+                                Sil
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {editing && (
+                    <div className="rounded-lg border border-dashed p-4 text-sm text-slate-600" data-testid="categories-hierarchy-locked">
+                      Mevcut kategori üzerinde hiyerarşi düzenleme devre dışı. Devam ederek form şemasını güncelleyebilirsiniz.
+                    </div>
+                  )}
+
+                  <div className="text-xs text-slate-500" data-testid="categories-hierarchy-warning">
+                    Hiyerarşi tamamlanmadan çekirdek alanlara geçilemez.
+                  </div>
+                </div>
+              )}
+
+              {wizardStep !== "hierarchy" && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
                 <input
                   className={inputClassName}
                   placeholder="Kategori adı"
