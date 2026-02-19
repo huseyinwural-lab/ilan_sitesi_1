@@ -1813,3 +1813,130 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ### Agent Communication:
 - **Agent**: testing
 - **Message**: Sprint 1.1 Dealer Management backend API tests SUCCESSFULLY COMPLETED. All 6 test cases passed (100% success rate). Authentication working with admin@platform.com credentials. All dealer management endpoints functional: list with pagination, status filtering, dealer detail with package info, status changes (active→suspended), and proper audit logging with DEALER_STATUS_CHANGE events. All APIs return correct HTTP 200 responses with expected data structures. Backend dealer management functionality is fully operational and ready for production use.
+
+## Category Wizard UI Regression Test Results (Feb 19, 2026)
+
+### Test Flow Executed:
+**Base URL**: https://cat-wizard-draft.preview.emergentagent.com
+**Route**: /admin/categories
+**Credentials**: admin@platform.com / Admin123! ✅ WORKING
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Admin Login & Navigation**:
+- ✅ Login successful with admin@platform.com / Admin123!
+- ✅ Navigation to /admin/categories page working correctly
+- ✅ Categories page loads with proper list view
+
+**2. New Category Wizard Flow**:
+- ✅ Wizard modal opens successfully
+- ✅ All 6 wizard steps accessible and functional:
+  1. **Hiyerarşi** (Hierarchy): ✅ Form fields working, hierarchy creation successful
+  2. **Çekirdek Alanlar** (Core): ✅ Step visible and navigable
+  3. **Parametre Alanları (2a)**: ✅ Dynamic fields can be added (tested with "Oda Sayısı" field)
+  4. **Detay Grupları (2c)**: ✅ Detail groups with checkbox options working (tested with "Özellikler" group)
+  5. **Modüller** (Modules): ✅ All 4 modules present (address, photos, contact, payment)
+  6. **Önizleme** (Preview): ✅ All preview requirements verified (see below)
+
+**3. Preview Step - Comprehensive Validation**:
+- ✅ **Summary (Özet)**: All fields visible and populated correctly
+  - Kategori: Test Kategori Wizard ✓
+  - Slug: test-kategori-wizard ✓
+  - Ülke: DE ✓
+  - Durum: Aktif ✓
+  - Parametre Alanı: 1 ✓
+  - Detay Grubu: 1 ✓
+  - Aktif Modül: 4 ✓
+
+- ✅ **Module List (Modül Listesi)**: All 4 modules displayed with status
+  - Adres: Aktif ✓
+  - Fotoğraf: Aktif ✓
+  - İletişim: Aktif ✓
+  - Ödeme: Aktif ✓
+
+- ✅ **Validation Warnings (Uyarılar)**: Section visible with proper warnings
+  - Found 1 warning: "Önizleme adımı tamamlanmalı." ✓
+  - Warning displays correctly before preview confirmation ✓
+
+- ✅ **JSON Accordion**: Fully functional
+  - Toggle button present with data-testid="categories-preview-json-toggle" ✓
+  - Accordion opens on click ✓
+  - JSON content visible (2429 characters) ✓
+  - Contains expected schema fields: "core_fields", "modules" ✓
+
+**4. Publish Button State Management**:
+- ✅ **Before Preview Confirmation**:
+  - Button state: DISABLED ✓
+  - CSS classes: "bg-blue-300 cursor-not-allowed" ✓
+  - Cannot be clicked ✓
+
+- ✅ **After "Önizlemeyi Onayla" Click**:
+  - Button state: ENABLED ✓
+  - CSS classes: "bg-blue-600" (active state) ✓
+  - Confirmation message visible: "Onay tamamlandı." ✓
+  - Button now clickable ✓
+
+**5. Save Draft Functionality**:
+- ✅ "Taslak Kaydet" button present on preview step
+- ✅ Modal closes after clicking "Taslak Kaydet"
+- ✅ Returns to categories list page
+- ✅ Draft saved successfully to backend
+
+**6. Slug Visibility on List**:
+- ✅ Categories list displays properly with all columns (AD, SLUG, ÜLKE, SIRA, DURUM, AKSİYON)
+- ✅ Slug column visible and populated
+- ✅ Newly created category appears in list with correct slug: "test-kategori-wizard"
+
+### Data-TestIds Verification:
+All required data-testids present and working:
+- ✅ `categories-preview-step`: Preview step container
+- ✅ `categories-preview-confirm`: Preview confirmation button
+- ✅ `categories-preview-json-toggle`: JSON accordion toggle
+- ✅ `categories-publish`: Publish button
+- ✅ `categories-save-draft`: Save draft button
+- ✅ `categories-modules-step`: Modules step container
+- ✅ `categories-detail-step`: Detail groups step (2c)
+- ✅ `categories-dynamic-step`: Dynamic fields step (2a)
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (12/12 core requirements verified)
+- **Login & Authentication**: ✅ WORKING
+- **Wizard Modal**: ✅ WORKING
+- **Hierarchy Step**: ✅ WORKING (parent category creation)
+- **Core Step**: ✅ WORKING (navigation)
+- **Dynamic Step (2a)**: ✅ WORKING (field addition)
+- **Detail Step (2c)**: ✅ WORKING (group + checkbox options)
+- **Modules Step**: ✅ WORKING (4 modules toggle)
+- **Preview Step**: ✅ FULLY FUNCTIONAL
+  - Summary display ✅
+  - Module list ✅
+  - Validation warnings ✅
+  - JSON accordion ✅
+- **Publish Button Logic**: ✅ WORKING (disabled → enabled after confirm)
+- **Save Draft**: ✅ WORKING (modal closes, returns to list)
+- **Slug Visibility**: ✅ WORKING (visible on list)
+
+### Screenshots Captured:
+1. categories-page-initial.png - Categories list page
+2. wizard-modal-opened.png - Wizard modal opened on Hierarchy step
+3. after-hierarchy-complete.png - After completing hierarchy
+4. after-dynamic-step.png - After adding dynamic field
+5. after-detail-step.png - After adding detail group
+6. after-modules-step.png - After modules step
+7. preview-step-full.png - Preview step with all sections visible
+8. preview-after-confirmation.png - Preview step after confirmation
+9. list-after-draft-save.png - Categories list after saving draft
+
+### Final Status:
+- **Overall Result**: ✅ **PASS** - Category wizard fully functional
+- **All Requirements**: ✅ VERIFIED (6 wizard steps + preview validation + publish logic)
+- **Preview Step Requirements**: ✅ COMPLETE (summary, modules, warnings, JSON all working)
+- **Publish Button Logic**: ✅ CORRECT (proper state management)
+- **Save Draft Flow**: ✅ WORKING (modal closes, returns to list)
+- **Production Ready**: ✅ CONFIRMED
+
+### Agent Communication:
+- **Agent**: testing
+- **Message**: Category wizard UI regression test SUCCESSFULLY COMPLETED. All 12 requirements verified and passing (100% success rate). Complete wizard flow tested: Hiyerarşi → Core → 2a (Dynamic) → 2c (Detail) → Modüller → Önizleme. Preview step fully functional with all required elements: summary (özet) displays category info correctly, module list (modül listesi) shows all 4 modules with statuses, validation warnings (uyarılar) section working with proper warnings before confirmation, JSON accordion (data-testid="categories-preview-json-toggle") opens and displays 2429 characters of JSON content with correct schema structure. Publish button properly disabled before preview confirmation and enabled after clicking "Önizlemeyi Onayla". Save draft functionality working correctly - modal closes and returns to categories list. Slug visibility confirmed on list page. All data-testids present and working as expected. No critical issues found.
