@@ -3964,6 +3964,11 @@ async def admin_update_category(
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
+    if payload.expected_updated_at is not None:
+        current_updated_at = category.get("updated_at")
+        if current_updated_at and payload.expected_updated_at != current_updated_at:
+            raise HTTPException(status_code=409, detail="Category updated in another session")
+
     updates: Dict = {}
     schema = None
     schema_status = None
