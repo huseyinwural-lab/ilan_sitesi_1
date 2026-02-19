@@ -1184,21 +1184,23 @@ const AdminCategories = () => {
                     <option value="EUR">EUR</option>
                     <option value="CHF">CHF</option>
                   </select>
-                  <select
-                    className={inputClassName}
-                    value={schema.core_fields.price.currency_secondary}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        price: { ...prev.core_fields.price, currency_secondary: e.target.value },
-                      },
-                    }))}
-                    data-testid="categories-price-secondary"
-                  >
-                    <option value="CHF">CHF</option>
-                    <option value="EUR">EUR</option>
-                  </select>
+                  {schema.core_fields.price.secondary_enabled && (
+                    <select
+                      className={inputClassName}
+                      value={schema.core_fields.price.currency_secondary}
+                      onChange={(e) => setSchema((prev) => ({
+                        ...prev,
+                        core_fields: {
+                          ...prev.core_fields,
+                          price: { ...prev.core_fields.price, currency_secondary: e.target.value },
+                        },
+                      }))}
+                      data-testid="categories-price-secondary"
+                    >
+                      <option value="CHF">CHF</option>
+                      <option value="EUR">EUR</option>
+                    </select>
+                  )}
                   <select
                     className={inputClassName}
                     aria-label="Ondalık basamak"
