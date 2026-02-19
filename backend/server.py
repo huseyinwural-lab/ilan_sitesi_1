@@ -5174,6 +5174,7 @@ async def submit_vehicle_listing(
         "status": "pending_moderation",
         "validation_errors": [],
         "next_actions": ["wait_moderation"],
+        "detail_url": f"/ilan/{listing_id}?preview=1",
     }
 
 
