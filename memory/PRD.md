@@ -124,6 +124,8 @@
 - 2026-02-19: Risk & alarm paneli (çoklu IP/SLA/bekleyen ödeme) + sistem sağlığı gecikme metrikleri
 - 2026-02-19: Finans verileri RBAC (sadece finance/super_admin) + /admin ve /admin/dashboard birleşik görünüm
 - 2026-02-19: Trend aralığı filtresi (7-365) + Dashboard PDF export (super_admin)
+- 2026-02-19: Country compare analitik genişletme (growth %, conversion, dealer density, SLA 24/48, risk, bar chart + heatmap)
+- 2026-02-19: Country compare tarih filtresi + ECB EUR normalizasyonu (24h cache + fallback) + CSV export + E2E test
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
