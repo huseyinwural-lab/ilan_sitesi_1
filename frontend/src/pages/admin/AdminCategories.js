@@ -939,6 +939,9 @@ const AdminCategories = () => {
                   />
                   <input
                     type="number"
+                    min={0}
+                    max={200}
+                    aria-label="Başlık max"
                     className={inputClassName}
                     placeholder="Başlık max"
                     value={schema.core_fields.title.max}
