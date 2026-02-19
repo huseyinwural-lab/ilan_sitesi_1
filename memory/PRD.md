@@ -186,7 +186,9 @@
 - Admin Kategoriler ekranı metin kontrastları koyulaştırıldı
 - E2E fixture kullanıcı + fixture kategori şeması seed edildi (user@platform.com)
 - v2 vehicle makes/models endpoint alias eklendi (wizard test stabil)
-- SKIPPED E2E Senaryo 2/3 aktif edildi ve PASS
+- Preview export (PDF/CSV) endpoint + audit log + rate limit eklendi
+- Preview adımına PDF/CSV indir butonları eklendi
+- Export E2E doğrulamaları (content-type + dosya adı) eklendi
 
 ### Test Kanıtı
 - playwright: tests/e2e/admin-auth-edge.spec.js → ✅ 2 test geçti
