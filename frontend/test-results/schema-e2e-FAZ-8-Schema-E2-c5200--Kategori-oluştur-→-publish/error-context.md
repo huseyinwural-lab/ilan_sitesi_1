@@ -1,0 +1,587 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - complementary [ref=e4]:
+        - generic [ref=e5]:
+          - generic [ref=e7]: A
+          - generic [ref=e9]: Admin Panel
+          - button "Collapse" [ref=e10] [cursor=pointer]:
+            - img [ref=e12]
+        - navigation [ref=e14]:
+          - list [ref=e15]:
+            - generic [ref=e16]:
+              - listitem [ref=e17]:
+                - generic [ref=e19]: Dashboard
+              - listitem [ref=e20]:
+                - link "Kontrol Paneli" [ref=e22] [cursor=pointer]:
+                  - /url: /admin
+                  - img [ref=e23]
+                  - text: Kontrol Paneli
+              - listitem [ref=e28]:
+                - link "Genel Bakış" [ref=e30] [cursor=pointer]:
+                  - /url: /admin/dashboard
+                  - img [ref=e31]
+                  - text: Genel Bakış
+              - listitem [ref=e34]:
+                - link "Ülke Karşılaştırma" [ref=e36] [cursor=pointer]:
+                  - /url: /admin/country-compare
+                  - img [ref=e37]
+                  - text: Ülke Karşılaştırma
+              - listitem [ref=e39]:
+                - generic [ref=e41]: Yönetim
+              - listitem [ref=e42]:
+                - link "Admin Kullanıcıları" [ref=e44] [cursor=pointer]:
+                  - /url: /admin/admin-users
+                  - img [ref=e45]
+                  - text: Admin Kullanıcıları
+              - listitem [ref=e50]:
+                - link "Rol Tanımları" [ref=e52] [cursor=pointer]:
+                  - /url: /admin/roles
+                  - img [ref=e53]
+                  - text: Rol Tanımları
+              - listitem [ref=e56]:
+                - link "Yetki Atama (RBAC Matrix)" [ref=e58] [cursor=pointer]:
+                  - /url: /admin/rbac-matrix
+                  - img [ref=e59]
+                  - text: Yetki Atama (RBAC Matrix)
+              - listitem [ref=e61]:
+                - link "Kullanıcı Yönetimi" [ref=e63] [cursor=pointer]:
+                  - /url: /admin/users
+                  - img [ref=e64]
+                  - text: Kullanıcı Yönetimi
+              - listitem [ref=e69]:
+                - generic [ref=e71]: Üyeler
+              - listitem [ref=e72]:
+                - link "Bireysel Kullanıcılar" [ref=e74] [cursor=pointer]:
+                  - /url: /admin/individual-users
+                  - img [ref=e75]
+                  - text: Bireysel Kullanıcılar
+              - listitem [ref=e80]:
+                - link "Kurumsal Kullanıcılar" [ref=e82] [cursor=pointer]:
+                  - /url: /admin/dealers
+                  - img [ref=e83]
+                  - text: Kurumsal Kullanıcılar
+              - listitem [ref=e86]:
+                - link "Bireysel Üye Başvurular" [ref=e88] [cursor=pointer]:
+                  - /url: /admin/individual-applications
+                  - img [ref=e89]
+                  - text: Bireysel Üye Başvurular
+              - listitem [ref=e92]:
+                - link "Kurumsal Üye Başvurular" [ref=e94] [cursor=pointer]:
+                  - /url: /admin/dealer-applications
+                  - img [ref=e95]
+                  - text: Kurumsal Üye Başvurular
+              - listitem [ref=e98]:
+                - generic [ref=e100]: İlan & Moderasyon
+              - listitem [ref=e101]:
+                - link "Moderation Queue" [ref=e103] [cursor=pointer]:
+                  - /url: /admin/moderation
+                  - img [ref=e104]
+                  - text: Moderation Queue
+              - listitem [ref=e107]:
+                - link "Bireysel İlan Başvuruları" [ref=e109] [cursor=pointer]:
+                  - /url: /admin/individual-listing-applications
+                  - img [ref=e110]
+                  - text: Bireysel İlan Başvuruları
+              - listitem [ref=e113]:
+                - link "Kurumsal İlan Başvuruları" [ref=e115] [cursor=pointer]:
+                  - /url: /admin/corporate-listing-applications
+                  - img [ref=e116]
+                  - text: Kurumsal İlan Başvuruları
+              - listitem [ref=e119]:
+                - generic [ref=e121]: Kampanyalar
+              - listitem [ref=e122]:
+                - link "Bireysel Kampanyalar" [ref=e124] [cursor=pointer]:
+                  - /url: /admin/individual-campaigns
+                  - img [ref=e125]
+                  - text: Bireysel Kampanyalar
+              - listitem [ref=e127]:
+                - link "Kurumsal Kampanyalar" [ref=e129] [cursor=pointer]:
+                  - /url: /admin/corporate-campaigns
+                  - img [ref=e130]
+                  - text: Kurumsal Kampanyalar
+              - listitem [ref=e132]:
+                - link "Şikayetler" [ref=e134] [cursor=pointer]:
+                  - /url: /admin/reports
+                  - img [ref=e135]
+                  - text: Şikayetler
+              - listitem [ref=e137]:
+                - generic [ref=e139]: Katalog & İçerik
+              - listitem [ref=e140]:
+                - link "Kategoriler" [ref=e142] [cursor=pointer]:
+                  - /url: /admin/categories
+                  - img [ref=e143]
+                  - text: Kategoriler
+              - listitem [ref=e148]:
+                - link "Özellikler" [ref=e150] [cursor=pointer]:
+                  - /url: /admin/attributes
+                  - img [ref=e151]
+                  - text: Özellikler
+              - listitem [ref=e154]:
+                - generic "Coming soon" [ref=e156]:
+                  - img [ref=e157]
+                  - generic [ref=e160]: Menü Yönetimi
+                  - generic [ref=e162]: Yakında
+              - listitem [ref=e163]:
+                - generic [ref=e165]: Araç Verisi
+              - listitem [ref=e166]:
+                - link "Araç Markaları" [ref=e168] [cursor=pointer]:
+                  - /url: /admin/vehicle-makes
+                  - img [ref=e169]
+                  - text: Araç Markaları
+              - listitem [ref=e173]:
+                - link "Araç Modelleri" [ref=e175] [cursor=pointer]:
+                  - /url: /admin/vehicle-models
+                  - img [ref=e176]
+                  - text: Araç Modelleri
+              - listitem [ref=e180]:
+                - generic [ref=e182]: Finans
+              - listitem [ref=e183]:
+                - link "Planlar" [ref=e185] [cursor=pointer]:
+                  - /url: /admin/plans
+                  - img [ref=e186]
+                  - text: Planlar
+              - listitem [ref=e188]:
+                - link "Faturalar" [ref=e190] [cursor=pointer]:
+                  - /url: /admin/invoices
+                  - img [ref=e191]
+                  - text: Faturalar
+              - listitem [ref=e194]:
+                - generic "Coming soon" [ref=e196]:
+                  - img [ref=e197]
+                  - generic [ref=e201]: Ödemeler
+                  - generic [ref=e203]: Yakında
+              - listitem [ref=e204]:
+                - link "Vergi Oranları" [ref=e206] [cursor=pointer]:
+                  - /url: /admin/tax-rates
+                  - img [ref=e207]
+                  - text: Vergi Oranları
+              - listitem [ref=e211]:
+                - generic [ref=e213]: Sistem
+              - listitem [ref=e214]:
+                - link "Ülkeler" [ref=e216] [cursor=pointer]:
+                  - /url: /admin/countries
+                  - img [ref=e217]
+                  - text: Ülkeler
+              - listitem [ref=e220]:
+                - link "Denetim Kayıtları" [ref=e222] [cursor=pointer]:
+                  - /url: /admin/audit-logs
+                  - img [ref=e223]
+                  - text: Denetim Kayıtları
+              - listitem [ref=e226]:
+                - link "Sistem Ayarları" [ref=e228] [cursor=pointer]:
+                  - /url: /admin/system-settings
+                  - img [ref=e229]
+                  - text: Sistem Ayarları
+        - generic [ref=e232]:
+          - generic [ref=e233]:
+            - generic [ref=e234]: S
+            - generic [ref=e235]:
+              - paragraph [ref=e236]: System Administrator
+              - paragraph [ref=e237]: Süper Admin
+          - button "Çıkış" [ref=e238] [cursor=pointer]:
+            - img [ref=e239]
+            - text: Çıkış
+      - generic [ref=e242]:
+        - banner [ref=e243]:
+          - generic [ref=e245]:
+            - generic [ref=e246]:
+              - generic [ref=e247]: Global
+              - switch [ref=e248] [cursor=pointer]
+              - generic [ref=e249]: Country
+            - button "🇩🇪 DE" [disabled] [ref=e251]:
+              - generic [ref=e252]: 🇩🇪
+              - generic [ref=e253]: DE
+              - img [ref=e254]
+          - generic [ref=e256]:
+            - button [ref=e257] [cursor=pointer]:
+              - img [ref=e259]
+            - button "tr" [ref=e262] [cursor=pointer]:
+              - img [ref=e263]
+              - generic [ref=e266]: tr
+            - button "S" [ref=e268] [cursor=pointer]:
+              - generic [ref=e269]: S
+              - img [ref=e270]
+        - main [ref=e272]:
+          - navigation "breadcrumb" [ref=e274]:
+            - list [ref=e275]:
+              - listitem [ref=e276]:
+                - link "Admin" [ref=e277] [cursor=pointer]:
+                  - /url: /admin
+              - listitem [ref=e278]:
+                - img [ref=e280]
+              - listitem [ref=e282]:
+                - link "Kategoriler" [disabled] [ref=e283]
+          - generic [ref=e285]:
+            - generic [ref=e286]:
+              - generic [ref=e287]:
+                - heading "Kategoriler" [level=1] [ref=e288]
+                - paragraph [ref=e289]: İlan form şablonlarını yönetin.
+              - button "Yeni Kategori" [ref=e290] [cursor=pointer]
+            - generic [ref=e291]:
+              - generic [ref=e292]:
+                - generic [ref=e293]: Ad
+                - generic [ref=e294]: Slug
+                - generic [ref=e295]: Ülke
+                - generic [ref=e296]: Sıra
+                - generic [ref=e297]: Durum
+                - generic [ref=e298]: Aksiyon
+              - generic [ref=e299]:
+                - generic [ref=e300]:
+                  - generic [ref=e301]: Gate Category-conflict
+                  - generic [ref=e302]: gate-category
+                  - generic [ref=e303]: DE
+                  - generic [ref=e304]: "0"
+                  - generic [ref=e306]: Aktif
+                  - generic [ref=e307]:
+                    - button "Düzenle" [ref=e308] [cursor=pointer]
+                    - button "Pasif Et" [ref=e309] [cursor=pointer]
+                    - button "Sil" [ref=e310] [cursor=pointer]
+                - generic [ref=e311]:
+                  - generic [ref=e312]: e2e-test-category
+                  - generic [ref=e313]: e2e-test-category
+                  - generic [ref=e314]: DE
+                  - generic [ref=e315]: "0"
+                  - generic [ref=e317]: Pasif
+                  - generic [ref=e318]:
+                    - button "Düzenle" [ref=e319] [cursor=pointer]
+                    - button "Aktif Et" [ref=e320] [cursor=pointer]
+                    - button "Sil" [ref=e321] [cursor=pointer]
+                - generic [ref=e322]:
+                  - generic [ref=e323]: e2e-test-category-1771518990918
+                  - generic [ref=e324]: e2e-test-category-1771518990918
+                  - generic [ref=e325]: DE
+                  - generic [ref=e326]: "0"
+                  - generic [ref=e328]: Aktif
+                  - generic [ref=e329]:
+                    - button "Düzenle" [ref=e330] [cursor=pointer]
+                    - button "Pasif Et" [ref=e331] [cursor=pointer]
+                    - button "Sil" [ref=e332] [cursor=pointer]
+                - generic [ref=e333]:
+                  - generic [ref=e334]: e2e-test-category-1771519018242
+                  - generic [ref=e335]: e2e-test-category-1771519018242
+                  - generic [ref=e336]: DE
+                  - generic [ref=e337]: "0"
+                  - generic [ref=e339]: Aktif
+                  - generic [ref=e340]:
+                    - button "Düzenle" [ref=e341] [cursor=pointer]
+                    - button "Pasif Et" [ref=e342] [cursor=pointer]
+                    - button "Sil" [ref=e343] [cursor=pointer]
+                - generic [ref=e344]:
+                  - generic [ref=e345]: e2e-test-category-1771519111219
+                  - generic [ref=e346]: e2e-test-category-1771519111219
+                  - generic [ref=e347]: DE
+                  - generic [ref=e348]: "0"
+                  - generic [ref=e350]: Aktif
+                  - generic [ref=e351]:
+                    - button "Düzenle" [ref=e352] [cursor=pointer]
+                    - button "Pasif Et" [ref=e353] [cursor=pointer]
+                    - button "Sil" [ref=e354] [cursor=pointer]
+                - generic [ref=e355]:
+                  - generic [ref=e356]: e2e-test-category-1771519136738
+                  - generic [ref=e357]: e2e-test-category-1771519136738
+                  - generic [ref=e358]: DE
+                  - generic [ref=e359]: "0"
+                  - generic [ref=e361]: Aktif
+                  - generic [ref=e362]:
+                    - button "Düzenle" [ref=e363] [cursor=pointer]
+                    - button "Pasif Et" [ref=e364] [cursor=pointer]
+                    - button "Sil" [ref=e365] [cursor=pointer]
+                - generic [ref=e366]:
+                  - generic [ref=e367]: e2e-test-category-1771519240131
+                  - generic [ref=e368]: e2e-test-category-1771519240131
+                  - generic [ref=e369]: DE
+                  - generic [ref=e370]: "0"
+                  - generic [ref=e372]: Aktif
+                  - generic [ref=e373]:
+                    - button "Düzenle" [ref=e374] [cursor=pointer]
+                    - button "Pasif Et" [ref=e375] [cursor=pointer]
+                    - button "Sil" [ref=e376] [cursor=pointer]
+                - generic [ref=e377]:
+                  - generic [ref=e378]: Test Kategori Wizard
+                  - generic [ref=e379]: test-kategori-wizard
+                  - generic [ref=e380]: DE
+                  - generic [ref=e381]: "0"
+                  - generic [ref=e383]: Aktif
+                  - generic [ref=e384]:
+                    - button "Düzenle" [ref=e385] [cursor=pointer]
+                    - button "Pasif Et" [ref=e386] [cursor=pointer]
+                    - button "Sil" [ref=e387] [cursor=pointer]
+                - generic [ref=e388]:
+                  - generic [ref=e389]: e2e-test-category-1771520762927
+                  - generic [ref=e390]: e2e-test-category-1771520762927
+                  - generic [ref=e391]: DE
+                  - generic [ref=e392]: "0"
+                  - generic [ref=e394]: Aktif
+                  - generic [ref=e395]:
+                    - button "Düzenle" [ref=e396] [cursor=pointer]
+                    - button "Pasif Et" [ref=e397] [cursor=pointer]
+                    - button "Sil" [ref=e398] [cursor=pointer]
+                - generic [ref=e399]:
+                  - generic [ref=e400]: Regression Test Category
+                  - generic [ref=e401]: regression-test
+                  - generic [ref=e402]: DE
+                  - generic [ref=e403]: "0"
+                  - generic [ref=e405]: Aktif
+                  - generic [ref=e406]:
+                    - button "Düzenle" [ref=e407] [cursor=pointer]
+                    - button "Pasif Et" [ref=e408] [cursor=pointer]
+                    - button "Sil" [ref=e409] [cursor=pointer]
+                - generic [ref=e410]:
+                  - generic [ref=e411]: Sub Category
+                  - generic [ref=e412]: sub-category
+                  - generic [ref=e413]: DE
+                  - generic [ref=e414]: "0"
+                  - generic [ref=e416]: Aktif
+                  - generic [ref=e417]:
+                    - button "Düzenle" [ref=e418] [cursor=pointer]
+                    - button "Pasif Et" [ref=e419] [cursor=pointer]
+                    - button "Sil" [ref=e420] [cursor=pointer]
+                - generic [ref=e421]:
+                  - generic [ref=e422]: deneme
+                  - generic [ref=e423]: denemw
+                  - generic [ref=e424]: DE
+                  - generic [ref=e425]: "0"
+                  - generic [ref=e427]: Aktif
+                  - generic [ref=e428]:
+                    - button "Düzenle" [ref=e429] [cursor=pointer]
+                    - button "Pasif Et" [ref=e430] [cursor=pointer]
+                    - button "Sil" [ref=e431] [cursor=pointer]
+                - generic [ref=e432]:
+                  - generic [ref=e433]: e2e-test-category-1771522324115
+                  - generic [ref=e434]: e2e-test-category-1771522324115
+                  - generic [ref=e435]: DE
+                  - generic [ref=e436]: "0"
+                  - generic [ref=e438]: Aktif
+                  - generic [ref=e439]:
+                    - button "Düzenle" [ref=e440] [cursor=pointer]
+                    - button "Pasif Et" [ref=e441] [cursor=pointer]
+                    - button "Sil" [ref=e442] [cursor=pointer]
+                - generic [ref=e443]:
+                  - generic [ref=e444]: e2e-test-category-1771522428912
+                  - generic [ref=e445]: e2e-test-category-1771522428912
+                  - generic [ref=e446]: DE
+                  - generic [ref=e447]: "0"
+                  - generic [ref=e449]: Aktif
+                  - generic [ref=e450]:
+                    - button "Düzenle" [ref=e451] [cursor=pointer]
+                    - button "Pasif Et" [ref=e452] [cursor=pointer]
+                    - button "Sil" [ref=e453] [cursor=pointer]
+                - generic [ref=e454]:
+                  - generic [ref=e455]: d
+                  - generic [ref=e456]: d
+                  - generic [ref=e457]: DE
+                  - generic [ref=e458]: "0"
+                  - generic [ref=e460]: Aktif
+                  - generic [ref=e461]:
+                    - button "Düzenle" [ref=e462] [cursor=pointer]
+                    - button "Pasif Et" [ref=e463] [cursor=pointer]
+                    - button "Sil" [ref=e464] [cursor=pointer]
+                - generic [ref=e465]:
+                  - generic [ref=e466]: e2e-test-category-1771523838519
+                  - generic [ref=e467]: e2e-test-category-1771523838519
+                  - generic [ref=e468]: DE
+                  - generic [ref=e469]: "0"
+                  - generic [ref=e471]: Aktif
+                  - generic [ref=e472]:
+                    - button "Düzenle" [ref=e473] [cursor=pointer]
+                    - button "Pasif Et" [ref=e474] [cursor=pointer]
+                    - button "Sil" [ref=e475] [cursor=pointer]
+                - generic [ref=e476]:
+                  - generic [ref=e477]: e2e-test-category-1771523960402
+                  - generic [ref=e478]: e2e-test-category-1771523960402
+                  - generic [ref=e479]: DE
+                  - generic [ref=e480]: "0"
+                  - generic [ref=e482]: Aktif
+                  - generic [ref=e483]:
+                    - button "Düzenle" [ref=e484] [cursor=pointer]
+                    - button "Pasif Et" [ref=e485] [cursor=pointer]
+                    - button "Sil" [ref=e486] [cursor=pointer]
+                - generic [ref=e487]:
+                  - generic [ref=e488]: e2e-test-category-1771524202809
+                  - generic [ref=e489]: e2e-test-category-1771524202809
+                  - generic [ref=e490]: DE
+                  - generic [ref=e491]: "0"
+                  - generic [ref=e493]: Aktif
+                  - generic [ref=e494]:
+                    - button "Düzenle" [ref=e495] [cursor=pointer]
+                    - button "Pasif Et" [ref=e496] [cursor=pointer]
+                    - button "Sil" [ref=e497] [cursor=pointer]
+                - generic [ref=e498]:
+                  - generic [ref=e499]: e2e-test-category-1771524362608
+                  - generic [ref=e500]: e2e-test-category-1771524362608
+                  - generic [ref=e501]: DE
+                  - generic [ref=e502]: "0"
+                  - generic [ref=e504]: Aktif
+                  - generic [ref=e505]:
+                    - button "Düzenle" [ref=e506] [cursor=pointer]
+                    - button "Pasif Et" [ref=e507] [cursor=pointer]
+                    - button "Sil" [ref=e508] [cursor=pointer]
+                - generic [ref=e509]:
+                  - generic [ref=e510]: Test Autosave Category
+                  - generic [ref=e511]: test-autosave-cat
+                  - generic [ref=e512]: DE
+                  - generic [ref=e513]: "0"
+                  - generic [ref=e515]: Aktif
+                  - generic [ref=e516]:
+                    - button "Düzenle" [ref=e517] [cursor=pointer]
+                    - button "Pasif Et" [ref=e518] [cursor=pointer]
+                    - button "Sil" [ref=e519] [cursor=pointer]
+                - generic [ref=e520]:
+                  - generic [ref=e521]: Test Autosave Cat
+                  - generic [ref=e522]: test-autosave
+                  - generic [ref=e523]: DE
+                  - generic [ref=e524]: "0"
+                  - generic [ref=e526]: Aktif
+                  - generic [ref=e527]:
+                    - button "Düzenle" [ref=e528] [cursor=pointer]
+                    - button "Pasif Et" [ref=e529] [cursor=pointer]
+                    - button "Sil" [ref=e530] [cursor=pointer]
+                - generic [ref=e531]:
+                  - generic [ref=e532]: Gate Category-conflict Child
+                  - generic [ref=e533]: gate-category-child-1771525462945
+                  - generic [ref=e534]: DE
+                  - generic [ref=e535]: "0"
+                  - generic [ref=e537]: Aktif
+                  - generic [ref=e538]:
+                    - button "Düzenle" [ref=e539] [cursor=pointer]
+                    - button "Pasif Et" [ref=e540] [cursor=pointer]
+                    - button "Sil" [ref=e541] [cursor=pointer]
+                - generic [ref=e542]:
+                  - generic [ref=e543]: e2e-test-category-1771525461226
+                  - generic [ref=e544]: e2e-test-category-1771525461226
+                  - generic [ref=e545]: DE
+                  - generic [ref=e546]: "0"
+                  - generic [ref=e548]: Aktif
+                  - generic [ref=e549]:
+                    - button "Düzenle" [active] [ref=e550] [cursor=pointer]
+                    - button "Pasif Et" [ref=e551] [cursor=pointer]
+                    - button "Sil" [ref=e552] [cursor=pointer]
+                - generic [ref=e553]:
+                  - generic [ref=e554]: Alt Kategori
+                  - generic [ref=e555]: alt-e2e-test-category-1771525461226
+                  - generic [ref=e556]: DE
+                  - generic [ref=e557]: "0"
+                  - generic [ref=e559]: Aktif
+                  - generic [ref=e560]:
+                    - button "Düzenle" [ref=e561] [cursor=pointer]
+                    - button "Pasif Et" [ref=e562] [cursor=pointer]
+                    - button "Sil" [ref=e563] [cursor=pointer]
+                - generic [ref=e564]:
+                  - generic [ref=e565]: Alt Kategori 1
+                  - generic [ref=e566]: alt-kategori-1
+                  - generic [ref=e567]: DE
+                  - generic [ref=e568]: "1"
+                  - generic [ref=e570]: Aktif
+                  - generic [ref=e571]:
+                    - button "Düzenle" [ref=e572] [cursor=pointer]
+                    - button "Pasif Et" [ref=e573] [cursor=pointer]
+                    - button "Sil" [ref=e574] [cursor=pointer]
+                - generic [ref=e575]:
+                  - generic [ref=e576]: deneme
+                  - generic [ref=e577]: de
+                  - generic [ref=e578]: DE
+                  - generic [ref=e579]: "1"
+                  - generic [ref=e581]: Aktif
+                  - generic [ref=e582]:
+                    - button "Düzenle" [ref=e583] [cursor=pointer]
+                    - button "Pasif Et" [ref=e584] [cursor=pointer]
+                    - button "Sil" [ref=e585] [cursor=pointer]
+                - generic [ref=e586]:
+                  - generic [ref=e587]: Test Kategori
+                  - generic [ref=e588]: test-kategori
+                  - generic [ref=e589]: DE
+                  - generic [ref=e590]: "10"
+                  - generic [ref=e592]: Aktif
+                  - generic [ref=e593]:
+                    - button "Düzenle" [ref=e594] [cursor=pointer]
+                    - button "Pasif Et" [ref=e595] [cursor=pointer]
+                    - button "Sil" [ref=e596] [cursor=pointer]
+                - generic [ref=e597]:
+                  - generic [ref=e598]: Test Category
+                  - generic [ref=e599]: test-category
+                  - generic [ref=e600]: DE
+                  - generic [ref=e601]: "100"
+                  - generic [ref=e603]: Aktif
+                  - generic [ref=e604]:
+                    - button "Düzenle" [ref=e605] [cursor=pointer]
+                    - button "Pasif Et" [ref=e606] [cursor=pointer]
+                    - button "Sil" [ref=e607] [cursor=pointer]
+                - generic [ref=e608]:
+                  - generic [ref=e609]: Test Category 1771385847
+                  - generic [ref=e610]: test-category-1771385847
+                  - generic [ref=e611]: DE
+                  - generic [ref=e612]: "100"
+                  - generic [ref=e614]: Aktif
+                  - generic [ref=e615]:
+                    - button "Düzenle" [ref=e616] [cursor=pointer]
+                    - button "Pasif Et" [ref=e617] [cursor=pointer]
+                    - button "Sil" [ref=e618] [cursor=pointer]
+            - generic [ref=e621]:
+              - generic [ref=e622]:
+                - heading "Kategori Düzenle" [level=2] [ref=e623]
+                - button "✕" [ref=e624] [cursor=pointer]
+              - generic [ref=e625]:
+                - generic [ref=e626]:
+                  - generic [ref=e628]:
+                    - button "Hiyerarşi" [ref=e629] [cursor=pointer]
+                    - button "Çekirdek Alanlar" [disabled] [ref=e630]
+                    - button "Parametre Alanları (2a)" [disabled] [ref=e631]
+                    - button "Detay Grupları (2c)" [disabled] [ref=e632]
+                    - button "Modüller" [disabled] [ref=e633]
+                    - button "Önizleme" [disabled] [ref=e634]
+                  - generic [ref=e635]: Taslak
+                - generic [ref=e637]:
+                  - generic [ref=e638]:
+                    - heading "Ana Kategori" [level=3] [ref=e639]
+                    - generic [ref=e640]:
+                      - generic [ref=e641]:
+                        - text: Ana kategori adı
+                        - textbox [ref=e642]: e2e-test-category-1771525461226
+                      - generic [ref=e643]:
+                        - text: Slug
+                        - textbox [ref=e644]: e2e-test-category-1771525461226
+                      - generic [ref=e645]:
+                        - text: Ülke
+                        - textbox [ref=e646]: DE
+                      - generic [ref=e647]:
+                        - text: Sıra
+                        - spinbutton [ref=e648]: "0"
+                      - generic [ref=e649]:
+                        - checkbox "Aktif" [checked] [ref=e650]
+                        - text: Aktif
+                  - generic [ref=e651]:
+                    - generic [ref=e652]:
+                      - heading "Alt Kategoriler" [level=3] [ref=e653]
+                      - button "Alt kategori ekle" [ref=e654] [cursor=pointer]
+                    - generic [ref=e658]:
+                      - generic [ref=e659]:
+                        - text: Ad
+                        - textbox [ref=e660]: Alt Kategori
+                      - generic [ref=e661]:
+                        - text: Slug
+                        - textbox [ref=e662]: alt-e2e-test-category-1771525461226
+                      - generic [ref=e663]:
+                        - text: Sıra
+                        - spinbutton [ref=e664]: "0"
+                      - generic [ref=e665]:
+                        - checkbox "Aktif" [checked] [ref=e666]
+                        - text: Aktif
+                      - button "Sil" [ref=e667] [cursor=pointer]
+                  - generic [ref=e669]: Mevcut kategori üzerinde hiyerarşi düzenleme devre dışı. Devam ederek form şemasını güncelleyebilirsiniz.
+                  - generic [ref=e670]: Hiyerarşi tamamlanmadan çekirdek alanlara geçilemez.
+                - generic [ref=e671]:
+                  - button "Vazgeç" [ref=e672] [cursor=pointer]
+                  - generic [ref=e673]:
+                    - button "Taslak Kaydet" [ref=e674] [cursor=pointer]
+                    - button "Tamam" [ref=e676] [cursor=pointer]
+    - region "Notifications (F8)":
+      - list
+  - link "Made with Emergent" [ref=e677] [cursor=pointer]:
+    - /url: https://app.emergent.sh/?utm_source=emergent-badge
+    - img [ref=e678]
+    - paragraph [ref=e681]: Made with Emergent
+```
