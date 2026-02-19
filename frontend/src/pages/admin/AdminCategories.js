@@ -176,7 +176,7 @@ const AdminCategories = () => {
   const lastSavedSnapshotRef = useRef("");
 
   const { toast } = useToast();
-  const effectiveHierarchyComplete = editing ? Boolean(editing.hierarchy_complete) : hierarchyComplete;
+  const effectiveHierarchyComplete = hierarchyComplete;
   const inputClassName = "w-full border rounded p-2 text-slate-900 placeholder-slate-600 disabled:text-slate-500 disabled:bg-slate-100";
   const selectClassName = "w-full border rounded p-2 text-slate-900 disabled:text-slate-500 disabled:bg-slate-100";
   const labelClassName = "text-sm text-slate-800";
@@ -510,10 +510,17 @@ const AdminCategories = () => {
       sort_order: item.sort_order || 0,
     });
     setSchema(applySchemaDefaults(item.form_schema));
-    setWizardStep("core");
-    setHierarchyComplete(item.hierarchy_complete ?? true);
+    setWizardStep("hierarchy");
+    setHierarchyComplete(false);
     setHierarchyError("");
-    setSubcategories([]);
+    const relatedSubs = items.filter((child) => child.parent_id === item.id).map((child) => ({
+      id: child.id,
+      name: child.name || "",
+      slug: child.slug || "",
+      active_flag: child.active_flag ?? true,
+      sort_order: child.sort_order || 0,
+    }));
+    setSubcategories(relatedSubs);
     setDynamicDraft({
       label: "",
       key: "",
@@ -1120,6 +1127,7 @@ const AdminCategories = () => {
                   {WIZARD_STEPS.map((step) => {
                     const active = wizardStep === step.id;
                     const disabled = !canAccessStep(step.id);
+                    const tooltip = disabled ? "Önce hiyerarşiyi tamamlayın" : "";
                     return (
                       <button
                         key={step.id}
@@ -1127,6 +1135,7 @@ const AdminCategories = () => {
                         disabled={disabled}
                         onClick={() => !disabled && setWizardStep(step.id)}
                         className={`px-3 py-1 rounded text-xs border ${active ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={tooltip}
                         data-testid={`category-step-${step.id}`}
                       >
                         {step.label}
