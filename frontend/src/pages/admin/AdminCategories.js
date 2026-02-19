@@ -902,6 +902,7 @@ const AdminCategories = () => {
                                   type="checkbox"
                                   checked={sub.active_flag}
                                   onChange={(e) => updateSubcategory(index, { active_flag: e.target.checked })}
+                                  data-testid={`categories-subcategory-active-input-${index}`}
                                 />
                                 Aktif
                               </label>
