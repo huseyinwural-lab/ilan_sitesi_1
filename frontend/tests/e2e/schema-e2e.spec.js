@@ -62,6 +62,10 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await page.getByTestId('categories-step-next').click();
 
     await expect(page.getByTestId('category-step-core')).toBeEnabled();
+    await expect(page.getByTestId('category-step-dynamic')).toBeEnabled();
+    await expect(page.getByTestId('category-step-detail')).toBeEnabled();
+    await expect(page.getByTestId('category-step-modules')).toBeEnabled();
+    await expect(page.getByTestId('category-step-preview')).toBeEnabled();
     await expect(page.getByTestId('categories-core-step')).toBeVisible({ timeout: 60000 });
 
     const autosaveResponsePromise = page.waitForResponse((res) => (
