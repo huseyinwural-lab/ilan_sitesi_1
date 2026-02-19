@@ -2128,10 +2128,10 @@ def _validate_category_schema(schema: Dict[str, Any]) -> None:
 
     for field in schema.get("dynamic_fields", []):
         field_type = field.get("type")
-        if field_type not in {"radio", "select"}:
-            raise HTTPException(status_code=400, detail="Parametre alanı tipi radio/select olmalıdır.")
+        if field_type not in {"radio", "select", "text", "number"}:
+            raise HTTPException(status_code=400, detail="Parametre alanı tipi radio/select/text/number olmalıdır.")
         options = field.get("options") or []
-        if not options:
+        if field_type in {"radio", "select"} and not options:
             raise HTTPException(status_code=400, detail="Parametre alanı için seçenek listesi zorunludur.")
         if not field.get("key"):
             raise HTTPException(status_code=400, detail="Parametre alanı anahtarı zorunludur.")
