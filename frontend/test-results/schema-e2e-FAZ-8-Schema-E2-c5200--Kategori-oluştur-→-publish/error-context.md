@@ -1,7 +1,7 @@
 # Page snapshot
 
 ```yaml
-- generic [active] [ref=e1]:
+- generic [ref=e1]:
   - generic [ref=e2]:
     - generic [ref=e3]:
       - complementary [ref=e4]:
@@ -245,10 +245,10 @@
                   - generic [ref=e313]: e2e-test-category
                   - generic [ref=e314]: DE
                   - generic [ref=e315]: "0"
-                  - generic [ref=e317]: Aktif
+                  - generic [ref=e317]: Pasif
                   - generic [ref=e318]:
                     - button "Düzenle" [ref=e319] [cursor=pointer]
-                    - button "Pasif Et" [ref=e320] [cursor=pointer]
+                    - button "Aktif Et" [ref=e320] [cursor=pointer]
                     - button "Sil" [ref=e321] [cursor=pointer]
                 - generic [ref=e322]:
                   - generic [ref=e323]: Test Category
@@ -270,10 +270,55 @@
                     - button "Düzenle" [ref=e341] [cursor=pointer]
                     - button "Pasif Et" [ref=e342] [cursor=pointer]
                     - button "Sil" [ref=e343] [cursor=pointer]
+            - generic [ref=e346]:
+              - generic [ref=e347]:
+                - heading "Yeni Kategori" [level=2] [ref=e348]
+                - button "✕" [ref=e349] [cursor=pointer]
+              - generic [ref=e350]:
+                - generic [ref=e351]:
+                  - generic [ref=e353]:
+                    - button "Hiyerarşi" [ref=e354] [cursor=pointer]
+                    - button "Çekirdek Alanlar" [disabled] [ref=e355]
+                    - button "Parametre Alanları (2a)" [disabled] [ref=e356]
+                    - button "Detay Grupları (2c)" [disabled] [ref=e357]
+                    - button "Modüller" [disabled] [ref=e358]
+                    - button "Önizleme" [disabled] [ref=e359]
+                  - generic [ref=e360]: Taslak
+                - generic [ref=e362]: Hiyerarşi oluşturulurken hata oluştu.
+                - generic [ref=e364]:
+                  - generic [ref=e365]:
+                    - heading "Ana Kategori" [level=3] [ref=e366]
+                    - generic [ref=e367]:
+                      - generic [ref=e368]:
+                        - text: Ana kategori adı
+                        - textbox [ref=e369]: e2e-test-category
+                      - generic [ref=e370]:
+                        - text: Slug
+                        - textbox [ref=e371]: e2e-test-category
+                      - generic [ref=e372]:
+                        - text: Ülke
+                        - textbox [ref=e373]: DE
+                      - generic [ref=e374]:
+                        - text: Sıra
+                        - spinbutton [ref=e375]: "0"
+                      - generic [ref=e376]:
+                        - checkbox "Aktif" [checked] [ref=e377]
+                        - text: Aktif
+                  - generic [ref=e379]:
+                    - generic [ref=e380]:
+                      - heading "Alt Kategoriler" [level=3] [ref=e381]
+                      - button "Alt kategori ekle" [ref=e382] [cursor=pointer]
+                    - generic [ref=e384]: Henüz alt kategori eklenmedi.
+                  - generic [ref=e385]: Hiyerarşi tamamlanmadan çekirdek alanlara geçilemez.
+                - generic [ref=e386]:
+                  - button "Vazgeç" [ref=e387] [cursor=pointer]
+                  - generic [ref=e388]:
+                    - button "Taslak Kaydet" [ref=e389] [cursor=pointer]
+                    - button "Tamam" [active] [ref=e391] [cursor=pointer]
     - region "Notifications (F8)":
       - list
-  - link "Made with Emergent" [ref=e344] [cursor=pointer]:
+  - link "Made with Emergent" [ref=e392] [cursor=pointer]:
     - /url: https://app.emergent.sh/?utm_source=emergent-badge
-    - img [ref=e345]
-    - paragraph [ref=e348]: Made with Emergent
+    - img [ref=e393]
+    - paragraph [ref=e396]: Made with Emergent
 ```
