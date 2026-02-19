@@ -17,6 +17,16 @@ const photoFiles = [
   path.join(__dirname, '../fixtures/photo3.jpg'),
 ];
 
+const selectFirstOption = async (page, testId) => {
+  const selector = `[data-testid="${testId}"]`;
+  await page.waitForFunction((sel) => {
+    const el = document.querySelector(sel);
+    return el && el.options && el.options.length > 1;
+  }, selector);
+  const value = await page.$eval(selector, (el) => el.options[1].value);
+  await page.getByTestId(testId).selectOption(value);
+};
+
 let adminToken = "";
 
 test.describe.serial('FAZ-8 Schema E2E', () => {
