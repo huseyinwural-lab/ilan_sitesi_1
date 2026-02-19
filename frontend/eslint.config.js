@@ -39,6 +39,7 @@ module.exports = [
       'no-undef': 'off',
       'no-dupe-keys': 'off',
       'no-unreachable': 'off',
+      'no-useless-escape': 'off',
     },
   },
 ];
