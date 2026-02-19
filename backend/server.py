@@ -826,6 +826,22 @@ def _resolve_period_window(period: str, start_date: Optional[str], end_date: Opt
     return start, end, "Son 30 Gün"
 
 
+def _growth_pct(current: Optional[float], previous: Optional[float]) -> Optional[float]:
+    current_val = float(current or 0)
+    prev_val = float(previous or 0)
+    if prev_val == 0:
+        return None if current_val == 0 else 100.0
+    return round(((current_val - prev_val) / prev_val) * 100, 2)
+
+
+def _safe_ratio(numerator: Optional[float], denominator: Optional[float]) -> Optional[float]:
+    num = float(numerator or 0)
+    den = float(denominator or 0)
+    if den == 0:
+        return None
+    return round(num / den, 4)
+
+
 # Audit event taxonomy (v1)
 AUDIT_EVENT_TYPES_V1 = {
     "MODERATION_APPROVE",
