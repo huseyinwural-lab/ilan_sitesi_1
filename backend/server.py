@@ -5617,6 +5617,7 @@ async def admin_dashboard_summary(
     except Exception:
         db_status = "error"
 
+    uptime_seconds = int((now - APP_START_TIME).total_seconds())
     summary = {
         "scope": "country" if effective_countries else "global",
         "country_codes": effective_countries or active_country_codes,
@@ -5644,6 +5645,9 @@ async def admin_dashboard_summary(
             "api_status": "ok",
             "db_status": db_status,
             "deployed_at": os.environ.get("DEPLOYED_AT") or "unknown",
+            "restart_at": APP_START_TIME.isoformat(),
+            "uptime_seconds": uptime_seconds,
+            "uptime_human": _format_uptime(uptime_seconds),
         },
         "metrics": metrics,
     }
