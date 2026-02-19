@@ -5128,7 +5128,11 @@ async def get_vehicle_detail(listing_id: str, request: Request):
 
     v = listing.get("vehicle") or {}
     attrs = listing.get("attributes") or {}
-    title = f"{v.get('make_key','').upper()} {v.get('model_key','')} {v.get('year','')}".strip()
+    title = listing.get("title") or f"{v.get('make_key','').upper()} {v.get('model_key','')} {v.get('year','')}".strip()
+    price_data = listing.get("price") or {}
+    primary_price = price_data.get("amount")
+    if primary_price is None:
+        primary_price = attrs.get("price_eur")
 
     return {
         "id": listing_id,
@@ -5139,10 +5143,12 @@ async def get_vehicle_detail(listing_id: str, request: Request):
         "attributes": attrs,
         "media": out_media,
         "title": title,
-        "price": attrs.get("price_eur"),
-        "currency": "EUR",
+        "price": primary_price,
+        "currency": price_data.get("currency_primary") or "EUR",
+        "secondary_price": price_data.get("secondary_amount"),
+        "secondary_currency": price_data.get("currency_secondary"),
         "location": {"city": "", "country": listing.get("country")},
-        "description": "",
+        "description": listing.get("description") or "",
         "seller": {"name": "", "is_verified": False},
         "contact_option_phone": listing.get("contact_option_phone", False),
         "contact_option_message": listing.get("contact_option_message", True),
