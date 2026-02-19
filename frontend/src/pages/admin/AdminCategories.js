@@ -1665,73 +1665,86 @@ const AdminCategories = () => {
                 </div>
               )}
 
-              <div className="border-t pt-4 space-y-4">
-                <h3 className="text-md font-semibold">Sabit Modüller</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                  {Object.keys(schema.modules).map((key) => (
-                    <label key={key} className="flex items-center gap-2 text-slate-800">
+              {wizardStep === "modules" && (
+                <div className="border-t pt-4 space-y-4" data-testid="categories-modules-step">
+                  <h3 className="text-md font-semibold">Sabit Modüller</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    {Object.keys(schema.modules).map((key) => (
+                      <div key={key} className="flex items-center justify-between border rounded p-3" data-testid={`categories-module-row-${key}`}>
+                        <div>
+                          <div className="font-medium">{MODULE_LABELS[key] || key}</div>
+                          <div className="text-xs text-slate-500">Key: {key} · Kaynak: schema.modules</div>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={schema.modules[key].enabled}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            modules: {
+                              ...prev.modules,
+                              [key]: { ...prev.modules[key], enabled: e.target.checked },
+                            },
+                          }))}
+                          data-testid={`categories-module-${key}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {schema.modules.photos?.enabled && (
+                    <div className="space-y-1">
+                      <label className={labelClassName}>Foto limit</label>
                       <input
-                        type="checkbox"
-                        checked={schema.modules[key].enabled}
+                        type="number"
+                        min={1}
+                        max={50}
+                        className={`${inputClassName} w-48`}
+                        value={schema.modules.photos.max_uploads}
                         onChange={(e) => setSchema((prev) => ({
                           ...prev,
                           modules: {
                             ...prev.modules,
-                            [key]: { ...prev.modules[key], enabled: e.target.checked },
+                            photos: { ...prev.modules.photos, max_uploads: Number(e.target.value) },
                           },
                         }))}
-                        data-testid={`categories-module-${key}`}
+                        data-testid="categories-photos-max"
                       />
-                      {key}
-                    </label>
-                  ))}
+                      <div className="text-xs text-slate-500">Önerilen aralık: 1–50</div>
+                    </div>
+                  )}
+
+                  {schema.modules.payment?.enabled && (
+                    <div className="flex gap-4 text-sm">
+                      <label className="flex items-center gap-2 text-slate-800">
+                        <input
+                          type="checkbox"
+                          checked={schema.payment_options.package}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            payment_options: { ...prev.payment_options, package: e.target.checked },
+                          }))}
+                          data-testid="categories-payment-package"
+                        />
+                        Paket
+                      </label>
+                      <label className="flex items-center gap-2 text-slate-800">
+                        <input
+                          type="checkbox"
+                          checked={schema.payment_options.doping}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            payment_options: { ...prev.payment_options, doping: e.target.checked },
+                          }))}
+                          data-testid="categories-payment-doping"
+                        />
+                        Doping
+                      </label>
+                    </div>
+                  )}
                 </div>
-                {schema.modules.photos?.enabled && (
-                  <input
-                    type="number"
-                    className={`${inputClassName} w-48`}
-                    placeholder="Fotoğraf limiti"
-                    value={schema.modules.photos.max_uploads}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      modules: {
-                        ...prev.modules,
-                        photos: { ...prev.modules.photos, max_uploads: Number(e.target.value) },
-                      },
-                    }))}
-                    data-testid="categories-photos-max"
-                  />
-                )}
-                {schema.modules.payment?.enabled && (
-                  <div className="flex gap-4 text-sm">
-                    <label className="flex items-center gap-2 text-slate-800">
-                      <input
-                        type="checkbox"
-                        checked={schema.payment_options.package}
-                        onChange={(e) => setSchema((prev) => ({
-                          ...prev,
-                          payment_options: { ...prev.payment_options, package: e.target.checked },
-                        }))}
-                        data-testid="categories-payment-package"
-                      />
-                      Paket
-                    </label>
-                    <label className="flex items-center gap-2 text-slate-800">
-                      <input
-                        type="checkbox"
-                        checked={schema.payment_options.doping}
-                        onChange={(e) => setSchema((prev) => ({
-                          ...prev,
-                          payment_options: { ...prev.payment_options, doping: e.target.checked },
-                        }))}
-                        data-testid="categories-payment-doping"
-                      />
-                      Doping
-                    </label>
-                  </div>
-                )}
-              </div>
-            </div>
+              )}
+                </>
+              )}
 
             <div className="flex justify-end gap-2 mt-6">
               <button className="px-4 py-2 border rounded" onClick={() => setModalOpen(false)} data-testid="categories-cancel">
