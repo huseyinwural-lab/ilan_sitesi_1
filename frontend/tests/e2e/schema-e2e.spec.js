@@ -141,7 +141,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     expect(publishData.category.form_schema.status).toBe('published');
 
     await expect(page.getByTestId('categories-page')).toBeVisible({ timeout: 60000 });
-    await expect(page.getByText(categorySlug)).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText(categorySlug).first()).toBeVisible({ timeout: 30000 });
   });
 
   test('Senaryo 2: Wizard step-2 validation tetikleme', async ({ page }) => {
