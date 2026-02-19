@@ -199,8 +199,8 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await page.getByTestId('listing-description-textarea').fill('Bu açıklama FAZ-8 E2E test senaryosu için yeterince uzundur.');
     await page.getByTestId('listing-price-input').fill('15000');
 
-    await page.getByTestId('listing-make-select').selectOption({ index: 1 });
-    await page.getByTestId('listing-model-select').selectOption({ index: 1 });
+    await selectFirstOption(page, 'listing-make-select');
+    await selectFirstOption(page, 'listing-model-select');
     await page.getByTestId('listing-year-input').fill('2022');
     await page.getByTestId('listing-mileage-input').fill('5000');
     await page.getByTestId('listing-fuel-select').selectOption({ index: 1 });
@@ -231,8 +231,8 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await page.getByTestId('listing-description-textarea').fill('Bu açıklama FAZ-8 senaryosu için yeterince uzundur ve yayınlama içindir.');
     await page.getByTestId('listing-price-input').fill('22000');
 
-    await page.getByTestId('listing-make-select').selectOption({ index: 1 });
-    await page.getByTestId('listing-model-select').selectOption({ index: 1 });
+    await selectFirstOption(page, 'listing-make-select');
+    await selectFirstOption(page, 'listing-model-select');
     await page.getByTestId('listing-year-input').fill('2021');
     await page.getByTestId('listing-mileage-input').fill('9000');
     await page.getByTestId('listing-fuel-select').selectOption({ index: 1 });
