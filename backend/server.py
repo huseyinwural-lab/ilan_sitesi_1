@@ -4538,7 +4538,7 @@ async def admin_export_category_pdf(
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     filename = f"schema-{category_id}-v{version}-{timestamp}.pdf"
 
-    audit_doc = build_audit_entry(
+    audit_doc = await build_audit_entry(
         event_type="schema_export_pdf",
         actor=current_user,
         target_id=category_id,
