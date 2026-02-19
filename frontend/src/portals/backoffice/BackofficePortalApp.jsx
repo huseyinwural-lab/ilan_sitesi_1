@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
-import Layout from '@/components/Layout';
+import AdminRouteGuard from '@/components/AdminRouteGuard';
 import Dashboard from '@/pages/Dashboard';
 import UserManagement from '@/pages/Users';
 import FeatureFlags from '@/pages/FeatureFlags';
