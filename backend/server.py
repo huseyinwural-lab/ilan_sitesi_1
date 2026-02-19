@@ -5557,6 +5557,229 @@ async def _dashboard_metrics_scope(db, country_codes: Optional[List[str]], inclu
     }
 
 
+async def _dashboard_invoice_totals(db, invoice_query: Dict[str, Any]) -> tuple[float, Dict[str, float]]:
+    invoices = await db.invoices.find(invoice_query, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
+    totals: Dict[str, float] = {}
+    for inv in invoices:
+        currency = inv.get("currency") or "UNKNOWN"
+        totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
+    total_amount = sum(totals.values())
+    return round(total_amount, 2), {k: round(v, 2) for k, v in totals.items()}
+
+
+async def _dashboard_kpis(db, effective_countries: Optional[List[str]], include_revenue: bool) -> Dict[str, Any]:
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = now - timedelta(days=DASHBOARD_KPI_DAYS)
+
+    listing_query: Dict[str, Any] = {"created_at": {"$gte": today_start.isoformat()}}
+    listing_week_query: Dict[str, Any] = {"created_at": {"$gte": week_start.isoformat()}}
+    user_query: Dict[str, Any] = {"created_at": {"$gte": today_start.isoformat()}}
+    user_week_query: Dict[str, Any] = {"created_at": {"$gte": week_start.isoformat()}}
+
+    if effective_countries:
+        listing_query["country"] = {"$in": effective_countries}
+        listing_week_query["country"] = {"$in": effective_countries}
+        user_query["country_code"] = {"$in": effective_countries}
+        user_week_query["country_code"] = {"$in": effective_countries}
+
+    today_listings = await db.vehicle_listings.count_documents(listing_query)
+    week_listings = await db.vehicle_listings.count_documents(listing_week_query)
+    today_users = await db.users.count_documents(user_query)
+    week_users = await db.users.count_documents(user_week_query)
+
+    today_revenue_total = None
+    today_revenue_totals = None
+    week_revenue_total = None
+    week_revenue_totals = None
+
+    if include_revenue:
+        invoice_base: Dict[str, Any] = {"status": "paid"}
+        if effective_countries:
+            invoice_base["country_code"] = {"$in": effective_countries}
+        today_revenue_total, today_revenue_totals = await _dashboard_invoice_totals(
+            db,
+            {**invoice_base, "paid_at": {"$gte": today_start.isoformat()}},
+        )
+        week_revenue_total, week_revenue_totals = await _dashboard_invoice_totals(
+            db,
+            {**invoice_base, "paid_at": {"$gte": week_start.isoformat()}},
+        )
+
+    return {
+        "today": {
+            "new_listings": today_listings,
+            "new_users": today_users,
+            "revenue_total": today_revenue_total,
+            "revenue_currency_totals": today_revenue_totals,
+        },
+        "last_7_days": {
+            "new_listings": week_listings,
+            "new_users": week_users,
+            "revenue_total": week_revenue_total,
+            "revenue_currency_totals": week_revenue_totals,
+        },
+    }
+
+
+async def _dashboard_trends(db, effective_countries: Optional[List[str]], include_revenue: bool) -> Dict[str, Any]:
+    now = datetime.now(timezone.utc)
+    listings_trend: List[Dict[str, Any]] = []
+    revenue_trend: List[Dict[str, Any]] = []
+
+    invoice_base: Dict[str, Any] = {"status": "paid"}
+    if effective_countries:
+        invoice_base["country_code"] = {"$in": effective_countries}
+
+    for offset in range(DASHBOARD_TREND_DAYS):
+        day = (now - timedelta(days=(DASHBOARD_TREND_DAYS - 1 - offset))).replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day + timedelta(days=1)
+        start_iso = day.isoformat()
+        end_iso = day_end.isoformat()
+
+        listing_query: Dict[str, Any] = {"created_at": {"$gte": start_iso, "$lt": end_iso}}
+        if effective_countries:
+            listing_query["country"] = {"$in": effective_countries}
+        listing_count = await db.vehicle_listings.count_documents(listing_query)
+        listings_trend.append({"date": day.date().isoformat(), "count": listing_count})
+
+        if include_revenue:
+            revenue_total, revenue_totals = await _dashboard_invoice_totals(
+                db,
+                {**invoice_base, "paid_at": {"$gte": start_iso, "$lt": end_iso}},
+            )
+            revenue_trend.append({
+                "date": day.date().isoformat(),
+                "amount": revenue_total,
+                "currency_totals": revenue_totals,
+            })
+
+    return {
+        "window_days": DASHBOARD_TREND_DAYS,
+        "listings": listings_trend,
+        "revenue": revenue_trend if include_revenue else None,
+    }
+
+
+async def _dashboard_risk_panel(db, effective_countries: Optional[List[str]], include_finance: bool) -> Dict[str, Any]:
+    now = datetime.now(timezone.utc)
+
+    login_since_iso = (now - timedelta(hours=DASHBOARD_MULTI_IP_WINDOW_HOURS)).isoformat()
+    login_query: Dict[str, Any] = {
+        "event_type": "LOGIN_SUCCESS",
+        "created_at": {"$gte": login_since_iso},
+    }
+    if effective_countries:
+        login_query["country_code"] = {"$in": effective_countries}
+
+    login_logs = await db.audit_logs.find(
+        login_query,
+        {"_id": 0, "user_id": 1, "admin_user_id": 1, "user_email": 1, "metadata": 1, "request_ip": 1},
+    ).to_list(length=5000)
+
+    user_ips: Dict[str, set] = defaultdict(set)
+    user_emails: Dict[str, Optional[str]] = {}
+    for log in login_logs:
+        user_id = log.get("user_id") or log.get("admin_user_id")
+        if not user_id:
+            continue
+        metadata = log.get("metadata") or {}
+        ip_address = metadata.get("ip_address") or log.get("request_ip")
+        if not ip_address:
+            continue
+        user_ips[user_id].add(ip_address)
+        if log.get("user_email"):
+            user_emails[user_id] = log.get("user_email")
+
+    suspicious_users = [
+        {"user_id": user_id, "user_email": user_emails.get(user_id), "ip_count": len(ips)}
+        for user_id, ips in user_ips.items()
+        if len(ips) >= DASHBOARD_MULTI_IP_THRESHOLD
+    ]
+    suspicious_users.sort(key=lambda item: item["ip_count"], reverse=True)
+
+    sla_cutoff_iso = (now - timedelta(hours=DASHBOARD_SLA_HOURS)).isoformat()
+    sla_query: Dict[str, Any] = {"status": "pending_moderation", "created_at": {"$lt": sla_cutoff_iso}}
+    if effective_countries:
+        sla_query["country"] = {"$in": effective_countries}
+
+    sla_count = await db.vehicle_listings.count_documents(sla_query)
+    sla_docs = await db.vehicle_listings.find(
+        sla_query,
+        {"_id": 0, "id": 1, "title": 1, "created_at": 1, "country": 1},
+    ).sort("created_at", 1).limit(5).to_list(length=5)
+    sla_samples = [
+        {
+            "listing_id": doc.get("id"),
+            "title": doc.get("title"),
+            "created_at": doc.get("created_at"),
+            "country": doc.get("country"),
+        }
+        for doc in sla_docs
+    ]
+
+    pending_payments: Dict[str, Any]
+    if include_finance:
+        payment_cutoff_iso = (now - timedelta(days=DASHBOARD_PENDING_PAYMENT_DAYS)).isoformat()
+        invoice_query: Dict[str, Any] = {"status": "unpaid", "issued_at": {"$lt": payment_cutoff_iso}}
+        if effective_countries:
+            invoice_query["country_code"] = {"$in": effective_countries}
+        invoices = await db.invoices.find(
+            invoice_query,
+            {"_id": 0, "id": 1, "amount_gross": 1, "currency": 1, "issued_at": 1, "country_code": 1},
+        ).to_list(length=5000)
+        totals: Dict[str, float] = {}
+        for inv in invoices:
+            currency = inv.get("currency") or "UNKNOWN"
+            totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
+        pending_payments = {
+            "count": len(invoices),
+            "threshold_days": DASHBOARD_PENDING_PAYMENT_DAYS,
+            "total_amount": round(sum(totals.values()), 2),
+            "currency_totals": {k: round(v, 2) for k, v in totals.items()},
+            "items": [
+                {
+                    "invoice_id": inv.get("id"),
+                    "amount": inv.get("amount_gross"),
+                    "currency": inv.get("currency"),
+                    "issued_at": inv.get("issued_at"),
+                    "country_code": inv.get("country_code"),
+                }
+                for inv in invoices[:5]
+            ],
+        }
+    else:
+        pending_payments = {"count": None, "hidden": True}
+
+    return {
+        "suspicious_logins": {
+            "count": len(suspicious_users),
+            "threshold": DASHBOARD_MULTI_IP_THRESHOLD,
+            "window_hours": DASHBOARD_MULTI_IP_WINDOW_HOURS,
+            "items": suspicious_users[:5],
+        },
+        "sla_breaches": {
+            "count": sla_count,
+            "threshold": DASHBOARD_SLA_HOURS,
+            "window_hours": DASHBOARD_SLA_HOURS,
+            "items": sla_samples,
+        },
+        "pending_payments": pending_payments,
+        "finance_visible": include_finance,
+    }
+
+
+async def _dashboard_db_health(db) -> tuple[str, int]:
+    start = time.perf_counter()
+    status = "ok"
+    try:
+        await db.command("ping")
+    except Exception:
+        status = "error"
+    latency_ms = int((time.perf_counter() - start) * 1000)
+    return status, latency_ms
+
+
 @api_router.get("/admin/dashboard/summary")
 async def admin_dashboard_summary(
     request: Request,
