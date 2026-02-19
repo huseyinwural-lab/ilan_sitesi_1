@@ -1,0 +1,45 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - complementary [ref=e4]:
+        - heading "My Panel" [level=1] [ref=e6]
+        - navigation [ref=e7]:
+          - generic [ref=e8]:
+            - link "📊 Overview" [ref=e9] [cursor=pointer]:
+              - /url: /account
+              - generic [ref=e10]: 📊
+              - text: Overview
+            - link "📝 My Listings" [ref=e11] [cursor=pointer]:
+              - /url: /account/listings
+              - generic [ref=e12]: 📝
+              - text: My Listings
+            - link "💬 Messages" [ref=e13] [cursor=pointer]:
+              - /url: /account/messages
+              - generic [ref=e14]: 💬
+              - text: Messages
+            - link "👤 Profile" [ref=e15] [cursor=pointer]:
+              - /url: /account/profile
+              - generic [ref=e16]: 👤
+              - text: Profile
+      - main [ref=e17]:
+        - generic [ref=e19]:
+          - generic [ref=e21]:
+            - heading "Vasıta İlanı Oluştur" [level=1] [ref=e22]
+            - generic [ref=e23]: Adım 3 / 4
+          - generic [ref=e28]:
+            - heading "Fotoğraflar" [level=2] [ref=e29]
+            - generic [ref=e31] [cursor=pointer]:
+              - generic [ref=e32]: 📸
+              - text: Fotoğraf yüklemek için tıkla
+              - paragraph [ref=e33]: (min 3 foto, min 800x600)
+            - 'button "Next: Review" [disabled] [ref=e35]'
+    - region "Notifications (F8)":
+      - list
+  - link "Made with Emergent" [ref=e36] [cursor=pointer]:
+    - /url: https://app.emergent.sh/?utm_source=emergent-badge
+    - img [ref=e37]
+    - paragraph [ref=e40]: Made with Emergent
+```
