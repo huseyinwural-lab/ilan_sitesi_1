@@ -230,6 +230,90 @@ const AdminCategories = () => {
     }
   };
 
+  const fetchVersions = async () => {
+    if (!editing?.id) return;
+    setVersionsLoading(true);
+    setVersionsError("");
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}/versions`, {
+        headers: authHeader,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setVersionsError(data?.detail || "Versiyonlar yüklenemedi.");
+        setVersions([]);
+        return;
+      }
+      const data = await res.json();
+      setVersions(data.items || []);
+    } catch (error) {
+      setVersionsError("Versiyonlar yüklenemedi.");
+      setVersions([]);
+    } finally {
+      setVersionsLoading(false);
+    }
+  };
+
+  const fetchVersionDetail = async (versionId) => {
+    if (!editing?.id || !versionId) return;
+    if (versionDetails[versionId]) return;
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}/versions/${versionId}`, {
+        headers: authHeader,
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.version) {
+        setVersionDetails((prev) => ({ ...prev, [versionId]: data.version }));
+      }
+    } catch (error) {
+      // ignore
+    }
+  };
+
+  const handleVersionSelect = (versionId) => {
+    setSelectedVersions((prev) => {
+      if (prev.includes(versionId)) {
+        return prev.filter((id) => id !== versionId);
+      }
+      if (prev.length >= 2) {
+        return [prev[1], versionId];
+      }
+      return [...prev, versionId];
+    });
+  };
+
+  const buildDiffPaths = (left, right, basePath = "") => {
+    if (left === right) return [];
+    const leftIsObj = left && typeof left === "object";
+    const rightIsObj = right && typeof right === "object";
+    if (!leftIsObj || !rightIsObj) {
+      return [basePath || "root"];
+    }
+    const keys = new Set([...(Array.isArray(left) ? left.keys() : Object.keys(left)), ...(Array.isArray(right) ? right.keys() : Object.keys(right))]);
+    const paths = [];
+    keys.forEach((key) => {
+      const path = basePath ? `${basePath}.${key}` : `${key}`;
+      const leftValue = Array.isArray(left) ? left[key] : left[key];
+      const rightValue = Array.isArray(right) ? right[key] : right[key];
+      paths.push(...buildDiffPaths(leftValue, rightValue, path));
+    });
+    return paths;
+  };
+
+  const versionCompare = useMemo(() => {
+    if (selectedVersions.length !== 2) {
+      return { left: null, right: null, diffPaths: [] };
+    }
+    const left = versionDetails[selectedVersions[0]];
+    const right = versionDetails[selectedVersions[1]];
+    if (!left || !right) {
+      return { left, right, diffPaths: [] };
+    }
+    const diffPaths = buildDiffPaths(left.schema_snapshot, right.schema_snapshot);
+    return { left, right, diffPaths };
+  }, [selectedVersions, versionDetails]);
+
   useEffect(() => {
     fetchItems();
   }, [selectedCountry]);
