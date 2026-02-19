@@ -36,6 +36,15 @@ const formatCurrencyTotals = (totals) => {
     .join(' · ');
 };
 
+const TREND_PRESETS = [7, 30, 90, 180, 365];
+const DEFAULT_TREND_DAYS = 14;
+
+const clampTrendDays = (value) => {
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) return DEFAULT_TREND_DAYS;
+  return Math.min(365, Math.max(7, parsed));
+};
+
 const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendUp, testId }) => (
   <div className="stat-card" data-testid={testId}>
     <div className="flex items-start justify-between">
