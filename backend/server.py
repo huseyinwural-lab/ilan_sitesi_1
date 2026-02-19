@@ -6107,6 +6107,47 @@ async def admin_dashboard_summary(
     return summary
 
 
+@api_router.get("/admin/dashboard/export/pdf")
+async def admin_dashboard_export_pdf(
+    request: Request,
+    country: Optional[str] = None,
+    trend_days: Optional[int] = None,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    _enforce_export_rate_limit(request, current_user.get("id"))
+
+    summary = await admin_dashboard_summary(
+        request=request,
+        country=country,
+        trend_days=trend_days,
+        current_user=current_user,
+    )
+    trend_window = (summary.get("trends") or {}).get("window_days") or DASHBOARD_TREND_DAYS
+    pdf_bytes = _build_dashboard_pdf(summary, trend_window)
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    filename = f"dashboard-summary-{timestamp}.pdf"
+
+    audit_doc = await build_audit_entry(
+        event_type="dashboard_export_pdf",
+        actor=current_user,
+        target_id="dashboard_summary",
+        target_type="dashboard_summary",
+        country_code=country.upper() if country else None,
+        details={"trend_days": trend_window, "format": "pdf", "scope": summary.get("scope")},
+        request=request,
+    )
+    audit_doc["action"] = "dashboard_export_pdf"
+    audit_doc["user_agent"] = request.headers.get("user-agent")
+    await db.audit_logs.insert_one(audit_doc)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+    )
+
 
 @api_router.get("/admin/dashboard/country-compare")
 async def admin_dashboard_country_compare(
