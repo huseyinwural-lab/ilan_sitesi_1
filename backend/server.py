@@ -635,6 +635,15 @@ def _format_uptime(seconds: int) -> str:
     return " ".join(parts)
 
 
+def _parse_iso(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
 # Audit event taxonomy (v1)
 AUDIT_EVENT_TYPES_V1 = {
     "MODERATION_APPROVE",
