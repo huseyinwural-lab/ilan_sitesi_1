@@ -386,6 +386,9 @@ const AdminCategories = () => {
     setSelectedVersions([]);
     setVersionDetails({});
     setLastSavedAt("");
+    setAutosaveStatus("idle");
+    lastSavedSnapshotRef.current = "";
+    setLastSavedAt("");
   }, [modalOpen, editing?.id]);
 
   useEffect(() => {
@@ -491,6 +494,9 @@ const AdminCategories = () => {
     setVersionsError("");
     setSelectedVersions([]);
     setVersionDetails({});
+    setLastSavedAt("");
+    setAutosaveStatus("idle");
+    lastSavedSnapshotRef.current = "";
   };
 
   const handleEdit = (item) => {
@@ -537,6 +543,9 @@ const AdminCategories = () => {
     setVersionsError("");
     setSelectedVersions([]);
     setVersionDetails({});
+    setLastSavedAt("");
+    setAutosaveStatus("idle");
+    lastSavedSnapshotRef.current = "";
     setModalOpen(true);
   };
 
