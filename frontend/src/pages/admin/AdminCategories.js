@@ -222,7 +222,7 @@ const AdminCategories = () => {
       errors.push("Önizleme adımı tamamlanmalı.");
     }
     return { canPublish: errors.length === 0, errors };
-  }, [hierarchyComplete, schema, previewComplete]);
+  }, [effectiveHierarchyComplete, schema, previewComplete]);
   const isPaymentEnabled = Boolean(schema.modules?.payment?.enabled);
   const isPhotosEnabled = Boolean(schema.modules?.photos?.enabled);
 
