@@ -828,6 +828,7 @@ const AdminCategories = () => {
           return { success: false };
         }
 
+        const savedSubs = [];
         for (const child of cleanedSubs) {
           const childPayload = {
             name: child.name,
@@ -839,7 +840,7 @@ const AdminCategories = () => {
             hierarchy_complete: true,
           };
           if (child.id) {
-            await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${child.id}`, {
+            const childRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${child.id}`, {
               method: "PATCH",
               headers: {
                 "Content-Type": "application/json",
@@ -847,8 +848,18 @@ const AdminCategories = () => {
               },
               body: JSON.stringify(childPayload),
             });
+            const childData = await childRes.json().catch(() => ({}));
+            if (childRes.ok && childData?.category) {
+              savedSubs.push({
+                id: childData.category.id,
+                name: childData.category.name,
+                slug: childData.category.slug,
+                active_flag: childData.category.active_flag,
+                sort_order: childData.category.sort_order || 0,
+              });
+            }
           } else {
-            await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
+            const childRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -856,11 +867,22 @@ const AdminCategories = () => {
               },
               body: JSON.stringify(childPayload),
             });
+            const childData = await childRes.json().catch(() => ({}));
+            if (childRes.ok && childData?.category) {
+              savedSubs.push({
+                id: childData.category.id,
+                name: childData.category.name,
+                slug: childData.category.slug,
+                active_flag: childData.category.active_flag,
+                sort_order: childData.category.sort_order || 0,
+              });
+            }
           }
         }
 
         const updated = data?.category || editing;
         setEditing(updated);
+        setSubcategories(savedSubs.length ? savedSubs : cleanedSubs);
         setHierarchyComplete(true);
         setWizardStep("core");
         return { success: true, parent: updated };
