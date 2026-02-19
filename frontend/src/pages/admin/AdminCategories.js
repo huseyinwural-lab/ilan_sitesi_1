@@ -271,20 +271,27 @@ const AdminCategories = () => {
     setModalOpen(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (status = "draft") => {
+    setHierarchyError("");
+    if (!hierarchyComplete) {
+      setHierarchyError("Önce kategori hiyerarşisini tamamlayın.");
+      return;
+    }
     const payload = {
       ...form,
       sort_order: Number(form.sort_order || 0),
-      form_schema: schema,
+      hierarchy_complete: true,
+      form_schema: { ...schema, status },
     };
     if (!payload.name || !payload.slug) {
+      setHierarchyError("Kategori adı ve slug zorunludur.");
       return;
     }
     const url = editing
       ? `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`
       : `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`;
     const method = editing ? "PATCH" : "POST";
-    await fetch(url, {
+    const res = await fetch(url, {
       method,
       headers: {
         "Content-Type": "application/json",
@@ -292,6 +299,11 @@ const AdminCategories = () => {
       },
       body: JSON.stringify(payload),
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setHierarchyError(data?.detail || "Kaydetme sırasında hata oluştu.");
+      return;
+    }
     setModalOpen(false);
     resetForm();
     fetchItems();
