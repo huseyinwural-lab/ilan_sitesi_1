@@ -1938,6 +1938,133 @@ const AdminCategories = () => {
 
                 </div>
               )}
+
+              {wizardStep === "preview" && (
+                <div className="border-t pt-4 space-y-4" data-testid="categories-preview-step">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-md font-semibold">Önizleme</h3>
+                    <span
+                      className={`text-xs px-2 py-1 rounded ${previewComplete ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}
+                      data-testid="categories-preview-status"
+                    >
+                      {previewComplete ? 'Onaylandı' : 'Onay bekliyor'}
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg border p-4 space-y-3" data-testid="categories-preview-summary">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
+                      <div>
+                        <div className="text-xs text-slate-500">Kategori</div>
+                        <div className="font-medium" data-testid="categories-preview-name">{form.name || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500">Slug</div>
+                        <div className="font-medium" data-testid="categories-preview-slug">{form.slug || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500">Ülke</div>
+                        <div className="font-medium" data-testid="categories-preview-country">{form.country_code || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500">Durum</div>
+                        <div className="font-medium" data-testid="categories-preview-active">{form.active_flag ? 'Aktif' : 'Pasif'}</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                      <div>
+                        <div className="text-xs text-slate-500">Parametre Alanı</div>
+                        <div className="font-medium" data-testid="categories-preview-dynamic-count">{schema.dynamic_fields.length}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500">Detay Grubu</div>
+                        <div className="font-medium" data-testid="categories-preview-detail-count">{schema.detail_groups.length}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500">Aktif Modül</div>
+                        <div className="font-medium" data-testid="categories-preview-module-count">
+                          {Object.values(schema.modules || {}).filter((mod) => mod.enabled).length}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border p-4 space-y-2" data-testid="categories-preview-modules">
+                    <div className="text-sm font-semibold">Modül Listesi</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      {Object.keys(schema.modules).map((key) => (
+                        <div key={`preview-${key}`} className="flex items-center justify-between border rounded px-3 py-2" data-testid={`categories-preview-module-${key}`}>
+                          <span>{MODULE_LABELS[key] || key}</span>
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full ${schema.modules[key].enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
+                            data-testid={`categories-preview-module-status-${key}`}
+                          >
+                            {schema.modules[key].enabled ? 'Aktif' : 'Kapalı'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border p-4 space-y-2" data-testid="categories-preview-warnings">
+                    <div className="text-sm font-semibold">Validation Uyarıları</div>
+                    {publishValidation.errors.length > 0 ? (
+                      <ul className="list-disc pl-5 space-y-1 text-sm text-amber-700">
+                        {publishValidation.errors.map((err, index) => (
+                          <li key={`preview-warning-${index}`} data-testid={`categories-preview-warning-${index}`}>
+                            {err}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="text-sm text-emerald-700" data-testid="categories-preview-ready">Tüm kontroller tamam.</div>
+                    )}
+                  </div>
+
+                  {publishError && (
+                    <div className="p-2 rounded border border-rose-200 bg-rose-50 text-rose-700 text-sm" data-testid="categories-publish-error">
+                      {publishError}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      className={`px-4 py-2 rounded text-sm ${previewComplete ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-900 text-white'}`}
+                      onClick={() => setPreviewComplete(true)}
+                      disabled={previewComplete}
+                      data-testid="categories-preview-confirm"
+                    >
+                      {previewComplete ? 'Önizleme Onaylandı' : 'Önizlemeyi Onayla'}
+                    </button>
+                    {previewComplete && (
+                      <span className="text-xs text-emerald-700" data-testid="categories-preview-confirmed">Onay tamamlandı.</span>
+                    )}
+                  </div>
+
+                  <details className="rounded-lg border p-4" data-testid="categories-preview-json">
+                    <summary className="cursor-pointer text-sm font-semibold" data-testid="categories-preview-json-toggle">JSON şema (salt okunur / debug)</summary>
+                    <div className="mt-3 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs text-slate-500" data-testid="categories-preview-json-hint">Salt okunur / debug amaçlı</span>
+                        <button
+                          type="button"
+                          className="px-3 py-1 border rounded text-xs"
+                          onClick={handleCopySchema}
+                          data-testid="categories-preview-json-copy"
+                        >
+                          Kopyala
+                        </button>
+                      </div>
+                      {jsonCopyStatus && (
+                        <div className="text-xs text-emerald-700" data-testid="categories-preview-json-status">{jsonCopyStatus}</div>
+                      )}
+                      <pre className="text-xs bg-slate-900 text-slate-100 p-3 rounded overflow-auto max-h-64" data-testid="categories-preview-json-content">
+                        {JSON.stringify(schema, null, 2)}
+                      </pre>
+                    </div>
+                  </details>
+                </div>
+              )}
                 </div>
               )}
 
