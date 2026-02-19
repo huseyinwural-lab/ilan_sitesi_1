@@ -387,7 +387,7 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
       const token = localStorage.getItem('access_token');
       const params = new URLSearchParams();
       if (isCountryMode) {
-        params.set('country', encodeURIComponent(effectiveCountry));
+        params.set('country', effectiveCountry);
       }
       if (trendDays) {
         params.set('trend_days', String(trendDays));
