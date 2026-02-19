@@ -170,6 +170,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
   });
 
   test('Senaryo 2: Wizard step-2 validation tetikleme', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('selected_country', 'DE'));
     await page.goto('/login');
     await page.getByTestId('login-email').fill(userCreds.email);
     await page.getByTestId('login-password').fill(userCreds.password);
