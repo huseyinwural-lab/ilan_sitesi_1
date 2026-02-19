@@ -9,6 +9,7 @@ const categorySlug = `e2e-test-category-${runId}`;
 const dynamicKey = 'extra_option';
 const detailGroupId = 'features';
 const detailOptions = ['ABS', 'Airbag', 'Klima', 'ESP'];
+const fixtureCategoryName = 'E2E Fixture Category';
 
 const photoFiles = [
   path.join(__dirname, '../fixtures/photo1.jpg'),
