@@ -225,6 +225,40 @@ const AdminCategories = () => {
   }, [effectiveHierarchyComplete, schema, previewComplete]);
   const isPaymentEnabled = Boolean(schema.modules?.payment?.enabled);
   const isPhotosEnabled = Boolean(schema.modules?.photos?.enabled);
+  const autosaveEnabled = Boolean(modalOpen && editing && schema.status === "draft");
+  const autosaveSnapshot = useMemo(() => JSON.stringify({
+    form,
+    schema,
+    hierarchy_complete: effectiveHierarchyComplete,
+  }), [form, schema, effectiveHierarchyComplete]);
+
+  const formatTime = (value) => {
+    if (!value) return "";
+    const date = typeof value === "string" ? new Date(value) : value;
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  };
+
+  const showDraftToast = (payload) => {
+    if (autosaveToastRef.current?.update) {
+      autosaveToastRef.current.update(payload);
+      return;
+    }
+    autosaveToastRef.current = toast(payload);
+  };
+
+  const dismissDraftToast = (delay = 2000) => {
+    if (!autosaveToastRef.current?.dismiss) return;
+    setTimeout(() => autosaveToastRef.current?.dismiss(), delay);
+  };
+
+  const buildSavePayload = (status, activeEditing) => ({
+    ...form,
+    sort_order: Number(form.sort_order || 0),
+    hierarchy_complete: true,
+    form_schema: { ...schema, status },
+    expected_updated_at: activeEditing?.updated_at,
+  });
 
   const fetchItems = async () => {
     setLoading(true);
@@ -338,12 +372,20 @@ const AdminCategories = () => {
   useEffect(() => {
     if (modalOpen && editing?.id) {
       fetchVersions();
+      const snapshot = JSON.stringify({
+        form,
+        schema,
+        hierarchy_complete: effectiveHierarchyComplete,
+      });
+      lastSavedSnapshotRef.current = snapshot;
+      setLastSavedAt(formatTime(editing.updated_at));
       return;
     }
     setVersions([]);
     setVersionsError("");
     setSelectedVersions([]);
     setVersionDetails({});
+    setLastSavedAt("");
   }, [modalOpen, editing?.id]);
 
   useEffect(() => {
@@ -353,6 +395,55 @@ const AdminCategories = () => {
       }
     });
   }, [selectedVersions, versionDetails]);
+
+  useEffect(() => {
+    if (!autosaveEnabled) return;
+    if (!effectiveHierarchyComplete) return;
+    if (autosaveSnapshot === lastSavedSnapshotRef.current) return;
+
+    if (autosaveTimeoutRef.current) {
+      clearTimeout(autosaveTimeoutRef.current);
+    }
+    autosaveTimeoutRef.current = setTimeout(() => {
+      handleSave("draft", null, false, { autosave: true });
+    }, 2500);
+
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
+  }, [autosaveSnapshot, autosaveEnabled, effectiveHierarchyComplete]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!autosaveEnabled) return;
+      if (autosaveSnapshot === lastSavedSnapshotRef.current) return;
+      if (!effectiveHierarchyComplete || !editing?.id) return;
+
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+      const payload = buildSavePayload("draft", editing);
+      const url = `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`;
+      const body = JSON.stringify(payload);
+      if (navigator.sendBeacon) {
+        const blob = new Blob([body], { type: "application/json" });
+        navigator.sendBeacon(url, blob);
+      } else {
+        fetch(url, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body,
+          keepalive: true,
+        });
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [autosaveEnabled, autosaveSnapshot, effectiveHierarchyComplete, editing]);
 
   const parentOptions = useMemo(() => items.filter((item) => item.id !== editing?.id), [items, editing]);
 
