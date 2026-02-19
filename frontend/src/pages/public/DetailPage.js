@@ -195,35 +195,39 @@ const DetailPage = () => {
               </div>
 
               <div className="space-y-3">
-                {phoneEnabled ? (
-                  !phone ? (
-                    <button
-                      onClick={handleRevealPhone}
-                      className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition"
-                      data-testid="listing-reveal-phone-button"
-                    >
-                      Show Phone Number
-                    </button>
-                  ) : (
-                    <div className="w-full bg-gray-100 py-3 rounded-lg font-bold text-center text-gray-800 border border-green-500" data-testid="listing-phone-number">
-                      {phone}
-                    </div>
-                  )
-                ) : (
-                  <div data-testid="listing-phone-hidden">Phone hidden by seller</div>
-                )}
+                {showContact && (
+                  <div className="space-y-3" data-testid="listing-contact-section">
+                    {phoneEnabled ? (
+                      !phone ? (
+                        <button
+                          onClick={handleRevealPhone}
+                          className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition"
+                          data-testid="listing-reveal-phone-button"
+                        >
+                          Show Phone Number
+                        </button>
+                      ) : (
+                        <div className="w-full bg-gray-100 py-3 rounded-lg font-bold text-center text-gray-800 border border-green-500" data-testid="listing-phone-number">
+                          {phone}
+                        </div>
+                      )
+                    ) : (
+                      <div data-testid="listing-phone-hidden">Phone hidden by seller</div>
+                    )}
 
-                {messageEnabled ? (
-                  <Link 
-                    to={`/account/messages/new?listing=${listing.id}`} 
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold block text-center hover:bg-blue-700 transition"
-                    data-testid="listing-send-message-button"
-                  >
-                    Send Message
-                  </Link>
-                ) : (
-                  <div className="w-full bg-gray-100 py-3 rounded-lg font-bold text-center text-gray-500 border" data-testid="listing-message-disabled">
-                    Messaging disabled
+                    {messageEnabled ? (
+                      <Link 
+                        to={`/account/messages/new?listing=${listing.id}`} 
+                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold block text-center hover:bg-blue-700 transition"
+                        data-testid="listing-send-message-button"
+                      >
+                        Send Message
+                      </Link>
+                    ) : (
+                      <div className="w-full bg-gray-100 py-3 rounded-lg font-bold text-center text-gray-500 border" data-testid="listing-message-disabled">
+                        Messaging disabled
+                      </div>
+                    )}
                   </div>
                 )}
 
