@@ -127,7 +127,7 @@
 - 2026-02-19: Country compare analitik genişletme (growth %, conversion, dealer density, SLA 24/48, risk, bar chart + heatmap)
 - 2026-02-19: Country compare tarih filtresi + ECB EUR normalizasyonu (24h cache + fallback) + CSV export + E2E test
 - 2026-02-19: Countries seed düzeltmesi (DE/CH/AT/FR aktif, PL pasif) + country-compare varsayılan filtre (DE/CH/AT)
-- 2026-02-19: Admin Countries ISO dropdown + arama ile yeni ülke ekleme (locale/currency alanları)
+- 2026-02-19: Admin Countries ISO dropdown + arama (i18n-iso-countries) ile yeni ülke ekleme (locale/currency alanları)
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
