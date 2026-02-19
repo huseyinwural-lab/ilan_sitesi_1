@@ -809,6 +809,19 @@ async def login(credentials: UserLogin, request: Request):
     await db.users.update_one({"id": user["id"]}, {"$set": {"last_login": now_iso}})
     user["last_login"] = now_iso
 
+    audit_entry = await build_audit_entry(
+        event_type="LOGIN_SUCCESS",
+        actor=user,
+        target_id=user.get("id"),
+        target_type="auth",
+        country_code=user.get("country_code"),
+        details={"ip_address": ip_address},
+        request=request,
+    )
+    audit_entry["action"] = "LOGIN_SUCCESS"
+    audit_entry["user_agent"] = user_agent
+    await db.audit_logs.insert_one(audit_entry)
+
     token_data = {"sub": user["id"], "email": user["email"], "role": user.get("role")}
 
     return TokenResponse(
