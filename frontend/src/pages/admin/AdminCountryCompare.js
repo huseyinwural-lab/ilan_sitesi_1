@@ -197,12 +197,17 @@ export default function AdminCountryComparePage() {
 
   const availableCountries = useMemo(() => items.map((item) => item.country_code), [items]);
 
+  const filteredItems = useMemo(() => {
+    if (selectedCountries.length === 0) return items;
+    return items.filter((item) => selectedCountries.includes(item.country_code));
+  }, [items, selectedCountries]);
+
   const comparisonCountries = useMemo(() => {
     if (selectedCountries.length > 0) {
-      return items.filter((item) => selectedCountries.includes(item.country_code));
+      return filteredItems;
     }
-    return items.slice(0, 3);
-  }, [items, selectedCountries]);
+    return filteredItems.slice(0, 3);
+  }, [filteredItems, selectedCountries]);
 
   const metricValue = (item) => {
     if (compareMetric === 'revenue_eur') return item.revenue_eur || 0;
