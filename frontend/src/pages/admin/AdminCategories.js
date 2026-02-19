@@ -1935,24 +1935,6 @@ const AdminCategories = () => {
                     </div>
                   )}
 
-                  {publishError && (
-                    <div className="p-2 rounded border border-rose-200 bg-rose-50 text-rose-700 text-sm" data-testid="categories-publish-error">
-                      {publishError}
-                    </div>
-                  )}
-
-                  {!publishValidation.canPublish && (
-                    <div className="p-3 rounded border border-amber-200 bg-amber-50 text-amber-700 text-sm" data-testid="categories-publish-requirements">
-                      <div className="font-semibold mb-1">Yayın için eksikler</div>
-                      <ul className="list-disc pl-5 space-y-1">
-                        {publishValidation.errors.map((err, index) => (
-                          <li key={`publish-req-${index}`} data-testid={`categories-publish-requirement-${index}`}>
-                            {err}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </div>
               )}
                 </div>
