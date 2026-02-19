@@ -1177,7 +1177,7 @@ const AdminCategories = () => {
               <div className="text-slate-800">{item.country_code || "global"}</div>
               <div className="text-slate-800">{item.sort_order}</div>
               <div>
-                <span className={`px-2 py-1 rounded text-xs ${item.active_flag ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                <span className={`px-2 py-1 rounded text-xs ${item.active_flag ? "bg-green-100 text-green-700" : "bg-gray-100 text-slate-800"}`}>
                   {item.active_flag ? "Aktif" : "Pasif"}
                 </span>
               </div>
