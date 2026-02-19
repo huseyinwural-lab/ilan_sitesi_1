@@ -1769,13 +1769,62 @@ const AdminCategories = () => {
                 </>
               )}
 
-            <div className="flex justify-end gap-2 mt-6">
-              <button className="px-4 py-2 border rounded" onClick={() => setModalOpen(false)} data-testid="categories-cancel">
+            <div className="flex flex-wrap justify-between items-center gap-3 mt-6 pt-4 border-t">
+              <button
+                className="px-4 py-2 border rounded"
+                onClick={() => {
+                  setModalOpen(false);
+                  resetForm();
+                }}
+                data-testid="categories-cancel"
+              >
                 Vazgeç
               </button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={handleSave} data-testid="categories-save">
-                Kaydet
-              </button>
+              <div className="flex flex-wrap gap-2">
+                {prevStep && (
+                  <button
+                    className="px-4 py-2 border rounded"
+                    onClick={() => setWizardStep(prevStep)}
+                    data-testid="categories-step-prev"
+                  >
+                    Geri
+                  </button>
+                )}
+                {wizardStep === "modules" ? (
+                  <>
+                    <button
+                      className="px-4 py-2 border rounded"
+                      onClick={() => handleSave("draft")}
+                      data-testid="categories-save-draft"
+                    >
+                      Taslak Kaydet
+                    </button>
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded"
+                      onClick={() => handleSave("published")}
+                      data-testid="categories-publish"
+                    >
+                      Yayınla
+                    </button>
+                  </>
+                ) : (
+                  nextStep && (
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded"
+                      onClick={() => {
+                        if (wizardStep === "hierarchy") {
+                          handleHierarchyComplete();
+                          return;
+                        }
+                        setWizardStep(nextStep);
+                      }}
+                      data-testid="categories-step-next"
+                    >
+                      {wizardStep === "hierarchy" ? "Tamam" : wizardStep === "dynamic" ? "Bitti" : "Devam"}
+                    </button>
+                  )
+                )}
+              </div>
             </div>
           </div>
         </div>
