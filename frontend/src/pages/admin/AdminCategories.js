@@ -1694,13 +1694,16 @@ const AdminCategories = () => {
 
                     {(detailDraft.options || []).length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2" data-testid="categories-detail-options">
-                        {detailOptions.map((opt, index) => (
-                          <div key={`${opt}-${index}`} className="flex items-center gap-2 border rounded px-2 py-1 text-xs" data-testid={`categories-detail-option-${index}`}>
-                            <span>{opt}</span>
+                        {(detailDraft.options || []).map((opt, index) => (
+                          <div key={`${opt}-${index}`} className="flex items-center justify-between gap-2 border rounded px-2 py-1 text-xs" data-testid={`categories-detail-option-${index}`}>
+                            <span className="truncate">{opt}</span>
                             <button
                               type="button"
                               className="text-rose-600"
-                              onClick={() => setDetailOptions((prev) => prev.filter((_, i) => i !== index))}
+                              onClick={() => setDetailDraft((prev) => ({
+                                ...prev,
+                                options: (prev.options || []).filter((_, i) => i !== index),
+                              }))}
                               data-testid={`categories-detail-option-remove-${index}`}
                             >
                               ✕
