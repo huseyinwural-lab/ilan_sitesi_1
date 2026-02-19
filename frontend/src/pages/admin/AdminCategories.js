@@ -455,7 +455,7 @@ const AdminCategories = () => {
     const invalidSub = cleanedSubs.find((item) => !item.name || !item.slug);
     if (invalidSub) {
       setHierarchyError("Alt kategorilerde ad + slug zorunludur.");
-      return;
+      return { success: false };
     }
 
     if (editing) {
