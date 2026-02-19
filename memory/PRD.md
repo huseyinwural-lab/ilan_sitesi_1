@@ -145,13 +145,14 @@
 - Plan: P1’de LINT-1/2, P2’de LINT-3/4/5 + lint CI gate (baseline bozulmasın)
 - Not: Frontend ESLint gate şu an “legacy uyumlu” (no-unused-vars/no-undef kapalı); P2’de kademeli sıkılaştırma
 
-## P1 Spec — Taslak Versiyon Geçmişi + Diff Paneli (MVP)
+## P2 Spec — Versioning Diff + Rollback (Active)
 - Amaç: Admin’in yayın öncesi değişiklikleri sürüm bazında görmesi ve diff karşılaştırması
 - Veri modeli: categories_versions { id, category_id, version, schema_snapshot, status, created_at, created_by }
 - Akış: Her “Taslak Kaydet” → yeni versiyon kaydı; “Yayınla” → son versiyon published
 - UI: Kategori sihirbazında “Versiyon Geçmişi” paneli (liste + iki versiyon seçip diff)
 - Diff MVP: JSON side-by-side (read-only), highlight changed keys
-- Risk/Önlem: Draft şişmesi → versiyon limiti (örn. son 25); rollback MVP dışında
+- Rollback: Seçili versiyon → draft olarak aç → publish
+- Risk/Önlem: Draft şişmesi → versiyon limiti (örn. son 25); rollback audit zorunlu
 
 ## Autosave Spec (P1)
 - Draft modunda event-driven autosave: field change → 2.5s debounce → draft save
