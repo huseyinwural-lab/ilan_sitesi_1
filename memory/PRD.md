@@ -86,6 +86,10 @@
   - Sidebar bootstrap health-check sonrası render
   - Playwright admin login smoke testi (dashboard → kategoriler)
   - Test yolu: /app/frontend/tests/e2e/admin-login.spec.js
+- **FAZ-7 Auth Edge-case Test Report (2026-02-19):**
+  - Expired token health-check → 401 + UI logout doğrulandı
+  - Multi-tab logout → ikinci sekme login ekranına düştü
+  - Test yolu: /app/frontend/tests/e2e/admin-auth-edge.spec.js
 - **Admin Kategori Modal Kontrast Düzeltmesi:**
   - Modal input/label/placeholder renkleri koyu tona çekildi (WCAG uyumlu)
   - Playwright görsel regresyon testi eklendi
