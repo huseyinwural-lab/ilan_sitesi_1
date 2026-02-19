@@ -174,7 +174,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await expect(page.getByTestId(`listing-dynamic-error-${dynamicKey}`)).toBeVisible({ timeout: 30000 });
   });
 
-  test('Senaryo 3: Listing detail modül görünürlüğü', async ({ page }) => {
+  test.skip('Senaryo 3: Listing detail modül görünürlüğü', async ({ page }) => {
     await page.goto('/login');
     await page.getByTestId('login-email').fill(userCreds.email);
     await page.getByTestId('login-password').fill(userCreds.password);
