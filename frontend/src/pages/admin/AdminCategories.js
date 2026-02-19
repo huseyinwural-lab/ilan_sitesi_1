@@ -176,6 +176,7 @@ const AdminCategories = () => {
   const lastSavedSnapshotRef = useRef("");
 
   const { toast } = useToast();
+  const effectiveHierarchyComplete = editing ? Boolean(editing.hierarchy_complete) : hierarchyComplete;
   const inputClassName = "w-full border rounded p-2 text-slate-900 placeholder-slate-600 disabled:text-slate-500 disabled:bg-slate-100";
   const selectClassName = "w-full border rounded p-2 text-slate-900 disabled:text-slate-500 disabled:bg-slate-100";
   const labelClassName = "text-sm text-slate-800";
