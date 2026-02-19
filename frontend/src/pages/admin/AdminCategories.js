@@ -484,7 +484,7 @@ const AdminCategories = () => {
       const parentData = await parentRes.json();
       if (!parentRes.ok) {
         setHierarchyError(parentData?.detail || "Ana kategori oluşturulamadı.");
-        return;
+        return { success: false };
       }
       const parent = parentData.category;
 
