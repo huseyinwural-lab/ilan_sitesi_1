@@ -359,7 +359,7 @@ const AdminCategories = () => {
               <div className="border-t pt-4 space-y-4">
                 <h3 className="text-md font-semibold">Çekirdek Alanlar</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 text-sm text-slate-800">
                     <input
                       type="checkbox"
                       checked={schema.core_fields.title.required}
@@ -374,7 +374,7 @@ const AdminCategories = () => {
                     />
                     Başlık zorunlu
                   </label>
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 text-sm text-slate-800">
                     <input
                       type="checkbox"
                       checked={schema.core_fields.description.required}
@@ -762,7 +762,7 @@ const AdminCategories = () => {
                     data-testid="categories-price-range-message"
                   />
                 </div>
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-sm text-slate-800">
                   <input
                     type="checkbox"
                     checked={schema.core_fields.price.secondary_enabled}
@@ -782,7 +782,7 @@ const AdminCategories = () => {
               <div className="border-t pt-4 space-y-4">
                 <h3 className="text-md font-semibold">Başlık Benzersizliği</h3>
                 <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 text-sm text-slate-800">
                     <input
                       type="checkbox"
                       checked={schema.title_uniqueness.enabled}
@@ -979,7 +979,7 @@ const AdminCategories = () => {
                         data-testid={`categories-group-sort-${index}`}
                       />
                     </div>
-                    <label className="flex items-center gap-2 text-sm">
+                    <label className="flex items-center gap-2 text-sm text-slate-800">
                       <input
                         type="checkbox"
                         checked={group.required}
