@@ -465,7 +465,7 @@ export default function AdminCountryComparePage() {
             ) : items.length === 0 ? (
               <div className="p-6 text-center text-muted-foreground" data-testid="country-compare-empty">Kayıt yok</div>
             ) : (
-              items.map((item) => {
+              filteredItems.map((item) => {
                 const heatIntensity = Math.max(0.05, metricValue(item) / heatmapMax);
                 return (
                   <div
