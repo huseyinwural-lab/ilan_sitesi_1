@@ -54,6 +54,7 @@ export default function AdminCountriesPage() {
       default_language: '',
       active_flag: true,
     });
+    setIsoSearch('');
     setError(null);
     setModalOpen(true);
   };
