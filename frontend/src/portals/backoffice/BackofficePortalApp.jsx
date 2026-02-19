@@ -57,7 +57,20 @@ export default function BackofficePortalApp() {
       <Route path="/categories" element={<Layout><AdminCategories /></Layout>} />
       <Route path="/attributes" element={<Layout><AdminAttributes /></Layout>} />
       <Route path="/menu-management" element={<Layout><MenuManagementPage /></Layout>} />
-      <Route path="/audit-logs" element={<Layout><AuditLogs /></Layout>} />
+      <Route path="/audit" element={
+        <Layout>
+          <AdminRouteGuard roles={["super_admin", "country_admin"]}>
+            <AuditLogs />
+          </AdminRouteGuard>
+        </Layout>
+      } />
+      <Route path="/audit-logs" element={
+        <Layout>
+          <AdminRouteGuard roles={["super_admin", "country_admin"]}>
+            <AuditLogs />
+          </AdminRouteGuard>
+        </Layout>
+      } />
       <Route path="/moderation" element={<Layout><ModerationQueue /></Layout>} />
       <Route path="/individual-listing-applications" element={<Layout><IndividualListingApplicationsPage /></Layout>} />
       <Route path="/corporate-listing-applications" element={<Layout><CorporateListingApplicationsPage /></Layout>} />
