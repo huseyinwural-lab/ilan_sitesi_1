@@ -5798,6 +5798,9 @@ async def admin_dashboard_summary(
 
     role = current_user.get("role")
     can_view_finance = role in {"finance", "super_admin"}
+    trend_window = trend_days or DASHBOARD_TREND_DAYS
+    if trend_window < DASHBOARD_TREND_MIN_DAYS or trend_window > DASHBOARD_TREND_MAX_DAYS:
+        raise HTTPException(status_code=400, detail="trend_days must be between 7 and 365")
     scope = (current_user.get("country_scope") or [])
     country_code = country.upper() if country else None
 
