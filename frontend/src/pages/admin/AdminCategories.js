@@ -2096,7 +2096,7 @@ const AdminCategories = () => {
                 >
                   Taslak Kaydet
                 </button>
-                {wizardStep === "modules" ? (
+                {wizardStep === "preview" ? (
                   <button
                     className={`px-4 py-2 rounded text-white ${publishValidation.canPublish ? 'bg-blue-600' : 'bg-blue-300 cursor-not-allowed'}`}
                     onClick={() => handleSave("published")}
