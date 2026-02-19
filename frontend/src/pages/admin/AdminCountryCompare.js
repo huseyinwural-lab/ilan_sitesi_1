@@ -172,6 +172,9 @@ export default function AdminCountryComparePage() {
       }
       if (sortBy) params.set('sort_by', sortBy);
       if (sortDir) params.set('sort_dir', sortDir);
+      if (selectedCountries.length > 0) {
+        params.set('countries', selectedCountries.join(','));
+      }
       const qs = params.toString() ? `?${params.toString()}` : '';
       const response = await axios.get(`${API}/admin/dashboard/country-compare/export/csv${qs}`, {
         headers: authHeader,
@@ -332,22 +335,13 @@ export default function AdminCountryComparePage() {
       </div>
 
       <div className="bg-card rounded-md border p-4" data-testid="country-compare-selection">
-        [1m [0m[1m[0m[1m [0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m [0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m
-          [1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m
-          [1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m[1m[0m
-          [1m[0m[1m[0m
-          [1m[0m          [1m[0m
-          [1m[0m[1m[0m
-          [1m[0m          [1m[0m[1m[0m
-          [1m[0m[1m[0m
-          [1m[0m          [1m[0m[1m[0m
-          [1m[0m[1m[0m
-          [1m[0m          [1m[0m[1m[0m
-          [1m[0m[1m[0m
-          [1m[0m          [1m[0m[1m[0m
-          [1m[0m[1m[0m
-          [1m[0m          [1m[0m
-        [1m[0m        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3" data-testid="country-compare-country-list">
+        <div className="flex items-center gap-2 text-sm font-medium" data-testid="country-compare-selection-title">
+          <Filter size={16} /> Ülke filtre (multi-select, 2-3 karşılaştırma)
+        </div>
+        <div className="text-xs text-muted-foreground mt-1" data-testid="country-compare-selection-note">
+          Varsayılan: aktif ülkeler (DE/CH/AT)
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3" data-testid="country-compare-country-list">
           {availableCountries.map((code) => (
             <label key={code} className="flex items-center gap-2 text-sm" data-testid={`country-compare-country-${code}`}>
               <input
