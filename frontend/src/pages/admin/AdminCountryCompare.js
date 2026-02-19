@@ -205,7 +205,7 @@ export default function AdminCountryComparePage() {
 
   const gridCols = showRevenue
     ? 'grid-cols-[0.7fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]'
-    : 'grid-cols-[0.7fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]';
+    : 'grid-cols-[0.7fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]';
 
   return (
     <div className="space-y-6" data-testid="admin-country-compare-page">
