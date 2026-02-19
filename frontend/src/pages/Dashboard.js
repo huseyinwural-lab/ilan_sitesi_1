@@ -385,7 +385,14 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
     setError('');
     try {
       const token = localStorage.getItem('access_token');
-      const qs = isCountryMode ? `?country=${encodeURIComponent(effectiveCountry)}` : '';
+      const params = new URLSearchParams();
+      if (isCountryMode) {
+        params.set('country', encodeURIComponent(effectiveCountry));
+      }
+      if (trendDays) {
+        params.set('trend_days', String(trendDays));
+      }
+      const qs = params.toString() ? `?${params.toString()}` : '';
       const response = await axios.get(`${API}/admin/dashboard/summary${qs}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
