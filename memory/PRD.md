@@ -68,6 +68,7 @@
   - Dynamic fields (2a) + detail groups (2c) + sabit modüller (adres/foto/iletişim/ödeme)
   - Validation mesajları + duplicate title toggle + schema publish guard
   - Frontend listing wizard schema tabanlı form üretimi
+  - Public contract: /api/catalog/schema?category_id=...&country=...
 - **Sprint 6:** Final Integration Gate
   - RBAC + Country-scope + Audit coverage kanıtları
   - Kritik akışlar E2E (public/dealer/individual/report/finance)
