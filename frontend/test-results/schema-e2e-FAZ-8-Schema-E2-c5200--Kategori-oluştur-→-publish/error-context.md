@@ -271,18 +271,18 @@
                     - button "Pasif Et" [ref=e342] [cursor=pointer]
                     - button "Sil" [ref=e343] [cursor=pointer]
                 - generic [ref=e344]:
-                  - generic [ref=e345]: Test Category
-                  - generic [ref=e346]: test-category
+                  - generic [ref=e345]: e2e-test-category-1771519111219
+                  - generic [ref=e346]: e2e-test-category-1771519111219
                   - generic [ref=e347]: DE
-                  - generic [ref=e348]: "100"
+                  - generic [ref=e348]: "0"
                   - generic [ref=e350]: Aktif
                   - generic [ref=e351]:
                     - button "Düzenle" [ref=e352] [cursor=pointer]
                     - button "Pasif Et" [ref=e353] [cursor=pointer]
                     - button "Sil" [ref=e354] [cursor=pointer]
                 - generic [ref=e355]:
-                  - generic [ref=e356]: Test Category 1771385847
-                  - generic [ref=e357]: test-category-1771385847
+                  - generic [ref=e356]: Test Category
+                  - generic [ref=e357]: test-category
                   - generic [ref=e358]: DE
                   - generic [ref=e359]: "100"
                   - generic [ref=e361]: Aktif
@@ -290,10 +290,20 @@
                     - button "Düzenle" [ref=e363] [cursor=pointer]
                     - button "Pasif Et" [ref=e364] [cursor=pointer]
                     - button "Sil" [ref=e365] [cursor=pointer]
+                - generic [ref=e366]:
+                  - generic [ref=e367]: Test Category 1771385847
+                  - generic [ref=e368]: test-category-1771385847
+                  - generic [ref=e369]: DE
+                  - generic [ref=e370]: "100"
+                  - generic [ref=e372]: Aktif
+                  - generic [ref=e373]:
+                    - button "Düzenle" [ref=e374] [cursor=pointer]
+                    - button "Pasif Et" [ref=e375] [cursor=pointer]
+                    - button "Sil" [ref=e376] [cursor=pointer]
     - region "Notifications (F8)":
       - list
-  - link "Made with Emergent" [ref=e366] [cursor=pointer]:
+  - link "Made with Emergent" [ref=e377] [cursor=pointer]:
     - /url: https://app.emergent.sh/?utm_source=emergent-badge
-    - img [ref=e367]
-    - paragraph [ref=e370]: Made with Emergent
+    - img [ref=e378]
+    - paragraph [ref=e381]: Made with Emergent
 ```
