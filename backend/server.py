@@ -4690,6 +4690,25 @@ async def admin_dashboard_country_compare(
     return {"items": items}
 
 
+@api_router.get("/admin/session/health")
+async def admin_session_health(request: Request, current_user=Depends(get_current_user)):
+    auth_header = request.headers.get("Authorization", "")
+    token = auth_header.split(" ", 1)[1] if auth_header.startswith("Bearer ") else None
+    expires_at = None
+    if token:
+        payload = decode_token(token)
+        exp = payload.get("exp")
+        if exp:
+            expires_at = datetime.fromtimestamp(exp, tz=timezone.utc).isoformat()
+    roles = current_user.get("roles") or [current_user.get("role")]
+    return {
+        "user_id": current_user.get("id"),
+        "roles": roles,
+        "expires_at": expires_at,
+        "server_time": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 # =====================
 # Public Search v2 (Mongo)
 # =====================
