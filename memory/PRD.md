@@ -130,3 +130,19 @@
 
 ### P4
 - Şema versiyonlama + audit log sertleştirme
+
+## Lint Debt Roadmap (Backend)
+- LINT-1: F821 build_audit_entry undefined (server.py:1236/1283) → import veya helper ekle
+- LINT-2: F841 unused variable `v` (server.py:2466) → kaldır
+- LINT-3: E741 ambiguous `l` (server.py:2639/2642) → anlamlı isimle değiştir
+- LINT-4: F601 duplicate "$or" key (server.py:4798) → query birleştir
+- LINT-5: F821 now_iso undefined (server.py:5126) → timestamp kaynağını standardize et
+- Plan: P1’de LINT-1/2, P2’de LINT-3/4/5 + lint CI gate (baseline bozulmasın)
+
+## P1 Spec — Taslak Versiyon Geçmişi + Diff Paneli (MVP)
+- Amaç: Admin’in yayın öncesi değişiklikleri sürüm bazında görmesi ve diff karşılaştırması
+- Veri modeli: categories_versions { id, category_id, version, schema_snapshot, status, created_at, created_by }
+- Akış: Her “Taslak Kaydet” → yeni versiyon kaydı; “Yayınla” → son versiyon published
+- UI: Kategori sihirbazında “Versiyon Geçmişi” paneli (liste + iki versiyon seçip diff)
+- Diff MVP: JSON side-by-side (read-only), highlight changed keys
+- Risk/Önlem: Draft şişmesi → versiyon limiti (örn. son 25); rollback MVP dışında
