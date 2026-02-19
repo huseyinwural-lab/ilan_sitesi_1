@@ -69,6 +69,10 @@
   - Validation mesajları + duplicate title toggle + schema publish guard
   - Frontend listing wizard schema tabanlı form üretimi
   - Public contract: /api/catalog/schema?category_id=...&country=...
+- **FAZ-7 Admin Login Stabilizasyonu:**
+  - GET /api/admin/session/health (token doğrulama + expires_at)
+  - Sidebar bootstrap health-check sonrası render
+  - Playwright admin login smoke testi (dashboard → kategoriler)
 - **Sprint 6:** Final Integration Gate
   - RBAC + Country-scope + Audit coverage kanıtları
   - Kritik akışlar E2E (public/dealer/individual/report/finance)
