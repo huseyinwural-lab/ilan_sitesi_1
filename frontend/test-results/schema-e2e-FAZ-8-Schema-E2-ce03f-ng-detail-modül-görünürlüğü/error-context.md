@@ -28,18 +28,40 @@
         - generic [ref=e19]:
           - generic [ref=e21]:
             - heading "Vasıta İlanı Oluştur" [level=1] [ref=e22]
-            - generic [ref=e23]: Adım 3 / 4
+            - generic [ref=e23]: Adım 4 / 4
           - generic [ref=e28]:
-            - heading "Fotoğraflar" [level=2] [ref=e29]
-            - generic [ref=e31] [cursor=pointer]:
-              - generic [ref=e32]: 📸
-              - text: Fotoğraf yüklemek için tıkla
-              - paragraph [ref=e33]: (min 3 foto, min 800x600)
-            - 'button "Next: Review" [disabled] [ref=e35]'
+            - heading "Önizleme & Yayınla" [level=2] [ref=e29]
+            - generic [ref=e30]:
+              - generic [ref=e31]:
+                - img "cover" [ref=e33]
+                - generic [ref=e34]: € -
+              - generic [ref=e35]:
+                - generic [ref=e36]:
+                  - heading "audi a4 2021" [level=3] [ref=e37]
+                  - paragraph [ref=e38]: "Segment: E2E Fixture Category"
+                - generic [ref=e40]:
+                  - generic [ref=e41]:
+                    - generic [ref=e42]: "KM :"
+                    - generic [ref=e43]: "9000"
+                  - generic [ref=e44]:
+                    - generic [ref=e45]: "Yakıt :"
+                    - generic [ref=e46]: petrol
+                  - generic [ref=e47]:
+                    - generic [ref=e48]: "Vites :"
+                    - generic [ref=e49]: manual
+                  - generic [ref=e50]:
+                    - generic [ref=e51]: "Kondisyon :"
+                    - generic [ref=e52]: new
+                - generic [ref=e53]:
+                  - strong [ref=e54]: "Not:"
+                  - text: Yayınla’ya bastığınızda ilanınız yayınlanacaktır (MVP).
+            - generic [ref=e55]:
+              - button "Edit" [ref=e56] [cursor=pointer]
+              - button "Yayınla" [ref=e57] [cursor=pointer]
     - region "Notifications (F8)":
       - list
-  - link "Made with Emergent" [ref=e36] [cursor=pointer]:
+  - link "Made with Emergent" [ref=e58] [cursor=pointer]:
     - /url: https://app.emergent.sh/?utm_source=emergent-badge
-    - img [ref=e37]
-    - paragraph [ref=e40]: Made with Emergent
+    - img [ref=e59]
+    - paragraph [ref=e62]: Made with Emergent
 ```
