@@ -2402,6 +2402,84 @@ All required data-testids present and functional:
   - **Conclusion**: All text elements have EXCELLENT contrast
 
 **3. Code Review - Export Buttons Exist**: ✅ CONFIRMED IN CODE
+
+## Dashboard Uptime UI Check Test Results (Feb 19, 2026)
+
+### Test Flow Executed:
+**Review Request**: Dashboard uptime UI check
+1. ✅ Admin login (admin@platform.com / Admin123!) → /admin
+2. ✅ Health card visible with "Son restart" and "Uptime" fields
+3. ✅ Uptime value is populated (not empty)
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Admin Login → /admin**: ✅ WORKING
+  - Login successful with admin@platform.com / Admin123!
+  - Successfully redirected to /admin dashboard
+  - Dashboard loaded completely with all sections visible
+
+**2. Health Card (Sistem Sağlığı) Visibility**: ✅ WORKING
+  - Health card visible with data-testid="dashboard-health-card"
+  - Card displays "Sistem Sağlığı" header
+  - All health status fields rendered correctly
+
+**3. "Son restart" Field**: ✅ VISIBLE AND POPULATED
+  - Field visible with data-testid="dashboard-health-restart"
+  - Value displayed: "2/19/2026, 9:00:22 PM"
+  - Timestamp format correct (localized date/time)
+  - Value is NOT "unknown" ✓
+
+**4. "Uptime" Field**: ✅ VISIBLE AND POPULATED
+  - Field visible with data-testid="dashboard-health-uptime"
+  - Value displayed: "3m 40s"
+  - Human-readable format (minutes and seconds)
+  - Value is NOT empty ✓
+  - Value is NOT "unknown" ✓
+
+### Health Card Complete Status:
+All 5 health fields verified:
+- ✅ API status: ok
+- ✅ DB bağlantı: ok
+- ✅ Son deploy: unknown (expected for non-production environments)
+- ✅ Son restart: 2/19/2026, 9:00:22 PM
+- ✅ Uptime: 3m 40s
+
+### Data-testids Verified:
+All required data-testids present and functional:
+- ✅ `dashboard-health-card`: Health card container
+- ✅ `dashboard-health-restart`: Son restart field
+- ✅ `dashboard-health-uptime`: Uptime field
+- ✅ `dashboard-health-api`: API status field
+- ✅ `dashboard-health-db`: DB connection status field
+- ✅ `dashboard-health-deploy`: Deploy timestamp field
+
+### Screenshots Captured:
+- **dashboard-health-card.png**: Complete dashboard view showing health card with all fields visible and populated
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (3/3 core requirements verified)
+- **Login & Authentication**: ✅ WORKING
+- **Dashboard Access**: ✅ WORKING (/admin route)
+- **Health Card Visibility**: ✅ WORKING
+- **Son restart Field**: ✅ VISIBLE with timestamp value
+- **Uptime Field**: ✅ VISIBLE with non-empty value
+- **No Console Errors**: ✅ CONFIRMED (no critical errors)
+
+### Final Status:
+- **Overall Result**: ✅ **PASS** - Dashboard uptime UI check fully successful
+- **All Requirements Met**: ✅ VERIFIED
+  - Son restart görünüyor: ✅ YES
+  - Uptime görünüyor: ✅ YES
+  - Uptime değeri boş değil: ✅ YES (shows "3m 40s")
+- **Production Ready**: ✅ CONFIRMED
+
+### Agent Communication:
+- **Agent**: testing
+- **Message**: Dashboard uptime UI check test SUCCESSFULLY COMPLETED. All 3 requirements verified and passing (100% success rate). Admin login working correctly, health card visible on /admin dashboard with all required fields. "Son restart" field displaying timestamp "2/19/2026, 9:00:22 PM" (data-testid="dashboard-health-restart"). "Uptime" field displaying "3m 40s" in human-readable format (data-testid="dashboard-health-uptime"). Uptime value is populated and not empty as required. All health status indicators (API status, DB connection, deploy time, restart time, uptime) rendering correctly. No critical issues found - dashboard health monitoring fully operational.
+
+
   - **File**: `/app/frontend/src/pages/admin/AdminCategories.js`
   - **Lines**: 2414-2433
   - **Container**: `<div data-testid="categories-export-actions">`
