@@ -179,6 +179,8 @@
 - Draft/Pubish API assertion’lı wizard E2E senaryosu
 - FAZ-7 auth edge-case Playwright senaryoları
 - Wizard step unlock fix: hierarchy_complete backend flag ile guard + draft save sonrası refetch
+- Step navigation guard: sekmeler default disabled, “Tamam” ile unlock + tooltip
+- Hiyerarşi kriteri: ana ad + slug + en az 1 alt kategori
 - Lint debt yol haritası ve versiyonlama tasarım başlangıcı
 
 ### Test Kanıtı
