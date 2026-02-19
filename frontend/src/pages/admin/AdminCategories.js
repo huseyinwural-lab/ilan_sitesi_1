@@ -297,7 +297,7 @@ const AdminCategories = () => {
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" data-testid="categories-modal">
-          <div className="bg-white p-6 rounded-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+          <div className="bg-white p-6 rounded-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto text-slate-900">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">{editing ? "Kategori Düzenle" : "Yeni Kategori"}</h2>
               <button onClick={() => setModalOpen(false)} data-testid="categories-modal-close">✕</button>
@@ -306,21 +306,21 @@ const AdminCategories = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
-                  className="w-full border rounded p-2"
+                  className={inputClassName}
                   placeholder="Kategori adı"
                   value={form.name}
                   onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
                   data-testid="categories-name-input"
                 />
                 <input
-                  className="w-full border rounded p-2"
+                  className={inputClassName}
                   placeholder="Slug"
                   value={form.slug}
                   onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
                   data-testid="categories-slug-input"
                 />
                 <select
-                  className="w-full border rounded p-2"
+                  className={selectClassName}
                   value={form.parent_id}
                   onChange={(e) => setForm((prev) => ({ ...prev, parent_id: e.target.value }))}
                   data-testid="categories-parent-select"
@@ -331,7 +331,7 @@ const AdminCategories = () => {
                   ))}
                 </select>
                 <input
-                  className="w-full border rounded p-2"
+                  className={inputClassName}
                   placeholder="Country code (optional)"
                   value={form.country_code}
                   onChange={(e) => setForm((prev) => ({ ...prev, country_code: e.target.value.toUpperCase() }))}
@@ -339,13 +339,13 @@ const AdminCategories = () => {
                 />
                 <input
                   type="number"
-                  className="w-full border rounded p-2"
+                  className={inputClassName}
                   placeholder="Sort order"
                   value={form.sort_order}
                   onChange={(e) => setForm((prev) => ({ ...prev, sort_order: e.target.value }))}
                   data-testid="categories-sort-input"
                 />
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-sm text-slate-800">
                   <input
                     type="checkbox"
                     checked={form.active_flag}
