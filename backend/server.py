@@ -3895,6 +3895,7 @@ async def admin_create_category(
     category_id = str(uuid.uuid4())
     hierarchy_complete = payload.hierarchy_complete if payload.hierarchy_complete is not None else True
     schema = None
+    schema_status = None
     if payload.form_schema is not None:
         schema = _normalize_category_schema(payload.form_schema)
         schema_status = schema.get("status", "published")
