@@ -115,21 +115,18 @@
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- (Boş) — P0 sihirbaz stabilizasyonu tamamlandı
+- (Boş) — Preview gate + FAZ-7 auth kontrolleri + wizard E2E tamamlandı
 
 ### P1
-- FAZ-7 kapanış kontrolleri: expired token health-check → 401 + UI logout
-- Paralel sekme logout testi (multi-tab session invalid)
+- Taslak versiyon geçmişi + diff paneli (MVP)
+- Lint debt cleanup (LINT-1/2)
 
 ### P2
-- Sihirbaz E2E Playwright senaryoları (Hierarchy → Core → 2a → 2c → Modules → Draft → Publish)
-- Publish öncesi önizleme panelini zorunlu adım yap
+- Lint debt cleanup (LINT-3/4/5)
+- Şema versiyonlama + audit log sertleştirme
 
 ### P3
 - Dinamik modül adımları (ilan verme sihirbazında modül bazlı step)
-
-### P4
-- Şema versiyonlama + audit log sertleştirme
 
 ## Lint Debt Roadmap (Backend)
 - LINT-1: F821 build_audit_entry undefined (server.py:1236/1283) → import veya helper ekle
