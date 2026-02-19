@@ -2545,7 +2545,7 @@ def _schema_to_csv_rows(schema: Dict[str, Any]) -> list[list[str]]:
     return rows
 
 
-def _build_schema_pdf(schema: Dict[str, Any], category: dict, version: int) -> bytes:
+def _build_schema_pdf(schema: Dict[str, Any], category: dict, version: int, hierarchy: dict) -> bytes:
     styles = getSampleStyleSheet()
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, title="Schema Export")
@@ -2554,6 +2554,8 @@ def _build_schema_pdf(schema: Dict[str, Any], category: dict, version: int) -> b
     elements.append(Paragraph(f"Kategori: {category.get('name')} ({category.get('slug')})", styles["Normal"]))
     elements.append(Paragraph(f"Versiyon: v{version}", styles["Normal"]))
     elements.append(Paragraph(f"Durum: {schema.get('status')}", styles["Normal"]))
+    elements.append(Paragraph(f"Ana kategori: {hierarchy.get('parent') or '-'}", styles["Normal"]))
+    elements.append(Paragraph(f"Alt kategoriler: {', '.join(hierarchy.get('children') or []) or '-'}", styles["Normal"]))
     elements.append(Spacer(1, 12))
 
     def add_table(title: str, rows: list[list[str]]):
