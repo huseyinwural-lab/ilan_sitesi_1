@@ -587,7 +587,8 @@ const AdminCategories = () => {
     }
   };
 
-  const handleSave = async (status = "draft", overrideEditing = null, closeOnSuccess = true) => {
+  const handleSave = async (status = "draft", overrideEditing = null, closeOnSuccess = true, options = {}) => {
+    const { autosave = false } = options;
     setHierarchyError("");
     setPublishError("");
     const activeEditing = overrideEditing ?? editing;
@@ -600,12 +601,7 @@ const AdminCategories = () => {
       setPublishError("Yayınlama için zorunlu şartlar tamamlanmalı.");
       return;
     }
-    const payload = {
-      ...form,
-      sort_order: Number(form.sort_order || 0),
-      hierarchy_complete: true,
-      form_schema: { ...schema, status },
-    };
+    const payload = buildSavePayload(status, activeEditing);
     if (!payload.name || !payload.slug) {
       setHierarchyError("Kategori adı ve slug zorunludur.");
       return;
@@ -614,6 +610,15 @@ const AdminCategories = () => {
       ? `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${activeEditing.id}`
       : `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`;
     const method = activeEditing ? "PATCH" : "POST";
+
+    if (status === "draft") {
+      setAutosaveStatus("saving");
+      showDraftToast({
+        title: "Kaydediliyor...",
+        description: "Taslak otomatik kaydediliyor.",
+      });
+    }
+
     const res = await fetch(url, {
       method,
       headers: {
@@ -624,28 +629,62 @@ const AdminCategories = () => {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setHierarchyError(data?.detail || "Kaydetme sırasında hata oluştu.");
+      if (res.status === 409) {
+        showDraftToast({
+          title: "Kaydetme başarısız",
+          description: "Başka bir sekmede güncellendi.",
+          variant: "destructive",
+        });
+        dismissDraftToast(3000);
+      } else if (status === "draft") {
+        showDraftToast({
+          title: "Kaydetme başarısız",
+          description: "Taslak kaydedilemedi.",
+          variant: "destructive",
+        });
+        dismissDraftToast(3000);
+      }
+      if (!autosave) {
+        setHierarchyError(data?.detail || "Kaydetme sırasında hata oluştu.");
+      }
+      setAutosaveStatus("idle");
       return;
     }
     const savedCategory = data?.category || activeEditing;
     if (savedCategory) {
-      setEditing(savedCategory);
-      setForm({
+      const nextForm = {
         name: savedCategory.name || form.name,
         slug: savedCategory.slug || form.slug,
         parent_id: savedCategory.parent_id || form.parent_id,
         country_code: savedCategory.country_code || form.country_code,
         active_flag: savedCategory.active_flag ?? form.active_flag,
         sort_order: savedCategory.sort_order ?? form.sort_order,
-      });
+      };
+      const nextSchema = savedCategory.form_schema ? applySchemaDefaults(savedCategory.form_schema) : schema;
+      setEditing(savedCategory);
+      setForm(nextForm);
       if (savedCategory.form_schema) {
-        setSchema(applySchemaDefaults(savedCategory.form_schema));
+        setSchema(nextSchema);
       }
       setHierarchyComplete(Boolean(savedCategory.hierarchy_complete));
       if (wizardStep === "hierarchy" && savedCategory.hierarchy_complete) {
         setWizardStep("core");
       }
+      lastSavedSnapshotRef.current = JSON.stringify({
+        form: nextForm,
+        schema: nextSchema,
+        hierarchy_complete: Boolean(savedCategory.hierarchy_complete),
+      });
+      setLastSavedAt(formatTime(new Date()));
     }
+    if (status === "draft") {
+      showDraftToast({
+        title: "Taslak kaydedildi",
+        description: "Değişiklikler kaydedildi.",
+      });
+      dismissDraftToast(2000);
+    }
+    setAutosaveStatus("idle");
     fetchItems();
     if (closeOnSuccess) {
       setModalOpen(false);
