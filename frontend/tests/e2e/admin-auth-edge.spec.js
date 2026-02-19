@@ -2,11 +2,15 @@ const { test, expect } = require('@playwright/test');
 
 const adminCreds = { email: 'admin@platform.com', password: 'Admin123!' };
 
-const loginAdmin = async (page) => {
+const loginAdmin = async (page, { waitForPortal = true } = {}) => {
   await page.goto('/admin/login');
   await page.getByTestId('login-email').fill(adminCreds.email);
   await page.getByTestId('login-password').fill(adminCreds.password);
   await page.getByTestId('login-submit').click();
+  if (waitForPortal) {
+    await page.waitForURL(/\/admin/, { timeout: 60000 });
+    await expect(page.getByTestId('nav-catalog-categories')).toBeVisible({ timeout: 60000 });
+  }
 };
 
 test('FAZ-7 auth edge: expired token health-check', async ({ page }) => {
