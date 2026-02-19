@@ -1951,23 +1951,22 @@ const AdminCategories = () => {
                     Geri
                   </button>
                 )}
+                <button
+                  className="px-4 py-2 border rounded"
+                  onClick={handleDraftSave}
+                  data-testid="categories-save-draft"
+                >
+                  Taslak Kaydet
+                </button>
                 {wizardStep === "modules" ? (
-                  <>
-                    <button
-                      className="px-4 py-2 border rounded"
-                      onClick={() => handleSave("draft")}
-                      data-testid="categories-save-draft"
-                    >
-                      Taslak Kaydet
-                    </button>
-                    <button
-                      className="px-4 py-2 bg-blue-600 text-white rounded"
-                      onClick={() => handleSave("published")}
-                      data-testid="categories-publish"
-                    >
-                      Yayınla
-                    </button>
-                  </>
+                  <button
+                    className={`px-4 py-2 rounded text-white ${publishValidation.canPublish ? 'bg-blue-600' : 'bg-blue-300 cursor-not-allowed'}`}
+                    onClick={() => handleSave("published")}
+                    disabled={!publishValidation.canPublish}
+                    data-testid="categories-publish"
+                  >
+                    Yayınla
+                  </button>
                 ) : (
                   nextStep && (
                     <button
