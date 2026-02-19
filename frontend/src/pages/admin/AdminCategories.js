@@ -233,6 +233,10 @@ const AdminCategories = () => {
     setPreviewComplete(false);
   }, [schema, form, hierarchyComplete]);
 
+  useEffect(() => {
+    setPublishError("");
+  }, [wizardStep]);
+
   const parentOptions = useMemo(() => items.filter((item) => item.id !== editing?.id), [items, editing]);
 
   const resetForm = () => {
