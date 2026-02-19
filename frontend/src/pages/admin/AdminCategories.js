@@ -1343,18 +1343,20 @@ const AdminCategories = () => {
                     />
                     Aynı başlıkla ilanı engelle
                   </label>
-                  <select
-                    className={`${inputClassName} text-sm`}
-                    value={schema.title_uniqueness.scope}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      title_uniqueness: { ...prev.title_uniqueness, scope: e.target.value },
-                    }))}
-                    data-testid="categories-title-unique-scope"
-                  >
-                    <option value="category">Kategori genelinde</option>
-                    <option value="category_user">Kategori + kullanıcı</option>
-                  </select>
+                  {schema.title_uniqueness.enabled && (
+                    <select
+                      className={`${inputClassName} text-sm`}
+                      value={schema.title_uniqueness.scope}
+                      onChange={(e) => setSchema((prev) => ({
+                        ...prev,
+                        title_uniqueness: { ...prev.title_uniqueness, scope: e.target.value },
+                      }))}
+                      data-testid="categories-title-unique-scope"
+                    >
+                      <option value="category">Kategori genelinde</option>
+                      <option value="category_user">Kategori + kullanıcı</option>
+                    </select>
+                  )}
                 </div>
               </div>
 
