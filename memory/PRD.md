@@ -116,6 +116,9 @@
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
 ## Release Notes
+- Dashboard summary gerçek veriye bağlandı + Quick Actions aktif (users/countries/audit)
+- Dashboard summary endpoint (/api/admin/dashboard/summary) + RBAC + cache
+- Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
 - Admin imzası backlog’a alındı (sonraki faz)
