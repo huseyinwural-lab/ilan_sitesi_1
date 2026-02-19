@@ -82,13 +82,21 @@ test('Autosave conflict uyarısı gösterir', async ({ page, request }) => {
   await page.getByTestId('categories-step-next').click();
   await expect(page.getByTestId('categories-core-step')).toBeVisible({ timeout: 60000 });
 
-  await request.patch(`/api/admin/categories/${targetCategory.id}`, {
+  const freshRes = await request.get(`/api/admin/categories?country=DE`, {
     headers: { Authorization: `Bearer ${token}` },
-    data: {
-      name: `${targetCategory.name}-conflict`,
-      expected_updated_at: targetCategory.updated_at,
-    },
   });
+  const freshData = await freshRes.json();
+  const refreshed = (freshData.items || []).find((item) => item.id === targetCategory.id);
+
+  if (refreshed) {
+    await request.patch(`/api/admin/categories/${targetCategory.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        name: `${targetCategory.name}-conflict`,
+        expected_updated_at: refreshed.updated_at,
+      },
+    });
+  }
 
   await page.getByTestId('categories-title-min').fill('11');
   await page.waitForTimeout(3000);

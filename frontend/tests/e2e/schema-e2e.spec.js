@@ -144,6 +144,8 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await expect(page.getByTestId('categories-page')).toBeVisible({ timeout: 60000 });
     await page.getByTestId(`categories-edit-${savedCategory.id}`).click();
     await expect(page.getByTestId('categories-modal')).toBeVisible();
+    await page.getByTestId('categories-step-next').click();
+    await expect(page.getByTestId('category-step-preview')).toBeEnabled();
     await page.getByTestId('category-step-preview').click();
     await expect(page.getByTestId('categories-preview-step')).toBeVisible();
     await page.getByTestId('categories-preview-confirm').click();
