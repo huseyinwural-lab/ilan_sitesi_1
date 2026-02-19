@@ -1,0 +1,29 @@
+name: Lint Gate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Backend lint (ruff)
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+          ruff check backend
+
+      - name: Frontend lint (eslint)
+        working-directory: frontend
+        run: |
+          yarn install
+          npx eslint "src/**/*.{js,jsx}" --max-warnings=0
