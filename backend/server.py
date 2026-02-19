@@ -129,6 +129,34 @@ def _user_to_response(doc: dict) -> UserResponse:
     )
 
 
+def build_audit_entry(
+    event_type: str,
+    actor: dict,
+    target_id: str,
+    target_type: str,
+    country_code: Optional[str],
+    details: Optional[dict],
+    request: Optional[Request],
+) -> dict:
+    now_iso = datetime.now(timezone.utc).isoformat()
+    return {
+        "id": str(uuid.uuid4()),
+        "created_at": now_iso,
+        "event_type": event_type,
+        "action": event_type,
+        "resource_type": target_type,
+        "resource_id": target_id,
+        "admin_user_id": actor.get("id"),
+        "user_id": actor.get("id"),
+        "user_email": actor.get("email"),
+        "country_code": country_code,
+        "country_scope": actor.get("country_scope") or [],
+        "metadata": details or {},
+        "request_ip": request.client.host if request and request.client else None,
+        "applied": True,
+    }
+
+
 async def _ensure_admin_user(db):
     now_iso = datetime.now(timezone.utc).isoformat()
     admin_email = "admin@platform.com"
