@@ -48,6 +48,10 @@ test('Autosave conflict uyarısı gösterir', async ({ page, request }) => {
     }
   }
 
+  if (!targetCategory.form_schema || targetCategory.form_schema.status !== 'draft') {
+    test.skip(true, 'Autosave sadece draft şemalarda aktif');
+  }
+
   await editLocator.click({ force: true });
   await expect(page.getByTestId('categories-core-step')).toBeVisible({ timeout: 60000 });
 
