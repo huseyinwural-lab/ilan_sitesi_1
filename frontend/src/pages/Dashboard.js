@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   BarChart3,
   Lock,
+  Download,
 } from 'lucide-react';
 
 const TrendsSection = lazy(() => import('../components/admin/dashboard/TrendsSection'));
