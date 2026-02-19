@@ -2185,6 +2185,89 @@ const AdminCategories = () => {
                       </pre>
                     </div>
                   </details>
+
+                  <div className="rounded-lg border p-4 space-y-3" data-testid="categories-version-history">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-semibold">Versiyon Geçmişi</div>
+                      <span className="text-xs text-slate-500">Snapshot bazlı</span>
+                    </div>
+                    {versionsLoading ? (
+                      <div className="text-sm text-slate-500" data-testid="categories-version-loading">Yükleniyor...</div>
+                    ) : versionsError ? (
+                      <div className="text-sm text-rose-600" data-testid="categories-version-error">{versionsError}</div>
+                    ) : versions.length === 0 ? (
+                      <div className="text-sm text-slate-500" data-testid="categories-version-empty">Henüz versiyon yok.</div>
+                    ) : (
+                      <div className="space-y-2" data-testid="categories-version-list">
+                        {versions.map((version) => (
+                          <div key={version.id} className="flex flex-wrap items-center justify-between gap-3 border rounded px-3 py-2 text-sm" data-testid={`categories-version-row-${version.id}`}>
+                            <div className="space-y-1">
+                              <div className="font-medium" data-testid={`categories-version-label-${version.id}`}>v{version.version} · {version.status === 'published' ? 'Yayınlandı' : 'Taslak'}</div>
+                              <div className="text-xs text-slate-500" data-testid={`categories-version-meta-${version.id}`}>
+                                {version.created_at || '-'} · {version.created_by_email || '-'}
+                              </div>
+                            </div>
+                            <label className="flex items-center gap-2 text-xs text-slate-700" data-testid={`categories-version-select-wrapper-${version.id}`}>
+                              <input
+                                type="checkbox"
+                                checked={selectedVersions.includes(version.id)}
+                                onChange={() => handleVersionSelect(version.id)}
+                                data-testid={`categories-version-select-${version.id}`}
+                              />
+                              Karşılaştır
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500" data-testid="categories-version-selection-hint">
+                      2 versiyon seçildiğinde diff görünür.
+                      {selectedVersions.length > 0 && (
+                        <button
+                          type="button"
+                          className="px-2 py-1 border rounded text-xs"
+                          onClick={() => setSelectedVersions([])}
+                          data-testid="categories-version-clear"
+                        >
+                          Seçimi temizle
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {selectedVersions.length === 2 && versionCompare.left && versionCompare.right && (
+                    <div className="rounded-lg border p-4 space-y-3" data-testid="categories-version-compare">
+                      <div className="text-sm font-semibold">Versiyon Karşılaştırma</div>
+                      {versionCompare.diffPaths.length > 0 ? (
+                        <div className="text-xs text-amber-700" data-testid="categories-version-diff-count">
+                          {versionCompare.diffPaths.length} farklı alan bulundu.
+                        </div>
+                      ) : (
+                        <div className="text-xs text-emerald-700" data-testid="categories-version-diff-empty">Fark bulunamadı.</div>
+                      )}
+                      {versionCompare.diffPaths.length > 0 && (
+                        <ul className="list-disc pl-5 space-y-1 text-xs text-slate-600 max-h-32 overflow-auto" data-testid="categories-version-diff-list">
+                          {versionCompare.diffPaths.slice(0, 20).map((path, index) => (
+                            <li key={`diff-${index}`} data-testid={`categories-version-diff-${index}`}>{path}</li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <div className="text-xs font-semibold text-slate-600" data-testid="categories-version-left-label">v{versionCompare.left.version}</div>
+                          <pre className="text-xs bg-slate-900 text-slate-100 p-3 rounded overflow-auto max-h-64" data-testid="categories-version-left-json">
+                            {JSON.stringify(versionCompare.left.schema_snapshot, null, 2)}
+                          </pre>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-xs font-semibold text-slate-600" data-testid="categories-version-right-label">v{versionCompare.right.version}</div>
+                          <pre className="text-xs bg-slate-900 text-slate-100 p-3 rounded overflow-auto max-h-64" data-testid="categories-version-right-json">
+                            {JSON.stringify(versionCompare.right.schema_snapshot, null, 2)}
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
                 </div>
