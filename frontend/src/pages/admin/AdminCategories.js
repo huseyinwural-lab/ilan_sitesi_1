@@ -682,7 +682,7 @@ const AdminCategories = () => {
         schema: nextSchema,
         hierarchy_complete: Boolean(savedCategory.hierarchy_complete),
       });
-      setLastSavedAt(formatTime(new Date()));
+      setLastSavedAt(formatTime(savedCategory.updated_at || new Date()));
     }
     if (status === "draft") {
       showDraftToast({
