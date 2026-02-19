@@ -11,6 +11,11 @@ module.exports = [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
       globals: {
         ...globals.browser,
         ...globals.node,
