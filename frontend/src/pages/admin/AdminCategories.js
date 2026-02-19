@@ -1894,7 +1894,6 @@ const AdminCategories = () => {
       </div>
       )}
     </div>
-    </div>
   );
 };
 
