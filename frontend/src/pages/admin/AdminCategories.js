@@ -437,11 +437,11 @@ const AdminCategories = () => {
 
     if (!name || !slug) {
       setHierarchyError("Ana kategori adı ve slug zorunludur.");
-      return;
+      return { success: false };
     }
     if (!country) {
       setHierarchyError("Ülke (country) zorunludur.");
-      return;
+      return { success: false };
     }
 
     const cleanedSubs = subcategories
