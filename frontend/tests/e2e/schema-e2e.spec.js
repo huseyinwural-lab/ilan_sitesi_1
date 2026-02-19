@@ -156,6 +156,29 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     expect(savedCategory).toBeTruthy();
     expect(savedCategory.form_schema.status).toBe('draft');
 
+    const versionsRes = await request.get(`/api/admin/categories/${savedCategory.id}/versions`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(versionsRes.ok()).toBeTruthy();
+    const versionsData = await versionsRes.json();
+    const versionValue = versionsData.items?.[0]?.version || 0;
+
+    const pdfRes = await request.get(`/api/admin/categories/${savedCategory.id}/export/pdf`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(pdfRes.status()).toBe(200);
+    const pdfHeaders = pdfRes.headers();
+    expect(pdfHeaders['content-type']).toContain('application/pdf');
+    expect(pdfHeaders['content-disposition']).toContain(`schema-${savedCategory.id}-v${versionValue}-`);
+
+    const csvRes = await request.get(`/api/admin/categories/${savedCategory.id}/export/csv`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(csvRes.status()).toBe(200);
+    const csvHeaders = csvRes.headers();
+    expect(csvHeaders['content-type']).toContain('text/csv');
+    expect(csvHeaders['content-disposition']).toContain(`schema-${savedCategory.id}-v${versionValue}-`);
+
     await expect(page.getByTestId('categories-page')).toBeVisible({ timeout: 60000 });
     await page.getByTestId(`categories-edit-${savedCategory.id}`).click();
     await expect(page.getByTestId('categories-modal')).toBeVisible();
