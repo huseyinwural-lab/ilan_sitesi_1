@@ -509,7 +509,7 @@ const AdminCategories = () => {
         if (!childRes.ok) {
           const childData = await childRes.json();
           setHierarchyError(childData?.detail || "Alt kategori oluşturulamadı.");
-          return;
+          return { success: false };
         }
       }
 
