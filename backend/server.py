@@ -5035,7 +5035,7 @@ def _apply_listing_payload(listing: dict, payload: dict) -> tuple[dict, dict]:
 async def submit_vehicle_listing(
     listing_id: str,
     payload: dict = Body(default={}),
-    request: Request = None,
+    request: Request,
     current_user=Depends(get_current_user),
 ):
     db = request.app.state.db
