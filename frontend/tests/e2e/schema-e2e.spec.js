@@ -64,7 +64,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await page.getByTestId('categories-dynamic-draft-label').fill('Ekstra Seçim');
     await page.getByTestId('categories-dynamic-draft-key').fill(dynamicKey);
     await page.getByTestId('categories-dynamic-draft-options').fill('A, B');
-    await page.getByTestId('categories-dynamic-draft-required').click();
+    await page.getByTestId('categories-dynamic-draft-required-input').check();
     await page.getByTestId('categories-dynamic-next').click();
 
     await page.getByTestId('categories-step-next').click();
