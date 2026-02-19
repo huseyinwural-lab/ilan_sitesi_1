@@ -6352,14 +6352,19 @@ async def _build_country_compare_payload(
     start_iso = period_start.isoformat()
     end_iso = period_end.isoformat()
 
+    if selected_codes:
+        selected_codes = [code.upper() for code in selected_codes]
+
     if role == "country_admin":
         if not scope:
             raise HTTPException(status_code=403, detail="Country scope required")
+        if selected_codes and not set(selected_codes).issubset(set(scope)):
+            raise HTTPException(status_code=403, detail="Country scope violation")
         effective_countries = scope
     else:
         effective_countries = None
 
-    cache_key = _country_compare_cache_key(role, effective_countries, period, start_date, end_date, sort_by, sort_dir)
+    cache_key = _country_compare_cache_key(role, effective_countries, selected_codes, period, start_date, end_date, sort_by, sort_dir)
     cached = _get_cached_country_compare(cache_key)
     if cached:
         return cached
