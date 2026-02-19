@@ -6446,6 +6446,9 @@ async def _build_country_compare_payload(
         if (doc.get("country_code") or doc.get("code"))
     ]
 
+    if selected_codes:
+        country_codes = [code for code in country_codes if code in selected_codes]
+
     async def count_listings(code: str, start: datetime, end: datetime, status: Optional[str] = None) -> int:
         query: Dict[str, Any] = {"country": code, "created_at": {"$gte": start.isoformat(), "$lt": end.isoformat()}}
         if status:
