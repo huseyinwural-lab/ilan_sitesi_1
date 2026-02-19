@@ -883,8 +883,9 @@ const AdminCategories = () => {
                     <div className="mt-2 text-xs text-slate-500">Sıra: {form.sort_order || 0}</div>
                   </div>
 
-              <div className="border-t pt-4 space-y-4">
-                <h3 className="text-md font-semibold">Çekirdek Alanlar</h3>
+              {wizardStep === "core" ( (
+                (div className="border-t pt-4 space-y-4" data-testid="categories-core-step")
+                  <h3 className="text-md font-semibold">Çekirdek Alanlar</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <label className="flex items-center gap-2 text-sm text-slate-800">
                     <input
