@@ -20,6 +20,18 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
+  useEffect(() => {
+    const handleStorage = (event) => {
+      if (event.key === 'access_token' && !event.newValue) {
+        delete axios.defaults.headers.common['Authorization'];
+        setToken(null);
+        setUser(null);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
   const fetchUser = async () => {
     try {
       const response = await axios.get(`${API}/auth/me`);
