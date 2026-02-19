@@ -137,8 +137,13 @@ const DetailPage = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="listing-title">{listing.title}</h1>
               <div className="text-2xl font-bold text-blue-600" data-testid="listing-price">
-                {listing.price.toLocaleString()} {listing.currency}
+                {listing.price ? listing.price.toLocaleString() : '-'} {listing.currency || ''}
               </div>
+              {listing.secondary_price && listing.secondary_currency && (
+                <div className="text-sm text-gray-500" data-testid="listing-secondary-price">
+                  {listing.secondary_price.toLocaleString()} {listing.secondary_currency}
+                </div>
+              )}
               <div className="text-gray-500 mt-1" data-testid="listing-location">
                 {location.city || ''} {location.country || ''}
               </div>
