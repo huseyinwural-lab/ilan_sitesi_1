@@ -1025,7 +1025,7 @@ const AdminCategories = () => {
                 <h3 className="text-md font-semibold">Sabit Modüller</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                   {Object.keys(schema.modules).map((key) => (
-                    <label key={key} className="flex items-center gap-2">
+                    <label key={key} className="flex items-center gap-2 text-slate-800">
                       <input
                         type="checkbox"
                         checked={schema.modules[key].enabled}
