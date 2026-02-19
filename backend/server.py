@@ -5420,6 +5420,73 @@ async def _dashboard_metrics(db, country_code: str) -> dict:
     }
 
 
+async def _dashboard_metrics(db, country_code: str) -> dict:
+    total_listings = await db.vehicle_listings.count_documents({"country": country_code})
+    published_listings = await db.vehicle_listings.count_documents({"country": country_code, "status": "published"})
+    pending_moderation = await db.vehicle_listings.count_documents({"country": country_code, "status": "pending_moderation"})
+    active_dealers = await db.users.count_documents({"role": "dealer", "dealer_status": "active", "country_code": country_code})
+
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_start_iso = month_start.isoformat()
+    invoices = await db.invoices.find({
+        "country_code": country_code,
+        "status": "paid",
+        "paid_at": {"$gte": month_start_iso},
+    }, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
+    totals: Dict[str, float] = {}
+    for inv in invoices:
+        currency = inv.get("currency") or "UNKNOWN"
+        totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
+    revenue_mtd = sum(totals.values())
+
+    return {
+        "total_listings": total_listings,
+        "published_listings": published_listings,
+        "pending_moderation": pending_moderation,
+        "active_dealers": active_dealers,
+        "revenue_mtd": round(revenue_mtd, 2),
+        "revenue_currency_totals": {k: round(v, 2) for k, v in totals.items()},
+        "month_start_utc": month_start_iso,
+    }
+
+
+async def _dashboard_metrics_scope(db, country_codes: Optional[List[str]]) -> dict:
+    listing_query: Dict[str, Any] = {}
+    user_query: Dict[str, Any] = {}
+    invoice_query: Dict[str, Any] = {"status": "paid"}
+    if country_codes:
+        listing_query["country"] = {"$in": country_codes}
+        user_query["country_code"] = {"$in": country_codes}
+        invoice_query["country_code"] = {"$in": country_codes}
+
+    total_listings = await db.vehicle_listings.count_documents(listing_query)
+    published_listings = await db.vehicle_listings.count_documents({**listing_query, "status": "published"})
+    pending_moderation = await db.vehicle_listings.count_documents({**listing_query, "status": "pending_moderation"})
+    active_dealers = await db.users.count_documents({**user_query, "role": "dealer", "dealer_status": "active"})
+
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_start_iso = month_start.isoformat()
+    invoice_query["paid_at"] = {"$gte": month_start_iso}
+    invoices = await db.invoices.find(invoice_query, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
+    totals: Dict[str, float] = {}
+    for inv in invoices:
+        currency = inv.get("currency") or "UNKNOWN"
+        totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
+    revenue_mtd = sum(totals.values())
+
+    return {
+        "total_listings": total_listings,
+        "published_listings": published_listings,
+        "pending_moderation": pending_moderation,
+        "active_dealers": active_dealers,
+        "revenue_mtd": round(revenue_mtd, 2),
+        "revenue_currency_totals": {k: round(v, 2) for k, v in totals.items()},
+        "month_start_utc": month_start_iso,
+    }
+
+
 @api_router.get("/admin/dashboard/summary")
 async def admin_dashboard_summary(
     request: Request,
@@ -5428,12 +5495,141 @@ async def admin_dashboard_summary(
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
-    if not country:
-        raise HTTPException(status_code=400, detail="country is required")
-    country_code = country.upper()
-    _assert_country_scope(country_code, current_user)
-    metrics = await _dashboard_metrics(db, country_code)
-    return {"country_code": country_code, **metrics}
+
+    role = current_user.get("role")
+    scope = (current_user.get("country_scope") or [])
+    country_code = country.upper() if country else None
+
+    if role == "country_admin":
+        if not scope:
+            raise HTTPException(status_code=403, detail="Country scope required")
+        if country_code and country_code not in scope:
+            raise HTTPException(status_code=403, detail="Country scope violation")
+        effective_countries = [country_code] if country_code else scope
+    else:
+        effective_countries = [country_code] if country_code else None
+
+    cache_key = _dashboard_cache_key(role, effective_countries)
+    cached = _get_cached_dashboard_summary(cache_key)
+    if cached:
+        return cached
+
+    metrics = await _dashboard_metrics_scope(db, effective_countries)
+
+    active_country_query: Dict[str, Any] = {"active_flag": True}
+    if effective_countries:
+        active_country_query["$or"] = [
+            {"country_code": {"$in": effective_countries}},
+            {"code": {"$in": effective_countries}},
+        ]
+    active_countries_docs = await db.countries.find(active_country_query, {"_id": 0, "country_code": 1, "code": 1}).to_list(length=1000)
+    active_country_codes = [
+        (doc.get("country_code") or doc.get("code")) for doc in active_countries_docs if (doc.get("country_code") or doc.get("code"))
+    ]
+
+    user_scope_query: Dict[str, Any] = {}
+    if effective_countries:
+        user_scope_query["country_code"] = {"$in": effective_countries}
+    total_users = await db.users.count_documents(user_scope_query)
+    active_users = await db.users.count_documents({**user_scope_query, "$or": [{"is_active": True}, {"is_active": {"$exists": False}}]})
+    inactive_users = await db.users.count_documents({**user_scope_query, "is_active": False})
+
+    role_distribution = {}
+    for role_name in ["super_admin", "country_admin", "moderator", "support", "finance", "dealer", "individual"]:
+        role_distribution[role_name] = await db.users.count_documents({**user_scope_query, "role": role_name})
+
+    categories_query: Dict[str, Any] = {}
+    if effective_countries:
+        categories_query["$or"] = [
+            {"country_code": {"$in": effective_countries}},
+            {"country_code": None},
+            {"country_code": ""},
+        ]
+    categories = await db.categories.find(categories_query, {"_id": 0, "form_schema": 1}).to_list(length=2000)
+    active_modules = set()
+    for cat in categories:
+        schema = _normalize_category_schema(cat.get("form_schema")) if cat.get("form_schema") else {}
+        for key, module in (schema.get("modules") or {}).items():
+            enabled = bool(module.get("enabled")) if isinstance(module, dict) else bool(module)
+            if enabled:
+                active_modules.add(key)
+
+    recent_query: Dict[str, Any] = {}
+    if effective_countries:
+        recent_query["country_code"] = {"$in": effective_countries}
+    recent_logs = await db.audit_logs.find(recent_query, {"_id": 0}).sort("created_at", -1).limit(10).to_list(length=10)
+    recent_activity = [
+        {
+            "id": log.get("id"),
+            "event_type": log.get("event_type") or log.get("action"),
+            "action": log.get("action"),
+            "resource_type": log.get("resource_type") or log.get("subject_type"),
+            "user_email": log.get("user_email"),
+            "created_at": log.get("created_at"),
+            "country_code": log.get("country_code"),
+        }
+        for log in recent_logs
+    ]
+
+    since_iso = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    listing_recent_query = {"created_at": {"$gte": since_iso}}
+    if effective_countries:
+        listing_recent_query["country"] = {"$in": effective_countries}
+    new_listings = await db.vehicle_listings.count_documents(listing_recent_query)
+
+    user_recent_query = {"created_at": {"$gte": since_iso}}
+    if effective_countries:
+        user_recent_query["country_code"] = {"$in": effective_countries}
+    new_users = await db.users.count_documents(user_recent_query)
+
+    delete_query = {
+        "event_type": {"$in": ["LISTING_SOFT_DELETE", "LISTING_FORCE_UNPUBLISH"]},
+        "created_at": {"$gte": since_iso},
+    }
+    if effective_countries:
+        delete_query["country_code"] = {"$in": effective_countries}
+    deleted_content = await db.audit_logs.count_documents(delete_query)
+
+    db_status = "ok"
+    try:
+        await db.command("ping")
+    except Exception:
+        db_status = "error"
+
+    summary = {
+        "scope": "country" if effective_countries else "global",
+        "country_codes": effective_countries or active_country_codes,
+        "users": {
+            "total": total_users,
+            "active": active_users,
+            "inactive": inactive_users,
+        },
+        "active_countries": {
+            "count": len(active_country_codes),
+            "codes": active_country_codes,
+        },
+        "active_modules": {
+            "count": len(active_modules),
+            "items": sorted(active_modules),
+        },
+        "recent_activity": recent_activity,
+        "role_distribution": role_distribution,
+        "activity_24h": {
+            "new_listings": new_listings,
+            "new_users": new_users,
+            "deleted_content": deleted_content,
+        },
+        "health": {
+            "api_status": "ok",
+            "db_status": db_status,
+            "deployed_at": os.environ.get("DEPLOYED_AT") or "unknown",
+        },
+        "metrics": metrics,
+    }
+
+    _set_cached_dashboard_summary(cache_key, summary)
+    return summary
+
 
 
 @api_router.get("/admin/dashboard/country-compare")
