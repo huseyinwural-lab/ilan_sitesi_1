@@ -114,6 +114,7 @@ const WIZARD_STEPS = [
   { id: "dynamic", label: "Parametre Alanları (2a)" },
   { id: "detail", label: "Detay Grupları (2c)" },
   { id: "modules", label: "Modüller" },
+  { id: "preview", label: "Önizleme" },
 ];
 
 const createId = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
