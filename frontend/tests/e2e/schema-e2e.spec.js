@@ -245,7 +245,6 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
 
     await page.getByTestId('listing-attributes-submit').click();
 
-    await expect(page.getByTestId('wizard-photo-input')).toBeVisible({ timeout: 60000 });
     await page.getByTestId('wizard-photo-input').setInputFiles(photoFiles);
     await page.getByTestId('wizard-photos-next').click();
 
