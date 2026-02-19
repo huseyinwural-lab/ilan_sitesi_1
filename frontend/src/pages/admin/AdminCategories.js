@@ -1852,7 +1852,7 @@ const AdminCategories = () => {
                     ))}
                   </div>
 
-                  {schema.modules.photos?.enabled && (
+                  {isPhotosEnabled && (
                     <div className="space-y-1">
                       <label className={labelClassName}>Foto limit</label>
                       <input
