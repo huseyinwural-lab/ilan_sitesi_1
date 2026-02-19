@@ -1055,6 +1055,9 @@ const AdminCategories = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <input
                     type="number"
+                    min={0}
+                    max={10000}
+                    aria-label="Açıklama min"
                     className={inputClassName}
                     placeholder="Açıklama min"
                     value={schema.core_fields.description.min}
