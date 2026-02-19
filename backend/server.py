@@ -780,8 +780,8 @@ async def list_categories(
 @api_router.get("/catalog/schema")
 async def get_catalog_schema(
     category_id: str,
+    request: Request,
     country: str | None = None,
-    request: Request = None,
 ):
     db = request.app.state.db
     category = await db.categories.find_one({"id": category_id, "active_flag": True})
