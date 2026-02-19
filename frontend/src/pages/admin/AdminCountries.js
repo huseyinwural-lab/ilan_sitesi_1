@@ -158,7 +158,7 @@ export default function AdminCountriesPage() {
           className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
           data-testid="countries-create-open"
         >
-          Yeni Country
+          Yeni Ülke
         </button>
       </div>
 
