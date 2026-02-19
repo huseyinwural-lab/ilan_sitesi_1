@@ -458,6 +458,8 @@ async def lifespan(app: FastAPI):
     # Seed dealer user (dev/test only)
     if os.environ.get("ENV", "dev") != "production":
         await _ensure_dealer_user(db)
+        await _ensure_test_user(db)
+        await _ensure_fixture_category_schema(db)
 
     # Seed countries
     now_iso = datetime.now(timezone.utc).isoformat()
