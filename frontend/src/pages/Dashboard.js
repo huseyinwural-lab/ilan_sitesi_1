@@ -299,7 +299,7 @@ const RiskPanel = ({ data, canViewFinance }) => {
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Moderasyon SLA ihlali</div>
-              <div className="text-xs text-muted-foreground">> {sla?.threshold || '-'} saat bekleyen ilan</div>
+              <div className="text-xs text-muted-foreground">{'>'} {sla?.threshold || '-'} saat bekleyen ilan</div>
             </div>
             <div className="text-lg font-semibold" data-testid="risk-sla-count">{formatNumber(sla?.count || 0)}</div>
           </div>
