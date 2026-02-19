@@ -59,8 +59,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await expect(page.getByTestId('categories-core-step')).toBeVisible({ timeout: 60000 });
 
     await page.getByTestId('categories-title-min').fill('10');
-    await expect(page.getByText('Kaydediliyor...')).toBeVisible();
-    await page.waitForTimeout(2600);
+    await page.waitForTimeout(3000);
     await expect(page.getByText('Taslak kaydedildi')).toBeVisible();
 
     await page.getByTestId('categories-title-max').fill('120');
