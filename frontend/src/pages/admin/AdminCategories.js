@@ -166,6 +166,11 @@ const AdminCategories = () => {
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
   }), []);
 
+  const currentStepIndex = WIZARD_STEPS.findIndex((step) => step.id === wizardStep);
+  const nextStep = WIZARD_STEPS[currentStepIndex + 1]?.id;
+  const prevStep = WIZARD_STEPS[currentStepIndex - 1]?.id;
+  const schemaStatusLabel = schema.status === "published" ? "Yayında" : "Taslak";
+
   const fetchItems = async () => {
     setLoading(true);
     try {
