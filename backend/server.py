@@ -663,6 +663,86 @@ def _set_cached_dashboard_summary(cache_key: str, data: Dict[str, Any]) -> None:
     _dashboard_summary_cache[cache_key] = {"timestamp": time.time(), "data": data}
 
 
+def _get_cached_country_compare(cache_key: str) -> Optional[Dict[str, Any]]:
+    entry = _country_compare_cache.get(cache_key)
+    if not entry:
+        return None
+    if (time.time() - entry.get("timestamp", 0)) > COUNTRY_COMPARE_CACHE_TTL_SECONDS:
+        _country_compare_cache.pop(cache_key, None)
+        return None
+    return entry.get("data")
+
+
+def _set_cached_country_compare(cache_key: str, data: Dict[str, Any]) -> None:
+    _country_compare_cache[cache_key] = {"timestamp": time.time(), "data": data}
+
+
+def _fetch_ecb_rates() -> Optional[Dict[str, float]]:
+    try:
+        with urllib.request.urlopen(ECB_DAILY_URL, timeout=20) as response:
+            xml_bytes = response.read()
+        root = ET.fromstring(xml_bytes)
+        ns = {
+            "gesmes": "http://www.gesmes.org/xml/2002-08-01",
+            "ecb": "http://www.ecb.int/vocabulary/2002-08-01/eurofxref",
+        }
+        rates: Dict[str, float] = {ECB_RATE_BASE: 1.0}
+        for cube in root.findall(".//ecb:Cube[@currency]", ns):
+            currency = cube.get("currency")
+            rate = cube.get("rate")
+            if currency and rate:
+                try:
+                    rates[currency.upper()] = float(rate)
+                except ValueError:
+                    continue
+        return rates
+    except Exception:
+        return None
+
+
+def _get_ecb_rates() -> Dict[str, Any]:
+    now = time.time()
+    if _ecb_rates_cache.get("rates") and (now - _ecb_rates_cache.get("timestamp", 0)) < ECB_CACHE_TTL_SECONDS:
+        return _ecb_rates_cache
+
+    rates = _fetch_ecb_rates()
+    if rates:
+        fetched_at = datetime.now(timezone.utc).isoformat()
+        _ecb_rates_cache.update({
+            "timestamp": now,
+            "rates": rates,
+            "last_success_at": fetched_at,
+            "fallback": False,
+        })
+        global _ecb_rates_fallback
+        _ecb_rates_fallback = dict(_ecb_rates_cache)
+        return _ecb_rates_cache
+
+    if _ecb_rates_fallback and _ecb_rates_fallback.get("rates"):
+        fallback = dict(_ecb_rates_fallback)
+        fallback["fallback"] = True
+        _ecb_rates_cache.update(fallback)
+        _ecb_rates_cache["timestamp"] = now
+        return _ecb_rates_cache
+
+    return {
+        "timestamp": now,
+        "rates": {ECB_RATE_BASE: 1.0},
+        "last_success_at": None,
+        "fallback": True,
+    }
+
+
+def _convert_to_eur(amount: float, currency: Optional[str], rates: Dict[str, float]) -> Optional[float]:
+    if amount is None:
+        return None
+    currency_code = (currency or ECB_RATE_BASE).upper()
+    rate = rates.get(currency_code)
+    if not rate or rate == 0:
+        return None
+    return round(float(amount) / rate, 4)
+
+
 def _format_uptime(seconds: int) -> str:
     if seconds < 0:
         return "0s"
