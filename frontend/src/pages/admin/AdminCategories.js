@@ -5,7 +5,7 @@ import { useCountry } from "../../contexts/CountryContext";
 const createDefaultSchema = () => ({
   core_fields: {
     title: {
-      required: True,
+      required: true,
       min: 10,
       max: 120,
       custom_rule: "",
@@ -16,10 +16,10 @@ const createDefaultSchema = () => ({
         max: "Başlık çok uzun.",
         duplicate: "Bu başlık zaten kullanılıyor.",
       },
-      ui: { bold: True, high_contrast: True },
+      ui: { bold: true, high_contrast: true },
     },
     description: {
-      required: True,
+      required: true,
       min: 30,
       max: 4000,
       custom_rule: "",
@@ -29,13 +29,13 @@ const createDefaultSchema = () => ({
         min: "Açıklama çok kısa.",
         max: "Açıklama çok uzun.",
       },
-      ui: { min_rows: 6, auto_grow: True, show_counter: True },
+      ui: { min_rows: 6, auto_grow: true, show_counter: true },
     },
     price: {
-      required: True,
+      required: true,
       currency_primary: "EUR",
       currency_secondary: "CHF",
-      secondary_enabled: False,
+      secondary_enabled: false,
       decimal_places: 0,
       range: { min: 0, max: None },
       messages: {
@@ -48,14 +48,14 @@ const createDefaultSchema = () => ({
   dynamic_fields: [],
   detail_groups: [],
   modules: {
-    address: { enabled: True },
-    photos: { enabled: True, max_uploads: 12 },
-    contact: { enabled: True },
-    payment: { enabled: True },
+    address: { enabled: true },
+    photos: { enabled: true, max_uploads: 12 },
+    contact: { enabled: true },
+    payment: { enabled: true },
   },
-  payment_options: { package: True, doping: False },
+  payment_options: { package: true, doping: false },
   module_order: ["core_fields", "dynamic_fields", "address", "detail_groups", "photos", "contact", "payment"],
-  title_uniqueness: { enabled: False, scope: "category" },
+  title_uniqueness: { enabled: false, scope: "category" },
 });
 
 const applySchemaDefaults = (incoming) => {
@@ -570,7 +570,7 @@ const AdminCategories = () => {
                             key: "",
                             type: "select",
                             options: [],
-                            required: False,
+                            required: false,
                             sort_order: 0,
                             messages: { required: "", invalid: "" },
                           },
@@ -614,7 +614,7 @@ const AdminCategories = () => {
                       className="border rounded p-2 w-full"
                       placeholder="Seçenekler (virgülle)"
                       value={(field.options || []).join(', ')}
-                      onChange={(e) => updateDynamicField(index, { options: e.target.value.split(',').map((o) => o.strip()).filter(Boolean) })}
+                      onChange={(e) => updateDynamicField(index, { options: e.target.value.split(',').map((o) => o.trim()).filter(Boolean) })}
                       data-testid={`categories-dynamic-options-${index}`}
                     />
                     <div className="flex items-center gap-3 text-sm">
@@ -668,7 +668,7 @@ const AdminCategories = () => {
                             id: createId('group'),
                             title: "",
                             options: [],
-                            required: False,
+                            required: false,
                             sort_order: 0,
                             messages: { required: "", invalid: "" },
                           },
@@ -695,7 +695,7 @@ const AdminCategories = () => {
                         className="border rounded p-2"
                         placeholder="Seçenekler (virgülle)"
                         value={(group.options || []).join(', ')}
-                        onChange={(e) => updateDetailGroup(index, { options: e.target.value.split(',').map((o) => o.strip()).filter(Boolean) })}
+                        onChange={(e) => updateDetailGroup(index, { options: e.target.value.split(',').map((o) => o.trim()).filter(Boolean) })}
                         data-testid={`categories-group-options-${index}`}
                       />
                       <input
