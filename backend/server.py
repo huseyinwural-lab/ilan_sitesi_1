@@ -778,6 +778,8 @@ DASHBOARD_CACHE_TTL_SECONDS = int(os.environ.get("DASHBOARD_CACHE_TTL_SECONDS", 
 COUNTRY_COMPARE_CACHE_TTL_SECONDS = 60
 _dashboard_summary_cache: Dict[str, Dict[str, Any]] = {}
 _country_compare_cache: Dict[str, Dict[str, Any]] = {}
+_ecb_rates_cache: Dict[str, Any] = {"timestamp": 0, "rates": None, "last_success_at": None, "fallback": False}
+_ecb_rates_fallback: Optional[Dict[str, Any]] = None
 _dashboard_cache_hits = 0
 _dashboard_cache_misses = 0
 
