@@ -55,6 +55,7 @@ const createDefaultSchema = () => ({
   payment_options: { package: true, doping: false },
   module_order: ["core_fields", "dynamic_fields", "address", "detail_groups", "photos", "contact", "payment"],
   title_uniqueness: { enabled: false, scope: "category" },
+  status: "draft",
 });
 
 const applySchemaDefaults = (incoming) => {
