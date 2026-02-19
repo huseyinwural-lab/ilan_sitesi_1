@@ -885,484 +885,548 @@ const AdminCategories = () => {
                   </div>
 
               {wizardStep === "core" && (
-                <div className="border-t pt-4 space-y-4" data-testid="categories-core-step">
+                <div className="border-t pt-4 space-y-6" data-testid="categories-core-step">
                   <h3 className="text-md font-semibold">Çekirdek Alanlar</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <label className="flex items-center gap-2 text-sm text-slate-800">
-                    <input
-                      type="checkbox"
-                      checked={schema.core_fields.title.required}
-                      onChange={(e) => setSchema((prev) => ({
-                        ...prev,
-                        core_fields: {
-                          ...prev.core_fields,
-                          title: { ...prev.core_fields.title, required: e.target.checked },
-                        },
-                      }))}
-                      data-testid="categories-title-required"
-                    />
-                    Başlık zorunlu
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-800">
-                    <input
-                      type="checkbox"
-                      checked={schema.core_fields.description.required}
-                      onChange={(e) => setSchema((prev) => ({
-                        ...prev,
-                        core_fields: {
-                          ...prev.core_fields,
-                          description: { ...prev.core_fields.description, required: e.target.checked },
-                        },
-                      }))}
-                      data-testid="categories-description-required"
-                    />
-                    Açıklama zorunlu
-                  </label>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <input
-                    type="number"
-                    min={0}
-                    max={200}
-                    aria-label="Başlık min"
-                    className={inputClassName}
-                    placeholder="Başlık min"
-                    value={schema.core_fields.title.min}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        title: { ...prev.core_fields.title, min: Number(e.target.value) },
-                      },
-                    }))}
-                    data-testid="categories-title-min"
-                  />
-                  <input
-                    type="number"
-                    min={0}
-                    max={200}
-                    aria-label="Başlık max"
-                    className={inputClassName}
-                    placeholder="Başlık max"
-                    value={schema.core_fields.title.max}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        title: { ...prev.core_fields.title, max: Number(e.target.value) },
-                      },
-                    }))}
-                    data-testid="categories-title-max"
-                  />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Başlık custom rule (regex)"
-                    value={schema.core_fields.title.custom_rule}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        title: { ...prev.core_fields.title, custom_rule: e.target.value },
-                      },
-                    }))}
-                    data-testid="categories-title-custom-rule"
-                  />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Başlık required mesajı"
-                    value={schema.core_fields.title.messages.required}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        title: {
-                          ...prev.core_fields.title,
-                          messages: { ...prev.core_fields.title.messages, required: e.target.value },
-                        },
-                      },
-                    }))}
-                    data-testid="categories-title-required-message"
-                  />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Başlık min mesajı"
-                    value={schema.core_fields.title.messages.min}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        title: {
-                          ...prev.core_fields.title,
-                          messages: { ...prev.core_fields.title.messages, min: e.target.value },
-                        },
-                      },
-                    }))}
-                    data-testid="categories-title-min-message"
-                  />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Başlık max mesajı"
-                    value={schema.core_fields.title.messages.max}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        title: {
-                          ...prev.core_fields.title,
-                          messages: { ...prev.core_fields.title.messages, max: e.target.value },
-                        },
-                      },
-                    }))}
-                    data-testid="categories-title-max-message"
-                  />
-                  {schema.title_uniqueness.enabled && (
-                    <input
-                      type="text"
-                      className={inputClassName}
-                      placeholder="Başlık duplicate mesajı"
-                      value={schema.core_fields.title.messages.duplicate}
-                      onChange={(e) => setSchema((prev) => ({
-                        ...prev,
-                        core_fields: {
-                          ...prev.core_fields,
-                          title: {
-                            ...prev.core_fields.title,
-                            messages: { ...prev.core_fields.title.messages, duplicate: e.target.value },
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-slate-700">Başlık</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <label className="flex items-center gap-2 text-sm text-slate-800">
+                        <input
+                          type="checkbox"
+                          checked={schema.core_fields.title.required}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              title: { ...prev.core_fields.title, required: e.target.checked },
+                            },
+                          }))}
+                          data-testid="categories-title-required"
+                        />
+                        Başlık zorunlu
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-slate-800">
+                        <input
+                          type="checkbox"
+                          checked={schema.title_uniqueness.enabled}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            title_uniqueness: { ...prev.title_uniqueness, enabled: e.target.checked },
+                          }))}
+                          data-testid="categories-title-unique-toggle"
+                        />
+                        Başlık benzersizliği
+                      </label>
+                    </div>
+
+                    {schema.title_uniqueness.enabled && (
+                      <select
+                        className={`${inputClassName} text-sm`}
+                        value={schema.title_uniqueness.scope}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          title_uniqueness: { ...prev.title_uniqueness, scope: e.target.value },
+                        }))}
+                        data-testid="categories-title-unique-scope"
+                      >
+                        <option value="category">Kategori genelinde</option>
+                        <option value="category_user">Kategori + kullanıcı</option>
+                      </select>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Başlık min</label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={200}
+                          aria-label="Başlık min"
+                          className={inputClassName}
+                          value={schema.core_fields.title.min}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              title: { ...prev.core_fields.title, min: Number(e.target.value) },
+                            },
+                          }))}
+                          data-testid="categories-title-min"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Başlık max</label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={200}
+                          aria-label="Başlık max"
+                          className={inputClassName}
+                          value={schema.core_fields.title.max}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              title: { ...prev.core_fields.title, max: Number(e.target.value) },
+                            },
+                          }))}
+                          data-testid="categories-title-max"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Başlık custom rule (regex)</label>
+                        <input
+                          type="text"
+                          className={inputClassName}
+                          value={schema.core_fields.title.custom_rule}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              title: { ...prev.core_fields.title, custom_rule: e.target.value },
+                            },
+                          }))}
+                          data-testid="categories-title-custom-rule"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        placeholder="Başlık required mesajı"
+                        value={schema.core_fields.title.messages.required}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            title: {
+                              ...prev.core_fields.title,
+                              messages: { ...prev.core_fields.title.messages, required: e.target.value },
+                            },
                           },
-                        },
-                      }))}
-                      data-testid="categories-title-duplicate-message"
-                    />
-                  )}
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Başlık custom mesajı"
-                    value={schema.core_fields.title.custom_message}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        title: { ...prev.core_fields.title, custom_message: e.target.value },
-                      },
-                    }))}
-                    data-testid="categories-title-custom-message"
-                  />
-                </div>
+                        }))}
+                        data-testid="categories-title-required-message"
+                      />
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        placeholder="Başlık min mesajı"
+                        value={schema.core_fields.title.messages.min}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            title: {
+                              ...prev.core_fields.title,
+                              messages: { ...prev.core_fields.title.messages, min: e.target.value },
+                            },
+                          },
+                        }))}
+                        data-testid="categories-title-min-message"
+                      />
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        placeholder="Başlık max mesajı"
+                        value={schema.core_fields.title.messages.max}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            title: {
+                              ...prev.core_fields.title,
+                              messages: { ...prev.core_fields.title.messages, max: e.target.value },
+                            },
+                          },
+                        }))}
+                        data-testid="categories-title-max-message"
+                      />
+                      {schema.title_uniqueness.enabled && (
+                        <input
+                          type="text"
+                          className={inputClassName}
+                          placeholder="Başlık duplicate mesajı"
+                          value={schema.core_fields.title.messages.duplicate}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              title: {
+                                ...prev.core_fields.title,
+                                messages: { ...prev.core_fields.title.messages, duplicate: e.target.value },
+                              },
+                            },
+                          }))}
+                          data-testid="categories-title-duplicate-message"
+                        />
+                      )}
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        placeholder="Başlık custom mesaj"
+                        value={schema.core_fields.title.messages.custom}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            title: {
+                              ...prev.core_fields.title,
+                              messages: { ...prev.core_fields.title.messages, custom: e.target.value },
+                            },
+                          },
+                        }))}
+                        data-testid="categories-title-custom-message"
+                      />
+                    </div>
+                  </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <input
-                    type="number"
-                    min={0}
-                    max={10000}
-                    aria-label="Açıklama min"
-                    className={inputClassName}
-                    placeholder="Açıklama min"
-                    value={schema.core_fields.description.min}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        description: { ...prev.core_fields.description, min: Number(e.target.value) },
-                      },
-                    }))}
-                    data-testid="categories-description-min"
-                  />
-                  <input
-                    type="number"
-                    min={0}
-                    max={20000}
-                    aria-label="Açıklama max"
-                    className={inputClassName}
-                    placeholder="Açıklama max"
-                    value={schema.core_fields.description.max}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        description: { ...prev.core_fields.description, max: Number(e.target.value) },
-                      },
-                    }))}
-                    data-testid="categories-description-max"
-                  />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Açıklama custom rule (regex)"
-                    value={schema.core_fields.description.custom_rule}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        description: { ...prev.core_fields.description, custom_rule: e.target.value },
-                      },
-                    }))}
-                    data-testid="categories-description-custom-rule"
-                  />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Açıklama required mesajı"
-                    value={schema.core_fields.description.messages.required}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        description: {
-                          ...prev.core_fields.description,
-                          messages: { ...prev.core_fields.description.messages, required: e.target.value },
-                        },
-                      },
-                    }))}
-                    data-testid="categories-description-required-message"
-                  />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Açıklama min mesajı"
-                    value={schema.core_fields.description.messages.min}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        description: {
-                          ...prev.core_fields.description,
-                          messages: { ...prev.core_fields.description.messages, min: e.target.value },
-                        },
-                      },
-                    }))}
-                    data-testid="categories-description-min-message"
-                  />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Açıklama max mesajı"
-                    value={schema.core_fields.description.messages.max}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        description: {
-                          ...prev.core_fields.description,
-                          messages: { ...prev.core_fields.description.messages, max: e.target.value },
-                        },
-                      },
-                    }))}
-                    data-testid="categories-description-max-message"
-                  />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Açıklama custom mesajı"
-                    value={schema.core_fields.description.custom_message}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        description: { ...prev.core_fields.description, custom_message: e.target.value },
-                      },
-                    }))}
-                    data-testid="categories-description-custom-message"
-                  />
-                </div>
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-slate-700">Açıklama</h4>
+                    <label className="flex items-center gap-2 text-sm text-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={schema.core_fields.description.required}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            description: { ...prev.core_fields.description, required: e.target.checked },
+                          },
+                        }))}
+                        data-testid="categories-description-required"
+                      />
+                      Açıklama zorunlu
+                    </label>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <select
-                    className={inputClassName}
-                    value={schema.core_fields.price.currency_primary}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        price: { ...prev.core_fields.price, currency_primary: e.target.value },
-                      },
-                    }))}
-                    data-testid="categories-price-primary"
-                  >
-                    <option value="EUR">EUR</option>
-                    <option value="CHF">CHF</option>
-                  </select>
-                  {schema.core_fields.price.secondary_enabled && (
-                    <select
-                      className={inputClassName}
-                      value={schema.core_fields.price.currency_secondary}
-                      onChange={(e) => setSchema((prev) => ({
-                        ...prev,
-                        core_fields: {
-                          ...prev.core_fields,
-                          price: { ...prev.core_fields.price, currency_secondary: e.target.value },
-                        },
-                      }))}
-                      data-testid="categories-price-secondary"
-                    >
-                      <option value="CHF">CHF</option>
-                      <option value="EUR">EUR</option>
-                    </select>
-                  )}
-                  <select
-                    className={inputClassName}
-                    aria-label="Ondalık basamak"
-                    value={schema.core_fields.price.decimal_places}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        price: { ...prev.core_fields.price, decimal_places: Number(e.target.value) },
-                      },
-                    }))}
-                    data-testid="categories-price-decimals"
-                  >
-                    <option value={0}>0 basamak</option>
-                    <option value={2}>2 basamak</option>
-                  </select>
-                  <input
-                    type="number"
-                    min={0}
-                    aria-label="Min fiyat"
-                    className={inputClassName}
-                    placeholder="Min fiyat"
-                    value={schema.core_fields.price.range.min ?? ''}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        price: {
-                          ...prev.core_fields.price,
-                          range: { ...prev.core_fields.price.range, min: Number(e.target.value) },
-                        },
-                      },
-                    }))}
-                    data-testid="categories-price-range-min"
-                  />
-                  <input
-                    type="number"
-                    min={0}
-                    aria-label="Max fiyat"
-                    className={inputClassName}
-                    placeholder="Max fiyat"
-                    value={schema.core_fields.price.range.max ?? ''}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        price: {
-                          ...prev.core_fields.price,
-                          range: { ...prev.core_fields.price.range, max: e.target.value ? Number(e.target.value) : null },
-                        },
-                      },
-                    }))}
-                    data-testid="categories-price-range-max"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Fiyat required mesajı"
-                    value={schema.core_fields.price.messages.required}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        price: {
-                          ...prev.core_fields.price,
-                          messages: { ...prev.core_fields.price.messages, required: e.target.value },
-                        },
-                      },
-                    }))}
-                    data-testid="categories-price-required-message"
-                  />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Fiyat numeric mesajı"
-                    value={schema.core_fields.price.messages.numeric}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        price: {
-                          ...prev.core_fields.price,
-                          messages: { ...prev.core_fields.price.messages, numeric: e.target.value },
-                        },
-                      },
-                    }))}
-                    data-testid="categories-price-numeric-message"
-                  />
-                  <input
-                    type="text"
-                    className={inputClassName}
-                    placeholder="Fiyat range mesajı"
-                    value={schema.core_fields.price.messages.range}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        price: {
-                          ...prev.core_fields.price,
-                          messages: { ...prev.core_fields.price.messages, range: e.target.value },
-                        },
-                      },
-                    }))}
-                    data-testid="categories-price-range-message"
-                  />
-                </div>
-                <label className="flex items-center gap-2 text-sm text-slate-800">
-                  <input
-                    type="checkbox"
-                    checked={schema.core_fields.price.secondary_enabled}
-                    onChange={(e) => setSchema((prev) => ({
-                      ...prev,
-                      core_fields: {
-                        ...prev.core_fields,
-                        price: { ...prev.core_fields.price, secondary_enabled: e.target.checked },
-                      },
-                    }))}
-                    data-testid="categories-price-secondary-toggle"
-                  />
-                  İkincil para birimi göster
-                </label>
-              <div className="border-t pt-4 space-y-4">
-                <h3 className="text-md font-semibold">Başlık Benzersizliği</h3>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 text-sm text-slate-800">
-                    <input
-                      type="checkbox"
-                      checked={schema.title_uniqueness.enabled}
-                      onChange={(e) => setSchema((prev) => ({
-                        ...prev,
-                        title_uniqueness: { ...prev.title_uniqueness, enabled: e.target.checked },
-                      }))}
-                      data-testid="categories-title-unique-toggle"
-                    />
-                    Aynı başlıkla ilanı engelle
-                  </label>
-                  {schema.title_uniqueness.enabled && (
-                    <select
-                      className={`${inputClassName} text-sm`}
-                      value={schema.title_uniqueness.scope}
-                      onChange={(e) => setSchema((prev) => ({
-                        ...prev,
-                        title_uniqueness: { ...prev.title_uniqueness, scope: e.target.value },
-                      }))}
-                      data-testid="categories-title-unique-scope"
-                    >
-                      <option value="category">Kategori genelinde</option>
-                      <option value="category_user">Kategori + kullanıcı</option>
-                    </select>
-                  )}
-                </div>
-              </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Açıklama min</label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={10000}
+                          aria-label="Açıklama min"
+                          className={inputClassName}
+                          value={schema.core_fields.description.min}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              description: { ...prev.core_fields.description, min: Number(e.target.value) },
+                            },
+                          }))}
+                          data-testid="categories-description-min"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Açıklama max</label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={20000}
+                          aria-label="Açıklama max"
+                          className={inputClassName}
+                          value={schema.core_fields.description.max}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              description: { ...prev.core_fields.description, max: Number(e.target.value) },
+                            },
+                          }))}
+                          data-testid="categories-description-max"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Açıklama custom rule (regex)</label>
+                        <input
+                          type="text"
+                          className={inputClassName}
+                          value={schema.core_fields.description.custom_rule}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              description: { ...prev.core_fields.description, custom_rule: e.target.value },
+                            },
+                          }))}
+                          data-testid="categories-description-custom-rule"
+                        />
+                      </div>
+                    </div>
 
-              </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        placeholder="Açıklama required mesajı"
+                        value={schema.core_fields.description.messages.required}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            description: {
+                              ...prev.core_fields.description,
+                              messages: { ...prev.core_fields.description.messages, required: e.target.value },
+                            },
+                          },
+                        }))}
+                        data-testid="categories-description-required-message"
+                      />
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        placeholder="Açıklama min mesajı"
+                        value={schema.core_fields.description.messages.min}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            description: {
+                              ...prev.core_fields.description,
+                              messages: { ...prev.core_fields.description.messages, min: e.target.value },
+                            },
+                          },
+                        }))}
+                        data-testid="categories-description-min-message"
+                      />
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        placeholder="Açıklama max mesajı"
+                        value={schema.core_fields.description.messages.max}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            description: {
+                              ...prev.core_fields.description,
+                              messages: { ...prev.core_fields.description.messages, max: e.target.value },
+                            },
+                          },
+                        }))}
+                        data-testid="categories-description-max-message"
+                      />
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        placeholder="Açıklama custom mesaj"
+                        value={schema.core_fields.description.messages.custom}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            description: {
+                              ...prev.core_fields.description,
+                              messages: { ...prev.core_fields.description.messages, custom: e.target.value },
+                            },
+                          },
+                        }))}
+                        data-testid="categories-description-custom-message"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-slate-700">Fiyat</h4>
+                    <label className="flex items-center gap-2 text-sm text-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={schema.core_fields.price.required}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            price: { ...prev.core_fields.price, required: e.target.checked },
+                          },
+                        }))}
+                        data-testid="categories-price-required"
+                      />
+                      Fiyat zorunlu
+                    </label>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Birincil para</label>
+                        <select
+                          className={inputClassName}
+                          value={schema.core_fields.price.currency_primary}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              price: { ...prev.core_fields.price, currency_primary: e.target.value },
+                            },
+                          }))}
+                          data-testid="categories-price-primary"
+                        >
+                          <option value="EUR">EUR</option>
+                          <option value="CHF">CHF</option>
+                        </select>
+                      </div>
+                      {schema.core_fields.price.secondary_enabled && (
+                        <div className="space-y-1">
+                          <label className={labelClassName}>İkincil para</label>
+                          <select
+                            className={inputClassName}
+                            value={schema.core_fields.price.currency_secondary}
+                            onChange={(e) => setSchema((prev) => ({
+                              ...prev,
+                              core_fields: {
+                                ...prev.core_fields,
+                                price: { ...prev.core_fields.price, currency_secondary: e.target.value },
+                              },
+                            }))}
+                            data-testid="categories-price-secondary"
+                          >
+                            <option value="CHF">CHF</option>
+                            <option value="EUR">EUR</option>
+                          </select>
+                        </div>
+                      )}
+                      <label className="flex items-center gap-2 text-sm text-slate-800">
+                        <input
+                          type="checkbox"
+                          checked={schema.core_fields.price.secondary_enabled}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              price: { ...prev.core_fields.price, secondary_enabled: e.target.checked },
+                            },
+                          }))}
+                          data-testid="categories-price-secondary-toggle"
+                        />
+                        İkincil para
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Ondalık basamak</label>
+                        <select
+                          className={inputClassName}
+                          aria-label="Ondalık basamak"
+                          value={schema.core_fields.price.decimal_places}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              price: { ...prev.core_fields.price, decimal_places: Number(e.target.value) },
+                            },
+                          }))}
+                          data-testid="categories-price-decimals"
+                        >
+                          <option value={0}>0 basamak</option>
+                          <option value={1}>1 basamak</option>
+                          <option value={2}>2 basamak</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Min fiyat</label>
+                        <input
+                          type="number"
+                          min={0}
+                          aria-label="Min fiyat"
+                          className={inputClassName}
+                          value={schema.core_fields.price.range.min ?? ''}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              price: {
+                                ...prev.core_fields.price,
+                                range: { ...prev.core_fields.price.range, min: Number(e.target.value) },
+                              },
+                            },
+                          }))}
+                          data-testid="categories-price-range-min"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={labelClassName}>Max fiyat</label>
+                        <input
+                          type="number"
+                          min={0}
+                          aria-label="Max fiyat"
+                          className={inputClassName}
+                          value={schema.core_fields.price.range.max ?? ''}
+                          onChange={(e) => setSchema((prev) => ({
+                            ...prev,
+                            core_fields: {
+                              ...prev.core_fields,
+                              price: {
+                                ...prev.core_fields.price,
+                                range: { ...prev.core_fields.price.range, max: e.target.value ? Number(e.target.value) : null },
+                              },
+                            },
+                          }))}
+                          data-testid="categories-price-range-max"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        placeholder="Fiyat required mesajı"
+                        value={schema.core_fields.price.messages.required}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            price: {
+                              ...prev.core_fields.price,
+                              messages: { ...prev.core_fields.price.messages, required: e.target.value },
+                            },
+                          },
+                        }))}
+                        data-testid="categories-price-required-message"
+                      />
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        placeholder="Fiyat numeric mesajı"
+                        value={schema.core_fields.price.messages.numeric}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            price: {
+                              ...prev.core_fields.price,
+                              messages: { ...prev.core_fields.price.messages, numeric: e.target.value },
+                            },
+                          },
+                        }))}
+                        data-testid="categories-price-numeric-message"
+                      />
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        placeholder="Fiyat range mesajı"
+                        value={schema.core_fields.price.messages.range}
+                        onChange={(e) => setSchema((prev) => ({
+                          ...prev,
+                          core_fields: {
+                            ...prev.core_fields,
+                            price: {
+                              ...prev.core_fields.price,
+                              messages: { ...prev.core_fields.price.messages, range: e.target.value },
+                            },
+                          },
+                        }))}
+                        data-testid="categories-price-range-message"
+                      />
+                    </div>
+                  </div>
+                </div>
               )}
 
-              {wizardStep === "dynamic" && (
+              {wizardStep === "dynamic" && (              {wizardStep === "dynamic" && (
                 <div className="border-t pt-4 space-y-4" data-testid="categories-dynamic-step">
                   <div className="flex items-center justify-between">
                     <h3 className="text-md font-semibold">Parametre Alanları (2a)</h3>
