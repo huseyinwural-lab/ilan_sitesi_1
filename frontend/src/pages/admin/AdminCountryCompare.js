@@ -57,6 +57,7 @@ export default function AdminCountryComparePage() {
   const [sortDir, setSortDir] = useState('desc');
   const [compareMetric, setCompareMetric] = useState('revenue_eur');
   const [selectedCountries, setSelectedCountries] = useState([]);
+  const [selectionInitialized, setSelectionInitialized] = useState(false);
   const [compareError, setCompareError] = useState('');
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
