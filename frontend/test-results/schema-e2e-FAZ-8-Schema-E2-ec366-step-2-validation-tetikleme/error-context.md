@@ -1,0 +1,109 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - complementary [ref=e4]:
+        - heading "My Panel" [level=1] [ref=e6]
+        - navigation [ref=e7]:
+          - generic [ref=e8]:
+            - link "📊 Overview" [ref=e9] [cursor=pointer]:
+              - /url: /account
+              - generic [ref=e10]: 📊
+              - text: Overview
+            - link "📝 My Listings" [ref=e11] [cursor=pointer]:
+              - /url: /account/listings
+              - generic [ref=e12]: 📝
+              - text: My Listings
+            - link "💬 Messages" [ref=e13] [cursor=pointer]:
+              - /url: /account/messages
+              - generic [ref=e14]: 💬
+              - text: Messages
+            - link "👤 Profile" [ref=e15] [cursor=pointer]:
+              - /url: /account/profile
+              - generic [ref=e16]: 👤
+              - text: Profile
+      - main [ref=e17]:
+        - generic [ref=e19]:
+          - generic [ref=e21]:
+            - heading "Vasıta İlanı Oluştur" [level=1] [ref=e22]
+            - generic [ref=e23]: Adım 1 / 4
+          - generic [ref=e28]:
+            - heading "Kategori Seç" [level=2] [ref=e29]
+            - generic [ref=e30]:
+              - generic [ref=e32]:
+                - button "E2E Fixture Category" [ref=e33] [cursor=pointer]:
+                  - generic [ref=e34]: E2E Fixture Category
+                - button "Regression Test Category" [ref=e35] [cursor=pointer]:
+                  - generic [ref=e36]: Regression Test Category
+                - button "Test Autosave Cat" [ref=e37] [cursor=pointer]:
+                  - generic [ref=e38]: Test Autosave Cat
+                - button "Test Autosave Category" [ref=e39] [cursor=pointer]:
+                  - generic [ref=e40]: Test Autosave Category
+                - button "Test Category Guard" [ref=e41] [cursor=pointer]:
+                  - generic [ref=e42]: Test Category Guard
+                - button "Test Kategori 1771526723" [ref=e43] [cursor=pointer]:
+                  - generic [ref=e44]: Test Kategori 1771526723
+                - button "Test Kategori Wizard" [ref=e45] [cursor=pointer]:
+                  - generic [ref=e46]: Test Kategori Wizard
+                - button "Test Wizard Core Edit" [ref=e47] [cursor=pointer]:
+                  - generic [ref=e48]: Test Wizard Core Edit
+                - button "Vasıta" [ref=e49] [cursor=pointer]:
+                  - generic [ref=e50]: Vasıta
+                - button "d" [ref=e51] [cursor=pointer]:
+                  - generic [ref=e52]: d
+                - button "e2e-test-category-1771518990918" [ref=e53] [cursor=pointer]:
+                  - generic [ref=e54]: e2e-test-category-1771518990918
+                - button "e2e-test-category-1771519018242" [ref=e55] [cursor=pointer]:
+                  - generic [ref=e56]: e2e-test-category-1771519018242
+                - button "e2e-test-category-1771519111219" [ref=e57] [cursor=pointer]:
+                  - generic [ref=e58]: e2e-test-category-1771519111219
+                - button "e2e-test-category-1771519136738" [ref=e59] [cursor=pointer]:
+                  - generic [ref=e60]: e2e-test-category-1771519136738
+                - button "e2e-test-category-1771519240131" [ref=e61] [cursor=pointer]:
+                  - generic [ref=e62]: e2e-test-category-1771519240131
+                - button "e2e-test-category-1771520762927" [ref=e63] [cursor=pointer]:
+                  - generic [ref=e64]: e2e-test-category-1771520762927
+                - button "e2e-test-category-1771522324115" [ref=e65] [cursor=pointer]:
+                  - generic [ref=e66]: e2e-test-category-1771522324115
+                - button "e2e-test-category-1771522428912" [ref=e67] [cursor=pointer]:
+                  - generic [ref=e68]: e2e-test-category-1771522428912
+                - button "e2e-test-category-1771523838519" [ref=e69] [cursor=pointer]:
+                  - generic [ref=e70]: e2e-test-category-1771523838519
+                - button "e2e-test-category-1771523960402" [ref=e71] [cursor=pointer]:
+                  - generic [ref=e72]: e2e-test-category-1771523960402
+                - button "e2e-test-category-1771524202809" [ref=e73] [cursor=pointer]:
+                  - generic [ref=e74]: e2e-test-category-1771524202809
+                - button "e2e-test-category-1771524362608" [ref=e75] [cursor=pointer]:
+                  - generic [ref=e76]: e2e-test-category-1771524362608
+                - button "e2e-test-category-1771525461226" [ref=e77] [cursor=pointer]:
+                  - generic [ref=e78]: e2e-test-category-1771525461226
+                - button "e2e-test-category-1771525565425" [ref=e79] [cursor=pointer]:
+                  - generic [ref=e80]: e2e-test-category-1771525565425
+                - button "e2e-test-category-1771526204822" [ref=e81] [cursor=pointer]:
+                  - generic [ref=e82]: e2e-test-category-1771526204822
+                - button "e2e-test-category-1771527380583" [ref=e83] [cursor=pointer]:
+                  - generic [ref=e84]: e2e-test-category-1771527380583
+                - button "e2e-test-category-1771528143316" [ref=e85] [cursor=pointer]:
+                  - generic [ref=e86]: e2e-test-category-1771528143316
+                - button "e2e-test-category-1771528613477" [ref=e87] [cursor=pointer]:
+                  - generic [ref=e88]: e2e-test-category-1771528613477
+                - button "deneme" [ref=e89] [cursor=pointer]:
+                  - generic [ref=e90]: deneme
+                - button "Test Kategori" [ref=e91] [cursor=pointer]:
+                  - generic [ref=e92]: Test Kategori
+                - button "Test Category" [ref=e93] [cursor=pointer]:
+                  - generic [ref=e94]: Test Category
+                - button "Test Category 1771385847" [ref=e95] [cursor=pointer]:
+                  - generic [ref=e96]: Test Category 1771385847
+              - generic [ref=e99]:
+                - paragraph [ref=e100]: Bu kategori altında alt kategori yok.
+                - button "E2E Fixture Category seç" [ref=e102] [cursor=pointer]
+    - region "Notifications (F8)":
+      - list
+  - link "Made with Emergent" [ref=e103] [cursor=pointer]:
+    - /url: https://app.emergent.sh/?utm_source=emergent-badge
+    - img [ref=e104]
+    - paragraph [ref=e107]: Made with Emergent
+```
