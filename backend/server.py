@@ -4022,6 +4022,13 @@ async def admin_update_category(
             raise HTTPException(status_code=409, detail="Category slug already exists")
         raise
     category.update(updates)
+
+    if schema:
+        if schema_status == "draft":
+            await _record_category_version(db, category_id, schema, current_user, "draft")
+        else:
+            await _mark_latest_category_version_published(db, category_id, schema, current_user)
+
     return {"category": _normalize_category_doc(category, include_schema=True)}
 
 
