@@ -347,6 +347,7 @@ const AdminCategories = () => {
       if (navigator?.clipboard?.writeText) {
         navigator.clipboard.writeText(text);
         setJsonCopyStatus("Kopyalandı");
+        setTimeout(() => setJsonCopyStatus(""), 2000);
       } else {
         setJsonCopyStatus("Kopyalanamadı");
       }
