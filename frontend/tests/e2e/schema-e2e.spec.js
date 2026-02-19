@@ -15,21 +15,23 @@ const photoFiles = [
   path.join(__dirname, '../fixtures/photo3.jpg'),
 ];
 
+let adminToken = "";
+
 test.describe.serial('FAZ-8 Schema E2E', () => {
   test.beforeAll(async ({ request }) => {
     const loginRes = await request.post('/api/auth/login', { data: adminCreds });
     const loginData = await loginRes.json();
-    const token = loginData.access_token;
+    adminToken = loginData.access_token;
 
     const listRes = await request.get('/api/admin/categories?country=DE', {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${adminToken}` },
     });
     if (!listRes.ok()) return;
     const listData = await listRes.json();
     const existing = (listData.items || []).find((item) => item.slug === categorySlug);
     if (existing) {
       await request.delete(`/api/admin/categories/${existing.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${adminToken}` },
       });
     }
   });
