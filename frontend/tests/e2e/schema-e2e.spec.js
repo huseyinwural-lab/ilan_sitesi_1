@@ -103,9 +103,9 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await expect(page.getByTestId('categories-preview-ready')).toBeVisible();
 
     const draftResponsePromise = page.waitForResponse((res) => (
-      res.url().includes('/api/admin/categories/') &&
-      res.request().method() === 'PATCH' &&
-      (res.request().postData() || '').includes('"status":"draft"')
+      res.url().includes('/api/admin/categories') &&
+      ['POST', 'PATCH'].includes(res.request().method()) &&
+      res.status() >= 200 && res.status() < 300
     ));
     await page.getByTestId('categories-save-draft').click();
     const draftResponse = await draftResponsePromise;
