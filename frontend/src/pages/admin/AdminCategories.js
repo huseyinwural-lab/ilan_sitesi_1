@@ -861,7 +861,7 @@ const AdminCategories = () => {
               )}
 
               {wizardStep !== "hierarchy" && (
-                <>
+                <div className="space-y-4" data-testid="categories-step-content">
                   <div className="rounded-lg border p-4 text-sm" data-testid="categories-summary">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div>
