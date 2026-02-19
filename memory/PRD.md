@@ -69,6 +69,12 @@
   - Validation mesajları + duplicate title toggle + schema publish guard
   - Frontend listing wizard schema tabanlı form üretimi
   - Public contract: /api/catalog/schema?category_id=...&country=...
+- **Kategori Sihirbazı P0 Stabilizasyonu (2026-02-19):**
+  - Detay grubu state tek kaynak + checkbox listesi 4’lü grid
+  - Modüller: Adres/Fotoğraf/İletişim/Ödeme + key badge + kaynak etiketi
+  - Modül bağımlılıkları (payment off → paket/doping pasif + collapse, photos on → foto limit görünür)
+  - Taslak kaydet tüm adımlar + publish guard (hierarchy/core/2a/2c)
+  - Backend kategori payload: hierarchy_complete + form_schema alanları
 - **FAZ-7 Admin Login Stabilizasyonu:**
   - GET /api/admin/session/health (token doğrulama + expires_at)
   - Sidebar bootstrap health-check sonrası render
