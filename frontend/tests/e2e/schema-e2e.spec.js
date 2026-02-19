@@ -126,10 +126,8 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     expect(savedCategory).toBeTruthy();
     expect(savedCategory.form_schema.status).toBe('draft');
 
-    await page.getByTestId('categories-modal-close').click();
-    await expect(page.getByTestId('categories-modal')).toHaveCount(0);
-
     await expect(page.getByTestId('categories-page')).toBeVisible({ timeout: 60000 });
+    await page.getByTestId(`categories-edit-${savedCategory.id}`).click();
     await expect(page.getByTestId('categories-modal')).toBeVisible();
     await page.getByTestId('category-step-preview').click();
     await expect(page.getByTestId('categories-preview-step')).toBeVisible();
