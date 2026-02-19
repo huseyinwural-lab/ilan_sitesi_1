@@ -18,6 +18,7 @@ export const WizardProvider = ({ children }) => {
   const [basicInfo, setBasicInfo] = useState({
     country: 'DE',
     category_key: null, // segment
+    category_id: null,
     make_key: null,
     model_key: null,
     year: null,
@@ -28,6 +29,27 @@ export const WizardProvider = ({ children }) => {
     condition: null,
   });
   const [attributes, setAttributes] = useState({});
+  const [schema, setSchema] = useState(null);
+  const [schemaLoading, setSchemaLoading] = useState(false);
+  const [coreFields, setCoreFields] = useState({
+    title: '',
+    description: '',
+    price_amount: '',
+    price_display: '',
+    currency_primary: 'EUR',
+    currency_secondary: 'CHF',
+    secondary_amount: '',
+    secondary_display: '',
+    secondary_enabled: false,
+    decimal_places: 0,
+  });
+  const [dynamicValues, setDynamicValues] = useState({});
+  const [detailGroups, setDetailGroups] = useState({});
+  const [moduleData, setModuleData] = useState({
+    address: { street: '', city: '', postal_code: '' },
+    contact: { phone: '', allow_phone: true, allow_message: true },
+    payment: { package_selected: false, doping_selected: false },
+  });
 
   // Keep wizard country in sync with selected country
   useEffect(() => {
@@ -38,16 +60,47 @@ export const WizardProvider = ({ children }) => {
 
   const [media, setMedia] = useState([]);
 
+  const loadCategorySchema = async (categoryId) => {
+    if (!categoryId) return null;
+    try {
+      setSchemaLoading(true);
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/catalog/schema?category_id=${categoryId}&country=${selectedCountry || 'DE'}`
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.detail || 'Schema yüklenemedi');
+      }
+      setSchema(data.schema);
+      const priceConfig = data.schema?.core_fields?.price || {};
+      setCoreFields((prev) => ({
+        ...prev,
+        currency_primary: priceConfig.currency_primary || 'EUR',
+        currency_secondary: priceConfig.currency_secondary || 'CHF',
+        secondary_enabled: priceConfig.secondary_enabled || false,
+        decimal_places: priceConfig.decimal_places ?? 0,
+      }));
+      return data.schema;
+    } catch (error) {
+      console.error(error);
+      return null;
+    } finally {
+      setSchemaLoading(false);
+    }
+  };
+
   // Actions
   const createDraft = async (selectedCategory) => {
     setLoading(true);
     setValidationErrors([]);
     try {
       setCategory(selectedCategory);
+      await loadCategorySchema(selectedCategory.id);
 
       const payload = {
         country: selectedCountry || 'DE',
         category_key: selectedCategory.id,
+        category_id: selectedCategory.id,
       };
 
       // Create empty draft first; details set in step 2
@@ -74,6 +127,7 @@ export const WizardProvider = ({ children }) => {
         ...prev,
         country: selectedCountry || 'DE',
         category_key: selectedCategory.id,
+        category_id: selectedCategory.id,
       }));
       setStep(2);
     } catch (error) {
@@ -91,6 +145,10 @@ export const WizardProvider = ({ children }) => {
       if (step === 2) {
         setBasicInfo((prev) => ({ ...prev, ...data.basic }));
         if (data.basic?.attributes) setAttributes(data.basic.attributes);
+        if (data.coreFields) setCoreFields(data.coreFields);
+        if (data.dynamicValues) setDynamicValues(data.dynamicValues);
+        if (data.detailGroups) setDetailGroups(data.detailGroups);
+        if (data.moduleData) setModuleData(data.moduleData);
       } else if (step === 3) {
         setMedia(data);
       }
@@ -116,11 +174,33 @@ export const WizardProvider = ({ children }) => {
         throw new Error('Missing draftId');
       }
 
+      const payload = {
+        core_fields: {
+          title: coreFields.title,
+          description: coreFields.description,
+          price: {
+            amount: coreFields.price_amount ? Number(coreFields.price_amount) : null,
+            currency_primary: coreFields.currency_primary,
+            currency_secondary: coreFields.secondary_enabled ? coreFields.currency_secondary : null,
+            secondary_amount: coreFields.secondary_amount ? Number(coreFields.secondary_amount) : null,
+            decimal_places: coreFields.decimal_places,
+          },
+        },
+        dynamic_fields: dynamicValues,
+        detail_groups: detailGroups,
+        modules: moduleData,
+        payment_options: {
+          package: moduleData.payment?.package_selected,
+          doping: moduleData.payment?.doping_selected,
+        },
+      };
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle/${draftId}/submit`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify(payload),
       });
 
       if (res.status === 422) {
@@ -154,6 +234,13 @@ export const WizardProvider = ({ children }) => {
       category,
       basicInfo,
       attributes,
+      schema,
+      schemaLoading,
+      loadCategorySchema,
+      coreFields,
+      dynamicValues,
+      detailGroups,
+      moduleData,
       media,
       loading,
       validationErrors,
@@ -162,7 +249,11 @@ export const WizardProvider = ({ children }) => {
       saveStep,
       publishListing,
       setDraftId,
-      setMedia
+      setMedia,
+      setCoreFields,
+      setDynamicValues,
+      setDetailGroups,
+      setModuleData
     }}>
       {children}
     </WizardContext.Provider>
