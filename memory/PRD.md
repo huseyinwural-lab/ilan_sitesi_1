@@ -182,6 +182,7 @@
 - Step navigation guard: sekmeler default disabled, “Tamam” ile unlock + tooltip
 - Hiyerarşi kriteri: ana ad + slug + en az 1 alt kategori
 - Lint debt yol haritası ve versiyonlama tasarım başlangıcı
+- Unlock state tek kaynak: isHierarchyComplete only, persist sonrası unlock
 
 ### Test Kanıtı
 - playwright: tests/e2e/admin-auth-edge.spec.js → ✅ 2 test geçti
