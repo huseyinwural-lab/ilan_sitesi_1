@@ -817,6 +817,22 @@ const AdminCategories = () => {
                       onChange={(e) => updateDynamicField(index, { options: e.target.value.split(',').map((o) => o.trim()).filter(Boolean) })}
                       data-testid={`categories-dynamic-options-${index}`}
                     />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <input
+                        className="border rounded p-2"
+                        placeholder="Required mesajı"
+                        value={field.messages?.required || ''}
+                        onChange={(e) => updateDynamicField(index, { messages: { ...field.messages, required: e.target.value } })}
+                        data-testid={`categories-dynamic-required-message-${index}`}
+                      />
+                      <input
+                        className="border rounded p-2"
+                        placeholder="Invalid mesajı"
+                        value={field.messages?.invalid || ''}
+                        onChange={(e) => updateDynamicField(index, { messages: { ...field.messages, invalid: e.target.value } })}
+                        data-testid={`categories-dynamic-invalid-message-${index}`}
+                      />
+                    </div>
                     <div className="flex items-center gap-3 text-sm">
                       <label className="flex items-center gap-2">
                         <input
