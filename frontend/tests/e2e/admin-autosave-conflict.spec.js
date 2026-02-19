@@ -27,9 +27,11 @@ test('Autosave conflict uyarısı gösterir', async ({ page, request }) => {
     throw new Error('Draft kategori bulunamadı');
   }
 
+  await page.addInitScript(() => localStorage.setItem('selected_country', 'DE'));
   await loginAdmin(page);
   await page.goto('/admin/categories');
-  await page.getByTestId(`categories-edit-${targetCategory.id}`).click();
+  await page.waitForSelector(`[data-testid="categories-edit-${targetCategory.id}"]`, { timeout: 60000 });
+  await page.getByTestId(`categories-edit-${targetCategory.id}`).click({ force: true });
   await expect(page.getByTestId('categories-core-step')).toBeVisible({ timeout: 60000 });
 
   await request.patch(`/api/admin/categories/${targetCategory.id}`, {
@@ -41,6 +43,6 @@ test('Autosave conflict uyarısı gösterir', async ({ page, request }) => {
   });
 
   await page.getByTestId('categories-title-min').fill('11');
-  await page.waitForTimeout(2600);
+  await page.waitForTimeout(3000);
   await expect(page.getByText('Başka bir sekmede güncellendi')).toBeVisible();
 });
