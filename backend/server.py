@@ -1731,6 +1731,8 @@ class CategoryCreatePayload(BaseModel):
     country_code: Optional[str] = None
     active_flag: Optional[bool] = True
     sort_order: Optional[int] = 0
+    hierarchy_complete: Optional[bool] = None
+    form_schema: Optional[Dict[str, Any]] = None
 
 
 class CategoryUpdatePayload(BaseModel):
@@ -1740,6 +1742,8 @@ class CategoryUpdatePayload(BaseModel):
     country_code: Optional[str] = None
     active_flag: Optional[bool] = None
     sort_order: Optional[int] = None
+    hierarchy_complete: Optional[bool] = None
+    form_schema: Optional[Dict[str, Any]] = None
 
 
 class MenuItemCreatePayload(BaseModel):
