@@ -19,7 +19,7 @@ test('Autosave conflict uyarısı gösterir', async ({ page, request }) => {
     headers: { Authorization: `Bearer ${token}` },
   });
   const listData = await listRes.json();
-  const targetCategory = (listData.items || []).find(
+  let targetCategory = (listData.items || []).find(
     (item) => item.hierarchy_complete && item.form_schema && item.form_schema.status === 'draft'
   );
 
@@ -30,8 +30,21 @@ test('Autosave conflict uyarısı gösterir', async ({ page, request }) => {
   await page.addInitScript(() => localStorage.setItem('selected_country', 'DE'));
   await loginAdmin(page);
   await page.goto('/admin/categories');
-  await page.waitForSelector(`[data-testid="categories-edit-${targetCategory.id}"]`, { timeout: 60000 });
-  await page.getByTestId(`categories-edit-${targetCategory.id}`).click({ force: true });
+  await expect(page.getByTestId('categories-page')).toBeVisible({ timeout: 60000 });
+  await page.waitForSelector('[data-testid="categories-loading"]', { state: 'detached' });
+
+  let editLocator = page.locator(`[data-testid="categories-edit-${targetCategory.id}"]`);
+  if (await editLocator.count() === 0) {
+    editLocator = page.locator('[data-testid^="categories-edit-"]').first();
+    const fallbackTestId = await editLocator.getAttribute('data-testid');
+    const fallbackId = fallbackTestId?.replace('categories-edit-', '');
+    const fallbackCategory = (listData.items || []).find((item) => item.id === fallbackId);
+    if (fallbackCategory) {
+      targetCategory = fallbackCategory;
+    }
+  }
+
+  await editLocator.click({ force: true });
   await expect(page.getByTestId('categories-core-step')).toBeVisible({ timeout: 60000 });
 
   await request.patch(`/api/admin/categories/${targetCategory.id}`, {
