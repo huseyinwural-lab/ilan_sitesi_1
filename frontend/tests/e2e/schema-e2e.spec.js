@@ -55,6 +55,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await page.getByTestId('categories-country-input').fill('DE');
     await page.getByTestId('categories-step-next').click();
 
+    await expect(page.getByTestId('category-step-core')).toBeEnabled();
     await expect(page.getByTestId('categories-core-step')).toBeVisible({ timeout: 60000 });
     await page.getByTestId('categories-title-min').fill('10');
     await page.getByTestId('categories-title-max').fill('120');
