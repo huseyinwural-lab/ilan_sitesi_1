@@ -311,10 +311,33 @@ const AdminCategories = () => {
     setModalOpen(true);
   };
 
-  const handleSave = async (status = "draft") => {
+  const handleModuleToggle = (key, enabled) => {
+    setSchema((prev) => {
+      const updated = {
+        ...prev,
+        modules: {
+          ...prev.modules,
+          [key]: { ...prev.modules[key], enabled },
+        },
+      };
+      if (key === "payment" && !enabled) {
+        return { ...updated, payment_options: { package: false, doping: false } };
+      }
+      return updated;
+    });
+  };
+
+  const handleSave = async (status = "draft", overrideEditing = null) => {
     setHierarchyError("");
-    if (!hierarchyComplete) {
+    setPublishError("");
+    const activeEditing = overrideEditing ?? editing;
+    const hierarchyOk = hierarchyComplete || Boolean(activeEditing);
+    if (!hierarchyOk) {
       setHierarchyError("Önce kategori hiyerarşisini tamamlayın.");
+      return;
+    }
+    if (status === "published" && !publishValidation.canPublish) {
+      setPublishError("Yayınlama için zorunlu şartlar tamamlanmalı.");
       return;
     }
     const payload = {
@@ -327,10 +350,10 @@ const AdminCategories = () => {
       setHierarchyError("Kategori adı ve slug zorunludur.");
       return;
     }
-    const url = editing
-      ? `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`
+    const url = activeEditing
+      ? `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${activeEditing.id}`
       : `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`;
-    const method = editing ? "PATCH" : "POST";
+    const method = activeEditing ? "PATCH" : "POST";
     const res = await fetch(url, {
       method,
       headers: {
@@ -347,6 +370,16 @@ const AdminCategories = () => {
     setModalOpen(false);
     resetForm();
     fetchItems();
+  };
+
+  const handleDraftSave = async () => {
+    if (!hierarchyComplete && !editing) {
+      const result = await handleHierarchyComplete();
+      if (!result?.success) return;
+      await handleSave("draft", result.parent || null);
+      return;
+    }
+    await handleSave("draft");
   };
 
   const handleToggle = async (item) => {
