@@ -103,7 +103,7 @@ const applySchemaDefaults = (incoming) => {
 
 const MODULE_LABELS = {
   address: "Adres",
-  photos: "Fotoğraflar",
+  photos: "Fotoğraf",
   contact: "İletişim",
   payment: "Ödeme",
 };
