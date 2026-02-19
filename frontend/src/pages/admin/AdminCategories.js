@@ -1309,7 +1309,7 @@ const AdminCategories = () => {
                       </button>
                     </div>
                     {subcategories.length === 0 ? (
-                      <div className="text-sm text-slate-500" data-testid="categories-subcategory-empty">Henüz alt kategori eklenmedi.</div>
+                      <div className="text-sm text-slate-700" data-testid="categories-subcategory-empty">Henüz alt kategori eklenmedi.</div>
                     ) : (
                       <div className="space-y-3">
                         {subcategories.map((sub, index) => (
@@ -1383,23 +1383,23 @@ const AdminCategories = () => {
                   <div className="rounded-lg border p-4 text-sm" data-testid="categories-summary">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div>
-                        <div className="text-xs text-slate-500">Ana Kategori</div>
+                        <div className="text-xs text-slate-700">Ana Kategori</div>
                         <div className="font-medium">{form.name || '-'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-slate-500">Slug</div>
+                        <div className="text-xs text-slate-700">Slug</div>
                         <div className="font-medium">{form.slug || '-'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-slate-500">Ülke</div>
+                        <div className="text-xs text-slate-700">Ülke</div>
                         <div className="font-medium">{form.country_code || '-'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-slate-500">Durum</div>
+                        <div className="text-xs text-slate-700">Durum</div>
                         <div className="font-medium">{form.active_flag ? 'Aktif' : 'Pasif'}</div>
                       </div>
                     </div>
-                    <div className="mt-2 text-xs text-slate-500">Sıra: {form.sort_order || 0}</div>
+                    <div className="mt-2 text-xs text-slate-700">Sıra: {form.sort_order || 0}</div>
                   </div>
 
               {wizardStep === "core" && (
@@ -1948,7 +1948,7 @@ const AdminCategories = () => {
                 <div className="border-t pt-4 space-y-4" data-testid="categories-dynamic-step">
                   <div className="flex items-center justify-between">
                     <h3 className="text-md font-semibold">Parametre Alanları (2a)</h3>
-                    <span className="text-xs text-slate-500">Tek tek ekleme + Next</span>
+                    <span className="text-xs text-slate-700">Tek tek ekleme + Next</span>
                   </div>
 
                   {dynamicError && (
@@ -2072,13 +2072,13 @@ const AdminCategories = () => {
 
                   <div className="space-y-2" data-testid="categories-dynamic-list">
                     {schema.dynamic_fields.length === 0 ? (
-                      <div className="text-sm text-slate-500">Henüz parametre alanı eklenmedi.</div>
+                      <div className="text-sm text-slate-700">Henüz parametre alanı eklenmedi.</div>
                     ) : (
                       schema.dynamic_fields.map((field, index) => (
                         <div key={field.id || field.key} className="border rounded p-3 flex flex-wrap items-center gap-3">
                           <div className="flex-1">
                             <div className="font-medium">{field.label} ({field.key})</div>
-                            <div className="text-xs text-slate-500">Tip: {field.type} · Sıra: {field.sort_order || 0}</div>
+                            <div className="text-xs text-slate-700">Tip: {field.type} · Sıra: {field.sort_order || 0}</div>
                           </div>
                           <button
                             type="button"
@@ -2107,7 +2107,7 @@ const AdminCategories = () => {
                 <div className="border-t pt-4 space-y-4" data-testid="categories-detail-step">
                   <div className="flex items-center justify-between">
                     <h3 className="text-md font-semibold">Detay Grupları (2c)</h3>
-                    <span className="text-xs text-slate-500">Önce grup tanımı → checkbox listesi</span>
+                    <span className="text-xs text-slate-700">Önce grup tanımı → checkbox listesi</span>
                   </div>
 
                   {detailError && (
@@ -2243,13 +2243,13 @@ const AdminCategories = () => {
 
                   <div className="space-y-2" data-testid="categories-detail-list">
                     {schema.detail_groups.length === 0 ? (
-                      <div className="text-sm text-slate-500">Henüz detay grubu eklenmedi.</div>
+                      <div className="text-sm text-slate-700">Henüz detay grubu eklenmedi.</div>
                     ) : (
                       schema.detail_groups.map((group, index) => (
                         <div key={group.id || group.title} className="border rounded p-3 flex flex-wrap items-center gap-3">
                           <div className="flex-1">
                             <div className="font-medium">{group.title} ({group.id})</div>
-                            <div className="text-xs text-slate-500">Seçenek: {group.options?.length || 0} · Sıra: {group.sort_order || 0}</div>
+                            <div className="text-xs text-slate-700">Seçenek: {group.options?.length || 0} · Sıra: {group.sort_order || 0}</div>
                           </div>
                           <button
                             type="button"
@@ -2282,7 +2282,7 @@ const AdminCategories = () => {
                       <div key={key} className="flex items-center justify-between border rounded p-3" data-testid={`categories-module-row-${key}`}>
                         <div className="space-y-1">
                           <div className="font-medium" data-testid={`categories-module-label-${key}`}>{MODULE_LABELS[key] || key}</div>
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-700">
                             <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700" data-testid={`categories-module-key-${key}`}>{key}</span>
                             <span data-testid={`categories-module-source-${key}`}>Kaynak: schema.modules</span>
                           </div>
@@ -2315,7 +2315,7 @@ const AdminCategories = () => {
                         }))}
                         data-testid="categories-photos-max"
                       />
-                      <div className="text-xs text-slate-500">Önerilen aralık: 1–50</div>
+                      <div className="text-xs text-slate-700">Önerilen aralık: 1–50</div>
                     </div>
                   )}
 
@@ -2347,7 +2347,7 @@ const AdminCategories = () => {
                       </label>
                     </div>
                   ) : (
-                    <div className="text-xs text-slate-500" data-testid="categories-payment-options-collapsed">
+                    <div className="text-xs text-slate-700" data-testid="categories-payment-options-collapsed">
                       Ödeme modülü kapalı. Paket/doping seçenekleri pasif.
                     </div>
                   )}
@@ -2360,7 +2360,7 @@ const AdminCategories = () => {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h3 className="text-md font-semibold">Önizleme</h3>
-                      <div className="text-xs text-slate-500" data-testid="categories-last-saved">
+                      <div className="text-xs text-slate-700" data-testid="categories-last-saved">
                         Son kaydetme: {lastSavedAt || "-"}
                       </div>
                     </div>
@@ -2375,33 +2375,33 @@ const AdminCategories = () => {
                   <div className="rounded-lg border p-4 space-y-3" data-testid="categories-preview-summary">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
                       <div>
-                        <div className="text-xs text-slate-500">Kategori</div>
+                        <div className="text-xs text-slate-700">Kategori</div>
                         <div className="font-medium" data-testid="categories-preview-name">{form.name || '-'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-slate-500">Slug</div>
+                        <div className="text-xs text-slate-700">Slug</div>
                         <div className="font-medium" data-testid="categories-preview-slug">{form.slug || '-'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-slate-500">Ülke</div>
+                        <div className="text-xs text-slate-700">Ülke</div>
                         <div className="font-medium" data-testid="categories-preview-country">{form.country_code || '-'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-slate-500">Durum</div>
+                        <div className="text-xs text-slate-700">Durum</div>
                         <div className="font-medium" data-testid="categories-preview-active">{form.active_flag ? 'Aktif' : 'Pasif'}</div>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                       <div>
-                        <div className="text-xs text-slate-500">Parametre Alanı</div>
+                        <div className="text-xs text-slate-700">Parametre Alanı</div>
                         <div className="font-medium" data-testid="categories-preview-dynamic-count">{schema.dynamic_fields.length}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-slate-500">Detay Grubu</div>
+                        <div className="text-xs text-slate-700">Detay Grubu</div>
                         <div className="font-medium" data-testid="categories-preview-detail-count">{schema.detail_groups.length}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-slate-500">Aktif Modül</div>
+                        <div className="text-xs text-slate-700">Aktif Modül</div>
                         <div className="font-medium" data-testid="categories-preview-module-count">
                           {Object.values(schema.modules || {}).filter((mod) => mod.enabled).length}
                         </div>
@@ -2416,7 +2416,7 @@ const AdminCategories = () => {
                         <div key={`preview-${key}`} className="flex items-center justify-between border rounded px-3 py-2" data-testid={`categories-preview-module-${key}`}>
                           <span>{MODULE_LABELS[key] || key}</span>
                           <span
-                            className={`text-xs px-2 py-0.5 rounded-full ${schema.modules[key].enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
+                            className={`text-xs px-2 py-0.5 rounded-full ${schema.modules[key].enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}
                             data-testid={`categories-preview-module-status-${key}`}
                           >
                             {schema.modules[key].enabled ? 'Aktif' : 'Kapalı'}
@@ -2466,7 +2466,7 @@ const AdminCategories = () => {
                     <summary className="cursor-pointer text-sm font-semibold" data-testid="categories-preview-json-toggle">JSON şema (salt okunur / debug)</summary>
                     <div className="mt-3 space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs text-slate-500" data-testid="categories-preview-json-hint">Salt okunur / debug amaçlı</span>
+                        <span className="text-xs text-slate-700" data-testid="categories-preview-json-hint">Salt okunur / debug amaçlı</span>
                         <button
                           type="button"
                           className="px-3 py-1 border rounded text-xs"
@@ -2488,21 +2488,21 @@ const AdminCategories = () => {
                   <div className="rounded-lg border p-4 space-y-3" data-testid="categories-version-history">
                     <div className="flex items-center justify-between">
                       <div className="text-sm font-semibold">Versiyon Geçmişi</div>
-                      <span className="text-xs text-slate-500">Snapshot bazlı</span>
+                      <span className="text-xs text-slate-700">Snapshot bazlı</span>
                     </div>
                     {versionsLoading ? (
-                      <div className="text-sm text-slate-500" data-testid="categories-version-loading">Yükleniyor...</div>
+                      <div className="text-sm text-slate-700" data-testid="categories-version-loading">Yükleniyor...</div>
                     ) : versionsError ? (
                       <div className="text-sm text-rose-600" data-testid="categories-version-error">{versionsError}</div>
                     ) : versions.length === 0 ? (
-                      <div className="text-sm text-slate-500" data-testid="categories-version-empty">Henüz versiyon yok.</div>
+                      <div className="text-sm text-slate-700" data-testid="categories-version-empty">Henüz versiyon yok.</div>
                     ) : (
                       <div className="space-y-2" data-testid="categories-version-list">
                         {versions.map((version) => (
                           <div key={version.id} className="flex flex-wrap items-center justify-between gap-3 border rounded px-3 py-2 text-sm" data-testid={`categories-version-row-${version.id}`}>
                             <div className="space-y-1">
                               <div className="font-medium" data-testid={`categories-version-label-${version.id}`}>v{version.version} · {version.status === 'published' ? 'Yayınlandı' : 'Taslak'}</div>
-                              <div className="text-xs text-slate-500" data-testid={`categories-version-meta-${version.id}`}>
+                              <div className="text-xs text-slate-700" data-testid={`categories-version-meta-${version.id}`}>
                                 {version.created_at || '-'} · {version.created_by_email || '-'}
                               </div>
                             </div>
@@ -2519,7 +2519,7 @@ const AdminCategories = () => {
                         ))}
                       </div>
                     )}
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500" data-testid="categories-version-selection-hint">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-700" data-testid="categories-version-selection-hint">
                       2 versiyon seçildiğinde diff görünür.
                       {selectedVersions.length > 0 && (
                         <button
