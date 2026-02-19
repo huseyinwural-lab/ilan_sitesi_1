@@ -66,9 +66,24 @@ const applySchemaDefaults = (incoming) => {
     core_fields: {
       ...base.core_fields,
       ...incoming.core_fields,
-      title: { ...base.core_fields.title, ...(incoming.core_fields?.title || {}) },
-      description: { ...base.core_fields.description, ...(incoming.core_fields?.description || {}) },
-      price: { ...base.core_fields.price, ...(incoming.core_fields?.price || {}) },
+      title: {
+        ...base.core_fields.title,
+        ...(incoming.core_fields?.title || {}),
+        messages: { ...base.core_fields.title.messages, ...(incoming.core_fields?.title?.messages || {}) },
+        ui: { ...base.core_fields.title.ui, ...(incoming.core_fields?.title?.ui || {}) },
+      },
+      description: {
+        ...base.core_fields.description,
+        ...(incoming.core_fields?.description || {}),
+        messages: { ...base.core_fields.description.messages, ...(incoming.core_fields?.description?.messages || {}) },
+        ui: { ...base.core_fields.description.ui, ...(incoming.core_fields?.description?.ui || {}) },
+      },
+      price: {
+        ...base.core_fields.price,
+        ...(incoming.core_fields?.price || {}),
+        range: { ...base.core_fields.price.range, ...(incoming.core_fields?.price?.range || {}) },
+        messages: { ...base.core_fields.price.messages, ...(incoming.core_fields?.price?.messages || {}) },
+      },
     },
     modules: {
       ...base.modules,
