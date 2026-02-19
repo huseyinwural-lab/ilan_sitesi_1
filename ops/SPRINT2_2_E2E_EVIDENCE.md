@@ -22,7 +22,7 @@ curl -X POST $REACT_APP_BACKEND_URL/api/reports \
   -H "Content-Type: application/json" \
   -d '{"listing_id":"14e4ae50-973e-4b99-b8bb-c8b8f0e2ecb2","reason":"spam"}'
 
-curl -X GET "$REACT_APP_BACKEND_URL/api/admin/reports?listing_id=14e4ae50-973e-4b99-b8bb-c8b8f0e2ecb2" \
+curl -X GET "$REACT_APP_BACKEND_URL/api/admin/reports?listing_id=kategori-form-v2" \
   -H "Authorization: Bearer <TOKEN>"
 
 curl -X POST $REACT_APP_BACKEND_URL/api/admin/reports/c02ab575-52fa-4129-b5df-4470ce133088/status \
