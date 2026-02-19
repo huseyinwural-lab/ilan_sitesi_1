@@ -191,7 +191,7 @@ const AdminCategories = () => {
   const schemaStatusLabel = schema.status === "published" ? "Yayında" : "Taslak";
   const publishValidation = useMemo(() => {
     const errors = [];
-    if (!hierarchyComplete) {
+    if (!effectiveHierarchyComplete) {
       errors.push("Hiyerarşi tamamlanmalı.");
     }
     const titleRangeValid = schema.core_fields.title.min <= schema.core_fields.title.max;
