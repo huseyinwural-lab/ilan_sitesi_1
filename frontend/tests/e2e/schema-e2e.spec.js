@@ -201,6 +201,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
   });
 
   test('Senaryo 3: Listing detail modül görünürlüğü', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('selected_country', 'DE'));
     await page.goto('/login');
     await page.getByTestId('login-email').fill(userCreds.email);
     await page.getByTestId('login-password').fill(userCreds.password);
