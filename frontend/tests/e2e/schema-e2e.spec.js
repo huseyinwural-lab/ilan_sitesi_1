@@ -3,8 +3,9 @@ const path = require('path');
 
 const adminCreds = { email: 'admin@platform.com', password: 'Admin123!' };
 const userCreds = { email: 'user@platform.com', password: 'User123!' };
-const categoryName = 'e2e-test-category';
-const categorySlug = 'e2e-test-category';
+const runId = Date.now();
+const categoryName = `e2e-test-category-${runId}`;
+const categorySlug = `e2e-test-category-${runId}`;
 const dynamicKey = 'extra_option';
 const detailGroupId = 'features';
 const detailOptions = ['ABS', 'Airbag', 'Klima', 'ESP'];
