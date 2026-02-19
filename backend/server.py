@@ -2039,6 +2039,7 @@ def _default_category_schema() -> Dict[str, Any]:
             },
         },
         "title_uniqueness": {"enabled": False, "scope": "category"},
+        "status": "published",
         "dynamic_fields": [],
         "detail_groups": [],
         "modules": {
