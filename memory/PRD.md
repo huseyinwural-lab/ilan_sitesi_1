@@ -101,19 +101,18 @@
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- P1 sprint başlangıç tarihi netleştirme
+- (Boş) — P0 sihirbaz stabilizasyonu tamamlandı
 
 ### P1
-- **Backlog:** P1 sprint planlama + kickoff
-- **Backlog:** Admin Listing Preview Drawer
-- **Backlog:** Bulk Report Status Update
-- **Backlog:** Finance CSV Export
-- **Backlog:** Revenue Chart
-- **Backlog:** Dashboard View Audit
-- **Backlog:** Master Data CSV Import/Export
-- **Backlog:** Audit Dashboard Widget (Son 24 Saat Kritik Event)
-- **Backlog:** Kampanyalar CRUD + uygulama noktaları
-- **Backlog:** Billing/Ödeme kayıtları entegrasyonu
+- FAZ-7 kapanış kontrolleri: expired token health-check → 401 + UI logout
+- Paralel sekme logout testi (multi-tab session invalid)
 
 ### P2
-- V3 genişletmeler (gelişmiş arama, güven katmanı, bayi genişletmeleri)
+- Sihirbaz E2E Playwright senaryoları (Hierarchy → Core → 2a → 2c → Modules → Draft → Publish)
+- Publish öncesi önizleme panelini zorunlu adım yap
+
+### P3
+- Dinamik modül adımları (ilan verme sihirbazında modül bazlı step)
+
+### P4
+- Şema versiyonlama + audit log sertleştirme
