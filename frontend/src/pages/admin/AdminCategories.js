@@ -1709,6 +1709,7 @@ const AdminCategories = () => {
                         type="checkbox"
                         checked={detailDraft.required}
                         onChange={(e) => setDetailDraft((prev) => ({ ...prev, required: e.target.checked }))}
+                        data-testid="categories-detail-draft-required-input"
                       />
                       Zorunlu
                     </label>
