@@ -3936,6 +3936,13 @@ async def admin_create_category(
         if "E11000" in str(e):
             raise HTTPException(status_code=409, detail="Category slug already exists")
         raise
+
+    if schema:
+        if schema_status == "draft":
+            await _record_category_version(db, category_id, schema, current_user, "draft")
+        else:
+            await _record_category_version(db, category_id, schema, current_user, "published")
+
     return {"category": _normalize_category_doc(doc, include_schema=True)}
 
 
