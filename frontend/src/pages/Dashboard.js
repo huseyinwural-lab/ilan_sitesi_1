@@ -178,6 +178,18 @@ const HealthCard = ({ health }) => (
           {health?.deployed_at || 'unknown'}
         </span>
       </div>
+      <div className="flex items-center justify-between">
+        <span>Son restart</span>
+        <span className="font-semibold" data-testid="dashboard-health-restart">
+          {health?.restart_at ? new Date(health.restart_at).toLocaleString() : 'unknown'}
+        </span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span>Uptime</span>
+        <span className="font-semibold" data-testid="dashboard-health-uptime">
+          {health?.uptime_human || 'unknown'}
+        </span>
+      </div>
     </div>
   </div>
 );
