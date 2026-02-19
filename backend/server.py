@@ -3962,6 +3962,8 @@ async def admin_update_category(
         raise HTTPException(status_code=404, detail="Category not found")
 
     updates: Dict = {}
+    schema = None
+    schema_status = None
     if payload.name is not None:
         updates["name"] = payload.name.strip()
     if payload.slug is not None:
