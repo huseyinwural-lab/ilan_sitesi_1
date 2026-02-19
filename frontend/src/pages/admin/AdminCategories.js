@@ -601,7 +601,15 @@ const AdminCategories = () => {
     const activeEditing = overrideEditing ?? editing;
     const hierarchyOk = effectiveHierarchyComplete;
     if (!hierarchyOk) {
-      setHierarchyError("Önce kategori hiyerarşisini tamamlayın.");
+      setHierarchyError("Önce hiyerarşiyi tamamlayın.");
+      if (status === "draft") {
+        showDraftToast({
+          title: "Kaydetme başarısız",
+          description: "Hiyerarşi tamamlanmadan kaydedilemez.",
+          variant: "destructive",
+        });
+        dismissDraftToast(4000);
+      }
       return;
     }
     if (status === "published" && !publishValidation.canPublish) {
@@ -637,11 +645,19 @@ const AdminCategories = () => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       if (res.status === 409) {
-        showDraftToast({
-          title: "Kaydetme başarısız",
-          description: "Başka bir sekmede güncellendi.",
-          variant: "destructive",
-        });
+        if (String(data?.detail || "").toLowerCase().includes("hiyerar")) {
+          showDraftToast({
+            title: "Kaydetme başarısız",
+            description: "Hiyerarşi tamamlanmadan kaydedilemez.",
+            variant: "destructive",
+          });
+        } else {
+          showDraftToast({
+            title: "Kaydetme başarısız",
+            description: "Başka bir sekmede güncellendi.",
+            variant: "destructive",
+          });
+        }
         dismissDraftToast(4000);
       } else if (status === "draft") {
         showDraftToast({
@@ -700,10 +716,8 @@ const AdminCategories = () => {
   };
 
   const handleDraftSave = async () => {
-    if (!effectiveHierarchyComplete && !editing) {
-      const result = await handleHierarchyComplete();
-      if (!result?.success) return;
-      await handleSave("draft", result.parent || null, false);
+    if (!effectiveHierarchyComplete) {
+      setHierarchyError("Önce hiyerarşiyi tamamlayın.");
       return;
     }
     await handleSave("draft", null, false);
