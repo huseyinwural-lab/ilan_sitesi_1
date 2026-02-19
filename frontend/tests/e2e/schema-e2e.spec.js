@@ -95,7 +95,50 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
 
     await page.getByTestId('categories-photos-max').fill('12');
 
+    await page.getByTestId('categories-step-next').click();
+    await expect(page.getByTestId('categories-preview-step')).toBeVisible();
+
+    await expect(page.getByTestId('categories-publish')).toBeDisabled();
+    await page.getByTestId('categories-preview-confirm').click();
+    await expect(page.getByTestId('categories-preview-ready')).toBeVisible();
+
+    const draftResponsePromise = page.waitForResponse((res) => (
+      res.url().includes('/api/admin/categories/') &&
+      res.request().method() === 'PATCH' &&
+      (res.request().postData() || '').includes('"status":"draft"')
+    ));
+    await page.getByTestId('categories-save-draft').click();
+    const draftResponse = await draftResponsePromise;
+    const draftData = await draftResponse.json();
+    expect(draftData.category.form_schema.status).toBe('draft');
+
+    await expect(page.getByTestId('categories-page')).toBeVisible({ timeout: 60000 });
+
+    const listRes = await request.get('/api/admin/categories?country=DE', {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(listRes.ok()).toBeTruthy();
+    const listData = await listRes.json();
+    const savedCategory = (listData.items || []).find((item) => item.slug === categorySlug);
+    expect(savedCategory).toBeTruthy();
+    expect(savedCategory.form_schema.status).toBe('draft');
+
+    await page.getByTestId(`categories-edit-${savedCategory.id}`).click();
+    await expect(page.getByTestId('categories-modal')).toBeVisible();
+    await page.getByTestId('category-step-preview').click();
+    await expect(page.getByTestId('categories-preview-step')).toBeVisible();
+    await page.getByTestId('categories-preview-confirm').click();
+    await expect(page.getByTestId('categories-publish')).toBeEnabled();
+
+    const publishResponsePromise = page.waitForResponse((res) => (
+      res.url().includes(`/api/admin/categories/${savedCategory.id}`) &&
+      res.request().method() === 'PATCH' &&
+      (res.request().postData() || '').includes('"status":"published"')
+    ));
     await page.getByTestId('categories-publish').click();
+    const publishData = await publishResponsePromise.json();
+    expect(publishData.category.form_schema.status).toBe('published');
+
     await expect(page.getByTestId('categories-page')).toBeVisible({ timeout: 60000 });
     await expect(page.getByText(categorySlug)).toBeVisible({ timeout: 30000 });
   });
