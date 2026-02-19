@@ -117,6 +117,7 @@
 
 ## Release Notes
 - Dashboard summary gerçek veriye bağlandı + Quick Actions aktif (users/countries/audit)
+- Dashboard canlı veri + Quick Actions + E2E PASS (Dashboard fazı kapatıldı)
 - Dashboard summary endpoint (/api/admin/dashboard/summary) + RBAC + cache
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
@@ -129,6 +130,7 @@
 
 ### P1
 - Lint debt cleanup (LINT-1/2)
+- Runtime config / feature flag (Dashboard TTL yönetimi) — backlog
 
 ### P2
 - Versioning diff highlight + rollback (aktif faz)
@@ -150,12 +152,19 @@
 
 ## P2 Spec — Versioning Diff + Rollback (Active)
 - Amaç: Admin’in yayın öncesi değişiklikleri sürüm bazında görmesi ve diff karşılaştırması
-- Veri modeli: categories_versions { id, category_id, version, schema_snapshot, status, created_at, created_by }
-- Akış: Her “Taslak Kaydet” → yeni versiyon kaydı; “Yayınla” → son versiyon published
-- UI: Kategori sihirbazında “Versiyon Geçmişi” paneli (liste + iki versiyon seçip diff)
-- Diff MVP: JSON side-by-side (read-only), highlight changed keys
-- Rollback: Seçili versiyon → draft olarak aç → publish
-- Risk/Önlem: Draft şişmesi → versiyon limiti (örn. son 25); rollback audit zorunlu
+- Gerekli API’ler:
+  - GET /api/admin/categories/{id}/versions (list)
+  - GET /api/admin/categories/{id}/versions/{version_id} (detail + snapshot)
+  - POST /api/admin/categories/{id}/versions/{version_id}/rollback (draft olarak aç)
+  - POST /api/admin/categories/{id}/publish (publish sonrası yeni version)
+- E2E Planı:
+  - draft → publish → yeni versiyon oluştuğunu doğrula
+  - rollback endpoint ile önceki versiyona dön → taslak açıldığını doğrula
+  - yeniden publish → version artışını doğrula
+- UI: Versiyon listesi + iki versiyon diff highlight + rollback CTA
+- Diff highlight: added/removed/changed (required/messages/options/modules)
+- Rollback: sadece admin + audit log zorunlu
+- Risk/Önlem: Draft şişmesi → versiyon limiti (örn. son 25)
 
 ## Autosave Spec (P1)
 - Draft modunda event-driven autosave: field change → 2.5s debounce → draft save
