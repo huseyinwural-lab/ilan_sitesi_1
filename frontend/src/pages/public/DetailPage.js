@@ -133,9 +133,11 @@ const DetailPage = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Gallery */}
-            <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden">
-              <img src={listing.media[0].url} alt={listing.title} className="w-full h-full object-cover" />
-            </div>
+            {showPhotos && (
+              <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden" data-testid="listing-photos-section">
+                <img src={listing.media[0].url} alt={listing.title} className="w-full h-full object-cover" />
+              </div>
+            )}
 
             {/* Header */}
             <div>
