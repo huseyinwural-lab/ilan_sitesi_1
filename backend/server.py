@@ -5784,12 +5784,14 @@ async def _dashboard_db_health(db) -> tuple[str, int]:
 async def admin_dashboard_summary(
     request: Request,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "finance"])),
 ):
+    start_perf = time.perf_counter()
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
     role = current_user.get("role")
+    can_view_finance = role in {"finance", "super_admin"}
     scope = (current_user.get("country_scope") or [])
     country_code = country.upper() if country else None
 
@@ -5805,9 +5807,13 @@ async def admin_dashboard_summary(
     cache_key = _dashboard_cache_key(role, effective_countries)
     cached = _get_cached_dashboard_summary(cache_key)
     if cached:
-        return cached
+        response = {**cached}
+        health = dict(response.get("health") or {})
+        health["api_latency_ms"] = int((time.perf_counter() - start_perf) * 1000)
+        response["health"] = health
+        return response
 
-    metrics = await _dashboard_metrics_scope(db, effective_countries)
+    metrics = await _dashboard_metrics_scope(db, effective_countries, include_revenue=can_view_finance)
 
     active_country_query: Dict[str, Any] = {"active_flag": True}
     if effective_countries:
@@ -5884,13 +5890,14 @@ async def admin_dashboard_summary(
         delete_query["country_code"] = {"$in": effective_countries}
     deleted_content = await db.audit_logs.count_documents(delete_query)
 
-    db_status = "ok"
-    try:
-        await db.command("ping")
-    except Exception:
-        db_status = "error"
+    kpis = await _dashboard_kpis(db, effective_countries, include_revenue=can_view_finance)
+    trends = await _dashboard_trends(db, effective_countries, include_revenue=can_view_finance)
+    risk_panel = await _dashboard_risk_panel(db, effective_countries, include_finance=can_view_finance)
 
+    db_status, db_latency_ms = await _dashboard_db_health(db)
     uptime_seconds = int((now - APP_START_TIME).total_seconds())
+    api_latency_ms = int((time.perf_counter() - start_perf) * 1000)
+
     summary = {
         "scope": "country" if effective_countries else "global",
         "country_codes": effective_countries or active_country_codes,
@@ -5917,12 +5924,18 @@ async def admin_dashboard_summary(
         "health": {
             "api_status": "ok",
             "db_status": db_status,
+            "api_latency_ms": api_latency_ms,
+            "db_latency_ms": db_latency_ms,
             "deployed_at": os.environ.get("DEPLOYED_AT") or "unknown",
             "restart_at": APP_START_TIME.isoformat(),
             "uptime_seconds": uptime_seconds,
             "uptime_human": _format_uptime(uptime_seconds),
         },
         "metrics": metrics,
+        "kpis": kpis,
+        "trends": trends,
+        "risk_panel": risk_panel,
+        "finance_visible": can_view_finance,
     }
 
     _set_cached_dashboard_summary(cache_key, summary)
