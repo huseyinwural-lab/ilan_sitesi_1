@@ -132,6 +132,32 @@ const AdminCategories = () => {
     sort_order: 0,
   });
   const [schema, setSchema] = useState(createDefaultSchema());
+  const [wizardStep, setWizardStep] = useState("hierarchy");
+  const [hierarchyComplete, setHierarchyComplete] = useState(false);
+  const [hierarchyError, setHierarchyError] = useState("");
+  const [subcategories, setSubcategories] = useState([]);
+  const [dynamicDraft, setDynamicDraft] = useState({
+    label: "",
+    key: "",
+    type: "select",
+    required: false,
+    sort_order: 0,
+    optionsInput: "",
+    messages: { required: "", invalid: "" },
+  });
+  const [dynamicEditIndex, setDynamicEditIndex] = useState(null);
+  const [dynamicError, setDynamicError] = useState("");
+  const [detailDraft, setDetailDraft] = useState({
+    id: "",
+    title: "",
+    required: false,
+    sort_order: 0,
+    messages: { required: "", invalid: "" },
+  });
+  const [detailOptions, setDetailOptions] = useState([]);
+  const [detailOptionInput, setDetailOptionInput] = useState("");
+  const [detailEditIndex, setDetailEditIndex] = useState(null);
+  const [detailError, setDetailError] = useState("");
   const inputClassName = "w-full border rounded p-2 text-slate-900 placeholder-slate-600 disabled:text-slate-500 disabled:bg-slate-100";
   const selectClassName = "w-full border rounded p-2 text-slate-900 disabled:text-slate-500 disabled:bg-slate-100";
   const labelClassName = "text-sm text-slate-800";
