@@ -652,6 +652,40 @@ const AdminCategories = () => {
                     <option value={0}>0 basamak</option>
                     <option value={2}>2 basamak</option>
                   </select>
+                  <input
+                    type="number"
+                    className="w-full border rounded p-2"
+                    placeholder="Min fiyat"
+                    value={schema.core_fields.price.range.min ?? ''}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        price: {
+                          ...prev.core_fields.price,
+                          range: { ...prev.core_fields.price.range, min: Number(e.target.value) },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-price-range-min"
+                  />
+                  <input
+                    type="number"
+                    className="w-full border rounded p-2"
+                    placeholder="Max fiyat"
+                    value={schema.core_fields.price.range.max ?? ''}
+                    onChange={(e) => setSchema((prev) => ({
+                      ...prev,
+                      core_fields: {
+                        ...prev.core_fields,
+                        price: {
+                          ...prev.core_fields.price,
+                          range: { ...prev.core_fields.price.range, max: e.target.value ? Number(e.target.value) : null },
+                        },
+                      },
+                    }))}
+                    data-testid="categories-price-range-max"
+                  />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <input
