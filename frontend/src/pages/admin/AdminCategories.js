@@ -932,6 +932,22 @@ const AdminCategories = () => {
                       />
                       Zorunlu
                     </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <input
+                        className="border rounded p-2"
+                        placeholder="Required mesajı"
+                        value={group.messages?.required || ''}
+                        onChange={(e) => updateDetailGroup(index, { messages: { ...group.messages, required: e.target.value } })}
+                        data-testid={`categories-group-required-message-${index}`}
+                      />
+                      <input
+                        className="border rounded p-2"
+                        placeholder="Invalid mesajı"
+                        value={group.messages?.invalid || ''}
+                        onChange={(e) => updateDetailGroup(index, { messages: { ...group.messages, invalid: e.target.value } })}
+                        data-testid={`categories-group-invalid-message-${index}`}
+                      />
+                    </div>
                     <button
                       className="text-sm text-red-500"
                       onClick={(e) => {
