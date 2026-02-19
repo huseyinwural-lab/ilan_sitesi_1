@@ -783,6 +783,49 @@ def _parse_iso(value: Optional[str]) -> Optional[datetime]:
         return None
 
 
+def _resolve_period_window(period: str, start_date: Optional[str], end_date: Optional[str]) -> tuple[datetime, datetime, str]:
+    now = datetime.now(timezone.utc)
+    period_key = (period or "30d").lower()
+
+    if period_key == "today":
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = now
+        return start, end, "Bugün"
+
+    if period_key in {"7d", "7", "last_7_days"}:
+        start = now - timedelta(days=7)
+        end = now
+        return start, end, "Son 7 Gün"
+
+    if period_key in {"30d", "30", "last_30_days"}:
+        start = now - timedelta(days=30)
+        end = now
+        return start, end, "Son 30 Gün"
+
+    if period_key == "mtd":
+        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = now
+        return start, end, "MTD"
+
+    if period_key == "custom":
+        start_dt = _parse_iso(start_date)
+        end_dt = _parse_iso(end_date)
+        if not start_dt or not end_dt:
+            raise HTTPException(status_code=400, detail="custom start_date and end_date required")
+        start = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = end_dt.replace(hour=23, minute=59, second=59, microsecond=0)
+        if end < start:
+            raise HTTPException(status_code=400, detail="end_date must be after start_date")
+        range_days = (end - start).days + 1
+        if range_days < DASHBOARD_TREND_MIN_DAYS or range_days > DASHBOARD_TREND_MAX_DAYS:
+            raise HTTPException(status_code=400, detail="custom range must be between 7 and 365 days")
+        return start, end, "Özel"
+
+    start = now - timedelta(days=30)
+    end = now
+    return start, end, "Son 30 Gün"
+
+
 # Audit event taxonomy (v1)
 AUDIT_EVENT_TYPES_V1 = {
     "MODERATION_APPROVE",
