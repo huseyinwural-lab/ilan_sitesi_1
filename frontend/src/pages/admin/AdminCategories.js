@@ -2266,8 +2266,13 @@ const AdminCategories = () => {
 
               {wizardStep === "preview" && (
                 <div className="border-t pt-4 space-y-4" data-testid="categories-preview-step">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-md font-semibold">Önizleme</h3>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-md font-semibold">Önizleme</h3>
+                      <div className="text-xs text-slate-500" data-testid="categories-last-saved">
+                        Son kaydetme: {lastSavedAt || "-"}
+                      </div>
+                    </div>
                     <span
                       className={`text-xs px-2 py-1 rounded ${previewComplete ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}
                       data-testid="categories-preview-status"
