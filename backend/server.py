@@ -2550,7 +2550,7 @@ def _build_schema_pdf(schema: Dict[str, Any], category: dict, version: int, hier
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, title="Schema Export")
     elements = []
-    elements.append(Paragraph(f"Kategori Şema Export", styles["Title"]))
+    elements.append(Paragraph("Kategori Şema Export", styles["Title"]))
     elements.append(Paragraph(f"Kategori: {category.get('name')} ({category.get('slug')})", styles["Normal"]))
     elements.append(Paragraph(f"Versiyon: v{version}", styles["Normal"]))
     elements.append(Paragraph(f"Durum: {schema.get('status')}", styles["Normal"]))
