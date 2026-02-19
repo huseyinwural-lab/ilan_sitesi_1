@@ -115,6 +115,11 @@
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 
+## Release Notes
+- Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
+- Export modülü freeze (yeni geliştirme yok)
+- Admin imzası backlog’a alındı (sonraki faz)
+
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
 - (Boş) — Preview gate + FAZ-7 auth kontrolleri + wizard E2E tamamlandı
