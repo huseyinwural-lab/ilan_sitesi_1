@@ -137,6 +137,7 @@
 - LINT-4: F601 duplicate "$or" key (server.py:4798) → query birleştir
 - LINT-5: F821 now_iso undefined (server.py:5126) → timestamp kaynağını standardize et
 - Plan: P1’de LINT-1/2, P2’de LINT-3/4/5 + lint CI gate (baseline bozulmasın)
+- Not: Frontend ESLint gate şu an “legacy uyumlu” (no-unused-vars/no-undef kapalı); P2’de kademeli sıkılaştırma
 
 ## P1 Spec — Taslak Versiyon Geçmişi + Diff Paneli (MVP)
 - Amaç: Admin’in yayın öncesi değişiklikleri sürüm bazında görmesi ve diff karşılaştırması
