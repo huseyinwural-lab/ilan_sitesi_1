@@ -145,3 +145,50 @@
 - UI: Kategori sihirbazında “Versiyon Geçmişi” paneli (liste + iki versiyon seçip diff)
 - Diff MVP: JSON side-by-side (read-only), highlight changed keys
 - Risk/Önlem: Draft şişmesi → versiyon limiti (örn. son 25); rollback MVP dışında
+
+## Preview Export Mini-Spec (P1)
+- PDF export zorunlu; preview gate onayı sonrası üretilecek
+- CSV export opsiyonel (sadece modül + alan listesi, sadeleştirilmiş)
+- İçerik: kategori özeti, modül listesi, dinamik alanlar, detay grupları, validation uyarıları, timestamp
+- Yetki: super_admin + country_admin
+- Formatlar: PDF (tam rapor), CSV (modül/alan matrisi)
+- Not: Export snapshot, preview-onaylı schema üzerinden üretilecek
+
+## P1 Tasarım Dokümanları
+- Draft Versioning + Diff MVP: /app/memory/DESIGN_DRAFT_VERSIONING.md
+
+## Appendix: P0 Stabilizasyon Final Raporu
+### Kapsam
+- Preview Gate zorunlu adım + publish enablement
+- Auth edge-case testleri (expired token + multi-tab logout)
+- Kategori sihirbazı E2E (admin wizard + draft/publish)
+- Playwright baseURL standardizasyonu (PLAYWRIGHT_BASE_URL → REACT_APP_BACKEND_URL)
+
+### Değişiklik Listesi
+- Preview adımında özet + modül listesi + validation uyarıları + JSON accordion
+- Draft/Pubish API assertion’lı wizard E2E senaryosu
+- FAZ-7 auth edge-case Playwright senaryoları
+- Lint debt yol haritası ve versiyonlama tasarım başlangıcı
+
+### Test Kanıtı
+- playwright: tests/e2e/admin-auth-edge.spec.js → ✅ 2 test geçti
+- playwright: tests/e2e/schema-e2e.spec.js → ✅ Senaryo 1 geçti; Senaryo 2/3 SKIPPED
+- UI regresyon: auto_frontend_testing_agent ✅
+
+### Açık Kalanlar (SKIPPED) + Fixture Gereksinimleri
+- Senaryo 2/3 (user listing wizard) şu an SKIPPED.
+- Gereksinimler:
+  - user@platform.com (role: individual) hesabı aktif olmalı
+  - /account/create/vehicle-wizard route erişilebilir olmalı
+  - Published kategori schema’sı public contract üzerinden çekilebilir olmalı
+  - Vehicle master data (make/model) seed’leri yüklü olmalı
+
+### Risk / Önlem
+- Risk: SKIPPED senaryolar regresyonu yakalayamaz → Fixture hazır olduğunda P2’de aktive edilecek
+- Risk: Export/PDF gelecekte schema ile uyumsuz olabilir → snapshot tabanlı üretim şartı
+
+### Kapanış Kriterleri
+- Preview Gate yayın öncesi zorunlu
+- Auth edge-case testleri yeşil
+- Wizard E2E Senaryo 1 (draft+publish) yeşil
+- P0 kapsamında açık blocker kalmaması
