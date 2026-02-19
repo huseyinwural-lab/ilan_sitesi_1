@@ -129,7 +129,7 @@ def _user_to_response(doc: dict) -> UserResponse:
     )
 
 
-def build_audit_entry(
+async def build_audit_entry(
     event_type: str,
     actor: dict,
     target_id: str,
