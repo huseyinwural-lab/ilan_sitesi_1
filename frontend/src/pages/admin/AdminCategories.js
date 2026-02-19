@@ -319,6 +319,290 @@ const AdminCategories = () => {
     fetchItems();
   };
 
+  const canAccessStep = (stepId) => {
+    if (stepId === "hierarchy") return true;
+    return hierarchyComplete;
+  };
+
+  const addSubcategory = () => {
+    setSubcategories((prev) => ([
+      ...prev,
+      { name: "", slug: "", active_flag: true, sort_order: 0 },
+    ]));
+  };
+
+  const updateSubcategory = (index, patch) => {
+    setSubcategories((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], ...patch };
+      return updated;
+    });
+  };
+
+  const removeSubcategory = (index) => {
+    setSubcategories((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleHierarchyComplete = async () => {
+    setHierarchyError("");
+
+    const name = form.name.trim();
+    const slug = form.slug.trim().toLowerCase();
+    const country = (form.country_code || "").trim().toUpperCase();
+
+    if (!name || !slug) {
+      setHierarchyError("Ana kategori adı ve slug zorunludur.");
+      return;
+    }
+    if (!country) {
+      setHierarchyError("Ülke (country) zorunludur.");
+      return;
+    }
+
+    const cleanedSubs = subcategories
+      .map((item) => ({
+        ...item,
+        name: item.name.trim(),
+        slug: item.slug.trim().toLowerCase(),
+      }))
+      .filter((item) => item.name || item.slug);
+
+    const invalidSub = cleanedSubs.find((item) => !item.name || !item.slug);
+    if (invalidSub) {
+      setHierarchyError("Alt kategorilerde ad + slug zorunludur.");
+      return;
+    }
+
+    if (editing) {
+      setHierarchyComplete(true);
+      setWizardStep("core");
+      return;
+    }
+
+    try {
+      const parentPayload = {
+        name,
+        slug,
+        country_code: country,
+        active_flag: form.active_flag,
+        sort_order: Number(form.sort_order || 0),
+        hierarchy_complete: false,
+      };
+      const parentRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify(parentPayload),
+      });
+      const parentData = await parentRes.json();
+      if (!parentRes.ok) {
+        setHierarchyError(parentData?.detail || "Ana kategori oluşturulamadı.");
+        return;
+      }
+      const parent = parentData.category;
+
+      for (const child of cleanedSubs) {
+        const childPayload = {
+          name: child.name,
+          slug: child.slug,
+          parent_id: parent.id,
+          country_code: country,
+          active_flag: child.active_flag,
+          sort_order: Number(child.sort_order || 0),
+          hierarchy_complete: true,
+        };
+        const childRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeader,
+          },
+          body: JSON.stringify(childPayload),
+        });
+        if (!childRes.ok) {
+          const childData = await childRes.json();
+          setHierarchyError(childData?.detail || "Alt kategori oluşturulamadı.");
+          return;
+        }
+      }
+
+      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${parent.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify({ hierarchy_complete: true }),
+      });
+
+      setEditing(parent);
+      setForm({
+        name: parent.name || name,
+        slug: parent.slug || slug,
+        parent_id: parent.parent_id || "",
+        country_code: parent.country_code || country,
+        active_flag: parent.active_flag ?? true,
+        sort_order: parent.sort_order || 0,
+      });
+      setHierarchyComplete(true);
+      setWizardStep("core");
+      fetchItems();
+    } catch (error) {
+      setHierarchyError("Hiyerarşi oluşturulurken hata oluştu.");
+    }
+  };
+
+  const handleDynamicNext = () => {
+    setDynamicError("");
+    const label = dynamicDraft.label.trim();
+    const key = dynamicDraft.key.trim();
+    const type = dynamicDraft.type;
+    if (!label || !key) {
+      setDynamicError("Etiket ve key zorunludur.");
+      return;
+    }
+    const options = (dynamicDraft.optionsInput || "")
+      .split(",")
+      .map((opt) => opt.trim())
+      .filter(Boolean);
+    if ((type === "select" || type === "radio") && options.length === 0) {
+      setDynamicError("Select/Radio için seçenek listesi zorunludur.");
+      return;
+    }
+    const messages = { ...dynamicDraft.messages };
+    if (!dynamicDraft.required) {
+      messages.required = "";
+    }
+    const payload = {
+      id: dynamicDraft.id || createId("field"),
+      label,
+      key,
+      type,
+      options: type === "select" || type === "radio" ? options : [],
+      required: dynamicDraft.required,
+      sort_order: Number(dynamicDraft.sort_order || 0),
+      messages,
+    };
+    setSchema((prev) => {
+      const updated = [...prev.dynamic_fields];
+      if (dynamicEditIndex !== null) {
+        updated[dynamicEditIndex] = payload;
+      } else {
+        updated.push(payload);
+      }
+      return { ...prev, dynamic_fields: updated };
+    });
+    setDynamicDraft({
+      label: "",
+      key: "",
+      type: "select",
+      required: false,
+      sort_order: 0,
+      optionsInput: "",
+      messages: { required: "", invalid: "" },
+    });
+    setDynamicEditIndex(null);
+  };
+
+  const handleDynamicEdit = (index) => {
+    const field = schema.dynamic_fields[index];
+    setDynamicEditIndex(index);
+    setDynamicDraft({
+      id: field.id,
+      label: field.label || "",
+      key: field.key || "",
+      type: field.type || "select",
+      required: field.required || false,
+      sort_order: field.sort_order || 0,
+      optionsInput: (field.options || []).join(", "),
+      messages: { required: field.messages?.required || "", invalid: field.messages?.invalid || "" },
+    });
+    setDynamicError("");
+  };
+
+  const handleDynamicRemove = (index) => {
+    setSchema((prev) => ({
+      ...prev,
+      dynamic_fields: prev.dynamic_fields.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleDetailOptionAdd = () => {
+    const value = detailOptionInput.trim();
+    if (!value) return;
+    setDetailOptions((prev) => [...prev, value]);
+    setDetailOptionInput("");
+  };
+
+  const handleDetailNext = () => {
+    setDetailError("");
+    const title = detailDraft.title.trim();
+    const id = detailDraft.id.trim();
+    if (!title || !id) {
+      setDetailError("Grup başlığı ve key zorunludur.");
+      return;
+    }
+    if (detailOptions.length === 0) {
+      setDetailError("En az 1 checkbox seçeneği ekleyin.");
+      return;
+    }
+    const messages = { ...detailDraft.messages };
+    if (!detailDraft.required) {
+      messages.required = "";
+    }
+    const payload = {
+      id,
+      title,
+      options: detailOptions,
+      required: detailDraft.required,
+      sort_order: Number(detailDraft.sort_order || 0),
+      messages,
+    };
+    setSchema((prev) => {
+      const updated = [...prev.detail_groups];
+      if (detailEditIndex !== null) {
+        updated[detailEditIndex] = payload;
+      } else {
+        updated.push(payload);
+      }
+      return { ...prev, detail_groups: updated };
+    });
+    setDetailDraft({
+      id: "",
+      title: "",
+      required: false,
+      sort_order: 0,
+      messages: { required: "", invalid: "" },
+    });
+    setDetailOptions([]);
+    setDetailOptionInput("");
+    setDetailEditIndex(null);
+  };
+
+  const handleDetailEdit = (index) => {
+    const group = schema.detail_groups[index];
+    setDetailEditIndex(index);
+    setDetailDraft({
+      id: group.id || "",
+      title: group.title || "",
+      required: group.required || false,
+      sort_order: group.sort_order || 0,
+      messages: { required: group.messages?.required || "", invalid: group.messages?.invalid || "" },
+    });
+    setDetailOptions(group.options || []);
+    setDetailOptionInput("");
+    setDetailError("");
+  };
+
+  const handleDetailRemove = (index) => {
+    setSchema((prev) => ({
+      ...prev,
+      detail_groups: prev.detail_groups.filter((_, i) => i !== index),
+    }));
+  };
+
 
 
   return (
