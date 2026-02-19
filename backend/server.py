@@ -4985,8 +4985,59 @@ async def preview_vehicle_media(listing_id: str, media_id: str, request: Request
     return FileResponse(path)
 
 
+def _apply_listing_payload(listing: dict, payload: dict) -> tuple[dict, dict]:
+    updates: dict = {}
+    if not payload:
+        return listing, updates
+    core_fields = payload.get("core_fields") or {}
+    price_payload = core_fields.get("price") if isinstance(core_fields, dict) else None
+    price_payload = price_payload or payload.get("price") or {}
+    title = core_fields.get("title") or payload.get("title")
+    description = core_fields.get("description") or payload.get("description")
+    if title is not None:
+        updates["title"] = title.strip()
+        updates["title_lower"] = title.strip().lower()
+    if description is not None:
+        updates["description"] = description.strip()
+    if price_payload:
+        updates["price"] = {
+            "amount": price_payload.get("amount"),
+            "currency_primary": price_payload.get("currency_primary"),
+            "currency_secondary": price_payload.get("currency_secondary"),
+            "secondary_amount": price_payload.get("secondary_amount"),
+            "decimal_places": price_payload.get("decimal_places"),
+        }
+    if core_fields:
+        updates["core_fields"] = core_fields
+
+    attributes = dict(listing.get("attributes") or {})
+    dynamic_fields = payload.get("dynamic_fields") or {}
+    if isinstance(dynamic_fields, dict):
+        attributes.update(dynamic_fields)
+    price_amount = updates.get("price", {}).get("amount") if updates.get("price") else None
+    if price_amount is not None:
+        attributes["price_eur"] = price_amount
+    updates["attributes"] = attributes
+
+    if payload.get("detail_groups") is not None:
+        updates["detail_groups"] = payload.get("detail_groups")
+    if payload.get("modules") is not None:
+        updates["modules"] = payload.get("modules")
+    if payload.get("payment_options") is not None:
+        updates["payment_options"] = payload.get("payment_options")
+
+    updated_listing = dict(listing)
+    updated_listing.update(updates)
+    return updated_listing, updates
+
+
 @api_router.post("/v1/listings/vehicle/{listing_id}/submit")
-async def submit_vehicle_listing(listing_id: str, request: Request, current_user=Depends(get_current_user)):
+async def submit_vehicle_listing(
+    listing_id: str,
+    payload: dict = Body(default={}),
+    request: Request = None,
+    current_user=Depends(get_current_user),
+):
     db = request.app.state.db
     listing = await get_vehicle_listing(db, listing_id)
     if not listing:
@@ -4996,6 +5047,11 @@ async def submit_vehicle_listing(listing_id: str, request: Request, current_user
     if listing.get("status") not in ["draft", "needs_revision"]:
         raise HTTPException(status_code=400, detail="Listing not draft/needs_revision")
 
+    listing, updates = _apply_listing_payload(listing, payload)
+    if updates:
+        updates["updated_at"] = now_iso()
+        await db.vehicle_listings.update_one({"id": listing_id}, {"$set": updates})
+
     vehicle_master = await _build_vehicle_master_from_db(db, listing.get("country"))
     required_keys = await _get_required_attribute_keys(db, listing.get("category_key"), listing.get("country"))
     errs = validate_publish(
@@ -5004,11 +5060,43 @@ async def submit_vehicle_listing(listing_id: str, request: Request, current_user
         required_attribute_keys=required_keys,
         supported_countries=SUPPORTED_COUNTRIES,
     )
+    schema = None
+    if listing.get("category_id"):
+        category = await db.categories.find_one({"id": listing.get("category_id")})
+        if category:
+            schema = _normalize_category_schema(category.get("form_schema"))
+    if schema:
+        errs.extend(validate_listing_schema(listing, schema))
+        title_uniqueness = schema.get("title_uniqueness", {})
+        if title_uniqueness.get("enabled"):
+            title_value = (listing.get("title") or "").strip()
+            if title_value:
+                query = {
+                    "title_lower": title_value.lower(),
+                    "category_id": listing.get("category_id"),
+                    "id": {"$ne": listing.get("id")},
+                    "status": {"$ne": "archived"},
+                }
+                if title_uniqueness.get("scope") == "category_user":
+                    query["created_by"] = listing.get("created_by")
+                exists = await db.vehicle_listings.find_one(query, {"_id": 1})
+                if exists:
+                    errs.append(
+                        {
+                            "code": "DUPLICATE_TITLE",
+                            "field": "title",
+                            "message": schema.get("core_fields", {})
+                            .get("title", {})
+                            .get("messages", {})
+                            .get("duplicate", "Bu başlık zaten kullanılıyor."),
+                        }
+                    )
     if errs:
-        # return normalized 422 payload for FE
-        raise HTTPException(status_code=422, detail={"id": listing_id, "status": listing.get("status"), "validation_errors": errs, "next_actions": ["fix_form", "upload_media"]})
+        raise HTTPException(
+            status_code=422,
+            detail={"id": listing_id, "status": listing.get("status"), "validation_errors": errs, "next_actions": ["fix_form", "upload_media"]},
+        )
 
-    # If publish guard passes, listing is ready for moderation queue
     listing = await set_vehicle_status(db, listing_id, "pending_moderation")
 
     return {
