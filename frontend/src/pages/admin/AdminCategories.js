@@ -861,58 +861,27 @@ const AdminCategories = () => {
 
               {wizardStep !== "hierarchy" && (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-                <input
-                  className={inputClassName}
-                  placeholder="Kategori adı"
-                  value={form.name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  data-testid="categories-name-input"
-                />
-                <input
-                  className={inputClassName}
-                  placeholder="Slug"
-                  value={form.slug}
-                  onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
-                  data-testid="categories-slug-input"
-                />
-                <select
-                  className={selectClassName}
-                  value={form.parent_id}
-                  onChange={(e) => setForm((prev) => ({ ...prev, parent_id: e.target.value }))}
-                  data-testid="categories-parent-select"
-                >
-                  <option value="">Parent (optional)</option>
-                  {parentOptions.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-                <input
-                  className={inputClassName}
-                  placeholder="Country code (optional)"
-                  value={form.country_code}
-                  onChange={(e) => setForm((prev) => ({ ...prev, country_code: e.target.value.toUpperCase() }))}
-                  data-testid="categories-country-input"
-                />
-                <input
-                  type="number"
-                  className={inputClassName}
-                  placeholder="Sort order"
-                  value={form.sort_order}
-                  onChange={(e) => setForm((prev) => ({ ...prev, sort_order: e.target.value }))}
-                  data-testid="categories-sort-input"
-                />
-                <label className="flex items-center gap-2 text-sm text-slate-800">
-                  <input
-                    type="checkbox"
-                    checked={form.active_flag}
-                    onChange={(e) => setForm((prev) => ({ ...prev, active_flag: e.target.checked }))}
-                    data-testid="categories-active-checkbox"
-                  />
-                  Aktif
-                </label>
-              </div>
+                  <div className="rounded-lg border p-4 text-sm" data-testid="categories-summary">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <div>
+                        <div className="text-xs text-slate-500">Ana Kategori</div>
+                        <div className="font-medium">{form.name || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500">Slug</div>
+                        <div className="font-medium">{form.slug || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500">Ülke</div>
+                        <div className="font-medium">{form.country_code || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500">Durum</div>
+                        <div className="font-medium">{form.active_flag ? 'Aktif' : 'Pasif'}</div>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-slate-500">Sıra: {form.sort_order || 0}</div>
+                  </div>
 
               <div className="border-t pt-4 space-y-4">
                 <h3 className="text-md font-semibold">Çekirdek Alanlar</h3>
