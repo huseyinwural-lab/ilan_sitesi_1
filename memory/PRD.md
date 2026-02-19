@@ -168,6 +168,8 @@
 - Yetki: super_admin + country_admin
 - Formatlar: PDF (tam rapor), CSV (modül/alan matrisi)
 - Not: Export snapshot, preview-onaylı schema üzerinden üretilecek
+- Rate limit: 10 istek / 60 sn (admin başına)
+- Audit_logs event_type index: mevcut + (event_type, created_at) composite index
 
 ## P1 Tasarım Dokümanları
 - Draft Versioning + Diff MVP: /app/memory/DESIGN_DRAFT_VERSIONING.md
