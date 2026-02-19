@@ -250,7 +250,7 @@
 ### Backend Testing Results (Feb 17, 2026)
 - **Test Suite**: FAZ-FINAL-02 Security & Permission Audit
 - **Test File**: `/app/backend/tests/test_faz_final_02_security_audit.py`
-- **Base URL**: https://kategori-form-v2.preview.emergentagent.com/api
+- **Base URL**: https://cat-wizard-draft.preview.emergentagent.com/api
 - **Credentials**: admin@platform.com / Admin123!
 
 #### Test Results Summary:
@@ -703,7 +703,7 @@
 
 ### Network Analysis:
 - **All API Endpoints**: Return successful HTTP responses as expected
-- **Base URL**: https://kategori-form-v2.preview.emergentagent.com/api (from frontend/.env)
+- **Base URL**: https://cat-wizard-draft.preview.emergentagent.com/api (from frontend/.env)
 - **Authentication**: admin@platform.com / Admin123! login successful
 - **No Network Errors**: All requests completed successfully
 
@@ -994,7 +994,7 @@
 ## Portal Split v1 No-Chunk-Load Acceptance Verification Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-form-v2.preview.emergentagent.com
+**Base URL**: https://cat-wizard-draft.preview.emergentagent.com
 
 **Credentials Tested**:
 - Admin: admin@platform.com / Admin123! ✅ WORKING
@@ -1079,7 +1079,7 @@
 ## Portal Split v1 No-Chunk-Load Re-Test Results (Feb 17, 2026) - MAJOR IMPROVEMENT
 
 ### Test Flow Re-executed:
-**Base URL**: https://kategori-form-v2.preview.emergentagent.com
+**Base URL**: https://cat-wizard-draft.preview.emergentagent.com
 
 **Credentials Tested**:
 - Admin: admin@platform.com / Admin123! ✅ WORKING
@@ -1154,7 +1154,7 @@
 ## Sprint 1.2 Dealer Applications UI E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-form-v2.preview.emergentagent.com
+**Base URL**: https://cat-wizard-draft.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 **Target Route**: /admin/dealer-applications
 
@@ -1206,7 +1206,7 @@
 ## Sprint 1.2 Dealer Applications Backend E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-form-v2.preview.emergentagent.com
+**Base URL**: https://cat-wizard-draft.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 **Country Admin**: country_admin_fr@test.com / CountryAdmin123! ✅ WORKING
 
@@ -1265,7 +1265,7 @@
 
 ### Network Analysis:
 - **All API Calls**: Successful HTTP responses
-- **Base URL**: https://kategori-form-v2.preview.emergentagent.com/api (from frontend/.env)
+- **Base URL**: https://cat-wizard-draft.preview.emergentagent.com/api (from frontend/.env)
 - **Authentication**: Bearer token authentication working
 - **Country Context**: Scope enforcement via ?country= query parameter working
 
@@ -1289,7 +1289,7 @@
 ## Admin Dealers Module Testing Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-form-v2.preview.emergentagent.com
+**Base URL**: https://cat-wizard-draft.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 1. ✅ **Admin Login** - Authentication successful, redirected to /admin
@@ -1349,7 +1349,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## Dealer Portal Positive Smoke + Chunk Assertions Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-form-v2.preview.emergentagent.com
+**Base URL**: https://cat-wizard-draft.preview.emergentagent.com
 **Credentials**: dealer@platform.com / Dealer123! ✅ WORKING
 
 1. ✅ **Dealer Login Page Access** - /dealer/login loads successfully with login form
@@ -1481,7 +1481,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-01 P0 Backend Regression Tests (Feb 17, 2026) - ALL PASSED
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-form-v2.preview.emergentagent.com/api
+**Base URL**: https://cat-wizard-draft.preview.emergentagent.com/api
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 ### Critical Findings:
@@ -1547,7 +1547,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-01 Frontend E2E Smoke Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-form-v2.preview.emergentagent.com
+**Base URL**: https://cat-wizard-draft.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123!
 
 ### Critical Findings:
@@ -1598,8 +1598,8 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-02 (P1) UI Changes - Audit Logs Filters Frontend E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Attempted:
-**Base URL**: https://kategori-form-v2.preview.emergentagent.com/admin/login
-**Target URL**: https://kategori-form-v2.preview.emergentagent.com/admin/audit-logs?country=DE
+**Base URL**: https://cat-wizard-draft.preview.emergentagent.com/admin/login
+**Target URL**: https://cat-wizard-draft.preview.emergentagent.com/admin/audit-logs?country=DE
 **Credentials**: admin@platform.com / Admin123!
 
 ### Critical Findings:
@@ -1681,9 +1681,9 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 
 ### Test Flow Executed:
 **Base URLs Tested**:
-- Public: https://kategori-form-v2.preview.emergentagent.com/login
-- Dealer: https://kategori-form-v2.preview.emergentagent.com/dealer/login  
-- Admin: https://kategori-form-v2.preview.emergentagent.com/admin/login
+- Public: https://cat-wizard-draft.preview.emergentagent.com/login
+- Dealer: https://cat-wizard-draft.preview.emergentagent.com/dealer/login  
+- Admin: https://cat-wizard-draft.preview.emergentagent.com/admin/login
 
 **Test Credentials**: admin@platform.com with wrong passwords + test@example.com
 
@@ -1758,7 +1758,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## Sprint 1.1 Dealer Management Backend API Tests (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-form-v2.preview.emergentagent.com/api
+**Base URL**: https://cat-wizard-draft.preview.emergentagent.com/api
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 ### Test Cases Executed:
