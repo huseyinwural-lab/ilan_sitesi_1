@@ -3867,9 +3867,9 @@ async def admin_update_category(
         schema = _normalize_category_schema(payload.form_schema)
         schema_status = schema.get("status", "published")
         hierarchy_complete = updates.get("hierarchy_complete", category.get("hierarchy_complete", True))
+        if not hierarchy_complete:
+            raise HTTPException(status_code=409, detail="Kategori hiyerarşisi tamamlanmadan yayınlanamaz")
         if schema_status != "draft":
-            if not hierarchy_complete:
-                raise HTTPException(status_code=409, detail="Kategori hiyerarşisi tamamlanmadan yayınlanamaz")
             _validate_category_schema(schema)
         updates["form_schema"] = schema
 
