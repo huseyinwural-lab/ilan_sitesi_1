@@ -1,0 +1,279 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - complementary [ref=e4]:
+        - generic [ref=e5]:
+          - generic [ref=e7]: A
+          - generic [ref=e9]: Admin Panel
+          - button "Collapse" [ref=e10] [cursor=pointer]:
+            - img [ref=e12]
+        - navigation [ref=e14]:
+          - list [ref=e15]:
+            - generic [ref=e16]:
+              - listitem [ref=e17]:
+                - generic [ref=e19]: Dashboard
+              - listitem [ref=e20]:
+                - link "Kontrol Paneli" [ref=e22] [cursor=pointer]:
+                  - /url: /admin
+                  - img [ref=e23]
+                  - text: Kontrol Paneli
+              - listitem [ref=e28]:
+                - link "Genel Bakış" [ref=e30] [cursor=pointer]:
+                  - /url: /admin/dashboard
+                  - img [ref=e31]
+                  - text: Genel Bakış
+              - listitem [ref=e34]:
+                - link "Ülke Karşılaştırma" [ref=e36] [cursor=pointer]:
+                  - /url: /admin/country-compare
+                  - img [ref=e37]
+                  - text: Ülke Karşılaştırma
+              - listitem [ref=e39]:
+                - generic [ref=e41]: Yönetim
+              - listitem [ref=e42]:
+                - link "Admin Kullanıcıları" [ref=e44] [cursor=pointer]:
+                  - /url: /admin/admin-users
+                  - img [ref=e45]
+                  - text: Admin Kullanıcıları
+              - listitem [ref=e50]:
+                - link "Rol Tanımları" [ref=e52] [cursor=pointer]:
+                  - /url: /admin/roles
+                  - img [ref=e53]
+                  - text: Rol Tanımları
+              - listitem [ref=e56]:
+                - link "Yetki Atama (RBAC Matrix)" [ref=e58] [cursor=pointer]:
+                  - /url: /admin/rbac-matrix
+                  - img [ref=e59]
+                  - text: Yetki Atama (RBAC Matrix)
+              - listitem [ref=e61]:
+                - link "Kullanıcı Yönetimi" [ref=e63] [cursor=pointer]:
+                  - /url: /admin/users
+                  - img [ref=e64]
+                  - text: Kullanıcı Yönetimi
+              - listitem [ref=e69]:
+                - generic [ref=e71]: Üyeler
+              - listitem [ref=e72]:
+                - link "Bireysel Kullanıcılar" [ref=e74] [cursor=pointer]:
+                  - /url: /admin/individual-users
+                  - img [ref=e75]
+                  - text: Bireysel Kullanıcılar
+              - listitem [ref=e80]:
+                - link "Kurumsal Kullanıcılar" [ref=e82] [cursor=pointer]:
+                  - /url: /admin/dealers
+                  - img [ref=e83]
+                  - text: Kurumsal Kullanıcılar
+              - listitem [ref=e86]:
+                - link "Bireysel Üye Başvurular" [ref=e88] [cursor=pointer]:
+                  - /url: /admin/individual-applications
+                  - img [ref=e89]
+                  - text: Bireysel Üye Başvurular
+              - listitem [ref=e92]:
+                - link "Kurumsal Üye Başvurular" [ref=e94] [cursor=pointer]:
+                  - /url: /admin/dealer-applications
+                  - img [ref=e95]
+                  - text: Kurumsal Üye Başvurular
+              - listitem [ref=e98]:
+                - generic [ref=e100]: İlan & Moderasyon
+              - listitem [ref=e101]:
+                - link "Moderation Queue" [ref=e103] [cursor=pointer]:
+                  - /url: /admin/moderation
+                  - img [ref=e104]
+                  - text: Moderation Queue
+              - listitem [ref=e107]:
+                - link "Bireysel İlan Başvuruları" [ref=e109] [cursor=pointer]:
+                  - /url: /admin/individual-listing-applications
+                  - img [ref=e110]
+                  - text: Bireysel İlan Başvuruları
+              - listitem [ref=e113]:
+                - link "Kurumsal İlan Başvuruları" [ref=e115] [cursor=pointer]:
+                  - /url: /admin/corporate-listing-applications
+                  - img [ref=e116]
+                  - text: Kurumsal İlan Başvuruları
+              - listitem [ref=e119]:
+                - generic [ref=e121]: Kampanyalar
+              - listitem [ref=e122]:
+                - link "Bireysel Kampanyalar" [ref=e124] [cursor=pointer]:
+                  - /url: /admin/individual-campaigns
+                  - img [ref=e125]
+                  - text: Bireysel Kampanyalar
+              - listitem [ref=e127]:
+                - link "Kurumsal Kampanyalar" [ref=e129] [cursor=pointer]:
+                  - /url: /admin/corporate-campaigns
+                  - img [ref=e130]
+                  - text: Kurumsal Kampanyalar
+              - listitem [ref=e132]:
+                - link "Şikayetler" [ref=e134] [cursor=pointer]:
+                  - /url: /admin/reports
+                  - img [ref=e135]
+                  - text: Şikayetler
+              - listitem [ref=e137]:
+                - generic [ref=e139]: Katalog & İçerik
+              - listitem [ref=e140]:
+                - link "Kategoriler" [ref=e142] [cursor=pointer]:
+                  - /url: /admin/categories
+                  - img [ref=e143]
+                  - text: Kategoriler
+              - listitem [ref=e148]:
+                - link "Özellikler" [ref=e150] [cursor=pointer]:
+                  - /url: /admin/attributes
+                  - img [ref=e151]
+                  - text: Özellikler
+              - listitem [ref=e154]:
+                - generic "Coming soon" [ref=e156]:
+                  - img [ref=e157]
+                  - generic [ref=e160]: Menü Yönetimi
+                  - generic [ref=e162]: Yakında
+              - listitem [ref=e163]:
+                - generic [ref=e165]: Araç Verisi
+              - listitem [ref=e166]:
+                - link "Araç Markaları" [ref=e168] [cursor=pointer]:
+                  - /url: /admin/vehicle-makes
+                  - img [ref=e169]
+                  - text: Araç Markaları
+              - listitem [ref=e173]:
+                - link "Araç Modelleri" [ref=e175] [cursor=pointer]:
+                  - /url: /admin/vehicle-models
+                  - img [ref=e176]
+                  - text: Araç Modelleri
+              - listitem [ref=e180]:
+                - generic [ref=e182]: Finans
+              - listitem [ref=e183]:
+                - link "Planlar" [ref=e185] [cursor=pointer]:
+                  - /url: /admin/plans
+                  - img [ref=e186]
+                  - text: Planlar
+              - listitem [ref=e188]:
+                - link "Faturalar" [ref=e190] [cursor=pointer]:
+                  - /url: /admin/invoices
+                  - img [ref=e191]
+                  - text: Faturalar
+              - listitem [ref=e194]:
+                - generic "Coming soon" [ref=e196]:
+                  - img [ref=e197]
+                  - generic [ref=e201]: Ödemeler
+                  - generic [ref=e203]: Yakında
+              - listitem [ref=e204]:
+                - link "Vergi Oranları" [ref=e206] [cursor=pointer]:
+                  - /url: /admin/tax-rates
+                  - img [ref=e207]
+                  - text: Vergi Oranları
+              - listitem [ref=e211]:
+                - generic [ref=e213]: Sistem
+              - listitem [ref=e214]:
+                - link "Ülkeler" [ref=e216] [cursor=pointer]:
+                  - /url: /admin/countries
+                  - img [ref=e217]
+                  - text: Ülkeler
+              - listitem [ref=e220]:
+                - link "Denetim Kayıtları" [ref=e222] [cursor=pointer]:
+                  - /url: /admin/audit-logs
+                  - img [ref=e223]
+                  - text: Denetim Kayıtları
+              - listitem [ref=e226]:
+                - link "Sistem Ayarları" [ref=e228] [cursor=pointer]:
+                  - /url: /admin/system-settings
+                  - img [ref=e229]
+                  - text: Sistem Ayarları
+        - generic [ref=e232]:
+          - generic [ref=e233]:
+            - generic [ref=e234]: S
+            - generic [ref=e235]:
+              - paragraph [ref=e236]: System Administrator
+              - paragraph [ref=e237]: Süper Admin
+          - button "Çıkış" [ref=e238] [cursor=pointer]:
+            - img [ref=e239]
+            - text: Çıkış
+      - generic [ref=e242]:
+        - banner [ref=e243]:
+          - generic [ref=e245]:
+            - generic [ref=e246]:
+              - generic [ref=e247]: Global
+              - switch [ref=e248] [cursor=pointer]
+              - generic [ref=e249]: Country
+            - button "🇩🇪 DE" [disabled] [ref=e251]:
+              - generic [ref=e252]: 🇩🇪
+              - generic [ref=e253]: DE
+              - img [ref=e254]
+          - generic [ref=e256]:
+            - button [ref=e257] [cursor=pointer]:
+              - img [ref=e259]
+            - button "tr" [ref=e262] [cursor=pointer]:
+              - img [ref=e263]
+              - generic [ref=e266]: tr
+            - button "S" [ref=e268] [cursor=pointer]:
+              - generic [ref=e269]: S
+              - img [ref=e270]
+        - main [ref=e272]:
+          - navigation "breadcrumb" [ref=e274]:
+            - list [ref=e275]:
+              - listitem [ref=e276]:
+                - link "Admin" [ref=e277] [cursor=pointer]:
+                  - /url: /admin
+              - listitem [ref=e278]:
+                - img [ref=e280]
+              - listitem [ref=e282]:
+                - link "Kategoriler" [disabled] [ref=e283]
+          - generic [ref=e285]:
+            - generic [ref=e286]:
+              - generic [ref=e287]:
+                - heading "Kategoriler" [level=1] [ref=e288]
+                - paragraph [ref=e289]: İlan form şablonlarını yönetin.
+              - button "Yeni Kategori" [ref=e290] [cursor=pointer]
+            - generic [ref=e291]:
+              - generic [ref=e292]:
+                - generic [ref=e293]: Ad
+                - generic [ref=e294]: Slug
+                - generic [ref=e295]: Ülke
+                - generic [ref=e296]: Sıra
+                - generic [ref=e297]: Durum
+                - generic [ref=e298]: Aksiyon
+              - generic [ref=e299]:
+                - generic [ref=e300]:
+                  - generic [ref=e301]: Gate Category
+                  - generic [ref=e302]: gate-category
+                  - generic [ref=e303]: DE
+                  - generic [ref=e304]: "0"
+                  - generic [ref=e306]: Aktif
+                  - generic [ref=e307]:
+                    - button "Düzenle" [ref=e308] [cursor=pointer]
+                    - button "Pasif Et" [ref=e309] [cursor=pointer]
+                    - button "Sil" [ref=e310] [cursor=pointer]
+                - generic [ref=e311]:
+                  - generic [ref=e312]: e2e-test-category
+                  - generic [ref=e313]: e2e-test-category
+                  - generic [ref=e314]: DE
+                  - generic [ref=e315]: "0"
+                  - generic [ref=e317]: Aktif
+                  - generic [ref=e318]:
+                    - button "Düzenle" [ref=e319] [cursor=pointer]
+                    - button "Pasif Et" [ref=e320] [cursor=pointer]
+                    - button "Sil" [ref=e321] [cursor=pointer]
+                - generic [ref=e322]:
+                  - generic [ref=e323]: Test Category
+                  - generic [ref=e324]: test-category
+                  - generic [ref=e325]: DE
+                  - generic [ref=e326]: "100"
+                  - generic [ref=e328]: Aktif
+                  - generic [ref=e329]:
+                    - button "Düzenle" [ref=e330] [cursor=pointer]
+                    - button "Pasif Et" [ref=e331] [cursor=pointer]
+                    - button "Sil" [ref=e332] [cursor=pointer]
+                - generic [ref=e333]:
+                  - generic [ref=e334]: Test Category 1771385847
+                  - generic [ref=e335]: test-category-1771385847
+                  - generic [ref=e336]: DE
+                  - generic [ref=e337]: "100"
+                  - generic [ref=e339]: Aktif
+                  - generic [ref=e340]:
+                    - button "Düzenle" [ref=e341] [cursor=pointer]
+                    - button "Pasif Et" [ref=e342] [cursor=pointer]
+                    - button "Sil" [ref=e343] [cursor=pointer]
+    - region "Notifications (F8)":
+      - list
+  - link "Made with Emergent" [ref=e344] [cursor=pointer]:
+    - /url: https://app.emergent.sh/?utm_source=emergent-badge
+    - img [ref=e345]
+    - paragraph [ref=e348]: Made with Emergent
+```
