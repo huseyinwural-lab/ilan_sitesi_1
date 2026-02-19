@@ -163,6 +163,11 @@ const AdminCategories = () => {
   const [publishError, setPublishError] = useState("");
   const [previewComplete, setPreviewComplete] = useState(false);
   const [jsonCopyStatus, setJsonCopyStatus] = useState("");
+  const [versions, setVersions] = useState([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [versionsError, setVersionsError] = useState("");
+  const [selectedVersions, setSelectedVersions] = useState([]);
+  const [versionDetails, setVersionDetails] = useState({});
   const inputClassName = "w-full border rounded p-2 text-slate-900 placeholder-slate-600 disabled:text-slate-500 disabled:bg-slate-100";
   const selectClassName = "w-full border rounded p-2 text-slate-900 disabled:text-slate-500 disabled:bg-slate-100";
   const labelClassName = "text-sm text-slate-800";
