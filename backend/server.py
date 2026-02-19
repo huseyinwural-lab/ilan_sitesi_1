@@ -1561,7 +1561,6 @@ async def moderation_queue(
 
     out = []
     for d in docs:
-        v = d.get("vehicle") or {}
         attrs = d.get("attributes") or {}
         media = d.get("media") or []
         title = (d.get("title") or "").strip() or f"{(v.get('make_key') or '').upper()} {v.get('model_key') or ''} {v.get('year') or ''}".strip()
@@ -2491,7 +2490,6 @@ async def admin_listings(
 
     items = []
     for d in docs:
-        v = d.get("vehicle") or {}
         attrs = d.get("attributes") or {}
         media = d.get("media") or []
         owner = user_map.get(d.get("created_by"), {})
