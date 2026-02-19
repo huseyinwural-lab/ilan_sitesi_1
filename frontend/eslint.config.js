@@ -5,6 +5,7 @@ const jsxA11y = require('eslint-plugin-jsx-a11y');
 const globals = require('globals');
 
 module.exports = [
+  { ignores: ['src/components/seo/StructuredData.js'] },
   js.configs.recommended,
   {
     files: ['**/*.{js,jsx}'],
