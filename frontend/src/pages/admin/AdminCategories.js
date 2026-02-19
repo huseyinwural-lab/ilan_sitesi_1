@@ -745,10 +745,7 @@ const AdminCategories = () => {
     fetchItems();
   };
 
-  const canAccessStep = (stepId) => {
-    if (stepId === "hierarchy") return true;
-    return effectiveHierarchyComplete;
-  };
+  const canAccessStep = () => true;
 
   const addSubcategory = () => {
     setSubcategories((prev) => ([

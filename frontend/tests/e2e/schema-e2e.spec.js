@@ -49,7 +49,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
 
     await page.getByTestId('categories-create-open').click();
     await expect(page.getByTestId('category-hierarchy-step')).toBeVisible();
-    await expect(page.getByTestId('category-step-core')).toBeDisabled();
+    await expect(page.getByTestId('category-step-core')).toBeEnabled();
 
     await page.getByTestId('categories-name-input').fill(categoryName);
     await page.getByTestId('categories-slug-input').fill(categorySlug);
