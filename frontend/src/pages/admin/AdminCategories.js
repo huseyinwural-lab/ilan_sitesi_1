@@ -100,6 +100,21 @@ const applySchemaDefaults = (incoming) => {
   };
 };
 
+const MODULE_LABELS = {
+  address: "Adres",
+  photos: "Fotoğraflar",
+  contact: "İletişim",
+  payment: "Ödeme",
+};
+
+const WIZARD_STEPS = [
+  { id: "hierarchy", label: "Hiyerarşi" },
+  { id: "core", label: "Çekirdek Alanlar" },
+  { id: "dynamic", label: "Parametre Alanları (2a)" },
+  { id: "detail", label: "Detay Grupları (2c)" },
+  { id: "modules", label: "Modüller" },
+];
+
 const createId = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
 const AdminCategories = () => {
