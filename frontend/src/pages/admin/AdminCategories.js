@@ -1765,7 +1765,7 @@ const AdminCategories = () => {
                   )}
                 </div>
               )}
-                </>
+                </div>
               )}
 
             <div className="flex flex-wrap justify-between items-center gap-3 mt-6 pt-4 border-t">
