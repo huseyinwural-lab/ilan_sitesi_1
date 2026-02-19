@@ -5178,10 +5178,10 @@ async def submit_vehicle_listing(
 
 
 @api_router.get("/v1/listings/vehicle/{listing_id}")
-async def get_vehicle_detail(listing_id: str, request: Request):
+async def get_vehicle_detail(listing_id: str, request: Request, preview: bool = False):
     db = request.app.state.db
     listing = await get_vehicle_listing(db, listing_id)
-    if not listing or listing.get("status") != "published":
+    if not listing or (listing.get("status") != "published" and not preview):
         raise HTTPException(status_code=404, detail="Not found")
 
     media = listing.get("media") or []
