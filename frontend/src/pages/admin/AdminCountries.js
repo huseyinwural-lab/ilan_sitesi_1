@@ -26,6 +26,7 @@ export default function AdminCountriesPage() {
     default_language: '',
     active_flag: true,
   });
+  const [isoSearch, setIsoSearch] = useState('');
   const [error, setError] = useState(null);
 
   const authHeader = useMemo(() => ({
