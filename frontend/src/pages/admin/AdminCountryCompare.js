@@ -409,7 +409,7 @@ export default function AdminCountryComparePage() {
             </div>
           </div>
           <div className="mt-6 space-y-3" data-testid="country-compare-heatmap-list">
-            {items.slice(0, 5).map((item) => {
+            {filteredItems.slice(0, 5).map((item) => {
               const value = metricValue(item);
               const intensity = Math.max(0.15, value / heatmapMax);
               return (
