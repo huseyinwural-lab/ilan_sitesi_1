@@ -190,8 +190,9 @@ def validate_listing_schema(listing: dict, schema: dict) -> list[dict]:
             errs.append(_error(key, "REQUIRED", field.get("messages", {}).get("required", f"{key} zorunlu")))
             continue
         if value is not None and value != "":
+            field_type = field.get("type")
             options = field.get("options") or []
-            if options and value not in options:
+            if field_type in {"select", "radio"} and options and value not in options:
                 errs.append(_error(key, "INVALID", field.get("messages", {}).get("invalid", f"{key} geçersiz")))
 
     detail_groups = listing.get("detail_groups") or {}
