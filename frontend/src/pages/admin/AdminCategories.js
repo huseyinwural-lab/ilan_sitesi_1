@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useCountry } from "../../contexts/CountryContext";
+import { useToast } from "@/components/ui/toaster";
 
 const createDefaultSchema = () => ({
   core_fields: {
@@ -168,8 +169,13 @@ const AdminCategories = () => {
   const [versionsError, setVersionsError] = useState("");
   const [selectedVersions, setSelectedVersions] = useState([]);
   const [versionDetails, setVersionDetails] = useState({});
+  const [lastSavedAt, setLastSavedAt] = useState("");
+  const [autosaveStatus, setAutosaveStatus] = useState("idle");
+  const autosaveTimeoutRef = useRef(null);
+  const autosaveToastRef = useRef(null);
+  const lastSavedSnapshotRef = useRef("");
 
-  const effectiveHierarchyComplete = editing ? Boolean(editing.hierarchy_complete) : hierarchyComplete;
+  const { toast } = useToast();
   const inputClassName = "w-full border rounded p-2 text-slate-900 placeholder-slate-600 disabled:text-slate-500 disabled:bg-slate-100";
   const selectClassName = "w-full border rounded p-2 text-slate-900 disabled:text-slate-500 disabled:bg-slate-100";
   const labelClassName = "text-sm text-slate-800";
