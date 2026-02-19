@@ -58,9 +58,14 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
     await expect(page.getByTestId('category-step-core')).toBeEnabled();
     await expect(page.getByTestId('categories-core-step')).toBeVisible({ timeout: 60000 });
 
+    const autosaveResponsePromise = page.waitForResponse((res) => (
+      res.url().includes('/api/admin/categories/') &&
+      res.request().method() === 'PATCH' &&
+      res.status() >= 200 && res.status() < 300
+    ));
     await page.getByTestId('categories-title-min').fill('10');
-    await page.waitForTimeout(3000);
-    await expect(page.getByText('Taslak kaydedildi')).toBeVisible();
+    await autosaveResponsePromise;
+    await expect(page.getByText('Taslak kaydedildi')).toBeVisible({ timeout: 10000 });
 
     await page.getByTestId('categories-title-max').fill('120');
 
