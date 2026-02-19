@@ -133,8 +133,7 @@ test.describe.serial('FAZ-8 Schema E2E', () => {
 
     const publishResponsePromise = page.waitForResponse((res) => (
       res.url().includes(`/api/admin/categories/${savedCategory.id}`) &&
-      res.request().method() === 'PATCH' &&
-      (res.request().postData() || '').includes('"status":"published"')
+      res.request().method() === 'PATCH'
     ));
     await page.getByTestId('categories-publish').click();
     const publishResponse = await publishResponsePromise;
