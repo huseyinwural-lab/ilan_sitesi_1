@@ -519,11 +519,18 @@ async def lifespan(app: FastAPI):
     now_iso = datetime.now(timezone.utc).isoformat()
     for c in default_countries(now_iso):
         await db.countries.update_one(
-            {"code": c["code"]},
-            {"$setOnInsert": c},
+            {"$or": [{"code": c["code"]}, {"country_code": c["code"]}]},
+            {"$setOnInsert": c, "$set": {"active_flag": True, "is_enabled": True}},
             upsert=True,
         )
-    existing_countries = await db.countries.find({}, {"_id": 0, "code": 1, "country_code": 1}).to_list(length=500)
+
+    # Deactivate unwanted seed countries (e.g., PL)
+    await db.countries.update_many(
+        {"$or": [{"code": "PL"}, {"country_code": "PL"}]},
+        {"$set": {"active_flag": False, "is_enabled": False, "updated_at": now_iso}},
+    )
+
+    existing_countries = await db.countries.find({"active_flag": True}, {"_id": 0, "code": 1, "country_code": 1}).to_list(length=500)
     SUPPORTED_COUNTRIES.clear()
     SUPPORTED_COUNTRIES.update(
         [
