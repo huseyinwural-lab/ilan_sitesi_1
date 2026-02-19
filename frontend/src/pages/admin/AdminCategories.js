@@ -196,6 +196,32 @@ const AdminCategories = () => {
     });
     setSchema(createDefaultSchema());
     setEditing(null);
+    setWizardStep("hierarchy");
+    setHierarchyComplete(false);
+    setHierarchyError("");
+    setSubcategories([]);
+    setDynamicDraft({
+      label: "",
+      key: "",
+      type: "select",
+      required: false,
+      sort_order: 0,
+      optionsInput: "",
+      messages: { required: "", invalid: "" },
+    });
+    setDynamicEditIndex(null);
+    setDynamicError("");
+    setDetailDraft({
+      id: "",
+      title: "",
+      required: false,
+      sort_order: 0,
+      messages: { required: "", invalid: "" },
+    });
+    setDetailOptions([]);
+    setDetailOptionInput("");
+    setDetailEditIndex(null);
+    setDetailError("");
   };
 
   const handleEdit = (item) => {
