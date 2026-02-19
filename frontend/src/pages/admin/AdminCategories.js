@@ -1166,16 +1166,16 @@ const AdminCategories = () => {
           <div className="text-right">Aksiyon</div>
         </div>
         {loading ? (
-          <div className="p-4 text-sm" data-testid="categories-loading">Yükleniyor...</div>
+          <div className="p-4 text-sm text-slate-800" data-testid="categories-loading">Yükleniyor...</div>
         ) : items.length === 0 ? (
-          <div className="p-4 text-sm" data-testid="categories-empty">Kayıt yok.</div>
+          <div className="p-4 text-sm text-slate-800" data-testid="categories-empty">Kayıt yok.</div>
         ) : (
           items.map((item) => (
             <div key={item.id} className="grid grid-cols-6 px-4 py-3 border-b text-sm items-center text-slate-900">
-              <div className="font-medium">{item.name}</div>
-              <div className="text-gray-600">{item.slug}</div>
-              <div className="text-gray-600">{item.country_code || "global"}</div>
-              <div>{item.sort_order}</div>
+              <div className="font-semibold text-slate-900">{item.name}</div>
+              <div className="text-slate-800">{item.slug}</div>
+              <div className="text-slate-800">{item.country_code || "global"}</div>
+              <div className="text-slate-800">{item.sort_order}</div>
               <div>
                 <span className={`px-2 py-1 rounded text-xs ${item.active_flag ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
                   {item.active_flag ? "Aktif" : "Pasif"}
