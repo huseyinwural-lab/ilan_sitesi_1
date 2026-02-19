@@ -2,6 +2,7 @@ import os
 import re
 import io
 import csv
+from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 import uuid
