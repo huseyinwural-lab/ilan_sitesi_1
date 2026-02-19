@@ -320,7 +320,7 @@ const RiskPanel = ({ data, canViewFinance }) => {
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Bekleyen ödemeler</div>
-              <div className="text-xs text-muted-foreground">> {pending?.threshold_days || '-'} gün geciken faturalar</div>
+              <div className="text-xs text-muted-foreground">{'>'} {pending?.threshold_days || '-'} gün geciken faturalar</div>
             </div>
             <div className="text-lg font-semibold" data-testid="risk-payments-count">
               {canViewFinance ? formatNumber(pending?.count || 0) : '-'}
