@@ -5060,8 +5060,8 @@ def _apply_listing_payload(listing: dict, payload: dict) -> tuple[dict, dict]:
 @api_router.post("/v1/listings/vehicle/{listing_id}/submit")
 async def submit_vehicle_listing(
     listing_id: str,
-    payload: dict = Body(default={}),
     request: Request,
+    payload: dict = Body(default={}),
     current_user=Depends(get_current_user),
 ):
     db = request.app.state.db
