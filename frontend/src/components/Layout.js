@@ -259,6 +259,41 @@ export default function Layout({ children }) {
     return !known.has(path);
   };
 
+  if (sessionStatus === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50" data-testid="admin-session-loading">
+        <div className="text-sm text-slate-600">Admin oturumu doğrulanıyor...</div>
+      </div>
+    );
+  }
+
+  if (sessionStatus === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50" data-testid="admin-session-error">
+        <div className="bg-white border rounded-lg p-6 w-full max-w-md text-center space-y-3">
+          <h2 className="text-lg font-semibold">Oturum Hatası</h2>
+          <p className="text-sm text-slate-600" data-testid="admin-session-error-message">{sessionError}</p>
+          <div className="flex items-center justify-center gap-2">
+            <button
+              className="px-4 py-2 rounded bg-slate-900 text-white text-sm"
+              onClick={checkSession}
+              data-testid="admin-session-retry"
+            >
+              Tekrar Dene
+            </button>
+            <button
+              className="px-4 py-2 rounded border text-sm"
+              onClick={logout}
+              data-testid="admin-session-logout"
+            >
+              Çıkış Yap
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar - Desktop */}
