@@ -6315,27 +6315,365 @@ async def admin_dashboard_export_pdf(
     )
 
 
+async def _build_country_compare_payload(
+    db,
+    current_user: dict,
+    period: str,
+    start_date: Optional[str],
+    end_date: Optional[str],
+    sort_by: Optional[str],
+    sort_dir: Optional[str],
+) -> Dict[str, Any]:
+    role = current_user.get("role")
+    can_view_finance = role in {"finance", "super_admin"}
+    scope = (current_user.get("country_scope") or [])
+
+    period_start, period_end, period_label = _resolve_period_window(period, start_date, end_date)
+    start_iso = period_start.isoformat()
+    end_iso = period_end.isoformat()
+
+    if role == "country_admin":
+        if not scope:
+            raise HTTPException(status_code=403, detail="Country scope required")
+        effective_countries = scope
+    else:
+        effective_countries = None
+
+    cache_key = _country_compare_cache_key(role, effective_countries, period, start_date, end_date, sort_by, sort_dir)
+    cached = _get_cached_country_compare(cache_key)
+    if cached:
+        return cached
+
+    fx_data = _get_ecb_rates()
+    rates = fx_data.get("rates") or {ECB_RATE_BASE: 1.0}
+    missing_rates: set[str] = set()
+
+    now = datetime.now(timezone.utc)
+    growth_7_start = now - timedelta(days=7)
+    growth_14_start = now - timedelta(days=14)
+    growth_30_start = now - timedelta(days=30)
+    growth_60_start = now - timedelta(days=60)
+
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    days_elapsed = (now - month_start).days + 1
+    last_month_end = month_start - timedelta(seconds=1)
+    last_month_start = last_month_end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    last_month_same_end = last_month_start + timedelta(days=days_elapsed)
+    if last_month_same_end > month_start:
+        last_month_same_end = month_start
+
+    login_since_iso = (now - timedelta(hours=DASHBOARD_MULTI_IP_WINDOW_HOURS)).isoformat()
+    login_query: Dict[str, Any] = {
+        "event_type": "LOGIN_SUCCESS",
+        "created_at": {"$gte": login_since_iso},
+    }
+    if effective_countries:
+        login_query["country_code"] = {"$in": effective_countries}
+    login_logs = await db.audit_logs.find(
+        login_query,
+        {"_id": 0, "user_id": 1, "admin_user_id": 1, "country_code": 1, "metadata": 1, "request_ip": 1},
+    ).to_list(length=10000)
+
+    suspicious_by_country: Dict[str, int] = {}
+    login_ips: Dict[str, Dict[str, set]] = defaultdict(lambda: defaultdict(set))
+    for log in login_logs:
+        country_code = (log.get("country_code") or "").upper()
+        if not country_code:
+            continue
+        user_id = log.get("user_id") or log.get("admin_user_id")
+        if not user_id:
+            continue
+        metadata = log.get("metadata") or {}
+        ip_address = metadata.get("ip_address") or log.get("request_ip")
+        if not ip_address:
+            continue
+        login_ips[country_code][user_id].add(ip_address)
+
+    for country_code, users in login_ips.items():
+        suspicious_by_country[country_code] = len([1 for ips in users.values() if len(ips) >= DASHBOARD_MULTI_IP_THRESHOLD])
+
+    pending_payment_by_country: Dict[str, int] = {}
+    if can_view_finance:
+        payment_cutoff_iso = (now - timedelta(days=DASHBOARD_PENDING_PAYMENT_DAYS)).isoformat()
+        invoice_query: Dict[str, Any] = {"status": "unpaid", "issued_at": {"$lt": payment_cutoff_iso}}
+        if effective_countries:
+            invoice_query["country_code"] = {"$in": effective_countries}
+        invoices = await db.invoices.find(invoice_query, {"_id": 0, "country_code": 1}).to_list(length=10000)
+        for inv in invoices:
+            code = (inv.get("country_code") or "").upper()
+            if not code:
+                continue
+            pending_payment_by_country[code] = pending_payment_by_country.get(code, 0) + 1
+
+    sla_24_cutoff = (now - timedelta(hours=24)).isoformat()
+    sla_48_cutoff = (now - timedelta(hours=48)).isoformat()
+
+    country_query: Dict[str, Any] = {"active_flag": True}
+    if effective_countries:
+        country_query["$or"] = [
+            {"country_code": {"$in": effective_countries}},
+            {"code": {"$in": effective_countries}},
+        ]
+    country_docs = await db.countries.find(country_query, {"_id": 0, "country_code": 1, "code": 1}).to_list(length=200)
+    country_codes = [
+        (doc.get("country_code") or doc.get("code") or "").upper()
+        for doc in country_docs
+        if (doc.get("country_code") or doc.get("code"))
+    ]
+
+    async def count_listings(code: str, start: datetime, end: datetime, status: Optional[str] = None) -> int:
+        query: Dict[str, Any] = {"country": code, "created_at": {"$gte": start.isoformat(), "$lt": end.isoformat()}}
+        if status:
+            query["status"] = status
+        return await db.vehicle_listings.count_documents(query)
+
+    async def count_dealers(code: str, start: datetime, end: datetime) -> int:
+        query: Dict[str, Any] = {
+            "country_code": code,
+            "role": "dealer",
+            "dealer_status": "active",
+            "created_at": {"$gte": start.isoformat(), "$lt": end.isoformat()},
+        }
+        return await db.users.count_documents(query)
+
+    async def sum_revenue(code: str, start: datetime, end: datetime) -> tuple[float, Dict[str, float]]:
+        if not can_view_finance:
+            return 0.0, {}
+        invoice_query = {
+            "country_code": code,
+            "status": "paid",
+            "paid_at": {"$gte": start.isoformat(), "$lt": end.isoformat()},
+        }
+        invoices = await db.invoices.find(invoice_query, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
+        totals: Dict[str, float] = {}
+        eur_total = 0.0
+        for inv in invoices:
+            currency = (inv.get("currency") or ECB_RATE_BASE).upper()
+            amount = float(inv.get("amount_gross") or 0)
+            totals[currency] = totals.get(currency, 0.0) + amount
+            eur_value = _convert_to_eur(amount, currency, rates)
+            if eur_value is None:
+                missing_rates.add(currency)
+            else:
+                eur_total += eur_value
+        return round(eur_total, 2), {k: round(v, 2) for k, v in totals.items()}
+
+    items = []
+    for code in country_codes:
+        total_listings = await count_listings(code, period_start, period_end)
+        published_listings = await count_listings(code, period_start, period_end, status="published")
+        pending_moderation = await count_listings(code, period_start, period_end, status="pending_moderation")
+        active_dealers = await count_dealers(code, period_start, period_end)
+        revenue_eur, revenue_local_totals = await sum_revenue(code, period_start, period_end)
+
+        listings_7 = await count_listings(code, growth_7_start, now)
+        listings_prev_7 = await count_listings(code, growth_14_start, growth_7_start)
+        listings_30 = await count_listings(code, growth_30_start, now)
+        listings_prev_30 = await count_listings(code, growth_60_start, growth_30_start)
+
+        published_7 = await count_listings(code, growth_7_start, now, status="published")
+        published_prev_7 = await count_listings(code, growth_14_start, growth_7_start, status="published")
+        published_30 = await count_listings(code, growth_30_start, now, status="published")
+        published_prev_30 = await count_listings(code, growth_60_start, growth_30_start, status="published")
+
+        dealers_7 = await count_dealers(code, growth_7_start, now)
+        dealers_prev_7 = await count_dealers(code, growth_14_start, growth_7_start)
+        dealers_30 = await count_dealers(code, growth_30_start, now)
+        dealers_prev_30 = await count_dealers(code, growth_60_start, growth_30_start)
+
+        revenue_7, _ = await sum_revenue(code, growth_7_start, now)
+        revenue_prev_7, _ = await sum_revenue(code, growth_14_start, growth_7_start)
+        revenue_30, _ = await sum_revenue(code, growth_30_start, now)
+        revenue_prev_30, _ = await sum_revenue(code, growth_60_start, growth_30_start)
+
+        revenue_mtd, _ = await sum_revenue(code, month_start, now)
+        revenue_prev_mtd, _ = await sum_revenue(code, last_month_start, last_month_same_end)
+
+        conversion_rate = _safe_ratio(published_listings, total_listings)
+        dealer_density = _safe_ratio(active_dealers, total_listings)
+
+        sla_24_count = await db.vehicle_listings.count_documents({
+            "country": code,
+            "status": "pending_moderation",
+            "created_at": {"$lt": sla_24_cutoff},
+        })
+        sla_48_count = await db.vehicle_listings.count_documents({
+            "country": code,
+            "status": "pending_moderation",
+            "created_at": {"$lt": sla_48_cutoff},
+        })
+
+        risk_multi_login = suspicious_by_country.get(code, 0)
+        risk_pending_payments = pending_payment_by_country.get(code, 0) if can_view_finance else None
+
+        zero_data = total_listings == 0 and published_listings == 0 and active_dealers == 0 and revenue_eur == 0
+
+        items.append({
+            "country_code": code,
+            "total_listings": total_listings,
+            "published_listings": published_listings,
+            "pending_moderation": pending_moderation,
+            "active_dealers": active_dealers,
+            "revenue_eur": revenue_eur if can_view_finance else None,
+            "revenue_local_totals": revenue_local_totals if can_view_finance else None,
+            "conversion_rate": round(conversion_rate * 100, 2) if conversion_rate is not None else None,
+            "dealer_density": round(dealer_density * 100, 2) if dealer_density is not None else None,
+            "growth_total_listings_7d": _growth_pct(listings_7, listings_prev_7),
+            "growth_total_listings_30d": _growth_pct(listings_30, listings_prev_30),
+            "growth_published_7d": _growth_pct(published_7, published_prev_7),
+            "growth_published_30d": _growth_pct(published_30, published_prev_30),
+            "growth_active_dealers_7d": _growth_pct(dealers_7, dealers_prev_7),
+            "growth_active_dealers_30d": _growth_pct(dealers_30, dealers_prev_30),
+            "growth_revenue_7d": _growth_pct(revenue_7, revenue_prev_7) if can_view_finance else None,
+            "growth_revenue_30d": _growth_pct(revenue_30, revenue_prev_30) if can_view_finance else None,
+            "revenue_mtd_growth_pct": _growth_pct(revenue_mtd, revenue_prev_mtd) if can_view_finance else None,
+            "sla_pending_24h": sla_24_count,
+            "sla_pending_48h": sla_48_count,
+            "risk_multi_login": risk_multi_login,
+            "risk_pending_payments": risk_pending_payments,
+            "note": "Henüz veri yok" if zero_data else None,
+        })
+
+    default_sort_by = "revenue_eur" if can_view_finance else "total_listings"
+    default_sort_dir = "desc"
+    sort_field = sort_by or default_sort_by
+    sort_direction = (sort_dir or default_sort_dir).lower()
+
+    def sort_value(item: Dict[str, Any]) -> float:
+        value = item.get(sort_field)
+        if value is None:
+            return -float("inf") if sort_direction == "desc" else float("inf")
+        return float(value)
+
+    items.sort(key=sort_value, reverse=sort_direction == "desc")
+
+    payload = {
+        "items": items,
+        "finance_visible": can_view_finance,
+        "period": period,
+        "period_label": period_label,
+        "period_start": start_iso,
+        "period_end": end_iso,
+        "fx": {
+            "base": ECB_RATE_BASE,
+            "as_of": fx_data.get("last_success_at"),
+            "fallback": fx_data.get("fallback", False),
+            "missing_currencies": sorted(missing_rates),
+        },
+        "sort_by": sort_field,
+        "sort_dir": sort_direction,
+        "default_sort_by": default_sort_by,
+        "default_sort_dir": default_sort_dir,
+    }
+
+    _set_cached_country_compare(cache_key, payload)
+    return payload
+
+
 @api_router.get("/admin/dashboard/country-compare")
 async def admin_dashboard_country_compare(
     request: Request,
+    period: str = "30d",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    sort_dir: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "finance"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
-    can_view_finance = current_user.get("role") in {"finance", "super_admin"}
-    docs = await db.countries.find({}, {"_id": 0, "country_code": 1, "code": 1, "active_flag": 1, "is_enabled": 1}).to_list(length=200)
-    items = []
-    for doc in docs:
-        code = (doc.get("country_code") or doc.get("code") or "").upper()
-        if not code:
-            continue
-        if current_user.get("role") == "country_admin":
-            scope = current_user.get("country_scope") or []
-            if "*" not in scope and code not in scope:
-                continue
-        metrics = await _dashboard_metrics(db, code, include_revenue=can_view_finance)
-        items.append({"country_code": code, **metrics})
-    return {"items": items, "finance_visible": can_view_finance}
+    return await _build_country_compare_payload(db, current_user, period, start_date, end_date, sort_by, sort_dir)
+
+
+@api_router.get("/admin/dashboard/country-compare/export/csv")
+async def admin_dashboard_country_compare_export_csv(
+    request: Request,
+    period: str = "30d",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    sort_dir: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "finance"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    _enforce_export_rate_limit(request, current_user.get("id"))
+
+    payload = await _build_country_compare_payload(db, current_user, period, start_date, end_date, sort_by, sort_dir)
+    items = payload.get("items") or []
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow([
+        "Country",
+        "Total Listings",
+        "Total Growth 7d",
+        "Total Growth 30d",
+        "Published",
+        "Published Growth 7d",
+        "Published Growth 30d",
+        "Conversion Rate %",
+        "Active Dealers",
+        "Dealer Growth 7d",
+        "Dealer Growth 30d",
+        "Dealer Density %",
+        "Revenue EUR",
+        "Revenue Growth 7d",
+        "Revenue Growth 30d",
+        "Revenue MTD Growth %",
+        "SLA 24h",
+        "SLA 48h",
+        "Risk Multi Login",
+        "Risk Pending Payments",
+        "Note",
+    ])
+    for item in items:
+        writer.writerow([
+            item.get("country_code"),
+            item.get("total_listings"),
+            item.get("growth_total_listings_7d"),
+            item.get("growth_total_listings_30d"),
+            item.get("published_listings"),
+            item.get("growth_published_7d"),
+            item.get("growth_published_30d"),
+            item.get("conversion_rate"),
+            item.get("active_dealers"),
+            item.get("growth_active_dealers_7d"),
+            item.get("growth_active_dealers_30d"),
+            item.get("dealer_density"),
+            item.get("revenue_eur"),
+            item.get("growth_revenue_7d"),
+            item.get("growth_revenue_30d"),
+            item.get("revenue_mtd_growth_pct"),
+            item.get("sla_pending_24h"),
+            item.get("sla_pending_48h"),
+            item.get("risk_multi_login"),
+            item.get("risk_pending_payments"),
+            item.get("note"),
+        ])
+
+    csv_content = buffer.getvalue().encode("utf-8")
+    buffer.close()
+    filename = f"country-compare-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.csv"
+
+    audit_doc = await build_audit_entry(
+        event_type="country_compare_export_csv",
+        actor=current_user,
+        target_id="country_compare",
+        target_type="dashboard_country_compare",
+        country_code=None,
+        details={"period": period, "start_date": start_date, "end_date": end_date, "sort_by": sort_by, "sort_dir": sort_dir},
+        request=request,
+    )
+    audit_doc["action"] = "country_compare_export_csv"
+    audit_doc["user_agent"] = request.headers.get("user-agent")
+    await db.audit_logs.insert_one(audit_doc)
+
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+    )
 
 
 @api_router.get("/admin/session/health")
