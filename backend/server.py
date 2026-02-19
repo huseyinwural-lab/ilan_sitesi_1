@@ -5785,6 +5785,162 @@ async def _dashboard_db_health(db) -> tuple[str, int]:
     return status, latency_ms
 
 
+def _build_dashboard_pdf(summary: Dict[str, Any], trend_window: int) -> bytes:
+    styles = getSampleStyleSheet()
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, title="Dashboard Export")
+    elements = []
+
+    def format_number(value: Optional[float]) -> str:
+        if value is None:
+            return "-"
+        try:
+            return f"{float(value):,.2f}".replace(",", " ")
+        except Exception:
+            return str(value)
+
+    def format_currency_totals(totals: Optional[Dict[str, Any]]) -> str:
+        if not totals:
+            return "-"
+        parts = []
+        for currency, amount in totals.items():
+            parts.append(f"{format_number(amount)} {currency}")
+        return " / ".join(parts)
+
+    def add_table(title: str, rows: List[List[str]]):
+        if not rows:
+            return
+        elements.append(Paragraph(title, styles["Heading3"]))
+        table = Table(rows, hAlign="LEFT")
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ]))
+        elements.append(table)
+        elements.append(Spacer(1, 10))
+
+    countries = summary.get("country_codes") or []
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    elements.append(Paragraph("Dashboard Özet Raporu", styles["Title"]))
+    elements.append(Paragraph(f"Kapsam: {summary.get('scope')}", styles["Normal"]))
+    elements.append(Paragraph(f"Ülkeler: {', '.join(countries) or '-'}", styles["Normal"]))
+    elements.append(Paragraph(f"Trend Aralığı: {trend_window} gün", styles["Normal"]))
+    elements.append(Paragraph(f"Oluşturma: {generated_at}", styles["Normal"]))
+    elements.append(Spacer(1, 12))
+
+    finance_visible = bool(summary.get("finance_visible"))
+    kpis = summary.get("kpis") or {}
+    today = kpis.get("today") or {}
+    week = kpis.get("last_7_days") or {}
+    kpi_rows = [["Periyot", "Yeni İlan", "Yeni Kullanıcı", "Gelir"]]
+    def kpi_revenue_label(data: Dict[str, Any]) -> str:
+        if not finance_visible:
+            return "Gizli"
+        total = data.get("revenue_total")
+        totals = data.get("revenue_currency_totals")
+        if total is None and not totals:
+            return "0"
+        return f"{format_number(total)} ({format_currency_totals(totals)})"
+
+    kpi_rows.append([
+        "Bugün",
+        str(today.get("new_listings", 0)),
+        str(today.get("new_users", 0)),
+        kpi_revenue_label(today),
+    ])
+    kpi_rows.append([
+        "Son 7 Gün",
+        str(week.get("new_listings", 0)),
+        str(week.get("new_users", 0)),
+        kpi_revenue_label(week),
+    ])
+    add_table("KPI Özeti", kpi_rows)
+
+    metrics = summary.get("metrics") or {}
+    users = summary.get("users") or {}
+    active_countries = summary.get("active_countries") or {}
+    active_modules = summary.get("active_modules") or {}
+    metrics_rows = [["Metri̇k", "Değer"]]
+    metrics_rows.append(["Toplam Kullanıcı", str(users.get("total", 0))])
+    metrics_rows.append(["Aktif / Pasif", f"{users.get('active', 0)} / {users.get('inactive', 0)}"])
+    metrics_rows.append(["Toplam İlan", str(metrics.get("total_listings", 0))])
+    metrics_rows.append(["Yayınlı İlan", str(metrics.get("published_listings", 0))])
+    metrics_rows.append(["Moderasyon Bekleyen", str(metrics.get("pending_moderation", 0))])
+    metrics_rows.append(["Aktif Dealer", str(metrics.get("active_dealers", 0))])
+    metrics_rows.append(["Aktif Ülke", str(active_countries.get("count", 0))])
+    metrics_rows.append(["Aktif Modül", str(active_modules.get("count", 0))])
+    add_table("Genel Metrikler", metrics_rows)
+
+    risk = summary.get("risk_panel") or {}
+    suspicious = risk.get("suspicious_logins") or {}
+    sla = risk.get("sla_breaches") or {}
+    pending = risk.get("pending_payments") or {}
+    risk_rows = [["Risk Başlığı", "Sayı", "Eşik", "Detay"]]
+    risk_rows.append([
+        "Çoklu IP girişleri",
+        str(suspicious.get("count", 0)),
+        f"{suspicious.get('threshold', '-') } IP / {suspicious.get('window_hours', '-') } saat",
+        "Örnek kayıtlar: " + str(len(suspicious.get("items") or [])),
+    ])
+    risk_rows.append([
+        "Moderasyon SLA ihlali",
+        str(sla.get("count", 0)),
+        f">e {sla.get('threshold', '-') } saat",
+        "Örnek kayıtlar: " + str(len(sla.get("items") or [])),
+    ])
+    if finance_visible:
+        risk_rows.append([
+            "Bekleyen ödemeler",
+            str(pending.get("count", 0)),
+            f">e {pending.get('threshold_days', '-') } gün",
+            f"Toplam: {format_number(pending.get('total_amount'))} | {format_currency_totals(pending.get('currency_totals'))}",
+        ])
+    else:
+        risk_rows.append([
+            "Bekleyen ödemeler",
+            "-",
+            "-",
+            "Gizli",
+        ])
+    add_table("Risk 6 Alarm Merkezi", risk_rows)
+
+    trends = summary.get("trends") or {}
+    listings = trends.get("listings") or []
+    revenue = trends.get("revenue") or []
+    revenue_map = {item.get("date"): item for item in revenue}
+    trend_rows = [["Tarih", "İlan", "Gelir"]]
+    for item in listings:
+        date_label = item.get("date")
+        revenue_item = revenue_map.get(date_label) or {}
+        revenue_label = "Gizli" if not finance_visible else format_number(revenue_item.get("amount"))
+        trend_rows.append([
+            str(date_label),
+            str(item.get("count", 0)),
+            revenue_label,
+        ])
+    add_table("Trend Detayı", trend_rows)
+
+    health = summary.get("health") or {}
+    health_rows = [["Bileşen", "Değer"]]
+    health_rows.append(["API status", str(health.get("api_status"))])
+    health_rows.append(["DB status", str(health.get("db_status"))])
+    health_rows.append(["API gecikme", f"{health.get('api_latency_ms')} ms"])
+    health_rows.append(["DB gecikme", f"{health.get('db_latency_ms')} ms"])
+    health_rows.append(["Son deploy", str(health.get("deployed_at"))])
+    health_rows.append(["Son restart", str(health.get("restart_at"))])
+    health_rows.append(["Uptime", str(health.get("uptime_human"))])
+    add_table("Sistem Sağlığı", health_rows)
+
+    doc.build(elements)
+    pdf_value = buffer.getvalue()
+    buffer.close()
+    return pdf_value
+
+
 @api_router.get("/admin/dashboard/summary")
 async def admin_dashboard_summary(
     request: Request,
