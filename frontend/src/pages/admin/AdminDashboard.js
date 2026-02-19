@@ -45,28 +45,28 @@ export default function AdminDashboardPage() {
 
       {loading ? (
         <div className="p-6 text-center" data-testid="dashboard-loading">Yükleniyor…</div>
-      ) : data ? (
+      ) : data?.metrics ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4" data-testid="dashboard-kpis">
           <div className="border rounded-md p-4" data-testid="kpi-total-listings">
             <div className="text-xs text-muted-foreground">Total Listings</div>
-            <div className="text-2xl font-bold">{data.total_listings}</div>
+            <div className="text-2xl font-bold">{data.metrics.total_listings}</div>
           </div>
           <div className="border rounded-md p-4" data-testid="kpi-published-listings">
             <div className="text-xs text-muted-foreground">Published</div>
-            <div className="text-2xl font-bold">{data.published_listings}</div>
+            <div className="text-2xl font-bold">{data.metrics.published_listings}</div>
           </div>
           <div className="border rounded-md p-4" data-testid="kpi-pending-moderation">
             <div className="text-xs text-muted-foreground">Pending Moderation</div>
-            <div className="text-2xl font-bold">{data.pending_moderation}</div>
+            <div className="text-2xl font-bold">{data.metrics.pending_moderation}</div>
           </div>
           <div className="border rounded-md p-4" data-testid="kpi-active-dealers">
             <div className="text-xs text-muted-foreground">Active Dealers</div>
-            <div className="text-2xl font-bold">{data.active_dealers}</div>
+            <div className="text-2xl font-bold">{data.metrics.active_dealers}</div>
           </div>
           <div className="border rounded-md p-4" data-testid="kpi-revenue-mtd">
             <div className="text-xs text-muted-foreground">Revenue MTD (UTC)</div>
-            <div className="text-2xl font-bold">{data.revenue_mtd}</div>
-            <div className="text-xs text-muted-foreground">Month start: {data.month_start_utc}</div>
+            <div className="text-2xl font-bold">{data.metrics.revenue_mtd}</div>
+            <div className="text-xs text-muted-foreground">Month start: {data.metrics.month_start_utc}</div>
           </div>
         </div>
       ) : (
