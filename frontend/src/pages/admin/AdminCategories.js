@@ -268,6 +268,8 @@ const AdminCategories = () => {
     setDetailOptionInput("");
     setDetailEditIndex(null);
     setDetailError("");
+    setPreviewComplete(false);
+    setJsonCopyStatus("");
   };
 
   const handleEdit = (item) => {
@@ -307,6 +309,8 @@ const AdminCategories = () => {
     setDetailOptionInput("");
     setDetailEditIndex(null);
     setDetailError("");
+    setPreviewComplete(false);
+    setJsonCopyStatus("");
     setModalOpen(true);
   };
 
