@@ -916,6 +916,7 @@ const AdminCategories = () => {
       }
       const parent = parentData.category;
 
+      const savedSubs = [];
       for (const child of cleanedSubs) {
         const childPayload = {
           name: child.name,
@@ -934,10 +935,19 @@ const AdminCategories = () => {
           },
           body: JSON.stringify(childPayload),
         });
+        const childData = await childRes.json().catch(() => ({}));
         if (!childRes.ok) {
-          const childData = await childRes.json();
           setHierarchyError(childData?.detail || "Alt kategori oluşturulamadı.");
           return { success: false };
+        }
+        if (childData?.category) {
+          savedSubs.push({
+            id: childData.category.id,
+            name: childData.category.name,
+            slug: childData.category.slug,
+            active_flag: childData.category.active_flag,
+            sort_order: childData.category.sort_order || 0,
+          });
         }
       }
 
@@ -965,6 +975,7 @@ const AdminCategories = () => {
         active_flag: updatedParent.active_flag ?? true,
         sort_order: updatedParent.sort_order || 0,
       });
+      setSubcategories(savedSubs.length ? savedSubs : cleanedSubs);
       setHierarchyComplete(true);
       setWizardStep("core");
       fetchItems();
