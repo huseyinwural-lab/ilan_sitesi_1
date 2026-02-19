@@ -27,6 +27,37 @@ export default function Layout({ children }) {
   const [adminPreferredMode, setAdminPreferredMode] = useState(() => {
     return localStorage.getItem('admin_mode') || (urlCountry ? 'country' : 'global');
   });
+  const [sessionStatus, setSessionStatus] = useState('loading');
+  const [sessionError, setSessionError] = useState('');
+
+  const checkSession = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setSessionStatus('error');
+      setSessionError('Oturum bulunamadı. Lütfen tekrar giriş yapın.');
+      return;
+    }
+    try {
+      setSessionStatus('loading');
+      setSessionError('');
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/session/health`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        setSessionStatus('error');
+        setSessionError('Oturum doğrulanamadı. Lütfen tekrar deneyin.');
+        return;
+      }
+      setSessionStatus('ok');
+    } catch (error) {
+      setSessionStatus('error');
+      setSessionError('Sunucuya ulaşılamadı. Lütfen tekrar deneyin.');
+    }
+  };
+
+  useEffect(() => {
+    checkSession();
+  }, []);
 
 
   const prevUrlCountryRef = useRef(urlCountry);
