@@ -148,11 +148,12 @@ const AdminVehicleMakes = () => {
         <table className="min-w-full text-sm">
           <thead className="bg-muted">
             <tr>
-              <th className="text-left px-3 py-2">Name</th>
-              <th className="text-left px-3 py-2">Slug</th>
-              <th className="text-left px-3 py-2">Country</th>
-              <th className="text-left px-3 py-2">Active</th>
-              <th className="text-right px-3 py-2">Aksiyon</th>
+              <th className="text-left px-3 py-2" data-testid="vehicle-makes-header-name">Name</th>
+              <th className="text-left px-3 py-2" data-testid="vehicle-makes-header-slug">Slug</th>
+              <th className="text-left px-3 py-2" data-testid="vehicle-makes-header-country">Country</th>
+              <th className="text-left px-3 py-2" data-testid="vehicle-makes-header-type">Tip</th>
+              <th className="text-left px-3 py-2" data-testid="vehicle-makes-header-active">Active</th>
+              <th className="text-right px-3 py-2" data-testid="vehicle-makes-header-actions">Aksiyon</th>
             </tr>
           </thead>
           <tbody>
