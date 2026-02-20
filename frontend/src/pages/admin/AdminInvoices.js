@@ -622,6 +622,7 @@ export default function AdminInvoicesPage() {
                     <div>
                       <h4 className="text-sm font-semibold">Status</h4>
                       <div className="text-xs text-muted-foreground" data-testid="invoice-detail-status">{detailData.invoice.status}</div>
+                      <div className="text-xs text-muted-foreground" data-testid="invoice-detail-payment-status">{detailData.invoice.payment_status || '-'}</div>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
