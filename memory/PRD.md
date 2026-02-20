@@ -154,6 +154,7 @@
 - 2026-02-20: Plans Admin V1 hazırlıkları (DB gate banner/disable, yeni UI filtreleri ve form, plans SQL model + migration + Postgres API kontratı)
 - 2026-02-20: Plans UI P1 (scope quick filter chip + updated sort kısayolu)
 - 2026-02-20: Invoices Admin V1 hazırlıkları (UI filtre/kolon genişletme + DB gate disable + Postgres admin invoice modeli + p25 migration + API kontratı)
+- 2026-02-20: Invoices UI P1 (Son 7/30 gün quick date preset + temizle)
 
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
