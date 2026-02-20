@@ -423,7 +423,8 @@ export default function IndividualUsers() {
                       )}
                     </td>
                   </tr>
-                ))
+                );
+                })
               )}
             </tbody>
           </table>
