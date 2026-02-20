@@ -1234,6 +1234,24 @@ def _campaign_to_dict(campaign: Campaign) -> Dict[str, Any]:
     }
 
 
+def _plan_to_dict(plan: Plan) -> Dict[str, Any]:
+    return {
+        "id": str(plan.id),
+        "slug": plan.slug,
+        "name": plan.name,
+        "country_scope": plan.country_scope,
+        "country_code": plan.country_code,
+        "price_amount": float(plan.price_amount) if plan.price_amount is not None else None,
+        "currency_code": plan.currency_code,
+        "listing_quota": plan.listing_quota,
+        "showcase_quota": plan.showcase_quota,
+        "active_flag": plan.active_flag,
+        "archived_at": plan.archived_at.isoformat() if plan.archived_at else None,
+        "created_at": plan.created_at.isoformat() if plan.created_at else None,
+        "updated_at": plan.updated_at.isoformat() if plan.updated_at else None,
+    }
+
+
 def _check_application_rate_limit(request: Request, user_id: str) -> None:
     key = user_id or _get_client_ip(request) or "unknown"
     now = time.time()
