@@ -424,7 +424,7 @@ export default function Users() {
                 onClick={() => setConfirmAction(null)}
                 data-testid="users-confirm-cancel"
               >
-                Vazgeç
+                İptal
               </button>
               <button
                 type="button"
