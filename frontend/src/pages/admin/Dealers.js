@@ -167,10 +167,10 @@ export default function DealersPage() {
         <table className="w-full text-sm">
           <thead className="bg-muted">
             <tr>
-              <th className="text-left p-3">Email</th>
-              <th className="text-left p-3">Country</th>
-              <th className="text-left p-3">Status</th>
-              <th className="text-right p-3">Actions</th>
+              <th className="text-left p-3" data-testid="dealers-header-email">E-posta</th>
+              <th className="text-left p-3" data-testid="dealers-header-country">Ülke</th>
+              <th className="text-left p-3" data-testid="dealers-header-status">Durum</th>
+              <th className="text-right p-3" data-testid="dealers-header-actions">Aksiyon</th>
             </tr>
           </thead>
           <tbody>
