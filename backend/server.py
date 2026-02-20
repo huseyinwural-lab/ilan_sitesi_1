@@ -4199,7 +4199,9 @@ async def send_thread_message(
 
     recipient_ids = [user_id for user_id in participants if user_id != current_user.get("id")]
     for recipient_id in recipient_ids:
-        await _send_message_notification_email(db, recipient_id, thread, message_doc)
+        push_sent = await _send_message_push_notification(db, recipient_id, thread, message_doc)
+        if not push_sent:
+            await _send_message_notification_email(db, recipient_id, thread, message_doc)
 
     return {"message": message_doc}
 
