@@ -20,6 +20,7 @@ const formatDate = (value) => {
 };
 
 export default function AccountMessages() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [threads, setThreads] = useState([]);
   const [activeId, setActiveId] = useState(null);
