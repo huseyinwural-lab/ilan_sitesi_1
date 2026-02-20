@@ -71,6 +71,7 @@ from app.models.base import Base
 from app.models.user import User as SqlUser
 from app.models.application import Application
 from app.models.campaign import Campaign
+from app.models.plan import Plan
 
 
 from fastapi import UploadFile, File
