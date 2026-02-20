@@ -11,7 +11,6 @@ from app.models.premium import PremiumProduct, ListingPromotion, PremiumRankingR
 from app.models.moderation import Listing, ModerationAction, ModerationRule
 # Use P11 Billing Models
 from app.models.billing import Invoice, InvoiceItem, VatRate, StripeEvent
-from app.models.payment import StripeSettings, PaymentAttempt, Refund
 from app.models.commercial import DealerPackage, DealerSubscription
 from app.models.monetization import SubscriptionPlan, UserSubscription, QuotaUsage
 
