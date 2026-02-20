@@ -108,11 +108,15 @@ class SqlApplicationsRepository(ApplicationsRepository):
                 start_dt = datetime.fromisoformat(start_date)
                 if start_dt.tzinfo is None:
                     start_dt = start_dt.replace(tzinfo=timezone.utc)
+                if len(start_date) == 10:
+                    start_dt = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
                 date_filter.append(Application.created_at >= start_dt)
             if end_date:
                 end_dt = datetime.fromisoformat(end_date)
                 if end_dt.tzinfo is None:
                     end_dt = end_dt.replace(tzinfo=timezone.utc)
+                if len(end_date) == 10:
+                    end_dt = end_dt.replace(hour=23, minute=59, second=59, microsecond=0)
                 date_filter.append(Application.created_at <= end_dt)
             for clause in date_filter:
                 query = query.where(clause)
