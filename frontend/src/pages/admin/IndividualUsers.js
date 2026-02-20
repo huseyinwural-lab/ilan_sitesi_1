@@ -237,7 +237,7 @@ export default function IndividualUsers() {
                 </tr>
               ) : safeUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-6 text-center text-muted-foreground" data-testid="individual-users-empty">
+                  <td colSpan={6} className="p-6 text-center text-muted-foreground" data-testid="individual-users-empty">
                     Bireysel kullanıcı bulunamadı.
                   </td>
                 </tr>
