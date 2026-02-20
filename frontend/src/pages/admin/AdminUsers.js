@@ -63,6 +63,7 @@ const statusLabel = (user) => {
 const roleLabel = (role) => ROLE_OPTIONS.find((opt) => opt.value === role)?.label || role;
 
 export default function AdminUsers() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +81,8 @@ export default function AdminUsers() {
   const [createForm, setCreateForm] = useState({ ...emptyForm });
   const [editForm, setEditForm] = useState({ ...emptyForm });
   const [editingUser, setEditingUser] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
   const [saving, setSaving] = useState(false);
