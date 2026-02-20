@@ -154,7 +154,7 @@ const AdminVehicleModels = () => {
         </button>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3" data-testid="vehicle-models-filters">
         <select
           className="border rounded p-2"
           value={filterMake}
@@ -164,6 +164,17 @@ const AdminVehicleModels = () => {
           <option value="">Tüm Markalar</option>
           {makes.map((make) => (
             <option key={make.id} value={make.id}>{make.name}</option>
+          ))}
+        </select>
+        <select
+          className="border rounded p-2"
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          data-testid="vehicle-models-filter-type"
+        >
+          <option value="">Tüm Tipler</option>
+          {vehicleTypeOptions.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
       </div>
