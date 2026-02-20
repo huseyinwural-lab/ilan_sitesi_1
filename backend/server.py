@@ -3200,6 +3200,228 @@ async def get_me(current_user=Depends(get_current_user)):
     return _user_to_response(current_user)
 
 
+@api_router.get("/users/me")
+async def get_user_profile(current_user=Depends(get_current_user)):
+    prefs = current_user.get("notification_prefs") or {}
+    return {
+        "id": current_user.get("id"),
+        "email": current_user.get("email"),
+        "full_name": current_user.get("full_name"),
+        "phone": current_user.get("phone_e164") or current_user.get("phone"),
+        "locale": current_user.get("preferred_language") or "tr",
+        "notification_prefs": _normalize_notification_prefs(prefs),
+    }
+
+
+@api_router.put("/users/me")
+async def update_user_profile(
+    payload: UserProfileUpdatePayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    db = request.app.state.db
+    update_payload: Dict[str, Any] = {}
+    if payload.full_name is not None:
+        update_payload["full_name"] = payload.full_name.strip()
+    if payload.phone is not None:
+        update_payload["phone_e164"] = _normalize_phone_e164(payload.phone)
+    if payload.locale is not None:
+        update_payload["preferred_language"] = payload.locale.strip()
+    if payload.notification_prefs is not None:
+        update_payload["notification_prefs"] = _normalize_notification_prefs(payload.notification_prefs)
+
+    if not update_payload:
+        return {"ok": True}
+
+    update_payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    if AUTH_PROVIDER == "mongo" and db is not None:
+        await db.users.update_one({"id": current_user.get("id")}, {"$set": update_payload})
+        user_doc = await db.users.find_one({"id": current_user.get("id")}, {"_id": 0})
+    else:
+        user_doc = None
+        try:
+            user_uuid = uuid.UUID(str(current_user.get("id")))
+        except ValueError:
+            user_uuid = None
+        if user_uuid:
+            result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+            user_row = result.scalar_one_or_none()
+            if not user_row:
+                raise HTTPException(status_code=404, detail="User not found")
+            if update_payload.get("full_name"):
+                user_row.full_name = update_payload.get("full_name")
+            if update_payload.get("preferred_language"):
+                user_row.preferred_language = update_payload.get("preferred_language")
+            await session.commit()
+            await session.refresh(user_row)
+            user_doc = {
+                "id": str(user_row.id),
+                "email": user_row.email,
+                "full_name": user_row.full_name,
+                "phone_e164": None,
+                "preferred_language": user_row.preferred_language,
+                "notification_prefs": update_payload.get("notification_prefs"),
+            }
+
+    if db is not None:
+        audit_entry = await build_audit_entry(
+            request,
+            current_user,
+            target_type="user",
+            target_id=current_user.get("id"),
+            event_type="profile_update",
+            details={"fields": list(update_payload.keys())},
+        )
+        await db.audit_logs.insert_one(audit_entry)
+
+    response_user = user_doc or await db.users.find_one({"id": current_user.get("id")}, {"_id": 0})
+    return {
+        "user": {
+            "id": response_user.get("id"),
+            "email": response_user.get("email"),
+            "full_name": response_user.get("full_name"),
+            "phone": response_user.get("phone_e164") or response_user.get("phone"),
+            "locale": response_user.get("preferred_language") or "tr",
+            "notification_prefs": _normalize_notification_prefs(response_user.get("notification_prefs")),
+        }
+    }
+
+
+@api_router.post("/users/change-password")
+async def change_password(
+    payload: ChangePasswordPayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    db = request.app.state.db
+    if len(payload.new_password or "") < 8:
+        raise HTTPException(status_code=400, detail="Password too short")
+
+    if AUTH_PROVIDER == "mongo" and db is not None:
+        user_doc = await db.users.find_one({"id": current_user.get("id")}, {"_id": 0})
+        if not user_doc or not verify_password(payload.current_password, user_doc.get("hashed_password", "")):
+            raise HTTPException(status_code=400, detail="Invalid current password")
+        await db.users.update_one(
+            {"id": current_user.get("id")},
+            {"$set": {"hashed_password": get_password_hash(payload.new_password), "updated_at": datetime.now(timezone.utc).isoformat()}},
+        )
+    else:
+        try:
+            user_uuid = uuid.UUID(str(current_user.get("id")))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid user id") from exc
+        result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+        user_row = result.scalar_one_or_none()
+        if not user_row or not verify_password(payload.current_password, user_row.hashed_password):
+            raise HTTPException(status_code=400, detail="Invalid current password")
+        user_row.hashed_password = get_password_hash(payload.new_password)
+        await session.commit()
+
+    if db is not None:
+        audit_entry = await build_audit_entry(
+            request,
+            current_user,
+            target_type="user",
+            target_id=current_user.get("id"),
+            event_type="password_change",
+            details={"source": "self_service"},
+        )
+        await db.audit_logs.insert_one(audit_entry)
+
+    return {"ok": True}
+
+
+@api_router.get("/users/me/export")
+async def export_user_data(
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+
+    _enforce_export_rate_limit(request, current_user.get("id"))
+
+    user_doc = await db.users.find_one({"id": current_user.get("id")}, {"_id": 0})
+    listings = await db.vehicle_listings.find({"created_by": current_user.get("id")}, {"_id": 0}).to_list(length=500)
+    applications = await db.support_applications.find({"user_id": current_user.get("id")}, {"_id": 0}).to_list(length=500)
+    favorites = await db.favorites.find({"user_id": current_user.get("id")}, {"_id": 0}).to_list(length=500)
+    threads = await db.message_threads.find({"participants": current_user.get("id")}, {"_id": 0}).to_list(length=200)
+
+    messages_meta = []
+    for thread in threads:
+        total_messages = await db.messages.count_documents({"thread_id": thread.get("id")})
+        messages_meta.append(
+            {
+                "thread_id": thread.get("id"),
+                "listing_id": thread.get("listing_id"),
+                "participants": thread.get("participants"),
+                "last_message_at": thread.get("last_message_at"),
+                "total_messages": total_messages,
+            }
+        )
+
+    export_payload = {
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "user": {
+            "id": user_doc.get("id"),
+            "email": user_doc.get("email"),
+            "full_name": user_doc.get("full_name"),
+            "phone": user_doc.get("phone_e164"),
+            "preferred_language": user_doc.get("preferred_language"),
+            "notification_prefs": user_doc.get("notification_prefs"),
+        },
+        "listings": [
+            {
+                "id": item.get("id"),
+                "title": item.get("title"),
+                "status": item.get("status"),
+                "created_at": item.get("created_at"),
+            }
+            for item in listings
+        ],
+        "applications": [
+            {
+                "id": item.get("id"),
+                "application_id": item.get("application_id"),
+                "category": item.get("category"),
+                "status": item.get("status"),
+                "created_at": item.get("created_at"),
+            }
+            for item in applications
+        ],
+        "favorites": [
+            {
+                "listing_id": item.get("listing_id"),
+                "created_at": item.get("created_at"),
+            }
+            for item in favorites
+        ],
+        "messages": messages_meta,
+    }
+
+    audit_entry = await build_audit_entry(
+        request,
+        current_user,
+        target_type="user",
+        target_id=current_user.get("id"),
+        event_type="gdpr_export_requested",
+        details={"lists": ["listings", "applications", "favorites", "messages"]},
+    )
+    await db.audit_logs.insert_one(audit_entry)
+
+    payload_text = json.dumps(export_payload, ensure_ascii=False)
+    filename = f"gdpr-export-{current_user.get('id')}.json"
+    return Response(
+        content=payload_text,
+        media_type="application/json",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
 @api_router.post("/applications")
 async def create_support_application(
     payload: SupportApplicationCreatePayload,
