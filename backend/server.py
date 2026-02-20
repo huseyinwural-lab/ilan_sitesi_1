@@ -398,6 +398,9 @@ async def _ensure_test_user(db):
             "email": user_email,
             "hashed_password": hashed,
             "full_name": "Test User",
+            "first_name": "Test",
+            "last_name": "User",
+            "phone_e164": "+491701112233",
             "role": "individual",
             "status": "active",
             "is_active": True,
@@ -409,6 +412,86 @@ async def _ensure_test_user(db):
             "last_login": None,
         }
     )
+
+
+async def _ensure_individual_fixtures(db):
+    now = datetime.now(timezone.utc)
+    fixtures = [
+        {
+            "email": "ayse.kaya@platform.com",
+            "first_name": "Ayşe",
+            "last_name": "Kaya",
+            "phone_e164": "+905321234567",
+            "country_code": "TR",
+        },
+        {
+            "email": "mehmet.yilmaz@platform.com",
+            "first_name": "Mehmet",
+            "last_name": "Yılmaz",
+            "phone_e164": "+905551112233",
+            "country_code": "TR",
+        },
+        {
+            "email": "elif.demir@platform.com",
+            "first_name": "Elif",
+            "last_name": "Demir",
+            "phone_e164": "+491701234567",
+            "country_code": "DE",
+        },
+        {
+            "email": "zeynep.sari@platform.com",
+            "first_name": "Zeynep",
+            "last_name": "Sarı",
+            "phone_e164": "+43123456789",
+            "country_code": "AT",
+        },
+        {
+            "email": "mert.ozkan@platform.com",
+            "first_name": "Mert",
+            "last_name": "Özkan",
+            "phone_e164": "+41791234567",
+            "country_code": "CH",
+        },
+        {
+            "email": "deniz.arslan@platform.com",
+            "first_name": "Deniz",
+            "last_name": "Arslan",
+            "phone_e164": "+905443332211",
+            "country_code": "TR",
+        },
+    ]
+
+    for idx, fixture in enumerate(fixtures):
+        now_iso = (now - timedelta(days=idx + 1)).isoformat()
+        email = fixture["email"]
+        existing = await db.users.find_one({"email": email}, {"_id": 0})
+        user_id = existing.get("id") if existing else str(uuid.uuid4())
+        hashed = get_password_hash("User123!")
+
+        payload = {
+            "id": user_id,
+            "email": email,
+            "hashed_password": hashed,
+            "full_name": f"{fixture['first_name']} {fixture['last_name']}",
+            "first_name": fixture["first_name"],
+            "last_name": fixture["last_name"],
+            "phone_e164": fixture["phone_e164"],
+            "role": "individual",
+            "status": "active",
+            "is_active": True,
+            "is_verified": True,
+            "country_scope": [fixture["country_code"]],
+            "country_code": fixture["country_code"],
+            "preferred_language": "tr",
+            "created_at": now_iso,
+            "last_login": None,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        if existing:
+            await db.users.update_one({"email": email}, {"$set": payload})
+        else:
+            await db.users.insert_one(payload)
 
 
 async def _ensure_country_admin_user(db):
