@@ -1442,6 +1442,9 @@ class BulkDeactivatePayload(BaseModel):
 
 class AdminUserActionPayload(BaseModel):
     reason: Optional[str] = None
+    reason_code: Optional[str] = None
+    reason_detail: Optional[str] = None
+    suspension_until: Optional[str] = None
 
 
 @api_router.patch("/users/{user_id}")
