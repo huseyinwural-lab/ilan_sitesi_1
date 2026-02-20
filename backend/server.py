@@ -2584,6 +2584,7 @@ async def admin_individual_users_export_csv(
         details={
             "search": search,
             "country": country_code,
+            "status": status,
             "sort_by": sort_by,
             "sort_dir": sort_dir,
             "total_count": total_count,
