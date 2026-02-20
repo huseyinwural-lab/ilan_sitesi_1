@@ -1399,6 +1399,58 @@ ADMIN_INVITE_RATE_LIMIT_MAX_ATTEMPTS = 5
 
 ADMIN_ROLE_OPTIONS = {"super_admin", "country_admin", "finance", "support", "moderator"}
 
+APPLICATION_TYPES = {"individual", "dealer"}
+APPLICATION_REQUEST_TYPES = {"complaint", "request"}
+APPLICATION_PRIORITY_SET = {"low", "medium", "high"}
+APPLICATION_STATUS_SET = {"open", "in_review", "closed"}
+APPLICATION_STATUS_TRANSITIONS = {
+    "open": {"in_review", "closed"},
+    "in_review": {"closed"},
+    "closed": set(),
+}
+
+APPLICATION_RATE_LIMIT_WINDOW_SECONDS = 10 * 60
+APPLICATION_RATE_LIMIT_MAX_ATTEMPTS = 5
+_application_submit_attempts: Dict[str, List[float]] = {}
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL must be set")
+ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+
+sql_engine = create_async_engine(ASYNC_DATABASE_URL, echo=False, future=True)
+AsyncSessionLocal = async_sessionmaker(
+    sql_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+
+class Application(Base):
+    __tablename__ = "applications"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    application_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    request_type: Mapped[str] = mapped_column(String(20), default="complaint", nullable=False)
+    subject: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    attachment_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    attachment_url: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
+    priority: Mapped[str] = mapped_column(String(20), default="medium", nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="open", nullable=False, index=True)
+    assigned_admin_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+async def get_sql_session():
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+
 _admin_invite_attempts: Dict[str, List[float]] = {}
 _admin_invite_logger = logging.getLogger("admin_invites")
 
