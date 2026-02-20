@@ -21,3 +21,4 @@ from app.models.escrow import EscrowTransaction, Dispute
 from app.models.dealer_profile import DealerProfile
 from app.models.legal import LegalConsent
 from app.models.vehicle_mdm import VehicleMake, VehicleModel
+from app.models.application import Application
