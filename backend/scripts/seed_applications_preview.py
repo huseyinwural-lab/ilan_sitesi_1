@@ -142,16 +142,20 @@ async def seed_applications():
         seed_rows = []
         for idx, user in enumerate(individual_users):
             user_uuid = await ensure_sql_user(session, user)
+            app_uuid = uuid.uuid4()
             seed_rows.append(
                 Application(
-                    id=uuid.uuid4(),
+                    id=app_uuid,
+                    application_id=str(app_uuid),
                     user_id=user_uuid,
                     application_type="individual",
-                    request_type="complaint" if idx % 2 == 0 else "request",
+                    category="complaint" if idx % 2 == 0 else "request",
                     subject=f"Bireysel Başvuru {idx+1}",
                     description="Seed açıklama (bireysel)",
+                    attachments=[],
+                    extra_data={"kvkk_consent": True},
                     priority="medium",
-                    status="open" if idx % 2 == 0 else "in_progress",
+                    status="pending" if idx % 2 == 0 else "in_review",
                     created_at=now - timedelta(days=idx),
                     updated_at=now - timedelta(days=idx),
                 )
@@ -159,16 +163,20 @@ async def seed_applications():
 
         for idx, user in enumerate(dealer_users):
             user_uuid = await ensure_sql_user(session, user)
+            app_uuid = uuid.uuid4()
             seed_rows.append(
                 Application(
-                    id=uuid.uuid4(),
+                    id=app_uuid,
+                    application_id=str(app_uuid),
                     user_id=user_uuid,
                     application_type="dealer",
-                    request_type="complaint" if idx % 2 == 0 else "request",
+                    category="complaint" if idx % 2 == 0 else "request",
                     subject=f"Kurumsal Başvuru {idx+1}",
                     description="Seed açıklama (kurumsal)",
+                    attachments=[],
+                    extra_data={"company_name": user.get("company_name"), "kvkk_consent": True},
                     priority="medium",
-                    status="open" if idx % 2 == 0 else "in_progress",
+                    status="pending" if idx % 2 == 0 else "in_review",
                     created_at=now - timedelta(days=idx),
                     updated_at=now - timedelta(days=idx),
                 )
