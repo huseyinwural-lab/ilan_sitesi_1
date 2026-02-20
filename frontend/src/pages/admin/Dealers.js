@@ -186,7 +186,7 @@ export default function DealersPage() {
                 const allowDelete = canDelete && statusValue !== 'deleted';
                 const showActions = allowSuspend || allowDelete;
                 return (
-                <tr key={d.id} className="border-t" data-testid={`dealer-row-${d.id}`}>
+                  <tr key={d.id} className="border-t" data-testid={`dealer-row-${d.id}`}>
                   <td className="p-3" data-testid={`dealer-email-${d.id}`}>{d.email}</td>
                   <td className="p-3 text-muted-foreground" data-testid={`dealer-country-${d.id}`}>{d.country_code || '-'}</td>
                   <td className="p-3" data-testid={`dealer-status-${d.id}`}>
