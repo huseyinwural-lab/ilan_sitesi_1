@@ -1,0 +1,1184 @@
+{
+  "attributes": [
+    {
+      "key": "engine_cc",
+      "name": {
+        "tr": "Motor Hacmi (cc)",
+        "de": "Hubraum (cc)",
+        "fr": "Cylindrée (cc)"
+      },
+      "attribute_type": "number",
+      "unit": "cc",
+      "is_filterable": true,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "engine_cyl",
+      "name": {
+        "tr": "Silindir Sayısı",
+        "de": "Zylinder",
+        "fr": "Cylindres"
+      },
+      "attribute_type": "number",
+      "unit": null,
+      "is_filterable": true,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "engine_type",
+      "name": {
+        "tr": "Motor Tipi",
+        "de": "Motortyp",
+        "fr": "Type moteur"
+      },
+      "attribute_type": "select",
+      "unit": null,
+      "is_filterable": true,
+      "is_required": false,
+      "options": [
+        {
+          "value": "flat",
+          "label": {
+            "tr": "Flat",
+            "de": "Flat",
+            "fr": "Flat"
+          }
+        },
+        {
+          "value": "inline",
+          "label": {
+            "tr": "Inline",
+            "de": "Inline",
+            "fr": "Inline"
+          }
+        },
+        {
+          "value": "not-available",
+          "label": {
+            "tr": "Not Available",
+            "de": "Not Available",
+            "fr": "Not Available"
+          }
+        },
+        {
+          "value": "v",
+          "label": {
+            "tr": "V",
+            "de": "V",
+            "fr": "V"
+          }
+        },
+        {
+          "value": "w",
+          "label": {
+            "tr": "W",
+            "de": "W",
+            "fr": "W"
+          }
+        },
+        {
+          "value": "boxer",
+          "label": {
+            "tr": "boxer",
+            "de": "boxer",
+            "fr": "boxer"
+          }
+        },
+        {
+          "value": "dual-disk-rotary",
+          "label": {
+            "tr": "dual-disk rotary",
+            "de": "dual-disk rotary",
+            "fr": "dual-disk rotary"
+          }
+        },
+        {
+          "value": "electric",
+          "label": {
+            "tr": "electric",
+            "de": "electric",
+            "fr": "electric"
+          }
+        },
+        {
+          "value": "in-line",
+          "label": {
+            "tr": "in-line",
+            "de": "in-line",
+            "fr": "in-line"
+          }
+        },
+        {
+          "value": "single",
+          "label": {
+            "tr": "single",
+            "de": "single",
+            "fr": "single"
+          }
+        }
+      ],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "power_ps",
+      "name": {
+        "tr": "Güç (PS)",
+        "de": "Leistung (PS)",
+        "fr": "Puissance (PS)"
+      },
+      "attribute_type": "number",
+      "unit": "ps",
+      "is_filterable": true,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "torque_nm",
+      "name": {
+        "tr": "Tork (Nm)",
+        "de": "Drehmoment (Nm)",
+        "fr": "Couple (Nm)"
+      },
+      "attribute_type": "number",
+      "unit": "nm",
+      "is_filterable": true,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "fuel_type",
+      "name": {
+        "tr": "Yakıt Tipi",
+        "de": "Kraftstoff",
+        "fr": "Carburant"
+      },
+      "attribute_type": "select",
+      "unit": null,
+      "is_filterable": true,
+      "is_required": false,
+      "options": [
+        {
+          "value": "biofuel",
+          "label": {
+            "tr": "Biofuel",
+            "de": "Biofuel",
+            "fr": "Biofuel"
+          }
+        },
+        {
+          "value": "diesel",
+          "label": {
+            "tr": "Diesel",
+            "de": "Diesel",
+            "fr": "Diesel"
+          }
+        },
+        {
+          "value": "diesel-electric-hybrid",
+          "label": {
+            "tr": "Diesel / Electric Hybrid",
+            "de": "Diesel / Electric Hybrid",
+            "fr": "Diesel / Electric Hybrid"
+          }
+        },
+        {
+          "value": "electric",
+          "label": {
+            "tr": "Electric",
+            "de": "Electric",
+            "fr": "Electric"
+          }
+        },
+        {
+          "value": "flex-fuel",
+          "label": {
+            "tr": "Flex Fuel",
+            "de": "Flex Fuel",
+            "fr": "Flex Fuel"
+          }
+        },
+        {
+          "value": "flex-fuel-premium-unleaded-reco",
+          "label": {
+            "tr": "Flex-Fuel (Premium Unleaded Reco",
+            "de": "Flex-Fuel (Premium Unleaded Reco",
+            "fr": "Flex-Fuel (Premium Unleaded Reco"
+          }
+        },
+        {
+          "value": "flex-fuel-premium-unleaded-requ",
+          "label": {
+            "tr": "Flex-Fuel (Premium Unleaded Requ",
+            "de": "Flex-Fuel (Premium Unleaded Requ",
+            "fr": "Flex-Fuel (Premium Unleaded Requ"
+          }
+        },
+        {
+          "value": "flex-fuel-premium-unleaded-e85",
+          "label": {
+            "tr": "Flex-Fuel (Premium Unleaded/E85)",
+            "de": "Flex-Fuel (Premium Unleaded/E85)",
+            "fr": "Flex-Fuel (Premium Unleaded/E85)"
+          }
+        },
+        {
+          "value": "flex-fuel-unleaded-e85",
+          "label": {
+            "tr": "Flex-Fuel (Unleaded/E85)",
+            "de": "Flex-Fuel (Unleaded/E85)",
+            "fr": "Flex-Fuel (Unleaded/E85)"
+          }
+        },
+        {
+          "value": "flex-fuel-unleaded-natural-gas",
+          "label": {
+            "tr": "Flex-Fuel (Unleaded/Natural Gas)",
+            "de": "Flex-Fuel (Unleaded/Natural Gas)",
+            "fr": "Flex-Fuel (Unleaded/Natural Gas)"
+          }
+        },
+        {
+          "value": "flexfuel",
+          "label": {
+            "tr": "FlexFuel",
+            "de": "FlexFuel",
+            "fr": "FlexFuel"
+          }
+        },
+        {
+          "value": "gasoline",
+          "label": {
+            "tr": "Gasoline",
+            "de": "Gasoline",
+            "fr": "Gasoline"
+          }
+        },
+        {
+          "value": "gasoline-premium",
+          "label": {
+            "tr": "Gasoline - Premium",
+            "de": "Gasoline - Premium",
+            "fr": "Gasoline - Premium"
+          }
+        },
+        {
+          "value": "gasoline-electric-hybrid",
+          "label": {
+            "tr": "Gasoline / Electric Hybrid",
+            "de": "Gasoline / Electric Hybrid",
+            "fr": "Gasoline / Electric Hybrid"
+          }
+        },
+        {
+          "value": "lpg",
+          "label": {
+            "tr": "LPG",
+            "de": "LPG",
+            "fr": "LPG"
+          }
+        },
+        {
+          "value": "natural-gas",
+          "label": {
+            "tr": "Natural Gas",
+            "de": "Natural Gas",
+            "fr": "Natural Gas"
+          }
+        },
+        {
+          "value": "natural-gas-cng",
+          "label": {
+            "tr": "Natural Gas (CNG)",
+            "de": "Natural Gas (CNG)",
+            "fr": "Natural Gas (CNG)"
+          }
+        },
+        {
+          "value": "not-available",
+          "label": {
+            "tr": "Not Available",
+            "de": "Not Available",
+            "fr": "Not Available"
+          }
+        },
+        {
+          "value": "premium",
+          "label": {
+            "tr": "Premium",
+            "de": "Premium",
+            "fr": "Premium"
+          }
+        },
+        {
+          "value": "premium-unleaded-recommended",
+          "label": {
+            "tr": "Premium Unleaded (Recommended)",
+            "de": "Premium Unleaded (Recommended)",
+            "fr": "Premium Unleaded (Recommended)"
+          }
+        },
+        {
+          "value": "premium-unleaded-required",
+          "label": {
+            "tr": "Premium Unleaded (Required)",
+            "de": "Premium Unleaded (Required)",
+            "fr": "Premium Unleaded (Required)"
+          }
+        },
+        {
+          "value": "regular-unleaded",
+          "label": {
+            "tr": "Regular Unleaded",
+            "de": "Regular Unleaded",
+            "fr": "Regular Unleaded"
+          }
+        }
+      ],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "transmission_type",
+      "name": {
+        "tr": "Şanzıman Tipi",
+        "de": "Getriebe",
+        "fr": "Transmission"
+      },
+      "attribute_type": "select",
+      "unit": null,
+      "is_filterable": true,
+      "is_required": false,
+      "options": [
+        {
+          "value": "4-speed-automatic",
+          "label": {
+            "tr": "4-speed automatic",
+            "de": "4-speed automatic",
+            "fr": "4-speed automatic"
+          }
+        },
+        {
+          "value": "4-speed-manual",
+          "label": {
+            "tr": "4-speed manual",
+            "de": "4-speed manual",
+            "fr": "4-speed manual"
+          }
+        },
+        {
+          "value": "4-speed-shiftable-automatic",
+          "label": {
+            "tr": "4-speed shiftable automatic",
+            "de": "4-speed shiftable automatic",
+            "fr": "4-speed shiftable automatic"
+          }
+        },
+        {
+          "value": "5-speed-automated-manual",
+          "label": {
+            "tr": "5-speed automated manual",
+            "de": "5-speed automated manual",
+            "fr": "5-speed automated manual"
+          }
+        },
+        {
+          "value": "5-speed-automatic",
+          "label": {
+            "tr": "5-speed automatic",
+            "de": "5-speed automatic",
+            "fr": "5-speed automatic"
+          }
+        },
+        {
+          "value": "5-speed-manual",
+          "label": {
+            "tr": "5-speed manual",
+            "de": "5-speed manual",
+            "fr": "5-speed manual"
+          }
+        },
+        {
+          "value": "5-speed-shiftable-automatic",
+          "label": {
+            "tr": "5-speed shiftable automatic",
+            "de": "5-speed shiftable automatic",
+            "fr": "5-speed shiftable automatic"
+          }
+        },
+        {
+          "value": "6-speed-automated-manual",
+          "label": {
+            "tr": "6-speed automated manual",
+            "de": "6-speed automated manual",
+            "fr": "6-speed automated manual"
+          }
+        },
+        {
+          "value": "6-speed-automatic",
+          "label": {
+            "tr": "6-speed automatic",
+            "de": "6-speed automatic",
+            "fr": "6-speed automatic"
+          }
+        },
+        {
+          "value": "6-speed-manual",
+          "label": {
+            "tr": "6-speed manual",
+            "de": "6-speed manual",
+            "fr": "6-speed manual"
+          }
+        },
+        {
+          "value": "6-speed-shiftable-automatic",
+          "label": {
+            "tr": "6-speed shiftable automatic",
+            "de": "6-speed shiftable automatic",
+            "fr": "6-speed shiftable automatic"
+          }
+        },
+        {
+          "value": "7-speed-automated-manual",
+          "label": {
+            "tr": "7-speed automated manual",
+            "de": "7-speed automated manual",
+            "fr": "7-speed automated manual"
+          }
+        },
+        {
+          "value": "7-speed-automatic",
+          "label": {
+            "tr": "7-speed automatic",
+            "de": "7-speed automatic",
+            "fr": "7-speed automatic"
+          }
+        },
+        {
+          "value": "7-speed-manual",
+          "label": {
+            "tr": "7-speed manual",
+            "de": "7-speed manual",
+            "fr": "7-speed manual"
+          }
+        },
+        {
+          "value": "7-speed-shiftable-automatic",
+          "label": {
+            "tr": "7-speed shiftable automatic",
+            "de": "7-speed shiftable automatic",
+            "fr": "7-speed shiftable automatic"
+          }
+        },
+        {
+          "value": "8-speed-automated-manual",
+          "label": {
+            "tr": "8-speed automated manual",
+            "de": "8-speed automated manual",
+            "fr": "8-speed automated manual"
+          }
+        },
+        {
+          "value": "8-speed-automatic",
+          "label": {
+            "tr": "8-speed automatic",
+            "de": "8-speed automatic",
+            "fr": "8-speed automatic"
+          }
+        },
+        {
+          "value": "8-speed-shiftable-automatic",
+          "label": {
+            "tr": "8-speed shiftable automatic",
+            "de": "8-speed shiftable automatic",
+            "fr": "8-speed shiftable automatic"
+          }
+        },
+        {
+          "value": "automated-manual",
+          "label": {
+            "tr": "Automated Manual",
+            "de": "Automated Manual",
+            "fr": "Automated Manual"
+          }
+        },
+        {
+          "value": "automatic",
+          "label": {
+            "tr": "Automatic",
+            "de": "Automatic",
+            "fr": "Automatic"
+          }
+        },
+        {
+          "value": "cvt",
+          "label": {
+            "tr": "CVT",
+            "de": "CVT",
+            "fr": "CVT"
+          }
+        },
+        {
+          "value": "direct-drive",
+          "label": {
+            "tr": "Direct Drive",
+            "de": "Direct Drive",
+            "fr": "Direct Drive"
+          }
+        },
+        {
+          "value": "manual",
+          "label": {
+            "tr": "Manual",
+            "de": "Manual",
+            "fr": "Manual"
+          }
+        },
+        {
+          "value": "single-speed",
+          "label": {
+            "tr": "Single Speed",
+            "de": "Single Speed",
+            "fr": "Single Speed"
+          }
+        },
+        {
+          "value": "unknown",
+          "label": {
+            "tr": "Unknown",
+            "de": "Unknown",
+            "fr": "Unknown"
+          }
+        },
+        {
+          "value": "automatic",
+          "label": {
+            "tr": "automatic",
+            "de": "automatic",
+            "fr": "automatic"
+          }
+        },
+        {
+          "value": "manual",
+          "label": {
+            "tr": "manual",
+            "de": "manual",
+            "fr": "manual"
+          }
+        }
+      ],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "drive",
+      "name": {
+        "tr": "Çekiş",
+        "de": "Antrieb",
+        "fr": "Transmission"
+      },
+      "attribute_type": "select",
+      "unit": null,
+      "is_filterable": true,
+      "is_required": false,
+      "options": [
+        {
+          "value": "4wd",
+          "label": {
+            "tr": "4WD",
+            "de": "4WD",
+            "fr": "4WD"
+          }
+        },
+        {
+          "value": "awd",
+          "label": {
+            "tr": "AWD",
+            "de": "AWD",
+            "fr": "AWD"
+          }
+        },
+        {
+          "value": "all-wheel-drive",
+          "label": {
+            "tr": "All Wheel Drive",
+            "de": "All Wheel Drive",
+            "fr": "All Wheel Drive"
+          }
+        },
+        {
+          "value": "four-wheel-drive",
+          "label": {
+            "tr": "Four Wheel Drive",
+            "de": "Four Wheel Drive",
+            "fr": "Four Wheel Drive"
+          }
+        },
+        {
+          "value": "front",
+          "label": {
+            "tr": "Front",
+            "de": "Front",
+            "fr": "Front"
+          }
+        },
+        {
+          "value": "front-wheel-driv",
+          "label": {
+            "tr": "Front Wheel Driv",
+            "de": "Front Wheel Driv",
+            "fr": "Front Wheel Driv"
+          }
+        },
+        {
+          "value": "not-available",
+          "label": {
+            "tr": "Not Available",
+            "de": "Not Available",
+            "fr": "Not Available"
+          }
+        },
+        {
+          "value": "rear",
+          "label": {
+            "tr": "Rear",
+            "de": "Rear",
+            "fr": "Rear"
+          }
+        },
+        {
+          "value": "rear-wheel-drive",
+          "label": {
+            "tr": "Rear Wheel Drive",
+            "de": "Rear Wheel Drive",
+            "fr": "Rear Wheel Drive"
+          }
+        },
+        {
+          "value": "front",
+          "label": {
+            "tr": "front",
+            "de": "front",
+            "fr": "front"
+          }
+        }
+      ],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "body",
+      "name": {
+        "tr": "Gövde Tipi",
+        "de": "Karosserie",
+        "fr": "Carrosserie"
+      },
+      "attribute_type": "select",
+      "unit": null,
+      "is_filterable": true,
+      "is_required": false,
+      "options": [
+        {
+          "value": "cargo-vans",
+          "label": {
+            "tr": "cargo vans",
+            "de": "cargo vans",
+            "fr": "cargo vans"
+          }
+        },
+        {
+          "value": "compact-cars",
+          "label": {
+            "tr": "compact cars",
+            "de": "compact cars",
+            "fr": "compact cars"
+          }
+        },
+        {
+          "value": "convertible",
+          "label": {
+            "tr": "convertible",
+            "de": "convertible",
+            "fr": "convertible"
+          }
+        },
+        {
+          "value": "coupe",
+          "label": {
+            "tr": "coupe",
+            "de": "coupe",
+            "fr": "coupe"
+          }
+        },
+        {
+          "value": "crossover",
+          "label": {
+            "tr": "crossover",
+            "de": "crossover",
+            "fr": "crossover"
+          }
+        },
+        {
+          "value": "hatchback",
+          "label": {
+            "tr": "hatchback",
+            "de": "hatchback",
+            "fr": "hatchback"
+          }
+        },
+        {
+          "value": "large-cars",
+          "label": {
+            "tr": "large cars",
+            "de": "large cars",
+            "fr": "large cars"
+          }
+        },
+        {
+          "value": "midsize-cars",
+          "label": {
+            "tr": "midsize cars",
+            "de": "midsize cars",
+            "fr": "midsize cars"
+          }
+        },
+        {
+          "value": "midsize-station-wagons",
+          "label": {
+            "tr": "midsize station wagons",
+            "de": "midsize station wagons",
+            "fr": "midsize station wagons"
+          }
+        },
+        {
+          "value": "mini-compact-cars",
+          "label": {
+            "tr": "mini compact cars",
+            "de": "mini compact cars",
+            "fr": "mini compact cars"
+          }
+        },
+        {
+          "value": "minivan",
+          "label": {
+            "tr": "minivan",
+            "de": "minivan",
+            "fr": "minivan"
+          }
+        },
+        {
+          "value": "not-available",
+          "label": {
+            "tr": "not available",
+            "de": "not available",
+            "fr": "not available"
+          }
+        },
+        {
+          "value": "panel-van",
+          "label": {
+            "tr": "panel van",
+            "de": "panel van",
+            "fr": "panel van"
+          }
+        },
+        {
+          "value": "passenger-vans",
+          "label": {
+            "tr": "passenger vans",
+            "de": "passenger vans",
+            "fr": "passenger vans"
+          }
+        },
+        {
+          "value": "pickup",
+          "label": {
+            "tr": "pickup",
+            "de": "pickup",
+            "fr": "pickup"
+          }
+        },
+        {
+          "value": "roadster",
+          "label": {
+            "tr": "roadster",
+            "de": "roadster",
+            "fr": "roadster"
+          }
+        },
+        {
+          "value": "sedan",
+          "label": {
+            "tr": "sedan",
+            "de": "sedan",
+            "fr": "sedan"
+          }
+        },
+        {
+          "value": "small-pickup-trucks",
+          "label": {
+            "tr": "small pickup trucks",
+            "de": "small pickup trucks",
+            "fr": "small pickup trucks"
+          }
+        },
+        {
+          "value": "small-sport-utility-vehicles",
+          "label": {
+            "tr": "small sport utility vehicles",
+            "de": "small sport utility vehicles",
+            "fr": "small sport utility vehicles"
+          }
+        },
+        {
+          "value": "small-station-wagons",
+          "label": {
+            "tr": "small station wagons",
+            "de": "small station wagons",
+            "fr": "small station wagons"
+          }
+        },
+        {
+          "value": "sport-utility-vehicles",
+          "label": {
+            "tr": "sport utility vehicles",
+            "de": "sport utility vehicles",
+            "fr": "sport utility vehicles"
+          }
+        },
+        {
+          "value": "standard-pickup-trucks",
+          "label": {
+            "tr": "standard pickup trucks",
+            "de": "standard pickup trucks",
+            "fr": "standard pickup trucks"
+          }
+        },
+        {
+          "value": "standard-sport-utility-vehicles",
+          "label": {
+            "tr": "standard sport utility vehicles",
+            "de": "standard sport utility vehicles",
+            "fr": "standard sport utility vehicles"
+          }
+        },
+        {
+          "value": "station-wagon",
+          "label": {
+            "tr": "station wagon",
+            "de": "station wagon",
+            "fr": "station wagon"
+          }
+        },
+        {
+          "value": "subcompact-cars",
+          "label": {
+            "tr": "subcompact cars",
+            "de": "subcompact cars",
+            "fr": "subcompact cars"
+          }
+        },
+        {
+          "value": "suv",
+          "label": {
+            "tr": "suv",
+            "de": "suv",
+            "fr": "suv"
+          }
+        },
+        {
+          "value": "two-seaters",
+          "label": {
+            "tr": "two seaters",
+            "de": "two seaters",
+            "fr": "two seaters"
+          }
+        },
+        {
+          "value": "van",
+          "label": {
+            "tr": "van",
+            "de": "van",
+            "fr": "van"
+          }
+        }
+      ],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "doors",
+      "name": {
+        "tr": "Kapı Sayısı",
+        "de": "Türen",
+        "fr": "Portes"
+      },
+      "attribute_type": "number",
+      "unit": null,
+      "is_filterable": true,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "seats",
+      "name": {
+        "tr": "Koltuk Sayısı",
+        "de": "Sitze",
+        "fr": "Sièges"
+      },
+      "attribute_type": "number",
+      "unit": null,
+      "is_filterable": true,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "length_mm",
+      "name": {
+        "tr": "Uzunluk (mm)",
+        "de": "Länge (mm)",
+        "fr": "Longueur (mm)"
+      },
+      "attribute_type": "number",
+      "unit": "mm",
+      "is_filterable": false,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "width_mm",
+      "name": {
+        "tr": "Genişlik (mm)",
+        "de": "Breite (mm)",
+        "fr": "Largeur (mm)"
+      },
+      "attribute_type": "number",
+      "unit": "mm",
+      "is_filterable": false,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "height_mm",
+      "name": {
+        "tr": "Yükseklik (mm)",
+        "de": "Höhe (mm)",
+        "fr": "Hauteur (mm)"
+      },
+      "attribute_type": "number",
+      "unit": "mm",
+      "is_filterable": false,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "wheelbase_mm",
+      "name": {
+        "tr": "Aks Mesafesi (mm)",
+        "de": "Radstand (mm)",
+        "fr": "Empattement (mm)"
+      },
+      "attribute_type": "number",
+      "unit": "mm",
+      "is_filterable": false,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "weight_kg",
+      "name": {
+        "tr": "Ağırlık (kg)",
+        "de": "Gewicht (kg)",
+        "fr": "Poids (kg)"
+      },
+      "attribute_type": "number",
+      "unit": "kg",
+      "is_filterable": true,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "top_speed_kph",
+      "name": {
+        "tr": "Maksimum Hız (km/s)",
+        "de": "Höchstgeschwindigkeit (km/h)",
+        "fr": "Vitesse max (km/h)"
+      },
+      "attribute_type": "number",
+      "unit": "kph",
+      "is_filterable": false,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "zero_to_100_kph",
+      "name": {
+        "tr": "0-100 km/s",
+        "de": "0-100 km/h",
+        "fr": "0-100 km/h"
+      },
+      "attribute_type": "number",
+      "unit": "kph",
+      "is_filterable": false,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "lkm_city",
+      "name": {
+        "tr": "Şehir içi tüketim (L/100km)",
+        "de": "Verbrauch Stadt (L/100km)",
+        "fr": "Conso ville (L/100km)"
+      },
+      "attribute_type": "number",
+      "unit": "l/100km",
+      "is_filterable": false,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "lkm_hwy",
+      "name": {
+        "tr": "Şehir dışı tüketim (L/100km)",
+        "de": "Verbrauch Autobahn (L/100km)",
+        "fr": "Conso route (L/100km)"
+      },
+      "attribute_type": "number",
+      "unit": "l/100km",
+      "is_filterable": false,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    },
+    {
+      "key": "lkm_mixed",
+      "name": {
+        "tr": "Karma tüketim (L/100km)",
+        "de": "Verbrauch gemischt (L/100km)",
+        "fr": "Conso mixte (L/100km)"
+      },
+      "attribute_type": "number",
+      "unit": "l/100km",
+      "is_filterable": false,
+      "is_required": false,
+      "options": [],
+      "category_scope": [
+        {
+          "category_slug": "vasita",
+          "inherit_to_children": true
+        }
+      ]
+    }
+  ]
+}

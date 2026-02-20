@@ -1,0 +1,1231 @@
+{
+  "total_rows": 81135,
+  "unique_makes": 156,
+  "unique_models": 1743,
+  "vehicle_type_counts": {
+    "car": 1452,
+    "suv": 228,
+    "pickup": 63
+  },
+  "models_skipped_unknown_body": 1911,
+  "unknown_body_values": [
+    "NULL",
+    "sport utility vehicles",
+    "compact cars",
+    "midsize cars",
+    "subcompact cars",
+    "large cars",
+    "two seaters",
+    "cargo vans",
+    "small station wagons",
+    "small sport utility vehicles",
+    "passenger vans",
+    "mini compact cars",
+    "midsize station wagons",
+    "not available",
+    "standard sport utility vehicles"
+  ],
+  "duplicate_model_slugs": [
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "citroen",
+      "model_slug": "bx",
+      "existing_name": "BX",
+      "duplicate_name": "Bx"
+    },
+    {
+      "make_slug": "citroen",
+      "model_slug": "bx",
+      "existing_name": "BX",
+      "duplicate_name": "Bx"
+    },
+    {
+      "make_slug": "isuzu",
+      "model_slug": "vehicross",
+      "existing_name": "VehiCross",
+      "duplicate_name": "Vehicross"
+    },
+    {
+      "make_slug": "jaguar",
+      "model_slug": "e-type",
+      "existing_name": "E Type",
+      "duplicate_name": "E-Type"
+    },
+    {
+      "make_slug": "jaguar",
+      "model_slug": "e-type",
+      "existing_name": "E Type",
+      "duplicate_name": "E-Type"
+    },
+    {
+      "make_slug": "jaguar",
+      "model_slug": "e-type",
+      "existing_name": "E Type",
+      "duplicate_name": "E-Type"
+    },
+    {
+      "make_slug": "jaguar",
+      "model_slug": "e-type",
+      "existing_name": "E Type",
+      "duplicate_name": "E-Type"
+    },
+    {
+      "make_slug": "jaguar",
+      "model_slug": "e-type",
+      "existing_name": "E Type",
+      "duplicate_name": "E-Type"
+    },
+    {
+      "make_slug": "jaguar",
+      "model_slug": "e-type",
+      "existing_name": "E Type",
+      "duplicate_name": "E-Type"
+    },
+    {
+      "make_slug": "jaguar",
+      "model_slug": "e-type",
+      "existing_name": "E Type",
+      "duplicate_name": "E-Type"
+    },
+    {
+      "make_slug": "mazda",
+      "model_slug": "rx-evolv",
+      "existing_name": "RX-Evolv",
+      "duplicate_name": "RX Evolv"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "c-max",
+      "existing_name": "C-MAX",
+      "duplicate_name": "C-Max"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "chevrolet",
+      "model_slug": "trailblazer",
+      "existing_name": "Trailblazer",
+      "duplicate_name": "TrailBlazer"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "edge",
+      "existing_name": "Edge",
+      "duplicate_name": "EDGE"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "edge",
+      "existing_name": "Edge",
+      "duplicate_name": "EDGE"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "edge",
+      "existing_name": "Edge",
+      "duplicate_name": "EDGE"
+    },
+    {
+      "make_slug": "ford",
+      "model_slug": "edge",
+      "existing_name": "Edge",
+      "duplicate_name": "EDGE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "cadillac",
+      "model_slug": "escalade",
+      "existing_name": "Escalade",
+      "duplicate_name": "ESCALADE"
+    },
+    {
+      "make_slug": "chrysler",
+      "model_slug": "town-country",
+      "existing_name": "Town & Country",
+      "duplicate_name": "TOWN & COUNTRY"
+    },
+    {
+      "make_slug": "chrysler",
+      "model_slug": "town-country",
+      "existing_name": "Town & Country",
+      "duplicate_name": "TOWN & COUNTRY"
+    },
+    {
+      "make_slug": "chrysler",
+      "model_slug": "town-country",
+      "existing_name": "Town & Country",
+      "duplicate_name": "TOWN & COUNTRY"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "avenger",
+      "existing_name": "Avenger",
+      "duplicate_name": "AVENGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "avenger",
+      "existing_name": "Avenger",
+      "duplicate_name": "AVENGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "avenger",
+      "existing_name": "Avenger",
+      "duplicate_name": "AVENGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "avenger",
+      "existing_name": "Avenger",
+      "duplicate_name": "AVENGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "challenger",
+      "existing_name": "Challenger",
+      "duplicate_name": "CHALLENGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "challenger",
+      "existing_name": "Challenger",
+      "duplicate_name": "CHALLENGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "challenger",
+      "existing_name": "Challenger",
+      "duplicate_name": "CHALLENGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "challenger",
+      "existing_name": "Challenger",
+      "duplicate_name": "CHALLENGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "challenger",
+      "existing_name": "Challenger",
+      "duplicate_name": "CHALLENGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "challenger",
+      "existing_name": "Challenger",
+      "duplicate_name": "CHALLENGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "challenger",
+      "existing_name": "Challenger",
+      "duplicate_name": "CHALLENGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "charger",
+      "existing_name": "Charger",
+      "duplicate_name": "CHARGER"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "dart",
+      "existing_name": "Dart",
+      "duplicate_name": "DART"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "dart",
+      "existing_name": "Dart",
+      "duplicate_name": "DART"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "dart",
+      "existing_name": "Dart",
+      "duplicate_name": "DART"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "dart",
+      "existing_name": "Dart",
+      "duplicate_name": "DART"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "dart",
+      "existing_name": "Dart",
+      "duplicate_name": "DART"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "durango",
+      "existing_name": "Durango",
+      "duplicate_name": "DURANGO"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "durango",
+      "existing_name": "Durango",
+      "duplicate_name": "DURANGO"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "durango",
+      "existing_name": "Durango",
+      "duplicate_name": "DURANGO"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "durango",
+      "existing_name": "Durango",
+      "duplicate_name": "DURANGO"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "durango",
+      "existing_name": "Durango",
+      "duplicate_name": "DURANGO"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "durango",
+      "existing_name": "Durango",
+      "duplicate_name": "DURANGO"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "durango",
+      "existing_name": "Durango",
+      "duplicate_name": "DURANGO"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "durango",
+      "existing_name": "Durango",
+      "duplicate_name": "DURANGO"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "journey",
+      "existing_name": "Journey",
+      "duplicate_name": "JOURNEY"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "journey",
+      "existing_name": "Journey",
+      "duplicate_name": "JOURNEY"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "journey",
+      "existing_name": "Journey",
+      "duplicate_name": "JOURNEY"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "journey",
+      "existing_name": "Journey",
+      "duplicate_name": "JOURNEY"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "journey",
+      "existing_name": "Journey",
+      "duplicate_name": "JOURNEY"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "journey",
+      "existing_name": "Journey",
+      "duplicate_name": "JOURNEY"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "journey",
+      "existing_name": "Journey",
+      "duplicate_name": "JOURNEY"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "journey",
+      "existing_name": "Journey",
+      "duplicate_name": "JOURNEY"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "grand-caravan",
+      "existing_name": "Grand Caravan",
+      "duplicate_name": "GRAND CARAVAN"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "grand-caravan",
+      "existing_name": "Grand Caravan",
+      "duplicate_name": "GRAND CARAVAN"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "grand-caravan",
+      "existing_name": "Grand Caravan",
+      "duplicate_name": "GRAND CARAVAN"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "grand-caravan",
+      "existing_name": "Grand Caravan",
+      "duplicate_name": "GRAND CARAVAN"
+    },
+    {
+      "make_slug": "dodge",
+      "model_slug": "grand-caravan",
+      "existing_name": "Grand Caravan",
+      "duplicate_name": "GRAND CARAVAN"
+    },
+    {
+      "make_slug": "mazda",
+      "model_slug": "mx-5-miata",
+      "existing_name": "MX-5 Miata",
+      "duplicate_name": "MX-5 MIATA"
+    },
+    {
+      "make_slug": "mazda",
+      "model_slug": "mx-5-miata",
+      "existing_name": "MX-5 Miata",
+      "duplicate_name": "MX-5 MIATA"
+    },
+    {
+      "make_slug": "mazda",
+      "model_slug": "mx-5-miata",
+      "existing_name": "MX-5 Miata",
+      "duplicate_name": "MX-5 MIATA"
+    },
+    {
+      "make_slug": "mazda",
+      "model_slug": "mx-5-miata",
+      "existing_name": "MX-5 Miata",
+      "duplicate_name": "MX-5 MIATA"
+    },
+    {
+      "make_slug": "mazda",
+      "model_slug": "mx-5-miata",
+      "existing_name": "MX-5 Miata",
+      "duplicate_name": "MX-5 MIATA"
+    },
+    {
+      "make_slug": "nissan",
+      "model_slug": "altima",
+      "existing_name": "Altima",
+      "duplicate_name": "ALTIMA"
+    },
+    {
+      "make_slug": "nissan",
+      "model_slug": "altima",
+      "existing_name": "Altima",
+      "duplicate_name": "ALTIMA"
+    },
+    {
+      "make_slug": "nissan",
+      "model_slug": "altima",
+      "existing_name": "Altima",
+      "duplicate_name": "ALTIMA"
+    },
+    {
+      "make_slug": "nissan",
+      "model_slug": "altima",
+      "existing_name": "Altima",
+      "duplicate_name": "ALTIMA"
+    },
+    {
+      "make_slug": "nissan",
+      "model_slug": "altima",
+      "existing_name": "Altima",
+      "duplicate_name": "ALTIMA"
+    },
+    {
+      "make_slug": "nissan",
+      "model_slug": "altima",
+      "existing_name": "Altima",
+      "duplicate_name": "ALTIMA"
+    },
+    {
+      "make_slug": "nissan",
+      "model_slug": "altima",
+      "existing_name": "Altima",
+      "duplicate_name": "ALTIMA"
+    },
+    {
+      "make_slug": "nissan",
+      "model_slug": "altima",
+      "existing_name": "Altima",
+      "duplicate_name": "ALTIMA"
+    },
+    {
+      "make_slug": "kia",
+      "model_slug": "rio",
+      "existing_name": "Rio",
+      "duplicate_name": "RIO"
+    },
+    {
+      "make_slug": "kia",
+      "model_slug": "rio",
+      "existing_name": "Rio",
+      "duplicate_name": "RIO"
+    },
+    {
+      "make_slug": "kia",
+      "model_slug": "rio",
+      "existing_name": "Rio",
+      "duplicate_name": "RIO"
+    },
+    {
+      "make_slug": "kia",
+      "model_slug": "rio",
+      "existing_name": "Rio",
+      "duplicate_name": "RIO"
+    },
+    {
+      "make_slug": "kia",
+      "model_slug": "rio",
+      "existing_name": "Rio",
+      "duplicate_name": "RIO"
+    },
+    {
+      "make_slug": "kia",
+      "model_slug": "rio",
+      "existing_name": "Rio",
+      "duplicate_name": "RIO"
+    },
+    {
+      "make_slug": "kia",
+      "model_slug": "soul",
+      "existing_name": "Soul",
+      "duplicate_name": "SOUL"
+    },
+    {
+      "make_slug": "kia",
+      "model_slug": "soul",
+      "existing_name": "Soul",
+      "duplicate_name": "SOUL"
+    },
+    {
+      "make_slug": "kia",
+      "model_slug": "soul",
+      "existing_name": "Soul",
+      "duplicate_name": "SOUL"
+    },
+    {
+      "make_slug": "jaguar",
+      "model_slug": "f-type",
+      "existing_name": "F-Type",
+      "duplicate_name": "F-TYPE"
+    },
+    {
+      "make_slug": "jaguar",
+      "model_slug": "f-type",
+      "existing_name": "F-Type",
+      "duplicate_name": "F-TYPE"
+    },
+    {
+      "make_slug": "jaguar",
+      "model_slug": "f-type",
+      "existing_name": "F-Type",
+      "duplicate_name": "F-TYPE"
+    },
+    {
+      "make_slug": "smart",
+      "model_slug": "fortwo",
+      "existing_name": "ForTwo",
+      "duplicate_name": "Fortwo"
+    },
+    {
+      "make_slug": "smart",
+      "model_slug": "fortwo",
+      "existing_name": "ForTwo",
+      "duplicate_name": "Fortwo"
+    },
+    {
+      "make_slug": "smart",
+      "model_slug": "fortwo",
+      "existing_name": "ForTwo",
+      "duplicate_name": "Fortwo"
+    },
+    {
+      "make_slug": "smart",
+      "model_slug": "fortwo",
+      "existing_name": "ForTwo",
+      "duplicate_name": "Fortwo"
+    },
+    {
+      "make_slug": "smart",
+      "model_slug": "fortwo",
+      "existing_name": "ForTwo",
+      "duplicate_name": "Fortwo"
+    },
+    {
+      "make_slug": "smart",
+      "model_slug": "fortwo",
+      "existing_name": "ForTwo",
+      "duplicate_name": "Fortwo"
+    },
+    {
+      "make_slug": "smart",
+      "model_slug": "fortwo",
+      "existing_name": "ForTwo",
+      "duplicate_name": "Fortwo"
+    },
+    {
+      "make_slug": "smart",
+      "model_slug": "fortwo",
+      "existing_name": "ForTwo",
+      "duplicate_name": "Fortwo"
+    },
+    {
+      "make_slug": "audi",
+      "model_slug": "allroad",
+      "existing_name": "Allroad",
+      "duplicate_name": "allroad"
+    },
+    {
+      "make_slug": "bmw",
+      "model_slug": "6-series",
+      "existing_name": "6 series",
+      "duplicate_name": "6 Series"
+    },
+    {
+      "make_slug": "bmw",
+      "model_slug": "6-series",
+      "existing_name": "6 series",
+      "duplicate_name": "6 Series"
+    },
+    {
+      "make_slug": "bmw",
+      "model_slug": "6-series",
+      "existing_name": "6 series",
+      "duplicate_name": "6 Series"
+    },
+    {
+      "make_slug": "bmw",
+      "model_slug": "6-series",
+      "existing_name": "6 series",
+      "duplicate_name": "6 Series"
+    },
+    {
+      "make_slug": "bmw",
+      "model_slug": "6-series",
+      "existing_name": "6 series",
+      "duplicate_name": "6 Series"
+    },
+    {
+      "make_slug": "bmw",
+      "model_slug": "6-series",
+      "existing_name": "6 series",
+      "duplicate_name": "6 Series"
+    }
+  ],
+  "models_with_multiple_types": []
+}
