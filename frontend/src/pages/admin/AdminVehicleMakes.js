@@ -31,6 +31,7 @@ const AdminVehicleMakes = () => {
   const [searchParams] = useSearchParams();
   const urlCountry = (searchParams.get('country') || '').toUpperCase();
   const [items, setItems] = useState([]);
+  const [filterType, setFilterType] = useState('');
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
