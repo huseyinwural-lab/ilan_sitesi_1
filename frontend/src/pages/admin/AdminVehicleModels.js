@@ -101,8 +101,8 @@ const AdminVehicleModels = () => {
   };
 
   const handleSave = async () => {
-    if (!form.make_id || !form.name || !form.slug) {
-      setError('Make, name ve slug zorunlu');
+    if (!form.make_id || !form.name || !form.slug || !form.vehicle_type) {
+      setError('Make, name, slug ve vehicle type zorunlu');
       return;
     }
     const payload = {
