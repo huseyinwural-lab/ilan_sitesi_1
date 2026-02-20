@@ -102,6 +102,39 @@ export default function IndividualUsers() {
     setPage(1);
   };
 
+  const handleExport = async () => {
+    if (!canExport) return;
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      const { sort_by, sort_dir } = getSortParams(sortOption);
+      params.set("sort_by", sort_by);
+      params.set("sort_dir", sort_dir);
+      if (searchQuery) params.set("search", searchQuery);
+      const qs = params.toString() ? `?${params.toString()}` : "";
+      const res = await axios.get(`${API}/admin/individual-users/export/csv${qs}`, {
+        headers: authHeader,
+        responseType: "blob",
+      });
+      const blob = new Blob([res.data], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      link.href = url;
+      link.download = `individual-users-${timestamp}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast({ title: "CSV export hazır." });
+    } catch (err) {
+      const message = err.response?.data?.detail || "CSV export başarısız.";
+      toast({ title: typeof message === "string" ? message : "CSV export başarısız.", variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const safeUsers = users.filter((user) => user.user_type === "individual");
   const resultLabel = searchQuery
     ? `${totalCount} sonuç bulundu`
