@@ -27,6 +27,7 @@ test('admin users ia cleanup: legacy routes redirect and menu item removed', asy
   await expect(page.getByTestId('nav-management-users')).toHaveCount(0);
 });
 
+test('bulk deactivate limit enforced', async ({ request }) => {
   const login = await request.post('/api/auth/login', {
     data: { email: 'admin@platform.com', password: 'Admin123!' },
   });
