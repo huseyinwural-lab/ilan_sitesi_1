@@ -92,6 +92,11 @@ export default function DealersPage() {
   const [reasonDetail, setReasonDetail] = useState('');
   const [suspensionUntil, setSuspensionUntil] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedDealer, setSelectedDealer] = useState(null);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState('');
 
   const canSuspend = ['super_admin', 'moderator'].includes(currentUser?.role);
   const canDelete = currentUser?.role === 'super_admin';
