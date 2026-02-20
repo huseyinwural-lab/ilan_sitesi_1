@@ -1022,6 +1022,59 @@ def _send_admin_invite_email(to_email: str, full_name: str, invite_link: str) ->
         raise HTTPException(status_code=502, detail="Failed to send invite email")
 
 
+def _send_support_received_email(to_email: str, application_id: str, subject_text: str) -> None:
+    sendgrid_key = os.environ.get("SENDGRID_API_KEY")
+    sender_email = os.environ.get("SENDER_EMAIL")
+    if not sendgrid_key or not sender_email:
+        _admin_invite_logger.error("SendGrid configuration missing: SENDGRID_API_KEY or SENDER_EMAIL")
+        raise HTTPException(status_code=503, detail="SendGrid is not configured")
+
+    subject = "Başvurunuz alındı"
+    html_content = f"""
+    <html>
+      <body>
+        <h2>Başvurunuz alındı</h2>
+        <p>Merhaba,</p>
+        <p>Başvurunuzu aldık. Referans numaranız: <strong>{application_id}</strong></p>
+        <p>Konu: {subject_text}</p>
+        <p>İnceleme sürecimiz başladığında sizi bilgilendireceğiz.</p>
+      </body>
+    </html>
+    """
+    message = Mail(
+        from_email=sender_email,
+        to_emails=to_email,
+        subject=subject,
+        html_content=html_content,
+    )
+
+    try:
+        sg = SendGridAPIClient(sendgrid_key)
+        response = sg.send(message)
+        if response.status_code not in (200, 202):
+            raise HTTPException(status_code=502, detail="Failed to send support email")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        _admin_invite_logger.error("SendGrid send error: %s", exc)
+        raise HTTPException(status_code=502, detail="Failed to send support email")
+
+
+async def _create_inapp_notification(db, user_id: str, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.notifications.insert_one(
+        {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "message": message,
+            "type": "support",
+            "metadata": metadata or {},
+            "read": False,
+            "created_at": now_iso,
+        }
+    )
+
+
 def _normalize_scope(role: str, scope: Optional[List[str]], active_countries: List[str]) -> List[str]:
     if role == "super_admin":
         return ["*"]
