@@ -34,7 +34,7 @@ const resolveLastName = (user) => {
   if (user?.last_name) return user.last_name;
   if (user?.full_name) {
     const parts = user.full_name.split(" ");
-    return parts.length  ? parts.slice(1).join(" ") : "-";
+    return parts.length > 1 ? parts.slice(1).join(" ") : "-";
   }
   return "-";
 };
