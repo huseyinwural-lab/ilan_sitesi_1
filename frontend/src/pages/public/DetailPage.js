@@ -271,7 +271,7 @@ const DetailPage = () => {
 
                     {messageEnabled ? (
                       <Link 
-                        to={`/account/messages/new?listing=${listing.id}`} 
+                        to={`/account/messages?listing=${listing.id}`} 
                         className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold block text-center hover:bg-blue-700 transition"
                         data-testid="listing-send-message-button"
                       >
