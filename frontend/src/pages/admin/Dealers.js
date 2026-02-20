@@ -498,6 +498,129 @@ export default function DealersPage() {
         </button>
       </div>
 
+      {drawerOpen && selectedDealer && (
+        <div
+          className="fixed inset-0 bg-black/40 z-50 flex justify-end"
+          onClick={closeDrawer}
+          data-testid="dealer-drawer-overlay"
+        >
+          <div
+            className="w-full max-w-xl bg-card h-full shadow-xl overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+            data-testid="dealer-drawer"
+          >
+            <div className="flex items-start justify-between p-6 border-b">
+              <div>
+                <h3 className="text-xl font-semibold" data-testid="dealer-drawer-title">
+                  {resolveCompanyName(selectedDealer)}
+                </h3>
+                <p className="text-sm text-muted-foreground" data-testid="dealer-drawer-subtitle">
+                  Kurumsal kullanıcı profili
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeDrawer}
+                className="text-sm text-muted-foreground"
+                data-testid="dealer-drawer-close"
+              >
+                Kapat
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <section className="space-y-3" data-testid="dealer-drawer-identity">
+                <h4 className="text-sm font-semibold">Kimlik</h4>
+                <div className="grid gap-2 text-sm">
+                  <div data-testid="dealer-drawer-company">Firma: {resolveCompanyName(selectedDealer)}</div>
+                  <div data-testid="dealer-drawer-contact">Yetkili: {resolveContactName(selectedDealer)}</div>
+                  <div data-testid="dealer-drawer-email">E-posta: {selectedDealer.email}</div>
+                  <div data-testid="dealer-drawer-phone">Telefon: {selectedDealer.phone_e164 || '—'}</div>
+                  <div data-testid="dealer-drawer-country">Ülke: {selectedDealer.country_code || '-'}</div>
+                  <div data-testid="dealer-drawer-status">
+                    Durum: <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${statusBadge(selectedDealer.status || 'active').className}`}>
+                      {statusBadge(selectedDealer.status || 'active').label}
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-3" data-testid="dealer-drawer-metrics">
+                <h4 className="text-sm font-semibold">Metrikler</h4>
+                <div className="grid gap-2 text-sm">
+                  <div data-testid="dealer-drawer-created">Kayıt Tarihi: {formatDate(selectedDealer.created_at)}</div>
+                  <div data-testid="dealer-drawer-last-login">Son Giriş: {formatDate(selectedDealer.last_login)}</div>
+                  <div data-testid="dealer-drawer-listings">İlan: {selectedDealer.total_listings ?? 0} / {selectedDealer.active_listings ?? 0}</div>
+                  <div data-testid="dealer-drawer-plan">Paket: {selectedDealer.plan_name || '-'}</div>
+                </div>
+              </section>
+
+              <section className="space-y-3" data-testid="dealer-drawer-actions">
+                <h4 className="text-sm font-semibold">Aksiyonlar</h4>
+                <div className="flex flex-wrap gap-2">
+                  {canSuspend && selectedDealer.status !== 'deleted' && (selectedDealer.status === 'suspended' ? (
+                    <button
+                      type="button"
+                      className="h-9 px-4 rounded-md border text-sm"
+                      onClick={() => openActionDialog('activate', selectedDealer)}
+                      data-testid="dealer-drawer-reactivate"
+                    >
+                      Aktif Et
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="h-9 px-4 rounded-md border text-sm"
+                      onClick={() => openActionDialog('suspend', selectedDealer)}
+                      data-testid="dealer-drawer-suspend"
+                    >
+                      Askıya Al
+                    </button>
+                  ))}
+                  {canDelete && selectedDealer.status !== 'deleted' && (
+                    <button
+                      type="button"
+                      className="h-9 px-4 rounded-md border text-sm text-rose-600"
+                      onClick={() => openActionDialog('delete', selectedDealer)}
+                      data-testid="dealer-drawer-delete"
+                    >
+                      Sil
+                    </button>
+                  )}
+                </div>
+              </section>
+
+              <section className="space-y-3" data-testid="dealer-drawer-audit">
+                <h4 className="text-sm font-semibold">Moderasyon Geçmişi</h4>
+                {auditLoading ? (
+                  <div className="text-sm text-muted-foreground" data-testid="dealer-drawer-audit-loading">Yükleniyor...</div>
+                ) : auditError ? (
+                  <div className="text-sm text-rose-600" data-testid="dealer-drawer-audit-error">{auditError}</div>
+                ) : auditLogs.length === 0 ? (
+                  <div className="text-sm text-muted-foreground" data-testid="dealer-drawer-audit-empty">Kayıt yok</div>
+                ) : (
+                  <div className="space-y-2">
+                    {auditLogs.map((log) => (
+                      <div key={log.id} className="rounded-md border p-3 text-xs" data-testid={`dealer-drawer-audit-item-${log.id}`}>
+                        <div className="font-medium" data-testid={`dealer-drawer-audit-action-${log.id}`}>
+                          {AUDIT_LABELS[log.event_type] || log.event_type}
+                        </div>
+                        <div className="text-muted-foreground" data-testid={`dealer-drawer-audit-meta-${log.id}`}>
+                          {formatDate(log.created_at)} • {log.user_email || '—'}
+                        </div>
+                        <div className="text-muted-foreground" data-testid={`dealer-drawer-audit-reason-${log.id}`}>
+                          {formatAuditReason(log)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
+
       {actionDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="dealers-action-modal">
           <div className="bg-card rounded-lg shadow-lg max-w-lg w-full">
