@@ -266,7 +266,7 @@ const DetailPage = () => {
                         </div>
                       )
                     ) : (
-                      <div data-testid="listing-phone-hidden">Phone hidden by seller</div>
+                      <div data-testid="listing-phone-hidden">Satıcı telefonunu gizledi</div>
                     )}
 
                     {messageEnabled ? (
