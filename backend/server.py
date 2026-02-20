@@ -1867,6 +1867,15 @@ DB_POOL_SIZE_RAW = os.environ.get("DB_POOL_SIZE")
 DB_MAX_OVERFLOW_RAW = os.environ.get("DB_MAX_OVERFLOW")
 DB_SSL_MODE = (os.environ.get("DB_SSL_MODE") or ("require" if APP_ENV == "prod" else "disable")).lower()
 
+STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
+PAYMENTS_ENABLED_COUNTRIES_RAW = os.environ.get("PAYMENTS_ENABLED_COUNTRIES")
+PAYMENTS_ENABLED_COUNTRIES = {
+    code.strip().upper()
+    for code in (PAYMENTS_ENABLED_COUNTRIES_RAW or "").split(",")
+    if code.strip()
+}
+
 if APP_ENV == "prod":
     if not RAW_DATABASE_URL:
         raise RuntimeError("DATABASE_URL must be set")
