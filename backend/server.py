@@ -6754,125 +6754,160 @@ async def admin_create_invoice(
     payload: InvoiceCreatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await _ensure_invoices_db_ready(session)
 
-    country_code = (payload.country_code or "").upper()
-    _assert_country_scope(country_code, current_user)
-    if payload.amount_net <= 0:
-        raise HTTPException(status_code=400, detail="amount_net must be positive")
-    if not (0 <= payload.tax_rate <= 100):
-        raise HTTPException(status_code=400, detail="tax_rate must be between 0 and 100")
+    try:
+        dealer_uuid = uuid.UUID(payload.dealer_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="dealer_id invalid")
 
-    dealer = await db.users.find_one({"id": payload.dealer_user_id, "role": "dealer"}, {"_id": 0})
+    try:
+        plan_uuid = uuid.UUID(payload.plan_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="plan_id invalid")
+
+    dealer = await session.get(SqlUser, dealer_uuid)
     if not dealer:
         raise HTTPException(status_code=404, detail="Dealer not found")
 
-    plan = await db.plans.find_one({"id": payload.plan_id}, {"_id": 0})
+    plan = await session.get(Plan, plan_uuid)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
-    tax_amount = round(payload.amount_net * (payload.tax_rate / 100), 2)
-    amount_gross = round(payload.amount_net + tax_amount, 2)
-    now_iso = datetime.now(timezone.utc).isoformat()
-    issued_at = payload.issued_at or now_iso
-    invoice_id = str(uuid.uuid4())
+    scope_value = plan.country_scope
+    country_code = plan.country_code if scope_value == "country" else "GLOBAL"
+    if scope_value == "country":
+        _assert_country_scope(country_code, current_user)
+        currency_code = plan.currency_code or _resolve_currency_code(country_code)
+    else:
+        currency_code = plan.currency_code or "EUR"
 
-    invoice_doc = {
-        "id": invoice_id,
-        "dealer_user_id": payload.dealer_user_id,
-        "country_code": country_code,
-        "plan_id": payload.plan_id,
-        "amount_net": payload.amount_net,
-        "tax_rate": payload.tax_rate,
-        "tax_amount": tax_amount,
-        "amount_gross": amount_gross,
-        "currency": payload.currency,
-        "status": "unpaid",
-        "issued_at": issued_at,
-        "paid_at": None,
-        "created_at": now_iso,
-    }
+    if not currency_code:
+        raise HTTPException(status_code=400, detail="currency_code unavailable")
 
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "INVOICE_STATUS_CHANGE",
-        "action": "INVOICE_CREATE",
-        "invoice_id": invoice_id,
-        "dealer_user_id": payload.dealer_user_id,
-        "plan_id": payload.plan_id,
-        "country_code": country_code,
-        "previous_status": None,
-        "new_status": "unpaid",
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "invoice",
-        "resource_id": invoice_id,
-        "applied": False,
-    }
+    if payload.currency_code and payload.currency_code != currency_code:
+        raise HTTPException(status_code=400, detail="currency_code invalid for scope")
 
-    await db.audit_logs.insert_one(audit_doc)
-    await db.invoices.insert_one(invoice_doc)
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    amount_value = payload.amount if payload.amount is not None else plan.price_amount
+    if amount_value is None:
+        raise HTTPException(status_code=400, detail="amount is required")
+    if amount_value < 0:
+        raise HTTPException(status_code=400, detail="amount must be >= 0")
 
-    invoice_doc.pop("_id", None)
-    return {"ok": True, "invoice": invoice_doc}
+    due_at = _parse_iso_datetime(payload.due_at, "due_at") if payload.due_at else None
+    issue_now = True if payload.issue_now is None else payload.issue_now
+
+    now = datetime.now(timezone.utc)
+    status_value = "issued" if issue_now else "draft"
+    issued_at = now if issue_now else None
+
+    invoice = AdminInvoice(
+        invoice_no=_generate_invoice_no(),
+        dealer_id=dealer_uuid,
+        plan_id=plan_uuid,
+        amount=amount_value,
+        currency_code=currency_code,
+        status=status_value,
+        issued_at=issued_at,
+        paid_at=None,
+        due_at=due_at,
+        scope=scope_value,
+        country_code=country_code,
+        payment_method=None,
+        notes=payload.notes,
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(invoice)
+    await session.commit()
+    await session.refresh(invoice)
+
+    return {"invoice": _admin_invoice_to_dict(invoice, dealer, plan)}
 
 
 @api_router.get("/admin/invoices")
 async def admin_list_invoices(
     request: Request,
     country: Optional[str] = None,
-    dealer_user_id: Optional[str] = None,
+    dealer: Optional[str] = None,
     status: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    plan_id: Optional[str] = None,
+    amount_min: Optional[float] = None,
+    amount_max: Optional[float] = None,
     skip: int = 0,
     limit: int = 50,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await _ensure_invoices_db_ready(session)
 
     if not country:
         raise HTTPException(status_code=400, detail="country is required")
     country_code = country.upper()
-    _assert_country_scope(country_code, current_user)
+    if country_code != "GLOBAL":
+        _assert_country_scope(country_code, current_user)
 
-    q: Dict = {"country_code": country_code}
-    if dealer_user_id:
-        q["dealer_user_id"] = dealer_user_id
+    conditions = [AdminInvoice.country_code == country_code]
+
+    if dealer:
+        try:
+            dealer_uuid = uuid.UUID(dealer)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="dealer invalid")
+        conditions.append(AdminInvoice.dealer_id == dealer_uuid)
+
+    if plan_id:
+        try:
+            plan_uuid = uuid.UUID(plan_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="plan_id invalid")
+        conditions.append(AdminInvoice.plan_id == plan_uuid)
+
     if status:
-        if status not in INVOICE_STATUS_SET:
+        status_value = status.strip().lower()
+        if status_value not in INVOICE_STATUS_SET:
             raise HTTPException(status_code=400, detail="Invalid status")
-        q["status"] = status
+        conditions.append(AdminInvoice.status == status_value)
+
+    if date_from:
+        start_dt = _parse_iso_datetime(date_from, "date_from")
+        conditions.append(AdminInvoice.issued_at >= start_dt)
+    if date_to:
+        end_dt = _parse_iso_datetime(date_to, "date_to")
+        conditions.append(AdminInvoice.issued_at <= end_dt)
+
+    if amount_min is not None:
+        conditions.append(AdminInvoice.amount >= float(amount_min))
+    if amount_max is not None:
+        conditions.append(AdminInvoice.amount <= float(amount_max))
 
     limit = min(100, max(1, int(limit)))
-    cursor = db.invoices.find(q, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(limit)
-    docs = await cursor.to_list(length=limit)
+    skip = max(0, int(skip))
 
-    dealer_ids = [d.get("dealer_user_id") for d in docs]
-    plan_ids = [d.get("plan_id") for d in docs]
-    dealers = await db.users.find({"id": {"$in": dealer_ids}}, {"_id": 0, "id": 1, "email": 1}).to_list(length=len(dealer_ids))
-    plans = await db.plans.find({"id": {"$in": plan_ids}}, {"_id": 0, "id": 1, "name": 1}).to_list(length=len(plan_ids))
-    dealer_map = {d.get("id"): d for d in dealers}
-    plan_map = {p.get("id"): p for p in plans}
+    base_query = select(AdminInvoice).where(*conditions)
+    rows = (await session.execute(base_query.order_by(AdminInvoice.created_at.desc()).offset(skip).limit(limit))).scalars().all()
+    total = (await session.execute(select(func.count()).select_from(AdminInvoice).where(*conditions))).scalar() or 0
 
-    items = []
-    for doc in docs:
-        dealer = dealer_map.get(doc.get("dealer_user_id"), {})
-        plan = plan_map.get(doc.get("plan_id"), {})
-        items.append({
-            **doc,
-            "dealer_email": dealer.get("email"),
-            "plan_name": plan.get("name"),
-        })
+    dealer_ids = {row.dealer_id for row in rows}
+    plan_ids = {row.plan_id for row in rows}
 
-    total = await db.invoices.count_documents(q)
-    return {"items": items, "pagination": {"total": total, "skip": int(skip), "limit": limit}}
+    dealers = []
+    plans = []
+    if dealer_ids:
+        dealers = (await session.execute(select(SqlUser).where(SqlUser.id.in_(dealer_ids)))).scalars().all()
+    if plan_ids:
+        plans = (await session.execute(select(Plan).where(Plan.id.in_(plan_ids)))).scalars().all()
+
+    dealer_map = {dealer.id: dealer for dealer in dealers}
+    plan_map = {plan.id: plan for plan in plans}
+
+    items = [_admin_invoice_to_dict(row, dealer_map.get(row.dealer_id), plan_map.get(row.plan_id)) for row in rows]
+
+    return {"items": items, "pagination": {"total": total, "skip": skip, "limit": limit}}
 
 
 @api_router.get("/admin/invoices/{invoice_id}")
@@ -6880,77 +6915,135 @@ async def admin_invoice_detail(
     invoice_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await _ensure_invoices_db_ready(session)
 
-    invoice = await db.invoices.find_one({"id": invoice_id}, {"_id": 0})
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invoice_id invalid")
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    _assert_country_scope(invoice.get("country_code"), current_user)
+    if invoice.country_code != "GLOBAL":
+        _assert_country_scope(invoice.country_code, current_user)
 
-    dealer = await db.users.find_one({"id": invoice.get("dealer_user_id")}, {"_id": 0, "id": 1, "email": 1, "dealer_status": 1})
-    plan = await db.plans.find_one({"id": invoice.get("plan_id")}, {"_id": 0})
+    dealer = await session.get(SqlUser, invoice.dealer_id)
+    plan = await session.get(Plan, invoice.plan_id)
 
-    return {"invoice": invoice, "dealer": dealer, "plan": plan}
-
-
-@api_router.post("/admin/invoices/{invoice_id}/status")
-async def admin_invoice_status_change(
-    invoice_id: str,
-    payload: InvoiceStatusPayload,
-    request: Request,
-    current_user=Depends(check_permissions(["super_admin", "finance"])),
-):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
-
-    invoice = await db.invoices.find_one({"id": invoice_id}, {"_id": 0})
-    if not invoice:
-        raise HTTPException(status_code=404, detail="Invoice not found")
-    _assert_country_scope(invoice.get("country_code"), current_user)
-
-    target_status = (payload.target_status or "").strip()
-    if target_status not in {"paid", "cancelled"}:
-        raise HTTPException(status_code=400, detail="Invalid target_status")
-    if invoice.get("status") != "unpaid":
-        raise HTTPException(status_code=400, detail="Only unpaid invoices can be updated")
-
-    now_iso = datetime.now(timezone.utc).isoformat()
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "INVOICE_STATUS_CHANGE",
-        "action": "INVOICE_STATUS_CHANGE",
-        "invoice_id": invoice_id,
-        "dealer_user_id": invoice.get("dealer_user_id"),
-        "plan_id": invoice.get("plan_id"),
-        "country_code": invoice.get("country_code"),
-        "previous_status": invoice.get("status"),
-        "new_status": target_status,
-        "note": payload.note,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "invoice",
-        "resource_id": invoice_id,
-        "applied": False,
+    return {
+        "invoice": _admin_invoice_to_dict(invoice, dealer, plan),
+        "dealer": {"id": str(dealer.id), "email": dealer.email} if dealer else None,
+        "plan": {"id": str(plan.id), "name": plan.name} if plan else None,
     }
 
-    await db.audit_logs.insert_one(audit_doc)
 
-    update_fields = {"status": target_status, "updated_at": now_iso}
-    if target_status == "paid":
-        update_fields["paid_at"] = now_iso
-    else:
-        update_fields["paid_at"] = None
+@api_router.post("/admin/invoices/{invoice_id}/mark-paid")
+async def admin_invoice_mark_paid(
+    invoice_id: str,
+    payload: InvoiceActionPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
 
-    await db.invoices.update_one({"id": invoice_id}, {"$set": update_fields})
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invoice_id invalid")
 
-    return {"ok": True, "invoice": {"id": invoice_id, "status": target_status}}
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    if invoice.country_code != "GLOBAL":
+        _assert_country_scope(invoice.country_code, current_user)
+
+    if invoice.status not in {"issued", "overdue"}:
+        raise HTTPException(status_code=400, detail="Only issued invoices can be marked paid")
+
+    now = datetime.now(timezone.utc)
+    invoice.status = "paid"
+    invoice.paid_at = now
+    if payload.payment_method:
+        invoice.payment_method = payload.payment_method
+    invoice.updated_at = now
+    await session.commit()
+    await session.refresh(invoice)
+
+    dealer = await session.get(SqlUser, invoice.dealer_id)
+    plan = await session.get(Plan, invoice.plan_id)
+    return {"invoice": _admin_invoice_to_dict(invoice, dealer, plan)}
+
+
+@api_router.post("/admin/invoices/{invoice_id}/cancel")
+async def admin_invoice_cancel(
+    invoice_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invoice_id invalid")
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    if invoice.country_code != "GLOBAL":
+        _assert_country_scope(invoice.country_code, current_user)
+
+    if invoice.status != "issued":
+        raise HTTPException(status_code=400, detail="Only issued invoices can be cancelled")
+
+    now = datetime.now(timezone.utc)
+    invoice.status = "cancelled"
+    invoice.updated_at = now
+    await session.commit()
+    await session.refresh(invoice)
+
+    dealer = await session.get(SqlUser, invoice.dealer_id)
+    plan = await session.get(Plan, invoice.plan_id)
+    return {"invoice": _admin_invoice_to_dict(invoice, dealer, plan)}
+
+
+@api_router.post("/admin/invoices/{invoice_id}/refund")
+async def admin_invoice_refund(
+    invoice_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invoice_id invalid")
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    if invoice.country_code != "GLOBAL":
+        _assert_country_scope(invoice.country_code, current_user)
+
+    if invoice.status != "paid":
+        raise HTTPException(status_code=400, detail="Only paid invoices can be refunded")
+
+    now = datetime.now(timezone.utc)
+    invoice.status = "refunded"
+    invoice.updated_at = now
+    await session.commit()
+    await session.refresh(invoice)
+
+    dealer = await session.get(SqlUser, invoice.dealer_id)
+    plan = await session.get(Plan, invoice.plan_id)
+    return {"invoice": _admin_invoice_to_dict(invoice, dealer, plan)}
 
 
 @api_router.get("/admin/finance/revenue")
