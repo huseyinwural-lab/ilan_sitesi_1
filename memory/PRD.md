@@ -1,6 +1,6 @@
 # FAZ Admin Domain Complete — PRD
 
-**Son güncelleme:** 2026-02-20 (Mongo Exit P0 hazırlık + auth migration şeması)
+**Son güncelleme:** 2026-02-20 (Mongo Exit P0 repo abstraction + soft mode stabilizasyonu)
 
 ## Program Status (23.02.2026)
 - Foundation Phase: **OFFICIALLY CLOSED**
