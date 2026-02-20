@@ -5212,9 +5212,11 @@ class TaxRateUpdatePayload(BaseModel):
 
 class PlanCreatePayload(BaseModel):
     name: str
-    country_code: str
-    price: float
-    currency: str
+    slug: Optional[str] = None
+    country_scope: str
+    country_code: Optional[str] = None
+    price_amount: float
+    currency_code: Optional[str] = None
     listing_quota: int
     showcase_quota: int
     active_flag: Optional[bool] = True
@@ -5222,9 +5224,11 @@ class PlanCreatePayload(BaseModel):
 
 class PlanUpdatePayload(BaseModel):
     name: Optional[str] = None
+    slug: Optional[str] = None
+    country_scope: Optional[str] = None
     country_code: Optional[str] = None
-    price: Optional[float] = None
-    currency: Optional[str] = None
+    price_amount: Optional[float] = None
+    currency_code: Optional[str] = None
     listing_quota: Optional[int] = None
     showcase_quota: Optional[int] = None
     active_flag: Optional[bool] = None
