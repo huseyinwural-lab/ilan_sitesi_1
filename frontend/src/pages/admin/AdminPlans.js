@@ -378,6 +378,14 @@ export default function AdminPlans() {
         >
           Ara
         </button>
+        <button
+          className="px-4 py-2 rounded border"
+          onClick={() => setSortOrder('desc')}
+          disabled={disabled}
+          data-testid="plans-sort-newest"
+        >
+          Sırala: En yeni
+        </button>
       </div>
 
       <div className="border rounded-lg overflow-hidden" data-testid="plans-table">
