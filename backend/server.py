@@ -7264,7 +7264,7 @@ async def create_checkout_session(
         currency=invoice.currency_code,
         status=checkout_session.status or "pending",
         payment_status="unpaid",
-        metadata={"checkout_url": checkout_session.checkout_url},
+        metadata_json={"checkout_url": checkout_session.checkout_url},
         created_at=now,
         updated_at=now,
     )
@@ -7448,7 +7448,7 @@ async def stripe_webhook(
                         currency=invoice.currency_code,
                         status="pending",
                         payment_status="unpaid",
-                        metadata=metadata,
+                        metadata_json=metadata,
                         created_at=now,
                         updated_at=now,
                     )
