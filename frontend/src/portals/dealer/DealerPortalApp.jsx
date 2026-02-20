@@ -1,5 +1,8 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Link } from 'react-router-dom';
+import DealerInvoices from '@/pages/dealer/DealerInvoices';
+import PaymentSuccess from '@/pages/dealer/PaymentSuccess';
+import PaymentCancel from '@/pages/dealer/PaymentCancel';
 
 function DealerHome() {
   return (
