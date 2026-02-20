@@ -19,8 +19,8 @@ test('Dashboard smoke: cards + quick actions', async ({ page }) => {
   await expect(page.getByTestId('dashboard-active-countries-value')).toBeVisible();
   await expect(page.getByTestId('dashboard-active-modules-value')).toBeVisible();
 
-  await page.getByTestId('quick-action-users').click();
-  await expect(page.getByTestId('users-page')).toBeVisible({ timeout: 60000 });
+  await page.getByTestId('quick-action-admin-users').click();
+  await expect(page.getByTestId('admin-users-page')).toBeVisible({ timeout: 60000 });
 
   await page.goto('/admin');
   await page.getByTestId('quick-action-audit').click();
