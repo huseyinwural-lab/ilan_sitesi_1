@@ -1473,7 +1473,7 @@ async def update_user(
     user_id: str,
     payload: UpdateUserPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2688,7 +2688,7 @@ async def admin_list_dealers(
     limit: int = 50,
     status: Optional[str] = None,
     search: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2726,7 +2726,7 @@ async def admin_list_dealers(
 async def admin_get_dealer_detail(
     dealer_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2781,7 +2781,7 @@ async def admin_set_dealer_status(
     dealer_id: str,
     payload: DealerStatusPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2838,7 +2838,7 @@ async def admin_list_dealer_applications(
     limit: int = 50,
     status: Optional[str] = None,
     search: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2869,7 +2869,7 @@ async def admin_list_individual_applications(
     limit: int = 50,
     status: Optional[str] = None,
     search: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2907,7 +2907,7 @@ async def admin_reject_dealer_application(
     app_id: str,
     payload: DealerApplicationRejectPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -2982,7 +2982,7 @@ async def admin_reject_dealer_application(
 async def admin_approve_dealer_application(
     app_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -3071,7 +3071,7 @@ async def admin_approve_dealer_application(
 async def admin_approve_individual_application(
     app_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
@@ -3130,7 +3130,7 @@ async def admin_reject_individual_application(
     app_id: str,
     payload: IndividualApplicationRejectPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
@@ -5576,7 +5576,7 @@ async def admin_assign_dealer_plan(
     dealer_id: str,
     payload: DealerPlanAssignmentPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -5960,7 +5960,7 @@ async def system_settings_effective(request: Request, country: Optional[str] = N
 async def admin_list_categories(
     request: Request,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -5977,7 +5977,7 @@ async def admin_list_categories(
 async def admin_create_category(
     payload: CategoryCreatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -6056,7 +6056,7 @@ async def admin_update_category(
     category_id: str,
     payload: CategoryUpdatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
@@ -6146,7 +6146,7 @@ async def admin_update_category(
 async def admin_list_category_versions(
     category_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -6166,7 +6166,7 @@ async def admin_get_category_version(
     category_id: str,
     version_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -6188,7 +6188,7 @@ async def admin_get_category_version(
 async def admin_export_category_pdf(
     category_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -6246,7 +6246,7 @@ async def admin_export_category_pdf(
 async def admin_export_category_csv(
     category_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -6309,7 +6309,7 @@ async def admin_export_category_csv(
 async def admin_delete_category(
     category_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
@@ -6341,7 +6341,7 @@ async def admin_delete_category(
 async def admin_list_menu_items(
     request: Request,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
@@ -6361,7 +6361,7 @@ async def admin_list_menu_items(
 async def admin_create_menu_item(
     payload: MenuItemCreatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
@@ -6421,7 +6421,7 @@ async def admin_update_menu_item(
     menu_id: str,
     payload: MenuItemUpdatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
@@ -6491,7 +6491,7 @@ async def admin_update_menu_item(
 async def admin_delete_menu_item(
     menu_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     existing = await db.menu_items.find_one({"id": menu_id}, {"_id": 0})
@@ -6545,7 +6545,7 @@ async def admin_list_attributes(
     request: Request,
     category_id: Optional[str] = None,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -6568,7 +6568,7 @@ async def admin_list_attributes(
 async def admin_create_attribute(
     payload: AttributeCreatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
@@ -6633,7 +6633,7 @@ async def admin_update_attribute(
     attribute_id: str,
     payload: AttributeUpdatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
@@ -6701,7 +6701,7 @@ async def admin_update_attribute(
 async def admin_delete_attribute(
     attribute_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
@@ -6733,7 +6733,7 @@ async def admin_delete_attribute(
 async def admin_list_vehicle_makes(
     request: Request,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -6750,7 +6750,7 @@ async def admin_list_vehicle_makes(
 async def admin_create_vehicle_make(
     payload: VehicleMakeCreatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
@@ -6800,7 +6800,7 @@ async def admin_update_vehicle_make(
     make_id: str,
     payload: VehicleMakeUpdatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
@@ -6853,7 +6853,7 @@ async def admin_update_vehicle_make(
 async def admin_delete_vehicle_make(
     make_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
@@ -6886,7 +6886,7 @@ async def admin_list_vehicle_models(
     request: Request,
     make_id: Optional[str] = None,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db)
@@ -6911,7 +6911,7 @@ async def admin_list_vehicle_models(
 async def admin_create_vehicle_model(
     payload: VehicleModelCreatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
@@ -6963,7 +6963,7 @@ async def admin_update_vehicle_model(
     model_id: str,
     payload: VehicleModelUpdatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
@@ -7018,7 +7018,7 @@ async def admin_update_vehicle_model(
 async def admin_delete_vehicle_model(
     model_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
