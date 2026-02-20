@@ -149,6 +149,7 @@
 - 2026-02-20: Deploy gate script (deploy_gate_check.py) + GitHub Actions deploy-prod workflow eklendi
 - 2026-02-20: Kampanyalar menüsündeki Şikayetler alt menüsü kaldırıldı (işlevsiz)
 - 2026-02-20: Kampanyalar V1 (campaigns tablosu/migration + admin CRUD + UI placeholder kaldırma + pricing read-path tasarımı)
+- 2026-02-20: Vehicle Type V1 (taxonomi + vehicle_models vehicle_type zorunlu + admin UI filtre/kolon + import dry-run/apply endpoint + örnek JSON)
 
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
