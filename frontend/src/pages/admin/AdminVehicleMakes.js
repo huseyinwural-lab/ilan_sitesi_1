@@ -60,7 +60,7 @@ const AdminVehicleMakes = () => {
 
   useEffect(() => {
     fetchItems();
-  }, [urlCountry]);
+  }, [urlCountry, filterType]);
 
   const openCreate = () => {
     setEditing(null);
