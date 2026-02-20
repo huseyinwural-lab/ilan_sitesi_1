@@ -45,6 +45,7 @@ target_metadata = Base.metadata
 from app.models.blog import BlogPost
 from app.models.growth import GrowthEvent
 from app.models.application import Application
+from app.models.campaign import Campaign
 from app.models.auth import Role, UserRole, UserCredential, RefreshToken
 
 def get_url():
