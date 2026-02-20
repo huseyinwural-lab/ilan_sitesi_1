@@ -15,11 +15,15 @@ Preview + Prod:
 - GET /api/health → 200
 - GET /api/health/db → 200 (DB bağlı) / 503 degraded (DB yok)
 
-## 4) Migration
+## 4) Deploy Gate (prod)
+- Komut: `python /app/backend/scripts/deploy_gate_check.py`
+- Kontroller: APP_ENV=prod, DATABASE_URL var, DB_SSL_MODE=require, alembic head eşleşmesi
+
+## 5) Migration
 - Komut: `alembic upgrade head`
 - Not: P0 migration seti **auth + applications** tablolarını içerir.
 
-## 5) Seed (Preview only)
+## 6) Seed (Preview only)
 - Komut: `python /app/backend/scripts/seed_applications_preview.py`
 - Sonuç: 5 bireysel + 5 kurumsal demo başvuru
 
