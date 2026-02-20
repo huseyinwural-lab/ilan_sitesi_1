@@ -255,6 +255,17 @@ const AdminVehicleModels = () => {
                   <option key={make.id} value={make.id}>{make.name}</option>
                 ))}
               </select>
+              <select
+                className="w-full border rounded p-2"
+                value={form.vehicle_type}
+                onChange={(e) => setForm((prev) => ({ ...prev, vehicle_type: e.target.value }))}
+                data-testid="vehicle-models-type-select"
+              >
+                <option value="">Araç tipi seç</option>
+                {vehicleTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
               <input
                 className="w-full border rounded p-2"
                 placeholder="Name"
