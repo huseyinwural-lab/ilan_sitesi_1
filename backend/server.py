@@ -2528,6 +2528,7 @@ async def admin_individual_users_export_csv(
     request: Request,
     search: Optional[str] = None,
     country: Optional[str] = None,
+    status: Optional[str] = None,
     sort_by: Optional[str] = "last_name",
     sort_dir: Optional[str] = "asc",
     current_user=Depends(check_permissions(["super_admin", "marketing"])),
