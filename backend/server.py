@@ -198,7 +198,7 @@ def _resolve_user_phone_e164(doc: dict) -> Optional[str]:
     return _normalize_phone_e164(raw_phone)
 
 
-def _extract_moderation_reason(payload: Optional[AdminUserActionPayload]) -> tuple[Optional[str], Optional[str]]:
+def _extract_moderation_reason(payload: Optional["AdminUserActionPayload"]) -> tuple[Optional[str], Optional[str]]:
     if not payload:
         return None, None
     reason_code = (payload.reason_code or payload.reason or "").strip()
