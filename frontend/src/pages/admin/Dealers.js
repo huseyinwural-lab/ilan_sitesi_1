@@ -41,12 +41,21 @@ const statusBadge = (status) => {
 
 export default function DealersPage() {
   const { t } = useLanguage();
+  const { user: currentUser } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
+  const [actionDialog, setActionDialog] = useState(null);
+  const [reasonCode, setReasonCode] = useState('');
+  const [reasonDetail, setReasonDetail] = useState('');
+  const [suspensionUntil, setSuspensionUntil] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
   const limit = 20;
+
+  const canSuspend = ['super_admin', 'moderator'].includes(currentUser?.role);
+  const canDelete = currentUser?.role === 'super_admin';
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
