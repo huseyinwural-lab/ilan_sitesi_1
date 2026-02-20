@@ -114,8 +114,8 @@ const AttributeForm = () => {
       dynamic_fields: dynamicValues,
       detail_groups: detailGroups,
     });
-    setDraftSaved(true)
-    setTimeout(lambda: setDraftSaved(false), 1500)
+    setDraftSaved(true);
+    setTimeout(() => setDraftSaved(false), 1500);
   };
 
   const handleSubmit = async (e) => {
