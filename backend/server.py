@@ -3043,6 +3043,42 @@ async def admin_get_dealer_detail(
     }
 
 
+@api_router.get("/admin/dealers/{dealer_id}/audit-logs")
+async def admin_get_dealer_audit_logs(
+    dealer_id: str,
+    request: Request,
+    limit: int = 5,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    query: Dict = {"id": dealer_id, "role": "dealer"}
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        query["country_code"] = ctx.country
+
+    dealer = await db.users.find_one(query, {"_id": 0})
+    if not dealer:
+        raise HTTPException(status_code=404, detail="Dealer not found")
+    _assert_country_scope(dealer.get("country_code"), current_user)
+
+    limit = min(max(int(limit), 1), 20)
+    event_types = [
+        "dealer_suspended",
+        "dealer_reactivated",
+        "dealer_deleted",
+        "user_suspended",
+        "user_reactivated",
+        "user_deleted",
+    ]
+    logs = await db.audit_logs.find(
+        {"resource_id": dealer_id, "event_type": {"$in": event_types}},
+        {"_id": 0},
+    ).sort("created_at", -1).limit(limit).to_list(length=limit)
+
+    return {"items": logs}
+
+
 class DealerStatusPayload(BaseModel):
     dealer_status: str
 
