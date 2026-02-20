@@ -26,6 +26,11 @@ const ROLE_DEFINITIONS = [
     label: "Support Admin",
     summary: "Kullanıcı yönetimi + şikayetler",
   },
+  {
+    key: "ROLE_AUDIT_VIEWER",
+    label: "Audit Viewer",
+    summary: "Denetim kayıtlarını görüntüleme",
+  },
 ];
 
 export default function AdminRoles() {
