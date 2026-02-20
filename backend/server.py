@@ -11458,6 +11458,52 @@ async def vehicle_master_activate_endpoint(payload: dict, request: Request, curr
 # Vehicle Listings (Stage-4)
 # =====================
 
+async def _get_owned_listing(db, listing_id: str, current_user: dict) -> dict:
+    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if listing.get("created_by") != current_user.get("id"):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return listing
+
+
+@api_router.get("/v1/listings/my")
+async def list_my_listings(
+    request: Request,
+    status: Optional[str] = None,
+    q: Optional[str] = None,
+    page: int = 1,
+    limit: int = 20,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    safe_page = max(1, int(page))
+    safe_limit = min(100, max(1, int(limit)))
+    skip = (safe_page - 1) * safe_limit
+
+    query: Dict[str, Any] = {"created_by": current_user.get("id")}
+    now_iso = datetime.now(timezone.utc).isoformat()
+    if status:
+        status_value = status.strip().lower()
+        if status_value == "expired":
+            query["expires_at"] = {"$lte": now_iso}
+        else:
+            query["status"] = status_value
+    if q:
+        regex = re.compile(re.escape(q.strip()), re.IGNORECASE)
+        query["$or"] = [{"title": regex}, {"id": regex}]
+
+    cursor = (
+        db.vehicle_listings.find(query, {"_id": 0})
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(safe_limit)
+    )
+    items = await cursor.to_list(length=safe_limit)
+    total = await db.vehicle_listings.count_documents(query)
+
+    return {"items": items, "pagination": {"total": total, "page": safe_page, "limit": safe_limit}}
+
 @api_router.post("/v1/listings/vehicle")
 async def create_vehicle_draft(payload: dict, request: Request, current_user=Depends(get_current_user)):
     db = request.app.state.db
