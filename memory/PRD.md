@@ -114,6 +114,7 @@
 - **Menü Yönetimi:** CRUD + audit-first + country-scope aktif
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
+- **Bireysel Portal Faz B1-B7 (2026-02-20):** /account IA + role guard, bireysel menü standardı, listing wizard 5 adım, draft kaydet, my listings filtre/aksiyonlar, moderasyon notu görünümü, favorites/messages/support list/detail, profil/şifre ekranı (favorites/messages/profile MOCKED)
 
 ## Release Notes
 - Dashboard summary gerçek veriye bağlandı + Quick Actions aktif (users/countries/audit)
