@@ -1298,6 +1298,7 @@ def _admin_invoice_to_dict(invoice: AdminInvoice, dealer: Optional[SqlUser] = No
         "amount": float(invoice.amount) if invoice.amount is not None else None,
         "currency_code": invoice.currency_code,
         "status": invoice.status,
+        "payment_status": invoice.payment_status,
         "issued_at": invoice.issued_at.isoformat() if invoice.issued_at else None,
         "paid_at": invoice.paid_at.isoformat() if invoice.paid_at else None,
         "due_at": invoice.due_at.isoformat() if invoice.due_at else None,
