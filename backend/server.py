@@ -5353,9 +5353,18 @@ async def _moderation_transition(
 
     await db.audit_logs.insert_one(audit_doc)
 
+    update_payload = {
+        "status": new_status,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if reason or reason_note:
+        update_payload["moderation_reason"] = reason
+        update_payload["moderation_note"] = reason_note
+        update_payload["moderation_at"] = update_payload["updated_at"]
+
     res = await db.vehicle_listings.update_one(
         {"id": listing_id, "status": prev_status},
-        {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}},
+        {"$set": update_payload},
     )
     if res.matched_count == 0:
         # Listing changed concurrently; keep audit row as applied=false
