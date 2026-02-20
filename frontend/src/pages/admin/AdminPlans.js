@@ -71,6 +71,17 @@ export default function AdminPlans() {
     return { Authorization: `Bearer ${token}` };
   }, []);
 
+  const sortedItems = useMemo(() => {
+    const list = [...items];
+    list.sort((a, b) => {
+      const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
+      const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
+      if (sortOrder === 'asc') return dateA - dateB;
+      return dateB - dateA;
+    });
+    return list;
+  }, [items, sortOrder]);
+
   const disabled = !dbReady;
 
   const checkDb = async () => {
