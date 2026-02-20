@@ -12,6 +12,27 @@ const SORT_OPTIONS = [
   { value: "last_name_desc", label: "Soyad (Z→A)" },
 ];
 
+const STATUS_OPTIONS = [
+  { value: "all", label: "Tümü" },
+  { value: "active", label: "Aktif" },
+  { value: "suspended", label: "Askıda" },
+  { value: "deleted", label: "Silindi" },
+];
+
+const REASON_OPTIONS = [
+  { value: "spam", label: "Spam" },
+  { value: "fraud", label: "Dolandırıcılık" },
+  { value: "adult", label: "Müstehcen içerik" },
+  { value: "policy", label: "Politika ihlali" },
+  { value: "other", label: "Diğer" },
+];
+
+const ACTION_LABELS = {
+  suspend: "Kullanıcı askıya alınacak. Devam edilsin mi?",
+  activate: "Kullanıcı yeniden aktif edilecek. Devam edilsin mi?",
+  delete: "Kullanıcı silinecek (geri alınamaz). Devam edilsin mi?",
+};
+
 const formatDate = (value) => {
   if (!value) return "-";
   const date = new Date(value);
