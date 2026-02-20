@@ -22,6 +22,9 @@ export default function DealerPortalApp() {
   return (
     <Routes>
       <Route path="/" element={<DealerHome />} />
+      <Route path="/invoices" element={<DealerInvoices />} />
+      <Route path="/payments/success" element={<PaymentSuccess />} />
+      <Route path="/payments/cancel" element={<PaymentCancel />} />
       <Route path="*" element={<Navigate to="/dealer" replace />} />
     </Routes>
   );
