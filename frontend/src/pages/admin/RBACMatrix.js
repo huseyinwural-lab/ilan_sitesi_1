@@ -17,6 +17,7 @@ const ROLE_MATRIX = {
   moderator: ["İlan & Moderasyon", "Katalog & İçerik"],
   finance: ["Dashboard", "Finans"],
   support: ["Üyeler", "İlan & Moderasyon"],
+  ROLE_AUDIT_VIEWER: ["Sistem"],
 };
 
 const ROLE_LABELS = {
@@ -25,6 +26,7 @@ const ROLE_LABELS = {
   moderator: "Moderator",
   finance: "Finance Admin",
   support: "Support Admin",
+  ROLE_AUDIT_VIEWER: "Audit Viewer",
 };
 
 export default function RBACMatrix() {
