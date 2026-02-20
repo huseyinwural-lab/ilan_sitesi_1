@@ -14,6 +14,7 @@ const ROLE_OPTIONS = [
   { value: 'moderator', label: 'Moderatör' },
   { value: 'support', label: 'Destek' },
   { value: 'finance', label: 'Finans' },
+  { value: 'ROLE_AUDIT_VIEWER', label: 'Audit Viewer' },
 ];
 
 const STATUS_OPTIONS = [
