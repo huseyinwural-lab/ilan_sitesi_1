@@ -86,13 +86,54 @@ export default function DealersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, search, page]);
 
-  const setDealerStatus = async (dealerId, newStatus) => {
-    await axios.post(
-      `${API}/admin/dealers/${dealerId}/status`,
-      { dealer_status: newStatus },
-      { headers: authHeader }
-    );
-    await fetchDealers();
+  const openActionDialog = (type, dealer) => {
+    setActionDialog({ type, dealer });
+    setReasonCode('');
+    setReasonDetail('');
+    setSuspensionUntil('');
+  };
+
+  const closeActionDialog = () => {
+    setActionDialog(null);
+    setReasonCode('');
+    setReasonDetail('');
+    setSuspensionUntil('');
+  };
+
+  const handleActionConfirm = async () => {
+    if (!actionDialog) return;
+    if (!reasonCode) {
+      toast({ title: 'Gerekçe zorunludur.', variant: 'destructive' });
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const payload = {
+        reason_code: reasonCode,
+        reason_detail: reasonDetail || undefined,
+      };
+      if (actionDialog.type === 'suspend' && suspensionUntil) {
+        payload.suspension_until = new Date(suspensionUntil).toISOString();
+      }
+      if (actionDialog.type === 'delete') {
+        await axios.delete(`${API}/admin/users/${actionDialog.dealer.id}`, {
+          headers: authHeader,
+          data: payload,
+        });
+      } else if (actionDialog.type === 'suspend') {
+        await axios.post(`${API}/admin/users/${actionDialog.dealer.id}/suspend`, payload, { headers: authHeader });
+      } else if (actionDialog.type === 'activate') {
+        await axios.post(`${API}/admin/users/${actionDialog.dealer.id}/activate`, payload, { headers: authHeader });
+      }
+      toast({ title: 'İşlem tamamlandı.' });
+      closeActionDialog();
+      fetchDealers();
+    } catch (e) {
+      const message = e.response?.data?.detail || 'İşlem başarısız. Lütfen tekrar deneyin.';
+      toast({ title: typeof message === 'string' ? message : 'İşlem başarısız. Lütfen tekrar deneyin.', variant: 'destructive' });
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
