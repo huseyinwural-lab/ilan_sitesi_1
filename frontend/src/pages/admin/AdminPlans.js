@@ -182,7 +182,7 @@ export default function AdminPlans() {
     try {
       const payload = {
         name: form.name.trim(),
-        slug: slugify(form.name),
+        slug: editing ? editing.slug : slugify(form.name),
         country_scope: form.scope,
         country_code: form.scope === 'country' ? form.country_code : undefined,
         price_amount: Number(form.price_amount),
