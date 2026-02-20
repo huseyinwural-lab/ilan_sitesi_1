@@ -170,12 +170,10 @@ export default function AccountMessages() {
             );
           }
         }
-        if (payload.type === 'message:read' && payload.thread_id) {
+        if (payload.type === 'message:read' && payload.thread_id && payload.user_id === user?.id) {
           setThreads((prev) =>
             prev.map((thread) =>
-              thread.id === payload.thread_id
-                ? { ...thread, unread_count: payload.user_id === thread.id ? 0 : thread.unread_count }
-                : thread
+              thread.id === payload.thread_id ? { ...thread, unread_count: 0 } : thread
             )
           );
         }
