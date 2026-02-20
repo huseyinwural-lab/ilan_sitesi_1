@@ -2876,57 +2876,117 @@ async def get_catalog_schema(
 @api_router.get("/admin/dealers")
 async def admin_list_dealers(
     request: Request,
-    skip: int = 0,
-    limit: int = 50,
-    status: Optional[str] = None,
     search: Optional[str] = None,
+    country: Optional[str] = None,
+    status: Optional[str] = None,
+    plan_id: Optional[str] = None,
+    sort_by: Optional[str] = "company_name",
+    sort_dir: Optional[str] = "asc",
+    page: int = 1,
+    limit: int = 25,
+    include_filters: bool = False,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
-    query: Dict = {"role": "dealer"}
-    if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        query["country_code"] = ctx.country
+    country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
+    if country:
+        country_code = country.upper()
 
-    status_key = (status or "").lower().strip()
-    if status_key:
-        if status_key == "deleted":
-            query["deleted_at"] = {"$exists": True}
-        else:
-            query["deleted_at"] = {"$exists": False}
-            if status_key == "suspended":
-                query["$or"] = [{"status": "suspended"}, {"is_active": False}]
-            elif status_key == "active":
-                query["status"] = {"$ne": "suspended"}
-                query["is_active"] = {"$ne": False}
-    else:
-        query["deleted_at"] = {"$exists": False}
+    query = _build_dealer_query(search, country_code, status, plan_id)
 
-    if search:
-        query["email"] = {"$regex": search, "$options": "i"}
+    safe_page = max(page, 1)
+    safe_limit = min(max(limit, 1), 200)
+    skip = (safe_page - 1) * safe_limit
 
-    limit = min(100, max(1, int(limit)))
-    cursor = db.users.find(query, {"_id": 0}).skip(int(skip)).limit(limit)
-    docs = await cursor.to_list(length=limit)
+    total_count = await db.users.count_documents(query)
 
-    out = []
-    for u in docs:
-        out.append(
+    sort_spec, sort_company_expr, sort_direction = _build_dealer_sort(sort_by, sort_dir)
+
+    pipeline = [
+        {"$match": query},
+        {"$addFields": {"sort_company": sort_company_expr}},
+        {"$sort": sort_spec},
+        {"$skip": skip},
+        {"$limit": safe_limit},
+    ]
+
+    docs = await db.users.aggregate(pipeline).to_list(length=safe_limit)
+
+    user_ids = [doc.get("id") for doc in docs if doc.get("id")]
+    listing_stats_map: Dict[str, Dict[str, Any]] = {}
+    if user_ids:
+        pipeline_stats = [
+            {"$match": {"created_by": {"$in": user_ids}}},
             {
-                "id": u.get("id"),
-                "email": u.get("email"),
-                "dealer_status": u.get("dealer_status", "active"),
-                "status": _normalize_user_status(u),
-                "suspension_until": u.get("suspension_until"),
-                "country_code": u.get("country_code"),
-                "plan_id": u.get("plan_id"),
-                "created_at": u.get("created_at"),
-            }
-        )
+                "$group": {
+                    "_id": "$created_by",
+                    "total": {"$sum": 1},
+                    "active": {
+                        "$sum": {
+                            "$cond": [
+                                {"$eq": ["$status", "published"]},
+                                1,
+                                0,
+                            ]
+                        }
+                    },
+                }
+            },
+        ]
+        listing_stats = await db.vehicle_listings.aggregate(pipeline_stats).to_list(length=5000)
+        listing_stats_map = {
+            stat.get("_id"): {"total": stat.get("total", 0), "active": stat.get("active", 0)}
+            for stat in listing_stats
+        }
 
-    total = await db.users.count_documents(query)
-    return {"items": out, "pagination": {"total": total, "skip": int(skip), "limit": limit}}
+    plan_ids = [doc.get("plan_id") for doc in docs if doc.get("plan_id")]
+    plan_map: Dict[str, Any] = {}
+    if plan_ids:
+        plan_docs = await db.plans.find({"id": {"$in": plan_ids}}, {"_id": 0}).to_list(length=200)
+        plan_map = {doc.get("id"): doc for doc in plan_docs}
+
+    items = [_build_dealer_summary(doc, listing_stats_map.get(doc.get("id"), {}), plan_map) for doc in docs]
+
+    total_pages = max(1, (total_count + safe_limit - 1) // safe_limit)
+
+    response: Dict[str, Any] = {
+        "items": items,
+        "total_count": total_count,
+        "page": safe_page,
+        "limit": safe_limit,
+        "total_pages": total_pages,
+    }
+
+    if include_filters:
+        plan_filters: List[Dict[str, Any]] = []
+        plan_query: Dict[str, Any] = {}
+        if country_code:
+            plan_query["country_code"] = country_code
+        elif current_user.get("role") == "country_admin":
+            scope = current_user.get("country_scope") or []
+            if "*" not in scope:
+                plan_query["country_code"] = {"$in": scope}
+        if plan_query or current_user.get("role") in {"super_admin", "moderator", "country_admin"}:
+            plan_docs = await db.plans.find(plan_query, {"_id": 0, "id": 1, "name": 1, "country_code": 1}).to_list(length=500)
+            plan_filters = [
+                {"id": doc.get("id"), "name": doc.get("name"), "country_code": doc.get("country_code")}
+                for doc in plan_docs
+            ]
+
+        country_filters: List[Dict[str, Any]] = []
+        countries_query: Dict[str, Any] = {}
+        if current_user.get("role") == "country_admin":
+            scope = current_user.get("country_scope") or []
+            if "*" not in scope:
+                countries_query["$or"] = [{"country_code": {"$in": scope}}, {"code": {"$in": scope}}]
+        country_docs = await db.countries.find(countries_query, {"_id": 0}).sort("code", 1).to_list(length=500)
+        country_filters = [_normalize_country_doc(doc) for doc in country_docs]
+
+        response["filters"] = {"plans": plan_filters, "countries": country_filters}
+
+    return response
 
 
 @api_router.get("/admin/dealers/{dealer_id}")
