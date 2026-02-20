@@ -1,6 +1,6 @@
 # FAZ Admin Domain Complete — PRD
 
-**Son güncelleme:** 2026-02-20 (Kurumsal kullanıcı standardizasyonu + hızlı drawer)
+**Son güncelleme:** 2026-02-20 (Moderasyon şablonları + otomatik reason_detail)
 
 ## Program Status (23.02.2026)
 - Foundation Phase: **OFFICIALLY CLOSED**
