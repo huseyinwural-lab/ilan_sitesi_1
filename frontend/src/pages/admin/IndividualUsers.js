@@ -293,7 +293,7 @@ export default function IndividualUsers() {
           )}
         </form>
 
-        <div className="grid gap-3 md:grid-cols-2" data-testid="individual-users-filters">
+        <div className="grid gap-3 md:grid-cols-3" data-testid="individual-users-filters">
           <div className="space-y-1">
             <div className="text-xs text-muted-foreground">Sıralama</div>
             <select
@@ -303,6 +303,19 @@ export default function IndividualUsers() {
               data-testid="individual-users-sort-select"
             >
               {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Durum</div>
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+              className="h-10 rounded-md border bg-background px-3 text-sm w-full"
+              data-testid="individual-users-status-select"
+            >
+              {STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
