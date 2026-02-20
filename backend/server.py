@@ -1776,21 +1776,22 @@ async def login(
     _failed_login_block_audited.pop(rl_key, None)
 
     now_iso = datetime.now(timezone.utc).isoformat()
-    await db.users.update_one({"id": user["id"]}, {"$set": {"last_login": now_iso}})
+    await auth_repo.update_last_login(user["id"], now_iso)
     user["last_login"] = now_iso
 
-    audit_entry = await build_audit_entry(
-        event_type="LOGIN_SUCCESS",
-        actor=user,
-        target_id=user.get("id"),
-        target_type="auth",
-        country_code=user.get("country_code"),
-        details={"ip_address": ip_address},
-        request=request,
-    )
-    audit_entry["action"] = "LOGIN_SUCCESS"
-    audit_entry["user_agent"] = user_agent
-    await db.audit_logs.insert_one(audit_entry)
+    if db:
+        audit_entry = await build_audit_entry(
+            event_type="LOGIN_SUCCESS",
+            actor=user,
+            target_id=user.get("id"),
+            target_type="auth",
+            country_code=user.get("country_code"),
+            details={"ip_address": ip_address},
+            request=request,
+        )
+        audit_entry["action"] = "LOGIN_SUCCESS"
+        audit_entry["user_agent"] = user_agent
+        await db.audit_logs.insert_one(audit_entry)
 
     token_data = {"sub": user["id"], "email": user["email"], "role": user.get("role")}
 
