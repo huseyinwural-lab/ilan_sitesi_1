@@ -1,6 +1,6 @@
 # FAZ Admin Domain Complete — PRD
 
-**Son güncelleme:** 2026-02-20 (Audit Logs V1 admin UI + RBAC + DB gate)
+**Son güncelleme:** 2026-02-20 (Audit Logs V1 + Bireysel Portal Faz B1-B7)
 
 ## Program Status (23.02.2026)
 - Foundation Phase: **OFFICIALLY CLOSED**
