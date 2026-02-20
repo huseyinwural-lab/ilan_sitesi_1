@@ -219,12 +219,13 @@ export default function IndividualUsers() {
         <div className="overflow-x-auto">
           <table className="min-w-[900px] w-full text-sm">
             <thead className="bg-muted">
-              <tr>
-                <th className="p-3 text-left">Ad</th>
-                <th className="p-3 text-left">Soyad</th>
-                <th className="p-3 text-left">E-posta</th>
-                <th className="p-3 text-left">Kayıt Tarihi</th>
-                <th className="p-3 text-left">Son Giriş</th>
+              <tr>
+                <th className="p-3 text-left" data-testid="individual-users-header-first-name">Ad</th>
+                <th className="p-3 text-left" data-testid="individual-users-header-last-name">Soyad</th>
+                <th className="p-3 text-left" data-testid="individual-users-header-email">E-posta</th>
+                <th className="p-3 text-left" data-testid="individual-users-header-phone">Telefon</th>
+                <th className="p-3 text-left" data-testid="individual-users-header-created">Kayıt Tarihi</th>
+                <th className="p-3 text-left" data-testid="individual-users-header-last-login">Son Giriş</th>
               </tr>
             </thead>
             <tbody>
