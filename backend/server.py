@@ -5272,6 +5272,11 @@ class InvoiceActionPayload(BaseModel):
     payment_method: Optional[str] = None
 
 
+class PaymentCheckoutPayload(BaseModel):
+    invoice_id: str
+    origin_url: str
+
+
 class TaxRateCreatePayload(BaseModel):
     country_code: str
     rate: float
