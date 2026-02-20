@@ -5305,6 +5305,7 @@ class VehicleModelCreatePayload(BaseModel):
     make_id: str
     name: str
     slug: str
+    vehicle_type: str
     active_flag: Optional[bool] = True
 
 
@@ -5312,6 +5313,7 @@ class VehicleModelUpdatePayload(BaseModel):
     name: Optional[str] = None
     slug: Optional[str] = None
     make_id: Optional[str] = None
+    vehicle_type: Optional[str] = None
     active_flag: Optional[bool] = None
 
 
