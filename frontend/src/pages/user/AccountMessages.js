@@ -70,6 +70,15 @@ export default function AccountMessages() {
       }
       const data = await res.json();
       const items = data.items || [];
+      if (data.thread) {
+        setThreads((prev) => {
+          const exists = prev.find((thread) => thread.id === data.thread.id);
+          if (exists) {
+            return prev.map((thread) => (thread.id === data.thread.id ? data.thread : thread));
+          }
+          return [data.thread, ...prev];
+        });
+      }
       if (since) {
         setMessages((prev) => [...prev, ...items]);
       } else {
