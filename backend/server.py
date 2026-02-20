@@ -38,6 +38,11 @@ import html
 
 from app.core.config import settings
 
+try:
+    from asgi_correlation_id import correlation_id
+except Exception:  # pragma: no cover
+    correlation_id = None
+
 from app.core.security import (
     verify_password,
     get_password_hash,
