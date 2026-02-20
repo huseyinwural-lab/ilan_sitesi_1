@@ -5317,6 +5317,26 @@ class VehicleModelUpdatePayload(BaseModel):
     active_flag: Optional[bool] = None
 
 
+class VehicleMakeImportPayload(BaseModel):
+    name: str
+    slug: str
+    country_code: str
+    active: Optional[bool] = True
+
+
+class VehicleModelImportPayload(BaseModel):
+    make_slug: str
+    name: str
+    slug: str
+    vehicle_type: str
+    active: Optional[bool] = True
+
+
+class VehicleImportPayload(BaseModel):
+    makes: List[VehicleMakeImportPayload] = Field(default_factory=list)
+    models: List[VehicleModelImportPayload] = Field(default_factory=list)
+
+
 def _resolve_listing_title(listing: dict) -> str:
     title = (listing.get("title") or "").strip()
     if title:
