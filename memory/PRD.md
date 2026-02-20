@@ -131,6 +131,7 @@
 - 2026-02-20: Admin kullanıcı yönetimi (listeleme, filtre/sıralama, edit modal, bulk deactivate)
 - 2026-02-20: Admin davet akışı (SendGrid entegrasyonu + /admin/invite/accept şifre belirleme)
 - 2026-02-20: Admin RBAC güvenlik kontrolleri + audit log olayları (admin_invited/accepted/role_changed/deactivated)
+- 2026-02-20: Admin kullanıcıları IA standardizasyonu (sidebar etiketleri, başlık/alt başlık, /admin/users → /admin/admin-users alias, RBAC Matrix linki)
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
