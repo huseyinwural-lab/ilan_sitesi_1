@@ -6,6 +6,7 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 load_dotenv(ROOT_DIR / '.env')
 
 class Settings:
+    APP_ENV: str = os.environ.get('APP_ENV', 'dev').lower()
     DATABASE_URL: str = os.environ.get('DATABASE_URL', 'postgresql://admin_user:admin_pass@localhost:5432/admin_panel')
     SECRET_KEY: str = os.environ.get('SECRET_KEY', 'change-this-in-production')
     ALGORITHM: str = os.environ.get('ALGORITHM', 'HS256')
