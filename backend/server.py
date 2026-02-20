@@ -2709,6 +2709,8 @@ async def admin_list_dealers(
             elif status_key == "active":
                 query["status"] = {"$ne": "suspended"}
                 query["is_active"] = {"$ne": False}
+    else:
+        query["deleted_at"] = {"$exists": False}
 
     if search:
         query["email"] = {"$regex": search, "$options": "i"}
