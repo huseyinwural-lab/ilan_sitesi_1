@@ -192,31 +192,62 @@ export default function DealersPage() {
                   <td className="p-3" data-testid={`dealer-status-${d.id}`}>
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
                   </td>
-                  <td className="p-3 text-right">
-                    {d.dealer_status === 'active' ? (
-                      <button
-                        onClick={() => setDealerStatus(d.id, 'suspended')}
-                        className="h-8 px-3 rounded-md border text-xs hover:bg-muted"
-                        data-testid={`dealer-suspend-${d.id}`}
-                      >
-                        Suspend
-                      </button>
+                  <td className="p-3 text-right" data-testid={`dealer-actions-${d.id}`}>
+                    {statusValue === 'deleted' ? (
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="text-xs text-muted-foreground" data-testid={`dealer-actions-deleted-${d.id}`}>
+                          Silindi
+                        </span>
+                        <Link
+                          to={`/admin/dealers/${d.id}`}
+                          className="h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center"
+                          data-testid={`dealer-detail-link-${d.id}`}
+                        >
+                          Detay
+                        </Link>
+                      </div>
                     ) : (
-                      <button
-                        onClick={() => setDealerStatus(d.id, 'active')}
-                        className="h-8 px-3 rounded-md border text-xs hover:bg-muted"
-                        data-testid={`dealer-activate-${d.id}`}
-                      >
-                        Activate
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {allowSuspend && (statusValue === 'suspended' ? (
+                          <button
+                            onClick={() => openActionDialog('activate', d)}
+                            className="h-8 px-3 rounded-md border text-xs"
+                            data-testid={`dealer-reactivate-${d.id}`}
+                          >
+                            Aktif Et
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => openActionDialog('suspend', d)}
+                            className="h-8 px-3 rounded-md border text-xs"
+                            data-testid={`dealer-suspend-${d.id}`}
+                          >
+                            Askıya Al
+                          </button>
+                        ))}
+                        {allowDelete && (
+                          <button
+                            onClick={() => openActionDialog('delete', d)}
+                            className="h-8 px-3 rounded-md border text-xs text-rose-600"
+                            data-testid={`dealer-delete-${d.id}`}
+                          >
+                            Sil
+                          </button>
+                        )}
+                        {!showActions && (
+                          <span className="text-xs text-muted-foreground" data-testid={`dealer-actions-disabled-${d.id}`}>
+                            Yetkisiz
+                          </span>
+                        )}
+                        <Link
+                          to={`/admin/dealers/${d.id}`}
+                          className="h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center"
+                          data-testid={`dealer-detail-link-${d.id}`}
+                        >
+                          Detay
+                        </Link>
+                      </div>
                     )}
-                    <Link
-                      to={`/admin/dealers/${d.id}`}
-                      className="ml-2 h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center"
-                      data-testid={`dealer-detail-link-${d.id}`}
-                    >
-                      Detay
-                    </Link>
                   </td>
                 </tr>
               ))
