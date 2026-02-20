@@ -749,6 +749,16 @@ async def lifespan(app: FastAPI):
     # Ping
     await db.command("ping")
 
+    sql_target = _get_masked_db_target()
+    logging.getLogger("sql_config").info(
+        "SQL target host=%s db=%s ssl=%s pool=%s/%s",
+        sql_target.get("host"),
+        sql_target.get("database"),
+        DB_SSL_MODE,
+        DB_POOL_SIZE,
+        DB_MAX_OVERFLOW,
+    )
+
     async with sql_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -949,6 +959,28 @@ def _get_client_ip(request: Request) -> str | None:
         # first IP in list is the original client
         return xff.split(",")[0].strip() or None
     return request.client.host if request.client else None
+
+
+def _get_masked_db_target() -> Dict[str, Optional[str]]:
+    try:
+        parsed = urllib.parse.urlparse(DATABASE_URL)
+    except Exception:
+        return {"host": None, "database": None}
+
+    host = parsed.hostname or None
+    db_name = parsed.path.lstrip("/") if parsed.path else None
+
+    masked_host = host
+    if host and host not in {"localhost", "127.0.0.1"}:
+        parts = host.split(".")
+        if len(parts) > 2:
+            masked_host = ".".join(parts[-2:])
+
+    masked_db = None
+    if db_name:
+        masked_db = f"{db_name[:3]}***" if len(db_name) > 3 else "***"
+
+    return {"host": masked_host, "database": masked_db}
 
 
 def _sanitize_text(value: str) -> str:
@@ -1573,13 +1605,16 @@ async def health_check(request: Request):
 
 
 @api_router.get("/health/db")
-async def health_db():
+async def health_db(
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
+):
+    target = _get_masked_db_target()
     try:
         async with sql_engine.connect() as conn:
             await conn.execute(select(1))
-        return {"status": "healthy", "database": "postgres"}
+        return {"status": "healthy", "database": "postgres", "target": target}
     except Exception as exc:
-        raise HTTPException(status_code=503, detail="Database unavailable") from exc
+        raise HTTPException(status_code=503, detail={"message": "Database unavailable", "target": target}) from exc
 
 
 @api_router.post("/auth/login", response_model=TokenResponse)
