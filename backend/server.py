@@ -3263,6 +3263,8 @@ async def update_user_profile(
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
+    if AUTH_PROVIDER == "mongo" and db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
     update_payload: Dict[str, Any] = {}
     if payload.full_name is not None:
         update_payload["full_name"] = payload.full_name.strip()
