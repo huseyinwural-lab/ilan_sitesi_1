@@ -1681,12 +1681,14 @@ async def health_db():
             status_code=503,
             content=degraded_payload,
             media_type="application/json",
+            headers={"Content-Length": str(len(degraded_payload))},
         )
     if APP_ENV != "prod" and ("localhost" in RAW_DATABASE_URL or "127.0.0.1" in RAW_DATABASE_URL):
         return Response(
             status_code=503,
             content=degraded_payload,
             media_type="application/json",
+            headers={"Content-Length": str(len(degraded_payload))},
         )
 
     try:
@@ -1698,6 +1700,7 @@ async def health_db():
             status_code=503,
             content=degraded_payload,
             media_type="application/json",
+            headers={"Content-Length": str(len(degraded_payload))},
         )
 
 
