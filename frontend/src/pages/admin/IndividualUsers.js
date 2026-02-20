@@ -156,7 +156,7 @@ export default function IndividualUsers() {
             <input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Ad, soyad veya e-posta ara"
+              placeholder="Ad, soyad, e-posta veya telefon ara"
               className="bg-transparent outline-none text-sm flex-1"
               data-testid="individual-users-search-input"
             />
