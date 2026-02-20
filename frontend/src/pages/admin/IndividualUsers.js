@@ -373,8 +373,8 @@ export default function IndividualUsers() {
                     <td className="p-3" data-testid={`individual-user-email-${user.id}`}>{user.email}</td>
                     <td className="p-3" data-testid={`individual-user-phone-${user.id}`}>{user.phone_e164 || '-'}</td>
                     <td className="p-3" data-testid={`individual-user-status-${user.id}`}>
-                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${statusBadge(user.status || "active").className}`}>
-                        {statusBadge(user.status || "active").label}
+                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${badge.className}`}>
+                        {badge.label}
                       </span>
                     </td>
                     <td className="p-3" data-testid={`individual-user-created-${user.id}`}>{formatDate(user.created_at)}</td>
