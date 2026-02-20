@@ -2707,8 +2707,6 @@ async def assign_support_application(
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
-    if not getattr(request.app.state, "sql_ready", False):
-        raise HTTPException(status_code=503, detail="Relational database unavailable")
 
     try:
         application_uuid = uuid.UUID(application_id)
