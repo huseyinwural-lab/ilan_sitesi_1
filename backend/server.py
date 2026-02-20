@@ -3473,12 +3473,13 @@ async def change_password(
 
     if db is not None:
         audit_entry = await build_audit_entry(
-            request,
-            current_user,
-            target_type="user",
-            target_id=current_user.get("id"),
             event_type="password_change",
+            actor=current_user,
+            target_id=current_user.get("id"),
+            target_type="user",
+            country_code=current_user.get("country_code"),
             details={"source": "self_service"},
+            request=request,
         )
         await db.audit_logs.insert_one(audit_entry)
 
