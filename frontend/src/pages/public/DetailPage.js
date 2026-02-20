@@ -14,6 +14,7 @@ const DetailPage = () => {
   // Router in App.js is /ilan/:id. 
   // If we use /ilan/UUID-slug, we need to parse.
   const { search } = useLocation();
+  const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
   const { token, user } = useAuth();
   
