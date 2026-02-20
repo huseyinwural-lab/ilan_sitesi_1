@@ -12,9 +12,9 @@ export default function AccountDashboard() {
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
+  useEffect(() => {
     let active = true;
-    const fetchStats = async () > {
+    const fetchStats = async () => {
       setLoading(true);
       try {
         const headers = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
