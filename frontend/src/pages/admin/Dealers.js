@@ -84,7 +84,7 @@ export default function DealersPage() {
   useEffect(() => {
     fetchDealers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, search, page]);
+  }, [statusFilter, search, page]);
 
   const setDealerStatus = async (dealerId, newStatus) => {
     await axios.post(
