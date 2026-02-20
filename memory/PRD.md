@@ -145,7 +145,7 @@
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- (Boş) — Preview gate + FAZ-7 auth kontrolleri + wizard E2E tamamlandı
+- Başvuru Modülü RDBMS bağlantısı (DATABASE_URL erişilebilir) + create→list→assign→close E2E
 
 ### P1
 - Lint debt cleanup (LINT-1/2)
