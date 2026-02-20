@@ -53,6 +53,7 @@ const formatScope = (scope) => {
 };
 
 const statusLabel = (user) => {
+  if (user.deleted_at) return { text: 'Silindi', color: 'bg-rose-100 text-rose-700' };
   if (user.invite_status === 'pending') return { text: 'Davet Bekliyor', color: 'bg-amber-100 text-amber-700' };
   return user.is_active
     ? { text: 'Aktif', color: 'bg-emerald-100 text-emerald-700' }
