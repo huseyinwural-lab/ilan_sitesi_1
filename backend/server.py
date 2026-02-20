@@ -1968,6 +1968,55 @@ class SupportApplicationStatusPayload(BaseModel):
     decision_reason: Optional[str] = None
 
 
+class CampaignCreatePayload(BaseModel):
+    type: str
+    country_scope: str = "global"
+    country_code: Optional[str] = None
+    name: str
+    description: Optional[str] = None
+    status: Optional[str] = "draft"
+    target: str
+    start_at: str
+    end_at: str
+    priority: Optional[str] = "medium"
+    discount_percent: Optional[float] = None
+    discount_amount: Optional[float] = None
+    min_listing_count: Optional[int] = None
+    max_listing_count: Optional[int] = None
+    eligible_categories: Optional[List[str]] = None
+    eligible_user_segment: Optional[str] = "all"
+    eligible_dealer_plan: Optional[str] = "any"
+    eligible_dealers: Optional[List[str]] = None
+    eligible_users: Optional[List[str]] = None
+    free_listing_quota_bonus: Optional[int] = None
+
+
+class CampaignUpdatePayload(BaseModel):
+    country_scope: Optional[str] = None
+    country_code: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    target: Optional[str] = None
+    start_at: Optional[str] = None
+    end_at: Optional[str] = None
+    priority: Optional[str] = None
+    discount_percent: Optional[float] = None
+    discount_amount: Optional[float] = None
+    min_listing_count: Optional[int] = None
+    max_listing_count: Optional[int] = None
+    eligible_categories: Optional[List[str]] = None
+    eligible_user_segment: Optional[str] = None
+    eligible_dealer_plan: Optional[str] = None
+    eligible_dealers: Optional[List[str]] = None
+    eligible_users: Optional[List[str]] = None
+    free_listing_quota_bonus: Optional[int] = None
+
+
+class CampaignStatusPayload(BaseModel):
+    status: str
+
+
 @api_router.patch("/users/{user_id}")
 async def update_user(
     user_id: str,
