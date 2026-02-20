@@ -1608,16 +1608,17 @@ async def health_check(request: Request):
 
 
 @api_router.get("/health/db")
-async def health_db(
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
-):
+async def health_db():
     target = _get_masked_db_target()
     try:
         async with sql_engine.connect() as conn:
             await conn.execute(select(1))
         return {"status": "healthy", "database": "postgres", "target": target}
-    except Exception as exc:
-        raise HTTPException(status_code=503, detail={"message": "Database unavailable", "target": target}) from exc
+    except Exception:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "degraded", "database": "postgres", "target": target},
+        )
 
 
 @api_router.post("/auth/login", response_model=TokenResponse)
