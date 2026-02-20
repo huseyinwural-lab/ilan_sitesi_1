@@ -333,9 +333,9 @@ async def _deactivate_push_subscription(db, subscription_id: str, reason: str) -
     )
 
 
-async def _send_web_push_notification(subscription: dict, payload: dict) -> bool:
+async def _send_web_push_notification(subscription: dict, payload: dict) -> dict:
     if not PUSH_ENABLED:
-        return False
+        return {"ok": False, "revoke": False}
 
     try:
         webpush(
@@ -350,14 +350,12 @@ async def _send_web_push_notification(subscription: dict, payload: dict) -> bool
             vapid_private_key=VAPID_PRIVATE_KEY,
             vapid_claims={"sub": VAPID_SUBJECT},
         )
-        return True
+        return {"ok": True, "revoke": False}
     except WebPushException as exc:
         status = getattr(getattr(exc, "response", None), "status_code", None)
-        if status in (404, 410):
-            return False
-        return False
+        return {"ok": False, "revoke": status in (404, 410)}
     except Exception:
-        return False
+        return {"ok": False, "revoke": False}
 
 
 async def _send_message_push_notification(db, recipient_id: str, thread: dict, message: dict) -> bool:
