@@ -151,7 +151,7 @@ async def seed_applications():
                     subject=f"Bireysel Başvuru {idx+1}",
                     description="Seed açıklama (bireysel)",
                     priority="medium",
-                    status="open" if idx % 2 == 0 else "in_review",
+                    status="open" if idx % 2 == 0 else "in_progress",
                     created_at=now - timedelta(days=idx),
                     updated_at=now - timedelta(days=idx),
                 )
@@ -168,7 +168,7 @@ async def seed_applications():
                     subject=f"Kurumsal Başvuru {idx+1}",
                     description="Seed açıklama (kurumsal)",
                     priority="medium",
-                    status="open" if idx % 2 == 0 else "in_review",
+                    status="open" if idx % 2 == 0 else "in_progress",
                     created_at=now - timedelta(days=idx),
                     updated_at=now - timedelta(days=idx),
                 )
