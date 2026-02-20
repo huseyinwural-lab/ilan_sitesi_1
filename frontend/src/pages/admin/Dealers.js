@@ -139,8 +139,8 @@ export default function DealersPage() {
   return (
     <div className="space-y-6" data-testid="admin-dealers-page">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dealers</h1>
-        <p className="text-sm text-muted-foreground">Dealer Management (Sprint 1)</p>
+        <h1 className="text-2xl font-bold tracking-tight">Kurumsal Kullanıcılar</h1>
+        <p className="text-sm text-muted-foreground">Kurumsal kullanıcı yönetimi ve moderasyon aksiyonları</p>
       </div>
 
         <div className="flex flex-wrap gap-3">
