@@ -1726,6 +1726,9 @@ CAMPAIGN_STATUS_TRANSITIONS = {
     "archived": set(),
 }
 
+PLAN_SCOPE_SET = {"global", "country"}
+PLAN_STATUS_SET = {"active", "inactive", "archived"}
+
 APPLICATION_TYPES = {"individual", "dealer"}
 APPLICATION_REQUEST_TYPES = {"complaint", "request"}
 APPLICATION_PRIORITY_SET = {"low", "medium", "high"}
