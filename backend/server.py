@@ -1545,6 +1545,26 @@ class AdminUserActionPayload(BaseModel):
     suspension_until: Optional[str] = None
 
 
+class SupportAttachmentPayload(BaseModel):
+    name: str
+    url: str
+
+
+class SupportApplicationCreatePayload(BaseModel):
+    category: str
+    subject: str
+    description: str
+    attachments: Optional[List[SupportAttachmentPayload]] = None
+    listing_id: Optional[str] = None
+    kvkk_consent: bool
+    company_name: Optional[str] = None
+    tax_number: Optional[str] = None
+
+
+class SupportApplicationAssignPayload(BaseModel):
+    assigned_to: Optional[str] = None
+
+
 @api_router.patch("/users/{user_id}")
 async def update_user(
     user_id: str,
