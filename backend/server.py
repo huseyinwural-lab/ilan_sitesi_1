@@ -1113,6 +1113,12 @@ def _slugify_value(value: str) -> str:
     return cleaned
 
 
+def _generate_invoice_no() -> str:
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
+    short = uuid.uuid4().hex[:6].upper()
+    return f"INV-{stamp}-{short}"
+
+
 def _parse_datetime_field(value: str, field_name: str) -> datetime:
     if not value:
         raise HTTPException(status_code=400, detail=f"{field_name} is required")
