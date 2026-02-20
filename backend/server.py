@@ -1829,6 +1829,62 @@ EXPORT_RATE_LIMIT_WINDOW_SECONDS = 60
 EXPORT_RATE_LIMIT_MAX_ATTEMPTS = 10
 _export_attempts: Dict[str, List[float]] = {}
 
+
+class MessageConnectionManager:
+    def __init__(self):
+        self.user_connections: Dict[str, set] = defaultdict(set)
+        self.thread_connections: Dict[str, set] = defaultdict(set)
+
+    async def connect(self, websocket: WebSocket, user_id: str) -> None:
+        await websocket.accept()
+        self.user_connections[user_id].add(websocket)
+
+    def disconnect(self, websocket: WebSocket, user_id: str) -> None:
+        if user_id in self.user_connections and websocket in self.user_connections[user_id]:
+            self.user_connections[user_id].remove(websocket)
+            if not self.user_connections[user_id]:
+                self.user_connections.pop(user_id, None)
+        for thread_id, sockets in list(self.thread_connections.items()):
+            if websocket in sockets:
+                sockets.remove(websocket)
+                if not sockets:
+                    self.thread_connections.pop(thread_id, None)
+
+    def subscribe(self, websocket: WebSocket, thread_id: str) -> None:
+        self.thread_connections[thread_id].add(websocket)
+
+    def unsubscribe(self, websocket: WebSocket, thread_id: str) -> None:
+        if thread_id in self.thread_connections and websocket in self.thread_connections[thread_id]:
+            self.thread_connections[thread_id].remove(websocket)
+            if not self.thread_connections[thread_id]:
+                self.thread_connections.pop(thread_id, None)
+
+    async def send_personal(self, user_id: str, payload: dict) -> None:
+        for socket in list(self.user_connections.get(user_id, [])):
+            await self._safe_send(socket, payload)
+
+    async def broadcast_thread(self, thread_id: str, payload: dict) -> None:
+        for socket in list(self.thread_connections.get(thread_id, [])):
+            await self._safe_send(socket, payload)
+
+    async def _safe_send(self, websocket: WebSocket, payload: dict) -> None:
+        try:
+            await websocket.send_json(payload)
+        except Exception:
+            for thread_id, sockets in list(self.thread_connections.items()):
+                if websocket in sockets:
+                    sockets.remove(websocket)
+                    if not sockets:
+                        self.thread_connections.pop(thread_id, None)
+            for user_id, sockets in list(self.user_connections.items()):
+                if websocket in sockets:
+                    sockets.remove(websocket)
+                    if not sockets:
+                        self.user_connections.pop(user_id, None)
+
+
+message_ws_manager = MessageConnectionManager()
+
 ADMIN_INVITE_RATE_LIMIT_WINDOW_SECONDS = 60
 ADMIN_INVITE_RATE_LIMIT_MAX_ATTEMPTS = 5
 
