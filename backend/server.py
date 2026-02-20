@@ -1776,28 +1776,118 @@ async def get_dashboard_stats(request: Request, current_user=Depends(get_current
 @api_router.get("/users")
 async def list_users(
     request: Request,
-    skip: int = 0,
-    limit: int = 50,
-    role: Optional[str] = None,
     search: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    role: Optional[str] = None,
+    user_type: Optional[str] = None,
+    status: Optional[str] = None,
+    country: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    sort_dir: Optional[str] = "desc",
+    limit: int = 100,
+    skip: int = 0,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
-    query: Dict = {}
-    if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        query["country_code"] = ctx.country
+
+    query: Dict[str, Any] = {}
+
+    country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
+    if country:
+        country_code = country.upper()
+    if country_code:
+        query["country_code"] = country_code
+
+    if user_type:
+        user_type_key = user_type.lower()
+        if user_type_key == "admin":
+            query["role"] = {"$in": list(ADMIN_ROLE_OPTIONS)}
+        elif user_type_key == "dealer":
+            query["role"] = "dealer"
+        elif user_type_key == "individual":
+            query["role"] = {"$nin": list(ADMIN_ROLE_OPTIONS) + ["dealer"]}
+
     if role:
         query["role"] = role
+
+    if status:
+        status_key = status.lower()
+        if status_key == "deleted":
+            query["deleted_at"] = {"$exists": True}
+        else:
+            query["deleted_at"] = {"$exists": False}
+            if status_key == "inactive":
+                query["$or"] = [{"status": "suspended"}, {"is_active": False}]
+            elif status_key == "active":
+                query["status"] = {"$ne": "suspended"}
+                query["is_active"] = {"$ne": False}
+    else:
+        query["deleted_at"] = {"$exists": False}
+
     if search:
         query["$or"] = [
             {"email": {"$regex": search, "$options": "i"}},
             {"full_name": {"$regex": search, "$options": "i"}},
         ]
 
-    cursor = db.users.find(query, {"_id": 0}).skip(skip).limit(limit)
+    sort_field_map = {
+        "email": "email",
+        "full_name": "full_name",
+        "role": "role",
+        "created_at": "created_at",
+        "last_login": "last_login",
+        "status": "status",
+    }
+    sort_field = sort_field_map.get(sort_by or "", "created_at")
+    sort_direction = -1 if (sort_dir or "desc").lower() == "desc" else 1
+
+    cursor = (
+        db.users.find(query, {"_id": 0})
+        .sort(sort_field, sort_direction)
+        .skip(max(skip, 0))
+        .limit(min(limit, 300))
+    )
     docs = await cursor.to_list(length=limit)
-    return [_user_to_response(d).model_dump() for d in docs]
+
+    user_ids = [doc.get("id") for doc in docs if doc.get("id")]
+    listing_stats_map: Dict[str, Dict[str, Any]] = {}
+    if user_ids:
+        pipeline = [
+            {"$match": {"created_by": {"$in": user_ids}}},
+            {
+                "$group": {
+                    "_id": "$created_by",
+                    "total": {"$sum": 1},
+                    "active": {
+                        "$sum": {
+                            "$cond": [
+                                {"$eq": ["$status", "published"]},
+                                1,
+                                0,
+                            ]
+                        }
+                    },
+                }
+            },
+        ]
+        listing_stats = await db.vehicle_listings.aggregate(pipeline).to_list(length=5000)
+        listing_stats_map = {
+            stat.get("_id"): {"total": stat.get("total", 0), "active": stat.get("active", 0)}
+            for stat in listing_stats
+        }
+
+    plan_ids = [doc.get("plan_id") for doc in docs if doc.get("plan_id")]
+    plan_map: Dict[str, Any] = {}
+    if plan_ids:
+        plan_docs = await db.plans.find({"id": {"$in": plan_ids}}, {"_id": 0}).to_list(length=200)
+        plan_map = {doc.get("id"): doc for doc in plan_docs}
+
+    items = [
+        _build_user_summary(doc, listing_stats_map.get(doc.get("id"), {}), plan_map)
+        for doc in docs
+    ]
+
+    return {"items": items}
 
 
 @api_router.get("/menu/top-items")
