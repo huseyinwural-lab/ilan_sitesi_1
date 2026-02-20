@@ -11717,9 +11717,12 @@ async def request_publish_vehicle_listing(
         raise HTTPException(status_code=400, detail="Listing not eligible for publish")
 
     now_iso = datetime.now(timezone.utc).isoformat()
+    update_payload = {"status": "pending_moderation", "updated_at": now_iso}
+    if not listing.get("expires_at"):
+        update_payload["expires_at"] = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
     await db.vehicle_listings.update_one(
         {"id": listing_id},
-        {"$set": {"status": "pending_moderation", "updated_at": now_iso}},
+        {"$set": update_payload},
     )
     return {"ok": True, "status": "pending_moderation"}
 
