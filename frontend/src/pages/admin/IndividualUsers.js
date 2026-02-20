@@ -42,6 +42,7 @@ const resolveLastName = (user) => {
 };
 
 export default function IndividualUsers() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -52,11 +53,14 @@ export default function IndividualUsers() {
   const [limit] = useState(25);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [exporting, setExporting] = useState(false);
 
   const authHeader = useMemo(
     () => ({ Authorization: `Bearer ${localStorage.getItem("access_token")}` }),
     []
   );
+
+  const canExport = ["super_admin", "marketing"].includes(currentUser?.role);
 
   const fetchUsers = async () => {
     setLoading(true);
