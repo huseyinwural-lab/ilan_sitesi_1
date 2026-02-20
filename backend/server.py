@@ -747,6 +747,9 @@ async def lifespan(app: FastAPI):
     # Ping
     await db.command("ping")
 
+    async with sql_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
     # Indexes
     await db.users.create_index("email", unique=True)
     await db.users.create_index("id", unique=True)
