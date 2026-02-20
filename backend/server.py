@@ -6994,6 +6994,9 @@ async def admin_invoice_mark_paid(
     if invoice.status not in {"issued", "overdue"}:
         raise HTTPException(status_code=400, detail="Only issued invoices can be marked paid")
 
+    if not payload.reason:
+        raise HTTPException(status_code=400, detail="reason is required")
+
     now = datetime.now(timezone.utc)
     invoice.status = "paid"
     invoice.payment_status = "paid"
