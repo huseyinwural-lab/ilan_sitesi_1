@@ -1,39 +1,88 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ErrorState, LoadingState } from '@/components/account/AccountStates';
 
-const PROFILE_KEY = 'account_profile';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
-const readProfile = () => {
-  try {
-    return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}');
-  } catch (e) {
-    return {};
-  }
+const buildStrength = (value) => {
+  let score = 0;
+  if (value.length >= 8) score += 1;
+  if (/[A-Z]/.test(value)) score += 1;
+  if (/[0-9]/.test(value)) score += 1;
+  if (/[^A-Za-z0-9]/.test(value)) score += 1;
+  if (score <= 1) return { label: 'Zayıf', color: 'text-rose-600' };
+  if (score === 2) return { label: 'Orta', color: 'text-amber-600' };
+  if (score === 3) return { label: 'İyi', color: 'text-emerald-600' };
+  return { label: 'Güçlü', color: 'text-emerald-700' };
 };
 
 export default function AccountProfile() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState({ full_name: '', phone: '', city: '' });
+  const [profile, setProfile] = useState({ full_name: '', phone: '', locale: 'tr' });
+  const [prefs, setPrefs] = useState({ push_enabled: true, email_enabled: true });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' });
   const [passwordMessage, setPasswordMessage] = useState('');
+  const [gdprLoading, setGdprLoading] = useState(false);
+  const [gdprError, setGdprError] = useState('');
 
-  useEffect(() => {
-    const stored = readProfile();
-    setProfile({
-      full_name: stored.full_name || user?.full_name || '',
-      phone: stored.phone || '',
-      city: stored.city || '',
-    });
-  }, [user]);
+  const strength = useMemo(() => buildStrength(passwordForm.next || ''), [passwordForm.next]);
 
-  const handleProfileSave = () => {
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/users/me`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+      });
+      if (!res.ok) {
+        throw new Error('Profil yüklenemedi');
+      }
+      const data = await res.json();
+      setProfile({
+        full_name: data.full_name || '',
+        phone: data.phone || '',
+        locale: data.locale || 'tr',
+      });
+      setPrefs(data.notification_prefs || { push_enabled: true, email_enabled: true });
+      setError('');
+    } catch (err) {
+      setError('Profil yüklenemedi');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handlePasswordSave = () => {
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const handleProfileSave = async () => {
+    try {
+      const res = await fetch(`${API}/users/me`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          full_name: profile.full_name,
+          phone: profile.phone,
+          locale: profile.locale,
+          notification_prefs: prefs,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error('Profil güncellenemedi');
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
+    } catch (err) {
+      setError('Profil güncellenemedi');
+    }
+  };
+
+  const handlePasswordSave = async () => {
     if (!passwordForm.current || !passwordForm.next || !passwordForm.confirm) {
       setPasswordMessage('Tüm alanlar zorunlu.');
       return;
@@ -46,9 +95,58 @@ export default function AccountProfile() {
       setPasswordMessage('Şifreler eşleşmiyor.');
       return;
     }
-    setPasswordMessage('Şifre güncellendi (MOCKED).');
-    setPasswordForm({ current: '', next: '', confirm: '' });
+    try {
+      const res = await fetch(`${API}/users/change-password`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ current_password: passwordForm.current, new_password: passwordForm.next }),
+      });
+      if (!res.ok) {
+        throw new Error('Şifre güncellenemedi');
+      }
+      setPasswordMessage('Şifre güncellendi.');
+      setPasswordForm({ current: '', next: '', confirm: '' });
+    } catch (err) {
+      setPasswordMessage('Şifre güncellenemedi.');
+    }
   };
+
+  const handleGdprExport = async () => {
+    setGdprLoading(true);
+    setGdprError('');
+    try {
+      const res = await fetch(`${API}/users/me/export`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+      });
+      if (!res.ok) {
+        throw new Error('Export alınamadı');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `gdpr-export.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setGdprError('Export indirilemedi');
+    } finally {
+      setGdprLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <LoadingState label="Profil yükleniyor..." />;
+  }
+
+  if (error) {
+    return <ErrorState message={error} onRetry={fetchProfile} testId="account-profile-error" />;
+  }
 
   return (
     <div className="space-y-6" data-testid="account-profile">
@@ -79,23 +177,36 @@ export default function AccountProfile() {
             />
           </div>
           <div>
-            <label className="text-xs text-muted-foreground">Şehir</label>
-            <input
-              value={profile.city}
-              onChange={(e) => setProfile((prev) => ({ ...prev, city: e.target.value }))}
+            <label className="text-xs text-muted-foreground">Dil</label>
+            <select
+              value={profile.locale}
+              onChange={(e) => setProfile((prev) => ({ ...prev, locale: e.target.value }))}
               className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
-              data-testid="account-profile-city"
-            />
+              data-testid="account-profile-locale"
+            >
+              <option value="tr">Türkçe</option>
+              <option value="de">Deutsch</option>
+              <option value="en">English</option>
+            </select>
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground">E-posta</label>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label className="flex items-center gap-2 text-sm" data-testid="account-profile-push-pref">
             <input
-              value={user?.email || ''}
-              readOnly
-              className="mt-1 h-10 w-full rounded-md border px-3 text-sm bg-muted"
-              data-testid="account-profile-email"
+              type="checkbox"
+              checked={prefs.push_enabled}
+              onChange={(e) => setPrefs((prev) => ({ ...prev, push_enabled: e.target.checked }))}
             />
-          </div>
+            Web push bildirimleri
+          </label>
+          <label className="flex items-center gap-2 text-sm" data-testid="account-profile-email-pref">
+            <input
+              type="checkbox"
+              checked={prefs.email_enabled}
+              onChange={(e) => setPrefs((prev) => ({ ...prev, email_enabled: e.target.checked }))}
+            />
+            E-posta bildirimleri
+          </label>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -134,6 +245,7 @@ export default function AccountProfile() {
               className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
               data-testid="account-password-next"
             />
+            <div className={`text-xs mt-1 ${strength.color}`} data-testid="account-password-strength">{strength.label}</div>
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Yeni Şifre (Tekrar)</label>
@@ -160,15 +272,19 @@ export default function AccountProfile() {
       </div>
 
       <div className="rounded-lg border bg-white p-6" data-testid="account-gdpr-card">
-        <div className="text-sm font-semibold">Veri Dışa Aktarma (Opsiyonel)</div>
-        <p className="text-xs text-muted-foreground mt-1">GDPR export entegrasyonu yapılmadı.</p>
+        <div className="text-sm font-semibold">Veri Dışa Aktarma</div>
+        <p className="text-xs text-muted-foreground mt-1">GDPR export dosyanızı indirebilirsiniz.</p>
+        {gdprError && (
+          <div className="text-xs text-rose-600 mt-2" data-testid="account-gdpr-error">{gdprError}</div>
+        )}
         <button
           type="button"
-          disabled
+          onClick={handleGdprExport}
+          disabled={gdprLoading}
           className="mt-3 h-9 px-4 rounded-md border text-sm disabled:opacity-60"
           data-testid="account-gdpr-export"
         >
-          Veri Dışa Aktar (MOCKED)
+          {gdprLoading ? 'Hazırlanıyor...' : 'Veri Dışa Aktar'}
         </button>
       </div>
     </div>
