@@ -58,7 +58,7 @@ const UserPanelLayout = () => {
     };
     fetchCounts();
     return () => {
-      active = false
+      active = false;
     };
   }, []);
 
