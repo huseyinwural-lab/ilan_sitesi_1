@@ -11645,6 +11645,10 @@ async def list_my_listings(
         status_value = status.strip().lower()
         if status_value == "expired":
             query["expires_at"] = {"$lte": now_iso}
+        elif status_value == "draft":
+            query["status"] = {"$in": ["draft", "needs_revision"]}
+        elif status_value == "active":
+            query["status"] = "published"
         else:
             query["status"] = status_value
     if q:
