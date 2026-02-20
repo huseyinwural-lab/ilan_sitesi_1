@@ -1543,7 +1543,22 @@ _export_attempts: Dict[str, List[float]] = {}
 ADMIN_INVITE_RATE_LIMIT_WINDOW_SECONDS = 60
 ADMIN_INVITE_RATE_LIMIT_MAX_ATTEMPTS = 5
 
-ADMIN_ROLE_OPTIONS = {"super_admin", "country_admin", "finance", "support", "moderator"}
+ADMIN_ROLE_OPTIONS = {"super_admin", "country_admin", "finance", "support", "moderator", "campaigns_admin", "campaigns_supervisor"}
+
+CAMPAIGN_TYPES = {"individual", "corporate"}
+CAMPAIGN_TARGETS = {"showcase", "discount", "package"}
+CAMPAIGN_STATUSES = {"draft", "active", "paused", "expired", "archived"}
+CAMPAIGN_PRIORITY_SET = {"low", "medium", "high"}
+CAMPAIGN_SEGMENTS = {"all", "new_users", "returning", "selected"}
+CAMPAIGN_SCOPE_SET = {"global", "country"}
+CAMPAIGN_DEALER_PLANS = {"basic", "pro", "enterprise", "any"}
+CAMPAIGN_STATUS_TRANSITIONS = {
+    "draft": {"active", "archived"},
+    "active": {"paused", "archived"},
+    "paused": {"active", "archived"},
+    "expired": {"archived"},
+    "archived": set(),
+}
 
 APPLICATION_TYPES = {"individual", "dealer"}
 APPLICATION_REQUEST_TYPES = {"complaint", "request"}
