@@ -179,6 +179,26 @@ export default function AdminUsers() {
     setEditOpen(true);
   };
 
+  const handleDelete = (user) => {
+    setConfirmDelete(user);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
+    setDeleteLoading(true);
+    try {
+      await axios.delete(`${API}/admin/users/${confirmDelete.id}`, { headers: authHeader });
+      toast({ title: 'İşlem tamamlandı.' });
+      setConfirmDelete(null);
+      fetchUsers();
+    } catch (err) {
+      const message = err.response?.data?.detail || 'İşlem başarısız. Lütfen tekrar deneyin.';
+      toast({ title: typeof message === 'string' ? message : 'İşlem başarısız. Lütfen tekrar deneyin.', variant: 'destructive' });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const handleCloseModal = () => {
     setCreateOpen(false);
     setEditOpen(false);
