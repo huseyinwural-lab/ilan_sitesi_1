@@ -196,7 +196,6 @@ export default function Layout({ children }) {
     { divider: true, label: 'Kampanyalar', roles: roles.moderation },
   { path: '/admin/individual-campaigns', icon: Flag, label: 'Bireysel Kampanyalar', roles: roles.moderation, testId: 'campaigns-individual' },
   { path: '/admin/corporate-campaigns', icon: Flag, label: 'Kurumsal Kampanyalar', roles: roles.moderation, testId: 'campaigns-corporate' },
-    { path: '/admin/reports', icon: Flag, label: 'Şikayetler', roles: roles.moderationWithSupport, testId: 'listings-reports' },
 
     { divider: true, label: 'Katalog & İçerik', roles: roles.catalogView },
     { path: '/admin/categories', icon: FolderTree, label: 'Kategoriler', roles: roles.catalogView, testId: 'catalog-categories' },
