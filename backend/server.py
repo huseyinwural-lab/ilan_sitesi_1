@@ -2165,11 +2165,12 @@ def _build_individual_users_query(search: Optional[str], country_code: Optional[
         query["country_code"] = country_code
 
     if search:
+        safe_search = re.escape(search)
         or_conditions = [
-            {"first_name": {"$regex": search, "$options": "i"}},
-            {"last_name": {"$regex": search, "$options": "i"}},
-            {"email": {"$regex": search, "$options": "i"}},
-            {"full_name": {"$regex": search, "$options": "i"}},
+            {"first_name": {"$regex": safe_search, "$options": "i"}},
+            {"last_name": {"$regex": safe_search, "$options": "i"}},
+            {"email": {"$regex": safe_search, "$options": "i"}},
+            {"full_name": {"$regex": safe_search, "$options": "i"}},
         ]
         phone_candidates = _normalize_phone_candidates(search)
         if phone_candidates:
