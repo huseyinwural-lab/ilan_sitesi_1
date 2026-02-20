@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import hashlib
 import secrets
 import logging
+import ssl
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
