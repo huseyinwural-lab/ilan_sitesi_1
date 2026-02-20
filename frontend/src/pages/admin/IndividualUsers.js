@@ -356,7 +356,12 @@ export default function IndividualUsers() {
                   </td>
                 </tr>
               ) : (
-                safeUsers.map((user) => (
+                safeUsers.map((user) => {
+                  const statusValue = user.status || "active";
+                  const allowSuspend = canSuspend && statusValue !== "deleted";
+                  const allowDelete = canDelete && statusValue !== "deleted";
+                  const showActions = allowSuspend || allowDelete;
+                  return (
                   <tr key={user.id} className="border-b last:border-none" data-testid={`individual-user-row-${user.id}`}>
                     <td className="p-3" data-testid={`individual-user-first-name-${user.id}`}>
                       {resolveFirstName(user)}
