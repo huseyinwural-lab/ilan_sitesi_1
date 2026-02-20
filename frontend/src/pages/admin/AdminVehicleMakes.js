@@ -45,8 +45,11 @@ const AdminVehicleMakes = () => {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      const params = urlCountry ? `?country=${urlCountry}` : '';
-      const res = await axios.get(`${API_BASE_URL}/api/admin/vehicle-makes${params}`, { headers: authHeader });
+      const params = new URLSearchParams();
+      if (urlCountry) params.set('country', urlCountry);
+      if (filterType) params.set('vehicle_type', filterType);
+      const query = params.toString();
+      const res = await axios.get(`${API_BASE_URL}/api/admin/vehicle-makes${query ? `?${query}` : ''}`, { headers: authHeader });
       setItems(res.data.items || []);
     } catch (e) {
       console.error('Failed to load makes', e);
