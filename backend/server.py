@@ -5237,18 +5237,17 @@ class ReportStatusPayload(BaseModel):
 
 
 class InvoiceCreatePayload(BaseModel):
-    dealer_user_id: str
-    country_code: str
+    dealer_id: str
     plan_id: str
-    amount_net: float
-    tax_rate: float
-    currency: str
-    issued_at: Optional[str] = None
+    amount: Optional[float] = None
+    currency_code: Optional[str] = None
+    due_at: Optional[str] = None
+    notes: Optional[str] = None
+    issue_now: Optional[bool] = True
 
 
-class InvoiceStatusPayload(BaseModel):
-    target_status: str
-    note: Optional[str] = None
+class InvoiceActionPayload(BaseModel):
+    payment_method: Optional[str] = None
 
 
 class TaxRateCreatePayload(BaseModel):
