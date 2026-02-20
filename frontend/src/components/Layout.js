@@ -161,7 +161,7 @@ export default function Layout({ children }) {
   const roles = {
     dashboard: ['super_admin', 'country_admin', 'finance'],
     adminOnly: ['super_admin'],
-    userOps: ['super_admin', 'country_admin', 'support'],
+    userOps: ['super_admin', 'country_admin', 'support', 'moderator'],
     moderation: ['super_admin', 'country_admin', 'moderator'],
     moderationWithSupport: ['super_admin', 'country_admin', 'moderator', 'support'],
     catalogView: ['super_admin', 'country_admin', 'moderator'],
