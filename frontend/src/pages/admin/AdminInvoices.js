@@ -701,8 +701,22 @@ export default function AdminInvoicesPage() {
                     </div>
                     <div>
                       <h4 className="text-sm font-semibold">Status</h4>
-                      <div className="text-xs text-muted-foreground" data-testid="invoice-detail-status">{detailData.invoice.status}</div>
-                      <div className="text-xs text-muted-foreground" data-testid="invoice-detail-payment-status">{detailData.invoice.payment_status || '-'}</div>
+                      <div className="flex flex-col gap-2" data-testid="invoice-detail-status-group">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolveStatusBadgeClass(detailData.invoice.status)}`}
+                          data-testid="invoice-detail-status"
+                          title={resolveInvoiceTooltip(detailData.invoice)}
+                        >
+                          {detailData.invoice.status}
+                        </span>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolvePaymentBadgeClass(detailData.invoice.payment_status)}`}
+                          data-testid="invoice-detail-payment-status"
+                          title={resolvePaymentTooltip(detailData.invoice)}
+                        >
+                          {detailData.invoice.payment_status || '-'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
