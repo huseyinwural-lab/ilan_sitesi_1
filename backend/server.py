@@ -1405,8 +1405,11 @@ async def list_admin_users(
     if role:
         query["role"] = role
 
-    if status:
-        status_key = status.lower()
+    status_key = status.lower() if status else None
+    if status_key == "deleted":
+        query["deleted_at"] = {"$exists": True}
+    else:
+        query["deleted_at"] = {"$exists": False}
         if status_key == "active":
             query["is_active"] = True
         elif status_key == "inactive":
