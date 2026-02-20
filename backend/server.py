@@ -6989,6 +6989,7 @@ async def admin_invoice_mark_paid(
 
     now = datetime.now(timezone.utc)
     invoice.status = "paid"
+    invoice.payment_status = "paid"
     invoice.paid_at = now
     if payload.payment_method:
         invoice.payment_method = payload.payment_method
