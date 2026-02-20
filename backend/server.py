@@ -765,6 +765,14 @@ async def lifespan(app: FastAPI):
     else:
         logging.getLogger("mongo").warning("Mongo disabled (MONGO_ENABLED=false)")
 
+    logging.getLogger("runtime").info(
+        "APP_ENV=%s MONGO_ENABLED=%s AUTH_PROVIDER=%s APPLICATIONS_PROVIDER=%s",
+        APP_ENV,
+        MONGO_ENABLED,
+        AUTH_PROVIDER,
+        APPLICATIONS_PROVIDER,
+    )
+
     sql_target = _get_masked_db_target()
     logging.getLogger("sql_config").info(
         "SQL target host=%s db=%s ssl=%s pool=%s/%s",
