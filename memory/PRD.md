@@ -146,7 +146,7 @@
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- Başvuru Modülü RDBMS bağlantısı (DATABASE_URL erişilebilir) + create→list→assign→close E2E
+- Başvuru Modülü RDBMS bağlantısı (DATABASE_URL erişilebilir, Postgres) + create→list→assign→close E2E
 
 ### P1
 - Lint debt cleanup (LINT-1/2)
