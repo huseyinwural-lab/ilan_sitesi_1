@@ -178,10 +178,9 @@ export default function Layout({ children }) {
     { path: '/admin/country-compare', icon: Activity, label: 'Ülke Karşılaştırma', roles: roles.dashboard, testId: 'dashboard-country-compare' },
 
     { divider: true, label: 'Yönetim', roles: roles.userOps },
-  { path: '/admin/admin-users', icon: Users, label: 'Admin Kullanıcıları', roles: roles.adminOnly, testId: 'management-admin-users' },
-  { path: '/admin/roles', icon: ShieldCheck, label: 'Rol Tanımları', roles: roles.adminOnly, testId: 'management-roles' },
-  { path: '/admin/rbac-matrix', icon: MenuSquare, label: 'Yetki Atama (RBAC Matrix)', roles: roles.adminOnly, testId: 'management-rbac-matrix' },
-    { path: '/admin/users', icon: Users, label: 'Kullanıcı Yönetimi', roles: roles.userOps, testId: 'management-users' },
+    { path: '/admin/admin-users', icon: Users, label: 'Admin Kullanıcıları', roles: roles.adminOnly, testId: 'management-admin-users' },
+    { path: '/admin/roles', icon: ShieldCheck, label: 'Rol Tanımları', roles: roles.adminOnly, testId: 'management-roles' },
+    { path: '/admin/rbac-matrix', icon: MenuSquare, label: 'Yetki Atama (RBAC Matrix)', roles: roles.adminOnly, testId: 'management-rbac-matrix' },
 
     { divider: true, label: 'Üyeler', roles: roles.userOps },
   { path: '/admin/individual-users', icon: Users, label: 'Bireysel Kullanıcılar', roles: roles.userOps, testId: 'members-individual-users' },
