@@ -334,6 +334,18 @@ export default function Users() {
               ) : (
                 users.map((userItem) => {
                   const badge = statusBadge(userItem.status);
+                  const isSelf = userItem.id === user?.id;
+                  const canManageUser = canManage && !isSelf;
+                  const showManageActions = canManageUser && userItem.status !== 'deleted';
+                  const actionLabel = !showManageActions
+                    ? isSelf
+                      ? 'Kendi hesabın'
+                      : !canManage
+                      ? 'Yetkisiz'
+                      : userItem.status === 'deleted'
+                      ? 'Silindi'
+                      : 'Aksiyon yok'
+                    : '';
                   return (
                     <tr key={userItem.id} className="border-b last:border-none" data-testid={`user-row-${userItem.id}`}>
                       <td className="p-3" data-testid={`user-name-${userItem.id}`}>{userItem.full_name || '-'}</td>
@@ -366,7 +378,7 @@ export default function Users() {
                           >
                             <Eye size={14} /> Detay
                           </button>
-                          {canManage && userItem.status !== 'deleted' && (
+                          {showManageActions ? (
                             <>
                               {userItem.status === 'suspended' ? (
                                 <button
@@ -396,6 +408,10 @@ export default function Users() {
                                 <Trash2 size={14} /> Sil
                               </button>
                             </>
+                          ) : (
+                            <span className="text-xs text-muted-foreground" data-testid={`user-actions-disabled-${userItem.id}`}>
+                              {actionLabel}
+                            </span>
                           )}
                         </div>
                       </td>
