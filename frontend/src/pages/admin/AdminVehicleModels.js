@@ -34,6 +34,7 @@ const AdminVehicleModels = () => {
   const [items, setItems] = useState([]);
   const [makes, setMakes] = useState([]);
   const [filterMake, setFilterMake] = useState('');
+  const [filterType, setFilterType] = useState('');
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
