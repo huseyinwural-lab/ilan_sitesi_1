@@ -7027,6 +7027,7 @@ async def admin_invoice_cancel(
 
     now = datetime.now(timezone.utc)
     invoice.status = "cancelled"
+    invoice.payment_status = "unpaid"
     invoice.updated_at = now
     await session.commit()
     await session.refresh(invoice)
