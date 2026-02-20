@@ -2391,6 +2391,161 @@ All required data-testids present and functional:
   - Categories page loads correctly with list view
   - All navigation working as expected
 
+## Admin UI Routing and Labels Test (Feb 20, 2026)
+
+### Test Flow Executed:
+**Base URL**: https://user-action-panel.preview.emergentagent.com
+**Route Tested**: /admin/users → /admin/admin-users redirect
+**Credentials**: admin@platform.com / Admin123! ✅ WORKING
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Admin Login**: ✅ WORKING
+  - Login successful with admin@platform.com / Admin123!
+  - Redirected to /admin after authentication
+  - Session established correctly
+
+**2. URL Redirect Test**: ✅ WORKING PERFECTLY
+  - **Test**: Navigate to `/admin/users`
+  - **Expected**: Redirect/alias to `/admin/admin-users`
+  - **Result**: ✅ Redirect confirmed - URL changed to `https://user-action-panel.preview.emergentagent.com/admin/admin-users`
+  - **Implementation**: React Router redirect in BackofficePortalApp.jsx line 43: `<Route path="/users" element={<Navigate to="/admin/admin-users" replace />} />`
+
+**3. Sidebar Label Verification**: ✅ CORRECT
+  - **Expected Label**: "Admin Kullanıcıları"
+  - **Found**: ✅ "Admin Kullanıcıları" (exact match)
+  - **Location**: Sidebar navigation under "Yönetim" section
+  - **Data-testid**: `nav-management-admin-users`
+  - **Implementation**: Layout.js line 181
+
+**4. Page Title Verification**: ✅ CORRECT
+  - **Expected Title**: "Admin Kullanıcıları Yönetimi"
+  - **Found**: ✅ "Admin Kullanıcıları Yönetimi" (exact match)
+  - **Data-testid**: `admin-users-title`
+  - **Implementation**: AdminUsers.js line 297
+
+**5. Page Subtitle Verification**: ✅ CORRECT
+  - **Expected Subtitle**: "Yetkilendirilmiş admin hesapları ve erişim kapsamları"
+  - **Found**: ✅ "Yetkilendirilmiş admin hesapları ve erişim kapsamları" (exact match)
+  - **Data-testid**: `admin-users-subtitle`
+  - **Implementation**: AdminUsers.js lines 298-300
+
+**6. Table Actions Column - "Düzenle" Button**: ✅ ALL ROWS HAVE IT
+  - **Total Admin User Rows**: 7
+  - **Rows with "Düzenle" button**: 7/7 (100%)
+  - **Button Text**: "Düzenle" (with Pencil icon)
+  - **Data-testid Pattern**: `admin-user-edit-{user_id}`
+  - **Implementation**: AdminUsers.js lines 483-489
+  - **All users verified**:
+    - countryadmin@platform.com ✅
+    - country_admin_fr@test.com ✅
+    - countryadmin_fr_d442e8@example.com ✅
+    - support@platform.ch ✅
+    - finance@platform.com ✅
+    - moderator@platform.de ✅
+    - admin@platform.com ✅
+
+**7. Table Actions Column - "RBAC Matrix" Link**: ✅ ALL ROWS HAVE IT
+  - **Total Admin User Rows**: 7
+  - **Rows with "RBAC Matrix" link**: 7/7 (100%)
+  - **Link Text**: "RBAC Matrix"
+  - **Link Target**: `/admin/rbac-matrix`
+  - **Data-testid Pattern**: `admin-user-rbac-{user_id}`
+  - **Implementation**: AdminUsers.js lines 490-496
+  - **All users verified**: ✅ All 7 rows contain the RBAC Matrix link
+
+### Implementation Details Verified:
+
+**Route Configuration** (BackofficePortalApp.jsx):
+```javascript
+// Line 43: Redirect from old route to new route
+<Route path="/users" element={<Navigate to="/admin/admin-users" replace />} />
+
+// Line 44: New admin users route
+<Route path="/admin-users" element={<Layout><AdminUsersPage /></Layout>} />
+```
+
+**Sidebar Navigation** (Layout.js):
+```javascript
+// Line 181: Sidebar item with correct Turkish label
+{ path: '/admin/admin-users', icon: Users, label: 'Admin Kullanıcıları', roles: roles.adminOnly, testId: 'management-admin-users' }
+```
+
+**Page Header** (AdminUsers.js):
+```javascript
+// Lines 297-300: Title and subtitle with data-testids
+<h1 className="text-2xl font-bold" data-testid="admin-users-title">
+  Admin Kullanıcıları Yönetimi
+</h1>
+<p className="text-sm text-muted-foreground" data-testid="admin-users-subtitle">
+  Yetkilendirilmiş admin hesapları ve erişim kapsamları
+</p>
+```
+
+**Table Actions** (AdminUsers.js):
+```javascript
+// Lines 483-489: Düzenle button
+<button
+  type="button"
+  className="inline-flex items-center gap-1 text-primary text-xs"
+  onClick={() => handleOpenEdit(user)}
+  data-testid={`admin-user-edit-${user.id}`}
+>
+  <Pencil size={14} /> Düzenle
+</button>
+
+// Lines 490-496: RBAC Matrix link
+<Link
+  to="/admin/rbac-matrix"
+  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+  data-testid={`admin-user-rbac-${user.id}`}
+>
+  RBAC Matrix
+</Link>
+```
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (7/7 requirements verified)
+- **Login & Authentication**: ✅ WORKING
+- **URL Redirect**: ✅ WORKING (/admin/users → /admin/admin-users)
+- **Sidebar Label**: ✅ CORRECT ("Admin Kullanıcıları")
+- **Page Title**: ✅ CORRECT ("Admin Kullanıcıları Yönetimi")
+- **Page Subtitle**: ✅ CORRECT (exact Turkish text match)
+- **Actions Column - Düzenle**: ✅ ALL 7 ROWS (100%)
+- **Actions Column - RBAC Matrix**: ✅ ALL 7 ROWS (100%)
+- **No Critical Errors**: ✅ CONFIRMED
+
+### Console Warnings (Non-Critical):
+- **React 19 Hydration Warnings**: 4 warnings detected
+  - `<span>` cannot be child of `<option>` (filter dropdowns)
+  - `<span>` cannot be child of `<select>` (filter dropdowns)
+  - `<tr>` and `<span>` nesting in table body
+  - **Impact**: Non-blocking, pages render and function correctly
+  - **Note**: Consistent with previous test results, cosmetic only
+
+### Screenshots Captured:
+- **admin-users-routing-test.png**: Full admin users page showing all verified elements
+  - Sidebar with "Admin Kullanıcıları" label visible
+  - Page title "Admin Kullanıcıları Yönetimi"
+  - Page subtitle with full Turkish text
+  - Table with 7 admin users
+  - Actions column showing both "Düzenle" and "RBAC Matrix" for each row
+
+### Final Status:
+- **Overall Result**: ✅ **PASS** - All admin UI routing and labels working correctly
+- **All Requirements**: ✅ VERIFIED (redirect, sidebar label, page title, subtitle, actions)
+- **URL Routing**: ✅ CORRECT (proper redirect from old to new route)
+- **Turkish Labels**: ✅ CORRECT (all Turkish text matches exactly)
+- **Table Actions**: ✅ COMPLETE (all rows have both required action items)
+- **Production Ready**: ✅ CONFIRMED
+
+### Agent Communication:
+- **Agent**: testing
+- **Message**: Admin UI routing and labels test SUCCESSFULLY COMPLETED. All 7 requirements verified and passing (100% success rate). 1) Login as super admin working correctly. 2) /admin/users successfully redirects to /admin/admin-users. 3) Sidebar shows correct label "Admin Kullanıcıları" in Yönetim section. 4) Page title "Admin Kullanıcıları Yönetimi" matches exactly. 5) Subtitle "Yetkilendirilmiş admin hesapları ve erişim kapsamları" matches exactly. 6) All 7 admin user rows have "Düzenle" button in actions column. 7) All 7 admin user rows have "RBAC Matrix" link in actions column. Only non-critical React 19 hydration warnings present (consistent with previous tests). No functional issues found. All selectors and data-testids working correctly.
+
+
 **2. Text Contrast (Liste ve Wizard)**: ✅ EXCELLENT - ALL DARK
   - **List Headers**: `text-slate-800` (DARK) ✅
   - **List Rows**: `text-slate-900` (DARK) ✅
