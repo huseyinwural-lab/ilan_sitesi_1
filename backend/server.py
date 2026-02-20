@@ -8585,6 +8585,7 @@ async def admin_list_vehicle_models(
     request: Request,
     make_id: Optional[str] = None,
     country: Optional[str] = None,
+    vehicle_type: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
@@ -8602,6 +8603,13 @@ async def admin_list_vehicle_models(
             {"country_code": country_code}, {"_id": 0, "id": 1}
         ).to_list(length=500)
         query["make_id"] = {"$in": [m["id"] for m in make_ids]}
+
+    vehicle_type_filter = _normalize_vehicle_type(vehicle_type)
+    if vehicle_type_filter:
+        if vehicle_type_filter not in VEHICLE_TYPE_SET:
+            raise HTTPException(status_code=400, detail="vehicle_type invalid")
+        query["vehicle_type"] = vehicle_type_filter
+
     docs = await db.vehicle_models.find(query, {"_id": 0}).sort("name", 1).to_list(length=1000)
     return {"items": [_normalize_vehicle_model_doc(doc) for doc in docs]}
 
