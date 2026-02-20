@@ -619,12 +619,12 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
         <h3 className="font-semibold mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Link
-            to="/admin/users"
+            to="/admin/admin-users"
             className="flex items-center gap-2 p-3 rounded-md border hover:bg-muted/50 transition-colors"
-            data-testid="quick-action-users"
+            data-testid="quick-action-admin-users"
           >
             <Users size={18} className="text-primary" />
-            <span className="text-sm font-medium">{t('users')}</span>
+            <span className="text-sm font-medium">Admin Kullanıcıları</span>
           </Link>
           <Link
             to="/admin/countries"
