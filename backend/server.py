@@ -7082,6 +7082,345 @@ async def admin_invoice_refund(
     return {"invoice": _admin_invoice_to_dict(invoice, dealer, plan)}
 
 
+@api_router.get("/dealer/invoices")
+async def dealer_list_invoices(
+    request: Request,
+    status: Optional[str] = None,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+
+    try:
+        dealer_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="dealer invalid")
+
+    conditions = [AdminInvoice.dealer_id == dealer_uuid]
+    if status:
+        status_value = status.strip().lower()
+        if status_value not in INVOICE_STATUS_SET:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        conditions.append(AdminInvoice.status == status_value)
+
+    rows = (await session.execute(select(AdminInvoice).where(*conditions).order_by(AdminInvoice.created_at.desc()))).scalars().all()
+    items = [_admin_invoice_to_dict(row) for row in rows]
+    return {"items": items}
+
+
+@api_router.get("/dealer/invoices/{invoice_id}")
+async def dealer_invoice_detail(
+    invoice_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invoice_id invalid")
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    if str(invoice.dealer_id) != current_user.get("id"):
+        raise HTTPException(status_code=403, detail="Invoice access denied")
+
+    plan = await session.get(Plan, invoice.plan_id)
+    return {"invoice": _admin_invoice_to_dict(invoice, None, plan)}
+
+
+def _resolve_payment_status(value: Optional[str]) -> str:
+    normalized = (value or "").lower()
+    if normalized in {"paid", "succeeded"}:
+        return "paid"
+    if normalized in {"refunded"}:
+        return "refunded"
+    if normalized in {"partially_refunded", "partial_refund"}:
+        return "partially_refunded"
+    if normalized in {"failed", "canceled", "cancelled"}:
+        return "failed"
+    return normalized or "unpaid"
+
+
+def _apply_payment_status(invoice: AdminInvoice, payment: Payment, transaction: PaymentTransaction, payment_status: str, provider_payment_id: Optional[str]) -> None:
+    now = datetime.now(timezone.utc)
+    status_value = _resolve_payment_status(payment_status)
+
+    if provider_payment_id:
+        payment.provider_payment_id = provider_payment_id
+        transaction.provider_payment_id = provider_payment_id
+
+    if status_value == "paid":
+        invoice.payment_status = "paid"
+        invoice.status = "paid"
+        if not invoice.paid_at:
+            invoice.paid_at = now
+        payment.status = "succeeded"
+        payment.paid_at = now
+        transaction.status = "succeeded"
+        transaction.payment_status = "paid"
+    elif status_value == "refunded":
+        invoice.payment_status = "refunded"
+        invoice.status = "refunded"
+        payment.status = "refunded"
+        transaction.status = "refunded"
+        transaction.payment_status = "refunded"
+    elif status_value == "partially_refunded":
+        invoice.payment_status = "partially_refunded"
+        payment.status = "refunded"
+        transaction.status = "refunded"
+        transaction.payment_status = "partially_refunded"
+    elif status_value == "failed":
+        invoice.payment_status = "unpaid"
+        payment.status = "failed"
+        transaction.status = "failed"
+        transaction.payment_status = "unpaid"
+    else:
+        transaction.status = status_value
+
+    invoice.updated_at = now
+    payment.updated_at = now
+    transaction.updated_at = now
+
+
+@api_router.post("/payments/create-checkout-session")
+async def create_checkout_session(
+    payload: PaymentCheckoutPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=503, detail="Stripe not configured")
+
+    try:
+        invoice_uuid = uuid.UUID(payload.invoice_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invoice_id invalid")
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    if str(invoice.dealer_id) != current_user.get("id"):
+        raise HTTPException(status_code=403, detail="Invoice access denied")
+
+    if invoice.status not in {"issued", "overdue"} or invoice.payment_status != "unpaid":
+        raise HTTPException(status_code=400, detail="Invoice is not payable")
+
+    if not _is_payment_enabled_for_country(invoice.country_code):
+        raise HTTPException(status_code=403, detail="Payments disabled for this country")
+
+    origin = payload.origin_url.strip().rstrip("/")
+    if not origin:
+        raise HTTPException(status_code=400, detail="origin_url required")
+
+    webhook_url = f"{origin}/api/webhook/stripe"
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+
+    success_url = f"{origin}/dealer/payments/success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{origin}/dealer/payments/cancel"
+
+    session_request = CheckoutSessionRequest(
+        amount=float(invoice.amount),
+        currency=invoice.currency_code,
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata={
+            "invoice_id": str(invoice.id),
+            "dealer_id": str(invoice.dealer_id),
+            "invoice_no": invoice.invoice_no,
+        },
+    )
+
+    checkout_session: CheckoutSessionResponse = stripe_checkout.create_checkout_session(session_request)
+
+    now = datetime.now(timezone.utc)
+    payment = Payment(
+        invoice_id=invoice.id,
+        dealer_id=invoice.dealer_id,
+        provider="stripe",
+        provider_payment_id=None,
+        amount=invoice.amount,
+        currency=invoice.currency_code,
+        status="pending",
+        paid_at=None,
+        created_at=now,
+        updated_at=now,
+    )
+    transaction = PaymentTransaction(
+        provider="stripe",
+        session_id=checkout_session.session_id,
+        provider_payment_id=None,
+        invoice_id=invoice.id,
+        dealer_id=invoice.dealer_id,
+        amount=invoice.amount,
+        currency=invoice.currency_code,
+        status=checkout_session.status or "pending",
+        payment_status="unpaid",
+        metadata={"checkout_url": checkout_session.checkout_url},
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(payment)
+    session.add(transaction)
+    await session.commit()
+
+    return {"checkout_url": checkout_session.checkout_url, "session_id": checkout_session.session_id}
+
+
+@api_router.get("/payments/checkout/status/{session_id}")
+async def get_checkout_status(
+    session_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=503, detail="Stripe not configured")
+
+    origin = str(request.base_url).rstrip("/")
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=f"{origin}/api/webhook/stripe")
+
+    status_response: CheckoutStatusResponse = stripe_checkout.get_checkout_status(session_id)
+
+    transaction = (await session.execute(
+        select(PaymentTransaction).where(PaymentTransaction.session_id == session_id)
+    )).scalar_one_or_none()
+
+    if not transaction:
+        raise HTTPException(status_code=404, detail="payment transaction not found")
+
+    if str(transaction.dealer_id) != current_user.get("id"):
+        raise HTTPException(status_code=403, detail="payment access denied")
+
+    invoice = await session.get(AdminInvoice, transaction.invoice_id)
+    payment = (await session.execute(
+        select(Payment).where(Payment.invoice_id == transaction.invoice_id)
+    )).scalar_one_or_none()
+
+    provider_payment_id = getattr(status_response, "payment_id", None)
+    payment_status = status_response.payment_status if hasattr(status_response, "payment_status") else None
+
+    if invoice and payment:
+        _apply_payment_status(invoice, payment, transaction, payment_status or "", provider_payment_id)
+        await session.commit()
+        await session.refresh(invoice)
+
+    return {
+        "session_id": status_response.session_id,
+        "status": status_response.status,
+        "payment_status": status_response.payment_status,
+    }
+
+
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=503, detail="Stripe not configured")
+    if not STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="Stripe webhook secret not configured")
+
+    origin = str(request.base_url).rstrip("/")
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=f"{origin}/api/webhook/stripe")
+
+    signature = request.headers.get("stripe-signature")
+    raw_body = await request.body()
+
+    webhook_response = stripe_checkout.handle_webhook(raw_body, signature)
+
+    event_id = webhook_response.event_id
+    event_type = webhook_response.event_type
+    session_id = webhook_response.session_id
+    payment_status = webhook_response.payment_status
+    metadata = webhook_response.metadata or {}
+
+    now = datetime.now(timezone.utc)
+
+    event_log = PaymentEventLog(
+        provider="stripe",
+        event_id=event_id,
+        event_type=event_type,
+        raw_payload=metadata,
+        status="processing",
+        processed_at=None,
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(event_log)
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        return {"status": "duplicate"}
+
+    transaction = (await session.execute(
+        select(PaymentTransaction).where(PaymentTransaction.session_id == session_id)
+    )).scalar_one_or_none()
+
+    invoice = None
+    payment = None
+    if transaction:
+        invoice = await session.get(AdminInvoice, transaction.invoice_id)
+        payment = (await session.execute(
+            select(Payment).where(Payment.invoice_id == transaction.invoice_id)
+        )).scalar_one_or_none()
+    else:
+        invoice_id = metadata.get("invoice_id")
+        try:
+            invoice_uuid = uuid.UUID(invoice_id) if invoice_id else None
+        except ValueError:
+            invoice_uuid = None
+        if invoice_uuid:
+            invoice = await session.get(AdminInvoice, invoice_uuid)
+            if invoice:
+                payment = (await session.execute(
+                    select(Payment).where(Payment.invoice_id == invoice.id)
+                )).scalar_one_or_none()
+
+                if not transaction:
+                    transaction = PaymentTransaction(
+                        provider="stripe",
+                        session_id=session_id,
+                        provider_payment_id=None,
+                        invoice_id=invoice.id,
+                        dealer_id=invoice.dealer_id,
+                        amount=invoice.amount,
+                        currency=invoice.currency_code,
+                        status="pending",
+                        payment_status="unpaid",
+                        metadata=metadata,
+                        created_at=now,
+                        updated_at=now,
+                    )
+                    session.add(transaction)
+
+    if invoice and payment and transaction:
+        _apply_payment_status(invoice, payment, transaction, payment_status or "", None)
+        event_log.status = "processed"
+        event_log.processed_at = now
+        event_log.updated_at = now
+        await session.commit()
+        return {"status": "processed"}
+
+    event_log.status = "ignored"
+    event_log.processed_at = now
+    event_log.updated_at = now
+    await session.commit()
+    return {"status": "ignored"}
+
+
 @api_router.get("/admin/finance/revenue")
 async def admin_revenue(
     request: Request,
