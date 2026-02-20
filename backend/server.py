@@ -746,7 +746,7 @@ def _normalize_scope(role: str, scope: Optional[List[str]], active_countries: Li
     return normalized
 
 
-def _assert_super_admin_invariant(db, target_user: dict, payload_role: Optional[str], payload_active: Optional[bool], actor: dict) -> None:
+async def _assert_super_admin_invariant(db, target_user: dict, payload_role: Optional[str], payload_active: Optional[bool], actor: dict) -> None:
     if not target_user:
         return
     target_role = target_user.get("role")
