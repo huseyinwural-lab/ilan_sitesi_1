@@ -185,9 +185,13 @@ export default function Users() {
     setDetailData(null);
   };
 
-  const confirmMessage = confirmAction?.type === 'delete'
-    ? 'Kullanıcı silinecek (geri alınamaz). Devam edilsin mi?'
-    : 'Kullanıcı pasife alınacak. Devam edilsin mi?';
+  const confirmMessages = {
+    suspend: 'Kullanıcı askıya alınacak. Devam edilsin mi?',
+    activate: 'Kullanıcı yeniden aktif edilecek. Devam edilsin mi?',
+    delete: 'Kullanıcı silinecek (geri alınamaz). Devam edilsin mi?',
+  };
+
+  const confirmMessage = confirmAction ? confirmMessages[confirmAction.type] : '';
 
   return (
     <div className="space-y-6" data-testid="users-page">
