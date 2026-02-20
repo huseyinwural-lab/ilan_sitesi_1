@@ -1714,7 +1714,7 @@ async def login(
     blocked_until = _failed_login_blocked_until.get(rl_key)
     if blocked_until and now < blocked_until:
         # Log RATE_LIMIT_BLOCK only once per block window
-        if db and not _failed_login_block_audited.get(rl_key):
+        if db is not None and not _failed_login_block_audited.get(rl_key):
             await db.audit_logs.insert_one(
                 {
                     "id": str(uuid.uuid4()),
