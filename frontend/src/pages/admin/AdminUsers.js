@@ -687,6 +687,38 @@ export default function AdminUsers() {
           </div>
         </div>
       )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="admin-users-delete-modal">
+          <div className="bg-card rounded-lg shadow-lg max-w-md w-full">
+            <div className="p-4 border-b">
+              <h3 className="text-lg font-semibold" data-testid="admin-users-delete-title">Onay</h3>
+            </div>
+            <div className="p-4 text-sm text-muted-foreground" data-testid="admin-users-delete-message">
+              Admin hesabı silinecek (geri alınamaz). Devam edilsin mi?
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t">
+              <button
+                type="button"
+                className="h-9 px-4 rounded-md border text-sm"
+                onClick={() => setConfirmDelete(null)}
+                data-testid="admin-users-delete-cancel"
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm"
+                onClick={handleConfirmDelete}
+                disabled={deleteLoading}
+                data-testid="admin-users-delete-confirm"
+              >
+                {deleteLoading ? 'Siliniyor' : 'Onayla'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
