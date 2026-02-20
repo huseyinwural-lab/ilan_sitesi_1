@@ -60,6 +60,7 @@ const AdminVehicleModels = () => {
       setLoading(true);
       const params = new URLSearchParams();
       if (filterMake) params.set('make_id', filterMake);
+      if (filterType) params.set('vehicle_type', filterType);
       if (urlCountry) params.set('country', urlCountry);
       const query = params.toString();
       const res = await axios.get(`${API_BASE_URL}/api/admin/vehicle-models${query ? `?${query}` : ''}`, { headers: authHeader });
