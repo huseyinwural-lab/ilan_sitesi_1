@@ -1990,7 +1990,7 @@ async def activate_user(
     user_id: str,
     request: Request,
     payload: Optional[AdminUserActionPayload] = None,
-    current_user=Depends(check_permissions(["super_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -1999,22 +1999,57 @@ async def activate_user(
     if not user or user.get("deleted_at"):
         raise HTTPException(status_code=404, detail="User not found")
 
+    if user.get("role") in ADMIN_ROLE_OPTIONS:
+        raise HTTPException(status_code=400, detail="Admin accounts must be managed in Admin Users")
+
+    reason_code, reason_detail = _extract_moderation_reason(payload)
+    if not reason_code:
+        raise HTTPException(status_code=400, detail="Reason is required")
+
     now_iso = datetime.now(timezone.utc).isoformat()
-    await db.users.update_one(
-        {"id": user_id},
-        {"$set": {"status": "active", "is_active": True, "updated_at": now_iso}},
-    )
+    before_state = {
+        "status": user.get("status"),
+        "is_active": user.get("is_active", True),
+        "suspension_until": user.get("suspension_until"),
+        "deleted_at": user.get("deleted_at"),
+    }
+
+    update_ops: Dict[str, Any] = {
+        "$set": {
+            "status": "active",
+            "is_active": True,
+            "updated_at": now_iso,
+        },
+        "$unset": {"suspension_until": ""},
+    }
+
+    if user.get("role") == "dealer":
+        update_ops["$set"]["dealer_status"] = "active"
+
+    await db.users.update_one({"id": user_id}, update_ops)
+
+    after_state = {
+        **before_state,
+        "status": "active",
+        "is_active": True,
+        "suspension_until": None,
+    }
 
     audit_entry = await build_audit_entry(
-        event_type="user_activated",
+        event_type="user_reactivated",
         actor=current_user,
         target_id=user_id,
         target_type="user",
         country_code=user.get("country_code"),
-        details={"reason": payload.reason if payload else None},
+        details={
+            "reason_code": reason_code,
+            "reason_detail": reason_detail,
+            "before": before_state,
+            "after": after_state,
+        },
         request=request,
     )
-    audit_entry["action"] = "user_activated"
+    audit_entry["action"] = "user_reactivated"
     await db.audit_logs.insert_one(audit_entry)
 
     return {"ok": True}
