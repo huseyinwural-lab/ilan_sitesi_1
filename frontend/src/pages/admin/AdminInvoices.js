@@ -374,6 +374,29 @@ export default function AdminInvoicesPage() {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2" data-testid="invoice-date-presets">
+          <button
+            className="h-9 px-3 rounded-md border text-sm"
+            onClick={() => applyDatePreset(7)}
+            data-testid="invoice-date-preset-7"
+          >
+            Son 7 Gün
+          </button>
+          <button
+            className="h-9 px-3 rounded-md border text-sm"
+            onClick={() => applyDatePreset(30)}
+            data-testid="invoice-date-preset-30"
+          >
+            Son 30 Gün
+          </button>
+          <button
+            className="h-9 px-3 rounded-md border text-sm"
+            onClick={clearDatePreset}
+            data-testid="invoice-date-preset-clear"
+          >
+            Temizle
+          </button>
+        </div>
         <input
           type="date"
           value={dateFrom}
