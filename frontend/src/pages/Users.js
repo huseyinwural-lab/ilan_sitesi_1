@@ -142,14 +142,8 @@ export default function Users() {
     setConfirmAction({ type: 'delete', user: userItem });
   };
 
-  const handleActivate = async (userItem) => {
-    try {
-      await axios.post(`${API}/admin/users/${userItem.id}/activate`, {}, { headers: authHeader });
-      toast({ title: 'Kullanıcı aktif edildi.' });
-      fetchUsers();
-    } catch (err) {
-      toast({ title: 'Aktifleştirme başarısız.', variant: 'destructive' });
-    }
+  const handleActivate = (userItem) => {
+    setConfirmAction({ type: 'activate', user: userItem });
   };
 
   const handleConfirmAction = async () => {
