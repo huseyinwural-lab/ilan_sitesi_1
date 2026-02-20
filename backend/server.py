@@ -269,8 +269,9 @@ async def _auto_reactivate_if_expired(user: dict, db, request: Optional[Request]
             "role": "system",
             "country_scope": [],
         }
+        event_type = "dealer_reactivated" if user.get("role") == "dealer" else "user_reactivated"
         audit_entry = await build_audit_entry(
-            event_type="user_reactivated",
+            event_type=event_type,
             actor=actor,
             target_id=user.get("id"),
             target_type="user",
@@ -287,7 +288,7 @@ async def _auto_reactivate_if_expired(user: dict, db, request: Optional[Request]
             },
             request=request,
         )
-        audit_entry["action"] = "user_reactivated"
+        audit_entry["action"] = event_type
         await db.audit_logs.insert_one(audit_entry)
 
     return user
