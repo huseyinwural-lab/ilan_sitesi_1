@@ -101,6 +101,15 @@ function App() {
                     <Route path="create/vehicle-wizard" element={<WizardContainer />} />
                   </Route>
 
+                  <Route
+                    path="/support"
+                    element={
+                      <ProtectedRoute>
+                        <SupportPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   {/* Backoffice Portal (lazy chunk) */}
                   <Route
                     path="/admin/*"
