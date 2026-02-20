@@ -384,7 +384,7 @@ export default function Users() {
                                   onClick={() => handleSuspend(userItem)}
                                   data-testid={`user-suspend-${userItem.id}`}
                                 >
-                                  <Ban size={14} /> Pasife Al
+                                  <Ban size={14} /> Askıya Al
                                 </button>
                               )}
                               <button
