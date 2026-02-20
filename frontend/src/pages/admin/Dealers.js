@@ -179,7 +179,13 @@ export default function DealersPage() {
             ) : items.length === 0 ? (
               <tr><td colSpan={4} className="p-6 text-center text-muted-foreground">No dealers</td></tr>
             ) : (
-              items.map((d) => (
+              items.map((d) => {
+                const statusValue = d.status || d.dealer_status || 'active';
+                const badge = statusBadge(statusValue);
+                const allowSuspend = canSuspend && statusValue !== 'deleted';
+                const allowDelete = canDelete && statusValue !== 'deleted';
+                const showActions = allowSuspend || allowDelete;
+                return (
                 <tr key={d.id} className="border-t" data-testid={`dealer-row-${d.id}`}>
                   <td className="p-3" data-testid={`dealer-email-${d.id}`}>{d.email}</td>
                   <td className="p-3 text-muted-foreground" data-testid={`dealer-country-${d.id}`}>{d.country_code || '-'}</td>
