@@ -117,6 +117,7 @@
 - **Bireysel Portal Faz B1-B7 (2026-02-20):** /account IA + role guard, bireysel menü standardı, listing wizard 5 adım, draft kaydet, my listings filtre/aksiyonlar, moderasyon notu görünümü, favorites/messages/support list/detail, profil/şifre ekranı (favorites/messages/profile MOCKED)
 
 ## Release Notes
+- Bireysel Portal: /account IA + guard + listing wizard (5 adım) + my listings aksiyonları + favorites/messages/support/profil temel akışlar
 - Dashboard summary gerçek veriye bağlandı + Quick Actions aktif (users/countries/audit)
 - Dashboard canlı veri + Quick Actions + E2E PASS (Dashboard fazı kapatıldı)
 - Dashboard health: uptime + restart zamanı eklendi
