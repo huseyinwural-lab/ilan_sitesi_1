@@ -41,6 +41,7 @@ export default function BackofficePortalApp() {
     <Routes>
       <Route path="/" element={<Layout><Dashboard /></Layout>} />
       <Route path="/users" element={<Navigate to="/admin/admin-users" replace />} />
+      <Route path="/user-management" element={<Navigate to="/admin/admin-users" replace />} />
       <Route path="/admin-users" element={<Layout><AdminUsersPage /></Layout>} />
       <Route path="/roles" element={<Layout><AdminRolesPage /></Layout>} />
       <Route path="/rbac-matrix" element={<Layout><RBACMatrixPage /></Layout>} />
