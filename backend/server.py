@@ -1219,6 +1219,29 @@ class UpdateUserPayload(BaseModel):
     role: Optional[str] = None
 
 
+class AdminUserCreatePayload(BaseModel):
+    full_name: str
+    email: EmailStr
+    role: str
+    country_scope: Optional[List[str]] = None
+    is_active: Optional[bool] = True
+
+
+class AdminUserUpdatePayload(BaseModel):
+    role: Optional[str] = None
+    country_scope: Optional[List[str]] = None
+    is_active: Optional[bool] = None
+
+
+class AdminInviteAcceptPayload(BaseModel):
+    token: str
+    password: str
+
+
+class BulkDeactivatePayload(BaseModel):
+    user_ids: List[str]
+
+
 @api_router.patch("/users/{user_id}")
 async def update_user(
     user_id: str,
