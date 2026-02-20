@@ -89,6 +89,57 @@ test('country admin cannot access admin users api', async ({ request }) => {
   expect(response.status()).toBe(403);
 });
 
+test('individual users api scope and default sort', async ({ request }) => {
+  const login = await request.post('/api/auth/login', {
+    data: { email: 'admin@platform.com', password: 'Admin123!' },
+  });
+  const loginJson = await login.json();
+  const token = loginJson.access_token;
+
+  const response = await request.get('/api/admin/individual-users', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(response.status()).toBe(200);
+  const data = await response.json();
+  const items = data.items || [];
+
+  expect(items.every((user) => user.user_type === 'individual')).toBeTruthy();
+
+  if (items.length < 2) {
+    return;
+  }
+
+  const keys = items.map((user) => (user.last_name || user.first_name || user.email || '').toLowerCase());
+  const sorted = [...keys].sort((a, b) => a.localeCompare(b, 'tr'));
+  expect(keys).toEqual(sorted);
+});
+
+test('individual users api search by email', async ({ request }) => {
+  const login = await request.post('/api/auth/login', {
+    data: { email: 'admin@platform.com', password: 'Admin123!' },
+  });
+  const loginJson = await login.json();
+  const token = loginJson.access_token;
+
+  const listResponse = await request.get('/api/admin/individual-users', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const listJson = await listResponse.json();
+  const items = listJson.items || [];
+
+  if (items.length === 0) {
+    return;
+  }
+
+  const email = items[0].email;
+  const searchResponse = await request.get(`/api/admin/individual-users?search=${encodeURIComponent(email)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const searchJson = await searchResponse.json();
+  const found = (searchJson.items || []).some((user) => user.email === email);
+  expect(found).toBeTruthy();
+});
+
 const hasSendGrid = Boolean(process.env.SENDGRID_API_KEY);
 
 test.describe('admin invite flow', () => {
