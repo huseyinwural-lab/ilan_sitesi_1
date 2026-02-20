@@ -749,13 +749,8 @@ async def lifespan(app: FastAPI):
     # Ping
     await db.command("ping")
 
-    app.state.sql_ready = False
-    try:
-        async with sql_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        app.state.sql_ready = True
-    except Exception as exc:
-        logging.getLogger("sql_init").exception("SQL init failed", exc_info=exc)
+    async with sql_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
     # Indexes
     await db.users.create_index("email", unique=True)
