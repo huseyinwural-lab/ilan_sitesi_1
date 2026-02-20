@@ -1274,6 +1274,29 @@ def _plan_to_dict(plan: Plan) -> Dict[str, Any]:
     }
 
 
+def _admin_invoice_to_dict(invoice: AdminInvoice, dealer: Optional[SqlUser] = None, plan: Optional[Plan] = None) -> Dict[str, Any]:
+    return {
+        "id": str(invoice.id),
+        "invoice_no": invoice.invoice_no,
+        "dealer_id": str(invoice.dealer_id),
+        "dealer_email": dealer.email if dealer else None,
+        "plan_id": str(invoice.plan_id),
+        "plan_name": plan.name if plan else None,
+        "amount": float(invoice.amount) if invoice.amount is not None else None,
+        "currency_code": invoice.currency_code,
+        "status": invoice.status,
+        "issued_at": invoice.issued_at.isoformat() if invoice.issued_at else None,
+        "paid_at": invoice.paid_at.isoformat() if invoice.paid_at else None,
+        "due_at": invoice.due_at.isoformat() if invoice.due_at else None,
+        "scope": invoice.scope,
+        "country_code": invoice.country_code,
+        "payment_method": invoice.payment_method,
+        "notes": invoice.notes,
+        "created_at": invoice.created_at.isoformat() if invoice.created_at else None,
+        "updated_at": invoice.updated_at.isoformat() if invoice.updated_at else None,
+    }
+
+
 def _check_application_rate_limit(request: Request, user_id: str) -> None:
     key = user_id or _get_client_ip(request) or "unknown"
     now = time.time()
