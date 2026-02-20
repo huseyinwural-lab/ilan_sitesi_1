@@ -124,7 +124,14 @@ export default function DealersPage() {
       const res = await axios.get(`${API}/admin/dealers?${params.toString()}`, {
         headers: authHeader,
       });
-      setItems(res.data.items || []);
+      const nextItems = res.data.items || [];
+      setItems(nextItems);
+      if (selectedDealer) {
+        const updated = nextItems.find((dealer) => dealer.id === selectedDealer.id);
+        if (updated) {
+          setSelectedDealer(updated);
+        }
+      }
       setTotalCount(res.data.total_count ?? 0);
       setTotalPages(res.data.total_pages ?? 1);
       if (res.data.filters?.countries) {
