@@ -6041,11 +6041,14 @@ def _normalize_vehicle_make_doc(doc: dict) -> dict:
 
 
 def _normalize_vehicle_model_doc(doc: dict) -> dict:
+    vehicle_type = (doc.get("vehicle_type") or "car").strip().lower()
     return {
         "id": doc.get("id"),
         "make_id": doc.get("make_id"),
         "name": doc.get("name"),
         "slug": doc.get("slug"),
+        "vehicle_type": vehicle_type,
+        "country_code": doc.get("country_code"),
         "active_flag": doc.get("active_flag", True),
         "created_at": doc.get("created_at"),
         "updated_at": doc.get("updated_at"),
