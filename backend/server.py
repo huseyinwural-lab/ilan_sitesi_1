@@ -238,6 +238,7 @@ async def _ensure_admin_user(db):
             {
                 "$set": {
                     "hashed_password": hashed,
+                    "status": "active",
                     "is_active": True,
                     "role": existing.get("role") or "super_admin",
                     "country_code": existing.get("country_code") or "TR",
@@ -281,6 +282,7 @@ async def _ensure_dealer_user(db):
             {
                 "$set": {
                     "hashed_password": hashed,
+                    "status": "active",
                     "is_active": True,
                     "role": "dealer",
                     "country_scope": existing.get("country_scope") or ["DE"],
@@ -324,6 +326,7 @@ async def _ensure_test_user(db):
             {
                 "$set": {
                     "hashed_password": hashed,
+                    "status": "active",
                     "is_active": True,
                     "role": "individual",
                     "country_scope": existing.get("country_scope") or ["DE"],
@@ -367,6 +370,7 @@ async def _ensure_country_admin_user(db):
             {
                 "$set": {
                     "hashed_password": hashed,
+                    "status": "active",
                     "is_active": True,
                     "role": "country_admin",
                     "country_scope": existing.get("country_scope") or ["DE"],
