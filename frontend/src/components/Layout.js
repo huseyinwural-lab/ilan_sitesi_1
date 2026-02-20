@@ -251,7 +251,6 @@ export default function Layout({ children }) {
       '/admin/billing',
       '/admin/moderation',
       '/admin/listings',
-      '/admin/reports',
       '/admin/invoices',
       '/admin/tax-rates',
       '/admin/plans',
