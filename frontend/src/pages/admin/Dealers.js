@@ -143,25 +143,25 @@ export default function DealersPage() {
         <p className="text-sm text-muted-foreground">Dealer Management (Sprint 1)</p>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3">
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            placeholder="Search by email"
+            placeholder="E-posta ile ara"
             className="h-9 px-3 rounded-md border bg-background text-sm"
             data-testid="dealers-search-input"
           />
           <select
-            value={status}
-            onChange={(e) => { setStatus(e.target.value); setPage(0); }}
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
             className="h-9 px-3 rounded-md border bg-background text-sm"
             data-testid="dealers-status-select"
           >
-          <option value="">All statuses</option>
-          <option value="active">active</option>
-          <option value="suspended">suspended</option>
-        </select>
-      </div>
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </div>
 
       <div className="rounded-md border bg-card overflow-hidden">
         <table className="w-full text-sm">
