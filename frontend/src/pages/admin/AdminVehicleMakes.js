@@ -158,9 +158,9 @@ const AdminVehicleMakes = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td className="px-3 py-4" colSpan="5">Yükleniyor...</td></tr>
+              <tr><td className="px-3 py-4" colSpan="6">Yükleniyor...</td></tr>
             ) : items.length === 0 ? (
-              <tr><td className="px-3 py-4" colSpan="5">Kayıt yok</td></tr>
+              <tr><td className="px-3 py-4" colSpan="6">Kayıt yok</td></tr>
             ) : (
               items.map((item) => (
                 <tr key={item.id} className="border-t" data-testid={`vehicle-makes-row-${item.id}`}>
