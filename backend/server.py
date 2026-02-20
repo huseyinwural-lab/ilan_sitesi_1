@@ -198,6 +198,27 @@ def _resolve_user_phone_e164(doc: dict) -> Optional[str]:
     return _normalize_phone_e164(raw_phone)
 
 
+def _extract_moderation_reason(payload: Optional[AdminUserActionPayload]) -> tuple[Optional[str], Optional[str]]:
+    if not payload:
+        return None, None
+    reason_code = (payload.reason_code or payload.reason or "").strip()
+    reason_detail = (payload.reason_detail or "").strip()
+    return (reason_code or None), (reason_detail or None)
+
+
+def _parse_suspension_until(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    try:
+        iso_value = value.replace("Z", "+00:00")
+        parsed = datetime.fromisoformat(iso_value)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc).isoformat()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid suspension_until") from exc
+
+
 def _build_user_summary(doc: dict, listing_stats: Optional[Dict[str, Any]] = None, plan_map: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     listing_stats = listing_stats or {}
     plan_map = plan_map or {}
