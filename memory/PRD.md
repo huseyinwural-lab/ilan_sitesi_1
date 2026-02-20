@@ -143,7 +143,7 @@
 - 2026-02-20: Auth + Applications repository abstraction (mongo/sql provider switch) + MONGO_ENABLED kill switch
 - 2026-02-20: APP_ENV=prod strict fail-fast guard (prod strict, preview/dev degraded)
 - 2026-02-20: Support formu (KVKK + dosya URL mock + ilan ID) + admin başvuru listesi filtre/kolon güncellemesi
-- 2026-02-20: Preview ortamında DATABASE_URL (Postgres) erişimi yok; applications API 503 döner (E2E için bağlantı sağlanmalı, env güncelle)
+- 2026-02-20: Preview ortamında /health/db backend 503 döndürüyor; edge katmanında 520 görülüyor (proxy passthrough gerektirir)
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
