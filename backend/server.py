@@ -2294,6 +2294,83 @@ async def list_individual_users(
     }
 
 
+@api_router.get("/admin/individual-users/export/csv")
+async def admin_individual_users_export_csv(
+    request: Request,
+    search: Optional[str] = None,
+    country: Optional[str] = None,
+    sort_by: Optional[str] = "last_name",
+    sort_dir: Optional[str] = "asc",
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    _enforce_export_rate_limit(request, current_user.get("id"))
+
+    country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
+    if country:
+        country_code = country.upper()
+
+    query = _build_individual_users_query(search, country_code)
+    sort_spec, sort_name_expr, sort_first_expr, _ = _build_individual_users_sort(sort_by, sort_dir)
+
+    pipeline = [
+        {"$match": query},
+        {"$addFields": {"sort_name": sort_name_expr, "sort_first": sort_first_expr}},
+        {"$sort": sort_spec},
+    ]
+
+    docs = await db.users.aggregate(pipeline).to_list(length=10000)
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["Email", "Name", "Country", "Type"])
+
+    for doc in docs:
+        full_name = doc.get("full_name")
+        if not full_name:
+            first = doc.get("first_name") or ""
+            last = doc.get("last_name") or ""
+            full_name = " ".join(part for part in [first, last] if part).strip() or doc.get("email")
+        writer.writerow([
+            doc.get("email"),
+            full_name,
+            doc.get("country_code"),
+            _determine_user_type(doc.get("role", "individual")),
+        ])
+
+    csv_content = buffer.getvalue().encode("utf-8")
+    buffer.close()
+
+    total_count = len(docs)
+    filename = f"individual-users-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.csv"
+
+    audit_doc = await build_audit_entry(
+        event_type="individual_users_export_csv",
+        actor=current_user,
+        target_id="individual_users",
+        target_type="individual_users",
+        country_code=country_code,
+        details={
+            "search": search,
+            "country": country_code,
+            "sort_by": sort_by,
+            "sort_dir": sort_dir,
+            "total_count": total_count,
+        },
+        request=request,
+    )
+    audit_doc["action"] = "individual_users_export_csv"
+    audit_doc["user_agent"] = request.headers.get("user-agent")
+    await db.audit_logs.insert_one(audit_doc)
+
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+    )
+
+
 @api_router.get("/menu/top-items")
 async def get_top_menu_items(request: Request):
     db = request.app.state.db
