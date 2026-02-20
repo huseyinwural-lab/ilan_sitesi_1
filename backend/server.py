@@ -1126,6 +1126,12 @@ def _generate_invoice_no() -> str:
     return f"INV-{stamp}-{short}"
 
 
+def _is_payment_enabled_for_country(country_code: Optional[str]) -> bool:
+    if not country_code:
+        return False
+    return country_code.upper() in PAYMENTS_ENABLED_COUNTRIES
+
+
 def _parse_datetime_field(value: str, field_name: str) -> datetime:
     if not value:
         raise HTTPException(status_code=400, detail=f"{field_name} is required")
