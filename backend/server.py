@@ -1319,6 +1319,363 @@ async def update_user(
     return {"ok": True}
 
 
+@api_router.get("/admin/users")
+async def list_admin_users(
+    request: Request,
+    search: Optional[str] = None,
+    role: Optional[str] = None,
+    status: Optional[str] = None,
+    country: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    sort_dir: Optional[str] = "desc",
+    skip: int = 0,
+    limit: int = 200,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    query: Dict[str, Any] = {"role": {"$in": list(ADMIN_ROLE_OPTIONS)}}
+
+    if role:
+        query["role"] = role
+
+    if status:
+        status_key = status.lower()
+        if status_key == "active":
+            query["is_active"] = True
+        elif status_key == "inactive":
+            query["is_active"] = False
+        elif status_key == "invited":
+            query["invite_status"] = "pending"
+
+    if search:
+        query["$or"] = [
+            {"email": {"$regex": search, "$options": "i"}},
+            {"full_name": {"$regex": search, "$options": "i"}},
+        ]
+
+    if country:
+        country_code = country.upper()
+        query["country_scope"] = {"$in": [country_code, "*"]}
+
+    sort_field_map = {
+        "email": "email",
+        "full_name": "full_name",
+        "role": "role",
+        "created_at": "created_at",
+        "last_login": "last_login",
+        "is_active": "is_active",
+    }
+    sort_field = sort_field_map.get(sort_by or "", "created_at")
+    sort_direction = -1 if (sort_dir or "desc").lower() == "desc" else 1
+
+    cursor = (
+        db.users.find(query, {"_id": 0})
+        .sort(sort_field, sort_direction)
+        .skip(max(skip, 0))
+        .limit(min(limit, 500))
+    )
+    docs = await cursor.to_list(length=limit)
+    return {"items": [_user_to_response(doc).model_dump() for doc in docs]}
+
+
+@api_router.post("/admin/users")
+async def create_admin_user(
+    request: Request,
+    payload: AdminUserCreatePayload,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    _enforce_admin_invite_rate_limit(request, current_user.get("id"))
+
+    sendgrid_key = os.environ.get("SENDGRID_API_KEY")
+    sender_email = os.environ.get("SENDER_EMAIL")
+    if not sendgrid_key or not sender_email:
+        _admin_invite_logger.error("SendGrid configuration missing: SENDGRID_API_KEY or SENDER_EMAIL")
+        raise HTTPException(status_code=503, detail="SendGrid is not configured")
+
+    role_value = payload.role
+    if role_value not in ADMIN_ROLE_OPTIONS:
+        raise HTTPException(status_code=400, detail="Invalid admin role")
+
+    email_value = payload.email.lower().strip()
+    existing = await db.users.find_one({"email": email_value}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=409, detail="Email already exists")
+
+    active_countries_docs = await db.countries.find({"active_flag": True}, {"_id": 0, "country_code": 1, "code": 1}).to_list(length=200)
+    active_countries = [
+        (doc.get("country_code") or doc.get("code") or "").upper()
+        for doc in active_countries_docs
+        if doc.get("country_code") or doc.get("code")
+    ]
+
+    country_scope = _normalize_scope(role_value, payload.country_scope, active_countries)
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    user_id = str(uuid.uuid4())
+    invite_expires_at = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+
+    user_doc = {
+        "id": user_id,
+        "email": email_value,
+        "full_name": payload.full_name.strip(),
+        "role": role_value,
+        "country_scope": country_scope,
+        "is_active": bool(payload.is_active),
+        "is_verified": False,
+        "invite_status": "pending",
+        "created_at": now_iso,
+        "updated_at": now_iso,
+        "last_login": None,
+        "preferred_language": "tr",
+    }
+    await db.users.insert_one(user_doc)
+
+    token = secrets.token_urlsafe(32)
+    token_hash = _hash_invite_token(token)
+    invite_id = str(uuid.uuid4())
+    invite_doc = {
+        "id": invite_id,
+        "token_hash": token_hash,
+        "user_id": user_id,
+        "email": email_value,
+        "role": role_value,
+        "country_scope": country_scope,
+        "expires_at": invite_expires_at,
+        "created_at": now_iso,
+        "created_by": current_user.get("id"),
+        "used_at": None,
+    }
+    await db.admin_invites.insert_one(invite_doc)
+
+    invite_link = f"{_get_admin_base_url(request)}/admin/invite/accept?token={token}"
+
+    try:
+        _send_admin_invite_email(email_value, payload.full_name.strip(), invite_link)
+    except HTTPException:
+        await db.admin_invites.delete_one({"id": invite_id})
+        await db.users.delete_one({"id": user_id})
+        raise
+
+    audit_created = await build_audit_entry(
+        event_type="admin_user_created",
+        actor=current_user,
+        target_id=user_id,
+        target_type="admin_user",
+        country_code=None,
+        details={"email": email_value, "role": role_value},
+        request=request,
+    )
+    audit_created["action"] = "admin_user_created"
+    await db.audit_logs.insert_one(audit_created)
+
+    audit_invited = await build_audit_entry(
+        event_type="admin_invited",
+        actor=current_user,
+        target_id=user_id,
+        target_type="admin_user",
+        country_code=None,
+        details={"email": email_value, "role": role_value, "invite_expires_at": invite_expires_at},
+        request=request,
+    )
+    audit_invited["action"] = "admin_invited"
+    await db.audit_logs.insert_one(audit_invited)
+
+    return {"ok": True, "invite_expires_at": invite_expires_at}
+
+
+@api_router.patch("/admin/users/{user_id}")
+async def update_admin_user(
+    user_id: str,
+    payload: AdminUserUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    target = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="Admin user not found")
+
+    next_role = payload.role or target.get("role")
+    if payload.role and payload.role not in ADMIN_ROLE_OPTIONS:
+        raise HTTPException(status_code=400, detail="Invalid admin role")
+
+    active_countries_docs = await db.countries.find({"active_flag": True}, {"_id": 0, "country_code": 1, "code": 1}).to_list(length=200)
+    active_countries = [
+        (doc.get("country_code") or doc.get("code") or "").upper()
+        for doc in active_countries_docs
+        if doc.get("country_code") or doc.get("code")
+    ]
+
+    if next_role == "country_admin" and payload.country_scope is None and not (target.get("country_scope") or []):
+        raise HTTPException(status_code=400, detail="Country scope required for country_admin")
+
+    next_scope = target.get("country_scope") or []
+    if payload.country_scope is not None or payload.role:
+        next_scope = _normalize_scope(next_role, payload.country_scope or next_scope, active_countries)
+
+    await _assert_super_admin_invariant(db, target, payload.role, payload.is_active, current_user)
+
+    updates: Dict[str, Any] = {}
+    if payload.role and payload.role != target.get("role"):
+        updates["role"] = payload.role
+    if payload.country_scope is not None or payload.role:
+        updates["country_scope"] = next_scope
+    if payload.is_active is not None and payload.is_active != target.get("is_active", True):
+        updates["is_active"] = bool(payload.is_active)
+
+    if not updates:
+        return {"ok": True}
+
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.users.update_one({"id": user_id}, {"$set": updates})
+
+    if payload.role and payload.role != target.get("role"):
+        audit_role = await build_audit_entry(
+            event_type="admin_role_changed",
+            actor=current_user,
+            target_id=user_id,
+            target_type="admin_user",
+            country_code=None,
+            details={"from": target.get("role"), "to": payload.role},
+            request=request,
+        )
+        audit_role["action"] = "admin_role_changed"
+        await db.audit_logs.insert_one(audit_role)
+
+    if payload.is_active is not None and payload.is_active is False:
+        audit_deactivate = await build_audit_entry(
+            event_type="admin_deactivated",
+            actor=current_user,
+            target_id=user_id,
+            target_type="admin_user",
+            country_code=None,
+            details={"email": target.get("email")},
+            request=request,
+        )
+        audit_deactivate["action"] = "admin_deactivated"
+        await db.audit_logs.insert_one(audit_deactivate)
+
+    return {"ok": True}
+
+
+@api_router.post("/admin/users/bulk-deactivate")
+async def bulk_deactivate_admins(
+    request: Request,
+    payload: BulkDeactivatePayload,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    user_ids = list(dict.fromkeys(payload.user_ids or []))
+    if not user_ids:
+        return {"ok": True, "count": 0}
+    if len(user_ids) > 20:
+        raise HTTPException(status_code=400, detail="Bulk deactivate limit is 20")
+
+    users = await db.users.find({"id": {"$in": user_ids}}, {"_id": 0}).to_list(length=200)
+    if not users:
+        return {"ok": True, "count": 0}
+
+    for user in users:
+        await _assert_super_admin_invariant(db, user, None, False, current_user)
+        if user.get("id") == current_user.get("id"):
+            raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.users.update_many({"id": {"$in": user_ids}}, {"$set": {"is_active": False, "updated_at": now_iso}})
+
+    for user in users:
+        audit_deactivate = await build_audit_entry(
+            event_type="admin_deactivated",
+            actor=current_user,
+            target_id=user.get("id"),
+            target_type="admin_user",
+            country_code=None,
+            details={"email": user.get("email")},
+            request=request,
+        )
+        audit_deactivate["action"] = "admin_deactivated"
+        await db.audit_logs.insert_one(audit_deactivate)
+
+    return {"ok": True, "count": len(user_ids)}
+
+
+@api_router.get("/admin/invite/preview")
+async def admin_invite_preview(token: str, request: Request):
+    db = request.app.state.db
+    token_hash = _hash_invite_token(token)
+    invite = await db.admin_invites.find_one({"token_hash": token_hash}, {"_id": 0})
+    if not invite or invite.get("used_at"):
+        raise HTTPException(status_code=404, detail="Invite not found")
+
+    if invite.get("expires_at") and invite.get("expires_at") < datetime.now(timezone.utc).isoformat():
+        raise HTTPException(status_code=400, detail="Invite expired")
+
+    user = await db.users.find_one({"id": invite.get("user_id")}, {"_id": 0})
+    return {
+        "email": invite.get("email"),
+        "full_name": user.get("full_name") if user else None,
+        "role": invite.get("role"),
+        "expires_at": invite.get("expires_at"),
+    }
+
+
+@api_router.post("/admin/invite/accept")
+async def admin_invite_accept(payload: AdminInviteAcceptPayload, request: Request):
+    db = request.app.state.db
+    token_hash = _hash_invite_token(payload.token)
+    invite = await db.admin_invites.find_one({"token_hash": token_hash}, {"_id": 0})
+    if not invite or invite.get("used_at"):
+        raise HTTPException(status_code=404, detail="Invite not found")
+
+    if invite.get("expires_at") and invite.get("expires_at") < datetime.now(timezone.utc).isoformat():
+        raise HTTPException(status_code=400, detail="Invite expired")
+
+    if not payload.password or len(payload.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+
+    user = await db.users.find_one({"id": invite.get("user_id")}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.users.update_one(
+        {"id": invite.get("user_id")},
+        {
+            "$set": {
+                "hashed_password": get_password_hash(payload.password),
+                "is_verified": True,
+                "invite_status": None,
+                "invite_accepted_at": now_iso,
+                "updated_at": now_iso,
+            }
+        },
+    )
+    await db.admin_invites.update_one({"id": invite.get("id")}, {"$set": {"used_at": now_iso}})
+
+    audit_accept = await build_audit_entry(
+        event_type="admin_invite_accepted",
+        actor=user,
+        target_id=user.get("id"),
+        target_type="admin_user",
+        country_code=None,
+        details={"email": user.get("email")},
+        request=request,
+    )
+    audit_accept["action"] = "admin_invite_accepted"
+    await db.audit_logs.insert_one(audit_accept)
+
+    return {"ok": True}
+
+
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_me(current_user=Depends(get_current_user)):
     return _user_to_response(current_user)
