@@ -1740,6 +1740,182 @@ async def admin_invite_accept(payload: AdminInviteAcceptPayload, request: Reques
     return {"ok": True}
 
 
+@api_router.post("/admin/users/{user_id}/suspend")
+async def suspend_user(
+    user_id: str,
+    request: Request,
+    payload: Optional[AdminUserActionPayload] = None,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    if user_id == current_user.get("id"):
+        raise HTTPException(status_code=400, detail="Cannot suspend yourself")
+
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user or user.get("deleted_at"):
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await _assert_super_admin_invariant(db, user, None, False, current_user)
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"status": "suspended", "is_active": False, "updated_at": now_iso}},
+    )
+
+    audit_entry = await build_audit_entry(
+        event_type="user_suspended",
+        actor=current_user,
+        target_id=user_id,
+        target_type="user",
+        country_code=user.get("country_code"),
+        details={"reason": payload.reason if payload else None},
+        request=request,
+    )
+    audit_entry["action"] = "user_suspended"
+    await db.audit_logs.insert_one(audit_entry)
+
+    return {"ok": True}
+
+
+@api_router.post("/admin/users/{user_id}/activate")
+async def activate_user(
+    user_id: str,
+    request: Request,
+    payload: Optional[AdminUserActionPayload] = None,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user or user.get("deleted_at"):
+        raise HTTPException(status_code=404, detail="User not found")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"status": "active", "is_active": True, "updated_at": now_iso}},
+    )
+
+    audit_entry = await build_audit_entry(
+        event_type="user_activated",
+        actor=current_user,
+        target_id=user_id,
+        target_type="user",
+        country_code=user.get("country_code"),
+        details={"reason": payload.reason if payload else None},
+        request=request,
+    )
+    audit_entry["action"] = "user_activated"
+    await db.audit_logs.insert_one(audit_entry)
+
+    return {"ok": True}
+
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    request: Request,
+    payload: Optional[AdminUserActionPayload] = None,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    if user_id == current_user.get("id"):
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.get("deleted_at"):
+        return {"ok": True}
+
+    await _assert_super_admin_invariant(db, user, None, False, current_user)
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"status": "deleted", "is_active": False, "deleted_at": now_iso, "updated_at": now_iso}},
+    )
+
+    audit_entry = await build_audit_entry(
+        event_type="user_deleted",
+        actor=current_user,
+        target_id=user_id,
+        target_type="user",
+        country_code=user.get("country_code"),
+        details={"reason": payload.reason if payload else None},
+        request=request,
+    )
+    audit_entry["action"] = "user_deleted"
+    await db.audit_logs.insert_one(audit_entry)
+
+    return {"ok": True}
+
+
+@api_router.get("/admin/users/{user_id}/detail")
+async def admin_user_detail(
+    user_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    listing_stats_map: Dict[str, Dict[str, Any]] = {}
+    listing_stats = await db.vehicle_listings.aggregate([
+        {"$match": {"created_by": user_id}},
+        {
+            "$group": {
+                "_id": "$created_by",
+                "total": {"$sum": 1},
+                "active": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$status", "published"]},
+                            1,
+                            0,
+                        ]
+                    }
+                },
+            }
+        },
+    ]).to_list(length=10)
+    if listing_stats:
+        listing_stats_map = {
+            listing_stats[0].get("_id"): {
+                "total": listing_stats[0].get("total", 0),
+                "active": listing_stats[0].get("active", 0),
+            }
+        }
+
+    plan_map: Dict[str, Any] = {}
+    if user.get("plan_id"):
+        plan = await db.plans.find_one({"id": user.get("plan_id")}, {"_id": 0})
+        if plan:
+            plan_map = {plan.get("id"): plan}
+
+    audit_logs = await db.audit_logs.find(
+        {"$or": [{"actor_id": user_id}, {"target_id": user_id}]},
+        {"_id": 0, "event_type": 1, "created_at": 1, "action": 1},
+    ).sort("created_at", -1).limit(10).to_list(length=10)
+
+    return {
+        "user": _build_user_summary(user, listing_stats_map.get(user_id, {}), plan_map),
+        "audit_logs": audit_logs,
+        "listings_link": f"/admin/listings?owner_id={user_id}",
+    }
+
+
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_me(current_user=Depends(get_current_user)):
     return _user_to_response(current_user)
