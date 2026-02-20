@@ -954,11 +954,13 @@ async def lifespan(app: FastAPI):
 
     app.state.mongo_client = client
     app.state.db = db
+    app.state.mongo_enabled = True
 
     yield
 
     await sql_engine.dispose()
-    client.close()
+    if client:
+        client.close()
 
 
 app = FastAPI(
