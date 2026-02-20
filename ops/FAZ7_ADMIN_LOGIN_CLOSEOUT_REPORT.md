@@ -1,7 +1,7 @@
 ## FAZ-7 Admin Login Kapanış Kontrolleri — Closeout Raporu
 
 **Tarih:** 2026-02-19
-**Ortam:** https://support-queue-2.preview.emergentagent.com
+**Ortam:** https://classifieds-postgres.preview.emergentagent.com
 **Kullanıcı:** admin@platform.com / Admin123!
 
 ---
