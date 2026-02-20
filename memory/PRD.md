@@ -156,7 +156,6 @@
 - Mongo Exit P0: Auth + Applications (Mongo dependency removal)
 - Auth akışlarını Postgres’e taşı (users/user_credentials/roles/user_roles/refresh_tokens)
 - Applications endpoint’leri Postgres’te finalize + seed
-- APP_ENV bazlı strict/degraded politika (prod strict, preview/dev degraded)
 - Ops: DATABASE_URL secret + migration + seed
 
 ### P1
