@@ -1766,7 +1766,7 @@ async def login(
 
         raise HTTPException(status_code=401, detail={"code": "INVALID_CREDENTIALS"})
 
-    if AUTH_PROVIDER == "mongo" and db:
+    if AUTH_PROVIDER == "mongo" and db is not None:
         user = await _auto_reactivate_if_expired(user, db, request)
 
     if user.get("deleted_at"):
