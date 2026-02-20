@@ -2651,55 +2651,70 @@ async def create_support_application(
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
+    applications_repo = _get_applications_repository(db, session)
 
     _check_application_rate_limit(request, current_user.get("id"))
 
-    request_type = (payload.request_type or "complaint").lower().strip()
-    if request_type not in APPLICATION_REQUEST_TYPES:
-        raise HTTPException(status_code=400, detail="Invalid request_type")
+    category = (payload.category or "").lower().strip()
+    if category not in APPLICATION_REQUEST_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid category")
 
     subject = (payload.subject or "").strip()
     description = (payload.description or "").strip()
     if not subject or not description:
         raise HTTPException(status_code=400, detail="Subject and description are required")
 
-    attachment_name = payload.attachment_name.strip() if payload.attachment_name else None
-    attachment_url = _validate_attachment_url(payload.attachment_url)
+    if not payload.kvkk_consent:
+        raise HTTPException(status_code=400, detail="KVKK consent required")
 
     application_type = "dealer" if current_user.get("role") == "dealer" else "individual"
 
-    user_uuid = await _ensure_sql_user(session, current_user)
+    company_name = payload.company_name or current_user.get("company_name")
+    if application_type == "dealer" and not company_name:
+        raise HTTPException(status_code=400, detail="Company name required")
 
-    now = datetime.now(timezone.utc)
-    application = Application(
-        id=uuid.uuid4(),
-        user_id=user_uuid,
-        application_type=application_type,
-        request_type=request_type,
-        subject=subject,
-        description=_sanitize_text(description),
-        attachment_name=attachment_name,
-        attachment_url=attachment_url,
-        priority="medium",
-        status="open",
-        assigned_admin_id=None,
-        created_at=now,
-        updated_at=now,
-    )
+    attachments = []
+    for att in payload.attachments or []:
+        name = (att.name or "").strip()
+        url = (att.url or "").strip()
+        if not name or not url:
+            continue
+        attachments.append({"name": name, "url": _validate_attachment_url(url)})
 
-    session.add(application)
-    await session.commit()
-    await session.refresh(application)
+    extra_data = {
+        "listing_id": payload.listing_id,
+        "company_name": company_name,
+        "tax_number": payload.tax_number,
+        "kvkk_consent": payload.kvkk_consent,
+    }
 
-    await _create_inapp_notification(
-        db,
-        current_user.get("id"),
-        f"Başvurunuz alındı. Referans: {application.id}",
-        {"application_id": str(application.id)},
-    )
-    _send_support_received_email(current_user.get("email"), str(application.id), subject)
+    payload_data = {
+        "application_type": application_type,
+        "category": category,
+        "subject": subject,
+        "description": _sanitize_text(description),
+        "attachments": attachments,
+        "extra_data": extra_data,
+        "status": "pending",
+        "priority": "medium",
+    }
 
-    return {"application_id": str(application.id)}
+    if APPLICATIONS_PROVIDER == "sql" and current_user.get("id"):
+        await _ensure_sql_user(session, current_user)
+
+    created = await applications_repo.create_application(payload_data, current_user)
+    application_id = created.get("application_id")
+
+    if db:
+        await _create_inapp_notification(
+            db,
+            current_user.get("id"),
+            f"Başvurunuz alındı. Referans: {application_id}",
+            {"application_id": application_id},
+        )
+        _send_support_received_email(current_user.get("email"), application_id, subject)
+
+    return {"application_id": application_id}
 
 
 @api_router.get("/applications")
