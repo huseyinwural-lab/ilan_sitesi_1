@@ -131,8 +131,8 @@ const AdminVehicleMakes = () => {
     <div className="p-6 space-y-6" data-testid="admin-vehicle-makes-page">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Araç Markaları</h1>
-          <p className="text-sm text-muted-foreground">Country: {urlCountry || 'Global'}</p>
+          <h1 className="text-2xl font-semibold" data-testid="vehicle-makes-title">Araç Markaları</h1>
+          <p className="text-sm text-muted-foreground" data-testid="vehicle-makes-country">Country: {urlCountry || 'Global'}</p>
         </div>
         <button
           onClick={openCreate}
