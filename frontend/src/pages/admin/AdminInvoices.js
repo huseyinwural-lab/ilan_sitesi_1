@@ -106,6 +106,21 @@ export default function AdminInvoicesPage() {
   const disabledActions = !dbReady;
   const createDisabled = !urlCountry || disabledActions;
 
+  const applyDatePreset = (days) => {
+    const today = new Date();
+    const from = new Date();
+    from.setDate(today.getDate() - (days - 1));
+    setDateFrom(toDateInputValue(from));
+    setDateTo(toDateInputValue(today));
+    setPage(0);
+  };
+
+  const clearDatePreset = () => {
+    setDateFrom('');
+    setDateTo('');
+    setPage(0);
+  };
+
   const checkDb = async () => {
     try {
       const res = await axios.get(`${API}/health/db`);
