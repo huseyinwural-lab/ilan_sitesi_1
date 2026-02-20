@@ -2581,8 +2581,6 @@ async def list_support_applications(
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
-    if not getattr(request.app.state, "sql_ready", False):
-        raise HTTPException(status_code=503, detail="Relational database unavailable")
 
     if not application_type:
         raise HTTPException(status_code=400, detail="type is required")
