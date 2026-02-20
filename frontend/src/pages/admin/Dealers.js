@@ -68,6 +68,13 @@ const resolveContactName = (dealer) => {
   return fallback || '—';
 };
 
+const formatAuditReason = (log) => {
+  const code = log?.metadata?.reason_code || '';
+  const detail = log?.metadata?.reason_detail || '';
+  const combined = [code, detail].filter(Boolean).join(' • ');
+  return combined || '—';
+};
+
 const getSortParams = (value) => {
   if (value === 'company_desc') {
     return { sort_by: 'company_name', sort_dir: 'desc' };
