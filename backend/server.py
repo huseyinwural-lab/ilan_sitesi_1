@@ -1487,34 +1487,46 @@ APPLICATION_RATE_LIMIT_MAX_ATTEMPTS = 5
 _application_submit_attempts: Dict[str, List[float]] = {}
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
+DB_POOL_SIZE_RAW = os.environ.get("DB_POOL_SIZE")
+DB_MAX_OVERFLOW_RAW = os.environ.get("DB_MAX_OVERFLOW")
+DB_SSL_MODE = os.environ.get("DB_SSL_MODE")
+
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL must be set")
+if not DB_POOL_SIZE_RAW:
+    raise RuntimeError("DB_POOL_SIZE must be set")
+if not DB_MAX_OVERFLOW_RAW:
+    raise RuntimeError("DB_MAX_OVERFLOW must be set")
+if not DB_SSL_MODE:
+    raise RuntimeError("DB_SSL_MODE must be set")
+if DB_SSL_MODE != "require":
+    raise RuntimeError("DB_SSL_MODE must be require for preview")
+
+try:
+    DB_POOL_SIZE = int(DB_POOL_SIZE_RAW)
+    DB_MAX_OVERFLOW = int(DB_MAX_OVERFLOW_RAW)
+except ValueError as exc:
+    raise RuntimeError("DB_POOL_SIZE and DB_MAX_OVERFLOW must be integers") from exc
+
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
+
 ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
-sql_engine = create_async_engine(ASYNC_DATABASE_URL, echo=False, future=True)
+sql_engine = create_async_engine(
+    ASYNC_DATABASE_URL,
+    echo=False,
+    future=True,
+    pool_size=DB_POOL_SIZE,
+    max_overflow=DB_MAX_OVERFLOW,
+    connect_args={"ssl": ssl_context},
+)
 AsyncSessionLocal = async_sessionmaker(
     sql_engine,
     class_=AsyncSession,
     expire_on_commit=False,
 )
-
-
-class Application(Base):
-    __tablename__ = "applications"
-
-    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
-    application_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
-    request_type: Mapped[str] = mapped_column(String(20), default="complaint", nullable=False)
-    subject: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str] = mapped_column(Text, nullable=False)
-    attachment_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    attachment_url: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
-    priority: Mapped[str] = mapped_column(String(20), default="medium", nullable=False)
-    status: Mapped[str] = mapped_column(String(20), default="open", nullable=False, index=True)
-    assigned_admin_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 async def get_sql_session():
