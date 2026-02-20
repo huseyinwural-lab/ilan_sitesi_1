@@ -192,6 +192,20 @@ class MessageSendPayload(BaseModel):
     client_message_id: Optional[str] = None
 
 
+class PushSubscriptionKeys(BaseModel):
+    p256dh: str
+    auth: str
+
+
+class PushSubscriptionPayload(BaseModel):
+    endpoint: str
+    keys: PushSubscriptionKeys
+
+
+class PushUnsubscribePayload(BaseModel):
+    endpoint: str
+
+
 def _normalize_user_status(doc: dict) -> str:
     if doc.get("deleted_at"):
         return "deleted"
