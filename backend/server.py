@@ -7422,6 +7422,21 @@ async def stripe_webhook(
                     select(Payment).where(Payment.invoice_id == invoice.id)
                 )).scalar_one_or_none()
 
+                if not payment:
+                    payment = Payment(
+                        invoice_id=invoice.id,
+                        dealer_id=invoice.dealer_id,
+                        provider="stripe",
+                        provider_payment_id=None,
+                        amount=invoice.amount,
+                        currency=invoice.currency_code,
+                        status="pending",
+                        paid_at=None,
+                        created_at=now,
+                        updated_at=now,
+                    )
+                    session.add(payment)
+
                 if not transaction:
                     transaction = PaymentTransaction(
                         provider="stripe",
