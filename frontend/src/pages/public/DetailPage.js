@@ -42,6 +42,55 @@ const DetailPage = () => {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-');
 
+  const readFavorites = () => {
+    try {
+      return JSON.parse(localStorage.getItem('account_favorites') || '[]');
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const writeFavorites = (items) => {
+    localStorage.setItem('account_favorites', JSON.stringify(items));
+  };
+
+  const handleToggleFavorite = () => {
+    if (!listing) return;
+    if (!user) {
+      window.location.assign('/login');
+      return;
+    }
+    const current = readFavorites();
+    if (isFavorite) {
+      const next = current.filter((item) => item.id !== listing.id);
+      writeFavorites(next);
+      setIsFavorite(false);
+      return;
+    }
+    const priceLabel = listing.price?.formatted_primary ||
+      (listing.price?.amount ? `${listing.price.currency_primary || 'EUR'} ${listing.price.amount}` : '-');
+    const image = listing.media?.[0]?.url || listing.media?.[0]?.preview_url || '';
+    const location = listing.location?.city || listing.location?.region || listing.location?.country || '';
+    const next = [
+      {
+        id: listing.id,
+        title: listing.title || `${listing.make_key || ''} ${listing.model_key || ''}`,
+        price: priceLabel,
+        image,
+        location,
+      },
+      ...current.filter((item) => item.id !== listing.id),
+    ];
+    writeFavorites(next);
+    setIsFavorite(true);
+  };
+
+  useEffect(() => {
+    if (!listing?.id) return;
+    const current = readFavorites();
+    setIsFavorite(current.some((item) => item.id === listing.id));
+  }, [listing]);
+
   // ID parsing is now handled inside useEffect
 
   useEffect(() => {
