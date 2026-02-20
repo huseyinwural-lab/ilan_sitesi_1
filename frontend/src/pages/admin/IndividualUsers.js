@@ -98,6 +98,8 @@ export default function IndividualUsers() {
   );
 
   const canExport = ["super_admin", "marketing"].includes(currentUser?.role);
+  const canSuspend = ["super_admin", "moderator"].includes(currentUser?.role);
+  const canDelete = currentUser?.role === "super_admin";
 
   const fetchUsers = async () => {
     setLoading(true);
