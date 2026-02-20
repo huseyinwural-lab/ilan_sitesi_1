@@ -2107,20 +2107,12 @@ class CampaignCreatePayload(BaseModel):
     name: str
     description: Optional[str] = None
     status: Optional[str] = "draft"
-    target: str
-    start_at: str
-    end_at: str
+    start_at: Optional[str] = None
+    end_at: Optional[str] = None
     priority: Optional[str] = "medium"
-    discount_percent: Optional[float] = None
-    discount_amount: Optional[float] = None
-    min_listing_count: Optional[int] = None
-    max_listing_count: Optional[int] = None
-    eligible_categories: Optional[List[str]] = None
-    eligible_user_segment: Optional[str] = "all"
-    eligible_dealer_plan: Optional[str] = "any"
-    eligible_dealers: Optional[List[str]] = None
-    eligible_users: Optional[List[str]] = None
-    free_listing_quota_bonus: Optional[int] = None
+    duration_days: Optional[int] = None
+    quota_count: Optional[int] = None
+    price_amount: Optional[float] = None
 
 
 class CampaignUpdatePayload(BaseModel):
@@ -2129,20 +2121,12 @@ class CampaignUpdatePayload(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
-    target: Optional[str] = None
     start_at: Optional[str] = None
     end_at: Optional[str] = None
     priority: Optional[str] = None
-    discount_percent: Optional[float] = None
-    discount_amount: Optional[float] = None
-    min_listing_count: Optional[int] = None
-    max_listing_count: Optional[int] = None
-    eligible_categories: Optional[List[str]] = None
-    eligible_user_segment: Optional[str] = None
-    eligible_dealer_plan: Optional[str] = None
-    eligible_dealers: Optional[List[str]] = None
-    eligible_users: Optional[List[str]] = None
-    free_listing_quota_bonus: Optional[int] = None
+    duration_days: Optional[int] = None
+    quota_count: Optional[int] = None
+    price_amount: Optional[float] = None
 
 
 class CampaignStatusPayload(BaseModel):
