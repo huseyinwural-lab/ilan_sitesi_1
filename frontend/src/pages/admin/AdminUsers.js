@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Search, UserPlus, Filter, Shield, Pencil, XCircle } from 'lucide-react';
+import { Search, UserPlus, Filter, Shield, Pencil, XCircle, Trash2 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { toast } from '../../components/ui/use-toast';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
