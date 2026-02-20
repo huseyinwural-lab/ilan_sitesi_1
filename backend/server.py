@@ -1170,8 +1170,8 @@ def _send_support_received_email(to_email: str, application_id: str, subject_tex
     sendgrid_key = os.environ.get("SENDGRID_API_KEY")
     sender_email = os.environ.get("SENDER_EMAIL")
     if not sendgrid_key or not sender_email:
-        _admin_invite_logger.error("SendGrid configuration missing: SENDGRID_API_KEY or SENDER_EMAIL")
-        raise HTTPException(status_code=503, detail="SendGrid is not configured")
+        _admin_invite_logger.warning("SendGrid configuration missing: SENDGRID_API_KEY or SENDER_EMAIL")
+        return
 
     subject = "Başvurunuz alındı"
     html_content = f"""
