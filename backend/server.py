@@ -7306,6 +7306,20 @@ async def get_checkout_status(
     payment = (await session.execute(
         select(Payment).where(Payment.invoice_id == transaction.invoice_id)
     )).scalar_one_or_none()
+    if invoice and not payment:
+        payment = Payment(
+            invoice_id=invoice.id,
+            dealer_id=invoice.dealer_id,
+            provider="stripe",
+            provider_payment_id=None,
+            amount=invoice.amount,
+            currency=invoice.currency_code,
+            status="pending",
+            paid_at=None,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+        session.add(payment)
 
     provider_payment_id = getattr(status_response, "payment_id", None)
     payment_status = status_response.payment_status if hasattr(status_response, "payment_status") else None
