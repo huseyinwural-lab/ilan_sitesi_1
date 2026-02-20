@@ -1,23 +1,23 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCountry } from '@/contexts/CountryContext';
 
 const WizardContext = createContext();
 
-export const WizardProvider = ({ children }) => {
+export const WizardProvider = ({ children, editListingId = null }) => {
   const navigate = useNavigate();
   const { selectedCountry } = useCountry();
   const [draftId, setDraftId] = useState(null);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  
-  // Data
+  const [editLoading, setEditLoading] = useState(false);
+
   const [category, setCategory] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
   const [publishedDetailUrl, setPublishedDetailUrl] = useState(null);
   const [basicInfo, setBasicInfo] = useState({
     country: 'DE',
-    category_key: null, // segment
+    category_key: null,
     category_id: null,
     make_key: null,
     model_key: null,
@@ -27,6 +27,7 @@ export const WizardProvider = ({ children }) => {
     fuel_type: null,
     transmission: null,
     condition: null,
+    trim_key: null,
   });
   const [attributes, setAttributes] = useState({});
   const [schema, setSchema] = useState(null);
@@ -50,15 +51,13 @@ export const WizardProvider = ({ children }) => {
     contact: { phone: '', allow_phone: true, allow_message: true },
     payment: { package_selected: false, doping_selected: false },
   });
+  const [media, setMedia] = useState([]);
 
-  // Keep wizard country in sync with selected country
   useEffect(() => {
     if (selectedCountry) {
       setBasicInfo((prev) => ({ ...prev, country: selectedCountry }));
     }
   }, [selectedCountry]);
-
-  const [media, setMedia] = useState([]);
 
   const loadCategorySchema = async (categoryId) => {
     if (!categoryId) return null;
@@ -89,7 +88,98 @@ export const WizardProvider = ({ children }) => {
     }
   };
 
-  // Actions
+  const formatDisplay = (amount, decimals = 0) => {
+    if (amount === null || amount === undefined || amount === '') return '';
+    const value = Number(amount);
+    if (Number.isNaN(value)) return '';
+    return new Intl.NumberFormat('de-DE', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
+  };
+
+  const hydrateFromListing = async (listing) => {
+    if (!listing) return;
+    const categoryId = listing.category_id || listing.category_key;
+    setCategory({ id: categoryId, name: listing.category_key || 'Kategori' });
+    await loadCategorySchema(categoryId);
+
+    setDraftId(listing.id);
+    window.__WIZARD_DRAFT_ID__ = listing.id;
+
+    const attrs = listing.attributes || {};
+    const reserved = new Set(['mileage_km', 'fuel_type', 'transmission', 'condition', 'price_eur']);
+    const dynamic = {};
+    Object.entries(attrs).forEach(([key, value]) => {
+      if (!reserved.has(key)) {
+        dynamic[key] = value;
+      }
+    });
+
+    const priceData = listing.price || {};
+    setCoreFields((prev) => ({
+      ...prev,
+      title: listing.title || '',
+      description: listing.description || '',
+      price_amount: priceData.amount ? String(priceData.amount) : '',
+      price_display: priceData.amount ? formatDisplay(priceData.amount, prev.decimal_places) : '',
+      currency_primary: priceData.currency_primary || prev.currency_primary,
+      currency_secondary: priceData.currency_secondary || prev.currency_secondary,
+      secondary_amount: priceData.secondary_amount ? String(priceData.secondary_amount) : '',
+      secondary_display: priceData.secondary_amount ? formatDisplay(priceData.secondary_amount, prev.decimal_places) : '',
+    }));
+
+    setBasicInfo((prev) => ({
+      ...prev,
+      country: listing.country || prev.country,
+      category_key: listing.category_key,
+      category_id: listing.category_id,
+      make_key: listing.vehicle?.make_key || null,
+      model_key: listing.vehicle?.model_key || null,
+      year: listing.vehicle?.year || null,
+      trim_key: listing.vehicle?.trim_key || null,
+      mileage_km: attrs.mileage_km || null,
+      fuel_type: attrs.fuel_type || null,
+      transmission: attrs.transmission || null,
+      condition: attrs.condition || null,
+    }));
+
+    setDynamicValues(dynamic);
+    setDetailGroups(listing.detail_groups || {});
+    setModuleData((prev) => ({
+      ...prev,
+      ...(listing.modules || {}),
+    }));
+
+    const mediaUrls = (listing.media || []).map((m) => `/media/listings/${listing.id}/${m.file}`);
+    setMedia(mediaUrls);
+  };
+
+  useEffect(() => {
+    if (!editListingId) return;
+    const fetchDraft = async () => {
+      setEditLoading(true);
+      try {
+        const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle/${editListingId}/draft`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+        if (!res.ok) {
+          throw new Error('Draft yüklenemedi');
+        }
+        const data = await res.json();
+        await hydrateFromListing(data.item);
+        setStep(2);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setEditLoading(false);
+      }
+    };
+    fetchDraft();
+  }, [editListingId]);
+
   const createDraft = async (selectedCategory) => {
     setLoading(true);
     setValidationErrors([]);
@@ -103,12 +193,11 @@ export const WizardProvider = ({ children }) => {
         category_id: selectedCategory.id,
       };
 
-      // Create empty draft first; details set in step 2
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
         },
         body: JSON.stringify(payload),
       });
@@ -120,7 +209,6 @@ export const WizardProvider = ({ children }) => {
 
       const data = await res.json();
       setDraftId(data.id);
-      // expose for media step (minimal wiring)
       window.__WIZARD_DRAFT_ID__ = data.id;
 
       setBasicInfo((prev) => ({
@@ -138,6 +226,22 @@ export const WizardProvider = ({ children }) => {
     }
   };
 
+  const saveDraft = async (payload) => {
+    if (!draftId) return;
+    try {
+      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle/${draftId}/draft`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload || {}),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const saveStep = async (data) => {
     setLoading(true);
     setValidationErrors([]);
@@ -145,15 +249,15 @@ export const WizardProvider = ({ children }) => {
       if (step === 2) {
         setBasicInfo((prev) => ({ ...prev, ...data.basic }));
         if (data.basic?.attributes) setAttributes(data.basic.attributes);
-        if (data.coreFields) setCoreFields(data.coreFields);
         if (data.dynamicValues) setDynamicValues(data.dynamicValues);
         if (data.detailGroups) setDetailGroups(data.detailGroups);
-        if (data.moduleData) setModuleData(data.moduleData);
       } else if (step === 3) {
+        if (data.coreFields) setCoreFields(data.coreFields);
+        if (data.moduleData) setModuleData(data.moduleData);
+      } else if (step === 4) {
         setMedia(data);
       }
 
-      // ensure draft exists before leaving step 2
       if (step === 2 && !draftId) {
         throw new Error('Missing draftId');
       }
@@ -210,7 +314,7 @@ export const WizardProvider = ({ children }) => {
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle/${draftId}/submit`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
@@ -242,7 +346,8 @@ export const WizardProvider = ({ children }) => {
 
   return (
     <WizardContext.Provider value={{
-      step, setStep,
+      step,
+      setStep,
       draftId,
       category,
       basicInfo,
@@ -253,22 +358,24 @@ export const WizardProvider = ({ children }) => {
       schemaLoading,
       loadCategorySchema,
       coreFields,
+      setCoreFields,
       dynamicValues,
+      setDynamicValues,
       detailGroups,
+      setDetailGroups,
       moduleData,
+      setModuleData,
       media,
+      setMedia,
       loading,
+      editLoading,
       validationErrors,
       publishedDetailUrl,
       createDraft,
+      saveDraft,
       saveStep,
       publishListing,
       setDraftId,
-      setMedia,
-      setCoreFields,
-      setDynamicValues,
-      setDetailGroups,
-      setModuleData
     }}>
       {children}
     </WizardContext.Provider>
