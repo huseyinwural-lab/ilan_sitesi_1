@@ -12,7 +12,21 @@ test('super admin can open admin invite modal', async ({ page }) => {
   await expect(page.getByTestId('admin-users-modal')).toBeVisible();
 });
 
-test('bulk deactivate limit enforced', async ({ request }) => {
+test('admin users ia cleanup: legacy routes redirect and menu item removed', async ({ page }) => {
+  await page.goto('/admin/login');
+  await page.getByTestId('login-email').fill('admin@platform.com');
+  await page.getByTestId('login-password').fill('Admin123!');
+  await page.getByTestId('login-submit').click();
+
+  await page.goto('/admin/users');
+  await expect(page).toHaveURL(/\/admin\/admin-users/);
+
+  await page.goto('/admin/user-management');
+  await expect(page).toHaveURL(/\/admin\/admin-users/);
+
+  await expect(page.getByTestId('nav-management-users')).toHaveCount(0);
+});
+
   const login = await request.post('/api/auth/login', {
     data: { email: 'admin@platform.com', password: 'Admin123!' },
   });
