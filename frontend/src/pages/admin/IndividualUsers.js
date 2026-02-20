@@ -378,6 +378,50 @@ export default function IndividualUsers() {
                     </td>
                     <td className="p-3" data-testid={`individual-user-created-${user.id}`}>{formatDate(user.created_at)}</td>
                     <td className="p-3" data-testid={`individual-user-last-login-${user.id}`}>{formatDate(user.last_login)}</td>
+                    <td className="p-3 text-right" data-testid={`individual-user-actions-${user.id}`}>
+                      {statusValue === "deleted" ? (
+                        <span className="text-xs text-muted-foreground" data-testid={`individual-user-actions-deleted-${user.id}`}>
+                          Silindi
+                        </span>
+                      ) : (
+                        <div className="flex items-center justify-end gap-2">
+                          {allowSuspend && (statusValue === "suspended" ? (
+                            <button
+                              type="button"
+                              className="h-8 px-3 rounded-md border text-xs"
+                              onClick={() => openActionDialog("activate", user)}
+                              data-testid={`individual-user-reactivate-${user.id}`}
+                            >
+                              Aktif Et
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="h-8 px-3 rounded-md border text-xs"
+                              onClick={() => openActionDialog("suspend", user)}
+                              data-testid={`individual-user-suspend-${user.id}`}
+                            >
+                              Askıya Al
+                            </button>
+                          ))}
+                          {allowDelete && (
+                            <button
+                              type="button"
+                              className="h-8 px-3 rounded-md border text-xs text-rose-600"
+                              onClick={() => openActionDialog("delete", user)}
+                              data-testid={`individual-user-delete-${user.id}`}
+                            >
+                              Sil
+                            </button>
+                          )}
+                          {!showActions && (
+                            <span className="text-xs text-muted-foreground" data-testid={`individual-user-actions-disabled-${user.id}`}>
+                              Yetkisiz
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))
               )}
