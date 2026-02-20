@@ -53,14 +53,14 @@ export default function BackofficePortalApp() {
       <Route path="/menu-management" element={<Layout><MenuManagementPage /></Layout>} />
       <Route path="/audit" element={
         <Layout>
-          <AdminRouteGuard roles={["super_admin", "country_admin"]}>
+          <AdminRouteGuard roles={["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"]}>
             <AuditLogs />
           </AdminRouteGuard>
         </Layout>
       } />
       <Route path="/audit-logs" element={
         <Layout>
-          <AdminRouteGuard roles={["super_admin", "country_admin"]}>
+          <AdminRouteGuard roles={["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"]}>
             <AuditLogs />
           </AdminRouteGuard>
         </Layout>
@@ -74,7 +74,7 @@ export default function BackofficePortalApp() {
       <Route path="/country-compare" element={<Layout><AdminCountryComparePage /></Layout>} />
       <Route path="/countries" element={
         <Layout>
-          <AdminRouteGuard roles={["super_admin", "country_admin"]}>
+          <AdminRouteGuard roles={["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"]}>
             <AdminCountriesPage />
           </AdminRouteGuard>
         </Layout>
