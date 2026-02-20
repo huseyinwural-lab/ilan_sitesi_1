@@ -1122,6 +1122,13 @@
     },
     {
       "make_slug": "acura",
+      "name": "ILX Hybrid",
+      "slug": "ilx-hybrid",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "acura",
       "name": "Integra",
       "slug": "integra",
       "vehicle_type": "car",
@@ -1164,6 +1171,13 @@
     },
     {
       "make_slug": "acura",
+      "name": "RLX",
+      "slug": "rlx",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "acura",
       "name": "RSX",
       "slug": "rsx",
       "vehicle_type": "car",
@@ -1180,6 +1194,13 @@
       "make_slug": "acura",
       "name": "TL",
       "slug": "tl",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "acura",
+      "name": "TLX",
+      "slug": "tlx",
       "vehicle_type": "car",
       "active": true
     },
@@ -1264,6 +1285,13 @@
       "make_slug": "alfa-romeo",
       "name": "2600",
       "slug": "2600",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "alfa-romeo",
+      "name": "4C",
+      "slug": "4c",
       "vehicle_type": "car",
       "active": true
     },
@@ -1619,6 +1647,13 @@
     },
     {
       "make_slug": "aston-martin",
+      "name": "Rapide S",
+      "slug": "rapide-s",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "aston-martin",
       "name": "V12",
       "slug": "v12",
       "vehicle_type": "car",
@@ -1628,6 +1663,13 @@
       "make_slug": "aston-martin",
       "name": "V12 Vantage",
       "slug": "v12-vantage",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "aston-martin",
+      "name": "V12 Vantage S",
+      "slug": "v12-vantage-s",
       "vehicle_type": "car",
       "active": true
     },
@@ -1717,6 +1759,13 @@
     },
     {
       "make_slug": "audi",
+      "name": "A3 e-tron",
+      "slug": "a3-e-tron",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "audi",
       "name": "A4",
       "slug": "a4",
       "vehicle_type": "car",
@@ -1796,7 +1845,7 @@
       "make_slug": "audi",
       "name": "Q3",
       "slug": "q3",
-      "vehicle_type": "suv",
+      "vehicle_type": "car",
       "active": true
     },
     {
@@ -1838,6 +1887,20 @@
       "make_slug": "audi",
       "name": "Rosemeyer",
       "slug": "rosemeyer",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "audi",
+      "name": "RS 5",
+      "slug": "rs-5",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "audi",
+      "name": "RS 7",
+      "slug": "rs-7",
       "vehicle_type": "car",
       "active": true
     },
@@ -1920,6 +1983,13 @@
     },
     {
       "make_slug": "audi",
+      "name": "SQ5",
+      "slug": "sq5",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "audi",
       "name": "Steppenwolf",
       "slug": "steppenwolf",
       "vehicle_type": "suv",
@@ -1929,6 +1999,13 @@
       "make_slug": "audi",
       "name": "TT",
       "slug": "tt",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "audi",
+      "name": "TTS",
+      "slug": "tts",
       "vehicle_type": "car",
       "active": true
     },
@@ -2088,6 +2165,13 @@
     },
     {
       "make_slug": "bentley",
+      "name": "Flying Spur",
+      "slug": "flying-spur",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "bentley",
       "name": "Mark VI",
       "slug": "mark-vi",
       "vehicle_type": "car",
@@ -2179,6 +2263,13 @@
     },
     {
       "make_slug": "bmw",
+      "name": "2 Series",
+      "slug": "2-series",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "bmw",
       "name": "2000",
       "slug": "2000",
       "vehicle_type": "car",
@@ -2202,6 +2293,13 @@
       "make_slug": "bmw",
       "name": "3 Series",
       "slug": "3-series",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "bmw",
+      "name": "3 Series Gran Turismo",
+      "slug": "3-series-gran-turismo",
       "vehicle_type": "car",
       "active": true
     },
@@ -2291,8 +2389,29 @@
     },
     {
       "make_slug": "bmw",
+      "name": "4 Series",
+      "slug": "4-series",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "bmw",
+      "name": "4 Series Gran Coupe",
+      "slug": "4-series-gran-coupe",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "bmw",
       "name": "5 Series",
       "slug": "5-series",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "bmw",
+      "name": "5 Series Gran Turismo",
+      "slug": "5-series-gran-turismo",
       "vehicle_type": "car",
       "active": true
     },
@@ -2384,6 +2503,13 @@
       "make_slug": "bmw",
       "name": "6 series",
       "slug": "6-series",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "bmw",
+      "name": "6 Series Gran Coupe",
+      "slug": "6-series-gran-coupe",
       "vehicle_type": "car",
       "active": true
     },
@@ -2592,6 +2718,20 @@
     },
     {
       "make_slug": "bmw",
+      "name": "ALPINA B6 Gran Coupe",
+      "slug": "alpina-b6-gran-coupe",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "bmw",
+      "name": "ALPINA B7",
+      "slug": "alpina-b7",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "bmw",
       "name": "B7",
       "slug": "b7",
       "vehicle_type": "car",
@@ -2641,6 +2781,13 @@
     },
     {
       "make_slug": "bmw",
+      "name": "M4",
+      "slug": "m4",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "bmw",
       "name": "M5",
       "slug": "m5",
       "vehicle_type": "car",
@@ -2655,6 +2802,13 @@
     },
     {
       "make_slug": "bmw",
+      "name": "M6 Gran Coupe",
+      "slug": "m6-gran-coupe",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "bmw",
       "name": "X1",
       "slug": "x1",
       "vehicle_type": "suv",
@@ -2664,6 +2818,13 @@
       "make_slug": "bmw",
       "name": "X3",
       "slug": "x3",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "bmw",
+      "name": "X4",
+      "slug": "x4",
       "vehicle_type": "suv",
       "active": true
     },
@@ -2816,6 +2977,13 @@
     },
     {
       "make_slug": "buick",
+      "name": "Encore",
+      "slug": "encore",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "buick",
       "name": "Estate",
       "slug": "estate",
       "vehicle_type": "car",
@@ -2921,6 +3089,13 @@
     },
     {
       "make_slug": "cadillac",
+      "name": "ATS Coupe",
+      "slug": "ats-coupe",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "cadillac",
       "name": "Biarritz",
       "slug": "biarritz",
       "vehicle_type": "car",
@@ -2970,8 +3145,36 @@
     },
     {
       "make_slug": "cadillac",
+      "name": "CTS Coupe",
+      "slug": "cts-coupe",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "cadillac",
       "name": "CTS-V",
       "slug": "cts-v",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "cadillac",
+      "name": "CTS-V Coupe",
+      "slug": "cts-v-coupe",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "cadillac",
+      "name": "CTS-V Wagon",
+      "slug": "cts-v-wagon",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "cadillac",
+      "name": "CTS Wagon",
+      "slug": "cts-wagon",
       "vehicle_type": "car",
       "active": true
     },
@@ -2998,8 +3201,22 @@
     },
     {
       "make_slug": "cadillac",
+      "name": "ELR",
+      "slug": "elr",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "cadillac",
       "name": "Escalade",
       "slug": "escalade",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "cadillac",
+      "name": "Escalade ESV",
+      "slug": "escalade-esv",
       "vehicle_type": "suv",
       "active": true
     },
@@ -3056,7 +3273,7 @@
       "make_slug": "cadillac",
       "name": "XTS",
       "slug": "xts",
-      "vehicle_type": "car",
+      "vehicle_type": "suv",
       "active": true
     },
     {
@@ -3159,6 +3376,13 @@
     },
     {
       "make_slug": "chevrolet",
+      "name": "City Express",
+      "slug": "city-express",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "chevrolet",
       "name": "Cobalt",
       "slug": "cobalt",
       "vehicle_type": "car",
@@ -3182,6 +3406,13 @@
       "make_slug": "chevrolet",
       "name": "Corvette",
       "slug": "corvette",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "chevrolet",
+      "name": "Corvette Stingray",
+      "slug": "corvette-stingray",
       "vehicle_type": "car",
       "active": true
     },
@@ -3217,6 +3448,13 @@
       "make_slug": "chevrolet",
       "name": "Express",
       "slug": "express",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "chevrolet",
+      "name": "Express Cargo",
+      "slug": "express-cargo",
       "vehicle_type": "car",
       "active": true
     },
@@ -3376,6 +3614,20 @@
     },
     {
       "make_slug": "chevrolet",
+      "name": "Spark EV",
+      "slug": "spark-ev",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "chevrolet",
+      "name": "SS",
+      "slug": "ss",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "chevrolet",
       "name": "SSR",
       "slug": "ssr",
       "vehicle_type": "pickup",
@@ -3420,6 +3672,13 @@
       "make_slug": "chevrolet",
       "name": "Traverse",
       "slug": "traverse",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "chevrolet",
+      "name": "Trax",
+      "slug": "trax",
       "vehicle_type": "suv",
       "active": true
     },
@@ -4342,6 +4601,13 @@
     },
     {
       "make_slug": "dodge",
+      "name": "SRT Viper",
+      "slug": "srt-viper",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "dodge",
       "name": "Stealth",
       "slug": "stealth",
       "vehicle_type": "car",
@@ -4776,6 +5042,20 @@
     },
     {
       "make_slug": "fiat",
+      "name": "500e",
+      "slug": "500e",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "fiat",
+      "name": "500L",
+      "slug": "500l",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "fiat",
       "name": "600",
       "slug": "600",
       "vehicle_type": "car",
@@ -5063,6 +5343,20 @@
     },
     {
       "make_slug": "ford",
+      "name": "C-Max Energi",
+      "slug": "c-max-energi",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ford",
+      "name": "C-Max Hybrid",
+      "slug": "c-max-hybrid",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ford",
       "name": "Capri",
       "slug": "capri",
       "vehicle_type": "car",
@@ -5121,6 +5415,20 @@
       "make_slug": "ford",
       "name": "E-Series",
       "slug": "e-series",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ford",
+      "name": "E-Series Van",
+      "slug": "e-series-van",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ford",
+      "name": "E-Series Wagon",
+      "slug": "e-series-wagon",
       "vehicle_type": "car",
       "active": true
     },
@@ -5282,13 +5590,20 @@
       "make_slug": "ford",
       "name": "Flex",
       "slug": "flex",
-      "vehicle_type": "suv",
+      "vehicle_type": "car",
       "active": true
     },
     {
       "make_slug": "ford",
       "name": "Focus",
       "slug": "focus",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ford",
+      "name": "Focus ST",
+      "slug": "focus-st",
       "vehicle_type": "car",
       "active": true
     },
@@ -5310,6 +5625,20 @@
       "make_slug": "ford",
       "name": "Fusion",
       "slug": "fusion",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ford",
+      "name": "Fusion Energi",
+      "slug": "fusion-energi",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ford",
+      "name": "Fusion Hybrid",
+      "slug": "fusion-hybrid",
       "vehicle_type": "car",
       "active": true
     },
@@ -5546,6 +5875,20 @@
     },
     {
       "make_slug": "ford",
+      "name": "Transit Van",
+      "slug": "transit-van",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ford",
+      "name": "Transit Wagon",
+      "slug": "transit-wagon",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ford",
       "name": "Windstar",
       "slug": "windstar",
       "vehicle_type": "car",
@@ -5653,6 +5996,13 @@
       "make_slug": "gmc",
       "name": "Yukon",
       "slug": "yukon",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "gmc",
+      "name": "Yukon XL",
+      "slug": "yukon-xl",
       "vehicle_type": "suv",
       "active": true
     },
@@ -5808,6 +6158,20 @@
       "name": "Accord Crosstour",
       "slug": "accord-crosstour",
       "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "honda",
+      "name": "Accord Hybrid",
+      "slug": "accord-hybrid",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "honda",
+      "name": "Accord Plug-In Hybrid",
+      "slug": "accord-plug-in-hybrid",
+      "vehicle_type": "car",
       "active": true
     },
     {
@@ -6113,6 +6477,13 @@
     },
     {
       "make_slug": "hyundai",
+      "name": "Elantra GT",
+      "slug": "elantra-gt",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "hyundai",
       "name": "Entourage",
       "slug": "entourage",
       "vehicle_type": "car",
@@ -6239,6 +6610,13 @@
     },
     {
       "make_slug": "hyundai",
+      "name": "Santa Fe Sport",
+      "slug": "santa-fe-sport",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "hyundai",
       "name": "Satellite",
       "slug": "satellite",
       "vehicle_type": "car",
@@ -6255,6 +6633,13 @@
       "make_slug": "hyundai",
       "name": "Sonata",
       "slug": "sonata",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "hyundai",
+      "name": "Sonata Hybrid",
+      "slug": "sonata-hybrid",
       "vehicle_type": "car",
       "active": true
     },
@@ -6414,8 +6799,43 @@
     },
     {
       "make_slug": "infiniti",
+      "name": "Q40",
+      "slug": "q40",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "infiniti",
       "name": "Q45",
       "slug": "q45",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "infiniti",
+      "name": "Q50",
+      "slug": "q50",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "infiniti",
+      "name": "Q60 Convertible",
+      "slug": "q60-convertible",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "infiniti",
+      "name": "Q60 Coupe",
+      "slug": "q60-coupe",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "infiniti",
+      "name": "Q70",
+      "slug": "q70",
       "vehicle_type": "car",
       "active": true
     },
@@ -6435,8 +6855,36 @@
     },
     {
       "make_slug": "infiniti",
+      "name": "QX50",
+      "slug": "qx50",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "infiniti",
       "name": "QX56",
       "slug": "qx56",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "infiniti",
+      "name": "QX60",
+      "slug": "qx60",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "infiniti",
+      "name": "QX70",
+      "slug": "qx70",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "infiniti",
+      "name": "QX80",
+      "slug": "qx80",
       "vehicle_type": "suv",
       "active": true
     },
@@ -6575,6 +7023,13 @@
     },
     {
       "make_slug": "jaguar",
+      "name": "F-Type",
+      "slug": "f-type",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "jaguar",
       "name": "MK II",
       "slug": "mk-ii",
       "vehicle_type": "car",
@@ -6693,6 +7148,13 @@
       "active": true
     },
     {
+      "make_slug": "jaguar",
+      "name": "XS",
+      "slug": "xs",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
       "make_slug": "jeep",
       "name": "Cherokee",
       "slug": "cherokee",
@@ -6771,6 +7233,13 @@
     },
     {
       "make_slug": "jeep",
+      "name": "Grand Cherokee SRT",
+      "slug": "grand-cherokee-srt",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "jeep",
       "name": "Grand Wagoneer",
       "slug": "grand-wagoneer",
       "vehicle_type": "suv",
@@ -6801,6 +7270,13 @@
       "make_slug": "jeep",
       "name": "Patriot",
       "slug": "patriot",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "jeep",
+      "name": "Renegade",
+      "slug": "renegade",
       "vehicle_type": "suv",
       "active": true
     },
@@ -6911,6 +7387,13 @@
     },
     {
       "make_slug": "kia",
+      "name": "K900",
+      "slug": "k900",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "kia",
       "name": "Magentis",
       "slug": "magentis",
       "vehicle_type": "car",
@@ -6927,6 +7410,13 @@
       "make_slug": "kia",
       "name": "Optima",
       "slug": "optima",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "kia",
+      "name": "Optima Hybrid",
+      "slug": "optima-hybrid",
       "vehicle_type": "car",
       "active": true
     },
@@ -7011,6 +7501,13 @@
       "make_slug": "kia",
       "name": "Soul",
       "slug": "soul",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "kia",
+      "name": "Soul EV",
+      "slug": "soul-ev",
       "vehicle_type": "car",
       "active": true
     },
@@ -7179,6 +7676,13 @@
       "make_slug": "lamborghini",
       "name": "Gallardo",
       "slug": "gallardo",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lamborghini",
+      "name": "Huracan",
+      "slug": "huracan",
       "vehicle_type": "car",
       "active": true
     },
@@ -7429,6 +7933,13 @@
     },
     {
       "make_slug": "land-rover",
+      "name": "Discovery Sport",
+      "slug": "discovery-sport",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "land-rover",
       "name": "Freelander",
       "slug": "freelander",
       "vehicle_type": "suv",
@@ -7471,6 +7982,13 @@
     },
     {
       "make_slug": "land-rover",
+      "name": "Range Rover Evoque Convertible",
+      "slug": "range-rover-evoque-convertible",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "land-rover",
       "name": "Range Rover Sport",
       "slug": "range-rover-sport",
       "vehicle_type": "suv",
@@ -7506,8 +8024,29 @@
     },
     {
       "make_slug": "lexus",
+      "name": "CT 200h",
+      "slug": "ct-200h",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
       "name": "ES",
       "slug": "es",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "ES 300h",
+      "slug": "es-300h",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "ES 350",
+      "slug": "es-350",
       "vehicle_type": "car",
       "active": true
     },
@@ -7520,8 +8059,29 @@
     },
     {
       "make_slug": "lexus",
+      "name": "GS 350",
+      "slug": "gs-350",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "GS 450h",
+      "slug": "gs-450h",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
       "name": "GX",
       "slug": "gx",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "GX 460",
+      "slug": "gx-460",
       "vehicle_type": "suv",
       "active": true
     },
@@ -7536,6 +8096,41 @@
       "make_slug": "lexus",
       "name": "IS",
       "slug": "is",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "IS 250",
+      "slug": "is-250",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "IS 250 C",
+      "slug": "is-250-c",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "IS 350",
+      "slug": "is-350",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "IS 350 C",
+      "slug": "is-350-c",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "IS F",
+      "slug": "is-f",
       "vehicle_type": "car",
       "active": true
     },
@@ -7562,6 +8157,20 @@
     },
     {
       "make_slug": "lexus",
+      "name": "LS 460",
+      "slug": "ls-460",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "LS 600h L",
+      "slug": "ls-600h-l",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
       "name": "LX",
       "slug": "lx",
       "vehicle_type": "suv",
@@ -7569,8 +8178,57 @@
     },
     {
       "make_slug": "lexus",
+      "name": "LX 570",
+      "slug": "lx-570",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "NX 200t",
+      "slug": "nx-200t",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "NX 300h",
+      "slug": "nx-300h",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "RC 350",
+      "slug": "rc-350",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "RC F",
+      "slug": "rc-f",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
       "name": "RX",
       "slug": "rx",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "RX 350",
+      "slug": "rx-350",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "lexus",
+      "name": "RX 450h",
+      "slug": "rx-450h",
       "vehicle_type": "suv",
       "active": true
     },
@@ -7642,6 +8300,13 @@
       "name": "Mark VIII",
       "slug": "mark-viii",
       "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "lincoln",
+      "name": "MKC",
+      "slug": "mkc",
+      "vehicle_type": "suv",
       "active": true
     },
     {
@@ -7884,6 +8549,13 @@
     },
     {
       "make_slug": "maserati",
+      "name": "Ghibli",
+      "slug": "ghibli",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "maserati",
       "name": "Gran Turismo",
       "slug": "gran-turismo",
       "vehicle_type": "car",
@@ -7900,6 +8572,13 @@
       "make_slug": "maserati",
       "name": "GranTurismo",
       "slug": "granturismo",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "maserati",
+      "name": "GranTurismo Convertible",
+      "slug": "granturismo-convertible",
       "vehicle_type": "car",
       "active": true
     },
@@ -8227,8 +8906,29 @@
     },
     {
       "make_slug": "mazda",
+      "name": "MAZDA2",
+      "slug": "mazda2",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mazda",
+      "name": "MAZDA3",
+      "slug": "mazda3",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mazda",
       "name": "Mazda5",
       "slug": "mazda5",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mazda",
+      "name": "MAZDA6",
+      "slug": "mazda6",
       "vehicle_type": "car",
       "active": true
     },
@@ -8395,6 +9095,20 @@
     },
     {
       "make_slug": "mclaren",
+      "name": "650S Coupe",
+      "slug": "650s-coupe",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mclaren",
+      "name": "650S Spider",
+      "slug": "650s-spider",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mclaren",
       "name": "F1",
       "slug": "f1",
       "vehicle_type": "car",
@@ -8418,6 +9132,13 @@
       "make_slug": "mclaren",
       "name": "MP4-12C",
       "slug": "mp4-12c",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mclaren",
+      "name": "P1",
+      "slug": "p1",
       "vehicle_type": "car",
       "active": true
     },
@@ -8465,6 +9186,13 @@
     },
     {
       "make_slug": "mercedes-benz",
+      "name": "C-Class",
+      "slug": "c-class",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
       "name": "C30",
       "slug": "c30",
       "vehicle_type": "car",
@@ -8474,6 +9202,20 @@
       "make_slug": "mercedes-benz",
       "name": "CL",
       "slug": "cl",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
+      "name": "CL-Class",
+      "slug": "cl-class",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
+      "name": "CLA-Class",
+      "slug": "cla-class",
       "vehicle_type": "car",
       "active": true
     },
@@ -8514,8 +9256,22 @@
     },
     {
       "make_slug": "mercedes-benz",
+      "name": "CLS-Class",
+      "slug": "cls-class",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
       "name": "E",
       "slug": "e",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
+      "name": "E-Class",
+      "slug": "e-class",
       "vehicle_type": "car",
       "active": true
     },
@@ -8549,8 +9305,29 @@
     },
     {
       "make_slug": "mercedes-benz",
+      "name": "G-Class",
+      "slug": "g-class",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
       "name": "GL",
       "slug": "gl",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
+      "name": "GL-Class",
+      "slug": "gl-class",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
+      "name": "GLA-Class",
+      "slug": "gla-class",
       "vehicle_type": "suv",
       "active": true
     },
@@ -8563,8 +9340,22 @@
     },
     {
       "make_slug": "mercedes-benz",
+      "name": "GLK-Class",
+      "slug": "glk-class",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
       "name": "M",
       "slug": "m",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
+      "name": "M-Class",
+      "slug": "m-class",
       "vehicle_type": "suv",
       "active": true
     },
@@ -8591,6 +9382,13 @@
     },
     {
       "make_slug": "mercedes-benz",
+      "name": "S-Class",
+      "slug": "s-class",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
       "name": "SC",
       "slug": "sc",
       "vehicle_type": "car",
@@ -8612,8 +9410,22 @@
     },
     {
       "make_slug": "mercedes-benz",
+      "name": "SL-Class",
+      "slug": "sl-class",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
       "name": "SLK",
       "slug": "slk",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
+      "name": "SLK-Class",
+      "slug": "slk-class",
       "vehicle_type": "car",
       "active": true
     },
@@ -8628,6 +9440,20 @@
       "make_slug": "mercedes-benz",
       "name": "SLS",
       "slug": "sls",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
+      "name": "SLS AMG GT",
+      "slug": "sls-amg-gt",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mercedes-benz",
+      "name": "SLS AMG GT Final Edition",
+      "slug": "sls-amg-gt-final-edition",
       "vehicle_type": "car",
       "active": true
     },
@@ -8894,13 +9720,20 @@
       "make_slug": "mini",
       "name": "Cooper Countryman",
       "slug": "cooper-countryman",
-      "vehicle_type": "suv",
+      "vehicle_type": "car",
       "active": true
     },
     {
       "make_slug": "mini",
       "name": "Cooper Coupe",
       "slug": "cooper-coupe",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mini",
+      "name": "Cooper Paceman",
+      "slug": "cooper-paceman",
       "vehicle_type": "car",
       "active": true
     },
@@ -9067,8 +9900,29 @@
     },
     {
       "make_slug": "mitsubishi",
+      "name": "Lancer Evolution",
+      "slug": "lancer-evolution",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mitsubishi",
+      "name": "Lancer Sportback",
+      "slug": "lancer-sportback",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mitsubishi",
       "name": "Magna",
       "slug": "magna",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "mitsubishi",
+      "name": "Mirage",
+      "slug": "mirage",
       "vehicle_type": "car",
       "active": true
     },
@@ -9083,6 +9937,13 @@
       "make_slug": "mitsubishi",
       "name": "Outlander",
       "slug": "outlander",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "mitsubishi",
+      "name": "Outlander Sport",
+      "slug": "outlander-sport",
       "vehicle_type": "suv",
       "active": true
     },
@@ -9370,7 +10231,7 @@
       "make_slug": "nissan",
       "name": "Juke",
       "slug": "juke",
-      "vehicle_type": "suv",
+      "vehicle_type": "car",
       "active": true
     },
     {
@@ -9419,7 +10280,7 @@
       "make_slug": "nissan",
       "name": "Murano",
       "slug": "murano",
-      "vehicle_type": "suv",
+      "vehicle_type": "car",
       "active": true
     },
     {
@@ -9448,6 +10309,13 @@
       "name": "NP300",
       "slug": "np300",
       "vehicle_type": "pickup",
+      "active": true
+    },
+    {
+      "make_slug": "nissan",
+      "name": "NV200",
+      "slug": "nv200",
+      "vehicle_type": "car",
       "active": true
     },
     {
@@ -9622,6 +10490,13 @@
       "make_slug": "nissan",
       "name": "Versa",
       "slug": "versa",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "nissan",
+      "name": "Versa Note",
+      "slug": "versa-note",
       "vehicle_type": "car",
       "active": true
     },
@@ -10467,6 +11342,13 @@
     },
     {
       "make_slug": "porsche",
+      "name": "918 Spyder",
+      "slug": "918-spyder",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "porsche",
       "name": "924",
       "slug": "924",
       "vehicle_type": "car",
@@ -10572,6 +11454,13 @@
     },
     {
       "make_slug": "porsche",
+      "name": "Macan",
+      "slug": "macan",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "porsche",
       "name": "Panamera",
       "slug": "panamera",
       "vehicle_type": "car",
@@ -10672,6 +11561,27 @@
       "make_slug": "ram",
       "name": "CV Tradesman",
       "slug": "cv-tradesman",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ram",
+      "name": "Promaster Cargo Van",
+      "slug": "promaster-cargo-van",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ram",
+      "name": "ProMaster City",
+      "slug": "promaster-city",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ram",
+      "name": "Promaster Window Van",
+      "slug": "promaster-window-van",
       "vehicle_type": "car",
       "active": true
     },
@@ -10910,6 +11820,13 @@
       "make_slug": "rolls-royce",
       "name": "Ghost",
       "slug": "ghost",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "rolls-royce",
+      "name": "Ghost Series II",
+      "slug": "ghost-series-ii",
       "vehicle_type": "car",
       "active": true
     },
@@ -11204,6 +12121,13 @@
       "make_slug": "scion",
       "name": "FR-S",
       "slug": "fr-s",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "scion",
+      "name": "FR-S Convertible",
+      "slug": "fr-s-convertible",
       "vehicle_type": "car",
       "active": true
     },
@@ -11615,6 +12539,13 @@
     },
     {
       "make_slug": "subaru",
+      "name": "Impreza WRX",
+      "slug": "impreza-wrx",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "subaru",
       "name": "Legacy",
       "slug": "legacy",
       "vehicle_type": "car",
@@ -11687,6 +12618,13 @@
       "make_slug": "subaru",
       "name": "Vivio",
       "slug": "vivio",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "subaru",
+      "name": "WRX",
+      "slug": "wrx",
       "vehicle_type": "car",
       "active": true
     },
@@ -12007,6 +12945,13 @@
     },
     {
       "make_slug": "toyota",
+      "name": "Avalon Hybrid",
+      "slug": "avalon-hybrid",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "toyota",
       "name": "Avanza",
       "slug": "avanza",
       "vehicle_type": "car",
@@ -12044,6 +12989,13 @@
       "make_slug": "toyota",
       "name": "Camry",
       "slug": "camry",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "toyota",
+      "name": "Camry Hybrid",
+      "slug": "camry-hybrid",
       "vehicle_type": "car",
       "active": true
     },
@@ -12140,6 +13092,13 @@
     },
     {
       "make_slug": "toyota",
+      "name": "Highlander Hybrid",
+      "slug": "highlander-hybrid",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "toyota",
       "name": "Hilux",
       "slug": "hilux",
       "vehicle_type": "pickup",
@@ -12231,6 +13190,13 @@
     },
     {
       "make_slug": "toyota",
+      "name": "Prius Plug-in",
+      "slug": "prius-plug-in",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "toyota",
       "name": "Prius V",
       "slug": "prius-v",
       "vehicle_type": "car",
@@ -12247,6 +13213,13 @@
       "make_slug": "toyota",
       "name": "RAV4",
       "slug": "rav4",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "toyota",
+      "name": "RAV4 EV",
+      "slug": "rav4-ev",
       "vehicle_type": "suv",
       "active": true
     },
@@ -12742,6 +13715,13 @@
     },
     {
       "make_slug": "volkswagen",
+      "name": "Beetle Convertible",
+      "slug": "beetle-convertible",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "volkswagen",
       "name": "Bora",
       "slug": "bora",
       "vehicle_type": "car",
@@ -12784,6 +13764,13 @@
     },
     {
       "make_slug": "volkswagen",
+      "name": "e-Golf",
+      "slug": "e-golf",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "volkswagen",
       "name": "Eos",
       "slug": "eos",
       "vehicle_type": "car",
@@ -12805,6 +13792,27 @@
     },
     {
       "make_slug": "volkswagen",
+      "name": "Golf GTI",
+      "slug": "golf-gti",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "volkswagen",
+      "name": "Golf R",
+      "slug": "golf-r",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "volkswagen",
+      "name": "Golf SportWagen",
+      "slug": "golf-sportwagen",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "volkswagen",
       "name": "GTI",
       "slug": "gti",
       "vehicle_type": "car",
@@ -12814,6 +13822,27 @@
       "make_slug": "volkswagen",
       "name": "Jetta",
       "slug": "jetta",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "volkswagen",
+      "name": "Jetta GLI",
+      "slug": "jetta-gli",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "volkswagen",
+      "name": "Jetta Hybrid",
+      "slug": "jetta-hybrid",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "volkswagen",
+      "name": "Jetta SportWagen",
+      "slug": "jetta-sportwagen",
       "vehicle_type": "car",
       "active": true
     },
@@ -13045,6 +14074,20 @@
       "make_slug": "volvo",
       "name": "V50",
       "slug": "v50",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "volvo",
+      "name": "V60",
+      "slug": "v60",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "volvo",
+      "name": "V60 Cross Country",
+      "slug": "v60-cross-country",
       "vehicle_type": "car",
       "active": true
     },

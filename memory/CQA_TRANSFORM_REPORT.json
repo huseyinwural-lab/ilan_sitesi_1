@@ -1,29 +1,16 @@
 {
   "total_rows": 81135,
   "unique_makes": 156,
-  "unique_models": 1743,
+  "unique_models": 1892,
   "vehicle_type_counts": {
-    "car": 1452,
-    "suv": 228,
+    "car": 1575,
+    "suv": 254,
     "pickup": 63
   },
-  "models_skipped_unknown_body": 1911,
+  "models_skipped_unknown_body": 1762,
   "unknown_body_values": [
     "NULL",
-    "sport utility vehicles",
-    "compact cars",
-    "midsize cars",
-    "subcompact cars",
-    "large cars",
-    "two seaters",
-    "cargo vans",
-    "small station wagons",
-    "small sport utility vehicles",
-    "passenger vans",
-    "mini compact cars",
-    "midsize station wagons",
-    "not available",
-    "standard sport utility vehicles"
+    "not available"
   ],
   "duplicate_model_slugs": [
     {
