@@ -258,7 +258,7 @@ const DetailPage = () => {
                           className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition"
                           data-testid="listing-reveal-phone-button"
                         >
-                          Show Phone Number
+                          Telefonu Göster
                         </button>
                       ) : (
                         <div className="w-full bg-gray-100 py-3 rounded-lg font-bold text-center text-gray-800 border border-green-500" data-testid="listing-phone-number">
@@ -275,7 +275,7 @@ const DetailPage = () => {
                         className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold block text-center hover:bg-blue-700 transition"
                         data-testid="listing-send-message-button"
                       >
-                        Send Message
+                        Mesaj Gönder
                       </Link>
                     ) : (
                       <div className="w-full bg-gray-100 py-3 rounded-lg font-bold text-center text-gray-500 border" data-testid="listing-message-disabled">
