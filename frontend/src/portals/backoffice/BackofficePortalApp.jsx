@@ -17,6 +17,7 @@ import DealersPage from '@/pages/admin/Dealers';
 import DealerApplicationsPage from '@/pages/admin/DealerApplications';
 import AdminListingsPage from '@/pages/admin/AdminListings';
 import AdminInvoicesPage from '@/pages/admin/AdminInvoices';
+import AdminPaymentsPage from '@/pages/admin/AdminPayments';
 import AdminTaxRatesPage from '@/pages/admin/AdminTaxRates';
 import AdminPlansPage from '@/pages/admin/AdminPlans';
 import AdminDealerDetailPage from '@/pages/admin/AdminDealerDetail';
