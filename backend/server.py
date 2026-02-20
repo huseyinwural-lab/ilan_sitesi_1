@@ -7109,24 +7109,60 @@ async def admin_delete_tax_rate(
 @api_router.get("/admin/plans")
 async def admin_list_plans(
     request: Request,
-    country: Optional[str] = None,
+    scope: Optional[str] = None,
+    country_code: Optional[str] = None,
+    status: Optional[str] = None,
+    q: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await _ensure_plans_db_ready(session)
 
-    q: Dict = {}
-    if country:
-        country_code = country.upper()
-        _assert_country_scope(country_code, current_user)
-        q["country_code"] = country_code
-    elif current_user.get("role") == "country_admin":
-        scope = current_user.get("country_scope") or []
-        if "*" not in scope:
-            q["country_code"] = {"$in": scope}
+    query = select(Plan)
 
-    items = await db.plans.find(q, {"_id": 0}).sort("created_at", -1).to_list(length=500)
-    return {"items": items}
+    if scope:
+        scope_value = scope.strip().lower()
+        if scope_value not in PLAN_SCOPE_SET:
+            raise HTTPException(status_code=400, detail="country_scope invalid")
+        query = query.where(Plan.country_scope == scope_value)
+
+    if country_code:
+        query = query.where(Plan.country_code == country_code.strip().upper())
+
+    if status:
+        status_value = status.strip().lower()
+        if status_value not in PLAN_STATUS_SET:
+            raise HTTPException(status_code=400, detail="status invalid")
+        if status_value == "archived":
+            query = query.where(Plan.archived_at.isnot(None))
+        elif status_value == "active":
+            query = query.where(Plan.archived_at.is_(None), Plan.active_flag.is_(True))
+        elif status_value == "inactive":
+            query = query.where(Plan.archived_at.is_(None), Plan.active_flag.is_(False))
+    else:
+        query = query.where(Plan.archived_at.is_(None))
+
+    if q:
+        search_value = f"%{q.strip()}%"
+        query = query.where(Plan.name.ilike(search_value))
+
+    query = query.order_by(Plan.updated_at.desc(), Plan.created_at.desc())
+    rows = (await session.execute(query)).scalars().all()
+    return {"items": [_plan_to_dict(plan) for plan in rows]}
+
+
+@api_router.get("/admin/plans/{plan_id}")
+async def admin_get_plan(
+    plan_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_plans_db_ready(session)
+    plan = await session.get(Plan, plan_id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    return {"plan": _plan_to_dict(plan)}
 
 
 @api_router.post("/admin/plans")
@@ -7134,146 +7170,213 @@ async def admin_create_plan(
     payload: PlanCreatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await _ensure_plans_db_ready(session)
 
-    country_code = payload.country_code.upper()
-    _assert_country_scope(country_code, current_user)
-    if payload.price < 0:
-        raise HTTPException(status_code=400, detail="price must be >= 0")
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="name is required")
+
+    scope_value = payload.country_scope.strip().lower()
+    if scope_value not in PLAN_SCOPE_SET:
+        raise HTTPException(status_code=400, detail="country_scope invalid")
+
+    if payload.price_amount < 0:
+        raise HTTPException(status_code=400, detail="price_amount must be >= 0")
     if payload.listing_quota < 0 or payload.showcase_quota < 0:
         raise HTTPException(status_code=400, detail="quota must be >= 0")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    plan_id = str(uuid.uuid4())
-    plan_doc = {
-        "id": plan_id,
-        "name": payload.name,
-        "country_code": country_code,
-        "price": payload.price,
-        "currency": payload.currency,
-        "listing_quota": payload.listing_quota,
-        "showcase_quota": payload.showcase_quota,
-        "active_flag": True if payload.active_flag is None else payload.active_flag,
-        "created_at": now_iso,
-        "updated_at": None,
-    }
+    slug_value = _slugify_value(payload.slug or name)
+    if not slug_value or not SLUG_PATTERN.match(slug_value):
+        raise HTTPException(status_code=400, detail="slug invalid")
 
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "PLAN_CHANGE",
-        "action": "PLAN_CREATE",
-        "plan_id": plan_id,
-        "country_code": country_code,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "plan",
-        "resource_id": plan_id,
-        "applied": False,
-    }
+    if scope_value == "country":
+        if not payload.country_code:
+            raise HTTPException(status_code=400, detail="country_code is required")
+        country_value = payload.country_code.strip().upper()
+        currency = _resolve_currency_code(country_value)
+        if not currency:
+            raise HTTPException(status_code=400, detail="currency_code unavailable for country")
+        currency_code = currency
+    else:
+        country_value = "GLOBAL"
+        currency_code = "EUR"
 
-    await db.audit_logs.insert_one(audit_doc)
-    await db.plans.insert_one(plan_doc)
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    if payload.currency_code and payload.currency_code != currency_code:
+        raise HTTPException(status_code=400, detail="currency_code invalid for scope")
 
-    plan_doc.pop("_id", None)
-    return {"ok": True, "plan": plan_doc}
+    exists_query = select(Plan).where(
+        Plan.country_scope == scope_value,
+        Plan.country_code == country_value,
+        Plan.slug == slug_value,
+    )
+    existing = (await session.execute(exists_query)).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=409, detail="plan slug already exists")
+
+    now = datetime.now(timezone.utc)
+    plan = Plan(
+        slug=slug_value,
+        name=name,
+        country_scope=scope_value,
+        country_code=country_value,
+        price_amount=payload.price_amount,
+        currency_code=currency_code,
+        listing_quota=payload.listing_quota,
+        showcase_quota=payload.showcase_quota,
+        active_flag=True if payload.active_flag is None else payload.active_flag,
+        archived_at=None,
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(plan)
+    await session.commit()
+    await session.refresh(plan)
+    return {"plan": _plan_to_dict(plan)}
 
 
-@api_router.patch("/admin/plans/{plan_id}")
+@api_router.put("/admin/plans/{plan_id}")
 async def admin_update_plan(
     plan_id: str,
     payload: PlanUpdatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await _ensure_plans_db_ready(session)
 
-    plan = await db.plans.find_one({"id": plan_id}, {"_id": 0})
+    plan = await session.get(Plan, plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
-    _assert_country_scope(plan.get("country_code"), current_user)
 
-    updates: Dict = {"updated_at": datetime.now(timezone.utc).isoformat()}
-    for field in ["name", "country_code", "price", "currency", "listing_quota", "showcase_quota", "active_flag"]:
-        value = getattr(payload, field)
-        if value is not None:
-            if field == "price" and value < 0:
-                raise HTTPException(status_code=400, detail="price must be >= 0")
-            if field in {"listing_quota", "showcase_quota"} and value < 0:
-                raise HTTPException(status_code=400, detail="quota must be >= 0")
-            if field == "country_code":
-                value = value.upper()
-                _assert_country_scope(value, current_user)
-            updates[field] = value
+    updates: Dict[str, Any] = {}
 
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": updates["updated_at"],
-        "event_type": "PLAN_CHANGE",
-        "action": "PLAN_UPDATE",
-        "plan_id": plan_id,
-        "country_code": plan.get("country_code"),
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "plan",
-        "resource_id": plan_id,
-        "applied": False,
-    }
+    if payload.name is not None:
+        name_value = payload.name.strip()
+        if not name_value:
+            raise HTTPException(status_code=400, detail="name is required")
+        updates["name"] = name_value
 
-    await db.audit_logs.insert_one(audit_doc)
-    await db.plans.update_one({"id": plan_id}, {"$set": updates})
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    scope_value = plan.country_scope
+    if payload.country_scope is not None:
+        scope_value = payload.country_scope.strip().lower()
+        if scope_value not in PLAN_SCOPE_SET:
+            raise HTTPException(status_code=400, detail="country_scope invalid")
+        updates["country_scope"] = scope_value
 
-    updated = await db.plans.find_one({"id": plan_id}, {"_id": 0})
-    return {"ok": True, "plan": updated}
+    country_value = plan.country_code
+    if payload.country_code is not None:
+        country_value = payload.country_code.strip().upper()
+        updates["country_code"] = country_value
+
+    if scope_value == "country":
+        if not country_value:
+            raise HTTPException(status_code=400, detail="country_code is required")
+        currency = _resolve_currency_code(country_value)
+        if not currency:
+            raise HTTPException(status_code=400, detail="currency_code unavailable for country")
+        currency_code = currency
+    else:
+        country_value = "GLOBAL"
+        updates["country_code"] = country_value
+        currency_code = "EUR"
+
+    if payload.currency_code and payload.currency_code != currency_code:
+        raise HTTPException(status_code=400, detail="currency_code invalid for scope")
+
+    if payload.price_amount is not None:
+        if payload.price_amount < 0:
+            raise HTTPException(status_code=400, detail="price_amount must be >= 0")
+        updates["price_amount"] = payload.price_amount
+
+    if payload.listing_quota is not None:
+        if payload.listing_quota < 0:
+            raise HTTPException(status_code=400, detail="listing_quota must be >= 0")
+        updates["listing_quota"] = payload.listing_quota
+
+    if payload.showcase_quota is not None:
+        if payload.showcase_quota < 0:
+            raise HTTPException(status_code=400, detail="showcase_quota must be >= 0")
+        updates["showcase_quota"] = payload.showcase_quota
+
+    if payload.active_flag is not None:
+        updates["active_flag"] = payload.active_flag
+
+    if payload.slug is not None:
+        slug_value = _slugify_value(payload.slug)
+    elif payload.name is not None:
+        slug_value = _slugify_value(payload.name)
+    else:
+        slug_value = plan.slug
+
+    if not slug_value or not SLUG_PATTERN.match(slug_value):
+        raise HTTPException(status_code=400, detail="slug invalid")
+
+    updates["slug"] = slug_value
+    updates["currency_code"] = currency_code
+
+    exists_query = select(Plan).where(
+        Plan.country_scope == scope_value,
+        Plan.country_code == country_value,
+        Plan.slug == slug_value,
+        Plan.id != plan.id,
+    )
+    existing = (await session.execute(exists_query)).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=409, detail="plan slug already exists")
+
+    updates["updated_at"] = datetime.now(timezone.utc)
+    for key, value in updates.items():
+        setattr(plan, key, value)
+
+    await session.commit()
+    await session.refresh(plan)
+    return {"plan": _plan_to_dict(plan)}
 
 
-@api_router.delete("/admin/plans/{plan_id}")
-async def admin_delete_plan(
+@api_router.post("/admin/plans/{plan_id}/toggle-active")
+async def admin_toggle_plan_active(
     plan_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await _ensure_plans_db_ready(session)
 
-    plan = await db.plans.find_one({"id": plan_id}, {"_id": 0})
+    plan = await session.get(Plan, plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
-    _assert_country_scope(plan.get("country_code"), current_user)
+    if plan.archived_at:
+        raise HTTPException(status_code=400, detail="Plan is archived")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "PLAN_CHANGE",
-        "action": "PLAN_DELETE",
-        "plan_id": plan_id,
-        "country_code": plan.get("country_code"),
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "plan",
-        "resource_id": plan_id,
-        "applied": False,
-    }
+    plan.active_flag = not plan.active_flag
+    plan.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+    await session.refresh(plan)
+    return {"plan": _plan_to_dict(plan)}
 
-    await db.audit_logs.insert_one(audit_doc)
-    await db.plans.update_one({"id": plan_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-    return {"ok": True}
+
+@api_router.post("/admin/plans/{plan_id}/archive")
+async def admin_archive_plan(
+    plan_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_plans_db_ready(session)
+
+    plan = await session.get(Plan, plan_id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    now = datetime.now(timezone.utc)
+    plan.archived_at = now
+    plan.active_flag = False
+    plan.updated_at = now
+    await session.commit()
+    await session.refresh(plan)
+    return {"plan": _plan_to_dict(plan)}
 
 
 @api_router.post("/admin/dealers/{dealer_id}/plan")
