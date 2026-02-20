@@ -1803,15 +1803,20 @@ async def login(
 
 
 @api_router.post("/auth/refresh", response_model=TokenResponse)
-async def refresh_token_endpoint(data: RefreshTokenRequest, request: Request):
+async def refresh_token_endpoint(
+    data: RefreshTokenRequest,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
     db = request.app.state.db
+    auth_repo = _get_auth_repository(db, session)
 
     payload = decode_token(data.refresh_token)
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     user_id = payload.get("sub")
-    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    user = await auth_repo.get_user_by_id(user_id)
     if not user or not user.get("is_active", True):
         raise HTTPException(status_code=401, detail="User not found or inactive")
 
