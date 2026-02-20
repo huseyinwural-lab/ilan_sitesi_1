@@ -29,6 +29,12 @@ from fastapi import FastAPI, APIRouter, Depends, HTTPException, Request, Body, R
 from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, EmailStr
+from emergentintegrations.payments.stripe.checkout import (
+    StripeCheckout,
+    CheckoutSessionRequest,
+    CheckoutSessionResponse,
+    CheckoutStatusResponse,
+)
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import select, func, String, Text, DateTime, ForeignKey, desc, and_, or_
 from sqlalchemy.orm import Mapped, mapped_column
