@@ -94,7 +94,7 @@ const MediaUploader = () => {
           id="file-upload"
           data-testid="wizard-photo-input"
         />
-        <label htmlFor="file-upload" className="cursor-pointer block">
+        <label htmlFor="file-upload" className="cursor-pointer block" data-testid="wizard-photo-label">
           <div className="text-4xl mb-2">📸</div>
           <span className="text-blue-600 font-medium">Fotoğraf yüklemek için tıkla</span>
           <p className="text-sm text-gray-500 mt-1">(min 3 foto, min 800x600)</p>
