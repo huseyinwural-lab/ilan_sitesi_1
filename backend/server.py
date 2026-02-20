@@ -2383,7 +2383,7 @@ async def admin_individual_users_export_csv(
     country: Optional[str] = None,
     sort_by: Optional[str] = "last_name",
     sort_dir: Optional[str] = "asc",
-    current_user=Depends(check_permissions(["super_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "marketing"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
