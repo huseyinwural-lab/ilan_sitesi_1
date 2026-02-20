@@ -15,7 +15,7 @@ const DetailPage = () => {
   // If we use /ilan/UUID-slug, we need to parse.
   const { search } = useLocation();
 
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +26,7 @@ const DetailPage = () => {
   const [reportError, setReportError] = useState(null);
   const [reportSuccess, setReportSuccess] = useState(null);
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const reportReasons = [
     { value: 'spam', label: 'spam' },
