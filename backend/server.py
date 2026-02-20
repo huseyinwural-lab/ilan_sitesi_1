@@ -2440,11 +2440,12 @@ async def list_individual_users(
     request: Request,
     search: Optional[str] = None,
     country: Optional[str] = None,
+    status: Optional[str] = None,
     sort_by: Optional[str] = "last_name",
     sort_dir: Optional[str] = "asc",
     page: int = 1,
     limit: int = 50,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
 ):
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
