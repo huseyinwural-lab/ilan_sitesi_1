@@ -250,7 +250,8 @@ export default function IndividualUsers() {
                     <td className="p-3" data-testid={`individual-user-last-name-${user.id}`}>
                       {resolveLastName(user)}
                     </td>
-                    <td className="p-3" data-testid={`individual-user-email-${user.id}`}>{user.email}</td>
+                    <td className="p-3" data-testid={`individual-user-email-${user.id}`}>{user.email}</td>
+                    <td className="p-3" data-testid={`individual-user-phone-${user.id}`}>{user.phone_e164 || '-'}</td>
                     <td className="p-3" data-testid={`individual-user-created-${user.id}`}>{formatDate(user.created_at)}</td>
                     <td className="p-3" data-testid={`individual-user-last-login-${user.id}`}>{formatDate(user.last_login)}</td>
                   </tr>
