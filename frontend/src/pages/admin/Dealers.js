@@ -274,6 +274,76 @@ export default function DealersPage() {
           Next
         </button>
       </div>
+
+      {actionDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="dealers-action-modal">
+          <div className="bg-card rounded-lg shadow-lg max-w-lg w-full">
+            <div className="p-4 border-b">
+              <h3 className="text-lg font-semibold" data-testid="dealers-action-title">Onay</h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-muted-foreground" data-testid="dealers-action-message">
+                {ACTION_LABELS[actionDialog.type]}
+              </p>
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground">Gerekçe (zorunlu)</label>
+                <select
+                  value={reasonCode}
+                  onChange={(e) => setReasonCode(e.target.value)}
+                  className="h-10 rounded-md border bg-background px-3 text-sm w-full"
+                  data-testid="dealers-reason-select"
+                >
+                  <option value="">Seçiniz</option>
+                  {REASON_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground">Detay (opsiyonel)</label>
+                <textarea
+                  value={reasonDetail}
+                  onChange={(e) => setReasonDetail(e.target.value)}
+                  className="min-h-[90px] w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  placeholder="Ek açıklama"
+                  data-testid="dealers-reason-detail"
+                />
+              </div>
+              {actionDialog.type === 'suspend' && (
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">Askı bitiş tarihi (opsiyonel)</label>
+                  <input
+                    type="datetime-local"
+                    value={suspensionUntil}
+                    onChange={(e) => setSuspensionUntil(e.target.value)}
+                    className="h-10 rounded-md border bg-background px-3 text-sm w-full"
+                    data-testid="dealers-suspension-until"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t">
+              <button
+                type="button"
+                className="h-9 px-4 rounded-md border text-sm"
+                onClick={closeActionDialog}
+                data-testid="dealers-action-cancel"
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm"
+                onClick={handleActionConfirm}
+                disabled={actionLoading}
+                data-testid="dealers-action-confirm"
+              >
+                {actionLoading ? 'İşleniyor' : 'Onayla'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
