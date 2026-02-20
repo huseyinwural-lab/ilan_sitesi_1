@@ -132,7 +132,7 @@
 - 2026-02-20: Admin davet akışı (SendGrid entegrasyonu + /admin/invite/accept şifre belirleme)
 - 2026-02-20: Admin RBAC güvenlik kontrolleri + audit log olayları (admin_invited/accepted/role_changed/deactivated)
 - 2026-02-20: Admin kullanıcıları IA temizliği (Kullanıcı Yönetimi menüsü kaldırıldı, /admin/users & /admin/user-management redirect)
-- 2026-02-20: Admin silme (soft delete + silinenler filtresi + admin_deleted audit)
+- 2026-02-20: Bireysel kullanıcılar ekranı (SSOT individual filtre, soyad A→Z varsayılan sıralama, server-side arama + sayfalama)
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
