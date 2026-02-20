@@ -1674,24 +1674,30 @@ async def health_check(request: Request):
 @api_router.get("/health/db")
 async def health_db():
     target = _get_masked_db_target()
+    degraded_payload = json.dumps({"status": "degraded", "database": "postgres", "target": target})
+
     if not RAW_DATABASE_URL:
-        return JSONResponse(
+        return Response(
             status_code=503,
-            content={"status": "degraded", "database": "postgres", "target": target},
+            content=degraded_payload,
+            media_type="application/json",
         )
     if APP_ENV != "prod" and ("localhost" in RAW_DATABASE_URL or "127.0.0.1" in RAW_DATABASE_URL):
-        return JSONResponse(
+        return Response(
             status_code=503,
-            content={"status": "degraded", "database": "postgres", "target": target},
+            content=degraded_payload,
+            media_type="application/json",
         )
+
     try:
         async with sql_engine.connect() as conn:
             await conn.execute(select(1))
         return {"status": "healthy", "database": "postgres", "target": target}
     except Exception:
-        return JSONResponse(
+        return Response(
             status_code=503,
-            content={"status": "degraded", "database": "postgres", "target": target},
+            content=degraded_payload,
+            media_type="application/json",
         )
 
 
