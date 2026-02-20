@@ -1778,7 +1778,6 @@ REPORT_REASONS_V1 = {
 }
 
 REPORT_STATUS_SET = {"open", "in_review", "resolved", "dismissed"}
-INVOICE_STATUS_SET = {"unpaid", "paid", "cancelled"}
 KEY_NAMESPACE_REGEX = re.compile(r"^[a-z0-9]+(\.[a-z0-9_]+)+$")
 
 REPORT_STATUS_TRANSITIONS = {
