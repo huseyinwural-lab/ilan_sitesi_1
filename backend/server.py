@@ -190,6 +190,7 @@ def _user_to_response(doc: dict) -> UserResponse:
         preferred_language=doc.get("preferred_language", "tr"),
         is_active=bool(doc.get("is_active", True)),
         is_verified=bool(doc.get("is_verified", True)),
+        deleted_at=doc.get("deleted_at"),
         created_at=doc.get("created_at") or datetime.now(timezone.utc).isoformat(),
         last_login=doc.get("last_login"),
         invite_status=doc.get("invite_status"),
