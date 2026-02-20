@@ -7062,6 +7062,7 @@ async def admin_invoice_refund(
 
     now = datetime.now(timezone.utc)
     invoice.status = "refunded"
+    invoice.payment_status = "refunded"
     invoice.updated_at = now
     await session.commit()
     await session.refresh(invoice)
