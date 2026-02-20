@@ -34,6 +34,15 @@ const ACTION_LABELS = {
   delete: 'Kullanıcı silinecek (geri alınamaz). Devam edilsin mi?',
 };
 
+const AUDIT_LABELS = {
+  dealer_suspended: 'Askıya Alındı',
+  dealer_reactivated: 'Tekrar Aktif',
+  dealer_deleted: 'Silindi',
+  user_suspended: 'Askıya Alındı',
+  user_reactivated: 'Tekrar Aktif',
+  user_deleted: 'Silindi',
+};
+
 const statusBadge = (status) => {
   if (status === 'deleted') {
     return { label: 'Silindi', className: 'bg-rose-100 text-rose-700' };
