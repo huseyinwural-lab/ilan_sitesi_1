@@ -1209,8 +1209,10 @@ async def login(credentials: UserLogin, request: Request):
 
         raise HTTPException(status_code=401, detail={"code": "INVALID_CREDENTIALS"})
 
-    if not user.get("is_active", True):
-        raise HTTPException(status_code=400, detail="User account is disabled")
+    if user.get("deleted_at"):
+        raise HTTPException(status_code=403, detail="User account deleted")
+    if user.get("status") == "suspended" or not user.get("is_active", True):
+        raise HTTPException(status_code=403, detail="User account suspended")
 
 
     # successful login: reset failed-login counters
