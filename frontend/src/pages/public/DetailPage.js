@@ -279,7 +279,7 @@ const DetailPage = () => {
                       </Link>
                     ) : (
                       <div className="w-full bg-gray-100 py-3 rounded-lg font-bold text-center text-gray-500 border" data-testid="listing-message-disabled">
-                        Messaging disabled
+                        Mesajlaşma kapalı
                       </div>
                     )}
                   </div>
