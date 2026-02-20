@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
+import { Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+const SORT_OPTIONS = [
+  { value: 'company_asc', label: 'Firma Adı (A→Z)' },
+  { value: 'company_desc', label: 'Firma Adı (Z→A)' },
+  { value: 'email_asc', label: 'E-posta (A→Z)' },
+];
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Tümü' },
@@ -39,20 +45,53 @@ const statusBadge = (status) => {
   return { label: 'Aktif', className: 'bg-emerald-100 text-emerald-700' };
 };
 
+const formatDate = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString();
+};
+
+const resolveCompanyName = (dealer) => dealer?.company_name || '—';
+
+const resolveContactName = (dealer) => {
+  if (dealer?.contact_name) return dealer.contact_name;
+  const fallback = [dealer?.first_name, dealer?.last_name].filter(Boolean).join(' ');
+  return fallback || '—';
+};
+
+const getSortParams = (value) => {
+  if (value === 'company_desc') {
+    return { sort_by: 'company_name', sort_dir: 'desc' };
+  }
+  if (value === 'email_asc') {
+    return { sort_by: 'email', sort_dir: 'asc' };
+  }
+  return { sort_by: 'company_name', sort_dir: 'asc' };
+};
+
 export default function DealersPage() {
-  const { t } = useLanguage();
   const { user: currentUser } = useAuth();
   const [items, setItems] = useState([]);
+  const [countries, setCountries] = useState([]);
+  const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('company_asc');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(0);
+  const [countryFilter, setCountryFilter] = useState('all');
+  const [planFilter, setPlanFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(25);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [actionDialog, setActionDialog] = useState(null);
   const [reasonCode, setReasonCode] = useState('');
   const [reasonDetail, setReasonDetail] = useState('');
   const [suspensionUntil, setSuspensionUntil] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
-  const limit = 20;
 
   const canSuspend = ['super_admin', 'moderator'].includes(currentUser?.role);
   const canDelete = currentUser?.role === 'super_admin';
@@ -63,19 +102,34 @@ export default function DealersPage() {
 
   const fetchDealers = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
-      params.set('skip', String(page * limit));
+      params.set('page', String(page));
       params.set('limit', String(limit));
+      params.set('include_filters', 'true');
+      const { sort_by, sort_dir } = getSortParams(sortOption);
+      params.set('sort_by', sort_by);
+      params.set('sort_dir', sort_dir);
+      if (searchQuery) params.set('search', searchQuery);
       if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
-      if (search) params.set('search', search);
+      if (countryFilter && countryFilter !== 'all') params.set('country', countryFilter);
+      if (planFilter && planFilter !== 'all') params.set('plan_id', planFilter);
 
       const res = await axios.get(`${API}/admin/dealers?${params.toString()}`, {
         headers: authHeader,
       });
       setItems(res.data.items || []);
+      setTotalCount(res.data.total_count ?? 0);
+      setTotalPages(res.data.total_pages ?? 1);
+      if (res.data.filters?.countries) {
+        setCountries(res.data.filters.countries || []);
+      }
+      if (res.data.filters?.plans) {
+        setPlans(res.data.filters.plans || []);
+      }
     } catch (e) {
-      console.error(e);
+      setError('Kurumsal kullanıcı listesi yüklenemedi.');
     } finally {
       setLoading(false);
     }
@@ -84,7 +138,19 @@ export default function DealersPage() {
   useEffect(() => {
     fetchDealers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, search, page]);
+  }, [statusFilter, searchQuery, countryFilter, planFilter, sortOption, page]);
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    setPage(1);
+    setSearchQuery(searchInput.trim());
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchQuery('');
+    setPage(1);
+  };
 
   const openActionDialog = (type, dealer) => {
     setActionDialog({ type, dealer });
@@ -136,142 +202,219 @@ export default function DealersPage() {
     }
   };
 
+  const resultLabel = searchQuery ? `${totalCount} sonuç bulundu` : `Toplam ${totalCount} kayıt`;
+
   return (
     <div className="space-y-6" data-testid="dealers-page">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Kurumsal Kullanıcılar</h1>
-        <p className="text-sm text-muted-foreground">Kurumsal kullanıcı yönetimi ve moderasyon aksiyonları</p>
+        <h1 className="text-2xl font-bold" data-testid="dealers-title">Kurumsal Kullanıcılar</h1>
+        <p className="text-sm text-muted-foreground" data-testid="dealers-subtitle">Kurumsal kullanıcı yönetimi ve moderasyon aksiyonları</p>
       </div>
 
-        <div className="flex flex-wrap gap-3">
-          <input
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            placeholder="E-posta ile ara"
-            className="h-9 px-3 rounded-md border bg-background text-sm"
-            data-testid="dealers-search-input"
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
-            className="h-9 px-3 rounded-md border bg-background text-sm"
-            data-testid="dealers-status-select"
-          >
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </div>
-
-      <div className="rounded-md border bg-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted">
-            <tr>
-              <th className="text-left p-3" data-testid="dealers-header-email">E-posta</th>
-              <th className="text-left p-3" data-testid="dealers-header-country">Ülke</th>
-              <th className="text-left p-3" data-testid="dealers-header-status">Durum</th>
-              <th className="text-right p-3" data-testid="dealers-header-actions">Aksiyon</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={4} className="p-6 text-center">Loading…</td></tr>
-            ) : items.length === 0 ? (
-              <tr><td colSpan={4} className="p-6 text-center text-muted-foreground">No dealers</td></tr>
-            ) : (
-              items.map((d) => {
-                const statusValue = d.status || d.dealer_status || 'active';
-                const badge = statusBadge(statusValue);
-                const allowSuspend = canSuspend && statusValue !== 'deleted';
-                const allowDelete = canDelete && statusValue !== 'deleted';
-                const showActions = allowSuspend || allowDelete;
-                return (
-                  <tr key={d.id} className="border-t" data-testid={`dealer-row-${d.id}`}>
-                  <td className="p-3" data-testid={`dealer-email-${d.id}`}>{d.email}</td>
-                  <td className="p-3 text-muted-foreground" data-testid={`dealer-country-${d.id}`}>{d.country_code || '-'}</td>
-                  <td className="p-3" data-testid={`dealer-status-${d.id}`}>
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
-                  </td>
-                  <td className="p-3 text-right" data-testid={`dealer-actions-${d.id}`}>
-                    {statusValue === 'deleted' ? (
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="text-xs text-muted-foreground" data-testid={`dealer-actions-deleted-${d.id}`}>
-                          Silindi
-                        </span>
-                        <Link
-                          to={`/admin/dealers/${d.id}`}
-                          className="h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center"
-                          data-testid={`dealer-detail-link-${d.id}`}
-                        >
-                          Detay
-                        </Link>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-end gap-2">
-                        {allowSuspend && (statusValue === 'suspended' ? (
-                          <button
-                            onClick={() => openActionDialog('activate', d)}
-                            className="h-8 px-3 rounded-md border text-xs"
-                            data-testid={`dealer-reactivate-${d.id}`}
-                          >
-                            Aktif Et
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => openActionDialog('suspend', d)}
-                            className="h-8 px-3 rounded-md border text-xs"
-                            data-testid={`dealer-suspend-${d.id}`}
-                          >
-                            Askıya Al
-                          </button>
-                        ))}
-                        {allowDelete && (
-                          <button
-                            onClick={() => openActionDialog('delete', d)}
-                            className="h-8 px-3 rounded-md border text-xs text-rose-600"
-                            data-testid={`dealer-delete-${d.id}`}
-                          >
-                            Sil
-                          </button>
-                        )}
-                        {!showActions && (
-                          <span className="text-xs text-muted-foreground" data-testid={`dealer-actions-disabled-${d.id}`}>
-                            Yetkisiz
-                          </span>
-                        )}
-                        <Link
-                          to={`/admin/dealers/${d.id}`}
-                          className="h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center"
-                          data-testid={`dealer-detail-link-${d.id}`}
-                        >
-                          Detay
-                        </Link>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              );
-              })
+      <div className="bg-card border rounded-md p-4 space-y-4" data-testid="dealers-controls">
+        <form onSubmit={handleSearchSubmit} className="flex flex-wrap items-center gap-3">
+          <div className="relative flex items-center gap-2 border rounded-md px-3 h-10 bg-background w-full sm:w-96">
+            <Search size={16} className="text-muted-foreground" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Firma, yetkili, e-posta veya telefon ara"
+              className="bg-transparent outline-none text-sm flex-1"
+              data-testid="dealers-search-input"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="text-muted-foreground hover:text-foreground"
+                data-testid="dealers-search-clear"
+              >
+                <X size={14} />
+              </button>
             )}
-          </tbody>
-        </table>
+          </div>
+          <button type="submit" className="h-10 px-4 rounded-md border text-sm" data-testid="dealers-search-button">
+            Ara
+          </button>
+          <div className="text-xs text-muted-foreground" data-testid="dealers-result-count">{resultLabel}</div>
+        </form>
+
+        <div className="grid gap-3 md:grid-cols-4" data-testid="dealers-filters">
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Sıralama</div>
+            <select
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value)}
+              className="h-10 rounded-md border bg-background px-3 text-sm w-full"
+              data-testid="dealers-sort-select"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Durum</div>
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+              className="h-10 rounded-md border bg-background px-3 text-sm w-full"
+              data-testid="dealers-status-select"
+            >
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Ülke</div>
+            <select
+              value={countryFilter}
+              onChange={(e) => { setCountryFilter(e.target.value); setPage(1); }}
+              className="h-10 rounded-md border bg-background px-3 text-sm w-full"
+              data-testid="dealers-country-select"
+            >
+              <option value="all">Tümü</option>
+              {countries.map((country) => (
+                <option key={country.country_code} value={country.country_code}>{country.name} ({country.country_code})</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Paket</div>
+            <select
+              value={planFilter}
+              onChange={(e) => { setPlanFilter(e.target.value); setPage(1); }}
+              className="h-10 rounded-md border bg-background px-3 text-sm w-full"
+              data-testid="dealers-plan-select"
+            >
+              <option value="all">Tümü</option>
+              {plans.map((plan) => (
+                <option key={plan.id} value={plan.id}>{plan.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center justify-end gap-2">
+      {error && (
+        <div className="text-sm text-rose-600" data-testid="dealers-error">{error}</div>
+      )}
+
+      <div className="rounded-md border bg-card overflow-hidden" data-testid="dealers-table">
+        <div className="overflow-x-auto">
+          <table className="min-w-[1400px] w-full text-sm">
+            <thead className="bg-muted">
+              <tr>
+                <th className="p-3 text-left" data-testid="dealers-header-company">Firma Adı</th>
+                <th className="p-3 text-left" data-testid="dealers-header-contact">Yetkili</th>
+                <th className="p-3 text-left" data-testid="dealers-header-email">E-posta</th>
+                <th className="p-3 text-left" data-testid="dealers-header-phone">Telefon</th>
+                <th className="p-3 text-left" data-testid="dealers-header-country">Ülke</th>
+                <th className="p-3 text-left" data-testid="dealers-header-status">Durum</th>
+                <th className="p-3 text-left" data-testid="dealers-header-verify">Doğrulama</th>
+                <th className="p-3 text-left" data-testid="dealers-header-created">Kayıt Tarihi</th>
+                <th className="p-3 text-left" data-testid="dealers-header-last-login">Son Giriş</th>
+                <th className="p-3 text-left" data-testid="dealers-header-listings">İlan</th>
+                <th className="p-3 text-left" data-testid="dealers-header-plan">Paket</th>
+                <th className="p-3 text-right" data-testid="dealers-header-actions">Aksiyon</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={12} className="p-6 text-center text-muted-foreground" data-testid="dealers-loading">Yükleniyor...</td>
+                </tr>
+              ) : items.length === 0 ? (
+                <tr>
+                  <td colSpan={12} className="p-6 text-center text-muted-foreground" data-testid="dealers-empty">Kurumsal kullanıcı bulunamadı.</td>
+                </tr>
+              ) : (
+                items.map((dealer) => {
+                  const statusValue = dealer.status || 'active';
+                  const badge = statusBadge(statusValue);
+                  const allowSuspend = canSuspend && statusValue !== 'deleted';
+                  const allowDelete = canDelete && statusValue !== 'deleted';
+                  const showActions = allowSuspend || allowDelete;
+                  return (
+                    <tr key={dealer.id} className="border-b last:border-none" data-testid={`dealer-row-${dealer.id}`}>
+                      <td className="p-3" data-testid={`dealer-company-${dealer.id}`}>{resolveCompanyName(dealer)}</td>
+                      <td className="p-3" data-testid={`dealer-contact-${dealer.id}`}>{resolveContactName(dealer)}</td>
+                      <td className="p-3" data-testid={`dealer-email-${dealer.id}`}>{dealer.email}</td>
+                      <td className="p-3" data-testid={`dealer-phone-${dealer.id}`}>{dealer.phone_e164 || '—'}</td>
+                      <td className="p-3" data-testid={`dealer-country-${dealer.id}`}>{dealer.country_code || '-'}</td>
+                      <td className="p-3" data-testid={`dealer-status-${dealer.id}`}>
+                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${badge.className}`}>{badge.label}</span>
+                      </td>
+                      <td className="p-3" data-testid={`dealer-verify-${dealer.id}`}>
+                        <div className="text-xs">E-posta: {dealer.email_verified ? 'Onaylı' : 'Onaysız'}</div>
+                        <div className="text-xs">Telefon: {dealer.phone_verified ? 'Onaylı' : 'Onaysız'}</div>
+                      </td>
+                      <td className="p-3" data-testid={`dealer-created-${dealer.id}`}>{formatDate(dealer.created_at)}</td>
+                      <td className="p-3" data-testid={`dealer-last-login-${dealer.id}`}>{formatDate(dealer.last_login)}</td>
+                      <td className="p-3" data-testid={`dealer-listings-${dealer.id}`}>{dealer.total_listings ?? 0} / {dealer.active_listings ?? 0}</td>
+                      <td className="p-3" data-testid={`dealer-plan-${dealer.id}`}>{dealer.plan_name || '-'}</td>
+                      <td className="p-3 text-right" data-testid={`dealer-actions-${dealer.id}`}>
+                        {statusValue === 'deleted' ? (
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="text-xs text-muted-foreground" data-testid={`dealer-actions-deleted-${dealer.id}`}>Silindi</span>
+                            <Link to={`/admin/dealers/${dealer.id}`} className="h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center" data-testid={`dealer-detail-link-${dealer.id}`}>
+                              Detay
+                            </Link>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-2">
+                            {allowSuspend && (statusValue === 'suspended' ? (
+                              <button type="button" className="h-8 px-3 rounded-md border text-xs" onClick={() => openActionDialog('activate', dealer)} data-testid={`dealer-reactivate-${dealer.id}`}>
+                                Aktif Et
+                              </button>
+                            ) : (
+                              <button type="button" className="h-8 px-3 rounded-md border text-xs" onClick={() => openActionDialog('suspend', dealer)} data-testid={`dealer-suspend-${dealer.id}`}>
+                                Askıya Al
+                              </button>
+                            ))}
+                            {allowDelete && (
+                              <button type="button" className="h-8 px-3 rounded-md border text-xs text-rose-600" onClick={() => openActionDialog('delete', dealer)} data-testid={`dealer-delete-${dealer.id}`}>
+                                Sil
+                              </button>
+                            )}
+                            {!showActions && (
+                              <span className="text-xs text-muted-foreground" data-testid={`dealer-actions-disabled-${dealer.id}`}>Yetkisiz</span>
+                            )}
+                            <Link to={`/admin/dealers/${dealer.id}`} className="h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center" data-testid={`dealer-detail-link-${dealer.id}`}>
+                              Detay
+                            </Link>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between" data-testid="dealers-pagination">
         <button
-          onClick={() => setPage(Math.max(0, page - 1))}
-          disabled={page === 0}
-          className="h-9 px-3 rounded-md border text-sm disabled:opacity-50"
-          data-testid="dealers-prev-page"
+          type="button"
+          className="h-9 px-3 rounded-md border text-sm flex items-center gap-2 disabled:opacity-50"
+          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+          disabled={page <= 1}
+          data-testid="dealers-prev"
         >
-          Prev
+          <ChevronLeft size={14} /> Önceki
         </button>
+        <div className="text-sm text-muted-foreground" data-testid="dealers-page-indicator">Sayfa {page} / {totalPages}</div>
         <button
-          onClick={() => setPage(page + 1)}
-          className="h-9 px-3 rounded-md border text-sm"
-          data-testid="dealers-next-page"
+          type="button"
+          className="h-9 px-3 rounded-md border text-sm flex items-center gap-2 disabled:opacity-50"
+          onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+          disabled={page >= totalPages}
+          data-testid="dealers-next"
         >
-          Next
+          Sonraki <ChevronRight size={14} />
         </button>
       </div>
 
@@ -323,21 +466,10 @@ export default function DealersPage() {
               )}
             </div>
             <div className="flex items-center justify-end gap-2 p-4 border-t">
-              <button
-                type="button"
-                className="h-9 px-4 rounded-md border text-sm"
-                onClick={closeActionDialog}
-                data-testid="dealers-action-cancel"
-              >
+              <button type="button" className="h-9 px-4 rounded-md border text-sm" onClick={closeActionDialog} data-testid="dealers-action-cancel">
                 İptal
               </button>
-              <button
-                type="button"
-                className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm"
-                onClick={handleActionConfirm}
-                disabled={actionLoading}
-                data-testid="dealers-action-confirm"
-              >
+              <button type="button" className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm" onClick={handleActionConfirm} disabled={actionLoading} data-testid="dealers-action-confirm">
                 {actionLoading ? 'İşleniyor' : 'Onayla'}
               </button>
             </div>
