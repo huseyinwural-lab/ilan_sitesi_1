@@ -753,11 +753,16 @@ async def _ensure_fixture_category_schema(db):
 
 
 async def lifespan(app: FastAPI):
-    client = get_mongo_client()
-    db = client[get_db_name()]
+    client = None
+    db = None
+    if MONGO_ENABLED:
+        client = get_mongo_client()
+        db = client[get_db_name()]
 
-    # Ping
-    await db.command("ping")
+        # Ping
+        await db.command("ping")
+    else:
+        logging.getLogger("mongo").warning("Mongo disabled (MONGO_ENABLED=false)")
 
     sql_target = _get_masked_db_target()
     logging.getLogger("sql_config").info(
@@ -774,6 +779,14 @@ async def lifespan(app: FastAPI):
             await conn.run_sync(Base.metadata.create_all)
     except Exception as exc:
         logging.getLogger("sql_config").warning("SQL init skipped: %s", exc)
+
+    if not MONGO_ENABLED:
+        app.state.mongo_client = None
+        app.state.db = None
+        app.state.mongo_enabled = False
+        yield
+        await sql_engine.dispose()
+        return
 
     # Indexes
     await db.users.create_index("email", unique=True)
