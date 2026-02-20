@@ -3277,6 +3277,430 @@ async def update_support_application_status(
     return {"ok": True, "status": new_status}
 
 
+@api_router.post("/admin/campaigns")
+async def create_campaign(
+    payload: CampaignCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "campaigns_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_campaigns_db_ready(session)
+
+    data = _normalize_campaign_payload(payload)
+
+    created_by_admin_id = None
+    if current_user.get("id"):
+        try:
+            created_by_admin_id = uuid.UUID(current_user.get("id"))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid admin id") from exc
+
+    now = datetime.now(timezone.utc)
+    campaign = Campaign(
+        id=uuid.uuid4(),
+        type=data["type"],
+        country_scope=data["country_scope"],
+        country_code=data["country_code"],
+        name=data["name"],
+        description=data["description"],
+        status=data["status"],
+        target=data["target"],
+        start_at=data["start_at"],
+        end_at=data["end_at"],
+        priority=data["priority"],
+        discount_percent=data["discount_percent"],
+        discount_amount=data["discount_amount"],
+        discount_currency=data["discount_currency"],
+        min_listing_count=data["min_listing_count"],
+        max_listing_count=data["max_listing_count"],
+        eligible_categories=data["eligible_categories"],
+        eligible_user_segment=data["eligible_user_segment"],
+        eligible_dealer_plan=data["eligible_dealer_plan"],
+        eligible_dealers=data["eligible_dealers"],
+        eligible_users=data["eligible_users"],
+        free_listing_quota_bonus=data["free_listing_quota_bonus"],
+        created_by_admin_id=created_by_admin_id,
+        created_at=now,
+        updated_at=now,
+    )
+
+    session.add(campaign)
+    await session.commit()
+    await session.refresh(campaign)
+
+    db = request.app.state.db
+    if db is not None:
+        audit_entry = await build_audit_entry(
+            event_type="CAMPAIGN_CREATED",
+            actor=current_user,
+            target_id=str(campaign.id),
+            target_type="campaign",
+            country_code=current_user.get("country_code"),
+            details={"after": _campaign_to_dict(campaign)},
+            request=request,
+        )
+        audit_entry["action"] = "CAMPAIGN_CREATED"
+        await db.audit_logs.insert_one(audit_entry)
+
+    return _campaign_to_dict(campaign)
+
+
+@api_router.get("/admin/campaigns")
+async def list_campaigns(
+    request: Request,
+    type: str,
+    status: Optional[str] = None,
+    country: Optional[str] = None,
+    q: Optional[str] = None,
+    date_range: Optional[str] = None,
+    page: int = 1,
+    limit: int = 25,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "campaigns_admin", "campaigns_supervisor"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_campaigns_db_ready(session)
+
+    type_value = type.lower().strip()
+    if type_value not in CAMPAIGN_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid type")
+
+    query = select(Campaign).where(Campaign.type == type_value)
+
+    if status:
+        status_value = status.lower().strip()
+        if status_value not in CAMPAIGN_STATUSES:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        query = query.where(Campaign.status == status_value)
+
+    if country:
+        if country.lower() == "global":
+            query = query.where(Campaign.country_scope == "global")
+        else:
+            query = query.where(
+                and_(Campaign.country_scope == "country", Campaign.country_code == country.upper())
+            )
+
+    if q:
+        search_value = f"%{q.strip()}%"
+        query = query.where(or_(Campaign.name.ilike(search_value), Campaign.description.ilike(search_value)))
+
+    if date_range:
+        parts = [part.strip() for part in date_range.split(",") if part.strip()]
+        if len(parts) == 2:
+            start_dt = _parse_datetime_field(parts[0], "date_range_start")
+            end_dt = _parse_datetime_field(parts[1], "date_range_end")
+            query = query.where(Campaign.start_at >= start_dt).where(Campaign.end_at <= end_dt)
+
+    safe_page = max(page, 1)
+    safe_limit = min(max(limit, 1), 200)
+    offset = (safe_page - 1) * safe_limit
+
+    total_count = await session.scalar(select(func.count()).select_from(query.subquery())) or 0
+    result = await session.execute(
+        query.order_by(desc(Campaign.priority), desc(Campaign.updated_at)).offset(offset).limit(safe_limit)
+    )
+    rows = result.scalars().all()
+
+    items = []
+    for row in rows:
+        row_dict = _campaign_to_dict(row)
+        row_dict["eligible_dealers_count"] = len(row.eligible_dealers or [])
+        row_dict["eligible_users_count"] = len(row.eligible_users or [])
+        items.append(row_dict)
+
+    total_pages = max(1, (total_count + safe_limit - 1) // safe_limit)
+
+    return {
+        "items": items,
+        "total_count": total_count,
+        "page": safe_page,
+        "limit": safe_limit,
+        "total_pages": total_pages,
+    }
+
+
+@api_router.get("/admin/campaigns/{campaign_id}")
+async def get_campaign_detail(
+    campaign_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "campaigns_admin", "campaigns_supervisor"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_campaigns_db_ready(session)
+
+    try:
+        campaign_uuid = uuid.UUID(campaign_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid campaign id") from exc
+
+    result = await session.execute(select(Campaign).where(Campaign.id == campaign_uuid))
+    campaign = result.scalar_one_or_none()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    data = _campaign_to_dict(campaign)
+
+    db = request.app.state.db
+    if db is not None:
+        audit_items = (
+            await db.audit_logs.find(
+                {"resource_type": "campaign", "resource_id": campaign_id},
+                {"_id": 0},
+            )
+            .sort("created_at", -1)
+            .limit(20)
+            .to_list(length=20)
+        )
+        data["audit"] = audit_items
+    else:
+        data["audit"] = []
+
+    return data
+
+
+@api_router.put("/admin/campaigns/{campaign_id}")
+async def update_campaign(
+    campaign_id: str,
+    payload: CampaignUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "campaigns_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_campaigns_db_ready(session)
+
+    try:
+        campaign_uuid = uuid.UUID(campaign_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid campaign id") from exc
+
+    result = await session.execute(select(Campaign).where(Campaign.id == campaign_uuid))
+    campaign = result.scalar_one_or_none()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    before_state = _campaign_to_dict(campaign)
+    data = _normalize_campaign_payload(payload, existing=campaign)
+
+    if data["status"] != campaign.status:
+        allowed = CAMPAIGN_STATUS_TRANSITIONS.get(campaign.status, set())
+        if data["status"] not in allowed:
+            raise HTTPException(status_code=400, detail="Invalid status transition")
+
+    campaign.country_scope = data["country_scope"]
+    campaign.country_code = data["country_code"]
+    campaign.name = data["name"]
+    campaign.description = data["description"]
+    campaign.status = data["status"]
+    campaign.target = data["target"]
+    campaign.start_at = data["start_at"]
+    campaign.end_at = data["end_at"]
+    campaign.priority = data["priority"]
+    campaign.discount_percent = data["discount_percent"]
+    campaign.discount_amount = data["discount_amount"]
+    campaign.discount_currency = data["discount_currency"]
+    campaign.min_listing_count = data["min_listing_count"]
+    campaign.max_listing_count = data["max_listing_count"]
+    campaign.eligible_categories = data["eligible_categories"]
+    campaign.eligible_user_segment = data["eligible_user_segment"]
+    campaign.eligible_dealer_plan = data["eligible_dealer_plan"]
+    campaign.eligible_dealers = data["eligible_dealers"]
+    campaign.eligible_users = data["eligible_users"]
+    campaign.free_listing_quota_bonus = data["free_listing_quota_bonus"]
+    campaign.updated_at = datetime.now(timezone.utc)
+
+    await session.commit()
+    await session.refresh(campaign)
+
+    db = request.app.state.db
+    if db is not None:
+        audit_entry = await build_audit_entry(
+            event_type="CAMPAIGN_UPDATED",
+            actor=current_user,
+            target_id=campaign_id,
+            target_type="campaign",
+            country_code=current_user.get("country_code"),
+            details={"before": before_state, "after": _campaign_to_dict(campaign)},
+            request=request,
+        )
+        audit_entry["action"] = "CAMPAIGN_UPDATED"
+        await db.audit_logs.insert_one(audit_entry)
+
+    return _campaign_to_dict(campaign)
+
+
+@api_router.delete("/admin/campaigns/{campaign_id}")
+async def archive_campaign(
+    campaign_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "campaigns_supervisor"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_campaigns_db_ready(session)
+
+    try:
+        campaign_uuid = uuid.UUID(campaign_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid campaign id") from exc
+
+    result = await session.execute(select(Campaign).where(Campaign.id == campaign_uuid))
+    campaign = result.scalar_one_or_none()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    before_state = _campaign_to_dict(campaign)
+    campaign.status = "archived"
+    campaign.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+
+    db = request.app.state.db
+    if db is not None:
+        audit_entry = await build_audit_entry(
+            event_type="CAMPAIGN_ARCHIVED",
+            actor=current_user,
+            target_id=campaign_id,
+            target_type="campaign",
+            country_code=current_user.get("country_code"),
+            details={"before": before_state, "after": {"status": "archived"}},
+            request=request,
+        )
+        audit_entry["action"] = "CAMPAIGN_ARCHIVED"
+        await db.audit_logs.insert_one(audit_entry)
+
+    return {"ok": True}
+
+
+@api_router.post("/admin/campaigns/{campaign_id}/activate")
+async def activate_campaign(
+    campaign_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "campaigns_supervisor"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_campaigns_db_ready(session)
+
+    try:
+        campaign_uuid = uuid.UUID(campaign_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid campaign id") from exc
+
+    result = await session.execute(select(Campaign).where(Campaign.id == campaign_uuid))
+    campaign = result.scalar_one_or_none()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    if campaign.status not in {"draft", "paused"}:
+        raise HTTPException(status_code=400, detail="Invalid status transition")
+
+    before_state = _campaign_to_dict(campaign)
+    campaign.status = "active"
+    campaign.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+
+    db = request.app.state.db
+    if db is not None:
+        audit_entry = await build_audit_entry(
+            event_type="CAMPAIGN_ACTIVATED",
+            actor=current_user,
+            target_id=campaign_id,
+            target_type="campaign",
+            country_code=current_user.get("country_code"),
+            details={"before": before_state, "after": {"status": "active"}},
+            request=request,
+        )
+        audit_entry["action"] = "CAMPAIGN_ACTIVATED"
+        await db.audit_logs.insert_one(audit_entry)
+
+    return {"ok": True}
+
+
+@api_router.post("/admin/campaigns/{campaign_id}/pause")
+async def pause_campaign(
+    campaign_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "campaigns_supervisor"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_campaigns_db_ready(session)
+
+    try:
+        campaign_uuid = uuid.UUID(campaign_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid campaign id") from exc
+
+    result = await session.execute(select(Campaign).where(Campaign.id == campaign_uuid))
+    campaign = result.scalar_one_or_none()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    if campaign.status not in {"active"}:
+        raise HTTPException(status_code=400, detail="Invalid status transition")
+
+    before_state = _campaign_to_dict(campaign)
+    campaign.status = "paused"
+    campaign.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+
+    db = request.app.state.db
+    if db is not None:
+        audit_entry = await build_audit_entry(
+            event_type="CAMPAIGN_PAUSED",
+            actor=current_user,
+            target_id=campaign_id,
+            target_type="campaign",
+            country_code=current_user.get("country_code"),
+            details={"before": before_state, "after": {"status": "paused"}},
+            request=request,
+        )
+        audit_entry["action"] = "CAMPAIGN_PAUSED"
+        await db.audit_logs.insert_one(audit_entry)
+
+    return {"ok": True}
+
+
+@api_router.post("/admin/campaigns/{campaign_id}/archive")
+async def archive_campaign_action(
+    campaign_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "campaigns_supervisor"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_campaigns_db_ready(session)
+
+    try:
+        campaign_uuid = uuid.UUID(campaign_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid campaign id") from exc
+
+    result = await session.execute(select(Campaign).where(Campaign.id == campaign_uuid))
+    campaign = result.scalar_one_or_none()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    if campaign.status == "archived":
+        return {"ok": True}
+
+    before_state = _campaign_to_dict(campaign)
+    campaign.status = "archived"
+    campaign.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+
+    db = request.app.state.db
+    if db is not None:
+        audit_entry = await build_audit_entry(
+            event_type="CAMPAIGN_ARCHIVED",
+            actor=current_user,
+            target_id=campaign_id,
+            target_type="campaign",
+            country_code=current_user.get("country_code"),
+            details={"before": before_state, "after": {"status": "archived"}},
+            request=request,
+        )
+        audit_entry["action"] = "CAMPAIGN_ARCHIVED"
+        await db.audit_logs.insert_one(audit_entry)
+
+    return {"ok": True}
+
+
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(request: Request, current_user=Depends(get_current_user)):
     db = request.app.state.db
