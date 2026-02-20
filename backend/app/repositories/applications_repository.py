@@ -311,8 +311,30 @@ class MongoApplicationsRepository(ApplicationsRepository):
             .to_list(length=safe_limit)
         )
 
+        assigned_ids = {doc.get("assigned_to") for doc in docs if isinstance(doc.get("assigned_to"), str)}
+        assigned_map: Dict[str, Any] = {}
+        if assigned_ids:
+            assigned_users = await self.db.users.find({"id": {"$in": list(assigned_ids)}}, {"_id": 0}).to_list(
+                length=len(assigned_ids)
+            )
+            assigned_map = {
+                user.get("id"): {
+                    "id": user.get("id"),
+                    "name": user.get("full_name") or user.get("email"),
+                    "email": user.get("email"),
+                }
+                for user in assigned_users
+            }
+
         items = []
         for doc in docs:
+            assigned_value = doc.get("assigned_to")
+            assigned_payload = None
+            if isinstance(assigned_value, dict):
+                assigned_payload = assigned_value
+            elif isinstance(assigned_value, str):
+                assigned_payload = assigned_map.get(assigned_value)
+
             items.append(
                 {
                     "id": doc.get("id"),
@@ -332,7 +354,7 @@ class MongoApplicationsRepository(ApplicationsRepository):
                         "email": doc.get("applicant_email") or "-",
                         "country": doc.get("applicant_country") or "-",
                     },
-                    "assigned_to": doc.get("assigned_to"),
+                    "assigned_to": assigned_payload,
                 }
             )
 
