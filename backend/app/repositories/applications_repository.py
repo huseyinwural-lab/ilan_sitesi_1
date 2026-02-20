@@ -261,6 +261,30 @@ class MongoApplicationsRepository(ApplicationsRepository):
         if filters.get("country"):
             query["applicant_country"] = filters["country"]
 
+        if filters.get("start_date") or filters.get("end_date"):
+            date_filter: Dict[str, Any] = {}
+            start_date = filters.get("start_date")
+            end_date = filters.get("end_date")
+            try:
+                if start_date:
+                    start_dt = datetime.fromisoformat(start_date)
+                    if start_dt.tzinfo is None:
+                        start_dt = start_dt.replace(tzinfo=timezone.utc)
+                    if len(start_date) == 10:
+                        start_dt = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+                    date_filter["$gte"] = start_dt.isoformat()
+                if end_date:
+                    end_dt = datetime.fromisoformat(end_date)
+                    if end_dt.tzinfo is None:
+                        end_dt = end_dt.replace(tzinfo=timezone.utc)
+                    if len(end_date) == 10:
+                        end_dt = end_dt.replace(hour=23, minute=59, second=59, microsecond=0)
+                    date_filter["$lte"] = end_dt.isoformat()
+            except ValueError:
+                date_filter = {}
+            if date_filter:
+                query["created_at"] = date_filter
+
         if filters.get("search"):
             safe_search = re.escape(filters["search"])
             query["$or"] = [
