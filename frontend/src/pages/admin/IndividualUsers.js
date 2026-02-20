@@ -345,7 +345,7 @@ export default function IndividualUsers() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-6 text-center text-muted-foreground" data-testid="individual-users-loading">
+                  <td colSpan={8} className="p-6 text-center text-muted-foreground" data-testid="individual-users-loading">
                     Yükleniyor...
                   </td>
                 </tr>
