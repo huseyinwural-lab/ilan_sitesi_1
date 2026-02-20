@@ -3,30 +3,17 @@
 ## Özet
 - Toplam satır: 81135
 - Unique make: 156
-- Unique model (importa alınan): 1743
-- Unknown body nedeniyle skip edilen model: 1911
+- Unique model (importa alınan): 1892
+- Unknown body nedeniyle skip edilen model: 1762
 
 ## vehicle_type Coverage
-- car: 1452
-- suv: 228
+- car: 1575
+- suv: 254
 - pickup: 63
 
 ## Unknown Body Değerleri (ilk 200)
 - NULL
-- sport utility vehicles
-- compact cars
-- midsize cars
-- subcompact cars
-- large cars
-- two seaters
-- cargo vans
-- small station wagons
-- small sport utility vehicles
-- passenger vans
-- mini compact cars
-- midsize station wagons
 - not available
-- standard sport utility vehicles
 
 ## Duplicate Model Slug (ilk 200)
 - chevrolet / trailblazer → Trailblazer vs TrailBlazer
