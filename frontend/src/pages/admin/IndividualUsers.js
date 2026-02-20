@@ -20,11 +20,11 @@ const STATUS_OPTIONS = [
 ];
 
 const REASON_OPTIONS = [
-  { value: "spam", label: "Spam" },
-  { value: "fraud", label: "Dolandırıcılık" },
-  { value: "adult", label: "Müstehcen içerik" },
-  { value: "policy", label: "Politika ihlali" },
-  { value: "other", label: "Diğer" },
+  { value: "spam", label: "Spam", detail: "Spam içerik / istenmeyen tekrar paylaşım." },
+  { value: "fraud", label: "Dolandırıcılık", detail: "Dolandırıcılık şüphesi veya sahte işlem." },
+  { value: "adult", label: "Müstehcen içerik", detail: "Müstehcen içerik politikaya aykırı." },
+  { value: "fake_listing", label: "Sahte ilan", detail: "Sahte ilan tespit edildi." },
+  { value: "repeat_violation", label: "Tekrarlı ihlal", detail: "Tekrarlı ihlal nedeniyle yaptırım." },
 ];
 
 const ACTION_LABELS = {
