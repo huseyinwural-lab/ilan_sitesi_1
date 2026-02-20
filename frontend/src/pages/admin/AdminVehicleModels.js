@@ -4,6 +4,22 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
+const vehicleTypeOptions = [
+  { value: 'car', label: 'Otomobil' },
+  { value: 'suv', label: 'SUV' },
+  { value: 'offroad', label: 'Arazi' },
+  { value: 'pickup', label: 'Pickup' },
+  { value: 'truck', label: 'Kamyon' },
+  { value: 'bus', label: 'Otobüs' },
+];
+
+const vehicleTypeLabels = vehicleTypeOptions.reduce((acc, item) => {
+  acc[item.value] = item.label;
+  return acc;
+}, {});
+
+const resolveVehicleTypeLabel = (value) => vehicleTypeLabels[value] || value;
+
 const emptyForm = {
   make_id: '',
   name: '',
