@@ -8766,6 +8766,319 @@ async def admin_delete_vehicle_model(
     return {"model": _normalize_vehicle_model_doc(model)}
 
 
+async def _prepare_vehicle_import_payload(db, payload: VehicleImportPayload) -> dict:
+    makes = payload.makes or []
+    models = payload.models or []
+
+    normalized_makes = []
+    normalized_models = []
+    invalid_makes = []
+    invalid_models = []
+    unknown_vehicle_types = set()
+
+    make_slug_counts: Dict[str, int] = {}
+    for make in makes:
+        slug = (make.slug or "").strip().lower()
+        if slug:
+            make_slug_counts[slug] = make_slug_counts.get(slug, 0) + 1
+
+    duplicate_make_slugs = sorted([slug for slug, count in make_slug_counts.items() if count > 1])
+
+    model_slug_counts: Dict[str, int] = {}
+    for model in models:
+        make_slug = (model.make_slug or "").strip().lower()
+        slug = (model.slug or "").strip().lower()
+        if make_slug and slug:
+            key = f"{make_slug}:{slug}"
+            model_slug_counts[key] = model_slug_counts.get(key, 0) + 1
+
+    duplicate_model_slugs = []
+    for key, count in model_slug_counts.items():
+        if count > 1:
+            make_slug, model_slug = key.split(":", 1)
+            duplicate_model_slugs.append({"make_slug": make_slug, "model_slug": model_slug, "count": count})
+
+    make_slug_lookup = set(make_slug_counts.keys())
+    model_make_slugs = {(model.make_slug or "").strip().lower() for model in models if model.make_slug}
+    make_slug_lookup.update(model_make_slugs)
+
+    existing_make_docs = []
+    if make_slug_lookup:
+        existing_make_docs = await db.vehicle_makes.find(
+            {"slug": {"$in": list(make_slug_lookup)}},
+            {"_id": 0, "id": 1, "slug": 1, "country_code": 1, "name": 1},
+        ).to_list(length=1000)
+
+    existing_make_map: Dict[str, list] = {}
+    for doc in existing_make_docs:
+        existing_make_map.setdefault(doc.get("slug"), []).append(doc)
+
+    ambiguous_make_slugs = sorted([slug for slug, docs in existing_make_map.items() if len(docs) > 1])
+
+    for idx, make in enumerate(makes):
+        errors = []
+        name = (make.name or "").strip()
+        slug = (make.slug or "").strip().lower()
+        country_code = (make.country_code or "").strip().upper()
+
+        if not name:
+            errors.append("name missing")
+        if not slug:
+            errors.append("slug missing")
+        elif not SLUG_PATTERN.match(slug):
+            errors.append("slug format invalid")
+        if not country_code:
+            errors.append("country_code missing")
+        if slug in duplicate_make_slugs:
+            errors.append("duplicate slug in payload")
+        if slug in ambiguous_make_slugs:
+            errors.append("make_slug ambiguous in db")
+        if slug in existing_make_map:
+            for doc in existing_make_map[slug]:
+                if doc.get("country_code") and doc.get("country_code") != country_code:
+                    errors.append("slug already exists for different country")
+                    break
+
+        if errors:
+            invalid_makes.append({"index": idx, "slug": slug or None, "reason": "; ".join(errors)})
+            continue
+
+        normalized_makes.append({
+            "name": name,
+            "slug": slug,
+            "country_code": country_code,
+            "active_flag": make.active if make.active is not None else True,
+        })
+
+    valid_make_slugs = {make["slug"] for make in normalized_makes}
+    invalid_make_slugs = {item.get("slug") for item in invalid_makes if item.get("slug")}
+
+    for idx, model in enumerate(models):
+        errors = []
+        make_slug = (model.make_slug or "").strip().lower()
+        name = (model.name or "").strip()
+        slug = (model.slug or "").strip().lower()
+        vehicle_type = (model.vehicle_type or "").strip().lower()
+
+        if not make_slug:
+            errors.append("make_slug missing")
+        if not name:
+            errors.append("name missing")
+        if not slug:
+            errors.append("slug missing")
+        elif not SLUG_PATTERN.match(slug):
+            errors.append("slug format invalid")
+        if not vehicle_type:
+            errors.append("vehicle_type missing")
+        elif vehicle_type not in VEHICLE_TYPE_SET:
+            errors.append("vehicle_type invalid")
+            unknown_vehicle_types.add(vehicle_type)
+
+        if make_slug in duplicate_make_slugs:
+            errors.append("make_slug duplicated in payload")
+        if make_slug in ambiguous_make_slugs:
+            errors.append("make_slug ambiguous in db")
+        if make_slug in invalid_make_slugs:
+            errors.append("make_slug invalid")
+        if make_slug not in valid_make_slugs and make_slug not in existing_make_map:
+            errors.append("make_slug not found")
+        if make_slug in existing_make_map and len(existing_make_map.get(make_slug, [])) > 1:
+            errors.append("make_slug ambiguous in db")
+
+        key = f"{make_slug}:{slug}" if make_slug and slug else None
+        if key and model_slug_counts.get(key, 0) > 1:
+            errors.append("duplicate model slug in payload")
+
+        if errors:
+            invalid_models.append({"index": idx, "slug": slug or None, "make_slug": make_slug or None, "reason": "; ".join(errors)})
+            continue
+
+        normalized_models.append({
+            "make_slug": make_slug,
+            "name": name,
+            "slug": slug,
+            "vehicle_type": vehicle_type,
+            "active_flag": model.active if model.active is not None else True,
+        })
+
+    report = {
+        "summary": {
+            "makes_total": len(makes),
+            "makes_valid": len(normalized_makes),
+            "makes_invalid": len(invalid_makes),
+            "models_total": len(models),
+            "models_valid": len(normalized_models),
+            "models_invalid": len(invalid_models),
+        },
+        "unknown_vehicle_types": sorted([v for v in unknown_vehicle_types if v]),
+        "duplicate_make_slugs": duplicate_make_slugs,
+        "duplicate_model_slugs": duplicate_model_slugs,
+        "ambiguous_make_slugs": ambiguous_make_slugs,
+        "invalid_makes": invalid_makes,
+        "invalid_models": invalid_models,
+    }
+
+    can_apply = (
+        not invalid_makes
+        and not invalid_models
+        and not duplicate_make_slugs
+        and not duplicate_model_slugs
+        and not ambiguous_make_slugs
+        and not unknown_vehicle_types
+    )
+    report["can_apply"] = can_apply
+
+    return {
+        "normalized_makes": normalized_makes,
+        "normalized_models": normalized_models,
+        "report": report,
+        "existing_make_map": existing_make_map,
+    }
+
+
+@api_router.post("/admin/vehicle-import/dry-run")
+async def admin_vehicle_import_dry_run(
+    payload: VehicleImportPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    prepared = await _prepare_vehicle_import_payload(db, payload)
+    return prepared["report"]
+
+
+@api_router.post("/admin/vehicle-import/apply")
+async def admin_vehicle_import_apply(
+    payload: VehicleImportPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    prepared = await _prepare_vehicle_import_payload(db, payload)
+    report = prepared["report"]
+    if not report.get("can_apply"):
+        raise HTTPException(status_code=400, detail=report)
+
+    normalized_makes = prepared["normalized_makes"]
+    normalized_models = prepared["normalized_models"]
+    existing_make_map = prepared["existing_make_map"]
+
+    make_id_by_slug: Dict[str, str] = {}
+    make_country_by_slug: Dict[str, Optional[str]] = {}
+    for slug, docs in existing_make_map.items():
+        if docs:
+            make_id_by_slug[slug] = docs[0].get("id")
+            make_country_by_slug[slug] = docs[0].get("country_code")
+
+    make_inserts = 0
+    make_updates = 0
+    model_inserts = 0
+    model_updates = 0
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    session = await db.client.start_session()
+    try:
+        async with session.start_transaction():
+            for make in normalized_makes:
+                existing = await db.vehicle_makes.find_one(
+                    {"slug": make["slug"], "country_code": make["country_code"]},
+                    {"_id": 0, "id": 1, "country_code": 1},
+                    session=session,
+                )
+                if existing:
+                    updates = {
+                        "name": make["name"],
+                        "active_flag": make["active_flag"],
+                        "updated_at": now_iso,
+                    }
+                    await db.vehicle_makes.update_one({"id": existing["id"]}, {"$set": updates}, session=session)
+                    make_updates += 1
+                    make_id_by_slug[make["slug"]] = existing["id"]
+                    make_country_by_slug[make["slug"]] = existing.get("country_code")
+                else:
+                    make_id = str(uuid.uuid4())
+                    doc = {
+                        "id": make_id,
+                        "name": make["name"],
+                        "slug": make["slug"],
+                        "country_code": make["country_code"],
+                        "active_flag": make["active_flag"],
+                        "created_at": now_iso,
+                        "updated_at": now_iso,
+                    }
+                    await db.vehicle_makes.insert_one(doc, session=session)
+                    make_inserts += 1
+                    make_id_by_slug[make["slug"]] = make_id
+                    make_country_by_slug[make["slug"]] = make["country_code"]
+
+            for model in normalized_models:
+                make_id = make_id_by_slug.get(model["make_slug"])
+                if not make_id:
+                    raise HTTPException(status_code=400, detail=f"make_slug not found: {model['make_slug']}")
+
+                existing_model = await db.vehicle_models.find_one(
+                    {"make_id": make_id, "slug": model["slug"]},
+                    {"_id": 0, "id": 1},
+                    session=session,
+                )
+                if existing_model:
+                    updates = {
+                        "name": model["name"],
+                        "vehicle_type": model["vehicle_type"],
+                        "active_flag": model["active_flag"],
+                        "country_code": make_country_by_slug.get(model["make_slug"]),
+                        "updated_at": now_iso,
+                    }
+                    await db.vehicle_models.update_one({"id": existing_model["id"]}, {"$set": updates}, session=session)
+                    model_updates += 1
+                else:
+                    doc = {
+                        "id": str(uuid.uuid4()),
+                        "make_id": make_id,
+                        "name": model["name"],
+                        "slug": model["slug"],
+                        "vehicle_type": model["vehicle_type"],
+                        "country_code": make_country_by_slug.get(model["make_slug"]),
+                        "active_flag": model["active_flag"],
+                        "created_at": now_iso,
+                        "updated_at": now_iso,
+                    }
+                    await db.vehicle_models.insert_one(doc, session=session)
+                    model_inserts += 1
+
+            audit_doc = {
+                "id": str(uuid.uuid4()),
+                "event_type": "VEHICLE_MASTER_DATA_IMPORT",
+                "actor_id": current_user["id"],
+                "actor_role": current_user.get("role"),
+                "subject_type": "vehicle_master_data",
+                "subject_id": "vehicle_import",
+                "action": "import",
+                "created_at": now_iso,
+                "metadata": {
+                    "makes_inserted": make_inserts,
+                    "makes_updated": make_updates,
+                    "models_inserted": model_inserts,
+                    "models_updated": model_updates,
+                },
+            }
+            await db.audit_logs.insert_one(audit_doc, session=session)
+    finally:
+        await session.end_session()
+
+    return {
+        "status": "applied",
+        "summary": {
+            "makes_inserted": make_inserts,
+            "makes_updated": make_updates,
+            "models_inserted": model_inserts,
+            "models_updated": model_updates,
+        },
+    }
+
+
 async def _dashboard_metrics(db, country_code: str, include_revenue: bool = True) -> dict:
     total_listings = await db.vehicle_listings.count_documents({"country": country_code})
     published_listings = await db.vehicle_listings.count_documents({"country": country_code, "status": "published"})
