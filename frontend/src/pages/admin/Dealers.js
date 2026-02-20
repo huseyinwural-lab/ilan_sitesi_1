@@ -189,12 +189,8 @@ export default function DealersPage() {
                 <tr key={d.id} className="border-t" data-testid={`dealer-row-${d.id}`}>
                   <td className="p-3" data-testid={`dealer-email-${d.id}`}>{d.email}</td>
                   <td className="p-3 text-muted-foreground" data-testid={`dealer-country-${d.id}`}>{d.country_code || '-'}</td>
-                  <td className="p-3">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                      d.dealer_status === 'active'
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
-                        : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'
-                    }`} data-testid={`dealer-status-${d.id}`}>{d.dealer_status}</span>
+                  <td className="p-3" data-testid={`dealer-status-${d.id}`}>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
                   </td>
                   <td className="p-3 text-right">
                     {d.dealer_status === 'active' ? (
