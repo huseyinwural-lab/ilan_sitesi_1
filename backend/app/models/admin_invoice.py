@@ -16,6 +16,7 @@ class AdminInvoice(Base):
     amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
     currency_code: Mapped[str] = mapped_column(String(5), nullable=False, server_default="EUR")
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="draft")
+    payment_status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="unpaid")
     issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
