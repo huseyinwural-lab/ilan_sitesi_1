@@ -72,6 +72,7 @@ from app.models.user import User as SqlUser
 from app.models.application import Application
 from app.models.campaign import Campaign
 from app.models.plan import Plan
+from app.models.admin_invoice import AdminInvoice
 
 
 from fastapi import UploadFile, File
