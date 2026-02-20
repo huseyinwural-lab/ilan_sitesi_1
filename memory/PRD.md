@@ -32,7 +32,7 @@
 ## Mimari
 - **Frontend:** React (portal bazlı code-splitting)
 - **Backend:** FastAPI
-- **Database:** MongoDB (motor)
+- **Database:** MongoDB (legacy) + Postgres (geçiş)
 - **Portallar:** Public / Dealer / Backoffice
 - **Kritik Koleksiyonlar:** `users`, `dealer_applications`, `vehicle_listings`, `audit_logs`, `categories`, `countries`
 
