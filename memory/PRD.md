@@ -146,6 +146,8 @@
 - Runtime config / feature flag (Dashboard TTL yönetimi) — backlog
 
 ### P2
+- Admin kullanıcı yönetimi audit log sertleştirme (admin_role_changed/admin_scope_changed/admin_suspended/admin_activated/admin_invited) + before/after metadata
+- Admin kullanıcı yönetimi için E2E test paketi (rol/scope değişimi, last super_admin koruması, 403 görünmez aksiyonlar)
 - Versioning diff highlight + rollback (aktif faz)
 - Lint debt cleanup (LINT-3/4/5)
 - Şema versiyonlama + audit log sertleştirme
