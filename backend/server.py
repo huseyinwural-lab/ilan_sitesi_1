@@ -8608,7 +8608,10 @@ async def admin_list_vehicle_models(
     if vehicle_type_filter:
         if vehicle_type_filter not in VEHICLE_TYPE_SET:
             raise HTTPException(status_code=400, detail="vehicle_type invalid")
-        query["vehicle_type"] = vehicle_type_filter
+        if vehicle_type_filter == "car":
+            query["$or"] = [{"vehicle_type": "car"}, {"vehicle_type": {"$exists": False}}]
+        else:
+            query["vehicle_type"] = vehicle_type_filter
 
     docs = await db.vehicle_models.find(query, {"_id": 0}).sort("name", 1).to_list(length=1000)
     return {"items": [_normalize_vehicle_model_doc(doc) for doc in docs]}
