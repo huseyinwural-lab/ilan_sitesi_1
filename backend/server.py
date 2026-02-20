@@ -1644,6 +1644,11 @@ async def health_check(request: Request):
 @api_router.get("/health/db")
 async def health_db():
     target = _get_masked_db_target()
+    if not RAW_DATABASE_URL:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "degraded", "database": "postgres", "target": target},
+        )
     try:
         async with sql_engine.connect() as conn:
             await conn.execute(select(1))
