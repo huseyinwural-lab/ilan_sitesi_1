@@ -1,4 +1,4 @@
-from sqlalchemy import String, Boolean, DateTime, Integer, Numeric, Index
+from sqlalchemy import String, Boolean, DateTime, Integer, Numeric, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from datetime import datetime, timezone
@@ -24,6 +24,7 @@ class Plan(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
+        UniqueConstraint("country_scope", "country_code", "slug", name="uq_plans_scope_country_slug"),
         Index("ix_plans_country_scope", "country_scope"),
         Index("ix_plans_country_code", "country_code"),
         Index("ix_plans_active_flag", "active_flag"),
