@@ -336,8 +336,10 @@ export default function IndividualUsers() {
                 <th className="p-3 text-left" data-testid="individual-users-header-last-name">Soyad</th>
                 <th className="p-3 text-left" data-testid="individual-users-header-email">E-posta</th>
                 <th className="p-3 text-left" data-testid="individual-users-header-phone">Telefon</th>
+                <th className="p-3 text-left" data-testid="individual-users-header-status">Durum</th>
                 <th className="p-3 text-left" data-testid="individual-users-header-created">Kayıt Tarihi</th>
                 <th className="p-3 text-left" data-testid="individual-users-header-last-login">Son Giriş</th>
+                <th className="p-3 text-right" data-testid="individual-users-header-actions">Aksiyon</th>
               </tr>
             </thead>
             <tbody>
