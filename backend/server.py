@@ -1768,6 +1768,15 @@ CAMPAIGN_STATUS_TRANSITIONS = {
 
 PLAN_SCOPE_SET = {"global", "country"}
 PLAN_STATUS_SET = {"active", "inactive", "archived"}
+INVOICE_STATUS_SET = {"draft", "issued", "paid", "cancelled", "refunded", "overdue"}
+INVOICE_STATUS_TRANSITIONS = {
+    "draft": {"issued"},
+    "issued": {"paid", "cancelled", "overdue"},
+    "overdue": {"paid"},
+    "paid": {"refunded"},
+    "cancelled": set(),
+    "refunded": set(),
+}
 
 APPLICATION_TYPES = {"individual", "dealer"}
 APPLICATION_REQUEST_TYPES = {"complaint", "request"}
