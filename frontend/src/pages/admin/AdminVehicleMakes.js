@@ -114,6 +114,19 @@ const AdminVehicleMakes = () => {
     }
   };
 
+  const resolveTypeSummary = (item) => {
+    if (item.vehicle_type_summary) {
+      if (item.vehicle_type_summary === 'mixed' || item.vehicle_type_summary === '—') {
+        return item.vehicle_type_summary;
+      }
+      return resolveVehicleTypeLabel(item.vehicle_type_summary);
+    }
+    const types = item.vehicle_types || [];
+    if (types.length === 0) return '—';
+    if (types.length === 1) return resolveVehicleTypeLabel(types[0]);
+    return 'mixed';
+  };
+
   return (
     <div className="p-6 space-y-6" data-testid="admin-vehicle-makes-page">
       <div className="flex items-center justify-between">
