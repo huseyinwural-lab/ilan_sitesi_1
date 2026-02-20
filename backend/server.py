@@ -1741,6 +1741,8 @@ APPLICATION_RATE_LIMIT_WINDOW_SECONDS = 10 * 60
 APPLICATION_RATE_LIMIT_MAX_ATTEMPTS = 5
 _application_submit_attempts: Dict[str, List[float]] = {}
 
+VEHICLE_TYPE_SET = {"car", "suv", "offroad", "pickup", "truck", "bus"}
+
 APP_ENV = (os.environ.get("APP_ENV") or "dev").lower()
 MONGO_ENABLED_RAW = os.environ.get("MONGO_ENABLED")
 if APP_ENV == "prod":
