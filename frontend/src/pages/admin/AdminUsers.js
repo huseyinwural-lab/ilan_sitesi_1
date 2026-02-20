@@ -20,6 +20,7 @@ const STATUS_OPTIONS = [
   { value: 'all', label: 'Tümü' },
   { value: 'active', label: 'Aktif' },
   { value: 'inactive', label: 'Pasif' },
+  { value: 'deleted', label: 'Silinenler' },
   { value: 'invited', label: 'Davet Bekliyor' },
 ];
 
