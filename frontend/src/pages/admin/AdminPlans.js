@@ -80,7 +80,7 @@ export default function AdminPlans() {
       }
     } catch (err) {
       setDbReady(false);
-      setError('DB hazır değil → işlemler devre dışı. Ops ekibine DATABASE_URL + migration kontrolü gerekiyor.');
+      setError('');
     }
   };
 
