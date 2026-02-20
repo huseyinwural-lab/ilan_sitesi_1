@@ -1616,6 +1616,52 @@ def _send_support_received_email(to_email: str, application_id: str, subject_tex
         raise HTTPException(status_code=502, detail="Failed to send support email")
 
 
+def _send_message_notification_email(db, recipient_id: str, thread: dict, message: dict) -> None:
+    sendgrid_key = os.environ.get("SENDGRID_API_KEY")
+    sender_email = os.environ.get("SENDER_EMAIL")
+    if not sendgrid_key or not sender_email:
+        return
+
+    recipient = None
+    if db is not None:
+        recipient = db.users.find_one({"id": recipient_id}, {"_id": 0})
+    if hasattr(recipient, "__await__"):
+        recipient = asyncio.get_event_loop().run_until_complete(recipient)
+    if not recipient:
+        return
+
+    prefs = recipient.get("notification_prefs") or {}
+    if not prefs.get("email_enabled", True):
+        return
+
+    listing_title = thread.get("listing_title") or "İlan"
+    preview = (message.get("body") or "")[:160]
+    subject = f"Yeni mesajınız var: {listing_title}"
+    html_content = f"""
+    <html>
+      <body>
+        <h2>Yeni mesajınız var</h2>
+        <p>İlan: <strong>{listing_title}</strong></p>
+        <p>Mesaj: {preview}</p>
+        <p>Mesajları görüntülemek için hesabınıza giriş yapın.</p>
+      </body>
+    </html>
+    """
+
+    message_mail = Mail(
+        from_email=sender_email,
+        to_emails=recipient.get("email"),
+        subject=subject,
+        html_content=html_content,
+    )
+
+    try:
+        sg = SendGridAPIClient(sendgrid_key)
+        sg.send(message_mail)
+    except Exception as exc:
+        _admin_invite_logger.error("SendGrid message notification error: %s", exc)
+
+
 async def _create_inapp_notification(db, user_id: str, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
     now_iso = datetime.now(timezone.utc).isoformat()
     await db.notifications.insert_one(
