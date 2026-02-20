@@ -8413,7 +8413,11 @@ async def admin_list_vehicle_makes(
             make_ids = [doc.get("id") for doc in make_docs]
             if not make_ids:
                 return {"items": []}
-        model_query: Dict[str, Any] = {"vehicle_type": vehicle_type_filter}
+        model_query: Dict[str, Any] = {}
+        if vehicle_type_filter == "car":
+            model_query["$or"] = [{"vehicle_type": "car"}, {"vehicle_type": {"$exists": False}}]
+        else:
+            model_query["vehicle_type"] = vehicle_type_filter
         if make_ids:
             model_query["make_id"] = {"$in": make_ids}
         type_make_ids = await db.vehicle_models.distinct("make_id", model_query)
