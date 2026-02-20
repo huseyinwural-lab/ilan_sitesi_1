@@ -248,7 +248,7 @@ export default function Layout({ children }) {
       '/admin/vehicle-models',
       '/admin/audit',
       '/admin/plans',
-      '/admin/billing',
+      '/admin/payments',
       '/admin/moderation',
       '/admin/listings',
       '/admin/invoices',
