@@ -1505,10 +1505,12 @@ ADMIN_ROLE_OPTIONS = {"super_admin", "country_admin", "finance", "support", "mod
 APPLICATION_TYPES = {"individual", "dealer"}
 APPLICATION_REQUEST_TYPES = {"complaint", "request"}
 APPLICATION_PRIORITY_SET = {"low", "medium", "high"}
-APPLICATION_STATUS_SET = {"open", "in_progress", "closed"}
+APPLICATION_STATUS_SET = {"pending", "in_review", "approved", "rejected", "closed"}
 APPLICATION_STATUS_TRANSITIONS = {
-    "open": {"in_progress", "closed"},
-    "in_progress": {"closed"},
+    "pending": {"in_review", "approved", "rejected", "closed"},
+    "in_review": {"approved", "rejected", "closed"},
+    "approved": {"closed"},
+    "rejected": {"closed"},
     "closed": set(),
 }
 
