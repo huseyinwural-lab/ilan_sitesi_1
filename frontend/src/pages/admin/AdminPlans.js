@@ -59,6 +59,7 @@ export default function AdminPlans() {
   const [filterStatus, setFilterStatus] = useState('active');
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
