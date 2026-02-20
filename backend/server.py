@@ -130,6 +130,55 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
+def _normalize_user_status(doc: dict) -> str:
+    if doc.get("deleted_at"):
+        return "deleted"
+    status = doc.get("status") or "active"
+    if status == "suspended" or doc.get("is_active") is False:
+        return "suspended"
+    return "active"
+
+
+def _determine_user_type(role: str) -> str:
+    if role in ADMIN_ROLE_OPTIONS:
+        return "admin"
+    if role == "dealer":
+        return "dealer"
+    return "individual"
+
+
+def _build_user_summary(doc: dict, listing_stats: Optional[Dict[str, Any]] = None, plan_map: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    listing_stats = listing_stats or {}
+    plan_map = plan_map or {}
+    plan = plan_map.get(doc.get("plan_id"), {})
+    status = _normalize_user_status(doc)
+    user_type = _determine_user_type(doc.get("role", "individual"))
+    phone_verified = bool(doc.get("phone_verified") or doc.get("phone_verified_at"))
+    plan_expiry = doc.get("plan_expires_at") or doc.get("plan_end_at") or doc.get("plan_ends_at")
+
+    return {
+        "id": doc.get("id"),
+        "full_name": doc.get("full_name"),
+        "email": doc.get("email"),
+        "role": doc.get("role"),
+        "user_type": user_type,
+        "country_code": doc.get("country_code"),
+        "country_scope": doc.get("country_scope") or [],
+        "status": status,
+        "is_active": bool(doc.get("is_active", True)),
+        "deleted_at": doc.get("deleted_at"),
+        "created_at": doc.get("created_at"),
+        "last_login": doc.get("last_login"),
+        "email_verified": bool(doc.get("is_verified", False)),
+        "phone_verified": phone_verified,
+        "total_listings": listing_stats.get("total", 0),
+        "active_listings": listing_stats.get("active", 0),
+        "plan_id": doc.get("plan_id"),
+        "plan_name": plan.get("name") if plan else None,
+        "plan_expires_at": plan_expiry,
+    }
+
+
 def _user_to_response(doc: dict) -> UserResponse:
     return UserResponse(
         id=doc["id"],
@@ -1242,6 +1291,10 @@ class AdminInviteAcceptPayload(BaseModel):
 
 class BulkDeactivatePayload(BaseModel):
     user_ids: List[str]
+
+
+class AdminUserActionPayload(BaseModel):
+    reason: Optional[str] = None
 
 
 @api_router.patch("/users/{user_id}")
