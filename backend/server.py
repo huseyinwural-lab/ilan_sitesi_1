@@ -8391,6 +8391,7 @@ async def admin_delete_attribute(
 async def admin_list_vehicle_makes(
     request: Request,
     country: Optional[str] = None,
+    vehicle_type: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
@@ -8400,8 +8401,48 @@ async def admin_list_vehicle_makes(
         code = country.upper()
         _assert_country_scope(code, current_user)
         query["country_code"] = code
+
+    vehicle_type_filter = _normalize_vehicle_type(vehicle_type)
+    if vehicle_type_filter:
+        if vehicle_type_filter not in VEHICLE_TYPE_SET:
+            raise HTTPException(status_code=400, detail="vehicle_type invalid")
+        make_scope_query = dict(query)
+        make_ids = []
+        if make_scope_query:
+            make_docs = await db.vehicle_makes.find(make_scope_query, {"_id": 0, "id": 1}).to_list(length=1000)
+            make_ids = [doc.get("id") for doc in make_docs]
+            if not make_ids:
+                return {"items": []}
+        model_query: Dict[str, Any] = {"vehicle_type": vehicle_type_filter}
+        if make_ids:
+            model_query["make_id"] = {"$in": make_ids}
+        type_make_ids = await db.vehicle_models.distinct("make_id", model_query)
+        query["id"] = {"$in": type_make_ids} if type_make_ids else {"$in": []}
+
     docs = await db.vehicle_makes.find(query, {"_id": 0}).sort("name", 1).to_list(length=1000)
-    return {"items": [_normalize_vehicle_make_doc(doc) for doc in docs]}
+    make_ids = [doc.get("id") for doc in docs if doc.get("id")]
+    type_map: Dict[str, set[str]] = {}
+    if make_ids:
+        model_docs = await db.vehicle_models.find(
+            {"make_id": {"$in": make_ids}},
+            {"_id": 0, "make_id": 1, "vehicle_type": 1},
+        ).to_list(length=10000)
+        for model in model_docs:
+            make_id = model.get("make_id")
+            if not make_id:
+                continue
+            vtype = (model.get("vehicle_type") or "car").strip().lower()
+            type_map.setdefault(make_id, set()).add(vtype)
+
+    result = []
+    for doc in docs:
+        item = _normalize_vehicle_make_doc(doc)
+        types = sorted(type_map.get(doc.get("id"), set()))
+        item["vehicle_types"] = types
+        item["vehicle_type_summary"] = _build_vehicle_type_summary(set(types))
+        result.append(item)
+
+    return {"items": result}
 
 
 @api_router.post("/admin/vehicle-makes", status_code=201)
