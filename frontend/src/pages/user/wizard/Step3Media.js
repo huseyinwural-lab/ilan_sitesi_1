@@ -143,7 +143,7 @@ const MediaUploader = () => {
           className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50"
           data-testid="wizard-photos-next"
         >
-          Next: Review
+          Sonraki: Önizleme
         </button>
       </div>
     </div>
