@@ -233,8 +233,22 @@ export default function DealersPage() {
         await axios.post(`${API}/admin/users/${actionDialog.dealer.id}/activate`, payload, { headers: authHeader });
       }
       toast({ title: 'İşlem tamamlandı.' });
+      const targetId = actionDialog.dealer.id;
+      const actionType = actionDialog.type;
       closeActionDialog();
-      fetchDealers();
+      await fetchDealers();
+      if (selectedDealer && selectedDealer.id === targetId) {
+        if (actionType === 'delete') {
+          setSelectedDealer({ ...selectedDealer, status: 'deleted', deleted_at: new Date().toISOString() });
+        }
+        if (actionType === 'suspend') {
+          setSelectedDealer({ ...selectedDealer, status: 'suspended' });
+        }
+        if (actionType === 'activate') {
+          setSelectedDealer({ ...selectedDealer, status: 'active' });
+        }
+        fetchAuditLogs(targetId);
+      }
     } catch (e) {
       const message = e.response?.data?.detail || 'İşlem başarısız. Lütfen tekrar deneyin.';
       toast({ title: typeof message === 'string' ? message : 'İşlem başarısız. Lütfen tekrar deneyin.', variant: 'destructive' });
