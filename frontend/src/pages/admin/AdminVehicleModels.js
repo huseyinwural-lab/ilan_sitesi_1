@@ -187,11 +187,13 @@ const AdminVehicleModels = () => {
         <table className="min-w-full text-sm">
           <thead className="bg-muted">
             <tr>
-              <th className="text-left px-3 py-2">Name</th>
-              <th className="text-left px-3 py-2">Slug</th>
-              <th className="text-left px-3 py-2">Make</th>
-              <th className="text-left px-3 py-2">Active</th>
-              <th className="text-right px-3 py-2">Aksiyon</th>
+              <th className="text-left px-3 py-2" data-testid="vehicle-models-header-make">Make</th>
+              <th className="text-left px-3 py-2" data-testid="vehicle-models-header-name">Model</th>
+              <th className="text-left px-3 py-2" data-testid="vehicle-models-header-slug">Slug</th>
+              <th className="text-left px-3 py-2" data-testid="vehicle-models-header-country">Country</th>
+              <th className="text-left px-3 py-2" data-testid="vehicle-models-header-type">Vehicle Type</th>
+              <th className="text-left px-3 py-2" data-testid="vehicle-models-header-active">Active</th>
+              <th className="text-right px-3 py-2" data-testid="vehicle-models-header-actions">Aksiyon</th>
             </tr>
           </thead>
           <tbody>
