@@ -1837,27 +1837,58 @@ async def delete_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    is_admin_target = user.get("role") in ADMIN_ROLE_OPTIONS
+
     if user.get("deleted_at"):
         return {"ok": True}
 
     await _assert_super_admin_invariant(db, user, None, False, current_user)
 
+    before_state = {
+        "status": user.get("status"),
+        "is_active": user.get("is_active", True),
+        "role": user.get("role"),
+        "country_scope": user.get("country_scope") or [],
+        "deleted_at": user.get("deleted_at"),
+    }
+
     now_iso = datetime.now(timezone.utc).isoformat()
+    update_payload = {"status": "deleted", "is_active": False, "deleted_at": now_iso, "updated_at": now_iso}
     await db.users.update_one(
         {"id": user_id},
-        {"$set": {"status": "deleted", "is_active": False, "deleted_at": now_iso, "updated_at": now_iso}},
+        {"$set": update_payload},
     )
 
-    audit_entry = await build_audit_entry(
-        event_type="user_deleted",
-        actor=current_user,
-        target_id=user_id,
-        target_type="user",
-        country_code=user.get("country_code"),
-        details={"reason": payload.reason if payload else None},
-        request=request,
-    )
-    audit_entry["action"] = "user_deleted"
+    after_state = {
+        **before_state,
+        "status": "deleted",
+        "is_active": False,
+        "deleted_at": now_iso,
+    }
+
+    if is_admin_target:
+        audit_entry = await build_audit_entry(
+            event_type="admin_deleted",
+            actor=current_user,
+            target_id=user_id,
+            target_type="admin_user",
+            country_code=user.get("country_code"),
+            details={"before": before_state, "after": after_state},
+            request=request,
+        )
+        audit_entry["action"] = "admin_deleted"
+    else:
+        audit_entry = await build_audit_entry(
+            event_type="user_deleted",
+            actor=current_user,
+            target_id=user_id,
+            target_type="user",
+            country_code=user.get("country_code"),
+            details={"reason": payload.reason if payload else None},
+            request=request,
+        )
+        audit_entry["action"] = "user_deleted"
+
     await db.audit_logs.insert_one(audit_entry)
 
     return {"ok": True}
