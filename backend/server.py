@@ -487,7 +487,7 @@ async def _ensure_individual_fixtures(db):
         }
 
         if existing:
-            await db.users.update_one({"email": email}, {"$set": payload})
+            await db.users.update_one({"email": email}, {"$set": payload, "$unset": {"deleted_at": ""}})
         else:
             await db.users.insert_one(payload)
 
