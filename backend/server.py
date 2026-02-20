@@ -456,13 +456,6 @@ async def _ensure_individual_fixtures(db):
             "phone_e164": "+41791234567",
             "country_code": "CH",
         },
-        {
-            "email": "deniz.arslan@platform.com",
-            "first_name": "Deniz",
-            "last_name": "Arslan",
-            "phone_e164": "+905443332211",
-            "country_code": "TR",
-        },
     ]
 
     for idx, fixture in enumerate(fixtures):
