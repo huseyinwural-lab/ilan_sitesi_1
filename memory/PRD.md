@@ -153,6 +153,7 @@
 - 2026-02-20: CQA Offline Package V1 (zip envanter + mapping/normalizasyon dokümanları + vehicle/attribute import JSON + transform raporu)
 - 2026-02-20: Plans Admin V1 hazırlıkları (DB gate banner/disable, yeni UI filtreleri ve form, plans SQL model + migration + Postgres API kontratı)
 - 2026-02-20: Plans UI P1 (scope quick filter chip + updated sort kısayolu)
+- 2026-02-20: Invoices Admin V1 hazırlıkları (UI filtre/kolon genişletme + DB gate disable + Postgres admin invoice modeli + p25 migration + API kontratı)
 
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
