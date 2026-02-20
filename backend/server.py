@@ -1737,7 +1737,7 @@ async def login(
 
     user = await auth_repo.get_user_by_email(email)
     if not user or not verify_password(credentials.password, user.get("hashed_password", "")):
-        if db:
+        if db is not None:
             # FAILED_LOGIN audit (always)
             await db.audit_logs.insert_one(
                 {
@@ -1784,7 +1784,7 @@ async def login(
     await auth_repo.update_last_login(user["id"], now_iso)
     user["last_login"] = now_iso
 
-    if db:
+    if db is not None:
         audit_entry = await build_audit_entry(
             event_type="LOGIN_SUCCESS",
             actor=user,
@@ -2710,7 +2710,7 @@ async def create_support_application(
     created = await applications_repo.create_application(payload_data, current_user)
     application_id = created.get("application_id")
 
-    if db:
+    if db is not None:
         await _create_inapp_notification(
             db,
             current_user.get("id"),
@@ -2848,7 +2848,7 @@ async def assign_support_application(
             result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
             if not result.scalar_one_or_none():
                 raise HTTPException(status_code=404, detail="Assignee not found")
-        elif db:
+        elif db is not None:
             user = await db.users.find_one(
                 {"id": assigned_to, "role": {"$in": list(ADMIN_ROLE_OPTIONS)}, "deleted_at": {"$exists": False}},
                 {"_id": 0},
@@ -2858,7 +2858,7 @@ async def assign_support_application(
 
     await applications_repo.assign_application(application_id, assigned_to)
 
-    if db:
+    if db is not None:
         audit_entry = await build_audit_entry(
             event_type="APPLICATION_ASSIGNED",
             actor=current_user,
@@ -2924,7 +2924,7 @@ async def update_support_application_status(
 
     await applications_repo.update_status(application_id, new_status, decision_reason)
 
-    if db:
+    if db is not None:
         audit_entry = await build_audit_entry(
             event_type="APPLICATION_STATUS_UPDATED",
             actor=current_user,
