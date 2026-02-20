@@ -398,7 +398,19 @@ export default function AdminPlans() {
               <th className="text-left px-3 py-2" data-testid="plans-header-listing">Listing</th>
               <th className="text-left px-3 py-2" data-testid="plans-header-showcase">Showcase</th>
               <th className="text-left px-3 py-2" data-testid="plans-header-active">Active</th>
-              <th className="text-left px-3 py-2" data-testid="plans-header-updated">Updated</th>
+              <th className="text-left px-3 py-2" data-testid="plans-header-updated">
+                <button
+                  type="button"
+                  className="flex flex-col items-start"
+                  onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+                  data-testid="plans-sort-toggle"
+                >
+                  <span>Updated</span>
+                  <span className="text-xs text-muted-foreground" data-testid="plans-sort-direction">
+                    {sortOrder === 'desc' ? 'En yeni' : 'En eski'}
+                  </span>
+                </button>
+              </th>
               <th className="text-right px-3 py-2" data-testid="plans-header-actions">Actions</th>
             </tr>
           </thead>
