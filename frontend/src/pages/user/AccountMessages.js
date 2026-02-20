@@ -93,6 +93,7 @@ export default function AccountMessages() {
         method: 'POST',
         headers: authHeader,
       });
+      setThreads((prev) => prev.map((thread) => (thread.id === threadId ? { ...thread, unread_count: 0 } : thread)));
     } catch (err) {
       // ignore
     }
