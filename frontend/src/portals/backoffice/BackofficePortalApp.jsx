@@ -80,7 +80,6 @@ export default function BackofficePortalApp() {
       } />
       <Route path="/system-settings" element={<Layout><AdminSystemSettingsPage /></Layout>} />
       <Route path="/listings" element={<Layout><AdminListingsPage /></Layout>} />
-      <Route path="/reports" element={<Layout><AdminReportsPage /></Layout>} />
       <Route path="/invoices" element={<Layout><AdminInvoicesPage /></Layout>} />
       <Route path="/billing" element={<Layout><BillingPlaceholderPage /></Layout>} />
       <Route path="/tax-rates" element={<Layout><AdminTaxRatesPage /></Layout>} />
