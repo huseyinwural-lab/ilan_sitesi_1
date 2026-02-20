@@ -44,6 +44,7 @@ from app.models.affiliate import Affiliate, AffiliateClick
 target_metadata = Base.metadata
 from app.models.blog import BlogPost
 from app.models.growth import GrowthEvent
+from app.models.application import Application
 
 def get_url():
     return os.environ.get("DATABASE_URL", "postgresql://admin_user:admin_pass@localhost:5432/admin_panel")

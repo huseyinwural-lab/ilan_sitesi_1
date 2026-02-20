@@ -6,7 +6,7 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 load_dotenv(ROOT_DIR / '.env')
 
 class Settings:
-    DATABASE_URL: str = os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/admin_panel')
+    DATABASE_URL: str = os.environ.get('DATABASE_URL')
     SECRET_KEY: str = os.environ.get('SECRET_KEY', 'change-this-in-production')
     ALGORITHM: str = os.environ.get('ALGORITHM', 'HS256')
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.environ.get('ACCESS_TOKEN_EXPIRE_MINUTES', 30))
@@ -30,3 +30,5 @@ class Settings:
     }
 
 settings = Settings()
+if not settings.DATABASE_URL:
+    raise RuntimeError("DATABASE_URL must be set")
