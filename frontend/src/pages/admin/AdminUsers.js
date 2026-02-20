@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Search, UserPlus, Filter, Shield, Pencil, XCircle, CheckCircle, Users } from 'lucide-react';
+import { Search, UserPlus, Filter, Shield, Pencil, XCircle } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
