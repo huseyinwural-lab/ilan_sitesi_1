@@ -8,7 +8,7 @@ const API = `${BACKEND_URL}/api`;
 
 const STATUS_OPTIONS = [
   { value: 'open', label: 'Açık' },
-  { value: 'in_review', label: 'İncelemede' },
+  { value: 'in_progress', label: 'İşlemde' },
   { value: 'closed', label: 'Kapalı' },
 ];
 
@@ -16,8 +16,8 @@ const statusBadge = (status) => {
   switch (status) {
     case 'open':
       return { label: 'Açık', className: 'bg-amber-100 text-amber-700' };
-    case 'in_review':
-      return { label: 'İncelemede', className: 'bg-blue-100 text-blue-700' };
+    case 'in_progress':
+      return { label: 'İşlemde', className: 'bg-blue-100 text-blue-700' };
     case 'closed':
       return { label: 'Kapalı', className: 'bg-slate-200 text-slate-700' };
     default:
