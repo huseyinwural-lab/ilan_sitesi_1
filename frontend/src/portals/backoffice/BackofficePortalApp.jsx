@@ -25,7 +25,6 @@ import AdminCountriesPage from '@/pages/admin/AdminCountries';
 import AdminSystemSettingsPage from '@/pages/admin/AdminSystemSettings';
 import AdminDashboardPage from '@/pages/admin/AdminDashboard';
 import AdminCountryComparePage from '@/pages/admin/AdminCountryCompare';
-import AdminUsersPage from '@/pages/admin/AdminUsers';
 import AdminRolesPage from '@/pages/admin/AdminRoles';
 import RBACMatrixPage from '@/pages/admin/RBACMatrix';
 import IndividualUsersPage from '@/pages/admin/IndividualUsers';
