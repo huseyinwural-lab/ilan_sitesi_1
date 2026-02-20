@@ -112,6 +112,7 @@ export default function IndividualUsers() {
       params.set("sort_by", sort_by);
       params.set("sort_dir", sort_dir);
       if (searchQuery) params.set("search", searchQuery);
+      if (statusFilter && statusFilter !== "all") params.set("status", statusFilter);
       const qs = params.toString() ? `?${params.toString()}` : "";
       const res = await axios.get(`${API}/admin/individual-users${qs}`, { headers: authHeader });
       setUsers(res.data.items || []);
@@ -150,6 +151,7 @@ export default function IndividualUsers() {
       params.set("sort_by", sort_by);
       params.set("sort_dir", sort_dir);
       if (searchQuery) params.set("search", searchQuery);
+      if (statusFilter && statusFilter !== "all") params.set("status", statusFilter);
       const qs = params.toString() ? `?${params.toString()}` : "";
       const res = await axios.get(`${API}/admin/individual-users/export/csv${qs}`, {
         headers: authHeader,
