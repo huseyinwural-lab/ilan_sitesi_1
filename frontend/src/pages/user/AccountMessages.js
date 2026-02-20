@@ -214,6 +214,11 @@ export default function AccountMessages() {
 
   useEffect(() => {
     const listingId = searchParams.get('listing');
+    const threadId = searchParams.get('thread');
+    if (threadId) {
+      setActiveId(threadId);
+      return;
+    }
     if (listingId) {
       createThreadFromListing(listingId);
     }
