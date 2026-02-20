@@ -1071,6 +1071,21 @@ async def _ensure_campaigns_db_ready(session: AsyncSession) -> None:
         raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Campaigns database not reachable"))
 
 
+async def _ensure_plans_db_ready(session: AsyncSession) -> None:
+    if not RAW_DATABASE_URL:
+        raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Plans database not ready"))
+    if APP_ENV != "prod" and (
+        "localhost" in RAW_DATABASE_URL
+        or "127.0.0.1" in RAW_DATABASE_URL
+        or "admin_user" in RAW_DATABASE_URL
+    ):
+        raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Plans database not ready"))
+    try:
+        await session.execute(select(1))
+    except Exception:
+        raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Plans database not reachable"))
+
+
 def _resolve_currency_code(country_code: Optional[str]) -> Optional[str]:
     code = country_code or settings.DEFAULT_COUNTRY
     return settings.COUNTRY_CURRENCIES.get(code)
