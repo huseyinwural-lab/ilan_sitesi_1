@@ -188,13 +188,13 @@ export default function MyListings() {
       <div className="rounded-lg border bg-white overflow-hidden" data-testid="account-listings-table">
         <table className="w-full text-sm">
           <thead className="bg-muted">
-            <tr>
-              <th className="text-left p-3">İlan</th>
-              <th className="text-left p-3">Durum</th>
-              <th className="text-left p-3">Fiyat</th>
-              <th className="text-left p-3">Oluşturma</th>
-              <th className="text-left p-3">Bitiş</th>
-              <th className="text-right p-3">Aksiyonlar</th>
+            <tr data-testid="account-listings-table-header">
+              <th className="text-left p-3" data-testid="account-listings-header-title">İlan</th>
+              <th className="text-left p-3" data-testid="account-listings-header-status">Durum</th>
+              <th className="text-left p-3" data-testid="account-listings-header-price">Fiyat</th>
+              <th className="text-left p-3" data-testid="account-listings-header-created">Oluşturma</th>
+              <th className="text-left p-3" data-testid="account-listings-header-expires">Bitiş</th>
+              <th className="text-right p-3" data-testid="account-listings-header-actions">Aksiyonlar</th>
             </tr>
           </thead>
           <tbody>
