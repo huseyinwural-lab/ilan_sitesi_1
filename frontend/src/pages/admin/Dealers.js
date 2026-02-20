@@ -67,7 +67,7 @@ export default function DealersPage() {
       const params = new URLSearchParams();
       params.set('skip', String(page * limit));
       params.set('limit', String(limit));
-      if (status) params.set('status', status);
+      if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
       if (search) params.set('search', search);
 
       const res = await axios.get(`${API}/admin/dealers?${params.toString()}`, {
