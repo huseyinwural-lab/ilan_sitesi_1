@@ -2112,8 +2112,9 @@ async def activate_user(
         "suspension_until": None,
     }
 
+    event_type = "dealer_reactivated" if user.get("role") == "dealer" else "user_reactivated"
     audit_entry = await build_audit_entry(
-        event_type="user_reactivated",
+        event_type=event_type,
         actor=current_user,
         target_id=user_id,
         target_type="user",
@@ -2126,7 +2127,7 @@ async def activate_user(
         },
         request=request,
     )
-    audit_entry["action"] = "user_reactivated"
+    audit_entry["action"] = event_type
     await db.audit_logs.insert_one(audit_entry)
 
     return {"ok": True}
