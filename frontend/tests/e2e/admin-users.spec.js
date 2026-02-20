@@ -75,6 +75,7 @@ test('super admin can soft delete admin users', async ({ request }) => {
   expect(stillVisible).toBeFalsy();
 });
 
+test('country admin cannot access admin users api', async ({ request }) => {
   const login = await request.post('/api/auth/login', {
     data: { email: 'countryadmin@platform.com', password: 'Country123!' },
   });
