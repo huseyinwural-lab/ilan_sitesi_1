@@ -1,52 +1,69 @@
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { WizardProvider, useWizard } from './WizardContext';
 import Step1Category from './Step1Category';
 import Step2Attributes from './Step2Attributes';
+import Step3PricingLocation from './Step3PricingLocation';
 import Step3Media from './Step3Media';
 import Step4Review from './Step4Review';
 
-const WizardSteps = () => {
-  const { step, setStep } = useWizard();
+const WizardContent = () => {
+  const { step, loading, editLoading } = useWizard();
 
-  const renderStep = () => {
-    switch (step) {
-      case 1: return <Step1Category />; // Segment
-      case 2: return <Step2Attributes />; // Make/Model/Year + Basic
-      case 3: return <Step3Media />; // Photos
-      case 4: return <Step4Review />; // Preview + Publish
-      default: return null;
-    }
-  };
+  const steps = [
+    { step: 1, label: 'Kategori' },
+    { step: 2, label: 'Dinamik Alanlar' },
+    { step: 3, label: 'Fiyat + Konum' },
+    { step: 4, label: 'Medya' },
+    { step: 5, label: 'Önizleme' },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
-          <h1 className="font-bold text-lg">Vasıta İlanı Oluştur</h1>
-          <div className="text-sm text-gray-500">Adım {step} / 4</div>
-        </div>
-        {/* Progress Bar */}
-        <div className="h-1 bg-gray-100">
-          <div 
-            className="h-full bg-blue-600 transition-all duration-500" 
-            style={{ width: `${(step / 4) * 100}%` }}
-          />
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <div className="bg-white rounded-xl shadow-sm border p-6 mb-6" data-testid="wizard-progress">
+        <div className="flex items-center justify-between">
+          {steps.map((s, index) => (
+            <div key={s.step} className="flex items-center" data-testid={`wizard-step-${s.step}`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                  step >= s.step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                }`}
+              >
+                {s.step}
+              </div>
+              <span className={`ml-2 text-sm ${step >= s.step ? 'text-gray-900' : 'text-gray-500'}`}>
+                {s.label}
+              </span>
+              {index < steps.length - 1 && (
+                <div className={`w-12 h-0.5 mx-4 ${step > s.step ? 'bg-blue-600' : 'bg-gray-200'}`} />
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-3xl mx-auto p-4 md:p-8">
-        {renderStep()}
-      </div>
+      {(loading || editLoading) && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6" data-testid="wizard-loading">
+          İşlem yapılıyor, lütfen bekleyin...
+        </div>
+      )}
+
+      {step === 1 && <Step1Category />}
+      {step === 2 && <Step2Attributes />}
+      {step === 3 && <Step3PricingLocation />}
+      {step === 4 && <Step3Media />}
+      {step === 5 && <Step4Review />}
     </div>
   );
 };
 
 const WizardContainer = () => {
+  const [searchParams] = useSearchParams();
+  const editListingId = searchParams.get('edit');
+
   return (
-    <WizardProvider>
-      <WizardSteps />
+    <WizardProvider editListingId={editListingId}>
+      <WizardContent />
     </WizardProvider>
   );
 };
