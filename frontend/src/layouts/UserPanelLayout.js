@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -10,6 +10,9 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const menuItems = [
   { key: 'dashboard', path: '/account', label: 'Dashboard', icon: LayoutDashboard, testId: 'account-nav-dashboard' },
@@ -31,10 +34,49 @@ const UserPanelLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [counts, setCounts] = useState({ favorites: 0, messages: 0 });
+
+  useEffect(() => {
+    let active = true;
+    const fetchCounts = async () => {
+      try {
+        const headers = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
+        const [favRes, msgRes] = await Promise.all([
+          fetch(`${API}/v1/favorites/count`, { headers }),
+          fetch(`${API}/v1/messages/unread-count`, { headers }),
+        ]);
+        const favData = favRes.ok ? await favRes.json() : { count: 0 };
+        const msgData = msgRes.ok ? await msgRes.json() : { count: 0 };
+        if (active) {
+          setCounts({ favorites: favData.count || 0, messages: msgData.count || 0 });
+        }
+      } catch (err) {
+        if (active) {
+          setCounts({ favorites: 0, messages: 0 });
+        }
+      }
+    };
+    fetchCounts();
+    return () => {
+      active = false
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const renderBadge = (value, testId) => {
+    if (!value) return null;
+    return (
+      <span
+        className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground"
+        data-testid={testId}
+      >
+        {value}
+      </span>
+    );
   };
 
   return (
@@ -55,10 +97,16 @@ const UserPanelLayout = () => {
           <nav className="flex-1 px-4 space-y-1" data-testid="account-sidebar-nav">
             {menuItems.map((item) => {
               const Icon = item.icon;
+              const badge = item.key === 'favorites'
+                ? renderBadge(counts.favorites, 'account-nav-favorites-badge')
+                : item.key === 'messages'
+                ? renderBadge(counts.messages, 'account-nav-messages-badge')
+                : null;
               return (
                 <NavLink key={item.key} to={item.path} className={navClass} data-testid={item.testId}>
                   <Icon size={18} />
                   <span data-testid={`${item.testId}-label`}>{item.label}</span>
+                  {badge}
                 </NavLink>
               );
             })}
