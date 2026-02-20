@@ -314,6 +314,86 @@ def _build_thread_summary(thread: dict, current_user_id: str) -> dict:
     }
 
 
+async def _get_active_push_subscriptions(db, user_id: str) -> List[dict]:
+    if db is None:
+        return []
+    cursor = db.push_subscriptions.find(
+        {"user_id": user_id, "is_active": True},
+        {"_id": 0},
+    )
+    return await cursor.to_list(length=50)
+
+
+async def _deactivate_push_subscription(db, subscription_id: str, reason: str) -> None:
+    if db is None or not subscription_id:
+        return
+    await db.push_subscriptions.update_one(
+        {"id": subscription_id},
+        {"$set": {"is_active": False, "revoked_at": datetime.now(timezone.utc).isoformat(), "revoked_reason": reason}},
+    )
+
+
+async def _send_web_push_notification(subscription: dict, payload: dict) -> bool:
+    if not PUSH_ENABLED:
+        return False
+
+    try:
+        webpush(
+            subscription_info={
+                "endpoint": subscription.get("endpoint"),
+                "keys": {
+                    "p256dh": subscription.get("p256dh"),
+                    "auth": subscription.get("auth"),
+                },
+            },
+            data=json.dumps(payload, ensure_ascii=False),
+            vapid_private_key=VAPID_PRIVATE_KEY,
+            vapid_claims={"sub": VAPID_SUBJECT},
+        )
+        return True
+    except WebPushException as exc:
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+        if status in (404, 410):
+            return False
+        return False
+    except Exception:
+        return False
+
+
+async def _send_message_push_notification(db, recipient_id: str, thread: dict, message: dict) -> bool:
+    if not PUSH_ENABLED or db is None:
+        return False
+
+    recipient = await db.users.find_one({"id": recipient_id}, {"_id": 0})
+    if not recipient:
+        return False
+
+    prefs = recipient.get("notification_prefs") or {}
+    if not prefs.get("push_enabled", True):
+        return False
+
+    subscriptions = await _get_active_push_subscriptions(db, recipient_id)
+    if not subscriptions:
+        return False
+
+    payload = {
+        "title": "Yeni mesaj",
+        "body": thread.get("listing_title") or "İlan mesajı",
+        "url": f"/account/messages?thread={thread.get('id')}",
+        "thread_id": thread.get("id"),
+        "tag": "message",
+    }
+
+    success = False
+    for subscription in subscriptions:
+        sent = await _send_web_push_notification(subscription, payload)
+        if sent:
+            success = True
+        else:
+            await _deactivate_push_subscription(db, subscription.get("id"), "push_failed")
+    return success
+
+
 def _resolve_user_phone_e164(doc: dict) -> Optional[str]:
     raw_phone = (
         doc.get("phone_e164")
