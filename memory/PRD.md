@@ -139,6 +139,7 @@
 - 2026-02-20: Moderasyon şablonları (Spam/Dolandırıcılık/Müstehcen/Sahte ilan/Tekrarlı ihlal) + otomatik reason_detail
 - 2026-02-20: Başvuru Modülü P0 (RDBMS applications tablosu + /api/applications create/list + admin assign/status + rate limit + XSS sanitize + URL validation) — DB bağlantısı gerekli
 - 2026-02-20: DB gate rollback (fail-fast kaldırıldı, fallback geri geldi, /health/db soft-degraded)
+- 2026-02-20: Mongo Exit P0 hazırlık dokümanları (inventory + schema + ops runbook) + auth migration seti
 - 2026-02-20: Preview ortamında DATABASE_URL (Postgres) erişimi yok; applications API 503 döner (E2E için bağlantı sağlanmalı, env güncelle)
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
