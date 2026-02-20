@@ -24,6 +24,7 @@ const emptyForm = {
   make_id: '',
   name: '',
   slug: '',
+  vehicle_type: '',
   active_flag: true,
 };
 
