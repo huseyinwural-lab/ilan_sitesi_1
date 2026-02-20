@@ -918,13 +918,6 @@ def _parse_iso(value: Optional[str]) -> Optional[datetime]:
         return None
 
 
-def _parse_country_codes(value: Optional[str]) -> Optional[List[str]]:
-    if not value:
-        return None
-    codes = [code.strip().upper() for code in value.split(",") if code.strip()]
-    return codes or None
-
-
 def _resolve_period_window(period: str, start_date: Optional[str], end_date: Optional[str]) -> tuple[datetime, datetime, str]:
     now = datetime.now(timezone.utc)
     period_key = (period or "30d").lower()
