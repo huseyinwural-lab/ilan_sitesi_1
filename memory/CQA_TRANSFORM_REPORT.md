@@ -1,0 +1,234 @@
+# CQA_TRANSFORM_REPORT
+
+## Özet
+- Toplam satır: 81135
+- Unique make: 156
+- Unique model (importa alınan): 1743
+- Unknown body nedeniyle skip edilen model: 1911
+
+## vehicle_type Coverage
+- car: 1452
+- suv: 228
+- pickup: 63
+
+## Unknown Body Değerleri (ilk 200)
+- NULL
+- sport utility vehicles
+- compact cars
+- midsize cars
+- subcompact cars
+- large cars
+- two seaters
+- cargo vans
+- small station wagons
+- small sport utility vehicles
+- passenger vans
+- mini compact cars
+- midsize station wagons
+- not available
+- standard sport utility vehicles
+
+## Duplicate Model Slug (ilk 200)
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- citroen / bx → BX vs Bx
+- citroen / bx → BX vs Bx
+- isuzu / vehicross → VehiCross vs Vehicross
+- jaguar / e-type → E Type vs E-Type
+- jaguar / e-type → E Type vs E-Type
+- jaguar / e-type → E Type vs E-Type
+- jaguar / e-type → E Type vs E-Type
+- jaguar / e-type → E Type vs E-Type
+- jaguar / e-type → E Type vs E-Type
+- jaguar / e-type → E Type vs E-Type
+- mazda / rx-evolv → RX-Evolv vs RX Evolv
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- ford / c-max → C-MAX vs C-Max
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- chevrolet / trailblazer → Trailblazer vs TrailBlazer
+- ford / edge → Edge vs EDGE
+- ford / edge → Edge vs EDGE
+- ford / edge → Edge vs EDGE
+- ford / edge → Edge vs EDGE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- cadillac / escalade → Escalade vs ESCALADE
+- chrysler / town-country → Town & Country vs TOWN & COUNTRY
+- chrysler / town-country → Town & Country vs TOWN & COUNTRY
+- chrysler / town-country → Town & Country vs TOWN & COUNTRY
+- dodge / avenger → Avenger vs AVENGER
+- dodge / avenger → Avenger vs AVENGER
+- dodge / avenger → Avenger vs AVENGER
+- dodge / avenger → Avenger vs AVENGER
+- dodge / challenger → Challenger vs CHALLENGER
+- dodge / challenger → Challenger vs CHALLENGER
+- dodge / challenger → Challenger vs CHALLENGER
+- dodge / challenger → Challenger vs CHALLENGER
+- dodge / challenger → Challenger vs CHALLENGER
+- dodge / challenger → Challenger vs CHALLENGER
+- dodge / challenger → Challenger vs CHALLENGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / charger → Charger vs CHARGER
+- dodge / dart → Dart vs DART
+- dodge / dart → Dart vs DART
+- dodge / dart → Dart vs DART
+- dodge / dart → Dart vs DART
+- dodge / dart → Dart vs DART
+- dodge / durango → Durango vs DURANGO
+- dodge / durango → Durango vs DURANGO
+- dodge / durango → Durango vs DURANGO
+- dodge / durango → Durango vs DURANGO
+- dodge / durango → Durango vs DURANGO
+- dodge / durango → Durango vs DURANGO
+- dodge / durango → Durango vs DURANGO
+- dodge / durango → Durango vs DURANGO
+- dodge / journey → Journey vs JOURNEY
+- dodge / journey → Journey vs JOURNEY
+- dodge / journey → Journey vs JOURNEY
+- dodge / journey → Journey vs JOURNEY
+- dodge / journey → Journey vs JOURNEY
+- dodge / journey → Journey vs JOURNEY
+- dodge / journey → Journey vs JOURNEY
+- dodge / journey → Journey vs JOURNEY
+- dodge / grand-caravan → Grand Caravan vs GRAND CARAVAN
+- dodge / grand-caravan → Grand Caravan vs GRAND CARAVAN
+- dodge / grand-caravan → Grand Caravan vs GRAND CARAVAN
+- dodge / grand-caravan → Grand Caravan vs GRAND CARAVAN
+- dodge / grand-caravan → Grand Caravan vs GRAND CARAVAN
+- mazda / mx-5-miata → MX-5 Miata vs MX-5 MIATA
+- mazda / mx-5-miata → MX-5 Miata vs MX-5 MIATA
+- mazda / mx-5-miata → MX-5 Miata vs MX-5 MIATA
+- mazda / mx-5-miata → MX-5 Miata vs MX-5 MIATA
+- mazda / mx-5-miata → MX-5 Miata vs MX-5 MIATA
+- nissan / altima → Altima vs ALTIMA
+- nissan / altima → Altima vs ALTIMA
+- nissan / altima → Altima vs ALTIMA
+- nissan / altima → Altima vs ALTIMA
+- nissan / altima → Altima vs ALTIMA
+- nissan / altima → Altima vs ALTIMA
+- nissan / altima → Altima vs ALTIMA
+- nissan / altima → Altima vs ALTIMA
+- kia / rio → Rio vs RIO
+- kia / rio → Rio vs RIO
+- kia / rio → Rio vs RIO
+- kia / rio → Rio vs RIO
+- kia / rio → Rio vs RIO
+- kia / rio → Rio vs RIO
+- kia / soul → Soul vs SOUL
+- kia / soul → Soul vs SOUL
+- kia / soul → Soul vs SOUL
+- jaguar / f-type → F-Type vs F-TYPE
+- jaguar / f-type → F-Type vs F-TYPE
+- jaguar / f-type → F-Type vs F-TYPE
+- smart / fortwo → ForTwo vs Fortwo
+- smart / fortwo → ForTwo vs Fortwo
+- smart / fortwo → ForTwo vs Fortwo
+- smart / fortwo → ForTwo vs Fortwo
+- smart / fortwo → ForTwo vs Fortwo
+- smart / fortwo → ForTwo vs Fortwo
+- smart / fortwo → ForTwo vs Fortwo
+- smart / fortwo → ForTwo vs Fortwo
+- audi / allroad → Allroad vs allroad
+- bmw / 6-series → 6 series vs 6 Series
+- bmw / 6-series → 6 series vs 6 Series
+- bmw / 6-series → 6 series vs 6 Series
+- bmw / 6-series → 6 series vs 6 Series
+- bmw / 6-series → 6 series vs 6 Series
+- bmw / 6-series → 6 series vs 6 Series
+
+## Birden Fazla vehicle_type Çıkan Modeller (ilk 200)
+- yok
