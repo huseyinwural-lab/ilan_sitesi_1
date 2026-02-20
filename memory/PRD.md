@@ -144,7 +144,8 @@
 - 2026-02-20: APP_ENV=prod strict fail-fast guard (prod strict, preview/dev degraded)
 - 2026-02-20: Support formu (KVKK + dosya URL mock + ilan ID) + admin başvuru listesi filtre/kolon güncellemesi
 - 2026-02-20: Preview ortamında /health/db backend 503 döndürüyor; edge katmanında 520 görülüyor (proxy passthrough gerektirir)
-- Yeni /admin/audit route + AdminRouteGuard (403)
+- 2026-02-20: Postgres secret hazır değil; SQL provider aktif değil (Mongo fallback sürüyor)
+
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
 - Admin imzası backlog’a alındı (sonraki faz)
