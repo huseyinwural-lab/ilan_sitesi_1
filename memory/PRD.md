@@ -1,6 +1,6 @@
 # FAZ Admin Domain Complete — PRD
 
-**Son güncelleme:** 2026-02-20 (Başvuru Modülü RDBMS + admin assign/status + Postgres bağlantı notu)
+**Son güncelleme:** 2026-02-20 (Başvuru Modülü RDBMS + admin assign/status + Postgres bağlantı notu + UI güncelleme)
 
 ## Program Status (23.02.2026)
 - Foundation Phase: **OFFICIALLY CLOSED**
