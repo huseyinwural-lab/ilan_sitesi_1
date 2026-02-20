@@ -49,6 +49,12 @@ const formatDateTime = (value) => {
   return parsed.toLocaleString('tr-TR');
 };
 
+const toDateInputValue = (date) => {
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60000);
+  return local.toISOString().split('T')[0];
+};
+
 export default function AdminInvoicesPage() {
   const [searchParams] = useSearchParams();
   const urlCountry = (searchParams.get('country') || '').toUpperCase();
