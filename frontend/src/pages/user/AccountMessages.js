@@ -1,82 +1,281 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { EmptyState } from '@/components/account/AccountStates';
+import { EmptyState, LoadingState, ErrorState } from '@/components/account/AccountStates';
 
-const readThreads = () => {
-  try {
-    return JSON.parse(localStorage.getItem('account_messages') || '[]');
-  } catch (e) {
-    return [];
-  }
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const buildWsUrl = (token) => {
+  if (!BACKEND_URL) return null;
+  const wsBase = BACKEND_URL.replace('https://', 'wss://').replace('http://', 'ws://');
+  return `${wsBase}/api/ws/messages?token=${token}`;
 };
 
-const saveThreads = (threads) => {
-  localStorage.setItem('account_messages', JSON.stringify(threads));
+const formatDate = (value) => {
+  if (!value) return '-';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleString('tr-TR');
 };
 
 export default function AccountMessages() {
   const [searchParams] = useSearchParams();
   const [threads, setThreads] = useState([]);
   const [activeId, setActiveId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [loadingThreads, setLoadingThreads] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [error, setError] = useState('');
   const [messageText, setMessageText] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState('disconnected');
+  const [typingUser, setTypingUser] = useState(null);
+
+  const socketRef = useRef(null);
+  const reconnectRef = useRef(null);
+  const lastMessageAtRef = useRef(null);
+
+  const authHeader = useMemo(() => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }), []);
+
+  const fetchThreads = async () => {
+    setLoadingThreads(true);
+    try {
+      const res = await fetch(`${API}/v1/messages/threads`, { headers: authHeader });
+      if (!res.ok) {
+        throw new Error('Mesajlar yüklenemedi');
+      }
+      const data = await res.json();
+      setThreads(data.items || []);
+      if (!activeId && data.items?.length) {
+        setActiveId(data.items[0].id);
+      }
+      setError('');
+    } catch (err) {
+      setError('Mesajlar yüklenemedi');
+    } finally {
+      setLoadingThreads(false);
+    }
+  };
+
+  const fetchMessages = async (threadId, since = null) => {
+    if (!threadId) return;
+    setLoadingMessages(true);
+    try {
+      const params = new URLSearchParams();
+      if (since) params.set('since', since);
+      const res = await fetch(`${API}/v1/messages/threads/${threadId}/messages?${params.toString()}`, { headers: authHeader });
+      if (!res.ok) {
+        throw new Error('Mesaj detayı alınamadı');
+      }
+      const data = await res.json();
+      const items = data.items || [];
+      if (since) {
+        setMessages((prev) => [...prev, ...items]);
+      } else {
+        setMessages(items);
+      }
+      if (items.length) {
+        lastMessageAtRef.current = items[items.length - 1].created_at;
+      }
+      setError('');
+    } catch (err) {
+      setError('Mesaj detayı alınamadı');
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  const markRead = async (threadId) => {
+    if (!threadId) return;
+    try {
+      await fetch(`${API}/v1/messages/threads/${threadId}/read`, {
+        method: 'POST',
+        headers: authHeader,
+      });
+    } catch (err) {
+      // ignore
+    }
+  };
+
+  const createThreadFromListing = async (listingId) => {
+    try {
+      const res = await fetch(`${API}/v1/messages/threads`, {
+        method: 'POST',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listing_id: listingId }),
+      });
+      if (!res.ok) {
+        throw new Error('Thread oluşturulamadı');
+      }
+      const data = await res.json();
+      const thread = data.thread;
+      setThreads((prev) => {
+        const exists = prev.find((item) => item.id === thread.id);
+        if (exists) return prev;
+        return [thread, ...prev];
+      });
+      setActiveId(thread.id);
+      await fetchMessages(thread.id);
+    } catch (err) {
+      setError('Mesajlaşma başlatılamadı');
+    }
+  };
+
+  const connectSocket = () => {
+    const token = localStorage.getItem('access_token');
+    const wsUrl = buildWsUrl(token);
+    if (!wsUrl) return;
+
+    if (socketRef.current) {
+      socketRef.current.close();
+    }
+
+    const socket = new WebSocket(wsUrl);
+    socketRef.current = socket;
+    setConnectionStatus('connecting');
+
+    socket.onopen = () => {
+      setConnectionStatus('connected');
+      if (activeId) {
+        socket.send(JSON.stringify({ type: 'subscribe', thread_id: activeId }));
+      }
+      if (activeId && lastMessageAtRef.current) {
+        fetchMessages(activeId, lastMessageAtRef.current);
+      }
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type === 'message:new') {
+          const msg = payload.message;
+          if (payload.thread_id === activeId) {
+            setMessages((prev) => [...prev, msg]);
+            lastMessageAtRef.current = msg.created_at;
+            markRead(activeId);
+          } else {
+            setThreads((prev) =>
+              prev.map((thread) =>
+                thread.id === payload.thread_id
+                  ? {
+                      ...thread,
+                      last_message: msg.body,
+                      last_message_at: msg.created_at,
+                      unread_count: (thread.unread_count || 0) + 1,
+                    }
+                  : thread
+              )
+            );
+          }
+        }
+        if (payload.type === 'message:read' && payload.thread_id) {
+          setThreads((prev) =>
+            prev.map((thread) =>
+              thread.id === payload.thread_id
+                ? { ...thread, unread_count: payload.user_id === thread.id ? 0 : thread.unread_count }
+                : thread
+            )
+          );
+        }
+        if (payload.type === 'typing:start' && payload.thread_id === activeId) {
+          setTypingUser(payload.user_id);
+        }
+        if (payload.type === 'typing:stop' && payload.thread_id === activeId) {
+          setTypingUser(null);
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+
+    socket.onclose = () => {
+      setConnectionStatus('disconnected');
+      if (reconnectRef.current) {
+        clearTimeout(reconnectRef.current);
+      }
+      reconnectRef.current = setTimeout(() => {
+        connectSocket();
+      }, 2000);
+    };
+  };
 
   useEffect(() => {
-    const initial = readThreads();
+    fetchThreads();
+    connectSocket();
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
+      if (reconnectRef.current) {
+        clearTimeout(reconnectRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     const listingId = searchParams.get('listing');
     if (listingId) {
-      const existing = initial.find((t) => t.listing_id === listingId);
-      if (!existing) {
-        const newThread = {
-          id: `thread-${Date.now()}`,
-          listing_id: listingId,
-          listing_title: `İlan #${listingId}`,
-          last_message: 'Yeni mesaj başlatıldı',
-          last_at: new Date().toISOString(),
-          unread_count: 0,
-          messages: [],
-        };
-        initial.unshift(newThread);
-        saveThreads(initial);
-      }
-    }
-    setThreads(initial);
-    if (initial.length > 0) {
-      setActiveId(initial[0].id);
+      createThreadFromListing(listingId);
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (!activeId) return;
+    fetchMessages(activeId);
+    markRead(activeId);
+    if (socketRef.current && connectionStatus === 'connected') {
+      socketRef.current.send(JSON.stringify({ type: 'subscribe', thread_id: activeId }));
+    }
+  }, [activeId]);
+
   const activeThread = useMemo(() => threads.find((t) => t.id === activeId), [threads, activeId]);
 
-  const handleSelect = (threadId) => {
-    const next = threads.map((t) =>
-      t.id === threadId ? { ...t, unread_count: 0 } : t
-    );
-    setThreads(next);
-    saveThreads(next);
-    setActiveId(threadId);
+  const handleSend = async () => {
+    if (!messageText.trim() || !activeId) return;
+    const clientMessageId = (crypto?.randomUUID && crypto.randomUUID()) || `msg-${Date.now()}`;
+    const payload = { body: messageText.trim(), client_message_id: clientMessageId };
+    try {
+      const res = await fetch(`${API}/v1/messages/threads/${activeId}/messages`, {
+        method: 'POST',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        throw new Error('Mesaj gönderilemedi');
+      }
+      const data = await res.json();
+      setMessages((prev) => [...prev, data.message]);
+      lastMessageAtRef.current = data.message.created_at;
+      setMessageText('');
+      setThreads((prev) =>
+        prev.map((thread) =>
+          thread.id === activeId
+            ? { ...thread, last_message: data.message.body, last_message_at: data.message.created_at }
+            : thread
+        )
+      );
+    } catch (err) {
+      setError('Mesaj gönderilemedi');
+    }
   };
 
-  const handleSend = () => {
-    if (!messageText.trim() || !activeThread) return;
-    const newMessage = {
-      id: `msg-${Date.now()}`,
-      sender: 'me',
-      body: messageText.trim(),
-      created_at: new Date().toISOString(),
-    };
-    const next = threads.map((t) => {
-      if (t.id !== activeThread.id) return t;
-      return {
-        ...t,
-        last_message: newMessage.body,
-        last_at: newMessage.created_at,
-        messages: [...(t.messages || []), newMessage],
-      };
-    });
-    setThreads(next);
-    saveThreads(next);
-    setMessageText('');
+  const handleTyping = () => {
+    if (socketRef.current && connectionStatus === 'connected' && activeId) {
+      socketRef.current.send(JSON.stringify({ type: 'typing:start', thread_id: activeId }));
+      setTimeout(() => {
+        if (socketRef.current && connectionStatus === 'connected') {
+          socketRef.current.send(JSON.stringify({ type: 'typing:stop', thread_id: activeId }));
+        }
+      }, 800);
+    }
   };
+
+  if (loadingThreads) {
+    return <LoadingState label="Mesajlar yükleniyor..." />;
+  }
+
+  if (error && threads.length === 0) {
+    return <ErrorState message={error} onRetry={fetchThreads} testId="account-messages-error" />;
+  }
 
   if (threads.length === 0) {
     return (
@@ -93,16 +292,17 @@ export default function AccountMessages() {
       <div className="rounded-lg border bg-white" data-testid="account-messages-list">
         <div className="border-b px-4 py-3" data-testid="account-messages-list-header">
           <div className="text-sm font-semibold" data-testid="account-messages-title">Mesajlar</div>
+          <div className="text-xs text-muted-foreground" data-testid="account-messages-connection">
+            Bağlantı: {connectionStatus}
+          </div>
         </div>
         <div className="divide-y" data-testid="account-messages-list-items">
           {threads.map((thread) => (
             <button
               key={thread.id}
               type="button"
-              onClick={() => handleSelect(thread.id)}
-              className={`w-full text-left px-4 py-3 hover:bg-muted/40 ${
-                activeId === thread.id ? 'bg-muted/30' : ''
-              }`}
+              onClick={() => setActiveId(thread.id)}
+              className={`w-full text-left px-4 py-3 hover:bg-muted/40 ${activeId === thread.id ? 'bg-muted/30' : ''}`}
               data-testid={`account-message-thread-${thread.id}`}
             >
               <div className="flex items-center justify-between">
@@ -116,7 +316,10 @@ export default function AccountMessages() {
                 )}
               </div>
               <div className="text-xs text-muted-foreground line-clamp-1" data-testid={`account-message-thread-preview-${thread.id}`}>
-                {thread.last_message}
+                {thread.last_message || 'Yeni konuşma'}
+              </div>
+              <div className="text-[11px] text-muted-foreground" data-testid={`account-message-thread-time-${thread.id}`}>
+                {thread.last_message_at ? formatDate(thread.last_message_at) : '-'}
               </div>
             </button>
           ))}
@@ -135,29 +338,35 @@ export default function AccountMessages() {
               </div>
             </div>
             <div className="flex-1 overflow-auto p-4 space-y-3" data-testid="account-message-thread-body">
-              {(activeThread.messages || []).length === 0 ? (
+              {loadingMessages ? (
+                <div className="text-sm text-muted-foreground" data-testid="account-message-thread-loading">Yükleniyor...</div>
+              ) : messages.length === 0 ? (
                 <div className="text-sm text-muted-foreground" data-testid="account-message-thread-empty">Henüz mesaj yok.</div>
               ) : (
-                activeThread.messages.map((msg) => (
+                messages.map((msg) => (
                   <div
                     key={msg.id}
                     className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${
-                      msg.sender === 'me' ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted'
+                      msg.sender_id === localStorage.getItem('user_id') ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted'
                     }`}
                     data-testid={`account-message-${msg.id}`}
                   >
                     {msg.body}
                     <div className="mt-1 text-[10px] opacity-70" data-testid={`account-message-time-${msg.id}`}>
-                      {new Date(msg.created_at).toLocaleString('tr-TR')}
+                      {formatDate(msg.created_at)}
                     </div>
                   </div>
                 ))
+              )}
+              {typingUser && (
+                <div className="text-xs text-muted-foreground" data-testid="account-message-typing">Karşı taraf yazıyor...</div>
               )}
             </div>
             <div className="border-t p-3 flex items-center gap-2" data-testid="account-message-input">
               <input
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
+                onKeyUp={handleTyping}
                 placeholder="Mesaj yazın"
                 className="flex-1 h-10 rounded-md border px-3 text-sm"
                 data-testid="account-message-input-field"
