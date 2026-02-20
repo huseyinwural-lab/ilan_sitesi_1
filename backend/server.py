@@ -1616,17 +1616,13 @@ def _send_support_received_email(to_email: str, application_id: str, subject_tex
         raise HTTPException(status_code=502, detail="Failed to send support email")
 
 
-def _send_message_notification_email(db, recipient_id: str, thread: dict, message: dict) -> None:
+async def _send_message_notification_email(db, recipient_id: str, thread: dict, message: dict) -> None:
     sendgrid_key = os.environ.get("SENDGRID_API_KEY")
     sender_email = os.environ.get("SENDER_EMAIL")
-    if not sendgrid_key or not sender_email:
+    if not sendgrid_key or not sender_email or db is None:
         return
 
-    recipient = None
-    if db is not None:
-        recipient = db.users.find_one({"id": recipient_id}, {"_id": 0})
-    if hasattr(recipient, "__await__"):
-        recipient = asyncio.get_event_loop().run_until_complete(recipient)
+    recipient = await db.users.find_one({"id": recipient_id}, {"_id": 0})
     if not recipient:
         return
 
