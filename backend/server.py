@@ -4116,8 +4116,11 @@ async def admin_listings(
                 keys.append(slug_value)
         query["category_key"] = {"$in": list(set(keys))}
 
+    if owner_id:
+        query["created_by"] = owner_id
+
     dealer_only_flag = _parse_bool_flag(dealer_only)
-    if dealer_only_flag:
+    if dealer_only_flag and not owner_id:
         dealer_query: Dict = {"role": "dealer"}
         if getattr(ctx, "mode", "global") == "country" and ctx.country:
             dealer_query["country_code"] = ctx.country
