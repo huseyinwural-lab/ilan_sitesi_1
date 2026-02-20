@@ -24,4 +24,5 @@ from app.models.vehicle_mdm import VehicleMake, VehicleModel
 from app.models.application import Application
 from app.models.campaign import Campaign
 from app.models.plan import Plan
+from app.models.admin_invoice import AdminInvoice
 from app.models.auth import Role, UserRole, UserCredential, RefreshToken
