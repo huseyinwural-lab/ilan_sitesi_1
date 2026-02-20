@@ -8,8 +8,6 @@ const MediaUploader = () => {
 
   const handleFileSelect = (e) => {
     const selected = Array.from(e.target.files);
-    // In prod: Upload immediately via MediaService and get URL
-    // Here: Mock local preview
     const newFiles = selected.map(file => ({
       file,
       preview: URL.createObjectURL(file),
