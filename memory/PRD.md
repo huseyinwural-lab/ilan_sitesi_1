@@ -115,6 +115,7 @@
 - Moderation Queue + audit log altyapısı
 - Login rate-limit ve audit log (FAILED_LOGIN, RATE_LIMIT_BLOCK)
 - **Bireysel Portal Faz B1-B7 (2026-02-20):** /account IA + role guard, bireysel menü standardı, listing wizard 5 adım, draft kaydet, my listings filtre/aksiyonlar, moderasyon notu görünümü, favorites/messages/support list/detail, profil/şifre ekranı
+- **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
 - B8: Favoriler backend + profil/şifre API + GDPR export + mesajlaşma REST/WS entegrasyonu + push subscription altyapısı (VAPID secrets bekliyor)
