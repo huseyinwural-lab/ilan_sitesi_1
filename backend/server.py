@@ -2214,8 +2214,9 @@ async def delete_user(
         )
         audit_entry["action"] = "admin_deleted"
     else:
+        event_type = "dealer_deleted" if user.get("role") == "dealer" else "user_deleted"
         audit_entry = await build_audit_entry(
-            event_type="user_deleted",
+            event_type=event_type,
             actor=current_user,
             target_id=user_id,
             target_type="user",
@@ -2228,7 +2229,7 @@ async def delete_user(
             },
             request=request,
         )
-        audit_entry["action"] = "user_deleted"
+        audit_entry["action"] = event_type
 
     await db.audit_logs.insert_one(audit_entry)
 
