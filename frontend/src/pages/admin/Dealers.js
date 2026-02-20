@@ -413,9 +413,14 @@ export default function DealersPage() {
                         {statusValue === 'deleted' ? (
                           <div className="flex items-center justify-end gap-2">
                             <span className="text-xs text-muted-foreground" data-testid={`dealer-actions-deleted-${dealer.id}`}>Silindi</span>
-                            <Link to={`/admin/dealers/${dealer.id}`} className="h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center" data-testid={`dealer-detail-link-${dealer.id}`}>
+                            <button
+                              type="button"
+                              onClick={() => openDrawer(dealer)}
+                              className="h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center"
+                              data-testid={`dealer-detail-link-${dealer.id}`}
+                            >
                               Detay
-                            </Link>
+                            </button>
                           </div>
                         ) : (
                           <div className="flex items-center justify-end gap-2">
@@ -436,9 +441,14 @@ export default function DealersPage() {
                             {!showActions && (
                               <span className="text-xs text-muted-foreground" data-testid={`dealer-actions-disabled-${dealer.id}`}>Yetkisiz</span>
                             )}
-                            <Link to={`/admin/dealers/${dealer.id}`} className="h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center" data-testid={`dealer-detail-link-${dealer.id}`}>
+                            <button
+                              type="button"
+                              onClick={() => openDrawer(dealer)}
+                              className="h-8 px-3 rounded-md border text-xs inline-flex items-center justify-center"
+                              data-testid={`dealer-detail-link-${dealer.id}`}
+                            >
                               Detay
-                            </Link>
+                            </button>
                           </div>
                         )}
                       </td>
