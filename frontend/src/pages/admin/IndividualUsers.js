@@ -470,7 +470,12 @@ export default function IndividualUsers() {
                 <label className="text-xs text-muted-foreground">Gerekçe (zorunlu)</label>
                 <select
                   value={reasonCode}
-                  onChange={(e) => setReasonCode(e.target.value)}
+                  onChange={(e) => {
+                    const nextValue = e.target.value;
+                    const template = REASON_OPTIONS.find((option) => option.value === nextValue);
+                    setReasonCode(nextValue);
+                    setReasonDetail(template?.detail || '');
+                  }}
                   className="h-10 rounded-md border bg-background px-3 text-sm w-full"
                   data-testid="individual-users-reason-select"
                 >
