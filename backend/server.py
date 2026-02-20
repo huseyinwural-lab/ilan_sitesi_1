@@ -765,7 +765,7 @@ async def lifespan(app: FastAPI):
     else:
         logging.getLogger("mongo").warning("Mongo disabled (MONGO_ENABLED=false)")
 
-    logging.getLogger("runtime").info(
+    logging.getLogger("runtime").warning(
         "APP_ENV=%s MONGO_ENABLED=%s AUTH_PROVIDER=%s APPLICATIONS_PROVIDER=%s",
         APP_ENV,
         MONGO_ENABLED,
