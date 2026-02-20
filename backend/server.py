@@ -2104,6 +2104,124 @@ async def list_users(
     return {"items": items}
 
 
+@api_router.get("/admin/individual-users")
+async def list_individual_users(
+    request: Request,
+    search: Optional[str] = None,
+    country: Optional[str] = None,
+    sort_by: Optional[str] = "last_name",
+    sort_dir: Optional[str] = "asc",
+    page: int = 1,
+    limit: int = 50,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    query: Dict[str, Any] = {
+        "role": {"$nin": list(ADMIN_ROLE_OPTIONS) + ["dealer"]},
+        "deleted_at": {"$exists": False},
+    }
+
+    country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
+    if country:
+        country_code = country.upper()
+    if country_code:
+        query["country_code"] = country_code
+
+    if search:
+        query["$or"] = [
+            {"first_name": {"$regex": search, "$options": "i"}},
+            {"last_name": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}},
+            {"full_name": {"$regex": search, "$options": "i"}},
+        ]
+
+    safe_page = max(page, 1)
+    safe_limit = min(max(limit, 1), 200)
+    skip = (safe_page - 1) * safe_limit
+
+    sort_field_map = {
+        "email": "email",
+        "created_at": "created_at",
+        "last_login": "last_login",
+        "first_name": "first_name",
+        "last_name": "last_name",
+    }
+    sort_key = sort_field_map.get(sort_by or "last_name", "last_name")
+    sort_direction = 1 if (sort_dir or "asc").lower() == "asc" else -1
+
+    total_count = await db.users.count_documents(query)
+
+    sort_name_expr = {"$ifNull": ["$last_name", {"$ifNull": ["$first_name", "$email"]}]}
+    sort_first_expr = {"$ifNull": ["$first_name", "$email"]}
+    sort_spec = {
+        "sort_name": sort_direction,
+        "sort_first": sort_direction,
+        "email": sort_direction,
+    }
+    if sort_key != "last_name":
+        sort_spec = {sort_key: sort_direction, "email": sort_direction}
+
+    pipeline = [
+        {"$match": query},
+        {"$addFields": {"sort_name": sort_name_expr, "sort_first": sort_first_expr}},
+        {"$sort": sort_spec},
+        {"$skip": skip},
+        {"$limit": safe_limit},
+    ]
+
+    docs = await db.users.aggregate(pipeline).to_list(length=safe_limit)
+
+    user_ids = [doc.get("id") for doc in docs if doc.get("id")]
+    listing_stats_map: Dict[str, Dict[str, Any]] = {}
+    if user_ids:
+        pipeline_stats = [
+            {"$match": {"created_by": {"$in": user_ids}}},
+            {
+                "$group": {
+                    "_id": "$created_by",
+                    "total": {"$sum": 1},
+                    "active": {
+                        "$sum": {
+                            "$cond": [
+                                {"$eq": ["$status", "published"]},
+                                1,
+                                0,
+                            ]
+                        }
+                    },
+                }
+            },
+        ]
+        listing_stats = await db.vehicle_listings.aggregate(pipeline_stats).to_list(length=5000)
+        listing_stats_map = {
+            stat.get("_id"): {"total": stat.get("total", 0), "active": stat.get("active", 0)}
+            for stat in listing_stats
+        }
+
+    plan_ids = [doc.get("plan_id") for doc in docs if doc.get("plan_id")]
+    plan_map: Dict[str, Any] = {}
+    if plan_ids:
+        plan_docs = await db.plans.find({"id": {"$in": plan_ids}}, {"_id": 0}).to_list(length=200)
+        plan_map = {doc.get("id"): doc for doc in plan_docs}
+
+    items = [
+        _build_user_summary(doc, listing_stats_map.get(doc.get("id"), {}), plan_map)
+        for doc in docs
+    ]
+
+    total_pages = max(1, (total_count + safe_limit - 1) // safe_limit)
+
+    return {
+        "items": items,
+        "total_count": total_count,
+        "page": safe_page,
+        "limit": safe_limit,
+        "total_pages": total_pages,
+    }
+
+
 @api_router.get("/menu/top-items")
 async def get_top_menu_items(request: Request):
     db = request.app.state.db
