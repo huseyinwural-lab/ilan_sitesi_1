@@ -164,6 +164,35 @@ export default function DealersPage() {
     setPage(1);
   };
 
+  const fetchAuditLogs = async (dealerId) => {
+    if (!dealerId) return;
+    setAuditLoading(true);
+    setAuditError('');
+    try {
+      const res = await axios.get(`${API}/admin/dealers/${dealerId}/audit-logs?limit=5`, {
+        headers: authHeader,
+      });
+      setAuditLogs(res.data.items || []);
+    } catch (e) {
+      setAuditError('Moderasyon geçmişi yüklenemedi.');
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  const openDrawer = (dealer) => {
+    setSelectedDealer(dealer);
+    setDrawerOpen(true);
+    fetchAuditLogs(dealer.id);
+  };
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setSelectedDealer(null);
+    setAuditLogs([]);
+    setAuditError('');
+  };
+
   const openActionDialog = (type, dealer) => {
     setActionDialog({ type, dealer });
     setReasonCode('');
