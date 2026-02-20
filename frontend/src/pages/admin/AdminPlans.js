@@ -47,6 +47,7 @@ const emptyForm = {
 export default function AdminPlans() {
   const [searchParams] = useSearchParams();
   const urlCountry = searchParams.get('country') || '';
+  const defaultCountry = urlCountry ? urlCountry.toUpperCase() : 'DE';
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
