@@ -5271,6 +5271,7 @@ class InvoiceCreatePayload(BaseModel):
 
 class InvoiceActionPayload(BaseModel):
     payment_method: Optional[str] = None
+    reason: Optional[str] = None
 
 
 class PaymentCheckoutPayload(BaseModel):
