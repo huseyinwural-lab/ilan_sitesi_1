@@ -43,7 +43,38 @@ test('bulk deactivate limit enforced', async ({ request }) => {
   expect(response.status()).toBe(400);
 });
 
-test('country admin cannot access admin users api', async ({ request }) => {
+test('super admin can soft delete admin users', async ({ request }) => {
+  const login = await request.post('/api/auth/login', {
+    data: { email: 'admin@platform.com', password: 'Admin123!' },
+  });
+  const loginJson = await login.json();
+  const token = loginJson.access_token;
+
+  const listResponse = await request.get('/api/admin/users', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const listJson = await listResponse.json();
+  const target = (listJson.items || []).find(
+    (user) => user.role !== 'super_admin' && user.email !== 'countryadmin@platform.com'
+  );
+
+  if (!target) {
+    test.skip(true, 'No deletable admin user available');
+  }
+
+  const deleteResponse = await request.delete(`/api/admin/users/${target.id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(deleteResponse.status()).toBe(200);
+
+  const afterResponse = await request.get('/api/admin/users', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const afterJson = await afterResponse.json();
+  const stillVisible = (afterJson.items || []).find((user) => user.id === target.id);
+  expect(stillVisible).toBeFalsy();
+});
+
   const login = await request.post('/api/auth/login', {
     data: { email: 'countryadmin@platform.com', password: 'Country123!' },
   });
