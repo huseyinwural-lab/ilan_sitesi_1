@@ -292,11 +292,16 @@ const DetailPage = () => {
 
                 <button
                   onClick={handleToggleFavorite}
-                  className={`w-full py-3 rounded-lg font-bold transition ${isFavorite ? 'bg-rose-600 text-white' : 'border border-rose-200 text-rose-600 hover:bg-rose-50'}`}
+                  disabled={favoriteLoading}
+                  className={`w-full py-3 rounded-lg font-bold transition ${isFavorite ? 'bg-rose-600 text-white' : 'border border-rose-200 text-rose-600 hover:bg-rose-50'} ${favoriteLoading ? 'opacity-60' : ''}`}
                   data-testid="listing-favorite-toggle"
                 >
-                  {isFavorite ? 'Favoriden Kaldır' : 'Favoriye Ekle'}
+                  {favoriteLoading ? 'Güncelleniyor...' : isFavorite ? 'Favoriden Kaldır' : 'Favoriye Ekle'}
                 </button>
+
+                {favoriteError && (
+                  <p className="text-xs text-rose-600" data-testid="listing-favorite-error">{favoriteError}</p>
+                )}
 
                 <button
                   onClick={() => { setReportOpen(true); setReportError(null); }}
