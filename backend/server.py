@@ -2454,7 +2454,7 @@ async def list_individual_users(
     if country:
         country_code = country.upper()
 
-    query = _build_individual_users_query(search, country_code)
+    query = _build_individual_users_query(search, country_code, status)
 
     safe_page = max(page, 1)
     safe_limit = min(max(limit, 1), 200)
@@ -2540,7 +2540,7 @@ async def admin_individual_users_export_csv(
     if country:
         country_code = country.upper()
 
-    query = _build_individual_users_query(search, country_code)
+    query = _build_individual_users_query(search, country_code, status)
     sort_spec, sort_name_expr, sort_first_expr, _ = _build_individual_users_sort(sort_by, sort_dir)
 
     pipeline = [
