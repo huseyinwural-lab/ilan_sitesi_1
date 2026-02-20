@@ -135,6 +135,7 @@
 - 2026-02-20: Admin silme (soft delete + silinenler filtresi + admin_deleted audit)
 - 2026-02-20: Bireysel kullanıcılar ekranı (SSOT individual filtre, soyad A→Z varsayılan sıralama, server-side arama + sayfalama)
 - 2026-02-20: Bireysel kullanıcı demo seed (6 kullanıcı, phone_e164) + telefon araması + CSV export
+- 2026-02-20: Üye moderasyon aksiyonları (askıya al/aktif et/sil) + reason/suspension_until + audit log + RBAC
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
