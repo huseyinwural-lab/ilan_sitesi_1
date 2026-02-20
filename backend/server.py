@@ -2881,22 +2881,35 @@ async def update_support_application_status(
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
-
-    try:
-        application_uuid = uuid.UUID(application_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid application id") from exc
-
-    result = await session.execute(select(Application).where(Application.id == application_uuid))
-    application = result.scalar_one_or_none()
-    if not application:
-        raise HTTPException(status_code=404, detail="Application not found")
+    applications_repo = _get_applications_repository(db, session)
 
     new_status = (payload.status or "").lower().strip()
     if new_status not in APPLICATION_STATUS_SET:
         raise HTTPException(status_code=400, detail="Invalid status")
 
-    current_status = application.status
+    decision_reason = payload.decision_reason
+    if new_status in {"approved", "rejected"} and not decision_reason:
+        raise HTTPException(status_code=400, detail="decision_reason required")
+
+    current_status = None
+    if APPLICATIONS_PROVIDER == "mongo":
+        if not db:
+            raise HTTPException(status_code=503, detail="Mongo disabled")
+        application = await db.support_applications.find_one({"id": application_id}, {"_id": 0})
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+        current_status = application.get("status")
+    else:
+        try:
+            application_uuid = uuid.UUID(application_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid application id") from exc
+        result = await session.execute(select(Application).where(Application.id == application_uuid))
+        application = result.scalar_one_or_none()
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+        current_status = application.status
+
     if new_status == current_status:
         raise HTTPException(status_code=400, detail="Status already set")
 
@@ -2904,25 +2917,23 @@ async def update_support_application_status(
     if new_status not in allowed_transitions:
         raise HTTPException(status_code=400, detail="Invalid status transition")
 
-    before_state = {"status": current_status}
-    application.status = new_status
-    application.updated_at = datetime.now(timezone.utc)
-    await session.commit()
+    await applications_repo.update_status(application_id, new_status, decision_reason)
 
-    audit_entry = await build_audit_entry(
-        event_type="APPLICATION_STATUS_UPDATED",
-        actor=current_user,
-        target_id=str(application.id),
-        target_type="application",
-        country_code=current_user.get("country_code"),
-        details={
-            "before": before_state,
-            "after": {"status": new_status},
-        },
-        request=request,
-    )
-    audit_entry["action"] = "APPLICATION_STATUS_UPDATED"
-    await db.audit_logs.insert_one(audit_entry)
+    if db:
+        audit_entry = await build_audit_entry(
+            event_type="APPLICATION_STATUS_UPDATED",
+            actor=current_user,
+            target_id=application_id,
+            target_type="application",
+            country_code=current_user.get("country_code"),
+            details={
+                "before": {"status": current_status},
+                "after": {"status": new_status, "decision_reason": decision_reason},
+            },
+            request=request,
+        )
+        audit_entry["action"] = "APPLICATION_STATUS_UPDATED"
+        await db.audit_logs.insert_one(audit_entry)
 
     return {"ok": True, "status": new_status}
 
