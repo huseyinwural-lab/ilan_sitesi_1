@@ -250,7 +250,8 @@ export default function DealersPage() {
                     )}
                   </td>
                 </tr>
-              ))
+              );
+              })
             )}
           </tbody>
         </table>
