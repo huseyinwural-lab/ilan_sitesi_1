@@ -2077,6 +2077,10 @@ async def delete_user(
     if user.get("deleted_at"):
         return {"ok": True}
 
+    reason_code, reason_detail = _extract_moderation_reason(payload)
+    if not is_admin_target and not reason_code:
+        raise HTTPException(status_code=400, detail="Reason is required")
+
     await _assert_super_admin_invariant(db, user, None, False, current_user)
 
     before_state = {
@@ -2085,13 +2089,26 @@ async def delete_user(
         "role": user.get("role"),
         "country_scope": user.get("country_scope") or [],
         "deleted_at": user.get("deleted_at"),
+        "suspension_until": user.get("suspension_until"),
     }
 
     now_iso = datetime.now(timezone.utc).isoformat()
-    update_payload = {"status": "deleted", "is_active": False, "deleted_at": now_iso, "updated_at": now_iso}
+    update_ops: Dict[str, Any] = {
+        "$set": {
+            "status": "deleted",
+            "is_active": False,
+            "deleted_at": now_iso,
+            "updated_at": now_iso,
+        },
+        "$unset": {"suspension_until": ""},
+    }
+
+    if user.get("role") == "dealer":
+        update_ops["$set"]["dealer_status"] = "deleted"
+
     await db.users.update_one(
         {"id": user_id},
-        {"$set": update_payload},
+        update_ops,
     )
 
     after_state = {
@@ -2099,6 +2116,7 @@ async def delete_user(
         "status": "deleted",
         "is_active": False,
         "deleted_at": now_iso,
+        "suspension_until": None,
     }
 
     if is_admin_target:
@@ -2108,7 +2126,12 @@ async def delete_user(
             target_id=user_id,
             target_type="admin_user",
             country_code=user.get("country_code"),
-            details={"before": before_state, "after": after_state},
+            details={
+                "reason_code": reason_code,
+                "reason_detail": reason_detail,
+                "before": before_state,
+                "after": after_state,
+            },
             request=request,
         )
         audit_entry["action"] = "admin_deleted"
@@ -2119,7 +2142,12 @@ async def delete_user(
             target_id=user_id,
             target_type="user",
             country_code=user.get("country_code"),
-            details={"reason": payload.reason if payload else None},
+            details={
+                "reason_code": reason_code,
+                "reason_detail": reason_detail,
+                "before": before_state,
+                "after": after_state,
+            },
             request=request,
         )
         audit_entry["action"] = "user_deleted"
