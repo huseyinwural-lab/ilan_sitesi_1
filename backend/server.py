@@ -3341,6 +3341,8 @@ async def change_password(
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
+    if AUTH_PROVIDER == "mongo" and db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
     if len(payload.new_password or "") < 8:
         raise HTTPException(status_code=400, detail="Password too short")
 
