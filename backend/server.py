@@ -2373,6 +2373,216 @@ async def get_me(current_user=Depends(get_current_user)):
     return _user_to_response(current_user)
 
 
+@api_router.post("/support/applications")
+async def create_support_application(
+    payload: SupportApplicationCreatePayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+
+    if not payload.kvkk_consent:
+        raise HTTPException(status_code=400, detail="KVKK consent required")
+
+    category = (payload.category or "").lower().strip()
+    if category not in {"complaint", "request"}:
+        raise HTTPException(status_code=400, detail="Invalid category")
+
+    application_type = "dealer" if current_user.get("role") == "dealer" else "individual"
+
+    company_name = payload.company_name or current_user.get("company_name")
+    if application_type == "dealer" and not company_name:
+        raise HTTPException(status_code=400, detail="Company name required")
+
+    contact_name = _resolve_contact_name(current_user)
+    applicant_name = current_user.get("full_name") or contact_name or current_user.get("email")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    application_id = str(uuid.uuid4())
+    attachments = [att.dict() for att in payload.attachments or []]
+
+    application_doc = {
+        "id": application_id,
+        "application_id": application_id,
+        "user_id": current_user.get("id"),
+        "application_type": application_type,
+        "category": category,
+        "subject": payload.subject,
+        "description": payload.description,
+        "attachments": attachments,
+        "listing_id": payload.listing_id,
+        "status": "pending",
+        "priority": "medium",
+        "assigned_to": None,
+        "decision_reason": None,
+        "company_name": company_name,
+        "tax_number": payload.tax_number,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+        "applicant_name": applicant_name,
+        "applicant_company_name": company_name if application_type == "dealer" else None,
+        "applicant_email": current_user.get("email"),
+        "applicant_country": current_user.get("country_code"),
+    }
+
+    await db.support_applications.insert_one(application_doc)
+
+    await _create_inapp_notification(
+        db,
+        current_user.get("id"),
+        f"Başvurunuz alındı. Referans: {application_id}",
+        {"application_id": application_id},
+    )
+    _send_support_received_email(current_user.get("email"), application_id, payload.subject)
+
+    return {"application_id": application_id}
+
+
+@api_router.get("/admin/applications")
+async def list_support_applications(
+    request: Request,
+    application_type: Optional[str] = None,
+    category: Optional[str] = None,
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    country: Optional[str] = None,
+    search: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    page: int = 1,
+    limit: int = 25,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
+):
+    db = request.app.state.db
+    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    query: Dict[str, Any] = {}
+    if application_type:
+        query["application_type"] = application_type
+
+    if category:
+        query["category"] = category
+    if status:
+        query["status"] = status
+    if priority:
+        query["priority"] = priority
+
+    country_code = country.upper() if country else None
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        country_code = ctx.country
+    if country_code:
+        query["applicant_country"] = country_code
+
+    if search:
+        safe_search = re.escape(search)
+        query["$or"] = [
+            {"applicant_name": {"$regex": safe_search, "$options": "i"}},
+            {"applicant_company_name": {"$regex": safe_search, "$options": "i"}},
+            {"applicant_email": {"$regex": safe_search, "$options": "i"}},
+        ]
+
+    if start_date or end_date:
+        date_filter: Dict[str, Any] = {}
+        try:
+            if start_date:
+                start_dt = datetime.fromisoformat(start_date)
+                if start_dt.tzinfo is None:
+                    start_dt = start_dt.replace(tzinfo=timezone.utc)
+                date_filter["$gte"] = start_dt.isoformat()
+            if end_date:
+                end_dt = datetime.fromisoformat(end_date)
+                if end_dt.tzinfo is None:
+                    end_dt = end_dt.replace(tzinfo=timezone.utc)
+                if len(end_date) == 10:
+                    end_dt = end_dt + timedelta(days=1) - timedelta(seconds=1)
+                date_filter["$lte"] = end_dt.isoformat()
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid date filter") from exc
+
+        if date_filter:
+            query["created_at"] = date_filter
+
+    safe_page = max(page, 1)
+    safe_limit = min(max(limit, 1), 200)
+    skip = (safe_page - 1) * safe_limit
+
+    total_count = await db.support_applications.count_documents(query)
+    docs = (
+        await db.support_applications.find(query, {"_id": 0})
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(safe_limit)
+        .to_list(length=safe_limit)
+    )
+
+    items = [_build_support_application_summary(doc) for doc in docs]
+    total_pages = max(1, (total_count + safe_limit - 1) // safe_limit)
+
+    return {
+        "items": items,
+        "total_count": total_count,
+        "page": safe_page,
+        "limit": safe_limit,
+        "total_pages": total_pages,
+    }
+
+
+@api_router.get("/admin/applications/assignees")
+async def list_support_application_assignees(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
+):
+    db = request.app.state.db
+    query = {"role": {"$in": list(ADMIN_ROLE_OPTIONS)}, "deleted_at": {"$exists": False}}
+    users = await db.users.find(query, {"_id": 0}).sort("full_name", 1).to_list(length=200)
+    return {
+        "items": [
+            {
+                "id": user.get("id"),
+                "name": user.get("full_name") or user.get("email"),
+                "email": user.get("email"),
+            }
+            for user in users
+        ]
+    }
+
+
+@api_router.post("/admin/applications/{application_id}/assign")
+async def assign_support_application(
+    application_id: str,
+    payload: SupportApplicationAssignPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
+):
+    db = request.app.state.db
+
+    application = await db.support_applications.find_one({"id": application_id}, {"_id": 0})
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    assigned_to = None
+    if payload.assigned_to:
+        user = await db.users.find_one(
+            {"id": payload.assigned_to, "role": {"$in": list(ADMIN_ROLE_OPTIONS)}, "deleted_at": {"$exists": False}},
+            {"_id": 0},
+        )
+        if not user:
+            raise HTTPException(status_code=404, detail="Assignee not found")
+        assigned_to = {
+            "id": user.get("id"),
+            "name": user.get("full_name") or user.get("email"),
+            "email": user.get("email"),
+        }
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.support_applications.update_one(
+        {"id": application_id},
+        {"$set": {"assigned_to": assigned_to, "updated_at": now_iso}},
+    )
+
+    return {"ok": True}
+
+
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(request: Request, current_user=Depends(get_current_user)):
     db = request.app.state.db
