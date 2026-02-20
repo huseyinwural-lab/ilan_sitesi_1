@@ -1,8 +1,9 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func, desc
+from sqlalchemy import select, and_, func, desc, or_
 from sqlalchemy.exc import IntegrityError
 from app.models.pricing import PriceConfig, FreeQuotaConfig, ListingConsumptionLog, Discount
+from app.models.campaign import Campaign
 from app.models.commercial import DealerSubscription
 from app.models.billing import VatRate, InvoiceItem
 from datetime import datetime, timezone, timedelta
