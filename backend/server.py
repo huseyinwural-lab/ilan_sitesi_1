@@ -660,6 +660,117 @@ def _enforce_export_rate_limit(request: Request, user_id: str) -> None:
     _export_attempts[key] = attempts
 
 
+def _enforce_admin_invite_rate_limit(request: Request, user_id: str) -> None:
+    now = time.time()
+    key = f"invite:{user_id}:{_get_client_ip(request)}"
+    attempts = _admin_invite_attempts.get(key, [])
+    attempts = [ts for ts in attempts if (now - ts) <= ADMIN_INVITE_RATE_LIMIT_WINDOW_SECONDS]
+    if len(attempts) >= ADMIN_INVITE_RATE_LIMIT_MAX_ATTEMPTS:
+        retry_after_seconds = int(ADMIN_INVITE_RATE_LIMIT_WINDOW_SECONDS - (now - attempts[0]))
+        raise HTTPException(
+            status_code=429,
+            detail={"code": "RATE_LIMITED", "retry_after_seconds": max(retry_after_seconds, 1)},
+        )
+    attempts.append(now)
+    _admin_invite_attempts[key] = attempts
+
+
+def _hash_invite_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _get_admin_base_url(request: Request) -> str:
+    origin = request.headers.get("origin")
+    if origin:
+        return origin.rstrip("/")
+    referer = request.headers.get("referer")
+    if referer:
+        return referer.split("/admin")[0].rstrip("/")
+    base = str(request.base_url).rstrip("/")
+    if base.endswith("/api"):
+        base = base[:-4]
+    return base
+
+
+def _send_admin_invite_email(to_email: str, full_name: str, invite_link: str) -> None:
+    sendgrid_key = os.environ.get("SENDGRID_API_KEY")
+    sender_email = os.environ.get("SENDER_EMAIL")
+    if not sendgrid_key or not sender_email:
+        _admin_invite_logger.error("SendGrid configuration missing: SENDGRID_API_KEY or SENDER_EMAIL")
+        raise HTTPException(status_code=503, detail="SendGrid is not configured")
+
+    subject = "Admin Daveti"
+    html_content = f"""
+    <html>
+      <body>
+        <h2>Admin Daveti</h2>
+        <p>Merhaba {full_name or to_email},</p>
+        <p>Admin hesabınız oluşturuldu. Daveti kabul etmek ve şifre belirlemek için aşağıdaki bağlantıyı kullanın:</p>
+        <p><a href=\"{invite_link}\">Daveti Kabul Et</a></p>
+        <p>Bağlantı 24 saat boyunca geçerlidir.</p>
+      </body>
+    </html>
+    """
+    message = Mail(
+        from_email=sender_email,
+        to_emails=to_email,
+        subject=subject,
+        html_content=html_content,
+    )
+
+    try:
+        sg = SendGridAPIClient(sendgrid_key)
+        response = sg.send(message)
+        if response.status_code not in (200, 202):
+            raise HTTPException(status_code=502, detail="Failed to send invite email")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        _admin_invite_logger.error("SendGrid send error: %s", exc)
+        raise HTTPException(status_code=502, detail="Failed to send invite email")
+
+
+def _normalize_scope(role: str, scope: Optional[List[str]], active_countries: List[str]) -> List[str]:
+    if role == "super_admin":
+        return ["*"]
+    normalized = [code.strip().upper() for code in (scope or []) if code and code.strip()]
+    if role == "country_admin" and not normalized:
+        raise HTTPException(status_code=400, detail="Country scope required for country_admin")
+    if "*" in normalized:
+        raise HTTPException(status_code=400, detail="Invalid country scope value")
+    for code in normalized:
+        if code not in active_countries:
+            raise HTTPException(status_code=400, detail=f"Invalid country scope: {code}")
+    return normalized
+
+
+def _assert_super_admin_invariant(db, target_user: dict, payload_role: Optional[str], payload_active: Optional[bool], actor: dict) -> None:
+    if not target_user:
+        return
+    target_role = target_user.get("role")
+    target_id = target_user.get("id")
+    actor_id = actor.get("id")
+
+    if payload_role and target_id == actor_id and payload_role != target_role:
+        raise HTTPException(status_code=400, detail="Self role change is not allowed")
+    if payload_active is not None and target_id == actor_id and payload_active is False:
+        raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
+
+    demoting = payload_role and target_role == "super_admin" and payload_role != "super_admin"
+    deactivating = payload_active is False and target_role == "super_admin"
+    if demoting or deactivating:
+        super_admin_count = await db.users.count_documents({"role": "super_admin", "is_active": True})
+        if super_admin_count <= 1:
+            raise HTTPException(status_code=400, detail="At least one super_admin must remain active")
+
+
+def _parse_country_codes(value: Optional[str]) -> Optional[List[str]]:
+    if not value:
+        return None
+    codes = [code.strip().upper() for code in value.split(",") if code.strip()]
+    return codes or None
+
+
 def _dashboard_cache_key(role: str, country_codes: Optional[List[str]], trend_days: int) -> str:
     trend_label = f"trend{trend_days}"
     if not country_codes:
