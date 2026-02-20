@@ -134,7 +134,7 @@
 - 2026-02-20: Admin kullanıcıları IA temizliği (Kullanıcı Yönetimi menüsü kaldırıldı, /admin/users & /admin/user-management redirect)
 - 2026-02-20: Admin silme (soft delete + silinenler filtresi + admin_deleted audit)
 - 2026-02-20: Bireysel kullanıcılar ekranı (SSOT individual filtre, soyad A→Z varsayılan sıralama, server-side arama + sayfalama)
-- 2026-02-20: Bireysel kullanıcılar telefon araması (phone_e164 standardı) + CSV export + export audit log
+- 2026-02-20: Bireysel kullanıcı demo seed (6 kullanıcı, phone_e164) + telefon araması + CSV export
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
