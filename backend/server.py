@@ -6055,6 +6055,21 @@ def _normalize_vehicle_model_doc(doc: dict) -> dict:
     }
 
 
+def _normalize_vehicle_type(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    normalized = str(value).strip().lower()
+    return normalized or None
+
+
+def _build_vehicle_type_summary(types: set[str]) -> str:
+    if not types:
+        return "—"
+    if len(types) == 1:
+        return next(iter(types))
+    return "mixed"
+
+
 async def _get_required_attribute_keys(db, category_id: str, country_code: Optional[str]) -> list[str]:
     if not category_id:
         return []
