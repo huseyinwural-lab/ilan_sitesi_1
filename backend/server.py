@@ -25,7 +25,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, Request, Body, Response, Query
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, Request, Body, Response, Query, WebSocket, WebSocketDisconnect
 from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, EmailStr
