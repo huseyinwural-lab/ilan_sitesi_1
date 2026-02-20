@@ -1,6 +1,6 @@
 # FAZ Admin Domain Complete — PRD
 
-**Son güncelleme:** 2026-02-20 (Admin kullanıcı yönetimi + davet akışı)
+**Son güncelleme:** 2026-02-20 (Bireysel kullanıcılar SSOT + admin silme + IA temizliği)
 
 ## Program Status (23.02.2026)
 - Foundation Phase: **OFFICIALLY CLOSED**
