@@ -49,6 +49,68 @@ const formatDateTime = (value) => {
   return parsed.toLocaleString('tr-TR');
 };
 
+const resolveStatusBadgeClass = (value) => {
+  switch ((value || '').toLowerCase()) {
+    case 'paid':
+      return 'bg-green-100 text-green-700';
+    case 'issued':
+      return 'bg-orange-100 text-orange-700';
+    case 'overdue':
+      return 'bg-red-200 text-red-800';
+    case 'cancelled':
+      return 'bg-red-100 text-red-700';
+    case 'refunded':
+      return 'bg-blue-100 text-blue-700';
+    case 'draft':
+      return 'bg-slate-100 text-slate-700';
+    default:
+      return 'bg-slate-100 text-slate-700';
+  }
+};
+
+const resolvePaymentBadgeClass = (value) => {
+  switch ((value || '').toLowerCase()) {
+    case 'paid':
+    case 'succeeded':
+      return 'bg-green-100 text-green-700';
+    case 'pending':
+      return 'bg-orange-100 text-orange-700';
+    case 'refunded':
+    case 'partially_refunded':
+      return 'bg-blue-100 text-blue-700';
+    case 'failed':
+    case 'cancelled':
+      return 'bg-red-100 text-red-700';
+    case 'overdue':
+      return 'bg-red-200 text-red-800';
+    case 'unpaid':
+    default:
+      return 'bg-slate-100 text-slate-700';
+  }
+};
+
+const resolveInvoiceTooltip = (inv) => {
+  if (!inv) return '';
+  if (inv.status === 'issued') return `Invoice issued at ${formatDateTime(inv.issued_at)}`;
+  if (inv.status === 'overdue') return `Overdue since ${formatDateTime(inv.due_at)}`;
+  if (inv.status === 'paid') return `Invoice paid at ${formatDateTime(inv.paid_at)}`;
+  if (inv.status === 'refunded') return `Refund processed at ${formatDateTime(inv.updated_at)}`;
+  if (inv.status === 'cancelled') return 'Invoice cancelled';
+  return '';
+};
+
+const resolvePaymentTooltip = (inv) => {
+  if (!inv) return '';
+  const paymentStatus = (inv.payment_status || '').toLowerCase();
+  if (paymentStatus === 'paid') return `Payment received at ${formatDateTime(inv.paid_at)}`;
+  if (paymentStatus === 'refunded') return `Refund processed at ${formatDateTime(inv.updated_at)}`;
+  if (paymentStatus === 'partially_refunded') return `Partial refund processed at ${formatDateTime(inv.updated_at)}`;
+  if (paymentStatus === 'pending') return 'Payment pending';
+  if (paymentStatus === 'failed') return 'Payment failed';
+  if (paymentStatus === 'unpaid') return 'Payment unpaid';
+  return '';
+};
+
 const toDateInputValue = (date) => {
   const offset = date.getTimezoneOffset();
   const local = new Date(date.getTime() - offset * 60000);
