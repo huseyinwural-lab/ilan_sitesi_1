@@ -506,16 +506,22 @@ export default function AdminUsers() {
                         <span className={`px-2 py-1 rounded-full text-xs ${status.color}`}>{status.text}</span>
                       </td>
                       <td className="p-3" data-testid={`admin-user-last-login-${user.id}`}>{formatDate(user.last_login)}</td>
-                      <td className="p-3">
+                      <td className="p-3" data-testid={`admin-user-actions-${user.id}`}>
                         <div className="flex flex-wrap items-center gap-3">
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-1 text-primary text-xs"
-                            onClick={() => handleOpenEdit(user)}
-                            data-testid={`admin-user-edit-${user.id}`}
-                          >
-                            <Pencil size={14} /> Düzenle
-                          </button>
+                          {!user.deleted_at ? (
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 text-primary text-xs"
+                              onClick={() => handleOpenEdit(user)}
+                              data-testid={`admin-user-edit-${user.id}`}
+                            >
+                              <Pencil size={14} /> Düzenle
+                            </button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground" data-testid={`admin-user-deleted-${user.id}`}>
+                              Silindi
+                            </span>
+                          )}
                           <Link
                             to="/admin/rbac-matrix"
                             className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
@@ -523,6 +529,21 @@ export default function AdminUsers() {
                           >
                             RBAC Matrix
                           </Link>
+                          {canDelete && !user.deleted_at && currentUser?.id !== user.id && (
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 text-rose-600 text-xs"
+                              onClick={() => handleDelete(user)}
+                              data-testid={`admin-user-delete-${user.id}`}
+                            >
+                              <Trash2 size={14} /> Sil
+                            </button>
+                          )}
+                          {canDelete && currentUser?.id === user.id && !user.deleted_at && (
+                            <span className="text-xs text-muted-foreground" data-testid={`admin-user-delete-disabled-${user.id}`}>
+                              Kendi hesabın
+                            </span>
+                          )}
                         </div>
                       </td>
                     </tr>
