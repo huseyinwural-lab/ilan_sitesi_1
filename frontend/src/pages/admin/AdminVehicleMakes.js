@@ -130,6 +130,20 @@ const AdminVehicleMakes = () => {
         </button>
       </div>
 
+      <div className="flex items-center gap-3" data-testid="vehicle-makes-filters">
+        <select
+          className="border rounded p-2"
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          data-testid="vehicle-makes-filter-type"
+        >
+          <option value="">Tüm Tipler</option>
+          {vehicleTypeOptions.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      </div>
+
       <div className="border rounded-lg overflow-hidden" data-testid="vehicle-makes-table">
         <table className="min-w-full text-sm">
           <thead className="bg-muted">
