@@ -97,12 +97,12 @@ export default function AccountSupportList() {
       <div className="rounded-lg border bg-white overflow-hidden" data-testid="account-support-table">
         <table className="w-full text-sm">
           <thead className="bg-muted">
-            <tr>
-              <th className="text-left p-3">Referans</th>
-              <th className="text-left p-3">Konu</th>
-              <th className="text-left p-3">Durum</th>
-              <th className="text-left p-3">Tarih</th>
-              <th className="text-right p-3">Detay</th>
+            <tr data-testid="account-support-table-header">
+              <th className="text-left p-3" data-testid="account-support-header-ref">Referans</th>
+              <th className="text-left p-3" data-testid="account-support-header-subject">Konu</th>
+              <th className="text-left p-3" data-testid="account-support-header-status">Durum</th>
+              <th className="text-left p-3" data-testid="account-support-header-date">Tarih</th>
+              <th className="text-right p-3" data-testid="account-support-header-detail">Detay</th>
             </tr>
           </thead>
           <tbody>
@@ -111,9 +111,9 @@ export default function AccountSupportList() {
                 <td className="p-3" data-testid={`account-support-ref-${item.id}`}>{item.application_id || item.id}</td>
                 <td className="p-3" data-testid={`account-support-subject-${item.id}`}>{item.subject}</td>
                 <td className="p-3" data-testid={`account-support-status-${item.id}`}>{item.status}</td>
-                <td className="p-3" data-testid={`account-support-date-${item.id}`}>{
-                  item.created_at ? new Date(item.created_at).toLocaleDateString('tr-TR') : '-'
-                }</td>
+                <td className="p-3" data-testid={`account-support-date-${item.id}`}>
+                  {item.created_at ? new Date(item.created_at).toLocaleDateString('tr-TR') : '-'}
+                </td>
                 <td className="p-3 text-right">
                   <Link
                     to={`/account/support/${item.id}`}
