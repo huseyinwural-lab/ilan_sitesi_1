@@ -82,9 +82,9 @@ const MediaUploader = () => {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <h2 className="text-2xl font-bold">Fotoğraflar</h2>
-      
-      <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-blue-50 transition">
+      <h2 className="text-2xl font-bold" data-testid="wizard-media-title">Fotoğraflar</h2>
+      <p className="text-sm text-muted-foreground" data-testid="wizard-media-subtitle">Yükleme canlıdır, en az 3 fotoğraf ekleyin.</p>
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-blue-50 transition">
         <input 
           type="file" 
           multiple 
