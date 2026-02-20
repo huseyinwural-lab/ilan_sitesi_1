@@ -1719,24 +1719,20 @@ class AdminUserActionPayload(BaseModel):
     suspension_until: Optional[str] = None
 
 
-class SupportAttachmentPayload(BaseModel):
-    name: str
-    url: str
-
-
 class SupportApplicationCreatePayload(BaseModel):
-    category: str
+    request_type: Optional[str] = "complaint"
     subject: str
     description: str
-    attachments: Optional[List[SupportAttachmentPayload]] = None
-    listing_id: Optional[str] = None
-    kvkk_consent: bool
-    company_name: Optional[str] = None
-    tax_number: Optional[str] = None
+    attachment_name: Optional[str] = None
+    attachment_url: Optional[str] = None
 
 
 class SupportApplicationAssignPayload(BaseModel):
-    assigned_to: Optional[str] = None
+    assigned_admin_id: Optional[str] = None
+
+
+class SupportApplicationStatusPayload(BaseModel):
+    status: str
 
 
 @api_router.patch("/users/{user_id}")
