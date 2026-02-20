@@ -292,6 +292,28 @@ export default function AdminPlans() {
       )}
 
       <div className="flex flex-wrap items-end gap-3" data-testid="plans-filters">
+        <div className="flex items-center gap-2" data-testid="plans-filter-chips">
+          <button
+            className={`px-3 py-1 rounded-full border text-sm ${filterScope === 'global' ? 'bg-primary text-white border-primary' : 'bg-white'}`}
+            onClick={() => {
+              setFilterScope('global');
+              setFilterCountry('');
+            }}
+            data-testid="plans-filter-chip-global"
+          >
+            Global
+          </button>
+          <button
+            className={`px-3 py-1 rounded-full border text-sm ${filterScope === 'country' ? 'bg-primary text-white border-primary' : 'bg-white'}`}
+            onClick={() => {
+              setFilterScope('country');
+              if (!filterCountry) setFilterCountry(defaultCountry);
+            }}
+            data-testid="plans-filter-chip-country"
+          >
+            Country
+          </button>
+        </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs text-muted-foreground" data-testid="plans-filter-scope-label">Scope</label>
           <select
