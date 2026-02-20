@@ -2511,6 +2511,121 @@ def _build_individual_users_sort(sort_by: Optional[str], sort_dir: Optional[str]
     return sort_spec, sort_name_expr, sort_first_expr, sort_direction
 
 
+def _resolve_contact_name(doc: dict) -> Optional[str]:
+    contact_name = doc.get("contact_name")
+    if contact_name:
+        return contact_name
+    first_name = doc.get("first_name") or ""
+    last_name = doc.get("last_name") or ""
+    fallback = " ".join(part for part in [first_name, last_name] if part).strip()
+    return fallback or None
+
+
+def _build_dealer_summary(
+    doc: dict,
+    listing_stats: Optional[Dict[str, Any]] = None,
+    plan_map: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    listing_stats = listing_stats or {}
+    plan_map = plan_map or {}
+    plan = plan_map.get(doc.get("plan_id"), {})
+    status = _normalize_user_status(doc)
+    phone_verified = bool(doc.get("phone_verified") or doc.get("phone_verified_at"))
+    email_verified = bool(doc.get("email_verified") or doc.get("is_verified", False))
+
+    return {
+        "id": doc.get("id"),
+        "company_name": doc.get("company_name"),
+        "contact_name": _resolve_contact_name(doc),
+        "first_name": doc.get("first_name"),
+        "last_name": doc.get("last_name"),
+        "email": doc.get("email"),
+        "phone_e164": _resolve_user_phone_e164(doc),
+        "country_code": doc.get("country_code"),
+        "status": status,
+        "is_active": bool(doc.get("is_active", True)),
+        "deleted_at": doc.get("deleted_at"),
+        "email_verified": email_verified,
+        "phone_verified": phone_verified,
+        "created_at": doc.get("created_at"),
+        "last_login": doc.get("last_login"),
+        "total_listings": listing_stats.get("total", 0),
+        "active_listings": listing_stats.get("active", 0),
+        "plan_id": doc.get("plan_id"),
+        "plan_name": plan.get("name") if plan else None,
+    }
+
+
+def _build_dealer_query(
+    search: Optional[str],
+    country_code: Optional[str],
+    status: Optional[str],
+    plan_id: Optional[str],
+) -> Dict[str, Any]:
+    query: Dict[str, Any] = {"role": "dealer"}
+
+    if country_code:
+        query["country_code"] = country_code
+
+    status_key = (status or "").lower().strip()
+    if status_key == "deleted":
+        query["deleted_at"] = {"$exists": True}
+    else:
+        query["deleted_at"] = {"$exists": False}
+        if status_key == "suspended":
+            query["$or"] = [{"status": "suspended"}, {"is_active": False}]
+        elif status_key == "active":
+            query["status"] = {"$ne": "suspended"}
+            query["is_active"] = {"$ne": False}
+
+    if plan_id:
+        query["plan_id"] = plan_id
+
+    if search:
+        safe_search = re.escape(search)
+        or_conditions = [
+            {"company_name": {"$regex": safe_search, "$options": "i"}},
+            {"contact_name": {"$regex": safe_search, "$options": "i"}},
+            {"first_name": {"$regex": safe_search, "$options": "i"}},
+            {"last_name": {"$regex": safe_search, "$options": "i"}},
+            {"email": {"$regex": safe_search, "$options": "i"}},
+        ]
+        phone_candidates = _normalize_phone_candidates(search)
+        if phone_candidates:
+            phone_fields = ["phone_e164", "phone_number", "phone", "mobile"]
+            for candidate in phone_candidates:
+                pattern = re.escape(candidate)
+                for field in phone_fields:
+                    or_conditions.append({field: {"$regex": pattern}})
+        if query.get("$or"):
+            query["$and"] = [{"$or": query.pop("$or")}, {"$or": or_conditions}]
+        else:
+            query["$or"] = or_conditions
+
+    return query
+
+
+def _build_dealer_sort(sort_by: Optional[str], sort_dir: Optional[str]):
+    sort_field_map = {
+        "company_name": "company_name",
+        "email": "email",
+        "created_at": "created_at",
+        "last_login": "last_login",
+    }
+    sort_key = sort_field_map.get(sort_by or "company_name", "company_name")
+    sort_direction = 1 if (sort_dir or "asc").lower() == "asc" else -1
+
+    sort_company_expr = {"$ifNull": ["$company_name", "$email"]}
+    sort_spec = {
+        "sort_company": sort_direction,
+        "email": sort_direction,
+    }
+    if sort_key != "company_name":
+        sort_spec = {sort_key: sort_direction, "email": sort_direction}
+
+    return sort_spec, sort_company_expr, sort_direction
+
+
 @api_router.get("/admin/individual-users")
 async def list_individual_users(
     request: Request,
