@@ -16,7 +16,6 @@ import ModerationQueue from '@/pages/ModerationQueue';
 import DealersPage from '@/pages/admin/Dealers';
 import DealerApplicationsPage from '@/pages/admin/DealerApplications';
 import AdminListingsPage from '@/pages/admin/AdminListings';
-import AdminReportsPage from '@/pages/admin/AdminReports';
 import AdminInvoicesPage from '@/pages/admin/AdminInvoices';
 import AdminTaxRatesPage from '@/pages/admin/AdminTaxRates';
 import AdminPlansPage from '@/pages/admin/AdminPlans';
