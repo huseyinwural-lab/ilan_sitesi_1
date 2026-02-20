@@ -384,6 +384,7 @@ async def _ensure_country_admin_user(db):
             "hashed_password": hashed,
             "full_name": "Country Admin",
             "role": "country_admin",
+            "status": "active",
             "is_active": True,
             "is_verified": True,
             "country_scope": ["DE"],
