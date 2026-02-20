@@ -117,8 +117,8 @@ const MediaUploader = () => {
       {files.length > 0 && (
         <div className="grid grid-cols-3 gap-4" data-testid="wizard-photo-grid">
           {files.map((f, index) => (
-            <div key={f.id} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border">
-              <img src={f.preview} alt="preview" className="w-full h-full object-cover" />
+            <div key={f.id} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border" data-testid={`wizard-photo-card-${index}`}>
+              <img src={f.preview} alt="preview" className="w-full h-full object-cover" data-testid={`wizard-photo-preview-${index}`} />
               <button 
                 onClick={() => setFiles(files.filter(x => x.id !== f.id))}
                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
