@@ -148,6 +148,56 @@ def _determine_user_type(role: str) -> str:
     return "individual"
 
 
+def _normalize_phone_e164(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    cleaned = re.sub(r"[^\d+]", "", value)
+    if not cleaned:
+        return None
+    if cleaned.startswith("00"):
+        cleaned = f"+{cleaned[2:]}"
+    if cleaned.startswith("+"):
+        digits = re.sub(r"\D", "", cleaned[1:])
+        return f"+{digits}" if digits else None
+    digits = re.sub(r"\D", "", cleaned)
+    if not digits:
+        return None
+    if digits.startswith("49"):
+        return f"+{digits}"
+    return digits
+
+
+def _normalize_phone_candidates(value: Optional[str]) -> List[str]:
+    if not value:
+        return []
+    cleaned = re.sub(r"[^\d+]", "", value)
+    digits = re.sub(r"\D", "", cleaned)
+    if not digits:
+        return []
+    candidates = set()
+    if cleaned.startswith("+"):
+        candidates.add(f"+{digits}")
+    if digits.startswith("00"):
+        trimmed = digits[2:]
+        if trimmed:
+            candidates.add(f"+{trimmed}")
+            candidates.add(trimmed)
+    if digits.startswith("49"):
+        candidates.add(f"+{digits}")
+    candidates.add(digits)
+    return list(candidates)
+
+
+def _resolve_user_phone_e164(doc: dict) -> Optional[str]:
+    raw_phone = (
+        doc.get("phone_e164")
+        or doc.get("phone_number")
+        or doc.get("phone")
+        or doc.get("mobile")
+    )
+    return _normalize_phone_e164(raw_phone)
+
+
 def _build_user_summary(doc: dict, listing_stats: Optional[Dict[str, Any]] = None, plan_map: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     listing_stats = listing_stats or {}
     plan_map = plan_map or {}
