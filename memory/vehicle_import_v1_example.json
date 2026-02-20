@@ -1,0 +1,67 @@
+{
+  "makes": [
+    {
+      "name": "Ford",
+      "slug": "ford",
+      "country_code": "DE",
+      "active": true
+    },
+    {
+      "name": "Toyota",
+      "slug": "toyota",
+      "country_code": "DE",
+      "active": true
+    }
+  ],
+  "models": [
+    {
+      "make_slug": "ford",
+      "name": "Focus",
+      "slug": "focus",
+      "vehicle_type": "car",
+      "active": true
+    },
+    {
+      "make_slug": "ford",
+      "name": "Ranger",
+      "slug": "ranger",
+      "vehicle_type": "pickup",
+      "active": true
+    },
+    {
+      "make_slug": "ford",
+      "name": "Transit",
+      "slug": "transit",
+      "vehicle_type": "truck",
+      "active": true
+    },
+    {
+      "make_slug": "toyota",
+      "name": "RAV4",
+      "slug": "rav4",
+      "vehicle_type": "suv",
+      "active": true
+    },
+    {
+      "make_slug": "toyota",
+      "name": "Land Cruiser",
+      "slug": "land-cruiser",
+      "vehicle_type": "offroad",
+      "active": true
+    },
+    {
+      "make_slug": "toyota",
+      "name": "Hilux",
+      "slug": "hilux",
+      "vehicle_type": "pickup",
+      "active": true
+    },
+    {
+      "make_slug": "toyota",
+      "name": "Coaster",
+      "slug": "coaster",
+      "vehicle_type": "bus",
+      "active": true
+    }
+  ]
+}
