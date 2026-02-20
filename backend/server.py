@@ -3869,6 +3869,74 @@ async def _get_message_thread_or_404(db, thread_id: str, current_user_id: str) -
     return thread
 
 
+@api_router.get("/v1/push/vapid-public-key")
+async def get_vapid_public_key(current_user=Depends(get_current_user)):
+    if not PUSH_ENABLED:
+        raise HTTPException(status_code=503, detail="Push not configured")
+    return {"public_key": VAPID_PUBLIC_KEY}
+
+
+@api_router.get("/v1/push/subscriptions")
+async def list_push_subscriptions(request: Request, current_user=Depends(get_current_user)):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+    subscriptions = await db.push_subscriptions.find(
+        {"user_id": current_user.get("id"), "is_active": True},
+        {"_id": 0},
+    ).to_list(length=50)
+    return {"items": subscriptions}
+
+
+@api_router.post("/v1/push/subscribe")
+async def subscribe_push_notifications(
+    payload: PushSubscriptionPayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+    if not PUSH_ENABLED:
+        raise HTTPException(status_code=503, detail="Push not configured")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    subscription_id = str(uuid.uuid4())
+    update_payload = {
+        "user_id": current_user.get("id"),
+        "endpoint": payload.endpoint,
+        "p256dh": payload.keys.p256dh,
+        "auth": payload.keys.auth,
+        "user_agent": request.headers.get("user-agent"),
+        "is_active": True,
+        "updated_at": now_iso,
+    }
+
+    await db.push_subscriptions.update_one(
+        {"user_id": current_user.get("id"), "endpoint": payload.endpoint},
+        {"$set": update_payload, "$setOnInsert": {"id": subscription_id, "created_at": now_iso}},
+        upsert=True,
+    )
+    return {"ok": True}
+
+
+@api_router.post("/v1/push/unsubscribe")
+async def unsubscribe_push_notifications(
+    payload: PushUnsubscribePayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+
+    await db.push_subscriptions.update_one(
+        {"user_id": current_user.get("id"), "endpoint": payload.endpoint},
+        {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    return {"ok": True}
+
+
 @api_router.get("/v1/favorites")
 async def list_favorites(request: Request, current_user=Depends(get_current_user)):
     db = request.app.state.db
