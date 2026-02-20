@@ -80,11 +80,17 @@ export default function IndividualUsers() {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("last_name_asc");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [limit] = useState(25);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [exporting, setExporting] = useState(false);
+  const [actionDialog, setActionDialog] = useState(null);
+  const [reasonCode, setReasonCode] = useState("");
+  const [reasonDetail, setReasonDetail] = useState("");
+  const [suspensionUntil, setSuspensionUntil] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
   const authHeader = useMemo(
     () => ({ Authorization: `Bearer ${localStorage.getItem("access_token")}` }),
