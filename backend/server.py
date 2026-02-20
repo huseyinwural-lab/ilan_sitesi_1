@@ -8693,10 +8693,16 @@ async def admin_update_vehicle_model(
             raise HTTPException(status_code=400, detail="slug format invalid")
         updates["slug"] = slug
     if payload.make_id is not None:
-        make = await db.vehicle_makes.find_one({"id": payload.make_id}, {"_id": 0})
+        make = await db.vehicle_makes.find_one({"id": payload.make_id}, {"_id": 0, "country_code": 1})
         if not make:
             raise HTTPException(status_code=400, detail="make_id not found")
         updates["make_id"] = payload.make_id
+        updates["country_code"] = make.get("country_code")
+    if payload.vehicle_type is not None:
+        vehicle_type = _normalize_vehicle_type(payload.vehicle_type)
+        if not vehicle_type or vehicle_type not in VEHICLE_TYPE_SET:
+            raise HTTPException(status_code=400, detail="vehicle_type invalid")
+        updates["vehicle_type"] = vehicle_type
     if payload.active_flag is not None:
         updates["active_flag"] = payload.active_flag
     if not updates:
