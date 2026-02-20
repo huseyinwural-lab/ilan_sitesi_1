@@ -2549,84 +2549,106 @@ async def create_support_application(
     return {"application_id": str(application.id)}
 
 
-@api_router.get("/admin/applications")
+@api_router.get("/applications")
 async def list_support_applications(
     request: Request,
-    application_type: Optional[str] = None,
-    category: Optional[str] = None,
-    status: Optional[str] = None,
-    priority: Optional[str] = None,
-    country: Optional[str] = None,
-    search: Optional[str] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    application_type: Optional[str] = Query(None, alias="type"),
     page: int = 1,
     limit: int = 25,
+    search: Optional[str] = None,
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    request_type: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
-    query: Dict[str, Any] = {}
-    if application_type:
-        query["application_type"] = application_type
+    if not application_type:
+        raise HTTPException(status_code=400, detail="type is required")
+    application_type = application_type.lower().strip()
+    if application_type not in APPLICATION_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid type")
 
-    if category:
-        query["category"] = category
+    query = select(Application).where(Application.application_type == application_type)
+
     if status:
-        query["status"] = status
-    if priority:
-        query["priority"] = priority
+        status_value = status.lower().strip()
+        if status_value not in APPLICATION_STATUS_SET:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        query = query.where(Application.status == status_value)
 
-    country_code = country.upper() if country else None
-    if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        country_code = ctx.country
-    if country_code:
-        query["applicant_country"] = country_code
+    if priority:
+        priority_value = priority.lower().strip()
+        if priority_value not in APPLICATION_PRIORITY_SET:
+            raise HTTPException(status_code=400, detail="Invalid priority")
+        query = query.where(Application.priority == priority_value)
+
+    if request_type:
+        request_value = request_type.lower().strip()
+        if request_value not in APPLICATION_REQUEST_TYPES:
+            raise HTTPException(status_code=400, detail="Invalid request_type")
+        query = query.where(Application.request_type == request_value)
 
     if search:
-        safe_search = re.escape(search)
-        query["$or"] = [
-            {"applicant_name": {"$regex": safe_search, "$options": "i"}},
-            {"applicant_company_name": {"$regex": safe_search, "$options": "i"}},
-            {"applicant_email": {"$regex": safe_search, "$options": "i"}},
-        ]
-
-    if start_date or end_date:
-        date_filter: Dict[str, Any] = {}
-        try:
-            if start_date:
-                start_dt = datetime.fromisoformat(start_date)
-                if start_dt.tzinfo is None:
-                    start_dt = start_dt.replace(tzinfo=timezone.utc)
-                date_filter["$gte"] = start_dt.isoformat()
-            if end_date:
-                end_dt = datetime.fromisoformat(end_date)
-                if end_dt.tzinfo is None:
-                    end_dt = end_dt.replace(tzinfo=timezone.utc)
-                if len(end_date) == 10:
-                    end_dt = end_dt + timedelta(days=1) - timedelta(seconds=1)
-                date_filter["$lte"] = end_dt.isoformat()
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail="Invalid date filter") from exc
-
-        if date_filter:
-            query["created_at"] = date_filter
+        search_value = f"%{search.strip()}%"
+        query = query.where(Application.subject.ilike(search_value))
 
     safe_page = max(page, 1)
     safe_limit = min(max(limit, 1), 200)
-    skip = (safe_page - 1) * safe_limit
+    offset = (safe_page - 1) * safe_limit
 
-    total_count = await db.support_applications.count_documents(query)
-    docs = (
-        await db.support_applications.find(query, {"_id": 0})
-        .sort("created_at", -1)
-        .skip(skip)
-        .limit(safe_limit)
-        .to_list(length=safe_limit)
+    total_count = await session.scalar(select(func.count()).select_from(query.subquery())) or 0
+    result = await session.execute(
+        query.order_by(Application.created_at.desc()).offset(offset).limit(safe_limit)
     )
+    rows = result.scalars().all()
 
-    items = [_build_support_application_summary(doc) for doc in docs]
+    user_ids = {str(row.user_id) for row in rows}
+    assigned_ids = {str(row.assigned_admin_id) for row in rows if row.assigned_admin_id}
+    combined_ids = list(user_ids | assigned_ids)
+    user_map: Dict[str, Any] = {}
+    if combined_ids:
+        user_docs = await db.users.find({"id": {"$in": combined_ids}}, {"_id": 0}).to_list(length=len(combined_ids))
+        user_map = {doc.get("id"): doc for doc in user_docs}
+
+    items = []
+    for row in rows:
+        applicant = user_map.get(str(row.user_id))
+        assigned = user_map.get(str(row.assigned_admin_id)) if row.assigned_admin_id else None
+        applicant_email = applicant.get("email") if applicant else None
+        applicant_name = applicant.get("full_name") if applicant else None
+        if not applicant_name:
+            applicant_name = applicant_email or "-"
+
+        assigned_payload = None
+        if assigned:
+            assigned_payload = {
+                "id": assigned.get("id"),
+                "name": assigned.get("full_name") or assigned.get("email"),
+                "email": assigned.get("email"),
+            }
+
+        items.append(
+            {
+                "id": str(row.id),
+                "application_type": row.application_type,
+                "request_type": row.request_type,
+                "subject": row.subject,
+                "description": row.description,
+                "status": row.status,
+                "priority": row.priority,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+                "user": {
+                    "id": str(row.user_id),
+                    "name": applicant_name,
+                    "email": applicant_email,
+                },
+                "assigned_admin": assigned_payload,
+            }
+        )
+
     total_pages = max(1, (total_count + safe_limit - 1) // safe_limit)
 
     return {
