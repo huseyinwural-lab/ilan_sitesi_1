@@ -152,6 +152,7 @@
 - 2026-02-20: Vehicle Type V1 (taxonomi + vehicle_models vehicle_type zorunlu + admin UI filtre/kolon + import dry-run/apply endpoint + örnek JSON)
 - 2026-02-20: CQA Offline Package V1 (zip envanter + mapping/normalizasyon dokümanları + vehicle/attribute import JSON + transform raporu)
 - 2026-02-20: Plans Admin V1 hazırlıkları (DB gate banner/disable, yeni UI filtreleri ve form, plans SQL model + migration + Postgres API kontratı)
+- 2026-02-20: Plans UI P1 (scope quick filter chip + updated sort kısayolu)
 
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
