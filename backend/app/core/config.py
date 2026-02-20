@@ -31,3 +31,5 @@ class Settings:
     }
 
 settings = Settings()
+if settings.APP_ENV == "prod" and not os.environ.get("DATABASE_URL"):
+    raise RuntimeError("DATABASE_URL must be set in prod")
