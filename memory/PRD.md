@@ -151,7 +151,7 @@
 ### P2
 - Admin kullanıcı yönetimi audit log sertleştirme (admin_role_changed/admin_scope_changed/admin_suspended/admin_activated/admin_invited) + before/after metadata
 - Admin kullanıcı yönetimi için E2E test paketi (rol/scope değişimi, last super_admin koruması, 403 görünmez aksiyonlar)
-- Bireysel kullanıcılar arama/sıralama için index önerisi: last_name + first_name + email (text/compound)
+- Bireysel kullanıcılar arama/sıralama için index önerisi: last_name + first_name + email + phone_e164 (text/compound)
 - Versioning diff highlight + rollback (aktif faz)
 - Lint debt cleanup (LINT-3/4/5)
 - Şema versiyonlama + audit log sertleştirme
