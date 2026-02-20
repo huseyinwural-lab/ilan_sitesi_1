@@ -11511,6 +11511,110 @@ async def create_vehicle_draft(payload: dict, request: Request, current_user=Dep
     return {"id": doc["id"], "status": doc["status"], "validation_errors": [], "next_actions": ["upload_media", "submit"]}
 
 
+@api_router.post("/v1/listings/vehicle/{listing_id}/draft")
+async def save_vehicle_draft(
+    listing_id: str,
+    request: Request,
+    payload: dict = Body(default={}),
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    listing = await _get_owned_listing(db, listing_id, current_user)
+    if listing.get("status") not in ["draft", "needs_revision", "unpublished"]:
+        raise HTTPException(status_code=400, detail="Listing not editable")
+
+    listing, updates = _apply_listing_payload(listing, payload)
+    if updates:
+        now_iso = datetime.now(timezone.utc).isoformat()
+        updates["updated_at"] = now_iso
+        await db.vehicle_listings.update_one({"id": listing_id}, {"$set": updates})
+
+    return {"id": listing_id, "status": listing.get("status"), "updated_at": updates.get("updated_at")}
+
+
+@api_router.post("/v1/listings/vehicle/{listing_id}/request-publish")
+async def request_publish_vehicle_listing(
+    listing_id: str,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    listing = await _get_owned_listing(db, listing_id, current_user)
+    if listing.get("status") not in ["draft", "needs_revision", "unpublished"]:
+        raise HTTPException(status_code=400, detail="Listing not eligible for publish")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.vehicle_listings.update_one(
+        {"id": listing_id},
+        {"$set": {"status": "pending_moderation", "updated_at": now_iso}},
+    )
+    return {"ok": True, "status": "pending_moderation"}
+
+
+@api_router.post("/v1/listings/vehicle/{listing_id}/unpublish")
+async def unpublish_vehicle_listing(
+    listing_id: str,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    listing = await _get_owned_listing(db, listing_id, current_user)
+    if listing.get("status") != "published":
+        raise HTTPException(status_code=400, detail="Only published listings can be unpublished")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.vehicle_listings.update_one(
+        {"id": listing_id},
+        {"$set": {"status": "unpublished", "updated_at": now_iso}},
+    )
+    return {"ok": True, "status": "unpublished"}
+
+
+@api_router.post("/v1/listings/vehicle/{listing_id}/archive")
+async def archive_vehicle_listing(
+    listing_id: str,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    await _get_owned_listing(db, listing_id, current_user)
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.vehicle_listings.update_one(
+        {"id": listing_id},
+        {"$set": {"status": "archived", "updated_at": now_iso}},
+    )
+    return {"ok": True, "status": "archived"}
+
+
+@api_router.post("/v1/listings/vehicle/{listing_id}/extend")
+async def extend_vehicle_listing(
+    listing_id: str,
+    request: Request,
+    days: int = Body(default=30, embed=True),
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    listing = await _get_owned_listing(db, listing_id, current_user)
+    if days < 1 or days > 365:
+        raise HTTPException(status_code=400, detail="days must be between 1 and 365")
+
+    base_value = listing.get("expires_at")
+    try:
+        base_dt = datetime.fromisoformat(base_value) if base_value else datetime.now(timezone.utc)
+    except ValueError:
+        base_dt = datetime.now(timezone.utc)
+    if base_dt.tzinfo is None:
+        base_dt = base_dt.replace(tzinfo=timezone.utc)
+
+    new_expires = base_dt + timedelta(days=days)
+    new_value = new_expires.isoformat()
+    await db.vehicle_listings.update_one(
+        {"id": listing_id},
+        {"$set": {"expires_at": new_value, "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    return {"ok": True, "expires_at": new_value}
+
+
 @api_router.post("/v1/listings/vehicle/{listing_id}/media")
 async def upload_vehicle_media(
     listing_id: str,
