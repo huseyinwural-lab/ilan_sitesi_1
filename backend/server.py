@@ -5020,6 +5020,251 @@ async def list_audit_logs(
     return docs
 
 
+def _parse_audit_date(value: Optional[str], is_end: bool = False) -> Optional[str]:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        try:
+            parsed = datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format")
+    if len(value) <= 10:
+        if is_end:
+            parsed = parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
+        else:
+            parsed = parsed.replace(hour=0, minute=0, second=0, microsecond=0)
+    return parsed.isoformat()
+
+
+def _build_audit_query(
+    *,
+    q: Optional[str],
+    action: Optional[str],
+    event_type: Optional[str],
+    resource_type: Optional[str],
+    country_code: Optional[str],
+    admin_user_query: Optional[str],
+    date_from: Optional[str],
+    date_to: Optional[str],
+): -> Dict:
+    conditions: List[Dict[str, Any]] = []
+
+    if action:
+        conditions.append({"action": action})
+    if event_type:
+        conditions.append({"event_type": event_type})
+    if resource_type:
+        conditions.append({"resource_type": resource_type})
+    if country_code:
+        conditions.append({"country_code": country_code})
+
+    if admin_user_query:
+        if "@" in admin_user_query:
+            regex = re.compile(re.escape(admin_user_query), re.IGNORECASE)
+            conditions.append({
+                "$or": [
+                    {"user_email": regex},
+                    {"admin_user_email": regex},
+                    {"email": regex},
+                ]
+            })
+        else:
+            conditions.append({
+                "$or": [
+                    {"admin_user_id": admin_user_query},
+                    {"user_id": admin_user_query},
+                    {"actor_id": admin_user_query},
+                ]
+            })
+
+    if q:
+        regex = re.compile(re.escape(q), re.IGNORECASE)
+        conditions.append({
+            "$or": [
+                {"event_type": regex},
+                {"action": regex},
+                {"resource_type": regex},
+                {"resource_id": regex},
+                {"user_email": regex},
+                {"admin_user_email": regex},
+                {"admin_user_id": regex},
+                {"user_id": regex},
+                {"country_code": regex},
+            ]
+        })
+
+    if date_from or date_to:
+        created_at_q: Dict[str, Any] = {}
+        if date_from:
+            created_at_q["$gte"] = _parse_audit_date(date_from, is_end=False)
+        if date_to:
+            created_at_q["$lte"] = _parse_audit_date(date_to, is_end=True)
+        conditions.append({"created_at": created_at_q})
+
+    if not conditions:
+        return {}
+    if len(conditions) == 1:
+        return conditions[0]
+    return {"$and": conditions}
+
+
+@api_router.get("/admin/audit-logs")
+async def admin_list_audit_logs(
+    request: Request,
+    q: Optional[str] = None,
+    event_type: Optional[str] = None,
+    action: Optional[str] = None,
+    resource_type: Optional[str] = None,
+    country_code: Optional[str] = None,
+    admin_user_id: Optional[str] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    sort: Optional[str] = "timestamp_desc",
+    page: int = 0,
+    page_size: int = 20,
+    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    page_size = min(200, max(1, int(page_size)))
+    page = max(0, int(page))
+    skip = page * page_size
+
+    query = _build_audit_query(
+        q=q,
+        action=action,
+        event_type=event_type,
+        resource_type=resource_type,
+        country_code=country_code.strip().upper() if country_code else None,
+        admin_user_query=admin_user_id,
+        date_from=from_date,
+        date_to=to_date,
+    )
+
+    sort_order = -1 if sort != "timestamp_asc" else 1
+
+    cursor = db.audit_logs.find(query, {"_id": 0}).sort("created_at", sort_order).skip(skip).limit(page_size)
+    docs = await cursor.to_list(length=page_size)
+    total = await db.audit_logs.count_documents(query)
+
+    return {
+        "items": docs,
+        "pagination": {"total": total, "page": page, "page_size": page_size},
+    }
+
+
+@api_router.get("/admin/audit-logs/event-types")
+async def admin_audit_event_types(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    types = await db.audit_logs.distinct("event_type")
+    return {"event_types": sorted([t for t in types if t])}
+
+
+@api_router.get("/admin/audit-logs/actions")
+async def admin_audit_actions(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    actions = await db.audit_logs.distinct("action")
+    return {"actions": sorted([a for a in actions if a])}
+
+
+@api_router.get("/admin/audit-logs/resources")
+async def admin_audit_resources(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    resources = await db.audit_logs.distinct("resource_type")
+    return {"resource_types": sorted([r for r in resources if r])}
+
+
+@api_router.get("/admin/audit-logs/{log_id}")
+async def admin_audit_log_detail(
+    log_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    doc = await db.audit_logs.find_one({"id": log_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Audit log not found")
+    return {"log": doc}
+
+
+@api_router.get("/admin/audit-logs/export")
+async def admin_export_audit_logs(
+    request: Request,
+    q: Optional[str] = None,
+    event_type: Optional[str] = None,
+    action: Optional[str] = None,
+    resource_type: Optional[str] = None,
+    country_code: Optional[str] = None,
+    admin_user_id: Optional[str] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    sort: Optional[str] = "timestamp_desc",
+    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+):
+    db = request.app.state.db
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
+    query = _build_audit_query(
+        q=q,
+        action=action,
+        event_type=event_type,
+        resource_type=resource_type,
+        country_code=country_code.strip().upper() if country_code else None,
+        admin_user_query=admin_user_id,
+        date_from=from_date,
+        date_to=to_date,
+    )
+
+    sort_order = -1 if sort != "timestamp_asc" else 1
+
+    docs = await db.audit_logs.find(query, {"_id": 0}).sort("created_at", sort_order).to_list(length=10000)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    headers = [
+        "id",
+        "created_at",
+        "event_type",
+        "action",
+        "resource_type",
+        "resource_id",
+        "admin_user_id",
+        "admin_user_email",
+        "user_id",
+        "user_email",
+        "country_code",
+        "ip_address",
+        "user_agent",
+        "request_id",
+        "trace_id",
+    ]
+    writer.writerow(headers)
+
+    for doc in docs:
+        writer.writerow([doc.get(h, "") for h in headers])
+
+    filename = datetime.now(timezone.utc).strftime("audit-logs-%Y%m%d-%H%M.csv")
+    response = StreamingResponse(iter([output.getvalue()]), media_type="text/csv")
+    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    return response
+
+
 # =====================
 # Moderation (Mongo) - Backoffice
 # =====================
