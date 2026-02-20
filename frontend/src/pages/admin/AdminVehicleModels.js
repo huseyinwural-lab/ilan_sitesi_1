@@ -93,6 +93,7 @@ const AdminVehicleModels = () => {
       make_id: item.make_id || '',
       name: item.name || '',
       slug: item.slug || '',
+      vehicle_type: item.vehicle_type || '',
       active_flag: item.active_flag !== false,
     });
     setError(null);
