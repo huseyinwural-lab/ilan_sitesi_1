@@ -11694,6 +11694,17 @@ async def save_vehicle_draft(
     return {"id": listing_id, "status": listing.get("status"), "updated_at": updates.get("updated_at")}
 
 
+@api_router.get("/v1/listings/vehicle/{listing_id}/draft")
+async def get_vehicle_draft(
+    listing_id: str,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    listing = await _get_owned_listing(db, listing_id, current_user)
+    return {"item": listing}
+
+
 @api_router.post("/v1/listings/vehicle/{listing_id}/request-publish")
 async def request_publish_vehicle_listing(
     listing_id: str,
