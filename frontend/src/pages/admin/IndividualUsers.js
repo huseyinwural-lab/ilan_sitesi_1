@@ -62,6 +62,16 @@ const resolveLastName = (user) => {
   return "-";
 };
 
+const statusBadge = (status) => {
+  if (status === "deleted") {
+    return { label: "Silindi", className: "bg-rose-100 text-rose-700" };
+  }
+  if (status === "suspended") {
+    return { label: "Askıda", className: "bg-amber-100 text-amber-700" };
+  }
+  return { label: "Aktif", className: "bg-emerald-100 text-emerald-700" };
+};
+
 export default function IndividualUsers() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
