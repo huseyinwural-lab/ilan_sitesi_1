@@ -47,7 +47,7 @@ def upgrade() -> None:
         sa.Column('currency', sa.String(length=5), nullable=False, server_default='EUR'),
         sa.Column('status', sa.String(length=20), nullable=False, server_default='pending'),
         sa.Column('payment_status', sa.String(length=20), nullable=False, server_default='unpaid'),
-        sa.Column('metadata', sa.JSON(), nullable=True),
+        sa.Column('metadata_json', sa.JSON(), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
     )

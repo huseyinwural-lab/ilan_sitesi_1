@@ -41,7 +41,7 @@ class PaymentTransaction(Base):
     currency: Mapped[str] = mapped_column(String(5), nullable=False, server_default="EUR")
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="pending")
     payment_status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="unpaid")
-    metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
