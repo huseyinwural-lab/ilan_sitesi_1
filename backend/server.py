@@ -7338,6 +7338,11 @@ async def stripe_webhook(
     signature = request.headers.get("stripe-signature")
     raw_body = await request.body()
 
+    try:
+        raw_payload = json.loads(raw_body.decode("utf-8"))
+    except Exception:
+        raw_payload = {"raw": raw_body.decode("utf-8", errors="ignore")}
+
     webhook_response = stripe_checkout.handle_webhook(raw_body, signature)
 
     event_id = webhook_response.event_id
@@ -7352,7 +7357,7 @@ async def stripe_webhook(
         provider="stripe",
         event_id=event_id,
         event_type=event_type,
-        raw_payload=metadata,
+        raw_payload=raw_payload,
         status="processing",
         processed_at=None,
         created_at=now,
