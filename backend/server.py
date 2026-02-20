@@ -2365,14 +2365,28 @@ async def list_users(
     return {"items": items}
 
 
-def _build_individual_users_query(search: Optional[str], country_code: Optional[str]) -> Dict[str, Any]:
+def _build_individual_users_query(
+    search: Optional[str],
+    country_code: Optional[str],
+    status: Optional[str],
+) -> Dict[str, Any]:
     query: Dict[str, Any] = {
         "role": {"$nin": list(ADMIN_ROLE_OPTIONS) + ["dealer"]},
-        "deleted_at": {"$exists": False},
     }
 
     if country_code:
         query["country_code"] = country_code
+
+    status_key = (status or "").lower().strip()
+    if status_key == "deleted":
+        query["deleted_at"] = {"$exists": True}
+    else:
+        query["deleted_at"] = {"$exists": False}
+        if status_key == "suspended":
+            query["$and"] = [{"$or": [{"status": "suspended"}, {"is_active": False}]}]
+        elif status_key == "active":
+            query["status"] = {"$ne": "suspended"}
+            query["is_active"] = {"$ne": False}
 
     if search:
         safe_search = re.escape(search)
@@ -2389,7 +2403,10 @@ def _build_individual_users_query(search: Optional[str], country_code: Optional[
                 pattern = re.escape(candidate)
                 for field in phone_fields:
                     or_conditions.append({field: {"$regex": pattern}})
-        query["$or"] = or_conditions
+        if query.get("$and"):
+            query["$and"].append({"$or": or_conditions})
+        else:
+            query["$or"] = or_conditions
 
     return query
 
