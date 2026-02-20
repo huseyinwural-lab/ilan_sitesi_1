@@ -206,9 +206,9 @@ export default function MyListings() {
                 <tr key={listing.id} className="border-t" data-testid={`account-listings-row-${listing.id}`}>
                   <td className="p-3">
                     <div className="font-medium" data-testid={`account-listings-title-${listing.id}`}>{listing.title || listing.id}</div>
-                    {listing.moderation_note && (
+                    {moderationText && (
                       <div className="text-xs text-rose-600" data-testid={`account-listings-moderation-${listing.id}`}>
-                        {listing.moderation_note}
+                        {moderationText}
                       </div>
                     )}
                   </td>
