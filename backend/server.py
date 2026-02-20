@@ -66,7 +66,7 @@ from app.models.application import Application
 
 
 from fastapi import UploadFile, File
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 
 from app.vehicle_listings_store import (
     create_vehicle_listing,
