@@ -60,7 +60,7 @@ const UserPanelLayout = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
