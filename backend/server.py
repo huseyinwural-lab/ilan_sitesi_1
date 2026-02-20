@@ -7385,9 +7385,11 @@ async def admin_assign_dealer_plan(
     payload: DealerPlanAssignmentPayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await _ensure_plans_db_ready(session)
 
     dealer = await db.users.find_one({"id": dealer_id, "role": "dealer"}, {"_id": 0})
     if not dealer:
@@ -7397,10 +7399,10 @@ async def admin_assign_dealer_plan(
     plan_id = payload.plan_id
     plan = None
     if plan_id:
-        plan = await db.plans.find_one({"id": plan_id}, {"_id": 0})
+        plan = await session.get(Plan, plan_id)
         if not plan:
             raise HTTPException(status_code=404, detail="Plan not found")
-        if plan.get("country_code") != dealer.get("country_code"):
+        if plan.country_scope == "country" and plan.country_code != dealer.get("country_code"):
             raise HTTPException(status_code=400, detail="Plan country mismatch")
 
     now_iso = datetime.now(timezone.utc).isoformat()
