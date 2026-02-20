@@ -333,7 +333,7 @@ async def _deactivate_push_subscription(db, subscription_id: str, reason: str) -
     )
 
 
-async def _send_web_push_notification(subscription: dict, payload: dict) -> dict:
+async def _send_web_push_notification(subscription: dict, payload: dict) -> dict:
     if not PUSH_ENABLED:
         return {"ok": False, "revoke": False}
 
