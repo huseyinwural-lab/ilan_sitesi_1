@@ -2221,50 +2221,19 @@ async def list_individual_users(
     db = request.app.state.db
     ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
-    query: Dict[str, Any] = {
-        "role": {"$nin": list(ADMIN_ROLE_OPTIONS) + ["dealer"]},
-        "deleted_at": {"$exists": False},
-    }
-
     country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
     if country:
         country_code = country.upper()
-    if country_code:
-        query["country_code"] = country_code
 
-    if search:
-        query["$or"] = [
-            {"first_name": {"$regex": search, "$options": "i"}},
-            {"last_name": {"$regex": search, "$options": "i"}},
-            {"email": {"$regex": search, "$options": "i"}},
-            {"full_name": {"$regex": search, "$options": "i"}},
-        ]
+    query = _build_individual_users_query(search, country_code)
 
     safe_page = max(page, 1)
     safe_limit = min(max(limit, 1), 200)
     skip = (safe_page - 1) * safe_limit
 
-    sort_field_map = {
-        "email": "email",
-        "created_at": "created_at",
-        "last_login": "last_login",
-        "first_name": "first_name",
-        "last_name": "last_name",
-    }
-    sort_key = sort_field_map.get(sort_by or "last_name", "last_name")
-    sort_direction = 1 if (sort_dir or "asc").lower() == "asc" else -1
-
     total_count = await db.users.count_documents(query)
 
-    sort_name_expr = {"$ifNull": ["$last_name", {"$ifNull": ["$first_name", "$email"]}]}
-    sort_first_expr = {"$ifNull": ["$first_name", "$email"]}
-    sort_spec = {
-        "sort_name": sort_direction,
-        "sort_first": sort_direction,
-        "email": sort_direction,
-    }
-    if sort_key != "last_name":
-        sort_spec = {sort_key: sort_direction, "email": sort_direction}
+    sort_spec, sort_name_expr, sort_first_expr, sort_direction = _build_individual_users_sort(sort_by, sort_dir)
 
     pipeline = [
         {"$match": query},
