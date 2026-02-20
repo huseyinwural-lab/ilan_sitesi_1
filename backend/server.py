@@ -717,6 +717,7 @@ async def lifespan(app: FastAPI):
     if os.environ.get("ENV", "dev") != "production":
         await _ensure_dealer_user(db)
         await _ensure_test_user(db)
+        await _ensure_individual_fixtures(db)
         await _ensure_country_admin_user(db)
         await _ensure_fixture_category_schema(db)
 
