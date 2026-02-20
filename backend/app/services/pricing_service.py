@@ -172,6 +172,57 @@ class PricingService:
 
         return result
 
+    async def apply_campaign_discount(
+        self,
+        result: CalculationResult,
+        dealer_id: str,
+        country: str,
+        now: datetime,
+    ) -> CalculationResult:
+        """Applies active campaign discount (read-path, safe no-op when DB not ready)."""
+        try:
+            query = select(Campaign).where(
+                and_(
+                    Campaign.type == "corporate",
+                    Campaign.status == "active",
+                    Campaign.start_at <= now,
+                    Campaign.end_at >= now,
+                    or_(
+                        Campaign.country_scope == "global",
+                        and_(Campaign.country_scope == "country", Campaign.country_code == country),
+                    ),
+                )
+            ).order_by(desc(Campaign.priority), desc(Campaign.updated_at))
+
+            campaign = (await self.db.execute(query)).scalars().first()
+            if not campaign:
+                return result
+
+            if campaign.target != "discount":
+                return result
+
+            discount_value = None
+            if campaign.discount_percent is not None:
+                discount_value = (
+                    result.charge_amount
+                    * Decimal(str(campaign.discount_percent))
+                    / Decimal("100.00")
+                )
+            elif campaign.discount_amount is not None:
+                if campaign.discount_currency and campaign.discount_currency != result.currency:
+                    return result
+                discount_value = Decimal(str(campaign.discount_amount))
+
+            if discount_value and discount_value > Decimal("0.00"):
+                result.applied_discount = discount_value
+                result.charge_amount = max(Decimal("0.00"), result.charge_amount - discount_value)
+                tax_amount = result.charge_amount * (result.vat_rate / Decimal("100.00"))
+                result.gross_amount = result.charge_amount + tax_amount
+
+            return result
+        except Exception:
+            return result
+
     async def commit_usage(self, calculation: CalculationResult, listing_id: str, dealer_id: str, user_id: str, invoice_id: Optional[str] = None):
         """
         Atomically commits the usage:
