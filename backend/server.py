@@ -919,6 +919,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    await sql_engine.dispose()
     client.close()
 
 
