@@ -286,6 +286,14 @@ const DetailPage = () => {
                 )}
 
                 <button
+                  onClick={handleToggleFavorite}
+                  className={`w-full py-3 rounded-lg font-bold transition ${isFavorite ? 'bg-rose-600 text-white' : 'border border-rose-200 text-rose-600 hover:bg-rose-50'}`}
+                  data-testid="listing-favorite-toggle"
+                >
+                  {isFavorite ? 'Favoriden Kaldır' : 'Favoriye Ekle'}
+                </button>
+
+                <button
                   onClick={() => { setReportOpen(true); setReportError(null); }}
                   className="w-full border border-rose-200 text-rose-600 py-3 rounded-lg font-bold hover:bg-rose-50 transition"
                   data-testid="listing-report-button"
