@@ -5124,7 +5124,7 @@ async def admin_list_audit_logs(
     sort: Optional[str] = "timestamp_desc",
     page: int = 0,
     page_size: int = 20,
-    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+    current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -5159,7 +5159,7 @@ async def admin_list_audit_logs(
 @api_router.get("/admin/audit-logs/event-types")
 async def admin_audit_event_types(
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+    current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -5170,7 +5170,7 @@ async def admin_audit_event_types(
 @api_router.get("/admin/audit-logs/actions")
 async def admin_audit_actions(
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+    current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -5181,7 +5181,7 @@ async def admin_audit_actions(
 @api_router.get("/admin/audit-logs/resources")
 async def admin_audit_resources(
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+    current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -5193,7 +5193,7 @@ async def admin_audit_resources(
 async def admin_audit_log_detail(
     log_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+    current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -5215,7 +5215,7 @@ async def admin_export_audit_logs(
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
     sort: Optional[str] = "timestamp_desc",
-    current_user=Depends(check_permissions(["super_admin", "audit_viewer"])),
+    current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
