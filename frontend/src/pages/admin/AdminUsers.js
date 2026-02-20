@@ -293,9 +293,9 @@ export default function AdminUsers() {
     <div className="space-y-6" data-testid="admin-users-page">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="admin-users-title">Admin Kullanıcıları</h1>
+          <h1 className="text-2xl font-bold" data-testid="admin-users-title">Admin Kullanıcıları Yönetimi</h1>
           <p className="text-sm text-muted-foreground" data-testid="admin-users-subtitle">
-            RBAC uyumlu admin yönetimi ve davet akışı
+            Yetkilendirilmiş admin hesapları ve erişim kapsamları
           </p>
         </div>
         <button
