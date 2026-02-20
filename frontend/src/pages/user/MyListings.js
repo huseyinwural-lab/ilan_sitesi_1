@@ -201,6 +201,7 @@ export default function MyListings() {
             {items.map((listing) => {
               const status = resolveStatus(listing);
               const canPublish = ['draft', 'needs_revision', 'unpublished'].includes(listing.status);
+              const moderationText = listing.moderation_note || listing.moderation_reason;
               return (
                 <tr key={listing.id} className="border-t" data-testid={`account-listings-row-${listing.id}`}>
                   <td className="p-3">
