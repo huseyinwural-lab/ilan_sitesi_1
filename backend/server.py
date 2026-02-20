@@ -1678,6 +1678,11 @@ async def health_db():
             status_code=503,
             content={"status": "degraded", "database": "postgres", "target": target},
         )
+    if APP_ENV != "prod" and ("localhost" in RAW_DATABASE_URL or "127.0.0.1" in RAW_DATABASE_URL):
+        return JSONResponse(
+            status_code=503,
+            content={"status": "degraded", "database": "postgres", "target": target},
+        )
     try:
         async with sql_engine.connect() as conn:
             await conn.execute(select(1))
