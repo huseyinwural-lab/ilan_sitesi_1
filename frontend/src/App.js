@@ -29,6 +29,7 @@ const DealerPortalApp = lazy(() => import('@/portals/dealer/DealerPortalApp'));
 import PublicLogin from '@/portals/public/PublicLogin';
 import DealerLogin from '@/portals/dealer/DealerLogin';
 import BackofficeLogin from '@/portals/backoffice/BackofficeLogin';
+import AdminInviteAccept from '@/pages/admin/AdminInviteAccept';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
