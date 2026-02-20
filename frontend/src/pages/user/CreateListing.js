@@ -1,5 +1,5 @@
 import React from 'react';
-import WizardContainer from './user/wizard/WizardContainer';
+import WizardContainer from './wizard/WizardContainer';
 
 const CreateListing = () => {
   return (
