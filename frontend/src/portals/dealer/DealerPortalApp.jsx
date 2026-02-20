@@ -9,6 +9,11 @@ function DealerHome() {
     <div className="p-8" data-testid="dealer-home">
       <h1 className="text-2xl font-bold tracking-tight">Dealer Panel</h1>
       <p className="text-sm text-muted-foreground mt-2">Yakında: dashboard, lead yönetimi, kota, faturalama.</p>
+      <div className="mt-4">
+        <Link className="text-sm text-primary" to="/dealer/invoices" data-testid="dealer-home-invoices-link">
+          Faturalarımı Gör
+        </Link>
+      </div>
     </div>
   );
 }
