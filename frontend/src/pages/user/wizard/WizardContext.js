@@ -108,6 +108,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     window.__WIZARD_DRAFT_ID__ = listing.id;
 
     const attrs = listing.attributes || {};
+    setAttributes(attrs);
     const reserved = new Set(['mileage_km', 'fuel_type', 'transmission', 'condition', 'price_eur']);
     const dynamic = {};
     Object.entries(attrs).forEach(([key, value]) => {
