@@ -158,6 +158,7 @@
 - 2026-02-20: Payments Stripe V1 hazırlıkları (payments/admin_invoices payment_status migration + Stripe checkout/webhook endpoints + dealer invoices UI + success/cancel pages + admin payments list)
 - 2026-02-20: Invoice UI badges (dealer + admin invoice/payment status badges + tooltips)
 - 2026-02-20: Admin login fix (payment model import cleanup + metadata column rename; backend startup restored)
+- 2026-02-20: Audit Logs V1 (admin UI filtre/sıralama/detay/CSV export + ROLE_AUDIT_VIEWER RBAC + DB gate banner/disable)
 
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
