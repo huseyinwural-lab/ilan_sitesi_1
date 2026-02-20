@@ -41,6 +41,16 @@ from app.core.security import (
     create_refresh_token,
     decode_token,
 )
+from app.repositories.auth_repository import (
+    resolve_auth_provider,
+    MongoAuthRepository,
+    SqlAuthRepository,
+)
+from app.repositories.applications_repository import (
+    resolve_applications_provider,
+    MongoApplicationsRepository,
+    SqlApplicationsRepository,
+)
 from app.mongo import get_mongo_client, get_db_name
 from app.admin_country_context import resolve_admin_country_context
 
