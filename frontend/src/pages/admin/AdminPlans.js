@@ -1,280 +1,537 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { useSearchParams } from 'react-router-dom';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function AdminPlansPage() {
+const COUNTRY_OPTIONS = [
+  { code: 'DE', label: 'DE', currency: 'EUR' },
+  { code: 'AT', label: 'AT', currency: 'EUR' },
+  { code: 'FR', label: 'FR', currency: 'EUR' },
+  { code: 'CH', label: 'CH', currency: 'CHF' },
+];
+
+const resolveCurrency = (scope, countryCode) => {
+  if (scope === 'global') return 'EUR';
+  const match = COUNTRY_OPTIONS.find((item) => item.code === countryCode);
+  return match?.currency || 'EUR';
+};
+
+const slugify = (value) => {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+};
+
+const formatDate = (value) => {
+  if (!value) return '-';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '-';
+  return parsed.toLocaleString('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+};
+
+const emptyForm = {
+  name: '',
+  scope: 'global',
+  country_code: '',
+  price_amount: '',
+  currency_code: 'EUR',
+  listing_quota: '',
+  showcase_quota: '',
+  active_flag: true,
+};
+
+export default function AdminPlans() {
   const [searchParams] = useSearchParams();
-  const urlCountry = (searchParams.get('country') || '').toUpperCase();
+  const urlCountry = searchParams.get('country') || '';
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [error, setError] = useState('');
+  const [dbReady, setDbReady] = useState(false);
+
+  const [filterScope, setFilterScope] = useState('all');
+  const [filterCountry, setFilterCountry] = useState('');
+  const [filterStatus, setFilterStatus] = useState('active');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({
-    name: '',
-    country_code: urlCountry,
-    price: '',
-    currency: 'EUR',
-    listing_quota: '',
-    showcase_quota: '',
-    active_flag: true,
-  });
-  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const authHeader = useMemo(() => ({
-    Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-  }), []);
+  const authHeader = useMemo(() => {
+    const token = localStorage.getItem('token');
+    return { Authorization: `Bearer ${token}` };
+  }, []);
 
-  const fetchPlans = async () => {
+  const disabled = !dbReady;
+
+  const checkDb = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/health/db`);
+      setDbReady(res.status === 200);
+      if (res.status === 200) {
+        setError('');
+      }
+    } catch (err) {
+      setDbReady(false);
+      setError('DB hazır değil → işlemler devre dışı. Ops ekibine DATABASE_URL + migration kontrolü gerekiyor.');
+    }
+  };
+
+  const fetchItems = async () => {
+    if (!dbReady) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (urlCountry) params.set('country', urlCountry);
-      const res = await axios.get(`${API}/admin/plans?${params.toString()}`, {
+      if (filterScope !== 'all') params.set('scope', filterScope);
+      if (filterScope === 'country' && filterCountry) params.set('country_code', filterCountry);
+      if (filterStatus !== 'all') params.set('status', filterStatus);
+      if (searchQuery) params.set('q', searchQuery);
+      const query = params.toString();
+      const res = await axios.get(`${API_BASE_URL}/api/admin/plans${query ? `?${query}` : ''}`, {
         headers: authHeader,
       });
       setItems(res.data.items || []);
-    } catch (e) {
-      console.error('Failed to fetch plans', e);
+      setError('');
+    } catch (err) {
+      setError('Planlar yüklenemedi');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    checkDb();
+  }, []);
+
+  useEffect(() => {
+    if (urlCountry) {
+      setFilterScope('country');
+      setFilterCountry(urlCountry.toUpperCase());
+    }
+  }, [urlCountry]);
+
+  useEffect(() => {
+    fetchItems();
+  }, [dbReady, filterScope, filterCountry, filterStatus, searchQuery]);
+
   const openCreate = () => {
     setEditing(null);
+    const scope = filterScope === 'country' ? 'country' : 'global';
+    const country = scope === 'country' ? filterCountry : '';
+    const currency = resolveCurrency(scope, country || 'DE');
     setForm({
-      name: '',
-      country_code: urlCountry,
-      price: '',
-      currency: 'EUR',
-      listing_quota: '',
-      showcase_quota: '',
-      active_flag: true,
+      ...emptyForm,
+      scope,
+      country_code: country,
+      currency_code: currency,
     });
-    setError(null);
-    setModalOpen(true);
+    setShowForm(true);
   };
 
   const openEdit = (item) => {
     setEditing(item);
+    const scope = item.country_scope || 'global';
+    const country = scope === 'country' ? item.country_code || '' : '';
     setForm({
-      name: item.name,
-      country_code: item.country_code,
-      price: item.price,
-      currency: item.currency,
-      listing_quota: item.listing_quota,
-      showcase_quota: item.showcase_quota,
-      active_flag: item.active_flag,
+      name: item.name || '',
+      scope,
+      country_code: country,
+      price_amount: item.price_amount ?? '',
+      currency_code: item.currency_code || resolveCurrency(scope, country || 'DE'),
+      listing_quota: item.listing_quota ?? '',
+      showcase_quota: item.showcase_quota ?? '',
+      active_flag: item.active_flag !== false,
     });
-    setError(null);
-    setModalOpen(true);
+    setShowForm(true);
   };
 
-  const submitForm = async () => {
-    if (!form.name || !form.country_code) {
-      setError('Name ve country zorunlu');
+  const closeForm = () => {
+    setShowForm(false);
+    setForm(emptyForm);
+    setEditing(null);
+  };
+
+  const validateForm = () => {
+    if (!form.name.trim()) return 'Name zorunlu';
+    if (form.scope === 'country' && !form.country_code) return 'Country zorunlu';
+    if (Number(form.price_amount) < 0) return 'Price 0 veya daha büyük olmalı';
+    if (Number(form.listing_quota) < 0) return 'Listing quota 0 veya daha büyük olmalı';
+    if (Number(form.showcase_quota) < 0) return 'Showcase quota 0 veya daha büyük olmalı';
+    return '';
+  };
+
+  const submitForm = async ({ forceActive = false } = {}) => {
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
+
+    setSaving(true);
     try {
+      const payload = {
+        name: form.name.trim(),
+        slug: slugify(form.name),
+        country_scope: form.scope,
+        country_code: form.scope === 'country' ? form.country_code : undefined,
+        price_amount: Number(form.price_amount),
+        currency_code: resolveCurrency(form.scope, form.country_code || 'DE'),
+        listing_quota: Number(form.listing_quota),
+        showcase_quota: Number(form.showcase_quota),
+        active_flag: forceActive ? true : form.active_flag,
+      };
+
       if (editing) {
-        await axios.patch(
-          `${API}/admin/plans/${editing.id}`,
-          {
-            name: form.name,
-            country_code: form.country_code,
-            price: Number(form.price),
-            currency: form.currency,
-            listing_quota: Number(form.listing_quota),
-            showcase_quota: Number(form.showcase_quota),
-            active_flag: form.active_flag,
-          },
-          { headers: authHeader }
-        );
+        await axios.put(`${API_BASE_URL}/api/admin/plans/${editing.id}`, payload, { headers: authHeader });
       } else {
-        await axios.post(
-          `${API}/admin/plans`,
-          {
-            name: form.name,
-            country_code: form.country_code,
-            price: Number(form.price),
-            currency: form.currency,
-            listing_quota: Number(form.listing_quota),
-            showcase_quota: Number(form.showcase_quota),
-            active_flag: form.active_flag,
-          },
-          { headers: authHeader }
-        );
+        await axios.post(`${API_BASE_URL}/api/admin/plans`, payload, { headers: authHeader });
       }
-      setModalOpen(false);
-      fetchPlans();
-    } catch (e) {
-      setError(e.response?.data?.detail || 'Kaydedilemedi');
+      closeForm();
+      fetchItems();
+    } catch (err) {
+      setError('Plan kaydedilemedi');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const deletePlan = async (item) => {
-    if (!window.confirm('Plan silinsin mi?')) return;
+  const toggleActive = async (item) => {
+    if (disabled) return;
     try {
-      await axios.delete(`${API}/admin/plans/${item.id}`, { headers: authHeader });
-      fetchPlans();
-    } catch (e) {
-      console.error('Delete failed', e);
+      await axios.post(`${API_BASE_URL}/api/admin/plans/${item.id}/toggle-active`, {}, { headers: authHeader });
+      fetchItems();
+    } catch (err) {
+      setError('Aktif/Pasif güncellenemedi');
     }
   };
 
-  useEffect(() => {
-    fetchPlans();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlCountry]);
+  const archivePlan = async (item) => {
+    if (disabled) return;
+    const confirmed = window.confirm('Bu planı arşivlemek mevcut abonelikleri etkilemez. Devam edilsin mi?');
+    if (!confirmed) return;
+    try {
+      await axios.post(`${API_BASE_URL}/api/admin/plans/${item.id}/archive`, {}, { headers: authHeader });
+      fetchItems();
+    } catch (err) {
+      setError('Plan arşivlenemedi');
+    }
+  };
+
+  const handleScopeChange = (scope) => {
+    const country = scope === 'country' ? (form.country_code || filterCountry || 'DE') : '';
+    const currency = resolveCurrency(scope, country || 'DE');
+    setForm((prev) => ({
+      ...prev,
+      scope,
+      country_code: country,
+      currency_code: currency,
+    }));
+  };
+
+  const handleCountryChange = (code) => {
+    const currency = resolveCurrency(form.scope, code || 'DE');
+    setForm((prev) => ({
+      ...prev,
+      country_code: code,
+      currency_code: currency,
+    }));
+  };
 
   return (
-    <div className="space-y-6" data-testid="admin-plans-page">
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6" data-testid="plans-page">
+      <div className="flex items-start justify-between gap-4" data-testid="plans-header">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="admin-plans-title">Plans</h1>
-          <div className="text-xs text-muted-foreground" data-testid="admin-plans-context">
-            Country: <span className="font-semibold">{urlCountry || 'Global'}</span>
-          </div>
+          <h1 className="text-2xl font-semibold" data-testid="plans-title">Planlar</h1>
+          <p className="text-sm text-muted-foreground" data-testid="plans-subtitle">Country: {urlCountry || 'Global'}</p>
         </div>
         <button
+          className="px-4 py-2 rounded bg-primary text-white disabled:opacity-60"
           onClick={openCreate}
-          className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
-          data-testid="plan-create-open"
+          disabled={disabled}
+          title={disabled ? 'DB hazır değil' : 'Yeni Plan'}
+          data-testid="plans-create-button"
         >
           Yeni Plan
         </button>
       </div>
 
-      <div className="rounded-md border bg-card overflow-hidden" data-testid="plan-table">
-        <div className="hidden lg:grid grid-cols-[1.2fr_0.6fr_0.6fr_0.6fr_0.6fr_0.5fr_0.7fr] gap-4 bg-muted px-4 py-3 text-sm font-medium">
-          <div>Name</div>
-          <div>Country</div>
-          <div>Price</div>
-          <div>Listing</div>
-          <div>Showcase</div>
-          <div>Active</div>
-          <div className="text-right">Aksiyon</div>
+      {!dbReady && (
+        <div className="border border-amber-200 bg-amber-50 text-amber-900 rounded-md p-4" data-testid="plans-db-banner">
+          DB hazır değil → işlemler devre dışı. Ops ekibine DATABASE_URL + migration kontrolü gerekiyor.
         </div>
-        <div className="divide-y">
-          {loading ? (
-            <div className="p-6 text-center" data-testid="plan-loading">Yükleniyor…</div>
-          ) : items.length === 0 ? (
-            <div className="p-6 text-center text-muted-foreground" data-testid="plan-empty">Kayıt yok</div>
-          ) : (
-            items.map((item) => (
-              <div
-                key={item.id}
-                className="grid grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-[1.2fr_0.6fr_0.6fr_0.6fr_0.6fr_0.5fr_0.7fr]"
-                data-testid={`plan-row-${item.id}`}
-              >
-                <div>{item.name}</div>
-                <div>{item.country_code}</div>
-                <div>{item.price} {item.currency}</div>
-                <div>{item.listing_quota}</div>
-                <div>{item.showcase_quota}</div>
-                <div>{item.active_flag ? 'yes' : 'no'}</div>
-                <div className="flex gap-2 justify-end">
-                  <button
-                    onClick={() => openEdit(item)}
-                    className="h-8 px-2.5 rounded-md border text-xs"
-                    data-testid={`plan-edit-${item.id}`}
-                  >
-                    Düzenle
-                  </button>
-                  <button
-                    onClick={() => deletePlan(item)}
-                    className="h-8 px-2.5 rounded-md border text-xs text-rose-600"
-                    data-testid={`plan-delete-${item.id}`}
-                  >
-                    Sil
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
+      )}
+
+      {error && (
+        <div className="border border-red-200 bg-red-50 text-red-700 rounded-md p-3" data-testid="plans-error">
+          {error}
         </div>
+      )}
+
+      <div className="flex flex-wrap items-end gap-3" data-testid="plans-filters">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground" data-testid="plans-filter-scope-label">Scope</label>
+          <select
+            className="border rounded p-2"
+            value={filterScope}
+            onChange={(e) => {
+              const value = e.target.value;
+              setFilterScope(value);
+              if (value !== 'country') setFilterCountry('');
+            }}
+            data-testid="plans-filter-scope"
+          >
+            <option value="all">Tümü</option>
+            <option value="global">Global</option>
+            <option value="country">Country</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground" data-testid="plans-filter-country-label">Country</label>
+          <select
+            className="border rounded p-2"
+            value={filterCountry}
+            onChange={(e) => setFilterCountry(e.target.value)}
+            disabled={filterScope !== 'country'}
+            data-testid="plans-filter-country"
+          >
+            <option value="">Tümü</option>
+            {COUNTRY_OPTIONS.map((item) => (
+              <option key={item.code} value={item.code}>{item.label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground" data-testid="plans-filter-status-label">Active</label>
+          <select
+            className="border rounded p-2"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            data-testid="plans-filter-status"
+          >
+            <option value="all">Tümü</option>
+            <option value="active">Aktif</option>
+            <option value="inactive">Pasif</option>
+            <option value="archived">Arşiv</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground" data-testid="plans-filter-search-label">Search</label>
+          <input
+            className="border rounded p-2"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Plan adı"
+            data-testid="plans-filter-search-input"
+          />
+        </div>
+        <button
+          className="px-4 py-2 rounded border"
+          onClick={() => setSearchQuery(searchInput.trim())}
+          disabled={disabled}
+          data-testid="plans-filter-search-button"
+        >
+          Ara
+        </button>
       </div>
 
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="plan-modal">
-          <div className="bg-card rounded-lg border shadow-xl w-full max-w-lg">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="text-lg font-semibold" data-testid="plan-modal-title">{editing ? 'Plan Güncelle' : 'Plan Oluştur'}</h3>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="h-8 px-2.5 rounded-md border text-xs"
-                data-testid="plan-modal-close"
-              >
-                Kapat
-              </button>
+      <div className="border rounded-lg overflow-hidden" data-testid="plans-table">
+        <table className="w-full text-sm">
+          <thead className="bg-muted">
+            <tr>
+              <th className="text-left px-3 py-2" data-testid="plans-header-name">Name</th>
+              <th className="text-left px-3 py-2" data-testid="plans-header-scope">Scope/Country</th>
+              <th className="text-left px-3 py-2" data-testid="plans-header-price">Price</th>
+              <th className="text-left px-3 py-2" data-testid="plans-header-listing">Listing</th>
+              <th className="text-left px-3 py-2" data-testid="plans-header-showcase">Showcase</th>
+              <th className="text-left px-3 py-2" data-testid="plans-header-active">Active</th>
+              <th className="text-left px-3 py-2" data-testid="plans-header-updated">Updated</th>
+              <th className="text-right px-3 py-2" data-testid="plans-header-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td className="px-3 py-4" colSpan="8">Yükleniyor...</td></tr>
+            ) : items.length === 0 ? (
+              <tr><td className="px-3 py-4" colSpan="8">Kayıt yok</td></tr>
+            ) : (
+              items.map((item) => (
+                <tr key={item.id} className="border-t" data-testid={`plans-row-${item.id}`}>
+                  <td className="px-3 py-2" data-testid={`plans-name-${item.id}`}>{item.name}</td>
+                  <td className="px-3 py-2" data-testid={`plans-scope-${item.id}`}>
+                    {item.country_scope === 'country' ? `Country / ${item.country_code || '-'}` : 'Global / —'}
+                  </td>
+                  <td className="px-3 py-2" data-testid={`plans-price-${item.id}`}>
+                    {item.price_amount} {item.currency_code || 'EUR'}
+                  </td>
+                  <td className="px-3 py-2" data-testid={`plans-listing-${item.id}`}>{item.listing_quota}</td>
+                  <td className="px-3 py-2" data-testid={`plans-showcase-${item.id}`}>{item.showcase_quota}</td>
+                  <td className="px-3 py-2" data-testid={`plans-active-${item.id}`}>
+                    {item.active_flag ? 'yes' : 'no'}
+                  </td>
+                  <td className="px-3 py-2" data-testid={`plans-updated-${item.id}`}>
+                    {formatDate(item.updated_at || item.created_at)}
+                  </td>
+                  <td className="px-3 py-2 text-right space-x-2" data-testid={`plans-actions-${item.id}`}>
+                    <button
+                      className="px-2 py-1 border rounded"
+                      onClick={() => openEdit(item)}
+                      disabled={disabled}
+                      title={disabled ? 'DB hazır değil' : 'Düzenle'}
+                      data-testid={`plans-edit-${item.id}`}
+                    >
+                      Düzenle
+                    </button>
+                    <button
+                      className="px-2 py-1 border rounded"
+                      onClick={() => toggleActive(item)}
+                      disabled={disabled}
+                      title={disabled ? 'DB hazır değil' : 'Aktif/Pasif'}
+                      data-testid={`plans-toggle-${item.id}`}
+                    >
+                      {item.active_flag ? 'Pasif Yap' : 'Aktif Yap'}
+                    </button>
+                    <button
+                      className="px-2 py-1 border rounded text-red-600"
+                      onClick={() => archivePlan(item)}
+                      disabled={disabled}
+                      title={disabled ? 'DB hazır değil' : 'Arşivle'}
+                      data-testid={`plans-archive-${item.id}`}
+                    >
+                      Arşivle
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" data-testid="plans-form-modal">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-xl p-6 space-y-4" data-testid="plans-form-card">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold" data-testid="plans-form-title">{editing ? 'Plan Düzenle' : 'Yeni Plan'}</h2>
+              <button className="text-sm text-muted-foreground" onClick={closeForm} data-testid="plans-form-close">Kapat</button>
             </div>
-            <div className="p-4 space-y-3">
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Plan Name"
-                className="h-9 px-3 rounded-md border bg-background text-sm w-full"
-                data-testid="plan-form-name"
-              />
-              <input
-                value={form.country_code}
-                onChange={(e) => setForm({ ...form, country_code: e.target.value.toUpperCase() })}
-                placeholder="Country Code"
-                className="h-9 px-3 rounded-md border bg-background text-sm w-full"
-                data-testid="plan-form-country"
-              />
-              <input
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-                placeholder="Price"
-                className="h-9 px-3 rounded-md border bg-background text-sm w-full"
-                data-testid="plan-form-price"
-              />
-              <input
-                value={form.currency}
-                onChange={(e) => setForm({ ...form, currency: e.target.value })}
-                placeholder="Currency"
-                className="h-9 px-3 rounded-md border bg-background text-sm w-full"
-                data-testid="plan-form-currency"
-              />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground" data-testid="plans-form-name-label">Name</label>
                 <input
-                  value={form.listing_quota}
-                  onChange={(e) => setForm({ ...form, listing_quota: e.target.value })}
-                  placeholder="Listing Quota"
-                  className="h-9 px-3 rounded-md border bg-background text-sm"
-                  data-testid="plan-form-listing"
-                />
-                <input
-                  value={form.showcase_quota}
-                  onChange={(e) => setForm({ ...form, showcase_quota: e.target.value })}
-                  placeholder="Showcase Quota"
-                  className="h-9 px-3 rounded-md border bg-background text-sm"
-                  data-testid="plan-form-showcase"
+                  className="w-full border rounded p-2"
+                  value={form.name}
+                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                  data-testid="plans-form-name"
                 />
               </div>
-              <label className="flex items-center gap-2 text-sm">
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground" data-testid="plans-form-scope-label">Scope</label>
+                <select
+                  className="w-full border rounded p-2"
+                  value={form.scope}
+                  onChange={(e) => handleScopeChange(e.target.value)}
+                  data-testid="plans-form-scope"
+                >
+                  <option value="global">Global</option>
+                  <option value="country">Country</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground" data-testid="plans-form-country-label">Country</label>
+                <select
+                  className="w-full border rounded p-2"
+                  value={form.country_code}
+                  onChange={(e) => handleCountryChange(e.target.value)}
+                  disabled={form.scope !== 'country'}
+                  data-testid="plans-form-country"
+                >
+                  <option value="">Seç</option>
+                  {COUNTRY_OPTIONS.map((item) => (
+                    <option key={item.code} value={item.code}>{item.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground" data-testid="plans-form-currency-label">Currency</label>
+                <input
+                  className="w-full border rounded p-2 bg-muted"
+                  value={resolveCurrency(form.scope, form.country_code || 'DE')}
+                  readOnly
+                  data-testid="plans-form-currency"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground" data-testid="plans-form-price-label">Price</label>
+                <input
+                  className="w-full border rounded p-2"
+                  type="number"
+                  value={form.price_amount}
+                  onChange={(e) => setForm((prev) => ({ ...prev, price_amount: e.target.value }))}
+                  data-testid="plans-form-price"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground" data-testid="plans-form-listing-label">Listing quota</label>
+                <input
+                  className="w-full border rounded p-2"
+                  type="number"
+                  value={form.listing_quota}
+                  onChange={(e) => setForm((prev) => ({ ...prev, listing_quota: e.target.value }))}
+                  data-testid="plans-form-listing"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground" data-testid="plans-form-showcase-label">Showcase quota</label>
+                <input
+                  className="w-full border rounded p-2"
+                  type="number"
+                  value={form.showcase_quota}
+                  onChange={(e) => setForm((prev) => ({ ...prev, showcase_quota: e.target.value }))}
+                  data-testid="plans-form-showcase"
+                />
+              </div>
+              <div className="flex items-center gap-2" data-testid="plans-form-active">
                 <input
                   type="checkbox"
                   checked={form.active_flag}
-                  onChange={(e) => setForm({ ...form, active_flag: e.target.checked })}
-                  data-testid="plan-form-active"
+                  onChange={(e) => setForm((prev) => ({ ...prev, active_flag: e.target.checked }))}
+                  data-testid="plans-form-active-checkbox"
                 />
-                Active
-              </label>
-              {error && (
-                <div className="text-xs text-destructive" data-testid="plan-form-error">{error}</div>
-              )}
+                <span>Aktif</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <button className="px-3 py-2 border rounded" onClick={closeForm} data-testid="plans-form-cancel">
+                Vazgeç
+              </button>
               <button
-                onClick={submitForm}
-                className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
-                data-testid="plan-form-submit"
+                className="px-3 py-2 border rounded"
+                onClick={() => submitForm({ forceActive: true })}
+                disabled={saving || disabled}
+                data-testid="plans-form-save-activate"
               >
-                {editing ? 'Güncelle' : 'Oluştur'}
+                Kaydet + Aktifleştir
+              </button>
+              <button
+                className="px-3 py-2 rounded bg-primary text-white"
+                onClick={() => submitForm({ forceActive: false })}
+                disabled={saving || disabled}
+                data-testid="plans-form-save"
+              >
+                Kaydet
               </button>
             </div>
           </div>
