@@ -142,6 +142,64 @@ export default function IndividualUsers() {
     setPage(1);
   };
 
+  const openActionDialog = (type, user) => {
+    setActionDialog({ type, user });
+    setReasonCode("");
+    setReasonDetail("");
+    setSuspensionUntil("");
+  };
+
+  const closeActionDialog = () => {
+    setActionDialog(null);
+    setReasonCode("");
+    setReasonDetail("");
+    setSuspensionUntil("");
+  };
+
+  const handleActionConfirm = async () => {
+    if (!actionDialog) return;
+    if (!reasonCode) {
+      toast({ title: "Gerekçe zorunludur.", variant: "destructive" });
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const payload = {
+        reason_code: reasonCode,
+        reason_detail: reasonDetail || undefined,
+      };
+      if (actionDialog.type === "suspend" && suspensionUntil) {
+        payload.suspension_until = new Date(suspensionUntil).toISOString();
+      }
+      if (actionDialog.type === "delete") {
+        await axios.delete(`${API}/admin/users/${actionDialog.user.id}`, {
+          headers: authHeader,
+          data: payload,
+        });
+      } else if (actionDialog.type === "suspend") {
+        await axios.post(
+          `${API}/admin/users/${actionDialog.user.id}/suspend`,
+          payload,
+          { headers: authHeader }
+        );
+      } else if (actionDialog.type === "activate") {
+        await axios.post(
+          `${API}/admin/users/${actionDialog.user.id}/activate`,
+          payload,
+          { headers: authHeader }
+        );
+      }
+      toast({ title: "İşlem tamamlandı." });
+      closeActionDialog();
+      fetchUsers();
+    } catch (err) {
+      const message = err.response?.data?.detail || "İşlem başarısız. Lütfen tekrar deneyin.";
+      toast({ title: typeof message === "string" ? message : "İşlem başarısız. Lütfen tekrar deneyin.", variant: "destructive" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleExport = async () => {
     if (!canExport) return;
     setExporting(true);
