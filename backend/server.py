@@ -84,7 +84,7 @@ from app.models.payment import Payment, PaymentTransaction, PaymentEventLog
 
 
 from fastapi import UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 
 from app.vehicle_listings_store import (
     create_vehicle_listing,
