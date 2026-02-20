@@ -485,6 +485,9 @@ export default function AdminInvoicesPage() {
                 <div data-testid={`invoice-status-${inv.id}`}>
                   <div className="text-xs uppercase text-muted-foreground lg:hidden">Status</div>
                   <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-muted">{inv.status}</span>
+                  <div className="text-xs text-muted-foreground" data-testid={`invoice-payment-status-${inv.id}`}>
+                    {inv.payment_status || '-'}
+                  </div>
                 </div>
                 <div>
                   <div className="text-xs uppercase text-muted-foreground lg:hidden">Issued</div>
