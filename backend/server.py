@@ -30,10 +30,13 @@ from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, EmailStr
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy import select, func, String, Text, DateTime, ForeignKey
+from sqlalchemy import select, func, String, Text, DateTime, ForeignKey, desc, and_, or_
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from decimal import Decimal
 import html
+
+from app.core.config import settings
 
 from app.core.security import (
     verify_password,
