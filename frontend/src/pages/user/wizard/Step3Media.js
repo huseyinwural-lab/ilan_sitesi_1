@@ -115,7 +115,7 @@ const MediaUploader = () => {
 
       {/* Preview Grid */}
       {files.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-4" data-testid="wizard-photo-grid">
           {files.map((f, index) => (
             <div key={f.id} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border">
               <img src={f.preview} alt="preview" className="w-full h-full object-cover" />
