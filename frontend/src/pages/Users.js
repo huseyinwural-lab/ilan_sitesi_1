@@ -1,296 +1,515 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { Search, Filter, Shield, Trash2, Ban, CheckCircle, Eye } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { 
-  Search, Filter, Plus, MoreHorizontal, UserCheck, UserX, 
-  Pencil, Trash2, Shield, X, Check
-} from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from '../components/ui/use-toast';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const roleColors = {
-  super_admin: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400',
-  country_admin: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400',
-  moderator: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-  support: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-  finance: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Tümü' },
+  { value: 'active', label: 'Aktif' },
+  { value: 'inactive', label: 'Pasif' },
+  { value: 'deleted', label: 'Silindi' },
+];
+
+const TYPE_OPTIONS = [
+  { value: 'all', label: 'Tümü' },
+  { value: 'individual', label: 'Bireysel' },
+  { value: 'dealer', label: 'Ticari (Dealer)' },
+  { value: 'admin', label: 'Admin' },
+];
+
+const SORT_OPTIONS = [
+  { value: 'created_at', label: 'Kayıt Tarihi' },
+  { value: 'last_login', label: 'Son Giriş' },
+  { value: 'email', label: 'E-posta' },
+];
+
+const ROLE_LABELS = {
+  super_admin: 'Super Admin',
+  country_admin: 'Ülke Admin',
+  moderator: 'Moderatör',
+  support: 'Destek',
+  finance: 'Finans',
+  dealer: 'Dealer',
+  individual: 'Bireysel',
 };
 
-export default function Users({
-  title,
-  allowedRoles = null,
-  readOnly = false,
-  showRoleFilter = true,
-  emptyStateLabel,
-}) {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-  const [actionMenuOpen, setActionMenuOpen] = useState(null);
-  const { t } = useLanguage();
+const TYPE_LABELS = {
+  individual: 'Bireysel',
+  dealer: 'Ticari (Dealer)',
+  admin: 'Admin',
+};
 
-  useEffect(() => {
-    fetchUsers();
-  }, [search, roleFilter, allowedRoles]);
+const formatDate = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString();
+};
+
+const formatPlan = (user) => {
+  if (!user?.plan_name) return '-';
+  return user.plan_expires_at
+    ? `${user.plan_name} · ${formatDate(user.plan_expires_at)}`
+    : user.plan_name;
+};
+
+const statusBadge = (status) => {
+  if (status === 'deleted') return { label: 'Silindi', className: 'bg-rose-100 text-rose-700' };
+  if (status === 'suspended') return { label: 'Pasif', className: 'bg-amber-100 text-amber-700' };
+  return { label: 'Aktif', className: 'bg-emerald-100 text-emerald-700' };
+};
+
+export default function Users() {
+  const { t } = useLanguage();
+  const { user } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [countries, setCountries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [countryFilter, setCountryFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortDir, setSortDir] = useState('desc');
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const canManage = user?.role === 'super_admin';
+
+  const authHeader = useMemo(
+    () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }),
+    []
+  );
+
+  const fetchCountries = async () => {
+    try {
+      const res = await axios.get(`${API}/admin/countries`, { headers: authHeader });
+      const active = (res.data.items || []).filter((item) => item.active_flag);
+      setCountries(active.map((item) => item.country_code));
+    } catch (err) {
+      setCountries([]);
+    }
+  };
 
   const fetchUsers = async () => {
+    setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
-      if (search) params.append('search', search);
-      if (roleFilter) params.append('role', roleFilter);
-      
-      const country = new URLSearchParams(window.location.search).get('country');
-      if (country) params.append('country', country);
-
-      const response = await axios.get(`${API}/users?${params}`);
-      let fetchedUsers = response.data || [];
-      if (allowedRoles?.length) {
-        fetchedUsers = fetchedUsers.filter((user) => allowedRoles.includes(user.role));
-      }
-      setUsers(fetchedUsers);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
+      if (search) params.set('search', search);
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (typeFilter !== 'all') params.set('user_type', typeFilter);
+      if (countryFilter !== 'all') params.set('country', countryFilter);
+      if (sortBy) params.set('sort_by', sortBy);
+      if (sortDir) params.set('sort_dir', sortDir);
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      const res = await axios.get(`${API}/users${qs}`, { headers: authHeader });
+      setUsers(res.data.items || []);
+    } catch (err) {
+      setError('Kullanıcı listesi yüklenemedi.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSuspend = async (userId) => {
-    try {
-      await axios.post(`${API}/users/${userId}/suspend`);
-      fetchUsers();
-    } catch (error) {
-      console.error('Failed to suspend user:', error);
-    }
-    setActionMenuOpen(null);
+  useEffect(() => {
+    fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, typeFilter, countryFilter, sortBy, sortDir]);
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    fetchUsers();
   };
 
-  const handleActivate = async (userId) => {
-    try {
-      await axios.post(`${API}/users/${userId}/activate`);
-      fetchUsers();
-    } catch (error) {
-      console.error('Failed to activate user:', error);
-    }
-    setActionMenuOpen(null);
+  const handleSuspend = (userItem) => {
+    setConfirmAction({ type: 'suspend', user: userItem });
   };
 
-  const handleDelete = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
-    try {
-      await axios.delete(`${API}/users/${userId}`);
-      fetchUsers();
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-    }
-    setActionMenuOpen(null);
+  const handleDelete = (userItem) => {
+    setConfirmAction({ type: 'delete', user: userItem });
   };
 
-  const handleUpdateRole = async (userId, newRole) => {
+  const handleActivate = async (userItem) => {
     try {
-      await axios.patch(`${API}/users/${userId}`, { role: newRole });
+      await axios.post(`${API}/admin/users/${userItem.id}/activate`, {}, { headers: authHeader });
+      toast({ title: 'Kullanıcı aktif edildi.' });
       fetchUsers();
-      setEditingUser(null);
-    } catch (error) {
-      console.error('Failed to update user:', error);
+    } catch (err) {
+      toast({ title: 'Aktifleştirme başarısız.', variant: 'destructive' });
     }
   };
+
+  const handleConfirmAction = async () => {
+    if (!confirmAction) return;
+    const { type, user: target } = confirmAction;
+    try {
+      if (type === 'suspend') {
+        await axios.post(`${API}/admin/users/${target.id}/suspend`, {}, { headers: authHeader });
+        toast({ title: 'Kullanıcı pasife alındı.' });
+      }
+      if (type === 'delete') {
+        await axios.delete(`${API}/admin/users/${target.id}`, { headers: authHeader });
+        toast({ title: 'Kullanıcı silindi.' });
+      }
+      setConfirmAction(null);
+      fetchUsers();
+    } catch (err) {
+      const message = err.response?.data?.detail || 'İşlem başarısız.';
+      toast({ title: typeof message === 'string' ? message : 'İşlem başarısız.', variant: 'destructive' });
+    }
+  };
+
+  const handleOpenDetail = async (userItem) => {
+    setDetailOpen(true);
+    setDetailLoading(true);
+    try {
+      const res = await axios.get(`${API}/admin/users/${userItem.id}/detail`, { headers: authHeader });
+      setDetailData(res.data);
+    } catch (err) {
+      toast({ title: 'Detay yüklenemedi.', variant: 'destructive' });
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const closeDetail = () => {
+    setDetailOpen(false);
+    setDetailData(null);
+  };
+
+  const confirmMessage = confirmAction?.type === 'delete'
+    ? 'Kullanıcı silinecek (geri alınamaz). Devam edilsin mi?'
+    : 'Kullanıcı pasife alınacak. Devam edilsin mi?';
 
   return (
     <div className="space-y-6" data-testid="users-page">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{title || t('users')}</h1>
-          <p className="text-muted-foreground text-sm mt-1">{users.length} {title ? title.toLowerCase() : t('users').toLowerCase()} found</p>
+          <h1 className="text-2xl font-bold" data-testid="users-title">Kullanıcı Yönetimi</h1>
+          <p className="text-sm text-muted-foreground" data-testid="users-subtitle">
+            {t('users')} listesi, filtreler ve yönetim aksiyonları
+          </p>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-          <input
-            type="text"
-            placeholder={`${t('search')}...`}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-10 pl-10 pr-4 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-            data-testid="users-search"
-          />
-        </div>
-        {showRoleFilter && (
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="h-10 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-            data-testid="users-role-filter"
+      <div className="bg-card border rounded-md p-4 space-y-4" data-testid="users-filters">
+        <form onSubmit={handleSearchSubmit} className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 border rounded-md px-3 h-10 bg-background">
+            <Search size={16} className="text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={`${t('search')}...`}
+              className="bg-transparent outline-none text-sm"
+              data-testid="users-search-input"
+            />
+          </div>
+          <button
+            type="submit"
+            className="h-10 px-4 rounded-md border text-sm"
+            data-testid="users-search-button"
           >
-            <option value="">{t('all')} {t('role')}</option>
-            <option value="super_admin">{t('super_admin')}</option>
-            <option value="country_admin">{t('country_admin')}</option>
-            <option value="moderator">{t('moderator')}</option>
-            <option value="support">{t('support')}</option>
-            <option value="finance">{t('finance')}</option>
-            <option value="dealer">{t('dealer')}</option>
-            <option value="user">{t('user')}</option>
-          </select>
-        )}
+            Ara
+          </button>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground" data-testid="users-filter-icon">
+            <Filter size={14} /> Filtreler
+          </div>
+        </form>
+
+        <div className="grid gap-3 md:grid-cols-4">
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Durum</div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 rounded-md border bg-background px-3 text-sm w-full"
+              data-testid="users-status-filter"
+            >
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Kullanıcı Tipi</div>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="h-10 rounded-md border bg-background px-3 text-sm w-full"
+              data-testid="users-type-filter"
+            >
+              {TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Ülke</div>
+            <select
+              value={countryFilter}
+              onChange={(e) => setCountryFilter(e.target.value)}
+              className="h-10 rounded-md border bg-background px-3 text-sm w-full"
+              data-testid="users-country-filter"
+            >
+              <option value="all">Tümü</option>
+              {countries.map((code) => (
+                <option key={code} value={code}>{code}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Sıralama</div>
+            <div className="flex items-center gap-2">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-10 rounded-md border bg-background px-3 text-sm w-full"
+                data-testid="users-sort-select"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setSortDir(sortDir === 'desc' ? 'asc' : 'desc')}
+                className="h-10 w-10 rounded-md border flex items-center justify-center"
+                data-testid="users-sort-direction"
+              >
+                <Shield size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border bg-card overflow-hidden">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>{t('name')}</th>
-              <th>{t('email')}</th>
-              <th>{t('role')}</th>
-              <th>Countries</th>
-              <th>{t('status')}</th>
-              <th className="text-right">{t('actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+      {error && (
+        <div className="text-sm text-rose-600" data-testid="users-error">{error}</div>
+      )}
+
+      <div className="rounded-md border bg-card overflow-hidden" data-testid="users-table">
+        <div className="overflow-x-auto">
+          <table className="min-w-[1400px] w-full text-sm">
+            <thead className="bg-muted">
               <tr>
-                <td colSpan={6} className="text-center py-8">
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-                  </div>
-                </td>
+                <th className="p-3 text-left">Ad Soyad</th>
+                <th className="p-3 text-left">E-posta</th>
+                <th className="p-3 text-left">Kullanıcı Tipi</th>
+                <th className="p-3 text-left">Rol</th>
+                <th className="p-3 text-left">Durum</th>
+                <th className="p-3 text-left">Doğrulama</th>
+                <th className="p-3 text-left">Kayıt Tarihi</th>
+                <th className="p-3 text-left">Son Giriş</th>
+                <th className="p-3 text-left">İlan Sayısı</th>
+                <th className="p-3 text-left">Aktif İlan</th>
+                <th className="p-3 text-left">Üyelik/Paket</th>
+                <th className="p-3 text-left">Aksiyon</th>
               </tr>
-            ) : users.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center py-8 text-muted-foreground" data-testid="users-empty-state">
-                  {emptyStateLabel || 'No users found'}
-                </td>
-              </tr>
-            ) : (
-              users.map((user) => (
-                <tr key={user.id} data-testid={`user-row-${user.id}`}>
-                  <td>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
-                        {user.full_name.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="font-medium">{user.full_name}</span>
-                    </div>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={12} className="p-6 text-center text-muted-foreground" data-testid="users-loading">
+                    Yükleniyor...
                   </td>
-                  <td className="text-muted-foreground">{user.email}</td>
-                  <td>
-                    {readOnly ? (
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${roleColors[user.role] || 'bg-muted'}`}
-                        data-testid={`user-role-${user.id}`}
-                      >
-                        {t(user.role)}
-                      </span>
-                    ) : editingUser === user.id ? (
-                      <select
-                        defaultValue={user.role}
-                        onChange={(e) => handleUpdateRole(user.id, e.target.value)}
-                        onBlur={() => setEditingUser(null)}
-                        autoFocus
-                        className="h-8 px-2 rounded border text-xs"
-                        data-testid={`user-role-select-${user.id}`}
-                      >
-                        <option value="super_admin">{t('super_admin')}</option>
-                        <option value="country_admin">{t('country_admin')}</option>
-                        <option value="moderator">{t('moderator')}</option>
-                        <option value="support">{t('support')}</option>
-                        <option value="finance">{t('finance')}</option>
-                      </select>
-                    ) : (
-                      <button
-                        type="button"
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${roleColors[user.role] || 'bg-muted'}`}
-                        onClick={() => setEditingUser(user.id)}
-                        data-testid={`user-role-${user.id}`}
-                      >
-                        {t(user.role)}
-                      </button>
-                    )}
+                </tr>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={12} className="p-6 text-center text-muted-foreground" data-testid="users-empty">
+                    Kullanıcı bulunamadı.
                   </td>
-                  <td>
-                    <div className="flex flex-wrap gap-1">
-                      {user.country_scope?.includes('*') ? (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-muted">All</span>
-                      ) : (
-                        user.country_scope?.map((c) => (
-                          <span key={c} className="text-xs px-1.5 py-0.5 rounded bg-muted">{c}</span>
-                        ))
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                      user.is_active 
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' 
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                    }`}>
-                      {user.is_active ? <Check size={12} /> : <X size={12} />}
-                      {user.is_active ? t('active') : t('inactive')}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    {readOnly ? (
-                      <span className="text-xs text-muted-foreground" data-testid={`user-actions-${user.id}`}>—</span>
-                    ) : (
-                      <div className="relative inline-block">
-                        <button
-                          onClick={() => setActionMenuOpen(actionMenuOpen === user.id ? null : user.id)}
-                          className="p-1.5 rounded hover:bg-muted transition-colors"
-                          data-testid={`user-actions-${user.id}`}
-                        >
-                          <MoreHorizontal size={16} />
-                        </button>
-                        {actionMenuOpen === user.id && (
-                          <div className="absolute right-0 top-full mt-1 w-40 rounded-md border bg-popover shadow-lg z-10">
-                            <div className="p-1">
-                              {user.is_active ? (
+                </tr>
+              ) : (
+                users.map((userItem) => {
+                  const badge = statusBadge(userItem.status);
+                  return (
+                    <tr key={userItem.id} className="border-b last:border-none" data-testid={`user-row-${userItem.id}`}>
+                      <td className="p-3" data-testid={`user-name-${userItem.id}`}>{userItem.full_name || '-'}</td>
+                      <td className="p-3" data-testid={`user-email-${userItem.id}`}>{userItem.email}</td>
+                      <td className="p-3" data-testid={`user-type-${userItem.id}`}>{TYPE_LABELS[userItem.user_type] || userItem.user_type}</td>
+                      <td className="p-3" data-testid={`user-role-${userItem.id}`}>{ROLE_LABELS[userItem.role] || userItem.role}</td>
+                      <td className="p-3" data-testid={`user-status-${userItem.id}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs ${badge.className}`}>{badge.label}</span>
+                      </td>
+                      <td className="p-3" data-testid={`user-verification-${userItem.id}`}>
+                        <div className="text-xs">
+                          E-posta: {userItem.email_verified ? 'Onaylı' : 'Onaysız'}
+                        </div>
+                        <div className="text-xs">
+                          Telefon: {userItem.phone_verified ? 'Onaylı' : 'Onaysız'}
+                        </div>
+                      </td>
+                      <td className="p-3" data-testid={`user-created-${userItem.id}`}>{formatDate(userItem.created_at)}</td>
+                      <td className="p-3" data-testid={`user-last-login-${userItem.id}`}>{formatDate(userItem.last_login)}</td>
+                      <td className="p-3" data-testid={`user-listings-total-${userItem.id}`}>{userItem.total_listings ?? 0}</td>
+                      <td className="p-3" data-testid={`user-listings-active-${userItem.id}`}>{userItem.active_listings ?? 0}</td>
+                      <td className="p-3" data-testid={`user-plan-${userItem.id}`}>{formatPlan(userItem)}</td>
+                      <td className="p-3" data-testid={`user-actions-${userItem.id}`}>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            className="text-xs text-primary inline-flex items-center gap-1"
+                            onClick={() => handleOpenDetail(userItem)}
+                            data-testid={`user-detail-${userItem.id}`}
+                          >
+                            <Eye size={14} /> Detay
+                          </button>
+                          {canManage && userItem.status !== 'deleted' && (
+                            <>
+                              {userItem.status === 'suspended' ? (
                                 <button
-                                  onClick={() => handleSuspend(user.id)}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-amber-600"
-                                  data-testid={`user-suspend-${user.id}`}
+                                  type="button"
+                                  className="text-xs text-emerald-600 inline-flex items-center gap-1"
+                                  onClick={() => handleActivate(userItem)}
+                                  data-testid={`user-activate-${userItem.id}`}
                                 >
-                                  <UserX size={14} />
-                                  Suspend
+                                  <CheckCircle size={14} /> Aktif Et
                                 </button>
                               ) : (
                                 <button
-                                  onClick={() => handleActivate(user.id)}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-emerald-600"
-                                  data-testid={`user-activate-${user.id}`}
+                                  type="button"
+                                  className="text-xs text-amber-600 inline-flex items-center gap-1"
+                                  onClick={() => handleSuspend(userItem)}
+                                  data-testid={`user-suspend-${userItem.id}`}
                                 >
-                                  <UserCheck size={14} />
-                                  Activate
+                                  <Ban size={14} /> Pasife Al
                                 </button>
                               )}
                               <button
-                                onClick={() => handleDelete(user.id)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive"
-                                data-testid={`user-delete-${user.id}`}
+                                type="button"
+                                className="text-xs text-rose-600 inline-flex items-center gap-1"
+                                onClick={() => handleDelete(userItem)}
+                                data-testid={`user-delete-${userItem.id}`}
                               >
-                                <Trash2 size={14} />
-                                {t('delete')}
+                                <Trash2 size={14} /> Sil
                               </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {confirmAction && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="users-confirm-modal">
+          <div className="bg-card rounded-lg shadow-lg max-w-md w-full">
+            <div className="p-4 border-b">
+              <h3 className="text-lg font-semibold" data-testid="users-confirm-title">Onay</h3>
+            </div>
+            <div className="p-4 text-sm text-muted-foreground" data-testid="users-confirm-message">
+              {confirmMessage}
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t">
+              <button
+                type="button"
+                className="h-9 px-4 rounded-md border text-sm"
+                onClick={() => setConfirmAction(null)}
+                data-testid="users-confirm-cancel"
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm"
+                onClick={handleConfirmAction}
+                data-testid="users-confirm-approve"
+              >
+                Onayla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {detailOpen && (
+        <div className="fixed inset-0 bg-black/30 flex justify-end z-40" data-testid="users-detail-drawer">
+          <div className="w-full max-w-md bg-card h-full shadow-xl p-6 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold" data-testid="users-detail-title">Kullanıcı Detayı</h3>
+              <button
+                type="button"
+                onClick={closeDetail}
+                className="text-sm text-muted-foreground"
+                data-testid="users-detail-close"
+              >
+                Kapat
+              </button>
+            </div>
+            {detailLoading ? (
+              <div className="text-sm text-muted-foreground" data-testid="users-detail-loading">Yükleniyor...</div>
+            ) : detailData ? (
+              <div className="space-y-4">
+                <div className="space-y-1" data-testid="users-detail-summary">
+                  <div className="text-xs text-muted-foreground">Ad Soyad</div>
+                  <div className="font-semibold">{detailData.user.full_name || '-'}</div>
+                  <div className="text-xs text-muted-foreground">E-posta</div>
+                  <div>{detailData.user.email}</div>
+                  <div className="text-xs text-muted-foreground">Tip / Rol</div>
+                  <div>{TYPE_LABELS[detailData.user.user_type] || detailData.user.user_type} · {ROLE_LABELS[detailData.user.role] || detailData.user.role}</div>
+                  <div className="text-xs text-muted-foreground">Durum</div>
+                  <div>{statusBadge(detailData.user.status).label}</div>
+                </div>
+
+                <div className="space-y-1" data-testid="users-detail-meta">
+                  <div className="text-xs text-muted-foreground">Kayıt Tarihi</div>
+                  <div>{formatDate(detailData.user.created_at)}</div>
+                  <div className="text-xs text-muted-foreground">Son Giriş</div>
+                  <div>{formatDate(detailData.user.last_login)}</div>
+                  <div className="text-xs text-muted-foreground">İlanlar</div>
+                  <div>{detailData.user.total_listings} toplam · {detailData.user.active_listings} aktif</div>
+                </div>
+
+                <div className="space-y-1" data-testid="users-detail-plan">
+                  <div className="text-xs text-muted-foreground">Üyelik/Paket</div>
+                  <div>{formatPlan(detailData.user)}</div>
+                </div>
+
+                <a
+                  href={detailData.listings_link}
+                  className="inline-flex items-center gap-2 text-sm text-primary"
+                  data-testid="users-detail-listings-link"
+                >
+                  İlanları Gör
+                </a>
+
+                <div className="space-y-2" data-testid="users-detail-audit">
+                  <div className="text-xs text-muted-foreground">Audit Geçmişi</div>
+                  {detailData.audit_logs?.length ? (
+                    detailData.audit_logs.map((log, idx) => (
+                      <div key={`${log.event_type}-${idx}`} className="text-sm" data-testid={`users-detail-audit-${idx}`}>
+                        {log.event_type} · {formatDate(log.created_at)}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground" data-testid="users-detail-audit-empty">Kayıt yok</div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground" data-testid="users-detail-empty">Detay bulunamadı.</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
