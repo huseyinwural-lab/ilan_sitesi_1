@@ -137,6 +137,7 @@
 - 2026-02-20: Bireysel kullanıcı demo seed (6 kullanıcı, phone_e164) + telefon araması + CSV export
 - 2026-02-20: Kurumsal kullanıcılar standardizasyonu (dealer listeleme + filtre/sıralama + moderasyon aksiyonları + audit + hızlı drawer)
 - 2026-02-20: Moderasyon şablonları (Spam/Dolandırıcılık/Müstehcen/Sahte ilan/Tekrarlı ihlal) + otomatik reason_detail
+- 2026-02-20: Başvuru Modülü P0 (RDBMS applications tablosu + /api/applications create/list + admin assign/status + rate limit + XSS sanitize + URL validation) — DB bağlantısı gerekli
 - Yeni /admin/audit route + AdminRouteGuard (403)
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
