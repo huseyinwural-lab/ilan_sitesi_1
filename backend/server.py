@@ -1053,6 +1053,8 @@ async def lifespan(app: FastAPI):
     await db.messages.create_index("thread_id")
     await db.messages.create_index([("thread_id", 1), ("created_at", -1)])
     await db.messages.create_index([("sender_id", 1), ("client_message_id", 1)], unique=True, sparse=True)
+    await db.push_subscriptions.create_index([("user_id", 1), ("endpoint", 1)], unique=True)
+    await db.push_subscriptions.create_index("user_id")
     await db.reports.create_index("id", unique=True)
     await db.reports.create_index("status")
     await db.reports.create_index("listing_id")
