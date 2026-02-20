@@ -219,6 +219,80 @@ def _parse_suspension_until(value: Optional[str]) -> Optional[str]:
         raise HTTPException(status_code=400, detail="Invalid suspension_until") from exc
 
 
+async def _auto_reactivate_if_expired(user: dict, db, request: Optional[Request]) -> dict:
+    if not user or user.get("deleted_at"):
+        return user
+    if user.get("status") != "suspended":
+        return user
+    suspension_until = user.get("suspension_until")
+    if not suspension_until:
+        return user
+
+    try:
+        parsed = datetime.fromisoformat(str(suspension_until).replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return user
+
+    if parsed  datetime.now(timezone.utc):
+        return user
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    before_state = {
+        "status": user.get("status"),
+        "is_active": user.get("is_active", True),
+        "suspension_until": user.get("suspension_until"),
+        "deleted_at": user.get("deleted_at"),
+    }
+
+    update_ops: Dict[str, Any] = {
+        "$set": {
+            "status": "active",
+            "is_active": True,
+            "updated_at": now_iso,
+        },
+        "$unset": {"suspension_until": ""},
+    }
+
+    if user.get("role") == "dealer":
+        update_ops["$set"]["dealer_status"] = "active"
+
+    await db.users.update_one({"id": user.get("id")}, update_ops)
+
+    user.update({"status": "active", "is_active": True, "suspension_until": None})
+
+    if request:
+        actor = {
+            "id": "system",
+            "email": "system@platform.com",
+            "role": "system",
+            "country_scope": [],
+        }
+        audit_entry = await build_audit_entry(
+            event_type="user_reactivated",
+            actor=actor,
+            target_id=user.get("id"),
+            target_type="user",
+            country_code=user.get("country_code"),
+            details={
+                "reason_code": "suspension_expired",
+                "before": before_state,
+                "after": {
+                    **before_state,
+                    "status": "active",
+                    "is_active": True,
+                    "suspension_until": None,
+                },
+            },
+            request=request,
+        )
+        audit_entry["action"] = "user_reactivated"
+        await db.audit_logs.insert_one(audit_entry)
+
+    return user
+
+
 def _build_user_summary(doc: dict, listing_stats: Optional[Dict[str, Any]] = None, plan_map: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     listing_stats = listing_stats or {}
     plan_map = plan_map or {}
