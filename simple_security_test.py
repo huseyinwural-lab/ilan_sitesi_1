@@ -12,9 +12,9 @@ try:
                 base_url = line.split('=', 1)[1].strip()
                 break
         else:
-            base_url = "https://classifieds-postgres.preview.emergentagent.com"
+            base_url = "https://audit-logs-admin.preview.emergentagent.com"
 except FileNotFoundError:
-    base_url = "https://classifieds-postgres.preview.emergentagent.com"
+    base_url = "https://audit-logs-admin.preview.emergentagent.com"
 
 api_url = f"{base_url}/api"
 

@@ -3,7 +3,7 @@ import requests
 import time
 
 def trigger_rate_limit():
-    api_url = "https://classifieds-postgres.preview.emergentagent.com/api"
+    api_url = "https://audit-logs-admin.preview.emergentagent.com/api"
     
     print("Attempting to trigger rate limit (20 requests/60s)...")
     for i in range(25):
