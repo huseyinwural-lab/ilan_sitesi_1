@@ -110,6 +110,7 @@ class UserResponse(BaseModel):
     is_verified: bool = True
     created_at: str
     last_login: Optional[str] = None
+    invite_status: Optional[str] = None
 
 
 class TokenResponse(BaseModel):
