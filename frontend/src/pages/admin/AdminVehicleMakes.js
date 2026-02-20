@@ -177,11 +177,12 @@ const AdminVehicleMakes = () => {
             ) : (
               items.map((item) => (
                 <tr key={item.id} className="border-t" data-testid={`vehicle-makes-row-${item.id}`}>
-                  <td className="px-3 py-2">{item.name}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{item.slug}</td>
-                  <td className="px-3 py-2">{item.country_code}</td>
-                  <td className="px-3 py-2">{item.active_flag ? 'yes' : 'no'}</td>
-                  <td className="px-3 py-2 text-right space-x-2">
+                  <td className="px-3 py-2" data-testid={`vehicle-makes-name-${item.id}`}>{item.name}</td>
+                  <td className="px-3 py-2 text-muted-foreground" data-testid={`vehicle-makes-slug-${item.id}`}>{item.slug}</td>
+                  <td className="px-3 py-2" data-testid={`vehicle-makes-country-${item.id}`}>{item.country_code}</td>
+                  <td className="px-3 py-2" data-testid={`vehicle-makes-type-${item.id}`}>{resolveTypeSummary(item)}</td>
+                  <td className="px-3 py-2" data-testid={`vehicle-makes-active-${item.id}`}>{item.active_flag ? 'yes' : 'no'}</td>
+                  <td className="px-3 py-2 text-right space-x-2" data-testid={`vehicle-makes-actions-${item.id}`}>
                     <button
                       className="px-2 py-1 border rounded"
                       onClick={() => openEdit(item)}
