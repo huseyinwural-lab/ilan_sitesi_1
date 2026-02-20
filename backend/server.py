@@ -1091,6 +1091,12 @@ def _resolve_currency_code(country_code: Optional[str]) -> Optional[str]:
     return settings.COUNTRY_CURRENCIES.get(code)
 
 
+def _slugify_value(value: str) -> str:
+    cleaned = re.sub(r"[^a-z0-9]+", "-", (value or "").strip().lower())
+    cleaned = re.sub(r"-+", "-", cleaned).strip("-")
+    return cleaned
+
+
 def _parse_datetime_field(value: str, field_name: str) -> datetime:
     if not value:
         raise HTTPException(status_code=400, detail=f"{field_name} is required")
