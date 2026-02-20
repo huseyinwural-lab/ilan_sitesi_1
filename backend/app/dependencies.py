@@ -60,7 +60,7 @@ async def _get_sql_user(user_id: str, session: AsyncSession) -> Optional[dict]:
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    request: Request = None,
+    request: Request = Depends(),
     sql_session: AsyncSession = Depends(get_db),
 ):
     credentials_exception = HTTPException(
