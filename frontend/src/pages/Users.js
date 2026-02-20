@@ -152,17 +152,18 @@ export default function Users() {
     try {
       if (type === 'suspend') {
         await axios.post(`${API}/admin/users/${target.id}/suspend`, {}, { headers: authHeader });
-        toast({ title: 'Kullanıcı pasife alındı.' });
+      }
+      if (type === 'activate') {
+        await axios.post(`${API}/admin/users/${target.id}/activate`, {}, { headers: authHeader });
       }
       if (type === 'delete') {
         await axios.delete(`${API}/admin/users/${target.id}`, { headers: authHeader });
-        toast({ title: 'Kullanıcı silindi.' });
       }
+      toast({ title: 'İşlem tamamlandı.' });
       setConfirmAction(null);
       fetchUsers();
     } catch (err) {
-      const message = err.response?.data?.detail || 'İşlem başarısız.';
-      toast({ title: typeof message === 'string' ? message : 'İşlem başarısız.', variant: 'destructive' });
+      toast({ title: 'İşlem başarısız. Lütfen tekrar deneyin.', variant: 'destructive' });
     }
   };
 
