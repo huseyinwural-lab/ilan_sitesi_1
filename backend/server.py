@@ -160,6 +160,8 @@ def _build_user_summary(doc: dict, listing_stats: Optional[Dict[str, Any]] = Non
     return {
         "id": doc.get("id"),
         "full_name": doc.get("full_name"),
+        "first_name": doc.get("first_name"),
+        "last_name": doc.get("last_name"),
         "email": doc.get("email"),
         "role": doc.get("role"),
         "user_type": user_type,
