@@ -99,8 +99,8 @@ const UserPanelLayout = () => {
       </div>
 
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 border-t bg-white" data-testid="account-mobile-nav">
-        <div className="grid grid-cols-5">
-          {menuItems.slice(0, 5).map((item) => {
+        <div className="grid grid-cols-6">
+          {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             return (
