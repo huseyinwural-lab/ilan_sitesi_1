@@ -2696,8 +2696,19 @@ async def admin_list_dealers(
     query: Dict = {"role": "dealer"}
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
         query["country_code"] = ctx.country
-    if status:
-        query["dealer_status"] = status
+
+    status_key = (status or "").lower().strip()
+    if status_key:
+        if status_key == "deleted":
+            query["deleted_at"] = {"$exists": True}
+        else:
+            query["deleted_at"] = {"$exists": False}
+            if status_key == "suspended":
+                query["$or"] = [{"status": "suspended"}, {"is_active": False}]
+            elif status_key == "active":
+                query["status"] = {"$ne": "suspended"}
+                query["is_active"] = {"$ne": False}
+
     if search:
         query["email"] = {"$regex": search, "$options": "i"}
 
