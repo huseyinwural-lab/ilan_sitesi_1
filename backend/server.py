@@ -224,6 +224,7 @@ def _build_user_summary(doc: dict, listing_stats: Optional[Dict[str, Any]] = Non
         "last_login": doc.get("last_login"),
         "email_verified": bool(doc.get("is_verified", False)),
         "phone_verified": phone_verified,
+        "phone_e164": _resolve_user_phone_e164(doc),
         "total_listings": listing_stats.get("total", 0),
         "active_listings": listing_stats.get("active", 0),
         "plan_id": doc.get("plan_id"),
