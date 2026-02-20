@@ -128,7 +128,7 @@ export default function IndividualUsers() {
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sortOption, searchQuery]);
+  }, [page, sortOption, searchQuery, statusFilter]);
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
