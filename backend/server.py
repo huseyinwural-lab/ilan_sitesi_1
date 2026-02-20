@@ -235,7 +235,7 @@ async def _auto_reactivate_if_expired(user: dict, db, request: Optional[Request]
     except ValueError:
         return user
 
-    if parsed <= datetime.now(timezone.utc):
+    if parsed > datetime.now(timezone.utc):
         return user
 
     now_iso = datetime.now(timezone.utc).isoformat()
