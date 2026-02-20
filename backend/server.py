@@ -4077,6 +4077,7 @@ async def admin_listings(
     q: Optional[str] = None,
     dealer_only: Optional[str] = None,
     category_id: Optional[str] = None,
+    owner_id: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
