@@ -349,7 +349,7 @@ export default function AccountMessages() {
                   <div
                     key={msg.id}
                     className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${
-                      msg.sender_id === localStorage.getItem('user_id') ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted'
+                      msg.sender_id === user?.id ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted'
                     }`}
                     data-testid={`account-message-${msg.id}`}
                   >
