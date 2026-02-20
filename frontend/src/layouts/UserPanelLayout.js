@@ -80,7 +80,9 @@ const UserPanelLayout = () => {
             <div className="flex items-center justify-between px-6 py-4">
               <div>
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">Bireysel Portal</div>
-                <div className="text-lg font-semibold" data-testid="account-topbar-title">{menuItems.find((item) => location.pathname === item.path)?.label || 'Dashboard'}</div>
+                <div className="text-lg font-semibold" data-testid="account-topbar-title">
+                  {menuItems.find((item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`))?.label || 'Dashboard'}
+                </div>
               </div>
               <button
                 type="button"
