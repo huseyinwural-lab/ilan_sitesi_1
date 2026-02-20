@@ -8,6 +8,37 @@ import { toast } from '@/components/ui/use-toast';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Tümü' },
+  { value: 'active', label: 'Aktif' },
+  { value: 'suspended', label: 'Askıda' },
+  { value: 'deleted', label: 'Silindi' },
+];
+
+const REASON_OPTIONS = [
+  { value: 'spam', label: 'Spam' },
+  { value: 'fraud', label: 'Dolandırıcılık' },
+  { value: 'adult', label: 'Müstehcen içerik' },
+  { value: 'policy', label: 'Politika ihlali' },
+  { value: 'other', label: 'Diğer' },
+];
+
+const ACTION_LABELS = {
+  suspend: 'Kullanıcı askıya alınacak. Devam edilsin mi?',
+  activate: 'Kullanıcı yeniden aktif edilecek. Devam edilsin mi?',
+  delete: 'Kullanıcı silinecek (geri alınamaz). Devam edilsin mi?',
+};
+
+const statusBadge = (status) => {
+  if (status === 'deleted') {
+    return { label: 'Silindi', className: 'bg-rose-100 text-rose-700' };
+  }
+  if (status === 'suspended') {
+    return { label: 'Askıda', className: 'bg-amber-100 text-amber-700' };
+  }
+  return { label: 'Aktif', className: 'bg-emerald-100 text-emerald-700' };
+};
+
 export default function DealersPage() {
   const { t } = useLanguage();
   const [items, setItems] = useState([]);
