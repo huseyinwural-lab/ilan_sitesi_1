@@ -1130,16 +1130,12 @@ def _normalize_campaign_payload(payload, existing: Optional[Campaign] = None) ->
     if status_value not in CAMPAIGN_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid status")
 
-    target_value = payload.target if payload.target is not None else (existing.target if existing else "discount")
-    target_value = target_value.lower()
-    if target_value not in CAMPAIGN_TARGETS:
-        raise HTTPException(status_code=400, detail="Invalid target")
+    start_raw = payload.start_at if payload.start_at is not None else (existing.start_at.isoformat() if existing and existing.start_at else None)
+    end_raw = payload.end_at if payload.end_at is not None else (existing.end_at.isoformat() if existing and existing.end_at else None)
 
-    start_raw = payload.start_at if payload.start_at is not None else (existing.start_at.isoformat() if existing else None)
-    end_raw = payload.end_at if payload.end_at is not None else (existing.end_at.isoformat() if existing else None)
-    start_at = _parse_datetime_field(start_raw, "start_at")
-    end_at = _parse_datetime_field(end_raw, "end_at")
-    if start_at >= end_at:
+    start_at = _parse_datetime_field(start_raw, "start_at") if start_raw else datetime.now(timezone.utc)
+    end_at = _parse_datetime_field(end_raw, "end_at") if end_raw else None
+    if end_at and start_at >= end_at:
         raise HTTPException(status_code=400, detail="start_at must be before end_at")
 
     priority_value = payload.priority if payload.priority is not None else (existing.priority if existing else "medium")
@@ -1147,88 +1143,35 @@ def _normalize_campaign_payload(payload, existing: Optional[Campaign] = None) ->
     if priority_value not in CAMPAIGN_PRIORITY_SET:
         raise HTTPException(status_code=400, detail="Invalid priority")
 
-    discount_percent = payload.discount_percent if payload.discount_percent is not None else (
-        float(existing.discount_percent) if existing and existing.discount_percent is not None else None
+    duration_days = payload.duration_days if payload.duration_days is not None else (
+        existing.duration_days if existing else None
     )
-    discount_amount = payload.discount_amount if payload.discount_amount is not None else (
-        float(existing.discount_amount) if existing and existing.discount_amount is not None else None
+    quota_count = payload.quota_count if payload.quota_count is not None else (
+        existing.quota_count if existing else None
     )
-    if discount_percent is not None and discount_amount is not None:
-        raise HTTPException(status_code=400, detail="Provide either discount_percent or discount_amount")
-    if discount_percent is not None:
-        if discount_percent < 0 or discount_percent > 100:
-            raise HTTPException(status_code=400, detail="discount_percent out of range")
-    if discount_amount is not None:
-        if discount_amount < 0:
-            raise HTTPException(status_code=400, detail="discount_amount must be >= 0")
+    price_amount = payload.price_amount if payload.price_amount is not None else (
+        float(existing.price_amount) if existing and existing.price_amount is not None else None
+    )
 
-    min_listing = payload.min_listing_count if payload.min_listing_count is not None else (
-        existing.min_listing_count if existing else None
-    )
-    max_listing = payload.max_listing_count if payload.max_listing_count is not None else (
-        existing.max_listing_count if existing else None
-    )
-    if min_listing is not None and min_listing < 0:
-        raise HTTPException(status_code=400, detail="min_listing_count must be >= 0")
-    if max_listing is not None and max_listing < 0:
-        raise HTTPException(status_code=400, detail="max_listing_count must be >= 0")
-    if min_listing is not None and max_listing is not None and min_listing > max_listing:
-        raise HTTPException(status_code=400, detail="min_listing_count must be <= max_listing_count")
-
-    eligible_categories = payload.eligible_categories if payload.eligible_categories is not None else (
-        existing.eligible_categories if existing else None
-    )
-    eligible_categories = _normalize_str_list(eligible_categories)
-
-    segment_value = payload.eligible_user_segment if payload.eligible_user_segment is not None else (
-        existing.eligible_user_segment if existing else "all"
-    )
-    segment_value = segment_value.lower()
-    if segment_value not in CAMPAIGN_SEGMENTS:
-        raise HTTPException(status_code=400, detail="Invalid eligible_user_segment")
-
-    eligible_dealer_plan = payload.eligible_dealer_plan if payload.eligible_dealer_plan is not None else (
-        existing.eligible_dealer_plan if existing else "any"
-    )
-    if eligible_dealer_plan:
-        eligible_dealer_plan = eligible_dealer_plan.lower()
-
-    eligible_dealers = payload.eligible_dealers if payload.eligible_dealers is not None else (
-        existing.eligible_dealers if existing else None
-    )
-    eligible_dealers = _normalize_str_list(eligible_dealers)
-
-    eligible_users = payload.eligible_users if payload.eligible_users is not None else (
-        existing.eligible_users if existing else None
-    )
-    eligible_users = _normalize_str_list(eligible_users)
-
-    free_listing_quota_bonus = payload.free_listing_quota_bonus if payload.free_listing_quota_bonus is not None else (
-        existing.free_listing_quota_bonus if existing else None
-    )
+    if price_amount is None:
+        raise HTTPException(status_code=400, detail="price_amount is required")
+    if price_amount < 0:
+        raise HTTPException(status_code=400, detail="price_amount must be >= 0")
 
     if type_value == "individual":
-        if eligible_dealer_plan not in {None, "any"}:
-            raise HTTPException(status_code=400, detail="eligible_dealer_plan is not valid for individual campaigns")
-        if eligible_dealers:
-            raise HTTPException(status_code=400, detail="eligible_dealers is not valid for individual campaigns")
-        if segment_value == "selected" and not eligible_users:
-            raise HTTPException(status_code=400, detail="eligible_users is required for selected segment")
+        if quota_count is not None:
+            raise HTTPException(status_code=400, detail="quota_count is not valid for individual campaigns")
+        if duration_days is None or duration_days <= 0:
+            raise HTTPException(status_code=400, detail="duration_days is required for individual campaigns")
     else:
-        if eligible_users:
-            raise HTTPException(status_code=400, detail="eligible_users is not valid for corporate campaigns")
-        if free_listing_quota_bonus:
-            raise HTTPException(status_code=400, detail="free_listing_quota_bonus is not valid for corporate campaigns")
-        if eligible_dealer_plan and eligible_dealer_plan not in CAMPAIGN_DEALER_PLANS:
-            raise HTTPException(status_code=400, detail="Invalid eligible_dealer_plan")
-        if segment_value == "selected" and not eligible_dealers:
-            raise HTTPException(status_code=400, detail="eligible_dealers is required for selected segment")
+        if duration_days is not None:
+            raise HTTPException(status_code=400, detail="duration_days is not valid for corporate campaigns")
+        if quota_count is None or quota_count <= 0:
+            raise HTTPException(status_code=400, detail="quota_count is required for corporate campaigns")
 
-    discount_currency = None
-    if discount_amount is not None:
-        discount_currency = _resolve_currency_code(country_code)
-        if not discount_currency:
-            raise HTTPException(status_code=400, detail="currency_code unavailable for country")
+    currency_code = _resolve_currency_code(country_code)
+    if not currency_code:
+        raise HTTPException(status_code=400, detail="currency_code unavailable for country")
 
     return {
         "type": type_value,
@@ -1237,21 +1180,13 @@ def _normalize_campaign_payload(payload, existing: Optional[Campaign] = None) ->
         "name": name,
         "description": description,
         "status": status_value,
-        "target": target_value,
         "start_at": start_at,
         "end_at": end_at,
         "priority": priority_value,
-        "discount_percent": discount_percent,
-        "discount_amount": discount_amount,
-        "discount_currency": discount_currency,
-        "min_listing_count": min_listing,
-        "max_listing_count": max_listing,
-        "eligible_categories": eligible_categories,
-        "eligible_user_segment": segment_value,
-        "eligible_dealer_plan": eligible_dealer_plan,
-        "eligible_dealers": eligible_dealers,
-        "eligible_users": eligible_users,
-        "free_listing_quota_bonus": free_listing_quota_bonus,
+        "duration_days": duration_days,
+        "quota_count": quota_count,
+        "price_amount": price_amount,
+        "currency_code": currency_code,
     }
 
 
@@ -1264,21 +1199,13 @@ def _campaign_to_dict(campaign: Campaign) -> Dict[str, Any]:
         "name": campaign.name,
         "description": campaign.description,
         "status": campaign.status,
-        "target": campaign.target,
         "start_at": campaign.start_at.isoformat() if campaign.start_at else None,
         "end_at": campaign.end_at.isoformat() if campaign.end_at else None,
         "priority": campaign.priority,
-        "discount_percent": float(campaign.discount_percent) if campaign.discount_percent is not None else None,
-        "discount_amount": float(campaign.discount_amount) if campaign.discount_amount is not None else None,
-        "discount_currency": campaign.discount_currency,
-        "min_listing_count": campaign.min_listing_count,
-        "max_listing_count": campaign.max_listing_count,
-        "eligible_categories": campaign.eligible_categories or [],
-        "eligible_user_segment": campaign.eligible_user_segment,
-        "eligible_dealer_plan": campaign.eligible_dealer_plan,
-        "eligible_dealers": campaign.eligible_dealers or [],
-        "eligible_users": campaign.eligible_users or [],
-        "free_listing_quota_bonus": campaign.free_listing_quota_bonus,
+        "duration_days": campaign.duration_days,
+        "quota_count": campaign.quota_count,
+        "price_amount": float(campaign.price_amount) if campaign.price_amount is not None else None,
+        "currency_code": campaign.currency_code,
         "created_by_admin_id": str(campaign.created_by_admin_id) if campaign.created_by_admin_id else None,
         "created_at": campaign.created_at.isoformat() if campaign.created_at else None,
         "updated_at": campaign.updated_at.isoformat() if campaign.updated_at else None,
