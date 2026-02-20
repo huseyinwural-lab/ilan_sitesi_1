@@ -2723,6 +2723,8 @@ async def admin_list_dealers(
                 "id": u.get("id"),
                 "email": u.get("email"),
                 "dealer_status": u.get("dealer_status", "active"),
+                "status": _normalize_user_status(u),
+                "suspension_until": u.get("suspension_until"),
                 "country_code": u.get("country_code"),
                 "plan_id": u.get("plan_id"),
                 "created_at": u.get("created_at"),
