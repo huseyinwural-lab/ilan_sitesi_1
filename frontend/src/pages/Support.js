@@ -157,7 +157,7 @@ export default function SupportPage() {
           />
         </div>
 
-        {isDealer  (
+        {isDealer  (
           <div className="grid gap-4 md:grid-cols-2" data-testid="support-dealer-fields">
             <div>
               <label className="text-sm text-muted-foreground">Firma Adı</label>
