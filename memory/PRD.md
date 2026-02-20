@@ -177,6 +177,7 @@
 - Lint debt cleanup (LINT-1/2)
 - Runtime config / feature flag (Dashboard TTL yönetimi) — backlog
 - Başvuru Modülü bildirimleri (in-app + email) — P1
+- Consumer Portal B8: E2E senaryoları (ilan oluştur/yayınla/düzenle, favori, mesaj, ticket)
 
 ### P2
 - Admin kullanıcı yönetimi audit log sertleştirme (admin_role_changed/admin_scope_changed/admin_suspended/admin_activated/admin_invited) + before/after metadata
