@@ -13,8 +13,12 @@ const tabs = [
   { key: 'expired', label: 'Süresi Doldu' },
 ];
 
-const statusLabel = (status) => {
-  switch (status) {
+const resolveStatus = (listing) => {
+  const expired = listing.expires_at && new Date(listing.expires_at) < new Date();
+  if (expired && listing.status === 'published') {
+    return { label: 'Süresi Doldu', color: 'bg-rose-100 text-rose-700' };
+  }
+  switch (listing.status) {
     case 'published':
       return { label: 'Yayında', color: 'bg-emerald-100 text-emerald-700' };
     case 'pending_moderation':
