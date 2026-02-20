@@ -478,14 +478,23 @@ export default function AdminUsers() {
                       </td>
                       <td className="p-3" data-testid={`admin-user-last-login-${user.id}`}>{formatDate(user.last_login)}</td>
                       <td className="p-3">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 text-primary text-xs"
-                          onClick={() => handleOpenEdit(user)}
-                          data-testid={`admin-user-edit-${user.id}`}
-                        >
-                          <Pencil size={14} /> Düzenle
-                        </button>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 text-primary text-xs"
+                            onClick={() => handleOpenEdit(user)}
+                            data-testid={`admin-user-edit-${user.id}`}
+                          >
+                            <Pencil size={14} /> Düzenle
+                          </button>
+                          <Link
+                            to="/admin/rbac-matrix"
+                            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                            data-testid={`admin-user-rbac-${user.id}`}
+                          >
+                            RBAC Matrix
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
