@@ -30,6 +30,7 @@ import PublicLogin from '@/portals/public/PublicLogin';
 import DealerLogin from '@/portals/dealer/DealerLogin';
 import BackofficeLogin from '@/portals/backoffice/BackofficeLogin';
 import AdminInviteAccept from '@/pages/admin/AdminInviteAccept';
+import SupportPage from '@/pages/Support';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
