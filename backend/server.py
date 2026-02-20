@@ -50,6 +50,7 @@ from app.categories_seed import vehicle_category_tree
 from app.master_data_seed import default_vehicle_makes, default_vehicle_models
 from app.models.base import Base
 from app.models.user import User as SqlUser
+from app.models.application import Application
 
 
 from fastapi import UploadFile, File
