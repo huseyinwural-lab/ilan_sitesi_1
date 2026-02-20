@@ -248,6 +248,57 @@ def _normalize_phone_candidates(value: Optional[str]) -> List[str]:
     return list(candidates)
 
 
+def _normalize_notification_prefs(payload: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    prefs = payload or {}
+    return {
+        "push_enabled": bool(prefs.get("push_enabled", True)),
+        "email_enabled": bool(prefs.get("email_enabled", True)),
+    }
+
+
+def _build_listing_snapshot(listing: Optional[dict]) -> dict:
+    if not listing:
+        return {
+            "listing_id": None,
+            "listing_title": None,
+            "listing_price": None,
+            "listing_image": None,
+            "listing_location": None,
+        }
+    price = listing.get("price") or {}
+    amount = price.get("amount")
+    currency = price.get("currency_primary") or "EUR"
+    price_label = price.get("formatted_primary") or (f"{currency} {amount}" if amount is not None else None)
+    media = listing.get("media") or []
+    image = None
+    if media:
+        first = media[0]
+        image = first.get("preview_url") or first.get("url") or first.get("file")
+    location = listing.get("location") or {}
+    location_label = location.get("city") or location.get("region") or location.get("country") or listing.get("country")
+    return {
+        "listing_id": listing.get("id"),
+        "listing_title": listing.get("title"),
+        "listing_price": price_label,
+        "listing_image": image,
+        "listing_location": location_label,
+    }
+
+
+def _build_thread_summary(thread: dict, current_user_id: str) -> dict:
+    unread_map = thread.get("unread_counts") or {}
+    return {
+        "id": thread.get("id"),
+        "listing_id": thread.get("listing_id"),
+        "listing_title": thread.get("listing_title"),
+        "listing_image": thread.get("listing_image"),
+        "last_message": thread.get("last_message"),
+        "last_message_at": thread.get("last_message_at"),
+        "participants": thread.get("participants") or [],
+        "unread_count": int(unread_map.get(current_user_id, 0)),
+    }
+
+
 def _resolve_user_phone_e164(doc: dict) -> Optional[str]:
     raw_phone = (
         doc.get("phone_e164")
