@@ -54,13 +54,15 @@ Indexes:
 - token_hash
 - user_id
 
-### applications (mevcut P20)
+### applications (P0 v2)
 - id (UUID, PK)
-- user_id (FK → users.id, nullable?)
+- application_id (string, unique)
+- user_id (FK → users.id, nullable)
 - application_type (individual|dealer)
 - category (complaint|request)
 - subject, description
-- attachments (JSON / ayrı tablo opsiyonel)
+- attachments (JSON)
+- extra_data (JSON) → listing_id, company_name, tax_number, kvkk_consent
 - status (pending|in_review|approved|rejected|closed)
 - priority (low|medium|high)
 - assigned_to (FK → users.id)
