@@ -938,6 +938,14 @@ EXPORT_RATE_LIMIT_WINDOW_SECONDS = 60
 EXPORT_RATE_LIMIT_MAX_ATTEMPTS = 10
 _export_attempts: Dict[str, List[float]] = {}
 
+ADMIN_INVITE_RATE_LIMIT_WINDOW_SECONDS = 60
+ADMIN_INVITE_RATE_LIMIT_MAX_ATTEMPTS = 5
+
+ADMIN_ROLE_OPTIONS = {"super_admin", "country_admin", "finance", "support", "moderator"}
+
+_admin_invite_attempts: Dict[str, List[float]] = {}
+_admin_invite_logger = logging.getLogger("admin_invites")
+
 APP_START_TIME = datetime.now(timezone.utc)
 
 DASHBOARD_TREND_DAYS = 14
