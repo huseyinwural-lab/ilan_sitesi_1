@@ -66,6 +66,7 @@ from app.master_data_seed import default_vehicle_makes, default_vehicle_models
 from app.models.base import Base
 from app.models.user import User as SqlUser
 from app.models.application import Application
+from app.models.campaign import Campaign
 
 
 from fastapi import UploadFile, File
