@@ -4,38 +4,29 @@
 - individual
 - corporate
 
-## Target (single-select)
-- showcase (ilan öne çıkarma)
-- discount
-- package
-
 ## Status
 - draft
 - active
 - paused
-- expired
 - archived
 
-## Common Rules (v1)
-- discount_percent (0–100)
-- discount_amount + currency_code
-- min_listing_count / max_listing_count
-- eligible_categories[]
-- eligible_user_segment (all|new_users|returning|selected)
-
-## Targeting (v1)
-### Corporate
-- eligible_dealer_plan (basic|pro|enterprise|any)
-- eligible_dealers[] (optional)
-
+## Package Definition
 ### Individual
-- eligible_users[] (optional)
-- free_listing_quota_bonus (optional)
+- duration_days (>0)
+- price_amount (>=0)
 
-## Scope
+### Corporate
+- quota_count (>0)
+- price_amount (>=0)
+
+## Common Fields
 - country_scope: global | country
-- country_code: nullable (required when country_scope=country)
+- country_code (nullable; required when country_scope=country)
+- priority (low|medium|high)
+- start_at (default now)
+- end_at (optional)
+- currency_code (derived from country_code; read-only in UI)
 
 ## Notes
-- Single table + type field; nullable targeting fields
-- V1 uses dropdown for target selection
+- Single table + type field; nullable duration_days/quota_count
+- V1 uses modal form with “Kaydet” and “Kaydet + Aktifleştir”
