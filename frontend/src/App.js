@@ -4,8 +4,13 @@ import { Toaster } from "@/components/ui/toaster";
 
 import UserPanelLayout from './layouts/UserPanelLayout';
 import MyListings from './pages/user/MyListings';
-import CreateListing from './pages/user/CreateListing';
 import WizardContainer from './pages/user/wizard/WizardContainer';
+import AccountDashboard from './pages/user/AccountDashboard';
+import AccountFavorites from './pages/user/AccountFavorites';
+import AccountMessages from './pages/user/AccountMessages';
+import AccountSupportList from './pages/user/AccountSupportList';
+import AccountSupportDetail from './pages/user/AccountSupportDetail';
+import AccountProfile from './pages/user/AccountProfile';
 import { HelmetProvider } from 'react-helmet-async';
 
 // Public Pages
@@ -41,7 +46,7 @@ const ProtectedRoute = ({ children, roles = [] }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div data-testid="route-loading">Loading...</div>;
   }
 
   if (!user) {
@@ -50,6 +55,28 @@ const ProtectedRoute = ({ children, roles = [] }) => {
 
   if (roles.length > 0 && !roles.includes(user.role)) {
     return <Navigate to="/" />;
+  }
+
+  return children;
+};
+
+const AccountRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div data-testid="account-route-loading">Loading...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  if (user.role === 'dealer') {
+    return <Navigate to="/dealer" />;
+  }
+
+  if (user.role !== 'individual') {
+    return <Navigate to="/admin" />;
   }
 
   return children;
@@ -90,13 +117,18 @@ function App() {
                   <Route
                     path="/account"
                     element={
-                      <ProtectedRoute roles={['individual', 'dealer', 'super_admin', 'country_admin']}>
+                      <AccountRoute>
                         <UserPanelLayout />
-                      </ProtectedRoute>
+                      </AccountRoute>
                     }
                   >
-                    <Route index element={<Navigate to="/account/listings" />} />
+                    <Route index element={<AccountDashboard />} />
                     <Route path="listings" element={<MyListings />} />
+                    <Route path="favorites" element={<AccountFavorites />} />
+                    <Route path="messages" element={<AccountMessages />} />
+                    <Route path="support" element={<AccountSupportList />} />
+                    <Route path="support/:id" element={<AccountSupportDetail />} />
+                    <Route path="profile" element={<AccountProfile />} />
                     <Route path="create" element={<Navigate to="/account/create/vehicle-wizard" />} />
                     <Route path="create/vehicle-wizard" element={<WizardContainer />} />
                   </Route>
