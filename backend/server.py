@@ -2822,7 +2822,7 @@ async def assign_support_application(
     before_state = {"assigned_to": None}
 
     if APPLICATIONS_PROVIDER == "mongo":
-        if not db:
+        if db is None:
             raise HTTPException(status_code=503, detail="Mongo disabled")
         application = await db.support_applications.find_one({"id": application_id}, {"_id": 0})
         if not application:
@@ -2898,7 +2898,7 @@ async def update_support_application_status(
 
     current_status = None
     if APPLICATIONS_PROVIDER == "mongo":
-        if not db:
+        if db is None:
             raise HTTPException(status_code=503, detail="Mongo disabled")
         application = await db.support_applications.find_one({"id": application_id}, {"_id": 0})
         if not application:
