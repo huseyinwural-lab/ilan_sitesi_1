@@ -2040,8 +2040,9 @@ async def suspend_user(
         "suspension_until": suspension_until,
     }
 
+    event_type = "dealer_suspended" if user.get("role") == "dealer" else "user_suspended"
     audit_entry = await build_audit_entry(
-        event_type="user_suspended",
+        event_type=event_type,
         actor=current_user,
         target_id=user_id,
         target_type="user",
@@ -2055,7 +2056,7 @@ async def suspend_user(
         },
         request=request,
     )
-    audit_entry["action"] = "user_suspended"
+    audit_entry["action"] = event_type
     await db.audit_logs.insert_one(audit_entry)
 
     return {"ok": True}
