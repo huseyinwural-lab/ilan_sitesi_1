@@ -155,7 +155,7 @@
 - 2026-02-20: Plans UI P1 (scope quick filter chip + updated sort kısayolu)
 - 2026-02-20: Invoices Admin V1 hazırlıkları (UI filtre/kolon genişletme + DB gate disable + Postgres admin invoice modeli + p25 migration + API kontratı)
 - 2026-02-20: Invoices UI P1 (Son 7/30 gün quick date preset + temizle)
-- 2026-02-20: Payments Stripe V1 hazırlıkları (payments/admin_invoices payment_status migration + Stripe checkout/webhook endpoints + dealer invoices UI + success/cancel pages)
+- 2026-02-20: Payments Stripe V1 hazırlıkları (payments/admin_invoices payment_status migration + Stripe checkout/webhook endpoints + dealer invoices UI + success/cancel pages + admin payments list)
 
 - Preview PDF/CSV Export + E2E PASS (Export fazı kapatıldı)
 - Export modülü freeze (yeni geliştirme yok)
