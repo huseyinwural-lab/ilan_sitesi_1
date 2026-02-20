@@ -3149,7 +3149,156 @@ async def list_support_applications(
     return await applications_repo.list_applications(filters)
 
 
-@api_router.get("/admin/applications/assignees")
+@api_router.get("/applications/my")
+async def list_my_support_applications(
+    request: Request,
+    status: Optional[str] = None,
+    page: int = 1,
+    limit: int = 20,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    db = request.app.state.db
+    safe_page = max(1, int(page))
+    safe_limit = min(100, max(1, int(limit)))
+    skip = (safe_page - 1) * safe_limit
+
+    status_value = None
+    if status:
+        status_value = status.lower().strip()
+        if status_value not in APPLICATION_STATUS_SET:
+            raise HTTPException(status_code=400, detail="Invalid status")
+
+    if APPLICATIONS_PROVIDER == "mongo":
+        if db is None:
+            raise HTTPException(status_code=503, detail="Mongo disabled")
+        query: Dict[str, Any] = {"user_id": current_user.get("id")}
+        if status_value:
+            query["status"] = status_value
+        total = await db.support_applications.count_documents(query)
+        docs = (
+            await db.support_applications.find(query, {"_id": 0})
+            .sort("created_at", -1)
+            .skip(skip)
+            .limit(safe_limit)
+            .to_list(length=safe_limit)
+        )
+        items = [
+            {
+                "id": doc.get("id"),
+                "application_id": doc.get("application_id"),
+                "category": doc.get("category"),
+                "subject": doc.get("subject"),
+                "description": doc.get("description"),
+                "status": doc.get("status"),
+                "priority": doc.get("priority"),
+                "decision_reason": doc.get("decision_reason"),
+                "created_at": doc.get("created_at"),
+                "updated_at": doc.get("updated_at"),
+            }
+            for doc in docs
+        ]
+        return {
+            "items": items,
+            "pagination": {"total": total, "page": safe_page, "limit": safe_limit},
+        }
+
+    if APPLICATIONS_PROVIDER == "sql":
+        try:
+            user_uuid = uuid.UUID(str(current_user.get("id")))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+        query = select(Application).where(Application.user_id == user_uuid)
+        if status_value:
+            query = query.where(Application.status == status_value)
+        query = query.order_by(Application.created_at.desc())
+        result = await session.execute(query.offset(skip).limit(safe_limit))
+        rows = result.scalars().all()
+        count_query = select(func.count()).select_from(Application).where(Application.user_id == user_uuid)
+        if status_value:
+            count_query = count_query.where(Application.status == status_value)
+        total = (await session.execute(count_query)).scalar_one()
+
+        items = [
+            {
+                "id": str(row.id),
+                "application_id": row.application_id,
+                "category": row.category,
+                "subject": row.subject,
+                "description": row.description,
+                "status": row.status,
+                "priority": row.priority,
+                "decision_reason": row.decision_reason,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+            }
+            for row in rows
+        ]
+        return {
+            "items": items,
+            "pagination": {"total": total, "page": safe_page, "limit": safe_limit},
+        }
+
+    raise HTTPException(status_code=503, detail="Applications provider not available")
+
+
+@api_router.get("/applications/{application_id}")
+async def get_my_support_application(
+    application_id: str,
+    request: Request,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    db = request.app.state.db
+
+    if APPLICATIONS_PROVIDER == "mongo":
+        if db is None:
+            raise HTTPException(status_code=503, detail="Mongo disabled")
+        doc = await db.support_applications.find_one(
+            {"$or": [{"id": application_id}, {"application_id": application_id}]},
+            {"_id": 0},
+        )
+        if not doc:
+            raise HTTPException(status_code=404, detail="Application not found")
+        if doc.get("user_id") != current_user.get("id"):
+            raise HTTPException(status_code=403, detail="Forbidden")
+        return {"item": doc}
+
+    if APPLICATIONS_PROVIDER == "sql":
+        try:
+            application_uuid = uuid.UUID(application_id)
+        except ValueError:
+            application_uuid = None
+        if application_uuid:
+            query = select(Application).where(Application.id == application_uuid)
+        else:
+            query = select(Application).where(Application.application_id == application_id)
+        result = await session.execute(query)
+        row = result.scalar_one_or_none()
+        if not row:
+            raise HTTPException(status_code=404, detail="Application not found")
+        if str(row.user_id) != str(current_user.get("id")):
+            raise HTTPException(status_code=403, detail="Forbidden")
+        return {
+            "item": {
+                "id": str(row.id),
+                "application_id": row.application_id,
+                "category": row.category,
+                "subject": row.subject,
+                "description": row.description,
+                "attachments": row.attachments,
+                "extra_data": row.extra_data,
+                "status": row.status,
+                "priority": row.priority,
+                "decision_reason": row.decision_reason,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+            }
+        }
+
+    raise HTTPException(status_code=503, detail="Applications provider not available")
+
 async def list_support_application_assignees(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
