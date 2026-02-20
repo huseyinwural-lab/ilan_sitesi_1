@@ -2680,40 +2680,68 @@ async def list_support_application_assignees(
     }
 
 
-@api_router.post("/admin/applications/{application_id}/assign")
+@api_router.patch("/admin/applications/{application_id}/assign")
 async def assign_support_application(
     application_id: str,
     payload: SupportApplicationAssignPayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
 
-    application = await db.support_applications.find_one({"id": application_id}, {"_id": 0})
+    try:
+        application_uuid = uuid.UUID(application_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid application id") from exc
+
+    result = await session.execute(select(Application).where(Application.id == application_uuid))
+    application = result.scalar_one_or_none()
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
 
-    assigned_to = None
-    if payload.assigned_to:
+    assigned_admin = None
+    assigned_admin_id = None
+    if payload.assigned_admin_id:
         user = await db.users.find_one(
-            {"id": payload.assigned_to, "role": {"$in": list(ADMIN_ROLE_OPTIONS)}, "deleted_at": {"$exists": False}},
+            {"id": payload.assigned_admin_id, "role": {"$in": list(ADMIN_ROLE_OPTIONS)}, "deleted_at": {"$exists": False}},
             {"_id": 0},
         )
         if not user:
             raise HTTPException(status_code=404, detail="Assignee not found")
-        assigned_to = {
+        assigned_admin_id = await _ensure_sql_user(session, user)
+        assigned_admin = {
             "id": user.get("id"),
             "name": user.get("full_name") or user.get("email"),
             "email": user.get("email"),
         }
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    await db.support_applications.update_one(
-        {"id": application_id},
-        {"$set": {"assigned_to": assigned_to, "updated_at": now_iso}},
-    )
+    before_state = {
+        "assigned_admin_id": str(application.assigned_admin_id) if application.assigned_admin_id else None,
+    }
 
-    return {"ok": True}
+    application.assigned_admin_id = assigned_admin_id
+    application.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+
+    audit_entry = await build_audit_entry(
+        event_type="APPLICATION_ASSIGNED",
+        actor=current_user,
+        target_id=str(application.id),
+        target_type="application",
+        country_code=current_user.get("country_code"),
+        details={
+            "before": before_state,
+            "after": {
+                "assigned_admin_id": str(assigned_admin_id) if assigned_admin_id else None,
+            },
+        },
+        request=request,
+    )
+    audit_entry["action"] = "APPLICATION_ASSIGNED"
+    await db.audit_logs.insert_one(audit_entry)
+
+    return {"ok": True, "assigned_admin": assigned_admin}
 
 
 @api_router.get("/dashboard/stats")
