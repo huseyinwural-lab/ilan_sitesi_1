@@ -1516,15 +1516,23 @@ APPLICATION_RATE_LIMIT_WINDOW_SECONDS = 10 * 60
 APPLICATION_RATE_LIMIT_MAX_ATTEMPTS = 5
 _application_submit_attempts: Dict[str, List[float]] = {}
 
+APP_ENV = (os.environ.get("APP_ENV") or "dev").lower()
 RAW_DATABASE_URL = os.environ.get("DATABASE_URL")
-DATABASE_URL = RAW_DATABASE_URL or "postgresql://admin_user:admin_pass@localhost:5432/admin_panel"
 
 DB_POOL_SIZE_RAW = os.environ.get("DB_POOL_SIZE")
 DB_MAX_OVERFLOW_RAW = os.environ.get("DB_MAX_OVERFLOW")
-DB_SSL_MODE = (os.environ.get("DB_SSL_MODE") or "disable").lower()
+DB_SSL_MODE = (os.environ.get("DB_SSL_MODE") or ("require" if APP_ENV == "prod" else "disable")).lower()
+
+if APP_ENV == "prod":
+    if not RAW_DATABASE_URL:
+        raise RuntimeError("DATABASE_URL must be set")
+    if DB_SSL_MODE != "require":
+        raise RuntimeError("DB_SSL_MODE must be require for prod")
 
 if not RAW_DATABASE_URL:
     logging.getLogger("sql_config").warning("DATABASE_URL not set – running with local fallback")
+
+DATABASE_URL = RAW_DATABASE_URL or "postgresql://admin_user:admin_pass@localhost:5432/admin_panel"
 
 try:
     DB_POOL_SIZE = int(DB_POOL_SIZE_RAW) if DB_POOL_SIZE_RAW else 5
