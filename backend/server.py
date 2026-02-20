@@ -170,6 +170,27 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
+class UserProfileUpdatePayload(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    locale: Optional[str] = None
+    notification_prefs: Optional[Dict[str, Any]] = None
+
+
+class ChangePasswordPayload(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class MessageThreadCreatePayload(BaseModel):
+    listing_id: str
+
+
+class MessageSendPayload(BaseModel):
+    body: str
+    client_message_id: Optional[str] = None
+
+
 def _normalize_user_status(doc: dict) -> str:
     if doc.get("deleted_at"):
         return "deleted"
