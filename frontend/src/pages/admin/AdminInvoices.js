@@ -206,9 +206,15 @@ export default function AdminInvoicesPage() {
 
   const markPaid = async (invoiceId) => {
     if (disabledActions) return;
+    const reason = window.prompt('Ödeme işaretleme nedeni');
+    if (!reason) return;
     setStatusError(null);
     try {
-      await axios.post(`${API}/admin/invoices/${invoiceId}/mark-paid`, {}, { headers: authHeader });
+      await axios.post(
+        `${API}/admin/invoices/${invoiceId}/mark-paid`,
+        { reason },
+        { headers: authHeader }
+      );
       await fetchInvoices();
       await openDetail(invoiceId);
     } catch (e) {
