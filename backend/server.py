@@ -3554,12 +3554,13 @@ async def export_user_data(
     }
 
     audit_entry = await build_audit_entry(
-        request,
-        current_user,
-        target_type="user",
-        target_id=current_user.get("id"),
         event_type="gdpr_export_requested",
+        actor=current_user,
+        target_id=current_user.get("id"),
+        target_type="user",
+        country_code=current_user.get("country_code"),
         details={"lists": ["listings", "applications", "favorites", "messages"]},
+        request=request,
     )
     await db.audit_logs.insert_one(audit_entry)
 
