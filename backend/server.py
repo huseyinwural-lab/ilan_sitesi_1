@@ -2811,59 +2811,65 @@ async def assign_support_application(
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
+    applications_repo = _get_applications_repository(db, session)
 
-    try:
-        application_uuid = uuid.UUID(application_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid application id") from exc
+    assigned_to = payload.assigned_to
+    before_state = {"assigned_to": None}
 
-    result = await session.execute(select(Application).where(Application.id == application_uuid))
-    application = result.scalar_one_or_none()
-    if not application:
-        raise HTTPException(status_code=404, detail="Application not found")
+    if APPLICATIONS_PROVIDER == "mongo":
+        if not db:
+            raise HTTPException(status_code=503, detail="Mongo disabled")
+        application = await db.support_applications.find_one({"id": application_id}, {"_id": 0})
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+        before_state["assigned_to"] = application.get("assigned_to")
+    else:
+        try:
+            application_uuid = uuid.UUID(application_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid application id") from exc
+        result = await session.execute(select(Application).where(Application.id == application_uuid))
+        application = result.scalar_one_or_none()
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+        before_state["assigned_to"] = str(application.assigned_to) if application.assigned_to else None
 
-    assigned_admin = None
-    assigned_admin_id = None
-    if payload.assigned_admin_id:
-        user = await db.users.find_one(
-            {"id": payload.assigned_admin_id, "role": {"$in": list(ADMIN_ROLE_OPTIONS)}, "deleted_at": {"$exists": False}},
-            {"_id": 0},
-        )
-        if not user:
-            raise HTTPException(status_code=404, detail="Assignee not found")
-        assigned_admin_id = await _ensure_sql_user(session, user)
-        assigned_admin = {
-            "id": user.get("id"),
-            "name": user.get("full_name") or user.get("email"),
-            "email": user.get("email"),
-        }
+    if assigned_to:
+        if AUTH_PROVIDER == "sql":
+            try:
+                user_uuid = uuid.UUID(str(assigned_to))
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail="Invalid assignee") from exc
+            result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+            if not result.scalar_one_or_none():
+                raise HTTPException(status_code=404, detail="Assignee not found")
+        elif db:
+            user = await db.users.find_one(
+                {"id": assigned_to, "role": {"$in": list(ADMIN_ROLE_OPTIONS)}, "deleted_at": {"$exists": False}},
+                {"_id": 0},
+            )
+            if not user:
+                raise HTTPException(status_code=404, detail="Assignee not found")
 
-    before_state = {
-        "assigned_admin_id": str(application.assigned_admin_id) if application.assigned_admin_id else None,
-    }
+    await applications_repo.assign_application(application_id, assigned_to)
 
-    application.assigned_admin_id = assigned_admin_id
-    application.updated_at = datetime.now(timezone.utc)
-    await session.commit()
-
-    audit_entry = await build_audit_entry(
-        event_type="APPLICATION_ASSIGNED",
-        actor=current_user,
-        target_id=str(application.id),
-        target_type="application",
-        country_code=current_user.get("country_code"),
-        details={
-            "before": before_state,
-            "after": {
-                "assigned_admin_id": str(assigned_admin_id) if assigned_admin_id else None,
+    if db:
+        audit_entry = await build_audit_entry(
+            event_type="APPLICATION_ASSIGNED",
+            actor=current_user,
+            target_id=application_id,
+            target_type="application",
+            country_code=current_user.get("country_code"),
+            details={
+                "before": before_state,
+                "after": {"assigned_to": assigned_to},
             },
-        },
-        request=request,
-    )
-    audit_entry["action"] = "APPLICATION_ASSIGNED"
-    await db.audit_logs.insert_one(audit_entry)
+            request=request,
+        )
+        audit_entry["action"] = "APPLICATION_ASSIGNED"
+        await db.audit_logs.insert_one(audit_entry)
 
-    return {"ok": True, "assigned_admin": assigned_admin}
+    return {"ok": True}
 
 
 @api_router.patch("/admin/applications/{application_id}/status")
