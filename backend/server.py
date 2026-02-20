@@ -945,6 +945,67 @@ def _get_client_ip(request: Request) -> str | None:
     return request.client.host if request.client else None
 
 
+def _sanitize_text(value: str) -> str:
+    return html.escape(value or "").strip()
+
+
+def _validate_attachment_url(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    cleaned = value.strip()
+    parsed = urllib.parse.urlparse(cleaned)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise HTTPException(status_code=400, detail="Invalid attachment_url")
+    return cleaned
+
+
+def _check_application_rate_limit(request: Request, user_id: str) -> None:
+    key = user_id or _get_client_ip(request) or "unknown"
+    now = time.time()
+    attempts = _application_submit_attempts.get(key, [])
+    attempts = [ts for ts in attempts if (now - ts) <= APPLICATION_RATE_LIMIT_WINDOW_SECONDS]
+    if len(attempts) >= APPLICATION_RATE_LIMIT_MAX_ATTEMPTS:
+        retry_after_seconds = int(APPLICATION_RATE_LIMIT_WINDOW_SECONDS - (now - attempts[0]))
+        raise HTTPException(
+            status_code=429,
+            detail={"code": "RATE_LIMITED", "retry_after_seconds": max(retry_after_seconds, 1)},
+        )
+    attempts.append(now)
+    _application_submit_attempts[key] = attempts
+
+
+async def _ensure_sql_user(session: AsyncSession, user_doc: dict) -> uuid.UUID:
+    user_id_raw = user_doc.get("id")
+    if not user_id_raw:
+        raise HTTPException(status_code=400, detail="Invalid user")
+    try:
+        user_uuid = uuid.UUID(str(user_id_raw))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    existing = result.scalar_one_or_none()
+    if existing:
+        return user_uuid
+
+    fallback_password = user_doc.get("hashed_password") or get_password_hash(secrets.token_hex(12))
+    new_user = SqlUser(
+        id=user_uuid,
+        email=user_doc.get("email") or f"user-{user_uuid}@platform.local",
+        hashed_password=fallback_password,
+        full_name=user_doc.get("full_name") or user_doc.get("email") or "User",
+        role=user_doc.get("role") or "individual",
+        is_active=bool(user_doc.get("is_active", True)),
+        is_verified=bool(user_doc.get("is_verified", True)),
+        country_scope=user_doc.get("country_scope") or [],
+        preferred_language=user_doc.get("preferred_language", "tr"),
+        country_code=user_doc.get("country_code") or "TR",
+    )
+    session.add(new_user)
+    await session.flush()
+    return user_uuid
+
+
 def _enforce_export_rate_limit(request: Request, user_id: str) -> None:
     now = time.time()
     key = f"{user_id}:{_get_client_ip(request)}"
