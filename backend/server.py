@@ -384,10 +384,10 @@ async def _send_message_push_notification(db, recipient_id: str, thread: dict, m
 
     success = False
     for subscription in subscriptions:
-        sent = await _send_web_push_notification(subscription, payload)
-        if sent:
+        result = await _send_web_push_notification(subscription, payload)
+        if result.get("ok"):
             success = True
-        else:
+        elif result.get("revoke"):
             await _deactivate_push_subscription(db, subscription.get("id"), "push_failed")
     return success
 
