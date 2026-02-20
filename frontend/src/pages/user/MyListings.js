@@ -199,7 +199,7 @@ export default function MyListings() {
           </thead>
           <tbody>
             {items.map((listing) => {
-              const status = statusLabel(listing.status);
+              const status = resolveStatus(listing);
               const canPublish = ['draft', 'needs_revision', 'unpublished'].includes(listing.status);
               return (
                 <tr key={listing.id} className="border-t" data-testid={`account-listings-row-${listing.id}`}>
