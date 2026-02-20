@@ -5048,7 +5048,7 @@ def _build_audit_query(
     admin_user_query: Optional[str],
     date_from: Optional[str],
     date_to: Optional[str],
-): -> Dict:
+) -> Dict[str, Any]:
     conditions: List[Dict[str, Any]] = []
 
     if action:
