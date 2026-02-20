@@ -388,11 +388,11 @@ async def _ensure_test_user(db):
                     "first_name": "Test",
                     "last_name": "User",
                     "phone_e164": "+491701112233",
-                    "deleted_at": None,
                     "country_scope": existing.get("country_scope") or ["DE"],
                     "country_code": existing.get("country_code") or "DE",
                     "updated_at": now_iso,
-                }
+                },
+                "$unset": {"deleted_at": ""},
             },
         )
         return
