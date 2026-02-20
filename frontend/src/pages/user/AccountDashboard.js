@@ -1,50 +1,36 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LoadingState, ErrorState } from '@/components/account/AccountStates';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const getFavorites = () => {
-  try {
-    return JSON.parse(localStorage.getItem('account_favorites') || '[]');
-  } catch (e) {
-    return [];
-  }
-};
-
-const getMessages = () => {
-  try {
-    return JSON.parse(localStorage.getItem('account_messages') || '[]');
-  } catch (e) {
-    return [];
-  }
-};
-
 export default function AccountDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [listingTotal, setListingTotal] = useState(0);
+  const [favoritesCount, setFavoritesCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const favorites = useMemo(() => getFavorites(), []);
-  const messages = useMemo(() => getMessages(), []);
-
-  const unreadCount = useMemo(() => messages.reduce((sum, msg) => sum + (msg.unread_count || 0), 0), [messages]);
-
-  useEffect(() => {
+  useEffect(() => {
     let active = true;
-    const fetchStats = async () => {
+    const fetchStats = async () > {
       setLoading(true);
       try {
-        const res = await fetch(`${API}/v1/listings/my?page=1&limit=1`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
-        });
-        if (!res.ok) {
-          throw new Error('Liste yüklenemedi');
-        }
-        const data = await res.json();
+        const headers = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
+        const [listingsRes, favRes, msgRes] = await Promise.all([
+          fetch(`${API}/v1/listings/my?page=1&limit=1`, { headers }),
+          fetch(`${API}/v1/favorites/count`, { headers }),
+          fetch(`${API}/v1/messages/unread-count`, { headers }),
+        ]);
+        if (!listingsRes.ok) throw new Error('Liste yüklenemedi');
+        const listingsData = await listingsRes.json();
+        const favData = favRes.ok ? await favRes.json() : { count: 0 };
+        const msgData = msgRes.ok ? await msgRes.json() : { count: 0 };
         if (active) {
-          setListingTotal(data.pagination?.total || 0);
+          setListingTotal(listingsData.pagination?.total || 0);
+          setFavoritesCount(favData.count || 0);
+          setUnreadCount(msgData.count || 0);
           setError('');
         }
       } catch (err) {
@@ -96,7 +82,7 @@ export default function AccountDashboard() {
         </div>
         <div className="rounded-lg border bg-white p-4" data-testid="account-dashboard-card-favorites">
           <div className="text-xs text-muted-foreground">Favoriler</div>
-          <div className="text-2xl font-semibold" data-testid="account-dashboard-favorites-count">{favorites.length}</div>
+          <div className="text-2xl font-semibold" data-testid="account-dashboard-favorites-count">{favoritesCount}</div>
         </div>
         <div className="rounded-lg border bg-white p-4" data-testid="account-dashboard-card-messages">
           <div className="text-xs text-muted-foreground">Okunmamış Mesaj</div>
