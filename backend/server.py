@@ -1076,6 +1076,216 @@ def _resolve_currency_code(country_code: Optional[str]) -> Optional[str]:
     return settings.COUNTRY_CURRENCIES.get(code)
 
 
+def _parse_datetime_field(value: str, field_name: str) -> datetime:
+    if not value:
+        raise HTTPException(status_code=400, detail=f"{field_name} is required")
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid {field_name}") from exc
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _normalize_str_list(value: Optional[List[str]]) -> Optional[List[str]]:
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        raise HTTPException(status_code=400, detail="List format expected")
+    cleaned = [str(item).strip() for item in value if str(item).strip()]
+    return cleaned or None
+
+
+def _normalize_campaign_payload(payload, existing: Optional[Campaign] = None) -> Dict[str, Any]:
+    type_value = payload.type if hasattr(payload, "type") and payload.type is not None else (existing.type if existing else None)
+    if not type_value:
+        raise HTTPException(status_code=400, detail="type is required")
+    type_value = type_value.lower()
+    if type_value not in CAMPAIGN_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid type")
+    if existing and hasattr(payload, "type") and payload.type and payload.type.lower() != existing.type:
+        raise HTTPException(status_code=400, detail="type cannot be changed")
+
+    scope_value = payload.country_scope if payload.country_scope is not None else (existing.country_scope if existing else "global")
+    scope_value = scope_value.lower()
+    if scope_value not in CAMPAIGN_SCOPE_SET:
+        raise HTTPException(status_code=400, detail="Invalid country_scope")
+
+    country_code = payload.country_code if payload.country_code is not None else (existing.country_code if existing else None)
+    if scope_value == "country":
+        if not country_code:
+            raise HTTPException(status_code=400, detail="country_code is required")
+        country_code = country_code.upper()
+    else:
+        country_code = None
+
+    name = payload.name if payload.name is not None else (existing.name if existing else None)
+    if not name:
+        raise HTTPException(status_code=400, detail="name is required")
+
+    description = payload.description if payload.description is not None else (existing.description if existing else None)
+
+    status_value = payload.status if payload.status is not None else (existing.status if existing else "draft")
+    status_value = status_value.lower()
+    if status_value not in CAMPAIGN_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    target_value = payload.target if payload.target is not None else (existing.target if existing else "discount")
+    target_value = target_value.lower()
+    if target_value not in CAMPAIGN_TARGETS:
+        raise HTTPException(status_code=400, detail="Invalid target")
+
+    start_raw = payload.start_at if payload.start_at is not None else (existing.start_at.isoformat() if existing else None)
+    end_raw = payload.end_at if payload.end_at is not None else (existing.end_at.isoformat() if existing else None)
+    start_at = _parse_datetime_field(start_raw, "start_at")
+    end_at = _parse_datetime_field(end_raw, "end_at")
+    if start_at >= end_at:
+        raise HTTPException(status_code=400, detail="start_at must be before end_at")
+
+    priority_value = payload.priority if payload.priority is not None else (existing.priority if existing else "medium")
+    priority_value = priority_value.lower()
+    if priority_value not in CAMPAIGN_PRIORITY_SET:
+        raise HTTPException(status_code=400, detail="Invalid priority")
+
+    discount_percent = payload.discount_percent if payload.discount_percent is not None else (
+        float(existing.discount_percent) if existing and existing.discount_percent is not None else None
+    )
+    discount_amount = payload.discount_amount if payload.discount_amount is not None else (
+        float(existing.discount_amount) if existing and existing.discount_amount is not None else None
+    )
+    if discount_percent is not None and discount_amount is not None:
+        raise HTTPException(status_code=400, detail="Provide either discount_percent or discount_amount")
+    if discount_percent is not None:
+        if discount_percent < 0 or discount_percent > 100:
+            raise HTTPException(status_code=400, detail="discount_percent out of range")
+    if discount_amount is not None:
+        if discount_amount < 0:
+            raise HTTPException(status_code=400, detail="discount_amount must be >= 0")
+
+    min_listing = payload.min_listing_count if payload.min_listing_count is not None else (
+        existing.min_listing_count if existing else None
+    )
+    max_listing = payload.max_listing_count if payload.max_listing_count is not None else (
+        existing.max_listing_count if existing else None
+    )
+    if min_listing is not None and min_listing < 0:
+        raise HTTPException(status_code=400, detail="min_listing_count must be >= 0")
+    if max_listing is not None and max_listing < 0:
+        raise HTTPException(status_code=400, detail="max_listing_count must be >= 0")
+    if min_listing is not None and max_listing is not None and min_listing > max_listing:
+        raise HTTPException(status_code=400, detail="min_listing_count must be <= max_listing_count")
+
+    eligible_categories = payload.eligible_categories if payload.eligible_categories is not None else (
+        existing.eligible_categories if existing else None
+    )
+    eligible_categories = _normalize_str_list(eligible_categories)
+
+    segment_value = payload.eligible_user_segment if payload.eligible_user_segment is not None else (
+        existing.eligible_user_segment if existing else "all"
+    )
+    segment_value = segment_value.lower()
+    if segment_value not in CAMPAIGN_SEGMENTS:
+        raise HTTPException(status_code=400, detail="Invalid eligible_user_segment")
+
+    eligible_dealer_plan = payload.eligible_dealer_plan if payload.eligible_dealer_plan is not None else (
+        existing.eligible_dealer_plan if existing else "any"
+    )
+    if eligible_dealer_plan:
+        eligible_dealer_plan = eligible_dealer_plan.lower()
+
+    eligible_dealers = payload.eligible_dealers if payload.eligible_dealers is not None else (
+        existing.eligible_dealers if existing else None
+    )
+    eligible_dealers = _normalize_str_list(eligible_dealers)
+
+    eligible_users = payload.eligible_users if payload.eligible_users is not None else (
+        existing.eligible_users if existing else None
+    )
+    eligible_users = _normalize_str_list(eligible_users)
+
+    free_listing_quota_bonus = payload.free_listing_quota_bonus if payload.free_listing_quota_bonus is not None else (
+        existing.free_listing_quota_bonus if existing else None
+    )
+
+    if type_value == "individual":
+        if eligible_dealer_plan not in {None, "any"}:
+            raise HTTPException(status_code=400, detail="eligible_dealer_plan is not valid for individual campaigns")
+        if eligible_dealers:
+            raise HTTPException(status_code=400, detail="eligible_dealers is not valid for individual campaigns")
+        if segment_value == "selected" and not eligible_users:
+            raise HTTPException(status_code=400, detail="eligible_users is required for selected segment")
+    else:
+        if eligible_users:
+            raise HTTPException(status_code=400, detail="eligible_users is not valid for corporate campaigns")
+        if free_listing_quota_bonus:
+            raise HTTPException(status_code=400, detail="free_listing_quota_bonus is not valid for corporate campaigns")
+        if eligible_dealer_plan and eligible_dealer_plan not in CAMPAIGN_DEALER_PLANS:
+            raise HTTPException(status_code=400, detail="Invalid eligible_dealer_plan")
+        if segment_value == "selected" and not eligible_dealers:
+            raise HTTPException(status_code=400, detail="eligible_dealers is required for selected segment")
+
+    discount_currency = None
+    if discount_amount is not None:
+        discount_currency = _resolve_currency_code(country_code)
+        if not discount_currency:
+            raise HTTPException(status_code=400, detail="currency_code unavailable for country")
+
+    return {
+        "type": type_value,
+        "country_scope": scope_value,
+        "country_code": country_code,
+        "name": name,
+        "description": description,
+        "status": status_value,
+        "target": target_value,
+        "start_at": start_at,
+        "end_at": end_at,
+        "priority": priority_value,
+        "discount_percent": discount_percent,
+        "discount_amount": discount_amount,
+        "discount_currency": discount_currency,
+        "min_listing_count": min_listing,
+        "max_listing_count": max_listing,
+        "eligible_categories": eligible_categories,
+        "eligible_user_segment": segment_value,
+        "eligible_dealer_plan": eligible_dealer_plan,
+        "eligible_dealers": eligible_dealers,
+        "eligible_users": eligible_users,
+        "free_listing_quota_bonus": free_listing_quota_bonus,
+    }
+
+
+def _campaign_to_dict(campaign: Campaign) -> Dict[str, Any]:
+    return {
+        "id": str(campaign.id),
+        "type": campaign.type,
+        "country_scope": campaign.country_scope,
+        "country_code": campaign.country_code,
+        "name": campaign.name,
+        "description": campaign.description,
+        "status": campaign.status,
+        "target": campaign.target,
+        "start_at": campaign.start_at.isoformat() if campaign.start_at else None,
+        "end_at": campaign.end_at.isoformat() if campaign.end_at else None,
+        "priority": campaign.priority,
+        "discount_percent": float(campaign.discount_percent) if campaign.discount_percent is not None else None,
+        "discount_amount": float(campaign.discount_amount) if campaign.discount_amount is not None else None,
+        "discount_currency": campaign.discount_currency,
+        "min_listing_count": campaign.min_listing_count,
+        "max_listing_count": campaign.max_listing_count,
+        "eligible_categories": campaign.eligible_categories or [],
+        "eligible_user_segment": campaign.eligible_user_segment,
+        "eligible_dealer_plan": campaign.eligible_dealer_plan,
+        "eligible_dealers": campaign.eligible_dealers or [],
+        "eligible_users": campaign.eligible_users or [],
+        "free_listing_quota_bonus": campaign.free_listing_quota_bonus,
+        "created_by_admin_id": str(campaign.created_by_admin_id) if campaign.created_by_admin_id else None,
+        "created_at": campaign.created_at.isoformat() if campaign.created_at else None,
+        "updated_at": campaign.updated_at.isoformat() if campaign.updated_at else None,
+    }
+
+
 def _check_application_rate_limit(request: Request, user_id: str) -> None:
     key = user_id or _get_client_ip(request) or "unknown"
     now = time.time()
