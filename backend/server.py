@@ -1664,7 +1664,7 @@ ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
 @api_router.get("/health")
 async def health_check(request: Request):
     db = request.app.state.db
-    if not db:
+    if db is None:
         return {"status": "degraded", "supported_countries": SUPPORTED_COUNTRIES, "database": "mongo_disabled"}
     await db.command("ping")
     return {"status": "healthy", "supported_countries": SUPPORTED_COUNTRIES, "database": "mongo"}
