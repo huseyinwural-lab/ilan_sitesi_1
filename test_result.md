@@ -4974,3 +4974,192 @@ Verified all requirements for Support module: user support form submission and a
 
 All data-testids present and functional. Backend APIs responding correctly. Only non-blocking React hydration warnings in console. Support module fully operational and production-ready.
 
+
+## Campaigns V1 UI (DB Not Ready State) Test Results (Feb 20, 2026) ✅ COMPLETE PASS
+
+### Test Summary
+Verified all 4 requirements from review request for Campaigns V1 UI in DB not ready state.
+
+### Test Flow Executed:
+1. ✅ Login as admin (admin@platform.com / Admin123!) → /admin/login successful
+2. ✅ Navigate to /admin/individual-campaigns → DB banner shows, Create button disabled, filters render, empty state shown
+3. ✅ Navigate to /admin/corporate-campaigns → DB banner shows, Create button disabled, filters render, Plan/Dealers column present
+4. ✅ Console errors checked → Only React hydration warnings (non-blocking), no crashes
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Admin Login**: ✅ WORKING
+  - Login successful with admin@platform.com / Admin123!
+  - Successfully authenticated and redirected to /admin
+  - Admin panel accessible
+
+**2. Individual Campaigns Page (/admin/individual-campaigns)**: ✅ ALL REQUIREMENTS MET
+  - **Page Loads**: ✅ data-testid="individual-campaigns-page" found
+  - **DB Banner Shows**: ✅ "DB hazır değil" banner visible
+    - Banner text: "DB hazır değil. Kampanya aksiyonları devre dışı. Ops ekibine DATABASE_URL + migration kontrolü gerekiyor."
+    - data-testid="individual-campaigns-db-banner" present
+  - **Create Button Disabled**: ✅ "Yeni Kampanya" button has disabled attribute
+    - data-testid="individual-campaigns-create-button" found
+    - disabled attribute present
+  - **Filters Render**: ✅ All filter elements present
+    - Search input: data-testid="individual-campaigns-search-input" ✅
+    - Status filter dropdown: data-testid="individual-campaigns-status-filter" ✅
+    - Country filter dropdown: data-testid="individual-campaigns-country-filter" ✅
+    - Start date: data-testid="individual-campaigns-start-date" ✅
+    - End date: data-testid="individual-campaigns-end-date" ✅
+  - **Empty State Shows**: ✅ "Kampanya bulunamadı." message displayed
+    - data-testid="individual-campaigns-empty" present
+
+**3. Corporate Campaigns Page (/admin/corporate-campaigns)**: ✅ ALL REQUIREMENTS MET
+  - **Page Loads**: ✅ data-testid="corporate-campaigns-page" found
+  - **DB Banner Shows**: ✅ "DB hazır değil" banner visible
+    - Banner text: "DB hazır değil. Kampanya aksiyonları devre dışı. Ops ekibine DATABASE_URL + migration kontrolü gerekiyor."
+    - data-testid="corporate-campaigns-db-banner" present
+  - **Create Button Disabled**: ✅ "Yeni Kampanya" button has disabled attribute
+    - data-testid="corporate-campaigns-create-button" found
+    - disabled attribute present
+  - **Filters Render**: ✅ All filter elements present
+    - Search input: data-testid="corporate-campaigns-search-input" ✅
+    - Status filter dropdown: data-testid="corporate-campaigns-status-filter" ✅
+    - Country filter dropdown: data-testid="corporate-campaigns-country-filter" ✅
+    - Start date: data-testid="corporate-campaigns-start-date" ✅
+    - End date: data-testid="corporate-campaigns-end-date" ✅
+  - **Plan/Dealers Column Present**: ✅ Table header found
+    - data-testid="corporate-campaigns-header-plan" present
+    - Header text: "Plan/Dealers"
+  - **Empty State Shows**: ✅ "Kampanya bulunamadı." message displayed
+    - data-testid="corporate-campaigns-empty" present
+
+**4. Console Errors Check**: ✅ NO CRASHES DETECTED
+  - **React Hydration Warnings**: ⚠️ 10 non-blocking warnings (expected)
+    - `<span>` cannot be child of `<option>` (in filter dropdowns)
+    - `<span>` cannot be child of `<select>` (in filter dropdowns)
+    - `<th>` cannot be child of `<span>` (in table headers)
+    - `<tr>` cannot be child of `<span>` (in table rows)
+    - `<span>` cannot be child of `<tbody>` (in table body)
+    - These are existing hydration issues present across admin panel, not specific to campaigns
+  - **API Health Endpoint**: ✅ Returns 520 as expected
+    - Error: "Failed to load resource: the server responded with a status of 520 () at https://support-queue-2.preview.emergentagent.com/api/health/db"
+    - Appears twice (once for each campaigns page)
+    - Note from review request: "backend /admin/campaigns returns 503 (DB_NOT_READY) and external proxy may show 520"
+  - **UI Handling**: ✅ UI gracefully handles 520/503 error
+    - Shows DB banner instead of crashing
+    - Disables Create button and other actions
+    - Displays appropriate empty state
+  - **No React Error Overlay**: ✅ No error overlay detected
+  - **No Critical JavaScript Errors**: ✅ No errors that break functionality
+
+### Backend API Behavior Verification:
+
+#### API Endpoint: `/api/health/db`
+- **Expected Response**: 503 (DB_NOT_READY) or 520 (from external proxy)
+- **Actual Response**: 520 from external proxy ✅
+- **Frontend Handling**: ✅ Sets `dbReady = false`, triggers banner display and button disabling
+
+#### Component Logic Verification (CampaignsManager.js):
+- **Line 146-153**: `checkDbReady()` function calls `/api/health/db`
+- **Line 132**: `dbReady` state initialized as `false`
+- **Line 144**: `disabled` computed as `!dbReady`
+- **Line 341-345**: DB banner shown when `!dbReady` ✅
+- **Line 352**: Create button disabled when `disabled === true` ✅
+- **Line 164-172**: `fetchCampaigns()` returns early when `!dbReady`, sets empty items array ✅
+
+### Screenshots Captured:
+1. **individual-campaigns-db-not-ready.png**: Individual Campaigns page showing:
+   - DB banner with "DB hazır değil" text
+   - Disabled "Yeni Kampanya" button (grayed out)
+   - All filters rendered and visible
+   - Empty state message "Kampanya bulunamadı."
+
+2. **corporate-campaigns-db-not-ready.png**: Corporate Campaigns page showing:
+   - DB banner with "DB hazır değil" text
+   - Disabled "Yeni Kampanya" button (grayed out)
+   - All filters rendered and visible
+   - "Plan/Dealers" column header in table
+   - Empty state message "Kampanya bulunamadı."
+
+### Data-testids Verified:
+All required data-testids present and functional:
+
+**Individual Campaigns**:
+- ✅ `individual-campaigns-page`: Main page container
+- ✅ `individual-campaigns-db-banner`: DB not ready warning banner
+- ✅ `individual-campaigns-create-button`: Create button (disabled)
+- ✅ `individual-campaigns-filters`: Filters section container
+- ✅ `individual-campaigns-search-input`: Search input field
+- ✅ `individual-campaigns-status-filter`: Status dropdown
+- ✅ `individual-campaigns-country-filter`: Country dropdown
+- ✅ `individual-campaigns-start-date`: Start date picker
+- ✅ `individual-campaigns-end-date`: End date picker
+- ✅ `individual-campaigns-table`: Table container
+- ✅ `individual-campaigns-empty`: Empty state message
+- ✅ `individual-campaigns-header-users`: Users column header
+
+**Corporate Campaigns**:
+- ✅ `corporate-campaigns-page`: Main page container
+- ✅ `corporate-campaigns-db-banner`: DB not ready warning banner
+- ✅ `corporate-campaigns-create-button`: Create button (disabled)
+- ✅ `corporate-campaigns-filters`: Filters section container
+- ✅ `corporate-campaigns-search-input`: Search input field
+- ✅ `corporate-campaigns-status-filter`: Status dropdown
+- ✅ `corporate-campaigns-country-filter`: Country dropdown
+- ✅ `corporate-campaigns-start-date`: Start date picker
+- ✅ `corporate-campaigns-end-date`: End date picker
+- ✅ `corporate-campaigns-table`: Table container
+- ✅ `corporate-campaigns-empty`: Empty state message
+- ✅ `corporate-campaigns-header-plan`: Plan/Dealers column header
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (4/4 core requirements verified)
+- **Admin Login**: ✅ WORKING
+- **Individual Campaigns Page**: ✅ WORKING (banner, disabled button, filters, empty state)
+- **Corporate Campaigns Page**: ✅ WORKING (banner, disabled button, filters, Plan/Dealers column, empty state)
+- **Console Errors**: ✅ NO CRASHES (only non-blocking hydration warnings)
+- **API Error Handling**: ✅ WORKING (520 error handled gracefully)
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - Campaigns V1 UI (DB not ready state) 100% successful
+- **All Required Elements**: ✅ PRESENT (banners, disabled buttons, filters, empty states, Plan/Dealers column)
+- **Error Handling**: ✅ ROBUST (520/503 errors don't crash UI)
+- **User Experience**: ✅ CLEAR (informative banner explains issue and suggests ops action)
+- **No Critical Issues**: ✅ CONFIRMED (only existing React hydration warnings)
+- **Production Ready**: ✅ CONFIRMED
+
+### Agent Communication:
+- **Agent**: testing
+- **Message**: Campaigns V1 UI (DB not ready state) test SUCCESSFULLY COMPLETED. All requirements from review request verified and passing (100% success rate).
+
+**Individual Campaigns Page (/admin/individual-campaigns)**:
+  - ✅ DB banner shows: "DB hazır değil. Kampanya aksiyonları devre dışı. Ops ekibine DATABASE_URL + migration kontrolü gerekiyor."
+  - ✅ Create button ("Yeni Kampanya") is disabled with disabled attribute
+  - ✅ Filters render: search input, status dropdown, country dropdown, date pickers all present
+  - ✅ Table shows empty state: "Kampanya bulunamadı."
+
+**Corporate Campaigns Page (/admin/corporate-campaigns)**:
+  - ✅ DB banner shows: "DB hazır değil. Kampanya aksiyonları devre dışı. Ops ekibine DATABASE_URL + migration kontrolü gerekiyor."
+  - ✅ Create button ("Yeni Kampanya") is disabled with disabled attribute
+  - ✅ Filters render: search input, status dropdown, country dropdown, date pickers all present
+  - ✅ Table columns include "Plan/Dealers" header (data-testid="corporate-campaigns-header-plan")
+  - ✅ Table shows empty state: "Kampanya bulunamadı."
+
+**Console Errors**:
+  - ✅ No crashes detected - no React error overlay present
+  - ⚠️ 10 React 19 hydration warnings (non-blocking, existing across admin panel): `<span>` in `<option>`, `<select>`, `<tbody>`, etc.
+  - ✅ API health endpoint returns 520 as noted in review request (external proxy behavior)
+  - ✅ UI handles 520/503 gracefully without crashing - shows banner and disables actions
+
+**Key Implementation Details**:
+  - Component uses `checkDbReady()` function to check `/api/health/db` endpoint
+  - When endpoint returns 520/503, `dbReady` state is set to `false`
+  - Banner conditionally renders when `!dbReady` (line 341-345)
+  - Create button gets `disabled` prop when `!dbReady` (line 352)
+  - `fetchCampaigns()` returns early with empty array when `!dbReady` (line 164-172)
+  - All data-testids present and correctly applied
+
+All screenshots captured showing DB banner, disabled buttons, rendered filters, and empty states. Campaigns V1 UI gracefully handles DB not ready state as designed.
+
+---
+
+
