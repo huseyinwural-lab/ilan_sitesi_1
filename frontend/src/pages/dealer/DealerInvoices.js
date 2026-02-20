@@ -216,8 +216,24 @@ export default function DealerInvoices() {
                 <tr key={inv.id} className="border-t" data-testid={`dealer-invoices-row-${inv.id}`}>
                   <td className="px-3 py-2" data-testid={`dealer-invoices-no-${inv.id}`}>{inv.invoice_no || '-'}</td>
                   <td className="px-3 py-2" data-testid={`dealer-invoices-amount-${inv.id}`}>{inv.amount} {inv.currency_code}</td>
-                  <td className="px-3 py-2" data-testid={`dealer-invoices-status-${inv.id}`}>{inv.status}</td>
-                  <td className="px-3 py-2" data-testid={`dealer-invoices-payment-${inv.id}`}>{inv.payment_status || '-'}</td>
+                  <td className="px-3 py-2" data-testid={`dealer-invoices-status-${inv.id}`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolveStatusBadgeClass(inv.status)}`}
+                      data-testid={`dealer-invoices-status-badge-${inv.id}`}
+                      title={resolveInvoiceTooltip(inv)}
+                    >
+                      {inv.status}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2" data-testid={`dealer-invoices-payment-${inv.id}`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolvePaymentBadgeClass(inv.payment_status)}`}
+                      data-testid={`dealer-invoices-payment-badge-${inv.id}`}
+                      title={resolvePaymentTooltip(inv)}
+                    >
+                      {inv.payment_status || '-'}
+                    </span>
+                  </td>
                   <td className="px-3 py-2" data-testid={`dealer-invoices-due-${inv.id}`}>{formatDate(inv.due_at)}</td>
                   <td className="px-3 py-2 text-right" data-testid={`dealer-invoices-actions-${inv.id}`}>
                     <button
