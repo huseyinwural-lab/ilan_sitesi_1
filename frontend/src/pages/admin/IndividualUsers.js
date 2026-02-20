@@ -181,6 +181,17 @@ export default function IndividualUsers() {
           <div className="text-xs text-muted-foreground" data-testid="individual-users-result-count">
             {resultLabel}
           </div>
+          {canExport && (
+            <button
+              type="button"
+              className="h-10 px-4 rounded-md border text-sm inline-flex items-center gap-2"
+              onClick={handleExport}
+              disabled={exporting}
+              data-testid="individual-users-export-button"
+            >
+              <Download size={16} /> {exporting ? "Dışa Aktarılıyor" : "CSV Export"}
+            </button>
+          )}
         </form>
 
         <div className="grid gap-3 md:grid-cols-2" data-testid="individual-users-filters">
