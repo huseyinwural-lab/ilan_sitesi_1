@@ -78,7 +78,7 @@ const AdminVehicleModels = () => {
 
   useEffect(() => {
     fetchItems();
-  }, [filterMake, urlCountry]);
+  }, [filterMake, filterType, urlCountry]);
 
   const openCreate = () => {
     setEditing(null);
