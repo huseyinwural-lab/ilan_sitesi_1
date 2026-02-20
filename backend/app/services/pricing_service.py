@@ -167,7 +167,9 @@ class PricingService:
         # Calculate Tax
         tax_amount = result.charge_amount * (result.vat_rate / Decimal("100.00"))
         result.gross_amount = result.charge_amount + tax_amount
-        
+
+        result = await self.apply_campaign_discount(result, dealer_id, country, now)
+
         return result
 
     async def commit_usage(self, calculation: CalculationResult, listing_id: str, dealer_id: str, user_id: str, invoice_id: Optional[str] = None):
