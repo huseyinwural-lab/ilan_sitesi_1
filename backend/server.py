@@ -1572,6 +1572,16 @@ async def health_check(request: Request):
     return {"status": "healthy", "supported_countries": SUPPORTED_COUNTRIES, "database": "mongo"}
 
 
+@api_router.get("/health/db")
+async def health_db():
+    try:
+        async with sql_engine.connect() as conn:
+            await conn.execute(select(1))
+        return {"status": "healthy", "database": "postgres"}
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Database unavailable") from exc
+
+
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin, request: Request):
     db = request.app.state.db
