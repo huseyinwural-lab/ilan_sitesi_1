@@ -3299,12 +3299,7 @@ async def list_campaigns(
     )
     rows = result.scalars().all()
 
-    items = []
-    for row in rows:
-        row_dict = _campaign_to_dict(row)
-        row_dict["eligible_dealers_count"] = len(row.eligible_dealers or [])
-        row_dict["eligible_users_count"] = len(row.eligible_users or [])
-        items.append(row_dict)
+    items = [_campaign_to_dict(row) for row in rows]
 
     total_pages = max(1, (total_count + safe_limit - 1) // safe_limit)
 
