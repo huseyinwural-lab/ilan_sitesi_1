@@ -7485,10 +7485,12 @@ async def admin_list_payments(
     await _ensure_invoices_db_ready(session)
 
     conditions = []
+    base_query = select(Payment)
     if country:
         country_code = country.upper()
         if country_code != "GLOBAL":
             _assert_country_scope(country_code, current_user)
+        base_query = select(Payment).join(AdminInvoice, Payment.invoice_id == AdminInvoice.id)
         conditions.append(AdminInvoice.country_code == country_code)
 
     if dealer:
