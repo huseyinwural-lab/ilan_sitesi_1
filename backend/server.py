@@ -453,6 +453,8 @@ async def lifespan(app: FastAPI):
     # Indexes
     await db.users.create_index("email", unique=True)
     await db.users.create_index("id", unique=True)
+    await db.admin_invites.create_index("token_hash", unique=True)
+    await db.admin_invites.create_index("email")
     await db.countries.create_index("code", unique=True)
     await db.countries.create_index("id", unique=True)
     await db.vehicle_listings.create_index("id", unique=True)
