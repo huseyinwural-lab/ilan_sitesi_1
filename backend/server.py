@@ -1690,8 +1690,13 @@ async def health_db():
 
 
 @api_router.post("/auth/login", response_model=TokenResponse)
-async def login(credentials: UserLogin, request: Request):
+async def login(
+    credentials: UserLogin,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
     db = request.app.state.db
+    auth_repo = _get_auth_repository(db, session)
 
     email = (credentials.email or "").lower().strip()
     ip_address = _get_client_ip(request)
