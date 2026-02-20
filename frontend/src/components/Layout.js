@@ -209,7 +209,7 @@ export default function Layout({ children }) {
     { divider: true, label: 'Finans', roles: roles.finance },
     { path: '/admin/plans', icon: Star, label: 'Planlar', roles: roles.finance, testId: 'finance-plans' },
     { path: '/admin/invoices', icon: FileText, label: 'Faturalar', roles: roles.finance, testId: 'finance-invoices' },
-    { path: '/admin/billing', icon: FileText, label: 'Ödemeler', roles: roles.finance, comingSoon: true, testId: 'finance-billing' },
+    { path: '/admin/payments', icon: Activity, label: 'Ödemeler', roles: roles.finance, testId: 'finance-payments' },
     { path: '/admin/tax-rates', icon: Percent, label: 'Vergi Oranları', roles: roles.finance, testId: 'finance-tax-rates' },
 
     { divider: true, label: 'Sistem', roles: roles.system },
