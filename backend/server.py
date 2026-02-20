@@ -1909,7 +1909,7 @@ async def suspend_user(
     user_id: str,
     request: Request,
     payload: Optional[AdminUserActionPayload] = None,
-    current_user=Depends(check_permissions(["super_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "moderator"])),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
@@ -1921,13 +1921,48 @@ async def suspend_user(
     if not user or user.get("deleted_at"):
         raise HTTPException(status_code=404, detail="User not found")
 
+    if user.get("role") in ADMIN_ROLE_OPTIONS:
+        raise HTTPException(status_code=400, detail="Admin accounts must be managed in Admin Users")
+
+    reason_code, reason_detail = _extract_moderation_reason(payload)
+    if not reason_code:
+        raise HTTPException(status_code=400, detail="Reason is required")
+
+    suspension_until = _parse_suspension_until(payload.suspension_until if payload else None)
+
     await _assert_super_admin_invariant(db, user, None, False, current_user)
 
     now_iso = datetime.now(timezone.utc).isoformat()
-    await db.users.update_one(
-        {"id": user_id},
-        {"$set": {"status": "suspended", "is_active": False, "updated_at": now_iso}},
-    )
+    before_state = {
+        "status": user.get("status"),
+        "is_active": user.get("is_active", True),
+        "suspension_until": user.get("suspension_until"),
+        "deleted_at": user.get("deleted_at"),
+    }
+
+    update_ops: Dict[str, Any] = {
+        "$set": {
+            "status": "suspended",
+            "is_active": False,
+            "updated_at": now_iso,
+        }
+    }
+    if suspension_until:
+        update_ops["$set"]["suspension_until"] = suspension_until
+    else:
+        update_ops["$unset"] = {"suspension_until": ""}
+
+    if user.get("role") == "dealer":
+        update_ops["$set"]["dealer_status"] = "suspended"
+
+    await db.users.update_one({"id": user_id}, update_ops)
+
+    after_state = {
+        **before_state,
+        "status": "suspended",
+        "is_active": False,
+        "suspension_until": suspension_until,
+    }
 
     audit_entry = await build_audit_entry(
         event_type="user_suspended",
@@ -1935,7 +1970,13 @@ async def suspend_user(
         target_id=user_id,
         target_type="user",
         country_code=user.get("country_code"),
-        details={"reason": payload.reason if payload else None},
+        details={
+            "reason_code": reason_code,
+            "reason_detail": reason_detail,
+            "suspension_until": suspension_until,
+            "before": before_state,
+            "after": after_state,
+        },
         request=request,
     )
     audit_entry["action"] = "user_suspended"
