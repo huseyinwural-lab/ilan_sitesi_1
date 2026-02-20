@@ -1985,6 +1985,15 @@ EXPORT_RATE_LIMIT_WINDOW_SECONDS = 60
 EXPORT_RATE_LIMIT_MAX_ATTEMPTS = 10
 _export_attempts: Dict[str, List[float]] = {}
 
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY")
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY")
+VAPID_SUBJECT = os.environ.get("VAPID_SUBJECT")
+PUSH_ENABLED = bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY and VAPID_SUBJECT)
+if PUSH_ENABLED:
+    logging.getLogger("push_config").info("push config loaded")
+else:
+    logging.getLogger("push_config").warning("push config not set")
+
 
 class MessageConnectionManager:
     def __init__(self):
