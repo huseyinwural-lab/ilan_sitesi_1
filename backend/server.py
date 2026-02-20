@@ -1730,24 +1730,23 @@ async def login(
             detail={"code": "RATE_LIMITED", "retry_after_seconds": retry_after_seconds},
         )
 
-    user = await db.users.find_one({"email": email}, {"_id": 0})
+    user = await auth_repo.get_user_by_email(email)
     if not user or not verify_password(credentials.password, user.get("hashed_password", "")):
-        # FAILED_LOGIN audit (always)
-        await db.audit_logs.insert_one(
-            {
-                "id": str(uuid.uuid4()),
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "event_type": "FAILED_LOGIN",
-                "action": "FAILED_LOGIN",
-                "resource_type": "auth",
-                "resource_id": None,
-                "email": email,
-
-
-                "ip_address": ip_address,
-                "user_agent": user_agent,
-            }
-        )
+        if db:
+            # FAILED_LOGIN audit (always)
+            await db.audit_logs.insert_one(
+                {
+                    "id": str(uuid.uuid4()),
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "event_type": "FAILED_LOGIN",
+                    "action": "FAILED_LOGIN",
+                    "resource_type": "auth",
+                    "resource_id": None,
+                    "email": email,
+                    "ip_address": ip_address,
+                    "user_agent": user_agent,
+                }
+            )
 
         # Update attempts window
         attempts = _failed_login_attempts.get(rl_key, [])
@@ -1759,8 +1758,6 @@ async def login(
         if len(attempts) > FAILED_LOGIN_MAX_ATTEMPTS:
             _failed_login_blocked_until[rl_key] = now + FAILED_LOGIN_BLOCK_SECONDS
             _failed_login_block_audited[rl_key] = False
-
-
 
         raise HTTPException(status_code=401, detail={"code": "INVALID_CREDENTIALS"})
 
