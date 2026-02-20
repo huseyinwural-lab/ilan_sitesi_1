@@ -1449,6 +1449,8 @@ async def login(credentials: UserLogin, request: Request):
 
         raise HTTPException(status_code=401, detail={"code": "INVALID_CREDENTIALS"})
 
+    user = await _auto_reactivate_if_expired(user, db, request)
+
     if user.get("deleted_at"):
         raise HTTPException(status_code=403, detail="User account deleted")
     if user.get("status") == "suspended" or not user.get("is_active", True):
