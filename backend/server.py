@@ -1811,7 +1811,7 @@ _export_attempts: Dict[str, List[float]] = {}
 ADMIN_INVITE_RATE_LIMIT_WINDOW_SECONDS = 60
 ADMIN_INVITE_RATE_LIMIT_MAX_ATTEMPTS = 5
 
-ADMIN_ROLE_OPTIONS = {"super_admin", "country_admin", "finance", "support", "moderator", "campaigns_admin", "campaigns_supervisor"}
+ADMIN_ROLE_OPTIONS = {"super_admin", "country_admin", "finance", "support", "moderator", "campaigns_admin", "campaigns_supervisor", "ROLE_AUDIT_VIEWER"}
 
 CAMPAIGN_TYPES = {"individual", "corporate"}
 CAMPAIGN_STATUSES = {"draft", "active", "paused", "archived"}
