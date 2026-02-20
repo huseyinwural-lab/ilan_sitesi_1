@@ -114,6 +114,7 @@ class UserResponse(BaseModel):
     preferred_language: str = "tr"
     is_active: bool = True
     is_verified: bool = True
+    deleted_at: Optional[str] = None
     created_at: str
     last_login: Optional[str] = None
     invite_status: Optional[str] = None
