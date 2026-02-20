@@ -40,7 +40,12 @@ class SqlApplicationsRepository(ApplicationsRepository):
         application_uuid = uuid.uuid4()
         now = datetime.now(timezone.utc)
         user_id_raw = current_user.get("id")
-        user_uuid = uuid.UUID(str(user_id_raw)) if user_id_raw else None
+        user_uuid = None
+        if user_id_raw:
+            try:
+                user_uuid = uuid.UUID(str(user_id_raw))
+            except ValueError:
+                user_uuid = None
 
         application = Application(
             id=application_uuid,
