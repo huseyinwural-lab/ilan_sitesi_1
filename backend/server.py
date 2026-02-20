@@ -8628,6 +8628,10 @@ async def admin_create_vehicle_model(
     if not SLUG_PATTERN.match(slug):
         raise HTTPException(status_code=400, detail="slug format invalid")
 
+    vehicle_type = _normalize_vehicle_type(payload.vehicle_type)
+    if not vehicle_type or vehicle_type not in VEHICLE_TYPE_SET:
+        raise HTTPException(status_code=400, detail="vehicle_type invalid")
+
     make = await db.vehicle_makes.find_one({"id": payload.make_id}, {"_id": 0, "id": 1, "country_code": 1})
     if not make:
         raise HTTPException(status_code=400, detail="make_id not found")
@@ -8639,6 +8643,8 @@ async def admin_create_vehicle_model(
         "make_id": payload.make_id,
         "name": payload.name.strip(),
         "slug": slug,
+        "vehicle_type": vehicle_type,
+        "country_code": make.get("country_code"),
         "active_flag": payload.active_flag if payload.active_flag is not None else True,
         "created_at": now_iso,
         "updated_at": now_iso,
@@ -8653,7 +8659,7 @@ async def admin_create_vehicle_model(
         "subject_id": model_id,
         "action": "create",
         "created_at": now_iso,
-        "metadata": {"slug": doc["slug"], "name": doc["name"], "make_id": payload.make_id},
+        "metadata": {"slug": doc["slug"], "name": doc["name"], "make_id": payload.make_id, "vehicle_type": vehicle_type},
     }
     await db.audit_logs.insert_one(audit_doc)
     try:
