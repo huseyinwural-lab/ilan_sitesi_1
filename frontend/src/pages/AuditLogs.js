@@ -190,7 +190,7 @@ export default function AuditLogs() {
   const fetchLogs = async () => {
     if (!dbReady) {
       setItems([]);
-      setPagination((prev) => ({ ...prev, total: 0 }));
+      setPagination((prev) => ({ ...prev, total: 0, page: 0 }));
       setLoading(false);
       return;
     }
