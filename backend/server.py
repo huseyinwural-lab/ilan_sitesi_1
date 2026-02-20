@@ -2744,6 +2744,61 @@ async def assign_support_application(
     return {"ok": True, "assigned_admin": assigned_admin}
 
 
+@api_router.patch("/admin/applications/{application_id}/status")
+async def update_support_application_status(
+    application_id: str,
+    payload: SupportApplicationStatusPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    db = request.app.state.db
+
+    try:
+        application_uuid = uuid.UUID(application_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid application id") from exc
+
+    result = await session.execute(select(Application).where(Application.id == application_uuid))
+    application = result.scalar_one_or_none()
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    new_status = (payload.status or "").lower().strip()
+    if new_status not in APPLICATION_STATUS_SET:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    current_status = application.status
+    if new_status == current_status:
+        raise HTTPException(status_code=400, detail="Status already set")
+
+    allowed_transitions = APPLICATION_STATUS_TRANSITIONS.get(current_status, set())
+    if new_status not in allowed_transitions:
+        raise HTTPException(status_code=400, detail="Invalid status transition")
+
+    before_state = {"status": current_status}
+    application.status = new_status
+    application.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+
+    audit_entry = await build_audit_entry(
+        event_type="APPLICATION_STATUS_UPDATED",
+        actor=current_user,
+        target_id=str(application.id),
+        target_type="application",
+        country_code=current_user.get("country_code"),
+        details={
+            "before": before_state,
+            "after": {"status": new_status},
+        },
+        request=request,
+    )
+    audit_entry["action"] = "APPLICATION_STATUS_UPDATED"
+    await db.audit_logs.insert_one(audit_entry)
+
+    return {"ok": True, "status": new_status}
+
+
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(request: Request, current_user=Depends(get_current_user)):
     db = request.app.state.db
