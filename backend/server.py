@@ -1623,7 +1623,7 @@ async def _send_message_notification_email(db, recipient_id: str, thread: dict, 
         return
 
     recipient = await db.users.find_one({"id": recipient_id}, {"_id": 0})
-    if not recipient:
+    if not recipient or not recipient.get("email"):
         return
 
     prefs = recipient.get("notification_prefs") or {}
