@@ -92,6 +92,8 @@ export default function AdminUsers() {
     []
   );
 
+  const canDelete = currentUser?.role === 'super_admin';
+
   const fetchCountries = async () => {
     try {
       const res = await axios.get(`${API}/admin/countries`, { headers: authHeader });
