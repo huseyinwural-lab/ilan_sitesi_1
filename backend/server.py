@@ -2490,69 +2490,63 @@ async def get_me(current_user=Depends(get_current_user)):
     return _user_to_response(current_user)
 
 
-@api_router.post("/support/applications")
+@api_router.post("/applications")
 async def create_support_application(
     payload: SupportApplicationCreatePayload,
     request: Request,
     current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
 
-    if not payload.kvkk_consent:
-        raise HTTPException(status_code=400, detail="KVKK consent required")
+    _check_application_rate_limit(request, current_user.get("id"))
 
-    category = (payload.category or "").lower().strip()
-    if category not in {"complaint", "request"}:
-        raise HTTPException(status_code=400, detail="Invalid category")
+    request_type = (payload.request_type or "complaint").lower().strip()
+    if request_type not in APPLICATION_REQUEST_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid request_type")
+
+    subject = (payload.subject or "").strip()
+    description = (payload.description or "").strip()
+    if not subject or not description:
+        raise HTTPException(status_code=400, detail="Subject and description are required")
+
+    attachment_name = payload.attachment_name.strip() if payload.attachment_name else None
+    attachment_url = _validate_attachment_url(payload.attachment_url)
 
     application_type = "dealer" if current_user.get("role") == "dealer" else "individual"
 
-    company_name = payload.company_name or current_user.get("company_name")
-    if application_type == "dealer" and not company_name:
-        raise HTTPException(status_code=400, detail="Company name required")
+    user_uuid = await _ensure_sql_user(session, current_user)
 
-    contact_name = _resolve_contact_name(current_user)
-    applicant_name = current_user.get("full_name") or contact_name or current_user.get("email")
+    now = datetime.now(timezone.utc)
+    application = Application(
+        id=uuid.uuid4(),
+        user_id=user_uuid,
+        application_type=application_type,
+        request_type=request_type,
+        subject=subject,
+        description=_sanitize_text(description),
+        attachment_name=attachment_name,
+        attachment_url=attachment_url,
+        priority="medium",
+        status="open",
+        assigned_admin_id=None,
+        created_at=now,
+        updated_at=now,
+    )
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    application_id = str(uuid.uuid4())
-    attachments = [att.dict() for att in payload.attachments or []]
-
-    application_doc = {
-        "id": application_id,
-        "application_id": application_id,
-        "user_id": current_user.get("id"),
-        "application_type": application_type,
-        "category": category,
-        "subject": payload.subject,
-        "description": payload.description,
-        "attachments": attachments,
-        "listing_id": payload.listing_id,
-        "status": "pending",
-        "priority": "medium",
-        "assigned_to": None,
-        "decision_reason": None,
-        "company_name": company_name,
-        "tax_number": payload.tax_number,
-        "created_at": now_iso,
-        "updated_at": now_iso,
-        "applicant_name": applicant_name,
-        "applicant_company_name": company_name if application_type == "dealer" else None,
-        "applicant_email": current_user.get("email"),
-        "applicant_country": current_user.get("country_code"),
-    }
-
-    await db.support_applications.insert_one(application_doc)
+    session.add(application)
+    await session.commit()
+    await session.refresh(application)
 
     await _create_inapp_notification(
         db,
         current_user.get("id"),
-        f"Başvurunuz alındı. Referans: {application_id}",
-        {"application_id": application_id},
+        f"Başvurunuz alındı. Referans: {application.id}",
+        {"application_id": str(application.id)},
     )
-    _send_support_received_email(current_user.get("email"), application_id, payload.subject)
+    _send_support_received_email(current_user.get("email"), str(application.id), subject)
 
-    return {"application_id": application_id}
+    return {"application_id": str(application.id)}
 
 
 @api_router.get("/admin/applications")
