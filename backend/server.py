@@ -1480,6 +1480,7 @@ async def create_admin_user(
         "full_name": payload.full_name.strip(),
         "role": role_value,
         "country_scope": country_scope,
+        "status": "active",
         "is_active": bool(payload.is_active),
         "is_verified": False,
         "invite_status": "pending",
