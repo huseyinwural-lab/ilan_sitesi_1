@@ -3711,6 +3711,363 @@ async def get_my_support_application(
 
     raise HTTPException(status_code=503, detail="Applications provider not available")
 
+
+async def _get_message_thread_or_404(db, thread_id: str, current_user_id: str) -> dict:
+    thread = await db.message_threads.find_one({"id": thread_id}, {"_id": 0})
+    if not thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    if current_user_id not in (thread.get("participants") or []):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return thread
+
+
+@api_router.get("/v1/favorites")
+async def list_favorites(request: Request, current_user=Depends(get_current_user)):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+
+    favorites = (
+        await db.favorites.find({"user_id": current_user.get("id")}, {"_id": 0})
+        .sort("created_at", -1)
+        .to_list(length=500)
+    )
+    listing_ids = [fav.get("listing_id") for fav in favorites if fav.get("listing_id")]
+    listings = []
+    if listing_ids:
+        listings = await db.vehicle_listings.find({"id": {"$in": listing_ids}}, {"_id": 0}).to_list(length=len(listing_ids))
+    listing_map = {listing.get("id"): listing for listing in listings}
+
+    items = []
+    for fav in favorites:
+        snapshot = _build_listing_snapshot(listing_map.get(fav.get("listing_id")))
+        items.append(
+            {
+                "id": fav.get("id"),
+                "created_at": fav.get("created_at"),
+                **snapshot,
+            }
+        )
+
+    return {"items": items}
+
+
+@api_router.get("/v1/favorites/count")
+async def favorites_count(request: Request, current_user=Depends(get_current_user)):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+    count = await db.favorites.count_documents({"user_id": current_user.get("id")})
+    return {"count": count}
+
+
+@api_router.get("/v1/favorites/{listing_id}")
+async def favorite_state(listing_id: str, request: Request, current_user=Depends(get_current_user)):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+    exists = await db.favorites.find_one({"user_id": current_user.get("id"), "listing_id": listing_id}, {"_id": 0})
+    return {"is_favorite": bool(exists)}
+
+
+@api_router.post("/v1/favorites/{listing_id}")
+async def add_favorite(listing_id: str, request: Request, current_user=Depends(get_current_user)):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+
+    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    fav_id = str(uuid.uuid4())
+    await db.favorites.update_one(
+        {"user_id": current_user.get("id"), "listing_id": listing_id},
+        {"$setOnInsert": {"id": fav_id, "created_at": now_iso}},
+        upsert=True,
+    )
+    return {"ok": True, "is_favorite": True}
+
+
+@api_router.delete("/v1/favorites/{listing_id}")
+async def remove_favorite(listing_id: str, request: Request, current_user=Depends(get_current_user)):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+    await db.favorites.delete_one({"user_id": current_user.get("id"), "listing_id": listing_id})
+    return {"ok": True, "is_favorite": False}
+
+
+@api_router.post("/v1/messages/threads")
+async def create_message_thread(
+    payload: MessageThreadCreatePayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+
+    listing = await db.vehicle_listings.find_one({"id": payload.listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    seller_id = listing.get("created_by")
+    buyer_id = current_user.get("id")
+    if not seller_id or not buyer_id:
+        raise HTTPException(status_code=400, detail="Invalid participants")
+    if seller_id == buyer_id:
+        raise HTTPException(status_code=400, detail="Cannot message your own listing")
+
+    existing = await db.message_threads.find_one(
+        {"listing_id": payload.listing_id, "participants": {"$all": [buyer_id, seller_id]}},
+        {"_id": 0},
+    )
+    if existing:
+        return {"thread": _build_thread_summary(existing, buyer_id)}
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    snapshot = _build_listing_snapshot(listing)
+    thread_doc = {
+        "id": str(uuid.uuid4()),
+        "listing_id": payload.listing_id,
+        "listing_title": snapshot.get("listing_title"),
+        "listing_image": snapshot.get("listing_image"),
+        "participants": [buyer_id, seller_id],
+        "created_at": now_iso,
+        "updated_at": now_iso,
+        "last_message": None,
+        "last_message_at": None,
+        "unread_counts": {buyer_id: 0, seller_id: 0},
+    }
+    await db.message_threads.insert_one(thread_doc)
+    return {"thread": _build_thread_summary(thread_doc, buyer_id)}
+
+
+@api_router.get("/v1/messages/threads")
+async def list_message_threads(
+    request: Request,
+    current_user=Depends(get_current_user),
+    page: int = 1,
+    limit: int = 30,
+):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+
+    safe_page = max(1, int(page))
+    safe_limit = min(100, max(1, int(limit)))
+    skip = (safe_page - 1) * safe_limit
+
+    cursor = (
+        db.message_threads.find({"participants": current_user.get("id")}, {"_id": 0})
+        .sort("last_message_at", -1)
+        .skip(skip)
+        .limit(safe_limit)
+    )
+    threads = await cursor.to_list(length=safe_limit)
+    total = await db.message_threads.count_documents({"participants": current_user.get("id")})
+
+    items = [_build_thread_summary(thread, current_user.get("id")) for thread in threads]
+    return {"items": items, "pagination": {"total": total, "page": safe_page, "limit": safe_limit}}
+
+
+@api_router.get("/v1/messages/unread-count")
+async def message_unread_count(request: Request, current_user=Depends(get_current_user)):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+
+    threads = await db.message_threads.find({"participants": current_user.get("id")}, {"_id": 0}).to_list(length=500)
+    total = 0
+    for thread in threads:
+        unread = (thread.get("unread_counts") or {}).get(current_user.get("id"), 0)
+        total += int(unread or 0)
+    return {"count": total}
+
+
+@api_router.get("/v1/messages/threads/{thread_id}/messages")
+async def list_thread_messages(
+    thread_id: str,
+    request: Request,
+    current_user=Depends(get_current_user),
+    limit: int = 50,
+    since: Optional[str] = None,
+):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+
+    thread = await _get_message_thread_or_404(db, thread_id, current_user.get("id"))
+    query: Dict[str, Any] = {"thread_id": thread.get("id")}
+    if since:
+        query["created_at"] = {"$gt": since}
+
+    cursor = db.messages.find(query, {"_id": 0}).sort("created_at", 1).limit(min(200, limit))
+    items = await cursor.to_list(length=min(200, limit))
+    return {"thread": _build_thread_summary(thread, current_user.get("id")), "items": items}
+
+
+@api_router.post("/v1/messages/threads/{thread_id}/messages")
+async def send_thread_message(
+    thread_id: str,
+    payload: MessageSendPayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+
+    thread = await _get_message_thread_or_404(db, thread_id, current_user.get("id"))
+    body = (payload.body or "").strip()
+    if not body:
+        raise HTTPException(status_code=400, detail="Message body required")
+
+    if payload.client_message_id:
+        existing = await db.messages.find_one(
+            {"thread_id": thread_id, "sender_id": current_user.get("id"), "client_message_id": payload.client_message_id},
+            {"_id": 0},
+        )
+        if existing:
+            return {"message": existing, "idempotent": True}
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    message_doc = {
+        "id": str(uuid.uuid4()),
+        "thread_id": thread_id,
+        "sender_id": current_user.get("id"),
+        "body": _sanitize_text(body),
+        "created_at": now_iso,
+        "client_message_id": payload.client_message_id,
+    }
+    await db.messages.insert_one(message_doc)
+
+    participants = thread.get("participants") or []
+    unread_counts = dict(thread.get("unread_counts") or {})
+    for user_id in participants:
+        if user_id == current_user.get("id"):
+            unread_counts[user_id] = 0
+        else:
+            unread_counts[user_id] = int(unread_counts.get(user_id, 0)) + 1
+
+    await db.message_threads.update_one(
+        {"id": thread_id},
+        {
+            "$set": {
+                "last_message": message_doc.get("body"),
+                "last_message_at": now_iso,
+                "updated_at": now_iso,
+                "unread_counts": unread_counts,
+            }
+        },
+    )
+
+    await message_ws_manager.broadcast_thread(
+        thread_id,
+        {
+            "type": "message:new",
+            "thread_id": thread_id,
+            "message": message_doc,
+        },
+    )
+    await message_ws_manager.send_personal(
+        current_user.get("id"),
+        {
+            "type": "message:delivered",
+            "thread_id": thread_id,
+            "message_id": message_doc.get("id"),
+        },
+    )
+
+    recipient_ids = [user_id for user_id in participants if user_id != current_user.get("id")]
+    for recipient_id in recipient_ids:
+        await _send_message_notification_email(db, recipient_id, thread, message_doc)
+
+    return {"message": message_doc}
+
+
+@api_router.post("/v1/messages/threads/{thread_id}/read")
+async def mark_thread_read(
+    thread_id: str,
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
+
+    thread = await _get_message_thread_or_404(db, thread_id, current_user.get("id"))
+    unread_counts = dict(thread.get("unread_counts") or {})
+    unread_counts[current_user.get("id")] = 0
+    await db.message_threads.update_one(
+        {"id": thread_id},
+        {"$set": {"unread_counts": unread_counts, "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    await message_ws_manager.broadcast_thread(
+        thread_id,
+        {
+            "type": "message:read",
+            "thread_id": thread_id,
+            "user_id": current_user.get("id"),
+            "read_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    return {"ok": True}
+
+
+@api_router.websocket("/ws/messages")
+async def websocket_messages(websocket: WebSocket):
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=1008)
+        return
+
+    payload = decode_token(token)
+    if not payload or payload.get("type") != "access":
+        await websocket.close(code=1008)
+        return
+
+    user_id = payload.get("sub")
+    if not user_id:
+        await websocket.close(code=1008)
+        return
+
+    await message_ws_manager.connect(websocket, user_id)
+    await websocket.send_json({"type": "connected", "user_id": user_id})
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+            event_type = data.get("type")
+            if event_type == "subscribe":
+                thread_id = data.get("thread_id")
+                if thread_id:
+                    message_ws_manager.subscribe(websocket, thread_id)
+                    await websocket.send_json({"type": "subscribed", "thread_id": thread_id})
+            elif event_type == "unsubscribe":
+                thread_id = data.get("thread_id")
+                if thread_id:
+                    message_ws_manager.unsubscribe(websocket, thread_id)
+            elif event_type in {"typing:start", "typing:stop"}:
+                thread_id = data.get("thread_id")
+                if thread_id:
+                    await message_ws_manager.broadcast_thread(
+                        thread_id,
+                        {
+                            "type": event_type,
+                            "thread_id": thread_id,
+                            "user_id": user_id,
+                        },
+                    )
+    except WebSocketDisconnect:
+        message_ws_manager.disconnect(websocket, user_id)
+    except Exception:
+        message_ws_manager.disconnect(websocket, user_id)
+        await websocket.close(code=1011)
+
+
 async def list_support_application_assignees(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
