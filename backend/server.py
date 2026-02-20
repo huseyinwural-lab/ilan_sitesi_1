@@ -2155,6 +2155,58 @@ async def list_users(
     return {"items": items}
 
 
+def _build_individual_users_query(search: Optional[str], country_code: Optional[str]) -> Dict[str, Any]:
+    query: Dict[str, Any] = {
+        "role": {"$nin": list(ADMIN_ROLE_OPTIONS) + ["dealer"]},
+        "deleted_at": {"$exists": False},
+    }
+
+    if country_code:
+        query["country_code"] = country_code
+
+    if search:
+        or_conditions = [
+            {"first_name": {"$regex": search, "$options": "i"}},
+            {"last_name": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}},
+            {"full_name": {"$regex": search, "$options": "i"}},
+        ]
+        phone_candidates = _normalize_phone_candidates(search)
+        if phone_candidates:
+            phone_fields = ["phone_e164", "phone_number", "phone", "mobile"]
+            for candidate in phone_candidates:
+                pattern = re.escape(candidate)
+                for field in phone_fields:
+                    or_conditions.append({field: {"$regex": pattern}})
+        query["$or"] = or_conditions
+
+    return query
+
+
+def _build_individual_users_sort(sort_by: Optional[str], sort_dir: Optional[str]):
+    sort_field_map = {
+        "email": "email",
+        "created_at": "created_at",
+        "last_login": "last_login",
+        "first_name": "first_name",
+        "last_name": "last_name",
+    }
+    sort_key = sort_field_map.get(sort_by or "last_name", "last_name")
+    sort_direction = 1 if (sort_dir or "asc").lower() == "asc" else -1
+
+    sort_name_expr = {"$ifNull": ["$last_name", {"$ifNull": ["$first_name", "$email"]}]}
+    sort_first_expr = {"$ifNull": ["$first_name", "$email"]}
+    sort_spec = {
+        "sort_name": sort_direction,
+        "sort_first": sort_direction,
+        "email": sort_direction,
+    }
+    if sort_key != "last_name":
+        sort_spec = {sort_key: sort_direction, "email": sort_direction}
+
+    return sort_spec, sort_name_expr, sort_first_expr, sort_direction
+
+
 @api_router.get("/admin/individual-users")
 async def list_individual_users(
     request: Request,
