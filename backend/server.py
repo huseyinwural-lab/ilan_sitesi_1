@@ -4,12 +4,18 @@ import io
 import csv
 import urllib.request
 import xml.etree.ElementTree as ET
+import hashlib
+import secrets
+import logging
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 import uuid
 from typing import List, Optional, Dict, Any
 import time
+
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
