@@ -134,9 +134,13 @@ const AdminVehicleModels = () => {
 
   const makeMap = useMemo(() => {
     const map = new Map();
-    makes.forEach((make) => map.set(make.id, make.name));
+    makes.forEach((make) => map.set(make.id, { name: make.name, country_code: make.country_code }));
     return map;
   }, [makes]);
+
+  const resolveMakeName = (makeId) => makeMap.get(makeId)?.name || '-';
+  const resolveMakeCountry = (makeId) => makeMap.get(makeId)?.country_code || '-';
+  const resolveVehicleType = (value) => resolveVehicleTypeLabel(value) || '-';
 
   return (
     <div className="p-6 space-y-6" data-testid="admin-vehicle-models-page">
