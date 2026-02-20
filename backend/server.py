@@ -409,6 +409,7 @@ async def _ensure_test_user(db):
             "role": "individual",
             "status": "active",
             "is_active": True,
+            "deleted_at": None,
             "is_verified": True,
             "country_scope": ["DE"],
             "country_code": "DE",
