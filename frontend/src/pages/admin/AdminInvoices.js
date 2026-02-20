@@ -552,9 +552,21 @@ export default function AdminInvoicesPage() {
                 </div>
                 <div data-testid={`invoice-status-${inv.id}`}>
                   <div className="text-xs uppercase text-muted-foreground lg:hidden">Status</div>
-                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-muted">{inv.status}</span>
-                  <div className="text-xs text-muted-foreground" data-testid={`invoice-payment-status-${inv.id}`}>
-                    {inv.payment_status || '-'}
+                  <div className="flex flex-col gap-1">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolveStatusBadgeClass(inv.status)}`}
+                      data-testid={`invoice-status-badge-${inv.id}`}
+                      title={resolveInvoiceTooltip(inv)}
+                    >
+                      {inv.status}
+                    </span>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolvePaymentBadgeClass(inv.payment_status)}`}
+                      data-testid={`invoice-payment-badge-${inv.id}`}
+                      title={resolvePaymentTooltip(inv)}
+                    >
+                      {inv.payment_status || '-'}
+                    </span>
                   </div>
                 </div>
                 <div>
