@@ -2703,6 +2703,29 @@ def _build_dealer_sort(sort_by: Optional[str], sort_dir: Optional[str]):
     return sort_spec, sort_company_expr, sort_direction
 
 
+def _build_support_application_summary(doc: dict) -> Dict[str, Any]:
+    assigned = doc.get("assigned_to") or None
+    display_name = doc.get("applicant_company_name") or doc.get("applicant_name") or doc.get("applicant_email")
+    return {
+        "id": doc.get("id"),
+        "application_id": doc.get("application_id"),
+        "application_type": doc.get("application_type"),
+        "category": doc.get("category"),
+        "subject": doc.get("subject"),
+        "description": doc.get("description"),
+        "status": doc.get("status"),
+        "priority": doc.get("priority"),
+        "assigned_to": assigned,
+        "created_at": doc.get("created_at"),
+        "updated_at": doc.get("updated_at"),
+        "applicant_name": doc.get("applicant_name"),
+        "applicant_company_name": doc.get("applicant_company_name"),
+        "applicant_email": doc.get("applicant_email"),
+        "applicant_country": doc.get("applicant_country"),
+        "display_name": display_name,
+    }
+
+
 @api_router.get("/admin/individual-users")
 async def list_individual_users(
     request: Request,
