@@ -65,8 +65,9 @@ Mongo tamamen kaldırılarak tek veri kaynağı Postgres olacak. Bu doküman; ka
 - **/api/v1/favorites** → SQL `favorites` tablosu
 
 ### Messages
-- **/api/v1/messages/*** → SQL `message_threads`, `message_thread_participants`, `messages`
-- **/ws/messages** → SQL read/write + last_message/unread_count güncellemesi
+- **/api/v1/messages/*** → SQL `conversations` + `messages`
+- **/ws/messages** → SQL read/write + last_message_at güncellemesi
+- Gerekirse `conversation_participants` ile unread_count yönetimi
 
 ### Support
 - **/api/applications** → SQL `applications` (aktif)
