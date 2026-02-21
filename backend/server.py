@@ -10470,8 +10470,13 @@ async def admin_update_category(
         slug_json.update({"tr": updates["slug"], "en": updates["slug"], "de": updates["slug"]})
         updates["slug"] = slug_json
 
-    if "path" in updates and updates["path"] is None:
-        updates["path"] = _pick_category_slug(category.slug) or ""
+    if "slug" in updates and "path" not in updates:
+        if category.parent_id:
+            parent = await session.get(Category, category.parent_id)
+            base_path = parent.path if parent else ""
+            updates["path"] = f"{base_path}.{_pick_category_slug(updates['slug'])}" if base_path else (_pick_category_slug(updates["slug"]) or "")
+        else:
+            updates["path"] = _pick_category_slug(updates["slug"]) or ""
 
     updates["updated_at"] = datetime.now(timezone.utc)
 
