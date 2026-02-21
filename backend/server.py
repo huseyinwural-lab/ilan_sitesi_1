@@ -15355,6 +15355,7 @@ async def create_vehicle_draft(
         raise HTTPException(status_code=400, detail="category_id invalid") from exc
 
     vehicle_payload = payload.get("vehicle") or {}
+    vehicle_payload = dict(vehicle_payload)
     make_value = payload.get("make_id") or vehicle_payload.get("make_id")
     model_value = payload.get("model_id") or vehicle_payload.get("model_id")
     if not make_value or not model_value:
@@ -15364,6 +15365,9 @@ async def create_vehicle_draft(
         model_uuid = uuid.UUID(str(model_value))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="make_id/model_id invalid") from exc
+
+    vehicle_payload.setdefault("make_id", str(make_uuid))
+    vehicle_payload.setdefault("model_id", str(model_uuid))
 
     listing = Listing(
         user_id=user_uuid,
