@@ -2511,7 +2511,11 @@ if APP_ENV == "prod":
         raise RuntimeError("EMAIL_PROVIDER cannot be mock in prod")
 
 if EMAIL_PROVIDER not in EMAIL_PROVIDER_OPTIONS:
-    raise RuntimeError("EMAIL_PROVIDER must be one of: mock, smtp, sendgrid")
+    raise RuntimeError("EMAIL_PROVIDER must be one of: mock, sendgrid")
+
+if EMAIL_PROVIDER == "sendgrid":
+    if not os.environ.get("SENDGRID_API_KEY") or not os.environ.get("SENDER_EMAIL"):
+        raise RuntimeError("SendGrid configuration missing: SENDGRID_API_KEY or SENDER_EMAIL")
 
 if not RAW_DATABASE_URL:
     logging.getLogger("sql_config").warning("DATABASE_URL not set – running with local fallback")
