@@ -1597,26 +1597,6 @@ async def _activate_subscription_from_invoice(session: AsyncSession, invoice: Ad
 
     await _write_audit_log_sql(
         session=session,
-        action="payment_succeeded",
-        actor={"id": str(invoice.user_id), "email": None},
-        resource_type="payment",
-        resource_id=str(invoice.id),
-        metadata={"invoice_id": str(invoice.id), "status": "succeeded"},
-        request=None,
-        country_code=invoice.country_code,
-    )
-    await _write_audit_log_sql(
-        session=session,
-        action="invoice_marked_paid",
-        actor={"id": str(invoice.user_id), "email": None},
-        resource_type="invoice",
-        resource_id=str(invoice.id),
-        metadata={"status": "paid"},
-        request=None,
-        country_code=invoice.country_code,
-    )
-    await _write_audit_log_sql(
-        session=session,
         action="subscription_activated",
         actor={"id": str(invoice.user_id), "email": None},
         resource_type="subscription",
