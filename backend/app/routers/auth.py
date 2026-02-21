@@ -75,7 +75,13 @@ async def login(credentials: UserLogin, request: Request, db: AsyncSession = Dep
     await db.commit()
     
     # Create tokens
-    token_data = {"sub": str(user.id), "email": user.email, "role": user.role.value}
+    token_data = {
+        "sub": str(user.id),
+        "email": user.email,
+        "role": user.role.value,
+        "portal_scope": _resolve_portal_scope(user.role.value),
+        "token_version": TOKEN_VERSION,
+    }
     access_token = create_access_token(token_data)
     refresh_token = create_refresh_token(token_data)
     
@@ -115,7 +121,13 @@ async def refresh_token(data: RefreshTokenRequest, db: AsyncSession = Depends(ge
             detail="User not found or inactive"
         )
     
-    token_data = {"sub": str(user.id), "email": user.email, "role": user.role.value}
+    token_data = {
+        "sub": str(user.id),
+        "email": user.email,
+        "role": user.role.value,
+        "portal_scope": _resolve_portal_scope(user.role.value),
+        "token_version": TOKEN_VERSION,
+    }
     new_access_token = create_access_token(token_data)
     new_refresh_token = create_refresh_token(token_data)
     
