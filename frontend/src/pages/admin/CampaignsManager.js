@@ -10,8 +10,7 @@ const STATUS_OPTIONS = [
   { value: 'draft', label: 'Taslak' },
   { value: 'active', label: 'Aktif' },
   { value: 'paused', label: 'Durduruldu' },
-  { value: 'expired', label: 'Süresi Doldu' },
-  { value: 'archived', label: 'Arşiv' },
+  { value: 'ended', label: 'Bitti' },
 ];
 
 const TARGET_OPTIONS = [
