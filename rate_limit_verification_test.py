@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 class RateLimitTester:
-    def __init__(self, base_url="https://audit-logs-admin.preview.emergentagent.com"):
+    def __init__(self, base_url="https://role-based-portals.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
