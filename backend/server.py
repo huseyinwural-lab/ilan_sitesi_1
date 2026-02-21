@@ -989,6 +989,47 @@ async def _get_or_create_dealer_profile(
     return profile
 
 
+def _build_consumer_profile_payload(user_row: SqlUser, profile: ConsumerProfile) -> Dict[str, Any]:
+    notification_prefs = getattr(user_row, "notification_prefs", None)
+    phone = getattr(user_row, "phone_e164", None)
+    return {
+        "profile_type": "consumer",
+        "id": str(user_row.id),
+        "email": user_row.email,
+        "full_name": user_row.full_name,
+        "display_name": _resolve_display_name(user_row.full_name, profile.display_name_mode),
+        "display_name_mode": profile.display_name_mode,
+        "phone": phone,
+        "locale": user_row.preferred_language or profile.language or "tr",
+        "country_code": profile.country_code,
+        "marketing_consent": profile.marketing_consent,
+        "gdpr_deleted_at": profile.gdpr_deleted_at.isoformat() if profile.gdpr_deleted_at else None,
+        "totp_enabled": profile.totp_enabled,
+        "notification_prefs": _normalize_notification_prefs(notification_prefs),
+    }
+
+
+def _build_dealer_profile_payload(user_row: SqlUser, profile: DealerProfile) -> Dict[str, Any]:
+    return {
+        "profile_type": "dealer",
+        "id": str(user_row.id),
+        "email": user_row.email,
+        "full_name": user_row.full_name,
+        "locale": user_row.preferred_language or "tr",
+        "country_code": profile.address_country or user_row.country_code,
+        "company_name": profile.company_name,
+        "vat_id": profile.vat_id,
+        "trade_register_no": profile.trade_register_no,
+        "authorized_person": profile.authorized_person,
+        "address_json": profile.address_json,
+        "logo_url": profile.logo_url,
+        "contact_email": profile.contact_email,
+        "contact_phone": profile.contact_phone,
+        "verification_status": profile.verification_status,
+        "gdpr_deleted_at": profile.gdpr_deleted_at.isoformat() if profile.gdpr_deleted_at else None,
+    }
+
+
 async def _log_email_verify_event(
     session: AsyncSession,
     action: str,
