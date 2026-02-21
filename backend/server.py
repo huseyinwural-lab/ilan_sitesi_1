@@ -116,7 +116,6 @@ MONGO_GATED_PATH_PREFIXES = (
     "/api/v1/favorites",
     "/api/v1/messages",
     "/api/support",
-    "/api/admin/countries",
     "/api/admin/menu",
 )
 
