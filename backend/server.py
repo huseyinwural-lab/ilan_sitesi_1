@@ -2918,7 +2918,8 @@ async def register_dealer(
         session.add(user)
         await session.flush()
         slug = await _generate_unique_dealer_slug(session, payload.company_name)
-        await _issue_email_verification_code(session, user, request)
+        verification_code = await _issue_email_verification_code(session, user, request)
+        _send_verification_email(email, verification_code, payload.preferred_language)
         dealer_profile = DealerProfile(
             user_id=user.id,
             slug=slug,
@@ -2932,9 +2933,15 @@ async def register_dealer(
         session.add(dealer_profile)
         await session.commit()
         await session.refresh(user)
+    except HTTPException:
+        await session.rollback()
+        raise
     except IntegrityError:
         await session.rollback()
         raise HTTPException(status_code=409, detail="Email already registered")
+    except Exception as exc:
+        await session.rollback()
+        raise HTTPException(status_code=502, detail="Failed to send verification email") from exc
 
     await _log_email_verify_event(
         session=session,
