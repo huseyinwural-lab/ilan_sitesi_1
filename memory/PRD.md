@@ -190,6 +190,7 @@
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
+- Notifications SQL migration finalize: alembic upgrade + backfill (DB ayağa kalkınca)
 - Mongo Exit P0: Auth + Applications (Mongo dependency removal)
 - Auth akışlarını Postgres’e taşı (users/user_credentials/roles/user_roles/refresh_tokens)
 - Applications endpoint’leri Postgres’te finalize + seed
