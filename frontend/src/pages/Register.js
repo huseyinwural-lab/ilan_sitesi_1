@@ -78,6 +78,8 @@ export default function Register({ portalContext = 'account' }) {
     return country.code || '';
   };
 
+  const selectedCountry = countries.find((item) => item.code === countryCode);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
