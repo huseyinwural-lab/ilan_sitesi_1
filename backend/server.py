@@ -10222,6 +10222,109 @@ async def _apply_payment_status(
     transaction.updated_at = now
 
 
+async def _process_webhook_payment(
+    session: AsyncSession,
+    event_log: WebhookEventLog,
+    session_id: Optional[str],
+    payment_status: Optional[str],
+    metadata: Dict[str, Any],
+    provider_ref: Optional[str],
+    provider_payment_id: Optional[str],
+) -> str:
+    now = datetime.now(timezone.utc)
+
+    transaction = None
+    if session_id:
+        transaction = (await session.execute(
+            select(PaymentTransaction).where(PaymentTransaction.session_id == session_id)
+        )).scalar_one_or_none()
+
+    invoice = None
+    payment = None
+    if transaction:
+        invoice = await session.get(AdminInvoice, transaction.invoice_id)
+        payment = (await session.execute(
+            select(Payment).where(Payment.invoice_id == transaction.invoice_id)
+        )).scalar_one_or_none()
+        if invoice and not payment:
+            payment = Payment(
+                invoice_id=invoice.id,
+                user_id=invoice.user_id,
+                provider="stripe",
+                provider_ref=provider_ref or f"pi_{invoice.id}",
+                status=_resolve_payment_status(payment_status),
+                amount_total=invoice.amount_total,
+                currency=invoice.currency,
+                meta_json=metadata,
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(payment)
+    else:
+        invoice_id = metadata.get("invoice_id")
+        try:
+            invoice_uuid = uuid.UUID(invoice_id) if invoice_id else None
+        except ValueError:
+            invoice_uuid = None
+        if invoice_uuid:
+            invoice = await session.get(AdminInvoice, invoice_uuid)
+            if invoice:
+                payment = (await session.execute(
+                    select(Payment).where(Payment.invoice_id == invoice.id)
+                )).scalar_one_or_none()
+
+                if not payment:
+                    payment = Payment(
+                        invoice_id=invoice.id,
+                        user_id=invoice.user_id,
+                        provider="stripe",
+                        provider_ref=provider_ref or f"pi_{invoice.id}",
+                        status=_resolve_payment_status(payment_status),
+                        amount_total=invoice.amount_total,
+                        currency=invoice.currency,
+                        meta_json=metadata,
+                        created_at=now,
+                        updated_at=now,
+                    )
+                    session.add(payment)
+
+                if not transaction:
+                    transaction = PaymentTransaction(
+                        provider="stripe",
+                        session_id=session_id or f"sess_{invoice.id}",
+                        provider_payment_id=provider_payment_id,
+                        invoice_id=invoice.id,
+                        dealer_id=invoice.user_id,
+                        amount=invoice.amount_total,
+                        currency=invoice.currency,
+                        status=_resolve_payment_status(payment_status),
+                        payment_status=_resolve_payment_status(payment_status),
+                        metadata_json=metadata,
+                        created_at=now,
+                        updated_at=now,
+                    )
+                    session.add(transaction)
+
+    if invoice and payment and transaction:
+        await _apply_payment_status(
+            invoice,
+            payment,
+            transaction,
+            payment_status or "",
+            provider_payment_id,
+            provider_ref=payment.provider_ref,
+            meta=metadata,
+            session=session,
+        )
+        event_log.status = "processed"
+        event_log.processed_at = now
+        return "processed"
+
+    event_log.status = "ignored"
+    event_log.processed_at = now
+    return "ignored"
+
+
 @api_router.post("/payments/create-checkout-session")
 async def create_checkout_session(
     payload: PaymentCheckoutPayload,
