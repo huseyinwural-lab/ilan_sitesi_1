@@ -200,6 +200,7 @@ export default function Layout({ children }) {
 
     { divider: true, label: 'Katalog & İçerik', roles: roles.catalogView },
     { path: '/admin/categories', icon: FolderTree, label: 'Kategoriler', roles: roles.catalogView, testId: 'catalog-categories' },
+    { path: '/admin/categories/import-export', icon: FileText, label: 'Kategori Import/Export', roles: roles.catalogAdmin, testId: 'catalog-categories-import-export' },
     { path: '/admin/attributes', icon: Settings2, label: 'Özellikler', roles: roles.catalogAdmin, testId: 'catalog-attributes' },
     { path: '/admin/menu-management', icon: MenuSquare, label: 'Menü Yönetimi', roles: roles.adminOnly, comingSoon: true, testId: 'catalog-menu-management' },
 
