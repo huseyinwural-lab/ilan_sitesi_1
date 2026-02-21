@@ -2629,7 +2629,7 @@ async def refresh_token_endpoint(
 @api_router.get("/countries/public")
 async def list_public_countries(session: AsyncSession = Depends(get_sql_session)):
     result = await session.execute(
-        select(Country).where(Country.is_enabled == True).order_by(Country.code)
+        select(Country).where(Country.is_enabled.is_(True)).order_by(Country.code)
     )
     countries = result.scalars().all()
     return [
