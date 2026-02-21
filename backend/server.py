@@ -4092,8 +4092,6 @@ async def list_support_applications(
             raise HTTPException(status_code=400, detail="Invalid priority")
         priority = priority_value
 
-    if APPLICATIONS_PROVIDER == "mongo" and db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
 
     filters = {
         "application_type": application_type,
