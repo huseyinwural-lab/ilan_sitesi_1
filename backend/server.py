@@ -7242,6 +7242,268 @@ def _serialize_category_sql(category: Category, include_schema: bool = False, in
     return payload
 
 
+def _category_translation_map(translations: list[CategoryTranslation]) -> dict:
+    mapping: Dict[str, dict] = {}
+    for translation in translations or []:
+        mapping[translation.language] = {
+            "name": translation.name,
+            "description": translation.description,
+            "meta_title": translation.meta_title,
+            "meta_description": translation.meta_description,
+        }
+    return mapping
+
+
+def _coerce_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        if value.strip().lower() in {"true", "1", "yes", "y"}:
+            return True
+        if value.strip().lower() in {"false", "0", "no", "n"}:
+            return False
+    return default
+
+
+def _normalize_slug_payload(slug_payload: Any) -> tuple[str, dict]:
+    if isinstance(slug_payload, dict):
+        slug_tr = slug_payload.get("tr") or slug_payload.get("en") or slug_payload.get("de") or slug_payload.get("fr")
+        slug_tr = (slug_tr or "").strip().lower()
+        slug_map = dict(slug_payload)
+        if slug_tr and "tr" not in slug_map:
+            slug_map["tr"] = slug_tr
+        return slug_tr, slug_map
+    slug_tr = str(slug_payload or "").strip().lower()
+    return slug_tr, {"tr": slug_tr, "en": slug_tr, "de": slug_tr}
+
+
+def _normalize_name_payload(name_payload: Any, slug_tr: str) -> dict:
+    if isinstance(name_payload, dict):
+        return name_payload
+    name_value = str(name_payload or slug_tr)
+    return {"tr": name_value, "en": name_value, "de": name_value}
+
+
+def _build_category_export_item(
+    category: Category,
+    translations: list[CategoryTranslation],
+    parent_slug: Optional[str],
+    schema_version: int,
+) -> dict:
+    translation_map = _category_translation_map(translations)
+    slug_value = category.slug if isinstance(category.slug, dict) else {"tr": category.slug}
+    name_payload = {lang: data.get("name") for lang, data in translation_map.items()} if translation_map else {}
+    return {
+        "id": str(category.id),
+        "parent_id": str(category.parent_id) if category.parent_id else None,
+        "parent_slug": parent_slug,
+        "path": category.path,
+        "module": category.module,
+        "slug": slug_value,
+        "name": name_payload,
+        "translations": translation_map,
+        "country_code": category.country_code,
+        "allowed_countries": category.allowed_countries or [],
+        "sort_order": category.sort_order,
+        "active_flag": category.is_enabled,
+        "hierarchy_complete": category.hierarchy_complete,
+        "schema_status": (category.form_schema or {}).get("status") if isinstance(category.form_schema, dict) else None,
+        "schema_version": schema_version,
+        "form_schema": category.form_schema,
+    }
+
+
+def _build_category_tree(items: list[dict]) -> list[dict]:
+    node_map: Dict[str, dict] = {}
+    roots: list[dict] = []
+    for item in items:
+        item_copy = dict(item)
+        item_copy["children"] = []
+        node_map[item_copy["id"]] = item_copy
+    for item in items:
+        node = node_map[item["id"]]
+        parent_id = item.get("parent_id")
+        if parent_id and parent_id in node_map:
+            node_map[parent_id]["children"].append(node)
+        else:
+            roots.append(node)
+    return roots
+
+
+def _flatten_import_tree(items: list[dict], parent_slug: Optional[str], parent_path: Optional[str]) -> list[dict]:
+    flattened: list[dict] = []
+    for item in items:
+        slug_tr, slug_map = _normalize_slug_payload(item.get("slug"))
+        if not slug_tr:
+            raise HTTPException(status_code=400, detail="slug is required")
+        name_map = _normalize_name_payload(item.get("name"), slug_tr)
+        path_value = f"{parent_path}.{slug_tr}" if parent_path else slug_tr
+        record = {
+            "slug_tr": slug_tr,
+            "slug": slug_map,
+            "name": name_map,
+            "parent_slug": parent_slug,
+            "path": path_value,
+            "country_code": (item.get("country_code") or None),
+            "allowed_countries": item.get("allowed_countries") or [],
+            "sort_order": int(item.get("sort_order") or 0),
+            "active_flag": _coerce_bool(item.get("active_flag"), True),
+            "hierarchy_complete": _coerce_bool(item.get("hierarchy_complete"), True),
+            "module": item.get("module") or "vehicle",
+            "form_schema": item.get("form_schema"),
+        }
+        flattened.append(record)
+        children = item.get("children") or []
+        if children:
+            flattened.extend(_flatten_import_tree(children, slug_tr, path_value))
+    return flattened
+
+
+def _parse_import_payload(content: bytes, file_type: str) -> list[dict]:
+    if file_type == "json":
+        try:
+            payload = json.loads(content.decode("utf-8"))
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail="JSON parse error") from exc
+        items = payload.get("categories") or payload.get("items")
+        if not isinstance(items, list):
+            raise HTTPException(status_code=400, detail="categories array is required")
+        return _flatten_import_tree(items, None, None)
+
+    if file_type == "csv":
+        decoded = content.decode("utf-8-sig")
+        reader = csv.DictReader(io.StringIO(decoded), delimiter=",")
+        records: list[dict] = []
+        for row in reader:
+            slug_tr = (row.get("slug_tr") or row.get("slug") or "").strip().lower()
+            if not slug_tr:
+                raise HTTPException(status_code=400, detail="slug_tr is required")
+            slug_map = {
+                "tr": slug_tr,
+                "en": (row.get("slug_en") or slug_tr).strip().lower(),
+                "de": (row.get("slug_de") or slug_tr).strip().lower(),
+            }
+            name_map = {
+                "tr": (row.get("name_tr") or slug_tr).strip(),
+                "en": (row.get("name_en") or row.get("name_tr") or slug_tr).strip(),
+                "de": (row.get("name_de") or row.get("name_tr") or slug_tr).strip(),
+            }
+            allowed_raw = row.get("allowed_countries") or ""
+            allowed = [code.strip().upper() for code in allowed_raw.split("|") if code.strip()] if allowed_raw else []
+            form_schema = None
+            schema_raw = row.get("form_schema") or ""
+            if schema_raw:
+                try:
+                    form_schema = json.loads(schema_raw)
+                except json.JSONDecodeError as exc:
+                    raise HTTPException(status_code=400, detail=f"Invalid form_schema JSON for {slug_tr}") from exc
+            record = {
+                "slug_tr": slug_tr,
+                "slug": slug_map,
+                "name": name_map,
+                "parent_slug": (row.get("parent_slug") or "").strip().lower() or None,
+                "path": (row.get("path") or "").strip() or None,
+                "country_code": (row.get("country_code") or "").strip().upper() or None,
+                "allowed_countries": allowed,
+                "sort_order": int(row.get("sort_order") or 0),
+                "active_flag": _coerce_bool(row.get("active_flag"), True),
+                "hierarchy_complete": _coerce_bool(row.get("hierarchy_complete"), True),
+                "module": row.get("module") or "vehicle",
+                "form_schema": form_schema,
+            }
+            records.append(record)
+        return records
+
+    raise HTTPException(status_code=400, detail="Unsupported import format")
+
+
+def _diff_categories(import_items: list[dict], existing: list[Category]) -> dict:
+    existing_map: Dict[str, Category] = {}
+    existing_parent_map: Dict[str, Optional[str]] = {}
+    for category in existing:
+        slug_key = _pick_category_slug(category.slug) or ""
+        existing_map[slug_key.lower()] = category
+
+    slug_by_id = {str(cat.id): (_pick_category_slug(cat.slug) or "") for cat in existing}
+    for category in existing:
+        parent_slug = slug_by_id.get(str(category.parent_id)) if category.parent_id else None
+        existing_parent_map[str(category.id)] = parent_slug
+
+    incoming_keys = set()
+    creates = []
+    updates = []
+    for item in import_items:
+        slug_key = item["slug_tr"]
+        if slug_key in incoming_keys:
+            raise HTTPException(status_code=400, detail=f"Duplicate slug: {slug_key}")
+        incoming_keys.add(slug_key)
+        existing_category = existing_map.get(slug_key)
+        if not existing_category:
+            creates.append(item)
+            continue
+
+        changes = {}
+        translation_map = _category_translation_map(list(existing_category.translations or []))
+        name_map = item.get("name") or {}
+        for lang in ("tr", "en", "de"):
+            old_name = (translation_map.get(lang) or {}).get("name")
+            new_name = name_map.get(lang)
+            if new_name and new_name != old_name:
+                changes[f"name_{lang}"] = {"from": old_name, "to": new_name}
+
+        parent_slug = existing_parent_map.get(str(existing_category.id))
+        if item.get("parent_slug") != parent_slug:
+            changes["parent_slug"] = {"from": parent_slug, "to": item.get("parent_slug")}
+
+        if item.get("country_code") != existing_category.country_code:
+            changes["country_code"] = {"from": existing_category.country_code, "to": item.get("country_code")}
+
+        allowed_existing = sorted(existing_category.allowed_countries or [])
+        allowed_new = sorted(item.get("allowed_countries") or [])
+        if allowed_existing != allowed_new:
+            changes["allowed_countries"] = {"from": allowed_existing, "to": allowed_new}
+
+        if int(item.get("sort_order") or 0) != int(existing_category.sort_order or 0):
+            changes["sort_order"] = {"from": existing_category.sort_order, "to": item.get("sort_order")}
+
+        if _coerce_bool(item.get("active_flag"), True) != bool(existing_category.is_enabled):
+            changes["active_flag"] = {"from": existing_category.is_enabled, "to": item.get("active_flag")}
+
+        if item.get("form_schema") is not None:
+            existing_schema = _normalize_category_schema(existing_category.form_schema) if existing_category.form_schema else None
+            incoming_schema = _normalize_category_schema(item.get("form_schema"))
+            if json.dumps(existing_schema, sort_keys=True) != json.dumps(incoming_schema, sort_keys=True):
+                changes["form_schema"] = {"from": "existing", "to": "incoming"}
+
+        if changes:
+            updates.append({"slug": slug_key, "changes": changes})
+
+    deletes = []
+    for category in existing:
+        slug_key = (_pick_category_slug(category.slug) or "").lower()
+        if slug_key and slug_key not in incoming_keys and not category.is_deleted:
+            deletes.append({
+                "slug": slug_key,
+                "name": _pick_category_name(list(category.translations or []), _pick_category_slug(category.slug)),
+            })
+
+    return {
+        "summary": {
+            "creates": len(creates),
+            "updates": len(updates),
+            "deletes": len(deletes),
+            "total": len(import_items),
+        },
+        "creates": creates,
+        "updates": updates,
+        "deletes": deletes,
+    }
+
+
 def _deep_merge_schema(base: Dict[str, Any], override: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     if not override:
         return base
