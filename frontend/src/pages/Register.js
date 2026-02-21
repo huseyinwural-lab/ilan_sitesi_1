@@ -251,7 +251,6 @@ export default function Register({ portalContext = 'account' }) {
 
       const data = await res.json().catch(() => ({}));
       applySession(data);
-      sessionStorage.removeItem('pending_debug_code');
       toast({ title: 'Doğrulama tamamlandı', description: 'Hesabınız doğrulandı.' });
       navigate(isDealer ? '/dealer' : '/account');
     } catch (err) {
