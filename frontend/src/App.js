@@ -166,6 +166,7 @@ function App() {
                     <Route path="support" element={<AccountSupportList />} />
                     <Route path="support/:id" element={<AccountSupportDetail />} />
                     <Route path="profile" element={<AccountProfile />} />
+                    <Route path="privacy" element={<AccountPrivacyCenter />} />
                     <Route path="create" element={<Navigate to="/account/create/vehicle-wizard" />} />
                     <Route path="create/vehicle-wizard" element={<WizardContainer />} />
                   </Route>
