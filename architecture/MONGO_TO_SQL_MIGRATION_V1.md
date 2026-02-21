@@ -41,10 +41,11 @@ Mongo tamamen kaldırılarak tek veri kaynağı Postgres olacak. Bu doküman; ka
 - Unique: `(user_id, listing_id)`
 
 ### 4.2 Messages
-- `message_threads(id, listing_id, listing_title, listing_image, last_message, last_message_at, created_at, updated_at)`
-- `message_thread_participants(id, thread_id, user_id, unread_count, last_read_at, is_muted)`
-- `messages(id, thread_id, sender_id, body, client_message_id, created_at)`
-- Idempotency: `(thread_id, sender_id, client_message_id)` unique
+- **Mevcut SQL tabloları:** `conversations`, `messages` (migrations: `1c2ba5052ea4`, `9f9e9c1bb40d`)
+- **Eksik alanlar:** unread_count, client_message_id idempotency, thread summary alanları
+- **Plan:**
+  - `/api/v1/messages` endpointleri `conversations` + `messages` üzerinden yeniden yazılır
+  - Gerekirse `conversation_participants` tablosu eklenir (unread_count, last_read_at)
 
 ### 4.3 Support Messages
 - `support_messages(id, application_id, sender_id, body, attachments, is_internal, created_at)`
