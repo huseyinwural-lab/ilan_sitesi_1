@@ -642,7 +642,7 @@ def _build_user_summary(doc: dict, listing_stats: Optional[Dict[str, Any]] = Non
     status = _normalize_user_status(doc)
     user_type = _determine_user_type(doc.get("role", "individual"))
     phone_verified = bool(doc.get("phone_verified") or doc.get("phone_verified_at"))
-    plan_expiry = doc.get("plan_expires_at") or doc.get("plan_end_at") or doc.get("plan_ends_at")
+    plan_expiry = doc.get("plan_expires_at") or doc.get("plan_current_period_end") or doc.get("plan_ends_at")
 
     return {
         "id": doc.get("id"),
@@ -1426,19 +1426,19 @@ def _normalize_campaign_payload(payload, existing: Optional[Campaign] = None) ->
         raise HTTPException(status_code=400, detail="country_code is required")
     country_code = country_code.upper()
 
-    start_raw = payload.start_at if payload.start_at is not None else (
-        existing.start_at.isoformat() if existing and existing.start_at else None
+    start_raw = payload.current_period_start if payload.current_period_start is not None else (
+        existing.current_period_start.isoformat() if existing and existing.current_period_start else None
     )
     if not start_raw and not existing:
-        raise HTTPException(status_code=400, detail="start_at is required")
-    start_at = _parse_datetime_field(start_raw, "start_at") if start_raw else existing.start_at
+        raise HTTPException(status_code=400, detail="current_period_start is required")
+    current_period_start = _parse_datetime_field(start_raw, "current_period_start") if start_raw else existing.current_period_start
 
-    end_raw = payload.end_at if payload.end_at is not None else (
-        existing.end_at.isoformat() if existing and existing.end_at else None
+    end_raw = payload.current_period_end if payload.current_period_end is not None else (
+        existing.current_period_end.isoformat() if existing and existing.current_period_end else None
     )
-    end_at = _parse_datetime_field(end_raw, "end_at") if end_raw else None
-    if end_at and start_at and start_at >= end_at:
-        raise HTTPException(status_code=400, detail="start_at must be before end_at")
+    current_period_end = _parse_datetime_field(end_raw, "current_period_end") if end_raw else None
+    if current_period_end and current_period_start and current_period_start >= current_period_end:
+        raise HTTPException(status_code=400, detail="current_period_start must be before current_period_end")
 
     budget_amount = payload.budget_amount if payload.budget_amount is not None else (
         float(existing.budget_amount) if existing and existing.budget_amount is not None else None
@@ -1461,8 +1461,8 @@ def _normalize_campaign_payload(payload, existing: Optional[Campaign] = None) ->
     return {
         "name": name,
         "status": status_value,
-        "start_at": start_at,
-        "end_at": end_at,
+        "current_period_start": current_period_start,
+        "current_period_end": current_period_end,
         "country_code": country_code,
         "budget_amount": budget_amount,
         "budget_currency": budget_currency,
@@ -1476,8 +1476,8 @@ def _campaign_to_dict(campaign: Campaign) -> Dict[str, Any]:
         "id": str(campaign.id),
         "name": campaign.name,
         "status": campaign.status,
-        "start_at": campaign.start_at.isoformat() if campaign.start_at else None,
-        "end_at": campaign.end_at.isoformat() if campaign.end_at else None,
+        "current_period_start": campaign.current_period_start.isoformat() if campaign.current_period_start else None,
+        "current_period_end": campaign.current_period_end.isoformat() if campaign.current_period_end else None,
         "country_code": campaign.country_code,
         "budget_amount": float(campaign.budget_amount) if campaign.budget_amount is not None else None,
         "budget_currency": campaign.budget_currency,
@@ -1584,7 +1584,7 @@ async def _activate_subscription_from_invoice(session: AsyncSession, invoice: Ad
         return
 
     now = datetime.now(timezone.utc)
-    subscription.status = "active"
+    subscription.status = "trial"
     subscription.current_period_start = subscription.current_period_start or now
     subscription.current_period_end = subscription.current_period_end or (now + timedelta(days=30))
     subscription.updated_at = now
@@ -3074,8 +3074,8 @@ class SupportApplicationStatusPayload(BaseModel):
 class CampaignCreatePayload(BaseModel):
     name: str
     status: Optional[str] = "draft"
-    start_at: str
-    end_at: Optional[str] = None
+    current_period_start: str
+    current_period_end: Optional[str] = None
     country_code: str
     budget_amount: Optional[float] = None
     budget_currency: Optional[str] = None
@@ -3086,8 +3086,8 @@ class CampaignCreatePayload(BaseModel):
 class CampaignUpdatePayload(BaseModel):
     name: Optional[str] = None
     status: Optional[str] = None
-    start_at: Optional[str] = None
-    end_at: Optional[str] = None
+    current_period_start: Optional[str] = None
+    current_period_end: Optional[str] = None
     country_code: Optional[str] = None
     budget_amount: Optional[float] = None
     budget_currency: Optional[str] = None
@@ -5056,8 +5056,8 @@ async def create_campaign(
         id=uuid.uuid4(),
         name=data["name"],
         status=data["status"],
-        start_at=data["start_at"],
-        end_at=data["end_at"],
+        current_period_start=data["current_period_start"],
+        current_period_end=data["current_period_end"],
         country_code=data["country_code"],
         budget_amount=data["budget_amount"],
         budget_currency=data["budget_currency"],
@@ -5120,8 +5120,8 @@ async def list_campaigns(
         if len(parts) == 2:
             start_dt = _parse_datetime_field(parts[0], "date_range_start")
             end_dt = _parse_datetime_field(parts[1], "date_range_end")
-            query = query.where(Campaign.start_at >= start_dt).where(
-                or_(Campaign.end_at.is_(None), Campaign.end_at <= end_dt)
+            query = query.where(Campaign.current_period_start >= start_dt).where(
+                or_(Campaign.current_period_end.is_(None), Campaign.current_period_end <= end_dt)
             )
 
     safe_page = max(page, 1)
@@ -5130,7 +5130,7 @@ async def list_campaigns(
 
     total_count = await session.scalar(select(func.count()).select_from(query.subquery())) or 0
     result = await session.execute(
-        query.order_by(desc(Campaign.start_at), desc(Campaign.updated_at)).offset(offset).limit(safe_limit)
+        query.order_by(desc(Campaign.current_period_start), desc(Campaign.updated_at)).offset(offset).limit(safe_limit)
     )
     rows = result.scalars().all()
 
@@ -5212,8 +5212,8 @@ async def update_campaign(
     campaign.country_code = data["country_code"]
     campaign.name = data["name"]
     campaign.status = data["status"]
-    campaign.start_at = data["start_at"]
-    campaign.end_at = data["end_at"]
+    campaign.current_period_start = data["current_period_start"]
+    campaign.current_period_end = data["current_period_end"]
     campaign.budget_amount = data["budget_amount"]
     campaign.budget_currency = data["budget_currency"]
     campaign.notes = data["notes"]
@@ -5299,7 +5299,7 @@ async def activate_campaign(
         raise HTTPException(status_code=400, detail="Invalid status transition")
 
     before_state = _campaign_to_dict(campaign)
-    campaign.status = "active"
+    campaign.status = "trial"
     campaign.updated_at = datetime.now(timezone.utc)
 
     await _write_audit_log_sql(
@@ -10054,7 +10054,7 @@ async def dealer_bulk_action_listings(
             if listing.status != "archived":
                 failed += 1
             else:
-                listing.status = "active"
+                listing.status = "trial"
                 updated += 1
         elif action == "delete":
             listing.status = "archived"
@@ -14049,7 +14049,7 @@ def _build_dashboard_pdf(summary: Dict[str, Any], trend_window: int) -> bytes:
     health_rows.append(["API gecikme", f"{health.get('api_latency_ms')} ms"])
     health_rows.append(["DB gecikme", f"{health.get('db_latency_ms')} ms"])
     health_rows.append(["Son deploy", str(health.get("deployed_at"))])
-    health_rows.append(["Son restart", str(health.get("restart_at"))])
+    health_rows.append(["Son restart", str(health.get("recurrent_period_start"))])
     health_rows.append(["Uptime", str(health.get("uptime_human"))])
     add_table("Sistem Sağlığı", health_rows)
 
@@ -14079,7 +14079,7 @@ def _empty_dashboard_summary(start_perf: float, can_view_finance: bool, trend_wi
             "api_latency_ms": api_latency_ms,
             "db_latency_ms": None,
             "deployed_at": os.environ.get("DEPLOYED_AT") or "unknown",
-            "restart_at": APP_START_TIME.isoformat(),
+            "recurrent_period_start": APP_START_TIME.isoformat(),
             "uptime_seconds": uptime_seconds,
             "uptime_human": _format_uptime(uptime_seconds),
         },
@@ -14308,7 +14308,7 @@ async def admin_dashboard_summary(
             "api_latency_ms": api_latency_ms,
             "db_latency_ms": 0,
             "deployed_at": os.environ.get("DEPLOYED_AT") or "unknown",
-            "restart_at": APP_START_TIME.isoformat(),
+            "recurrent_period_start": APP_START_TIME.isoformat(),
             "uptime_seconds": uptime_seconds,
             "uptime_human": _format_uptime(uptime_seconds),
         },
