@@ -19,6 +19,7 @@ from app.models.trust import UserReview
 from app.models.referral_tier import ReferralTier
 from app.models.affiliate import Affiliate
 from app.models.escrow import EscrowTransaction, Dispute
+from app.models.consumer_profile import ConsumerProfile
 from app.models.dealer_profile import DealerProfile
 from app.models.legal import LegalConsent
 from app.models.vehicle_mdm import VehicleMake, VehicleModel
