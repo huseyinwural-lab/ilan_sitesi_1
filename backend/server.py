@@ -12031,13 +12031,18 @@ async def admin_dashboard_summary(
 ):
     start_perf = time.perf_counter()
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
     role = current_user.get("role")
     can_view_finance = role in {"finance", "super_admin"}
     trend_window = trend_days or DASHBOARD_TREND_DAYS
     if trend_window < DASHBOARD_TREND_MIN_DAYS or trend_window > DASHBOARD_TREND_MAX_DAYS:
         raise HTTPException(status_code=400, detail="trend_days must be between 7 and 365")
+
+    if db is None or not MONGO_ENABLED:
+        return _empty_dashboard_summary(start_perf, can_view_finance, trend_window)
+
+    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+
     scope = (current_user.get("country_scope") or [])
     country_code = country.upper() if country else None
 
