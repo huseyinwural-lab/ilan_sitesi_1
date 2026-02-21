@@ -1368,6 +1368,16 @@ async def _ensure_invoices_db_ready(session: AsyncSession) -> None:
         raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Invoices database not reachable"))
 
 
+async def _get_db_status(session: AsyncSession) -> tuple[bool, str, str]:
+    if not RAW_DATABASE_URL:
+        return False, "db_config_missing", "config_missing"
+    try:
+        await session.execute(select(1))
+        return True, "ok", "ok"
+    except Exception:
+        return False, "db_unreachable", "unreachable"
+
+
 def _resolve_currency_code(country_code: Optional[str]) -> Optional[str]:
     code = country_code or settings.DEFAULT_COUNTRY
     return settings.COUNTRY_CURRENCIES.get(code)
