@@ -10568,7 +10568,7 @@ async def create_checkout_session_stub(
         metadata=payload.metadata or {"stub": "true"},
     )
 
-    checkout_session: CheckoutSessionResponse = stripe_checkout.create_checkout_session(session_request)
+    checkout_session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(session_request)
 
     return {
         "checkout_url": checkout_session.checkout_url,
@@ -10630,7 +10630,7 @@ async def create_checkout_session(
         },
     )
 
-    checkout_session: CheckoutSessionResponse = stripe_checkout.create_checkout_session(session_request)
+    checkout_session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(session_request)
 
     now = datetime.now(timezone.utc)
     payment = Payment(
