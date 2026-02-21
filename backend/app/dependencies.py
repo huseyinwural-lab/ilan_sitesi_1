@@ -100,11 +100,7 @@ async def get_current_user(
     if not user_id:
         raise credentials_exception
 
-    db = getattr(request.app.state, "db", None) if request else None
-    if AUTH_PROVIDER == "sql" or not MONGO_ENABLED or db is None:
-        user = await _get_sql_user(user_id, sql_session)
-    else:
-        user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    user = await _get_sql_user(user_id, sql_session)
 
     if not user or not user.get("is_active", False):
         raise credentials_exception
