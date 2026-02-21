@@ -16,6 +16,7 @@ from app.schemas.user import (
 from app.services.audit import log_action
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+TOKEN_VERSION = os.environ.get("TOKEN_VERSION", "v2")
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
