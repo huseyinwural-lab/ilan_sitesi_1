@@ -513,7 +513,7 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
                         </td>
                       ) : (
                         <td className="p-3" data-testid={`${testIdPrefix}-users-${campaign.id}`}>
-                          {campaign.eligible_users_count || 0}
+                          {userCount}
                         </td>
                       )}
                       <td className="p-3 text-right" data-testid={`${testIdPrefix}-actions-${campaign.id}`}>
