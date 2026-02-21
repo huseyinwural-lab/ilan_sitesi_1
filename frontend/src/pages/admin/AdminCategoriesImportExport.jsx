@@ -159,6 +159,14 @@ export default function AdminCategoriesImportExport() {
     }
   };
 
+  const updates = dryRunResult?.updates || [];
+  const totalUpdatePages = Math.max(1, Math.ceil(updates.length / UPDATE_PAGE_SIZE));
+  const safeUpdatePage = Math.min(updatePage, totalUpdatePages);
+  const pagedUpdates = updates.slice(
+    (safeUpdatePage - 1) * UPDATE_PAGE_SIZE,
+    safeUpdatePage * UPDATE_PAGE_SIZE
+  );
+
   return (
     <div className="p-6" data-testid="admin-categories-import-export-page">
       <div className="flex items-center justify-between mb-6">
