@@ -16,6 +16,8 @@ from app.models.monetization import SubscriptionPlan, UserSubscription, QuotaUsa
 
 from app.models.messaging import Conversation, Message
 from app.models.trust import UserReview
+from app.models.referral_tier import ReferralTier
+from app.models.affiliate import Affiliate
 from app.models.escrow import EscrowTransaction, Dispute
 from app.models.dealer_profile import DealerProfile
 from app.models.legal import LegalConsent
