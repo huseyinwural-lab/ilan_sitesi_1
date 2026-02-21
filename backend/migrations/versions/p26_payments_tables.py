@@ -15,7 +15,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('admin_invoices', sa.Column('payment_status', sa.String(length=20), nullable=False, server_default='unpaid'))
+    op.add_column('admin_invoices', sa.Column('payment_status', sa.String(length=40), nullable=False, server_default='requires_payment_method'))
 
     op.create_table(
         'payments',
