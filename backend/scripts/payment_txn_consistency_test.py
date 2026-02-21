@@ -1,10 +1,15 @@
 import asyncio
 import os
+import sys
 import uuid
 from datetime import datetime, timezone, timedelta
 
+from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy import select
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT_DIR))
 
 from app.database import AsyncSessionLocal
 from app.models.user import User
@@ -14,8 +19,8 @@ from app.models.monetization import UserSubscription
 from app.models.payment import Payment, PaymentTransaction
 from app.server import _apply_payment_status
 
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env.local"), override=True)
+load_dotenv(ROOT_DIR / ".env")
+load_dotenv(ROOT_DIR / ".env.local", override=True)
 
 
 async def run():
