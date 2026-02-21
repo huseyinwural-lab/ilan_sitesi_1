@@ -11,7 +11,7 @@ Mongo tabanlı notification okuma/yazma akışlarının kaldırılması ve SQL t
 
 ## Aşama-2 (1 release sonrası)
 - [ ] Mongo tarafındaki eski koleksiyon referanslarını tamamen sil.
-- [ ] “mongo notification” araması → 0 sonuç.
+- [ ] `mongo` + `notification` anahtar kelime araması → 0 sonuç.
 - [ ] Backfill raporu ve örnekleme doğrulaması onaylandıktan sonra kalıcı temizlik.
 
 ## Doğrulama Checklist
