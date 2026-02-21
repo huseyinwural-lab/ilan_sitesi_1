@@ -2398,19 +2398,9 @@ _application_submit_attempts: Dict[str, List[float]] = {}
 VEHICLE_TYPE_SET = {"car", "suv", "offroad", "pickup", "truck", "bus"}
 
 APP_ENV = (os.environ.get("APP_ENV") or "dev").lower()
-MONGO_ENABLED_RAW = os.environ.get("MONGO_ENABLED")
-if APP_ENV == "prod":
-    if MONGO_ENABLED_RAW and MONGO_ENABLED_RAW.lower() not in {"false", "0", "no"}:
-        raise RuntimeError("MONGO_ENABLED must be false in prod")
-    MONGO_ENABLED = False
-else:
-    if MONGO_ENABLED_RAW is None:
-        MONGO_ENABLED = True
-    else:
-        MONGO_ENABLED = MONGO_ENABLED_RAW.lower() in {"1", "true", "yes"}
-
-AUTH_PROVIDER = resolve_auth_provider(MONGO_ENABLED)
-APPLICATIONS_PROVIDER = resolve_applications_provider(MONGO_ENABLED)
+MONGO_ENABLED = False
+AUTH_PROVIDER = "sql"
+APPLICATIONS_PROVIDER = "sql"
 
 RAW_DATABASE_URL = os.environ.get("DATABASE_URL")
 TOKEN_VERSION = os.environ.get("TOKEN_VERSION", "v2")
