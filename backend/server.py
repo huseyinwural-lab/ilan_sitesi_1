@@ -167,6 +167,24 @@ class UserLogin(BaseModel):
     password: str
 
 
+class ConsumerRegisterPayload(BaseModel):
+    full_name: str = Field(..., min_length=2, max_length=255)
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    country_code: str = Field(..., min_length=2, max_length=5)
+    preferred_language: Optional[str] = "tr"
+
+
+class DealerRegisterPayload(BaseModel):
+    company_name: str = Field(..., min_length=2, max_length=255)
+    contact_name: str = Field(..., min_length=2, max_length=255)
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    country_code: str = Field(..., min_length=2, max_length=5)
+    tax_id: Optional[str] = None
+    preferred_language: Optional[str] = "tr"
+
+
 class UserResponse(BaseModel):
     id: str
     email: str
