@@ -14217,11 +14217,20 @@ async def admin_dashboard_country_compare(
     sort_dir: Optional[str] = None,
     countries: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, db=None)
     selected_codes = _parse_country_codes(countries)
-    return await _build_country_compare_payload(db, current_user, period, start_date, end_date, sort_by, sort_dir, selected_codes)
+    return await _build_country_compare_payload_sql(
+        session,
+        current_user,
+        period,
+        start_date,
+        end_date,
+        sort_by,
+        sort_dir,
+        selected_codes,
+    )
 
 
 @api_router.get("/admin/dashboard/country-compare/export/csv")
@@ -14234,13 +14243,22 @@ async def admin_dashboard_country_compare_export_csv(
     sort_dir: Optional[str] = None,
     countries: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, db=None)
     _enforce_export_rate_limit(request, current_user.get("id"))
 
     selected_codes = _parse_country_codes(countries)
-    payload = await _build_country_compare_payload(db, current_user, period, start_date, end_date, sort_by, sort_dir, selected_codes)
+    payload = await _build_country_compare_payload_sql(
+        session,
+        current_user,
+        period,
+        start_date,
+        end_date,
+        sort_by,
+        sort_dir,
+        selected_codes,
+    )
     items = payload.get("items") or []
 
     buffer = io.StringIO()
@@ -14297,23 +14315,22 @@ async def admin_dashboard_country_compare_export_csv(
     buffer.close()
     filename = f"country-compare-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.csv"
 
-    audit_doc = await build_audit_entry(
-        event_type="country_compare_export_csv",
-        actor=current_user,
-        target_id="country_compare",
-        target_type="dashboard_country_compare",
-        country_code=None,
-        details={"period": period, "start_date": start_date, "end_date": end_date, "sort_by": sort_by, "sort_dir": sort_dir},
+    await _write_audit_log_sql(
+        session=session,
+        action="country_compare_export_csv",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="dashboard_country_compare",
+        resource_id="country_compare",
+        metadata={"period": period, "start_date": start_date, "end_date": end_date, "sort_by": sort_by, "sort_dir": sort_dir},
         request=request,
+        country_code=None,
     )
-    audit_doc["action"] = "country_compare_export_csv"
-    audit_doc["user_agent"] = request.headers.get("user-agent")
-    await db.audit_logs.insert_one(audit_doc)
+    await session.commit()
 
     return Response(
         content=csv_content,
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
