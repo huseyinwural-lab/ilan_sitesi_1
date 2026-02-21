@@ -10836,6 +10836,11 @@ async def admin_update_plan(
             raise HTTPException(status_code=400, detail="country_scope invalid")
         updates["country_scope"] = scope_value
 
+    country_value = plan.country_code
+    if payload.country_code is not None:
+        country_value = payload.country_code.strip().upper()
+        updates["country_code"] = country_value
+
     period_value = plan.period
     if payload.period is not None:
         period_value = payload.period.strip().lower()
