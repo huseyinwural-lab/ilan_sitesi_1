@@ -25,7 +25,7 @@ export default function PortalGate({ portal, children, loginPath }) {
   // Public portal gate is not used; public routes are always accessible.
   if (portal === PORTALS.BACKOFFICE || portal === PORTALS.DEALER || portal === PORTALS.INDIVIDUAL) {
     if (eligiblePortal !== portal) {
-      const target = defaultHomeForRole(user.role);
+      const target = portalScope ? defaultHomeForScope(portalScope) : defaultHomeForRole(user.role);
       return <Navigate to={target} replace state={{ forbidden: true }} />;
     }
   }
