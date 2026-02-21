@@ -151,6 +151,7 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     role: str
+    portal_scope: Optional[str] = None
     country_scope: List[str] = Field(default_factory=list)
     preferred_language: str = "tr"
     is_active: bool = True
