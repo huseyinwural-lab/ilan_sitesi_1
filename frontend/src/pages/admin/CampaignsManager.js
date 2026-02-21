@@ -223,27 +223,28 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
 
   const openEdit = (campaign) => {
     setEditing(campaign);
+    const rules = campaign.rules_json || {};
     setFormState({
       name: campaign.name || '',
-      description: campaign.description || '',
+      description: campaign.notes || '',
       status: campaign.status || 'draft',
-      target: campaign.target || 'discount',
-      countryScope: campaign.country_scope || 'global',
+      target: rules.target || 'discount',
+      countryScope: rules.country_scope || 'country',
       countryCode: campaign.country_code || '',
       startAt: campaign.start_at ? campaign.start_at.slice(0, 16) : '',
       endAt: campaign.end_at ? campaign.end_at.slice(0, 16) : '',
-      priority: campaign.priority || 'medium',
-      discountMode: campaign.discount_percent ? 'percent' : campaign.discount_amount ? 'amount' : 'percent',
-      discountPercent: campaign.discount_percent || '',
-      discountAmount: campaign.discount_amount || '',
-      minListingCount: campaign.min_listing_count || '',
-      maxListingCount: campaign.max_listing_count || '',
-      eligibleCategories: (campaign.eligible_categories || []).join(', '),
-      eligibleUserSegment: campaign.eligible_user_segment || 'all',
-      eligibleDealerPlan: campaign.eligible_dealer_plan || 'any',
-      eligibleDealers: (campaign.eligible_dealers || []).join(', '),
-      eligibleUsers: (campaign.eligible_users || []).join(', '),
-      freeListingQuotaBonus: campaign.free_listing_quota_bonus || '',
+      priority: rules.priority || 'medium',
+      discountMode: rules.discount_percent ? 'percent' : rules.discount_amount ? 'amount' : 'percent',
+      discountPercent: rules.discount_percent || '',
+      discountAmount: rules.discount_amount || '',
+      minListingCount: rules.min_listing_count || '',
+      maxListingCount: rules.max_listing_count || '',
+      eligibleCategories: (rules.eligible_categories || []).join(', '),
+      eligibleUserSegment: rules.eligible_user_segment || 'all',
+      eligibleDealerPlan: rules.eligible_dealer_plan || 'any',
+      eligibleDealers: (rules.eligible_dealers || []).join(', '),
+      eligibleUsers: (rules.eligible_users || []).join(', '),
+      freeListingQuotaBonus: rules.free_listing_quota_bonus || '',
     });
     setFormOpen(true);
   };
