@@ -11,6 +11,7 @@ import AccountMessages from './pages/user/AccountMessages';
 import AccountSupportList from './pages/user/AccountSupportList';
 import AccountSupportDetail from './pages/user/AccountSupportDetail';
 import AccountProfile from './pages/user/AccountProfile';
+import AccountPrivacyCenter from './pages/user/AccountPrivacyCenter';
 import { HelmetProvider } from 'react-helmet-async';
 
 // Public Pages
