@@ -7,9 +7,12 @@ const API = `${BACKEND_URL}/api`;
 
 const statusOptions = [
   { value: 'all', label: 'Tümü' },
-  { value: 'pending', label: 'pending' },
+  { value: 'requires_payment_method', label: 'requires_payment_method' },
+  { value: 'requires_confirmation', label: 'requires_confirmation' },
+  { value: 'processing', label: 'processing' },
   { value: 'succeeded', label: 'succeeded' },
   { value: 'failed', label: 'failed' },
+  { value: 'canceled', label: 'canceled' },
   { value: 'refunded', label: 'refunded' },
 ];
 
