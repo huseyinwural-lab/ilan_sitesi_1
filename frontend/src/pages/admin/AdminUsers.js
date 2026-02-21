@@ -475,61 +475,63 @@ export default function AdminUsers() {
 
       <div className="rounded-md border bg-card overflow-hidden" data-testid="admin-users-table">
         <div className="overflow-x-auto">
-          <table className="min-w-[900px] w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="p-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.length === users.length && users.length > 0}
-                    onChange={handleSelectAll}
-                    data-testid="admin-users-select-all"
-                  />
-                </th>
-                <th className="p-3 text-left">Ad Soyad</th>
-                <th className="p-3 text-left">E-posta</th>
-                <th className="p-3 text-left">Rol</th>
-                <th className="p-3 text-left">Country Scope</th>
-                <th className="p-3 text-left">Durum</th>
-                <th className="p-3 text-left">Son Giriş</th>
-                <th className="p-3 text-left">Aksiyon</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={8} className="p-6 text-center text-muted-foreground" data-testid="admin-users-loading">
-                    Yükleniyor...
-                  </td>
-                </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="p-6 text-center text-muted-foreground" data-testid="admin-users-empty">
-                    Admin kullanıcı bulunamadı.
-                  </td>
-                </tr>
-              ) : (
-                users.map((user) => {
+          <div className="min-w-[900px]">
+            <div
+              className="grid grid-cols-[40px_1.4fr_1.6fr_1fr_1fr_1fr_1fr_1.6fr] gap-2 bg-muted text-xs font-semibold px-3 py-2"
+              data-testid="admin-users-table-header"
+            >
+              <div className="flex items-center" data-testid="admin-users-header-select">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.length === users.length && users.length > 0}
+                  onChange={handleSelectAll}
+                  data-testid="admin-users-select-all"
+                />
+              </div>
+              <div data-testid="admin-users-header-name">Ad Soyad</div>
+              <div data-testid="admin-users-header-email">E-posta</div>
+              <div data-testid="admin-users-header-role">Rol</div>
+              <div data-testid="admin-users-header-scope">Country Scope</div>
+              <div data-testid="admin-users-header-status">Durum</div>
+              <div data-testid="admin-users-header-last-login">Son Giriş</div>
+              <div data-testid="admin-users-header-actions">Aksiyon</div>
+            </div>
+
+            {loading ? (
+              <div className="p-6 text-center text-muted-foreground" data-testid="admin-users-loading">
+                Yükleniyor...
+              </div>
+            ) : users.length === 0 ? (
+              <div className="p-6 text-center text-muted-foreground" data-testid="admin-users-empty">
+                Admin kullanıcı bulunamadı.
+              </div>
+            ) : (
+              <div className="divide-y" data-testid="admin-users-table-body">
+                {users.map((user) => {
                   const status = statusLabel(user);
                   return (
-                    <tr key={user.id} className="border-b last:border-none" data-testid={`admin-user-row-${user.id}`}>
-                      <td className="p-3">
+                    <div
+                      key={user.id}
+                      className="grid grid-cols-[40px_1.4fr_1.6fr_1fr_1fr_1fr_1fr_1.6fr] gap-2 px-3 py-3 text-sm"
+                      data-testid={`admin-user-row-${user.id}`}
+                    >
+                      <div className="flex items-center">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(user.id)}
                           onChange={() => handleToggleSelect(user.id)}
                           data-testid={`admin-user-select-${user.id}`}
                         />
-                      </td>
-                      <td className="p-3" data-testid={`admin-user-name-${user.id}`}>{user.full_name || '-'}</td>
-                      <td className="p-3" data-testid={`admin-user-email-${user.id}`}>{user.email}</td>
-                      <td className="p-3" data-testid={`admin-user-role-${user.id}`}>{roleLabel(user.role)}</td>
-                      <td className="p-3" data-testid={`admin-user-scope-${user.id}`}>{formatScope(user.country_scope)}</td>
-                      <td className="p-3" data-testid={`admin-user-status-${user.id}`}>
+                      </div>
+                      <div data-testid={`admin-user-name-${user.id}`}>{user.full_name || '-'}</div>
+                      <div data-testid={`admin-user-email-${user.id}`}>{user.email}</div>
+                      <div data-testid={`admin-user-role-${user.id}`}>{roleLabel(user.role)}</div>
+                      <div data-testid={`admin-user-scope-${user.id}`}>{formatScope(user.country_scope)}</div>
+                      <div data-testid={`admin-user-status-${user.id}`}>
                         <span className={`px-2 py-1 rounded-full text-xs ${status.color}`}>{status.text}</span>
-                      </td>
-                      <td className="p-3" data-testid={`admin-user-last-login-${user.id}`}>{formatDate(user.last_login)}</td>
-                      <td className="p-3" data-testid={`admin-user-actions-${user.id}`}>
+                      </div>
+                      <div data-testid={`admin-user-last-login-${user.id}`}>{formatDate(user.last_login)}</div>
+                      <div data-testid={`admin-user-actions-${user.id}`}>
                         <div className="flex flex-wrap items-center gap-3">
                           {!user.deleted_at ? (
                             <button
@@ -568,13 +570,13 @@ export default function AdminUsers() {
                             </span>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   );
-                })
-              )}
-            </tbody>
-          </table>
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
