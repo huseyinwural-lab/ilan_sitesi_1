@@ -10,13 +10,6 @@ from app.models.user import User as SqlUser
 from app.models.auth import UserCredential
 
 
-def resolve_auth_provider(mongo_enabled: bool) -> str:
-    provider = os.environ.get("AUTH_PROVIDER")
-    if provider:
-        return provider.lower()
-    return "mongo" if mongo_enabled else "sql"
-
-
 class AuthRepository:
     async def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         raise NotImplementedError
@@ -26,26 +19,6 @@ class AuthRepository:
 
     async def update_last_login(self, user_id: str, iso_timestamp: str) -> None:
         raise NotImplementedError
-
-
-class MongoAuthRepository(AuthRepository):
-    def __init__(self, db):
-        self.db = db
-
-    async def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        if self.db is None:
-            return None
-        return await self.db.users.find_one({"email": email}, {"_id": 0})
-
-    async def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
-        if self.db is None:
-            return None
-        return await self.db.users.find_one({"id": user_id}, {"_id": 0})
-
-    async def update_last_login(self, user_id: str, iso_timestamp: str) -> None:
-        if self.db is None:
-            return
-        await self.db.users.update_one({"id": user_id}, {"$set": {"last_login": iso_timestamp}})
 
 
 class SqlAuthRepository(AuthRepository):
