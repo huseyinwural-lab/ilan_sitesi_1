@@ -777,31 +777,8 @@ def _send_verification_email(to_email: str, code: str, locale: Optional[str]) ->
         return
 
     if provider == "smtp":
-        if not SMTP_HOST or not SMTP_PORT or not SMTP_FROM:
-            logger.error("SMTP configuration missing: SMTP_HOST/SMTP_PORT/SMTP_FROM")
-            raise HTTPException(status_code=503, detail="SMTP not configured")
-        if (SMTP_USERNAME and not SMTP_PASSWORD) or (SMTP_PASSWORD and not SMTP_USERNAME):
-            logger.error("SMTP auth configuration incomplete")
-            raise HTTPException(status_code=503, detail="SMTP auth not configured")
-
-        message = EmailMessage()
-        message["Subject"] = subject
-        message["From"] = SMTP_FROM
-        message["To"] = to_email
-        message.set_content(text_body)
-        message.add_alternative(html_body, subtype="html")
-
-        try:
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as client:
-                client.ehlo()
-                if SMTP_USERNAME and SMTP_PASSWORD:
-                    client.starttls()
-                    client.login(SMTP_USERNAME, SMTP_PASSWORD)
-                client.send_message(message)
-        except Exception as exc:
-            logger.error("SMTP verification send error: %s", exc)
-            raise HTTPException(status_code=502, detail="Failed to send verification email") from exc
-        return
+        logger.error("SMTP provider not supported (SendGrid only)")
+        raise HTTPException(status_code=503, detail="SMTP provider not supported")
 
     raise HTTPException(status_code=503, detail="Email provider not configured")
 
