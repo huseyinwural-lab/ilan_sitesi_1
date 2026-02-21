@@ -83,17 +83,13 @@ from app.models.dealer_listing import DealerListing
 from app.models.moderation import Listing
 from app.models.analytics import ListingView
 from app.models.messaging import Conversation, Message
+from app.models.favorite import Favorite
+from app.models.support_message import SupportMessage
 
 
 from fastapi import UploadFile, File
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 
-from app.vehicle_listings_store import (
-    create_vehicle_listing,
-    get_vehicle_listing,
-    add_media as add_vehicle_media,
-    set_status as set_vehicle_status,
-)
 from app.vehicle_publish_guard import validate_publish, validate_listing_schema
 from app.vehicle_media_storage import store_image, resolve_public_media_path
 
