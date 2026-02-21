@@ -14,6 +14,7 @@ class Plan(Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     country_scope: Mapped[str] = mapped_column(String(20), nullable=False, server_default="global")
     country_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    period: Mapped[str] = mapped_column(String(20), nullable=False, server_default="monthly")
     price_amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
     currency_code: Mapped[str] = mapped_column(String(5), nullable=False, server_default="EUR")
     listing_quota: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
@@ -24,9 +25,10 @@ class Plan(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
-        UniqueConstraint("country_scope", "country_code", "slug", name="uq_plans_scope_country_slug"),
+        UniqueConstraint("country_scope", "country_code", "slug", "period", name="uq_plans_scope_country_slug_period"),
         Index("ix_plans_country_scope", "country_scope"),
         Index("ix_plans_country_code", "country_code"),
+        Index("ix_plans_period", "period"),
         Index("ix_plans_active_flag", "active_flag"),
         Index("ix_plans_archived_at", "archived_at"),
     )
