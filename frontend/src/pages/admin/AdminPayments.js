@@ -114,12 +114,12 @@ export default function AdminPaymentsPage() {
           <thead className="bg-muted">
             <tr>
               <th className="text-left px-3 py-2" data-testid="admin-payments-header-invoice">Invoice No</th>
-              <th className="text-left px-3 py-2" data-testid="admin-payments-header-dealer">Dealer</th>
+              <th className="text-left px-3 py-2" data-testid="admin-payments-header-user">User</th>
               <th className="text-left px-3 py-2" data-testid="admin-payments-header-amount">Amount</th>
               <th className="text-left px-3 py-2" data-testid="admin-payments-header-currency">Currency</th>
               <th className="text-left px-3 py-2" data-testid="admin-payments-header-status">Status</th>
               <th className="text-left px-3 py-2" data-testid="admin-payments-header-provider">Provider</th>
-              <th className="text-left px-3 py-2" data-testid="admin-payments-header-paid">Paid At</th>
+              <th className="text-left px-3 py-2" data-testid="admin-payments-header-provider-ref">Provider Ref</th>
               <th className="text-left px-3 py-2" data-testid="admin-payments-header-created">Created</th>
             </tr>
           </thead>
