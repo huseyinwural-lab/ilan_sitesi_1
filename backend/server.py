@@ -5151,7 +5151,7 @@ async def archive_campaign(
         raise HTTPException(status_code=404, detail="Campaign not found")
 
     before_state = _campaign_to_dict(campaign)
-    campaign.status = "archived"
+    campaign.status = "ended"
     campaign.updated_at = datetime.now(timezone.utc)
 
     await _write_audit_log_sql(
@@ -5281,7 +5281,7 @@ async def archive_campaign_action(
         return {"ok": True}
 
     before_state = _campaign_to_dict(campaign)
-    campaign.status = "archived"
+    campaign.status = "ended"
     campaign.updated_at = datetime.now(timezone.utc)
 
     await _write_audit_log_sql(
