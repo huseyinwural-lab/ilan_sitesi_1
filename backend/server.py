@@ -263,6 +263,11 @@ class GDPRExportResponse(BaseModel):
     data: Dict[str, Any]
 
 
+class ChangePasswordPayload(BaseModel):
+    current_password: str
+    new_password: str
+
+
 class MessageThreadCreatePayload(BaseModel):
     listing_id: str
 
