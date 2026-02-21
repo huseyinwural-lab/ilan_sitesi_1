@@ -128,7 +128,7 @@ function App() {
                     path="/account"
                     element={
                       <AccountRoute>
-                        <UserPanelLayout />
+                        <AccountLayout />
                       </AccountRoute>
                     }
                   >
