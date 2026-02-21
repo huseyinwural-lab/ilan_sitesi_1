@@ -70,6 +70,9 @@ export default function AdminCategoriesImportExport() {
     if (!validateFile(file)) return;
     setLoading(true);
     setDryRunResult(null);
+    setCommitResult(null);
+    setPublishResult(null);
+    setUpdatePage(1);
     try {
       const formData = new FormData();
       formData.append('file', file);
