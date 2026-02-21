@@ -7433,6 +7433,118 @@ def _serialize_category_version(doc: dict, include_snapshot: bool = False) -> di
     return payload
 
 
+def _safe_uuid(value: Optional[str]) -> Optional[uuid.UUID]:
+    if not value:
+        return None
+    try:
+        return uuid.UUID(str(value))
+    except ValueError:
+        return None
+
+
+def _serialize_category_version_sql(version: CategorySchemaVersion, include_snapshot: bool = False) -> dict:
+    payload = {
+        "id": str(version.id),
+        "category_id": str(version.category_id),
+        "version": version.version,
+        "status": version.status,
+        "created_at": version.created_at.isoformat() if version.created_at else None,
+        "created_by": str(version.created_by) if version.created_by else None,
+        "created_by_role": version.created_by_role,
+        "created_by_email": version.created_by_email,
+        "published_at": version.published_at.isoformat() if version.published_at else None,
+        "published_by": str(version.published_by) if version.published_by else None,
+    }
+    if include_snapshot:
+        payload["schema_snapshot"] = version.schema_snapshot
+    return payload
+
+
+async def _record_category_version_sql(
+    session: AsyncSession,
+    category_id: uuid.UUID,
+    schema_snapshot: Dict[str, Any],
+    actor: dict,
+    status: str,
+    max_versions: int = 20,
+) -> CategorySchemaVersion:
+    latest = await session.execute(
+        select(CategorySchemaVersion)
+        .where(CategorySchemaVersion.category_id == category_id)
+        .order_by(desc(CategorySchemaVersion.version))
+        .limit(1)
+    )
+    latest_row = latest.scalar_one_or_none()
+    next_version = (latest_row.version if latest_row else 0) + 1
+
+    now = datetime.now(timezone.utc)
+    version = CategorySchemaVersion(
+        id=uuid.uuid4(),
+        category_id=category_id,
+        version=next_version,
+        status=status,
+        schema_snapshot=schema_snapshot,
+        created_at=now,
+        created_by=_safe_uuid(actor.get("id")),
+        created_by_role=actor.get("role"),
+        created_by_email=actor.get("email"),
+        published_at=now if status == "published" else None,
+        published_by=_safe_uuid(actor.get("id")) if status == "published" else None,
+    )
+    session.add(version)
+    await session.commit()
+
+    if max_versions and max_versions > 0:
+        versions_res = await session.execute(
+            select(CategorySchemaVersion)
+            .where(CategorySchemaVersion.category_id == category_id)
+            .order_by(desc(CategorySchemaVersion.version))
+        )
+        versions = versions_res.scalars().all()
+        if len(versions) > max_versions:
+            for old in versions[max_versions:]:
+                await session.delete(old)
+            await session.commit()
+
+    return version
+
+
+async def _mark_latest_category_version_published_sql(
+    session: AsyncSession,
+    category_id: uuid.UUID,
+    schema_snapshot: Dict[str, Any],
+    actor: dict,
+    max_versions: int = 20,
+) -> CategorySchemaVersion:
+    latest = await session.execute(
+        select(CategorySchemaVersion)
+        .where(CategorySchemaVersion.category_id == category_id)
+        .order_by(desc(CategorySchemaVersion.version))
+        .limit(1)
+    )
+    latest_row = latest.scalar_one_or_none()
+    now = datetime.now(timezone.utc)
+    if latest_row:
+        latest_row.status = "published"
+        latest_row.published_at = now
+        latest_row.published_by = _safe_uuid(actor.get("id"))
+        await session.commit()
+        return latest_row
+
+    return await _record_category_version_sql(session, category_id, schema_snapshot, actor, "published", max_versions=max_versions)
+
+
+async def _get_schema_version_for_export_sql(session: AsyncSession, category_id: uuid.UUID) -> int:
+    latest = await session.execute(
+        select(CategorySchemaVersion.version)
+        .where(CategorySchemaVersion.category_id == category_id)
+        .order_by(desc(CategorySchemaVersion.version))
+        .limit(1)
+    )
+    value = latest.scalar_one_or_none()
+    return int(value or 0)
+
+
 async def _get_schema_version_for_export(db, category_id: str) -> int:
     latest_docs = await db.categories_versions.find(
         {"category_id": category_id},
