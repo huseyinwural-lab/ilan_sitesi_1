@@ -2530,7 +2530,7 @@ async def health_db():
 
     if not RAW_DATABASE_URL:
         return JSONResponse(
-            status_code=503,
+            status_code=200,
             content={
                 "status": "degraded",
                 "database": "postgres",
