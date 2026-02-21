@@ -87,6 +87,8 @@ export default function AdminCategoriesImportExport() {
       }
       const data = await res.json();
       setDryRunResult(data);
+      setShowOnlyChanged(true);
+      setExpandedSlug(null);
       setActiveTab('preview');
     } catch (err) {
       setError(err?.message || 'Dry-run başarısız');
