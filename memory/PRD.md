@@ -199,17 +199,13 @@
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- FAZ-FINAL-01 Critical User Path: **AUTH → Stripe → Ad Loop** (order lock)
-- Local E2E kanıtı: `/app/ops/FINAL01_LOCAL_E2E.md`
-- AUTH SQL full migration + Mongo cutoff + Auth E2E
-- Stripe Payment zinciri: Payments V1 unique + webhook idempotency/replay + invoice/subscription/quota chain
-- Ad Loop E2E: ilan oluştur → medya → publish → public görünür
-- Email verification prod switch: token tablosu + unique index + TTL=15dk + debug kaldırma
-- Ad wizard SQL mapping gap fix: category_id + make_id/model_id mapping
-- Ops: DATABASE_URL secret (preview/prod) + migration/seed
-- Local Postgres UNBLOCK **PASS** (FINAL01_LOCAL_E2E.md). Preview/prod DB hala BLOCKED.
-- Billing audit log tablo adı net değil (billing_audit_log yok; audit_logs kullanılıyor) → netleştirilecek.
-- Public search + moderation hâlâ Mongo (Ad Loop public görünürlük staging’de doğrulanacak).
+- Billing audit standard (audit_logs) + /api/admin/audit-logs?scope=billing
+- Wizard mapping gap fix: category NOT NULL + make/model mapping (vehicle)
+- Moderation SQL (approve-only) + public search v2 SQL
+- Email provider SendGrid (prod) + startup guard
+- Public search Mongo path kaldırma (MONGO_ENABLED=false)
+- Ad wizard mapping gap fix (category_id + make_id/model_id) + category not-null enforce
+- Ops: Staging smoke runbook + DB parity check
 ### P1
 - Verification token cleanup job (00:30 UTC) + retention policy (24h/7d) kanıtları
 - Lint debt cleanup (LINT-1/2)
