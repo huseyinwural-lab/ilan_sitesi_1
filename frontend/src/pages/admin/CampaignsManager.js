@@ -62,11 +62,12 @@ const formatDate = (value) => {
 };
 
 const formatDiscount = (campaign) => {
-  if (campaign.discount_percent) {
-    return `%${campaign.discount_percent}`;
+  const rules = campaign.rules_json || {};
+  if (rules.discount_percent) {
+    return `%${rules.discount_percent}`;
   }
-  if (campaign.discount_amount) {
-    return `${campaign.discount_amount} ${campaign.discount_currency || ''}`.trim();
+  if (rules.discount_amount) {
+    return `${rules.discount_amount} ${rules.discount_currency || ''}`.trim();
   }
   return '-';
 };
