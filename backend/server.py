@@ -2213,7 +2213,6 @@ _application_submit_attempts: Dict[str, List[float]] = {}
 VEHICLE_TYPE_SET = {"car", "suv", "offroad", "pickup", "truck", "bus"}
 
 APP_ENV = (os.environ.get("APP_ENV") or "dev").lower()
-MONGO_ENABLED = False
 AUTH_PROVIDER = "sql"
 APPLICATIONS_PROVIDER = "sql"
 
