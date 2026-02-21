@@ -12645,7 +12645,7 @@ async def list_my_listings(
     q: Optional[str] = None,
     page: int = 1,
     limit: int = 20,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     safe_page = max(1, int(page))
@@ -12680,7 +12680,7 @@ async def list_my_listings(
     return {"items": items, "pagination": {"total": total, "page": safe_page, "limit": safe_limit}}
 
 @api_router.post("/v1/listings/vehicle")
-async def create_vehicle_draft(payload: dict, request: Request, current_user=Depends(get_current_user)):
+async def create_vehicle_draft(payload: dict, request: Request, current_user=Depends(require_portal_scope("account"))):
     db = request.app.state.db
     doc = await create_vehicle_listing(db, payload, current_user)
     return {"id": doc["id"], "status": doc["status"], "validation_errors": [], "next_actions": ["upload_media", "submit"]}
@@ -12691,7 +12691,7 @@ async def save_vehicle_draft(
     listing_id: str,
     request: Request,
     payload: dict = Body(default={}),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     listing = await _get_owned_listing(db, listing_id, current_user)
@@ -12711,7 +12711,7 @@ async def save_vehicle_draft(
 async def get_vehicle_draft(
     listing_id: str,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     listing = await _get_owned_listing(db, listing_id, current_user)
