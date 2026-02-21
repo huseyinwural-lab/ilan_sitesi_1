@@ -2703,7 +2703,6 @@ async def register_consumer(
 @api_router.post("/auth/register/dealer", response_model=UserResponse, status_code=201)
 async def register_dealer(
     payload: DealerRegisterPayload,
-    request: Request,
     session: AsyncSession = Depends(get_sql_session),
 ):
     email = (payload.email or "").lower().strip()
