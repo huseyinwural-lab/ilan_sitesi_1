@@ -3368,7 +3368,7 @@ async def get_me(current_user=Depends(get_current_user)):
 
 
 @api_router.get("/users/me")
-async def get_user_profile(current_user=Depends(get_current_user)):
+async def get_user_profile(current_user=Depends(require_portal_scope("account"))):
     prefs = current_user.get("notification_prefs") or {}
     return {
         "id": current_user.get("id"),
@@ -3384,7 +3384,7 @@ async def get_user_profile(current_user=Depends(get_current_user)):
 async def update_user_profile(
     payload: UserProfileUpdatePayload,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
@@ -3463,7 +3463,7 @@ async def update_user_profile(
 async def change_password(
     payload: ChangePasswordPayload,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
@@ -3510,7 +3510,7 @@ async def change_password(
 @api_router.get("/users/me/export")
 async def export_user_data(
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     if db is None:
