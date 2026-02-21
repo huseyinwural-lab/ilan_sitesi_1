@@ -3000,7 +3000,7 @@ async def resend_email_verification(
 
     now = datetime.now(timezone.utc)
     blocked_until = _email_verification_block_expires_at(user)
-    if blocked_until and blocked_until > now and not user.email_verification_code_hash:
+    if blocked_until and blocked_until > now:
         retry_after = int((blocked_until - now).total_seconds())
         await _log_email_verify_event(
             session=session,
