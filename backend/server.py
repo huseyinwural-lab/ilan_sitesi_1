@@ -3033,7 +3033,7 @@ async def resend_email_verification(
                 detail={"code": "RATE_LIMITED", "retry_after_seconds": retry_after, "remaining_attempts": 0},
             )
 
-    verification_code = _issue_email_verification_code(user)
+    await _issue_email_verification_code(session, user, request)
     await _log_email_verify_event(
         session=session,
         action="auth.email_verify.requested",
@@ -3043,11 +3043,9 @@ async def resend_email_verification(
     )
     await session.commit()
 
-    debug_code = verification_code if _should_include_debug_code() else None
     return ResendVerificationResponse(
         status="queued",
         cooldown_seconds=EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS,
-        debug_code=debug_code,
     )
 
 
