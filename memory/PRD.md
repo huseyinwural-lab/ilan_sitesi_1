@@ -200,6 +200,7 @@
 - Auth akışlarını Postgres’e taşı (users/user_credentials/roles/user_roles/refresh_tokens)
 - Applications endpoint’leri Postgres’te finalize + seed
 - Ops: DATABASE_URL secret (preview/prod) + migration/seed (local tamamlandı)
+- Lokal/preview container’da Postgres servisi çalışmıyor → Alembic current/upgrade ve \dt kanıtları **BLOCKED**
 
 ### P1
 - Lint debt cleanup (LINT-1/2)
