@@ -223,6 +223,16 @@ def _determine_user_type(role: str) -> str:
     return "individual"
 
 
+def _resolve_portal_scope(role: Optional[str]) -> str:
+    if not role:
+        return "account"
+    if role == "dealer":
+        return "dealer"
+    if role in ADMIN_ROLE_OPTIONS or role == "audit_viewer":
+        return "admin"
+    return "account"
+
+
 def _normalize_phone_e164(value: Optional[str]) -> Optional[str]:
     if not value:
         return None
