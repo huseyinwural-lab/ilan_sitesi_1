@@ -153,7 +153,7 @@ export default function AccountProfile() {
   const handleTwoFactorSetup = async () => {
     setTwoFactorMessage('');
     try {
-      const res = await fetch(`${API}/users/me/2fa/setup`, {
+      const res = await fetch(`${API}/v1/users/me/2fa/setup`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
       });
