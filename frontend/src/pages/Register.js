@@ -139,8 +139,19 @@ export default function Register({ portalContext = 'account' }) {
         throw new Error(detail?.detail || 'Kayıt başarısız');
       }
 
-      setSuccess(true);
-      toast({ title: 'Kayıt tamamlandı', description: 'Giriş yapabilirsiniz.' });
+      const data = await res.json().catch(() => ({}));
+      const debugCode = data?.debug_code || null;
+
+      sessionStorage.setItem('pending_email', payload.email || email);
+      sessionStorage.setItem('pending_portal', isDealer ? 'dealer' : 'account');
+      if (debugCode) {
+        sessionStorage.setItem('pending_debug_code', debugCode);
+      }
+
+      toast({ title: 'Kayıt tamamlandı', description: 'Doğrulama kodu ekranına yönlendiriliyorsunuz.' });
+      navigate(isDealer ? '/dealer/verify-email' : '/verify-email', {
+        state: { email: payload.email || email, debugCode },
+      });
     } catch (err) {
       setError(err?.message || 'Kayıt başarısız');
     } finally {
