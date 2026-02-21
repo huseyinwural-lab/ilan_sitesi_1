@@ -10747,6 +10747,10 @@ async def admin_create_plan(
     if scope_value not in PLAN_SCOPE_SET:
         raise HTTPException(status_code=400, detail="country_scope invalid")
 
+    period_value = payload.period.strip().lower()
+    if period_value not in PLAN_PERIOD_SET:
+        raise HTTPException(status_code=400, detail="period invalid")
+
     if payload.price_amount < 0:
         raise HTTPException(status_code=400, detail="price_amount must be >= 0")
     if payload.listing_quota < 0 or payload.showcase_quota < 0:
