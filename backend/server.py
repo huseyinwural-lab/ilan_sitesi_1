@@ -9327,7 +9327,7 @@ async def admin_create_invoice(
         amount=amount_value,
         currency_code=currency_code,
         status=status_value,
-        payment_status="unpaid",
+        payment_status="requires_payment_method",
         issued_at=issued_at,
         paid_at=None,
         due_at=due_at,
