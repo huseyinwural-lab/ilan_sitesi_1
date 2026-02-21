@@ -2255,6 +2255,7 @@ CAMPAIGN_STATUS_TRANSITIONS = {
 
 PLAN_SCOPE_SET = {"global", "country"}
 PLAN_STATUS_SET = {"active", "inactive", "archived"}
+PLAN_PERIOD_SET = {"monthly", "yearly"}
 INVOICE_STATUS_SET = {"draft", "issued", "paid", "void", "refunded"}
 INVOICE_STATUS_TRANSITIONS = {
     "draft": {"issued", "void"},
