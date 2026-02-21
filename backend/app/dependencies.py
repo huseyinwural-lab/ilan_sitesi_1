@@ -134,12 +134,7 @@ async def get_current_user_optional(
     if not user_id:
         return None
 
-    db = getattr(request.app.state, "db", None) if request else None
-    user = None
-    if AUTH_PROVIDER == "sql" or not MONGO_ENABLED or db is None:
-        user = await _get_sql_user(user_id, sql_session)
-    else:
-        user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    user = await _get_sql_user(user_id, sql_session)
 
     if not user:
         return None
