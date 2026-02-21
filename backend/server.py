@@ -10191,13 +10191,13 @@ async def create_checkout_session(
     now = datetime.now(timezone.utc)
     payment = Payment(
         invoice_id=invoice.id,
-        dealer_id=invoice.user_id,
+        user_id=invoice.user_id,
         provider="stripe",
-        provider_payment_id=None,
-        amount=invoice.amount_total,
-        currency=invoice.currency,
+        provider_ref=checkout_session.payment_intent_id or checkout_session.session_id,
         status="requires_payment_method",
-        paid_at=None,
+        amount_total=invoice.amount_total,
+        currency=invoice.currency,
+        meta_json={"checkout_session_id": checkout_session.session_id},
         created_at=now,
         updated_at=now,
     )
