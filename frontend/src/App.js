@@ -129,6 +129,8 @@ function App() {
                   <Route path="/dealer/login" element={<DealerLogin />} />
                   <Route path="/register" element={<Register portalContext="account" />} />
                   <Route path="/dealer/register" element={<Register portalContext="dealer" />} />
+                  <Route path="/verify-email" element={<VerifyEmail portalContext="account" />} />
+                  <Route path="/dealer/verify-email" element={<VerifyEmail portalContext="dealer" />} />
                   <Route path="/admin/invite/accept" element={<AdminInviteAccept />} />
                   <Route path="/admin/login" element={<BackofficeLogin />} />
 
