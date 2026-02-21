@@ -1780,19 +1780,34 @@ async def _send_message_notification_email(db, recipient_id: str, thread: dict, 
         _admin_invite_logger.error("SendGrid message notification error: %s", exc)
 
 
-async def _create_inapp_notification(db, user_id: str, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
-    now_iso = datetime.now(timezone.utc).isoformat()
-    await db.notifications.insert_one(
-        {
-            "id": str(uuid.uuid4()),
-            "user_id": user_id,
-            "message": message,
-            "type": "support",
-            "metadata": metadata or {},
-            "read": False,
-            "created_at": now_iso,
-        }
+async def _create_inapp_notification(
+    session: AsyncSession,
+    user_id: str,
+    message: str,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> None:
+    if session is None:
+        return
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        return
+
+    payload = metadata or {}
+    notification = Notification(
+        user_id=user_uuid,
+        title=payload.get("title"),
+        message=message,
+        source_type=payload.get("source_type") or payload.get("type") or "support",
+        source_id=payload.get("source_id") or payload.get("listing_id") or payload.get("thread_id"),
+        action_url=payload.get("action_url") or payload.get("url"),
+        payload_json=payload or None,
+        dedupe_key=payload.get("dedupe_key"),
+        read_at=None,
+        delivered_at=None,
     )
+    session.add(notification)
+    await session.commit()
 
 
 def _normalize_scope(role: str, scope: Optional[List[str]], active_countries: List[str]) -> List[str]:
