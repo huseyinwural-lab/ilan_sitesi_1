@@ -159,6 +159,45 @@ export default function AdminCategoriesImportExport() {
     }
   };
 
+  const downloadPdfReport = async () => {
+    setError('');
+    if (!dryRunResult?.dry_run_hash) {
+      setError('PDF için önce dry-run çalıştırılmalı.');
+      return;
+    }
+    if (!validateFile(file)) return;
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(
+        `${API}/admin/categories/import-export/import/dry-run/pdf?format=${format}&dry_run_hash=${dryRunResult.dry_run_hash}`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
+      if (!res.ok) {
+        const detail = await res.json();
+        throw new Error(detail?.detail || 'PDF raporu alınamadı');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'dry-run-report.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err?.message || 'PDF raporu alınamadı');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updates = dryRunResult?.updates || [];
   const totalUpdatePages = Math.max(1, Math.ceil(updates.length / UPDATE_PAGE_SIZE));
   const safeUpdatePage = Math.min(updatePage, totalUpdatePages);
