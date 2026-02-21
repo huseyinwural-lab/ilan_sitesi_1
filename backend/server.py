@@ -11974,6 +11974,54 @@ def _build_dashboard_pdf(summary: Dict[str, Any], trend_window: int) -> bytes:
     return pdf_value
 
 
+def _empty_dashboard_summary(start_perf: float, can_view_finance: bool, trend_window: int) -> dict:
+    now = datetime.now(timezone.utc)
+    uptime_seconds = int((now - APP_START_TIME).total_seconds())
+    api_latency_ms = int((time.perf_counter() - start_perf) * 1000)
+
+    return {
+        "scope": "global",
+        "country_codes": [],
+        "users": {"total": 0, "active": 0, "inactive": 0},
+        "active_countries": {"count": 0, "codes": []},
+        "active_modules": {"count": 0, "items": []},
+        "recent_activity": [],
+        "role_distribution": {},
+        "activity_24h": {"new_listings": 0, "new_users": 0, "deleted_content": 0},
+        "health": {
+            "api_status": "ok",
+            "db_status": "mongo_disabled",
+            "api_latency_ms": api_latency_ms,
+            "db_latency_ms": None,
+            "deployed_at": os.environ.get("DEPLOYED_AT") or "unknown",
+            "restart_at": APP_START_TIME.isoformat(),
+            "uptime_seconds": uptime_seconds,
+            "uptime_human": _format_uptime(uptime_seconds),
+        },
+        "metrics": {"total_listings": 0, "published_listings": 0},
+        "kpis": {
+            "today": {"new_listings": 0, "new_users": 0, "revenue_total": 0, "revenue_currency_totals": {}},
+            "last_7_days": {"new_listings": 0, "new_users": 0, "revenue_total": 0, "revenue_currency_totals": {}},
+        },
+        "trends": {"window_days": trend_window, "listings": [], "revenue": []},
+        "risk_panel": {
+            "suspicious_logins": {
+                "count": 0,
+                "items": [],
+                "threshold": DASHBOARD_MULTI_IP_THRESHOLD,
+                "window_hours": DASHBOARD_MULTI_IP_WINDOW_HOURS,
+            },
+            "sla_breaches": {"count": 0, "items": [], "threshold": DASHBOARD_SLA_HOURS},
+            "pending_payments": {
+                "count": 0,
+                "items": [],
+                "threshold_days": DASHBOARD_PENDING_PAYMENT_DAYS,
+            },
+        },
+        "finance_visible": can_view_finance,
+    }
+
+
 @api_router.get("/admin/dashboard/summary")
 async def admin_dashboard_summary(
     request: Request,
