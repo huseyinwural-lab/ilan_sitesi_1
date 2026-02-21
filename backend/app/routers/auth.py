@@ -139,10 +139,12 @@ async def refresh_token(data: RefreshTokenRequest, db: AsyncSession = Depends(ge
     new_access_token = create_access_token(token_data)
     new_refresh_token = create_refresh_token(token_data)
     
+    user_payload = UserResponse.model_validate(user).model_copy(update={"portal_scope": _resolve_portal_scope(user.role.value)})
+
     return TokenResponse(
         access_token=new_access_token,
         refresh_token=new_refresh_token,
-        user=UserResponse.model_validate(user)
+        user=user_payload
     )
 
 @router.get("/me", response_model=UserResponse)
