@@ -594,7 +594,7 @@ export default function AdminInvoicesPage() {
                   >
                     Görüntüle
                   </button>
-                  {(inv.status === 'issued' || inv.status === 'overdue') && (
+                  {inv.status === 'issued' && (
                     <button
                       onClick={() => markPaid(inv.id)}
                       className="h-8 px-2.5 rounded-md border text-xs hover:bg-muted disabled:opacity-60"
