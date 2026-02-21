@@ -2703,6 +2703,75 @@ async def list_admin_users(
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     db = request.app.state.db
+    if db is None or not MONGO_ENABLED:
+        async with AsyncSessionLocal() as session:
+            stmt = select(SqlUser).where(SqlUser.role.in_(list(ADMIN_ROLE_OPTIONS)))
+
+            if role:
+                stmt = stmt.where(SqlUser.role == role)
+
+            status_key = status.lower() if status else None
+            if status_key == "deleted":
+                return {"items": []}
+            if status_key == "invited":
+                return {"items": []}
+            if status_key == "active":
+                stmt = stmt.where(SqlUser.is_active.is_(True))
+            elif status_key == "inactive":
+                stmt = stmt.where(SqlUser.is_active.is_(False))
+
+            if search:
+                pattern = f"%{search}%"
+                stmt = stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
+
+            sort_field_map = {
+                "email": SqlUser.email,
+                "full_name": SqlUser.full_name,
+                "role": SqlUser.role,
+                "created_at": SqlUser.created_at,
+                "last_login": SqlUser.last_login,
+                "is_active": SqlUser.is_active,
+            }
+            sort_col = sort_field_map.get(sort_by or "", SqlUser.created_at)
+            order = desc(sort_col) if (sort_dir or "desc").lower() == "desc" else sort_col
+            stmt = stmt.order_by(order)
+
+            result = await session.execute(stmt)
+            users = result.scalars().all()
+
+            if country:
+                code = country.upper()
+                users = [
+                    user
+                    for user in users
+                    if code in (user.country_scope or []) or "*" in (user.country_scope or [])
+                ]
+
+            safe_skip = max(skip, 0)
+            safe_limit = min(limit, 500)
+            users = users[safe_skip : safe_skip + safe_limit]
+
+            items = []
+            for user in users:
+                items.append(
+                    _user_to_response(
+                        {
+                            "id": str(user.id),
+                            "email": user.email,
+                            "full_name": user.full_name,
+                            "role": user.role,
+                            "country_scope": user.country_scope or [],
+                            "preferred_language": user.preferred_language,
+                            "is_active": user.is_active,
+                            "is_verified": user.is_verified,
+                            "created_at": user.created_at.isoformat() if user.created_at else None,
+                            "last_login": user.last_login.isoformat() if user.last_login else None,
+                        }
+                    ).model_dump()
+                )
+
+            return {"items": items}
+
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
 
     query: Dict[str, Any] = {"role": {"$in": list(ADMIN_ROLE_OPTIONS)}}
