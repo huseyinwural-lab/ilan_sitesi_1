@@ -14,7 +14,7 @@ class Payment(Base):
     provider_ref: Mapped[str] = mapped_column(String(120), nullable=False)
     invoice_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("admin_invoices.id"), nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="requires_payment_method")
+    status: Mapped[str] = mapped_column(String(40), nullable=False, server_default="requires_payment_method")
     amount_total: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
     currency: Mapped[str] = mapped_column(String(5), nullable=False, server_default="EUR")
     meta_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
