@@ -642,7 +642,7 @@ def _build_user_summary(doc: dict, listing_stats: Optional[Dict[str, Any]] = Non
     status = _normalize_user_status(doc)
     user_type = _determine_user_type(doc.get("role", "individual"))
     phone_verified = bool(doc.get("phone_verified") or doc.get("phone_verified_at"))
-    plan_expiry = doc.get("plan_expires_at") or doc.get("plan_current_period_end") or doc.get("plan_ends_at")
+    plan_expiry = doc.get("plan_expires_at") or doc.get("plan_end_at") or doc.get("plan_ends_at")
 
     return {
         "id": doc.get("id"),
