@@ -287,13 +287,9 @@ export default function Register({ portalContext = 'account' }) {
         throw new Error(detail?.detail || 'Kod gönderilemedi.');
       }
 
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(() =[?2004l[?2004hcc ({}));
       const nextCooldown = data?.cooldown_seconds || RESEND_COOLDOWN;
       setCooldown(nextCooldown);
-      if (data?.debug_code) {
-        setDebugCode(data.debug_code);
-        sessionStorage.setItem('pending_debug_code', data.debug_code);
-      }
 
       toast({ title: 'Kod yeniden gönderildi', description: 'Lütfen e-postanızı kontrol edin.' });
     } catch (err) {
