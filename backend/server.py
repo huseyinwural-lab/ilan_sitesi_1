@@ -111,13 +111,6 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 CATEGORY_IMPORT_MAX_BYTES = 10 * 1024 * 1024
 ATTRIBUTE_KEY_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
-MONGO_GATED_PATH_PREFIXES = (
-    "/api/v1/listings",
-    "/api/v1/favorites",
-    "/api/v1/messages",
-    "/api/support",
-    "/api/admin/menu",
-)
 
 # P1 Failed-login rate limit (in-process)
 FAILED_LOGIN_WINDOW_SECONDS = 10 * 60  # 10 min sliding window
