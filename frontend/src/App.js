@@ -146,7 +146,7 @@ function App() {
                   <Route
                     path="/support"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute portalScope="account">
                         <SupportPage />
                       </ProtectedRoute>
                     }
