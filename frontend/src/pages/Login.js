@@ -205,7 +205,7 @@ export default function Login({ portalContext = 'account' }) {
             <div className="space-y-2" data-testid="login-email-field">
               <label className="text-sm font-medium" htmlFor="email">{t('email')}</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   id="email"
                   type="email"
