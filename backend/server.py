@@ -9333,6 +9333,20 @@ class DealerListingCreatePayload(BaseModel):
     price: Optional[float] = None
 
 
+class DealerListingUpdatePayload(BaseModel):
+    title: Optional[str] = None
+    price: Optional[float] = None
+
+
+class DealerListingStatusPayload(BaseModel):
+    status: str
+
+
+class DealerListingBulkPayload(BaseModel):
+    ids: List[str]
+    action: str
+
+
 def _dealer_listing_to_dict(listing: DealerListing) -> dict:
     return {
         "id": str(listing.id),
