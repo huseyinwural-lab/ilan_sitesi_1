@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from datetime import datetime, timezone
 import uuid
 from app.models.base import Base
+from app.models.plan import Plan
 
 class SubscriptionPlan(Base):
     __tablename__ = "subscription_plans"
