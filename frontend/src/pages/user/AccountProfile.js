@@ -510,22 +510,7 @@ export default function AccountProfile() {
         </button>
       </div>
 
-      <div className="rounded-lg border bg-white p-6" data-testid="account-gdpr-card">
-        <div className="text-sm font-semibold">Veri Dışa Aktarma</div>
-        <p className="text-xs text-muted-foreground mt-1">GDPR export dosyanızı indirebilirsiniz.</p>
-        {gdprError && (
-          <div className="text-xs text-rose-600 mt-2" data-testid="account-gdpr-error">{gdprError}</div>
-        )}
-        <button
-          type="button"
-          onClick={handleGdprExport}
-          disabled={gdprLoading}
-          className="mt-3 h-9 px-4 rounded-md border text-sm disabled:opacity-60"
-          data-testid="account-gdpr-export"
-        >
-          {gdprLoading ? 'Hazırlanıyor...' : 'Veri Dışa Aktar'}
-        </button>
-      </div>
+
     </div>
   );
 }
