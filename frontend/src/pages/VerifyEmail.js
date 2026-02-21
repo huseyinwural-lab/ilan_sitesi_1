@@ -179,10 +179,6 @@ export default function VerifyEmail({ portalContext = 'account' }) {
       const data = await res.json().catch(() => ({}));
       const nextCooldown = data?.cooldown_seconds || RESEND_COOLDOWN;
       setCooldown(nextCooldown);
-      if (data?.debug_code) {
-        sessionStorage.setItem('pending_debug_code', data.debug_code);
-        setDebugCode(data.debug_code);
-      }
 
       toast({ title: 'Kod yeniden gönderildi', description: 'Lütfen e-postanızı kontrol edin.' });
     } catch (err) {
