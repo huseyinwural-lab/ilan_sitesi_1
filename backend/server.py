@@ -1237,6 +1237,9 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logging.getLogger("sql_config").warning("SQL init skipped: %s", exc)
 
+    app.state.db = None
+    app.state.mongo_enabled = False
+
     yield
     await sql_engine.dispose()
 
