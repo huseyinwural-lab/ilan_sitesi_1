@@ -75,6 +75,8 @@ def downgrade() -> None:
     op.add_column("admin_invoices", sa.Column("amount", sa.Numeric(12, 2), nullable=True))
     op.add_column("admin_invoices", sa.Column("currency_code", sa.String(length=5), nullable=True))
 
+    op.alter_column("admin_invoices", "payment_status", existing_type=sa.String(length=40), type_=sa.String(length=20))
+
     op.execute("UPDATE admin_invoices SET dealer_id = user_id WHERE dealer_id IS NULL")
     op.execute("UPDATE admin_invoices SET amount = amount_total WHERE amount IS NULL")
     op.execute("UPDATE admin_invoices SET currency_code = currency WHERE currency_code IS NULL")
