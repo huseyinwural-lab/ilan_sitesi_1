@@ -126,7 +126,7 @@ export default function AccountProfile() {
 
   const handleProfileSave = async () => {
     try {
-      const res = await fetch(`${API}/users/me`, {
+      const res = await fetch(`${API}/v1/users/me/profile`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -134,7 +134,6 @@ export default function AccountProfile() {
         },
         body: JSON.stringify({
           full_name: profile.full_name,
-          phone: profile.phone,
           locale: profile.locale,
           country_code: profile.country_code,
           display_name_mode: profile.display_name_mode,
