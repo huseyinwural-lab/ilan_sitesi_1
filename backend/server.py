@@ -10327,7 +10327,7 @@ async def stripe_webhook(
                         provider_payment_id=None,
                         amount=invoice.amount,
                         currency=invoice.currency_code,
-                        status="pending",
+                        status=_resolve_payment_status(payment_status),
                         paid_at=None,
                         created_at=now,
                         updated_at=now,
