@@ -3964,7 +3964,7 @@ async def unsubscribe_push_notifications(
 
 
 @api_router.get("/v1/favorites")
-async def list_favorites(request: Request, current_user=Depends(get_current_user)):
+async def list_favorites(request: Request, current_user=Depends(require_portal_scope("account"))):
     db = request.app.state.db
     if db is None:
         raise HTTPException(status_code=503, detail="Mongo disabled")
@@ -3995,7 +3995,7 @@ async def list_favorites(request: Request, current_user=Depends(get_current_user
 
 
 @api_router.get("/v1/favorites/count")
-async def favorites_count(request: Request, current_user=Depends(get_current_user)):
+async def favorites_count(request: Request, current_user=Depends(require_portal_scope("account"))):
     db = request.app.state.db
     if db is None:
         raise HTTPException(status_code=503, detail="Mongo disabled")
@@ -4004,7 +4004,7 @@ async def favorites_count(request: Request, current_user=Depends(get_current_use
 
 
 @api_router.get("/v1/favorites/{listing_id}")
-async def favorite_state(listing_id: str, request: Request, current_user=Depends(get_current_user)):
+async def favorite_state(listing_id: str, request: Request, current_user=Depends(require_portal_scope("account"))):
     db = request.app.state.db
     if db is None:
         raise HTTPException(status_code=503, detail="Mongo disabled")
@@ -4013,7 +4013,7 @@ async def favorite_state(listing_id: str, request: Request, current_user=Depends
 
 
 @api_router.post("/v1/favorites/{listing_id}")
-async def add_favorite(listing_id: str, request: Request, current_user=Depends(get_current_user)):
+async def add_favorite(listing_id: str, request: Request, current_user=Depends(require_portal_scope("account"))):
     db = request.app.state.db
     if db is None:
         raise HTTPException(status_code=503, detail="Mongo disabled")
@@ -4033,7 +4033,7 @@ async def add_favorite(listing_id: str, request: Request, current_user=Depends(g
 
 
 @api_router.delete("/v1/favorites/{listing_id}")
-async def remove_favorite(listing_id: str, request: Request, current_user=Depends(get_current_user)):
+async def remove_favorite(listing_id: str, request: Request, current_user=Depends(require_portal_scope("account"))):
     db = request.app.state.db
     if db is None:
         raise HTTPException(status_code=503, detail="Mongo disabled")
