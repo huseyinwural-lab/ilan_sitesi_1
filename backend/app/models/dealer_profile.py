@@ -15,6 +15,11 @@ class DealerProfile(Base):
     # Identity
     company_name: Mapped[str] = mapped_column(String(255), nullable=False)
     vat_number: Mapped[str] = mapped_column(String(50), nullable=True) # Optional initially
+    vat_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    trade_register_no: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    authorized_person: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    address_json: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    logo_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     
     # Address
     address_street: Mapped[str] = mapped_column(String(255), nullable=True)
