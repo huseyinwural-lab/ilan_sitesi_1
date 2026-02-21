@@ -390,7 +390,39 @@ export default function AccountProfile() {
             >
               <option value="tr">Türkçe</option>
               <option value="de">Deutsch</option>
+              <option value="fr">Français</option>
+              <option value="nl">Nederlands</option>
+              <option value="it">Italiano</option>
               <option value="en">English</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Görünen Ad</label>
+            <select
+              value={profile.display_name_mode}
+              onChange={(e) => setProfile((prev) => ({ ...prev, display_name_mode: e.target.value }))}
+              className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
+              data-testid="account-profile-display-name-mode"
+            >
+              <option value="full_name">Ad Soyad</option>
+              <option value="initials">Baş harfler</option>
+              <option value="hidden">Gizli</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Ülke</label>
+            <select
+              value={profile.country_code}
+              onChange={(e) => setProfile((prev) => ({ ...prev, country_code: e.target.value }))}
+              className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
+              data-testid="account-profile-country"
+            >
+              <option value="DE">Almanya (DE)</option>
+              <option value="FR">Fransa (FR)</option>
+              <option value="NL">Hollanda (NL)</option>
+              <option value="IT">İtalya (IT)</option>
+              <option value="AT">Avusturya (AT)</option>
+              <option value="CH">İsviçre (CH)</option>
             </select>
           </div>
         </div>
