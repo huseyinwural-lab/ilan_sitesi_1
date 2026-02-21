@@ -30,7 +30,10 @@ Mongo tamamen kaldırılarak tek veri kaynağı Postgres olacak. Bu doküman; ka
 
 ## 3) Alembic Draft (Local için hazır)
 - **Draft migration:** `/app/backend/migrations/versions/d2f4c9c4c7ab_mongo_to_sql_phase1_draft.py`
-- **Eklenen tablolar:** favorites, support_messages
+  - **Eklenen tablolar:** favorites, support_messages
+- **Category schema migration:** `/app/backend/migrations/versions/f3b1c2d8a91b_add_category_schema_fields.py`
+  - **Eklenen alanlar:** categories.country_code, categories.form_schema, categories.hierarchy_complete
+  - **Eklenen tablo:** category_schema_versions
 
 > Draft migration **head** olarak oluşur. Preview/Prod’da Ops’dan gelen DB üzerinde uygulanmadan önce merge/sequence netleştirilmelidir.
 
