@@ -2866,7 +2866,7 @@ async def verify_email(
 
     now = datetime.now(timezone.utc)
     blocked_until = _email_verification_block_expires_at(user)
-    if blocked_until and blocked_until > now and not user.email_verification_code_hash:
+    if blocked_until and blocked_until > now:
         retry_after = int((blocked_until - now).total_seconds())
         await _log_email_verify_event(
             session=session,
@@ -2881,19 +2881,34 @@ async def verify_email(
             detail={"code": "RATE_LIMITED", "retry_after_seconds": retry_after, "remaining_attempts": 0},
         )
 
-    if not user.email_verification_code_hash or not user.email_verification_expires_at:
+    tokens = await _get_active_verification_tokens(session, user.id)
+    if not tokens:
         raise HTTPException(status_code=400, detail="Doğrulama kodu bulunamadı")
 
-    if user.email_verification_expires_at < now:
+    valid_tokens = [token for token in tokens if token.expires_at and token.expires_at >= now]
+    if not valid_tokens:
         raise HTTPException(status_code=400, detail="Kod süresi doldu")
 
-    if not verify_password(code, user.email_verification_code_hash):
+    matched_token = None
+    for token in valid_tokens:
+        if verify_password(code, token.token_hash):
+            matched_token = token
+            break
+
+    if not matched_token:
         user.email_verification_attempts = (user.email_verification_attempts or 0) + 1
         remaining = max(0, EMAIL_VERIFICATION_MAX_ATTEMPTS - user.email_verification_attempts)
 
         if user.email_verification_attempts >= EMAIL_VERIFICATION_MAX_ATTEMPTS:
-            user.email_verification_code_hash = None
             user.email_verification_expires_at = now + timedelta(minutes=EMAIL_VERIFICATION_BLOCK_MINUTES)
+            await session.execute(
+                update(EmailVerificationToken)
+                .where(
+                    EmailVerificationToken.user_id == user.id,
+                    EmailVerificationToken.consumed_at.is_(None),
+                )
+                .values(consumed_at=now)
+            )
             await _log_email_verify_event(
                 session=session,
                 action="auth.email_verify.rate_limited",
@@ -2921,10 +2936,10 @@ async def verify_email(
         await session.commit()
         raise HTTPException(status_code=400, detail={"code": "INVALID_CODE", "remaining_attempts": remaining})
 
+    matched_token.consumed_at = now
     user.is_verified = True
-    user.email_verification_code_hash = None
-    user.email_verification_expires_at = None
     user.email_verification_attempts = 0
+    user.email_verification_expires_at = None
     now_dt = datetime.now(timezone.utc)
     now_iso = now_dt.isoformat()
     user.last_login = now_dt
