@@ -23,8 +23,6 @@ const formatDateTime = (value) => {
 };
 
 export default function AdminPaymentsPage() {
-  const [searchParams] = useSearchParams();
-
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
