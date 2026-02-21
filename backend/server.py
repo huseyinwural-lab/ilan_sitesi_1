@@ -10342,6 +10342,7 @@ async def get_checkout_status(
     )).scalar_one_or_none()
     provider_payment_id = getattr(status_response, "payment_id", None)
     payment_status = status_response.payment_status if hasattr(status_response, "payment_status") else None
+    metadata = {}
 
     if invoice and not payment:
         payment = Payment(
