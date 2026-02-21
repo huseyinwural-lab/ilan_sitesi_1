@@ -102,6 +102,7 @@ export default function AccountProfile() {
     }
   };
 
+  const loadPushStatus = async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       setPushSupported(false);
       setPushStatus('unsupported');
