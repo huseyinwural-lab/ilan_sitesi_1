@@ -10655,7 +10655,7 @@ async def create_checkout_session(
         currency=invoice.currency,
         status="requires_payment_method",
         payment_status="requires_payment_method",
-        metadata_json={"checkout_url": checkout_session.checkout_url},
+        metadata_json={"checkout_url": checkout_session.url},
         created_at=now,
         updated_at=now,
     )
