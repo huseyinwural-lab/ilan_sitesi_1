@@ -80,7 +80,7 @@ const UserPanelLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="account-layout">
+    <div className="min-h-screen bg-orange-50 account-theme" data-testid="account-layout">
       <div className="flex">
         <aside className="hidden lg:flex w-72 flex-col border-r bg-white" data-testid="account-sidebar">
           <div className="p-6 border-b" data-testid="account-sidebar-header">
