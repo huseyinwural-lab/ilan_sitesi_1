@@ -4045,7 +4045,7 @@ async def remove_favorite(listing_id: str, request: Request, current_user=Depend
 async def create_message_thread(
     payload: MessageThreadCreatePayload,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     if db is None:
@@ -4090,7 +4090,7 @@ async def create_message_thread(
 @api_router.get("/v1/messages/threads")
 async def list_message_threads(
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
     page: int = 1,
     limit: int = 30,
 ):
@@ -4116,7 +4116,7 @@ async def list_message_threads(
 
 
 @api_router.get("/v1/messages/unread-count")
-async def message_unread_count(request: Request, current_user=Depends(get_current_user)):
+async def message_unread_count(request: Request, current_user=Depends(require_portal_scope("account"))):
     db = request.app.state.db
     if db is None:
         raise HTTPException(status_code=503, detail="Mongo disabled")
@@ -4133,7 +4133,7 @@ async def message_unread_count(request: Request, current_user=Depends(get_curren
 async def list_thread_messages(
     thread_id: str,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
     limit: int = 50,
     since: Optional[str] = None,
 ):
@@ -4156,7 +4156,7 @@ async def send_thread_message(
     thread_id: str,
     payload: MessageSendPayload,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     if db is None:
