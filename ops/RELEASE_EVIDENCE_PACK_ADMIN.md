@@ -15,6 +15,7 @@
 - /app/admin/evidence/INDIVIDUAL_APPLICATIONS_PAGE.jpeg
 - /app/admin/evidence/INDIVIDUAL_LISTING_APPLICATIONS_PAGE.jpeg
 - /app/admin/evidence/CORPORATE_LISTING_APPLICATIONS_PAGE.jpeg
+- /app/ops/DB_MIGRATION_EVIDENCE_PACK.md
 
 ### Not
 - Nav smoke test: Playwright (login + menu route navigation)
