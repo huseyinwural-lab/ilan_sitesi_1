@@ -292,7 +292,7 @@ export default function Login({ portalContext = 'account' }) {
                 Henüz hesabın yok mu?{' '}
                 <a
                   href={registerPath}
-                  className="text-primary underline underline-offset-2"
+                  className="text-blue-600 underline underline-offset-2 hover:text-blue-700"
                   data-testid="login-register-link"
                 >
                   Hesap aç
@@ -303,7 +303,7 @@ export default function Login({ portalContext = 'account' }) {
             {showPortalSelector && (
               <div className="flex items-center gap-4" data-testid="login-divider">
                 <span className="h-px flex-1 bg-muted" />
-                <span className="text-xs text-muted-foreground">VEYA</span>
+                <span className="text-xs text-slate-500">VEYA</span>
                 <span className="h-px flex-1 bg-muted" />
               </div>
             )}
