@@ -11384,6 +11384,10 @@ async def admin_import_categories_commit(
                 category.updated_at = datetime.now(timezone.utc)
                 deleted += 1
 
+    except Exception:
+        await session.rollback()
+        raise
+
     audit_entry = await _write_audit_log_sql(
         session,
         "categories.import.commit",
