@@ -26,6 +26,20 @@ else:
 
 AUTH_PROVIDER = (os.environ.get("AUTH_PROVIDER") or ("mongo" if MONGO_ENABLED else "sql")).lower()
 
+ADMIN_ROLES = {
+    "super_admin",
+    "country_admin",
+    "moderator",
+    "support",
+    "finance",
+    "campaigns_admin",
+    "campaigns_supervisor",
+    "ROLE_AUDIT_VIEWER",
+    "audit_viewer",
+}
+
+DEALER_ROLES = {"dealer"}
+
 
 def get_mongo_db(request: Request):
     db = getattr(request.app.state, "db", None)
