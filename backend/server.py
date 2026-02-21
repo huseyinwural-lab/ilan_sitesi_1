@@ -1474,22 +1474,32 @@ def _normalize_campaign_payload(payload, existing: Optional[Campaign] = None) ->
 def _campaign_to_dict(campaign: Campaign) -> Dict[str, Any]:
     return {
         "id": str(campaign.id),
-        "type": campaign.type,
-        "country_scope": campaign.country_scope,
-        "country_code": campaign.country_code,
         "name": campaign.name,
-        "description": campaign.description,
         "status": campaign.status,
         "start_at": campaign.start_at.isoformat() if campaign.start_at else None,
         "end_at": campaign.end_at.isoformat() if campaign.end_at else None,
-        "priority": campaign.priority,
-        "duration_days": campaign.duration_days,
-        "quota_count": campaign.quota_count,
-        "price_amount": float(campaign.price_amount) if campaign.price_amount is not None else None,
-        "currency_code": campaign.currency_code,
-        "created_by_admin_id": str(campaign.created_by_admin_id) if campaign.created_by_admin_id else None,
+        "country_code": campaign.country_code,
+        "budget_amount": float(campaign.budget_amount) if campaign.budget_amount is not None else None,
+        "budget_currency": campaign.budget_currency,
+        "notes": campaign.notes,
+        "rules_json": campaign.rules_json or {},
         "created_at": campaign.created_at.isoformat() if campaign.created_at else None,
         "updated_at": campaign.updated_at.isoformat() if campaign.updated_at else None,
+    }
+
+
+def _audit_log_to_dict(entry: AuditLog) -> Dict[str, Any]:
+    return {
+        "id": str(entry.id),
+        "action": entry.action,
+        "user_id": str(entry.user_id) if entry.user_id else None,
+        "user_email": entry.user_email,
+        "resource_type": entry.resource_type,
+        "resource_id": entry.resource_id,
+        "old_values": entry.old_values,
+        "new_values": entry.new_values,
+        "metadata": entry.metadata_info,
+        "created_at": entry.created_at.isoformat() if entry.created_at else None,
     }
 
 
