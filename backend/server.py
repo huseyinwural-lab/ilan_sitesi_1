@@ -15321,6 +15321,22 @@ def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
         vehicle.update({k: v for k, v in vehicle_payload.items() if v is not None})
         attrs["vehicle"] = vehicle
 
+    if make_value is None and isinstance(vehicle_payload, dict):
+        make_value = vehicle_payload.get("make_id")
+    if model_value is None and isinstance(vehicle_payload, dict):
+        model_value = vehicle_payload.get("model_id")
+
+    if make_value is not None:
+        try:
+            listing.make_id = uuid.UUID(str(make_value))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="make_id invalid") from exc
+    if model_value is not None:
+        try:
+            listing.model_id = uuid.UUID(str(model_value))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="model_id invalid") from exc
+
     if payload.get("detail_groups") is not None:
         attrs["detail_groups"] = payload.get("detail_groups")
     if payload.get("modules") is not None:
