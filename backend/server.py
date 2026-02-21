@@ -10413,10 +10413,11 @@ async def admin_update_category(
         slug = payload.slug.strip().lower()
         if not SLUG_PATTERN.match(slug):
             raise HTTPException(status_code=400, detail="slug format invalid")
-        existing = await session.execute(
-            select(Category).where(Category.slug["tr"].astext == slug, Category.id != category.id)
+        existing_query = await session.execute(
+            select(Category).where(Category.is_deleted.is_(False), Category.id != category.id)
         )
-        if existing.scalar_one_or_none():
+        existing_categories = existing_query.scalars().all()
+        if any(_pick_category_slug(cat.slug) == slug for cat in existing_categories):
             raise HTTPException(status_code=409, detail="Category slug already exists")
         updates["slug"] = slug
 
