@@ -36,6 +36,7 @@ export default function VerifyEmail({ portalContext = 'account' }) {
 
   const verifyPath = portalContext === 'dealer' ? '/dealer/verify-email' : '/verify-email';
   const loginPath = portalContext === 'dealer' ? '/dealer/login' : '/login';
+  const supportPath = `/support?reason=email_verification`;
 
   useEffect(() => {
     if (user && user.is_verified) {
