@@ -3600,7 +3600,7 @@ async def export_user_data(
 async def create_support_application(
     payload: SupportApplicationCreatePayload,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
