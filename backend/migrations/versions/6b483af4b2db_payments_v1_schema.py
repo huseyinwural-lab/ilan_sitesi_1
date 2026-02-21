@@ -74,11 +74,11 @@ def upgrade() -> None:
     op.alter_column("payments", "user_id", nullable=False)
     op.alter_column("payments", "amount_total", nullable=False)
 
-    op.drop_constraint("payments_provider_payment_id_key", "payments", type_="unique")
+    op.execute("ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_provider_payment_id_key")
 
-    op.drop_index("ix_payments_dealer", table_name="payments")
-    op.drop_index("ix_payments_status", table_name="payments")
-    op.drop_index("ix_payments_invoice", table_name="payments")
+    op.execute("DROP INDEX IF EXISTS ix_payments_dealer")
+    op.execute("DROP INDEX IF EXISTS ix_payments_status")
+    op.execute("DROP INDEX IF EXISTS ix_payments_invoice")
 
     op.drop_column("payments", "provider_payment_id")
     op.drop_column("payments", "dealer_id")
