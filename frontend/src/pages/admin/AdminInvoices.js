@@ -70,17 +70,15 @@ const resolvePaymentBadgeClass = (value) => {
     case 'paid':
     case 'succeeded':
       return 'bg-green-100 text-green-700';
-    case 'pending':
+    case 'requires_payment_method':
+    case 'requires_confirmation':
+    case 'processing':
       return 'bg-orange-100 text-orange-700';
     case 'refunded':
-    case 'partially_refunded':
       return 'bg-blue-100 text-blue-700';
     case 'failed':
-    case 'cancelled':
+    case 'canceled':
       return 'bg-red-100 text-red-700';
-    case 'overdue':
-      return 'bg-red-200 text-red-800';
-    case 'unpaid':
     default:
       return 'bg-slate-100 text-slate-700';
   }
