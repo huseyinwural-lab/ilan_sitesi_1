@@ -7419,6 +7419,8 @@ def _parse_import_payload(content: bytes, file_type: str) -> list[dict]:
             slug_tr = (row.get("slug_tr") or row.get("slug") or "").strip().lower()
             if not slug_tr:
                 raise HTTPException(status_code=400, detail="slug_tr is required")
+            if not SLUG_PATTERN.match(slug_tr):
+                raise HTTPException(status_code=400, detail=f"Invalid slug: {slug_tr}")
             slug_map = {
                 "tr": slug_tr,
                 "en": (row.get("slug_en") or slug_tr).strip().lower(),
