@@ -4290,11 +4290,12 @@ async def get_my_support_application(
     raise HTTPException(status_code=503, detail="Applications provider not available")
 
 
-async def _get_message_thread_or_404(db, thread_id: str, current_user_id: str) -> dict:
-    thread = await db.message_threads.find_one({"id": thread_id}, {"_id": 0})
+async def _get_message_thread_or_404(session: AsyncSession, thread_id: str, current_user_id: str) -> Conversation:
+    thread_uuid = uuid.UUID(thread_id)
+    thread = await session.get(Conversation, thread_uuid)
     if not thread:
         raise HTTPException(status_code=404, detail="Thread not found")
-    if current_user_id not in (thread.get("participants") or []):
+    if current_user_id not in {str(thread.buyer_id), str(thread.seller_id)}:
         raise HTTPException(status_code=403, detail="Forbidden")
     return thread
 
