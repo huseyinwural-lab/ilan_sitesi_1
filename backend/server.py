@@ -10380,13 +10380,13 @@ async def stripe_webhook(
                 if not payment:
                     payment = Payment(
                         invoice_id=invoice.id,
-                        dealer_id=invoice.user_id,
+                        user_id=invoice.user_id,
                         provider="stripe",
-                        provider_payment_id=None,
-                        amount=invoice.amount_total,
-                        currency=invoice.currency,
+                        provider_ref=provider_payment_id or f"pi_{invoice.id}",
                         status=_resolve_payment_status(payment_status),
-                        paid_at=None,
+                        amount_total=invoice.amount_total,
+                        currency=invoice.currency,
+                        meta_json=metadata,
                         created_at=now,
                         updated_at=now,
                     )
