@@ -9450,7 +9450,7 @@ async def dealer_create_listing(
     session.add(listing)
     await session.commit()
     await session.refresh(listing)
-    used = int(count or 0) + 1
+    used = int(active_count or 0)
     limit = DEALER_LISTING_QUOTA_LIMIT
     remaining = max(0, limit - used)
     return {"item": _dealer_listing_to_dict(listing), "quota": {"limit": limit, "used": used, "remaining": remaining}}
