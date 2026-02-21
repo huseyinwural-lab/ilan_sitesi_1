@@ -4737,79 +4737,56 @@ async def send_thread_message(
     payload: MessageSendPayload,
     request: Request,
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-
-    thread = await _get_message_thread_or_404(db, thread_id, current_user.get("id"))
+    thread = await _get_message_thread_or_404(session, thread_id, current_user.get("id"))
     body = (payload.body or "").strip()
     if not body:
         raise HTTPException(status_code=400, detail="Message body required")
 
-    if payload.client_message_id:
-        existing = await db.messages.find_one(
-            {"thread_id": thread_id, "sender_id": current_user.get("id"), "client_message_id": payload.client_message_id},
-            {"_id": 0},
-        )
-        if existing:
-            return {"message": existing, "idempotent": True}
-
-    now_iso = datetime.now(timezone.utc).isoformat()
-    message_doc = {
-        "id": str(uuid.uuid4()),
-        "thread_id": thread_id,
-        "sender_id": current_user.get("id"),
-        "body": _sanitize_text(body),
-        "created_at": now_iso,
-        "client_message_id": payload.client_message_id,
-    }
-    await db.messages.insert_one(message_doc)
-
-    participants = thread.get("participants") or []
-    unread_counts = dict(thread.get("unread_counts") or {})
-    for user_id in participants:
-        if user_id == current_user.get("id"):
-            unread_counts[user_id] = 0
-        else:
-            unread_counts[user_id] = int(unread_counts.get(user_id, 0)) + 1
-
-    await db.message_threads.update_one(
-        {"id": thread_id},
-        {
-            "$set": {
-                "last_message": message_doc.get("body"),
-                "last_message_at": now_iso,
-                "updated_at": now_iso,
-                "unread_counts": unread_counts,
-            }
-        },
+    message = Message(
+        conversation_id=thread.id,
+        sender_id=uuid.UUID(current_user.get("id")),
+        body=_sanitize_text(body),
+        is_read=False,
     )
+    session.add(message)
+    thread.last_message_at = datetime.now(timezone.utc)
+    await session.commit()
+    await session.refresh(message)
 
     await message_ws_manager.broadcast_thread(
-        thread_id,
+        str(thread.id),
         {
             "type": "message:new",
-            "thread_id": thread_id,
-            "message": message_doc,
+            "thread_id": str(thread.id),
+            "message": {
+                "id": str(message.id),
+                "thread_id": str(thread.id),
+                "sender_id": str(message.sender_id),
+                "body": message.body,
+                "created_at": message.created_at.isoformat() if message.created_at else None,
+            },
         },
     )
     await message_ws_manager.send_personal(
         current_user.get("id"),
         {
             "type": "message:delivered",
-            "thread_id": thread_id,
-            "message_id": message_doc.get("id"),
+            "thread_id": str(thread.id),
+            "message_id": str(message.id),
         },
     )
 
-    recipient_ids = [user_id for user_id in participants if user_id != current_user.get("id")]
-    for recipient_id in recipient_ids:
-        push_sent = await _send_message_push_notification(db, recipient_id, thread, message_doc)
-        if not push_sent:
-            await _send_message_notification_email(db, recipient_id, thread, message_doc)
-
-    return {"message": message_doc}
+    return {
+        "message": {
+            "id": str(message.id),
+            "thread_id": str(thread.id),
+            "sender_id": str(message.sender_id),
+            "body": message.body,
+            "created_at": message.created_at.isoformat() if message.created_at else None,
+        }
+    }
 
 
 @api_router.post("/v1/messages/threads/{thread_id}/read")
