@@ -1,7 +1,7 @@
 {
   "migrated_count": 0,
-  "skipped_count": 0,
+  "skipped_count": 5,
   "error_count": 0,
   "sample": [],
-  "dry_run": true
+  "dry_run": false
 }
