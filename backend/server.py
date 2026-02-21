@@ -8983,8 +8983,8 @@ async def admin_soft_delete_listing(
     payload: ListingAdminActionPayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, session=None, )
     updated = await _admin_listing_action(
         session=session,
