@@ -340,6 +340,23 @@ export default function AdminCategoriesImportExport() {
                   <div className="rounded-md border p-3" data-testid="categories-preview-total-count">Toplam: {dryRunResult.summary?.total ?? 0}</div>
                 </div>
 
+                <div className="flex flex-wrap items-center gap-3" data-testid="categories-preview-actions">
+                  <button
+                    type="button"
+                    className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm"
+                    onClick={downloadPdfReport}
+                    disabled={loading || !dryRunResult?.dry_run_hash}
+                    data-testid="categories-preview-download-pdf"
+                  >
+                    PDF Raporu İndir
+                  </button>
+                  {!dryRunResult?.dry_run_hash && (
+                    <span className="text-xs text-slate-500" data-testid="categories-preview-pdf-hint">
+                      PDF raporu için önce dry-run çalıştırılmalı.
+                    </span>
+                  )}
+                </div>
+
                 {dryRunResult.warnings && dryRunResult.warnings.length > 0 && (
                   <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700" data-testid="categories-preview-warning">
                     <div className="font-semibold mb-1" data-testid="categories-preview-warning-title">Kritik Uyarı</div>
