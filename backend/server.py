@@ -57,17 +57,8 @@ from app.core.security import (
     create_refresh_token,
     decode_token,
 )
-from app.repositories.auth_repository import (
-    resolve_auth_provider,
-    MongoAuthRepository,
-    SqlAuthRepository,
-)
-from app.repositories.applications_repository import (
-    resolve_applications_provider,
-    MongoApplicationsRepository,
-    SqlApplicationsRepository,
-)
-from app.mongo import get_mongo_client, get_db_name
+from app.repositories.auth_repository import SqlAuthRepository
+from app.repositories.applications_repository import SqlApplicationsRepository
 from app.admin_country_context import resolve_admin_country_context
 
 from app.dependencies import get_current_user, get_current_user_optional, check_permissions, require_portal_scope
