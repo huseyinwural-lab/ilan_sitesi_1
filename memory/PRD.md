@@ -192,8 +192,9 @@
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- Monetization Chain SQL migration: **Plans → Invoices → Payments → Webhooks** (Campaigns V1 tamamlandı)
-- Plans admin parity doğrulama (period + seed V1 tamamlandı)
+- Monetization Chain SQL migration: **Payments → Webhooks** (Campaigns + Plans + Invoices V1 tamamlandı)
+- Payments V1: provider_ref unique constraint + admin list + duplicate test + txn consistency
+- Webhooks V1: event_log + idempotency + replay + signature validation
 - Mongo Exit P0: Auth + Applications (Mongo dependency removal)
 - Auth akışlarını Postgres’e taşı (users/user_credentials/roles/user_roles/refresh_tokens)
 - Applications endpoint’leri Postgres’te finalize + seed
