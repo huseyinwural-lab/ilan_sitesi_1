@@ -80,6 +80,7 @@ from app.models.category import Category, CategoryTranslation
 from app.models.category_schema_version import CategorySchemaVersion
 from app.models.core import AuditLog, Country
 from app.models.dealer_profile import DealerProfile
+from app.models.consumer_profile import ConsumerProfile
 from app.models.auth import UserCredential, EmailVerificationToken
 from app.utils.slug import slugify
 from app.models.dealer_listing import DealerListing
