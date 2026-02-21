@@ -5566,20 +5566,32 @@ async def get_catalog_schema(
     category_id: str,
     request: Request,
     country: str | None = None,
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    category = await db.categories.find_one({"id": category_id, "active_flag": True})
-    if not category:
+    try:
+        category_uuid = uuid.UUID(category_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid category id") from exc
+
+    category = await session.get(Category, category_uuid)
+    if not category or category.is_deleted or not category.is_enabled:
         raise HTTPException(status_code=404, detail="Kategori bulunamadı")
-    if country and category.get("country_code") and category.get("country_code") != country:
-        raise HTTPException(status_code=403, detail="Kategori ülke kapsamı dışında")
-    raw_schema = category.get("form_schema")
+
+    if country:
+        code = country.upper()
+        if category.country_code and category.country_code != code:
+            raise HTTPException(status_code=403, detail="Kategori ülke kapsamı dışında")
+        allowed = category.allowed_countries or []
+        if allowed and code not in allowed:
+            raise HTTPException(status_code=403, detail="Kategori ülke kapsamı dışında")
+
+    raw_schema = category.form_schema
     if not raw_schema:
         raise HTTPException(status_code=409, detail="Kategori şeması oluşturulmadı")
     schema = _normalize_category_schema(raw_schema)
     if schema.get("status") == "draft":
         raise HTTPException(status_code=409, detail="Kategori şeması taslak durumda")
-    return {"category": _normalize_category_doc(category), "schema": schema}
+    return {"category": _serialize_category_sql(category, include_schema=False), "schema": schema}
 
 
 # =====================
