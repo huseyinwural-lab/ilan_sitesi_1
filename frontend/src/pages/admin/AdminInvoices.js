@@ -728,7 +728,7 @@ export default function AdminInvoicesPage() {
                     <div className="text-xs text-destructive" data-testid="invoice-status-error">{statusError}</div>
                   )}
                   <div className="flex flex-wrap gap-2" data-testid="invoice-detail-actions">
-                    {(detailData.invoice.status === 'issued' || detailData.invoice.status === 'overdue') && (
+                    {detailData.invoice.status === 'issued' && (
                       <button
                         onClick={() => markPaid(detailData.invoice.id)}
                         className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
