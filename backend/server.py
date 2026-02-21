@@ -9501,9 +9501,9 @@ async def admin_invoice_mark_paid(
     await session.commit()
     await session.refresh(invoice)
 
-    dealer = await session.get(SqlUser, invoice.dealer_id)
-    plan = await session.get(Plan, invoice.plan_id)
-    return {"invoice": _admin_invoice_to_dict(invoice, dealer, plan)}
+    user = await session.get(SqlUser, invoice.user_id)
+    plan = await session.get(Plan, invoice.plan_id) if invoice.plan_id else None
+    return {"invoice": _admin_invoice_to_dict(invoice, user, plan)}
 
 
 @api_router.post("/admin/invoices/{invoice_id}/cancel")
@@ -9536,9 +9536,9 @@ async def admin_invoice_cancel(
     await session.commit()
     await session.refresh(invoice)
 
-    dealer = await session.get(SqlUser, invoice.dealer_id)
-    plan = await session.get(Plan, invoice.plan_id)
-    return {"invoice": _admin_invoice_to_dict(invoice, dealer, plan)}
+    user = await session.get(SqlUser, invoice.user_id)
+    plan = await session.get(Plan, invoice.plan_id) if invoice.plan_id else None
+    return {"invoice": _admin_invoice_to_dict(invoice, user, plan)}
 
 
 @api_router.post("/admin/invoices/{invoice_id}/refund")
@@ -9571,9 +9571,9 @@ async def admin_invoice_refund(
     await session.commit()
     await session.refresh(invoice)
 
-    dealer = await session.get(SqlUser, invoice.dealer_id)
-    plan = await session.get(Plan, invoice.plan_id)
-    return {"invoice": _admin_invoice_to_dict(invoice, dealer, plan)}
+    user = await session.get(SqlUser, invoice.user_id)
+    plan = await session.get(Plan, invoice.plan_id) if invoice.plan_id else None
+    return {"invoice": _admin_invoice_to_dict(invoice, user, plan)}
 
 
 @api_router.get("/dealer/invoices")
