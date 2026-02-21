@@ -324,6 +324,14 @@ export default function VerifyEmail({ portalContext = 'account' }) {
               </button>
               <button
                 type="button"
+                onClick={handleHelpToggle}
+                className="text-slate-600 underline underline-offset-2"
+                data-testid="verify-help-toggle"
+              >
+                Kod gelmedi mi?
+              </button>
+              <button
+                type="button"
                 onClick={() => navigate(loginPath)}
                 className="text-slate-600 underline underline-offset-2"
                 data-testid="verify-login-link"
@@ -331,6 +339,27 @@ export default function VerifyEmail({ portalContext = 'account' }) {
                 Girişe dön
               </button>
             </div>
+
+            {helpOpen && (
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700" data-testid="verify-help-panel">
+                <p className="font-medium" data-testid="verify-help-title">Yardım</p>
+                <ul className="mt-2 space-y-1 list-disc list-inside" data-testid="verify-help-list">
+                  <li data-testid="verify-help-item-spam">Spam veya gereksiz klasörünü kontrol edin.</li>
+                  <li data-testid="verify-help-item-resend">90 saniye sonra yeniden gönderme butonunu kullanın.</li>
+                  <li data-testid="verify-help-item-support">
+                    Sorun devam ederse{' '}
+                    <a
+                      href={supportPath}
+                      className="text-blue-600 underline underline-offset-2"
+                      data-testid="verify-help-support-link"
+                    >
+                      destekle iletişime geçin
+                    </a>
+                    .
+                  </li>
+                </ul>
+              </div>
+            )}
           </form>
         </div>
       </div>
