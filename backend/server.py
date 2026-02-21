@@ -2647,7 +2647,6 @@ async def list_public_countries(session: AsyncSession = Depends(get_sql_session)
 @api_router.post("/auth/register/consumer", response_model=UserResponse, status_code=201)
 async def register_consumer(
     payload: ConsumerRegisterPayload,
-    request: Request,
     session: AsyncSession = Depends(get_sql_session),
 ):
     email = (payload.email or "").lower().strip()
