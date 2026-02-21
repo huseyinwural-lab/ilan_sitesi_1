@@ -4334,8 +4334,181 @@ async def change_password(
     return {"ok": True}
 
 
-@api_router.get("/users/me/export")
-async def export_user_data(
+@api_router.get("/users/me/2fa/status")
+async def get_two_factor_status(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(str(current_user.get("id")))
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user_row = result.scalar_one_or_none()
+    if not user_row:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    profile = await _get_or_create_consumer_profile(session, user_row)
+    return {
+        "enabled": profile.totp_enabled,
+        "configured": bool(profile.totp_secret),
+        "enabled_at": profile.totp_enabled_at.isoformat() if profile.totp_enabled_at else None,
+    }
+
+
+@api_router.post("/users/me/2fa/setup")
+async def setup_two_factor(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(str(current_user.get("id")))
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user_row = result.scalar_one_or_none()
+    if not user_row:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    profile = await _get_or_create_consumer_profile(session, user_row)
+    if profile.totp_enabled:
+        raise HTTPException(status_code=409, detail="2FA already enabled")
+
+    secret = pyotp.random_base32()
+    recovery_codes = _generate_recovery_codes()
+    profile.totp_secret = secret
+    profile.totp_enabled = False
+    profile.totp_enabled_at = None
+    profile.totp_recovery_codes = _hash_recovery_codes(recovery_codes)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="2fa_setup_started",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={},
+        request=None,
+        country_code=user_row.country_code,
+    )
+
+    await session.commit()
+
+    return {
+        "secret": secret,
+        "otpauth_url": _build_totp_uri(user_row.email, secret),
+        "recovery_codes": recovery_codes,
+    }
+
+
+@api_router.post("/users/me/2fa/verify")
+async def verify_two_factor(
+    payload: TwoFactorVerifyPayload,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(str(current_user.get("id")))
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user_row = result.scalar_one_or_none()
+    if not user_row:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    profile = await _get_or_create_consumer_profile(session, user_row)
+    if not profile.totp_secret:
+        raise HTTPException(status_code=400, detail="2FA not setup")
+
+    if not _verify_totp_code(profile.totp_secret, payload.code):
+        raise HTTPException(status_code=400, detail="Invalid code")
+
+    profile.totp_enabled = True
+    profile.totp_enabled_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="2fa_enabled",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={},
+        request=None,
+        country_code=user_row.country_code,
+    )
+
+    await session.commit()
+    return {"enabled": True}
+
+
+@api_router.post("/users/me/2fa/disable")
+async def disable_two_factor(
+    payload: TwoFactorVerifyPayload,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(str(current_user.get("id")))
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user_row = result.scalar_one_or_none()
+    if not user_row:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    profile = await _get_or_create_consumer_profile(session, user_row)
+    if not profile.totp_secret:
+        raise HTTPException(status_code=400, detail="2FA not setup")
+
+    valid = _verify_totp_code(profile.totp_secret, payload.code)
+    if not valid:
+        ok, remaining = _verify_recovery_code(payload.code, profile.totp_recovery_codes or [])
+        if ok:
+            profile.totp_recovery_codes = remaining
+            valid = True
+    if not valid:
+        raise HTTPException(status_code=400, detail="Invalid code")
+
+    profile.totp_enabled = False
+    profile.totp_secret = None
+    profile.totp_enabled_at = None
+    profile.totp_recovery_codes = []
+
+    await _write_audit_log_sql(
+        session=session,
+        action="2fa_disabled",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={},
+        request=None,
+        country_code=user_row.country_code,
+    )
+
+    await session.commit()
+    return {"enabled": False}
+
+
+@api_router.post("/users/me/delete")
+async def request_account_delete(
+    payload: AccountDeletePayload,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(str(current_user.get("id")))
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user_row = result.scalar_one_or_none()
+    if not user_row:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    profile = await _get_or_create_consumer_profile(session, user_row)
+    now = datetime.now(timezone.utc)
+    profile.gdpr_deleted_at = now + timedelta(days=30)
+    user_row.deleted_at = now
+    user_row.status = "pending_delete"
+
+    await _write_audit_log_sql(
+        session=session,
+        action="gdpr_delete_requested",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={"reason": payload.reason or "user_request", "grace_days": 30},
+        request=None,
+        country_code=user_row.country_code,
+    )
+
+    await session.commit()
+    return {"status": "scheduled", "gdpr_deleted_at": profile.gdpr_deleted_at.isoformat()}
+
     request: Request,
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
