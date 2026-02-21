@@ -10033,14 +10033,16 @@ async def dealer_dashboard_metrics(
 def _resolve_payment_status(value: Optional[str]) -> str:
     normalized = (value or "").lower()
     if normalized in {"paid", "succeeded"}:
-        return "paid"
+        return "succeeded"
     if normalized in {"refunded"}:
         return "refunded"
-    if normalized in {"partially_refunded", "partial_refund"}:
-        return "partially_refunded"
-    if normalized in {"failed", "canceled", "cancelled"}:
+    if normalized in {"failed"}:
         return "failed"
-    return normalized or "unpaid"
+    if normalized in {"canceled", "cancelled"}:
+        return "canceled"
+    if normalized in {"requires_payment_method", "requires_confirmation", "processing"}:
+        return normalized
+    return normalized or "requires_payment_method"
 
 
 def _apply_payment_status(invoice: AdminInvoice, payment: Payment, transaction: PaymentTransaction, payment_status: str, provider_payment_id: Optional[str]) -> None:
