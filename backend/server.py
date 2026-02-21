@@ -4132,14 +4132,40 @@ async def get_me(current_user=Depends(get_current_user)):
 
 
 @api_router.get("/users/me")
-async def get_user_profile(current_user=Depends(require_portal_scope("account"))):
+async def get_user_profile(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
     prefs = current_user.get("notification_prefs") or {}
+    try:
+        user_uuid = uuid.UUID(str(current_user.get("id")))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user_row = result.scalar_one_or_none()
+    if not user_row:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    profile = await _get_or_create_consumer_profile(
+        session,
+        user_row,
+        language=user_row.preferred_language,
+        country_code=user_row.country_code,
+    )
+
     return {
-        "id": current_user.get("id"),
-        "email": current_user.get("email"),
-        "full_name": current_user.get("full_name"),
-        "phone": current_user.get("phone_e164") or current_user.get("phone"),
-        "locale": current_user.get("preferred_language") or "tr",
+        "id": str(user_row.id),
+        "email": user_row.email,
+        "full_name": user_row.full_name,
+        "display_name": _resolve_display_name(user_row.full_name, profile.display_name_mode),
+        "display_name_mode": profile.display_name_mode,
+        "phone": user_row.phone_e164,
+        "locale": user_row.preferred_language or profile.language or "tr",
+        "country_code": profile.country_code,
+        "marketing_consent": profile.marketing_consent,
+        "gdpr_deleted_at": profile.gdpr_deleted_at.isoformat() if profile.gdpr_deleted_at else None,
+        "totp_enabled": profile.totp_enabled,
         "notification_prefs": _normalize_notification_prefs(prefs),
     }
 
