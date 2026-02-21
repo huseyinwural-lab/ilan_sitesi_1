@@ -1426,19 +1426,19 @@ def _normalize_campaign_payload(payload, existing: Optional[Campaign] = None) ->
         raise HTTPException(status_code=400, detail="country_code is required")
     country_code = country_code.upper()
 
-    start_raw = payload.current_period_start if payload.current_period_start is not None else (
-        existing.current_period_start.isoformat() if existing and existing.current_period_start else None
+    start_raw = payload.start_at if payload.start_at is not None else (
+        existing.start_at.isoformat() if existing and existing.start_at else None
     )
     if not start_raw and not existing:
-        raise HTTPException(status_code=400, detail="current_period_start is required")
-    current_period_start = _parse_datetime_field(start_raw, "current_period_start") if start_raw else existing.current_period_start
+        raise HTTPException(status_code=400, detail="start_at is required")
+    start_at = _parse_datetime_field(start_raw, "start_at") if start_raw else existing.start_at
 
-    end_raw = payload.current_period_end if payload.current_period_end is not None else (
-        existing.current_period_end.isoformat() if existing and existing.current_period_end else None
+    end_raw = payload.end_at if payload.end_at is not None else (
+        existing.end_at.isoformat() if existing and existing.end_at else None
     )
-    current_period_end = _parse_datetime_field(end_raw, "current_period_end") if end_raw else None
-    if current_period_end and current_period_start and current_period_start >= current_period_end:
-        raise HTTPException(status_code=400, detail="current_period_start must be before current_period_end")
+    end_at = _parse_datetime_field(end_raw, "end_at") if end_raw else None
+    if end_at and start_at and start_at >= end_at:
+        raise HTTPException(status_code=400, detail="start_at must be before end_at")
 
     budget_amount = payload.budget_amount if payload.budget_amount is not None else (
         float(existing.budget_amount) if existing and existing.budget_amount is not None else None
