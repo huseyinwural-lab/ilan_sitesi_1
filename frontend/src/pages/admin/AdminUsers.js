@@ -63,6 +63,51 @@ const statusLabel = (user) => {
 
 const roleLabel = (role) => ROLE_OPTIONS.find((opt) => opt.value === role)?.label || role;
 
+const FilterDropdown = ({ label, value, options, onChange, testId }) => {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((opt) => opt.value === value) || options[0];
+
+  const handleSelect = (optionValue) => {
+    onChange(optionValue);
+    setOpen(false);
+  };
+
+  return (
+    <div className="space-y-1" data-testid={`${testId}-container`}>
+      <div className="text-xs text-muted-foreground" data-testid={`${testId}-label`}>{label}</div>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          className="h-10 w-full rounded-md border bg-background px-3 text-sm flex items-center justify-between"
+          data-testid={testId}
+        >
+          <span data-testid={`${testId}-value`}>{selected?.label || 'Seç'}</span>
+          <ChevronDown size={14} />
+        </button>
+        {open && (
+          <div
+            className="absolute z-20 mt-2 w-full rounded-md border bg-white shadow-sm max-h-56 overflow-y-auto"
+            data-testid={`${testId}-menu`}
+          >
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleSelect(option.value)}
+                className={`w-full px-3 py-2 text-left text-sm hover:bg-muted ${option.value === value ? 'bg-muted' : ''}`}
+                data-testid={`${testId}-option-${option.value}`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function AdminUsers() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
