@@ -844,6 +844,68 @@ def _email_verification_block_expires_at(user: SqlUser) -> Optional[datetime]:
     return user.email_verification_expires_at
 
 
+def _resolve_display_name(full_name: str, mode: str) -> str:
+    name = (full_name or "").strip()
+    if mode == "hidden":
+        return ""
+    if mode == "initials":
+        parts = [p for p in name.split(" ") if p]
+        initials = "".join([p[0].upper() for p in parts[:2]])
+        return initials
+    return name
+
+
+def _generate_recovery_codes(count: int = 6) -> List[str]:
+    return [secrets.token_hex(4) for _ in range(count)]
+
+
+def _hash_recovery_codes(codes: List[str]) -> List[str]:
+    return [get_password_hash(code) for code in codes]
+
+
+def _verify_recovery_code(code: str, hashed_codes: List[str]) -> Tuple[bool, List[str]]:
+    for idx, hashed in enumerate(hashed_codes):
+        if verify_password(code, hashed):
+            remaining = [c for i, c in enumerate(hashed_codes) if i != idx]
+            return True, remaining
+    return False, hashed_codes
+
+
+def _verify_totp_code(secret: str, code: str) -> bool:
+    try:
+        totp = pyotp.TOTP(secret)
+        return totp.verify(code, valid_window=1)
+    except Exception:
+        return False
+
+
+def _build_totp_uri(email: str, secret: str) -> str:
+    return pyotp.totp.TOTP(secret).provisioning_uri(name=email, issuer_name="FAZ Panel")
+
+
+async def _get_or_create_consumer_profile(
+    session: AsyncSession,
+    user: SqlUser,
+    language: Optional[str] = None,
+    country_code: Optional[str] = None,
+) -> ConsumerProfile:
+    result = await session.execute(select(ConsumerProfile).where(ConsumerProfile.user_id == user.id))
+    profile = result.scalar_one_or_none()
+    if profile:
+        return profile
+
+    profile = ConsumerProfile(
+        user_id=user.id,
+        language=language or user.preferred_language or "tr",
+        country_code=country_code or user.country_code or "DE",
+        display_name_mode="full_name",
+        marketing_consent=False,
+    )
+    session.add(profile)
+    await session.flush()
+    return profile
+
+
 async def _log_email_verify_event(
     session: AsyncSession,
     action: str,
