@@ -37,6 +37,7 @@ const emptyForm = {
   name: '',
   scope: 'global',
   country_code: '',
+  period: 'monthly',
   price_amount: '',
   currency_code: 'EUR',
   listing_quota: '',
