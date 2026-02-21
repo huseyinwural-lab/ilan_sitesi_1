@@ -118,7 +118,7 @@
 - **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
-- 2026-02-21: Notifications SQL V1 (schema + endpoints + backfill script + decommission/gate dokümanları). Alembic migration oluşturuldu; lokal DB offline olduğu için upgrade beklemede. Backfill raporu dry-run (boş export) üretildi.
+- 2026-02-21: Notifications SQL V1 tamamlandı (schema + endpoints + backfill + decommission/gate dokümanları). Alembic `upgrade heads` uygulandı, `/api/health` healthy, `/api/auth/login` 520 RCA + fix, Notifications E2E PASS.
 - 2026-02-21: AUTH1.8 inline register doğrulama (tek sayfa OTP, auto login), login doğrulama engeli + verify endpoint token dönüşü.
 - 2026-02-21: Email doğrulama altyapısı (AUTH1.7): users doğrulama alanları + /api/auth/verify-email ve /api/auth/resend-verification + verify-email UI (OTP, cooldown, debug_code) + login gating.
 - 2026-02-21: Register route haritası (\"/register\", \"/dealer/register\"), consumer/dealer kayıt formları, /api/auth/register/consumer|dealer ve /api/countries/public endpointleri eklendi; dealer profile slug migration (p27).
