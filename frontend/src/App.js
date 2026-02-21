@@ -36,6 +36,7 @@ import DealerLogin from '@/portals/dealer/DealerLogin';
 import BackofficeLogin from '@/portals/backoffice/BackofficeLogin';
 import AdminInviteAccept from '@/pages/admin/AdminInviteAccept';
 import SupportPage from '@/pages/Support';
+import Register from '@/pages/Register';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
