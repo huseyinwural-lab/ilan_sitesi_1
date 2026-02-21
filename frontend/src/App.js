@@ -117,6 +117,8 @@ function App() {
                   {/* Portal login surfaces */}
                   <Route path="/login" element={<PublicLogin />} />
                   <Route path="/dealer/login" element={<DealerLogin />} />
+                  <Route path="/register" element={<Register portalContext="account" />} />
+                  <Route path="/dealer/register" element={<Register portalContext="dealer" />} />
                   <Route path="/admin/invite/accept" element={<AdminInviteAccept />} />
                   <Route path="/admin/login" element={<BackofficeLogin />} />
 
