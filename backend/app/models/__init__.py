@@ -30,5 +30,6 @@ from app.models.payment import Payment, PaymentTransaction, PaymentEventLog
 from app.models.auth import Role, UserRole, UserCredential, RefreshToken
 from app.models.favorite import Favorite
 from app.models.support_message import SupportMessage
+from app.models.notification import Notification, UserDevice
 from app.models.category_schema_version import CategorySchemaVersion
 from app.models.dealer_listing import DealerListing
