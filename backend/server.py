@@ -10663,7 +10663,7 @@ async def create_checkout_session(
     session.add(transaction)
     await session.commit()
 
-    return {"checkout_url": checkout_session.checkout_url, "session_id": checkout_session.session_id}
+    return {"checkout_url": checkout_session.url, "session_id": checkout_session.session_id}
 
 
 @api_router.get("/payments/checkout/status/{session_id}")
