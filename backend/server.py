@@ -190,10 +190,6 @@ class DealerRegisterPayload(BaseModel):
     preferred_language: Optional[str] = "tr"
 
 
-class RegisterResponse(BaseModel):
-    user: UserResponse
-    debug_code: Optional[str] = None
-
 
 class VerifyEmailPayload(BaseModel):
     email: EmailStr
