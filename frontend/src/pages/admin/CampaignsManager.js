@@ -505,7 +505,7 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
                         {formatDate(campaign.start_at)} - {formatDate(campaign.end_at)}
                       </td>
                       <td className="p-3" data-testid={`${testIdPrefix}-discount-${campaign.id}`}>{formatDiscount(campaign)}</td>
-                      <td className="p-3" data-testid={`${testIdPrefix}-priority-${campaign.id}`}>{campaign.priority}</td>
+                      <td className="p-3" data-testid={`${testIdPrefix}-priority-${campaign.id}`}>{priorityLabel}</td>
                       <td className="p-3" data-testid={`${testIdPrefix}-updated-${campaign.id}`}>{formatDate(campaign.updated_at)}</td>
                       {campaignType === 'corporate' ? (
                         <td className="p-3" data-testid={`${testIdPrefix}-plan-${campaign.id}`}>
