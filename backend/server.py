@@ -2802,8 +2802,23 @@ async def login(
     if not user.get("is_verified", False) and portal_scope in {"account", "dealer"}:
         raise HTTPException(status_code=403, detail={"code": "EMAIL_NOT_VERIFIED"})
 
-
-    # successful login: reset failed-login counters
+    if user.get("role") == "individual":
+        result = await session.execute(
+            select(ConsumerProfile).where(ConsumerProfile.user_id == uuid.UUID(str(user.get("id"))))
+        )
+        profile = result.scalar_one_or_none()
+        if profile and profile.totp_enabled:
+            if not credentials.totp_code:
+                raise HTTPException(status_code=403, detail={"code": "TOTP_REQUIRED"})
+            if not profile.totp_secret:
+                raise HTTPException(status_code=403, detail={"code": "TOTP_SETUP_INCOMPLETE"})
+            if not _verify_totp_code(profile.totp_secret, credentials.totp_code):
+                ok, remaining = _verify_recovery_code(credentials.totp_code, profile.totp_recovery_codes or [])
+                if ok:
+                    profile.totp_recovery_codes = remaining
+                    await session.commit()
+                else:
+                    raise HTTPException(status_code=401, detail={"code": "INVALID_TOTP"})
     _failed_login_attempts.pop(rl_key, None)
     _failed_login_blocked_until.pop(rl_key, None)
     _failed_login_block_audited.pop(rl_key, None)
