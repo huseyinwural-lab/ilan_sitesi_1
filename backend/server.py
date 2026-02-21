@@ -2368,22 +2368,6 @@ async def login(
 
     blocked_until = _failed_login_blocked_until.get(rl_key)
     if blocked_until and now < blocked_until:
-        # Log RATE_LIMIT_BLOCK only once per block window
-        if db is not None and not _failed_login_block_audited.get(rl_key):
-            await db.audit_logs.insert_one(
-                {
-                    "id": str(uuid.uuid4()),
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                    "event_type": "RATE_LIMIT_BLOCK",
-                    "action": "RATE_LIMIT_BLOCK",
-                    "resource_type": "auth",
-                    "resource_id": None,
-                    "email": email,
-                    "ip_address": ip_address,
-                    "user_agent": user_agent,
-                }
-            )
-            _failed_login_block_audited[rl_key] = True
         retry_after_seconds = int(blocked_until - now)
         raise HTTPException(
             status_code=429,
@@ -2392,22 +2376,6 @@ async def login(
 
     user = await auth_repo.get_user_by_email(email)
     if not user or not verify_password(credentials.password, user.get("hashed_password", "")):
-        if db is not None:
-            # FAILED_LOGIN audit (always)
-            await db.audit_logs.insert_one(
-                {
-                    "id": str(uuid.uuid4()),
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                    "event_type": "FAILED_LOGIN",
-                    "action": "FAILED_LOGIN",
-                    "resource_type": "auth",
-                    "resource_id": None,
-                    "email": email,
-                    "ip_address": ip_address,
-                    "user_agent": user_agent,
-                }
-            )
-
         # Update attempts window
         attempts = _failed_login_attempts.get(rl_key, [])
         attempts = [ts for ts in attempts if (now - ts) <= FAILED_LOGIN_WINDOW_SECONDS]
@@ -2420,9 +2388,6 @@ async def login(
             _failed_login_block_audited[rl_key] = False
 
         raise HTTPException(status_code=401, detail={"code": "INVALID_CREDENTIALS"})
-
-    if AUTH_PROVIDER == "mongo" and db is not None:
-        user = await _auto_reactivate_if_expired(user, db, request)
 
     if user.get("deleted_at"):
         raise HTTPException(status_code=403, detail="User account deleted")
