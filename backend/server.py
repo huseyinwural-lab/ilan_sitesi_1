@@ -10571,7 +10571,7 @@ async def create_checkout_session_stub(
     checkout_session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(session_request)
 
     return {
-        "checkout_url": checkout_session.checkout_url,
+        "checkout_url": checkout_session.url,
         "session_id": checkout_session.session_id,
         "payment_intent_id": checkout_session.payment_intent_id,
         "mode": "stub",
