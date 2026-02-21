@@ -32,13 +32,6 @@ ADMIN_ROLES = {
 DEALER_ROLES = {"dealer"}
 
 
-def get_mongo_db(request: Request):
-    db = getattr(request.app.state, "db", None)
-    if not MONGO_ENABLED or db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-    return db
-
-
 async def _get_sql_user(user_id: str, session: AsyncSession) -> Optional[dict]:
     try:
         user_uuid = uuid.UUID(str(user_id))
