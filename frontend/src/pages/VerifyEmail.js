@@ -195,6 +195,24 @@ export default function VerifyEmail({ portalContext = 'account' }) {
     }
   };
 
+  const handleHelpToggle = async () => {
+    const nextState = !helpOpen;
+    setHelpOpen(nextState);
+
+    if (nextState && !helpLogged) {
+      setHelpLogged(true);
+      try {
+        await fetch(`${API}/auth/verify-email/help-opened`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim().toLowerCase(), reason: 'email_verification' }),
+        });
+      } catch (err) {
+        // ignore logging errors
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f7c27a] p-4" data-testid="verify-page">
       <div className="absolute top-4 right-4 flex items-center gap-2">
