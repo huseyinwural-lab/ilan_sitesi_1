@@ -134,7 +134,6 @@ export default function VerifyEmail({ portalContext = 'account' }) {
 
       const data = await res.json().catch(() => ({}));
       const userData = applySession(data);
-      sessionStorage.removeItem('pending_debug_code');
 
       toast({ title: 'Doğrulama tamamlandı', description: 'Hesabınız onaylandı.' });
       if (userData) {
