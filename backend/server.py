@@ -10195,7 +10195,7 @@ async def _apply_payment_status(
         transaction.payment_status = "succeeded"
 
         if session:
-            await _activate_subscription_from_invoice(session, invoice)
+            # await _activate_subscription_from_invoice(session, invoice)
 
     elif status_value == "refunded":
         invoice.payment_status = "refunded"
