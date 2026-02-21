@@ -3008,32 +3008,27 @@ class SupportApplicationStatusPayload(BaseModel):
 
 
 class CampaignCreatePayload(BaseModel):
-    type: str
-    country_scope: str = "global"
-    country_code: Optional[str] = None
     name: str
-    description: Optional[str] = None
     status: Optional[str] = "draft"
-    start_at: Optional[str] = None
+    start_at: str
     end_at: Optional[str] = None
-    priority: Optional[str] = "medium"
-    duration_days: Optional[int] = None
-    quota_count: Optional[int] = None
-    price_amount: Optional[float] = None
+    country_code: str
+    budget_amount: Optional[float] = None
+    budget_currency: Optional[str] = None
+    notes: Optional[str] = None
+    rules_json: Optional[Dict[str, Any]] = None
 
 
 class CampaignUpdatePayload(BaseModel):
-    country_scope: Optional[str] = None
-    country_code: Optional[str] = None
     name: Optional[str] = None
-    description: Optional[str] = None
     status: Optional[str] = None
     start_at: Optional[str] = None
     end_at: Optional[str] = None
-    priority: Optional[str] = None
-    duration_days: Optional[int] = None
-    quota_count: Optional[int] = None
-    price_amount: Optional[float] = None
+    country_code: Optional[str] = None
+    budget_amount: Optional[float] = None
+    budget_currency: Optional[str] = None
+    notes: Optional[str] = None
+    rules_json: Optional[Dict[str, Any]] = None
 
 
 class CampaignStatusPayload(BaseModel):
