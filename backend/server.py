@@ -6067,15 +6067,32 @@ async def admin_get_dealer_detail(
         raise HTTPException(status_code=404, detail="Dealer not found")
     _assert_country_scope(dealer.get("country_code"), current_user)
 
-    # Basic finance linkage (MVP)
-    last_invoice = (
-        await db.invoices.find({"dealer_user_id": dealer_id}, {"_id": 0})
-        .sort("issued_at", -1)
-        .limit(1)
-        .to_list(1)
-    )
-    last_invoice = last_invoice[0] if last_invoice else None
-    unpaid_count = await db.invoices.count_documents({"dealer_user_id": dealer_id, "status": "unpaid"})
+    # Basic finance linkage (V1 SQL)
+    last_invoice = None
+    unpaid_count = 0
+    try:
+        dealer_uuid = uuid.UUID(dealer_id)
+    except ValueError:
+        dealer_uuid = None
+
+    if dealer_uuid:
+        last_invoice = (
+            await session.execute(
+                select(AdminInvoice)
+                .where(AdminInvoice.user_id == dealer_uuid)
+                .order_by(desc(AdminInvoice.issued_at), desc(AdminInvoice.created_at))
+                .limit(1)
+            )
+        ).scalars().first()
+        unpaid_count = (
+            await session.execute(
+                select(func.count())
+                .select_from(AdminInvoice)
+                .where(AdminInvoice.user_id == dealer_uuid, AdminInvoice.status == "issued")
+            )
+        ).scalar() or 0
+
+    last_invoice_payload = _admin_invoice_to_dict(last_invoice) if last_invoice else None
     active_plan = None
     if dealer.get("plan_id"):
         active_plan = await db.plans.find_one({"id": dealer.get("plan_id")}, {"_id": 0})
