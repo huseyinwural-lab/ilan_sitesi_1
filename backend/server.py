@@ -2218,6 +2218,7 @@ AUTH_PROVIDER = resolve_auth_provider(MONGO_ENABLED)
 APPLICATIONS_PROVIDER = resolve_applications_provider(MONGO_ENABLED)
 
 RAW_DATABASE_URL = os.environ.get("DATABASE_URL")
+TOKEN_VERSION = os.environ.get("TOKEN_VERSION", "v2")
 
 DB_POOL_SIZE_RAW = os.environ.get("DB_POOL_SIZE")
 DB_MAX_OVERFLOW_RAW = os.environ.get("DB_MAX_OVERFLOW")
