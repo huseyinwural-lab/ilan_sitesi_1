@@ -259,6 +259,29 @@ class AccountDeletePayload(BaseModel):
     reason: Optional[str] = None
 
 
+class ConsumerProfileUpdatePayload(BaseModel):
+    full_name: Optional[str] = None
+    locale: Optional[str] = None
+    country_code: Optional[str] = None
+    display_name_mode: Optional[str] = None
+    marketing_consent: Optional[bool] = None
+
+
+class DealerProfileUpdatePayload(BaseModel):
+    company_name: Optional[str] = None
+    vat_id: Optional[str] = None
+    trade_register_no: Optional[str] = None
+    authorized_person: Optional[str] = None
+    address_json: Optional[Dict[str, Any]] = None
+    logo_url: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    contact_phone: Optional[str] = None
+    address_country: Optional[str] = None
+    impressum_text: Optional[str] = None
+    terms_text: Optional[str] = None
+    withdrawal_policy_text: Optional[str] = None
+
+
 class GDPRExportResponse(BaseModel):
     status: str
     data: Dict[str, Any]
