@@ -97,13 +97,6 @@ export default function AdminPaymentsPage() {
       )}
 
       <div className="flex flex-wrap items-center gap-3" data-testid="admin-payments-filters">
-        <input
-          value={dealerId}
-          onChange={(e) => setDealerId(e.target.value)}
-          placeholder="Dealer ID"
-          className="h-9 px-3 rounded-md border bg-background text-sm"
-          data-testid="admin-payments-filter-dealer"
-        />
         <select
           className="h-9 px-3 rounded-md border bg-background text-sm"
           value={status}
@@ -114,20 +107,6 @@ export default function AdminPaymentsPage() {
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
-        <input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-          className="h-9 px-3 rounded-md border bg-background text-sm"
-          data-testid="admin-payments-filter-date-from"
-        />
-        <input
-          type="date"
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-          className="h-9 px-3 rounded-md border bg-background text-sm"
-          data-testid="admin-payments-filter-date-to"
-        />
       </div>
 
       <div className="border rounded-lg overflow-hidden" data-testid="admin-payments-table">
