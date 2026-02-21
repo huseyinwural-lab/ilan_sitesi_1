@@ -24,9 +24,8 @@ const statusOptions = [
   { value: 'draft', label: 'draft' },
   { value: 'issued', label: 'issued' },
   { value: 'paid', label: 'paid' },
-  { value: 'cancelled', label: 'cancelled' },
+  { value: 'void', label: 'void' },
   { value: 'refunded', label: 'refunded' },
-  { value: 'overdue', label: 'overdue' },
 ];
 
 const resolveCurrency = (countryCode, scope = 'country') => {
