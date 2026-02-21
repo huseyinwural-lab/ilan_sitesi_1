@@ -15231,6 +15231,10 @@ def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
     core_fields = payload.get("core_fields") or {}
     title = core_fields.get("title") or payload.get("title")
     description = core_fields.get("description") or payload.get("description")
+    if title is not None:
+        listing.title = title.strip()
+    if description is not None:
+        listing.description = description.strip()
     category_value = payload.get("category_id")
     if category_value is not None:
         try:
