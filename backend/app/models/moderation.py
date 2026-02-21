@@ -49,6 +49,10 @@ class Listing(Base):
     make_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("vehicle_makes.id"), nullable=True)
     model_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("vehicle_models.id"), nullable=True)
     
+    # Contact options
+    contact_option_phone: Mapped[bool] = mapped_column(Boolean, default=True)
+    contact_option_message: Mapped[bool] = mapped_column(Boolean, default=True)
+
     # Status: pending, active, rejected, suspended, expired
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False, index=True)
     
