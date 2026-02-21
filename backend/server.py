@@ -9253,17 +9253,7 @@ async def admin_reject_listing(
     current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    reason = _validate_reason(payload.reason, REJECT_REASONS_V1)
-    updated = await _moderation_transition(
-        session=session,
-        listing_id=listing_id,
-        current_user=current_user,
-        event_type="MODERATION_REJECT",
-        new_status="rejected",
-        reason=reason,
-        reason_note=(payload.reason_note or None),
-    )
-    return {"ok": True, "listing": {"id": updated["id"], "status": updated.get("status")}}
+    raise HTTPException(status_code=501, detail="Reject flow not supported in Moderation V1")
 
 
 @api_router.post("/admin/listings/{listing_id}/needs_revision")
