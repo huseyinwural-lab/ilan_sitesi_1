@@ -3,25 +3,12 @@
 ## Ön Koşul
 - Postgres erişimi sağlandı (connection OK)
 
-## 1) Migration + Seed
-1. `cd /app/backend`
-2. `alembic upgrade head`
-3. `alembic current`
-4. Seed (gerekli master data):
-   - `python backend/scripts/seed_core_sql.py`
-   - `python backend/scripts/seed_default_plans_v1.py`
-
-## 2) AUTH E2E
-- Register → verify → login → portal redirect → protected endpoint
-- Output: Auth E2E PASS kanıtı
-
-## 3) Stripe Sandbox E2E
-- Checkout/PaymentIntent → webhook → invoice paid → subscription active → quota update
-- Output: Zincir PASS + replay PASS
-
-## 4) Ad Loop E2E
-- İlan oluştur → medya upload → publish → public görünür
-- Output: Ad Loop PASS
-
-## 5) Evidence Güncelle
-- DB Migration Evidence Pack + FINAL-01 evidence dosyaları güncellenir
+| # | Adım | Evidence Path |
+|---|------|---------------|
+| 1 | `alembic upgrade head` | `/app/ops/DB_MIGRATION_EVIDENCE_PACK.md` |
+| 2 | `alembic current` (head hash) | `/app/ops/DB_MIGRATION_EVIDENCE_PACK.md` |
+| 3 | Seed / master data (`seed_core_sql.py`, `seed_default_plans_v1.py`) | `/app/ops/FINAL01_SEED_EVIDENCE.md` |
+| 4 | Test user oluşturma (consumer + dealer) | `/app/ops/FINAL01_TEST_USER_EVIDENCE.md` |
+| 5 | Auth E2E (register → verify → login → portal) | `/app/ops/FINAL01_AUTH_E2E_EVIDENCE.md` |
+| 6 | Stripe sandbox E2E (checkout → webhook → invoice/subscription/quota) | `/app/ops/FINAL01_STRIPE_E2E_EVIDENCE.md` |
+| 7 | Ad Loop E2E (create → media → publish → public search) | `/app/ops/FINAL01_AD_LOOP_E2E_EVIDENCE.md` |
