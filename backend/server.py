@@ -5277,7 +5277,7 @@ async def archive_campaign_action(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    if campaign.status == "archived":
+    if campaign.status == "ended":
         return {"ok": True}
 
     before_state = _campaign_to_dict(campaign)
