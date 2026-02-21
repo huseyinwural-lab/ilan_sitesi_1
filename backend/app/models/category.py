@@ -65,6 +65,7 @@ class Category(Base):
     __table_args__ = (
         Index('ix_categories_module_enabled', 'module', 'is_enabled', 'is_deleted'),
         Index('ix_categories_path_prefix', 'path', postgresql_ops={'path': 'text_pattern_ops'}),
+        Index('ix_categories_country_code', 'country_code'),
     )
 
 class CategoryTranslation(Base):
