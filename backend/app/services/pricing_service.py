@@ -183,35 +183,37 @@ class PricingService:
         try:
             query = select(Campaign).where(
                 and_(
-                    Campaign.type == "corporate",
                     Campaign.status == "active",
                     Campaign.start_at <= now,
-                    Campaign.end_at >= now,
-                    or_(
-                        Campaign.country_scope == "global",
-                        and_(Campaign.country_scope == "country", Campaign.country_code == country),
-                    ),
+                    or_(Campaign.end_at.is_(None), Campaign.end_at >= now),
+                    Campaign.country_code == country,
                 )
-            ).order_by(desc(Campaign.priority), desc(Campaign.updated_at))
+            ).order_by(desc(Campaign.start_at), desc(Campaign.updated_at))
 
             campaign = (await self.db.execute(query)).scalars().first()
             if not campaign:
                 return result
 
-            if campaign.target != "discount":
+            rules = campaign.rules_json or {}
+            target = (rules.get("target") or "discount").lower()
+            if target != "discount":
                 return result
 
             discount_value = None
-            if campaign.discount_percent is not None:
+            discount_percent = rules.get("discount_percent")
+            discount_amount = rules.get("discount_amount")
+            discount_currency = rules.get("discount_currency")
+
+            if discount_percent is not None:
                 discount_value = (
                     result.charge_amount
-                    * Decimal(str(campaign.discount_percent))
+                    * Decimal(str(discount_percent))
                     / Decimal("100.00")
                 )
-            elif campaign.discount_amount is not None:
-                if campaign.discount_currency and campaign.discount_currency != result.currency:
+            elif discount_amount is not None:
+                if discount_currency and discount_currency != result.currency:
                     return result
-                discount_value = Decimal(str(campaign.discount_amount))
+                discount_value = Decimal(str(discount_amount))
 
             if discount_value and discount_value > Decimal("0.00"):
                 result.applied_discount = discount_value
