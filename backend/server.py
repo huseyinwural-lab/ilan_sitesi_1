@@ -13520,20 +13520,18 @@ async def _dashboard_metrics(db, country_code: str, include_revenue: bool = True
 
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    month_start_iso = month_start.isoformat()
 
     revenue_mtd = None
     totals: Dict[str, float] = {}
     if include_revenue:
-        invoices = await db.invoices.find({
-            "country_code": country_code,
-            "status": "paid",
-            "paid_at": {"$gte": month_start_iso},
-        }, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
-        for inv in invoices:
-            currency = inv.get("currency") or "UNKNOWN"
-            totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
-        revenue_mtd = sum(totals.values())
+        async with AsyncSessionLocal() as sql_session:
+            conditions = [
+                AdminInvoice.status == "paid",
+                AdminInvoice.paid_at >= month_start,
+                AdminInvoice.country_code == country_code,
+            ]
+            totals = await _invoice_totals_by_currency(sql_session, conditions)
+            revenue_mtd = sum(totals.values())
 
     return {
         "total_listings": total_listings,
@@ -13542,7 +13540,7 @@ async def _dashboard_metrics(db, country_code: str, include_revenue: bool = True
         "active_dealers": active_dealers,
         "revenue_mtd": round(revenue_mtd, 2) if revenue_mtd is not None else None,
         "revenue_currency_totals": {k: round(v, 2) for k, v in totals.items()} if include_revenue else None,
-        "month_start_utc": month_start_iso,
+        "month_start_utc": month_start.isoformat(),
     }
 
 
