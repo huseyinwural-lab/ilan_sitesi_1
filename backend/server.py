@@ -10296,9 +10296,10 @@ async def admin_create_category(
         _assert_country_scope(country_code, current_user)
 
     slug_query = await session.execute(
-        select(Category).where(Category.slug["tr"].astext == slug)
+        select(Category).where(Category.is_deleted.is_(False))
     )
-    if slug_query.scalar_one_or_none():
+    existing_categories = slug_query.scalars().all()
+    if any(_pick_category_slug(cat.slug) == slug for cat in existing_categories):
         raise HTTPException(status_code=409, detail="Category slug already exists")
 
     now = datetime.now(timezone.utc)
