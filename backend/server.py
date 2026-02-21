@@ -7130,12 +7130,19 @@ class ReportStatusPayload(BaseModel):
 
 
 class InvoiceCreatePayload(BaseModel):
-    dealer_id: str
-    plan_id: str
+    user_id: Optional[str] = None
+    dealer_id: Optional[str] = None
+    subscription_id: Optional[str] = None
+    plan_id: Optional[str] = None
+    campaign_id: Optional[str] = None
+    amount_total: Optional[float] = None
     amount: Optional[float] = None
+    currency: Optional[str] = None
     currency_code: Optional[str] = None
     due_at: Optional[str] = None
     notes: Optional[str] = None
+    provider_customer_id: Optional[str] = None
+    meta_json: Optional[Dict[str, Any]] = None
     issue_now: Optional[bool] = True
 
 
