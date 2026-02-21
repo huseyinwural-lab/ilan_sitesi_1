@@ -84,6 +84,7 @@ from app.models.admin_invoice import AdminInvoice
 from app.models.payment import Payment, PaymentTransaction, PaymentEventLog
 from app.models.category import Category, CategoryTranslation
 from app.models.category_schema_version import CategorySchemaVersion
+from app.models.core import AuditLog
 from app.models.dealer_listing import DealerListing
 
 
