@@ -4257,6 +4257,18 @@ async def update_user_profile(
         country_code=user_row.country_code,
     )
 
+    if "marketing_consent" in update_payload:
+        await _write_audit_log_sql(
+            session=session,
+            action="consent_updated",
+            actor=actor,
+            resource_type="user",
+            resource_id=str(user_row.id),
+            metadata={"marketing_consent": update_payload.get("marketing_consent")},
+            request=request,
+            country_code=user_row.country_code,
+        )
+
     await session.commit()
     await session.refresh(user_row)
 
