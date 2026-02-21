@@ -3,7 +3,7 @@ import requests
 import time
 
 def trigger_rate_limit():
-    api_url = "https://db-migration-38.preview.emergentagent.com/api"
+    api_url = "https://monetization-upgrade.preview.emergentagent.com/api"
     
     print("Attempting to trigger rate limit (20 requests/60s)...")
     for i in range(25):

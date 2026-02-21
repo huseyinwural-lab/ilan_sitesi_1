@@ -1,7 +1,7 @@
 ## FAZ-7 Admin Login Kapanış Kontrolleri — Closeout Raporu
 
 **Tarih:** 2026-02-19
-**Ortam:** https://db-migration-38.preview.emergentagent.com
+**Ortam:** https://monetization-upgrade.preview.emergentagent.com
 **Kullanıcı:** admin@platform.com / Admin123!
 
 ---
