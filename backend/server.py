@@ -11030,7 +11030,441 @@ async def admin_delete_category(
     return {"category": _serialize_category_sql(deleted, include_schema=True, include_translations=False)}
 
 
-@api_router.get("/admin/menu-items")
+@api_router.get("/admin/categories/import-export/export/json")
+async def admin_export_categories_json(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.is_deleted.is_(False))
+        .order_by(Category.depth.asc(), Category.sort_order.asc())
+    )
+    categories = result.scalars().all()
+
+    versions_result = await session.execute(
+        select(CategorySchemaVersion)
+        .order_by(CategorySchemaVersion.version.desc())
+    )
+    versions = versions_result.scalars().all()
+    latest_versions: Dict[str, int] = {}
+    for version in versions:
+        key = str(version.category_id)
+        if key not in latest_versions:
+            latest_versions[key] = version.version
+
+    slug_by_id = {str(cat.id): (_pick_category_slug(cat.slug) or "") for cat in categories}
+    items = []
+    for category in categories:
+        parent_slug = slug_by_id.get(str(category.parent_id)) if category.parent_id else None
+        items.append(
+            _build_category_export_item(
+                category,
+                list(category.translations or []),
+                parent_slug,
+                latest_versions.get(str(category.id), 0),
+            )
+        )
+
+    payload = {
+        "metadata": {
+            "schema": "CATEGORY_IMPORT_EXPORT_SCHEMA_V1",
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "module": "vehicle",
+            "count": len(items),
+        },
+        "categories": _build_category_tree(items),
+    }
+
+    filename = f"categories-export-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.json"
+    return JSONResponse(
+        content=payload,
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+    )
+
+
+@api_router.get("/admin/categories/import-export/export/csv")
+async def admin_export_categories_csv(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.is_deleted.is_(False))
+        .order_by(Category.depth.asc(), Category.sort_order.asc())
+    )
+    categories = result.scalars().all()
+
+    versions_result = await session.execute(
+        select(CategorySchemaVersion)
+        .order_by(CategorySchemaVersion.version.desc())
+    )
+    versions = versions_result.scalars().all()
+    latest_versions: Dict[str, int] = {}
+    for version in versions:
+        key = str(version.category_id)
+        if key not in latest_versions:
+            latest_versions[key] = version.version
+
+    slug_by_id = {str(cat.id): (_pick_category_slug(cat.slug) or "") for cat in categories}
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=",")
+    writer.writerow([
+        "id",
+        "parent_slug",
+        "path",
+        "module",
+        "country_code",
+        "allowed_countries",
+        "sort_order",
+        "active_flag",
+        "slug_tr",
+        "slug_en",
+        "slug_de",
+        "name_tr",
+        "name_en",
+        "name_de",
+        "schema_status",
+        "schema_version",
+        "form_schema",
+    ])
+
+    for category in categories:
+        slug_map = category.slug if isinstance(category.slug, dict) else {"tr": category.slug}
+        translation_map = _category_translation_map(list(category.translations or []))
+        parent_slug = slug_by_id.get(str(category.parent_id)) if category.parent_id else ""
+        writer.writerow([
+            str(category.id),
+            parent_slug or "",
+            category.path or "",
+            category.module,
+            category.country_code or "",
+            "|".join(category.allowed_countries or []),
+            category.sort_order,
+            "true" if category.is_enabled else "false",
+            slug_map.get("tr") or "",
+            slug_map.get("en") or "",
+            slug_map.get("de") or "",
+            (translation_map.get("tr") or {}).get("name") or "",
+            (translation_map.get("en") or {}).get("name") or "",
+            (translation_map.get("de") or {}).get("name") or "",
+            (category.form_schema or {}).get("status") if isinstance(category.form_schema, dict) else "",
+            latest_versions.get(str(category.id), 0),
+            json.dumps(category.form_schema or {}, ensure_ascii=False),
+        ])
+
+    filename = f"categories-export-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.csv"
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+    )
+
+
+def _read_import_file(file: UploadFile) -> bytes:
+    content = file.file.read()
+    if len(content) > CATEGORY_IMPORT_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="File exceeds 10MB limit")
+    if not content:
+        raise HTTPException(status_code=400, detail="File is empty")
+    return content
+
+
+@api_router.post("/admin/categories/import-export/import/dry-run")
+async def admin_import_categories_dry_run(
+    request: Request,
+    file: UploadFile = File(...),
+    format: str = "json",
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    content = _read_import_file(file)
+    items = _parse_import_payload(content, format.lower())
+
+    result = await session.execute(select(Category).options(selectinload(Category.translations)))
+    existing = result.scalars().all()
+    diff = _diff_categories(items, existing)
+
+    await _write_audit_log_sql(
+        session,
+        "categories.import.dry_run",
+        current_user,
+        "category_import",
+        None,
+        {
+            "format": format,
+            "filename": file.filename,
+            "summary": diff.get("summary"),
+        },
+        request,
+    )
+    await session.commit()
+    return diff
+
+
+@api_router.post("/admin/categories/import-export/import/commit")
+async def admin_import_categories_commit(
+    request: Request,
+    file: UploadFile = File(...),
+    format: str = "json",
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    content = _read_import_file(file)
+    items = _parse_import_payload(content, format.lower())
+
+    result = await session.execute(select(Category).options(selectinload(Category.translations)))
+    existing_categories = result.scalars().all()
+    existing_by_slug = {(_pick_category_slug(cat.slug) or "").lower(): cat for cat in existing_categories}
+
+    items_by_slug = {item["slug_tr"]: item for item in items}
+    created = 0
+    updated = 0
+    deleted = 0
+    schema_versions = []
+
+    async with session.begin():
+        created_map: Dict[str, Category] = {}
+        ordered_items = sorted(items, key=lambda x: (len((x.get("path") or "").split(".")), x.get("sort_order", 0)))
+        for item in ordered_items:
+            slug_key = item["slug_tr"]
+            category = existing_by_slug.get(slug_key)
+            parent_slug = item.get("parent_slug")
+            parent = None
+            if parent_slug:
+                parent = existing_by_slug.get(parent_slug) or created_map.get(parent_slug)
+                if not parent:
+                    raise HTTPException(status_code=400, detail=f"Parent slug not found: {parent_slug}")
+
+            allowed_countries = item.get("allowed_countries") or []
+            country_code = (item.get("country_code") or None)
+            if not allowed_countries:
+                allowed_countries = [country_code] if country_code else sorted(SUPPORTED_COUNTRIES)
+
+            if not category:
+                slug_map = item.get("slug")
+                category = Category(
+                    id=uuid.uuid4(),
+                    parent_id=parent.id if parent else None,
+                    path=item.get("path") or (f"{parent.path}.{slug_key}" if parent else slug_key),
+                    depth=(parent.depth + 1) if parent else 0,
+                    sort_order=item.get("sort_order") or 0,
+                    module=item.get("module") or "vehicle",
+                    slug=slug_map,
+                    icon=None,
+                    image_url=None,
+                    is_enabled=_coerce_bool(item.get("active_flag"), True),
+                    is_visible_on_home=False if parent else True,
+                    is_deleted=False,
+                    inherit_enabled=True,
+                    override_enabled=None,
+                    inherit_countries=True,
+                    override_countries=None,
+                    allowed_countries=allowed_countries,
+                    listing_count=0,
+                    country_code=country_code,
+                    hierarchy_complete=_coerce_bool(item.get("hierarchy_complete"), True),
+                    form_schema=None,
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                )
+                session.add(category)
+                await session.flush()
+                existing_by_slug[slug_key] = category
+                created_map[slug_key] = category
+                created += 1
+
+                for lang in ("tr", "en", "de"):
+                    session.add(
+                        CategoryTranslation(
+                            category_id=category.id,
+                            language=lang,
+                            name=(item.get("name") or {}).get(lang) or slug_key,
+                            description=None,
+                            meta_title=None,
+                            meta_description=None,
+                        )
+                    )
+            else:
+                changed = False
+                if parent and category.parent_id != parent.id:
+                    category.parent_id = parent.id
+                    category.depth = parent.depth + 1
+                    category.path = f"{parent.path}.{slug_key}" if parent.path else slug_key
+                    changed = True
+                if category.country_code != country_code:
+                    category.country_code = country_code
+                    changed = True
+                if category.allowed_countries != allowed_countries:
+                    category.allowed_countries = allowed_countries
+                    changed = True
+                if category.sort_order != item.get("sort_order"):
+                    category.sort_order = item.get("sort_order")
+                    changed = True
+                is_enabled = _coerce_bool(item.get("active_flag"), True)
+                if category.is_enabled != is_enabled:
+                    category.is_enabled = is_enabled
+                    changed = True
+
+                name_payload = item.get("name") or {}
+                if name_payload:
+                    translations = {t.language: t for t in (category.translations or [])}
+                    for lang in ("tr", "en", "de"):
+                        desired = name_payload.get(lang)
+                        if not desired:
+                            continue
+                        if lang in translations:
+                            if translations[lang].name != desired:
+                                translations[lang].name = desired
+                                changed = True
+                        else:
+                            session.add(
+                                CategoryTranslation(
+                                    category_id=category.id,
+                                    language=lang,
+                                    name=desired,
+                                    description=None,
+                                    meta_title=None,
+                                    meta_description=None,
+                                )
+                            )
+                            changed = True
+
+                if changed:
+                    category.updated_at = datetime.now(timezone.utc)
+                    updated += 1
+
+            if item.get("form_schema") is not None:
+                schema = _normalize_category_schema(item.get("form_schema"))
+                schema["status"] = "draft"
+                existing_schema = _normalize_category_schema(category.form_schema) if category.form_schema else None
+                if json.dumps(existing_schema, sort_keys=True) != json.dumps(schema, sort_keys=True):
+                    category.form_schema = schema
+                    max_version_result = await session.execute(
+                        select(func.max(CategorySchemaVersion.version))
+                        .where(CategorySchemaVersion.category_id == category.id)
+                    )
+                    max_version = max_version_result.scalar_one_or_none() or 0
+                    version = CategorySchemaVersion(
+                        id=uuid.uuid4(),
+                        category_id=category.id,
+                        version=max_version + 1,
+                        status="draft",
+                        schema_snapshot=schema,
+                        created_at=datetime.now(timezone.utc),
+                        created_by=_safe_uuid(current_user.get("id")),
+                        created_by_role=current_user.get("role"),
+                        created_by_email=current_user.get("email"),
+                        published_at=None,
+                        published_by=None,
+                    )
+                    session.add(version)
+                    schema_versions.append({
+                        "category_id": str(category.id),
+                        "version_id": str(version.id),
+                        "version": version.version,
+                    })
+
+        for slug_key, category in existing_by_slug.items():
+            if slug_key and slug_key not in items_by_slug and not category.is_deleted:
+                category.is_enabled = False
+                category.is_deleted = True
+                category.updated_at = datetime.now(timezone.utc)
+                deleted += 1
+
+    audit_entry = await _write_audit_log_sql(
+        session,
+        "categories.import.commit",
+        current_user,
+        "category_import",
+        None,
+        {
+            "format": format,
+            "filename": file.filename,
+            "created": created,
+            "updated": updated,
+            "deleted": deleted,
+            "schema_versions": schema_versions,
+        },
+        request,
+    )
+    await session.commit()
+    return {
+        "batch_id": str(audit_entry.id),
+        "summary": {"created": created, "updated": updated, "deleted": deleted},
+        "schema_versions": schema_versions,
+    }
+
+
+class CategoryImportPublishPayload(BaseModel):
+    batch_id: str
+
+
+@api_router.post("/admin/categories/import-export/publish")
+async def admin_publish_category_import_batch(
+    payload: CategoryImportPublishPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        batch_uuid = uuid.UUID(payload.batch_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid batch_id") from exc
+
+    result = await session.execute(select(AuditLog).where(AuditLog.id == batch_uuid))
+    audit_entry = result.scalar_one_or_none()
+    if not audit_entry:
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    schema_versions = (audit_entry.metadata_info or {}).get("schema_versions") or []
+    if not schema_versions:
+        raise HTTPException(status_code=409, detail="No draft schemas in batch")
+
+    published = 0
+    for version_info in schema_versions:
+        version_id = version_info.get("version_id")
+        if not version_id:
+            continue
+        try:
+            version_uuid = uuid.UUID(version_id)
+        except ValueError:
+            continue
+
+        version_result = await session.execute(
+            select(CategorySchemaVersion).where(CategorySchemaVersion.id == version_uuid)
+        )
+        version = version_result.scalar_one_or_none()
+        if not version:
+            continue
+        version.status = "published"
+        version.published_at = datetime.now(timezone.utc)
+        version.published_by = _safe_uuid(current_user.get("id"))
+        published += 1
+
+        category = await session.get(Category, version.category_id)
+        if category and isinstance(category.form_schema, dict):
+            updated_schema = dict(category.form_schema)
+            updated_schema["status"] = "published"
+            category.form_schema = updated_schema
+
+    await _write_audit_log_sql(
+        session,
+        "categories.schema.publish",
+        current_user,
+        "category_import",
+        payload.batch_id,
+        {"published": published},
+        request,
+    )
+    await session.commit()
+
+    return {"batch_id": payload.batch_id, "published": published}
 async def admin_list_menu_items(
     request: Request,
     country: Optional[str] = None,
