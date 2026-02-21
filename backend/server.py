@@ -4824,68 +4824,30 @@ async def assign_support_application(
     application_id: str,
     payload: SupportApplicationAssignPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    applications_repo = _get_applications_repository(db, session)
+    applications_repo = _get_applications_repository(session)
 
     assigned_to = payload.assigned_to
-    before_state = {"assigned_to": None}
-
-    if APPLICATIONS_PROVIDER == "mongo":
-        if db is None:
-            raise HTTPException(status_code=503, detail="Mongo disabled")
-        application = await db.support_applications.find_one({"id": application_id}, {"_id": 0})
-        if not application:
-            raise HTTPException(status_code=404, detail="Application not found")
-        before_state["assigned_to"] = application.get("assigned_to")
-    else:
-        try:
-            application_uuid = uuid.UUID(application_id)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail="Invalid application id") from exc
-        result = await session.execute(select(Application).where(Application.id == application_uuid))
-        application = result.scalar_one_or_none()
-        if not application:
-            raise HTTPException(status_code=404, detail="Application not found")
-        before_state["assigned_to"] = str(application.assigned_to) if application.assigned_to else None
-
     if assigned_to:
-        if AUTH_PROVIDER == "sql":
-            try:
-                user_uuid = uuid.UUID(str(assigned_to))
-            except ValueError as exc:
-                raise HTTPException(status_code=400, detail="Invalid assignee") from exc
-            result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
-            if not result.scalar_one_or_none():
-                raise HTTPException(status_code=404, detail="Assignee not found")
-        elif db is not None:
-            user = await db.users.find_one(
-                {"id": assigned_to, "role": {"$in": list(ADMIN_ROLE_OPTIONS)}, "deleted_at": {"$exists": False}},
-                {"_id": 0},
-            )
-            if not user:
-                raise HTTPException(status_code=404, detail="Assignee not found")
+        try:
+            uuid.UUID(assigned_to)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid assignee") from exc
 
     await applications_repo.assign_application(application_id, assigned_to)
-
-    if db is not None:
-        audit_entry = await build_audit_entry(
-            event_type="APPLICATION_ASSIGNED",
-            actor=current_user,
-            target_id=application_id,
-            target_type="application",
-            country_code=current_user.get("country_code"),
-            details={
-                "before": before_state,
-                "after": {"assigned_to": assigned_to},
-            },
-            request=request,
-        )
-        audit_entry["action"] = "APPLICATION_ASSIGNED"
-        await db.audit_logs.insert_one(audit_entry)
-
+    await _write_audit_log_sql(
+        session=session,
+        action="APPLICATION_ASSIGNED",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="application",
+        resource_id=application_id,
+        metadata={"assigned_to": assigned_to},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
     return {"ok": True}
 
 
@@ -4897,8 +4859,7 @@ async def update_support_application_status(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    applications_repo = _get_applications_repository(db, session)
+    applications_repo = _get_applications_repository(session)
 
     new_status = (payload.status or "").lower().strip()
     if new_status not in APPLICATION_STATUS_SET:
@@ -4908,24 +4869,15 @@ async def update_support_application_status(
     if new_status in {"approved", "rejected"} and not decision_reason:
         raise HTTPException(status_code=400, detail="decision_reason required")
 
-    current_status = None
-    if APPLICATIONS_PROVIDER == "mongo":
-        if db is None:
-            raise HTTPException(status_code=503, detail="Mongo disabled")
-        application = await db.support_applications.find_one({"id": application_id}, {"_id": 0})
-        if not application:
-            raise HTTPException(status_code=404, detail="Application not found")
-        current_status = application.get("status")
-    else:
-        try:
-            application_uuid = uuid.UUID(application_id)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail="Invalid application id") from exc
-        result = await session.execute(select(Application).where(Application.id == application_uuid))
-        application = result.scalar_one_or_none()
-        if not application:
-            raise HTTPException(status_code=404, detail="Application not found")
-        current_status = application.status
+    try:
+        application_uuid = uuid.UUID(application_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid application id") from exc
+    result = await session.execute(select(Application).where(Application.id == application_uuid))
+    application = result.scalar_one_or_none()
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    current_status = application.status
 
     if new_status == current_status:
         raise HTTPException(status_code=400, detail="Status already set")
@@ -4935,24 +4887,20 @@ async def update_support_application_status(
         raise HTTPException(status_code=400, detail="Invalid status transition")
 
     await applications_repo.update_status(application_id, new_status, decision_reason)
-
-    if db is not None:
-        audit_entry = await build_audit_entry(
-            event_type="APPLICATION_STATUS_UPDATED",
-            actor=current_user,
-            target_id=application_id,
-            target_type="application",
-            country_code=current_user.get("country_code"),
-            details={
-                "before": {"status": current_status},
-                "after": {"status": new_status, "decision_reason": decision_reason},
-            },
-            request=request,
-        )
-        audit_entry["action"] = "APPLICATION_STATUS_UPDATED"
-        await db.audit_logs.insert_one(audit_entry)
+    await _write_audit_log_sql(
+        session=session,
+        action="APPLICATION_STATUS_UPDATED",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="application",
+        resource_id=application_id,
+        metadata={"before": {"status": current_status}, "after": {"status": new_status, "decision_reason": decision_reason}},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
 
     return {"ok": True, "status": new_status}
+
 
 
 @api_router.post("/admin/campaigns")
