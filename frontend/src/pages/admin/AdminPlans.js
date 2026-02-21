@@ -180,6 +180,7 @@ export default function AdminPlans() {
 
   const validateForm = () => {
     if (!form.name.trim()) return 'Name zorunlu';
+    if (!form.period) return 'Period zorunlu';
     if (form.scope === 'country' && !form.country_code) return 'Country zorunlu';
     if (Number(form.price_amount) < 0) return 'Price 0 veya daha büyük olmalı';
     if (Number(form.listing_quota) < 0) return 'Listing quota 0 veya daha büyük olmalı';
