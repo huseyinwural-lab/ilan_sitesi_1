@@ -86,7 +86,7 @@ export default function AccountProfile() {
 
   const fetchTwoFactorStatus = async () => {
     try {
-      const res = await fetch(`${API}/users/me/2fa/status`, {
+      const res = await fetch(`${API}/v1/users/me/2fa/status`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
       });
       if (!res.ok) {
