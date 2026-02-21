@@ -37,7 +37,7 @@ Aşağıdaki klasör, agent otomasyon çıktılarının **statik** kanıtların�
 ## C) API Response Kanıtı (örnek payload)
 
 Base URL:
-- `https://role-based-portals.preview.emergentagent.com`
+- `https://dealer-listings.preview.emergentagent.com`
 
 ### 1) GET /api/menu/top-items
 Örnek response (kısaltılmış):

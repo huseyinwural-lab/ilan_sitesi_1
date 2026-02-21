@@ -1,157 +1,167 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to build a multi-country, multi-lingual classifieds platform. The project is undergoing a complete migration from MongoDB to PostgreSQL.
+The user's goal is to build a multi-country, multi-lingual classifieds platform, which involves a complete migration from MongoDB to PostgreSQL. The project was initially blocked by a missing  in the preview environment. To overcome this, development is proceeding using a local PostgreSQL instance.
 
-The entire application is **CRITICALLY BLOCKED** because the PostgreSQL database is not configured in the preview environment (the  environment variable is missing). This prevents all database operations, rendering every data-dependent feature non-functional.
+The current strategic focus is a multi-phase project to make the application production-ready, starting with the complete removal of MongoDB dependencies and finalizing the different user portals. The agent recently completed a sophisticated Category Import/Export feature for administrators and is now in the process of building out the Dealer Portal in distinct, user-approved phases.
 
-During this session, after confirming the database blocker could not be resolved by the user, the user pivoted to a new high-priority architectural task:
-**Portal Isolation (FAZ-AP1):** Physically and logically separate the application's front-end and back-end into distinct portals based on user roles:
-1.  **Admin Portal** ()
-2.  **Dealer Portal** ()
-3.  **Consumer Portal** ()
-4.  **Public Pages** ()
-
-This involves creating separate React Layout components, enforcing strict route-based access control on both frontend and backend ( in JWT), and visually distinguishing the portals (e.g., the Consumer portal should have an orange theme).
+PRODUCT REQUIREMENTS:
+1.  Complete the MongoDB to PostgreSQL data migration for all collections (listings, favorites, messages, support, etc.).
+2.  Finalize the Dealer Portal, making it production-grade with a full feature set:
+    -   Live data dashboard (metrics, quota, subscription status).
+    -   Complete listing lifecycle management (CRUD, status changes, bulk actions).
+    -   A Stripe-ready subscription state machine.
+    -   Dealer profiles with logo uploads and public-facing pages.
+3.  Integrate Stripe for payments.
+4.  Implement a full Consumer Portal (favorites, messaging, profile).
+5.  Implement a Support Ticket System (Başvuru Modülü).
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application consists of a React frontend and a FastAPI backend. It is architecturally prepared for PostgreSQL, but is non-functional due to the missing .
+The application consists of a React frontend and a FastAPI backend running with a local PostgreSQL database. The Portal Isolation architecture (separating Admin, Dealer, and Consumer sections) is in place.
 
-A major architectural refactoring for Portal Isolation is partially complete. Several new files for distinct portal layouts (, , ) and route protection () have been created. The main router () has been modified to use this new structure. However, the application remains in a broken, un-runnable state due to the underlying database connection issue, making it impossible to test the new architecture.
+The MongoDB to PostgreSQL migration is underway. The  collection has been fully migrated, and a new, enterprise-grade admin feature for category import/export (via JSON/CSV with a dry-run/commit workflow and PDF reporting) has been built and is accessible at .
+
+The Dealer Portal development is in progress. Phase 1 (FAZ-DL1), the dealer dashboard, is complete and displays live SQL-backed metrics for active listings, quota, and total views. Phase 2 (FAZ-DL2), listing lifecycle management, is partially complete.
 
 **Last working item**:
--   **Last item agent was working:** The agent was implementing the Portal Isolation (FAZ-AP1) feature. It had created the new Layout components (, , ), a , and was in the process of integrating them into the main  router. The goal was to ensure each user role (admin, dealer, user) is sandboxed within its own navigation and layout structure.
+-   **Last item agent was working:** Implementing bulk actions (archive and soft delete) for the Dealer Listing Management page (). This involved creating a new backend endpoint () and adding the necessary frontend UI elements (checkboxes in the table, action buttons) in . This is part of the FAZ-DL2 plan.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both. Once the database blocker is resolved and a user can log in, the frontend agent should be used to verify that users with different roles are correctly routed to their respective layouts and restricted from accessing other portals. The backend agent should verify that API endpoints are protected by the new  in the JWT.
+-   **Which testing method agent to use?** both. The frontend testing agent should verify the UI for selecting multiple listings and triggering the bulk actions. The backend agent should test the  endpoint to ensure it correctly performs the archive and soft-delete operations transactionally and updates the dealer's quota correctly.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Database Not Configured in Environment (P0, CRITICAL BLOCKER)**
-    -   **Description:** The  environment variable is not set in the container. The agent confirmed this by checking the environment, which resulted in  errors for all database-dependent endpoints. The application defaults to a non-existent  and fails to initialize the database connection. The user does not have the correct  and expects the Ops team or the agent to resolve this.
-    -   **Status:** BLOCKED
+-   **Issue 1: Database Not Configured in Preview/Prod Environment (P0, CRITICAL BLOCKER)**
+    -   **Description:** The application is being developed against a local PostgreSQL database because the  for the preview and production environments has not been provided. This is a recurring infrastructure blocker that prevents any deployment or testing in a shared environment.
+    -   **Status:** BLOCKED (on user/Ops).
     -   **Is recurring issue?** Y
 
--   **Issue 2: Stripe Secrets Not Configured (P0, BLOCKER)**
-    -   **Description:** Payment functionality is blocked as  and  are not set.
-    -   **Status:** BLOCKED
+-   **Issue 2: Stripe Secrets Not Configured (P1, BLOCKER for Payments)**
+    -   **Description:** Payment functionality is blocked as  and  are not set in the environment.
+    -   **Status:** BLOCKED (on user).
     -   **Is recurring issue?** Y
 
 **In progress Task List**:
--   **Task 1: Complete Portal Isolation Refactoring (P1)**
-    -   **Where to resume:**
-        1.  Review all created layout files (, , ) and the guard () for completeness and correctness.
-        2.  Finalize the changes in  to ensure all routes are correctly wrapped with the appropriate layout and guard.
-        3.  Implement the backend changes to include a  in the JWT upon login and add middleware to enforce it for all , , and  API routes.
-    -   **What will be achieved with this?** A clear, secure, and maintainable separation between the different user-facing portals of the application.
+-   **Task 1: Complete Dealer Listing Lifecycle (FAZ-DL2) (P0)**
+    -   **Where to resume:** Finalize the frontend implementation for bulk actions in . This includes wiring up the checkboxes, enabling/disabling action buttons based on selection, and making the API call to the new bulk action endpoint. Afterwards, the full CRUD and bulk action flow needs to be tested end-to-end.
+    -   **What will be achieved with this?** Dealers will have a fully functional interface to manage their listings efficiently, including performing operations on multiple listings at once.
     -   **Status:** IN PROGRESS
-    -   **Blocked on something:** Final implementation and all testing are blocked on **Issue 1 (Database Not Configured)**, as login is required to test role-based routing.
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
--   **Upcoming Tasks (P0, once DB is unblocked):**
-    -   Run FAILED: No 'script_location' key found in configuration. to apply all database migrations.
-    -   Run data seeders to create test users (admin, dealer, consumer).
-    -   Finalize and test the Audit Logs admin page () with server-side filtering, sorting, and export.
-    -   Import vehicle data from the previously prepared JSON files.
-    -   Activate and test the Payments module with Stripe.
+-   **Upcoming Tasks (P1):**
+    -   **FAZ-DL3: Finalize Subscription State Machine:** Implement and test the full subscription lifecycle (, , ) using the Stripe-ready data model. Connect the frontend plan card to this live data.
+    -   **Enhancement: Add Weekly Trend Mini-Chart:** Add the user-approved sparkline chart for weekly views to the dealer dashboard.
+    -   **Continue Mongo to SQL Migration:**
+        -   Migrate .
+        -   Migrate  (this will un-gate the messages metric on the dealer dashboard).
+        -   Migrate  tickets.
+    -   **Remove Mongo Dependencies:** After all data is migrated, completely remove MongoDB code and dependencies from the backend.
 
--   **Future Tasks (P1/P2):**
+-   **Future Tasks (P2):**
+    -   Stripe Integration and Monetization.
+    -   Implement the full Consumer Portal feature set.
     -   Implement the Başvuru Modülü (Support Ticket System).
-    -   Migrate and enhance the Moderation Module.
-    -   Implement the full Consumer Portal feature set (Favorites, Realtime Messaging, Profile Management, GDPR Export) as detailed in the user's B8 plans.
-    -   Implement a cron job for  invoices.
+    -   Production Hardening (Monitoring, Logging, Backups).
 
 **Completed work in this session**
--   **Portal Isolation Architecture:**
-    -   Created architecture documents for portal boundaries and RBAC:
-        -   
-        -   
-        -   
-    -   Created initial frontend structure for portal separation:
-        -   
-        -   
-        -   
-        -   
-    -   Diagnosed the root cause of the  errors as missing environment variables inside the container.
+-   **Unblocked Development:** Set up a local PostgreSQL to bypass the infrastructure blocker.
+-   **Database Migration Started:** Successfully migrated the  model and data from Mongo to PostgreSQL.
+-   **Admin Feature: Category Import/Export:**
+    -   Built a new page at .
+    -   Implemented import/export via JSON & CSV.
+    -   Created a safe workflow with Dry-run, Commit, and Publish stages.
+    -   Added a feature to generate a downloadable PDF report of dry-run changes.
+-   **Dealer Portal - Dashboard (FAZ-DL1):**
+    -   Completed the dealer dashboard with live SQL-backed metrics for listings, quota, and views.
+-   **Dealer Portal - Listing Management (FAZ-DL2, Partial):**
+    -   Implemented full CRUD (Create, Edit, Archive, Soft Delete) for listings.
+    -   Began implementing bulk actions.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: CSV Export for User Lists**
-    -   **Description:** A feature request to add a CSV export button to the main admin user list remains in the backlog.
-    -   **Status:** NOT STARTED
-    -   **Blocked on other issue:** Issue 1 (Database Not Configured)
+-   **Issue 1: CSV Export for Admin User Lists**
+    -   A pending feature request to add a CSV export button to the admin user list. This is in the backlog and not a current priority.
+    -   **Should Test frontend/backend/both after fix:** backend
+    -   **Is recurring issue?** N
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork**: The primary blocker, the unconfigured PostgreSQL database ( not set), was the main issue from the previous handoff and remains unresolved.
--   **Recurrence count:** 2+
+-   **Issue recurrence in previous fork**: The unconfigured PostgreSQL  for preview/production environments is a persistent blocker from previous sessions.
+-   **Recurrence count:** 3+
 -   **Status:** BLOCKED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Portal Isolation:** The core concept introduced in this session. Using a combination of URL subpaths (, , ), distinct React Layout Components, and a  claim in the JWT to create sandboxed experiences for different user roles.
--   **Environment Variable Injection:** The root cause of the main blocker was identified as a failure to inject secrets (, , etc.) into the running container environment.
+-   **Mongo to Postgres Migration:** The core technical effort, involving replacing  with  and  for all data operations.
+-   **Phased Development:** A user-approved strategy to deliver large features (like the Dealer Portal) in smaller, testable phases (e.g., FAZ-DL1, FAZ-DL2).
+-   **Enterprise Data Management:** The category import/export feature includes robust concepts like dry-runs, transactional commits, schema versioning, and PDF audit reports.
+-   **Soft Deletes:** Using a  flag instead of permanently deleting records to maintain data integrity and allow for restoration.
 
 **key DB schema**
--   No changes to the DB schema were made in this session. The schemas for , , , , , and  are defined but not yet created in a database.
+-   **categories:** 
+-   **category_translations:** 
+-   **listings:** 
+-   **subscriptions:**  (Stripe-ready model)
 
 **changes in tech stack**
--   No changes to the technology stack.
+-   Active migration from **MongoDB** to **PostgreSQL**. All new development uses PostgreSQL.
 
 **All files of reference**
-*   : Core routing logic, heavily modified for portal isolation.
-*   : New directory containing , , .
-*   : New component for protecting portal routes.
-*    (or similar): The file where JWT creation happens, which will need to be modified to include .
-*   : Log file created by the agent to track the ongoing infrastructure blocker.
-*   : New architecture document defining the portals.
+-   : Contains the new bulk action endpoint being implemented.
+-   : Frontend implementation for listing management, including the in-progress bulk actions.
+-   : Contains the complex category import/export logic.
+-   : The UI for the new category management feature.
+-   : The recently completed dealer dashboard.
+-   : High-level plan for the database migration.
+
+**key api endpoints**
+-   : (IN PROGRESS) For archiving or soft-deleting multiple listings.
+-   : Provides aggregated data for the dealer dashboard.
+-   : Initiates the dry-run for a category import.
+-   : Commits a validated category import.
+-   : Generates the PDF report for a dry-run.
 
 **Critical Info for New Agent**
--   **YOU ARE BLOCKED.** The application is fundamentally broken due to a missing . Do not attempt to implement any data-dependent features.
--   **Your first action MUST be to address the blocker.** Re-engage the user about the missing . You cannot proceed without it. Refer to the user's last message on this topic (#839) where they admit they don't have the URL and expect you or Ops to provide it. You do not have access to the infrastructure panel. This must be resolved first.
--   **The Portal Isolation task is IN PROGRESS.** Once the DB is active and users can log in, this task must be completed and tested before moving on to other features.
--   **Communicate in Turkish.** The user's preferred language is Turkish.
--   The user has provided extensive, detailed plans for future work (Audit Logs, Consumer Portal V1, Messaging, etc.). These are in the backlog and should only be addressed after the DB blocker and the Portal Isolation task are complete.
+-   **Continue Local Development:** The preview/production  is still missing. All work must proceed against the local PostgreSQL database. The user has approved this workflow.
+-   **Follow the Phased Plan:** Stick to the agreed-upon plan for the Dealer Portal. Your immediate task is to finish **FAZ-DL2 (Listing Lifecycle)**. After that is complete and tested, move to **FAZ-DL3 (Subscriptions)**.
+-   **Mongo Migration is the Goal:** The overarching strategic objective is the complete removal of MongoDB. Ensure all new features and refactors use PostgreSQL.
+-   **Communicate in Turkish:** All user-facing communication must be in Turkish.
+-   **User Provides Detailed Plans:** The user is technically savvy and provides structured, detailed plans. Adhere to these plans closely, as they represent confirmed architectural and feature decisions.
 
 **documents and test reports created in this job**
--   /app/ops/B8_BLOCKER_LOG.md
--   /app/architecture/PORTAL_BOUNDARY_V1.md
--   /app/architecture/RBAC_PORTAL_MATRIX_V1.md
--   /app/architecture/REDIRECT_MAP_V1.md
+-   
+-   
+-   
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (823):** Gives the agent authority to act as Ops and set the  and  secrets itself.
-2.  **User (826):** Confirms the agent's plan but states about : You should have it.
-3.  **User (839):** Clarifies they do not have the  and that the agent needs to get it from the infrastructure panel. Acknowledges the agent is blocked by this.
-4.  **Agent (840):** Correctly states that it cannot proceed without the  being provided.
-5.  **User (841):** Pivots completely from the DB issue. Provides a large, new architectural task: Admin Panel and User Panel Separation (Portal Isolation).
-6.  **User (844):** Provides clarifying decisions for the Portal Isolation task (use subpaths, add  to JWT, use an orange theme for the consumer panel).
-7.  **(Agent works on Portal Isolation)**
-8.  ...
-9.  ...
-10. ... (The rest of the conversation is the agent implementing the portal separation, with no further user input).
+-   The user has been providing detailed, phased task lists and architectural decisions.
+-   **Latest plan (msg 1519):** User confirmed the completion of the Dealer Dashboard (FAZ-DL1) and approved the start of the Dealer Listing Lifecycle (FAZ-DL2). They also approved a future enhancement (a weekly trend chart for the dashboard) to be worked on after FAZ-DL2 is complete.
+-   **Current State:** The agent is in the middle of implementing the approved FAZ-DL2. There are no pending messages from the user.
 
 **Project Health Check:**
--   **Broken:** The entire application is broken. No database connection. No user can log in. No data can be read or written.
+-   **Broken:** The preview/production deployment is non-functional due to the missing .
+-   **Mocked:** N/A
 
 **3rd Party Integrations**
 -   FastAPI
 -   React
--   PostgreSQL (, , ) - **AWAITING CONFIG**
+-   PostgreSQL (, , ) - **Configured for local dev only**
 -   Stripe (Payments) - **AWAITING CONFIG**
--   SendGrid (Emails)
+-   SendGrid (Emails) - **AWAITING CONFIG**
 
 **Testing status**
 -   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
--   **Known regressions:** The entire application is in a non-functional state.
+-   **Known regressions:** The preview deployment is non-functional. No known regressions in the local development environment.
 
 **Credentials to test flow:**
-(These are defined but unusable until the database is working and users can be seeded)
 -   **Admin:**  / 
--   **User 1:**  / 
--   **User 2:**  / 
+-   **Dealer:**  / 
+-   **User:**  / 
 
 **What agent forgot to execute**
-The agent did not forget anything. It was correctly pursuing the critical database blocker until the user explicitly pivoted to a new, unrelated architectural task. The original blocker remains the most important un-executed item, but this was a conscious de-prioritization based on user direction.</analysis>
+The agent has been following the user's detailed plans meticulously and has not forgotten any tasks. The major pending items (, Stripe keys) are blocked by the user/Ops, and the agent has correctly worked around the database issue by using a local instance as approved.</analysis>

@@ -303,7 +303,7 @@ All required data-testids present and functional:
 Verified all 5 NEW requirements from review request for Individual Users page updates (phone field, CSV export).
 
 ### Test Flow Executed:
-1. ✅ Login as admin (admin@platform.com / Admin123!) → https://role-based-portals.preview.emergentagent.com/admin/login
+1. ✅ Login as admin (admin@platform.com / Admin123!) → https://dealer-listings.preview.emergentagent.com/admin/login
 2. ✅ Navigate to /admin/individual-users → verify page renders
 3. ✅ Verify search placeholder mentions phone ("telefon")
 4. ✅ Verify result count label is visible
@@ -317,7 +317,7 @@ Verified all 5 NEW requirements from review request for Individual Users page up
 **1. Admin Login**: ✅ WORKING
   - Login successful with admin@platform.com / Admin123!
   - Successfully authenticated and accessed admin panel
-  - Preview URL: https://role-based-portals.preview.emergentagent.com/admin/login
+  - Preview URL: https://dealer-listings.preview.emergentagent.com/admin/login
 
 **2. Page Rendering**: ✅ VERIFIED
   - **URL**: /admin/individual-users loads successfully
@@ -571,13 +571,13 @@ Verified all 5 requirements from review request for admin IA cleanup and admin d
 
 **2. URL Redirects Verification**: ✅ BOTH WORKING
   - **/admin/users → /admin/admin-users**: ✅ Redirect confirmed
-    - Navigated to https://role-based-portals.preview.emergentagent.com/admin/users
-    - URL changed to https://role-based-portals.preview.emergentagent.com/admin/admin-users
+    - Navigated to https://dealer-listings.preview.emergentagent.com/admin/users
+    - URL changed to https://dealer-listings.preview.emergentagent.com/admin/admin-users
     - React Router redirect working correctly (BackofficePortalApp.jsx line 43)
   
   - **/admin/user-management → /admin/admin-users**: ✅ Redirect confirmed
-    - Navigated to https://role-based-portals.preview.emergentagent.com/admin/user-management
-    - URL changed to https://role-based-portals.preview.emergentagent.com/admin/admin-users
+    - Navigated to https://dealer-listings.preview.emergentagent.com/admin/user-management
+    - URL changed to https://dealer-listings.preview.emergentagent.com/admin/admin-users
     - React Router redirect working correctly (BackofficePortalApp.jsx line 44)
 
 **3. Sidebar Navigation Cleanup**: ✅ VERIFIED
@@ -1213,7 +1213,7 @@ All required data-testids present and functional:
 ### Backend Testing Results (Feb 17, 2026)
 - **Test Suite**: FAZ-FINAL-02 Security & Permission Audit
 - **Test File**: `/app/backend/tests/test_faz_final_02_security_audit.py`
-- **Base URL**: https://role-based-portals.preview.emergentagent.com/api
+- **Base URL**: https://dealer-listings.preview.emergentagent.com/api
 - **Credentials**: admin@platform.com / Admin123!
 
 #### Test Results Summary:
@@ -1666,7 +1666,7 @@ All required data-testids present and functional:
 
 ### Network Analysis:
 - **All API Endpoints**: Return successful HTTP responses as expected
-- **Base URL**: https://role-based-portals.preview.emergentagent.com/api (from frontend/.env)
+- **Base URL**: https://dealer-listings.preview.emergentagent.com/api (from frontend/.env)
 - **Authentication**: admin@platform.com / Admin123! login successful
 - **No Network Errors**: All requests completed successfully
 
@@ -1957,7 +1957,7 @@ All required data-testids present and functional:
 ## Portal Split v1 No-Chunk-Load Acceptance Verification Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com
+**Base URL**: https://dealer-listings.preview.emergentagent.com
 
 **Credentials Tested**:
 - Admin: admin@platform.com / Admin123! ✅ WORKING
@@ -2042,7 +2042,7 @@ All required data-testids present and functional:
 ## Portal Split v1 No-Chunk-Load Re-Test Results (Feb 17, 2026) - MAJOR IMPROVEMENT
 
 ### Test Flow Re-executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com
+**Base URL**: https://dealer-listings.preview.emergentagent.com
 
 **Credentials Tested**:
 - Admin: admin@platform.com / Admin123! ✅ WORKING
@@ -2227,7 +2227,7 @@ All required data-testids present and functional:
 ## Sprint 1.2 Dealer Applications UI E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com
+**Base URL**: https://dealer-listings.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 **Target Route**: /admin/dealer-applications
 
@@ -2279,7 +2279,7 @@ All required data-testids present and functional:
 ## Sprint 1.2 Dealer Applications Backend E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com
+**Base URL**: https://dealer-listings.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 **Country Admin**: country_admin_fr@test.com / CountryAdmin123! ✅ WORKING
 
@@ -2338,7 +2338,7 @@ All required data-testids present and functional:
 
 ### Network Analysis:
 - **All API Calls**: Successful HTTP responses
-- **Base URL**: https://role-based-portals.preview.emergentagent.com/api (from frontend/.env)
+- **Base URL**: https://dealer-listings.preview.emergentagent.com/api (from frontend/.env)
 - **Authentication**: Bearer token authentication working
 - **Country Context**: Scope enforcement via ?country= query parameter working
 
@@ -2362,7 +2362,7 @@ All required data-testids present and functional:
 ## Admin Dealers Module Testing Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com
+**Base URL**: https://dealer-listings.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 1. ✅ **Admin Login** - Authentication successful, redirected to /admin
@@ -2422,7 +2422,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## Dealer Portal Positive Smoke + Chunk Assertions Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com
+**Base URL**: https://dealer-listings.preview.emergentagent.com
 **Credentials**: dealer@platform.com / Dealer123! ✅ WORKING
 
 1. ✅ **Dealer Login Page Access** - /dealer/login loads successfully with login form
@@ -2554,7 +2554,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-01 P0 Backend Regression Tests (Feb 17, 2026) - ALL PASSED
 
 ### Test Flow Executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com/api
+**Base URL**: https://dealer-listings.preview.emergentagent.com/api
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 ### Critical Findings:
@@ -2620,7 +2620,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-01 Frontend E2E Smoke Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com
+**Base URL**: https://dealer-listings.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123!
 
 ### Critical Findings:
@@ -2671,8 +2671,8 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-02 (P1) UI Changes - Audit Logs Filters Frontend E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Attempted:
-**Base URL**: https://role-based-portals.preview.emergentagent.com/admin/login
-**Target URL**: https://role-based-portals.preview.emergentagent.com/admin/audit-logs?country=DE
+**Base URL**: https://dealer-listings.preview.emergentagent.com/admin/login
+**Target URL**: https://dealer-listings.preview.emergentagent.com/admin/audit-logs?country=DE
 **Credentials**: admin@platform.com / Admin123!
 
 ### Critical Findings:
@@ -2754,9 +2754,9 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 
 ### Test Flow Executed:
 **Base URLs Tested**:
-- Public: https://role-based-portals.preview.emergentagent.com/login
-- Dealer: https://role-based-portals.preview.emergentagent.com/dealer/login  
-- Admin: https://role-based-portals.preview.emergentagent.com/admin/login
+- Public: https://dealer-listings.preview.emergentagent.com/login
+- Dealer: https://dealer-listings.preview.emergentagent.com/dealer/login  
+- Admin: https://dealer-listings.preview.emergentagent.com/admin/login
 
 **Test Credentials**: admin@platform.com with wrong passwords + test@example.com
 
@@ -2831,7 +2831,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## Sprint 1.1 Dealer Management Backend API Tests (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com/api
+**Base URL**: https://dealer-listings.preview.emergentagent.com/api
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 ### Test Cases Executed:
@@ -2890,7 +2890,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## Category Wizard UI Regression Test Results (Feb 19, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com
+**Base URL**: https://dealer-listings.preview.emergentagent.com
 **Route**: /admin/categories
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
@@ -3255,7 +3255,7 @@ All required data-testids present and functional:
 ## Admin UI Routing and Labels Test (Feb 20, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com
+**Base URL**: https://dealer-listings.preview.emergentagent.com
 **Route Tested**: /admin/users → /admin/admin-users redirect
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
@@ -3271,7 +3271,7 @@ All required data-testids present and functional:
 **2. URL Redirect Test**: ✅ WORKING PERFECTLY
   - **Test**: Navigate to `/admin/users`
   - **Expected**: Redirect/alias to `/admin/admin-users`
-  - **Result**: ✅ Redirect confirmed - URL changed to `https://role-based-portals.preview.emergentagent.com/admin/admin-users`
+  - **Result**: ✅ Redirect confirmed - URL changed to `https://dealer-listings.preview.emergentagent.com/admin/admin-users`
   - **Implementation**: React Router redirect in BackofficePortalApp.jsx line 43: `<Route path="/users" element={<Navigate to="/admin/admin-users" replace />} />`
 
 **3. Sidebar Label Verification**: ✅ CORRECT
@@ -3619,7 +3619,7 @@ Verified all 6 requirements from review request for dashboard regression test on
 **1. Admin Login → /admin Dashboard**: ✅ WORKING
   - Login successful with admin@platform.com / Admin123!
   - Dashboard page loads with title "Kontrol Paneli"
-  - URL after login: https://role-based-portals.preview.emergentagent.com/admin
+  - URL after login: https://dealer-listings.preview.emergentagent.com/admin
   - No errors during login/navigation
 
 **2. Dashboard Cards (Kartlar) - Real Values Verification**: ✅ ALL 4 CARDS WORKING
@@ -4089,7 +4089,7 @@ All required data-testids present and functional:
 ## Admin Country Compare Feature Testing Results (Feb 19, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://role-based-portals.preview.emergentagent.com
+**Base URL**: https://dealer-listings.preview.emergentagent.com
 **Test Date**: February 19, 2026
 **Tester**: Frontend Testing Subagent
 
@@ -5354,7 +5354,7 @@ Verified all 4 requirements from review request for Campaigns V1 UI in DB not re
     - `<span>` cannot be child of `<tbody>` (in table body)
     - These are existing hydration issues present across admin panel, not specific to campaigns
   - **API Health Endpoint**: ✅ Returns 520 as expected
-    - Error: "Failed to load resource: the server responded with a status of 520 () at https://role-based-portals.preview.emergentagent.com/api/health/db"
+    - Error: "Failed to load resource: the server responded with a status of 520 () at https://dealer-listings.preview.emergentagent.com/api/health/db"
     - Appears twice (once for each campaigns page)
     - Note from review request: "backend /admin/campaigns returns 503 (DB_NOT_READY) and external proxy may show 520"
   - **UI Handling**: ✅ UI gracefully handles 520/503 error
@@ -5795,8 +5795,8 @@ Re-verified all Turkish UI functionality from review request "Tekrar UI doğrula
   - **Test Scenario**: Dealer user attempting to access /admin route
   - **Expected Behavior**: Redirect to /dealer (access denied)
   - **Actual Result**: 
-    - Attempted URL: https://role-based-portals.preview.emergentagent.com/admin
-    - Final URL: https://role-based-portals.preview.emergentagent.com/dealer
+    - Attempted URL: https://dealer-listings.preview.emergentagent.com/admin
+    - Final URL: https://dealer-listings.preview.emergentagent.com/dealer
     - ✅ Successfully redirected to dealer portal
     - ✅ Admin layout NOT visible to dealer user
   - **Guard Mechanism**: ✅ ENFORCED CORRECTLY
