@@ -14,7 +14,7 @@ const RESEND_COOLDOWN = 90;
 export default function VerifyEmail({ portalContext = 'account' }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, refreshUser } = useAuth();
+  const { user, applySession } = useAuth();
   const { language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
 
