@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Search, UserPlus, Filter, Shield, Pencil, XCircle, Trash2 } from 'lucide-react';
+import { Search, UserPlus, Filter, Shield, Pencil, XCircle, Trash2, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from '../../components/ui/use-toast';
 
