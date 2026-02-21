@@ -4331,6 +4331,65 @@ async def unsubscribe_push_notifications(
     return {"ok": True}
 
 
+@api_router.get("/v1/notifications")
+async def list_notifications(
+    current_user=Depends(require_portal_scope("account")),
+    page: int = 1,
+    limit: int = 30,
+    unread_only: bool = False,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_id = uuid.UUID(current_user.get("id"))
+    safe_page = max(1, int(page))
+    safe_limit = min(100, max(1, int(limit)))
+    offset = (safe_page - 1) * safe_limit
+
+    query = select(Notification).where(Notification.user_id == user_id)
+    if unread_only:
+        query = query.where(Notification.read_at.is_(None))
+
+    total = (
+        await session.execute(
+            select(func.count()).select_from(Notification).where(Notification.user_id == user_id)
+        )
+    ).scalar_one()
+
+    notifications = (
+        await session.execute(
+            query.order_by(desc(Notification.created_at)).offset(offset).limit(safe_limit)
+        )
+    ).scalars().all()
+
+    return {
+        "items": [_build_notification_payload(item) for item in notifications],
+        "pagination": {"total": int(total or 0), "page": safe_page, "limit": safe_limit},
+    }
+
+
+@api_router.post("/v1/notifications/{notification_id}/read")
+async def mark_notification_read(
+    notification_id: str,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        notification_uuid = uuid.UUID(notification_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid notification id")
+
+    notification = await session.get(Notification, notification_uuid)
+    if not notification:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    if str(notification.user_id) != current_user.get("id"):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    if not notification.read_at:
+        notification.read_at = datetime.now(timezone.utc)
+        await session.commit()
+
+    return {"ok": True, "notification": _build_notification_payload(notification)}
+
+
 @api_router.get("/v1/favorites")
 async def list_favorites(
     current_user=Depends(require_portal_scope("account")),
