@@ -4027,8 +4027,7 @@ async def create_support_application(
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    applications_repo = _get_applications_repository(db, session)
+    applications_repo = _get_applications_repository(session)
 
     _check_application_rate_limit(request, current_user.get("id"))
 
@@ -4076,20 +4075,12 @@ async def create_support_application(
         "priority": "medium",
     }
 
-    if APPLICATIONS_PROVIDER == "sql" and current_user.get("id"):
-        await _ensure_sql_user(session, current_user)
+    await _ensure_sql_user(session, current_user)
 
     created = await applications_repo.create_application(payload_data, current_user)
     application_id = created.get("application_id")
 
-    if db is not None:
-        await _create_inapp_notification(
-            db,
-            current_user.get("id"),
-            f"Başvurunuz alındı. Referans: {application_id}",
-            {"application_id": application_id},
-        )
-        _send_support_received_email(current_user.get("email"), application_id, subject)
+    _send_support_received_email(current_user.get("email"), application_id, subject)
 
     return {"application_id": application_id}
 
