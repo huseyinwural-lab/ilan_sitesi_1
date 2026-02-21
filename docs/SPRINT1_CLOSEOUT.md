@@ -9,4 +9,4 @@
 - [ ] Soft delete grace logic çalışıyor
 - [ ] GDPR export JSON structure doğrulandı
 
- Not: Preview DB erişimi açıldığında E2E kanıtlar burada toplanacak.
+Not: Preview DB erişimi açıldığında E2E kanıtlar burada toplanacak.
