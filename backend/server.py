@@ -9189,6 +9189,47 @@ async def _report_transition(
     return updated
 
 
+async def _moderation_transition_sql(
+    *,
+    session: AsyncSession,
+    listing_id: str,
+    current_user: dict,
+) -> Listing:
+    _ensure_moderation_rbac(current_user)
+
+    try:
+        listing_uuid = uuid.UUID(listing_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid listing id") from exc
+
+    listing = await session.get(Listing, listing_uuid)
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    prev_status = listing.status
+    if prev_status != "pending_moderation":
+        raise HTTPException(status_code=400, detail="Listing not pending_moderation")
+
+    now = datetime.now(timezone.utc)
+    listing.status = "published"
+    listing.published_at = now
+    listing.updated_at = now
+
+    await _write_audit_log_sql(
+        session=session,
+        action="moderation_approved",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="listing",
+        resource_id=listing_id,
+        metadata={"previous_status": prev_status, "new_status": "published"},
+        request=None,
+        country_code=listing.country,
+    )
+    await session.commit()
+
+    return listing
+
+
 @api_router.post("/admin/listings/{listing_id}/approve")
 async def admin_approve_listing(
     listing_id: str,
@@ -9196,14 +9237,12 @@ async def admin_approve_listing(
     current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    updated = await _moderation_transition(
+    updated = await _moderation_transition_sql(
         session=session,
         listing_id=listing_id,
         current_user=current_user,
-        event_type="MODERATION_APPROVE",
-        new_status="published",
     )
-    return {"ok": True, "listing": {"id": updated["id"], "status": updated.get("status")}}
+    return {"ok": True, "listing": {"id": str(updated.id), "status": updated.status}}
 
 
 @api_router.post("/admin/listings/{listing_id}/reject")
