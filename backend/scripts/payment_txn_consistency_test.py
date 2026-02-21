@@ -17,7 +17,7 @@ from app.models.plan import Plan
 from app.models.admin_invoice import AdminInvoice
 from app.models.monetization import UserSubscription
 from app.models.payment import Payment, PaymentTransaction
-from app.server import _apply_payment_status
+from server import _apply_payment_status
 
 load_dotenv(ROOT_DIR / ".env")
 load_dotenv(ROOT_DIR / ".env.local", override=True)
