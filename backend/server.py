@@ -4206,10 +4206,25 @@ async def update_user_profile(
     if not user_row:
         raise HTTPException(status_code=404, detail="User not found")
 
+    profile = await _get_or_create_consumer_profile(
+        session,
+        user_row,
+        language=user_row.preferred_language,
+        country_code=user_row.country_code,
+    )
+
     if update_payload.get("full_name"):
         user_row.full_name = update_payload.get("full_name")
     if update_payload.get("preferred_language"):
         user_row.preferred_language = update_payload.get("preferred_language")
+        profile.language = update_payload.get("preferred_language")
+    if update_payload.get("country_code"):
+        user_row.country_code = update_payload.get("country_code")
+        profile.country_code = update_payload.get("country_code")
+    if update_payload.get("display_name_mode"):
+        profile.display_name_mode = update_payload.get("display_name_mode")
+    if "marketing_consent" in update_payload:
+        profile.marketing_consent = update_payload.get("marketing_consent")
 
     actor = {
         "id": current_user.get("id"),
