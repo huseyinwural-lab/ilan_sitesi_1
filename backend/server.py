@@ -10108,7 +10108,7 @@ async def create_checkout_session(
     if str(invoice.dealer_id) != current_user.get("id"):
         raise HTTPException(status_code=403, detail="Invoice access denied")
 
-    if invoice.status not in {"issued", "overdue"} or invoice.payment_status != "unpaid":
+    if invoice.status != "issued" or invoice.payment_status in {"succeeded", "refunded"}:
         raise HTTPException(status_code=400, detail="Invoice is not payable")
 
     if not _is_payment_enabled_for_country(invoice.country_code):
