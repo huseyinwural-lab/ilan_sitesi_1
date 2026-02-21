@@ -122,6 +122,14 @@ async def get_current_user(
     if not user or not user.get("is_active", False):
         raise credentials_exception
 
+    token_scope = payload.get("portal_scope")
+    if not token_scope:
+        raise credentials_exception
+    expected_scope = _resolve_portal_scope(user.get("role"))
+    if token_scope != expected_scope:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Portal scope mismatch")
+    user["portal_scope"] = token_scope
+
     return user
 
 
