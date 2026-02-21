@@ -4338,84 +4338,116 @@ async def change_password(
 async def export_user_data(
     request: Request,
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-
     _enforce_export_rate_limit(request, current_user.get("id"))
 
-    user_doc = await db.users.find_one({"id": current_user.get("id")}, {"_id": 0})
-    listings = await db.vehicle_listings.find({"created_by": current_user.get("id")}, {"_id": 0}).to_list(length=500)
-    applications = await db.support_applications.find({"user_id": current_user.get("id")}, {"_id": 0}).to_list(length=500)
-    favorites = await db.favorites.find({"user_id": current_user.get("id")}, {"_id": 0}).to_list(length=500)
-    threads = await db.message_threads.find({"participants": current_user.get("id")}, {"_id": 0}).to_list(length=200)
+    try:
+        user_uuid = uuid.UUID(str(current_user.get("id")))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user_row = result.scalar_one_or_none()
+    if not user_row:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    profile = await _get_or_create_consumer_profile(
+        session,
+        user_row,
+        language=user_row.preferred_language,
+        country_code=user_row.country_code,
+    )
+
+    listings = (await session.execute(
+        select(Listing)
+        .where(Listing.user_id == user_uuid)
+        .order_by(desc(Listing.created_at))
+        .limit(500)
+    )).scalars().all()
+
+    favorites = (await session.execute(
+        select(Favorite)
+        .where(Favorite.user_id == user_uuid)
+        .order_by(desc(Favorite.created_at))
+        .limit(500)
+    )).scalars().all()
+
+    conversations = (await session.execute(
+        select(Conversation)
+        .where(or_(Conversation.buyer_id == user_uuid, Conversation.seller_id == user_uuid))
+        .order_by(desc(Conversation.last_message_at))
+        .limit(200)
+    )).scalars().all()
 
     messages_meta = []
-    for thread in threads:
-        total_messages = await db.messages.count_documents({"thread_id": thread.get("id")})
+    for convo in conversations:
+        total_messages = (await session.execute(
+            select(func.count()).select_from(Message).where(Message.conversation_id == convo.id)
+        )).scalar_one() or 0
         messages_meta.append(
             {
-                "thread_id": thread.get("id"),
-                "listing_id": thread.get("listing_id"),
-                "participants": thread.get("participants"),
-                "last_message_at": thread.get("last_message_at"),
-                "total_messages": total_messages,
+                "conversation_id": str(convo.id),
+                "listing_id": str(convo.listing_id) if convo.listing_id else None,
+                "buyer_id": str(convo.buyer_id) if convo.buyer_id else None,
+                "seller_id": str(convo.seller_id) if convo.seller_id else None,
+                "last_message_at": convo.last_message_at.isoformat() if convo.last_message_at else None,
+                "total_messages": int(total_messages),
             }
         )
 
     export_payload = {
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "user": {
-            "id": user_doc.get("id"),
-            "email": user_doc.get("email"),
-            "full_name": user_doc.get("full_name"),
-            "phone": user_doc.get("phone_e164"),
-            "preferred_language": user_doc.get("preferred_language"),
-            "notification_prefs": user_doc.get("notification_prefs"),
+            "id": str(user_row.id),
+            "email": user_row.email,
+            "full_name": user_row.full_name,
+            "phone": user_row.phone_e164,
+            "preferred_language": user_row.preferred_language,
+            "country_code": user_row.country_code,
+            "display_name_mode": profile.display_name_mode,
+            "marketing_consent": profile.marketing_consent,
+        },
+        "consumer_profile": {
+            "language": profile.language,
+            "country_code": profile.country_code,
+            "display_name_mode": profile.display_name_mode,
+            "marketing_consent": profile.marketing_consent,
+            "gdpr_deleted_at": profile.gdpr_deleted_at.isoformat() if profile.gdpr_deleted_at else None,
         },
         "listings": [
             {
-                "id": item.get("id"),
-                "title": item.get("title"),
-                "status": item.get("status"),
-                "created_at": item.get("created_at"),
+                "id": str(item.id),
+                "title": item.title,
+                "status": item.status,
+                "created_at": item.created_at.isoformat() if item.created_at else None,
             }
             for item in listings
         ],
-        "applications": [
-            {
-                "id": item.get("id"),
-                "application_id": item.get("application_id"),
-                "category": item.get("category"),
-                "status": item.get("status"),
-                "created_at": item.get("created_at"),
-            }
-            for item in applications
-        ],
         "favorites": [
             {
-                "listing_id": item.get("listing_id"),
-                "created_at": item.get("created_at"),
+                "listing_id": str(item.listing_id),
+                "created_at": item.created_at.isoformat() if item.created_at else None,
             }
             for item in favorites
         ],
         "messages": messages_meta,
     }
 
-    audit_entry = await build_audit_entry(
-        event_type="gdpr_export_requested",
-        actor=current_user,
-        target_id=current_user.get("id"),
-        target_type="user",
-        country_code=current_user.get("country_code"),
-        details={"lists": ["listings", "applications", "favorites", "messages"]},
+    await _write_audit_log_sql(
+        session=session,
+        action="gdpr_export_requested",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={"lists": ["listings", "favorites", "messages"]},
         request=request,
+        country_code=user_row.country_code,
     )
-    await db.audit_logs.insert_one(audit_entry)
+    await session.commit()
 
-    payload_text = json.dumps(export_payload, ensure_ascii=False)
-    filename = f"gdpr-export-{current_user.get('id')}.json"
+    payload_text = json.dumps(export_payload, ensure_ascii=False, indent=2)
+    filename = f"gdpr-export-{user_row.id}.json"
     return Response(
         content=payload_text,
         media_type="application/json",
