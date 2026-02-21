@@ -1510,6 +1510,7 @@ def _plan_to_dict(plan: Plan) -> Dict[str, Any]:
         "name": plan.name,
         "country_scope": plan.country_scope,
         "country_code": plan.country_code,
+        "period": plan.period,
         "price_amount": float(plan.price_amount) if plan.price_amount is not None else None,
         "currency_code": plan.currency_code,
         "listing_quota": plan.listing_quota,
