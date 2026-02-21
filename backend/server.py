@@ -9382,14 +9382,7 @@ async def admin_create_invoice(
 @api_router.get("/admin/invoices")
 async def admin_list_invoices(
     request: Request,
-    country: Optional[str] = None,
-    dealer: Optional[str] = None,
     status: Optional[str] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
-    plan_id: Optional[str] = None,
-    amount_min: Optional[float] = None,
-    amount_max: Optional[float] = None,
     skip: int = 0,
     limit: int = 50,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
@@ -9397,67 +9390,46 @@ async def admin_list_invoices(
 ):
     await _ensure_invoices_db_ready(session)
 
-    if not country:
-        raise HTTPException(status_code=400, detail="country is required")
-    country_code = country.upper()
-    if country_code != "GLOBAL":
-        _assert_country_scope(country_code, current_user)
-
-    conditions = [AdminInvoice.country_code == country_code]
-
-    if dealer:
-        try:
-            dealer_uuid = uuid.UUID(dealer)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="dealer invalid")
-        conditions.append(AdminInvoice.dealer_id == dealer_uuid)
-
-    if plan_id:
-        try:
-            plan_uuid = uuid.UUID(plan_id)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="plan_id invalid")
-        conditions.append(AdminInvoice.plan_id == plan_uuid)
+    conditions = []
 
     if status:
         status_value = status.strip().lower()
+        if status_value == "cancelled":
+            status_value = "void"
         if status_value not in INVOICE_STATUS_SET:
             raise HTTPException(status_code=400, detail="Invalid status")
         conditions.append(AdminInvoice.status == status_value)
 
-    if date_from:
-        start_dt = _parse_iso_datetime(date_from, "date_from")
-        conditions.append(AdminInvoice.issued_at >= start_dt)
-    if date_to:
-        end_dt = _parse_iso_datetime(date_to, "date_to")
-        conditions.append(AdminInvoice.issued_at <= end_dt)
-
-    if amount_min is not None:
-        conditions.append(AdminInvoice.amount >= float(amount_min))
-    if amount_max is not None:
-        conditions.append(AdminInvoice.amount <= float(amount_max))
-
     limit = min(100, max(1, int(limit)))
     skip = max(0, int(skip))
 
-    base_query = select(AdminInvoice).where(*conditions)
-    rows = (await session.execute(base_query.order_by(AdminInvoice.created_at.desc()).offset(skip).limit(limit))).scalars().all()
-    total = (await session.execute(select(func.count()).select_from(AdminInvoice).where(*conditions))).scalar() or 0
+    base_query = select(AdminInvoice)
+    if conditions:
+        base_query = base_query.where(*conditions)
 
-    dealer_ids = {row.dealer_id for row in rows}
-    plan_ids = {row.plan_id for row in rows}
+    rows = (
+        await session.execute(
+            base_query.order_by(AdminInvoice.created_at.desc()).offset(skip).limit(limit)
+        )
+    ).scalars().all()
+    total = (
+        await session.execute(select(func.count()).select_from(AdminInvoice).where(*conditions))
+    ).scalar() or 0
 
-    dealers = []
+    user_ids = {row.user_id for row in rows}
+    plan_ids = {row.plan_id for row in rows if row.plan_id}
+
+    users = []
     plans = []
-    if dealer_ids:
-        dealers = (await session.execute(select(SqlUser).where(SqlUser.id.in_(dealer_ids)))).scalars().all()
+    if user_ids:
+        users = (await session.execute(select(SqlUser).where(SqlUser.id.in_(user_ids)))).scalars().all()
     if plan_ids:
         plans = (await session.execute(select(Plan).where(Plan.id.in_(plan_ids)))).scalars().all()
 
-    dealer_map = {dealer.id: dealer for dealer in dealers}
+    user_map = {user.id: user for user in users}
     plan_map = {plan.id: plan for plan in plans}
 
-    items = [_admin_invoice_to_dict(row, dealer_map.get(row.dealer_id), plan_map.get(row.plan_id)) for row in rows]
+    items = [_admin_invoice_to_dict(row, user_map.get(row.user_id), plan_map.get(row.plan_id)) for row in rows]
 
     return {"items": items, "pagination": {"total": total, "skip": skip, "limit": limit}}
 
