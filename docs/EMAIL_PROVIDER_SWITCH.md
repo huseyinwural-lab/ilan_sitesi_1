@@ -4,14 +4,7 @@
 Email gönderimini ENV bazlı provider seçimiyle yönetmek (mock → prod).
 
 ## ENV Standardı
-- `EMAIL_PROVIDER`: `mock` | `smtp` | `sendgrid`
-
-### SMTP Konfigürasyonu
-- `SMTP_HOST`
-- `SMTP_PORT`
-- `SMTP_FROM`
-- `SMTP_USERNAME` (opsiyonel)
-- `SMTP_PASSWORD` (opsiyonel)
+- `EMAIL_PROVIDER`: `mock` | `sendgrid`
 
 ### SendGrid Konfigürasyonu
 - `SENDGRID_API_KEY`
