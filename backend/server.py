@@ -3896,14 +3896,14 @@ async def _get_message_thread_or_404(db, thread_id: str, current_user_id: str) -
 
 
 @api_router.get("/v1/push/vapid-public-key")
-async def get_vapid_public_key(current_user=Depends(get_current_user)):
+async def get_vapid_public_key(current_user=Depends(require_portal_scope("account"))):
     if not PUSH_ENABLED:
         raise HTTPException(status_code=503, detail="Push not configured")
     return {"public_key": VAPID_PUBLIC_KEY}
 
 
 @api_router.get("/v1/push/subscriptions")
-async def list_push_subscriptions(request: Request, current_user=Depends(get_current_user)):
+async def list_push_subscriptions(request: Request, current_user=Depends(require_portal_scope("account"))):
     db = request.app.state.db
     if db is None:
         raise HTTPException(status_code=503, detail="Mongo disabled")
@@ -3918,7 +3918,7 @@ async def list_push_subscriptions(request: Request, current_user=Depends(get_cur
 async def subscribe_push_notifications(
     payload: PushSubscriptionPayload,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     if db is None:
@@ -3950,7 +3950,7 @@ async def subscribe_push_notifications(
 async def unsubscribe_push_notifications(
     payload: PushUnsubscribePayload,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     if db is None:
