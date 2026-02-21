@@ -19,10 +19,24 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Upgrade schema."""
-    pass
+    op.add_column("plans", sa.Column("period", sa.String(length=20), nullable=False, server_default="monthly"))
+    op.execute("UPDATE plans SET period='monthly' WHERE period IS NULL")
+
+    op.drop_constraint("uq_plans_scope_country_slug", "plans", type_="unique")
+    op.create_unique_constraint(
+        "uq_plans_scope_country_slug_period",
+        "plans",
+        ["country_scope", "country_code", "slug", "period"],
+    )
+    op.create_index("ix_plans_period", "plans", ["period"])
 
 
 def downgrade() -> None:
-    """Downgrade schema."""
-    pass
+    op.drop_index("ix_plans_period", table_name="plans")
+    op.drop_constraint("uq_plans_scope_country_slug_period", "plans", type_="unique")
+    op.create_unique_constraint(
+        "uq_plans_scope_country_slug",
+        "plans",
+        ["country_scope", "country_code", "slug"],
+    )
+    op.drop_column("plans", "period")
