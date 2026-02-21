@@ -10681,7 +10681,7 @@ async def get_checkout_status(
     origin = str(request.base_url).rstrip("/")
     stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=f"{origin}/api/webhook/stripe")
 
-    status_response: CheckoutStatusResponse = stripe_checkout.get_checkout_status(session_id)
+    status_response: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
 
     transaction = (await session.execute(
         select(PaymentTransaction).where(PaymentTransaction.session_id == session_id)
