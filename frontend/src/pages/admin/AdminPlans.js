@@ -422,9 +422,9 @@ export default function AdminPlans() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td className="px-3 py-4" colSpan="8">Yükleniyor...</td></tr>
+              <tr><td className="px-3 py-4" colSpan="9">Yükleniyor...</td></tr>
             ) : sortedItems.length === 0 ? (
-              <tr><td className="px-3 py-4" colSpan="8">Kayıt yok</td></tr>
+              <tr><td className="px-3 py-4" colSpan="9">Kayıt yok</td></tr>
             ) : (
               sortedItems.map((item) => (
                 <tr key={item.id} className="border-t" data-testid={`plans-row-${item.id}`}>
