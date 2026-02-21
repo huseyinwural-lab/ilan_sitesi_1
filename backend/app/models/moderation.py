@@ -22,7 +22,7 @@ class Listing(Base):
     
     # Module & Category
     module: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    category_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), nullable=True, index=True)
+    category_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
     
     # Location
     country: Mapped[str] = mapped_column(String(5), nullable=False, index=True)
