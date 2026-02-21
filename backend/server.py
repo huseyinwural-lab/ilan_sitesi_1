@@ -7633,7 +7633,8 @@ def _diff_categories(import_items: list[dict], existing: list[Category]) -> dict
 
 def _build_category_import_report_pdf(diff: dict, snapshot_payload: dict) -> bytes:
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name="Code", fontName="Courier", fontSize=7, leading=9))
+    if "CodeSmall" not in styles:
+        styles.add(ParagraphStyle(name="CodeSmall", fontName="Courier", fontSize=7, leading=9))
 
     summary = diff.get("summary", {})
     warnings = diff.get("warnings", [])
