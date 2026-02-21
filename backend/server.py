@@ -9470,6 +9470,170 @@ async def dealer_create_listing(
     return {"item": _dealer_listing_to_dict(listing), "quota": {"limit": limit, "used": used, "remaining": remaining}}
 
 
+@api_router.patch("/dealer/listings/{listing_id}")
+async def dealer_update_listing(
+    listing_id: str,
+    payload: DealerListingUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        listing_uuid = uuid.UUID(listing_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="listing invalid")
+
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    listing = await session.get(DealerListing, listing_uuid)
+    if not listing or listing.dealer_id != dealer_uuid or listing.deleted_at:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    if payload.title is not None:
+        title = payload.title.strip()
+        if not title:
+            raise HTTPException(status_code=400, detail="title is required")
+        listing.title = title
+
+    if payload.price is not None:
+        listing.price = payload.price
+
+    await session.commit()
+    await session.refresh(listing)
+    return {"item": _dealer_listing_to_dict(listing)}
+
+
+@api_router.post("/dealer/listings/{listing_id}/status")
+async def dealer_update_listing_status(
+    listing_id: str,
+    payload: DealerListingStatusPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    status_value = payload.status.lower().strip()
+    if status_value not in {"draft", "active", "archived"}:
+        raise HTTPException(status_code=400, detail="invalid status")
+
+    try:
+        listing_uuid = uuid.UUID(listing_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="listing invalid")
+
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    listing = await session.get(DealerListing, listing_uuid)
+    if not listing or listing.dealer_id != dealer_uuid or listing.deleted_at:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    if status_value == "active":
+        active_count = (
+            await session.execute(
+                select(func.count()).select_from(DealerListing).where(
+                    DealerListing.dealer_id == dealer_uuid,
+                    DealerListing.status == "active",
+                    DealerListing.deleted_at.is_(None),
+                    DealerListing.id != listing.id,
+                )
+            )
+        ).scalar_one()
+        if int(active_count or 0) >= DEALER_LISTING_QUOTA_LIMIT:
+            raise HTTPException(status_code=403, detail="Listing quota exceeded")
+
+    listing.status = status_value
+    await session.commit()
+    await session.refresh(listing)
+    return {"item": _dealer_listing_to_dict(listing)}
+
+
+@api_router.delete("/dealer/listings/{listing_id}")
+async def dealer_delete_listing(
+    listing_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        listing_uuid = uuid.UUID(listing_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="listing invalid")
+
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    listing = await session.get(DealerListing, listing_uuid)
+    if not listing or listing.dealer_id != dealer_uuid or listing.deleted_at:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    listing.status = "archived"
+    listing.deleted_at = datetime.now(timezone.utc)
+    await session.commit()
+    await session.refresh(listing)
+    return {"item": _dealer_listing_to_dict(listing)}
+
+
+@api_router.post("/dealer/listings/bulk")
+async def dealer_bulk_action_listings(
+    payload: DealerListingBulkPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    action = payload.action.lower().strip()
+    if action not in {"archive", "delete", "restore"}:
+        raise HTTPException(status_code=400, detail="invalid action")
+
+    if not payload.ids:
+        raise HTTPException(status_code=400, detail="ids required")
+
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    listing_ids = []
+    for raw_id in payload.ids:
+        try:
+            listing_ids.append(uuid.UUID(raw_id))
+        except ValueError:
+            continue
+
+    if not listing_ids:
+        raise HTTPException(status_code=400, detail="ids invalid")
+
+    result = await session.execute(
+        select(DealerListing).where(
+            DealerListing.id.in_(listing_ids),
+            DealerListing.dealer_id == dealer_uuid,
+            DealerListing.deleted_at.is_(None),
+        )
+    )
+    listings = result.scalars().all()
+
+    if action == "restore":
+        active_count = (
+            await session.execute(
+                select(func.count()).select_from(DealerListing).where(
+                    DealerListing.dealer_id == dealer_uuid,
+                    DealerListing.status == "active",
+                    DealerListing.deleted_at.is_(None),
+                )
+            )
+        ).scalar_one()
+        restore_count = len(listings)
+        if int(active_count or 0) + restore_count > DEALER_LISTING_QUOTA_LIMIT:
+            raise HTTPException(status_code=403, detail="Listing quota exceeded")
+
+    updated = 0
+    deleted = 0
+    for listing in listings:
+        if action == "archive":
+            listing.status = "archived"
+            updated += 1
+        elif action == "restore":
+            listing.status = "active"
+            updated += 1
+        elif action == "delete":
+            listing.status = "archived"
+            listing.deleted_at = datetime.now(timezone.utc)
+            deleted += 1
+
+    await session.commit()
+    return {"updated": updated, "deleted": deleted}
+
+
 @api_router.get("/dealer/dashboard/metrics")
 async def dealer_dashboard_metrics(
     request: Request,
