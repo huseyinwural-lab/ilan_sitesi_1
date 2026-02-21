@@ -5412,6 +5412,8 @@ async def get_top_menu_items(request: Request):
 @api_router.patch("/menu/top-items/{item_id}")
 async def toggle_menu_item(item_id: str, data: dict, request: Request, current_user=Depends(check_permissions(["super_admin"]))):
     db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Menu storage unavailable")
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
     is_enabled = data.get("is_enabled")
     payload = {}
