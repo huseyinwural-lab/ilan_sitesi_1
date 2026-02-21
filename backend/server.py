@@ -111,6 +111,7 @@ SUPPORTED_COUNTRIES = {"DE", "CH", "FR", "AT"}
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 CATEGORY_IMPORT_MAX_BYTES = 10 * 1024 * 1024
 ATTRIBUTE_KEY_PATTERN = re.compile(r"^[a-z0-9_]+$")
+VAT_ID_PATTERN = re.compile(r"^[A-Z]{2}[A-Z0-9]{6,12}$")
 
 
 # P1 Failed-login rate limit (in-process)
