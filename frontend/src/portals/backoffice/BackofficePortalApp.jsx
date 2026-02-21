@@ -50,6 +50,7 @@ export default function BackofficePortalApp() {
       <Route path="/individual-applications" element={<AdminLayout><IndividualApplicationsPage /></AdminLayout>} />
       <Route path="/feature-flags" element={<AdminLayout><FeatureFlags /></AdminLayout>} />
       <Route path="/categories" element={<AdminLayout><AdminCategories /></AdminLayout>} />
+      <Route path="/categories/import-export" element={<AdminLayout><AdminCategoriesImportExport /></AdminLayout>} />
       <Route path="/attributes" element={<AdminLayout><AdminAttributes /></AdminLayout>} />
       <Route path="/menu-management" element={<AdminLayout><MenuManagementPage /></AdminLayout>} />
       <Route path="/audit" element={
