@@ -132,12 +132,12 @@ export default function AdminPaymentsPage() {
               items.map((item) => (
                 <tr key={item.id} className="border-t" data-testid={`admin-payments-row-${item.id}`}>
                   <td className="px-3 py-2" data-testid={`admin-payments-invoice-${item.id}`}>{item.invoice_no || '-'}</td>
-                  <td className="px-3 py-2" data-testid={`admin-payments-dealer-${item.id}`}>{item.dealer_email || item.dealer_id}</td>
-                  <td className="px-3 py-2" data-testid={`admin-payments-amount-${item.id}`}>{item.amount}</td>
+                  <td className="px-3 py-2" data-testid={`admin-payments-user-${item.id}`}>{item.user_email || item.user_id}</td>
+                  <td className="px-3 py-2" data-testid={`admin-payments-amount-${item.id}`}>{item.amount_total}</td>
                   <td className="px-3 py-2" data-testid={`admin-payments-currency-${item.id}`}>{item.currency}</td>
                   <td className="px-3 py-2" data-testid={`admin-payments-status-${item.id}`}>{item.status}</td>
                   <td className="px-3 py-2" data-testid={`admin-payments-provider-${item.id}`}>{item.provider}</td>
-                  <td className="px-3 py-2" data-testid={`admin-payments-paid-${item.id}`}>{formatDateTime(item.paid_at)}</td>
+                  <td className="px-3 py-2" data-testid={`admin-payments-provider-ref-${item.id}`}>{item.provider_ref}</td>
                   <td className="px-3 py-2" data-testid={`admin-payments-created-${item.id}`}>{formatDateTime(item.created_at)}</td>
                 </tr>
               ))
