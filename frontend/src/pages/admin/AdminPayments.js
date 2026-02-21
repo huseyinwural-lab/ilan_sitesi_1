@@ -73,7 +73,7 @@ export default function AdminPaymentsPage() {
 
   useEffect(() => {
     fetchPayments();
-  }, [dbReady, urlCountry, dealerId, status, dateFrom, dateTo]);
+  }, [dbReady, status]);
 
   return (
     <div className="p-6 space-y-4" data-testid="admin-payments-page">
