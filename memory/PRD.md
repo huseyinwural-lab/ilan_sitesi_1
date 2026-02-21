@@ -1,6 +1,6 @@
 # FAZ Admin Domain Complete — PRD
 
-**Son güncelleme:** 2026-02-21 (Campaigns V1 + Plans Period + Billing Status)
+**Son güncelleme:** 2026-02-21 (Invoices V1 + Campaigns/Plans)
 
 ## Program Status (23.02.2026)
 - Foundation Phase: **OFFICIALLY CLOSED**
