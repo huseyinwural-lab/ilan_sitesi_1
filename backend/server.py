@@ -2873,6 +2873,168 @@ async def register_dealer(
     return RegisterResponse(user=_user_to_response(user_payload), debug_code=debug_code)
 
 
+@api_router.post("/auth/verify-email", response_model=VerifyEmailResponse)
+async def verify_email(
+    payload: VerifyEmailPayload,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    email = (payload.email or "").lower().strip()
+    code = (payload.code or "").strip()
+
+    if not code.isdigit() or len(code) != 6:
+        raise HTTPException(status_code=400, detail="Kod geçersiz")
+
+    result = await session.execute(select(SqlUser).where(SqlUser.email == email))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=400, detail="Kod geçersiz")
+
+    if user.is_verified:
+        return VerifyEmailResponse(status="already_verified", remaining_attempts=EMAIL_VERIFICATION_MAX_ATTEMPTS)
+
+    now = datetime.now(timezone.utc)
+    blocked_until = _email_verification_block_expires_at(user)
+    if blocked_until and blocked_until > now and not user.email_verification_code_hash:
+        retry_after = int((blocked_until - now).total_seconds())
+        await _log_email_verify_event(
+            session=session,
+            action="auth.email_verify.rate_limited",
+            user=user,
+            request=request,
+            metadata={"retry_after_seconds": retry_after},
+        )
+        await session.commit()
+        raise HTTPException(
+            status_code=429,
+            detail={"code": "RATE_LIMITED", "retry_after_seconds": retry_after, "remaining_attempts": 0},
+        )
+
+    if not user.email_verification_code_hash or not user.email_verification_expires_at:
+        raise HTTPException(status_code=400, detail="Doğrulama kodu bulunamadı")
+
+    if user.email_verification_expires_at < now:
+        raise HTTPException(status_code=400, detail="Kod süresi doldu")
+
+    if not verify_password(code, user.email_verification_code_hash):
+        user.email_verification_attempts = (user.email_verification_attempts or 0) + 1
+        remaining = max(0, EMAIL_VERIFICATION_MAX_ATTEMPTS - user.email_verification_attempts)
+
+        if user.email_verification_attempts >= EMAIL_VERIFICATION_MAX_ATTEMPTS:
+            user.email_verification_code_hash = None
+            user.email_verification_expires_at = now + timedelta(minutes=EMAIL_VERIFICATION_BLOCK_MINUTES)
+            await _log_email_verify_event(
+                session=session,
+                action="auth.email_verify.rate_limited",
+                user=user,
+                request=request,
+                metadata={"retry_after_seconds": EMAIL_VERIFICATION_BLOCK_MINUTES * 60},
+            )
+            await session.commit()
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "code": "RATE_LIMITED",
+                    "retry_after_seconds": EMAIL_VERIFICATION_BLOCK_MINUTES * 60,
+                    "remaining_attempts": 0,
+                },
+            )
+
+        await _log_email_verify_event(
+            session=session,
+            action="auth.email_verify.failed",
+            user=user,
+            request=request,
+            metadata={"remaining_attempts": remaining},
+        )
+        await session.commit()
+        raise HTTPException(status_code=400, detail={"code": "INVALID_CODE", "remaining_attempts": remaining})
+
+    user.is_verified = True
+    user.email_verification_code_hash = None
+    user.email_verification_expires_at = None
+    user.email_verification_attempts = 0
+
+    await _log_email_verify_event(
+        session=session,
+        action="auth.email_verify.success",
+        user=user,
+        request=request,
+        metadata={},
+    )
+    await session.commit()
+
+    return VerifyEmailResponse(status="verified", remaining_attempts=EMAIL_VERIFICATION_MAX_ATTEMPTS)
+
+
+@api_router.post("/auth/resend-verification", response_model=ResendVerificationResponse)
+async def resend_email_verification(
+    payload: ResendVerificationPayload,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    email = (payload.email or "").lower().strip()
+    result = await session.execute(select(SqlUser).where(SqlUser.email == email))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=400, detail="E-posta bulunamadı")
+
+    if user.is_verified:
+        return ResendVerificationResponse(status="already_verified", cooldown_seconds=0)
+
+    now = datetime.now(timezone.utc)
+    blocked_until = _email_verification_block_expires_at(user)
+    if blocked_until and blocked_until > now and not user.email_verification_code_hash:
+        retry_after = int((blocked_until - now).total_seconds())
+        await _log_email_verify_event(
+            session=session,
+            action="auth.email_verify.rate_limited",
+            user=user,
+            request=request,
+            metadata={"retry_after_seconds": retry_after},
+        )
+        await session.commit()
+        raise HTTPException(
+            status_code=429,
+            detail={"code": "RATE_LIMITED", "retry_after_seconds": retry_after, "remaining_attempts": 0},
+        )
+
+    sent_at = _email_verification_sent_at(user)
+    if sent_at:
+        elapsed = (now - sent_at).total_seconds()
+        if elapsed < EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS:
+            retry_after = int(EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS - elapsed)
+            await _log_email_verify_event(
+                session=session,
+                action="auth.email_verify.rate_limited",
+                user=user,
+                request=request,
+                metadata={"retry_after_seconds": retry_after},
+            )
+            await session.commit()
+            raise HTTPException(
+                status_code=429,
+                detail={"code": "RATE_LIMITED", "retry_after_seconds": retry_after, "remaining_attempts": 0},
+            )
+
+    verification_code = _issue_email_verification_code(user)
+    await _log_email_verify_event(
+        session=session,
+        action="auth.email_verify.requested",
+        user=user,
+        request=request,
+        metadata={"channel": "email"},
+    )
+    await session.commit()
+
+    debug_code = verification_code if _should_include_debug_code() else None
+    return ResendVerificationResponse(
+        status="queued",
+        cooldown_seconds=EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS,
+        debug_code=debug_code,
+    )
+
+
 class UpdateUserPayload(BaseModel):
     role: Optional[str] = None
 
