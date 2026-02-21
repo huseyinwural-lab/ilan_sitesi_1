@@ -8833,8 +8833,8 @@ async def admin_reject_listing(
     payload: ModerationReasonPayload,
     request: Request,
     current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
     reason = _validate_reason(payload.reason, REJECT_REASONS_V1)
     updated = await _moderation_transition(
         session=session,
