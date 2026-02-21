@@ -52,6 +52,21 @@ export function AuthProvider({ children }) {
     return fetchUser();
   };
 
+  const applySession = (payload) => {
+    if (!payload) return null;
+    const { access_token, refresh_token, user: userData } = payload;
+    if (!access_token || !refresh_token) return null;
+
+    localStorage.setItem('access_token', access_token);
+    localStorage.setItem('refresh_token', refresh_token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+
+    setToken(access_token);
+    setUser(userData || null);
+
+    return userData || null;
+  };
+
   const login = async (email, password) => {
     const response = await axios.post(`${API}/auth/login`, { email, password });
     const { access_token, refresh_token, user: userData } = response.data;
