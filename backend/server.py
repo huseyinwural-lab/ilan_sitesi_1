@@ -227,8 +227,9 @@ class UserResponse(BaseModel):
     invite_status: Optional[str] = None
 
 
-class RegisterResponse(BaseModel):
-    user: UserResponse
+class RegisterVerificationResponse(BaseModel):
+    success: bool = True
+    requires_verification: bool = True
     debug_code: Optional[str] = None
 
 
