@@ -3005,7 +3005,6 @@ async def update_user(
 
 @api_router.get("/admin/users")
 async def list_admin_users(
-    request: Request,
     search: Optional[str] = None,
     role: Optional[str] = None,
     status: Optional[str] = None,
@@ -3015,125 +3014,74 @@ async def list_admin_users(
     skip: int = 0,
     limit: int = 200,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None or not MONGO_ENABLED:
-        async with AsyncSessionLocal() as session:
-            stmt = select(SqlUser).where(SqlUser.role.in_(list(ADMIN_ROLE_OPTIONS)))
-
-            if role:
-                stmt = stmt.where(SqlUser.role == role)
-
-            status_key = status.lower() if status else None
-            if status_key == "deleted":
-                return {"items": []}
-            if status_key == "invited":
-                return {"items": []}
-            if status_key == "active":
-                stmt = stmt.where(SqlUser.is_active.is_(True))
-            elif status_key == "inactive":
-                stmt = stmt.where(SqlUser.is_active.is_(False))
-
-            if search:
-                pattern = f"%{search}%"
-                stmt = stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
-
-            sort_field_map = {
-                "email": SqlUser.email,
-                "full_name": SqlUser.full_name,
-                "role": SqlUser.role,
-                "created_at": SqlUser.created_at,
-                "last_login": SqlUser.last_login,
-                "is_active": SqlUser.is_active,
-            }
-            sort_col = sort_field_map.get(sort_by or "", SqlUser.created_at)
-            order = desc(sort_col) if (sort_dir or "desc").lower() == "desc" else sort_col
-            stmt = stmt.order_by(order)
-
-            result = await session.execute(stmt)
-            users = result.scalars().all()
-
-            if country:
-                code = country.upper()
-                users = [
-                    user
-                    for user in users
-                    if code in (user.country_scope or []) or "*" in (user.country_scope or [])
-                ]
-
-            safe_skip = max(skip, 0)
-            safe_limit = min(limit, 500)
-            users = users[safe_skip : safe_skip + safe_limit]
-
-            items = []
-            for user in users:
-                items.append(
-                    _user_to_response(
-                        {
-                            "id": str(user.id),
-                            "email": user.email,
-                            "full_name": user.full_name,
-                            "role": user.role,
-                            "country_scope": user.country_scope or [],
-                            "preferred_language": user.preferred_language,
-                            "is_active": user.is_active,
-                            "is_verified": user.is_verified,
-                            "created_at": user.created_at.isoformat() if user.created_at else None,
-                            "last_login": user.last_login.isoformat() if user.last_login else None,
-                        }
-                    ).model_dump()
-                )
-
-            return {"items": items}
-
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
-
-    query: Dict[str, Any] = {"role": {"$in": list(ADMIN_ROLE_OPTIONS)}}
+    stmt = select(SqlUser).where(SqlUser.role.in_(list(ADMIN_ROLE_OPTIONS)))
 
     if role:
-        query["role"] = role
+        stmt = stmt.where(SqlUser.role == role)
 
     status_key = status.lower() if status else None
     if status_key == "deleted":
-        query["deleted_at"] = {"$exists": True}
-    else:
-        query["deleted_at"] = {"$exists": False}
-        if status_key == "active":
-            query["is_active"] = True
-        elif status_key == "inactive":
-            query["is_active"] = False
-        elif status_key == "invited":
-            query["invite_status"] = "pending"
+        return {"items": []}
+    if status_key == "invited":
+        return {"items": []}
+    if status_key == "active":
+        stmt = stmt.where(SqlUser.is_active.is_(True))
+    elif status_key == "inactive":
+        stmt = stmt.where(SqlUser.is_active.is_(False))
 
     if search:
-        query["$or"] = [
-            {"email": {"$regex": search, "$options": "i"}},
-            {"full_name": {"$regex": search, "$options": "i"}},
-        ]
-
-    if country:
-        country_code = country.upper()
-        query["country_scope"] = {"$in": [country_code, "*"]}
+        pattern = f"%{search}%"
+        stmt = stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
 
     sort_field_map = {
-        "email": "email",
-        "full_name": "full_name",
-        "role": "role",
-        "created_at": "created_at",
-        "last_login": "last_login",
-        "is_active": "is_active",
+        "email": SqlUser.email,
+        "full_name": SqlUser.full_name,
+        "role": SqlUser.role,
+        "created_at": SqlUser.created_at,
+        "last_login": SqlUser.last_login,
+        "is_active": SqlUser.is_active,
     }
-    sort_field = sort_field_map.get(sort_by or "", "created_at")
-    sort_direction = -1 if (sort_dir or "desc").lower() == "desc" else 1
+    sort_col = sort_field_map.get(sort_by or "", SqlUser.created_at)
+    order = desc(sort_col) if (sort_dir or "desc").lower() == "desc" else sort_col
+    stmt = stmt.order_by(order)
 
-    cursor = (
-        db.users.find(query, {"_id": 0})
-        .sort(sort_field, sort_direction)
-        .skip(max(skip, 0))
-        .limit(min(limit, 500))
-    )
-    docs = await cursor.to_list(length=limit)
-    return {"items": [_user_to_response(doc).model_dump() for doc in docs]}
+    result = await session.execute(stmt)
+    users = result.scalars().all()
+
+    if country:
+        code = country.upper()
+        users = [
+            user
+            for user in users
+            if code in (user.country_scope or []) or "*" in (user.country_scope or [])
+        ]
+
+    safe_skip = max(skip, 0)
+    safe_limit = min(limit, 500)
+    users = users[safe_skip : safe_skip + safe_limit]
+
+    items = []
+    for user in users:
+        items.append(
+            _user_to_response(
+                {
+                    "id": str(user.id),
+                    "email": user.email,
+                    "full_name": user.full_name,
+                    "role": user.role,
+                    "country_scope": user.country_scope or [],
+                    "preferred_language": user.preferred_language,
+                    "is_active": user.is_active,
+                    "is_verified": user.is_verified,
+                    "created_at": user.created_at.isoformat() if user.created_at else None,
+                    "last_login": user.last_login.isoformat() if user.last_login else None,
+                }
+            ).model_dump()
+        )
+
+    return {"items": items}
 
 
 @api_router.post("/admin/users")
