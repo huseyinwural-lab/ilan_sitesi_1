@@ -9454,12 +9454,12 @@ async def admin_invoice_detail(
     if invoice.country_code != "GLOBAL":
         _assert_country_scope(invoice.country_code, current_user)
 
-    dealer = await session.get(SqlUser, invoice.dealer_id)
-    plan = await session.get(Plan, invoice.plan_id)
+    user = await session.get(SqlUser, invoice.user_id)
+    plan = await session.get(Plan, invoice.plan_id) if invoice.plan_id else None
 
     return {
-        "invoice": _admin_invoice_to_dict(invoice, dealer, plan),
-        "dealer": {"id": str(dealer.id), "email": dealer.email} if dealer else None,
+        "invoice": _admin_invoice_to_dict(invoice, user, plan),
+        "dealer": {"id": str(user.id), "email": user.email} if user else None,
         "plan": {"id": str(plan.id), "name": plan.name} if plan else None,
     }
 
