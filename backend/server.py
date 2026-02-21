@@ -9725,6 +9725,8 @@ async def admin_list_countries(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
 ):
     db = request.app.state.db
+    if db is None or not MONGO_ENABLED:
+        return {"items": []}
     await resolve_admin_country_context(request, current_user=current_user, db=db, )
     q: Dict = {}
     if current_user.get("role") == "country_admin":
