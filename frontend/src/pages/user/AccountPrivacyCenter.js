@@ -78,8 +78,8 @@ export default function AccountPrivacyCenter() {
   const handleDeleteAccount = async () => {
     setDeleteStatus('');
     try {
-      const res = await fetch(`${API}/users/me/delete`, {
-        method: 'POST',
+      const res = await fetch(`${API}/v1/users/me/account`, {
+        method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
