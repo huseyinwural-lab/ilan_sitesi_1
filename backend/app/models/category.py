@@ -46,6 +46,10 @@ class Category(Base):
     
     # Allowed countries (if not inherited)
     allowed_countries: Mapped[list] = mapped_column(JSON, default=list)  # ["DE", "CH", "FR", "AT"]
+
+    # Schema metadata (admin wizard)
+    hierarchy_complete: Mapped[bool] = mapped_column(Boolean, default=True)
+    form_schema: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Listing stats (cached)
     listing_count: Mapped[int] = mapped_column(Integer, default=0)
