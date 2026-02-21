@@ -19,7 +19,8 @@ export default function PortalGate({ portal, children, loginPath }) {
     return <Navigate to={loginPath} replace />;
   }
 
-  const eligiblePortal = ROLE_TO_PORTAL[user.role];
+  const portalScope = user.portal_scope;
+  const eligiblePortal = portalScope ? portalFromScope(portalScope) : ROLE_TO_PORTAL[user.role];
 
   // Public portal gate is not used; public routes are always accessible.
   if (portal === PORTALS.BACKOFFICE || portal === PORTALS.DEALER || portal === PORTALS.INDIVIDUAL) {
