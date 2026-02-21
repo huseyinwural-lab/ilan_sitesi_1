@@ -398,6 +398,26 @@ def _build_thread_summary(thread: dict, current_user_id: str) -> dict:
         "unread_count": int(unread_map.get(current_user_id, 0)),
     }
 
+def _build_thread_summary_sql(
+    thread: Conversation,
+    current_user_id: str,
+    listing: Listing | None,
+    last_message: Message | None,
+    unread_count: int,
+) -> dict:
+    return {
+        "id": str(thread.id),
+        "listing_id": str(thread.listing_id),
+        "listing_title": listing.title if listing else None,
+        "listing_image": (listing.images[0] if listing and listing.images else None),
+        "last_message": last_message.body if last_message else None,
+        "last_message_at": last_message.created_at.isoformat() if last_message and last_message.created_at else None,
+        "participants": [str(thread.buyer_id), str(thread.seller_id)],
+        "unread_count": unread_count,
+    }
+
+
+
 
 async def _get_active_push_subscriptions(db, user_id: str) -> List[dict]:
     if db is None:
