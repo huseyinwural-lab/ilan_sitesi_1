@@ -7167,6 +7167,60 @@ def _normalize_category_doc(doc: dict, include_schema: bool = False) -> dict:
     return payload
 
 
+def _serialize_category_translation(translation: CategoryTranslation) -> dict:
+    return {
+        "language": translation.language,
+        "name": translation.name,
+        "description": translation.description,
+        "meta_title": translation.meta_title,
+        "meta_description": translation.meta_description,
+    }
+
+
+def _pick_category_name(translations: list[CategoryTranslation], slug_value: Optional[str]) -> str:
+    preferred = None
+    for lang in ("tr", "en", "de", "fr"):
+        preferred = next((t for t in translations if t.language == lang), None)
+        if preferred:
+            break
+    if not preferred and translations:
+        preferred = translations[0]
+    return preferred.name if preferred and preferred.name else (slug_value or "")
+
+
+def _pick_category_slug(slug_value) -> Optional[str]:
+    if isinstance(slug_value, dict):
+        return slug_value.get("tr") or slug_value.get("en") or slug_value.get("de") or slug_value.get("fr") or next(iter(slug_value.values()), None)
+    return slug_value
+
+
+def _serialize_category_sql(category: Category, include_schema: bool = False, include_translations: bool = True) -> dict:
+    translations = list(category.translations or [])
+    slug_value = _pick_category_slug(category.slug)
+    payload = {
+        "id": str(category.id),
+        "parent_id": str(category.parent_id) if category.parent_id else None,
+        "name": _pick_category_name(translations, slug_value),
+        "slug": slug_value,
+        "country_code": category.country_code,
+        "active_flag": category.is_enabled,
+        "sort_order": category.sort_order,
+        "hierarchy_complete": category.hierarchy_complete,
+        "module": category.module,
+        "allowed_countries": category.allowed_countries or [],
+        "icon": category.icon,
+        "image_url": category.image_url,
+        "listing_count": category.listing_count,
+        "created_at": category.created_at.isoformat() if category.created_at else None,
+        "updated_at": category.updated_at.isoformat() if category.updated_at else None,
+    }
+    if include_translations:
+        payload["translations"] = [_serialize_category_translation(t) for t in translations]
+    if include_schema:
+        payload["form_schema"] = _normalize_category_schema(category.form_schema) if category.form_schema else None
+    return payload
+
+
 def _deep_merge_schema(base: Dict[str, Any], override: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     if not override:
         return base
