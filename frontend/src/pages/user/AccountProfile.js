@@ -510,6 +510,75 @@ export default function AccountProfile() {
         </button>
       </div>
 
+      <div className="rounded-lg border bg-white p-6 space-y-4" data-testid="account-2fa-card">
+        <div className="text-sm font-semibold">İki Faktörlü Doğrulama (2FA)</div>
+        <div className="text-xs text-muted-foreground" data-testid="account-2fa-status">
+          Durum: {twoFactorStatus.enabled ? 'Etkin' : 'Kapalı'}
+        </div>
+        {twoFactorMessage && (
+          <div className="text-xs text-muted-foreground" data-testid="account-2fa-message">{twoFactorMessage}</div>
+        )}
+        {!twoFactorStatus.enabled && !setupData && (
+          <button
+            type="button"
+            onClick={handleTwoFactorSetup}
+            className="h-9 px-4 rounded-md border text-sm"
+            data-testid="account-2fa-setup"
+          >
+            2FA Kurulumu Başlat
+          </button>
+        )}
+        {setupData && (
+          <div className="space-y-3" data-testid="account-2fa-setup-panel">
+            {qrDataUrl && (
+              <img src={qrDataUrl} alt="QR" className="h-36 w-36" data-testid="account-2fa-qr" />
+            )}
+            <div className="text-xs text-muted-foreground" data-testid="account-2fa-secret">
+              Secret: {setupData.secret}
+            </div>
+            <div className="text-xs text-muted-foreground" data-testid="account-2fa-recovery">
+              Recovery codes: {setupData.recovery_codes?.join(', ')}
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Doğrulama Kodu</label>
+              <input
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value)}
+                className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
+                data-testid="account-2fa-code"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleTwoFactorVerify}
+              className="h-9 px-4 rounded-md border text-sm"
+              data-testid="account-2fa-verify"
+            >
+              2FA Etkinleştir
+            </button>
+          </div>
+        )}
+        {twoFactorStatus.enabled && (
+          <div className="space-y-3" data-testid="account-2fa-disable-panel">
+            <label className="text-xs text-muted-foreground">Kod veya Recovery Code</label>
+            <input
+              value={disableCode}
+              onChange={(e) => setDisableCode(e.target.value)}
+              className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
+              data-testid="account-2fa-disable-code"
+            />
+            <button
+              type="button"
+              onClick={handleTwoFactorDisable}
+              className="h-9 px-4 rounded-md border text-sm"
+              data-testid="account-2fa-disable"
+            >
+              2FA Devre Dışı Bırak
+            </button>
+          </div>
+        )}
+      </div>
+
 
     </div>
   );
