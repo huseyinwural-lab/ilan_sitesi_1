@@ -1256,6 +1256,121 @@ Verified that /login and /register pages load and render their forms correctly a
 1. **login-page-render.png**: Login page with form elements (email, password, submit button)
 2. **register-page-render.png**: Register page with form elements (name, email, password, country, submit button)
 
+
+---
+
+
+## Frontend Smoke Test (Feb 21, 2026) ⚠️ BLOCKED BY BACKEND
+
+### Test Summary
+Frontend smoke test requested to verify: 1) Login page loads, 2) Consumer login works, 3) Profile fields load, 4) 2FA setup button visible, 5) Privacy page elements visible. Testing blocked by backend 520 errors due to PostgreSQL connectivity failure.
+
+### Test Flow Executed:
+1. ✅ Navigate to /login → Login page loads successfully
+2. ❌ Login attempt with user@platform.com / User123! → Backend returns 520 error
+3. ❌ Cannot access /account/profile → Authentication required
+4. ❌ Cannot test 2FA panel → Authentication required  
+5. ❌ Cannot access /account/privacy → Authentication required
+
+### Critical Findings:
+
+#### ✅ FRONTEND UI WORKING:
+
+**1. Login Page Loading**: ✅ VERIFIED
+  - **URL**: https://privacy-center-dev.preview.emergentagent.com/login loads successfully
+  - **UI Rendering**: Login form renders properly with orange background
+  - **Form Elements**: Email input, password input, and submit button all visible
+  - **data-testid**: "login-page" container present
+  - Screenshot: smoke-test-login-page.png shows clean login UI
+
+#### ❌ BACKEND AUTHENTICATION BLOCKED:
+
+**2. Consumer Login Attempt**: ❌ BACKEND 520 ERROR (EXPECTED)
+  - **Credentials**: user@platform.com / User123!
+  - **Error**: Backend returns 520 status code on /api/auth/login
+  - **Root Cause**: PostgreSQL database connection failure
+    - Error: "OSError: [Errno 111] Connect call failed ('127.0.0.1', 5432)"
+    - PostgreSQL not available in current environment
+    - Only MongoDB is running in supervisor
+  - **Frontend Behavior**: Shows "Giriş başarısız" error message (correct error handling)
+  - **Expected**: Review request noted "Backend şu an 520 dönebiliyor" (backend may return 520)
+  - Screenshot: smoke-test-after-login.png shows error state
+
+**3. Profile Page Access**: ❌ CANNOT TEST (Authentication Required)
+  - Cannot verify profile fields (name, language, country, display name) without authentication
+  - Code verification shows proper implementation:
+    - data-testid="account-profile-name" for name field
+    - data-testid="account-profile-locale" for language dropdown
+    - data-testid="account-profile-country" for country dropdown
+    - data-testid="account-profile-display-name-mode" for display name
+  - Implementation: /app/frontend/src/pages/user/AccountProfile.js
+
+**4. 2FA Panel**: ❌ CANNOT TEST (Authentication Required)
+  - Cannot verify 2FA setup button without authentication
+  - Code verification shows proper implementation:
+    - data-testid="account-2fa-card" for 2FA panel
+    - data-testid="account-2fa-setup" for setup button
+    - data-testid="account-2fa-status" for status display
+  - Implementation: /app/frontend/src/pages/user/AccountProfile.js lines 513-580
+
+**5. Privacy Page**: ❌ CANNOT TEST (Authentication Required)
+  - Cannot verify marketing consent, GDPR export, or account deletion CTAs without authentication
+  - Code verification shows proper implementation:
+    - data-testid="privacy-consent-toggle" for marketing consent
+    - data-testid="privacy-export-button" for GDPR export
+    - data-testid="privacy-delete-button" for account deletion
+  - Implementation: /app/frontend/src/pages/user/AccountPrivacyCenter.js
+
+### Backend Error Details:
+
+**Database Connection Failure**:
+```
+OSError: Multiple exceptions: [Errno 111] Connect call failed ('127.0.0.1', 5432), 
+[Errno 99] Cannot assign requested address
+```
+
+**Error Location**: 
+- File: /app/backend/app/repositories/auth_repository.py, line 40
+- Function: get_user_by_email
+- Issue: Cannot connect to PostgreSQL at 127.0.0.1:5432
+
+**Services Status**:
+- ✅ Backend: RUNNING (but failing on database queries)
+- ✅ Frontend: RUNNING
+- ✅ MongoDB: RUNNING
+- ❌ PostgreSQL: NOT RUNNING (not in supervisor config)
+
+### Screenshots Captured:
+1. **smoke-test-login-page.png**: Login page successfully loaded
+2. **smoke-test-after-login.png**: Login error with "Giriş başarısız" message
+3. **smoke-test-profile-page.png**: Profile page redirects to login (not authenticated)
+4. **smoke-test-2fa-panel.png**: Cannot access without authentication
+5. **smoke-test-privacy-page.png**: Privacy page redirects to login (not authenticated)
+
+### Test Results Summary:
+- **Frontend UI**: ✅ WORKING (1/1 testable items passed)
+- **Login Page Loading**: ✅ VERIFIED
+- **Backend Authentication**: ❌ BLOCKED (520 error due to PostgreSQL)
+- **Profile Fields**: ❌ CANNOT TEST (auth required)
+- **2FA Panel**: ❌ CANNOT TEST (auth required)
+- **Privacy Page**: ❌ CANNOT TEST (auth required)
+- **Backend 520 Logged**: ✅ CONFIRMED (as requested in review)
+
+### Final Status:
+- **Overall Result**: ⚠️ **BLOCKED BY BACKEND** - Frontend smoke test partially completed
+- **Frontend Health**: ✅ LOGIN PAGE WORKING (UI renders correctly)
+- **Backend Issue**: ❌ POSTGRESQL CONNECTION FAILURE (520 errors on all auth endpoints)
+- **Expected Limitation**: ✅ DOCUMENTED IN REVIEW REQUEST ("Backend şu an 520 dönebiliyor")
+- **Code Quality**: ✅ ALL COMPONENTS PROPERLY IMPLEMENTED (verified by code review)
+- **Recommendation**: Fix PostgreSQL connectivity to complete full smoke test
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 21, 2026
+- **Message**: Frontend smoke test PARTIALLY COMPLETED. Login page loads successfully and renders correctly (orange background, form elements visible). Backend authentication blocked by 520 errors - root cause is PostgreSQL database connection failure at 127.0.0.1:5432 (PostgreSQL not running in environment, only MongoDB available). This was expected per review request noting "Backend şu an 520 dönebiliyor". Frontend code verified for all requested features - profile fields, 2FA panel, and privacy page elements all properly implemented with correct data-testids. Cannot complete functional testing of features 2-5 without working authentication. BLOCKER: PostgreSQL database needs to be configured and running to enable authentication flow.
+
+---
+
 ### Console Errors Analysis:
 - ✅ **No Console Errors**: No JavaScript errors detected during testing
 - ✅ **No Page Errors**: No error messages displayed on either page
