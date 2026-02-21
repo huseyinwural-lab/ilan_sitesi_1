@@ -10410,7 +10410,15 @@ async def stripe_webhook(
                     session.add(transaction)
 
     if invoice and payment and transaction:
-        _apply_payment_status(invoice, payment, transaction, payment_status or "", None)
+        _apply_payment_status(
+            invoice,
+            payment,
+            transaction,
+            payment_status or "",
+            provider_payment_id,
+            provider_ref=payment.provider_ref,
+            meta=metadata,
+        )
         event_log.status = "processed"
         event_log.processed_at = now
         event_log.updated_at = now
