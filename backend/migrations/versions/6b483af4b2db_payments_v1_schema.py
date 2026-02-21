@@ -66,6 +66,10 @@ def downgrade() -> None:
     op.drop_index("ix_payments_invoice", table_name="payments")
     op.drop_constraint("uq_payments_provider_ref", "payments", type_="unique")
 
+    op.alter_column("payment_transactions", "payment_status", existing_type=sa.String(length=40), type_=sa.String(length=20))
+    op.alter_column("payment_transactions", "status", existing_type=sa.String(length=40), type_=sa.String(length=20))
+    op.alter_column("payments", "status", existing_type=sa.String(length=40), type_=sa.String(length=20))
+
     op.add_column("payments", sa.Column("provider_payment_id", sa.String(length=120), nullable=True))
     op.add_column("payments", sa.Column("dealer_id", sa.dialects.postgresql.UUID(as_uuid=True), nullable=True))
     op.add_column("payments", sa.Column("amount", sa.Numeric(12, 2), nullable=True))
