@@ -1584,7 +1584,7 @@ async def _activate_subscription_from_invoice(session: AsyncSession, invoice: Ad
         return
 
     now = datetime.now(timezone.utc)
-    subscription.status = "trial"
+    subscription.status = "active"
     subscription.current_period_start = subscription.current_period_start or now
     subscription.current_period_end = subscription.current_period_end or (now + timedelta(days=30))
     subscription.updated_at = now
