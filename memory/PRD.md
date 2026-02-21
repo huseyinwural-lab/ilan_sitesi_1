@@ -207,6 +207,7 @@
 - Lokal/preview container’da Postgres servisi çalışmıyor → Alembic current/upgrade ve \dt kanıtları **BLOCKED**
 
 ### P1
+- Verification token cleanup job (00:30 UTC) + retention policy (24h/7d) kanıtları
 - Lint debt cleanup (LINT-1/2)
 - Runtime config / feature flag (Dashboard TTL yönetimi) — backlog
 - Başvuru Modülü bildirimleri (in-app + email) — P1
