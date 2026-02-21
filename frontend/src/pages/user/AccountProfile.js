@@ -84,7 +84,24 @@ export default function AccountProfile() {
     }
   };
 
-  const loadPushStatus = async () => {
+  const fetchTwoFactorStatus = async () => {
+    try {
+      const res = await fetch(`${API}/users/me/2fa/status`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+      });
+      if (!res.ok) {
+        return;
+      }
+      const data = await res.json();
+      setTwoFactorStatus({
+        enabled: Boolean(data.enabled),
+        configured: Boolean(data.configured),
+      });
+    } catch (err) {
+      // ignore
+    }
+  };
+
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       setPushSupported(false);
       setPushStatus('unsupported');
