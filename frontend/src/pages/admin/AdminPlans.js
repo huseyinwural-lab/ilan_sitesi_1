@@ -88,8 +88,9 @@ export default function AdminPlans() {
   const checkDb = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/health/db`);
-      setDbReady(res.status === 200);
-      if (res.status === 200) {
+      const isReady = res.data?.db_status === 'ok' || res.data?.status === 'healthy';
+      setDbReady(isReady);
+      if (isReady) {
         setError('');
       }
     } catch (err) {
