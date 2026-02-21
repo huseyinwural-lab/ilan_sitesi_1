@@ -4649,17 +4649,24 @@ async def list_message_threads(
 
 
 @api_router.get("/v1/messages/unread-count")
-async def message_unread_count(request: Request, current_user=Depends(require_portal_scope("account"))):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-
-    threads = await db.message_threads.find({"participants": current_user.get("id")}, {"_id": 0}).to_list(length=500)
-    total = 0
-    for thread in threads:
-        unread = (thread.get("unread_counts") or {}).get(current_user.get("id"), 0)
-        total += int(unread or 0)
-    return {"count": total}
+async def message_unread_count(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_id = uuid.UUID(current_user.get("id"))
+    total = (
+        await session.execute(
+            select(func.count())
+            .select_from(Message)
+            .join(Conversation, Conversation.id == Message.conversation_id)
+            .where(
+                Message.is_read.is_(False),
+                Message.sender_id != user_id,
+                or_(Conversation.buyer_id == user_id, Conversation.seller_id == user_id),
+            )
+        )
+    ).scalar_one()
+    return {"count": int(total or 0)}
 
 
 @api_router.get("/v1/messages/threads/{thread_id}/messages")
