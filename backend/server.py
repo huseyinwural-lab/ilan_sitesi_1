@@ -4509,6 +4509,9 @@ async def request_account_delete(
     await session.commit()
     return {"status": "scheduled", "gdpr_deleted_at": profile.gdpr_deleted_at.isoformat()}
 
+
+@api_router.get("/users/me/export")
+async def export_user_data(
     request: Request,
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
