@@ -7712,3 +7712,228 @@ Re-tested register pages after replacing native <select> with custom dropdown to
 - **Message**: Register pages custom dropdown re-test SUCCESSFULLY COMPLETED. All 6 requirements from review request verified and passing (100% success rate). CRITICAL ACHIEVEMENT: Hydration warnings completely eliminated - changed from 6 warnings to 0 warnings by replacing native <select>/<option> with custom button-based dropdown. 1) Custom dropdown verified: NO <select> elements found on either page, using button + div menu implementation. 2) Country dropdown button successfully opens menu (data-testid="register-country-menu"). 3) Selection correctly updates label (data-testid="register-country-selected") and closes menu. 4) All required fields present on /register (full name, email, password, country, submit, login link, NO tax ID). 5) All dealer fields present on /dealer/register (company name, contact name, email, password, country, tax ID marked optional, submit, login link, NO full name). 6) Console logs show ZERO hydration warnings (previous <span> inside <select>/<option> warnings eliminated). 7) Fallback country Almanya/DE working correctly despite countries API failure (ERR_ABORTED). All data-testids present and functional. Screenshots captured for both pages. Custom dropdown implementation is production-ready and resolves all hydration issues.
 
 ---
+
+
+## AUTH1.8.1 Help Link on /verify-email Page Test (Feb 21, 2026) ✅ COMPLETE PASS
+
+### Test Summary
+Verified all requirements from AUTH1.8.1 review request for help link functionality on /verify-email and /dealer/verify-email pages, including toggle button, inline help panel with three bullet points, support link, and orange styling preservation.
+
+### Test Flow Executed:
+1. ✅ Navigate to /verify-email → verify page loads with orange background
+2. ✅ Verify help toggle button "Kod gelmedi mi?" present (data-testid="verify-help-toggle")
+3. ✅ Verify help panel hidden initially (not in DOM)
+4. ✅ Click help toggle → verify panel appears with all elements
+5. ✅ Verify three bullet points in help panel
+6. ✅ Verify support link with href="/support?reason=email_verification"
+7. ✅ Click toggle again → verify panel closes
+8. ✅ Navigate to /dealer/verify-email → verify same functionality works
+9. ⚠️ Backend /api/auth/verify-email/help-opened NOT tested (DB 520 as noted in review request)
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Help Toggle Button**: ✅ VERIFIED
+  - **data-testid**: "verify-help-toggle" present and visible
+  - **Label Text**: "Kod gelmedi mi?" (exact match)
+  - **Location**: In verify-actions section, between resend link and login link
+  - **Styling**: Underlined slate-colored text button
+  - **Functionality**: Toggles helpOpen state on click
+  - Implementation: VerifyEmail.js lines 326-332
+
+**2. Help Panel Toggle Behavior**: ✅ WORKING CORRECTLY
+  - **Initial State**: Panel NOT visible (not rendered in DOM when helpOpen=false)
+  - **After First Click**: Panel appears smoothly
+  - **After Second Click**: Panel closes (removed from DOM)
+  - **State Management**: Controlled by helpOpen state (line 32)
+  - Implementation: VerifyEmail.js lines 343-362
+
+**3. Help Panel Container**: ✅ VERIFIED
+  - **data-testid**: "verify-help-panel" present
+  - **Styling**: Rounded border box with slate background (border-slate-200 bg-slate-50)
+  - **Padding**: Proper spacing (p-4)
+  - **Conditional Rendering**: Only renders when helpOpen is true
+  - **Panel Title**: "Yardım" (data-testid="verify-help-title")
+  - Implementation: VerifyEmail.js line 344
+
+**4. Three Bullet Points**: ✅ ALL PRESENT
+  - **Bullet List**: Unordered list with disc markers (list-disc list-inside)
+  - **data-testid**: "verify-help-list"
+  
+  - **Bullet 1 - Spam Folder** (data-testid="verify-help-item-spam"):
+    - Text: "Spam veya gereksiz klasörünü kontrol edin."
+    - Implementation: VerifyEmail.js line 347
+  
+  - **Bullet 2 - Resend Button** (data-testid="verify-help-item-resend"):
+    - Text: "90 saniye sonra yeniden gönderme butonunu kullanın."
+    - Implementation: VerifyEmail.js line 348
+  
+  - **Bullet 3 - Support Contact** (data-testid="verify-help-item-support"):
+    - Text: "Sorun devam ederse destekle iletişime geçin."
+    - Contains embedded support link
+    - Implementation: VerifyEmail.js lines 349-359
+
+**5. Support Link**: ✅ VERIFIED
+  - **data-testid**: "verify-help-support-link" present
+  - **Link Text**: "destekle iletişime geçin"
+  - **href Attribute**: "/support?reason=email_verification" (exact match)
+  - **Styling**: Blue underlined link (text-blue-600 underline)
+  - **Link Type**: Anchor tag (<a>) for proper navigation
+  - **supportPath Constant**: Defined at line 39: `/support?reason=email_verification`
+  - Implementation: VerifyEmail.js lines 351-357
+
+**6. Orange Background Preserved**: ✅ CONFIRMED
+  - **Background Color**: rgb(247, 194, 122) (matches #f7c27a)
+  - **data-testid**: "verify-page"
+  - **CSS Class**: bg-[#f7c27a]
+  - **Verified On**: Both /verify-email and /dealer/verify-email
+  - Implementation: VerifyEmail.js line 217
+
+**7. Backend Logging (Code Review Only)**: ⚠️ NOT TESTED
+  - **Endpoint**: POST /api/auth/verify-email/help-opened
+  - **Function**: handleHelpToggle (lines 198-214)
+  - **Behavior**: 
+    - Called only when help panel is opened (nextState && !helpLogged)
+    - Sets helpLogged flag to prevent duplicate calls
+    - Sends email and reason in request body
+    - Errors silently ignored (catch block empty)
+  - **Review Request Note**: Backend not tested due to DB 520
+  - Implementation: VerifyEmail.js lines 202-212
+
+### Additional Findings:
+
+#### ✅ PORTAL CONTEXT SUPPORT:
+- Help feature works identically on both portals:
+  - /verify-email (account portal) ✅
+  - /dealer/verify-email (dealer portal) ✅
+- Support link path is shared across both portals (supportPath constant)
+- No portal-specific differences in help panel content
+
+#### ✅ STATE MANAGEMENT:
+- **helpOpen**: Controls panel visibility (useState hook, line 32)
+- **helpLogged**: Prevents duplicate backend logging (useState hook, line 33)
+- **handleHelpToggle**: Toggles panel and logs to backend on first open (lines 198-214)
+
+#### ✅ HELP PANEL POSITIONING:
+- Located below verify button and action links
+- Inside form element (maintains semantic structure)
+- Appears above any error messages
+- Proper spacing with surrounding elements (mt-2)
+
+### Data-testids Verified:
+All required data-testids present and functional:
+- ✅ `verify-help-toggle`: Help toggle button
+- ✅ `verify-help-panel`: Help panel container
+- ✅ `verify-help-title`: Panel title "Yardım"
+- ✅ `verify-help-list`: Bullet points list container
+- ✅ `verify-help-item-spam`: First bullet point (spam folder)
+- ✅ `verify-help-item-resend`: Second bullet point (resend button)
+- ✅ `verify-help-item-support`: Third bullet point (support contact)
+- ✅ `verify-help-support-link`: Support link within third bullet
+
+### Screenshots Captured:
+1. **verify-help-before-toggle.png**: /verify-email page with help panel hidden
+2. **verify-help-panel-open.png**: /verify-email page with help panel open showing all three bullets
+3. **verify-help-after-close.png**: /verify-email page after closing help panel
+4. **dealer-verify-help-panel.png**: /dealer/verify-email page with help panel open
+
+### Console Errors Analysis:
+- ✅ **No Console Errors**: No JavaScript errors detected during testing
+- ✅ **No Page Errors**: No error messages displayed on the page
+- ✅ **Clean Execution**: All toggle actions executed without errors
+- ✅ **Smooth UX**: Panel appears and disappears smoothly without glitches
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (8/8 requirements verified, 1 explicitly not tested as requested)
+- **Help Toggle Button**: ✅ PRESENT with correct text "Kod gelmedi mi?"
+- **Help Panel**: ✅ TOGGLES correctly (open/close)
+- **Three Bullet Points**: ✅ ALL PRESENT (spam, resend, support)
+- **Support Link**: ✅ VERIFIED (/support?reason=email_verification)
+- **Orange Background**: ✅ PRESERVED (rgb(247, 194, 122))
+- **All data-testids**: ✅ PRESENT and correct
+- **/verify-email**: ✅ WORKING
+- **/dealer/verify-email**: ✅ WORKING
+- **Backend Endpoint**: ⚠️ NOT TESTED (DB 520, as requested)
+
+### Code Implementation Verification:
+
+**Help Toggle Button (VerifyEmail.js lines 326-332)**:
+```javascript
+<button
+  type="button"
+  onClick={handleHelpToggle}
+  className="text-slate-600 underline underline-offset-2"
+  data-testid="verify-help-toggle"
+>
+  Kod gelmedi mi?
+</button>
+```
+
+**Help Panel (VerifyEmail.js lines 343-362)**:
+```javascript
+{helpOpen && (
+  <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700" data-testid="verify-help-panel">
+    <p className="font-medium" data-testid="verify-help-title">Yardım</p>
+    <ul className="mt-2 space-y-1 list-disc list-inside" data-testid="verify-help-list">
+      <li data-testid="verify-help-item-spam">Spam veya gereksiz klasörünü kontrol edin.</li>
+      <li data-testid="verify-help-item-resend">90 saniye sonra yeniden gönderme butonunu kullanın.</li>
+      <li data-testid="verify-help-item-support">
+        Sorun devam ederse{' '}
+        <a
+          href={supportPath}
+          className="text-blue-600 underline underline-offset-2"
+          data-testid="verify-help-support-link"
+        >
+          destekle iletişime geçin
+        </a>
+        .
+      </li>
+    </ul>
+  </div>
+)}
+```
+
+**Support Path Constant (VerifyEmail.js line 39)**:
+```javascript
+const supportPath = `/support?reason=email_verification`;
+```
+
+**Backend Logging Handler (VerifyEmail.js lines 198-214)**:
+```javascript
+const handleHelpToggle = async () => {
+  const nextState = !helpOpen;
+  setHelpOpen(nextState);
+
+  if (nextState && !helpLogged) {
+    setHelpLogged(true);
+    try {
+      await fetch(`${API}/auth/verify-email/help-opened`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), reason: 'email_verification' }),
+      });
+    } catch (err) {
+      // ignore logging errors
+    }
+  }
+};
+```
+
+### Final Status:
+- **Overall Result**: ✅ **PASS** - AUTH1.8.1 help link test 100% successful
+- **All UI Requirements**: ✅ IMPLEMENTED and WORKING
+- **Toggle Functionality**: ✅ SMOOTH and ERROR-FREE
+- **Help Content**: ✅ COMPLETE (3 bullets + support link)
+- **Orange Styling**: ✅ PRESERVED
+- **Both Portal Paths**: ✅ WORKING (/verify-email and /dealer/verify-email)
+- **Backend Logging**: ✅ CODE VERIFIED (not tested as requested)
+- **Production Ready**: ✅ CONFIRMED
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 21, 2026
+- **Message**: AUTH1.8.1 help link test SUCCESSFULLY COMPLETED. All requirements from review request verified and passing (100% success rate). 1) Help toggle button "Kod gelmedi mi?" present with correct data-testid="verify-help-toggle" on both /verify-email and /dealer/verify-email. 2) Help panel (data-testid="verify-help-panel") toggles correctly - hidden initially, appears on click, closes on second click. 3) Three bullet points all present: spam folder check, 90-second resend reminder, and support contact with embedded link. 4) Support link (data-testid="verify-help-support-link") verified with correct href="/support?reason=email_verification". 5) Orange background (rgb(247, 194, 122)) preserved on both pages. 6) Backend /api/auth/verify-email/help-opened endpoint code verified but NOT tested as requested (DB 520). All data-testids present and functional. No console errors detected. AUTH1.8.1 help link feature is production-ready and working perfectly.
+
+---
+
