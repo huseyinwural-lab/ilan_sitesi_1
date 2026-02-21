@@ -39,3 +39,4 @@ class DealerProfile(Base):
     
     # Status
     verification_status: Mapped[str] = mapped_column(String(20), default="pending") # pending, verified, rejected
+    gdpr_deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
