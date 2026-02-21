@@ -199,6 +199,8 @@
 - AUTH SQL full migration + Mongo cutoff + Auth E2E
 - Stripe Payment zinciri: Payments V1 unique + webhook idempotency/replay + invoice/subscription/quota chain
 - Ad Loop E2E: ilan oluştur → medya → publish → public görünür
+- Email verification prod switch: token tablosu + unique index + TTL=15dk + debug kaldırma
+- Ad wizard SQL mapping gap fix: category_id + make_id/model_id mapping
 - Ops: DATABASE_URL secret (preview/prod) + migration/seed
 - Lokal/preview container’da Postgres servisi çalışmıyor → Alembic current/upgrade ve \dt kanıtları **BLOCKED**
 
