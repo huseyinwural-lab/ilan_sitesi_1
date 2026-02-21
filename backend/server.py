@@ -10670,6 +10670,7 @@ async def admin_list_plans(
     scope: Optional[str] = None,
     country_code: Optional[str] = None,
     status: Optional[str] = None,
+    period: Optional[str] = None,
     q: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
     session: AsyncSession = Depends(get_sql_session),
@@ -10686,6 +10687,12 @@ async def admin_list_plans(
 
     if country_code:
         query = query.where(Plan.country_code == country_code.strip().upper())
+
+    if period:
+        period_value = period.strip().lower()
+        if period_value not in PLAN_PERIOD_SET:
+            raise HTTPException(status_code=400, detail="period invalid")
+        query = query.where(Plan.period == period_value)
 
     if status:
         status_value = status.strip().lower()
