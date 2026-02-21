@@ -10368,6 +10368,7 @@ async def get_checkout_status(
             provider_payment_id,
             provider_ref=payment.provider_ref,
             meta=metadata,
+            session=session,
         )
         await session.commit()
         await session.refresh(invoice)
@@ -10506,6 +10507,7 @@ async def stripe_webhook(
             provider_payment_id,
             provider_ref=payment.provider_ref,
             meta=metadata,
+            session=session,
         )
         event_log.status = "processed"
         event_log.processed_at = now
