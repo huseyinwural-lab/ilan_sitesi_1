@@ -132,15 +132,11 @@ export default function VerifyEmail({ portalContext = 'account' }) {
       }
 
       const data = await res.json().catch(() => ({}));
-      if (data?.remaining_attempts !== undefined) {
-        setAttemptsLeft(data.remaining_attempts);
-      }
-
-      toast({ title: 'Doğrulama tamamlandı', description: 'Hesabınız onaylandı.' });
+      const userData = applySession(data);
       sessionStorage.removeItem('pending_debug_code');
 
-      const refreshed = await refreshUser();
-      if (refreshed && refreshed.is_verified) {
+      toast({ title: 'Doğrulama tamamlandı', description: 'Hesabınız onaylandı.' });
+      if (userData) {
         navigate(portalContext === 'dealer' ? '/dealer' : '/account');
       } else {
         navigate(loginPath);
