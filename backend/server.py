@@ -12722,7 +12722,7 @@ async def get_vehicle_draft(
 async def request_publish_vehicle_listing(
     listing_id: str,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     listing = await _get_owned_listing(db, listing_id, current_user)
@@ -12744,7 +12744,7 @@ async def request_publish_vehicle_listing(
 async def unpublish_vehicle_listing(
     listing_id: str,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     listing = await _get_owned_listing(db, listing_id, current_user)
@@ -12763,7 +12763,7 @@ async def unpublish_vehicle_listing(
 async def archive_vehicle_listing(
     listing_id: str,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     await _get_owned_listing(db, listing_id, current_user)
@@ -12780,7 +12780,7 @@ async def extend_vehicle_listing(
     listing_id: str,
     request: Request,
     days: int = Body(default=30, embed=True),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     listing = await _get_owned_listing(db, listing_id, current_user)
