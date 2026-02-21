@@ -148,6 +148,7 @@ export default function AdminPlans() {
       ...emptyForm,
       scope,
       country_code: country,
+      period: 'monthly',
       currency_code: currency,
     });
     setShowForm(true);
