@@ -25,7 +25,6 @@ const formatDateTime = (value) => {
 
 export default function AdminPaymentsPage() {
   const [searchParams] = useSearchParams();
-  const urlCountry = (searchParams.get('country') || '').toUpperCase();
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
