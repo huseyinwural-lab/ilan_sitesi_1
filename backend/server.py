@@ -4672,23 +4672,63 @@ async def message_unread_count(
 @api_router.get("/v1/messages/threads/{thread_id}/messages")
 async def list_thread_messages(
     thread_id: str,
-    request: Request,
     current_user=Depends(require_portal_scope("account")),
     limit: int = 50,
     since: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
+    thread = await _get_message_thread_or_404(session, thread_id, current_user.get("id"))
 
-    thread = await _get_message_thread_or_404(db, thread_id, current_user.get("id"))
-    query: Dict[str, Any] = {"thread_id": thread.get("id")}
+    query = select(Message).where(Message.conversation_id == thread.id)
     if since:
-        query["created_at"] = {"$gt": since}
+        try:
+            since_dt = datetime.fromisoformat(since)
+            if since_dt.tzinfo is None:
+                since_dt = since_dt.replace(tzinfo=timezone.utc)
+            query = query.where(Message.created_at > since_dt)
+        except ValueError:
+            pass
 
-    cursor = db.messages.find(query, {"_id": 0}).sort("created_at", 1).limit(min(200, limit))
-    items = await cursor.to_list(length=min(200, limit))
-    return {"thread": _build_thread_summary(thread, current_user.get("id")), "items": items}
+    messages = (
+        await session.execute(query.order_by(Message.created_at).limit(min(200, limit)))
+    ).scalars().all()
+
+    listing = await session.get(Listing, thread.listing_id)
+    last_message = messages[-1] if messages else None
+    unread_count = (
+        await session.execute(
+            select(func.count())
+            .select_from(Message)
+            .where(
+                Message.conversation_id == thread.id,
+                Message.is_read.is_(False),
+                Message.sender_id != uuid.UUID(current_user.get("id")),
+            )
+        )
+    ).scalar_one()
+
+    items = [
+        {
+            "id": str(msg.id),
+            "thread_id": str(msg.conversation_id),
+            "sender_id": str(msg.sender_id),
+            "body": msg.body,
+            "created_at": msg.created_at.isoformat() if msg.created_at else None,
+            "is_read": msg.is_read,
+        }
+        for msg in messages
+    ]
+
+    return {
+        "thread": _build_thread_summary_sql(
+            thread,
+            current_user.get("id"),
+            listing,
+            last_message,
+            int(unread_count or 0),
+        ),
+        "items": items,
+    }
 
 
 @api_router.post("/v1/messages/threads/{thread_id}/messages")
