@@ -118,6 +118,7 @@
 - **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
+- 2026-02-21: Monetization Chain başlangıcı: Campaigns Schema V1 (migration + SQL CRUD + audit SQL), Campaigns backfill raporu, Plans period alanı + default plan seed (3×2), Billing status V1 standardizasyonu, Webhooks V1 dokümanı.
 - 2026-02-21: Notifications SQL V1 tamamlandı (schema + endpoints + backfill + decommission/gate dokümanları). Alembic `upgrade heads` uygulandı, `/api/health` healthy, `/api/auth/login` 520 RCA + fix, Notifications E2E PASS.
 - 2026-02-21: AUTH1.8 inline register doğrulama (tek sayfa OTP, auto login), login doğrulama engeli + verify endpoint token dönüşü.
 - 2026-02-21: Email doğrulama altyapısı (AUTH1.7): users doğrulama alanları + /api/auth/verify-email ve /api/auth/resend-verification + verify-email UI (OTP, cooldown, debug_code) + login gating.
