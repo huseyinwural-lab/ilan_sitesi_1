@@ -13584,12 +13584,9 @@ async def _dashboard_metrics_scope(db, country_codes: Optional[List[str]], inclu
     }
 
 
-async def _dashboard_invoice_totals(db, invoice_query: Dict[str, Any]) -> tuple[float, Dict[str, float]]:
-    invoices = await db.invoices.find(invoice_query, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
-    totals: Dict[str, float] = {}
-    for inv in invoices:
-        currency = inv.get("currency") or "UNKNOWN"
-        totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
+async def _dashboard_invoice_totals(conditions: List[Any]) -> tuple[float, Dict[str, float]]:
+    async with AsyncSessionLocal() as sql_session:
+        totals = await _invoice_totals_by_currency(sql_session, conditions)
     total_amount = sum(totals.values())
     return round(total_amount, 2), {k: round(v, 2) for k, v in totals.items()}
 
