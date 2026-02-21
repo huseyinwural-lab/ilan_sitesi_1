@@ -8854,8 +8854,8 @@ async def admin_needs_revision_listing(
     payload: ModerationReasonPayload,
     request: Request,
     current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
     reason = _validate_reason(payload.reason, NEEDS_REVISION_REASONS_V1)
     reason_note = (payload.reason_note or "").strip() or None
     if reason == "other" and not reason_note:
