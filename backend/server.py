@@ -9590,9 +9590,11 @@ async def dealer_list_invoices(
     except ValueError:
         raise HTTPException(status_code=400, detail="dealer invalid")
 
-    conditions = [AdminInvoice.dealer_id == dealer_uuid]
+    conditions = [AdminInvoice.user_id == dealer_uuid]
     if status:
         status_value = status.strip().lower()
+        if status_value == "cancelled":
+            status_value = "void"
         if status_value not in INVOICE_STATUS_SET:
             raise HTTPException(status_code=400, detail="Invalid status")
         conditions.append(AdminInvoice.status == status_value)
