@@ -202,6 +202,7 @@ export default function AdminPlans() {
         slug: editing ? editing.slug : slugify(form.name),
         country_scope: form.scope,
         country_code: form.scope === 'country' ? form.country_code : undefined,
+        period: form.period,
         price_amount: Number(form.price_amount),
         currency_code: resolveCurrency(form.scope, form.country_code || 'DE'),
         listing_quota: Number(form.listing_quota),
