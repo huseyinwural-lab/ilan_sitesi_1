@@ -42,7 +42,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import { CountryProvider } from '@/contexts/CountryContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
-const ProtectedRoute = ({ children, roles = [] }) => {
+const ProtectedRoute = ({ children, roles = [], portalScope = null }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -51,6 +51,10 @@ const ProtectedRoute = ({ children, roles = [] }) => {
 
   if (!user) {
     return <Navigate to="/login" />;
+  }
+
+  if (portalScope && user.portal_scope && user.portal_scope !== portalScope) {
+    return <Navigate to="/" />;
   }
 
   if (roles.length > 0 && !roles.includes(user.role)) {
