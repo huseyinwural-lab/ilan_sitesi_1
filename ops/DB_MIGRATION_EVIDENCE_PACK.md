@@ -36,7 +36,7 @@ connection to server at "localhost" (::1), port 5432 failed: Cannot assign reque
 - Local Postgres (native) **aktif**
 - `alembic upgrade heads` **PASS**
 - `alembic current` heads:
-  - c5833a1fffde, d2f4c9c4c7ab, aa12b9c8d7e1, f3b1c2d8a91b, p29_email_verification_tokens, p30_user_quota_limits, p31_listing_contact_options
+  - c5833a1fffde, d2f4c9c4c7ab, aa12b9c8d7e1, f3b1c2d8a91b, p29_email_verification_tokens, p30_user_quota_limits, p31_listing_contact_options, p32_listing_category_required
 
 ### Tablo Doğrulama (Local)
 - `payments`, `user_subscriptions`, `admin_invoices`, `email_verification_tokens` ✅
