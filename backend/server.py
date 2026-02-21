@@ -73,7 +73,8 @@ from app.models.campaign import Campaign
 from app.models.plan import Plan
 from app.models.monetization import UserSubscription
 from app.models.admin_invoice import AdminInvoice
-from app.models.payment import Payment, PaymentTransaction, PaymentEventLog
+from app.models.payment import Payment, PaymentTransaction
+from app.models.webhook_event_log import WebhookEventLog
 from app.models.category import Category, CategoryTranslation
 from app.models.category_schema_version import CategorySchemaVersion
 from app.models.core import AuditLog, Country
