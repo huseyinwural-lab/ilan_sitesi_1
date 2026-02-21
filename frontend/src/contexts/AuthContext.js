@@ -36,14 +36,20 @@ export function AuthProvider({ children }) {
     try {
       const response = await axios.get(`${API}/auth/me`);
       setUser(response.data);
+      return response.data;
     } catch (error) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       setToken(null);
       delete axios.defaults.headers.common['Authorization'];
+      return null;
     } finally {
       setLoading(false);
     }
+  };
+
+  const refreshUser = async () => {
+    return fetchUser();
   };
 
   const login = async (email, password) => {
