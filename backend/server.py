@@ -2934,6 +2934,8 @@ async def verify_email(
     user.email_verification_code_hash = None
     user.email_verification_expires_at = None
     user.email_verification_attempts = 0
+    now_iso = datetime.now(timezone.utc).isoformat()
+    user.last_login = datetime.fromisoformat(now_iso)
 
     await _log_email_verify_event(
         session=session,
@@ -2944,7 +2946,34 @@ async def verify_email(
     )
     await session.commit()
 
-    return VerifyEmailResponse(status="verified", remaining_attempts=EMAIL_VERIFICATION_MAX_ATTEMPTS)
+    user_payload = {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role,
+        "country_scope": user.country_scope or [],
+        "preferred_language": user.preferred_language,
+        "is_active": user.is_active,
+        "is_verified": user.is_verified,
+        "deleted_at": None,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "last_login": now_iso,
+        "portal_scope": _resolve_portal_scope(user.role),
+    }
+
+    token_data = {
+        "sub": str(user.id),
+        "email": user.email,
+        "role": user.role,
+        "portal_scope": _resolve_portal_scope(user.role),
+        "token_version": TOKEN_VERSION,
+    }
+
+    return TokenResponse(
+        access_token=create_access_token(token_data),
+        refresh_token=create_refresh_token(token_data),
+        user=_user_to_response(user_payload),
+    )
 
 
 @api_router.post("/auth/resend-verification", response_model=ResendVerificationResponse)
