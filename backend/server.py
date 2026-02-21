@@ -4252,14 +4252,25 @@ async def update_user_profile(
         "phone_e164": None,
         "preferred_language": user_row.preferred_language,
         "notification_prefs": update_payload.get("notification_prefs"),
+        "display_name_mode": profile.display_name_mode,
+        "country_code": profile.country_code,
+        "marketing_consent": profile.marketing_consent,
+        "gdpr_deleted_at": profile.gdpr_deleted_at.isoformat() if profile.gdpr_deleted_at else None,
+        "totp_enabled": profile.totp_enabled,
     }
     return {
         "user": {
             "id": response_user.get("id"),
             "email": response_user.get("email"),
             "full_name": response_user.get("full_name"),
+            "display_name": _resolve_display_name(response_user.get("full_name"), response_user.get("display_name_mode")),
+            "display_name_mode": response_user.get("display_name_mode"),
             "phone": response_user.get("phone_e164") or response_user.get("phone"),
             "locale": response_user.get("preferred_language") or "tr",
+            "country_code": response_user.get("country_code"),
+            "marketing_consent": response_user.get("marketing_consent"),
+            "gdpr_deleted_at": response_user.get("gdpr_deleted_at"),
+            "totp_enabled": response_user.get("totp_enabled"),
             "notification_prefs": _normalize_notification_prefs(response_user.get("notification_prefs")),
         }
     }
