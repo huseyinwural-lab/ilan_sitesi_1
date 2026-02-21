@@ -2497,6 +2497,9 @@ async def refresh_token_endpoint(
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
+    if payload.get("token_version") != TOKEN_VERSION:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
     user_id = payload.get("sub")
     user = await auth_repo.get_user_by_id(user_id)
     if not user or not user.get("is_active", True):
