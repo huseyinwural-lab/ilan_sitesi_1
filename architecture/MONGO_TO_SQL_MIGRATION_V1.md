@@ -54,8 +54,9 @@ Mongo tamamen kaldırılarak tek veri kaynağı Postgres olacak. Bu doküman; ka
 ## 5) Endpoint → SQL Refactor Haritası
 
 ### Categories
-- **/api/categories** (public list) → SQL `Category` + `CategoryTranslation`
-- **/api/admin/categories** → SQL zaten kısmi (MDM routes) → public endpoint adaptasyonu
+- **/api/categories** → SQL `Category` + `CategoryTranslation` (implemented)
+- Seed script: `/app/backend/scripts/seed_categories_master.py`
+- Admin CRUD: `/api/admin/categories` SQL-backed (implemented)
 
 ### Listings (v1)
 - **/api/v1/listings/*** → SQL `Listing` (+ listing extensions)
