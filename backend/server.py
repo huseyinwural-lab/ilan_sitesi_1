@@ -2474,6 +2474,7 @@ async def login(
         "email": user["email"],
         "role": user.get("role"),
         "portal_scope": _resolve_portal_scope(user.get("role")),
+        "token_version": TOKEN_VERSION,
     }
 
     return TokenResponse(
@@ -2506,6 +2507,7 @@ async def refresh_token_endpoint(
         "email": user["email"],
         "role": user.get("role"),
         "portal_scope": _resolve_portal_scope(user.get("role")),
+        "token_version": TOKEN_VERSION,
     }
 
     return TokenResponse(
