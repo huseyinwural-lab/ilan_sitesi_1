@@ -2755,7 +2755,7 @@ async def register_consumer(
     try:
         session.add(user)
         await session.flush()
-        verification_code = _issue_email_verification_code(user)
+        await _issue_email_verification_code(session, user, request)
         session.add(UserCredential(user_id=user.id, provider="password", password_hash=hashed_password))
         await session.commit()
         await session.refresh(user)
@@ -2772,11 +2772,9 @@ async def register_consumer(
     )
     await session.commit()
 
-    debug_code = verification_code if _should_include_debug_code() else None
     return RegisterVerificationResponse(
         success=True,
         requires_verification=True,
-        debug_code=debug_code,
     )
 
 
