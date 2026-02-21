@@ -96,7 +96,7 @@ class PricingService:
         free_query = select(FreeQuotaConfig).where(and_(
             FreeQuotaConfig.country == country,
             FreeQuotaConfig.segment == "dealer", 
-            FreeQuotaConfig.is_active == True
+            FreeQuotaConfig.is_active.is_(True)
         ))
         free_config = (await self.db.execute(free_query)).scalar_one_or_none()
         
