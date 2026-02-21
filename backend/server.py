@@ -13744,18 +13744,26 @@ async def _dashboard_risk_panel(db, effective_countries: Optional[List[str]], in
 
     pending_payments: Dict[str, Any]
     if include_finance:
-        payment_cutoff_iso = (now - timedelta(days=DASHBOARD_PENDING_PAYMENT_DAYS)).isoformat()
-        invoice_query: Dict[str, Any] = {"status": "unpaid", "issued_at": {"$lt": payment_cutoff_iso}}
-        if effective_countries:
-            invoice_query["country_code"] = {"$in": effective_countries}
-        invoices = await db.invoices.find(
-            invoice_query,
-            {"_id": 0, "id": 1, "amount_gross": 1, "currency": 1, "issued_at": 1, "country_code": 1},
-        ).to_list(length=5000)
+        payment_cutoff = now - timedelta(days=DASHBOARD_PENDING_PAYMENT_DAYS)
+        async with AsyncSessionLocal() as sql_session:
+            conditions = [
+                AdminInvoice.status == "issued",
+                AdminInvoice.issued_at.isnot(None),
+                AdminInvoice.issued_at < payment_cutoff,
+            ]
+            if effective_countries:
+                conditions.append(AdminInvoice.country_code.in_(effective_countries))
+
+            invoices = (
+                await sql_session.execute(
+                    select(AdminInvoice).where(*conditions).order_by(AdminInvoice.issued_at.asc()).limit(5000)
+                )
+            ).scalars().all()
+
         totals: Dict[str, float] = {}
         for inv in invoices:
-            currency = inv.get("currency") or "UNKNOWN"
-            totals[currency] = totals.get(currency, 0) + float(inv.get("amount_gross") or 0)
+            currency = inv.currency or "UNKNOWN"
+            totals[currency] = totals.get(currency, 0) + float(inv.amount_total or 0)
         pending_payments = {
             "count": len(invoices),
             "threshold_days": DASHBOARD_PENDING_PAYMENT_DAYS,
@@ -13763,11 +13771,11 @@ async def _dashboard_risk_panel(db, effective_countries: Optional[List[str]], in
             "currency_totals": {k: round(v, 2) for k, v in totals.items()},
             "items": [
                 {
-                    "invoice_id": inv.get("id"),
-                    "amount": inv.get("amount_gross"),
-                    "currency": inv.get("currency"),
-                    "issued_at": inv.get("issued_at"),
-                    "country_code": inv.get("country_code"),
+                    "invoice_id": str(inv.id),
+                    "amount": float(inv.amount_total or 0),
+                    "currency": inv.currency,
+                    "issued_at": inv.issued_at.isoformat() if inv.issued_at else None,
+                    "country_code": inv.country_code,
                 }
                 for inv in invoices[:5]
             ],
