@@ -10583,51 +10583,52 @@ async def admin_export_category_pdf(
     category_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
     _enforce_export_rate_limit(request, current_user.get("id"))
 
-    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    try:
+        category_uuid = uuid.UUID(category_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid category id") from exc
+
+    category = await session.get(Category, category_uuid)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    if category.get("country_code"):
-        _assert_country_scope(category.get("country_code"), current_user)
+    if category.country_code:
+        _assert_country_scope(category.country_code, current_user)
 
-    schema = _normalize_category_schema(category.get("form_schema")) if category.get("form_schema") else None
+    schema = _normalize_category_schema(category.form_schema) if category.form_schema else None
     if not schema:
         raise HTTPException(status_code=404, detail="Schema not found")
     if schema.get("status") != "draft":
         raise HTTPException(status_code=409, detail="Sadece draft şema export edilebilir")
 
-    version = await _get_schema_version_for_export(db, category_id)
-    parent_doc = None
-    if category.get("parent_id"):
-        parent_doc = await db.categories.find_one({"id": category.get("parent_id")}, {"_id": 0})
-    parent_label = _pick_label(parent_doc.get("name")) if parent_doc else category.get("name")
-    children_docs = await db.categories.find({"parent_id": category_id}, {"_id": 0, "name": 1, "slug": 1}).to_list(length=200)
-    children = [(_pick_label(doc.get("name")) or doc.get("slug")) for doc in children_docs if doc]
+    parent_label = None
+    if category.parent_id:
+        parent = await session.get(Category, category.parent_id)
+        if parent:
+            parent_label = _pick_category_name(list(parent.translations or []), _pick_category_slug(parent.slug))
 
-    pdf_bytes = _build_schema_pdf(schema, {"name": category.get("name"), "slug": category.get("slug")}, version, {
-        "parent": parent_label,
-        "children": children,
-    })
+    children_result = await session.execute(
+        select(Category).options(selectinload(Category.translations)).where(Category.parent_id == category.id)
+    )
+    children = children_result.scalars().all()
+    children_labels = [
+        _pick_category_name(list(child.translations or []), _pick_category_slug(child.slug))
+        for child in children
+    ]
+
+    version = await _get_schema_version_for_export_sql(session, category.id)
+    pdf_bytes = _build_schema_pdf(
+        schema,
+        _serialize_category_sql(category, include_schema=False, include_translations=False),
+        version,
+        {"parent": parent_label, "children": children_labels},
+    )
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     filename = f"schema-{category_id}-v{version}-{timestamp}.pdf"
-
-    audit_doc = await build_audit_entry(
-        event_type="schema_export_pdf",
-        actor=current_user,
-        target_id=category_id,
-        target_type="category_schema",
-        country_code=category.get("country_code"),
-        details={"schema_version": version, "format": "pdf"},
-        request=request,
-    )
-    audit_doc["action"] = "schema_export_pdf"
-    audit_doc["user_agent"] = request.headers.get("user-agent")
-    await db.audit_logs.insert_one(audit_doc)
 
     return Response(
         content=pdf_bytes,
@@ -10641,59 +10642,60 @@ async def admin_export_category_csv(
     category_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
     _enforce_export_rate_limit(request, current_user.get("id"))
 
-    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    try:
+        category_uuid = uuid.UUID(category_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid category id") from exc
+
+    category = await session.get(Category, category_uuid)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    if category.get("country_code"):
-        _assert_country_scope(category.get("country_code"), current_user)
+    if category.country_code:
+        _assert_country_scope(category.country_code, current_user)
 
-    schema = _normalize_category_schema(category.get("form_schema")) if category.get("form_schema") else None
+    schema = _normalize_category_schema(category.form_schema) if category.form_schema else None
     if not schema:
         raise HTTPException(status_code=404, detail="Schema not found")
     if schema.get("status") != "draft":
         raise HTTPException(status_code=409, detail="Sadece draft şema export edilebilir")
 
-    version = await _get_schema_version_for_export(db, category_id)
-    parent_doc = None
-    if category.get("parent_id"):
-        parent_doc = await db.categories.find_one({"id": category.get("parent_id")}, {"_id": 0})
-    parent_label = _pick_label(parent_doc.get("name")) if parent_doc else category.get("name")
-    children_docs = await db.categories.find({"parent_id": category_id}, {"_id": 0, "name": 1, "slug": 1}).to_list(length=200)
-    children = [(_pick_label(doc.get("name")) or doc.get("slug")) for doc in children_docs if doc]
+    parent_label = None
+    if category.parent_id:
+        parent = await session.get(Category, category.parent_id)
+        if parent:
+            parent_label = _pick_category_name(list(parent.translations or []), _pick_category_slug(parent.slug))
 
-    rows = _schema_to_csv_rows(schema)
-    rows.append(["hierarchy", "parent", parent_label or "", "", "", "", "", "", "", "", "", "", ""])
-    rows.append(["hierarchy", "children", ",".join(children), "", "", "", "", "", "", "", "", "", ""])
+    children_result = await session.execute(
+        select(Category).options(selectinload(Category.translations)).where(Category.parent_id == category.id)
+    )
+    children = children_result.scalars().all()
+    children_labels = [
+        _pick_category_name(list(child.translations or []), _pick_category_slug(child.slug))
+        for child in children
+    ]
+
+    version = await _get_schema_version_for_export_sql(session, category.id)
+    rows = _build_schema_export_rows(
+        schema,
+        _serialize_category_sql(category, include_schema=False, include_translations=False),
+        version,
+        {"parent": parent_label, "children": children_labels},
+    )
 
     output = io.StringIO()
     writer = csv.writer(output)
-    for row in rows:
-        writer.writerow(row)
-    csv_bytes = output.getvalue().encode("utf-8")
+    writer.writerows(rows)
+    output.seek(0)
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     filename = f"schema-{category_id}-v{version}-{timestamp}.csv"
 
-    audit_doc = await build_audit_entry(
-        event_type="schema_export_csv",
-        actor=current_user,
-        target_id=category_id,
-        target_type="category_schema",
-        country_code=category.get("country_code"),
-        details={"schema_version": version, "format": "csv"},
-        request=request,
-    )
-    audit_doc["action"] = "schema_export_csv"
-    audit_doc["user_agent"] = request.headers.get("user-agent")
-    await db.audit_logs.insert_one(audit_doc)
-
     return Response(
-        content=csv_bytes,
+        content=output.getvalue(),
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
     )
