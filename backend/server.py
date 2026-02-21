@@ -14217,11 +14217,11 @@ async def admin_dashboard_summary(
     revenue_mtd = None
     totals = {}
     if can_view_finance:
-        invoice_query = select(Invoice).where(Invoice.status == "paid", Invoice.created_at >= month_start)
+        invoice_query = select(AdminInvoice).where(AdminInvoice.status == "paid", AdminInvoice.created_at >= month_start)
         invoices = (await session.execute(invoice_query)).scalars().all()
         for inv in invoices:
             currency = inv.currency or "UNKNOWN"
-            amount = float(inv.total_amount or 0)
+            amount = float(inv.amount_total or 0)
             totals[currency] = totals.get(currency, 0) + amount
         revenue_mtd = sum(totals.values())
 
