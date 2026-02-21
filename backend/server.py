@@ -2871,7 +2871,7 @@ async def verify_email(
         raise HTTPException(status_code=400, detail="Kod geçersiz")
 
     if user.is_verified:
-        return VerifyEmailResponse(status="already_verified", remaining_attempts=EMAIL_VERIFICATION_MAX_ATTEMPTS)
+        raise HTTPException(status_code=400, detail="Zaten doğrulanmış")
 
     now = datetime.now(timezone.utc)
     blocked_until = _email_verification_block_expires_at(user)
