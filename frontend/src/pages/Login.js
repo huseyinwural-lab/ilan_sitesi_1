@@ -117,15 +117,14 @@ export default function Login({ portalContext = 'account' }) {
             className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900"
             data-testid="login-info-banner"
           >
-            <strong>MarketListing</strong> platformuna Türkiye dışından erişmek için giriş yapmanız gerekmektedir.
-            Hesabınız yoksa ücretsiz hesap açabilirsiniz.
+            Avrupa'nın en yeni ve geniş ilan platformu <strong>Annoncia</strong>'ya Hoşgeldiniz. Hesabınız yoksa ücretsiz hesap açabilirsiniz.
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-lg border p-8" data-testid="login-card">
+        <div className="bg-white rounded-lg shadow-lg border p-8 text-slate-900" data-testid="login-card">
           <div className="text-center mb-8" data-testid="login-header">
             <h1 className="text-2xl font-bold tracking-tight">Giriş yap</h1>
-            <p className="text-muted-foreground text-sm mt-2">Hesabınıza giriş yapın.</p>
+            <p className="text-slate-600 text-sm mt-2">Hesabınıza giriş yapın.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6" data-testid="login-form">
