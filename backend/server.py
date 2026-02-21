@@ -190,6 +190,31 @@ class DealerRegisterPayload(BaseModel):
     preferred_language: Optional[str] = "tr"
 
 
+class RegisterResponse(BaseModel):
+    user: UserResponse
+    debug_code: Optional[str] = None
+
+
+class VerifyEmailPayload(BaseModel):
+    email: EmailStr
+    code: str = Field(..., min_length=6, max_length=6)
+
+
+class VerifyEmailResponse(BaseModel):
+    status: str
+    remaining_attempts: int
+
+
+class ResendVerificationPayload(BaseModel):
+    email: EmailStr
+
+
+class ResendVerificationResponse(BaseModel):
+    status: str
+    cooldown_seconds: int
+    debug_code: Optional[str] = None
+
+
 class UserResponse(BaseModel):
     id: str
     email: str
