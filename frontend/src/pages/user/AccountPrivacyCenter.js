@@ -12,7 +12,7 @@ export default function AccountPrivacyCenter() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch(`${API}/users/me`, {
+      const res = await fetch(`${API}/v1/users/me/profile`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
       });
       if (!res.ok) return;
