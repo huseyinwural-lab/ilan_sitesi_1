@@ -1834,6 +1834,83 @@ def _parse_country_codes(value: Optional[str]) -> Optional[List[str]]:
     codes = [code.strip().upper() for code in value.split(",") if code.strip()]
     return codes or None
 
+async def _build_country_compare_payload_sql(
+    session: AsyncSession,
+    current_user: dict,
+    period: str,
+    start_date: Optional[str],
+    end_date: Optional[str],
+    sort_by: Optional[str],
+    sort_dir: Optional[str],
+    selected_codes: Optional[List[str]],
+) -> dict:
+    codes = [code.upper() for code in (selected_codes or [])]
+    if not codes:
+        active_countries = (
+            await session.execute(select(Country).where(Country.is_enabled.is_(True)))
+        ).scalars().all()
+        codes = [c.code for c in active_countries]
+
+    items = []
+    for code in codes:
+        total_listings = (
+            await session.execute(
+                select(func.count()).select_from(Listing).where(Listing.country == code)
+            )
+        ).scalar_one()
+        published = (
+            await session.execute(
+                select(func.count()).select_from(Listing).where(
+                    Listing.country == code,
+                    Listing.status == "published",
+                )
+            )
+        ).scalar_one()
+        active_dealers = (
+            await session.execute(
+                select(func.count()).select_from(SqlUser).where(
+                    SqlUser.country_code == code,
+                    SqlUser.role == "dealer",
+                    SqlUser.is_active.is_(True),
+                )
+            )
+        ).scalar_one()
+
+        items.append(
+            {
+                "country_code": code,
+                "total_listings": int(total_listings or 0),
+                "growth_total_listings_7d": 0,
+                "growth_total_listings_30d": 0,
+                "published_listings": int(published or 0),
+                "growth_published_7d": 0,
+                "growth_published_30d": 0,
+                "conversion_rate": 0,
+                "active_dealers": int(active_dealers or 0),
+                "growth_active_dealers_7d": 0,
+                "growth_active_dealers_30d": 0,
+                "dealer_density": 0,
+                "revenue_eur": 0,
+                "growth_revenue_7d": 0,
+                "growth_revenue_30d": 0,
+                "revenue_mtd_growth_pct": 0,
+                "sla_pending_24h": 0,
+                "sla_pending_48h": 0,
+                "risk_multi_login": 0,
+                "risk_pending_payments": 0,
+                "note": "",
+            }
+        )
+
+    if sort_by:
+        key = sort_by
+        reverse = (sort_dir or "desc").lower() == "desc"
+        items.sort(key=lambda item: item.get(key) or 0, reverse=reverse)
+
+    return {"items": items, "period": period, "start_date": start_date, "end_date": end_date}
+
+
+
 
 def _dashboard_cache_key(role: str, country_codes: Optional[List[str]], trend_days: int) -> str:
     trend_label = f"trend{trend_days}"
