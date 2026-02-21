@@ -2551,7 +2551,7 @@ async def health_db():
         }
     except Exception:
         return JSONResponse(
-            status_code=503,
+            status_code=200,
             content={
                 "status": "degraded",
                 "database": "postgres",
