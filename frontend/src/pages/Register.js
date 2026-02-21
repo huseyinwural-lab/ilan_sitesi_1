@@ -273,19 +273,43 @@ export default function Register({ portalContext = 'account' }) {
 
               <div className="space-y-2" data-testid="register-country-field">
                 <label className="text-sm font-medium" htmlFor="register-country">Ülke</label>
-                <select
-                  id="register-country"
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="w-full h-11 rounded-md border px-3 text-sm"
-                  data-testid="register-country"
-                >
-                  {countries.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {resolveCountryLabel(country)}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative" data-testid="register-country-dropdown">
+                  <button
+                    type="button"
+                    id="register-country"
+                    onClick={() => setCountryOpen((prev) => !prev)}
+                    className="w-full h-11 rounded-md border px-3 text-sm flex items-center justify-between"
+                    data-testid="register-country-button"
+                  >
+                    <span data-testid="register-country-selected">
+                      {resolveCountryLabel(selectedCountry) || 'Ülke seçin'}
+                    </span>
+                    <span className="text-slate-400">▾</span>
+                  </button>
+                  {countryOpen && (
+                    <div
+                      className="absolute z-10 mt-2 w-full max-h-60 overflow-auto rounded-md border bg-white shadow-lg"
+                      data-testid="register-country-menu"
+                    >
+                      {countries.map((country) => (
+                        <button
+                          type="button"
+                          key={country.code}
+                          onClick={() => {
+                            setCountryCode(country.code);
+                            setCountryOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-muted ${
+                            countryCode === country.code ? 'bg-muted' : ''
+                          }`}
+                          data-testid={`register-country-option-${country.code.toLowerCase()}`}
+                        >
+                          {resolveCountryLabel(country)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {countryLoading && (
                   <p className="text-xs text-slate-500" data-testid="register-country-loading">
                     Ülkeler yükleniyor...
