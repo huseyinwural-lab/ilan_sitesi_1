@@ -211,6 +211,11 @@ class ResendVerificationResponse(BaseModel):
     debug_code: Optional[str] = None
 
 
+class EmailVerifyHelpPayload(BaseModel):
+    email: Optional[EmailStr] = None
+    reason: Optional[str] = "email_verification"
+
+
 class UserResponse(BaseModel):
     id: str
     email: str
