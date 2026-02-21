@@ -339,7 +339,7 @@ def _normalize_notification_prefs(payload: Optional[Dict[str, Any]]) -> Dict[str
     }
 
 
-def _build_listing_snapshot(listing: Optional[dict]) -> dict:
+def _build_listing_snapshot(listing) -> dict:
     if not listing:
         return {
             "listing_id": None,
@@ -348,6 +348,23 @@ def _build_listing_snapshot(listing: Optional[dict]) -> dict:
             "listing_image": None,
             "listing_location": None,
         }
+
+    if isinstance(listing, Listing):
+        price_label = None
+        if listing.price is not None:
+            price_label = f"{listing.currency} {listing.price}"
+        image = None
+        if listing.images:
+            image = listing.images[0]
+        location_label = listing.city or listing.country
+        return {
+            "listing_id": str(listing.id),
+            "listing_title": listing.title,
+            "listing_price": price_label,
+            "listing_image": image,
+            "listing_location": location_label,
+        }
+
     price = listing.get("price") or {}
     amount = price.get("amount")
     currency = price.get("currency_primary") or "EUR"
