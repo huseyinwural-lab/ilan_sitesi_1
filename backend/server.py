@@ -13623,10 +13623,10 @@ async def _dashboard_kpis(db, effective_countries: Optional[List[str]], include_
             conditions_base.append(AdminInvoice.country_code.in_(effective_countries))
 
         today_revenue_total, today_revenue_totals = await _dashboard_invoice_totals(
-            [*conditions_base, AdminInvoice.paid_at e= today_start]
+            [*conditions_base, AdminInvoice.paid_at >= today_start]
         )
         week_revenue_total, week_revenue_totals = await _dashboard_invoice_totals(
-            [*conditions_base, AdminInvoice.paid_at e= week_start]
+            [*conditions_base, AdminInvoice.paid_at >= week_start]
         )
 
     return {
