@@ -5062,20 +5062,15 @@ async def get_campaign_detail(
 
     data = _campaign_to_dict(campaign)
 
-    db = request.app.state.db
-    if db is not None:
-        audit_items = (
-            await db.audit_logs.find(
-                {"resource_type": "campaign", "resource_id": campaign_id},
-                {"_id": 0},
-            )
-            .sort("created_at", -1)
+    audit_rows = (
+        await session.execute(
+            select(AuditLog)
+            .where(AuditLog.resource_type == "campaign", AuditLog.resource_id == campaign_id)
+            .order_by(desc(AuditLog.created_at))
             .limit(20)
-            .to_list(length=20)
         )
-        data["audit"] = audit_items
-    else:
-        data["audit"] = []
+    ).scalars().all()
+    data["audit"] = [_audit_log_to_dict(row) for row in audit_rows]
 
     return data
 
