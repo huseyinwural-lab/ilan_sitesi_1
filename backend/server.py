@@ -10898,6 +10898,7 @@ async def admin_update_plan(
         Plan.country_scope == scope_value,
         Plan.country_code == country_value,
         Plan.slug == slug_value,
+        Plan.period == period_value,
         Plan.id != plan.id,
     )
     existing = (await session.execute(exists_query)).scalar_one_or_none()
