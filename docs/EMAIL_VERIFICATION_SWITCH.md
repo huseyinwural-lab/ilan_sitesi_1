@@ -4,9 +4,9 @@
 Email verification akışını **prod‑ready** hale getirmek: debug/mock kodu kaldırmak, gerçek token modeli + expiry enforcement eklemek.
 
 ## Mevcut Durum
-- Debug code sadece `APP_ENV != prod` iken response’a ekleniyor.
-- Token bilgisi `users` tablosunda `email_verification_code_hash` + `email_verification_expires_at` alanlarında tutuluyor.
-- TTL: 10 dk (EMAIL_VERIFICATION_TTL_MINUTES=10).
+- `debug_code` response’tan kaldırıldı (mock yok).
+- Tokenlar `email_verification_tokens` tablosunda tutuluyor (hash + expires_at + consumed_at).
+- TTL: 15 dk (EMAIL_VERIFICATION_TTL_MINUTES=15).
 
 ## Hedef (ADR-FINAL-05)
 - Debug/mock **tamamen kaldırılacak**.
