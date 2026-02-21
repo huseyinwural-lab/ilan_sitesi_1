@@ -7717,7 +7717,7 @@ def _build_category_import_report_pdf(diff: dict, snapshot_payload: dict) -> byt
     elements.append(PageBreak())
     elements.append(Paragraph("Appendix: Import Snapshot", styles["Heading3"]))
     snapshot_text = json.dumps(snapshot_payload, ensure_ascii=False, indent=2)
-    elements.append(Preformatted(snapshot_text, styles["Code"]))
+    elements.append(Preformatted(snapshot_text, styles["CodeSmall"]))
 
     doc.build(elements)
     pdf_bytes = buffer.getvalue()
