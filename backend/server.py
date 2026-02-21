@@ -162,6 +162,7 @@ _failed_login_block_audited: Dict[str, bool] = {}
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    totp_code: Optional[str] = None
 
 
 class ConsumerRegisterPayload(BaseModel):
