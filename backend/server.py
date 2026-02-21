@@ -2896,6 +2896,12 @@ async def register_consumer(
     try:
         session.add(user)
         await session.flush()
+        await _get_or_create_consumer_profile(
+            session,
+            user,
+            language=payload.preferred_language,
+            country_code=country_code,
+        )
         verification_code = await _issue_email_verification_code(session, user, request)
         _send_verification_email(email, verification_code, payload.preferred_language)
         session.add(UserCredential(user_id=user.id, provider="password", password_hash=hashed_password))
