@@ -7461,6 +7461,17 @@ def _parse_import_payload(content: bytes, file_type: str) -> list[dict]:
 
 
 def _diff_categories(import_items: list[dict], existing: list[Category]) -> dict:
+    def _change_type(before: Any, after: Any) -> str:
+        empty_before = before in (None, "", [], {})
+        empty_after = after in (None, "", [], {})
+        if empty_before and not empty_after:
+            return "added"
+        if not empty_before and empty_after:
+            return "removed"
+        if before != after:
+            return "updated"
+        return "unchanged"
+
     existing_map: Dict[str, Category] = {}
     existing_parent_map: Dict[str, Optional[str]] = {}
     for category in existing:
@@ -7485,50 +7496,126 @@ def _diff_categories(import_items: list[dict], existing: list[Category]) -> dict
             creates.append(item)
             continue
 
-        changes = {}
+        fields = []
+        changed_count = 0
+
         translation_map = _category_translation_map(list(existing_category.translations or []))
         name_map = item.get("name") or {}
         for lang in ("tr", "en", "de"):
             old_name = (translation_map.get(lang) or {}).get("name")
-            new_name = name_map.get(lang)
-            if new_name and new_name != old_name:
-                changes[f"name_{lang}"] = {"from": old_name, "to": new_name}
+            new_name = name_map.get(lang) if name_map.get(lang) is not None else old_name
+            change_type = _change_type(old_name, new_name)
+            if change_type != "unchanged":
+                changed_count += 1
+            fields.append({
+                "field_name": f"name_{lang}",
+                "before_value": old_name,
+                "after_value": new_name,
+                "change_type": change_type,
+            })
 
         parent_slug = existing_parent_map.get(str(existing_category.id))
-        if item.get("parent_slug") != parent_slug:
-            changes["parent_slug"] = {"from": parent_slug, "to": item.get("parent_slug")}
+        new_parent_slug = item.get("parent_slug")
+        change_type = _change_type(parent_slug, new_parent_slug)
+        if change_type != "unchanged":
+            changed_count += 1
+        fields.append({
+            "field_name": "parent_slug",
+            "before_value": parent_slug,
+            "after_value": new_parent_slug,
+            "change_type": change_type,
+        })
 
-        if item.get("country_code") != existing_category.country_code:
-            changes["country_code"] = {"from": existing_category.country_code, "to": item.get("country_code")}
+        change_type = _change_type(existing_category.country_code, item.get("country_code"))
+        if change_type != "unchanged":
+            changed_count += 1
+        fields.append({
+            "field_name": "country_code",
+            "before_value": existing_category.country_code,
+            "after_value": item.get("country_code"),
+            "change_type": change_type,
+        })
 
         allowed_existing = sorted(existing_category.allowed_countries or [])
         allowed_new = sorted(item.get("allowed_countries") or [])
-        if allowed_existing != allowed_new:
-            changes["allowed_countries"] = {"from": allowed_existing, "to": allowed_new}
+        change_type = _change_type(allowed_existing, allowed_new)
+        if change_type != "unchanged":
+            changed_count += 1
+        fields.append({
+            "field_name": "allowed_countries",
+            "before_value": allowed_existing,
+            "after_value": allowed_new,
+            "change_type": change_type,
+        })
 
-        if int(item.get("sort_order") or 0) != int(existing_category.sort_order or 0):
-            changes["sort_order"] = {"from": existing_category.sort_order, "to": item.get("sort_order")}
+        before_sort = int(existing_category.sort_order or 0)
+        after_sort = int(item.get("sort_order") or 0)
+        change_type = _change_type(before_sort, after_sort)
+        if change_type != "unchanged":
+            changed_count += 1
+        fields.append({
+            "field_name": "sort_order",
+            "before_value": before_sort,
+            "after_value": after_sort,
+            "change_type": change_type,
+        })
 
-        if _coerce_bool(item.get("active_flag"), True) != bool(existing_category.is_enabled):
-            changes["active_flag"] = {"from": existing_category.is_enabled, "to": item.get("active_flag")}
+        before_active = bool(existing_category.is_enabled)
+        after_active = _coerce_bool(item.get("active_flag"), True)
+        change_type = _change_type(before_active, after_active)
+        if change_type != "unchanged":
+            changed_count += 1
+        fields.append({
+            "field_name": "active_flag",
+            "before_value": before_active,
+            "after_value": after_active,
+            "change_type": change_type,
+        })
 
         if item.get("form_schema") is not None:
             existing_schema = _normalize_category_schema(existing_category.form_schema) if existing_category.form_schema else None
             incoming_schema = _normalize_category_schema(item.get("form_schema"))
-            if json.dumps(existing_schema, sort_keys=True) != json.dumps(incoming_schema, sort_keys=True):
-                changes["form_schema"] = {"from": "existing", "to": "incoming"}
+            change_type = "updated" if json.dumps(existing_schema, sort_keys=True) != json.dumps(incoming_schema, sort_keys=True) else "unchanged"
+            if change_type != "unchanged":
+                changed_count += 1
+            fields.append({
+                "field_name": "form_schema",
+                "before_value": "existing" if existing_schema else None,
+                "after_value": "incoming" if change_type != "unchanged" else ("existing" if existing_schema else None),
+                "change_type": change_type,
+            })
+        else:
+            fields.append({
+                "field_name": "form_schema",
+                "before_value": "existing" if existing_category.form_schema else None,
+                "after_value": "existing" if existing_category.form_schema else None,
+                "change_type": "unchanged",
+            })
 
-        if changes:
-            updates.append({"slug": slug_key, "changes": changes})
+        if changed_count > 0:
+            updates.append({
+                "slug": slug_key,
+                "fields": fields,
+                "changed_fields": changed_count,
+            })
 
     deletes = []
+    warnings = []
     for category in existing:
         slug_key = (_pick_category_slug(category.slug) or "").lower()
         if slug_key and slug_key not in incoming_keys and not category.is_deleted:
+            is_root = category.parent_id is None
             deletes.append({
                 "slug": slug_key,
                 "name": _pick_category_name(list(category.translations or []), _pick_category_slug(category.slug)),
+                "is_root": is_root,
             })
+            if is_root:
+                warnings.append({
+                    "type": "critical",
+                    "message": f"Root kategori siliniyor: {slug_key}",
+                    "slug": slug_key,
+                })
 
     return {
         "summary": {
@@ -7540,6 +7627,7 @@ def _diff_categories(import_items: list[dict], existing: list[Category]) -> dict
         "creates": creates,
         "updates": updates,
         "deletes": deletes,
+        "warnings": warnings,
     }
 
 
@@ -11190,6 +11278,7 @@ async def admin_import_categories_dry_run(
     session: AsyncSession = Depends(get_sql_session),
 ):
     content = _read_import_file(file)
+    file_hash = hashlib.sha256(content).hexdigest()
     items = _parse_import_payload(content, format.lower())
 
     result = await session.execute(select(Category).options(selectinload(Category.translations)))
@@ -11206,10 +11295,12 @@ async def admin_import_categories_dry_run(
             "format": format,
             "filename": file.filename,
             "summary": diff.get("summary"),
+            "hash": file_hash,
         },
         request,
     )
     await session.commit()
+    diff["dry_run_hash"] = file_hash
     return diff
 
 
@@ -11222,6 +11313,9 @@ async def admin_import_categories_commit(
     session: AsyncSession = Depends(get_sql_session),
 ):
     content = _read_import_file(file)
+    file_hash = hashlib.sha256(content).hexdigest()
+    if not dry_run_hash or dry_run_hash != file_hash:
+        raise HTTPException(status_code=409, detail="Dry-run doğrulaması gerekli")
     items = _parse_import_payload(content, format.lower())
 
     result = await session.execute(select(Category).options(selectinload(Category.translations)))
