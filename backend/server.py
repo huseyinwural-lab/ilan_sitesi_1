@@ -86,6 +86,9 @@ from app.models.category import Category, CategoryTranslation
 from app.models.category_schema_version import CategorySchemaVersion
 from app.models.core import AuditLog
 from app.models.dealer_listing import DealerListing
+from app.models.moderation import Listing
+from app.models.analytics import ListingView
+from app.models.messaging import Conversation, Message
 
 
 from fastapi import UploadFile, File
@@ -9423,6 +9426,88 @@ async def dealer_create_listing(
     limit = DEALER_LISTING_QUOTA_LIMIT
     remaining = max(0, limit - used)
     return {"item": _dealer_listing_to_dict(listing), "quota": {"limit": limit, "used": used, "remaining": remaining}}
+
+
+@api_router.get("/dealer/dashboard/metrics")
+async def dealer_dashboard_metrics(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        dealer_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="dealer invalid")
+
+    active_count = (
+        await session.execute(
+            select(func.count()).select_from(DealerListing).where(
+                DealerListing.dealer_id == dealer_uuid,
+                DealerListing.status == "active",
+            )
+        )
+    ).scalar_one()
+
+    total_count = (
+        await session.execute(
+            select(func.count()).select_from(DealerListing).where(DealerListing.dealer_id == dealer_uuid)
+        )
+    ).scalar_one()
+
+    quota_limit = DEALER_LISTING_QUOTA_LIMIT
+    remaining = max(0, quota_limit - int(active_count or 0))
+    utilization = (int(active_count or 0) / quota_limit * 100) if quota_limit else 0
+    quota_warning = utilization >= 80
+
+    views_payload = {"count": 0, "gated": False}
+    try:
+        views_count = (
+            await session.execute(
+                select(func.count())
+                .select_from(ListingView)
+                .join(Listing, ListingView.listing_id == Listing.id)
+                .where(Listing.dealer_id == dealer_uuid)
+            )
+        ).scalar_one()
+        views_payload["count"] = int(views_count or 0)
+    except Exception:
+        views_payload = {"count": 0, "gated": True}
+
+    messages_payload = {"count": 0, "gated": False}
+    try:
+        msg_count = (
+            await session.execute(
+                select(func.count())
+                .select_from(Message)
+                .join(Conversation, Message.conversation_id == Conversation.id)
+                .where(Conversation.seller_id == dealer_uuid)
+            )
+        ).scalar_one()
+        messages_payload["count"] = int(msg_count or 0)
+    except Exception:
+        messages_payload = {"count": 0, "gated": True}
+
+    subscription_payload = {
+        "name": "N/A",
+        "status": "gated",
+        "current_period_end": None,
+        "warning": False,
+    }
+
+    return {
+        "active_listings": int(active_count or 0),
+        "total_listings": int(total_count or 0),
+        "quota": {
+            "limit": quota_limit,
+            "used": int(active_count or 0),
+            "remaining": remaining,
+            "utilization": utilization,
+            "warning": quota_warning,
+        },
+        "views": views_payload,
+        "messages": messages_payload,
+        "subscription": subscription_payload,
+    }
 
 
 def _resolve_payment_status(value: Optional[str]) -> str:
