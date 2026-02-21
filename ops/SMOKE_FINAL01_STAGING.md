@@ -1,5 +1,9 @@
 # SMOKE_FINAL01_STAGING
 
+## Run (tek komut)
+- `bash /app/scripts/smoke_final01_staging.sh`
+- Output: `/app/ops/SMOKE_FINAL01_STAGING_EVIDENCE.md`
+
 ## Amaç
 Staging ortamında hızlı smoke testi: **payment → approve → search görünür**
 
