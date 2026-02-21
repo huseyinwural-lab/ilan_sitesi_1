@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 
-import UserPanelLayout from './layouts/UserPanelLayout';
+import AccountLayout from './layouts/AccountLayout';
 import MyListings from './pages/user/MyListings';
 import WizardContainer from './pages/user/wizard/WizardContainer';
 import AccountDashboard from './pages/user/AccountDashboard';
