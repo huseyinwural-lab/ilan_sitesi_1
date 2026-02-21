@@ -6,7 +6,7 @@ Durum: Mongo devreden çıkarıldı (MONGO_ENABLED=false). Aşağıdaki endpoint
 ## 1) Mongo Bağımlı Endpoint Envanteri
 
 ### Public / Portal
-- **/api/categories** (public + admin) → Mongo: `categories` koleksiyonu
+- **/api/categories** → SQL (Category + CategoryTranslation)
 - **/api/menu/top-items** → Mongo: `menu_top_items` (şu an boş liste döner)
 - **/api/v1/listings/*** → Mongo: `vehicle_listings` koleksiyonu
 - **/api/v1/favorites** → Mongo: `favorites` koleksiyonu
