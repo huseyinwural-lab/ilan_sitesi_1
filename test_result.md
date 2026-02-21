@@ -6706,3 +6706,130 @@ All required data-testids present and functional:
 
 ---
 
+
+## Login Page Text Changes Verification (Feb 20, 2026) ✅ COMPLETE PASS
+
+### Test Summary
+Verified all 5 requirements from review request for login page text changes and banner display across /login, /dealer/login, and /admin/login.
+
+### Test Flow Executed:
+1. ✅ Navigate to /login → Verify banner text and visibility
+2. ✅ Verify all text elements visible on white card
+3. ✅ Verify reCAPTCHA line removed
+4. ✅ Navigate to /dealer/login → Verify same banner
+5. ✅ Navigate to /admin/login → Verify NO banner
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. /login Banner Text**: ✅ VERIFIED
+  - **Banner Visible**: Yes (data-testid="login-info-banner")
+  - **Banner Text**: "Avrupa'nın en yeni ve geniş ilan platformu Annoncia'ya Hoşgeldiniz. Hesabınız yoksa ücretsiz hesap açabilirsiniz."
+  - **Text Match**: EXACT MATCH with expected text
+  - **Banner Styling**: Amber background (border-amber-200 bg-amber-50)
+  - Implementation: Login.js lines 115-122
+
+**2. White Card Text Visibility**: ✅ ALL TEXT VISIBLE
+  - **White Card**: data-testid="login-card" present with bg-white class
+  - **All Elements Visible on White Card**:
+    - ✅ Header: "Giriş yap" + subtitle "Hesabınıza giriş yapın."
+    - ✅ Portal selector: "Giriş türü" label with Bireysel/Ticari options
+    - ✅ Email field: "E-posta" label with input field
+    - ✅ Password field: "Şifre" label with input field and toggle
+    - ✅ Remember me: "Oturumum açık kalsın" checkbox
+    - ✅ Submit button: "E-posta ile giriş yap"
+    - ✅ Register link: "Henüz hesabın yok mu? Hesap aç"
+    - ✅ Forgot password: "Şifremi unuttum" link
+  - All text is clearly readable on white background
+  - Implementation: Login.js lines 124-344
+
+**3. reCAPTCHA Removed**: ✅ CONFIRMED
+  - **Page Content Scan**: No "recaptcha" or "grecaptcha" references found
+  - **Visual Check**: No reCAPTCHA widget visible on page
+  - **Code Review**: No reCAPTCHA-related code in Login.js
+  - reCAPTCHA line successfully removed as requested
+
+**4. /dealer/login Banner**: ✅ SAME BANNER VERIFIED
+  - **Banner Visible**: Yes (data-testid="login-info-banner")
+  - **Banner Text**: "Avrupa'nın en yeni ve geniş ilan platformu Annoncia'ya Hoşgeldiniz. Hesabınız yoksa ücretsiz hesap açabilirsiniz."
+  - **Text Match**: EXACT MATCH with /login banner text
+  - **Portal Default**: "Ticari" option selected by default
+  - **Background**: Same amber background as /login
+  - Implementation: DealerLogin.jsx passes portalContext="dealer" to Login.js
+
+**5. /admin/login No Banner**: ✅ CORRECT
+  - **Banner Element Count**: 0 (banner not rendered)
+  - **Banner Visibility**: Not present in DOM
+  - **Background**: Gradient background (bg-gradient-to-br from-background via-background to-muted/30)
+  - **Different Style**: Admin login correctly uses different styling (no amber background, no banner)
+  - **Portal Selector**: Hidden on admin login (no Bireysel/Ticari selector)
+  - Implementation: BackofficeLogin.jsx passes portalContext="admin" to Login.js, which sets isAdminLogin=true
+
+### Implementation Details:
+
+**Banner Conditional Rendering** (Login.js lines 115-122):
+```jsx
+{!isAdminLogin && (
+  <div
+    className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900"
+    data-testid="login-info-banner"
+  >
+    Avrupa'nın en yeni ve geniş ilan platformu <strong>Annoncia</strong>'ya Hoşgeldiniz. Hesabınız yoksa ücretsiz hesap açabilirsiniz.
+  </div>
+)}
+```
+
+**Portal Context Logic**:
+- PublicLogin.jsx → `portalContext="account"` → Shows banner, Bireysel default
+- DealerLogin.jsx → `portalContext="dealer"` → Shows banner, Ticari default
+- BackofficeLogin.jsx → `portalContext="admin"` → NO banner, NO portal selector
+
+### Screenshots Captured:
+1. **login-page-verification.png**: /login with banner and all text elements visible on white card
+2. **dealer-login-page-verification.png**: /dealer/login with same banner and Ticari option selected
+3. **admin-login-page-verification.png**: /admin/login WITHOUT banner, gradient background
+
+### Console Errors Analysis:
+- ✅ **No Console Errors**: No JavaScript errors detected
+- ✅ **No Network Errors**: All resources loaded successfully
+- ✅ **Clean Execution**: All pages rendered without errors
+
+### Data-testids Verified:
+All required data-testids present and functional:
+- ✅ `login-page`: Page container
+- ✅ `login-info-banner`: Banner element (on /login and /dealer/login only)
+- ✅ `login-card`: White card container
+- ✅ `login-header`: Header section
+- ✅ `login-portal-label`: Portal selector label
+- ✅ `login-portal-account`: Bireysel radio button
+- ✅ `login-portal-dealer`: Ticari radio button
+- ✅ `login-email-field`: Email field container
+- ✅ `login-password-field`: Password field container
+- ✅ `login-remember-me`: Remember me checkbox
+- ✅ `login-submit`: Submit button
+- ✅ `login-register`: Register link text
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (5/5 core requirements verified)
+- **Banner Text**: ✅ CORRECT on /login and /dealer/login
+- **Banner Absence**: ✅ CORRECT on /admin/login
+- **White Card Text**: ✅ ALL VISIBLE
+- **reCAPTCHA**: ✅ REMOVED
+- **No Errors**: ✅ CONFIRMED
+
+### Final Status:
+- **Overall Result**: ✅ **PASS** - Login page text changes 100% successful
+- **Banner Implementation**: ✅ WORKING as designed across all three login pages
+- **Text Visibility**: ✅ ALL ELEMENTS readable on white card
+- **reCAPTCHA Cleanup**: ✅ COMPLETE
+- **UI Consistency**: ✅ MAINTAINED (proper styling for each portal)
+- **Production Ready**: ✅ CONFIRMED
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 20, 2026
+- **Message**: Login page text changes verification SUCCESSFULLY COMPLETED. All 5 requirements from review request verified and passing (100% success rate). 1) /login banner displays exact text "Avrupa'nın en yeni ve geniş ilan platformu Annoncia'ya Hoşgeldiniz. Hesabınız yoksa ücretsiz hesap açabilirsiniz." - VERIFIED. 2) All text elements on white card are visible and readable (header, portal selector, email/password fields, remember me, submit button, register link) - VERIFIED. 3) reCAPTCHA line removed - CONFIRMED (no references found in page content or code). 4) /dealer/login shows same banner with same text - VERIFIED. 5) /admin/login correctly has NO banner and uses gradient background instead - VERIFIED. Screenshots captured for all three pages. UI changes working perfectly as designed. No console errors detected. Focus was on UI verification as requested (backend auth not tested due to DB 520 note).
+
+---
+
