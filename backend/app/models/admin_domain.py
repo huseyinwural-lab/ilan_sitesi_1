@@ -48,7 +48,7 @@ class DealerApplicationDoc(BaseModel):
 # Finance: Plans / Invoices / Tax rates
 # ===============
 
-InvoiceStatus = Literal["unpaid", "paid", "cancelled"]
+InvoiceStatus = Literal["draft", "issued", "paid", "void", "refunded"]
 
 
 class InvoiceDoc(BaseModel):
