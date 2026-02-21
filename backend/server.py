@@ -2518,7 +2518,7 @@ STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
 
 EMAIL_PROVIDER = (os.environ.get("EMAIL_PROVIDER") or "mock").lower()
-EMAIL_PROVIDER_OPTIONS = {"mock", "smtp", "sendgrid"}
+EMAIL_PROVIDER_OPTIONS = {"mock", "sendgrid"}
 SMTP_HOST = os.environ.get("SMTP_HOST")
 SMTP_PORT_RAW = os.environ.get("SMTP_PORT")
 SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
