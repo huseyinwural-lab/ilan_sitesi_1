@@ -4945,51 +4945,35 @@ async def create_campaign(
 
     data = _normalize_campaign_payload(payload)
 
-    created_by_admin_id = None
-    if current_user.get("id"):
-        try:
-            created_by_admin_id = uuid.UUID(current_user.get("id"))
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail="Invalid admin id") from exc
-
     now = datetime.now(timezone.utc)
     campaign = Campaign(
         id=uuid.uuid4(),
-        type=data["type"],
-        country_scope=data["country_scope"],
-        country_code=data["country_code"],
         name=data["name"],
-        description=data["description"],
         status=data["status"],
         start_at=data["start_at"],
         end_at=data["end_at"],
-        priority=data["priority"],
-        duration_days=data["duration_days"],
-        quota_count=data["quota_count"],
-        price_amount=data["price_amount"],
-        currency_code=data["currency_code"],
-        created_by_admin_id=created_by_admin_id,
+        country_code=data["country_code"],
+        budget_amount=data["budget_amount"],
+        budget_currency=data["budget_currency"],
+        notes=data["notes"],
+        rules_json=data["rules_json"],
         created_at=now,
         updated_at=now,
     )
 
     session.add(campaign)
+    await _write_audit_log_sql(
+        session=session,
+        action="CAMPAIGN_CREATED",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="campaign",
+        resource_id=str(campaign.id),
+        metadata={"after": _campaign_to_dict(campaign)},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
     await session.commit()
     await session.refresh(campaign)
-
-    db = request.app.state.db
-    if db is not None:
-        audit_entry = await build_audit_entry(
-            event_type="CAMPAIGN_CREATED",
-            actor=current_user,
-            target_id=str(campaign.id),
-            target_type="campaign",
-            country_code=current_user.get("country_code"),
-            details={"after": _campaign_to_dict(campaign)},
-            request=request,
-        )
-        audit_entry["action"] = "CAMPAIGN_CREATED"
-        await db.audit_logs.insert_one(audit_entry)
 
     return _campaign_to_dict(campaign)
 
