@@ -27,7 +27,7 @@ from app.models.campaign import Campaign
 from app.models.plan import Plan
 from app.models.admin_invoice import AdminInvoice
 from app.models.payment import Payment, PaymentTransaction, PaymentEventLog
-from app.models.auth import Role, UserRole, UserCredential, RefreshToken
+from app.models.auth import Role, UserRole, UserCredential, RefreshToken, EmailVerificationToken
 from app.models.favorite import Favorite
 from app.models.support_message import SupportMessage
 from app.models.notification import Notification, UserDevice
