@@ -2853,7 +2853,7 @@ async def register_dealer(
     )
 
 
-@api_router.post("/auth/verify-email", response_model=VerifyEmailResponse)
+@api_router.post("/auth/verify-email", response_model=TokenResponse)
 async def verify_email(
     payload: VerifyEmailPayload,
     request: Request,
