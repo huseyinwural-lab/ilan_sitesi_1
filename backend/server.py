@@ -39,7 +39,7 @@ from emergentintegrations.payments.stripe.checkout import (
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import select, func, String, Text, DateTime, ForeignKey, desc, and_, or_
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, selectinload
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 import html
 
