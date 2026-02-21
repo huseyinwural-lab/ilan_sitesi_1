@@ -4102,8 +4102,7 @@ async def list_support_applications(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    applications_repo = _get_applications_repository(db, session)
+    applications_repo = _get_applications_repository(session)
 
     if not application_type:
         application_type = type_filter
