@@ -250,9 +250,17 @@ class UserProfileUpdatePayload(BaseModel):
     notification_prefs: Optional[Dict[str, Any]] = None
 
 
-class ChangePasswordPayload(BaseModel):
-    current_password: str
-    new_password: str
+class TwoFactorVerifyPayload(BaseModel):
+    code: str
+
+
+class AccountDeletePayload(BaseModel):
+    reason: Optional[str] = None
+
+
+class GDPRExportResponse(BaseModel):
+    status: str
+    data: Dict[str, Any]
 
 
 class MessageThreadCreatePayload(BaseModel):
