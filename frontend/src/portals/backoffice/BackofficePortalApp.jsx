@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 import AdminRouteGuard from '@/components/AdminRouteGuard';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/layouts/AdminLayout';
 import Dashboard from '@/pages/Dashboard';
 import FeatureFlags from '@/pages/FeatureFlags';
 import AdminUsersPage from '@/pages/admin/AdminUsers';
