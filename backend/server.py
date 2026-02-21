@@ -606,6 +606,37 @@ async def build_audit_entry(
     }
 
 
+async def _write_audit_log_sql(
+    session: AsyncSession,
+    action: str,
+    actor: dict,
+    resource_type: str,
+    resource_id: Optional[str],
+    metadata: Optional[dict],
+    request: Optional[Request],
+    country_code: Optional[str] = None,
+) -> AuditLog:
+    entry = AuditLog(
+        id=uuid.uuid4(),
+        user_id=_safe_uuid(actor.get("id")),
+        user_email=actor.get("email"),
+        action=action,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        old_values=None,
+        new_values=None,
+        metadata_info=metadata or {},
+        ip_address=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+        country_scope=country_code,
+        is_pii_scrubbed=False,
+        created_at=datetime.now(timezone.utc),
+    )
+    session.add(entry)
+    await session.flush()
+    return entry
+
+
 async def _ensure_admin_user(db):
     now_iso = datetime.now(timezone.utc).isoformat()
     admin_email = "admin@platform.com"
