@@ -15184,14 +15184,17 @@ async def get_vehicle_detail(listing_id: str, preview: bool = False, session: As
 
 
 @app.get("/media/listings/{listing_id}/{file}")
-async def public_vehicle_media(listing_id: str, file: str, request: Request):
-    db = request.app.state.db
-    listing = await get_vehicle_listing(db, listing_id)
-    if not listing or listing.get("status") != "published":
+async def public_vehicle_media(
+    listing_id: str,
+    file: str,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    listing_uuid = uuid.UUID(listing_id)
+    listing = await session.get(Listing, listing_uuid)
+    if not listing or listing.status != "published":
         raise HTTPException(status_code=404, detail="Not found")
 
-    # ensure file belongs to listing
-    media = listing.get("media") or []
+    media = _listing_media_meta(listing)
     if not any(m.get("file") == file for m in media):
         raise HTTPException(status_code=404, detail="Not found")
 
