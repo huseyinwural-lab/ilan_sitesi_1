@@ -5130,7 +5130,7 @@ async def list_campaigns(
 
     total_count = await session.scalar(select(func.count()).select_from(query.subquery())) or 0
     result = await session.execute(
-        query.order_by(desc(Campaign.current_period_start), desc(Campaign.updated_at)).offset(offset).limit(safe_limit)
+        query.order_by(desc(Campaign.start_at), desc(Campaign.updated_at)).offset(offset).limit(safe_limit)
     )
     rows = result.scalars().all()
 
