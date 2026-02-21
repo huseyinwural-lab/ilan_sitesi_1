@@ -1,0 +1,25 @@
+{
+  "name": "Test Category",
+  "slug": "test-category",
+  "parent_id": null,
+  "country_code": "DE",
+  "active_flag": true,
+  "hierarchy_complete": true,
+  "form_schema": {
+    "status": "draft",
+    "core_fields": {
+      "title": {"required": true, "min": 10, "max": 80},
+      "description": {"required": true, "min": 30, "max": 2000},
+      "price": {
+        "required": true,
+        "currency_primary": "EUR",
+        "currency_secondary": "CHF",
+        "range": {"min": 0, "max": 500000}
+      }
+    },
+    "dynamic_fields": [],
+    "detail_groups": [],
+    "modules": {"photos": {"enabled": true, "max_uploads": 10}}
+  },
+  "sort_order": 99
+}
