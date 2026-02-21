@@ -4184,6 +4184,12 @@ async def update_user_profile(
         update_payload["phone_e164"] = _normalize_phone_e164(payload.phone)
     if payload.locale is not None:
         update_payload["preferred_language"] = payload.locale.strip()
+    if payload.country_code is not None:
+        update_payload["country_code"] = payload.country_code.strip().upper()
+    if payload.display_name_mode is not None:
+        update_payload["display_name_mode"] = payload.display_name_mode.strip().lower()
+    if payload.marketing_consent is not None:
+        update_payload["marketing_consent"] = bool(payload.marketing_consent)
     if payload.notification_prefs is not None:
         update_payload["notification_prefs"] = _normalize_notification_prefs(payload.notification_prefs)
 
