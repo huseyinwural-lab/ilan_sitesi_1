@@ -10,6 +10,8 @@ import hashlib
 import secrets
 import logging
 import ssl
+import smtplib
+from email.message import EmailMessage
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
