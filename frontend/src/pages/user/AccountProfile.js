@@ -151,7 +151,74 @@ export default function AccountProfile() {
     }
   };
 
-  const handlePushSubscribe = async () => {
+  const handleTwoFactorSetup = async () => {
+    setTwoFactorMessage('');
+    try {
+      const res = await fetch(`${API}/users/me/2fa/setup`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+      });
+      if (!res.ok) {
+        throw new Error('2FA setup başarısız');
+      }
+      const data = await res.json();
+      setSetupData(data);
+      if (data.otpauth_url) {
+        const qrUrl = await QRCode.toDataURL(data.otpauth_url);
+        setQrDataUrl(qrUrl);
+      }
+      setTwoFactorMessage('Kurulum hazır. Doğrulama kodunu girin.');
+    } catch (err) {
+      setTwoFactorMessage('2FA kurulumu başarısız');
+    }
+  };
+
+  const handleTwoFactorVerify = async () => {
+    setTwoFactorMessage('');
+    try {
+      const res = await fetch(`${API}/users/me/2fa/verify`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: totpCode }),
+      });
+      if (!res.ok) {
+        throw new Error('Doğrulama başarısız');
+      }
+      setTwoFactorStatus({ enabled: true, configured: true });
+      setSetupData(null);
+      setQrDataUrl('');
+      setTotpCode('');
+      setTwoFactorMessage('2FA etkinleştirildi.');
+    } catch (err) {
+      setTwoFactorMessage('Doğrulama başarısız');
+    }
+  };
+
+  const handleTwoFactorDisable = async () => {
+    setTwoFactorMessage('');
+    try {
+      const res = await fetch(`${API}/users/me/2fa/disable`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: disableCode }),
+      });
+      if (!res.ok) {
+        throw new Error('Devre dışı başarısız');
+      }
+      setTwoFactorStatus({ enabled: false, configured: false });
+      setDisableCode('');
+      setTwoFactorMessage('2FA devre dışı bırakıldı.');
+    } catch (err) {
+      setTwoFactorMessage('2FA devre dışı bırakılamadı.');
+    }
+  };
+
     setPushMessage('');
     try {
       const permission = await Notification.requestPermission();
