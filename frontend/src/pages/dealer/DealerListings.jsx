@@ -151,28 +151,28 @@ export default function DealerListings() {
         </div>
       ) : (
         <div className="rounded-lg border bg-white overflow-hidden" data-testid="dealer-listings-table">
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr data-testid="dealer-listings-table-header">
-                <th className="text-left p-3" data-testid="dealer-listings-header-title">İlan</th>
-                <th className="text-left p-3" data-testid="dealer-listings-header-price">Fiyat</th>
-                <th className="text-left p-3" data-testid="dealer-listings-header-status">Durum</th>
-                <th className="text-left p-3" data-testid="dealer-listings-header-created">Oluşturma</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id} className="border-t" data-testid={`dealer-listings-row-${item.id}`}>
-                  <td className="p-3" data-testid={`dealer-listings-title-${item.id}`}>{item.title}</td>
-                  <td className="p-3" data-testid={`dealer-listings-price-${item.id}`}>{formatPrice(item.price)}</td>
-                  <td className="p-3" data-testid={`dealer-listings-status-${item.id}`}>{item.status}</td>
-                  <td className="p-3" data-testid={`dealer-listings-created-${item.id}`}>
-                    {item.created_at ? new Date(item.created_at).toLocaleDateString('tr-TR') : '-'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="grid grid-cols-4 gap-4 bg-muted text-sm font-medium px-3 py-2" data-testid="dealer-listings-table-header">
+            <div data-testid="dealer-listings-header-title">İlan</div>
+            <div data-testid="dealer-listings-header-price">Fiyat</div>
+            <div data-testid="dealer-listings-header-status">Durum</div>
+            <div data-testid="dealer-listings-header-created">Oluşturma</div>
+          </div>
+          <div className="divide-y" data-testid="dealer-listings-table-body">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="grid grid-cols-4 gap-4 px-3 py-3 text-sm"
+                data-testid={`dealer-listings-row-${item.id}`}
+              >
+                <div data-testid={`dealer-listings-title-${item.id}`}>{item.title}</div>
+                <div data-testid={`dealer-listings-price-${item.id}`}>{formatPrice(item.price)}</div>
+                <div data-testid={`dealer-listings-status-${item.id}`}>{item.status}</div>
+                <div data-testid={`dealer-listings-created-${item.id}`}>
+                  {item.created_at ? new Date(item.created_at).toLocaleDateString('tr-TR') : '-'}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
