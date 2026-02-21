@@ -545,7 +545,7 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
                             >
                               Pause
                             </button>
-                          ) : campaign.status !== 'archived' ? (
+                          ) : campaign.status !== 'ended' ? (
                             <button
                               type="button"
                               className="h-8 px-3 rounded-md border text-xs"
@@ -556,7 +556,7 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
                               Activate
                             </button>
                           ) : null}
-                          {campaign.status !== 'archived' && (
+                          {campaign.status !== 'ended' && (
                             <button
                               type="button"
                               className="h-8 px-3 rounded-md border text-xs"
