@@ -457,7 +457,7 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
                 <th className="p-3 text-left" data-testid={`${testIdPrefix}-header-name`}>Name</th>
                 <th className="p-3 text-left" data-testid={`${testIdPrefix}-header-status`}>Status</th>
                 <th className="p-3 text-left" data-testid={`${testIdPrefix}-header-type`}>Type</th>
-                <th className="p-3 text-left" data-testid={`${testIdPrefix}-header-scope`}>Scope</th>
+                <th className="p-3 text-left" data-testid={`${testIdPrefix}-header-scope`}>Country</th>
                 <th className="p-3 text-left" data-testid={`${testIdPrefix}-header-date`}>Start-End</th>
                 <th className="p-3 text-left" data-testid={`${testIdPrefix}-header-discount`}>Discount</th>
                 <th className="p-3 text-left" data-testid={`${testIdPrefix}-header-priority`}>Priority</th>
