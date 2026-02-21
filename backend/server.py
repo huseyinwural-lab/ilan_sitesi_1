@@ -15237,6 +15237,7 @@ def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
 
     make_value = payload.get("make_id")
     model_value = payload.get("model_id")
+    price_payload = core_fields.get("price") if isinstance(core_fields, dict) else None
     price_payload = price_payload or payload.get("price") or {}
     if price_payload:
         listing.price = price_payload.get("amount")
