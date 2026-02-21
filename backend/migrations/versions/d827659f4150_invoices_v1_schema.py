@@ -27,6 +27,8 @@ def upgrade() -> None:
     op.add_column("admin_invoices", sa.Column("provider_customer_id", sa.String(length=120), nullable=True))
     op.add_column("admin_invoices", sa.Column("meta_json", sa.JSON(), nullable=True))
 
+    op.alter_column("admin_invoices", "payment_status", existing_type=sa.String(length=20), type_=sa.String(length=40))
+
     op.alter_column("admin_invoices", "plan_id", existing_type=sa.dialects.postgresql.UUID(as_uuid=True), nullable=True)
     op.alter_column("admin_invoices", "country_code", existing_type=sa.String(length=10), nullable=True)
 
