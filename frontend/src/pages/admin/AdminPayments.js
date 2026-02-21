@@ -80,7 +80,7 @@ export default function AdminPaymentsPage() {
       <div className="flex items-start justify-between" data-testid="admin-payments-header">
         <div>
           <h1 className="text-2xl font-semibold" data-testid="admin-payments-title">Ödemeler</h1>
-          <p className="text-sm text-muted-foreground" data-testid="admin-payments-subtitle">Country: {urlCountry || 'Global'}</p>
+          <p className="text-sm text-muted-foreground" data-testid="admin-payments-subtitle">Status filtresi ile ödeme kayıtları.</p>
         </div>
       </div>
 
