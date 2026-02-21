@@ -118,6 +118,7 @@
 - **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
+- 2026-02-21: Dealer Listings FAZ-DL2 bulk actions (archive/soft delete/restore) + status filtre (default active) + bulk response failed count; evidence: /app/docs/DEALER_LISTINGS_BULK_EVIDENCE.md.
 - 2026-02-21: Dealer dashboard metrikleri (active listings + quota + views + messages + plan card) eklendi.
 - 2026-02-21: Dry-run PDF raporu (özet + field-level diff + kritik uyarılar + schema snapshot) eklendi.
 - 2026-02-21: Category import/export V1.1 (field-level diff + dry-run hash gating + critical warning banner + pagination).
