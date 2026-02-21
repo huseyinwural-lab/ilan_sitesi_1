@@ -2811,7 +2811,7 @@ async def register_dealer(
         session.add(user)
         await session.flush()
         slug = await _generate_unique_dealer_slug(session, payload.company_name)
-        verification_code = _issue_email_verification_code(user)
+        await _issue_email_verification_code(session, user, request)
         dealer_profile = DealerProfile(
             user_id=user.id,
             slug=slug,
@@ -2838,11 +2838,9 @@ async def register_dealer(
     )
     await session.commit()
 
-    debug_code = verification_code if _should_include_debug_code() else None
     return RegisterVerificationResponse(
         success=True,
         requires_verification=True,
-        debug_code=debug_code,
     )
 
 
