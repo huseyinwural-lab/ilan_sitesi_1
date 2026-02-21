@@ -4236,7 +4236,7 @@ async def send_thread_message(
 async def mark_thread_read(
     thread_id: str,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     if db is None:
