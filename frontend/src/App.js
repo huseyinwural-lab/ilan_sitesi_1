@@ -75,12 +75,18 @@ const AccountRoute = ({ children }) => {
     return <Navigate to="/login" />;
   }
 
-  if (user.role === 'dealer') {
+  const portalScope = user.portal_scope || null;
+
+  if (portalScope === 'dealer') {
     return <Navigate to="/dealer" />;
   }
 
-  if (user.role !== 'individual') {
+  if (portalScope === 'admin') {
     return <Navigate to="/admin" />;
+  }
+
+  if (portalScope !== 'account') {
+    return <Navigate to="/" />;
   }
 
   return children;
