@@ -9340,6 +9340,8 @@ def _dealer_listing_to_dict(listing: DealerListing) -> dict:
         "price": listing.price,
         "status": listing.status,
         "created_at": listing.created_at.isoformat() if listing.created_at else None,
+        "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
+        "deleted_at": listing.deleted_at.isoformat() if listing.deleted_at else None,
     }
 
 
