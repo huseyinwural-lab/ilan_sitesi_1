@@ -10435,11 +10435,7 @@ async def stripe_webhook(
 @api_router.get("/admin/payments")
 async def admin_list_payments(
     request: Request,
-    country: Optional[str] = None,
-    dealer: Optional[str] = None,
     status: Optional[str] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
@@ -10448,31 +10444,9 @@ async def admin_list_payments(
     await _ensure_invoices_db_ready(session)
 
     conditions = []
-    base_query = select(Payment)
-    if country:
-        country_code = country.upper()
-        if country_code != "GLOBAL":
-            _assert_country_scope(country_code, current_user)
-        base_query = select(Payment).join(AdminInvoice, Payment.invoice_id == AdminInvoice.id)
-        conditions.append(AdminInvoice.country_code == country_code)
-
-    if dealer:
-        try:
-            dealer_uuid = uuid.UUID(dealer)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="dealer invalid")
-        conditions.append(Payment.dealer_id == dealer_uuid)
-
     if status:
         status_value = status.strip().lower()
         conditions.append(Payment.status == status_value)
-
-    if date_from:
-        start_dt = _parse_iso_datetime(date_from, "date_from")
-        conditions.append(Payment.created_at >= start_dt)
-    if date_to:
-        end_dt = _parse_iso_datetime(date_to, "date_to")
-        conditions.append(Payment.created_at <= end_dt)
 
     limit = min(100, max(1, int(limit)))
     skip = max(0, int(skip))
@@ -10481,43 +10455,44 @@ async def admin_list_payments(
     if conditions:
         base_query = base_query.where(*conditions)
 
-    rows = (await session.execute(
-        base_query.order_by(Payment.created_at.desc()).offset(skip).limit(limit)
-    )).scalars().all()
+    rows = (
+        await session.execute(
+            base_query.order_by(Payment.created_at.desc()).offset(skip).limit(limit)
+        )
+    ).scalars().all()
 
-    total = (await session.execute(
-        select(func.count()).select_from(Payment).where(*conditions)
-    )).scalar() or 0
+    total = (
+        await session.execute(select(func.count()).select_from(Payment).where(*conditions))
+    ).scalar() or 0
 
     invoice_ids = {row.invoice_id for row in rows}
-    dealer_ids = {row.dealer_id for row in rows}
+    user_ids = {row.user_id for row in rows}
 
     invoices = []
-    dealers = []
+    users = []
     if invoice_ids:
         invoices = (await session.execute(select(AdminInvoice).where(AdminInvoice.id.in_(invoice_ids)))).scalars().all()
-    if dealer_ids:
-        dealers = (await session.execute(select(SqlUser).where(SqlUser.id.in_(dealer_ids)))).scalars().all()
+    if user_ids:
+        users = (await session.execute(select(SqlUser).where(SqlUser.id.in_(user_ids)))).scalars().all()
 
     invoice_map = {inv.id: inv for inv in invoices}
-    dealer_map = {dealer.id: dealer for dealer in dealers}
+    user_map = {user.id: user for user in users}
 
     items = []
     for row in rows:
         invoice = invoice_map.get(row.invoice_id)
-        dealer_obj = dealer_map.get(row.dealer_id)
+        user_obj = user_map.get(row.user_id)
         items.append({
             "id": str(row.id),
             "invoice_id": str(row.invoice_id),
             "invoice_no": invoice.invoice_no if invoice else None,
-            "dealer_id": str(row.dealer_id),
-            "dealer_email": dealer_obj.email if dealer_obj else None,
-            "amount": float(row.amount) if row.amount is not None else None,
+            "user_id": str(row.user_id),
+            "user_email": user_obj.email if user_obj else None,
+            "amount_total": float(row.amount_total) if row.amount_total is not None else None,
             "currency": row.currency,
             "status": row.status,
             "provider": row.provider,
-            "provider_payment_id": row.provider_payment_id,
-            "paid_at": row.paid_at.isoformat() if row.paid_at else None,
+            "provider_ref": row.provider_ref,
             "created_at": row.created_at.isoformat() if row.created_at else None,
         })
 
