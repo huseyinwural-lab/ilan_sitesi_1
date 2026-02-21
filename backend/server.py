@@ -10913,36 +10913,62 @@ async def admin_assign_dealer_plan(
 
 @api_router.get("/admin/countries")
 async def admin_list_countries(
-    request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None or not MONGO_ENABLED:
-        return {"items": []}
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
-    q: Dict = {}
+    query = select(Country)
     if current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
         if "*" not in scope:
-            q["$or"] = [{"country_code": {"$in": scope}}, {"code": {"$in": scope}}]
-    docs = await db.countries.find(q, {"_id": 0}).sort("code", 1).to_list(length=500)
-    items = [_normalize_country_doc(doc) for doc in docs]
+            query = query.where(Country.code.in_([code.upper() for code in scope]))
+
+    rows = (await session.execute(query.order_by(Country.code))).scalars().all()
+    items = []
+    for row in rows:
+        items.append(
+            _normalize_country_doc(
+                {
+                    "code": row.code,
+                    "country_code": row.code,
+                    "name": row.name,
+                    "active_flag": row.is_enabled,
+                    "default_currency": row.default_currency,
+                    "default_language": row.default_language,
+                    "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+                    "created_at": row.created_at.isoformat() if row.created_at else None,
+                }
+            )
+        )
     return {"items": items}
 
 
 @api_router.get("/admin/countries/{code}")
 async def admin_get_country(
     code: str,
-    request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
     code_upper = code.upper()
-    doc = await db.countries.find_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"_id": 0})
-    if not doc:
+    country = (
+        await session.execute(select(Country).where(Country.code == code_upper))
+    ).scalar_one_or_none()
+    if not country:
         raise HTTPException(status_code=404, detail="Country not found")
-    return {"country": _normalize_country_doc(doc)}
+
+    return {
+        "country": _normalize_country_doc(
+            {
+                "code": country.code,
+                "country_code": country.code,
+                "name": country.name,
+                "active_flag": country.is_enabled,
+                "default_currency": country.default_currency,
+                "default_language": country.default_language,
+                "updated_at": country.updated_at.isoformat() if country.updated_at else None,
+                "created_at": country.created_at.isoformat() if country.created_at else None,
+            }
+        )
+    }
 
 
 @api_router.post("/admin/countries", status_code=201)
@@ -10950,57 +10976,59 @@ async def admin_create_country(
     payload: CountryCreatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
-
     code = payload.country_code.strip().upper()
     if not re.match(r"^[A-Z]{2}$", code):
         raise HTTPException(status_code=400, detail="country_code must be 2-letter ISO")
     if not payload.default_currency:
         raise HTTPException(status_code=400, detail="default_currency is required")
 
-    existing = await db.countries.find_one({"$or": [{"country_code": code}, {"code": code}]})
+    existing = (
+        await session.execute(select(Country).where(Country.code == code))
+    ).scalar_one_or_none()
     if existing:
         raise HTTPException(status_code=409, detail="Country already exists")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    country_doc = {
-        "id": code,
-        "code": code,
-        "country_code": code,
-        "name": payload.name,
-        "active_flag": True if payload.active_flag is None else payload.active_flag,
-        "is_enabled": True if payload.active_flag is None else payload.active_flag,
-        "default_currency": payload.default_currency.upper(),
-        "default_language": payload.default_language,
-        "created_at": now_iso,
-        "updated_at": now_iso,
-    }
+    country = Country(
+        code=code,
+        name=payload.name,
+        default_currency=payload.default_currency.upper(),
+        default_language=payload.default_language,
+        is_enabled=True if payload.active_flag is None else payload.active_flag,
+    )
+    session.add(country)
+    await session.commit()
+    await session.refresh(country)
 
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "COUNTRY_CHANGE",
-        "action": "COUNTRY_CREATE",
-        "country_code": code,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "country",
-        "resource_id": code,
-        "applied": False,
-    }
+    await _write_audit_log_sql(
+        session=session,
+        action="COUNTRY_CREATE",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="country",
+        resource_id=code,
+        metadata={"country_code": code},
+        request=request,
+        country_code=code,
+    )
+    await session.commit()
 
-    await db.audit_logs.insert_one(audit_doc)
-    await db.countries.insert_one(country_doc)
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-
-    country_doc.pop("_id", None)
     SUPPORTED_COUNTRIES.add(code)
-    return {"ok": True, "country": _normalize_country_doc(country_doc)}
+    return {
+        "ok": True,
+        "country": _normalize_country_doc(
+            {
+                "code": country.code,
+                "country_code": country.code,
+                "name": country.name,
+                "active_flag": country.is_enabled,
+                "default_currency": country.default_currency,
+                "default_language": country.default_language,
+                "updated_at": country.updated_at.isoformat() if country.updated_at else None,
+                "created_at": country.created_at.isoformat() if country.created_at else None,
+            }
+        ),
+    }
 
 
 @api_router.patch("/admin/countries/{code}")
@@ -11009,47 +11037,58 @@ async def admin_update_country(
     payload: CountryUpdatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
     code_upper = code.upper()
-    country = await db.countries.find_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"_id": 0})
+    country = (
+        await session.execute(select(Country).where(Country.code == code_upper))
+    ).scalar_one_or_none()
     if not country:
         raise HTTPException(status_code=404, detail="Country not found")
 
-    updates: Dict = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    updates = {}
     if payload.name is not None:
         updates["name"] = payload.name
+    if payload.active_flag is not None:
+        updates["is_enabled"] = payload.active_flag
     if payload.default_currency is not None:
         updates["default_currency"] = payload.default_currency.upper()
     if payload.default_language is not None:
         updates["default_language"] = payload.default_language
-    if payload.active_flag is not None:
-        updates["active_flag"] = payload.active_flag
-        updates["is_enabled"] = payload.active_flag
 
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": updates["updated_at"],
-        "event_type": "COUNTRY_CHANGE",
-        "action": "COUNTRY_UPDATE",
-        "country_code": code_upper,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "country",
-        "resource_id": code_upper,
-        "applied": False,
+    if updates:
+        for key, value in updates.items():
+            setattr(country, key, value)
+        await session.commit()
+        await session.refresh(country)
+
+        await _write_audit_log_sql(
+            session=session,
+            action="COUNTRY_UPDATE",
+            actor={"id": current_user.get("id"), "email": current_user.get("email")},
+            resource_type="country",
+            resource_id=code_upper,
+            metadata={"updates": updates},
+            request=request,
+            country_code=code_upper,
+        )
+        await session.commit()
+
+    return {
+        "ok": True,
+        "country": _normalize_country_doc(
+            {
+                "code": country.code,
+                "country_code": country.code,
+                "name": country.name,
+                "active_flag": country.is_enabled,
+                "default_currency": country.default_currency,
+                "default_language": country.default_language,
+                "updated_at": country.updated_at.isoformat() if country.updated_at else None,
+                "created_at": country.created_at.isoformat() if country.created_at else None,
+            }
+        ),
     }
-
-    await db.audit_logs.insert_one(audit_doc)
-    await db.countries.update_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"$set": updates})
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-
-    updated = await db.countries.find_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"_id": 0})
-    return {"ok": True, "country": _normalize_country_doc(updated)}
 
 
 @api_router.delete("/admin/countries/{code}")
@@ -11057,35 +11096,34 @@ async def admin_delete_country(
     code: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
     code_upper = code.upper()
-    country = await db.countries.find_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"_id": 0})
+    country = (
+        await session.execute(select(Country).where(Country.code == code_upper))
+    ).scalar_one_or_none()
     if not country:
         raise HTTPException(status_code=404, detail="Country not found")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "COUNTRY_CHANGE",
-        "action": "COUNTRY_DELETE",
-        "country_code": code_upper,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "country",
-        "resource_id": code_upper,
-        "applied": False,
-    }
+    await session.delete(country)
+    await session.commit()
 
-    await db.audit_logs.insert_one(audit_doc)
-    await db.countries.update_one({"$or": [{"country_code": code_upper}, {"code": code_upper}]}, {"$set": {"active_flag": False, "is_enabled": False, "updated_at": now_iso}})
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-    return {"ok": True}
+    await _write_audit_log_sql(
+        session=session,
+        action="COUNTRY_DELETE",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="country",
+        resource_id=code_upper,
+        metadata={},
+        request=request,
+        country_code=code_upper,
+    )
+    await session.commit()
+
+    if code_upper in SUPPORTED_COUNTRIES:
+        SUPPORTED_COUNTRIES.remove(code_upper)
+
+    return {"message": "Country deleted successfully"}
 
 
 @api_router.get("/admin/system-settings")
