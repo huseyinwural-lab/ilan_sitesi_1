@@ -9264,21 +9264,7 @@ async def admin_needs_revision_listing(
     current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    reason = _validate_reason(payload.reason, NEEDS_REVISION_REASONS_V1)
-    reason_note = (payload.reason_note or "").strip() or None
-    if reason == "other" and not reason_note:
-        raise HTTPException(status_code=400, detail="reason_note is required when reason=other")
-
-    updated = await _moderation_transition(
-        session=session,
-        listing_id=listing_id,
-        current_user=current_user,
-        event_type="MODERATION_NEEDS_REVISION",
-        new_status="needs_revision",
-        reason=reason,
-        reason_note=reason_note,
-    )
-    return {"ok": True, "listing": {"id": updated["id"], "status": updated.get("status")}}
+    raise HTTPException(status_code=501, detail="Needs revision flow not supported in Moderation V1")
 
 
 # =====================
