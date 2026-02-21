@@ -47,10 +47,8 @@ const statusBadge = (status) => {
       return { label: 'Durduruldu', className: 'bg-amber-100 text-amber-700' };
     case 'draft':
       return { label: 'Taslak', className: 'bg-slate-100 text-slate-600' };
-    case 'expired':
-      return { label: 'Süresi Doldu', className: 'bg-rose-100 text-rose-700' };
-    case 'archived':
-      return { label: 'Arşiv', className: 'bg-zinc-200 text-zinc-700' };
+    case 'ended':
+      return { label: 'Bitti', className: 'bg-zinc-200 text-zinc-700' };
     default:
       return { label: status || '-', className: 'bg-slate-100 text-slate-600' };
   }
