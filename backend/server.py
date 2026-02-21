@@ -10214,12 +10214,12 @@ async def get_checkout_status(
     if invoice and not payment:
         payment = Payment(
             invoice_id=invoice.id,
-            dealer_id=invoice.dealer_id,
+            dealer_id=invoice.user_id,
             provider="stripe",
             provider_payment_id=None,
-            amount=invoice.amount,
-            currency=invoice.currency_code,
-            status="pending",
+            amount=invoice.amount_total,
+            currency=invoice.currency,
+            status=_resolve_payment_status(payment_status),
             paid_at=None,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
