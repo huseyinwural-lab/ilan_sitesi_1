@@ -59,6 +59,10 @@ const ProtectedRoute = ({ children, roles = [], portalScope = null }) => {
     return <Navigate to={verifyPath} replace state={{ email: user.email }} />;
   }
 
+  if (portalScope && user.portal_scope && user.portal_scope !== portalScope) {
+    return <Navigate to="/" />;
+  }
+
   if (roles.length > 0 && !roles.includes(user.role)) {
     return <Navigate to="/" />;
   }
