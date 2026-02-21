@@ -123,6 +123,13 @@ EMAIL_VERIFICATION_MAX_ATTEMPTS = 5
 EMAIL_VERIFICATION_BLOCK_MINUTES = 15
 EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS = 90
 
+BILLING_AUDIT_ACTIONS = {
+    "payment_succeeded",
+    "invoice_marked_paid",
+    "subscription_activated",
+    "quota_limits_updated",
+}
+
 _failed_login_attempts: Dict[str, List[float]] = {}
 _failed_login_blocked_until: Dict[str, float] = {}
 
