@@ -120,6 +120,7 @@ async def seed() -> None:
                     updated_at=datetime.now(timezone.utc),
                 )
                 session.add(plan)
+                await session.flush()
                 created += 1
                 plan_id = plan.id
 
