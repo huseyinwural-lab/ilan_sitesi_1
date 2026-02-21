@@ -19,6 +19,43 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS payments (
+            id UUID PRIMARY KEY,
+            provider VARCHAR(20) NOT NULL DEFAULT 'stripe',
+            provider_payment_id VARCHAR(120),
+            invoice_id UUID NOT NULL,
+            dealer_id UUID,
+            amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+            currency VARCHAR(5) NOT NULL DEFAULT 'EUR',
+            status VARCHAR(20) NOT NULL DEFAULT 'pending',
+            paid_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT now(),
+            updated_at TIMESTAMPTZ DEFAULT now()
+        )
+        """
+    )
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS payment_transactions (
+            id UUID PRIMARY KEY,
+            provider VARCHAR(20) NOT NULL DEFAULT 'stripe',
+            session_id VARCHAR(120) NOT NULL UNIQUE,
+            provider_payment_id VARCHAR(120),
+            invoice_id UUID NOT NULL,
+            dealer_id UUID NOT NULL,
+            amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+            currency VARCHAR(5) NOT NULL DEFAULT 'EUR',
+            status VARCHAR(20) NOT NULL DEFAULT 'pending',
+            payment_status VARCHAR(20) NOT NULL DEFAULT 'unpaid',
+            metadata_json JSON,
+            created_at TIMESTAMPTZ DEFAULT now(),
+            updated_at TIMESTAMPTZ DEFAULT now()
+        )
+        """
+    )
+
     op.add_column("payments", sa.Column("provider_ref", sa.String(length=120), nullable=True))
     op.add_column("payments", sa.Column("user_id", sa.dialects.postgresql.UUID(as_uuid=True), nullable=True))
     op.add_column("payments", sa.Column("amount_total", sa.Numeric(12, 2), nullable=True))
