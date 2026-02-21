@@ -31,9 +31,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('user_id')
     )
-    op.drop_index(op.f('idx_user_device_token'), table_name='user_devices')
-    op.drop_index(op.f('idx_user_device_user'), table_name='user_devices')
-    op.drop_table('user_devices')
+    op.execute("DROP TABLE IF EXISTS user_devices CASCADE")
     # ### end Alembic commands ###
 
 
