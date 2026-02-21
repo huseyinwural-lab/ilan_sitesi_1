@@ -24,7 +24,6 @@ export default function Register({ portalContext = 'account' }) {
   const [countryOpen, setCountryOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
 
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
