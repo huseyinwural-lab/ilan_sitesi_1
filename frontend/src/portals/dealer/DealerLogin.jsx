@@ -1,5 +1,5 @@
 import Login from '@/pages/Login';
 
 export default function DealerLogin() {
-  return <Login />;
+  return <Login portalContext="dealer" />;
 }
