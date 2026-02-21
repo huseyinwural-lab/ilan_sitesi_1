@@ -8,6 +8,7 @@ import {
   LifeBuoy,
   User,
   LogOut,
+  Shield,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
