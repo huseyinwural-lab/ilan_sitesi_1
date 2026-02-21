@@ -11397,6 +11397,60 @@ async def admin_import_categories_dry_run(
     return diff
 
 
+@api_router.post("/admin/categories/import-export/import/dry-run/pdf")
+async def admin_import_categories_dry_run_pdf(
+    request: Request,
+    file: UploadFile = File(...),
+    format: str = "json",
+    dry_run_hash: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    content = _read_import_file(file)
+    file_hash = hashlib.sha256(content).hexdigest()
+    if dry_run_hash and dry_run_hash != file_hash:
+        raise HTTPException(status_code=409, detail="Dry-run hash mismatch")
+
+    items = _parse_import_payload(content, format.lower())
+    result = await session.execute(select(Category).options(selectinload(Category.translations)))
+    existing = result.scalars().all()
+    diff = _diff_categories(items, existing)
+
+    snapshot_payload = None
+    if format.lower() == "json":
+        try:
+            snapshot_payload = json.loads(content.decode("utf-8"))
+        except json.JSONDecodeError:
+            snapshot_payload = {"categories": items}
+    else:
+        snapshot_payload = {"rows": items}
+
+    pdf_bytes = _build_category_import_report_pdf(diff, snapshot_payload)
+
+    await _write_audit_log_sql(
+        session,
+        "categories.import.pdf_generated",
+        current_user,
+        "category_import",
+        None,
+        {
+            "format": format,
+            "filename": file.filename,
+            "hash": file_hash,
+            "summary": diff.get("summary"),
+        },
+        request,
+    )
+    await session.commit()
+
+    filename = f"dry-run-report-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+    )
+
+
 @api_router.post("/admin/categories/import-export/import/commit")
 async def admin_import_categories_commit(
     request: Request,
