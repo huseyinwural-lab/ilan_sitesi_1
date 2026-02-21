@@ -96,12 +96,13 @@ const resolveInvoiceTooltip = (inv) => {
 const resolvePaymentTooltip = (inv) => {
   if (!inv) return '';
   const paymentStatus = (inv.payment_status || '').toLowerCase();
-  if (paymentStatus === 'paid') return `Payment received at ${formatDateTime(inv.paid_at)}`;
+  if (paymentStatus === 'succeeded') return `Payment received at ${formatDateTime(inv.paid_at)}`;
   if (paymentStatus === 'refunded') return `Refund processed at ${formatDateTime(inv.updated_at)}`;
-  if (paymentStatus === 'partially_refunded') return `Partial refund processed at ${formatDateTime(inv.updated_at)}`;
-  if (paymentStatus === 'pending') return 'Payment pending';
+  if (paymentStatus === 'requires_payment_method') return 'Payment required';
+  if (paymentStatus === 'requires_confirmation') return 'Payment awaiting confirmation';
+  if (paymentStatus === 'processing') return 'Payment processing';
   if (paymentStatus === 'failed') return 'Payment failed';
-  if (paymentStatus === 'unpaid') return 'Payment unpaid';
+  if (paymentStatus === 'canceled') return 'Payment canceled';
   return '';
 };
 
