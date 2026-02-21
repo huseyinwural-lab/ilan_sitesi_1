@@ -714,26 +714,62 @@ async def _generate_unique_dealer_slug(session: AsyncSession, company_name: str)
         suffix += 1
 
 
-def _should_include_debug_code() -> bool:
-    return APP_ENV != "prod"
-
-
 def _generate_email_verification_code() -> str:
     return f"{secrets.randbelow(1000000):06d}"
 
 
-def _issue_email_verification_code(user: SqlUser) -> str:
+async def _issue_email_verification_code(
+    session: AsyncSession,
+    user: SqlUser,
+    request: Optional[Request] = None,
+) -> str:
     code = _generate_email_verification_code()
-    user.email_verification_code_hash = get_password_hash(code)
-    user.email_verification_expires_at = datetime.now(timezone.utc) + timedelta(minutes=EMAIL_VERIFICATION_TTL_MINUTES)
+    now = datetime.now(timezone.utc)
+    await session.execute(
+        update(EmailVerificationToken)
+        .where(
+            EmailVerificationToken.user_id == user.id,
+            EmailVerificationToken.consumed_at.is_(None),
+        )
+        .values(consumed_at=now)
+    )
+    token = EmailVerificationToken(
+        user_id=user.id,
+        token_hash=get_password_hash(code),
+        expires_at=now + timedelta(minutes=EMAIL_VERIFICATION_TTL_MINUTES),
+        consumed_at=None,
+        created_at=now,
+        ip_address=_get_client_ip(request) if request else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+    )
+    session.add(token)
     user.email_verification_attempts = 0
+    user.email_verification_expires_at = None
     return code
 
 
-def _email_verification_sent_at(user: SqlUser) -> Optional[datetime]:
-    if not user.email_verification_expires_at:
-        return None
-    return user.email_verification_expires_at - timedelta(minutes=EMAIL_VERIFICATION_TTL_MINUTES)
+async def _email_verification_sent_at(session: AsyncSession, user_id: uuid.UUID) -> Optional[datetime]:
+    result = await session.execute(
+        select(EmailVerificationToken)
+        .where(EmailVerificationToken.user_id == user_id)
+        .order_by(EmailVerificationToken.created_at.desc())
+        .limit(1)
+    )
+    token = result.scalars().first()
+    return token.created_at if token else None
+
+
+async def _get_active_verification_tokens(session: AsyncSession, user_id: uuid.UUID) -> List[EmailVerificationToken]:
+    result = await session.execute(
+        select(EmailVerificationToken)
+        .where(
+            EmailVerificationToken.user_id == user_id,
+            EmailVerificationToken.consumed_at.is_(None),
+        )
+        .order_by(EmailVerificationToken.created_at.desc())
+        .limit(5)
+    )
+    return list(result.scalars().all())
 
 
 def _email_verification_block_expires_at(user: SqlUser) -> Optional[datetime]:
