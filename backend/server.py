@@ -71,7 +71,7 @@ from app.models.user import User as SqlUser
 from app.models.application import Application
 from app.models.campaign import Campaign
 from app.models.plan import Plan
-from app.models.admin_invoice import AdminInvoice
+from app.models.billing import Invoice
 from app.models.payment import Payment, PaymentTransaction, PaymentEventLog
 from app.models.category import Category, CategoryTranslation
 from app.models.category_schema_version import CategorySchemaVersion
