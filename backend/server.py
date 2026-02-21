@@ -10637,7 +10637,7 @@ async def create_checkout_session(
         invoice_id=invoice.id,
         user_id=invoice.user_id,
         provider="stripe",
-        provider_ref=checkout_session.payment_intent_id or checkout_session.session_id,
+        provider_ref=checkout_session.session_id,
         status="requires_payment_method",
         amount_total=invoice.amount_total,
         currency=invoice.currency,
