@@ -9403,7 +9403,11 @@ async def dealer_listing_quota(
 
     count = (
         await session.execute(
-            select(func.count()).select_from(DealerListing).where(DealerListing.dealer_id == dealer_uuid)
+            select(func.count()).select_from(DealerListing).where(
+                DealerListing.dealer_id == dealer_uuid,
+                DealerListing.status == "active",
+                DealerListing.deleted_at.is_(None),
+            )
         )
     ).scalar_one()
     limit = DEALER_LISTING_QUOTA_LIMIT
