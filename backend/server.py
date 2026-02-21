@@ -15287,12 +15287,16 @@ def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
     core_fields = payload.get("core_fields") or {}
     title = core_fields.get("title") or payload.get("title")
     description = core_fields.get("description") or payload.get("description")
-    if title is not None:
-        listing.title = title.strip()
-    if description is not None:
-        listing.description = description.strip()
+    category_value = payload.get("category_id")
+    if category_value is not None:
+        try:
+            listing.category_id = uuid.UUID(str(category_value))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="category_id invalid") from exc
+        attrs["category_id"] = str(listing.category_id)
 
-    price_payload = core_fields.get("price") if isinstance(core_fields, dict) else None
+    make_value = payload.get("make_id")
+    model_value = payload.get("model_id")
     price_payload = price_payload or payload.get("price") or {}
     if price_payload:
         listing.price = price_payload.get("amount")
