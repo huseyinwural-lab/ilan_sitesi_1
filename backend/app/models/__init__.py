@@ -28,3 +28,4 @@ from app.models.plan import Plan
 from app.models.admin_invoice import AdminInvoice
 from app.models.payment import Payment, PaymentTransaction, PaymentEventLog
 from app.models.auth import Role, UserRole, UserCredential, RefreshToken
+from app.models.dealer_listing import DealerListing
