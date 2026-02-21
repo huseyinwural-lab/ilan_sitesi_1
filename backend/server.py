@@ -2449,6 +2449,11 @@ if APP_ENV == "prod":
         raise RuntimeError("DATABASE_URL must be set")
     if DB_SSL_MODE != "require":
         raise RuntimeError("DB_SSL_MODE must be require for prod")
+    if EMAIL_PROVIDER == "mock":
+        raise RuntimeError("EMAIL_PROVIDER cannot be mock in prod")
+
+if EMAIL_PROVIDER not in EMAIL_PROVIDER_OPTIONS:
+    raise RuntimeError("EMAIL_PROVIDER must be one of: mock, smtp, sendgrid")
 
 if not RAW_DATABASE_URL:
     logging.getLogger("sql_config").warning("DATABASE_URL not set – running with local fallback")
