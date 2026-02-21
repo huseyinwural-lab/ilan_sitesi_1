@@ -194,13 +194,11 @@
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- Monetization Chain SQL migration: **Payments → Webhooks** (Campaigns + Plans + Invoices V1 tamamlandı)
-- Payments V1: provider_ref unique constraint + admin list + duplicate test + txn consistency
-- Webhooks V1: event_log + idempotency + replay + signature validation
-- Mongo Exit P0: Auth + Applications (Mongo dependency removal)
-- Auth akışlarını Postgres’e taşı (users/user_credentials/roles/user_roles/refresh_tokens)
-- Applications endpoint’leri Postgres’te finalize + seed
-- Ops: DATABASE_URL secret (preview/prod) + migration/seed (local tamamlandı)
+- FAZ-FINAL-01 Critical User Path: **AUTH → Stripe → Ad Loop** (order lock)
+- AUTH SQL full migration + Mongo cutoff + Auth E2E
+- Stripe Payment zinciri: Payments V1 unique + webhook idempotency/replay + invoice/subscription/quota chain
+- Ad Loop E2E: ilan oluştur → medya → publish → public görünür
+- Ops: DATABASE_URL secret (preview/prod) + migration/seed
 - Lokal/preview container’da Postgres servisi çalışmıyor → Alembic current/upgrade ve \dt kanıtları **BLOCKED**
 
 ### P1
