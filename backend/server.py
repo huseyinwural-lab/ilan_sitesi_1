@@ -11496,6 +11496,7 @@ async def admin_import_categories_commit(
             "updated": updated,
             "deleted": deleted,
             "schema_versions": schema_versions,
+            "hash": file_hash,
         },
         request,
     )
