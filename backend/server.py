@@ -10574,6 +10574,20 @@ async def stripe_webhook(
     )
     provider_payment_id = getattr(webhook_response, "payment_id", None) or provider_ref
 
+    db_ready, db_reason, db_status = await _get_db_status(session)
+    if not db_ready:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "blocked",
+                "reason": db_reason,
+                "db_status": db_status,
+                "event_id": event_id,
+                "event_type": event_type,
+                "signature_valid": True,
+            },
+        )
+
     now = datetime.now(timezone.utc)
     payload_json = {
         "event_type": event_type,
