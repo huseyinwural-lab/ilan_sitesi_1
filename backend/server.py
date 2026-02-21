@@ -10604,6 +10604,62 @@ async def stripe_webhook(
         raise
 
 
+@api_router.post("/admin/webhooks/events/{event_id}/replay")
+async def admin_replay_webhook_event(
+    event_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    event_log = (
+        await session.execute(
+            select(WebhookEventLog).where(
+                WebhookEventLog.provider == "stripe",
+                WebhookEventLog.event_id == event_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if not event_log:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if not event_log.signature_valid:
+        raise HTTPException(status_code=400, detail="Invalid signature event cannot be replayed")
+
+    payload = event_log.payload_json or {}
+    session_id = payload.get("session_id")
+    payment_status = payload.get("payment_status")
+    metadata = payload.get("metadata") or {}
+    provider_ref = payload.get("provider_ref")
+    provider_payment_id = payload.get("provider_payment_id")
+
+    status_result = await _process_webhook_payment(
+        session=session,
+        event_log=event_log,
+        session_id=session_id,
+        payment_status=payment_status,
+        metadata=metadata,
+        provider_ref=provider_ref,
+        provider_payment_id=provider_payment_id,
+    )
+
+    if status_result == "processed":
+        event_log.status = "replayed"
+        event_log.processed_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="webhook_replayed",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="webhook_event",
+        resource_id=event_id,
+        metadata={"status": event_log.status},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    return {"status": event_log.status}
+
+
 @api_router.get("/admin/payments")
 async def admin_list_payments(
     request: Request,
