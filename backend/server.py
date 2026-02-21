@@ -3015,7 +3015,7 @@ async def resend_email_verification(
             detail={"code": "RATE_LIMITED", "retry_after_seconds": retry_after, "remaining_attempts": 0},
         )
 
-    sent_at = _email_verification_sent_at(user)
+    sent_at = await _email_verification_sent_at(session, user.id)
     if sent_at:
         elapsed = (now - sent_at).total_seconds()
         if elapsed < EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS:
