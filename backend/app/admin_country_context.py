@@ -24,7 +24,7 @@ async def resolve_admin_country_context(
     request: Request,
     *,
     current_user: dict,
-    session: AsyncSession,
+    session: Optional[AsyncSession] = None,
 ) -> AdminCountryContext:
     """Resolves admin mode/country from URL query params and enforces RBAC country scope.
 
