@@ -946,6 +946,49 @@ async def _get_or_create_consumer_profile(
     return profile
 
 
+def _normalize_vat_id(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    cleaned = re.sub(r"\s+", "", value).upper()
+    return cleaned or None
+
+
+def _is_valid_vat_id(value: Optional[str]) -> bool:
+    if not value:
+        return True
+    return bool(VAT_ID_PATTERN.match(value))
+
+
+async def _get_or_create_dealer_profile(
+    session: AsyncSession,
+    user: SqlUser,
+) -> DealerProfile:
+    result = await session.execute(select(DealerProfile).where(DealerProfile.user_id == user.id))
+    profile = result.scalar_one_or_none()
+    if profile:
+        return profile
+
+    company_name = (user.full_name or "Bayi").strip() or "Bayi"
+    slug = await _generate_unique_dealer_slug(session, company_name)
+    profile = DealerProfile(
+        user_id=user.id,
+        slug=slug,
+        company_name=company_name,
+        vat_number=None,
+        vat_id=None,
+        trade_register_no=None,
+        authorized_person=user.full_name,
+        address_json=None,
+        logo_url=None,
+        address_country=user.country_code or "DE",
+        contact_email=user.email,
+        verification_status="pending",
+    )
+    session.add(profile)
+    await session.flush()
+    return profile
+
+
 async def _log_email_verify_event(
     session: AsyncSession,
     action: str,
