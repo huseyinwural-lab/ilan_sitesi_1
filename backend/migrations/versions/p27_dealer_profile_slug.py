@@ -8,7 +8,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'p27_dealer_profile_slug'
-down_revision: Union[str, Sequence[str], None] = 'p26_payments_tables'
+down_revision: Union[str, Sequence[str], None] = 'p25_admin_invoices_table'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
