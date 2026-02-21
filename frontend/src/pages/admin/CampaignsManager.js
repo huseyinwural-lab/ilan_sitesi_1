@@ -711,7 +711,6 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
                   onChange={(event) => setFormState((prev) => ({ ...prev, endAt: event.target.value }))}
                   className="h-10 w-full rounded-md border bg-background px-3 text-sm"
                   data-testid={`${testIdPrefix}-form-end`}
-                  required
                 />
               </div>
               <div>
