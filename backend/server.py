@@ -5402,6 +5402,8 @@ async def admin_individual_users_export_csv(
 @api_router.get("/menu/top-items")
 async def get_top_menu_items(request: Request):
     db = request.app.state.db
+    if db is None:
+        return []
     items = await db.menu_top_items.find({"is_enabled": True}, {"_id": 0}).to_list(length=50)
     items.sort(key=lambda x: x.get("sort_order", 0))
     return items
