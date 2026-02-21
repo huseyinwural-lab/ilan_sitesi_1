@@ -244,6 +244,9 @@ class UserProfileUpdatePayload(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
     locale: Optional[str] = None
+    country_code: Optional[str] = None
+    display_name_mode: Optional[str] = None
+    marketing_consent: Optional[bool] = None
     notification_prefs: Optional[Dict[str, Any]] = None
 
 
