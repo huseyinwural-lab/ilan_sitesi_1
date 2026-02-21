@@ -4578,30 +4578,74 @@ async def create_message_thread(
 
 @api_router.get("/v1/messages/threads")
 async def list_message_threads(
-    request: Request,
     current_user=Depends(require_portal_scope("account")),
     page: int = 1,
     limit: int = 30,
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-
+    user_id = uuid.UUID(current_user.get("id"))
     safe_page = max(1, int(page))
     safe_limit = min(100, max(1, int(limit)))
-    skip = (safe_page - 1) * safe_limit
+    offset = (safe_page - 1) * safe_limit
 
-    cursor = (
-        db.message_threads.find({"participants": current_user.get("id")}, {"_id": 0})
-        .sort("last_message_at", -1)
-        .skip(skip)
-        .limit(safe_limit)
-    )
-    threads = await cursor.to_list(length=safe_limit)
-    total = await db.message_threads.count_documents({"participants": current_user.get("id")})
+    total = (
+        await session.execute(
+            select(func.count()).select_from(Conversation).where(
+                or_(Conversation.buyer_id == user_id, Conversation.seller_id == user_id)
+            )
+        )
+    ).scalar_one()
 
-    items = [_build_thread_summary(thread, current_user.get("id")) for thread in threads]
-    return {"items": items, "pagination": {"total": total, "page": safe_page, "limit": safe_limit}}
+    conversations = (
+        await session.execute(
+            select(Conversation)
+            .where(or_(Conversation.buyer_id == user_id, Conversation.seller_id == user_id))
+            .order_by(desc(Conversation.last_message_at))
+            .offset(offset)
+            .limit(safe_limit)
+        )
+    ).scalars().all()
+
+    listing_ids = [conv.listing_id for conv in conversations]
+    listing_map = {}
+    if listing_ids:
+        listings = (
+            await session.execute(select(Listing).where(Listing.id.in_(listing_ids)))
+        ).scalars().all()
+        listing_map = {listing.id: listing for listing in listings}
+
+    items = []
+    for conv in conversations:
+        last_message = (
+            await session.execute(
+                select(Message)
+                .where(Message.conversation_id == conv.id)
+                .order_by(desc(Message.created_at))
+            )
+        ).scalars().first()
+        unread_count = (
+            await session.execute(
+                select(func.count())
+                .select_from(Message)
+                .where(
+                    Message.conversation_id == conv.id,
+                    Message.is_read.is_(False),
+                    Message.sender_id != user_id,
+                )
+            )
+        ).scalar_one()
+
+        items.append(
+            _build_thread_summary_sql(
+                conv,
+                str(user_id),
+                listing_map.get(conv.listing_id),
+                last_message,
+                int(unread_count or 0),
+            )
+        )
+
+    return {"items": items, "pagination": {"total": int(total or 0), "page": safe_page, "limit": safe_limit}}
 
 
 @api_router.get("/v1/messages/unread-count")
