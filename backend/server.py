@@ -5529,26 +5529,36 @@ async def list_categories(
     module: str = "vehicle",
     country: Optional[str] = None,
     current_user=Depends(get_current_user_optional),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-
-    if current_user:
-        await resolve_admin_country_context(request, current_user=current_user, db=db, )
-
     if not country:
         raise HTTPException(status_code=400, detail="country is required")
-    code = country.upper()
 
-    query = {
-        "module": module,
-        "$and": [
-            {"$or": [{"country_code": None}, {"country_code": ""}, {"country_code": code}]},
-            {"$or": [{"active_flag": True}, {"active_flag": {"$exists": False}}]},
-        ],
-    }
-    docs = await db.categories.find(query, {"_id": 0}).to_list(length=500)
-    docs.sort(key=lambda x: (x.get("sort_order", 0), str(_pick_label(x.get("name")) or "")))
-    return [_normalize_category_doc(doc) for doc in docs]
+    code = country.upper()
+    query = (
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(
+            Category.module == module,
+            Category.is_deleted.is_(False),
+            Category.is_enabled.is_(True),
+        )
+    )
+
+    result = await session.execute(query)
+    categories = result.scalars().all()
+
+    filtered: list[Category] = []
+    for category in categories:
+        if category.country_code and category.country_code != code:
+            continue
+        allowed = category.allowed_countries or []
+        if allowed and code not in allowed:
+            continue
+        filtered.append(category)
+
+    filtered.sort(key=lambda c: (c.sort_order or 0, _pick_category_name(list(c.translations or []), _pick_category_slug(c.slug))))
+    return [_serialize_category_sql(cat, include_schema=False, include_translations=True) for cat in filtered]
 
 
 @api_router.get("/catalog/schema")
