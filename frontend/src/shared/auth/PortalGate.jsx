@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { defaultHomeForRole, ROLE_TO_PORTAL, PORTALS } from '@/shared/types/portals';
+import { defaultHomeForRole, defaultHomeForScope, ROLE_TO_PORTAL, PORTALS, portalFromScope } from '@/shared/types/portals';
 
 /**
  * PortalGate (pre-layout guard)
