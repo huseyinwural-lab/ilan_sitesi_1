@@ -2241,16 +2241,12 @@ async def get_sql_session():
             await session.close()
 
 
-def _get_auth_repository(db, session: AsyncSession):
-    if AUTH_PROVIDER == "sql":
-        return SqlAuthRepository(session)
-    return MongoAuthRepository(db)
+def _get_auth_repository(session: AsyncSession):
+    return SqlAuthRepository(session)
 
 
-def _get_applications_repository(db, session: AsyncSession):
-    if APPLICATIONS_PROVIDER == "sql":
-        return SqlApplicationsRepository(session)
-    return MongoApplicationsRepository(db)
+def _get_applications_repository(session: AsyncSession):
+    return SqlApplicationsRepository(session)
 
 _admin_invite_attempts: Dict[str, List[float]] = {}
 _admin_invite_logger = logging.getLogger("admin_invites")
