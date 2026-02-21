@@ -10164,17 +10164,19 @@ async def admin_create_category(
     payload: CategoryCreatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
-
     slug = payload.slug.strip().lower()
     if not SLUG_PATTERN.match(slug):
         raise HTTPException(status_code=400, detail="slug format invalid")
 
-    parent_id = payload.parent_id
-    if parent_id:
-        parent = await db.categories.find_one({"id": parent_id}, {"_id": 0, "id": 1})
+    parent = None
+    if payload.parent_id:
+        try:
+            parent_uuid = uuid.UUID(payload.parent_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="parent_id not valid") from exc
+        parent = await session.get(Category, parent_uuid)
         if not parent:
             raise HTTPException(status_code=400, detail="parent_id not found")
 
@@ -10182,8 +10184,13 @@ async def admin_create_category(
     if country_code:
         _assert_country_scope(country_code, current_user)
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    category_id = str(uuid.uuid4())
+    slug_query = await session.execute(
+        select(Category).where(Category.slug["tr"].astext == slug)
+    )
+    if slug_query.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Category slug already exists")
+
+    now = datetime.now(timezone.utc)
     hierarchy_complete = payload.hierarchy_complete if payload.hierarchy_complete is not None else True
     schema = None
     schema_status = None
@@ -10194,47 +10201,66 @@ async def admin_create_category(
             raise HTTPException(status_code=409, detail="Kategori hiyerarşisi tamamlanmadan kaydedilemez")
         if schema_status != "draft":
             _validate_category_schema(schema)
-    doc = {
-        "id": category_id,
-        "parent_id": parent_id,
-        "name": payload.name.strip(),
-        "slug": slug,
-        "country_code": country_code,
-        "active_flag": payload.active_flag if payload.active_flag is not None else True,
-        "sort_order": payload.sort_order or 0,
-        "hierarchy_complete": hierarchy_complete,
-        "form_schema": schema,
-        "created_at": now_iso,
-        "updated_at": now_iso,
-        "module": "vehicle",
-    }
-    audit_doc = {
-        "id": str(uuid.uuid4()),
-        "event_type": "CATEGORY_CHANGE",
-        "actor_id": current_user["id"],
-        "actor_role": current_user.get("role"),
-        "country_code": country_code,
-        "subject_type": "category",
-        "subject_id": category_id,
-        "action": "create",
-        "created_at": now_iso,
-        "metadata": {"name": doc["name"], "slug": doc["slug"]},
-    }
-    await db.audit_logs.insert_one(audit_doc)
-    try:
-        await db.categories.insert_one(doc)
-    except Exception as e:
-        if "E11000" in str(e):
-            raise HTTPException(status_code=409, detail="Category slug already exists")
-        raise
+
+    slug_json = {"tr": slug, "en": slug, "de": slug}
+    depth = (parent.depth + 1) if parent else 0
+    path = f"{parent.path}.{slug}" if parent and parent.path else slug
+    allowed_countries = [country_code] if country_code else sorted(SUPPORTED_COUNTRIES)
+
+    category = Category(
+        id=uuid.uuid4(),
+        parent_id=parent.id if parent else None,
+        path=path,
+        depth=depth,
+        sort_order=payload.sort_order or 0,
+        module="vehicle",
+        slug=slug_json,
+        icon=None,
+        image_url=None,
+        is_enabled=payload.active_flag if payload.active_flag is not None else True,
+        is_visible_on_home=False,
+        is_deleted=False,
+        inherit_enabled=True,
+        override_enabled=None,
+        inherit_countries=True,
+        override_countries=None,
+        allowed_countries=allowed_countries,
+        listing_count=0,
+        country_code=country_code,
+        hierarchy_complete=hierarchy_complete,
+        form_schema=schema,
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(category)
+
+    for lang in ("tr", "en", "de"):
+        session.add(
+            CategoryTranslation(
+                category_id=category.id,
+                language=lang,
+                name=payload.name.strip(),
+                description=None,
+                meta_title=None,
+                meta_description=None,
+            )
+        )
+
+    await session.commit()
 
     if schema:
         if schema_status == "draft":
-            await _record_category_version(db, category_id, schema, current_user, "draft")
+            await _record_category_version_sql(session, category.id, schema, current_user, "draft")
         else:
-            await _record_category_version(db, category_id, schema, current_user, "published")
+            await _record_category_version_sql(session, category.id, schema, current_user, "published")
 
-    return {"category": _normalize_category_doc(doc, include_schema=True)}
+    result = await session.execute(
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.id == category.id)
+    )
+    created = result.scalar_one()
+    return {"category": _serialize_category_sql(created, include_schema=True, include_translations=False)}
 
 
 @api_router.patch("/admin/categories/{category_id}")
