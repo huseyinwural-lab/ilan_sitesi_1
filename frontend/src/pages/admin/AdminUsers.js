@@ -74,7 +74,9 @@ const FilterDropdown = ({ label, value, options, onChange, testId }) => {
 
   return (
     <div className="space-y-1" data-testid={`${testId}-container`}>
-      <div className="text-xs text-muted-foreground" data-testid={`${testId}-label`}>{label}</div>
+      {label ? (
+        <div className="text-xs text-muted-foreground" data-testid={`${testId}-label`}>{label}</div>
+      ) : null}
       <div className="relative">
         <button
           type="button"
