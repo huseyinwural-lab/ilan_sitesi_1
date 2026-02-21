@@ -199,13 +199,9 @@
 
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
-- Billing audit standard (audit_logs) + /api/admin/audit-logs?scope=billing
-- Wizard mapping gap fix: category NOT NULL + make/model mapping (vehicle)
-- Moderation SQL (approve-only) + public search v2 SQL
-- Email provider SendGrid (prod) + startup guard
-- Public search Mongo path kaldırma (MONGO_ENABLED=false)
-- Ad wizard mapping gap fix (category_id + make_id/model_id) + category not-null enforce
-- Ops: Staging smoke runbook + DB parity check
+- SendGrid env sağla (SENDGRID_API_KEY, SENDER_EMAIL) + email delivery smoke test
+- Staging smoke runbook (`SMOKE_FINAL01_STAGING.md`) çalıştırma ve kanıt üretimi
+- Preview/prod DATABASE_URL sağlanınca parity smoke test
 ### P1
 - Verification token cleanup job (00:30 UTC) + retention policy (24h/7d) kanıtları
 - Lint debt cleanup (LINT-1/2)
