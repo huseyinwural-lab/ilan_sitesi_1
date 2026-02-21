@@ -24,6 +24,7 @@ export default function Login({ portalContext = 'account' }) {
   const isAdminLogin = portalContext === 'admin';
   const showPortalSelector = !isAdminLogin;
   const registerPath = portalSelection === 'dealer' ? '/dealer/register' : '/register';
+  const verifyPath = portalSelection === 'dealer' ? '/dealer/verify-email' : '/verify-email';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
