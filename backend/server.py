@@ -10113,7 +10113,7 @@ async def create_checkout_session(
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
-    if str(invoice.dealer_id) != current_user.get("id"):
+    if str(invoice.user_id) != current_user.get("id"):
         raise HTTPException(status_code=403, detail="Invoice access denied")
 
     if invoice.status != "issued" or invoice.payment_status in {"succeeded", "refunded"}:
