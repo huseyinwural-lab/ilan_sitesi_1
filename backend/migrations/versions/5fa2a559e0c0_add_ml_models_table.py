@@ -25,9 +25,7 @@ def upgrade() -> None:
     op.drop_index(op.f('ix_exp_logs_user_date'), table_name='experiment_logs')
     op.drop_index(op.f('ix_experiment_logs_user_id'), table_name='experiment_logs')
     op.drop_table('experiment_logs')
-    op.drop_index(op.f('idx_user_device_token'), table_name='user_devices')
-    op.drop_index(op.f('idx_user_device_user'), table_name='user_devices')
-    op.drop_table('user_devices')
+    op.execute("DROP TABLE IF EXISTS user_devices CASCADE")
     # ### end Alembic commands ###
 
 
