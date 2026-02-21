@@ -333,18 +333,12 @@ export default function Login({ portalContext = 'account' }) {
               <div className="text-center text-xs" data-testid="login-qr-login">
                 <a
                   href="/login/qr"
-                  className="text-primary underline underline-offset-2"
+                  className="text-blue-600 underline underline-offset-2 hover:text-blue-700"
                   data-testid="login-qr-link"
                 >
                   QR kod ile mobil uygulamadan giriş yap
                 </a>
               </div>
-            )}
-
-            {showPortalSelector && (
-              <p className="text-[11px] text-muted-foreground text-center" data-testid="login-recaptcha">
-                Bu site reCAPTCHA ile korunmaktadır. Google Gizlilik Politikası ve Kullanım Koşulları geçerlidir.
-              </p>
             )}
           </form>
         </div>
