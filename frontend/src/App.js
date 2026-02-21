@@ -123,6 +123,17 @@ function App() {
                   <Route path="/auth/login" element={<Navigate to="/login" replace />} />
                   <Route path="/auth/register" element={<Navigate to="/login" replace />} />
 
+                  {/* Legacy consumer redirects */}
+                  <Route path="/dashboard" element={<Navigate to="/account" replace />} />
+                  <Route path="/account/dashboard" element={<Navigate to="/account" replace />} />
+                  <Route path="/user" element={<Navigate to="/account" replace />} />
+                  <Route path="/user/listings" element={<Navigate to="/account/listings" replace />} />
+                  <Route path="/user/favorites" element={<Navigate to="/account/favorites" replace />} />
+                  <Route path="/user/messages" element={<Navigate to="/account/messages" replace />} />
+                  <Route path="/user/support" element={<Navigate to="/account/support" replace />} />
+                  <Route path="/user/profile" element={<Navigate to="/account/profile" replace />} />
+                  <Route path="/dealer/dashboard" element={<Navigate to="/dealer" replace />} />
+
                   {/* User Panel Routes */}
                   <Route
                     path="/account"
