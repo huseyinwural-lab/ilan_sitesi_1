@@ -10706,31 +10706,29 @@ async def admin_delete_category(
     category_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    # Permission check already handled by dependency
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
-    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    try:
+        category_uuid = uuid.UUID(category_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid category id") from exc
+
+    category = await session.get(Category, category_uuid)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    now_iso = datetime.now(timezone.utc).isoformat()
-    audit_doc = {
-        "id": str(uuid.uuid4()),
-        "event_type": "CATEGORY_CHANGE",
-        "actor_id": current_user["id"],
-        "actor_role": current_user.get("role"),
-        "country_code": category.get("country_code"),
-        "subject_type": "category",
-        "subject_id": category_id,
-        "action": "delete",
-        "created_at": now_iso,
-        "metadata": {"active_flag": False},
-    }
-    await db.audit_logs.insert_one(audit_doc)
-    await db.categories.update_one({"id": category_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
-    category["active_flag"] = False
-    category["updated_at"] = now_iso
-    return {"category": _normalize_category_doc(category, include_schema=True)}
+
+    category.is_enabled = False
+    category.is_deleted = True
+    category.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+
+    result = await session.execute(
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.id == category_uuid)
+    )
+    deleted = result.scalar_one()
+    return {"category": _serialize_category_sql(deleted, include_schema=True, include_translations=False)}
 
 
 @api_router.get("/admin/menu-items")
