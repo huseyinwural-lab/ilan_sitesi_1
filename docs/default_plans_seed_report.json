@@ -1,0 +1,39 @@
+{
+  "created": 6,
+  "updated": 0,
+  "total": 6,
+  "country_scope": "country",
+  "country_code": "DE",
+  "items": [
+    {
+      "slug": "consumer-free-monthly",
+      "period": "monthly",
+      "id": "None"
+    },
+    {
+      "slug": "consumer-free-yearly",
+      "period": "yearly",
+      "id": "None"
+    },
+    {
+      "slug": "dealer-pro-monthly",
+      "period": "monthly",
+      "id": "None"
+    },
+    {
+      "slug": "dealer-pro-yearly",
+      "period": "yearly",
+      "id": "None"
+    },
+    {
+      "slug": "dealer-enterprise-monthly",
+      "period": "monthly",
+      "id": "None"
+    },
+    {
+      "slug": "dealer-enterprise-yearly",
+      "period": "yearly",
+      "id": "None"
+    }
+  ]
+}
