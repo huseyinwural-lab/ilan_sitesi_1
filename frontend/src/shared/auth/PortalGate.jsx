@@ -13,7 +13,7 @@ import { defaultHomeForRole, defaultHomeForScope, ROLE_TO_PORTAL, PORTALS, porta
 export default function PortalGate({ portal, children, loginPath }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div data-testid="portal-gate-loading">Loading...</div>;
 
   if (!user) {
     return <Navigate to={loginPath} replace />;
