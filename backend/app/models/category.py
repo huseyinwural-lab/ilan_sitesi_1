@@ -22,7 +22,10 @@ class Category(Base):
     
     # Module association (real_estate, vehicle, machinery, services, jobs)
     module: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    
+
+    # Optional country override (admin-specific)
+    country_code: Mapped[Optional[str]] = mapped_column(String(5), nullable=True, index=True)
+
     # Slug per language for URLs
     slug: Mapped[dict] = mapped_column(JSON, nullable=False)  # {"tr": "emlak", "de": "immobilien", "fr": "immobilier"}
     
