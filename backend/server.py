@@ -9521,11 +9521,11 @@ async def admin_invoice_cancel(
         _assert_country_scope(invoice.country_code, current_user)
 
     if invoice.status != "issued":
-        raise HTTPException(status_code=400, detail="Only issued invoices can be cancelled")
+        raise HTTPException(status_code=400, detail="Only issued invoices can be voided")
 
     now = datetime.now(timezone.utc)
-    invoice.status = "cancelled"
-    invoice.payment_status = "unpaid"
+    invoice.status = "void"
+    invoice.payment_status = "canceled"
     invoice.updated_at = now
     await session.commit()
     await session.refresh(invoice)
