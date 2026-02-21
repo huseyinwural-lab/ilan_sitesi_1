@@ -13618,16 +13618,15 @@ async def _dashboard_kpis(db, effective_countries: Optional[List[str]], include_
     week_revenue_totals = None
 
     if include_revenue:
-        invoice_base: Dict[str, Any] = {"status": "paid"}
+        conditions_base: List[Any] = [AdminInvoice.status == "paid"]
         if effective_countries:
-            invoice_base["country_code"] = {"$in": effective_countries}
+            conditions_base.append(AdminInvoice.country_code.in_(effective_countries))
+
         today_revenue_total, today_revenue_totals = await _dashboard_invoice_totals(
-            db,
-            {**invoice_base, "paid_at": {"$gte": today_start.isoformat()}},
+            [*conditions_base, AdminInvoice.paid_at e= today_start]
         )
         week_revenue_total, week_revenue_totals = await _dashboard_invoice_totals(
-            db,
-            {**invoice_base, "paid_at": {"$gte": week_start.isoformat()}},
+            [*conditions_base, AdminInvoice.paid_at e= week_start]
         )
 
     return {
