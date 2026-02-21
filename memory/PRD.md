@@ -118,6 +118,10 @@
 - **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
+- 2026-02-21: Admin dashboard summary Mongo yokken boş veri döner; admin countries 200 + boş liste.
+- 2026-02-21: AdminUsers filtreleri custom dropdown + div-based liste (hydration warning fix).
+- 2026-02-21: Dealer portal listing CRUD (SQL) + quota chip + yeni route/menü.
+- 2026-02-21: Mongo bağımlılık envanteri oluşturuldu (/app/architecture/MONGO_DEPENDENCY_AUDIT.md).
 - 2026-02-21: Local Postgres dev (.env.local) + SQL auth/app providers aktif; migrations (heads) başarıyla uygulandı; admin/dealer/consumer seed kullanıcılar oluşturuldu.
 - 2026-02-21: portal_scope token v2 + websocket scope check; /health/db localhost 200; Account portal turuncu tema doğrulandı.
 - B8: Favoriler backend + profil/şifre API + GDPR export + mesajlaşma REST/WS entegrasyonu + push subscription altyapısı (VAPID secrets bekliyor)
