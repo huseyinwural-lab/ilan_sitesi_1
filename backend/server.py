@@ -7165,6 +7165,7 @@ class PlanCreatePayload(BaseModel):
     slug: Optional[str] = None
     country_scope: str
     country_code: Optional[str] = None
+    period: str = "monthly"
     price_amount: float
     currency_code: Optional[str] = None
     listing_quota: int
@@ -7177,6 +7178,7 @@ class PlanUpdatePayload(BaseModel):
     slug: Optional[str] = None
     country_scope: Optional[str] = None
     country_code: Optional[str] = None
+    period: Optional[str] = None
     price_amount: Optional[float] = None
     currency_code: Optional[str] = None
     listing_quota: Optional[int] = None
