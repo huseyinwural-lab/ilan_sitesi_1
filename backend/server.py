@@ -605,7 +605,7 @@ def _user_to_response(doc: dict) -> UserResponse:
 async def _ensure_country_enabled(session: AsyncSession, country_code: Optional[str]) -> str:
     normalized = (country_code or "DE").upper()
     result = await session.execute(
-        select(Country).where(Country.code == normalized, Country.is_enabled == True)
+        select(Country).where(Country.code == normalized, Country.is_enabled.is_(True))
     )
     country = result.scalar_one_or_none()
     if not country:
