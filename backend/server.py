@@ -2777,23 +2777,12 @@ async def register_consumer(
     )
     await session.commit()
 
-    user_payload = {
-        "id": str(user.id),
-        "email": user.email,
-        "full_name": user.full_name,
-        "role": user.role,
-        "country_scope": user.country_scope or [country_code],
-        "preferred_language": user.preferred_language,
-        "is_active": user.is_active,
-        "is_verified": user.is_verified,
-        "deleted_at": None,
-        "created_at": user.created_at.isoformat() if user.created_at else None,
-        "last_login": user.last_login.isoformat() if user.last_login else None,
-        "portal_scope": _resolve_portal_scope(user.role),
-    }
-
     debug_code = verification_code if _should_include_debug_code() else None
-    return RegisterResponse(user=_user_to_response(user_payload), debug_code=debug_code)
+    return RegisterVerificationResponse(
+        success=True,
+        requires_verification=True,
+        debug_code=debug_code,
+    )
 
 
 @api_router.post("/auth/register/dealer", response_model=RegisterResponse, status_code=201)
@@ -2856,23 +2845,12 @@ async def register_dealer(
     )
     await session.commit()
 
-    user_payload = {
-        "id": str(user.id),
-        "email": user.email,
-        "full_name": user.full_name,
-        "role": user.role,
-        "country_scope": user.country_scope or [country_code],
-        "preferred_language": user.preferred_language,
-        "is_active": user.is_active,
-        "is_verified": user.is_verified,
-        "deleted_at": None,
-        "created_at": user.created_at.isoformat() if user.created_at else None,
-        "last_login": user.last_login.isoformat() if user.last_login else None,
-        "portal_scope": _resolve_portal_scope(user.role),
-    }
-
     debug_code = verification_code if _should_include_debug_code() else None
-    return RegisterResponse(user=_user_to_response(user_payload), debug_code=debug_code)
+    return RegisterVerificationResponse(
+        success=True,
+        requires_verification=True,
+        debug_code=debug_code,
+    )
 
 
 @api_router.post("/auth/verify-email", response_model=VerifyEmailResponse)
