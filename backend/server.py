@@ -3054,6 +3054,39 @@ async def resend_email_verification(
     )
 
 
+@api_router.post("/auth/verify-email/help-opened")
+async def email_verify_help_opened(
+    payload: EmailVerifyHelpPayload,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    email = (payload.email or "").lower().strip()
+    user = None
+    if email:
+        result = await session.execute(select(SqlUser).where(SqlUser.email == email))
+        user = result.scalar_one_or_none()
+
+    actor = {
+        "id": str(user.id) if user else None,
+        "email": user.email if user else (email or "unknown"),
+        "country_scope": user.country_scope if user else [],
+    }
+
+    await _write_audit_log_sql(
+        session=session,
+        action="auth.email_verify.help_opened",
+        actor=actor,
+        resource_type="auth",
+        resource_id=str(user.id) if user else (email or None),
+        metadata={"reason": payload.reason or "email_verification"},
+        request=request,
+        country_code=user.country_code if user else None,
+    )
+    await session.commit()
+
+    return {"status": "ok"}
+
+
 class UpdateUserPayload(BaseModel):
     role: Optional[str] = None
 
