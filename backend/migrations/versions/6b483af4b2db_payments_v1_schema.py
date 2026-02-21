@@ -24,6 +24,10 @@ def upgrade() -> None:
     op.add_column("payments", sa.Column("amount_total", sa.Numeric(12, 2), nullable=True))
     op.add_column("payments", sa.Column("meta_json", sa.JSON(), nullable=True))
 
+    op.alter_column("payments", "status", existing_type=sa.String(length=20), type_=sa.String(length=40))
+    op.alter_column("payment_transactions", "status", existing_type=sa.String(length=20), type_=sa.String(length=40))
+    op.alter_column("payment_transactions", "payment_status", existing_type=sa.String(length=20), type_=sa.String(length=40))
+
     op.execute("UPDATE payments SET provider_ref = provider_payment_id WHERE provider_ref IS NULL")
     op.execute("UPDATE payments SET user_id = dealer_id WHERE user_id IS NULL")
     op.execute("UPDATE payments SET amount_total = amount WHERE amount_total IS NULL")
