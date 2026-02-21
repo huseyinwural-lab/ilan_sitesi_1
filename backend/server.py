@@ -1343,12 +1343,6 @@ def _build_error_detail(code: str, message: str) -> Dict[str, Any]:
 async def _ensure_campaigns_db_ready(session: AsyncSession) -> None:
     if not RAW_DATABASE_URL:
         raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Campaigns database not ready"))
-    if APP_ENV != "prod" and (
-        "localhost" in RAW_DATABASE_URL
-        or "127.0.0.1" in RAW_DATABASE_URL
-        or "admin_user" in RAW_DATABASE_URL
-    ):
-        raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Campaigns database not ready"))
     try:
         await session.execute(select(1))
     except Exception:
@@ -1358,12 +1352,6 @@ async def _ensure_campaigns_db_ready(session: AsyncSession) -> None:
 async def _ensure_plans_db_ready(session: AsyncSession) -> None:
     if not RAW_DATABASE_URL:
         raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Plans database not ready"))
-    if APP_ENV != "prod" and (
-        "localhost" in RAW_DATABASE_URL
-        or "127.0.0.1" in RAW_DATABASE_URL
-        or "admin_user" in RAW_DATABASE_URL
-    ):
-        raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Plans database not ready"))
     try:
         await session.execute(select(1))
     except Exception:
@@ -1372,12 +1360,6 @@ async def _ensure_plans_db_ready(session: AsyncSession) -> None:
 
 async def _ensure_invoices_db_ready(session: AsyncSession) -> None:
     if not RAW_DATABASE_URL:
-        raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Invoices database not ready"))
-    if APP_ENV != "prod" and (
-        "localhost" in RAW_DATABASE_URL
-        or "127.0.0.1" in RAW_DATABASE_URL
-        or "admin_user" in RAW_DATABASE_URL
-    ):
         raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Invoices database not ready"))
     try:
         await session.execute(select(1))
