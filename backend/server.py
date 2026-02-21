@@ -8634,6 +8634,106 @@ async def dealer_invoice_detail(
     return {"invoice": _admin_invoice_to_dict(invoice, None, plan)}
 
 
+class DealerListingCreatePayload(BaseModel):
+    title: str
+    price: Optional[float] = None
+
+
+def _dealer_listing_to_dict(listing: DealerListing) -> dict:
+    return {
+        "id": str(listing.id),
+        "title": listing.title,
+        "price": listing.price,
+        "status": listing.status,
+        "created_at": listing.created_at.isoformat() if listing.created_at else None,
+    }
+
+
+@api_router.get("/dealer/listings")
+async def dealer_list_listings(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        dealer_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="dealer invalid")
+
+    rows = (
+        await session.execute(
+            select(DealerListing)
+            .where(DealerListing.dealer_id == dealer_uuid)
+            .order_by(desc(DealerListing.created_at))
+        )
+    ).scalars().all()
+    items = [_dealer_listing_to_dict(row) for row in rows]
+    used = len(rows)
+    limit = DEALER_LISTING_QUOTA_LIMIT
+    remaining = max(0, limit - used)
+    return {"items": items, "quota": {"limit": limit, "used": used, "remaining": remaining}}
+
+
+@api_router.get("/dealer/quotas")
+async def dealer_listing_quota(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        dealer_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="dealer invalid")
+
+    count = (
+        await session.execute(
+            select(func.count()).select_from(DealerListing).where(DealerListing.dealer_id == dealer_uuid)
+        )
+    ).scalar_one()
+    limit = DEALER_LISTING_QUOTA_LIMIT
+    remaining = max(0, limit - int(count or 0))
+    return {"limit": limit, "used": int(count or 0), "remaining": remaining}
+
+
+@api_router.post("/dealer/listings", status_code=201)
+async def dealer_create_listing(
+    payload: DealerListingCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        dealer_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="dealer invalid")
+
+    count = (
+        await session.execute(
+            select(func.count()).select_from(DealerListing).where(DealerListing.dealer_id == dealer_uuid)
+        )
+    ).scalar_one()
+    if int(count or 0) >= DEALER_LISTING_QUOTA_LIMIT:
+        raise HTTPException(status_code=402, detail="Listing quota exceeded")
+
+    title = payload.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="title is required")
+
+    listing = DealerListing(
+        dealer_id=dealer_uuid,
+        title=title,
+        price=payload.price,
+        status="draft",
+    )
+    session.add(listing)
+    await session.commit()
+    await session.refresh(listing)
+    used = int(count or 0) + 1
+    limit = DEALER_LISTING_QUOTA_LIMIT
+    remaining = max(0, limit - used)
+    return {"item": _dealer_listing_to_dict(listing), "quota": {"limit": limit, "used": used, "remaining": remaining}}
+
+
 def _resolve_payment_status(value: Optional[str]) -> str:
     normalized = (value or "").lower()
     if normalized in {"paid", "succeeded"}:
