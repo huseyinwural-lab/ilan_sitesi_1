@@ -1180,7 +1180,7 @@ const AdminCategories = () => {
 
 
   return (
-    <div className="p-6" data-testid="categories-page">
+    <div className="p-6" data-testid="admin-categories-page">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Kategoriler</h1>
