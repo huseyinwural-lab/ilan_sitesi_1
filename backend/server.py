@@ -10573,7 +10573,7 @@ async def create_checkout_session_stub(
     return {
         "checkout_url": checkout_session.url,
         "session_id": checkout_session.session_id,
-        "payment_intent_id": checkout_session.payment_intent_id,
+        "payment_intent_id": None,
         "mode": "stub",
     }
 
