@@ -485,8 +485,13 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
               ) : (
                 items.map((campaign) => {
                   const badge = statusBadge(campaign.status);
-                  const scopeLabel = campaign.country_scope === 'global' ? 'Global' : campaign.country_code || '-';
-                  const typeLabel = campaign.type === 'corporate' ? 'Kurumsal' : 'Bireysel';
+                  const rules = campaign.rules_json || {};
+                  const scopeLabel = campaign.country_code || '-';
+                  const typeLabel = campaignType === 'corporate' ? 'Kurumsal' : 'Bireysel';
+                  const priorityLabel = rules.priority || '-';
+                  const dealerCount = Array.isArray(rules.eligible_dealers) ? rules.eligible_dealers.length : 0;
+                  const userCount = Array.isArray(rules.eligible_users) ? rules.eligible_users.length : 0;
+                  const dealerPlan = rules.eligible_dealer_plan || '-';
                   const actionDisabled = disabled;
                   return (
                     <tr key={campaign.id} className="border-b last:border-none" data-testid={`${testIdPrefix}-row-${campaign.id}`}>
