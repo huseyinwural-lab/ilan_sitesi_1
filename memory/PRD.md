@@ -118,6 +118,8 @@
 - **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
+- 2026-02-21: Local Postgres dev (.env.local) + SQL auth/app providers aktif; migrations (heads) başarıyla uygulandı; admin/dealer/consumer seed kullanıcılar oluşturuldu.
+- 2026-02-21: portal_scope token v2 + websocket scope check; /health/db localhost 200; Account portal turuncu tema doğrulandı.
 - B8: Favoriler backend + profil/şifre API + GDPR export + mesajlaşma REST/WS entegrasyonu + push subscription altyapısı (VAPID secrets bekliyor)
 - Bireysel Portal: /account IA + guard + listing wizard (5 adım) + my listings aksiyonları + favorites/messages/support/profil temel akışlar
 - Dashboard summary gerçek veriye bağlandı + Quick Actions aktif (users/countries/audit)
