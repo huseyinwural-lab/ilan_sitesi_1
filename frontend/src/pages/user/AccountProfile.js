@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import QRCode from 'qrcode';
 import { ErrorState, LoadingState } from '@/components/account/AccountStates';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
