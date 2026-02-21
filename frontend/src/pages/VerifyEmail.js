@@ -29,6 +29,8 @@ export default function VerifyEmail({ portalContext = 'account' }) {
   const [cooldown, setCooldown] = useState(0);
   const [error, setError] = useState('');
   const [attemptsLeft, setAttemptsLeft] = useState(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpLogged, setHelpLogged] = useState(false);
 
   const inputsRef = useRef([]);
 
