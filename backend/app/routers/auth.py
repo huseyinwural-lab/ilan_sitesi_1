@@ -95,10 +95,12 @@ async def login(credentials: UserLogin, request: Request, db: AsyncSession = Dep
         ip_address=request.client.host if request.client else None
     )
     
+    user_payload = UserResponse.model_validate(user).model_copy(update={"portal_scope": _resolve_portal_scope(user.role.value)})
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
-        user=UserResponse.model_validate(user)
+        user=user_payload
     )
 
 @router.post("/refresh", response_model=TokenResponse)
