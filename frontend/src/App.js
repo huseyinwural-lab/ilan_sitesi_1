@@ -81,6 +81,10 @@ const AccountRoute = ({ children }) => {
     return <Navigate to="/login" />;
   }
 
+  if (user.is_verified === false) {
+    return <Navigate to="/verify-email" replace state={{ email: user.email }} />;
+  }
+
   const portalScope = user.portal_scope || null;
 
   if (portalScope === 'dealer') {
