@@ -5237,21 +5237,19 @@ async def pause_campaign(
     before_state = _campaign_to_dict(campaign)
     campaign.status = "paused"
     campaign.updated_at = datetime.now(timezone.utc)
-    await session.commit()
 
-    db = request.app.state.db
-    if db is not None:
-        audit_entry = await build_audit_entry(
-            event_type="CAMPAIGN_PAUSED",
-            actor=current_user,
-            target_id=campaign_id,
-            target_type="campaign",
-            country_code=current_user.get("country_code"),
-            details={"before": before_state, "after": {"status": "paused"}},
-            request=request,
-        )
-        audit_entry["action"] = "CAMPAIGN_PAUSED"
-        await db.audit_logs.insert_one(audit_entry)
+    await _write_audit_log_sql(
+        session=session,
+        action="CAMPAIGN_PAUSED",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="campaign",
+        resource_id=campaign_id,
+        metadata={"before": before_state, "after": {"status": "paused"}},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
 
     return {"ok": True}
 
