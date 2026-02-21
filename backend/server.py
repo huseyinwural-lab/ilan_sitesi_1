@@ -416,6 +416,17 @@ def _build_thread_summary_sql(
         "unread_count": unread_count,
     }
 
+async def _get_message_thread_or_404(session: AsyncSession, thread_id: str, current_user_id: str) -> Conversation:
+    thread_uuid = uuid.UUID(thread_id)
+    thread = await session.get(Conversation, thread_uuid)
+    if not thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    if current_user_id not in {str(thread.buyer_id), str(thread.seller_id)}:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return thread
+
+
+
 
 
 
