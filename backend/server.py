@@ -191,7 +191,6 @@ class ResendVerificationPayload(BaseModel):
 class ResendVerificationResponse(BaseModel):
     status: str
     cooldown_seconds: int
-    debug_code: Optional[str] = None
 
 
 class EmailVerifyHelpPayload(BaseModel):
