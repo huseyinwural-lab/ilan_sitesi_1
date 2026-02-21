@@ -1221,16 +1221,6 @@ app.add_middleware(
 )
 
 
-@app.middleware("http")
-async def mongo_feature_gate(request: Request, call_next):
-    if not MONGO_ENABLED:
-        path = request.url.path
-        for prefix in MONGO_GATED_PATH_PREFIXES:
-            if path.startswith(prefix):
-                return JSONResponse(status_code=503, content={"detail": "Mongo disabled"})
-    return await call_next(request)
-
-
 
 def _get_client_ip(request: Request) -> str | None:
     xff = request.headers.get("x-forwarded-for")
