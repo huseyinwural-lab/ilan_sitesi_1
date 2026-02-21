@@ -4267,6 +4267,522 @@ async def get_me(current_user=Depends(get_current_user)):
     return _user_to_response(current_user)
 
 
+@api_router.get("/v1/users/me/profile")
+async def get_user_profile_v1(
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    role = current_user.get("role")
+    if role not in {"individual", "dealer"}:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+    user_row = await _get_user_row_from_current(session, current_user)
+    if role == "dealer":
+        profile = await _get_or_create_dealer_profile(session, user_row)
+        return _build_dealer_profile_payload(user_row, profile)
+
+    profile = await _get_or_create_consumer_profile(
+        session,
+        user_row,
+        language=user_row.preferred_language,
+        country_code=user_row.country_code,
+    )
+    return _build_consumer_profile_payload(user_row, profile)
+
+
+@api_router.put("/v1/users/me/profile")
+async def update_user_profile_v1(
+    payload: ConsumerProfileUpdatePayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    role = current_user.get("role")
+    if role == "dealer":
+        raise HTTPException(status_code=403, detail="Dealer profile update uses /v1/users/me/dealer-profile")
+
+    user_row = await _get_user_row_from_current(session, current_user)
+    profile = await _get_or_create_consumer_profile(
+        session,
+        user_row,
+        language=user_row.preferred_language,
+        country_code=user_row.country_code,
+    )
+
+    update_fields: Dict[str, Any] = {}
+    if payload.full_name is not None:
+        full_name = payload.full_name.strip()
+        if full_name:
+            user_row.full_name = full_name
+            update_fields["full_name"] = full_name
+    if payload.locale is not None:
+        locale = payload.locale.strip().lower()
+        if locale:
+            user_row.preferred_language = locale
+            profile.language = locale
+            update_fields["locale"] = locale
+    if payload.country_code is not None:
+        country_code = payload.country_code.strip().upper()
+        if country_code:
+            user_row.country_code = country_code
+            profile.country_code = country_code
+            update_fields["country_code"] = country_code
+    if payload.display_name_mode is not None:
+        display_mode = payload.display_name_mode.strip().lower()
+        if display_mode not in {"full_name", "initials", "hidden"}:
+            raise HTTPException(status_code=400, detail="Invalid display_name_mode")
+        profile.display_name_mode = display_mode
+        update_fields["display_name_mode"] = display_mode
+    if payload.marketing_consent is not None:
+        profile.marketing_consent = bool(payload.marketing_consent)
+        update_fields["marketing_consent"] = profile.marketing_consent
+
+    if update_fields:
+        actor = {
+            "id": current_user.get("id"),
+            "email": current_user.get("email"),
+            "country_scope": current_user.get("country_scope") or [],
+        }
+        await _write_audit_log_sql(
+            session=session,
+            action="profile_update",
+            actor=actor,
+            resource_type="user",
+            resource_id=str(user_row.id),
+            metadata={"fields": list(update_fields.keys())},
+            request=request,
+            country_code=user_row.country_code,
+        )
+        if "marketing_consent" in update_fields:
+            await _write_audit_log_sql(
+                session=session,
+                action="consent_updated",
+                actor=actor,
+                resource_type="user",
+                resource_id=str(user_row.id),
+                metadata={"marketing_consent": update_fields.get("marketing_consent")},
+                request=request,
+                country_code=user_row.country_code,
+            )
+        await session.commit()
+        await session.refresh(user_row)
+        await session.refresh(profile)
+
+    return _build_consumer_profile_payload(user_row, profile)
+
+
+@api_router.get("/v1/users/me/dealer-profile")
+async def get_dealer_profile_v1(
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if current_user.get("role") != "dealer":
+        raise HTTPException(status_code=403, detail="Dealer profile only")
+
+    user_row = await _get_user_row_from_current(session, current_user)
+    profile = await _get_or_create_dealer_profile(session, user_row)
+    return _build_dealer_profile_payload(user_row, profile)
+
+
+@api_router.put("/v1/users/me/dealer-profile")
+async def update_dealer_profile_v1(
+    payload: DealerProfileUpdatePayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if current_user.get("role") != "dealer":
+        raise HTTPException(status_code=403, detail="Dealer profile only")
+
+    user_row = await _get_user_row_from_current(session, current_user)
+    profile = await _get_or_create_dealer_profile(session, user_row)
+
+    update_fields: Dict[str, Any] = {}
+    if payload.company_name is not None:
+        company_name = payload.company_name.strip()
+        if not company_name:
+            raise HTTPException(status_code=400, detail="Company name required")
+        profile.company_name = company_name
+        update_fields["company_name"] = company_name
+    if payload.vat_id is not None:
+        vat_id = _normalize_vat_id(payload.vat_id)
+        if vat_id and not _is_valid_vat_id(vat_id):
+            raise HTTPException(status_code=400, detail="VAT format invalid")
+        profile.vat_id = vat_id
+        profile.vat_number = vat_id
+        update_fields["vat_id"] = vat_id
+    if payload.trade_register_no is not None:
+        profile.trade_register_no = payload.trade_register_no.strip() or None
+        update_fields["trade_register_no"] = profile.trade_register_no
+    if payload.authorized_person is not None:
+        profile.authorized_person = payload.authorized_person.strip() or None
+        update_fields["authorized_person"] = profile.authorized_person
+    if payload.address_json is not None:
+        profile.address_json = payload.address_json
+        update_fields["address_json"] = True
+    if payload.logo_url is not None:
+        profile.logo_url = payload.logo_url.strip() or None
+        update_fields["logo_url"] = profile.logo_url
+    if payload.contact_email is not None:
+        profile.contact_email = payload.contact_email
+        update_fields["contact_email"] = profile.contact_email
+    if payload.contact_phone is not None:
+        profile.contact_phone = payload.contact_phone.strip() or None
+        update_fields["contact_phone"] = profile.contact_phone
+    if payload.address_country is not None:
+        profile.address_country = payload.address_country.strip().upper()
+        update_fields["address_country"] = profile.address_country
+    if payload.impressum_text is not None:
+        profile.impressum_text = payload.impressum_text
+        update_fields["impressum_text"] = True
+    if payload.terms_text is not None:
+        profile.terms_text = payload.terms_text
+        update_fields["terms_text"] = True
+    if payload.withdrawal_policy_text is not None:
+        profile.withdrawal_policy_text = payload.withdrawal_policy_text
+        update_fields["withdrawal_policy_text"] = True
+
+    if update_fields:
+        actor = {
+            "id": current_user.get("id"),
+            "email": current_user.get("email"),
+            "country_scope": current_user.get("country_scope") or [],
+        }
+        await _write_audit_log_sql(
+            session=session,
+            action="dealer_profile_update",
+            actor=actor,
+            resource_type="dealer_profile",
+            resource_id=str(profile.id),
+            metadata={"fields": list(update_fields.keys())},
+            request=request,
+            country_code=user_row.country_code,
+        )
+        await session.commit()
+        await session.refresh(profile)
+
+    return _build_dealer_profile_payload(user_row, profile)
+
+
+@api_router.get("/v1/dealers/me/profile")
+async def get_dealer_profile_v1_alias(
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    return await get_dealer_profile_v1(current_user=current_user, session=session)
+
+
+@api_router.put("/v1/dealers/me/profile")
+async def update_dealer_profile_v1_alias(
+    payload: DealerProfileUpdatePayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    return await update_dealer_profile_v1(
+        payload=payload,
+        request=request,
+        current_user=current_user,
+        session=session,
+    )
+
+
+@api_router.get("/v1/users/me/2fa/status")
+async def get_two_factor_status_v1(
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if current_user.get("role") == "dealer":
+        raise HTTPException(status_code=403, detail="2FA consumer only")
+
+    user_row = await _get_user_row_from_current(session, current_user)
+    profile = await _get_or_create_consumer_profile(session, user_row)
+    return {
+        "enabled": profile.totp_enabled,
+        "configured": bool(profile.totp_secret),
+        "enabled_at": profile.totp_enabled_at.isoformat() if profile.totp_enabled_at else None,
+    }
+
+
+@api_router.post("/v1/users/me/2fa/setup")
+async def setup_two_factor_v1(
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if current_user.get("role") == "dealer":
+        raise HTTPException(status_code=403, detail="2FA consumer only")
+
+    user_row = await _get_user_row_from_current(session, current_user)
+    profile = await _get_or_create_consumer_profile(session, user_row)
+    if profile.totp_enabled:
+        raise HTTPException(status_code=409, detail="2FA already enabled")
+
+    secret = pyotp.random_base32()
+    recovery_codes = _generate_recovery_codes()
+    profile.totp_secret = secret
+    profile.totp_enabled = False
+    profile.totp_enabled_at = None
+    profile.totp_recovery_codes = _hash_recovery_codes(recovery_codes)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="2fa_setup_started",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={},
+        request=None,
+        country_code=user_row.country_code,
+    )
+
+    await session.commit()
+
+    return {
+        "secret": secret,
+        "otpauth_url": _build_totp_uri(user_row.email, secret),
+        "recovery_codes": recovery_codes,
+    }
+
+
+@api_router.post("/v1/users/me/2fa/verify")
+async def verify_two_factor_v1(
+    payload: TwoFactorVerifyPayload,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if current_user.get("role") == "dealer":
+        raise HTTPException(status_code=403, detail="2FA consumer only")
+
+    user_row = await _get_user_row_from_current(session, current_user)
+    profile = await _get_or_create_consumer_profile(session, user_row)
+    if not profile.totp_secret:
+        raise HTTPException(status_code=400, detail="2FA not setup")
+
+    if not _verify_totp_code(profile.totp_secret, payload.code):
+        raise HTTPException(status_code=400, detail="Invalid code")
+
+    profile.totp_enabled = True
+    profile.totp_enabled_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="2fa_enabled",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={},
+        request=None,
+        country_code=user_row.country_code,
+    )
+
+    await session.commit()
+    return {"enabled": True}
+
+
+@api_router.post("/v1/users/me/2fa/disable")
+async def disable_two_factor_v1(
+    payload: TwoFactorVerifyPayload,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if current_user.get("role") == "dealer":
+        raise HTTPException(status_code=403, detail="2FA consumer only")
+
+    user_row = await _get_user_row_from_current(session, current_user)
+    profile = await _get_or_create_consumer_profile(session, user_row)
+    if not profile.totp_secret:
+        raise HTTPException(status_code=400, detail="2FA not setup")
+
+    valid = _verify_totp_code(profile.totp_secret, payload.code)
+    if not valid:
+        ok, remaining = _verify_recovery_code(payload.code, profile.totp_recovery_codes or [])
+        if ok:
+            profile.totp_recovery_codes = remaining
+            valid = True
+    if not valid:
+        raise HTTPException(status_code=400, detail="Invalid code")
+
+    profile.totp_enabled = False
+    profile.totp_secret = None
+    profile.totp_enabled_at = None
+    profile.totp_recovery_codes = []
+
+    await _write_audit_log_sql(
+        session=session,
+        action="2fa_disabled",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={},
+        request=None,
+        country_code=user_row.country_code,
+    )
+
+    await session.commit()
+    return {"enabled": False}
+
+
+@api_router.delete("/v1/users/me/account")
+async def request_account_delete_v1(
+    payload: Optional[AccountDeletePayload] = Body(default=None),
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_row = await _get_user_row_from_current(session, current_user)
+    role = current_user.get("role")
+
+    if role == "dealer":
+        profile = await _get_or_create_dealer_profile(session, user_row)
+    else:
+        profile = await _get_or_create_consumer_profile(session, user_row)
+
+    now = datetime.now(timezone.utc)
+    profile.gdpr_deleted_at = now + timedelta(days=30)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="gdpr_delete_requested",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={"reason": payload.reason if payload else "user_request", "grace_days": 30},
+        request=None,
+        country_code=user_row.country_code,
+    )
+
+    await session.commit()
+    return {"status": "scheduled", "gdpr_deleted_at": profile.gdpr_deleted_at.isoformat()}
+
+
+@api_router.get("/v1/users/me/data-export")
+async def export_user_data_v1(
+    request: Request,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    _enforce_export_rate_limit(request, current_user.get("id"))
+
+    user_row = await _get_user_row_from_current(session, current_user)
+    role = current_user.get("role")
+
+    if role == "dealer":
+        profile = await _get_or_create_dealer_profile(session, user_row)
+        profile_payload = {
+            "company_name": profile.company_name,
+            "vat_id": profile.vat_id,
+            "trade_register_no": profile.trade_register_no,
+            "authorized_person": profile.authorized_person,
+            "address_json": profile.address_json,
+            "logo_url": profile.logo_url,
+            "contact_email": profile.contact_email,
+            "contact_phone": profile.contact_phone,
+            "verification_status": profile.verification_status,
+            "gdpr_deleted_at": profile.gdpr_deleted_at.isoformat() if profile.gdpr_deleted_at else None,
+        }
+        profile_key = "dealer_profile"
+    else:
+        profile = await _get_or_create_consumer_profile(
+            session,
+            user_row,
+            language=user_row.preferred_language,
+            country_code=user_row.country_code,
+        )
+        profile_payload = {
+            "language": profile.language,
+            "country_code": profile.country_code,
+            "display_name_mode": profile.display_name_mode,
+            "marketing_consent": profile.marketing_consent,
+            "gdpr_deleted_at": profile.gdpr_deleted_at.isoformat() if profile.gdpr_deleted_at else None,
+        }
+        profile_key = "consumer_profile"
+
+    listings = (await session.execute(
+        select(Listing)
+        .where(Listing.user_id == user_row.id)
+        .order_by(desc(Listing.created_at))
+        .limit(500)
+    )).scalars().all()
+
+    favorites = (await session.execute(
+        select(Favorite)
+        .where(Favorite.user_id == user_row.id)
+        .order_by(desc(Favorite.created_at))
+        .limit(500)
+    )).scalars().all()
+
+    conversations = (await session.execute(
+        select(Conversation)
+        .where(or_(Conversation.buyer_id == user_row.id, Conversation.seller_id == user_row.id))
+        .order_by(desc(Conversation.last_message_at))
+        .limit(200)
+    )).scalars().all()
+
+    messages_meta = []
+    for convo in conversations:
+        total_messages = (await session.execute(
+            select(func.count()).select_from(Message).where(Message.conversation_id == convo.id)
+        )).scalar_one() or 0
+        messages_meta.append(
+            {
+                "conversation_id": str(convo.id),
+                "listing_id": str(convo.listing_id) if convo.listing_id else None,
+                "buyer_id": str(convo.buyer_id) if convo.buyer_id else None,
+                "seller_id": str(convo.seller_id) if convo.seller_id else None,
+                "last_message_at": convo.last_message_at.isoformat() if convo.last_message_at else None,
+                "total_messages": int(total_messages),
+            }
+        )
+
+    export_payload = {
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "user": {
+            "id": str(user_row.id),
+            "email": user_row.email,
+            "full_name": user_row.full_name,
+            "preferred_language": user_row.preferred_language,
+            "country_code": user_row.country_code,
+        },
+        profile_key: profile_payload,
+        "listings": [
+            {
+                "id": str(item.id),
+                "title": item.title,
+                "status": item.status,
+                "created_at": item.created_at.isoformat() if item.created_at else None,
+            }
+            for item in listings
+        ],
+        "favorites": [
+            {
+                "listing_id": str(item.listing_id),
+                "created_at": item.created_at.isoformat() if item.created_at else None,
+            }
+            for item in favorites
+        ],
+        "messages": messages_meta,
+    }
+
+    await _write_audit_log_sql(
+        session=session,
+        action="gdpr_export_requested",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={"lists": ["listings", "favorites", "messages"]},
+        request=request,
+        country_code=user_row.country_code,
+    )
+    await session.commit()
+
+    payload_text = json.dumps(export_payload, ensure_ascii=False, indent=2)
+    filename = f"gdpr-export-{user_row.id}.json"
+    return Response(
+        content=payload_text,
+        media_type="application/json",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
 @api_router.get("/users/me")
 async def get_user_profile(
     current_user=Depends(require_portal_scope("account")),
