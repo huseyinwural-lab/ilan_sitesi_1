@@ -170,12 +170,31 @@ async def get_current_user_optional(
 
 
 def check_permissions(required_roles: list[str]):
+    required_scope = _infer_required_portal_scope(required_roles)
+
     async def permission_checker(current_user=Depends(get_current_user)):
         if current_user.get("role") not in required_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",
             )
+        if required_scope and current_user.get("portal_scope") != required_scope:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Portal scope mismatch",
+            )
         return current_user
 
     return permission_checker
+
+
+def require_portal_scope(scope: str):
+    async def portal_checker(current_user=Depends(get_current_user)):
+        if current_user.get("portal_scope") != scope:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Portal scope mismatch",
+            )
+        return current_user
+
+    return portal_checker
