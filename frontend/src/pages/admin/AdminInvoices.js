@@ -87,10 +87,9 @@ const resolvePaymentBadgeClass = (value) => {
 const resolveInvoiceTooltip = (inv) => {
   if (!inv) return '';
   if (inv.status === 'issued') return `Invoice issued at ${formatDateTime(inv.issued_at)}`;
-  if (inv.status === 'overdue') return `Overdue since ${formatDateTime(inv.due_at)}`;
   if (inv.status === 'paid') return `Invoice paid at ${formatDateTime(inv.paid_at)}`;
   if (inv.status === 'refunded') return `Refund processed at ${formatDateTime(inv.updated_at)}`;
-  if (inv.status === 'cancelled') return 'Invoice cancelled';
+  if (inv.status === 'void') return 'Invoice voided';
   return '';
 };
 
