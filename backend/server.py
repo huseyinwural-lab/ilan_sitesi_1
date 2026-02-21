@@ -1461,8 +1461,8 @@ def _normalize_campaign_payload(payload, existing: Optional[Campaign] = None) ->
     return {
         "name": name,
         "status": status_value,
-        "current_period_start": current_period_start,
-        "current_period_end": current_period_end,
+        "start_at": start_at,
+        "end_at": end_at,
         "country_code": country_code,
         "budget_amount": budget_amount,
         "budget_currency": budget_currency,
