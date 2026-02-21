@@ -7037,8 +7037,20 @@ def _build_audit_query(
     return {"$and": conditions}
 
 
-@api_router.get("/admin/audit-logs")
-async def admin_list_audit_logs(
+def _audit_log_sql_to_dict(row: AuditLog) -> Dict[str, Any]:
+    return {
+        "id": str(row.id),
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "action": row.action,
+        "resource_type": row.resource_type,
+        "resource_id": row.resource_id,
+        "user_id": str(row.user_id) if row.user_id else None,
+        "user_email": row.user_email,
+        "country_scope": row.country_scope,
+        "metadata": row.metadata_info or {},
+    }
+
+
     request: Request,
     q: Optional[str] = None,
     event_type: Optional[str] = None,
