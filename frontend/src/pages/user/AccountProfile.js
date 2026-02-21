@@ -136,6 +136,8 @@ export default function AccountProfile() {
           full_name: profile.full_name,
           phone: profile.phone,
           locale: profile.locale,
+          country_code: profile.country_code,
+          display_name_mode: profile.display_name_mode,
           notification_prefs: prefs,
         }),
       });
