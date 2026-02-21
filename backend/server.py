@@ -7293,6 +7293,13 @@ class PaymentCheckoutPayload(BaseModel):
     origin_url: str
 
 
+class PaymentCheckoutStubPayload(BaseModel):
+    amount: float = Field(..., gt=0)
+    currency: str = "EUR"
+    origin_url: str
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class TaxRateCreatePayload(BaseModel):
     country_code: str
     rate: float
