@@ -67,7 +67,7 @@ export default function AdminPlans() {
   const [saving, setSaving] = useState(false);
 
   const authHeader = useMemo(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     return { Authorization: `Bearer ${token}` };
   }, []);
 
