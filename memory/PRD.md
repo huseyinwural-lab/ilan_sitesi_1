@@ -118,6 +118,7 @@
 - **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
+- 2026-02-21: FAZ-EU-PANEL-01 dokümantasyon paketi eklendi (Consumer/Dealer IA, GDPR specs, design system, compliance checklist).
 - 2026-02-21: Smoke otomasyon scriptleri eklendi (staging/email/stripe/parity) + SMOKE_FINAL01_STAGING.md tek komut talimatı.
 - 2026-02-21: Ops için secret provisioning talebi + checklist eklendi (SECRETS_PROVISIONING_REQUEST_FINAL01.md).
 - 2026-02-21: Billing audit standard (audit_logs) + /api/admin/audit-logs scope=billing + SQL moderation approve + public search v2 SQL; category NOT NULL + make/model mapping; p32 migration; SendGrid-only provider guard.
