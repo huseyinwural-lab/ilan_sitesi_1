@@ -15,8 +15,14 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("dealer_listings", sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True))
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if "dealer_listings" in inspector.get_table_names():
+        op.add_column("dealer_listings", sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True))
 
 
 def downgrade() -> None:
-    op.drop_column("dealer_listings", "deleted_at")
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if "dealer_listings" in inspector.get_table_names():
+        op.drop_column("dealer_listings", "deleted_at")
