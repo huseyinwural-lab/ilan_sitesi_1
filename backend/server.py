@@ -3147,15 +3147,23 @@ async def resend_email_verification(
                 detail={"code": "RATE_LIMITED", "retry_after_seconds": retry_after, "remaining_attempts": 0},
             )
 
-    await _issue_email_verification_code(session, user, request)
-    await _log_email_verify_event(
-        session=session,
-        action="auth.email_verify.requested",
-        user=user,
-        request=request,
-        metadata={"channel": "email"},
-    )
-    await session.commit()
+    try:
+        verification_code = await _issue_email_verification_code(session, user, request)
+        _send_verification_email(user.email, verification_code, user.preferred_language)
+        await _log_email_verify_event(
+            session=session,
+            action="auth.email_verify.requested",
+            user=user,
+            request=request,
+            metadata={"channel": "email"},
+        )
+        await session.commit()
+    except HTTPException:
+        await session.rollback()
+        raise
+    except Exception as exc:
+        await session.rollback()
+        raise HTTPException(status_code=502, detail="Failed to send verification email") from exc
 
     return ResendVerificationResponse(
         status="queued",
