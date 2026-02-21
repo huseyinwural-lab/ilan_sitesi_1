@@ -118,6 +118,7 @@
 - **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
+- 2026-02-21: Billing audit standard (audit_logs) + /api/admin/audit-logs scope=billing + SQL moderation approve + public search v2 SQL; category NOT NULL + make/model mapping; p32 migration; SendGrid-only provider guard.
 - 2026-02-21: Local Postgres native kuruldu; alembic upgrade heads PASS; Stripe checkout async fix + webhook imza testleri ile payment zinciri local E2E PASS; p30_user_quota_limits + p31_listing_contact_options migration eklendi; FINAL01_LOCAL_E2E kanıtı üretildi.
 - 2026-02-23: Email provider switch (EMAIL_PROVIDER mock/smtp/sendgrid) + retention policy/job spec dokümanları + verification email prod switch wiring tamamlandı.
 - 2026-02-23: Email verification prod switch hazırlandı (p29 token table, TTL=15dk, debug_code kaldırıldı) + frontend debug alanları temizlendi.
