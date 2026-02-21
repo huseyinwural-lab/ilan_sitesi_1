@@ -120,6 +120,7 @@ export default function AccountProfile() {
 
   useEffect(() => {
     fetchProfile();
+    fetchTwoFactorStatus();
     loadPushStatus();
   }, []);
 
