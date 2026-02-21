@@ -162,6 +162,7 @@ export default function AdminPlans() {
       name: item.name || '',
       scope,
       country_code: country,
+      period: item.period || 'monthly',
       price_amount: item.price_amount ?? '',
       currency_code: item.currency_code || resolveCurrency(scope, country || 'DE'),
       listing_quota: item.listing_quota ?? '',
