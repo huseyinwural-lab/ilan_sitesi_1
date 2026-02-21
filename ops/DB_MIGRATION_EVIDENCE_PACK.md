@@ -31,3 +31,18 @@ connection to server at "localhost" (::1), port 5432 failed: Cannot assign reque
 ## Notlar / Gate
 - DB head’e çıkılmadan P1 adımına geçilmeyecek.
 - Ops dependency: local/staging Postgres servisi erişilebilir olmalı.
+
+## Local UNBLOCK (2026-02-21)
+- Local Postgres (native) **aktif**
+- `alembic upgrade heads` **PASS**
+- `alembic current` heads:
+  - c5833a1fffde, d2f4c9c4c7ab, aa12b9c8d7e1, f3b1c2d8a91b, p29_email_verification_tokens, p30_user_quota_limits
+
+### Tablo Doğrulama (Local)
+- `payments`, `user_subscriptions`, `admin_invoices`, `email_verification_tokens` ✅
+- `billing_audit_log` ❌ (audit_logs kullanılıyor)
+
+### Constraint Kanıtı
+- `uq_payments_provider_ref` UNIQUE (provider, provider_ref)
+- `email_verification_tokens` → unique token + indexes (user_id, expires_at)
+
