@@ -4792,25 +4792,28 @@ async def send_thread_message(
 @api_router.post("/v1/messages/threads/{thread_id}/read")
 async def mark_thread_read(
     thread_id: str,
-    request: Request,
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
+    thread = await _get_message_thread_or_404(session, thread_id, current_user.get("id"))
+    user_id = uuid.UUID(current_user.get("id"))
 
-    thread = await _get_message_thread_or_404(db, thread_id, current_user.get("id"))
-    unread_counts = dict(thread.get("unread_counts") or {})
-    unread_counts[current_user.get("id")] = 0
-    await db.message_threads.update_one(
-        {"id": thread_id},
-        {"$set": {"unread_counts": unread_counts, "updated_at": datetime.now(timezone.utc).isoformat()}},
+    await session.execute(
+        update(Message)
+        .where(
+            Message.conversation_id == thread.id,
+            Message.sender_id != user_id,
+            Message.is_read.is_(False),
+        )
+        .values(is_read=True)
     )
+    await session.commit()
+
     await message_ws_manager.broadcast_thread(
-        thread_id,
+        str(thread.id),
         {
             "type": "message:read",
-            "thread_id": thread_id,
+            "thread_id": str(thread.id),
             "user_id": current_user.get("id"),
             "read_at": datetime.now(timezone.utc).isoformat(),
         },
