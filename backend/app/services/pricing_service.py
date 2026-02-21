@@ -67,7 +67,7 @@ class PricingService:
         """Fetches active VAT rate or raises error"""
         query = select(VatRate).where(and_(
             VatRate.country == country,
-            VatRate.is_active == True
+            VatRate.is_active.is_(True)
         )).order_by(VatRate.valid_from.desc())
         
         vat = (await self.db.execute(query)).scalars().first()
