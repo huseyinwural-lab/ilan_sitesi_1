@@ -49,3 +49,11 @@ Email verification akışını **prod‑ready** hale getirmek: debug/mock kodu k
 ## Evidence (DB Unblock Sonrası)
 - Migration hash + `\d+ email_verification_tokens` çıktısı.
 - Register → verify E2E PASS.
+
+
+## Implementasyon Durumu (Hazırlık)
+- `p29_email_verification_tokens` migration hazır (token table + unique index).
+- API response’lardan `debug_code` kaldırıldı; mock yok.
+- TTL konfigürasyonu 15 dk olarak güncellendi.
+- DB gelince migration + E2E doğrulama yapılacak.
+
