@@ -15,16 +15,6 @@ security = HTTPBearer()
 security_optional = HTTPBearer(auto_error=False)
 
 APP_ENV = (os.environ.get("APP_ENV") or "dev").lower()
-MONGO_ENABLED_RAW = os.environ.get("MONGO_ENABLED")
-if APP_ENV == "prod":
-    MONGO_ENABLED = False
-else:
-    if MONGO_ENABLED_RAW is None:
-        MONGO_ENABLED = True
-    else:
-        MONGO_ENABLED = MONGO_ENABLED_RAW.lower() in {"1", "true", "yes"}
-
-AUTH_PROVIDER = (os.environ.get("AUTH_PROVIDER") or ("mongo" if MONGO_ENABLED else "sql")).lower()
 TOKEN_VERSION = os.environ.get("TOKEN_VERSION", "v2")
 
 ADMIN_ROLES = {
