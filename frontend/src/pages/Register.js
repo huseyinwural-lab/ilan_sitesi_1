@@ -197,16 +197,11 @@ export default function Register({ portalContext = 'account' }) {
         throw new Error(detail?.detail || 'Kayıt başarısız');
       }
 
-      const data = await res.json().catch(() => ({}));
-      const debug = data?.debug_code || '';
+      await res.json().catch(() => ({}));
 
       sessionStorage.setItem('pending_email', payload.email || email);
       sessionStorage.setItem('pending_portal', isDealer ? 'dealer' : 'account');
-      if (debug) {
-        sessionStorage.setItem('pending_debug_code', debug);
-      }
 
-      setDebugCode(debug);
       setStep('verify');
       setCooldown(RESEND_COOLDOWN);
       toast({ title: 'Doğrulama kodu gönderildi', description: 'Lütfen e-postanızı kontrol edin.' });
