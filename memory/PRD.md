@@ -205,8 +205,9 @@
 - Email verification prod switch: token tablosu + unique index + TTL=15dk + debug kaldırma
 - Ad wizard SQL mapping gap fix: category_id + make_id/model_id mapping
 - Ops: DATABASE_URL secret (preview/prod) + migration/seed
-- Lokal/preview container’da Postgres servisi çalışmıyor → Alembic current/upgrade ve \dt kanıtları **BLOCKED**
-
+- Local Postgres UNBLOCK **PASS** (FINAL01_LOCAL_E2E.md). Preview/prod DB hala BLOCKED.
+- Billing audit log tablo adı net değil (billing_audit_log yok; audit_logs kullanılıyor) → netleştirilecek.
+- Public search + moderation hâlâ Mongo (Ad Loop public görünürlük staging’de doğrulanacak).
 ### P1
 - Verification token cleanup job (00:30 UTC) + retention policy (24h/7d) kanıtları
 - Lint debt cleanup (LINT-1/2)
