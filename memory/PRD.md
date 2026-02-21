@@ -199,6 +199,7 @@
 ## Öncelikli Backlog
 ### P0 (Sıradaki)
 - FAZ-FINAL-01 Critical User Path: **AUTH → Stripe → Ad Loop** (order lock)
+- Local E2E kanıtı: `/app/ops/FINAL01_LOCAL_E2E.md`
 - AUTH SQL full migration + Mongo cutoff + Auth E2E
 - Stripe Payment zinciri: Payments V1 unique + webhook idempotency/replay + invoice/subscription/quota chain
 - Ad Loop E2E: ilan oluştur → medya → publish → public görünür
