@@ -54,8 +54,9 @@ const ProtectedRoute = ({ children, roles = [], portalScope = null }) => {
     return <Navigate to="/login" />;
   }
 
-  if (portalScope && user.portal_scope && user.portal_scope !== portalScope) {
-    return <Navigate to="/" />;
+  if (user.is_verified === false && (portalScope === 'account' || portalScope === 'dealer')) {
+    const verifyPath = portalScope === 'dealer' ? '/dealer/verify-email' : '/verify-email';
+    return <Navigate to={verifyPath} replace state={{ email: user.email }} />;
   }
 
   if (roles.length > 0 && !roles.includes(user.role)) {
