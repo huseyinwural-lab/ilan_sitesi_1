@@ -1412,96 +1412,62 @@ def _normalize_str_list(value: Optional[List[str]]) -> Optional[List[str]]:
 
 
 def _normalize_campaign_payload(payload, existing: Optional[Campaign] = None) -> Dict[str, Any]:
-    type_value = payload.type if hasattr(payload, "type") and payload.type is not None else (existing.type if existing else None)
-    if not type_value:
-        raise HTTPException(status_code=400, detail="type is required")
-    type_value = type_value.lower()
-    if type_value not in CAMPAIGN_TYPES:
-        raise HTTPException(status_code=400, detail="Invalid type")
-    if existing and hasattr(payload, "type") and payload.type and payload.type.lower() != existing.type:
-        raise HTTPException(status_code=400, detail="type cannot be changed")
-
-    scope_value = payload.country_scope if payload.country_scope is not None else (existing.country_scope if existing else "global")
-    scope_value = scope_value.lower()
-    if scope_value not in CAMPAIGN_SCOPE_SET:
-        raise HTTPException(status_code=400, detail="Invalid country_scope")
-
-    country_code = payload.country_code if payload.country_code is not None else (existing.country_code if existing else None)
-    if scope_value == "country":
-        if not country_code:
-            raise HTTPException(status_code=400, detail="country_code is required")
-        country_code = country_code.upper()
-    else:
-        country_code = None
-
     name = payload.name if payload.name is not None else (existing.name if existing else None)
     if not name:
         raise HTTPException(status_code=400, detail="name is required")
 
-    description = payload.description if payload.description is not None else (existing.description if existing else None)
-
     status_value = payload.status if payload.status is not None else (existing.status if existing else "draft")
     status_value = status_value.lower()
-    if status_value not in CAMPAIGN_STATUSES:
+    if status_value not in CAMPAIGN_STATUS_SET:
         raise HTTPException(status_code=400, detail="Invalid status")
 
-    start_raw = payload.start_at if payload.start_at is not None else (existing.start_at.isoformat() if existing and existing.start_at else None)
-    end_raw = payload.end_at if payload.end_at is not None else (existing.end_at.isoformat() if existing and existing.end_at else None)
+    country_code = payload.country_code if payload.country_code is not None else (existing.country_code if existing else None)
+    if not country_code:
+        raise HTTPException(status_code=400, detail="country_code is required")
+    country_code = country_code.upper()
 
-    start_at = _parse_datetime_field(start_raw, "start_at") if start_raw else datetime.now(timezone.utc)
+    start_raw = payload.start_at if payload.start_at is not None else (
+        existing.start_at.isoformat() if existing and existing.start_at else None
+    )
+    if not start_raw and not existing:
+        raise HTTPException(status_code=400, detail="start_at is required")
+    start_at = _parse_datetime_field(start_raw, "start_at") if start_raw else existing.start_at
+
+    end_raw = payload.end_at if payload.end_at is not None else (
+        existing.end_at.isoformat() if existing and existing.end_at else None
+    )
     end_at = _parse_datetime_field(end_raw, "end_at") if end_raw else None
-    if end_at and start_at >= end_at:
+    if end_at and start_at and start_at >= end_at:
         raise HTTPException(status_code=400, detail="start_at must be before end_at")
 
-    priority_value = payload.priority if payload.priority is not None else (existing.priority if existing else "medium")
-    priority_value = priority_value.lower()
-    if priority_value not in CAMPAIGN_PRIORITY_SET:
-        raise HTTPException(status_code=400, detail="Invalid priority")
-
-    duration_days = payload.duration_days if payload.duration_days is not None else (
-        existing.duration_days if existing else None
+    budget_amount = payload.budget_amount if payload.budget_amount is not None else (
+        float(existing.budget_amount) if existing and existing.budget_amount is not None else None
     )
-    quota_count = payload.quota_count if payload.quota_count is not None else (
-        existing.quota_count if existing else None
-    )
-    price_amount = payload.price_amount if payload.price_amount is not None else (
-        float(existing.price_amount) if existing and existing.price_amount is not None else None
+    budget_currency = payload.budget_currency if payload.budget_currency is not None else (
+        existing.budget_currency if existing else None
     )
 
-    if price_amount is None:
-        raise HTTPException(status_code=400, detail="price_amount is required")
-    if price_amount < 0:
-        raise HTTPException(status_code=400, detail="price_amount must be >= 0")
+    if budget_amount is not None:
+        if budget_amount < 0:
+            raise HTTPException(status_code=400, detail="budget_amount must be >= 0")
+        if not budget_currency:
+            raise HTTPException(status_code=400, detail="budget_currency is required when budget_amount is set")
+    if budget_currency and budget_amount is None:
+        raise HTTPException(status_code=400, detail="budget_amount is required when budget_currency is set")
 
-    if type_value == "individual":
-        if quota_count is not None:
-            raise HTTPException(status_code=400, detail="quota_count is not valid for individual campaigns")
-        if duration_days is None or duration_days <= 0:
-            raise HTTPException(status_code=400, detail="duration_days is required for individual campaigns")
-    else:
-        if duration_days is not None:
-            raise HTTPException(status_code=400, detail="duration_days is not valid for corporate campaigns")
-        if quota_count is None or quota_count <= 0:
-            raise HTTPException(status_code=400, detail="quota_count is required for corporate campaigns")
-
-    currency_code = _resolve_currency_code(country_code)
-    if not currency_code:
-        raise HTTPException(status_code=400, detail="currency_code unavailable for country")
+    notes = payload.notes if payload.notes is not None else (existing.notes if existing else None)
+    rules_json = payload.rules_json if payload.rules_json is not None else (existing.rules_json if existing else None)
 
     return {
-        "type": type_value,
-        "country_scope": scope_value,
-        "country_code": country_code,
         "name": name,
-        "description": description,
         "status": status_value,
         "start_at": start_at,
         "end_at": end_at,
-        "priority": priority_value,
-        "duration_days": duration_days,
-        "quota_count": quota_count,
-        "price_amount": price_amount,
-        "currency_code": currency_code,
+        "country_code": country_code,
+        "budget_amount": budget_amount,
+        "budget_currency": budget_currency,
+        "notes": notes,
+        "rules_json": rules_json,
     }
 
 
