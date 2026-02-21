@@ -41,11 +41,15 @@ export default function AccountProfile() {
   const [saved, setSaved] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' });
   const [passwordMessage, setPasswordMessage] = useState('');
-  const [gdprLoading, setGdprLoading] = useState(false);
-  const [gdprError, setGdprError] = useState('');
   const [pushSupported, setPushSupported] = useState(false);
   const [pushStatus, setPushStatus] = useState('unknown');
   const [pushMessage, setPushMessage] = useState('');
+  const [twoFactorStatus, setTwoFactorStatus] = useState({ enabled: false, configured: false });
+  const [setupData, setSetupData] = useState(null);
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [disableCode, setDisableCode] = useState('');
+  const [twoFactorMessage, setTwoFactorMessage] = useState('');
 
   const strength = useMemo(() => buildStrength(passwordForm.next || ''), [passwordForm.next]);
 
