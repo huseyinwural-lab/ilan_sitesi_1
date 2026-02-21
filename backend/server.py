@@ -10504,38 +10504,37 @@ async def admin_revenue(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await _ensure_invoices_db_ready(session)
 
-    if not country:
-        raise HTTPException(status_code=400, detail="country is required")
-    country_code = country.upper()
-    _assert_country_scope(country_code, current_user)
-
-    start_dt = _parse_iso_datetime(start_date, "start_date")
-    end_dt = _parse_iso_datetime(end_date, "end_date")
+    start_dt = _parse_iso_datetime(start_date, "start_date") if start_date else datetime.now(timezone.utc) - timedelta(days=30)
+    end_dt = _parse_iso_datetime(end_date, "end_date") if end_date else datetime.now(timezone.utc)
     if end_dt < start_dt:
         raise HTTPException(status_code=400, detail="end_date must be after start_date")
-    start_iso = start_dt.astimezone(timezone.utc).isoformat()
-    end_iso = end_dt.astimezone(timezone.utc).isoformat()
 
-    q = {
-        "country_code": country_code,
-        "status": "paid",
-        "paid_at": {"$gte": start_iso, "$lte": end_iso},
-    }
-    docs = await db.invoices.find(q, {"_id": 0, "amount_gross": 1, "currency": 1}).to_list(length=10000)
-    totals: Dict[str, float] = {}
-    for doc in docs:
-        currency = doc.get("currency") or "UNKNOWN"
-        totals[currency] = totals.get(currency, 0) + float(doc.get("amount_gross") or 0)
+    conditions = [
+        AdminInvoice.status == "paid",
+        AdminInvoice.paid_at >= start_dt,
+        AdminInvoice.paid_at <= end_dt,
+    ]
+
+    if country:
+        country_code = country.upper()
+        if country_code != "GLOBAL":
+            _assert_country_scope(country_code, current_user)
+        conditions.append(AdminInvoice.country_code == country_code)
+    else:
+        country_code = None
+
+    totals = await _invoice_totals_by_currency(session, conditions)
     total_gross = sum(totals.values())
 
     return {
         "country_code": country_code,
-        "start_date": start_iso,
-        "end_date": end_iso,
+        "start_date": start_dt.isoformat(),
+        "end_date": end_dt.isoformat(),
         "total_gross": round(total_gross, 2),
         "totals_by_currency": {k: round(v, 2) for k, v in totals.items()},
     }
