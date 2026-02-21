@@ -204,6 +204,7 @@
 - Consumer Portal B8: E2E senaryoları (ilan oluştur/yayınla/düzenle, favori, mesaj, ticket)
 
 ### P2
+- Notifications UI: badge + okunmamış/tür filtreleri (Medium priority, Monetization sonrası)
 - Admin kullanıcı yönetimi audit log sertleştirme (admin_role_changed/admin_scope_changed/admin_suspended/admin_activated/admin_invited) + before/after metadata
 - Admin kullanıcı yönetimi için E2E test paketi (rol/scope değişimi, last super_admin koruması, 403 görünmez aksiyonlar)
 - Bireysel kullanıcılar arama/sıralama için index önerisi: last_name + first_name + email + phone_e164 (text/compound)
