@@ -7631,6 +7631,99 @@ def _diff_categories(import_items: list[dict], existing: list[Category]) -> dict
     }
 
 
+def _build_category_import_report_pdf(diff: dict, snapshot_payload: dict) -> bytes:
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name="Code", fontName="Courier", fontSize=7, leading=9))
+
+    summary = diff.get("summary", {})
+    warnings = diff.get("warnings", [])
+    updates = diff.get("updates", [])
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    elements = []
+
+    elements.append(Paragraph("Dry-run Report", styles["Title"]))
+    elements.append(Paragraph("Kategori Import/Export Değişiklik Özeti", styles["Heading2"]))
+    elements.append(Spacer(1, 8))
+
+    summary_table = Table(
+        [
+            ["Creates", "Updates", "Deletes", "Total"],
+            [summary.get("creates", 0), summary.get("updates", 0), summary.get("deletes", 0), summary.get("total", 0)],
+        ]
+    )
+    summary_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ]
+        )
+    )
+    elements.append(summary_table)
+    elements.append(Spacer(1, 12))
+
+    if warnings:
+        elements.append(Paragraph("Kritik Uyarılar", styles["Heading3"]))
+        warning_rows = [["Tip", "Mesaj"]]
+        for warning in warnings:
+            warning_rows.append([warning.get("type"), warning.get("message")])
+        warning_table = Table(warning_rows, colWidths=[80, 420])
+        warning_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f59e0b")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ]
+            )
+        )
+        elements.append(warning_table)
+        elements.append(Spacer(1, 12))
+
+    if updates:
+        elements.append(Paragraph("Field-level Değişiklikler", styles["Heading3"]))
+        for update in updates:
+            elements.append(Paragraph(f"Slug: {update.get('slug')}", styles["Heading4"]))
+            rows = [["Alan", "Önce", "Sonra", "Tip"]]
+            for field in update.get("fields", []):
+                if field.get("change_type") == "unchanged":
+                    continue
+                rows.append([
+                    field.get("field_name"),
+                    str(field.get("before_value") or ""),
+                    str(field.get("after_value") or ""),
+                    field.get("change_type"),
+                ])
+            if len(rows) == 1:
+                rows.append(["-", "-", "-", "unchanged"])
+            table = Table(rows, colWidths=[120, 160, 160, 80])
+            table.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e2e8f0")),
+                        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ]
+                )
+            )
+            elements.append(table)
+            elements.append(Spacer(1, 10))
+
+    elements.append(PageBreak())
+    elements.append(Paragraph("Appendix: Import Snapshot", styles["Heading3"]))
+    snapshot_text = json.dumps(snapshot_payload, ensure_ascii=False, indent=2)
+    elements.append(Preformatted(snapshot_text, styles["Code"]))
+
+    doc.build(elements)
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    return pdf_bytes
+
+
 def _deep_merge_schema(base: Dict[str, Any], override: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     if not override:
         return base
