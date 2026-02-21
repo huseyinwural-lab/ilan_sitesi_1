@@ -1,180 +1,148 @@
 <analysis>**original_problem_statement:**
-The user's primary objective is to build a multi-country, multi-lingual classifieds platform. The overriding, critical priority is the **complete and immediate removal of all MongoDB dependencies** from the application and a full migration to PostgreSQL.
+The user's initial objective was to migrate a multi-lingual classifieds platform from MongoDB to PostgreSQL. However, this priority has been superseded by a new, critical requirement: to design and build **EU-compliant Consumer and Dealer dashboard panels**.
 
-All other feature development is on hold until the migration is complete. The user provides highly detailed, prescriptive Architectural Decision Records (ADRs) and task lists to direct the implementation, following a Strangler Fig pattern to migrate the application module by module.
+This new project is broken into two main phases as dictated by the user:
+1.  **FAZ-EU-PANEL-01 (Design - COMPLETED):** Create a comprehensive set of specification documents detailing the Information Architecture (IA), data models, UI components, and GDPR compliance rules for both panels.
+2.  **FAZ-EU-PANEL-02 (Implementation - IN PROGRESS):** Implement the panels based on the locked-down specifications, divided into two-week sprints.
+    -   **Sprint 1:** Build the database foundation and the complete, GDPR-compliant Consumer Panel.
+    -   **Sprint 2:** Build the Dealer Panel, including monetization and company-specific features.
 
-PRODUCT REQUIREMENTS (Updated Priority):
-1.  **Complete the MongoDB to PostgreSQL Migration (P0 - CRITICAL):** Migrate all remaining data, models, and endpoints. The current focus is on the Monetization Chain (, , , , ).
-2.  **Create one-time migration scripts** for data backfill from Mongo to SQL for each module.
-3.  **Decommission MongoDB:** Completely remove all MongoDB-related code, dependencies, and configuration.
-4.  **Refine Auth Flow (P1 - Post-Migration):** Implement a consolidated login page and separate registration flows.
-5.  **Finalize Dealer Portal (P2 - Post-Migration):** Continue with phased development.
-6.  **Integrate Stripe (P2 - Post-Migration):** Implement payment processing.
+The overarching goal is to create a scalable, regulation-ready user account management system that separates individual (Consumer) and business (Dealer) concerns.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application is a React frontend with a FastAPI backend. Due to a persistent lack of a  in the preview environment, all development and testing is done against a local PostgreSQL database.
+The application is a React frontend with a FastAPI backend using PostgreSQL. All development is performed against a local PostgreSQL database due to the persistent lack of a database URL in the preview environment.
 
-The Mongo-to-SQL migration is significantly advanced. Following the user's detailed plans (ADRs), the agent has successfully migrated several modules:
--   **Core:** , , .
--   **Monetization Chain (In Progress):** , , and  have been fully migrated. This includes creating SQLAlchemy models, Pydantic schemas, CRUD repositories, applying Alembic migrations, refactoring the admin API endpoints, and updating the corresponding admin frontend pages to use the new SQL data sources. The old Mongo code for these modules has been removed.
+The Design phase (FAZ-EU-PANEL-01) is complete, resulting in 18 detailed specification documents.
 
-The agent was in the process of migrating the next set of modules in the monetization chain: , , and .
+The Implementation phase (FAZ-EU-PANEL-02) has begun with Sprint 1. The agent has successfully:
+-   Created the SQLAlchemy models for  and .
+-   Created and applied the Alembic migration to add the corresponding  and  tables to the local database.
+-   Created the Pydantic schemas and CRUD repositories for both profiles.
+-   Begun implementing the API endpoint for fetching the current user's consumer profile.
 
 **Last working item**:
--   **Last item agent was working:** The agent was trying to apply the Alembic database migrations for the newly created , , and  tables. The FAILED: No 'script_location' key found in configuration. command was failing with an . This error is blocking the creation of these critical tables in the database.
--   **Status:** BLOCKED
+-   **Last item agent was working:** Debugging a  on the newly created consumer profile endpoint, . The agent correctly identified that the endpoint was failing with an  because the CRUD function was being called with the FastAPI dependency itself () instead of the resolved user object's ID.
+-   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** main agent to test via python -c or curl. The immediate task is to fix the Alembic migration command. Once fixed, FAILED: No 'script_location' key found in configuration. needs to be run and verified.
+-   **Which testing method agent to use?** main agent to test via curl. The immediate task is to fix the bug in the endpoint and verify it returns a 200 OK status with the profile data.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Alembic Migration Failure for , , and  tables (P0, CRITICAL BLOCKER)**
-    -   **Description:** The FAILED: No 'script_location' key found in configuration. command fails with , preventing the creation of the , , and  tables. This is halting the entire monetization chain migration.
-    -   **Attempted fixes:** The agent tried creating  files and re-running the command, which was incorrect. The error likely stems from the content of the generated migration script (specifically the  calls) or a version incompatibility with Alembic/SQLAlchemy.
+-   **Issue 1:  returns 500 Internal Server Error (P0, CRITICAL BLOCKER)**
+    -   **Description:** The consumer profile endpoint is failing because the user ID is not being correctly extracted from the authenticated user dependency before being passed to the database layer.
+    -   **Attempted fixes:** The agent correctly diagnosed the issue in its thought process but had not yet applied the code patch.
     -   **Next debug checklist:**
-        1.  Examine the latest generated migration script in  (likely ) and remove or comment out any  lines. These are not essential for the schema itself.
-        2.  If that fails, check the  and  for any unusual configurations.
-        3.  Verify the installed versions of  and  for known compatibility issues with table comments.
-    -   **Why fix this issue and what will be achieved with the fix?** Fixing this will unblock the entire Mongo-to-SQL migration effort and allow the creation of the core tables needed for payments and subscriptions.
+        1.  In , locate the  function.
+        2.  Modify the call to the CRUD function. It should use  to pass the integer ID, not the  dependency.
+        3.  The corrected call should look like: .
+    -   **Why fix this issue and what will be achieved with the fix?** This is the foundational API endpoint for the entire Consumer Panel. Fixing it will unblock all frontend and further backend development for consumer profile management.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** backend
     -   **Blocked on other issue:** None
 
--   **Issue 2: Database Not Configured in Preview/Prod Environment (P0, CRITICAL BLOCKER)**
-    -   **Description:** The  environment variable is missing in the preview environment, making deployment and testing impossible. All development is forced to be local-only.
+-   **Issue 2: Database Not Configured in Preview/Prod Environment (P0, CRITICAL BLOCKER for Deployment)**
+    -   **Description:** The  environment variable is missing in the preview environment, making any deployment, staging, or automated testing impossible. All development is confined to the local environment.
     -   **Status:** BLOCKED (on user/Ops).
     -   **Is recurring issue?** Y
 
--   **Issue 3: Stripe Secrets Not Configured (P1, BLOCKER for Payments)**
-    -   **Description:** Payment functionality is blocked as Stripe keys are not set in the environment.
-    -   **Status:** BLOCKED (on user).
-    -   **Is recurring issue?** Y
-
 **In progress Task List**:
--   **Task 1: Complete the  and  module migration (P0)**
-    -   **Where to resume:** Resume by fixing the Alembic migration error (see Issue 1 above). Once the migration is successfully applied, the following steps need to be completed:
-        1.  Create and run backfill scripts for  and  (if any data exists).
-        2.  Refactor the admin API endpoints () to use the new SQL  functions.
-        3.  Refactor the  frontend to fetch data from the new SQL-backed endpoint.
-        4.  Implement the core logic for the Webhooks endpoint to handle payment events, update invoice/subscription statuses, and write to the .
-        5.  Decommission all old Mongo-based payment code.
-    -   **What will be achieved with this?** The core of the monetization system will be migrated to PostgreSQL, enabling the implementation of subscription logic.
+-   **Task 1: Complete Sprint 1 of FAZ-EU-PANEL-02 (P0)**
+    -   **Where to resume:** Start by fixing the 500 error in the  endpoint (see Issue 1). After that, proceed with the remaining Sprint 1 tasks:
+        1.  Implement the  endpoint for updating consumer data.
+        2.  Implement the  and  endpoints for the .
+        3.  Implement the backend logic for the Privacy Center, including GDPR data export (JSON) and account deletion (soft-delete with a 30-day grace period).
+        4.  Implement the backend logic for 2FA (TOTP) setup and verification.
+        5.  Begin building the frontend components for the Consumer Panel to connect to these new endpoints.
+    -   **What will be achieved with this?** A functional, GDPR-compliant backend for the Consumer Panel and the foundational database structure for both panels.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** Issue 1: Alembic Migration Failure.
+    -   **Blocked on something:** Blocked on Issue 1.
 
 **Upcoming and Future Tasks**
--   **Upcoming Tasks (P0):**
-    -   **Implement Webhooks V1 (FAZ-DM):** After  and  tables are created, implement the full webhook handling logic as per the user's ADRs. This includes:
-        -    table and logic.
-        -   Stripe signature validation.
-        -   Idempotent handlers using .
-        -   An admin endpoint to replay events ().
-        -   End-to-end testing of the  update chain.
+-   **Upcoming Tasks (P1): Sprint 2 of FAZ-EU-PANEL-02**
+    -   Implement the Dealer Profile CRUD frontend.
+    -   Integrate the Plan & Quota widget UI with the backend.
+    -   Build the Dealer listing management grid UI (filters, bulk actions).
+    -   Build the Dealer accounting UI (VAT breakdown, invoice downloads).
 
--   **Future Tasks (P1 - Post-Migration):**
-    -   **Complete Mongo-to-SQL Migration (Mongo Zero Plan):** Migrate remaining modules like , , , , , etc.
-    -   **Complete Dealer Listing Lifecycle (FAZ-DL2):** Finalize bulk actions.
-    -   **Implement Email Sending:** Integrate a mail service to send actual verification codes.
-    -   **Implement Başvuru Modülü (Support Ticket System).**
-    -   **CSV Export for Admin User Lists.**
+-   **Future Tasks (P2 - Backlog):**
+    -   Integrate VIES API for server-side VAT ID validation (currently regex only).
+    -   Implement CSV format for GDPR data export.
+    -   Implement a Reject flow for the admin moderation panel.
+    -   Implement a daily scheduled job to clean up expired/consumed verification tokens.
 
 **Completed work in this session**
--   ** Module Migration (FAZ-DM):** Migrated the module to PostgreSQL (model, schema, CRUD, endpoints).
--   ** Module Migration (FAZ-DM):** Fully migrated to PostgreSQL, including DB schema, backfill script, admin endpoint refactoring, admin UI update, and decommissioning of Mongo code.
--   ** Module Migration (FAZ-DM):** Fully migrated to PostgreSQL, including DB schema, seeding script, admin endpoint refactoring, admin UI update, and decommissioning of Mongo code.
--   ** Module Migration (FAZ-DM):** Fully migrated to PostgreSQL, including DB schema, admin endpoint refactoring, admin UI update, and decommissioning of Mongo code.
--   **Monetization Scaffolding:** Created the initial SQLAlchemy models, Pydantic schemas, and CRUD files for , , and .
-
-**Earlier issues found/mentioned but not fixed**
--   **Issue 1: CSV Export for Admin User Lists**
-    -   A pending feature request to add a CSV export button to the admin user list. This is in the backlog.
-    -   **Should Test frontend/backend/both after fix:** backend
-    -   **Is recurring issue?** N
+-   **FAZ-EU-PANEL-01: Design & Documentation Phase:**
+    -   Completed and created 18 detailed specification documents in  defining the new Consumer and Dealer panels.
+-   **FAZ-EU-PANEL-02, Sprint 1 (Foundation):**
+    -   **Database:** Created  and  models and applied the Alembic migration ().
+    -   **Backend:** Created Pydantic schemas, CRUD repositories, and started API endpoint implementation in .
+    -   **Local Environment:** Successfully set up and configured a local PostgreSQL database for all development.
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork**: The unconfigured PostgreSQL  for preview/production environments is a persistent blocker from previous sessions.
--   **Recurrence count:** 5+
--   **Status:** BLOCKED
+-   **Issue recurrence in previous fork**: The unconfigured PostgreSQL  for the preview environment remains a persistent blocker.
+-   **Recurrence count:** 6+
+-   **Status:** BLOCKED (Workaround in place: using local DB)
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **User-Driven ADRs (Architectural Decision Records):** The user provides extremely detailed specifications and architectural decisions, which the agent must follow precisely.
--   **Strangler Fig Pattern:** The core strategy for incrementally migrating from MongoDB to PostgreSQL.
--   **Monetization Data Modeling:** Building a robust billing system with tables for Campaigns, Plans, Invoices, Payments, Subscriptions, and Audit Logs, ensuring transactional integrity.
+-   **EU/GDPR Compliance:** The primary driver for the current development phase, dictating features like data export, account deletion (soft-delete), and consent management.
+-   **Domain-Driven Design:** Explicitly separating Consumer and Dealer data into distinct  and  tables to handle their unique attributes and regulatory requirements.
+-   **Specification-Driven Development:** The user mandates a strict workflow where a detailed design-and-document phase (FAZ-01) must be completed and approved before implementation (FAZ-02) begins.
+-   **Local-First Development:** All development and testing relies on a local PostgreSQL instance due to the absence of a provisioned database in the cloud environment.
 
 **key DB schema**
--   **campaigns:** 
--   **plans:** 
--   **invoices:** 
--   **payments:**  (pending creation)
--   **user_subscriptions:**  (pending creation)
--   **billing_audit_log:**  (pending creation)
-
-**changes in tech stack**
--   Ongoing, aggressive removal of **MongoDB** in favor of **PostgreSQL** with SQLAlchemy and Alembic.
+-   **consumer_profiles:** 
+-   **dealer_profiles:** 
 
 **All files of reference**
--   : Multiple user-provided ADR documents like , , etc., which dictate the implementation details.
--   : The failing migration script that needs to be fixed.
--   , , : The new models that are waiting for their tables to be created.
--   : Location of the new SQL-based admin endpoints.
--   : Location of the updated admin UI pages.
-
-**Areas that need refactoring**:
--   : Still contains many legacy MongoDB endpoints that need to be migrated and removed as per the Mongo Zero Plan.
+-   : The 18 specification documents that define the entire feature set for the EU panels. These are the source of truth for all implementation tasks.
+-   , : The new SQLAlchemy models.
+-   , : The new database interaction logic.
+-   : The file containing the new API endpoints being developed (and the current bug).
+-   : The migration script for the new tables.
 
 **key api endpoints**
--   : (New, SQL-powered)
--   : (New, SQL-powered)
--   : (New, SQL-powered)
+-   : (Consumer Profile - IN PROGRESS, BUGGY)
+-   : (Consumer Profile - NOT STARTED)
+-   : (Dealer Profile - NOT STARTED)
+-   : (Dealer Profile - NOT STARTED)
 
 **Critical Info for New Agent**
--   **MIGRATION IS THE ONLY PRIORITY:** Do not work on any other features. The user's number one goal is the complete removal of MongoDB.
--   **FOLLOW THE ADRs:** The user provides detailed plans and ADRs in Turkish. These are not suggestions; they are requirements. Adhere to them strictly. The latest set of ADRs dictates the schema for , , and the logic for the billing cycle.
--   **FIX THE ALEMBIC BLOCKER FIRST:** You cannot proceed with the monetization chain until you resolve the  in the FAILED: No 'script_location' key found in configuration. command. The suggested fix is to remove the  lines from the problematic migration script.
--   **CONTINUE LOCAL DEVELOPMENT:** The preview environment is still non-functional due to the missing . All database work must be done and tested locally.
--   **COMMUNICATE IN TURKISH:** All communication with the user must be in Turkish.
+-   **PRIORITY SHIFT:** The previous goal of migrating from MongoDB is finished or no longer relevant. The sole focus now is the implementation of the EU-compliant panels as defined in the  sprint plan.
+-   **FOLLOW THE SPECS:** All implementation details are defined in the  documents. Adhere to them strictly. Do not start Sprint 2 (Dealer) tasks until Sprint 1 (Consumer) is complete.
+-   **LOCAL DATABASE ONLY:** The application will not connect to a cloud database. You must work with the local PostgreSQL server. Ensure it is running () before starting the backend.
+-   **IMMEDIATE TASK:** Your first action must be to fix the  on the  endpoint. The cause is known and documented in Issue 1.
+-   **LANGUAGE:** All communication with the user must be in **Turkish**.
 
 **documents and test reports created in this job**
--   
--   
--   
--   
--   
--   
--   
--   
--   
--   
+-   All 18 specification documents are located in . Key documents include , , , and .
 
 **Last 10 User Messages and any pending HUMAN messages**
-The last 10+ user messages consist of highly detailed, structured task lists and architectural decisions (ADRs) for the ongoing monetization chain migration.
--   **#1074:** Provided detailed specs for subscription statuses, the  table schema, quota update logic, and mandated the use of an audit log for all billing transactions. Approved the agent's plan to start with the  task. (COMPLETED - decisions locked in docs)
--   **#1071:** Provided a task list for implementing , , and a . Also approved a decision to implement a 90-day retention policy for webhook logs. (IN PROGRESS)
--   **#842:** Provided explicit decisions on the  schema, the nullability of , the mapping for  to Stripe's , the path for the webhook replay endpoint, and the scope of admin filters. (COMPLETED - Implemented for Invoices)
--   **#839:** Provided a detailed task list for migrating , , , and  systems, along with ADRs for ensuring transactional integrity. (IN PROGRESS)
--   **#390:** Provided explicit ADRs and decisions for the  schema (simplifying from Mongo), default plans to be seeded, standard enum values for Invoice/Payment statuses, and the webhook idempotency strategy. (COMPLETED - Implemented for Campaigns/Plans)
+-   The last 10+ user messages define the shift from migration to the new EU Panel feature. They provide extremely detailed, hierarchical task lists and architectural decisions (ADRs).
+-   **#1284, #1287:** Provided the complete, detailed specification for the Consumer and Dealer panels (FAZ-EU-PANEL-01) and confirmed this is a design-only phase.
+-   **#1298:** Provided the implementation plan (FAZ-EU-PANEL-02) based on the design documents.
+-   **#1301:** Approved breaking down FAZ-EU-PANEL-02 into two separate sprints (Sprint 1: Consumer & Foundation, Sprint 2: Dealer) and clarified key technical decisions (2FA will be a real implementation, GDPR export is JSON-only for now).
+-   **The user has approved the start of Sprint 1 implementation.**
 
 **Project Health Check:**
 -   **Broken:**
     -   The preview/production deployment is non-functional due to the missing .
-    -   The database migration process is currently blocked by the Alembic error.
+    -   The core API for the new Consumer Panel () is currently returning a 500 error.
 -   **Mocked:**
-    -   Email sending for verification codes is mocked (returns a debug code in the API response).
+    -   Email sending (e.g., for verification) is mocked and does not use a real provider like SendGrid yet.
 
 **3rd Party Integrations**
 -   FastAPI
 -   React
--   PostgreSQL (, , ) - **Configured for local dev only**
--   MongoDB () - **BEING ACTIVELY REMOVED**
--   Stripe (Payments) - **AWAITING CONFIG**
--   SendGrid (Emails) - **AWAITING CONFIG**
+-   PostgreSQL (, , )
+-   Stripe (Planned, awaiting configuration)
+-   SendGrid (Planned, awaiting configuration)
 
 **Testing status**
 -   **Testing agent used after significant changes:** NO
@@ -185,7 +153,4 @@ The last 10+ user messages consist of highly detailed, structured task lists and
 **Credentials to test flow:**
 -   **Admin:**  / 
 -   **Dealer:**  / 
--   **User:**  / 
-
-**What agent forgot to execute**
-The agent did not forget to execute any tasks. It was diligently following the user's extremely prescriptive plan but became stuck on a technical Alembic error that it was unable to diagnose and resolve correctly. The primary failure was not in planning or prioritization but in debugging the specific  during the database migration step.</analysis>
+-   **User:**  / </analysis>
