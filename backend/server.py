@@ -9622,10 +9622,10 @@ async def dealer_invoice_detail(
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
-    if str(invoice.dealer_id) != current_user.get("id"):
+    if str(invoice.user_id) != current_user.get("id"):
         raise HTTPException(status_code=403, detail="Invoice access denied")
 
-    plan = await session.get(Plan, invoice.plan_id)
+    plan = await session.get(Plan, invoice.plan_id) if invoice.plan_id else None
     return {"invoice": _admin_invoice_to_dict(invoice, None, plan)}
 
 
