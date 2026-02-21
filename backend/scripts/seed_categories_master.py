@@ -54,7 +54,7 @@ def build_categories() -> List[Dict]:
         {
             "key": "suv",
             "slug": {"tr": "suv", "en": "suv", "de": "suv"},
-            "name": {"tr": "SUV / Arazi", "en": "SUV / Offroad", "de": "SUV / Gele4ndewagen"},
+            "name": {"tr": "SUV / Arazi", "en": "SUV / Offroad", "de": "SUV / Gelaendewagen"},
             "children": [
                 {
                     "key": "pickup",
