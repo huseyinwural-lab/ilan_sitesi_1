@@ -7,8 +7,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
+from dotenv import load_dotenv
+
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
+load_dotenv(ROOT_DIR / ".env")
+load_dotenv(ROOT_DIR / ".env.local", override=True)
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
