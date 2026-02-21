@@ -10359,7 +10359,7 @@ async def get_checkout_status(
         session.add(payment)
 
     if invoice and payment:
-        _apply_payment_status(
+        await _apply_payment_status(
             invoice,
             payment,
             transaction,
@@ -10498,7 +10498,7 @@ async def stripe_webhook(
                     session.add(transaction)
 
     if invoice and payment and transaction:
-        _apply_payment_status(
+        await _apply_payment_status(
             invoice,
             payment,
             transaction,
