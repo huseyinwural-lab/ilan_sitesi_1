@@ -57,7 +57,7 @@ export default function AccountProfile() {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/users/me`, {
+      const res = await fetch(`${API}/v1/users/me/profile`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
       });
       if (!res.ok) {
