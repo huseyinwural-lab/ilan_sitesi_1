@@ -110,6 +110,12 @@ async def refresh_token(data: RefreshTokenRequest, db: AsyncSession = Depends(ge
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token"
         )
+
+    if payload.get("token_version") != TOKEN_VERSION:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
+        )
     
     user_id = payload.get("sub")
     result = await db.execute(select(User).where(User.id == user_id))
