@@ -24,9 +24,7 @@ def upgrade() -> None:
     op.execute("DROP TABLE IF EXISTS experiment_logs CASCADE")
     op.drop_table('ml_models')
     op.execute("DROP TABLE IF EXISTS user_devices CASCADE")
-    op.drop_index(op.f('ix_ml_logs_model_date'), table_name='ml_prediction_logs')
-    op.drop_index(op.f('ix_ml_prediction_logs_user_id'), table_name='ml_prediction_logs')
-    op.drop_table('ml_prediction_logs')
+    op.execute("DROP TABLE IF EXISTS ml_prediction_logs CASCADE")
     # ### end Alembic commands ###
 
 
