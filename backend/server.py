@@ -9241,6 +9241,7 @@ async def admin_report_status_change(
     payload: ReportStatusPayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, session=None, )
