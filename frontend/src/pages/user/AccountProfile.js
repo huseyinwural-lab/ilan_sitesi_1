@@ -68,8 +68,14 @@ export default function AccountProfile() {
         full_name: data.full_name || '',
         phone: data.phone || '',
         locale: data.locale || 'tr',
+        country_code: data.country_code || 'DE',
+        display_name_mode: data.display_name_mode || 'full_name',
       });
       setPrefs(data.notification_prefs || { push_enabled: true, email_enabled: true });
+      setTwoFactorStatus({
+        enabled: Boolean(data.totp_enabled),
+        configured: Boolean(data.totp_enabled),
+      });
       setError('');
     } catch (err) {
       setError('Profil yüklenemedi');
