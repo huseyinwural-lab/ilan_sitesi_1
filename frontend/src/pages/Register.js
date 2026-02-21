@@ -287,7 +287,7 @@ export default function Register({ portalContext = 'account' }) {
         throw new Error(detail?.detail || 'Kod gönderilemedi.');
       }
 
-      const data = await res.json().catch(() =[?2004l[?2004hcc ({}));
+      const data = await res.json().catch(() => ({}));
       const nextCooldown = data?.cooldown_seconds || RESEND_COOLDOWN;
       setCooldown(nextCooldown);
 
