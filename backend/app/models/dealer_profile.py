@@ -1,7 +1,8 @@
-from sqlalchemy import String, Text, ForeignKey, JSON
+from sqlalchemy import String, Text, ForeignKey, JSON, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from typing import Optional
+from datetime import datetime
 import uuid
 from app.models.base import Base
 
