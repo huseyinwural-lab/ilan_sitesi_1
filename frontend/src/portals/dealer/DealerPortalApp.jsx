@@ -13,7 +13,10 @@ function DealerHome() {
       <p className="text-sm text-muted-foreground" data-testid="dealer-home-subtitle">
         Yakında: dashboard, lead yönetimi, kota, faturalama.
       </p>
-      <div>
+      <div className="space-y-2" data-testid="dealer-home-links">
+        <Link className="text-sm text-primary" to="/dealer/listings" data-testid="dealer-home-listings-link">
+          İlanlarımı Yönet
+        </Link>
         <Link className="text-sm text-primary" to="/dealer/invoices" data-testid="dealer-home-invoices-link">
           Faturalarımı Gör
         </Link>
