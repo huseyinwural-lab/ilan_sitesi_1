@@ -39,59 +39,59 @@ import BillingPlaceholderPage from '@/pages/admin/BillingPlaceholder';
 export default function BackofficePortalApp() {
   return (
     <Routes>
-      <Route path="/" element={<Layout><Dashboard /></Layout>} />
+      <Route path="/" element={<AdminLayout><Dashboard /></Layout>} />
       <Route path="/users" element={<Navigate to="/admin/admin-users" replace />} />
       <Route path="/user-management" element={<Navigate to="/admin/admin-users" replace />} />
-      <Route path="/admin-users" element={<Layout><AdminUsersPage /></Layout>} />
-      <Route path="/roles" element={<Layout><AdminRolesPage /></Layout>} />
-      <Route path="/rbac-matrix" element={<Layout><RBACMatrixPage /></Layout>} />
-      <Route path="/individual-users" element={<Layout><IndividualUsersPage /></Layout>} />
-      <Route path="/individual-applications" element={<Layout><IndividualApplicationsPage /></Layout>} />
-      <Route path="/feature-flags" element={<Layout><FeatureFlags /></Layout>} />
-      <Route path="/categories" element={<Layout><AdminCategories /></Layout>} />
-      <Route path="/attributes" element={<Layout><AdminAttributes /></Layout>} />
-      <Route path="/menu-management" element={<Layout><MenuManagementPage /></Layout>} />
+      <Route path="/admin-users" element={<AdminLayout><AdminUsersPage /></Layout>} />
+      <Route path="/roles" element={<AdminLayout><AdminRolesPage /></Layout>} />
+      <Route path="/rbac-matrix" element={<AdminLayout><RBACMatrixPage /></Layout>} />
+      <Route path="/individual-users" element={<AdminLayout><IndividualUsersPage /></Layout>} />
+      <Route path="/individual-applications" element={<AdminLayout><IndividualApplicationsPage /></Layout>} />
+      <Route path="/feature-flags" element={<AdminLayout><FeatureFlags /></Layout>} />
+      <Route path="/categories" element={<AdminLayout><AdminCategories /></Layout>} />
+      <Route path="/attributes" element={<AdminLayout><AdminAttributes /></Layout>} />
+      <Route path="/menu-management" element={<AdminLayout><MenuManagementPage /></Layout>} />
       <Route path="/audit" element={
-        <Layout>
+        <AdminLayout>
           <AdminRouteGuard roles={["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"]}>
             <AuditLogs />
           </AdminRouteGuard>
         </Layout>
       } />
       <Route path="/audit-logs" element={
-        <Layout>
+        <AdminLayout>
           <AdminRouteGuard roles={["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"]}>
             <AuditLogs />
           </AdminRouteGuard>
         </Layout>
       } />
-      <Route path="/moderation" element={<Layout><ModerationQueue /></Layout>} />
-      <Route path="/individual-listing-applications" element={<Layout><IndividualListingApplicationsPage /></Layout>} />
-      <Route path="/corporate-listing-applications" element={<Layout><CorporateListingApplicationsPage /></Layout>} />
-      <Route path="/individual-campaigns" element={<Layout><IndividualCampaignsPage /></Layout>} />
-      <Route path="/corporate-campaigns" element={<Layout><CorporateCampaignsPage /></Layout>} />
-      <Route path="/dashboard" element={<Layout><AdminDashboardPage /></Layout>} />
-      <Route path="/country-compare" element={<Layout><AdminCountryComparePage /></Layout>} />
+      <Route path="/moderation" element={<AdminLayout><ModerationQueue /></Layout>} />
+      <Route path="/individual-listing-applications" element={<AdminLayout><IndividualListingApplicationsPage /></Layout>} />
+      <Route path="/corporate-listing-applications" element={<AdminLayout><CorporateListingApplicationsPage /></Layout>} />
+      <Route path="/individual-campaigns" element={<AdminLayout><IndividualCampaignsPage /></Layout>} />
+      <Route path="/corporate-campaigns" element={<AdminLayout><CorporateCampaignsPage /></Layout>} />
+      <Route path="/dashboard" element={<AdminLayout><AdminDashboardPage /></Layout>} />
+      <Route path="/country-compare" element={<AdminLayout><AdminCountryComparePage /></Layout>} />
       <Route path="/countries" element={
-        <Layout>
+        <AdminLayout>
           <AdminRouteGuard roles={["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"]}>
             <AdminCountriesPage />
           </AdminRouteGuard>
         </Layout>
       } />
-      <Route path="/system-settings" element={<Layout><AdminSystemSettingsPage /></Layout>} />
-      <Route path="/listings" element={<Layout><AdminListingsPage /></Layout>} />
-      <Route path="/invoices" element={<Layout><AdminInvoicesPage /></Layout>} />
-      <Route path="/payments" element={<Layout><AdminPaymentsPage /></Layout>} />
-      <Route path="/billing" element={<Layout><BillingPlaceholderPage /></Layout>} />
-      <Route path="/tax-rates" element={<Layout><AdminTaxRatesPage /></Layout>} />
-      <Route path="/plans" element={<Layout><AdminPlansPage /></Layout>} />
-      <Route path="/dealers/:dealerId" element={<Layout><AdminDealerDetailPage /></Layout>} />
+      <Route path="/system-settings" element={<AdminLayout><AdminSystemSettingsPage /></Layout>} />
+      <Route path="/listings" element={<AdminLayout><AdminListingsPage /></Layout>} />
+      <Route path="/invoices" element={<AdminLayout><AdminInvoicesPage /></Layout>} />
+      <Route path="/payments" element={<AdminLayout><AdminPaymentsPage /></Layout>} />
+      <Route path="/billing" element={<AdminLayout><BillingPlaceholderPage /></Layout>} />
+      <Route path="/tax-rates" element={<AdminLayout><AdminTaxRatesPage /></Layout>} />
+      <Route path="/plans" element={<AdminLayout><AdminPlansPage /></Layout>} />
+      <Route path="/dealers/:dealerId" element={<AdminLayout><AdminDealerDetailPage /></Layout>} />
 
-      <Route path="/dealers" element={<Layout><DealersPage /></Layout>} />
-      <Route path="/dealer-applications" element={<Layout><DealerApplicationsPage /></Layout>} />
-      <Route path="/vehicle-makes" element={<Layout><AdminVehicleMakes /></Layout>} />
-      <Route path="/vehicle-models" element={<Layout><AdminVehicleModels /></Layout>} />
+      <Route path="/dealers" element={<AdminLayout><DealersPage /></Layout>} />
+      <Route path="/dealer-applications" element={<AdminLayout><DealerApplicationsPage /></Layout>} />
+      <Route path="/vehicle-makes" element={<AdminLayout><AdminVehicleMakes /></Layout>} />
+      <Route path="/vehicle-models" element={<AdminLayout><AdminVehicleModels /></Layout>} />
       
 
       <Route path="*" element={<Navigate to="/admin" replace />} />
