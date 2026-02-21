@@ -244,7 +244,7 @@ export default function Login({ portalContext = 'account' }) {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs" data-testid="login-helper-row">
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-700" data-testid="login-helper-row">
               <label className="flex items-center gap-2" data-testid="login-remember-me">
                 <input
                   type="checkbox"
@@ -257,7 +257,7 @@ export default function Login({ portalContext = 'account' }) {
               </label>
               <a
                 href="/help/forgot-password"
-                className="text-primary underline underline-offset-2 hover:opacity-80"
+                className="text-blue-600 underline underline-offset-2 hover:text-blue-700"
                 data-testid="login-forgot-password"
               >
                 Şifremi unuttum
