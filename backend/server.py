@@ -7095,7 +7095,7 @@ async def admin_list_audit_logs(
         total_stmt = select(func.count()).select_from(AuditLog).where(and_(*base_conditions))
 
         if sort == "timestamp_asc":
-            query_stmt = query_stmt.order_by(desc(AuditLog.created_at).asc())
+            query_stmt = query_stmt.order_by(AuditLog.created_at.asc())
         else:
             query_stmt = query_stmt.order_by(desc(AuditLog.created_at))
 
