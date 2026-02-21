@@ -3946,43 +3946,38 @@ async def change_password(
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if AUTH_PROVIDER == "mongo" and db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
     if len(payload.new_password or "") < 8:
         raise HTTPException(status_code=400, detail="Password too short")
 
-    if AUTH_PROVIDER == "mongo" and db is not None:
-        user_doc = await db.users.find_one({"id": current_user.get("id")}, {"_id": 0})
-        if not user_doc or not verify_password(payload.current_password, user_doc.get("hashed_password", "")):
-            raise HTTPException(status_code=400, detail="Invalid current password")
-        await db.users.update_one(
-            {"id": current_user.get("id")},
-            {"$set": {"hashed_password": get_password_hash(payload.new_password), "updated_at": datetime.now(timezone.utc).isoformat()}},
-        )
-    else:
-        try:
-            user_uuid = uuid.UUID(str(current_user.get("id")))
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail="Invalid user id") from exc
-        result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
-        user_row = result.scalar_one_or_none()
-        if not user_row or not verify_password(payload.current_password, user_row.hashed_password):
-            raise HTTPException(status_code=400, detail="Invalid current password")
-        user_row.hashed_password = get_password_hash(payload.new_password)
-        await session.commit()
+    try:
+        user_uuid = uuid.UUID(str(current_user.get("id")))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
 
-    if db is not None:
-        audit_entry = await build_audit_entry(
-            event_type="password_change",
-            actor=current_user,
-            target_id=current_user.get("id"),
-            target_type="user",
-            country_code=current_user.get("country_code"),
-            details={"source": "self_service"},
-            request=request,
-        )
-        await db.audit_logs.insert_one(audit_entry)
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user_row = result.scalar_one_or_none()
+    if not user_row or not verify_password(payload.current_password, user_row.hashed_password):
+        raise HTTPException(status_code=400, detail="Invalid current password")
+
+    user_row.hashed_password = get_password_hash(payload.new_password)
+
+    actor = {
+        "id": current_user.get("id"),
+        "email": current_user.get("email"),
+        "country_scope": current_user.get("country_scope") or [],
+    }
+    await _write_audit_log_sql(
+        session=session,
+        action="password_change",
+        actor=actor,
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={"source": "self_service"},
+        request=request,
+        country_code=user_row.country_code,
+    )
+
+    await session.commit()
 
     return {"ok": True}
 
