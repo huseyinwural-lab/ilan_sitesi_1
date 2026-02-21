@@ -7054,9 +7054,9 @@ async def admin_list_audit_logs(
             base_conditions.append(
                 or_(
                     AuditLog.resource_id == ref_value,
-                    AuditLog.metadata_info["invoice_id"].astext == ref_value,
-                    AuditLog.metadata_info["subscription_id"].astext == ref_value,
-                    AuditLog.metadata_info["payment_id"].astext == ref_value,
+                    cast(AuditLog.metadata_info["invoice_id"], String) == ref_value,
+                    cast(AuditLog.metadata_info["subscription_id"], String) == ref_value,
+                    cast(AuditLog.metadata_info["payment_id"], String) == ref_value,
                 )
             )
 
