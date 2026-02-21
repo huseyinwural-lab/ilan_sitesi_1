@@ -14785,252 +14785,326 @@ async def vehicle_master_activate_endpoint(payload: dict, request: Request, curr
 
 
 # =====================
-# Vehicle Listings (Stage-4)
+# Vehicle Listings (SQL)
 # =====================
 
-async def _get_owned_listing(db, listing_id: str, current_user: dict) -> dict:
-    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+async def _get_owned_listing(session: AsyncSession, listing_id: str, current_user: dict) -> Listing:
+    listing_uuid = uuid.UUID(listing_id)
+    listing = await session.get(Listing, listing_uuid)
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
-    if listing.get("created_by") != current_user.get("id"):
+    if str(listing.user_id) != str(current_user.get("id")):
         raise HTTPException(status_code=403, detail="Forbidden")
     return listing
 
 
+def _listing_media_meta(listing: Listing) -> list[dict]:
+    attrs = listing.attributes or {}
+    return attrs.get("media") or []
+
+
+def _listing_to_dict(listing: Listing) -> dict:
+    attrs = listing.attributes or {}
+    media_meta = _listing_media_meta(listing)
+    return {
+        "id": str(listing.id),
+        "status": listing.status,
+        "country": listing.country,
+        "category_id": listing.category_id,
+        "category_key": attrs.get("category_key"),
+        "title": listing.title,
+        "description": listing.description,
+        "price": {
+            "amount": listing.price,
+            "currency_primary": listing.currency,
+        },
+        "core_fields": attrs.get("core_fields") or {},
+        "vehicle": attrs.get("vehicle") or {},
+        "attributes": attrs.get("attributes") or {},
+        "detail_groups": attrs.get("detail_groups") or [],
+        "modules": attrs.get("modules") or {},
+        "payment_options": attrs.get("payment_options") or {},
+        "media": media_meta,
+        "created_at": listing.created_at.isoformat() if listing.created_at else None,
+        "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
+        "expires_at": listing.expires_at.isoformat() if listing.expires_at else None,
+    }
+
+
+def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
+    if not payload:
+        return
+    attrs = dict(listing.attributes or {})
+    core_fields = payload.get("core_fields") or {}
+    title = core_fields.get("title") or payload.get("title")
+    description = core_fields.get("description") or payload.get("description")
+    if title is not None:
+        listing.title = title.strip()
+    if description is not None:
+        listing.description = description.strip()
+
+    price_payload = core_fields.get("price") if isinstance(core_fields, dict) else None
+    price_payload = price_payload or payload.get("price") or {}
+    if price_payload:
+        listing.price = price_payload.get("amount")
+        listing.currency = price_payload.get("currency_primary") or listing.currency
+        attrs["price"] = price_payload
+
+    if core_fields:
+        attrs["core_fields"] = core_fields
+
+    dynamic_fields = payload.get("dynamic_fields") or {}
+    extra_attrs = payload.get("attributes") or {}
+    merged_attrs = dict(attrs.get("attributes") or {})
+    if isinstance(dynamic_fields, dict):
+        merged_attrs.update(dynamic_fields)
+    if isinstance(extra_attrs, dict):
+        merged_attrs.update(extra_attrs)
+    attrs["attributes"] = merged_attrs
+
+    vehicle_payload = payload.get("vehicle") or {}
+    if vehicle_payload:
+        vehicle = dict(attrs.get("vehicle") or {})
+        vehicle.update({k: v for k, v in vehicle_payload.items() if v is not None})
+        attrs["vehicle"] = vehicle
+
+    if payload.get("detail_groups") is not None:
+        attrs["detail_groups"] = payload.get("detail_groups")
+    if payload.get("modules") is not None:
+        attrs["modules"] = payload.get("modules")
+    if payload.get("payment_options") is not None:
+        attrs["payment_options"] = payload.get("payment_options")
+
+    listing.attributes = attrs
+
+
 @api_router.get("/v1/listings/my")
 async def list_my_listings(
-    request: Request,
     status: Optional[str] = None,
     q: Optional[str] = None,
     page: int = 1,
     limit: int = 20,
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
     safe_page = max(1, int(page))
     safe_limit = min(100, max(1, int(limit)))
-    skip = (safe_page - 1) * safe_limit
+    offset = (safe_page - 1) * safe_limit
 
-    query: Dict[str, Any] = {"created_by": current_user.get("id")}
-    now_iso = datetime.now(timezone.utc).isoformat()
+    try:
+        user_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    query = select(Listing).where(Listing.user_id == user_uuid)
     if status:
         status_value = status.strip().lower()
         if status_value == "expired":
-            query["expires_at"] = {"$lte": now_iso}
+            query = query.where(Listing.expires_at <= datetime.now(timezone.utc))
         elif status_value == "draft":
-            query["status"] = {"$in": ["draft", "needs_revision"]}
+            query = query.where(Listing.status.in_(["draft", "needs_revision"]))
         elif status_value == "active":
-            query["status"] = "published"
+            query = query.where(Listing.status == "published")
         else:
-            query["status"] = status_value
+            query = query.where(Listing.status == status_value)
     if q:
-        regex = re.compile(re.escape(q.strip()), re.IGNORECASE)
-        query["$or"] = [{"title": regex}, {"id": regex}]
+        query = query.where(or_(Listing.title.ilike(f"%{q.strip()}%"), Listing.id.cast(String).ilike(f"%{q.strip()}%")))
 
-    cursor = (
-        db.vehicle_listings.find(query, {"_id": 0})
-        .sort("created_at", -1)
-        .skip(skip)
-        .limit(safe_limit)
-    )
-    items = await cursor.to_list(length=safe_limit)
-    total = await db.vehicle_listings.count_documents(query)
+    query = query.order_by(desc(Listing.created_at))
+    rows = (await session.execute(query.offset(offset).limit(safe_limit))).scalars().all()
+    total = (
+        await session.execute(select(func.count()).select_from(Listing).where(Listing.user_id == user_uuid))
+    ).scalar_one()
 
-    return {"items": items, "pagination": {"total": total, "page": safe_page, "limit": safe_limit}}
+    items = [_listing_to_dict(row) for row in rows]
+    return {"items": items, "pagination": {"total": int(total or 0), "page": safe_page, "limit": safe_limit}}
+
 
 @api_router.post("/v1/listings/vehicle")
-async def create_vehicle_draft(payload: dict, request: Request, current_user=Depends(require_portal_scope("account"))):
-    db = request.app.state.db
-    doc = await create_vehicle_listing(db, payload, current_user)
-    return {"id": doc["id"], "status": doc["status"], "validation_errors": [], "next_actions": ["upload_media", "submit"]}
+async def create_vehicle_draft(
+    payload: dict,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        user_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    country = (payload.get("country") or current_user.get("country_code") or "DE").upper()
+    category_id = payload.get("category_id")
+    listing = Listing(
+        user_id=user_uuid,
+        status="draft",
+        module="vehicle",
+        country=country,
+        title=payload.get("title") or "",
+        description=payload.get("description") or "",
+        price=None,
+        currency="EUR",
+        attributes={"category_id": category_id},
+        images=[],
+    )
+    _apply_listing_payload_sql(listing, payload)
+    session.add(listing)
+    await session.commit()
+    await session.refresh(listing)
+
+    return {"id": str(listing.id), "status": listing.status, "validation_errors": [], "next_actions": ["upload_media", "submit"]}
 
 
 @api_router.post("/v1/listings/vehicle/{listing_id}/draft")
 async def save_vehicle_draft(
     listing_id: str,
-    request: Request,
     payload: dict = Body(default={}),
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    listing = await _get_owned_listing(db, listing_id, current_user)
-    if listing.get("status") not in ["draft", "needs_revision", "unpublished"]:
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    if listing.status not in ["draft", "needs_revision", "unpublished"]:
         raise HTTPException(status_code=400, detail="Listing not editable")
 
-    listing, updates = _apply_listing_payload(listing, payload)
-    if updates:
-        now_iso = datetime.now(timezone.utc).isoformat()
-        updates["updated_at"] = now_iso
-        await db.vehicle_listings.update_one({"id": listing_id}, {"$set": updates})
+    _apply_listing_payload_sql(listing, payload)
+    listing.updated_at = datetime.now(timezone.utc)
+    await session.commit()
 
-    return {"id": listing_id, "status": listing.get("status"), "updated_at": updates.get("updated_at")}
+    return {"id": listing_id, "status": listing.status, "updated_at": listing.updated_at.isoformat() if listing.updated_at else None}
 
 
 @api_router.get("/v1/listings/vehicle/{listing_id}/draft")
 async def get_vehicle_draft(
     listing_id: str,
-    request: Request,
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    listing = await _get_owned_listing(db, listing_id, current_user)
-    return {"item": listing}
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    return {"item": _listing_to_dict(listing)}
 
 
 @api_router.post("/v1/listings/vehicle/{listing_id}/request-publish")
 async def request_publish_vehicle_listing(
     listing_id: str,
-    request: Request,
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    listing = await _get_owned_listing(db, listing_id, current_user)
-    if listing.get("status") not in ["draft", "needs_revision", "unpublished"]:
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    if listing.status not in ["draft", "needs_revision", "unpublished"]:
         raise HTTPException(status_code=400, detail="Listing not eligible for publish")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    update_payload = {"status": "pending_moderation", "updated_at": now_iso}
-    if not listing.get("expires_at"):
-        update_payload["expires_at"] = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
-    await db.vehicle_listings.update_one(
-        {"id": listing_id},
-        {"$set": update_payload},
-    )
-    return {"ok": True, "status": "pending_moderation"}
+    listing.status = "pending_moderation"
+    if not listing.expires_at:
+        listing.expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+    listing.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+    return {"ok": True, "status": listing.status}
 
 
 @api_router.post("/v1/listings/vehicle/{listing_id}/unpublish")
 async def unpublish_vehicle_listing(
     listing_id: str,
-    request: Request,
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    listing = await _get_owned_listing(db, listing_id, current_user)
-    if listing.get("status") != "published":
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    if listing.status != "published":
         raise HTTPException(status_code=400, detail="Only published listings can be unpublished")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    await db.vehicle_listings.update_one(
-        {"id": listing_id},
-        {"$set": {"status": "unpublished", "updated_at": now_iso}},
-    )
-    return {"ok": True, "status": "unpublished"}
+    listing.status = "unpublished"
+    listing.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+    return {"ok": True, "status": listing.status}
 
 
 @api_router.post("/v1/listings/vehicle/{listing_id}/archive")
 async def archive_vehicle_listing(
     listing_id: str,
-    request: Request,
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await _get_owned_listing(db, listing_id, current_user)
-    now_iso = datetime.now(timezone.utc).isoformat()
-    await db.vehicle_listings.update_one(
-        {"id": listing_id},
-        {"$set": {"status": "archived", "updated_at": now_iso}},
-    )
-    return {"ok": True, "status": "archived"}
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    listing.status = "archived"
+    listing.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+    return {"ok": True, "status": listing.status}
 
 
 @api_router.post("/v1/listings/vehicle/{listing_id}/extend")
 async def extend_vehicle_listing(
     listing_id: str,
-    request: Request,
     days: int = Body(default=30, embed=True),
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    listing = await _get_owned_listing(db, listing_id, current_user)
+    listing = await _get_owned_listing(session, listing_id, current_user)
     if days < 1 or days > 365:
         raise HTTPException(status_code=400, detail="days must be between 1 and 365")
 
-    base_value = listing.get("expires_at")
-    try:
-        base_dt = datetime.fromisoformat(base_value) if base_value else datetime.now(timezone.utc)
-    except ValueError:
-        base_dt = datetime.now(timezone.utc)
+    base_dt = listing.expires_at or datetime.now(timezone.utc)
     if base_dt.tzinfo is None:
         base_dt = base_dt.replace(tzinfo=timezone.utc)
+    listing.expires_at = base_dt + timedelta(days=days)
+    listing.updated_at = datetime.now(timezone.utc)
+    await session.commit()
 
-    new_expires = base_dt + timedelta(days=days)
-    new_value = new_expires.isoformat()
-    await db.vehicle_listings.update_one(
-        {"id": listing_id},
-        {"$set": {"expires_at": new_value, "updated_at": datetime.now(timezone.utc).isoformat()}},
-    )
-    return {"ok": True, "expires_at": new_value}
+    return {"ok": True, "expires_at": listing.expires_at.isoformat() if listing.expires_at else None}
 
 
 @api_router.post("/v1/listings/vehicle/{listing_id}/media")
 async def upload_vehicle_media(
     listing_id: str,
-    request: Request,
     files: list[UploadFile] = File(...),
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    listing = await get_vehicle_listing(db, listing_id)
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    if listing.get("created_by") != current_user.get("id"):
-        raise HTTPException(status_code=403, detail="Forbidden")
-    if listing.get("status") not in ["draft", "needs_revision"]:
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    if listing.status not in ["draft", "needs_revision"]:
         raise HTTPException(status_code=400, detail="Only draft/needs_revision can accept media")
 
-    stored = []
+    media_meta = _listing_media_meta(listing)
     for f in files:
         raw = await f.read()
         try:
-            filename, w, h = store_image(listing["country"], listing_id, raw, f.filename or "upload.jpg")
+            filename, w, h = store_image(listing.country, listing_id, raw, f.filename or "upload.jpg")
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e))
 
+        media_id = str(uuid.uuid4())
         media_item = {
-            "media_id": str(uuid.uuid4()),
+            "media_id": media_id,
             "file": filename,
             "width": w,
             "height": h,
             "is_cover": False,
         }
-        stored.append(media_item)
-        await add_vehicle_media(db, listing_id, media_item)
+        media_meta.append(media_item)
 
-    # set cover if none
-    listing = await get_vehicle_listing(db, listing_id)
-    media = listing.get("media", [])
-    if media and not any(m.get("is_cover") for m in media):
-        media[0]["is_cover"] = True
-        await db.vehicle_listings.update_one({"id": listing_id, "media.media_id": media[0]["media_id"]}, {"$set": {"media.$.is_cover": True}})
-        listing = await get_vehicle_listing(db, listing_id)
-        media = listing.get("media", [])
+    if media_meta and not any(m.get("is_cover") for m in media_meta):
+        media_meta[0]["is_cover"] = True
+
+    listing.attributes = {**(listing.attributes or {}), "media": media_meta}
+    listing.images = [f"/media/listings/{listing_id}/{m['file']}" for m in media_meta]
+    listing.updated_at = datetime.now(timezone.utc)
+    await session.commit()
 
     resp_media = [
         {
             "media_id": m["media_id"],
             "file": m["file"],
-            "width": m["width"],
-            "height": m["height"],
+            "width": m.get("width"),
+            "height": m.get("height"),
             "is_cover": m.get("is_cover", False),
             "preview_url": f"/api/v1/listings/vehicle/{listing_id}/media/{m['media_id']}/preview",
         }
-        for m in media
+        for m in media_meta
     ]
 
-    return {"id": listing_id, "status": "draft", "media": resp_media}
+    return {"id": listing_id, "status": listing.status, "media": resp_media}
 
 
 @api_router.get("/v1/listings/vehicle/{listing_id}/media/{media_id}/preview")
-async def preview_vehicle_media(listing_id: str, media_id: str, request: Request, current_user=Depends(require_portal_scope("account"))):
-    db = request.app.state.db
-    listing = await get_vehicle_listing(db, listing_id)
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    if listing.get("created_by") != current_user.get("id"):
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    media = next((m for m in (listing.get("media") or []) if m.get("media_id") == media_id), None)
+async def preview_vehicle_media(listing_id: str, media_id: str, current_user=Depends(require_portal_scope("account")), session: AsyncSession = Depends(get_sql_session)):
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    media = next((m for m in _listing_media_meta(listing) if m.get("media_id") == media_id), None)
     if not media:
         raise HTTPException(status_code=404, detail="Media not found")
 
@@ -15038,133 +15112,47 @@ async def preview_vehicle_media(listing_id: str, media_id: str, request: Request
     return FileResponse(path)
 
 
-def _apply_listing_payload(listing: dict, payload: dict) -> tuple[dict, dict]:
-    updates: dict = {}
-    if not payload:
-        return listing, updates
-    core_fields = payload.get("core_fields") or {}
-    price_payload = core_fields.get("price") if isinstance(core_fields, dict) else None
-    price_payload = price_payload or payload.get("price") or {}
-    title = core_fields.get("title") or payload.get("title")
-    description = core_fields.get("description") or payload.get("description")
-    if title is not None:
-        updates["title"] = title.strip()
-        updates["title_lower"] = title.strip().lower()
-    if description is not None:
-        updates["description"] = description.strip()
-    if price_payload:
-        updates["price"] = {
-            "amount": price_payload.get("amount"),
-            "currency_primary": price_payload.get("currency_primary"),
-            "currency_secondary": price_payload.get("currency_secondary"),
-            "secondary_amount": price_payload.get("secondary_amount"),
-            "decimal_places": price_payload.get("decimal_places"),
-        }
-    if core_fields:
-        updates["core_fields"] = core_fields
-
-    attributes = dict(listing.get("attributes") or {})
-    dynamic_fields = payload.get("dynamic_fields") or {}
-    if isinstance(dynamic_fields, dict):
-        attributes.update(dynamic_fields)
-    extra_attrs = payload.get("attributes")
-    if isinstance(extra_attrs, dict):
-        attributes.update(extra_attrs)
-    price_amount = updates.get("price", {}).get("amount") if updates.get("price") else None
-    if price_amount is not None:
-        attributes["price_eur"] = price_amount
-    updates["attributes"] = attributes
-
-    vehicle_payload = payload.get("vehicle") or {}
-    if vehicle_payload:
-        vehicle = dict(listing.get("vehicle") or {})
-        vehicle.update({k: v for k, v in vehicle_payload.items() if v is not None})
-        updates["vehicle"] = vehicle
-
-    if payload.get("detail_groups") is not None:
-        updates["detail_groups"] = payload.get("detail_groups")
-    if payload.get("modules") is not None:
-        updates["modules"] = payload.get("modules")
-    if payload.get("payment_options") is not None:
-        updates["payment_options"] = payload.get("payment_options")
-
-    updated_listing = dict(listing)
-    updated_listing.update(updates)
-    return updated_listing, updates
-
-
 @api_router.post("/v1/listings/vehicle/{listing_id}/submit")
 async def submit_vehicle_listing(
     listing_id: str,
-    request: Request,
     payload: dict = Body(default={}),
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    listing = await get_vehicle_listing(db, listing_id)
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    if listing.get("created_by") != current_user.get("id"):
-        raise HTTPException(status_code=403, detail="Forbidden")
-    if listing.get("status") not in ["draft", "needs_revision"]:
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    if listing.status not in ["draft", "needs_revision"]:
         raise HTTPException(status_code=400, detail="Listing not draft/needs_revision")
 
-    listing, updates = _apply_listing_payload(listing, payload)
-    if updates:
-        now_iso = datetime.now(timezone.utc).isoformat()
-        updates["updated_at"] = now_iso
-        await db.vehicle_listings.update_one({"id": listing_id}, {"$set": updates})
+    _apply_listing_payload_sql(listing, payload)
+    listing.updated_at = datetime.now(timezone.utc)
 
-    vehicle_master = await _build_vehicle_master_from_db(db, listing.get("country"))
-    required_keys = await _get_required_attribute_keys(db, listing.get("category_key"), listing.get("country"))
-    errs = validate_publish(
-        listing,
-        vehicle_master,
-        required_attribute_keys=required_keys,
-        supported_countries=SUPPORTED_COUNTRIES,
-    )
-    schema = None
-    if listing.get("category_id"):
-        category = await db.categories.find_one({"id": listing.get("category_id")})
-        if category:
-            schema = _normalize_category_schema(category.get("form_schema"))
-    if schema:
-        errs.extend(validate_listing_schema(listing, schema))
-        title_uniqueness = schema.get("title_uniqueness", {})
-        if title_uniqueness.get("enabled"):
-            title_value = (listing.get("title") or "").strip()
-            if title_value:
-                query = {
-                    "title_lower": title_value.lower(),
-                    "category_id": listing.get("category_id"),
-                    "id": {"$ne": listing.get("id")},
-                    "status": {"$ne": "archived"},
-                }
-                if title_uniqueness.get("scope") == "category_user":
-                    query["created_by"] = listing.get("created_by")
-                exists = await db.vehicle_listings.find_one(query, {"_id": 1})
-                if exists:
-                    errs.append(
-                        {
-                            "code": "DUPLICATE_TITLE",
-                            "field": "title",
-                            "message": schema.get("core_fields", {})
-                            .get("title", {})
-                            .get("messages", {})
-                            .get("duplicate", "Bu başlık zaten kullanılıyor."),
-                        }
-                    )
-    if errs:
+    media_meta = _listing_media_meta(listing)
+    validation_errors = []
+    if not listing.title:
+        validation_errors.append({"code": "TITLE_REQUIRED", "field": "title", "message": "Başlık gerekli"})
+    if not media_meta:
+        validation_errors.append({"code": "MEDIA_REQUIRED", "field": "media", "message": "En az 1 görsel ekleyin"})
+
+    if validation_errors:
+        await session.commit()
         raise HTTPException(
             status_code=422,
-            detail={"id": listing_id, "status": listing.get("status"), "validation_errors": errs, "next_actions": ["fix_form", "upload_media"]},
+            detail={
+                "id": listing_id,
+                "status": listing.status,
+                "validation_errors": validation_errors,
+                "next_actions": ["fix_form", "upload_media"],
+            },
         )
 
-    listing = await set_vehicle_status(db, listing_id, "pending_moderation")
+    listing.status = "pending_moderation"
+    if not listing.expires_at:
+        listing.expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+    await session.commit()
 
     return {
         "id": listing_id,
-        "status": "pending_moderation",
+        "status": listing.status,
         "validation_errors": [],
         "next_actions": ["wait_moderation"],
         "detail_url": f"/ilan/{listing_id}?preview=1",
@@ -15172,13 +15160,15 @@ async def submit_vehicle_listing(
 
 
 @api_router.get("/v1/listings/vehicle/{listing_id}")
-async def get_vehicle_detail(listing_id: str, request: Request, preview: bool = False):
-    db = request.app.state.db
-    listing = await get_vehicle_listing(db, listing_id)
-    if not listing or (listing.get("status") != "published" and not preview):
+async def get_vehicle_detail(listing_id: str, preview: bool = False, session: AsyncSession = Depends(get_sql_session)):
+    listing_uuid = uuid.UUID(listing_id)
+    listing = await session.get(Listing, listing_uuid)
+    if not listing:
+        raise HTTPException(status_code=404, detail="Not found")
+    if listing.status != "published" and not preview:
         raise HTTPException(status_code=404, detail="Not found")
 
-    media = listing.get("media") or []
+    media_meta = _listing_media_meta(listing)
     out_media = [
         {
             "media_id": m["media_id"],
@@ -15187,43 +15177,33 @@ async def get_vehicle_detail(listing_id: str, request: Request, preview: bool = 
             "width": m.get("width"),
             "height": m.get("height"),
         }
-        for m in media
+        for m in media_meta
     ]
 
-    v = listing.get("vehicle") or {}
-    attrs = listing.get("attributes") or {}
-    title = listing.get("title") or f"{v.get('make_key','').upper()} {v.get('model_key','')} {v.get('year','')}".strip()
-    price_data = listing.get("price") or {}
-    primary_price = price_data.get("amount")
-    if primary_price is None:
-        primary_price = attrs.get("price_eur")
-
-    modules = None
-    if listing.get("category_id"):
-        category = await db.categories.find_one({"id": listing.get("category_id")})
-        if category and category.get("form_schema"):
-            modules = _normalize_category_schema(category.get("form_schema")).get("modules")
+    attrs = listing.attributes or {}
+    v = attrs.get("vehicle") or {}
+    title = listing.title or f"{v.get('make_key','').upper()} {v.get('model_key','')} {v.get('year','')}".strip()
 
     return {
         "id": listing_id,
-        "status": "published",
-        "country": listing.get("country"),
-        "category_key": listing.get("category_key"),
+        "status": listing.status,
+        "country": listing.country,
+        "category_key": attrs.get("category_key"),
         "vehicle": v,
-        "attributes": attrs,
+        "attributes": attrs.get("attributes") or {},
         "media": out_media,
         "title": title,
-        "price": primary_price,
-        "currency": price_data.get("currency_primary") or "EUR",
-        "secondary_price": price_data.get("secondary_amount"),
-        "secondary_currency": price_data.get("currency_secondary"),
-        "location": {"city": "", "country": listing.get("country")},
-        "description": listing.get("description") or "",
+        "price": listing.price,
+        "currency": listing.currency or "EUR",
+        "secondary_price": None,
+        "secondary_currency": None,
+        "location": {"city": listing.city or "", "country": listing.country},
+        "description": listing.description or "",
         "seller": {"name": "", "is_verified": False},
-        "modules": modules or {},
-        "contact_option_phone": listing.get("contact_option_phone", False),
-        "contact_option_message": listing.get("contact_option_message", True),
-        "contact": {"phone_protected": not listing.get("contact_option_phone", False)},
+        "modules": attrs.get("modules") or {},
+        "contact_option_phone": listing.contact_option_phone,
+        "contact_option_message": listing.contact_option_message,
+        "contact": {"phone_protected": not listing.contact_option_phone},
     }
 
 
