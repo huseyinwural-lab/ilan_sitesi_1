@@ -265,19 +265,13 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
     event.preventDefault();
     if (disabled) return;
 
-    const payload = {
-      type: campaignType,
-      country_scope: formState.countryScope,
-      country_code: formState.countryScope === 'country' ? formState.countryCode : null,
-      name: formState.name.trim(),
-      description: formState.description.trim() || null,
-      status: formState.status,
+    const resolvedCountryCode = formState.countryCode || countryFilter || countries[0]?.code || 'DE';
+    const rulesJson = {
       target: formState.target,
-      start_at: formState.startAt,
-      end_at: formState.endAt,
       priority: formState.priority,
       discount_percent: formState.discountMode === 'percent' && formState.discountPercent !== '' ? Number(formState.discountPercent) : null,
       discount_amount: formState.discountMode === 'amount' && formState.discountAmount !== '' ? Number(formState.discountAmount) : null,
+      discount_currency: resolveCurrency('country', resolvedCountryCode),
       min_listing_count: formState.minListingCount !== '' ? Number(formState.minListingCount) : null,
       max_listing_count: formState.maxListingCount !== '' ? Number(formState.maxListingCount) : null,
       eligible_categories: formState.eligibleCategories ? parseCsv(formState.eligibleCategories) : [],
@@ -286,6 +280,18 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
       eligible_dealers: campaignType === 'corporate' ? parseCsv(formState.eligibleDealers) : [],
       eligible_users: campaignType === 'individual' ? parseCsv(formState.eligibleUsers) : [],
       free_listing_quota_bonus: campaignType === 'individual' && formState.freeListingQuotaBonus !== '' ? Number(formState.freeListingQuotaBonus) : null,
+      campaign_type: campaignType,
+      country_scope: formState.countryScope,
+    };
+
+    const payload = {
+      name: formState.name.trim(),
+      status: formState.status,
+      start_at: formState.startAt,
+      end_at: formState.endAt || null,
+      country_code: resolvedCountryCode,
+      notes: formState.description.trim() || null,
+      rules_json: rulesJson,
     };
 
     setSaving(true);
