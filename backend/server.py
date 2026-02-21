@@ -3741,7 +3741,7 @@ async def list_my_support_applications(
     status: Optional[str] = None,
     page: int = 1,
     limit: int = 20,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
@@ -3833,7 +3833,7 @@ async def list_my_support_applications(
 async def get_my_support_application(
     application_id: str,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
