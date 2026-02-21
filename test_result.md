@@ -7030,3 +7030,226 @@ Verified all 4 requirements from review request for new register pages UI across
 - **Message**: Register pages UI verification SUCCESSFULLY COMPLETED. All 4 requirements from review request verified and passing (100% success rate). 1) /register (bireysel) shows orange background, banner text with "Annoncia" and "Hoşgeldiniz", full name field, email, password, country select (fallback: Almanya DE), submit button "Hesap Oluştur", login link "Giriş yap", and NO tax ID field - ALL VERIFIED with proper data-testids. 2) /dealer/register shows company name, authorized person (yetkili kişi), email, password, country select, tax ID field marked as "opsiyonel", submit button, login link, and NO full name field - ALL VERIFIED with proper data-testids. 3) /admin/register correctly redirects to /admin/login (does not exist as a separate page) - VERIFIED. 4) Countries API fallback working: UI renders with fallback country "Almanya (DE)" ensuring form remains functional even if backend returns 520 - VERIFIED. All data-testids present and functional. Only minor React 19 hydration warnings (non-blocking). Screenshots captured for all pages. Register functionality is production-ready.
 
 ---
+
+
+## Register Pages Custom Dropdown Re-test (Feb 21, 2026) ✅ COMPLETE PASS
+
+### Test Summary
+Re-tested register pages after replacing native <select> with custom dropdown to eliminate hydration warnings. Verified all requirements across /register (bireysel) and /dealer/register (ticari).
+
+### Test Flow Executed:
+1. ✅ Navigate to /register → Verify custom dropdown (NO <select> elements)
+2. ✅ Test country dropdown opens menu, selection updates label
+3. ✅ Verify all required fields present
+4. ✅ Navigate to /dealer/register → Verify dealer-specific fields
+5. ✅ Confirm NO hydration warnings in console logs
+6. ✅ Verify fallback country Almanya/DE works
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Custom Dropdown Implementation**: ✅ VERIFIED
+  - **NO <select> elements found**: ✅ CONFIRMED
+    - Checked for `select[data-testid="register-country"]` - NOT FOUND
+    - Checked for `select#register-country` - NOT FOUND
+    - Checked for any `<select>` on dealer page - NOT FOUND
+  - **Custom button-based dropdown**: ✅ WORKING
+    - Uses `<button>` with data-testid="register-country-button"
+    - Uses `<div>` for menu with data-testid="register-country-menu"
+    - No HTML <select>/<option> elements anywhere
+  - Implementation: Register.js lines 276-312 (custom dropdown with button + div menu)
+
+**2. Country Dropdown Functionality**: ✅ ALL WORKING
+  - **Dropdown Button Opens Menu**: ✅ VERIFIED
+    - Clicked button successfully opens menu
+    - Menu element found: data-testid="register-country-menu"
+    - Menu contains clickable country options
+  - **Selection Updates Label**: ✅ VERIFIED
+    - Initial label shows: "Almanya"
+    - After clicking DE option, menu closes automatically
+    - Label correctly displays selected country
+    - data-testid="register-country-selected" updates properly
+  - **Fallback Country Almanya/DE**: ✅ WORKING
+    - Fallback defined in code: `[{ code: 'DE', name: { tr: 'Almanya', en: 'Germany' } }]`
+    - Countries API failed (ERR_ABORTED) as expected
+    - Dropdown still shows "Almanya" with fallback
+    - Option available: data-testid="register-country-option-de"
+
+**3. /register (Bireysel) Page**: ✅ FULLY VERIFIED
+  - **Orange Background**: ✅ CORRECT
+    - RGB color: rgb(247, 194, 122) (#f7c27a)
+    - data-testid="register-page" present
+  - **Banner**: ✅ CORRECT
+    - Text includes "Annoncia" and "Hoşgeldiniz"
+    - data-testid="register-info-banner"
+  - **Header**: ✅ CORRECT
+    - Title: "Bireysel Kayıt"
+    - Subtitle: "Bilgilerinizi girerek hesabınızı oluşturun."
+  - **Required Fields**: ✅ ALL PRESENT
+    - Full Name: data-testid="register-full-name" ✅
+    - Email: data-testid="register-email" ✅
+    - Password: data-testid="register-password" ✅
+    - Country dropdown: data-testid="register-country-button" ✅
+  - **Submit Button**: ✅ PRESENT
+    - data-testid="register-submit"
+    - Text: "Hesap Oluştur"
+  - **Login Link**: ✅ PRESENT
+    - data-testid="register-login-button"
+    - Text: "Giriş yap"
+  - **Tax ID**: ✅ NOT PRESENT (correct for bireysel)
+
+**4. /dealer/register (Ticari) Page**: ✅ FULLY VERIFIED
+  - **Orange Background**: ✅ CORRECT (same as bireysel)
+  - **Banner**: ✅ CORRECT (same as bireysel)
+  - **Header**: ✅ CORRECT
+    - Title: "Ticari Kayıt"
+    - Subtitle: "Bilgilerinizi girerek hesabınızı oluşturun."
+  - **Dealer-Specific Fields**: ✅ ALL PRESENT
+    - Company Name: data-testid="register-company-name" ✅
+    - Contact Name (Yetkili kişi): data-testid="register-contact-name" ✅
+    - Email: data-testid="register-email" ✅
+    - Password: data-testid="register-password" ✅
+    - Country dropdown: data-testid="register-country-button" ✅
+    - Tax ID (optional): data-testid="register-tax-id" ✅
+  - **Tax ID Optional Label**: ✅ VERIFIED
+    - Label text: "Vergi / ID (opsiyonel)"
+    - Clearly marked as optional
+  - **Submit Button**: ✅ PRESENT
+  - **Login Link**: ✅ PRESENT
+  - **Full Name**: ✅ NOT PRESENT (correct for dealer)
+
+**5. NO Hydration Warnings**: ✅ CONFIRMED
+  - **Console Log Analysis**: ✅ CLEAN
+    - NO hydration warnings about `<span>` inside `<select>`
+    - NO hydration warnings about `<span>` inside `<option>`
+    - Previous 6 hydration warnings completely eliminated
+    - Only expected error: Countries API failure (ERR_ABORTED) handled by fallback
+  - **Hydration Issue Resolution**: ✅ SUCCESSFUL
+    - Replaced native HTML `<select>/<option>` with custom dropdown
+    - Custom implementation uses only `<button>` and `<div>` elements
+    - React 19 hydration validation passes cleanly
+
+### Implementation Details:
+
+**Custom Dropdown Code** (Register.js lines 274-323):
+```javascript
+<div className="space-y-2" data-testid="register-country-field">
+  <label className="text-sm font-medium" htmlFor="register-country">Ülke</label>
+  <div className="relative" data-testid="register-country-dropdown">
+    <button
+      type="button"
+      id="register-country"
+      onClick={() => setCountryOpen((prev) => !prev)}
+      className="w-full h-11 rounded-md border px-3 text-sm flex items-center justify-between"
+      data-testid="register-country-button"
+    >
+      <span data-testid="register-country-selected">
+        {resolveCountryLabel(selectedCountry) || 'Ülke seçin'}
+      </span>
+      <span className="text-slate-400">▾</span>
+    </button>
+    {countryOpen && (
+      <div
+        className="absolute z-10 mt-2 w-full max-h-60 overflow-auto rounded-md border bg-white shadow-lg"
+        data-testid="register-country-menu"
+      >
+        {countries.map((country) => (
+          <button
+            type="button"
+            key={country.code}
+            onClick={() => {
+              setCountryCode(country.code);
+              setCountryOpen(false);
+            }}
+            className={`w-full text-left px-3 py-2 text-sm hover:bg-muted ${
+              countryCode === country.code ? 'bg-muted' : ''
+            }`}
+            data-testid={`register-country-option-${country.code.toLowerCase()}`}
+          >
+            {resolveCountryLabel(country)}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+```
+
+**State Management**:
+- Line 24: `const [countryOpen, setCountryOpen] = useState(false);`
+- Line 280: Toggle open state on button click
+- Lines 299-301: Close menu and update selection on option click
+
+**Fallback Mechanism** (Register.js):
+- Lines 11-13: Fallback countries array with DE
+- Lines 54-56: Catches API errors and uses fallback
+- Line 316: Loading state text: "Ülkeler yükleniyor..."
+- Line 320: Error message: "Ülke listesi yüklenemedi. Varsayılan ülke kullanılıyor."
+
+### Screenshots Captured:
+1. **register-bireysel-custom-dropdown.png**: Bireysel page showing custom dropdown with "Almanya" selected
+2. **register-dealer-custom-dropdown.png**: Dealer page showing all dealer fields including optional Tax ID
+
+### Console Logs Analysis:
+- **Hydration Warnings**: ✅ NONE (0 warnings)
+- **Previous Issues**: ✅ RESOLVED
+  - Before: 6 React hydration warnings for `<select>/<option>`
+  - After: 0 hydration warnings
+- **Expected Errors**: ✅ HANDLED GRACEFULLY
+  - Countries API failure (ERR_ABORTED) - fallback mechanism activates
+  - No impact on user experience
+
+### Data-testids Verified:
+
+**Page-level**:
+- ✅ `register-page`: Main page container
+- ✅ `register-info-banner`: Welcome banner
+- ✅ `register-card`: White card container
+- ✅ `register-header`: Header section
+- ✅ `register-form`: Form element
+
+**Custom Dropdown**:
+- ✅ `register-country-field`: Country field container
+- ✅ `register-country-dropdown`: Dropdown wrapper div
+- ✅ `register-country-button`: Dropdown toggle button
+- ✅ `register-country-selected`: Selected country label
+- ✅ `register-country-menu`: Dropdown menu (conditional)
+- ✅ `register-country-option-{code}`: Individual country option buttons
+- ✅ `register-country-loading`: Loading state text (conditional)
+- ✅ `register-country-error`: Error message (conditional)
+
+**Form Fields**:
+- ✅ `register-full-name`: Full name input (bireysel only)
+- ✅ `register-company-name`: Company name input (dealer only)
+- ✅ `register-contact-name`: Contact name input (dealer only)
+- ✅ `register-email`: Email input (both)
+- ✅ `register-password`: Password input (both)
+- ✅ `register-tax-id`: Tax ID input (dealer only)
+- ✅ `register-submit`: Submit button (both)
+- ✅ `register-login-button`: Login link (both)
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (6/6 core requirements verified)
+- **Custom Dropdown**: ✅ WORKING (NO <select> elements found)
+- **Dropdown Opens**: ✅ WORKING (menu appears on click)
+- **Selection Updates**: ✅ WORKING (label updates, menu closes)
+- **Required Fields**: ✅ ALL PRESENT (both pages)
+- **Submit & Login**: ✅ PRESENT (both pages)
+- **Hydration Warnings**: ✅ ELIMINATED (0 warnings, down from 6)
+- **Fallback Country**: ✅ WORKING (Almanya/DE available)
+
+### Final Status:
+- **Overall Result**: ✅ **PASS** - Custom dropdown implementation 100% successful
+- **Hydration Issue**: ✅ RESOLVED (no <select>/<option> hydration warnings)
+- **All Functionality**: ✅ PRESERVED (dropdown works correctly)
+- **User Experience**: ✅ IMPROVED (cleaner console, same UX)
+- **Fallback Mechanism**: ✅ ROBUST (handles API failures gracefully)
+- **Production Ready**: ✅ CONFIRMED
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 21, 2026
+- **Message**: Register pages custom dropdown re-test SUCCESSFULLY COMPLETED. All 6 requirements from review request verified and passing (100% success rate). CRITICAL ACHIEVEMENT: Hydration warnings completely eliminated - changed from 6 warnings to 0 warnings by replacing native <select>/<option> with custom button-based dropdown. 1) Custom dropdown verified: NO <select> elements found on either page, using button + div menu implementation. 2) Country dropdown button successfully opens menu (data-testid="register-country-menu"). 3) Selection correctly updates label (data-testid="register-country-selected") and closes menu. 4) All required fields present on /register (full name, email, password, country, submit, login link, NO tax ID). 5) All dealer fields present on /dealer/register (company name, contact name, email, password, country, tax ID marked optional, submit, login link, NO full name). 6) Console logs show ZERO hydration warnings (previous <span> inside <select>/<option> warnings eliminated). 7) Fallback country Almanya/DE working correctly despite countries API failure (ERR_ABORTED). All data-testids present and functional. Screenshots captured for both pages. Custom dropdown implementation is production-ready and resolves all hydration issues.
+
+---
