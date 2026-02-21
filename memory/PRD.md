@@ -118,6 +118,7 @@
 - **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
+- 2026-02-21: Email doğrulama altyapısı (AUTH1.7): users doğrulama alanları + /api/auth/verify-email ve /api/auth/resend-verification + verify-email UI (OTP, cooldown, debug_code) + login gating.
 - 2026-02-21: Register route haritası (\"/register\", \"/dealer/register\"), consumer/dealer kayıt formları, /api/auth/register/consumer|dealer ve /api/countries/public endpointleri eklendi; dealer profile slug migration (p27).
 - 2026-02-21: Login banner metni Annoncia olarak güncellendi, reCAPTCHA metni kaldırıldı, beyaz zemin yazı kontrastı iyileştirildi.
 - 2026-02-21: Tek giriş sayfası (bireysel/ticari seçimli), turuncu zeminli login UI + portal uyumsuzluk kontrolü; /login ve /dealer/login ortak.
