@@ -148,7 +148,7 @@ class PricingService:
             PriceConfig.country == country,
             PriceConfig.segment == "dealer",
             PriceConfig.pricing_type == pricing_type,
-            PriceConfig.is_active == True
+            PriceConfig.is_active.is_(True)
         ))
         price_config = (await self.db.execute(price_query)).scalar_one_or_none()
         
