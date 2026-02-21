@@ -22,6 +22,7 @@ const menuItems = [
   { key: 'messages', path: '/account/messages', label: 'Mesajlar', icon: MessageSquare, testId: 'account-nav-messages' },
   { key: 'support', path: '/account/support', label: 'Destek', icon: LifeBuoy, testId: 'account-nav-support' },
   { key: 'profile', path: '/account/profile', label: 'Hesap', icon: User, testId: 'account-nav-profile' },
+  { key: 'privacy', path: '/account/privacy', label: 'Gizlilik', icon: Shield, testId: 'account-nav-privacy' },
 ];
 
 const navClass = ({ isActive }) =>
