@@ -2287,26 +2287,22 @@ ADMIN_INVITE_RATE_LIMIT_MAX_ATTEMPTS = 5
 
 ADMIN_ROLE_OPTIONS = {"super_admin", "country_admin", "finance", "support", "moderator", "campaigns_admin", "campaigns_supervisor", "ROLE_AUDIT_VIEWER"}
 
-CAMPAIGN_TYPES = {"individual", "corporate"}
-CAMPAIGN_STATUSES = {"draft", "active", "paused", "archived"}
-CAMPAIGN_PRIORITY_SET = {"low", "medium", "high"}
-CAMPAIGN_SCOPE_SET = {"global", "country"}
+CAMPAIGN_STATUS_SET = {"draft", "active", "paused", "ended"}
 CAMPAIGN_STATUS_TRANSITIONS = {
-    "draft": {"active", "archived"},
-    "active": {"paused", "archived"},
-    "paused": {"active", "archived"},
-    "archived": set(),
+    "draft": {"active", "ended"},
+    "active": {"paused", "ended"},
+    "paused": {"active", "ended"},
+    "ended": set(),
 }
 
 PLAN_SCOPE_SET = {"global", "country"}
 PLAN_STATUS_SET = {"active", "inactive", "archived"}
-INVOICE_STATUS_SET = {"draft", "issued", "paid", "cancelled", "refunded", "overdue"}
+INVOICE_STATUS_SET = {"draft", "issued", "paid", "void", "refunded"}
 INVOICE_STATUS_TRANSITIONS = {
-    "draft": {"issued"},
-    "issued": {"paid", "cancelled", "overdue"},
-    "overdue": {"paid"},
+    "draft": {"issued", "void"},
+    "issued": {"paid", "void"},
     "paid": {"refunded"},
-    "cancelled": set(),
+    "void": set(),
     "refunded": set(),
 }
 
