@@ -718,6 +718,87 @@ def _generate_email_verification_code() -> str:
     return f"{secrets.randbelow(1000000):06d}"
 
 
+def _build_verification_email(code: str, locale: Optional[str]) -> Tuple[str, str, str]:
+    locale_key = (locale or "tr").lower()
+    if locale_key.startswith("de"):
+        subject = "E-Mail doğrulama kodunuz"
+        intro = "E-posta doğrulama kodunuz"
+    elif locale_key.startswith("fr"):
+        subject = "Code de vérification"
+        intro = "Votre code de vérification"
+    else:
+        subject = "E-posta doğrulama kodunuz"
+        intro = "E-posta doğrulama kodunuz"
+
+    text_body = f"{intro}: {code}\nKod 15 dakika içinde geçerlidir."
+    html_body = (
+        "<div style='font-family:Arial,sans-serif;font-size:14px;'>"
+        f"<p>{intro}: <strong>{code}</strong></p>"
+        "<p>Kod 15 dakika içinde geçerlidir.</p>"
+        "</div>"
+    )
+    return subject, text_body, html_body
+
+
+def _send_verification_email(to_email: str, code: str, locale: Optional[str]) -> None:
+    logger = logging.getLogger("email_verification")
+    provider = EMAIL_PROVIDER
+    subject, text_body, html_body = _build_verification_email(code, locale)
+
+    if provider == "mock":
+        logger.warning("Mock verification email -> %s code=%s", to_email, code)
+        return
+
+    if provider == "sendgrid":
+        sendgrid_key = os.environ.get("SENDGRID_API_KEY")
+        sender_email = os.environ.get("SENDER_EMAIL")
+        if not sendgrid_key or not sender_email:
+            logger.error("SendGrid configuration missing: SENDGRID_API_KEY or SENDER_EMAIL")
+            raise HTTPException(status_code=503, detail="Email provider not configured")
+        message = Mail(
+            from_email=sender_email,
+            to_emails=to_email,
+            subject=subject,
+            html_content=html_body,
+        )
+        try:
+            sg = SendGridAPIClient(sendgrid_key)
+            sg.send(message)
+        except Exception as exc:
+            logger.error("SendGrid verification send error: %s", exc)
+            raise HTTPException(status_code=502, detail="Failed to send verification email") from exc
+        return
+
+    if provider == "smtp":
+        if not SMTP_HOST or not SMTP_PORT or not SMTP_FROM:
+            logger.error("SMTP configuration missing: SMTP_HOST/SMTP_PORT/SMTP_FROM")
+            raise HTTPException(status_code=503, detail="SMTP not configured")
+        if (SMTP_USERNAME and not SMTP_PASSWORD) or (SMTP_PASSWORD and not SMTP_USERNAME):
+            logger.error("SMTP auth configuration incomplete")
+            raise HTTPException(status_code=503, detail="SMTP auth not configured")
+
+        message = EmailMessage()
+        message["Subject"] = subject
+        message["From"] = SMTP_FROM
+        message["To"] = to_email
+        message.set_content(text_body)
+        message.add_alternative(html_body, subtype="html")
+
+        try:
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as client:
+                client.ehlo()
+                if SMTP_USERNAME and SMTP_PASSWORD:
+                    client.starttls()
+                    client.login(SMTP_USERNAME, SMTP_PASSWORD)
+                client.send_message(message)
+        except Exception as exc:
+            logger.error("SMTP verification send error: %s", exc)
+            raise HTTPException(status_code=502, detail="Failed to send verification email") from exc
+        return
+
+    raise HTTPException(status_code=503, detail="Email provider not configured")
+
+
 async def _issue_email_verification_code(
     session: AsyncSession,
     user: SqlUser,
