@@ -47,12 +47,11 @@ async def resolve_admin_country_context(
 
     country = _normalize_country(raw_country)
 
-    # Validate exists
-    exists = await db.countries.find_one(
-        {"$or": [{"code": country}, {"country_code": country}]},
-        {"_id": 0, "code": 1, "country_code": 1, "is_enabled": 1, "active_flag": 1},
+    result = await session.execute(
+        select(Country).where(Country.code == country)
     )
-    if not exists or (exists.get("active_flag") is False) or (exists.get("is_enabled") is False):
+    exists = result.scalar_one_or_none()
+    if not exists or not exists.is_enabled:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid country parameter",
