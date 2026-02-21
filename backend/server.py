@@ -2704,11 +2704,29 @@ PAYMENTS_ENABLED_COUNTRIES = {
     if code.strip()
 }
 
-if APP_ENV == "prod":
+
+def _db_url_is_localhost(value: Optional[str]) -> bool:
+    if not value:
+        return True
+    try:
+        parsed = urllib.parse.urlparse(value)
+        host = (parsed.hostname or "").lower()
+    except Exception:
+        host = value.lower()
+    return host in {"localhost", "127.0.0.1"}
+
+
+if APP_ENV in {"preview", "prod"}:
     if not RAW_DATABASE_URL:
-        raise RuntimeError("DATABASE_URL must be set")
+        raise RuntimeError("DATABASE_URL must be set for preview/prod")
+    if _db_url_is_localhost(RAW_DATABASE_URL):
+        raise RuntimeError("DATABASE_URL cannot use localhost in preview/prod")
     if DB_SSL_MODE != "require":
-        raise RuntimeError("DB_SSL_MODE must be require for prod")
+        raise RuntimeError("DB_SSL_MODE must be require for preview/prod")
+    if APP_ENV == "prod" and EMAIL_PROVIDER == "mock":
+        raise RuntimeError("EMAIL_PROVIDER cannot be mock in prod")
+
+if APP_ENV == "prod":
     if EMAIL_PROVIDER == "mock":
         raise RuntimeError("EMAIL_PROVIDER cannot be mock in prod")
 
@@ -2719,10 +2737,13 @@ if EMAIL_PROVIDER == "sendgrid":
     if not os.environ.get("SENDGRID_API_KEY") or not os.environ.get("SENDER_EMAIL"):
         raise RuntimeError("SendGrid configuration missing: SENDGRID_API_KEY or SENDER_EMAIL")
 
-if not RAW_DATABASE_URL:
+if RAW_DATABASE_URL:
+    DATABASE_URL = RAW_DATABASE_URL
+elif APP_ENV in {"preview", "prod"}:
+    raise RuntimeError("DATABASE_URL must be set for preview/prod")
+else:
     logging.getLogger("sql_config").warning("DATABASE_URL not set – running with local fallback")
-
-DATABASE_URL = RAW_DATABASE_URL or "postgresql://admin_user:admin_pass@localhost:5432/admin_panel"
+    DATABASE_URL = "postgresql://admin_user:admin_pass@localhost:5432/admin_panel"
 
 try:
     DB_POOL_SIZE = int(DB_POOL_SIZE_RAW) if DB_POOL_SIZE_RAW else 5
