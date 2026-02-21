@@ -9479,7 +9479,7 @@ async def admin_invoice_mark_paid(
     if invoice.country_code != "GLOBAL":
         _assert_country_scope(invoice.country_code, current_user)
 
-    if invoice.status not in {"issued", "overdue"}:
+    if invoice.status not in {"issued"}:
         raise HTTPException(status_code=400, detail="Only issued invoices can be marked paid")
 
     if not payload.reason:
