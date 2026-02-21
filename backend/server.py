@@ -10505,7 +10505,26 @@ async def stripe_webhook(
     except Exception:
         raw_payload = {"raw": raw_body.decode("utf-8", errors="ignore")}
 
-    webhook_response = stripe_checkout.handle_webhook(raw_body, signature)
+    try:
+        webhook_response = stripe_checkout.handle_webhook(raw_body, signature)
+    except Exception as exc:
+        now = datetime.now(timezone.utc)
+        invalid_event_id = f"invalid-{uuid.uuid4()}"
+        event_log = WebhookEventLog(
+            provider="stripe",
+            event_id=invalid_event_id,
+            event_type="invalid_signature",
+            received_at=now,
+            processed_at=now,
+            status="invalid_signature",
+            payload_json={"raw_payload": raw_payload},
+            signature_valid=False,
+            error_message=str(exc)[:255],
+            created_at=now,
+        )
+        session.add(event_log)
+        await session.commit()
+        raise HTTPException(status_code=400, detail="Invalid signature")
 
     event_id = webhook_response.event_id
     event_type = webhook_response.event_type
@@ -10522,116 +10541,67 @@ async def stripe_webhook(
     provider_payment_id = getattr(webhook_response, "payment_id", None) or provider_ref
 
     now = datetime.now(timezone.utc)
+    payload_json = {
+        "event_type": event_type,
+        "session_id": session_id,
+        "payment_status": payment_status,
+        "metadata": metadata,
+        "provider_ref": provider_ref,
+        "provider_payment_id": provider_payment_id,
+        "raw_payload": raw_payload,
+    }
 
-    event_log = PaymentEventLog(
+    event_log = WebhookEventLog(
         provider="stripe",
         event_id=event_id,
         event_type=event_type,
-        raw_payload=raw_payload,
-        status="processing",
+        received_at=now,
         processed_at=None,
+        status="received",
+        payload_json=payload_json,
+        signature_valid=True,
+        error_message=None,
         created_at=now,
-        updated_at=now,
     )
     session.add(event_log)
     try:
-        await session.commit()
+        await session.flush()
     except IntegrityError:
         await session.rollback()
+        existing = (
+            await session.execute(
+                select(WebhookEventLog).where(
+                    WebhookEventLog.provider == "stripe",
+                    WebhookEventLog.event_id == event_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if existing:
+            existing.status = "duplicate"
+            existing.processed_at = now
+            await session.commit()
         return {"status": "duplicate"}
 
-    transaction = (await session.execute(
-        select(PaymentTransaction).where(PaymentTransaction.session_id == session_id)
-    )).scalar_one_or_none()
-
-    invoice = None
-    payment = None
-    if transaction:
-        invoice = await session.get(AdminInvoice, transaction.invoice_id)
-        payment = (await session.execute(
-            select(Payment).where(Payment.invoice_id == transaction.invoice_id)
-        )).scalar_one_or_none()
-        if invoice and not payment:
-            payment = Payment(
-                invoice_id=invoice.id,
-                user_id=invoice.user_id,
-                provider="stripe",
-                provider_ref=provider_ref or f"pi_{invoice.id}",
-                status=_resolve_payment_status(payment_status),
-                amount_total=invoice.amount_total,
-                currency=invoice.currency,
-                meta_json=metadata,
-                created_at=now,
-                updated_at=now,
-            )
-            session.add(payment)
-    else:
-        invoice_id = metadata.get("invoice_id")
-        try:
-            invoice_uuid = uuid.UUID(invoice_id) if invoice_id else None
-        except ValueError:
-            invoice_uuid = None
-        if invoice_uuid:
-            invoice = await session.get(AdminInvoice, invoice_uuid)
-            if invoice:
-                payment = (await session.execute(
-                    select(Payment).where(Payment.invoice_id == invoice.id)
-                )).scalar_one_or_none()
-
-                if not payment:
-                    payment = Payment(
-                        invoice_id=invoice.id,
-                        user_id=invoice.user_id,
-                        provider="stripe",
-                        provider_ref=provider_ref or f"pi_{invoice.id}",
-                        status=_resolve_payment_status(payment_status),
-                        amount_total=invoice.amount_total,
-                        currency=invoice.currency,
-                        meta_json=metadata,
-                        created_at=now,
-                        updated_at=now,
-                    )
-                    session.add(payment)
-
-                if not transaction:
-                    transaction = PaymentTransaction(
-                        provider="stripe",
-                        session_id=session_id,
-                        provider_payment_id=None,
-                        invoice_id=invoice.id,
-                        dealer_id=invoice.user_id,
-                        amount=invoice.amount_total,
-                        currency=invoice.currency,
-                        status=_resolve_payment_status(payment_status),
-                        payment_status=_resolve_payment_status(payment_status),
-                        metadata_json=metadata,
-                        created_at=now,
-                        updated_at=now,
-                    )
-                    session.add(transaction)
-
-    if invoice and payment and transaction:
-        await _apply_payment_status(
-            invoice,
-            payment,
-            transaction,
-            payment_status or "",
-            provider_payment_id,
-            provider_ref=payment.provider_ref,
-            meta=metadata,
+    try:
+        status_result = await _process_webhook_payment(
             session=session,
+            event_log=event_log,
+            session_id=session_id,
+            payment_status=payment_status,
+            metadata=metadata,
+            provider_ref=provider_ref,
+            provider_payment_id=provider_payment_id,
         )
-        event_log.status = "processed"
-        event_log.processed_at = now
-        event_log.updated_at = now
         await session.commit()
-        return {"status": "processed"}
-
-    event_log.status = "ignored"
-    event_log.processed_at = now
-    event_log.updated_at = now
-    await session.commit()
-    return {"status": "ignored"}
+        return {"status": status_result}
+    except Exception as exc:
+        await session.rollback()
+        event_log.status = "failed"
+        event_log.processed_at = now
+        event_log.error_message = str(exc)[:255]
+        session.add(event_log)
+        await session.commit()
+        raise
 
 
 @api_router.get("/admin/payments")
