@@ -113,7 +113,6 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 ATTRIBUTE_KEY_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 MONGO_GATED_PATH_PREFIXES = (
-    "/api/categories",
     "/api/v1/listings",
     "/api/v1/favorites",
     "/api/v1/messages",
