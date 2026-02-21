@@ -10759,7 +10759,7 @@ async def stripe_webhook(
         raw_payload = {"raw": raw_body.decode("utf-8", errors="ignore")}
 
     try:
-        webhook_response = stripe_checkout.handle_webhook(raw_body, signature)
+        webhook_response = await stripe_checkout.handle_webhook(raw_body, signature)
     except Exception as exc:
         now = datetime.now(timezone.utc)
         invalid_event_id = f"invalid-{uuid.uuid4()}"
