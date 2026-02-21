@@ -1,38 +1,37 @@
 <analysis>**original_problem_statement:**
-The user's goal is to build a multi-country, multi-lingual classifieds platform, which involves a complete migration from MongoDB to PostgreSQL. The project was initially blocked by a missing  in the preview environment. To overcome this, development is proceeding using a local PostgreSQL instance.
+The user's primary objective is to build a multi-country, multi-lingual classifieds platform. This initially involved a phased migration from MongoDB to PostgreSQL while building out various user portals (Admin, Dealer, Consumer).
 
-The current strategic focus is a multi-phase project to make the application production-ready, starting with the complete removal of MongoDB dependencies and finalizing the different user portals. The agent recently completed a sophisticated Category Import/Export feature for administrators and is now in the process of building out the Dealer Portal in distinct, user-approved phases.
+However, the user has recently pivoted and escalated the priority of the database migration. The new, overriding goal is the **complete and immediate removal of all MongoDB dependencies** from the application. All other feature development, including the Dealer Portal, is on hold until the application is 100% running on PostgreSQL.
 
-PRODUCT REQUIREMENTS:
-1.  Complete the MongoDB to PostgreSQL data migration for all collections (listings, favorites, messages, support, etc.).
-2.  Finalize the Dealer Portal, making it production-grade with a full feature set:
-    -   Live data dashboard (metrics, quota, subscription status).
-    -   Complete listing lifecycle management (CRUD, status changes, bulk actions).
-    -   A Stripe-ready subscription state machine.
-    -   Dealer profiles with logo uploads and public-facing pages.
-3.  Integrate Stripe for payments.
-4.  Implement a full Consumer Portal (favorites, messaging, profile).
-5.  Implement a Support Ticket System (Başvuru Modülü).
+PRODUCT REQUIREMENTS (Updated Priority):
+1.  **Complete the MongoDB to PostgreSQL Migration (P0 - CRITICAL):** Migrate all remaining data, models, and endpoints for every module still using MongoDB. This includes a user-approved Strangler Fig plan to tackle modules in a specific order.
+2.  **Create a one-time migration script** to handle the data backfill from Mongo to SQL.
+3.  **Decommission MongoDB:** Completely remove all MongoDB-related code, dependencies, and configuration from the repository.
+4.  **Refine Auth Flow (P1):** Implement a consolidated login page and separate, multi-step registration flows for consumer and dealer users, including an inline email verification process.
+5.  **Finalize Dealer Portal (P2 - Post-Migration):** Continue with the phased development of the dealer portal, including listing management and subscription features.
+6.  **Integrate Stripe (P2 - Post-Migration):** Implement payment processing.
+7.  **Implement Consumer & Support Portals (P3 - Post-Migration):** Build out the remaining user-facing features.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application consists of a React frontend and a FastAPI backend running with a local PostgreSQL database. The Portal Isolation architecture (separating Admin, Dealer, and Consumer sections) is in place.
+The application is a React frontend with a FastAPI backend. Development is being done with a local PostgreSQL database due to a persistent lack of a  in the preview environment.
 
-The MongoDB to PostgreSQL migration is underway. The  collection has been fully migrated, and a new, enterprise-grade admin feature for category import/export (via JSON/CSV with a dry-run/commit workflow and PDF reporting) has been built and is accessible at .
+The main focus of the current session has been a user-driven overhaul of the authentication system and a massive push to complete the Mongo-to-SQL migration.
 
-The Dealer Portal development is in progress. Phase 1 (FAZ-DL1), the dealer dashboard, is complete and displays live SQL-backed metrics for active listings, quota, and total views. Phase 2 (FAZ-DL2), listing lifecycle management, is partially complete.
+-   **Authentication (FAZ-AUTH1):** A new, unified login page has been created at , which allows users to select their role (Individual or Business). Separate, multi-step registration pages for consumers () and dealers () have been implemented. This flow includes an inline email verification step where, upon registration, an OTP input appears on the same page. The backend supports OTP generation, validation, rate-limiting, and automatic login upon successful verification.
+-   **Mongo-to-SQL Migration (FAZ-DM):** Following a direct user mandate, a detailed Strangler Fig migration plan was created and approved. The agent has already migrated the  and  modules and was in the process of migrating the  module.
 
 **Last working item**:
--   **Last item agent was working:** Implementing bulk actions (archive and soft delete) for the Dealer Listing Management page (). This involved creating a new backend endpoint () and adding the necessary frontend UI elements (checkboxes in the table, action buttons) in . This is part of the FAZ-DL2 plan.
+-   **Last item agent was working:** The agent was executing the approved Mongo-to-SQL migration plan. Specifically, they were migrating the  module. This involved creating the SQLAlchemy model (), Pydantic schema, and CRUD repository (). The agent's last action was preparing to create the Alembic migration script for the new  table.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both. The frontend testing agent should verify the UI for selecting multiple listings and triggering the bulk actions. The backend agent should test the  endpoint to ensure it correctly performs the archive and soft-delete operations transactionally and updates the dealer's quota correctly.
+-   **Which testing method agent to use?** backend testing agent. After the alembic migration is applied and the backfill script is run, the new  endpoint needs to be tested to ensure it's serving data correctly from PostgreSQL.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
 -   **Issue 1: Database Not Configured in Preview/Prod Environment (P0, CRITICAL BLOCKER)**
-    -   **Description:** The application is being developed against a local PostgreSQL database because the  for the preview and production environments has not been provided. This is a recurring infrastructure blocker that prevents any deployment or testing in a shared environment.
+    -   **Description:** The application cannot be deployed or tested in the preview environment because the  is missing. All development is forced to rely on a local PostgreSQL instance.
     -   **Status:** BLOCKED (on user/Ops).
     -   **Is recurring issue?** Y
 
@@ -42,93 +41,97 @@ The Dealer Portal development is in progress. Phase 1 (FAZ-DL1), the dealer dash
     -   **Is recurring issue?** Y
 
 **In progress Task List**:
--   **Task 1: Complete Dealer Listing Lifecycle (FAZ-DL2) (P0)**
-    -   **Where to resume:** Finalize the frontend implementation for bulk actions in . This includes wiring up the checkboxes, enabling/disabling action buttons based on selection, and making the API call to the new bulk action endpoint. Afterwards, the full CRUD and bulk action flow needs to be tested end-to-end.
-    -   **What will be achieved with this?** Dealers will have a fully functional interface to manage their listings efficiently, including performing operations on multiple listings at once.
+-   **Task 1: Complete the  module migration (P0)**
+    -   **Where to resume:** The agent needs to generate the Alembic migration script for the new  table.
+        1.  Run FAILED: No 'script_location' key found in configuration..
+        2.  Review and apply the migration with FAILED: No 'script_location' key found in configuration..
+        3.  Create and run a backfill script () to move data from the Mongo  collection to the new SQL table.
+        4.  Refactor the application logic to use the new SQL  functions and endpoints.
+        5.  Decommission the old Mongo-based notification code.
+    -   **What will be achieved with this?** The  module will be fully migrated to PostgreSQL, making progress on the user's top-priority task.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** both
+    -   **Should Test frontend/backend/both after fix?** backend
     -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
--   **Upcoming Tasks (P1):**
-    -   **FAZ-DL3: Finalize Subscription State Machine:** Implement and test the full subscription lifecycle (, , ) using the Stripe-ready data model. Connect the frontend plan card to this live data.
-    -   **Enhancement: Add Weekly Trend Mini-Chart:** Add the user-approved sparkline chart for weekly views to the dealer dashboard.
-    -   **Continue Mongo to SQL Migration:**
-        -   Migrate .
-        -   Migrate  (this will un-gate the messages metric on the dealer dashboard).
-        -   Migrate  tickets.
-    -   **Remove Mongo Dependencies:** After all data is migrated, completely remove MongoDB code and dependencies from the backend.
+-   **Upcoming Tasks (P0):**
+    -   **Continue and Complete Mongo-to-SQL Migration (FAZ-DM):** This is the highest priority. Follow the user-approved Strangler Fig plan from message #859. The strict priority order for remaining modules is:
+        1.  **Monetization Chain:** , , , , .
+        2.  **Dealer Management:** .
+        3.  **Site Content:** , , , .
+        4.  **Admin/System:** , , , , etc.
+        For each module, the process is: create schema, run backfill script, switch endpoints to SQL, and decommission Mongo code.
 
--   **Future Tasks (P2):**
-    -   Stripe Integration and Monetization.
-    -   Implement the full Consumer Portal feature set.
-    -   Implement the Başvuru Modülü (Support Ticket System).
-    -   Production Hardening (Monitoring, Logging, Backups).
+-   **Future Tasks (P2 - Post-Migration):**
+    -   **Complete Dealer Listing Lifecycle (FAZ-DL2):** Finalize bulk actions (archive, delete, restore) for listings.
+    -   **Implement Subscription State Machine (FAZ-DL3):** Connect the UI to a live, Stripe-ready subscription model.
+    -   **Implement Email Sending:** Integrate a mail service (like SendGrid) to send actual verification codes.
+    -   **Implement Başvuru Modülü (Support Ticket System).**
 
 **Completed work in this session**
--   **Unblocked Development:** Set up a local PostgreSQL to bypass the infrastructure blocker.
--   **Database Migration Started:** Successfully migrated the  model and data from Mongo to PostgreSQL.
--   **Admin Feature: Category Import/Export:**
-    -   Built a new page at .
-    -   Implemented import/export via JSON & CSV.
-    -   Created a safe workflow with Dry-run, Commit, and Publish stages.
-    -   Added a feature to generate a downloadable PDF report of dry-run changes.
--   **Dealer Portal - Dashboard (FAZ-DL1):**
-    -   Completed the dealer dashboard with live SQL-backed metrics for listings, quota, and views.
--   **Dealer Portal - Listing Management (FAZ-DL2, Partial):**
-    -   Implemented full CRUD (Create, Edit, Archive, Soft Delete) for listings.
-    -   Began implementing bulk actions.
+-   **Consolidated Auth Flow (FAZ-AUTH1):**
+    -   Refactored the login experience into a single page () with a role selector.
+    -   Built separate registration pages for Consumers () and Dealers ().
+    -   Implemented a modern inline email verification flow with an OTP input appearing on the registration page itself.
+    -   Created backend logic for OTP generation, validation (with rate-limiting and expiry), and automatic login on success.
+-   **Mongo to SQL Migration Progress (FAZ-DM):**
+    -   Established and received user approval for a formal Strangler Fig migration plan.
+    -   Successfully migrated the  module to PostgreSQL.
+    -   Successfully migrated the  module to PostgreSQL.
+    -   Began migration of the  module.
 
 **Earlier issues found/mentioned but not fixed**
 -   **Issue 1: CSV Export for Admin User Lists**
-    -   A pending feature request to add a CSV export button to the admin user list. This is in the backlog and not a current priority.
+    -   A pending feature request to add a CSV export button to the admin user list. This is in the backlog.
     -   **Should Test frontend/backend/both after fix:** backend
     -   **Is recurring issue?** N
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: The unconfigured PostgreSQL  for preview/production environments is a persistent blocker from previous sessions.
--   **Recurrence count:** 3+
+-   **Recurrence count:** 4+
 -   **Status:** BLOCKED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Mongo to Postgres Migration:** The core technical effort, involving replacing  with  and  for all data operations.
--   **Phased Development:** A user-approved strategy to deliver large features (like the Dealer Portal) in smaller, testable phases (e.g., FAZ-DL1, FAZ-DL2).
--   **Enterprise Data Management:** The category import/export feature includes robust concepts like dry-runs, transactional commits, schema versioning, and PDF audit reports.
--   **Soft Deletes:** Using a  flag instead of permanently deleting records to maintain data integrity and allow for restoration.
+-   **Strangler Fig Pattern:** The core architectural strategy for incrementally migrating the application from MongoDB to PostgreSQL without a big bang cutover. Each module is migrated, tested, and switched over independently.
+-   **Inline Email Verification:** A UX improvement where the user verifies their email with an OTP on the same page they registered, reducing friction compared to a separate page or email link click.
+-   **Idempotent Backfill Scripts:** One-time jobs designed to be safely re-runnable, ensuring data is not duplicated during the migration process.
+-   **User-Driven Pivots:** The project's direction can change drastically based on user feedback. The agent must be able to adapt, re-plan, and execute on new high-priority directives, such as the shift from feature development to an all-out migration effort.
 
 **key DB schema**
--   **categories:** 
--   **category_translations:** 
--   **listings:** 
--   **subscriptions:**  (Stripe-ready model)
+-   **users:** (Updated) Added , , .
+-   **messages:** 
+-   **favorites:** 
+-   **notifications:**  (In Progress)
 
 **changes in tech stack**
--   Active migration from **MongoDB** to **PostgreSQL**. All new development uses PostgreSQL.
+-   Aggressive and prioritized removal of **MongoDB**, with all new and refactored logic using **PostgreSQL**.
 
 **All files of reference**
--   : Contains the new bulk action endpoint being implemented.
--   : Frontend implementation for listing management, including the in-progress bulk actions.
--   : Contains the complex category import/export logic.
--   : The UI for the new category management feature.
--   : The recently completed dealer dashboard.
--   : High-level plan for the database migration.
+-   : Directory containing all new data migration scripts.
+-   : Directory containing all the new/refactored authentication UI components.
+-   : Contains the core logic for the new registration and verification flow.
+-   : The user-approved high-level plan for the database migration.
+-   : A document listing all remaining Mongo endpoints to be migrated.
+
+**Areas that need refactoring**:
+-   ****: This file still contains a large number of legacy endpoints tied to MongoDB. As per the user-approved migration plan (ADR-05), these endpoints must be refactored and moved into their respective domain modules as each module is migrated to SQL.
 
 **key api endpoints**
--   : (IN PROGRESS) For archiving or soft-deleting multiple listings.
--   : Provides aggregated data for the dealer dashboard.
--   : Initiates the dry-run for a category import.
--   : Commits a validated category import.
--   : Generates the PDF report for a dry-run.
+-   : (Updated) Creates a consumer user and triggers OTP flow.
+-   : (New) Creates a dealer user and triggers OTP flow.
+-   : (New) Verifies OTP, marks user as verified, and returns an auth token.
+-   : (New) Resends a new OTP code.
+-   : (New, SQL-powered)
+-   : (New, SQL-powered)
 
 **Critical Info for New Agent**
--   **Continue Local Development:** The preview/production  is still missing. All work must proceed against the local PostgreSQL database. The user has approved this workflow.
--   **Follow the Phased Plan:** Stick to the agreed-upon plan for the Dealer Portal. Your immediate task is to finish **FAZ-DL2 (Listing Lifecycle)**. After that is complete and tested, move to **FAZ-DL3 (Subscriptions)**.
--   **Mongo Migration is the Goal:** The overarching strategic objective is the complete removal of MongoDB. Ensure all new features and refactors use PostgreSQL.
--   **Communicate in Turkish:** All user-facing communication must be in Turkish.
--   **User Provides Detailed Plans:** The user is technically savvy and provides structured, detailed plans. Adhere to these plans closely, as they represent confirmed architectural and feature decisions.
+-   **MIGRATION IS THE ONLY PRIORITY:** The user has explicitly stated that finishing the MongoDB to PostgreSQL migration is the most critical task. Do not work on any other features (Dealer panel, etc.) until the migration is 100% complete and all Mongo dependencies are removed.
+-   **Follow the Strangler Plan:** Adhere strictly to the migration plan laid out by the user in message #859. The order of modules is not optional. Start with the Monetization Chain after finishing the current  module.
+-   **Continue Local Development:** The preview environment is still broken due to the missing . All database work must be done and tested against the local PostgreSQL instance.
+-   **Communicate in Turkish:** All communication with the user must be in Turkish.
 
 **documents and test reports created in this job**
 -   
@@ -137,18 +140,21 @@ The Dealer Portal development is in progress. Phase 1 (FAZ-DL1), the dealer dash
 -   
 
 **Last 10 User Messages and any pending HUMAN messages**
--   The user has been providing detailed, phased task lists and architectural decisions.
--   **Latest plan (msg 1519):** User confirmed the completion of the Dealer Dashboard (FAZ-DL1) and approved the start of the Dealer Listing Lifecycle (FAZ-DL2). They also approved a future enhancement (a weekly trend chart for the dashboard) to be worked on after FAZ-DL2 is complete.
--   **Current State:** The agent is in the middle of implementing the approved FAZ-DL2. There are no pending messages from the user.
+-   (Messages 527-550): User approved final details for the auth flow and then requested to switch focus back to finishing the dealer panel.
+-   **(Message 553): CRITICAL PIVOT. User overrides previous request and demands the complete migration of all remaining MongoDB modules to SQL.**
+-   **(Message 556): User confirms the migration is the only priority, expressing frustration that Mongo is still in the project. Approves a Strangler Fig approach and requests a one-time migration script.**
+-   **(Message 859): User provides a detailed, prioritized Architectural Decision Record and task list for the remaining Mongo-to-SQL migration, defining the exact order in which to tackle modules.**
+-   The last several hundred messages show the agent executing this migration plan, module by module, as instructed.
 
 **Project Health Check:**
 -   **Broken:** The preview/production deployment is non-functional due to the missing .
--   **Mocked:** N/A
+-   **Mocked:** Email sending for verification codes. The backend currently returns a  in the API response in non-production environments to allow for testing without a mail server.
 
 **3rd Party Integrations**
 -   FastAPI
 -   React
 -   PostgreSQL (, , ) - **Configured for local dev only**
+-   MongoDB () - **BEING ACTIVELY REMOVED**
 -   Stripe (Payments) - **AWAITING CONFIG**
 -   SendGrid (Emails) - **AWAITING CONFIG**
 
@@ -156,7 +162,7 @@ The Dealer Portal development is in progress. Phase 1 (FAZ-DL1), the dealer dash
 -   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
--   **Known regressions:** The preview deployment is non-functional. No known regressions in the local development environment.
+-   **Known regressions:** The preview deployment is non-functional.
 
 **Credentials to test flow:**
 -   **Admin:**  / 
@@ -164,4 +170,4 @@ The Dealer Portal development is in progress. Phase 1 (FAZ-DL1), the dealer dash
 -   **User:**  / 
 
 **What agent forgot to execute**
-The agent has been following the user's detailed plans meticulously and has not forgotten any tasks. The major pending items (, Stripe keys) are blocked by the user/Ops, and the agent has correctly worked around the database issue by using a local instance as approved.</analysis>
+The agent has been following the user's explicit and detailed instructions very closely. The user's major pivot to prioritize the database migration has correctly superseded all previous feature-related tasks. The agent has not forgotten any tasks; rather, the project's priorities were completely reset by the user.</analysis>
