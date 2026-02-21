@@ -32,10 +32,7 @@ export default function AdminPaymentsPage() {
   const [error, setError] = useState('');
   const [dbReady, setDbReady] = useState(false);
 
-  const [dealerId, setDealerId] = useState('');
   const [status, setStatus] = useState('all');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
