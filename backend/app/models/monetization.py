@@ -30,21 +30,32 @@ class SubscriptionPlan(Base):
 
 class UserSubscription(Base):
     __tablename__ = "user_subscriptions"
-    
+
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    
+
     user_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     plan_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("subscription_plans.id"), nullable=False)
-    
-    status: Mapped[str] = mapped_column(String(20), default="active", index=True) # active, expired, cancelled
-    
-    start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    end_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
-    
-    auto_renew: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    status: Mapped[str] = mapped_column(String(20), default="trial", index=True)
+
+    current_period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    current_period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+
+    provider: Mapped[str] = mapped_column(String(20), nullable=False, server_default="stripe")
+    provider_customer_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    provider_subscription_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    canceled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    meta_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     plan: Mapped["SubscriptionPlan"] = relationship("SubscriptionPlan")
+
+    __table_args__ = (
+        Index('ix_user_subscriptions_user', 'user_id', unique=True),
+        Index('ix_user_subscriptions_status', 'status'),
+    )
 
 class QuotaUsage(Base):
     __tablename__ = "quota_usage"
