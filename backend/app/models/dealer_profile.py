@@ -9,7 +9,8 @@ class DealerProfile(Base):
     
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False)
-    
+    slug: Mapped[Optional[str]] = mapped_column(String(120), unique=True, nullable=True, index=True)
+
     # Identity
     company_name: Mapped[str] = mapped_column(String(255), nullable=False)
     vat_number: Mapped[str] = mapped_column(String(50), nullable=True) # Optional initially
