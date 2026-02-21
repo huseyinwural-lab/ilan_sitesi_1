@@ -2689,7 +2689,7 @@ TOKEN_VERSION = os.environ.get("TOKEN_VERSION", "v2")
 
 DB_POOL_SIZE_RAW = os.environ.get("DB_POOL_SIZE")
 DB_MAX_OVERFLOW_RAW = os.environ.get("DB_MAX_OVERFLOW")
-DB_SSL_MODE = (os.environ.get("DB_SSL_MODE") or ("require" if APP_ENV == "prod" else "disable")).lower()
+DB_SSL_MODE = (os.environ.get("DB_SSL_MODE") or ("require" if APP_ENV in {"prod", "preview"} else "disable")).lower()
 
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
