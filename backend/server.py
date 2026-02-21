@@ -14049,7 +14049,7 @@ def _build_dashboard_pdf(summary: Dict[str, Any], trend_window: int) -> bytes:
     health_rows.append(["API gecikme", f"{health.get('api_latency_ms')} ms"])
     health_rows.append(["DB gecikme", f"{health.get('db_latency_ms')} ms"])
     health_rows.append(["Son deploy", str(health.get("deployed_at"))])
-    health_rows.append(["Son restart", str(health.get("recurrent_period_start"))])
+    health_rows.append(["Son restart", str(health.get("restart_at"))])
     health_rows.append(["Uptime", str(health.get("uptime_human"))])
     add_table("Sistem Sağlığı", health_rows)
 
