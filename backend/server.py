@@ -2371,7 +2371,6 @@ async def login(
 
     email = (credentials.email or "").lower().strip()
     ip_address = _get_client_ip(request)
-    user_agent = request.headers.get("user-agent")
 
     # Rate-limit key: IP + email (email may be empty but EmailStr should be present)
     rl_key = f"{ip_address}:{email}"
