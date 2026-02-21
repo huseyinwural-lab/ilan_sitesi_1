@@ -602,6 +602,31 @@ def _user_to_response(doc: dict) -> UserResponse:
     )
 
 
+async def _ensure_country_enabled(session: AsyncSession, country_code: Optional[str]) -> str:
+    normalized = (country_code or "DE").upper()
+    result = await session.execute(
+        select(Country).where(Country.code == normalized, Country.is_enabled == True)
+    )
+    country = result.scalar_one_or_none()
+    if not country:
+        raise HTTPException(status_code=400, detail="Geçersiz ülke")
+    return normalized
+
+
+async def _generate_unique_dealer_slug(session: AsyncSession, company_name: str) -> str:
+    base_slug = slugify(company_name) or "dealer"
+    base_slug = base_slug[:90]
+    candidate = base_slug
+    suffix = 2
+
+    while True:
+        result = await session.execute(select(DealerProfile).where(DealerProfile.slug == candidate))
+        if not result.scalar_one_or_none():
+            return candidate
+        candidate = f"{base_slug}-{suffix}"
+        suffix += 1
+
+
 async def build_audit_entry(
     event_type: str,
     actor: dict,
