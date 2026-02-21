@@ -2468,6 +2468,11 @@ except ValueError:
     DB_POOL_SIZE = 5
     DB_MAX_OVERFLOW = 5
 
+try:
+    SMTP_PORT = int(SMTP_PORT_RAW) if SMTP_PORT_RAW else None
+except ValueError as exc:
+    raise RuntimeError("SMTP_PORT must be an integer") from exc
+
 ssl_context = None
 connect_args: Dict[str, Any] = {}
 if DB_SSL_MODE == "require":
