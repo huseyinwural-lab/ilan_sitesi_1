@@ -9482,7 +9482,7 @@ async def admin_invoice_detail(
     invoice = await session.get(AdminInvoice, invoice_uuid)
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    if invoice.country_code != "GLOBAL":
+    if invoice.country_code and invoice.country_code != "GLOBAL":
         _assert_country_scope(invoice.country_code, current_user)
 
     user = await session.get(SqlUser, invoice.user_id)
@@ -9513,7 +9513,7 @@ async def admin_invoice_mark_paid(
     invoice = await session.get(AdminInvoice, invoice_uuid)
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    if invoice.country_code != "GLOBAL":
+    if invoice.country_code and invoice.country_code != "GLOBAL":
         _assert_country_scope(invoice.country_code, current_user)
 
     if invoice.status not in {"issued"}:
@@ -9554,7 +9554,7 @@ async def admin_invoice_cancel(
     invoice = await session.get(AdminInvoice, invoice_uuid)
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    if invoice.country_code != "GLOBAL":
+    if invoice.country_code and invoice.country_code != "GLOBAL":
         _assert_country_scope(invoice.country_code, current_user)
 
     if invoice.status != "issued":
@@ -9589,7 +9589,7 @@ async def admin_invoice_refund(
     invoice = await session.get(AdminInvoice, invoice_uuid)
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    if invoice.country_code != "GLOBAL":
+    if invoice.country_code and invoice.country_code != "GLOBAL":
         _assert_country_scope(invoice.country_code, current_user)
 
     if invoice.status != "paid":
