@@ -10053,33 +10053,31 @@ def _apply_payment_status(invoice: AdminInvoice, payment: Payment, transaction: 
         payment.provider_payment_id = provider_payment_id
         transaction.provider_payment_id = provider_payment_id
 
-    if status_value == "paid":
-        invoice.payment_status = "paid"
+    if status_value == "succeeded":
+        invoice.payment_status = "succeeded"
         invoice.status = "paid"
         if not invoice.paid_at:
             invoice.paid_at = now
         payment.status = "succeeded"
         payment.paid_at = now
         transaction.status = "succeeded"
-        transaction.payment_status = "paid"
+        transaction.payment_status = "succeeded"
     elif status_value == "refunded":
         invoice.payment_status = "refunded"
         invoice.status = "refunded"
         payment.status = "refunded"
         transaction.status = "refunded"
         transaction.payment_status = "refunded"
-    elif status_value == "partially_refunded":
-        invoice.payment_status = "partially_refunded"
-        payment.status = "refunded"
-        transaction.status = "refunded"
-        transaction.payment_status = "partially_refunded"
-    elif status_value == "failed":
-        invoice.payment_status = "unpaid"
-        payment.status = "failed"
-        transaction.status = "failed"
-        transaction.payment_status = "unpaid"
-    else:
+    elif status_value in {"failed", "canceled"}:
+        invoice.payment_status = status_value
+        payment.status = status_value
         transaction.status = status_value
+        transaction.payment_status = status_value
+    else:
+        invoice.payment_status = status_value
+        payment.status = status_value
+        transaction.status = status_value
+        transaction.payment_status = status_value
 
     invoice.updated_at = now
     payment.updated_at = now
