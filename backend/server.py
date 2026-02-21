@@ -86,7 +86,7 @@ from app.models.dealer_listing import DealerListing
 
 
 from fastapi import UploadFile, File
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 
 from app.vehicle_listings_store import (
     create_vehicle_listing,
