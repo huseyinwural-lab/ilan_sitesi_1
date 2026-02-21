@@ -9427,13 +9427,15 @@ async def dealer_create_listing(
     except ValueError:
         raise HTTPException(status_code=400, detail="dealer invalid")
 
-    count = (
+    active_count = (
         await session.execute(
-            select(func.count()).select_from(DealerListing).where(DealerListing.dealer_id == dealer_uuid)
+            select(func.count()).select_from(DealerListing).where(
+                DealerListing.dealer_id == dealer_uuid,
+                DealerListing.status == "active",
+                DealerListing.deleted_at.is_(None),
+            )
         )
     ).scalar_one()
-    if int(count or 0) >= DEALER_LISTING_QUOTA_LIMIT:
-        raise HTTPException(status_code=402, detail="Listing quota exceeded")
 
     title = payload.title.strip()
     if not title:
