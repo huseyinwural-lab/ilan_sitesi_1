@@ -11235,7 +11235,7 @@ async def admin_import_categories_commit(
     deleted = 0
     schema_versions = []
 
-    async with session.begin():
+    try:
         created_map: Dict[str, Category] = {}
         ordered_items = sorted(items, key=lambda x: (len((x.get("path") or "").split(".")), x.get("sort_order", 0)))
         for item in ordered_items:
