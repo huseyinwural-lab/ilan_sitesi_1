@@ -145,7 +145,8 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
   const checkDbReady = async () => {
     try {
       const res = await axios.get(`${API}/health/db`, { headers: authHeader });
-      setDbReady(res.status === 200 && res.data?.status === 'healthy');
+      const isReady = res.data?.db_status === 'ok' || res.data?.status === 'healthy';
+      setDbReady(isReady);
     } catch (err) {
       setDbReady(false);
     }
