@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent.parent
 load_dotenv(ROOT_DIR / '.env')
+load_dotenv(ROOT_DIR / '.env.local', override=True)
 
 class Settings:
     APP_ENV: str = os.environ.get('APP_ENV', 'dev').lower()
