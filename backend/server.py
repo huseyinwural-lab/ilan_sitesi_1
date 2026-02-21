@@ -7306,11 +7306,15 @@ def _normalize_slug_payload(slug_payload: Any) -> tuple[str, dict]:
     if isinstance(slug_payload, dict):
         slug_tr = slug_payload.get("tr") or slug_payload.get("en") or slug_payload.get("de") or slug_payload.get("fr")
         slug_tr = (slug_tr or "").strip().lower()
+        if slug_tr and not SLUG_PATTERN.match(slug_tr):
+            raise HTTPException(status_code=400, detail=f"Invalid slug: {slug_tr}")
         slug_map = dict(slug_payload)
         if slug_tr and "tr" not in slug_map:
             slug_map["tr"] = slug_tr
         return slug_tr, slug_map
     slug_tr = str(slug_payload or "").strip().lower()
+    if slug_tr and not SLUG_PATTERN.match(slug_tr):
+        raise HTTPException(status_code=400, detail=f"Invalid slug: {slug_tr}")
     return slug_tr, {"tr": slug_tr, "en": slug_tr, "de": slug_tr}
 
 
