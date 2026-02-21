@@ -10684,16 +10684,14 @@ async def admin_export_category_csv(
     ]
 
     version = await _get_schema_version_for_export_sql(session, category.id)
-    rows = _build_schema_export_rows(
-        schema,
-        _serialize_category_sql(category, include_schema=False, include_translations=False),
-        version,
-        {"parent": parent_label, "children": children_labels},
-    )
+    rows = _schema_to_csv_rows(schema)
+    rows.append(["hierarchy", "parent", parent_label or "", "", "", "", "", "", "", "", "", "", ""])
+    rows.append(["hierarchy", "children", ",".join(children_labels), "", "", "", "", "", "", "", "", "", ""])
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerows(rows)
+    for row in rows:
+        writer.writerow(row)
     output.seek(0)
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
