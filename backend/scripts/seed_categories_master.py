@@ -65,8 +65,8 @@ def build_categories() -> List[Dict]:
         },
         {
             "key": "motorcycles",
-            "slug": {"tr": "motosiklet", "en": "motorcycles", "de": "motorre4der"},
-            "name": {"tr": "Motosiklet", "en": "Motorcycles", "de": "Motorre4der"},
+            "slug": {"tr": "motosiklet", "en": "motorcycles", "de": "motorraeder"},
+            "name": {"tr": "Motosiklet", "en": "Motorcycles", "de": "Motorraeder"},
             "children": [
                 {
                     "key": "scooter",
