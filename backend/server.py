@@ -2794,9 +2794,10 @@ async def register_consumer(
     return RegisterResponse(user=_user_to_response(user_payload), debug_code=debug_code)
 
 
-@api_router.post("/auth/register/dealer", response_model=UserResponse, status_code=201)
+@api_router.post("/auth/register/dealer", response_model=RegisterResponse, status_code=201)
 async def register_dealer(
     payload: DealerRegisterPayload,
+    request: Request,
     session: AsyncSession = Depends(get_sql_session),
 ):
     email = (payload.email or "").lower().strip()
@@ -2826,6 +2827,7 @@ async def register_dealer(
         session.add(user)
         await session.flush()
         slug = await _generate_unique_dealer_slug(session, payload.company_name)
+        verification_code = _issue_email_verification_code(user)
         dealer_profile = DealerProfile(
             user_id=user.id,
             slug=slug,
@@ -2843,6 +2845,15 @@ async def register_dealer(
         await session.rollback()
         raise HTTPException(status_code=409, detail="Email already registered")
 
+    await _log_email_verify_event(
+        session=session,
+        action="auth.email_verify.requested",
+        user=user,
+        request=request,
+        metadata={"channel": "email"},
+    )
+    await session.commit()
+
     user_payload = {
         "id": str(user.id),
         "email": user.email,
@@ -2858,7 +2869,8 @@ async def register_dealer(
         "portal_scope": _resolve_portal_scope(user.role),
     }
 
-    return _user_to_response(user_payload)
+    debug_code = verification_code if _should_include_debug_code() else None
+    return RegisterResponse(user=_user_to_response(user_payload), debug_code=debug_code)
 
 
 class UpdateUserPayload(BaseModel):
