@@ -399,6 +399,7 @@ export default function AdminPlans() {
             <tr>
               <th className="text-left px-3 py-2" data-testid="plans-header-name">Name</th>
               <th className="text-left px-3 py-2" data-testid="plans-header-scope">Scope/Country</th>
+              <th className="text-left px-3 py-2" data-testid="plans-header-period">Period</th>
               <th className="text-left px-3 py-2" data-testid="plans-header-price">Price</th>
               <th className="text-left px-3 py-2" data-testid="plans-header-listing">Listing</th>
               <th className="text-left px-3 py-2" data-testid="plans-header-showcase">Showcase</th>
