@@ -2,27 +2,13 @@ import React from 'react';
 import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import DealerInvoices from '@/pages/dealer/DealerInvoices';
 import DealerListings from '@/pages/dealer/DealerListings';
+import DealerDashboard from '@/pages/dealer/DealerDashboard';
 import PaymentSuccess from '@/pages/dealer/PaymentSuccess';
 import PaymentCancel from '@/pages/dealer/PaymentCancel';
 import DealerLayout from '@/layouts/DealerLayout';
 
 function DealerHome() {
-  return (
-    <div className="space-y-3" data-testid="dealer-home">
-      <h1 className="text-2xl font-bold tracking-tight" data-testid="dealer-home-title">Dealer Panel</h1>
-      <p className="text-sm text-muted-foreground" data-testid="dealer-home-subtitle">
-        Yakında: dashboard, lead yönetimi, kota, faturalama.
-      </p>
-      <div className="space-y-2" data-testid="dealer-home-links">
-        <Link className="text-sm text-primary" to="/dealer/listings" data-testid="dealer-home-listings-link">
-          İlanlarımı Yönet
-        </Link>
-        <Link className="text-sm text-primary" to="/dealer/invoices" data-testid="dealer-home-invoices-link">
-          Faturalarımı Gör
-        </Link>
-      </div>
-    </div>
-  );
+  return <DealerDashboard />;
 }
 
 export default function DealerPortalApp() {
