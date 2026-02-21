@@ -17,9 +17,10 @@ Preview/Prod ortamlarında **DATABASE_URL** sağlanmadan deploy **bloklanır**. 
 - **ECB_CACHE_TTL_SECONDS**
 
 ## Deploy Gate Kuralı
-- `APP_ENV=prod` iken **DATABASE_URL yoksa deploy PASSED OLMAMALI**.
+- `APP_ENV=preview` veya `APP_ENV=prod` iken **DATABASE_URL yoksa deploy PASSED OLMAMALI**.
 - `DB_SSL_MODE=require` zorunlu.
-- `DATABASE_URL` localhost ya da placeholder olmamalı.
+- `DATABASE_URL` içinde `localhost` veya `127.0.0.1` **yasak**.
+- Preview/Prod için **secret manager üzerinden env injection** kullanılmalı (.env commit edilmez).
 
 ## Kontrol
 - Script: `backend/scripts/deploy_gate_check.py`
