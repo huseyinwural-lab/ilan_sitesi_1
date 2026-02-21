@@ -10779,6 +10779,7 @@ async def admin_create_plan(
         Plan.country_scope == scope_value,
         Plan.country_code == country_value,
         Plan.slug == slug_value,
+        Plan.period == period_value,
     )
     existing = (await session.execute(exists_query)).scalar_one_or_none()
     if existing:
