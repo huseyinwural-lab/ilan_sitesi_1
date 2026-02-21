@@ -28,7 +28,13 @@ const urlBase64ToUint8Array = (base64String) => {
 };
 
 export default function AccountProfile() {
-  const [profile, setProfile] = useState({ full_name: '', phone: '', locale: 'tr' });
+  const [profile, setProfile] = useState({
+    full_name: '',
+    phone: '',
+    locale: 'tr',
+    country_code: 'DE',
+    display_name_mode: 'full_name',
+  });
   const [prefs, setPrefs] = useState({ push_enabled: true, email_enabled: true });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
