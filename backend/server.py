@@ -418,6 +418,25 @@ def _build_thread_summary_sql(
         "unread_count": unread_count,
     }
 
+
+def _build_notification_payload(notification: Notification) -> dict:
+    return {
+        "id": str(notification.id),
+        "user_id": str(notification.user_id),
+        "title": notification.title,
+        "message": notification.message,
+        "source_type": notification.source_type,
+        "source_id": notification.source_id,
+        "action_url": notification.action_url,
+        "payload_json": notification.payload_json or {},
+        "dedupe_key": notification.dedupe_key,
+        "read_at": notification.read_at.isoformat() if notification.read_at else None,
+        "delivered_at": notification.delivered_at.isoformat() if notification.delivered_at else None,
+        "created_at": notification.created_at.isoformat() if notification.created_at else None,
+        "is_read": bool(notification.read_at),
+    }
+
+
 async def _get_message_thread_or_404(session: AsyncSession, thread_id: str, current_user_id: str) -> Conversation:
     thread_uuid = uuid.UUID(thread_id)
     thread = await session.get(Conversation, thread_uuid)
