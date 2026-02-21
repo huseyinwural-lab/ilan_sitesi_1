@@ -1553,6 +1553,24 @@ def _admin_invoice_to_dict(invoice: AdminInvoice, dealer: Optional[SqlUser] = No
     }
 
 
+def _payment_to_dict(payment: Payment, invoice: Optional[AdminInvoice] = None, user: Optional[SqlUser] = None) -> Dict[str, Any]:
+    return {
+        "id": str(payment.id),
+        "provider": payment.provider,
+        "provider_ref": payment.provider_ref,
+        "invoice_id": str(payment.invoice_id),
+        "invoice_no": invoice.invoice_no if invoice else None,
+        "user_id": str(payment.user_id),
+        "user_email": user.email if user else None,
+        "status": payment.status,
+        "amount_total": float(payment.amount_total) if payment.amount_total is not None else None,
+        "currency": payment.currency,
+        "meta_json": payment.meta_json or {},
+        "created_at": payment.created_at.isoformat() if payment.created_at else None,
+        "updated_at": payment.updated_at.isoformat() if payment.updated_at else None,
+    }
+
+
 async def _invoice_totals_by_currency(
     session: AsyncSession, conditions: List[Any]
 ) -> Dict[str, float]:
