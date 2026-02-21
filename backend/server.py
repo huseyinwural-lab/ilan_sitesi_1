@@ -12809,7 +12809,7 @@ async def upload_vehicle_media(
     listing_id: str,
     request: Request,
     files: list[UploadFile] = File(...),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     listing = await get_vehicle_listing(db, listing_id)
@@ -12863,7 +12863,7 @@ async def upload_vehicle_media(
 
 
 @api_router.get("/v1/listings/vehicle/{listing_id}/media/{media_id}/preview")
-async def preview_vehicle_media(listing_id: str, media_id: str, request: Request, current_user=Depends(get_current_user)):
+async def preview_vehicle_media(listing_id: str, media_id: str, request: Request, current_user=Depends(require_portal_scope("account"))):
     db = request.app.state.db
     listing = await get_vehicle_listing(db, listing_id)
     if not listing:
@@ -12939,7 +12939,7 @@ async def submit_vehicle_listing(
     listing_id: str,
     request: Request,
     payload: dict = Body(default={}),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_portal_scope("account")),
 ):
     db = request.app.state.db
     listing = await get_vehicle_listing(db, listing_id)
