@@ -1554,6 +1554,19 @@ def _admin_invoice_to_dict(invoice: AdminInvoice, dealer: Optional[SqlUser] = No
     }
 
 
+async def _invoice_totals_by_currency(
+    session: AsyncSession, conditions: List[Any]
+) -> Dict[str, float]:
+    query = select(AdminInvoice.currency, func.sum(AdminInvoice.amount_total)).group_by(AdminInvoice.currency)
+    if conditions:
+        query = query.where(*conditions)
+    rows = (await session.execute(query)).all()
+    totals: Dict[str, float] = {}
+    for currency, amount in rows:
+        totals[currency or "UNKNOWN"] = float(amount or 0)
+    return totals
+
+
 def _check_application_rate_limit(request: Request, user_id: str) -> None:
     key = user_id or _get_client_ip(request) or "unknown"
     now = time.time()
