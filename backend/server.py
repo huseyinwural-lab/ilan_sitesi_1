@@ -4348,11 +4348,11 @@ async def list_notifications(
     if unread_only:
         query = query.where(Notification.read_at.is_(None))
 
-    total = (
-        await session.execute(
-            select(func.count()).select_from(Notification).where(Notification.user_id == user_id)
-        )
-    ).scalar_one()
+    count_query = select(func.count()).select_from(Notification).where(Notification.user_id == user_id)
+    if unread_only:
+        count_query = count_query.where(Notification.read_at.is_(None))
+
+    total = (await session.execute(count_query)).scalar_one()
 
     notifications = (
         await session.execute(
