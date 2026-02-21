@@ -14,7 +14,7 @@ from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 import uuid
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 import time
 
 from sendgrid import SendGridAPIClient
