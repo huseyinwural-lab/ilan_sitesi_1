@@ -4981,7 +4981,7 @@ async def create_campaign(
 @api_router.get("/admin/campaigns")
 async def list_campaigns(
     request: Request,
-    type: str,
+    type: Optional[str] = None,
     status: Optional[str] = None,
     country: Optional[str] = None,
     q: Optional[str] = None,
@@ -4993,36 +4993,30 @@ async def list_campaigns(
 ):
     await _ensure_campaigns_db_ready(session)
 
-    type_value = type.lower().strip()
-    if type_value not in CAMPAIGN_TYPES:
-        raise HTTPException(status_code=400, detail="Invalid type")
-
-    query = select(Campaign).where(Campaign.type == type_value)
+    query = select(Campaign)
 
     if status:
         status_value = status.lower().strip()
-        if status_value not in CAMPAIGN_STATUSES:
+        if status_value not in CAMPAIGN_STATUS_SET:
             raise HTTPException(status_code=400, detail="Invalid status")
         query = query.where(Campaign.status == status_value)
 
     if country:
-        if country.lower() == "global":
-            query = query.where(Campaign.country_scope == "global")
-        else:
-            query = query.where(
-                and_(Campaign.country_scope == "country", Campaign.country_code == country.upper())
-            )
+        if country.lower() != "global":
+            query = query.where(Campaign.country_code == country.upper())
 
     if q:
         search_value = f"%{q.strip()}%"
-        query = query.where(or_(Campaign.name.ilike(search_value), Campaign.description.ilike(search_value)))
+        query = query.where(or_(Campaign.name.ilike(search_value), Campaign.notes.ilike(search_value)))
 
     if date_range:
         parts = [part.strip() for part in date_range.split(",") if part.strip()]
         if len(parts) == 2:
             start_dt = _parse_datetime_field(parts[0], "date_range_start")
             end_dt = _parse_datetime_field(parts[1], "date_range_end")
-            query = query.where(Campaign.start_at >= start_dt).where(Campaign.end_at <= end_dt)
+            query = query.where(Campaign.start_at >= start_dt).where(
+                or_(Campaign.end_at.is_(None), Campaign.end_at <= end_dt)
+            )
 
     safe_page = max(page, 1)
     safe_limit = min(max(limit, 1), 200)
@@ -5030,7 +5024,7 @@ async def list_campaigns(
 
     total_count = await session.scalar(select(func.count()).select_from(query.subquery())) or 0
     result = await session.execute(
-        query.order_by(desc(Campaign.priority), desc(Campaign.updated_at)).offset(offset).limit(safe_limit)
+        query.order_by(desc(Campaign.start_at), desc(Campaign.updated_at)).offset(offset).limit(safe_limit)
     )
     rows = result.scalars().all()
 
