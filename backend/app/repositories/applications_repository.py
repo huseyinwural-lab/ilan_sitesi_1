@@ -11,13 +11,6 @@ from app.models.application import Application
 from app.models.user import User as SqlUser
 
 
-def resolve_applications_provider(mongo_enabled: bool) -> str:
-    provider = os.environ.get("APPLICATIONS_PROVIDER")
-    if provider:
-        return provider.lower()
-    return "mongo" if mongo_enabled else "sql"
-
-
 class ApplicationsRepository:
     async def create_application(self, payload: Dict[str, Any], current_user: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError
