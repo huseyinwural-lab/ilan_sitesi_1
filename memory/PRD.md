@@ -118,6 +118,7 @@
 - **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
+- 2026-02-23: Email verification prod switch hazırlandı (p29 token table, TTL=15dk, debug_code kaldırıldı) + frontend debug alanları temizlendi.
 - 2026-02-23: Health endpoint reason/db_status eklendi; Stripe checkout stub + webhook DB-blocked response hazırlandı; UNBLOCK checklist evidence path eklendi; EMAIL_VERIFICATION_SWITCH + Ad Wizard mapping checklist dokümanları eklendi.
 - 2026-02-23: FINAL-01 order lock + Mongo cutoff (config + auth fallback removal), BLOCKED/UNBLOCK runbook’ları eklendi.
 - 2026-02-23: ADR-MIG-01 enforced (migrations README güncellendi), DB Migration Evidence Pack eklendi; local Postgres servisi olmadığı için Alembic upgrade/current kanıtları **BLOCKED**.
