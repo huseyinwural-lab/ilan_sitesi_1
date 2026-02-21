@@ -10408,6 +10408,14 @@ async def stripe_webhook(
     session_id = webhook_response.session_id
     payment_status = webhook_response.payment_status
     metadata = webhook_response.metadata or {}
+    provider_ref = (
+        getattr(webhook_response, "payment_intent_id", None)
+        or getattr(webhook_response, "payment_id", None)
+        or metadata.get("payment_intent_id")
+        or metadata.get("payment_id")
+        or session_id
+    )
+    provider_payment_id = getattr(webhook_response, "payment_id", None) or provider_ref
 
     now = datetime.now(timezone.utc)
 
