@@ -624,23 +624,17 @@ export default function AdminUsers() {
                   data-testid="admin-users-form-email"
                 />
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Rol</label>
-                <select
-                  className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                  value={editOpen ? editForm.role : createForm.role}
-                  onChange={(e) =>
-                    editOpen
-                      ? updateRoleForm(setEditForm, editForm, e.target.value)
-                      : updateRoleForm(setCreateForm, createForm, e.target.value)
-                  }
-                  data-testid="admin-users-form-role"
-                >
-                  {ROLE_OPTIONS.map((role) => (
-                    <option key={role.value} value={role.value}>{role.label}</option>
-                  ))}
-                </select>
-              </div>
+              <FilterDropdown
+                label="Rol"
+                value={editOpen ? editForm.role : createForm.role}
+                onChange={(value) =>
+                  editOpen
+                    ? updateRoleForm(setEditForm, editForm, value)
+                    : updateRoleForm(setCreateForm, createForm, value)
+                }
+                options={ROLE_OPTIONS}
+                testId="admin-users-form-role"
+              />
               <div>
                 <label className="text-xs text-muted-foreground">Country Scope</label>
                 <div className="border rounded-md p-3 space-y-2" data-testid="admin-users-form-scope">
