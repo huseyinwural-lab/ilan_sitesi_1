@@ -528,6 +528,18 @@ export default function AdminPlans() {
                 </select>
               </div>
               <div className="space-y-1">
+                <label className="text-xs text-muted-foreground" data-testid="plans-form-period-label">Period</label>
+                <select
+                  className="w-full border rounded p-2"
+                  value={form.period}
+                  onChange={(e) => setForm((prev) => ({ ...prev, period: e.target.value }))}
+                  data-testid="plans-form-period"
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+              <div className="space-y-1">
                 <label className="text-xs text-muted-foreground" data-testid="plans-form-currency-label">Currency</label>
                 <input
                   className="w-full border rounded p-2 bg-muted"
