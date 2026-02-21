@@ -118,6 +118,7 @@
 - **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
+- 2026-02-21: Dry-run PDF raporu (özet + field-level diff + kritik uyarılar + schema snapshot) eklendi.
 - 2026-02-21: Category import/export V1.1 (field-level diff + dry-run hash gating + critical warning banner + pagination).
 - 2026-02-21: Categories import/export modülü eklendi (JSON+CSV, dry-run + commit + batch publish).
 - 2026-02-21: Categories SQL migration tamamlandı (public + admin CRUD + schema versions + seed script).
