@@ -111,6 +111,7 @@ load_dotenv(ROOT_DIR / ".env.local", override=True)
 
 SUPPORTED_COUNTRIES = {"DE", "CH", "FR", "AT"}
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+CATEGORY_IMPORT_MAX_BYTES = 10 * 1024 * 1024
 ATTRIBUTE_KEY_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 MONGO_GATED_PATH_PREFIXES = (
