@@ -47,15 +47,16 @@ async def resolve_admin_country_context(
 
     country = _normalize_country(raw_country)
 
-    result = await session.execute(
-        select(Country).where(Country.code == country)
-    )
-    exists = result.scalar_one_or_none()
-    if not exists or not exists.is_enabled:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid country parameter",
+    if session is not None:
+        result = await session.execute(
+            select(Country).where(Country.code == country)
         )
+        exists = result.scalar_one_or_none()
+        if not exists or not exists.is_enabled:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid country parameter",
+            )
 
     # RBAC scope
     scope = current_user.get("country_scope") or []
