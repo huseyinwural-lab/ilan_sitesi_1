@@ -519,11 +519,6 @@ export default function Register({ portalContext = 'account' }) {
                   </div>
                 </div>
 
-                {debugCode && (
-                  <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600" data-testid="register-verify-debug-code">
-                    Debug kodu: <strong>{debugCode}</strong>
-                  </div>
-                )}
 
                 {attemptsLeft !== null && (
                   <div className="text-xs text-slate-500" data-testid="register-verify-attempts">
