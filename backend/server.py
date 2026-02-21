@@ -82,6 +82,7 @@ from app.models.campaign import Campaign
 from app.models.plan import Plan
 from app.models.admin_invoice import AdminInvoice
 from app.models.payment import Payment, PaymentTransaction, PaymentEventLog
+from app.models.dealer_listing import DealerListing
 
 
 from fastapi import UploadFile, File
