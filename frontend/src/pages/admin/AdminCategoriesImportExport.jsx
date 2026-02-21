@@ -99,16 +99,23 @@ export default function AdminCategoriesImportExport() {
 
   const runCommit = async () => {
     setError('');
+    if (!dryRunResult?.dry_run_hash) {
+      setError('Commit için önce dry-run çalıştırılmalı.');
+      return;
+    }
     if (!validateFile(file)) return;
     setLoading(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch(`${API}/admin/categories/import-export/import/commit?format=${format}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      const res = await fetch(
+        `${API}/admin/categories/import-export/import/commit?format=${format}&dry_run_hash=${dryRunResult.dry_run_hash}`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
       if (!res.ok) {
         const detail = await res.json();
         throw new Error(detail?.detail || 'Commit başarısız');
