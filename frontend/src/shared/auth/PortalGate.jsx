@@ -19,6 +19,11 @@ export default function PortalGate({ portal, children, loginPath }) {
     return <Navigate to={loginPath} replace />;
   }
 
+  if (user.is_verified === false && portal !== PORTALS.BACKOFFICE) {
+    const verifyPath = portal === PORTALS.DEALER ? '/dealer/verify-email' : '/verify-email';
+    return <Navigate to={verifyPath} replace state={{ email: user.email }} />;
+  }
+
   const portalScope = user.portal_scope;
   const eligiblePortal = portalScope ? portalFromScope(portalScope) : ROLE_TO_PORTAL[user.role];
 
