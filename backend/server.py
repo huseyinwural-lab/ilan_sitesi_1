@@ -217,7 +217,6 @@ class UserResponse(BaseModel):
 class RegisterVerificationResponse(BaseModel):
     success: bool = True
     requires_verification: bool = True
-    debug_code: Optional[str] = None
 
 
 class TokenResponse(BaseModel):
