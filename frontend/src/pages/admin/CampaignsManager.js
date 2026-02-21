@@ -898,17 +898,19 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
             ) : (
               <div className="space-y-3" data-testid={`${testIdPrefix}-detail-body`}>
                 <div><strong>Ad:</strong> {detailData.name}</div>
-                <div><strong>Tür:</strong> {detailData.type}</div>
+                <div><strong>Tür:</strong> {campaignType === 'corporate' ? 'Kurumsal' : 'Bireysel'}</div>
                 <div><strong>Status:</strong> {detailData.status}</div>
-                <div><strong>Target:</strong> {detailData.target}</div>
-                <div><strong>Scope:</strong> {detailData.country_scope} {detailData.country_code || ''}</div>
+                <div><strong>Target:</strong> {detailRules.target || '-'}</div>
+                <div><strong>Country:</strong> {detailData.country_code || '-'}</div>
                 <div><strong>Tarih:</strong> {formatDate(detailData.start_at)} - {formatDate(detailData.end_at)}</div>
+                <div><strong>Budget:</strong> {detailData.budget_amount ? `${detailData.budget_amount} ${detailData.budget_currency || ''}` : '-'}</div>
+                <div><strong>Not:</strong> {detailData.notes || '-'}</div>
                 <div><strong>Discount:</strong> {formatDiscount(detailData)}</div>
-                <div><strong>Segment:</strong> {detailData.eligible_user_segment}</div>
+                <div><strong>Segment:</strong> {detailRules.eligible_user_segment || '-'}</div>
                 {campaignType === 'corporate' ? (
-                  <div><strong>Plan:</strong> {detailData.eligible_dealer_plan}</div>
+                  <div><strong>Plan:</strong> {detailRules.eligible_dealer_plan || '-'}</div>
                 ) : (
-                  <div><strong>Selected Users:</strong> {(detailData.eligible_users || []).length}</div>
+                  <div><strong>Selected Users:</strong> {(detailRules.eligible_users || []).length}</div>
                 )}
                 <div>
                   <strong>Audit:</strong>
