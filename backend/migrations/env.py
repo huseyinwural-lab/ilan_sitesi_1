@@ -50,6 +50,7 @@ from app.models.growth import GrowthEvent
 from app.models.application import Application
 from app.models.campaign import Campaign
 from app.models.auth import Role, UserRole, UserCredential, RefreshToken
+from app.models.notification import Notification, UserDevice
 
 def get_url():
     return os.environ.get("DATABASE_URL", "postgresql://admin_user:admin_pass@localhost:5432/admin_panel")
