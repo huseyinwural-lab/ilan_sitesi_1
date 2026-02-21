@@ -10520,18 +10520,26 @@ async def admin_list_category_versions(
     category_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    try:
+        category_uuid = uuid.UUID(category_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid category id") from exc
 
-    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    category = await session.get(Category, category_uuid)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    if category.get("country_code"):
-        _assert_country_scope(category.get("country_code"), current_user)
+    if category.country_code:
+        _assert_country_scope(category.country_code, current_user)
 
-    docs = await db.categories_versions.find({"category_id": category_id}, {"_id": 0}).sort("version", -1).to_list(length=100)
-    return {"items": [_serialize_category_version(doc) for doc in docs]}
+    result = await session.execute(
+        select(CategorySchemaVersion)
+        .where(CategorySchemaVersion.category_id == category_uuid)
+        .order_by(desc(CategorySchemaVersion.version))
+    )
+    versions = result.scalars().all()
+    return {"items": [_serialize_category_version_sql(v) for v in versions]}
 
 
 @api_router.get("/admin/categories/{category_id}/versions/{version_id}")
