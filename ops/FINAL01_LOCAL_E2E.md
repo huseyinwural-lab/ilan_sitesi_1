@@ -108,6 +108,7 @@ SELECT action FROM audit_logs WHERE user_id='127b0006-4db9-4290-af4a-63f795360bc
 - Submit → **PASS** (status: pending_moderation)
 - Publish → **MANUAL SQL** (Mongo moderation path; SQL-only ortamda publish için DB update)
 - `/v1/listings/my` → listing status **published**
+- `/v1/listings/vehicle/{id}` detail → **PASS**
 - Public search v2 → **BLOCKED** (Mongo-backed)
 
 ## 8) Notlar
