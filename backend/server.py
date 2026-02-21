@@ -2934,8 +2934,9 @@ async def verify_email(
     user.email_verification_code_hash = None
     user.email_verification_expires_at = None
     user.email_verification_attempts = 0
-    now_iso = datetime.now(timezone.utc).isoformat()
-    user.last_login = datetime.fromisoformat(now_iso)
+    now_dt = datetime.now(timezone.utc)
+    now_iso = now_dt.isoformat()
+    user.last_login = now_dt
 
     await _log_email_verify_event(
         session=session,
