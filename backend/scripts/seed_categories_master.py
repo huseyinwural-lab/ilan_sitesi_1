@@ -153,7 +153,7 @@ async def seed_categories() -> None:
                 child_category = Category(
                     id=child_id,
                     parent_id=root_id,
-                    path=f"{root["slug"]["tr"]}.{child["slug"]["tr"]}",
+                    path=f"{root['slug']['tr']}.{child['slug']['tr']}",
                     depth=1,
                     sort_order=index * 10 + child_index,
                     module="vehicle",
