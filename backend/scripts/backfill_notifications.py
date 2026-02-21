@@ -15,7 +15,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 
 from app.models.notification import Notification
-from app.models.base import Base
 
 
 def _parse_datetime(value: Any) -> Optional[datetime]:
