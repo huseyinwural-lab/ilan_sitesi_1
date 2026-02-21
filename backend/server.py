@@ -9611,7 +9611,9 @@ async def dealer_bulk_action_listings(
     )
     listings = result.scalars().all()
 
+    restorable_count = 0
     if action == "restore":
+        restorable_count = sum(1 for listing in listings if listing.status == "archived")
         active_count = (
             await session.execute(
                 select(func.count()).select_from(DealerListing).where(
@@ -9621,26 +9623,32 @@ async def dealer_bulk_action_listings(
                 )
             )
         ).scalar_one()
-        restore_count = len(listings)
-        if int(active_count or 0) + restore_count > DEALER_LISTING_QUOTA_LIMIT:
+        if int(active_count or 0) + restorable_count > DEALER_LISTING_QUOTA_LIMIT:
             raise HTTPException(status_code=403, detail="Listing quota exceeded")
 
     updated = 0
     deleted = 0
+    failed = 0
     for listing in listings:
         if action == "archive":
-            listing.status = "archived"
-            updated += 1
+            if listing.status == "archived":
+                failed += 1
+            else:
+                listing.status = "archived"
+                updated += 1
         elif action == "restore":
-            listing.status = "active"
-            updated += 1
+            if listing.status != "archived":
+                failed += 1
+            else:
+                listing.status = "active"
+                updated += 1
         elif action == "delete":
             listing.status = "archived"
             listing.deleted_at = datetime.now(timezone.utc)
             deleted += 1
 
     await session.commit()
-    return {"updated": updated, "deleted": deleted}
+    return {"updated": updated, "deleted": deleted, "failed": failed}
 
 
 @api_router.get("/dealer/dashboard/metrics")
