@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from typing import Optional
 
 from fastapi import HTTPException, status, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from app.models.core import Country
 
 
 @dataclass
