@@ -10101,7 +10101,7 @@ def _resolve_payment_status(value: Optional[str]) -> str:
     return normalized or "requires_payment_method"
 
 
-def _apply_payment_status(
+async def _apply_payment_status(
     invoice: AdminInvoice,
     payment: Payment,
     transaction: PaymentTransaction,
@@ -10109,6 +10109,7 @@ def _apply_payment_status(
     provider_payment_id: Optional[str],
     provider_ref: Optional[str] = None,
     meta: Optional[Dict[str, Any]] = None,
+    session: Optional[AsyncSession] = None,
 ) -> None:
     now = datetime.now(timezone.utc)
     status_value = _resolve_payment_status(payment_status)
@@ -10126,6 +10127,10 @@ def _apply_payment_status(
         payment.status = "succeeded"
         transaction.status = "succeeded"
         transaction.payment_status = "succeeded"
+
+        if session:
+            await _activate_subscription_from_invoice(session, invoice)
+
     elif status_value == "refunded":
         invoice.payment_status = "refunded"
         invoice.status = "refunded"
