@@ -557,6 +557,7 @@ def _user_to_response(doc: dict) -> UserResponse:
         created_at=doc.get("created_at") or datetime.now(timezone.utc).isoformat(),
         last_login=doc.get("last_login"),
         invite_status=doc.get("invite_status"),
+        portal_scope=doc.get("portal_scope") or _resolve_portal_scope(doc.get("role")),
     )
 
 
