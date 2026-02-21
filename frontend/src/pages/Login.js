@@ -185,7 +185,7 @@ export default function Login({ portalContext = 'account' }) {
                   </div>
                 </div>
 
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" data-testid="login-error-actions">
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" data-testid="login-error-actions">
                   <a
                     href="/help/forgot-password"
                     className="underline underline-offset-2 hover:opacity-80"
@@ -193,6 +193,16 @@ export default function Login({ portalContext = 'account' }) {
                   >
                     Şifremi unuttum
                   </a>
+
+                  {error.code === 'EMAIL_NOT_VERIFIED' && (
+                    <a
+                      href={verifyPath}
+                      className="underline underline-offset-2 hover:opacity-80"
+                      data-testid="login-error-verify-link"
+                    >
+                      Doğrulama kodu gönder
+                    </a>
+                  )}
 
                   {error.code === 'RATE_LIMITED' && (
                     <>
