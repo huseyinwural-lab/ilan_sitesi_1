@@ -14219,7 +14219,7 @@ async def admin_dashboard_country_compare(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "finance"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    await resolve_admin_country_context(request, current_user=current_user, db=None)
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
     selected_codes = _parse_country_codes(countries)
     return await _build_country_compare_payload_sql(
         session,
@@ -14245,7 +14245,7 @@ async def admin_dashboard_country_compare_export_csv(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "finance"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    await resolve_admin_country_context(request, current_user=current_user, db=None)
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
     _enforce_export_rate_limit(request, current_user.get("id"))
 
     selected_codes = _parse_country_codes(countries)
