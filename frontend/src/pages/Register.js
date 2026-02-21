@@ -41,8 +41,6 @@ export default function Register({ portalContext = 'account' }) {
   const [resendLoading, setResendLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [attemptsLeft, setAttemptsLeft] = useState(null);
-  const [debugCode, setDebugCode] = useState('');
-
   const inputsRef = useRef([]);
 
   const isDealer = portalContext === 'dealer';
