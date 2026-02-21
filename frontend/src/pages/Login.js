@@ -180,6 +180,7 @@ export default function Login({ portalContext = 'account' }) {
                     {error.code === 'INVALID_CREDENTIALS' && 'E-posta veya şifre hatalı'}
                     {error.code === 'RATE_LIMITED' && 'Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin.'}
                     {error.code === 'PORTAL_MISMATCH' && renderPortalMismatchMessage()}
+                    {error.code === 'EMAIL_NOT_VERIFIED' && 'Hesabınızı doğrulamanız gerekiyor.'}
                     {error.code === 'UNKNOWN' && (t('login_error') || 'Giriş başarısız. Lütfen tekrar deneyin.')}
                   </div>
                 </div>
