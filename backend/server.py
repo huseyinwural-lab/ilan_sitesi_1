@@ -2474,7 +2474,12 @@ async def login(
         audit_entry["user_agent"] = user_agent
         await db.audit_logs.insert_one(audit_entry)
 
-    token_data = {"sub": user["id"], "email": user["email"], "role": user.get("role")}
+    token_data = {
+        "sub": user["id"],
+        "email": user["email"],
+        "role": user.get("role"),
+        "portal_scope": _resolve_portal_scope(user.get("role")),
+    }
 
     return TokenResponse(
         access_token=create_access_token(token_data),
@@ -2501,7 +2506,12 @@ async def refresh_token_endpoint(
     if not user or not user.get("is_active", True):
         raise HTTPException(status_code=401, detail="User not found or inactive")
 
-    token_data = {"sub": user["id"], "email": user["email"], "role": user.get("role")}
+    token_data = {
+        "sub": user["id"],
+        "email": user["email"],
+        "role": user.get("role"),
+        "portal_scope": _resolve_portal_scope(user.get("role")),
+    }
 
     return TokenResponse(
         access_token=create_access_token(token_data),
