@@ -11309,6 +11309,7 @@ async def admin_import_categories_commit(
     request: Request,
     file: UploadFile = File(...),
     format: str = "json",
+    dry_run_hash: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
