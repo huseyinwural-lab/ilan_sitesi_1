@@ -2484,12 +2484,31 @@ ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
 
 @api_router.get("/health")
 async def health_check():
+    if not RAW_DATABASE_URL:
+        return {
+            "status": "degraded",
+            "supported_countries": SUPPORTED_COUNTRIES,
+            "database": "postgres",
+            "reason": "db_config_missing",
+            "db_status": "config_missing",
+        }
     try:
         async with sql_engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
+        return {
+            "status": "healthy",
+            "supported_countries": SUPPORTED_COUNTRIES,
+            "database": "postgres",
+            "db_status": "ok",
+        }
     except Exception:
-        return {"status": "degraded", "supported_countries": SUPPORTED_COUNTRIES, "database": "postgres"}
-    return {"status": "healthy", "supported_countries": SUPPORTED_COUNTRIES, "database": "postgres"}
+        return {
+            "status": "degraded",
+            "supported_countries": SUPPORTED_COUNTRIES,
+            "database": "postgres",
+            "reason": "db_unreachable",
+            "db_status": "unreachable",
+        }
 
 
 @api_router.get("/health/db")
