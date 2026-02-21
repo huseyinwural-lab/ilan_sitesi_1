@@ -409,60 +409,37 @@ export default function AdminUsers() {
         </form>
 
         <div className="grid gap-3 md:grid-cols-4">
-          <div className="space-y-1">
-            <div className="text-xs text-muted-foreground">Rol</div>
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="h-10 rounded-md border bg-background px-3 text-sm w-full"
-              data-testid="admin-users-role-filter"
-            >
-              <option value="all">Tümü</option>
-              {ROLE_OPTIONS.map((role) => (
-                <option key={role.value} value={role.value}>{role.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <div className="text-xs text-muted-foreground">Durum</div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 rounded-md border bg-background px-3 text-sm w-full"
-              data-testid="admin-users-status-filter"
-            >
-              {STATUS_OPTIONS.map((status) => (
-                <option key={status.value} value={status.value}>{status.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <div className="text-xs text-muted-foreground">Ülke</div>
-            <select
-              value={countryFilter}
-              onChange={(e) => setCountryFilter(e.target.value)}
-              className="h-10 rounded-md border bg-background px-3 text-sm w-full"
-              data-testid="admin-users-country-filter"
-            >
-              <option value="all">Tümü</option>
-              {countries.map((code) => (
-                <option key={code} value={code}>{code}</option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
+          <FilterDropdown
+            label="Rol"
+            value={roleFilter}
+            onChange={setRoleFilter}
+            options={[{ value: 'all', label: 'Tümü' }, ...ROLE_OPTIONS]}
+            testId="admin-users-role-filter"
+          />
+          <FilterDropdown
+            label="Durum"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={STATUS_OPTIONS}
+            testId="admin-users-status-filter"
+          />
+          <FilterDropdown
+            label="Ülke"
+            value={countryFilter}
+            onChange={setCountryFilter}
+            options={[{ value: 'all', label: 'Tümü' }, ...countries.map((code) => ({ value: code, label: code }))]}
+            testId="admin-users-country-filter"
+          />
+          <div className="space-y-1" data-testid="admin-users-sort-wrapper">
             <div className="text-xs text-muted-foreground">Sıralama</div>
             <div className="flex items-center gap-2">
-              <select
+              <FilterDropdown
+                label=""
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="h-10 rounded-md border bg-background px-3 text-sm w-full"
-                data-testid="admin-users-sort-select"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+                onChange={setSortBy}
+                options={SORT_OPTIONS}
+                testId="admin-users-sort-select"
+              />
               <button
                 type="button"
                 onClick={() => setSortDir(sortDir === 'desc' ? 'asc' : 'desc')}
