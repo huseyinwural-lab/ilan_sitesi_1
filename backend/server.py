@@ -227,6 +227,11 @@ class UserResponse(BaseModel):
     invite_status: Optional[str] = None
 
 
+class RegisterResponse(BaseModel):
+    user: UserResponse
+    debug_code: Optional[str] = None
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
