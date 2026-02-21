@@ -2494,11 +2494,6 @@ STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
 
 EMAIL_PROVIDER = (os.environ.get("EMAIL_PROVIDER") or "mock").lower()
 EMAIL_PROVIDER_OPTIONS = {"mock", "sendgrid"}
-SMTP_HOST = os.environ.get("SMTP_HOST")
-SMTP_PORT_RAW = os.environ.get("SMTP_PORT")
-SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
-SMTP_FROM = os.environ.get("SMTP_FROM")
 
 PAYMENTS_ENABLED_COUNTRIES_RAW = os.environ.get("PAYMENTS_ENABLED_COUNTRIES")
 PAYMENTS_ENABLED_COUNTRIES = {
