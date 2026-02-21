@@ -35,8 +35,9 @@ MONGO kapalı iken aşağıdaki prefix’ler 503 döner:
 - `/api/v1/favorites`
 - `/api/v1/messages`
 - `/api/support`
-- `/api/admin/countries`
 - `/api/admin/menu`
+
+Not: `/api/admin/countries` Mongo kapalıyken boş liste döner (UI filtreleri kırılmasın diye).
 
 ## 3) SQL Karşılığı Taslak Plan (Migration)
 
