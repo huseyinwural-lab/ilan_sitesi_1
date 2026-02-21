@@ -632,6 +632,58 @@ async def _generate_unique_dealer_slug(session: AsyncSession, company_name: str)
         suffix += 1
 
 
+def _should_include_debug_code() -> bool:
+    return APP_ENV != "prod"
+
+
+def _generate_email_verification_code() -> str:
+    return f"{secrets.randbelow(1000000):06d}"
+
+
+def _issue_email_verification_code(user: SqlUser) -> str:
+    code = _generate_email_verification_code()
+    user.email_verification_code_hash = get_password_hash(code)
+    user.email_verification_expires_at = datetime.now(timezone.utc) + timedelta(minutes=EMAIL_VERIFICATION_TTL_MINUTES)
+    user.email_verification_attempts = 0
+    return code
+
+
+def _email_verification_sent_at(user: SqlUser) -> Optional[datetime]:
+    if not user.email_verification_expires_at:
+        return None
+    return user.email_verification_expires_at - timedelta(minutes=EMAIL_VERIFICATION_TTL_MINUTES)
+
+
+def _email_verification_block_expires_at(user: SqlUser) -> Optional[datetime]:
+    if user.email_verification_attempts < EMAIL_VERIFICATION_MAX_ATTEMPTS:
+        return None
+    return user.email_verification_expires_at
+
+
+async def _log_email_verify_event(
+    session: AsyncSession,
+    action: str,
+    user: SqlUser,
+    request: Optional[Request],
+    metadata: Optional[dict] = None,
+) -> None:
+    actor = {
+        "id": str(user.id),
+        "email": user.email,
+        "country_scope": user.country_scope or [],
+    }
+    await _write_audit_log_sql(
+        session=session,
+        action=action,
+        actor=actor,
+        resource_type="auth",
+        resource_id=str(user.id),
+        metadata=metadata,
+        request=request,
+        country_code=user.country_code,
+    )
+
+
 async def build_audit_entry(
     event_type: str,
     actor: dict,
