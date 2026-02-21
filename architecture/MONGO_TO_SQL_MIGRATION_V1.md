@@ -15,9 +15,9 @@ Mongo tamamen kaldırılarak tek veri kaynağı Postgres olacak. Bu doküman; ka
 - **users, invoices, plans, payments** gibi çekirdek tablolar
 
 ### SQL’de Eksik Olanlar (Mongo bağımlı)
-- **favorites**
-- **message_threads + messages**
-- **support_messages** (applications için mesajlaşma)
+- **favorites** (SQL tablosu draft ile ekleniyor)
+- **messages** (SQL tabloları mevcut: `conversations`, `messages`; endpoint refactor gerekiyor)
+- **support_messages** (applications için mesajlaşma; draft ile ekleniyor)
 
 ## 2) Migrasyon Önceliği (Deterministik)
 1. **Categories (master data)**
