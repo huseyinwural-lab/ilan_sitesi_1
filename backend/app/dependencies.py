@@ -72,6 +72,26 @@ async def _get_sql_user(user_id: str, session: AsyncSession) -> Optional[dict]:
     }
 
 
+def _resolve_portal_scope(role: Optional[str]) -> str:
+    if not role:
+        return "account"
+    if role in DEALER_ROLES:
+        return "dealer"
+    if role in ADMIN_ROLES:
+        return "admin"
+    return "account"
+
+
+def _infer_required_portal_scope(required_roles: Optional[list]) -> Optional[str]:
+    if not required_roles:
+        return None
+    if any(role in DEALER_ROLES for role in required_roles):
+        return "dealer"
+    if any(role in ADMIN_ROLES for role in required_roles):
+        return "admin"
+    return "account"
+
+
 async def get_current_user(
     request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
