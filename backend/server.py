@@ -13670,8 +13670,7 @@ async def _dashboard_trends(
 
         if include_revenue:
             revenue_total, revenue_totals = await _dashboard_invoice_totals(
-                db,
-                {**invoice_base, "paid_at": {"$gte": start_iso, "$lt": end_iso}},
+                [*invoice_base, AdminInvoice.paid_at >= day, AdminInvoice.paid_at < day_end]
             )
             revenue_trend.append({
                 "date": day.date().isoformat(),
