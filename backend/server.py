@@ -4270,6 +4270,14 @@ async def websocket_messages(websocket: WebSocket):
         await websocket.close(code=1008)
         return
 
+    if payload.get("token_version") != TOKEN_VERSION:
+        await websocket.close(code=1008)
+        return
+
+    if payload.get("portal_scope") != "account":
+        await websocket.close(code=1008)
+        return
+
     user_id = payload.get("sub")
     if not user_id:
         await websocket.close(code=1008)
