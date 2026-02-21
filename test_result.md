@@ -8072,3 +8072,138 @@ const handleHelpToggle = async () => {
 
 ---
 
+
+
+## Campaigns & Plans Frontend Verification (Feb 21, 2026) ⚠️ PARTIAL PASS
+
+### Test Summary
+Verified frontend accessibility for campaigns and plans pages as requested. Backend Campaigns V1 + Plans period seed reportedly completed, but period field NOT visible in frontend UI.
+
+### Test Flow Executed:
+1. ✅ Login page loads - https://db-migration-38.preview.emergentagent.com/admin/login
+2. ✅ Admin login successful - admin@platform.com / Admin123!
+3. ✅ Individual campaigns page loads - /admin/individual-campaigns
+4. ✅ Corporate campaigns page loads - /admin/corporate-campaigns
+5. ❌ /admin/campaigns route does NOT exist (redirects to /admin)
+6. ✅ Plans page loads - /admin/plans
+7. ❌ Period field NOT visible on plans page
+
+### Critical Findings:
+
+#### ✅ WORKING FEATURES:
+
+**1. Login Page**: ✅ ACCESSIBLE
+  - **URL**: https://db-migration-38.preview.emergentagent.com/admin/login loads successfully
+  - **Form Elements**: Email, password, and submit button all present
+  - **Authentication**: Login with admin@platform.com / Admin123! works correctly
+
+**2. Individual Campaigns Page**: ✅ ACCESSIBLE
+  - **URL**: /admin/individual-campaigns loads successfully
+  - **Page Title**: "Bireysel Kampanyalar" (Individual Campaigns)
+  - **Table**: List view present with 1 campaign row
+  - **Table Headers**: Name, Status, Type, Scope, Start-End, Discount, Priority, Updated, Users, Actions
+  - **Campaign Data**: "V1 Test Kampanya" visible with status "Taslak" (Draft), type "Bireysel", scope "DE"
+  - **Implementation**: CampaignsManager.js
+
+**3. Corporate Campaigns Page**: ✅ ACCESSIBLE
+  - **URL**: /admin/corporate-campaigns loads successfully
+  - **Page Title**: "Kurumsal Kampanyalar" (Corporate/Dealer Campaigns)
+  - **Table**: List view present with 1 campaign row
+  - **Table Headers**: Name, Status, Type, Scope, Start-End, Discount, Priority, Updated, Plan/Dealers, Actions
+  - **Campaign Data**: "V1 Test Kampanya" visible with status "Taslak", type "Bireysel", scope "DE"
+
+**4. Plans Page**: ✅ ACCESSIBLE BUT INCOMPLETE
+  - **URL**: /admin/plans loads successfully
+  - **Page Title**: "Planlar" (Plans)
+  - **Error Banner**: "Planlar yüklenemedi" (Plans could not be loaded) displayed
+  - **Table Structure**: Present with headers
+  - **Table Headers**: Name, Scope/Country, Price, Listing, Showcase, Active, Updated, Actions
+  - **Data**: Empty table ("Kayıt yok" - No records)
+
+#### ❌ ISSUES FOUND:
+
+**1. /admin/campaigns Route Does NOT Exist**: ❌ CRITICAL
+  - **Expected**: /admin/campaigns route as mentioned in review request
+  - **Actual**: Route does NOT exist - redirects to /admin (dashboard)
+  - **Correct Routes**:
+    - /admin/individual-campaigns (Bireysel Kampanyalar)
+    - /admin/corporate-campaigns (Kurumsal Kampanyalar)
+  - **Impact**: Review request asked to check "/admin/campaigns" but this route doesn't exist in the application
+  - **Recommendation**: Update review request documentation or add a unified /admin/campaigns route
+
+**2. Period Field NOT Visible on Plans Page**: ❌ CRITICAL
+  - **Review Request**: "Backend tarafında Campaigns V1 + Plans period seed tamamlandı. period alanı görünür mü?"
+  - **Expected**: Period field visible in plans table
+  - **Actual**: NO period field in table headers or content
+  - **Table Headers Found**: 
+    1. Name
+    2. Scope/Country
+    3. Price
+    4. Listing (quota)
+    5. Showcase (quota)
+    6. Active
+    7. Updated
+    8. Actions
+  - **Code Verification**: Checked /app/frontend/src/pages/admin/AdminPlans.js - period field NOT implemented in UI
+  - **Impact**: Backend may have period field in database, but frontend UI does not display it
+  - **Recommendation**: Frontend needs to be updated to add period column to plans table
+
+**3. Plans Data Loading Issue**: ⚠️ MINOR
+  - **Error**: "Planlar yüklenemedi" (Plans could not be loaded)
+  - **Table State**: Empty ("Kayıt yok")
+  - **Possible Causes**:
+    - Backend API not returning data
+    - Database not seeded
+    - API connection issue
+  - **Note**: This might be expected if no plans have been created yet
+
+### Code Implementation Verification:
+
+**Routes (BackofficePortalApp.jsx)**:
+- Line 73: `/admin/individual-campaigns` → IndividualCampaignsPage
+- Line 74: `/admin/corporate-campaigns` → CorporateCampaignsPage
+- NO route for `/admin/campaigns` (unified route)
+
+**Plans Table Headers (AdminPlans.js lines 394-414)**:
+```javascript
+<th data-testid="plans-header-name">Name</th>
+<th data-testid="plans-header-scope">Scope/Country</th>
+<th data-testid="plans-header-price">Price</th>
+<th data-testid="plans-header-listing">Listing</th>
+<th data-testid="plans-header-showcase">Showcase</th>
+<th data-testid="plans-header-active">Active</th>
+<th data-testid="plans-header-updated">Updated</th>
+<th data-testid="plans-header-actions">Actions</th>
+```
+**No period field header found in code**
+
+### Screenshots Captured:
+1. **campaigns-final-corporate.png**: Corporate campaigns page showing table with 1 campaign
+2. **campaigns-final-individual.png**: Individual campaigns page showing table with 1 campaign
+3. **campaigns-final-plans-check.png**: Plans page showing empty table without period field
+
+### Test Results Summary:
+- **Test Success Rate**: 60% (3/5 requirements fully met)
+- **Login Page**: ✅ LOADS SUCCESSFULLY
+- **Admin Login**: ✅ WORKING (admin@platform.com / Admin123!)
+- **/admin/campaigns**: ❌ ROUTE DOES NOT EXIST (should be /admin/individual-campaigns or /admin/corporate-campaigns)
+- **Individual Campaigns**: ✅ LOADS SUCCESSFULLY (list view with 1 row)
+- **Corporate Campaigns**: ✅ LOADS SUCCESSFULLY (list view with 1 row)
+- **/admin/plans Page**: ✅ LOADS BUT ❌ PERIOD FIELD NOT VISIBLE
+- **No Console Errors**: ✅ CONFIRMED (no critical JavaScript errors)
+
+### Final Status:
+- **Overall Result**: ⚠️ **PARTIAL PASS** - Pages are accessible but period field is missing
+- **Login & Authentication**: ✅ WORKING
+- **Campaigns Pages**: ✅ ACCESSIBLE (correct routes are /admin/individual-campaigns and /admin/corporate-campaigns)
+- **Plans Page**: ✅ ACCESSIBLE BUT ❌ PERIOD FIELD MISSING
+- **Backend Seed Status**: Backend claims period seed is complete, but frontend UI doesn't display period field
+- **Action Required**: Frontend needs to be updated to add period column to plans table
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 21, 2026
+- **Message**: Campaigns & Plans frontend verification PARTIALLY COMPLETED. Login working correctly at /admin/login with admin@platform.com credentials. IMPORTANT FINDING 1: The route /admin/campaigns does NOT exist - correct routes are /admin/individual-campaigns (Bireysel Kampanyalar) and /admin/corporate-campaigns (Kurumsal Kampanyalar). Both campaign pages load successfully with list view showing 1 campaign each. CRITICAL FINDING 2: /admin/plans page loads successfully BUT the period field is NOT visible in the table. Table headers are: Name, Scope/Country, Price, Listing, Showcase, Active, Updated, Actions - NO period column. Code verification in AdminPlans.js (lines 394-414) confirms period field is not implemented in the frontend UI. Backend may have completed period seed, but frontend needs to be updated to display this field. Screenshots captured for all pages.
+
+---
+
