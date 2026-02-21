@@ -3017,7 +3017,7 @@ async def update_user(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     target = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not target:
@@ -3172,7 +3172,7 @@ async def create_admin_user(
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     _enforce_admin_invite_rate_limit(request, current_user.get("id"))
 
@@ -3282,7 +3282,7 @@ async def update_admin_user(
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     target = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not target:
@@ -3358,7 +3358,7 @@ async def bulk_deactivate_admins(
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     user_ids = list(dict.fromkeys(payload.user_ids or []))
     if not user_ids:
@@ -3470,7 +3470,7 @@ async def suspend_user(
     current_user=Depends(check_permissions(["super_admin", "moderator"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     if user_id == current_user.get("id"):
         raise HTTPException(status_code=400, detail="Cannot suspend yourself")
@@ -3552,7 +3552,7 @@ async def activate_user(
     current_user=Depends(check_permissions(["super_admin", "moderator"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user or user.get("deleted_at"):
@@ -3623,7 +3623,7 @@ async def delete_user(
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     if user_id == current_user.get("id"):
         raise HTTPException(status_code=400, detail="Cannot delete yourself")
@@ -3725,7 +3725,7 @@ async def admin_user_detail(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
@@ -5297,7 +5297,7 @@ async def archive_campaign_action(
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(request: Request, current_user=Depends(get_current_user)):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     users_query = {}
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
@@ -5337,7 +5337,7 @@ async def list_users(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     query: Dict[str, Any] = {}
 
@@ -5660,7 +5660,7 @@ async def list_individual_users(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
     if country:
@@ -5746,7 +5746,7 @@ async def admin_individual_users_export_csv(
     current_user=Depends(check_permissions(["super_admin", "marketing"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
     _enforce_export_rate_limit(request, current_user.get("id"))
 
     country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
@@ -5829,7 +5829,7 @@ async def toggle_menu_item(item_id: str, data: dict, request: Request, current_u
     db = request.app.state.db
     if db is None:
         raise HTTPException(status_code=503, detail="Menu storage unavailable")
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     is_enabled = data.get("is_enabled")
     payload = {}
     if is_enabled is not None:
@@ -5935,7 +5935,7 @@ async def admin_list_dealers(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
     if country:
@@ -6043,7 +6043,7 @@ async def admin_get_dealer_detail(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     query: Dict = {"id": dealer_id, "role": "dealer"}
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
@@ -6094,7 +6094,7 @@ async def admin_get_dealer_audit_logs(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     query: Dict = {"id": dealer_id, "role": "dealer"}
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
@@ -6134,7 +6134,7 @@ async def admin_set_dealer_status(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     new_status = (payload.dealer_status or "").strip().lower()
     if new_status not in ["active", "suspended"]:
@@ -6191,7 +6191,7 @@ async def admin_list_dealer_applications(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     query: Dict = {}
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
@@ -6222,7 +6222,7 @@ async def admin_list_individual_applications(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     query: Dict = {}
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
@@ -6260,7 +6260,7 @@ async def admin_reject_dealer_application(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     app = await db.dealer_applications.find_one({"id": app_id}, {"_id": 0})
     if not app:
@@ -6335,7 +6335,7 @@ async def admin_approve_dealer_application(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     app = await db.dealer_applications.find_one({"id": app_id}, {"_id": 0})
     if not app:
@@ -6424,7 +6424,7 @@ async def admin_approve_individual_application(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     app = await db.individual_applications.find_one({"id": app_id})
     if not app:
@@ -6483,7 +6483,7 @@ async def admin_reject_individual_application(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     app = await db.individual_applications.find_one({"id": app_id})
     if not app:
@@ -6529,7 +6529,7 @@ async def admin_reject_individual_application(
 async def list_countries(request: Request, current_user=Depends(get_current_user)):
     db = request.app.state.db
     # Countries list is global; still resolve context for uniform audit/error handling
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     docs = await db.countries.find({}, {"_id": 0}).to_list(length=200)
     docs.sort(key=lambda x: x.get("code", ""))
     return docs
@@ -6539,7 +6539,7 @@ async def list_countries(request: Request, current_user=Depends(get_current_user
 @api_router.patch("/countries/{country_id}")
 async def update_country(country_id: str, data: dict, request: Request, current_user=Depends(check_permissions(["super_admin", "country_admin"]))):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
     allowed = {"is_enabled", "default_currency", "default_language", "support_email"}
     payload = {k: v for k, v in data.items() if k in allowed}
     if not payload:
@@ -6602,7 +6602,7 @@ async def list_audit_logs(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "finance"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     q: Dict = {}
     if action:
@@ -6739,7 +6739,7 @@ async def admin_list_audit_logs(
     current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     page_size = min(200, max(1, int(page_size)))
     page = max(0, int(page))
@@ -6774,7 +6774,7 @@ async def admin_audit_event_types(
     current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     types = await db.audit_logs.distinct("event_type")
     return {"event_types": sorted([t for t in types if t])}
 
@@ -6785,7 +6785,7 @@ async def admin_audit_actions(
     current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     actions = await db.audit_logs.distinct("action")
     return {"actions": sorted([a for a in actions if a])}
 
@@ -6796,7 +6796,7 @@ async def admin_audit_resources(
     current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     resources = await db.audit_logs.distinct("resource_type")
     return {"resource_types": sorted([r for r in resources if r])}
 
@@ -6808,7 +6808,7 @@ async def admin_audit_log_detail(
     current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     doc = await db.audit_logs.find_one({"id": log_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Audit log not found")
@@ -6830,7 +6830,7 @@ async def admin_export_audit_logs(
     current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     query = _build_audit_query(
         q=q,
@@ -8812,7 +8812,7 @@ async def admin_approve_listing(
 ):
     db = request.app.state.db
     updated = await _moderation_transition(
-        db=db,
+        session=session,
         listing_id=listing_id,
         current_user=current_user,
         event_type="MODERATION_APPROVE",
@@ -8831,7 +8831,7 @@ async def admin_reject_listing(
     db = request.app.state.db
     reason = _validate_reason(payload.reason, REJECT_REASONS_V1)
     updated = await _moderation_transition(
-        db=db,
+        session=session,
         listing_id=listing_id,
         current_user=current_user,
         event_type="MODERATION_REJECT",
@@ -8856,7 +8856,7 @@ async def admin_needs_revision_listing(
         raise HTTPException(status_code=400, detail="reason_note is required when reason=other")
 
     updated = await _moderation_transition(
-        db=db,
+        session=session,
         listing_id=listing_id,
         current_user=current_user,
         event_type="MODERATION_NEEDS_REVISION",
@@ -8885,7 +8885,7 @@ async def admin_listings(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     query: Dict = {}
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
@@ -8979,9 +8979,9 @@ async def admin_soft_delete_listing(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     updated = await _admin_listing_action(
-        db=db,
+        session=session,
         listing_id=listing_id,
         current_user=current_user,
         event_type="LISTING_SOFT_DELETE",
@@ -9000,7 +9000,7 @@ async def admin_force_unpublish_listing(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0, "status": 1})
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
@@ -9008,7 +9008,7 @@ async def admin_force_unpublish_listing(
         raise HTTPException(status_code=400, detail="Only published listings can be force-unpublished")
 
     updated = await _admin_listing_action(
-        db=db,
+        session=session,
         listing_id=listing_id,
         current_user=current_user,
         event_type="LISTING_FORCE_UNPUBLISH",
@@ -9090,7 +9090,7 @@ async def admin_reports(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     q: Dict = {}
     if status:
@@ -9165,7 +9165,7 @@ async def admin_report_detail(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     report = await db.reports.find_one({"id": report_id}, {"_id": 0})
     if not report:
@@ -9236,7 +9236,7 @@ async def admin_report_status_change(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     target_status = (payload.target_status or "").strip()
     if target_status not in REPORT_STATUS_SET:
@@ -9246,7 +9246,7 @@ async def admin_report_status_change(
         raise HTTPException(status_code=400, detail="note is required")
 
     updated = await _report_transition(
-        db=db,
+        session=session,
         report_id=report_id,
         current_user=current_user,
         target_status=target_status,
@@ -10461,7 +10461,7 @@ async def admin_revenue(
     current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     if not country:
         raise HTTPException(status_code=400, detail="country is required")
@@ -10503,7 +10503,7 @@ async def admin_list_tax_rates(
     current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     q: Dict = {}
     if country:
@@ -10526,7 +10526,7 @@ async def admin_create_tax_rate(
     current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     country_code = payload.country_code.upper()
     _assert_country_scope(country_code, current_user)
@@ -10578,7 +10578,7 @@ async def admin_update_tax_rate(
     current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     tax_rate = await db.tax_rates.find_one({"id": tax_id}, {"_id": 0})
     if not tax_rate:
@@ -10627,7 +10627,7 @@ async def admin_delete_tax_rate(
     current_user=Depends(check_permissions(["super_admin", "finance"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     tax_rate = await db.tax_rates.find_one({"id": tax_id}, {"_id": 0})
     if not tax_rate:
@@ -10940,7 +10940,7 @@ async def admin_assign_dealer_plan(
     session: AsyncSession = Depends(get_sql_session),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     await _ensure_plans_db_ready(session)
 
     dealer = await db.users.find_one({"id": dealer_id, "role": "dealer"}, {"_id": 0})
@@ -11211,7 +11211,7 @@ async def admin_list_system_settings(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     q: Dict = {}
     if country:
         code = country.upper()
@@ -11232,7 +11232,7 @@ async def admin_create_system_setting(
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     key = payload.key.strip()
     if not KEY_NAMESPACE_REGEX.match(key):
@@ -11290,7 +11290,7 @@ async def admin_update_system_setting(
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     setting = await db.system_settings.find_one({"id": setting_id}, {"_id": 0})
     if not setting:
@@ -12363,7 +12363,7 @@ async def admin_list_menu_items(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     query: Dict[str, Any] = {}
     if country:
         country_code = country.upper()
@@ -12383,7 +12383,7 @@ async def admin_create_menu_item(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     now_iso = datetime.now(timezone.utc).isoformat()
     slug = payload.slug.strip()
     if not slug:
@@ -12443,7 +12443,7 @@ async def admin_update_menu_item(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, db=db)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     existing = await db.menu_items.find_one({"id": menu_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="Menu item not found")
@@ -12567,7 +12567,7 @@ async def admin_list_attributes(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     query: Dict = {}
     if category_id:
         query["category_id"] = category_id
@@ -12591,7 +12591,7 @@ async def admin_create_attribute(
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     key = payload.key.strip().lower()
     if not ATTRIBUTE_KEY_PATTERN.match(key):
@@ -12656,7 +12656,7 @@ async def admin_update_attribute(
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     attr = await db.attributes.find_one({"id": attribute_id}, {"_id": 0})
     if not attr:
         raise HTTPException(status_code=404, detail="Attribute not found")
@@ -12724,7 +12724,7 @@ async def admin_delete_attribute(
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     attr = await db.attributes.find_one({"id": attribute_id}, {"_id": 0})
     if not attr:
         raise HTTPException(status_code=404, detail="Attribute not found")
@@ -12756,7 +12756,7 @@ async def admin_list_vehicle_makes(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     query: Dict = {}
     if country:
         code = country.upper()
@@ -12818,7 +12818,7 @@ async def admin_create_vehicle_make(
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     slug = payload.slug.strip().lower()
     if not SLUG_PATTERN.match(slug):
@@ -12868,7 +12868,7 @@ async def admin_update_vehicle_make(
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     make = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0})
     if not make:
         raise HTTPException(status_code=404, detail="Make not found")
@@ -12921,7 +12921,7 @@ async def admin_delete_vehicle_make(
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     make = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0})
     if not make:
         raise HTTPException(status_code=404, detail="Make not found")
@@ -12954,7 +12954,7 @@ async def admin_list_vehicle_models(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db)
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
     query: Dict = {}
     if make_id:
         make_doc = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0, "country_code": 1})
@@ -12990,7 +12990,7 @@ async def admin_create_vehicle_model(
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     slug = payload.slug.strip().lower()
     if not SLUG_PATTERN.match(slug):
@@ -13048,7 +13048,7 @@ async def admin_update_vehicle_model(
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     model = await db.vehicle_models.find_one({"id": model_id}, {"_id": 0})
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
@@ -13109,7 +13109,7 @@ async def admin_delete_vehicle_model(
 ):
     # Permission check already handled by dependency
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     model = await db.vehicle_models.find_one({"id": model_id}, {"_id": 0})
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
@@ -13311,7 +13311,7 @@ async def admin_vehicle_import_dry_run(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     prepared = await _prepare_vehicle_import_payload(db, payload)
     return prepared["report"]
 
@@ -13323,7 +13323,7 @@ async def admin_vehicle_import_apply(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
 ):
     db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     prepared = await _prepare_vehicle_import_payload(db, payload)
     report = prepared["report"]
     if not report.get("can_apply"):
