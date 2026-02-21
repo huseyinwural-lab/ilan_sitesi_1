@@ -4517,35 +4517,63 @@ async def create_message_thread(
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    buyer_id = current_user.get("id")
-    if not seller_id or not buyer_id:
-        raise HTTPException(status_code=400, detail="Invalid participants")
-    if seller_id == buyer_id:
+    buyer_id = uuid.UUID(current_user.get("id"))
+    listing_id = uuid.UUID(payload.listing_id)
+
+    listing = (
+        await session.execute(select(Listing).where(Listing.id == listing_id))
+    ).scalar_one_or_none()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    seller_id = listing.user_id
+    if not seller_id or buyer_id == seller_id:
         raise HTTPException(status_code=400, detail="Cannot message your own listing")
 
-    existing = await db.message_threads.find_one(
-        {"listing_id": payload.listing_id, "participants": {"$all": [buyer_id, seller_id]}},
-        {"_id": 0},
-    )
-    if existing:
-        return {"thread": _build_thread_summary(existing, buyer_id)}
+    thread = (
+        await session.execute(
+            select(Conversation).where(
+                Conversation.listing_id == listing_id,
+                Conversation.buyer_id == buyer_id,
+            )
+        )
+    ).scalar_one_or_none()
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    snapshot = _build_listing_snapshot(listing)
-    thread_doc = {
-        "id": str(uuid.uuid4()),
-        "listing_id": payload.listing_id,
-        "listing_title": snapshot.get("listing_title"),
-        "listing_image": snapshot.get("listing_image"),
-        "participants": [buyer_id, seller_id],
-        "created_at": now_iso,
-        "updated_at": now_iso,
-        "last_message": None,
-        "last_message_at": None,
-        "unread_counts": {buyer_id: 0, seller_id: 0},
+    if not thread:
+        thread = Conversation(listing_id=listing_id, buyer_id=buyer_id, seller_id=seller_id)
+        session.add(thread)
+        await session.commit()
+        await session.refresh(thread)
+
+    last_message = (
+        await session.execute(
+            select(Message)
+            .where(Message.conversation_id == thread.id)
+            .order_by(desc(Message.created_at))
+        )
+    ).scalars().first()
+
+    unread_count = (
+        await session.execute(
+            select(func.count())
+            .select_from(Message)
+            .where(
+                Message.conversation_id == thread.id,
+                Message.is_read.is_(False),
+                Message.sender_id != buyer_id,
+            )
+        )
+    ).scalar_one()
+
+    return {
+        "thread": _build_thread_summary_sql(
+            thread,
+            str(buyer_id),
+            listing,
+            last_message,
+            int(unread_count or 0),
+        )
     }
-    await db.message_threads.insert_one(thread_doc)
-    return {"thread": _build_thread_summary(thread_doc, buyer_id)}
 
 
 @api_router.get("/v1/messages/threads")
