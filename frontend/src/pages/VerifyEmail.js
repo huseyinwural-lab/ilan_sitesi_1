@@ -19,10 +19,8 @@ export default function VerifyEmail({ portalContext = 'account' }) {
   const { theme, toggleTheme } = useTheme();
 
   const initialEmail = location.state?.email || sessionStorage.getItem('pending_email') || user?.email || '';
-  const initialDebug = location.state?.debugCode || sessionStorage.getItem('pending_debug_code') || '';
 
   const [email, setEmail] = useState(initialEmail);
-  const [debugCode, setDebugCode] = useState(initialDebug);
   const [codeDigits, setCodeDigits] = useState(Array(OTP_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
