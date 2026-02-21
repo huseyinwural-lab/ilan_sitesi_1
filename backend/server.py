@@ -3872,9 +3872,6 @@ async def update_user_profile(
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if AUTH_PROVIDER == "mongo" and db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
     update_payload: Dict[str, Any] = {}
     if payload.full_name is not None:
         update_payload["full_name"] = payload.full_name.strip()
@@ -3888,50 +3885,48 @@ async def update_user_profile(
     if not update_payload:
         return {"ok": True}
 
-    update_payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+    try:
+        user_uuid = uuid.UUID(str(current_user.get("id")))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
 
-    if AUTH_PROVIDER == "mongo" and db is not None:
-        await db.users.update_one({"id": current_user.get("id")}, {"$set": update_payload})
-        user_doc = await db.users.find_one({"id": current_user.get("id")}, {"_id": 0})
-    else:
-        user_doc = None
-        try:
-            user_uuid = uuid.UUID(str(current_user.get("id")))
-        except ValueError:
-            user_uuid = None
-        if user_uuid:
-            result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
-            user_row = result.scalar_one_or_none()
-            if not user_row:
-                raise HTTPException(status_code=404, detail="User not found")
-            if update_payload.get("full_name"):
-                user_row.full_name = update_payload.get("full_name")
-            if update_payload.get("preferred_language"):
-                user_row.preferred_language = update_payload.get("preferred_language")
-            await session.commit()
-            await session.refresh(user_row)
-            user_doc = {
-                "id": str(user_row.id),
-                "email": user_row.email,
-                "full_name": user_row.full_name,
-                "phone_e164": None,
-                "preferred_language": user_row.preferred_language,
-                "notification_prefs": update_payload.get("notification_prefs"),
-            }
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user_row = result.scalar_one_or_none()
+    if not user_row:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    if db is not None:
-        audit_entry = await build_audit_entry(
-            event_type="profile_update",
-            actor=current_user,
-            target_id=current_user.get("id"),
-            target_type="user",
-            country_code=current_user.get("country_code"),
-            details={"fields": list(update_payload.keys())},
-            request=request,
-        )
-        await db.audit_logs.insert_one(audit_entry)
+    if update_payload.get("full_name"):
+        user_row.full_name = update_payload.get("full_name")
+    if update_payload.get("preferred_language"):
+        user_row.preferred_language = update_payload.get("preferred_language")
 
-    response_user = user_doc or await db.users.find_one({"id": current_user.get("id")}, {"_id": 0})
+    actor = {
+        "id": current_user.get("id"),
+        "email": current_user.get("email"),
+        "country_scope": current_user.get("country_scope") or [],
+    }
+    await _write_audit_log_sql(
+        session=session,
+        action="profile_update",
+        actor=actor,
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={"fields": list(update_payload.keys())},
+        request=request,
+        country_code=user_row.country_code,
+    )
+
+    await session.commit()
+    await session.refresh(user_row)
+
+    response_user = {
+        "id": str(user_row.id),
+        "email": user_row.email,
+        "full_name": user_row.full_name,
+        "phone_e164": None,
+        "preferred_language": user_row.preferred_language,
+        "notification_prefs": update_payload.get("notification_prefs"),
+    }
     return {
         "user": {
             "id": response_user.get("id"),
