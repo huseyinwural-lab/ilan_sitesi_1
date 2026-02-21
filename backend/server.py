@@ -1030,6 +1030,19 @@ def _build_dealer_profile_payload(user_row: SqlUser, profile: DealerProfile) -> 
     }
 
 
+async def _get_user_row_from_current(session: AsyncSession, current_user: dict) -> SqlUser:
+    try:
+        user_uuid = uuid.UUID(str(current_user.get("id")))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user_row = result.scalar_one_or_none()
+    if not user_row:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user_row
+
+
 async def _log_email_verify_event(
     session: AsyncSession,
     action: str,
