@@ -15620,6 +15620,10 @@ async def submit_vehicle_listing(
     validation_errors = []
     if not listing.title:
         validation_errors.append({"code": "TITLE_REQUIRED", "field": "title", "message": "Başlık gerekli"})
+    if not listing.category_id:
+        validation_errors.append({"code": "CATEGORY_REQUIRED", "field": "category_id", "message": "Kategori gerekli"})
+    if not listing.make_id or not listing.model_id:
+        validation_errors.append({"code": "MAKE_MODEL_REQUIRED", "field": "make_model", "message": "Marka ve model gerekli"})
     if not media_meta:
         validation_errors.append({"code": "MEDIA_REQUIRED", "field": "media", "message": "En az 1 görsel ekleyin"})
 
