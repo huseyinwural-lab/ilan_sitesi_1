@@ -432,6 +432,9 @@ export default function AdminPlans() {
                   <td className="px-3 py-2" data-testid={`plans-scope-${item.id}`}>
                     {item.country_scope === 'country' ? `Country / ${item.country_code || '-'}` : 'Global / —'}
                   </td>
+                  <td className="px-3 py-2" data-testid={`plans-period-${item.id}`}>
+                    {item.period || '-'}
+                  </td>
                   <td className="px-3 py-2" data-testid={`plans-price-${item.id}`}>
                     {item.price_amount} {item.currency_code || 'EUR'}
                   </td>
