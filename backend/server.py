@@ -7051,6 +7051,8 @@ def _audit_log_sql_to_dict(row: AuditLog) -> Dict[str, Any]:
     }
 
 
+@api_router.get("/admin/audit-logs")
+async def admin_list_audit_logs(
     request: Request,
     q: Optional[str] = None,
     event_type: Optional[str] = None,
@@ -7063,8 +7065,48 @@ def _audit_log_sql_to_dict(row: AuditLog) -> Dict[str, Any]:
     sort: Optional[str] = "timestamp_desc",
     page: int = 0,
     page_size: int = 20,
-    current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
+    scope: Optional[str] = None,
+    ref: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin", "finance", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
+    if scope == "billing":
+        role = current_user.get("role")
+        if role not in {"super_admin", "finance"}:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+        page_size = min(200, max(1, int(page_size)))
+        page = max(0, int(page))
+        skip = page * page_size
+
+        base_conditions = [AuditLog.action.in_(BILLING_AUDIT_ACTIONS)]
+        if ref:
+            ref_value = ref.strip()
+            base_conditions.append(
+                or_(
+                    AuditLog.resource_id == ref_value,
+                    AuditLog.metadata_info["invoice_id"].astext == ref_value,
+                    AuditLog.metadata_info["subscription_id"].astext == ref_value,
+                    AuditLog.metadata_info["payment_id"].astext == ref_value,
+                )
+            )
+
+        query_stmt = select(AuditLog).where(and_(*base_conditions))
+        total_stmt = select(func.count()).select_from(AuditLog).where(and_(*base_conditions))
+
+        if sort == "timestamp_asc":
+            query_stmt = query_stmt.order_by(desc(AuditLog.created_at).asc())
+        else:
+            query_stmt = query_stmt.order_by(desc(AuditLog.created_at))
+
+        rows = (await session.execute(query_stmt.offset(skip).limit(page_size))).scalars().all()
+        total = (await session.execute(total_stmt)).scalar_one() or 0
+
+        return {
+            "items": [_audit_log_sql_to_dict(row) for row in rows],
+            "pagination": {"total": int(total), "page": page, "page_size": page_size},
+        }
+
     db = request.app.state.db
     await resolve_admin_country_context(request, current_user=current_user, session=None, )
 
