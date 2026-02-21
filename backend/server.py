@@ -15401,7 +15401,25 @@ async def create_vehicle_draft(
         raise HTTPException(status_code=400, detail="Invalid user id") from exc
 
     country = (payload.get("country") or current_user.get("country_code") or "DE").upper()
-    category_id = payload.get("category_id")
+    category_value = payload.get("category_id")
+    if not category_value:
+        raise HTTPException(status_code=400, detail="category_id required")
+    try:
+        category_uuid = uuid.UUID(str(category_value))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="category_id invalid") from exc
+
+    vehicle_payload = payload.get("vehicle") or {}
+    make_value = payload.get("make_id") or vehicle_payload.get("make_id")
+    model_value = payload.get("model_id") or vehicle_payload.get("model_id")
+    if not make_value or not model_value:
+        raise HTTPException(status_code=400, detail="make_id and model_id required")
+    try:
+        make_uuid = uuid.UUID(str(make_value))
+        model_uuid = uuid.UUID(str(model_value))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="make_id/model_id invalid") from exc
+
     listing = Listing(
         user_id=user_uuid,
         status="draft",
@@ -15411,7 +15429,10 @@ async def create_vehicle_draft(
         description=payload.get("description") or "",
         price=None,
         currency="EUR",
-        attributes={"category_id": category_id},
+        category_id=category_uuid,
+        make_id=make_uuid,
+        model_id=model_uuid,
+        attributes={"category_id": str(category_uuid), "vehicle": vehicle_payload},
         images=[],
     )
     _apply_listing_payload_sql(listing, payload)
