@@ -8815,8 +8815,8 @@ async def admin_approve_listing(
     listing_id: str,
     request: Request,
     current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
     updated = await _moderation_transition(
         session=session,
         listing_id=listing_id,
