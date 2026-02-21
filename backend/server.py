@@ -3074,8 +3074,8 @@ class SupportApplicationStatusPayload(BaseModel):
 class CampaignCreatePayload(BaseModel):
     name: str
     status: Optional[str] = "draft"
-    current_period_start: str
-    current_period_end: Optional[str] = None
+    start_at: str
+    end_at: Optional[str] = None
     country_code: str
     budget_amount: Optional[float] = None
     budget_currency: Optional[str] = None
@@ -3086,8 +3086,8 @@ class CampaignCreatePayload(BaseModel):
 class CampaignUpdatePayload(BaseModel):
     name: Optional[str] = None
     status: Optional[str] = None
-    current_period_start: Optional[str] = None
-    current_period_end: Optional[str] = None
+    start_at: Optional[str] = None
+    end_at: Optional[str] = None
     country_code: Optional[str] = None
     budget_amount: Optional[float] = None
     budget_currency: Optional[str] = None
