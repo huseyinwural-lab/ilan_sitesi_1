@@ -9362,6 +9362,7 @@ def _dealer_listing_to_dict(listing: DealerListing) -> dict:
 @api_router.get("/dealer/listings")
 async def dealer_list_listings(
     request: Request,
+    status: Optional[str] = Query(None),
     current_user=Depends(check_permissions(["dealer"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
@@ -9370,16 +9371,24 @@ async def dealer_list_listings(
     except ValueError:
         raise HTTPException(status_code=400, detail="dealer invalid")
 
-    rows = (
-        await session.execute(
-            select(DealerListing)
-            .where(
-                DealerListing.dealer_id == dealer_uuid,
-                DealerListing.deleted_at.is_(None),
-            )
-            .order_by(desc(DealerListing.created_at))
+    status_value = status.lower().strip() if status else None
+    if status_value == "all":
+        status_value = None
+    if status_value and status_value not in {"active", "draft", "archived"}:
+        raise HTTPException(status_code=400, detail="invalid status")
+
+    query = (
+        select(DealerListing)
+        .where(
+            DealerListing.dealer_id == dealer_uuid,
+            DealerListing.deleted_at.is_(None),
         )
-    ).scalars().all()
+        .order_by(desc(DealerListing.created_at))
+    )
+    if status_value:
+        query = query.where(DealerListing.status == status_value)
+
+    rows = (await session.execute(query)).scalars().all()
     items = [_dealer_listing_to_dict(row) for row in rows]
 
     active_count = (
