@@ -10132,16 +10132,31 @@ async def admin_list_categories(
     request: Request,
     country: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
-    query: Dict = {}
     if country:
         code = country.upper()
         _assert_country_scope(code, current_user)
-        query["country_code"] = code
-    docs = await db.categories.find(query, {"_id": 0}).sort("sort_order", 1).to_list(length=1000)
-    return {"items": [_normalize_category_doc(doc, include_schema=True) for doc in docs]}
+        query = (
+            select(Category)
+            .options(selectinload(Category.translations))
+            .where(Category.country_code == code, Category.is_deleted.is_(False))
+        )
+    else:
+        query = (
+            select(Category)
+            .options(selectinload(Category.translations))
+            .where(Category.is_deleted.is_(False))
+        )
+
+    result = await session.execute(query.order_by(Category.sort_order.asc()))
+    items = result.scalars().all()
+    return {
+        "items": [
+            _serialize_category_sql(item, include_schema=True, include_translations=False)
+            for item in items
+        ]
+    }
 
 
 @api_router.post("/admin/categories", status_code=201)
