@@ -5120,8 +5120,8 @@ async def list_campaigns(
         if len(parts) == 2:
             start_dt = _parse_datetime_field(parts[0], "date_range_start")
             end_dt = _parse_datetime_field(parts[1], "date_range_end")
-            query = query.where(Campaign.current_period_start >= start_dt).where(
-                or_(Campaign.current_period_end.is_(None), Campaign.current_period_end <= end_dt)
+            query = query.where(Campaign.start_at >= start_dt).where(
+                or_(Campaign.end_at.is_(None), Campaign.end_at <= end_dt)
             )
 
     safe_page = max(page, 1)
