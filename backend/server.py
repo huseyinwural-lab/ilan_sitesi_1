@@ -10366,6 +10366,44 @@ async def _process_webhook_payment(
     return "ignored"
 
 
+@api_router.post("/payments/create-checkout-session/stub")
+async def create_checkout_session_stub(
+    payload: PaymentCheckoutStubPayload,
+    request: Request,
+):
+    if APP_ENV == "prod":
+        raise HTTPException(status_code=404, detail="Not found")
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=503, detail="Stripe not configured")
+
+    origin = payload.origin_url.strip().rstrip("/")
+    if not origin:
+        raise HTTPException(status_code=400, detail="origin_url required")
+
+    webhook_url = f"{origin}/api/webhook/stripe"
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+
+    success_url = f"{origin}/dealer/payments/success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{origin}/dealer/payments/cancel"
+
+    session_request = CheckoutSessionRequest(
+        amount=float(payload.amount),
+        currency=payload.currency,
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata=payload.metadata or {"stub": "true"},
+    )
+
+    checkout_session: CheckoutSessionResponse = stripe_checkout.create_checkout_session(session_request)
+
+    return {
+        "checkout_url": checkout_session.checkout_url,
+        "session_id": checkout_session.session_id,
+        "payment_intent_id": checkout_session.payment_intent_id,
+        "mode": "stub",
+    }
+
+
 @api_router.post("/payments/create-checkout-session")
 async def create_checkout_session(
     payload: PaymentCheckoutPayload,
