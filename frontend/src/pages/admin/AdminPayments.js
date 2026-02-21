@@ -56,11 +56,7 @@ export default function AdminPaymentsPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (urlCountry) params.set('country', urlCountry);
-      if (dealerId) params.set('dealer', dealerId);
       if (status !== 'all') params.set('status', status);
-      if (dateFrom) params.set('date_from', dateFrom);
-      if (dateTo) params.set('date_to', dateTo);
       const res = await axios.get(`${API}/admin/payments?${params.toString()}`, { headers: authHeader });
       setItems(res.data.items || []);
       setError('');
