@@ -1,4 +1,4 @@
-from sqlalchemy import String, Boolean, DateTime, Integer, Numeric, Index, Text, JSON
+from sqlalchemy import String, Boolean, DateTime, Integer, Numeric, Index, Text, JSON, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from datetime import datetime, timezone
@@ -10,21 +10,22 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    invoice_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
-    dealer_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
     provider: Mapped[str] = mapped_column(String(20), nullable=False, server_default="stripe")
-    provider_payment_id: Mapped[str | None] = mapped_column(String(120), nullable=True, unique=True)
-    amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
+    provider_ref: Mapped[str] = mapped_column(String(120), nullable=False)
+    invoice_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("admin_invoices.id"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="requires_payment_method")
+    amount_total: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
     currency: Mapped[str] = mapped_column(String(5), nullable=False, server_default="EUR")
-    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="pending")
-    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    meta_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
+        UniqueConstraint("provider", "provider_ref", name="uq_payments_provider_ref"),
         Index("ix_payments_invoice", "invoice_id"),
-        Index("ix_payments_dealer", "dealer_id"),
         Index("ix_payments_status", "status"),
+        Index("ix_payments_created", "created_at"),
     )
 
 
