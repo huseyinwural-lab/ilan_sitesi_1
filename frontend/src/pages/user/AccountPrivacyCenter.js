@@ -53,7 +53,7 @@ export default function AccountPrivacyCenter() {
     setExportLoading(true);
     setExportError('');
     try {
-      const res = await fetch(`${API}/users/me/export`, {
+      const res = await fetch(`${API}/v1/users/me/data-export`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
       });
       if (!res.ok) {
