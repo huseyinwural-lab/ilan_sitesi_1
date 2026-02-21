@@ -30,7 +30,7 @@ export default function AccountPrivacyCenter() {
   const handleConsentToggle = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/users/me`, {
+      const res = await fetch(`${API}/v1/users/me/profile`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
