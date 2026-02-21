@@ -36,6 +36,7 @@ class UserResponse(UserBase):
     is_verified: bool
     created_at: datetime
     last_login: Optional[datetime] = None
+    portal_scope: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
