@@ -10133,13 +10133,13 @@ async def create_checkout_session(
     cancel_url = f"{origin}/dealer/payments/cancel"
 
     session_request = CheckoutSessionRequest(
-        amount=float(invoice.amount),
-        currency=invoice.currency_code,
+        amount=float(invoice.amount_total),
+        currency=invoice.currency,
         success_url=success_url,
         cancel_url=cancel_url,
         metadata={
             "invoice_id": str(invoice.id),
-            "dealer_id": str(invoice.dealer_id),
+            "dealer_id": str(invoice.user_id),
             "invoice_no": invoice.invoice_no,
         },
     )
