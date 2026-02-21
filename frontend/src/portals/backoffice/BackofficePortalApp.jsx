@@ -7,6 +7,7 @@ import Dashboard from '@/pages/Dashboard';
 import FeatureFlags from '@/pages/FeatureFlags';
 import AdminUsersPage from '@/pages/admin/AdminUsers';
 import AdminCategories from '@/pages/admin/AdminCategories';
+import AdminCategoriesImportExport from '@/pages/admin/AdminCategoriesImportExport';
 import AdminAttributes from '@/pages/admin/AdminAttributes';
 import AdminVehicleMakes from '@/pages/admin/AdminVehicleMakes';
 import AdminVehicleModels from '@/pages/admin/AdminVehicleModels';
