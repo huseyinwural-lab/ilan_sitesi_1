@@ -219,6 +219,7 @@ export default function AccountProfile() {
     }
   };
 
+  const handlePushSubscribe = async () => {
     setPushMessage('');
     try {
       const permission = await Notification.requestPermission();
