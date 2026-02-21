@@ -133,6 +133,7 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
   const [editing, setEditing] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailData, setDetailData] = useState(null);
+  const detailRules = detailData?.rules_json || {};
   const [saving, setSaving] = useState(false);
 
   const authHeader = useMemo(() => ({
