@@ -194,180 +194,164 @@ export default function Register({ portalContext = 'account' }) {
             <p className="text-slate-600 text-sm mt-2">Bilgilerinizi girerek hesabınızı oluşturun.</p>
           </div>
 
-          {success ? (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" data-testid="register-success">
-              Kayıt tamamlandı. Giriş ekranına yönlenebilirsiniz.
-              <div className="mt-3">
-                <button
-                  type="button"
-                  onClick={() => navigate(loginPath)}
-                  className="h-10 px-4 rounded-md bg-emerald-600 text-white text-sm"
-                  data-testid="register-success-login"
-                >
-                  Girişe Git
-                </button>
+          <form onSubmit={handleSubmit} className="space-y-5" data-testid="register-form">
+            {error && (
+              <div className="rounded-md bg-destructive/10 text-destructive text-sm px-3 py-2" data-testid="register-error">
+                {error}
               </div>
+            )}
+
+            {isDealer ? (
+              <>
+                <div className="space-y-2" data-testid="register-company-field">
+                  <label className="text-sm font-medium" htmlFor="company-name">Firma adı</label>
+                  <input
+                    id="company-name"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="w-full h-11 rounded-md border px-3 text-sm"
+                    placeholder="Örn: Annoncia Motors"
+                    data-testid="register-company-name"
+                  />
+                </div>
+                <div className="space-y-2" data-testid="register-contact-field">
+                  <label className="text-sm font-medium" htmlFor="contact-name">Yetkili kişi</label>
+                  <input
+                    id="contact-name"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    className="w-full h-11 rounded-md border px-3 text-sm"
+                    placeholder="Örn: Ayşe Yılmaz"
+                    data-testid="register-contact-name"
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2" data-testid="register-fullname-field">
+                <label className="text-sm font-medium" htmlFor="full-name">Ad Soyad</label>
+                <input
+                  id="full-name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full h-11 rounded-md border px-3 text-sm"
+                  placeholder="Örn: Ali Demir"
+                  data-testid="register-full-name"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2" data-testid="register-email-field">
+              <label className="text-sm font-medium" htmlFor="register-email">E-posta</label>
+              <input
+                id="register-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full h-11 rounded-md border px-3 text-sm"
+                placeholder="mail@ornek.com"
+                data-testid="register-email"
+              />
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-5" data-testid="register-form">
-              {error && (
-                <div className="rounded-md bg-destructive/10 text-destructive text-sm px-3 py-2" data-testid="register-error">
-                  {error}
-                </div>
-              )}
 
-              {isDealer ? (
-                <>
-                  <div className="space-y-2" data-testid="register-company-field">
-                    <label className="text-sm font-medium" htmlFor="company-name">Firma adı</label>
-                    <input
-                      id="company-name"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      className="w-full h-11 rounded-md border px-3 text-sm"
-                      placeholder="Örn: Annoncia Motors"
-                      data-testid="register-company-name"
-                    />
-                  </div>
-                  <div className="space-y-2" data-testid="register-contact-field">
-                    <label className="text-sm font-medium" htmlFor="contact-name">Yetkili kişi</label>
-                    <input
-                      id="contact-name"
-                      value={contactName}
-                      onChange={(e) => setContactName(e.target.value)}
-                      className="w-full h-11 rounded-md border px-3 text-sm"
-                      placeholder="Örn: Ayşe Yılmaz"
-                      data-testid="register-contact-name"
-                    />
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-2" data-testid="register-fullname-field">
-                  <label className="text-sm font-medium" htmlFor="full-name">Ad Soyad</label>
-                  <input
-                    id="full-name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full h-11 rounded-md border px-3 text-sm"
-                    placeholder="Örn: Ali Demir"
-                    data-testid="register-full-name"
-                  />
-                </div>
-              )}
+            <div className="space-y-2" data-testid="register-password-field">
+              <label className="text-sm font-medium" htmlFor="register-password">Şifre</label>
+              <input
+                id="register-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-11 rounded-md border px-3 text-sm"
+                placeholder="En az 8 karakter"
+                data-testid="register-password"
+              />
+            </div>
 
-              <div className="space-y-2" data-testid="register-email-field">
-                <label className="text-sm font-medium" htmlFor="register-email">E-posta</label>
-                <input
-                  id="register-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-11 rounded-md border px-3 text-sm"
-                  placeholder="mail@ornek.com"
-                  data-testid="register-email"
-                />
-              </div>
-
-              <div className="space-y-2" data-testid="register-password-field">
-                <label className="text-sm font-medium" htmlFor="register-password">Şifre</label>
-                <input
-                  id="register-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-11 rounded-md border px-3 text-sm"
-                  placeholder="En az 8 karakter"
-                  data-testid="register-password"
-                />
-              </div>
-
-              <div className="space-y-2" data-testid="register-country-field">
-                <label className="text-sm font-medium" htmlFor="register-country">Ülke</label>
-                <div className="relative" data-testid="register-country-dropdown">
-                  <button
-                    type="button"
-                    id="register-country"
-                    onClick={() => setCountryOpen((prev) => !prev)}
-                    className="w-full h-11 rounded-md border px-3 text-sm flex items-center justify-between"
-                    data-testid="register-country-button"
-                  >
-                    <span data-testid="register-country-selected">
-                      {resolveCountryLabel(selectedCountry) || 'Ülke seçin'}
-                    </span>
-                    <span className="text-slate-400">▾</span>
-                  </button>
-                  {countryOpen && (
-                    <div
-                      className="absolute z-10 mt-2 w-full max-h-60 overflow-auto rounded-md border bg-white shadow-lg"
-                      data-testid="register-country-menu"
-                    >
-                      {countries.map((country) => (
-                        <button
-                          type="button"
-                          key={country.code}
-                          onClick={() => {
-                            setCountryCode(country.code);
-                            setCountryOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-muted ${
-                            countryCode === country.code ? 'bg-muted' : ''
-                          }`}
-                          data-testid={`register-country-option-${country.code.toLowerCase()}`}
-                        >
-                          {resolveCountryLabel(country)}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {countryLoading && (
-                  <p className="text-xs text-slate-500" data-testid="register-country-loading">
-                    Ülkeler yükleniyor...
-                  </p>
-                )}
-                {countryError && (
-                  <p className="text-xs text-amber-700" data-testid="register-country-error">
-                    {countryError}
-                  </p>
-                )}
-              </div>
-
-              {isDealer && (
-                <div className="space-y-2" data-testid="register-tax-field">
-                  <label className="text-sm font-medium" htmlFor="tax-id">Vergi / ID (opsiyonel)</label>
-                  <input
-                    id="tax-id"
-                    value={taxId}
-                    onChange={(e) => setTaxId(e.target.value)}
-                    className="w-full h-11 rounded-md border px-3 text-sm"
-                    placeholder="Vergi numarası"
-                    data-testid="register-tax-id"
-                  />
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full h-11 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 disabled:opacity-50"
-                data-testid="register-submit"
-              >
-                {loading ? 'Kaydediliyor...' : 'Hesap Oluştur'}
-              </button>
-
-              <div className="text-center text-sm" data-testid="register-login-link">
-                Zaten hesabın var mı?{' '}
+            <div className="space-y-2" data-testid="register-country-field">
+              <label className="text-sm font-medium" htmlFor="register-country">Ülke</label>
+              <div className="relative" data-testid="register-country-dropdown">
                 <button
                   type="button"
-                  onClick={() => navigate(loginPath)}
-                  className="text-blue-600 underline underline-offset-2 hover:text-blue-700"
-                  data-testid="register-login-button"
+                  id="register-country"
+                  onClick={() => setCountryOpen((prev) => !prev)}
+                  className="w-full h-11 rounded-md border px-3 text-sm flex items-center justify-between"
+                  data-testid="register-country-button"
                 >
-                  Giriş yap
+                  <span data-testid="register-country-selected">
+                    {resolveCountryLabel(selectedCountry) || 'Ülke seçin'}
+                  </span>
+                  <span className="text-slate-400">▾</span>
                 </button>
+                {countryOpen && (
+                  <div
+                    className="absolute z-10 mt-2 w-full max-h-60 overflow-auto rounded-md border bg-white shadow-lg"
+                    data-testid="register-country-menu"
+                  >
+                    {countries.map((country) => (
+                      <button
+                        type="button"
+                        key={country.code}
+                        onClick={() => {
+                          setCountryCode(country.code);
+                          setCountryOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-muted ${
+                          countryCode === country.code ? 'bg-muted' : ''
+                        }`}
+                        data-testid={`register-country-option-${country.code.toLowerCase()}`}
+                      >
+                        {resolveCountryLabel(country)}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            </form>
-          )}
+              {countryLoading && (
+                <p className="text-xs text-slate-500" data-testid="register-country-loading">
+                  Ülkeler yükleniyor...
+                </p>
+              )}
+              {countryError && (
+                <p className="text-xs text-amber-700" data-testid="register-country-error">
+                  {countryError}
+                </p>
+              )}
+            </div>
+
+            {isDealer && (
+              <div className="space-y-2" data-testid="register-tax-field">
+                <label className="text-sm font-medium" htmlFor="tax-id">Vergi / ID (opsiyonel)</label>
+                <input
+                  id="tax-id"
+                  value={taxId}
+                  onChange={(e) => setTaxId(e.target.value)}
+                  className="w-full h-11 rounded-md border px-3 text-sm"
+                  placeholder="Vergi numarası"
+                  data-testid="register-tax-id"
+                />
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 disabled:opacity-50"
+              data-testid="register-submit"
+            >
+              {loading ? 'Kaydediliyor...' : 'Hesap Oluştur'}
+            </button>
+
+            <div className="text-center text-sm" data-testid="register-login-link">
+              Zaten hesabın var mı?{' '}
+              <button
+                type="button"
+                onClick={() => navigate(loginPath)}
+                className="text-blue-600 underline underline-offset-2 hover:text-blue-700"
+                data-testid="register-login-button"
+              >
+                Giriş yap
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
