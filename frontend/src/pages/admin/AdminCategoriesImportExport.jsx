@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const MAX_FILE_MB = 10;
+const UPDATE_PAGE_SIZE = 6;
 
 const TABS = [
   { id: 'export', label: 'Export' },
@@ -18,6 +19,9 @@ export default function AdminCategoriesImportExport() {
   const [dryRunResult, setDryRunResult] = useState(null);
   const [commitResult, setCommitResult] = useState(null);
   const [publishResult, setPublishResult] = useState(null);
+  const [showOnlyChanged, setShowOnlyChanged] = useState(true);
+  const [expandedSlug, setExpandedSlug] = useState(null);
+  const [updatePage, setUpdatePage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
