@@ -113,3 +113,13 @@ SELECT action FROM audit_logs WHERE user_id='127b0006-4db9-4290-af4a-63f795360bc
 
 ## 8) Notlar
 - Billing audit log için ayrı tablo yok; audit_logs kullanılıyor. (Mongo Zero sonrası netleştirilecek)
+
+## 9) Billing Audit Endpoint (SQL)
+- `GET /api/admin/audit-logs?scope=billing` → **PASS**
+- RBAC: super_admin erişimi doğrulandı
+
+## 10) Wizard Mapping + Moderation + Search (SQL)
+- category_id + make_id + model_id zorunlu → **PASS** (create/submit)
+- Admin approve (SQL) → **PASS** (`/api/admin/listings/{id}/approve`)
+- /api/v2/search SQL → **PASS** (listing görünür)
+
