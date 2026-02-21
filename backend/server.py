@@ -10084,13 +10084,22 @@ def _resolve_payment_status(value: Optional[str]) -> str:
     return normalized or "requires_payment_method"
 
 
-def _apply_payment_status(invoice: AdminInvoice, payment: Payment, transaction: PaymentTransaction, payment_status: str, provider_payment_id: Optional[str]) -> None:
+def _apply_payment_status(
+    invoice: AdminInvoice,
+    payment: Payment,
+    transaction: PaymentTransaction,
+    payment_status: str,
+    provider_payment_id: Optional[str],
+    provider_ref: Optional[str] = None,
+    meta: Optional[Dict[str, Any]] = None,
+) -> None:
     now = datetime.now(timezone.utc)
     status_value = _resolve_payment_status(payment_status)
 
     if provider_payment_id:
-        payment.provider_payment_id = provider_payment_id
         transaction.provider_payment_id = provider_payment_id
+    if provider_ref:
+        payment.provider_ref = provider_ref
 
     if status_value == "succeeded":
         invoice.payment_status = "succeeded"
@@ -10098,7 +10107,6 @@ def _apply_payment_status(invoice: AdminInvoice, payment: Payment, transaction: 
         if not invoice.paid_at:
             invoice.paid_at = now
         payment.status = "succeeded"
-        payment.paid_at = now
         transaction.status = "succeeded"
         transaction.payment_status = "succeeded"
     elif status_value == "refunded":
@@ -10117,6 +10125,9 @@ def _apply_payment_status(invoice: AdminInvoice, payment: Payment, transaction: 
         payment.status = status_value
         transaction.status = status_value
         transaction.payment_status = status_value
+
+    if meta:
+        payment.meta_json = meta
 
     invoice.updated_at = now
     payment.updated_at = now
