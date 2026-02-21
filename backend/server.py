@@ -2635,6 +2635,10 @@ async def login(
     if user.get("status") == "suspended" or not user.get("is_active", True):
         raise HTTPException(status_code=403, detail="User account suspended")
 
+    portal_scope = _resolve_portal_scope(user.get("role"))
+    if not user.get("is_verified", False) and portal_scope in {"account", "dealer"}:
+        raise HTTPException(status_code=403, detail={"code": "EMAIL_NOT_VERIFIED"})
+
 
     # successful login: reset failed-login counters
     _failed_login_attempts.pop(rl_key, None)
