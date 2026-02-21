@@ -43,6 +43,13 @@ export default function Login({ portalContext = 'account' }) {
           return;
         }
 
+        if (!u?.is_verified) {
+          sessionStorage.setItem('pending_email', u?.email || '');
+          sessionStorage.setItem('pending_portal', expectedPortal);
+          navigate(expectedPortal === PORTALS.DEALER ? '/dealer/verify-email' : '/verify-email');
+          return;
+        }
+
         navigate(expectedPortal === PORTALS.DEALER ? '/dealer' : '/account');
         return;
       }
