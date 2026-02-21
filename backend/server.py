@@ -1571,6 +1571,72 @@ def _payment_to_dict(payment: Payment, invoice: Optional[AdminInvoice] = None, u
     }
 
 
+async def _activate_subscription_from_invoice(session: AsyncSession, invoice: AdminInvoice) -> None:
+    if not invoice.subscription_id or not invoice.plan_id:
+        return
+
+    subscription = await session.get(UserSubscription, invoice.subscription_id)
+    if not subscription:
+        return
+
+    plan = await session.get(Plan, invoice.plan_id)
+    if not plan:
+        return
+
+    now = datetime.now(timezone.utc)
+    subscription.status = "active"
+    subscription.current_period_start = subscription.current_period_start or now
+    subscription.current_period_end = subscription.current_period_end or (now + timedelta(days=30))
+    subscription.updated_at = now
+
+    user = await session.get(SqlUser, subscription.user_id)
+    if user:
+        user.listing_quota_limit = plan.listing_quota
+        user.showcase_quota_limit = plan.showcase_quota
+        user.updated_at = now
+
+    await _write_audit_log_sql(
+        session=session,
+        action="payment_succeeded",
+        actor={"id": str(invoice.user_id), "email": None},
+        resource_type="payment",
+        resource_id=str(invoice.id),
+        metadata={"invoice_id": str(invoice.id), "status": "succeeded"},
+        request=None,
+        country_code=invoice.country_code,
+    )
+    await _write_audit_log_sql(
+        session=session,
+        action="invoice_marked_paid",
+        actor={"id": str(invoice.user_id), "email": None},
+        resource_type="invoice",
+        resource_id=str(invoice.id),
+        metadata={"status": "paid"},
+        request=None,
+        country_code=invoice.country_code,
+    )
+    await _write_audit_log_sql(
+        session=session,
+        action="subscription_activated",
+        actor={"id": str(invoice.user_id), "email": None},
+        resource_type="subscription",
+        resource_id=str(subscription.id),
+        metadata={"status": "active"},
+        request=None,
+        country_code=invoice.country_code,
+    )
+    await _write_audit_log_sql(
+        session=session,
+        action="quota_limits_updated",
+        actor={"id": str(invoice.user_id), "email": None},
+        resource_type="user",
+        resource_id=str(subscription.user_id),
+        metadata={"listing_quota_limit": plan.listing_quota, "showcase_quota_limit": plan.showcase_quota},
+        request=None,
+        country_code=invoice.country_code,
+    )
+
+
 async def _invoice_totals_by_currency(
     session: AsyncSession, conditions: List[Any]
 ) -> Dict[str, float]:
