@@ -9359,15 +9359,35 @@ async def dealer_list_listings(
     rows = (
         await session.execute(
             select(DealerListing)
-            .where(DealerListing.dealer_id == dealer_uuid)
+            .where(
+                DealerListing.dealer_id == dealer_uuid,
+                DealerListing.deleted_at.is_(None),
+            )
             .order_by(desc(DealerListing.created_at))
         )
     ).scalars().all()
     items = [_dealer_listing_to_dict(row) for row in rows]
-    used = len(rows)
+
+    active_count = (
+        await session.execute(
+            select(func.count()).select_from(DealerListing).where(
+                DealerListing.dealer_id == dealer_uuid,
+                DealerListing.status == "active",
+                DealerListing.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one()
+
     limit = DEALER_LISTING_QUOTA_LIMIT
-    remaining = max(0, limit - used)
-    return {"items": items, "quota": {"limit": limit, "used": used, "remaining": remaining}}
+    remaining = max(0, limit - int(active_count or 0))
+    return {
+        "items": items,
+        "quota": {
+            "limit": limit,
+            "used": int(active_count or 0),
+            "remaining": remaining,
+        },
+    }
 
 
 @api_router.get("/dealer/quotas")
