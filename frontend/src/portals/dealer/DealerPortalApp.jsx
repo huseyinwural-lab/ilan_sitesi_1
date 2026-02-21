@@ -30,6 +30,7 @@ export default function DealerPortalApp() {
     <Routes>
       <Route path="/" element={<DealerLayout />}>
         <Route index element={<DealerHome />} />
+        <Route path="listings" element={<DealerListings />} />
         <Route path="invoices" element={<DealerInvoices />} />
         <Route path="payments/success" element={<PaymentSuccess />} />
         <Route path="payments/cancel" element={<PaymentCancel />} />
