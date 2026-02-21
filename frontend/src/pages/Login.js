@@ -222,7 +222,7 @@ export default function Login({ portalContext = 'account' }) {
             <div className="space-y-2" data-testid="login-password-field">
               <label className="text-sm font-medium" htmlFor="password">{t('password')}</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
