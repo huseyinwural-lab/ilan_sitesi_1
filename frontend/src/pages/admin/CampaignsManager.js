@@ -509,7 +509,7 @@ export default function CampaignsManager({ campaignType, title, subtitle, testId
                       <td className="p-3" data-testid={`${testIdPrefix}-updated-${campaign.id}`}>{formatDate(campaign.updated_at)}</td>
                       {campaignType === 'corporate' ? (
                         <td className="p-3" data-testid={`${testIdPrefix}-plan-${campaign.id}`}>
-                          {campaign.eligible_dealer_plan || '-'} / {campaign.eligible_dealers_count || 0}
+                          {dealerPlan} / {dealerCount}
                         </td>
                       ) : (
                         <td className="p-3" data-testid={`${testIdPrefix}-users-${campaign.id}`}>
