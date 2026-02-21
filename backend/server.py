@@ -4368,29 +4368,35 @@ async def unsubscribe_push_notifications(
 
 
 @api_router.get("/v1/favorites")
-async def list_favorites(request: Request, current_user=Depends(require_portal_scope("account"))):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
+async def list_favorites(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_id = uuid.UUID(current_user.get("id"))
 
     favorites = (
-        await db.favorites.find({"user_id": current_user.get("id")}, {"_id": 0})
-        .sort("created_at", -1)
-        .to_list(length=500)
-    )
-    listing_ids = [fav.get("listing_id") for fav in favorites if fav.get("listing_id")]
+        await session.execute(
+            select(Favorite)
+            .where(Favorite.user_id == user_id)
+            .order_by(desc(Favorite.created_at))
+        )
+    ).scalars().all()
+
+    listing_ids = [fav.listing_id for fav in favorites if fav.listing_id]
     listings = []
     if listing_ids:
-        listings = await db.vehicle_listings.find({"id": {"$in": listing_ids}}, {"_id": 0}).to_list(length=len(listing_ids))
-    listing_map = {listing.get("id"): listing for listing in listings}
+        listings = (
+            await session.execute(select(Listing).where(Listing.id.in_(listing_ids)))
+        ).scalars().all()
+    listing_map = {listing.id: listing for listing in listings}
 
     items = []
     for fav in favorites:
-        snapshot = _build_listing_snapshot(listing_map.get(fav.get("listing_id")))
+        snapshot = _build_listing_snapshot(listing_map.get(fav.listing_id))
         items.append(
             {
-                "id": fav.get("id"),
-                "created_at": fav.get("created_at"),
+                "id": str(fav.id),
+                "created_at": fav.created_at.isoformat() if fav.created_at else None,
                 **snapshot,
             }
         )
@@ -4399,49 +4405,87 @@ async def list_favorites(request: Request, current_user=Depends(require_portal_s
 
 
 @api_router.get("/v1/favorites/count")
-async def favorites_count(request: Request, current_user=Depends(require_portal_scope("account"))):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-    count = await db.favorites.count_documents({"user_id": current_user.get("id")})
-    return {"count": count}
+async def favorites_count(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_id = uuid.UUID(current_user.get("id"))
+    count = (
+        await session.execute(
+            select(func.count()).select_from(Favorite).where(Favorite.user_id == user_id)
+        )
+    ).scalar_one()
+    return {"count": int(count or 0)}
 
 
 @api_router.get("/v1/favorites/{listing_id}")
-async def favorite_state(listing_id: str, request: Request, current_user=Depends(require_portal_scope("account"))):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-    exists = await db.favorites.find_one({"user_id": current_user.get("id"), "listing_id": listing_id}, {"_id": 0})
+async def favorite_state(
+    listing_id: str,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_id = uuid.UUID(current_user.get("id"))
+    listing_uuid = uuid.UUID(listing_id)
+    exists = (
+        await session.execute(
+            select(Favorite).where(
+                Favorite.user_id == user_id,
+                Favorite.listing_id == listing_uuid,
+            )
+        )
+    ).scalar_one_or_none()
     return {"is_favorite": bool(exists)}
 
 
 @api_router.post("/v1/favorites/{listing_id}")
-async def add_favorite(listing_id: str, request: Request, current_user=Depends(require_portal_scope("account"))):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
+async def add_favorite(
+    listing_id: str,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_id = uuid.UUID(current_user.get("id"))
+    listing_uuid = uuid.UUID(listing_id)
 
-    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    listing = (
+        await session.execute(select(Listing).where(Listing.id == listing_uuid))
+    ).scalar_one_or_none()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    fav_id = str(uuid.uuid4())
-    await db.favorites.update_one(
-        {"user_id": current_user.get("id"), "listing_id": listing_id},
-        {"$setOnInsert": {"id": fav_id, "created_at": now_iso}},
-        upsert=True,
-    )
+    existing = (
+        await session.execute(
+            select(Favorite).where(
+                Favorite.user_id == user_id,
+                Favorite.listing_id == listing_uuid,
+            )
+        )
+    ).scalar_one_or_none()
+    if not existing:
+        session.add(Favorite(user_id=user_id, listing_id=listing_uuid))
+        await session.commit()
+
     return {"ok": True, "is_favorite": True}
 
 
 @api_router.delete("/v1/favorites/{listing_id}")
-async def remove_favorite(listing_id: str, request: Request, current_user=Depends(require_portal_scope("account"))):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-    await db.favorites.delete_one({"user_id": current_user.get("id"), "listing_id": listing_id})
+async def remove_favorite(
+    listing_id: str,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_id = uuid.UUID(current_user.get("id"))
+    listing_uuid = uuid.UUID(listing_id)
+    favorite = (
+        await session.execute(
+            select(Favorite).where(
+                Favorite.user_id == user_id,
+                Favorite.listing_id == listing_uuid,
+            )
+        )
+    ).scalar_one_or_none()
+    if favorite:
+        await session.delete(favorite)
+        await session.commit()
     return {"ok": True, "is_favorite": False}
 
 
@@ -4450,16 +4494,8 @@ async def create_message_thread(
     payload: MessageThreadCreatePayload,
     request: Request,
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-
-    listing = await db.vehicle_listings.find_one({"id": payload.listing_id}, {"_id": 0})
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-
-    seller_id = listing.get("created_by")
     buyer_id = current_user.get("id")
     if not seller_id or not buyer_id:
         raise HTTPException(status_code=400, detail="Invalid participants")
