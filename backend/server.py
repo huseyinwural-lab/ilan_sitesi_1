@@ -10374,7 +10374,14 @@ async def create_checkout_session_stub(
     if APP_ENV == "prod":
         raise HTTPException(status_code=404, detail="Not found")
     if not STRIPE_API_KEY:
-        raise HTTPException(status_code=503, detail="Stripe not configured")
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "blocked",
+                "reason": "stripe_not_configured",
+                "checkout_url": None,
+            },
+        )
 
     origin = payload.origin_url.strip().rstrip("/")
     if not origin:
