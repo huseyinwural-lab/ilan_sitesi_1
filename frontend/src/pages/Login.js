@@ -4,17 +4,26 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Lock, Mail, Eye, EyeOff, AlertCircle, Sun, Moon, Globe } from 'lucide-react';
+import { PORTALS, ROLE_TO_PORTAL, portalFromScope, defaultHomeForRole } from '@/shared/types/portals';
 
-export default function Login() {
+export default function Login({ portalContext = 'account' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState(null); // { code, retry_after_seconds }
+  const [error, setError] = useState(null); // { code, retry_after_seconds, expected, actual }
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [rememberMe, setRememberMe] = useState(true);
+  const [portalSelection, setPortalSelection] = useState(
+    portalContext === 'dealer' ? 'dealer' : 'account'
+  );
+  const { login, logout } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  const isAdminLogin = portalContext === 'admin';
+  const showPortalSelector = !isAdminLogin;
+  const registerPath = portalSelection === 'dealer' ? '/dealer/register' : '/register';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +32,21 @@ export default function Login() {
 
     try {
       const u = await login(email, password);
-      const { defaultHomeForRole } = await import('@/shared/types/portals');
+
+      if (showPortalSelector) {
+        const userPortal = portalFromScope(u?.portal_scope) || ROLE_TO_PORTAL[u?.role] || PORTALS.PUBLIC;
+        const expectedPortal = portalSelection === 'dealer' ? PORTALS.DEALER : PORTALS.INDIVIDUAL;
+
+        if (userPortal !== expectedPortal) {
+          setError({ code: 'PORTAL_MISMATCH', expected: expectedPortal, actual: userPortal });
+          logout();
+          return;
+        }
+
+        navigate(expectedPortal === PORTALS.DEALER ? '/dealer' : '/account');
+        return;
+      }
+
       navigate(defaultHomeForRole(u?.role));
     } catch (err) {
       const status = err.response?.status;
@@ -41,9 +64,29 @@ export default function Login() {
     }
   };
 
+  const renderPortalMismatchMessage = () => {
+    if (!error || error.code !== 'PORTAL_MISMATCH') return null;
+
+    if (error.actual === PORTALS.BACKOFFICE) {
+      return 'Bu hesap yönetici hesabı. Lütfen admin girişini kullanın.';
+    }
+
+    if (error.expected === PORTALS.DEALER) {
+      return 'Bu hesap bireysel giriş içindir. Bireysel seçimini kullanın.';
+    }
+
+    return 'Bu hesap ticari giriş içindir. Ticari seçimini kullanın.';
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
-      {/* Theme and Language toggles */}
+    <div
+      className={`min-h-screen flex items-center justify-center p-4 ${
+        isAdminLogin
+          ? 'bg-gradient-to-br from-background via-background to-muted/30'
+          : 'bg-[#f7c27a]'
+      }`}
+      data-testid="login-page"
+    >
       <div className="absolute top-4 right-4 flex items-center gap-2">
         <button
           onClick={toggleTheme}
@@ -68,39 +111,89 @@ export default function Login() {
         </div>
       </div>
 
-      <div className="w-full max-w-md">
-        <div className="bg-card rounded-lg shadow-lg border p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold tracking-tight">Giriş Yap</h1>
+      <div className="w-full max-w-2xl space-y-4" data-testid="login-content">
+        {!isAdminLogin && (
+          <div
+            className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900"
+            data-testid="login-info-banner"
+          >
+            <strong>MarketListing</strong> platformuna Türkiye dışından erişmek için giriş yapmanız gerekmektedir.
+            Hesabınız yoksa ücretsiz hesap açabilirsiniz.
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg shadow-lg border p-8" data-testid="login-card">
+          <div className="text-center mb-8" data-testid="login-header">
+            <h1 className="text-2xl font-bold tracking-tight">Giriş yap</h1>
             <p className="text-muted-foreground text-sm mt-2">Hesabınıza giriş yapın.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" data-testid="login-form">
+            {showPortalSelector && (
+              <div className="space-y-2" data-testid="login-portal-selector">
+                <label className="text-sm font-medium" data-testid="login-portal-label">Giriş türü</label>
+                <div className="flex flex-wrap items-center gap-6" data-testid="login-portal-options">
+                  <label className="flex items-center gap-2 text-sm" data-testid="login-portal-option-account">
+                    <input
+                      type="radio"
+                      name="portal"
+                      value="account"
+                      checked={portalSelection === 'account'}
+                      onChange={() => setPortalSelection('account')}
+                      className="h-4 w-4"
+                      data-testid="login-portal-account"
+                    />
+                    Bireysel
+                  </label>
+                  <label className="flex items-center gap-2 text-sm" data-testid="login-portal-option-dealer">
+                    <input
+                      type="radio"
+                      name="portal"
+                      value="dealer"
+                      checked={portalSelection === 'dealer'}
+                      onChange={() => setPortalSelection('dealer')}
+                      className="h-4 w-4"
+                      data-testid="login-portal-dealer"
+                    />
+                    Ticari
+                  </label>
+                </div>
+              </div>
+            )}
+
             {error && (
               <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm" data-testid="login-error">
                 <div className="flex items-center gap-2">
                   <AlertCircle size={16} />
-                  <div className="font-medium">
+                  <div className="font-medium" data-testid="login-error-message">
                     {error.code === 'INVALID_CREDENTIALS' && 'E-posta veya şifre hatalı'}
                     {error.code === 'RATE_LIMITED' && 'Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin.'}
+                    {error.code === 'PORTAL_MISMATCH' && renderPortalMismatchMessage()}
                     {error.code === 'UNKNOWN' && (t('login_error') || 'Giriş başarısız. Lütfen tekrar deneyin.')}
                   </div>
                 </div>
 
-                {/* Helper CTAs */}
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                  <a href="/help/forgot-password" className="underline underline-offset-2 hover:opacity-80">
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" data-testid="login-error-actions">
+                  <a
+                    href="/help/forgot-password"
+                    className="underline underline-offset-2 hover:opacity-80"
+                    data-testid="login-error-forgot-password"
+                  >
                     Şifremi unuttum
                   </a>
 
                   {error.code === 'RATE_LIMITED' && (
                     <>
                       <span className="text-destructive/80">Güvenlik nedeniyle geçici olarak engellendi.</span>
-                      <a href="/help/account-locked" className="underline underline-offset-2 hover:opacity-80">
+                      <a
+                        href="/help/account-locked"
+                        className="underline underline-offset-2 hover:opacity-80"
+                        data-testid="login-error-account-locked"
+                      >
                         Hesap kilitlendi mi?
                       </a>
                       {typeof error.retry_after_seconds === 'number' && (
-                        <span className="text-destructive/80">
+                        <span className="text-destructive/80" data-testid="login-error-retry-after">
                           ~{Math.max(1, Math.ceil(error.retry_after_seconds / 60))} dk
                         </span>
                       )}
@@ -110,7 +203,7 @@ export default function Login() {
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-2" data-testid="login-email-field">
               <label className="text-sm font-medium" htmlFor="email">{t('email')}</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
@@ -119,15 +212,15 @@ export default function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-10 pl-10 pr-4 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="admin@platform.com"
+                  className="w-full h-11 pl-10 pr-4 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  placeholder="E-posta adresi"
                   required
                   data-testid="login-email"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2" data-testid="login-password-field">
               <label className="text-sm font-medium" htmlFor="password">{t('password')}</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
@@ -136,8 +229,8 @@ export default function Login() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-10 pl-10 pr-10 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="••••••••"
+                  className="w-full h-11 pl-10 pr-10 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  placeholder="Şifre"
                   required
                   data-testid="login-password"
                 />
@@ -145,48 +238,106 @@ export default function Login() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  data-testid="login-toggle-password"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs" data-testid="login-helper-row">
+              <label className="flex items-center gap-2" data-testid="login-remember-me">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(event) => setRememberMe(event.target.checked)}
+                  className="h-4 w-4"
+                  data-testid="login-remember-me-checkbox"
+                />
+                Oturumum açık kalsın
+              </label>
+              <a
+                href="/help/forgot-password"
+                className="text-primary underline underline-offset-2 hover:opacity-80"
+                data-testid="login-forgot-password"
+              >
+                Şifremi unuttum
+              </a>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-10 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full h-11 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               data-testid="login-submit"
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   Loading...
                 </span>
-              ) : t('login')}
+              ) : (
+                'E-posta ile giriş yap'
+              )}
             </button>
-          </form>
 
-          {/* Demo Credentials (non-prod only) */}
-          {process.env.NODE_ENV !== 'production' && (
-            <div className="mt-6 pt-6 border-t">
-              <p className="text-xs text-muted-foreground text-center mb-3">Demo Credentials</p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2 rounded bg-muted/50">
-                  <p className="font-medium">Super Admin</p>
-                  <p className="text-muted-foreground">admin@platform.com</p>
-                  <p className="text-muted-foreground">Admin123!</p>
-                </div>
-                <div className="p-2 rounded bg-muted/50">
-                  <p className="font-medium">Moderator</p>
-                  <p className="text-muted-foreground">moderator@platform.de</p>
-                  <p className="text-muted-foreground">Demo123!</p>
-                </div>
-              </div>
+            <div className="text-center text-sm" data-testid="login-register">
+              Henüz hesabın yok mu?{' '}
+              <a
+                href={registerPath}
+                className="text-primary underline underline-offset-2"
+                data-testid="login-register-link"
+              >
+                Hesap aç
+              </a>
             </div>
-          )}
+
+            <div className="flex items-center gap-4" data-testid="login-divider">
+              <span className="h-px flex-1 bg-muted" />
+              <span className="text-xs text-muted-foreground">VEYA</span>
+              <span className="h-px flex-1 bg-muted" />
+            </div>
+
+            <div className="space-y-3" data-testid="login-social">
+              <button
+                type="button"
+                className="w-full h-11 rounded-md border text-sm font-medium hover:bg-muted/40"
+                data-testid="login-google"
+                disabled
+              >
+                Google ile giriş yap (Yakında)
+              </button>
+              <button
+                type="button"
+                className="w-full h-11 rounded-md border text-sm font-medium hover:bg-muted/40"
+                data-testid="login-apple"
+                disabled
+              >
+                Apple ile giriş yap (Yakında)
+              </button>
+            </div>
+
+            <div className="text-center text-xs" data-testid="login-qr-login">
+              <a
+                href="/login/qr"
+                className="text-primary underline underline-offset-2"
+                data-testid="login-qr-link"
+              >
+                QR kod ile mobil uygulamadan giriş yap
+              </a>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground text-center" data-testid="login-recaptcha">
+              Bu site reCAPTCHA ile korunmaktadır. Google Gizlilik Politikası ve Kullanım Koşulları geçerlidir.
+            </p>
+          </form>
         </div>
       </div>
     </div>
