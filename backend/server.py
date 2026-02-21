@@ -11220,6 +11220,7 @@ async def admin_import_categories_commit(
 
     result = await session.execute(select(Category).options(selectinload(Category.translations)))
     existing_categories = result.scalars().all()
+    _diff_categories(items, existing_categories)
     existing_by_slug = {(_pick_category_slug(cat.slug) or "").lower(): cat for cat in existing_categories}
 
     items_by_slug = {item["slug_tr"]: item for item in items}
