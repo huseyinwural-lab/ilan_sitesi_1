@@ -288,55 +288,65 @@ export default function Login({ portalContext = 'account' }) {
               )}
             </button>
 
-            <div className="text-center text-sm" data-testid="login-register">
-              Henüz hesabın yok mu?{' '}
-              <a
-                href={registerPath}
-                className="text-primary underline underline-offset-2"
-                data-testid="login-register-link"
-              >
-                Hesap aç
-              </a>
-            </div>
+            {showPortalSelector && (
+              <div className="text-center text-sm" data-testid="login-register">
+                Henüz hesabın yok mu?{' '}
+                <a
+                  href={registerPath}
+                  className="text-primary underline underline-offset-2"
+                  data-testid="login-register-link"
+                >
+                  Hesap aç
+                </a>
+              </div>
+            )}
 
-            <div className="flex items-center gap-4" data-testid="login-divider">
-              <span className="h-px flex-1 bg-muted" />
-              <span className="text-xs text-muted-foreground">VEYA</span>
-              <span className="h-px flex-1 bg-muted" />
-            </div>
+            {showPortalSelector && (
+              <div className="flex items-center gap-4" data-testid="login-divider">
+                <span className="h-px flex-1 bg-muted" />
+                <span className="text-xs text-muted-foreground">VEYA</span>
+                <span className="h-px flex-1 bg-muted" />
+              </div>
+            )}
 
-            <div className="space-y-3" data-testid="login-social">
-              <button
-                type="button"
-                className="w-full h-11 rounded-md border text-sm font-medium hover:bg-muted/40"
-                data-testid="login-google"
-                disabled
-              >
-                Google ile giriş yap (Yakında)
-              </button>
-              <button
-                type="button"
-                className="w-full h-11 rounded-md border text-sm font-medium hover:bg-muted/40"
-                data-testid="login-apple"
-                disabled
-              >
-                Apple ile giriş yap (Yakında)
-              </button>
-            </div>
+            {showPortalSelector && (
+              <div className="space-y-3" data-testid="login-social">
+                <button
+                  type="button"
+                  className="w-full h-11 rounded-md border text-sm font-medium hover:bg-muted/40"
+                  data-testid="login-google"
+                  disabled
+                >
+                  Google ile giriş yap (Yakında)
+                </button>
+                <button
+                  type="button"
+                  className="w-full h-11 rounded-md border text-sm font-medium hover:bg-muted/40"
+                  data-testid="login-apple"
+                  disabled
+                >
+                  Apple ile giriş yap (Yakında)
+                </button>
+              </div>
+            )}
 
-            <div className="text-center text-xs" data-testid="login-qr-login">
-              <a
-                href="/login/qr"
-                className="text-primary underline underline-offset-2"
-                data-testid="login-qr-link"
-              >
-                QR kod ile mobil uygulamadan giriş yap
-              </a>
-            </div>
+            {showPortalSelector && (
+              <div className="text-center text-xs" data-testid="login-qr-login">
+                <a
+                  href="/login/qr"
+                  className="text-primary underline underline-offset-2"
+                  data-testid="login-qr-link"
+                >
+                  QR kod ile mobil uygulamadan giriş yap
+                </a>
+              </div>
+            )}
 
-            <p className="text-[11px] text-muted-foreground text-center" data-testid="login-recaptcha">
-              Bu site reCAPTCHA ile korunmaktadır. Google Gizlilik Politikası ve Kullanım Koşulları geçerlidir.
-            </p>
+            {showPortalSelector && (
+              <p className="text-[11px] text-muted-foreground text-center" data-testid="login-recaptcha">
+                Bu site reCAPTCHA ile korunmaktadır. Google Gizlilik Politikası ve Kullanım Koşulları geçerlidir.
+              </p>
+            )}
           </form>
         </div>
       </div>
