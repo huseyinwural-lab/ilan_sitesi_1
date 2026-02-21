@@ -5103,36 +5103,30 @@ async def update_campaign(
         if data["status"] not in allowed:
             raise HTTPException(status_code=400, detail="Invalid status transition")
 
-    campaign.country_scope = data["country_scope"]
     campaign.country_code = data["country_code"]
     campaign.name = data["name"]
-    campaign.description = data["description"]
     campaign.status = data["status"]
     campaign.start_at = data["start_at"]
     campaign.end_at = data["end_at"]
-    campaign.priority = data["priority"]
-    campaign.duration_days = data["duration_days"]
-    campaign.quota_count = data["quota_count"]
-    campaign.price_amount = data["price_amount"]
-    campaign.currency_code = data["currency_code"]
+    campaign.budget_amount = data["budget_amount"]
+    campaign.budget_currency = data["budget_currency"]
+    campaign.notes = data["notes"]
+    campaign.rules_json = data["rules_json"]
     campaign.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="CAMPAIGN_UPDATED",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="campaign",
+        resource_id=campaign_id,
+        metadata={"before": before_state, "after": _campaign_to_dict(campaign)},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
 
     await session.commit()
     await session.refresh(campaign)
-
-    db = request.app.state.db
-    if db is not None:
-        audit_entry = await build_audit_entry(
-            event_type="CAMPAIGN_UPDATED",
-            actor=current_user,
-            target_id=campaign_id,
-            target_type="campaign",
-            country_code=current_user.get("country_code"),
-            details={"before": before_state, "after": _campaign_to_dict(campaign)},
-            request=request,
-        )
-        audit_entry["action"] = "CAMPAIGN_UPDATED"
-        await db.audit_logs.insert_one(audit_entry)
 
     return _campaign_to_dict(campaign)
 
