@@ -2323,8 +2323,7 @@ async def login(
     request: Request,
     session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    auth_repo = _get_auth_repository(db, session)
+    auth_repo = _get_auth_repository(session)
 
     email = (credentials.email or "").lower().strip()
     ip_address = _get_client_ip(request)
@@ -2446,8 +2445,7 @@ async def refresh_token_endpoint(
     request: Request,
     session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    auth_repo = _get_auth_repository(db, session)
+    auth_repo = _get_auth_repository(session)
 
     payload = decode_token(data.refresh_token)
     if not payload or payload.get("type") != "refresh":
