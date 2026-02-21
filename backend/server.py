@@ -10791,6 +10791,7 @@ async def admin_create_plan(
         name=name,
         country_scope=scope_value,
         country_code=country_value,
+        period=period_value,
         price_amount=payload.price_amount,
         currency_code=currency_code,
         listing_quota=payload.listing_quota,
