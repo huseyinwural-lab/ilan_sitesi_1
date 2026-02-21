@@ -2726,10 +2726,6 @@ if APP_ENV in {"preview", "prod"}:
     if APP_ENV == "prod" and EMAIL_PROVIDER == "mock":
         raise RuntimeError("EMAIL_PROVIDER cannot be mock in prod")
 
-if APP_ENV == "prod":
-    if EMAIL_PROVIDER == "mock":
-        raise RuntimeError("EMAIL_PROVIDER cannot be mock in prod")
-
 if EMAIL_PROVIDER not in EMAIL_PROVIDER_OPTIONS:
     raise RuntimeError("EMAIL_PROVIDER must be one of: mock, sendgrid")
 
