@@ -118,6 +118,8 @@
 - **B8.1-B8.4 (2026-02-20):** Favoriler backend + profil/şifre API + GDPR export (metadata-only) + mesajlaşma REST/WS + push subscription altyapısı (VAPID secrets bekliyor)
 
 ## Release Notes
+- 2026-02-21: MONGO_TO_SQL_MIGRATION_V1 dokümanı + favorites/support_messages için Alembic draft hazırlandı.
+- 2026-02-21: SQL messaging planı (conversations/messages) dokümana işlendi; draft tablo çakışması giderildi.
 - 2026-02-21: Admin dashboard summary Mongo yokken boş veri döner; admin countries 200 + boş liste.
 - 2026-02-21: AdminUsers filtreleri custom dropdown + div-based liste (hydration warning fix).
 - 2026-02-21: Dealer portal listing CRUD (SQL) + quota chip + yeni route/menü.
