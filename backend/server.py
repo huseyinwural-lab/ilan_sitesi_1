@@ -13652,9 +13652,9 @@ async def _dashboard_trends(
     listings_trend: List[Dict[str, Any]] = []
     revenue_trend: List[Dict[str, Any]] = []
 
-    invoice_base: Dict[str, Any] = {"status": "paid"}
+    invoice_base: List[Any] = [AdminInvoice.status == "paid"]
     if effective_countries:
-        invoice_base["country_code"] = {"$in": effective_countries}
+        invoice_base.append(AdminInvoice.country_code.in_(effective_countries))
 
     for offset in range(window_days):
         day = (now - timedelta(days=(window_days - 1 - offset))).replace(hour=0, minute=0, second=0, microsecond=0)
