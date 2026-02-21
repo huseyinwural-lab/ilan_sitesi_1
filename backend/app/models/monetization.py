@@ -50,7 +50,7 @@ class UserSubscription(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-    plan: Mapped["SubscriptionPlan"] = relationship("SubscriptionPlan")
+    plan: Mapped["Plan"] = relationship("Plan")
 
     __table_args__ = (
         Index('ix_user_subscriptions_user', 'user_id', unique=True),
