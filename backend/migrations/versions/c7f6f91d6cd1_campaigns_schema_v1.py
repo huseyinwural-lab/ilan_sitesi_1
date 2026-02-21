@@ -72,7 +72,5 @@ def downgrade() -> None:
 
     op.create_index("ix_campaigns_type", "campaigns", ["type"])
     op.create_index("ix_campaigns_status", "campaigns", ["status"])
-    op.create_index("ix_campaigns_start_at", "campaigns", ["start_at"])
-    op.create_index("ix_campaigns_end_at", "campaigns", ["end_at"])
     op.create_index("ix_campaigns_country_code", "campaigns", ["country_code"])
     op.create_index("ix_campaigns_priority", "campaigns", ["priority"])
