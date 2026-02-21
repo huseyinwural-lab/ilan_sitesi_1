@@ -10269,51 +10269,81 @@ async def admin_update_category(
     payload: CategoryUpdatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    # Permission check already handled by dependency
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, db=db, )
+    try:
+        category_uuid = uuid.UUID(category_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid category id") from exc
 
-    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    result = await session.execute(
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.id == category_uuid)
+    )
+    category = result.scalar_one_or_none()
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
     if payload.expected_updated_at is not None:
-        current_updated_at = category.get("updated_at")
+        current_updated_at = category.updated_at.isoformat() if category.updated_at else None
         if current_updated_at and payload.expected_updated_at != current_updated_at:
             raise HTTPException(status_code=409, detail="Category updated in another session")
 
-    updates: Dict = {}
+    updates: Dict[str, Any] = {}
     schema = None
     schema_status = None
+
     if payload.name is not None:
         updates["name"] = payload.name.strip()
+
     if payload.slug is not None:
         slug = payload.slug.strip().lower()
         if not SLUG_PATTERN.match(slug):
             raise HTTPException(status_code=400, detail="slug format invalid")
+        existing = await session.execute(
+            select(Category).where(Category.slug["tr"].astext == slug, Category.id != category.id)
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="Category slug already exists")
         updates["slug"] = slug
+
     if payload.parent_id is not None:
-        if payload.parent_id:
-            parent = await db.categories.find_one({"id": payload.parent_id}, {"_id": 0})
+        parent_id_value = payload.parent_id or None
+        parent = None
+        if parent_id_value:
+            try:
+                parent_uuid = uuid.UUID(parent_id_value)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail="parent_id not valid") from exc
+            parent = await session.get(Category, parent_uuid)
             if not parent:
                 raise HTTPException(status_code=400, detail="parent_id not found")
-        updates["parent_id"] = payload.parent_id
+        updates["parent_id"] = parent.id if parent else None
+        updates["path"] = f"{parent.path}.{updates.get('slug') or _pick_category_slug(category.slug)}" if parent and parent.path else (updates.get("slug") or _pick_category_slug(category.slug))
+        updates["depth"] = (parent.depth + 1) if parent else 0
+
     if payload.country_code is not None:
         code = payload.country_code.upper() if payload.country_code else None
         if code:
             _assert_country_scope(code, current_user)
         updates["country_code"] = code
+        if code:
+            updates["allowed_countries"] = [code]
+
     if payload.active_flag is not None:
-        updates["active_flag"] = payload.active_flag
+        updates["is_enabled"] = payload.active_flag
+
     if payload.sort_order is not None:
         updates["sort_order"] = payload.sort_order
+
     if payload.hierarchy_complete is not None:
         updates["hierarchy_complete"] = payload.hierarchy_complete
+
     if payload.form_schema is not None:
         schema = _normalize_category_schema(payload.form_schema)
         schema_status = schema.get("status", "published")
-        hierarchy_complete = updates.get("hierarchy_complete", category.get("hierarchy_complete", True))
+        hierarchy_complete = updates.get("hierarchy_complete", category.hierarchy_complete)
         if not hierarchy_complete:
             raise HTTPException(status_code=409, detail="Kategori hiyerarşisi tamamlanmadan kaydedilemez")
         if schema_status != "draft":
@@ -10321,37 +10351,56 @@ async def admin_update_category(
         updates["form_schema"] = schema
 
     if not updates:
-        return {"category": _normalize_category_doc(category, include_schema=True)}
+        return {"category": _serialize_category_sql(category, include_schema=True, include_translations=False)}
 
-    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
-    audit_doc = {
-        "id": str(uuid.uuid4()),
-        "event_type": "CATEGORY_CHANGE",
-        "actor_id": current_user["id"],
-        "actor_role": current_user.get("role"),
-        "country_code": updates.get("country_code", category.get("country_code")),
-        "subject_type": "category",
-        "subject_id": category_id,
-        "action": "update",
-        "created_at": updates["updated_at"],
-        "metadata": updates,
-    }
-    await db.audit_logs.insert_one(audit_doc)
-    try:
-        await db.categories.update_one({"id": category_id}, {"$set": updates})
-    except Exception as e:
-        if "E11000" in str(e):
-            raise HTTPException(status_code=409, detail="Category slug already exists")
-        raise
-    category.update(updates)
+    if "slug" in updates:
+        slug_json = dict(category.slug or {})
+        slug_json.update({"tr": updates["slug"], "en": updates["slug"], "de": updates["slug"]})
+        updates["slug"] = slug_json
+
+    if "path" in updates and updates["path"] is None:
+        updates["path"] = _pick_category_slug(category.slug) or ""
+
+    updates["updated_at"] = datetime.now(timezone.utc)
+
+    for key, value in updates.items():
+        if hasattr(category, key):
+            setattr(category, key, value)
+
+    if "name" in updates:
+        translations = list(category.translations or [])
+        if not translations:
+            for lang in ("tr", "en", "de"):
+                session.add(
+                    CategoryTranslation(
+                        category_id=category.id,
+                        language=lang,
+                        name=updates["name"],
+                        description=None,
+                        meta_title=None,
+                        meta_description=None,
+                    )
+                )
+        else:
+            for translation in translations:
+                if translation.language in {"tr", "en", "de"}:
+                    translation.name = updates["name"]
+
+    await session.commit()
 
     if schema:
         if schema_status == "draft":
-            await _record_category_version(db, category_id, schema, current_user, "draft")
+            await _record_category_version_sql(session, category.id, schema, current_user, "draft")
         else:
-            await _mark_latest_category_version_published(db, category_id, schema, current_user)
+            await _mark_latest_category_version_published_sql(session, category.id, schema, current_user)
 
-    return {"category": _normalize_category_doc(category, include_schema=True)}
+    refreshed = await session.execute(
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.id == category.id)
+    )
+    updated = refreshed.scalar_one()
+    return {"category": _serialize_category_sql(updated, include_schema=True, include_translations=False)}
 
 
 @api_router.get("/admin/categories/{category_id}/versions")
