@@ -1,1 +1,4 @@
 Generic single-database configuration.
+
+ADR-MIG-01: Alembic migration’larda op.create_table_comment(...) kullanılmaz.
+Gerekçe: Postgres/Alembic DDL uyumsuzluğu; tablo/kolon comment’leri V2’de ayrı migration veya DB-native script ile uygulanır.
