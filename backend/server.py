@@ -10272,7 +10272,15 @@ async def get_checkout_status(
         session.add(payment)
 
     if invoice and payment:
-        _apply_payment_status(invoice, payment, transaction, payment_status or "", provider_payment_id)
+        _apply_payment_status(
+            invoice,
+            payment,
+            transaction,
+            payment_status or "",
+            provider_payment_id,
+            provider_ref=payment.provider_ref,
+            meta=metadata,
+        )
         await session.commit()
         await session.refresh(invoice)
 
