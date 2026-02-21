@@ -316,31 +316,7 @@ export default function AccountProfile() {
     }
   };
 
-  const handleGdprExport = async () => {
-    setGdprLoading(true);
-    setGdprError('');
-    try {
-      const res = await fetch(`${API}/users/me/export`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
-      });
-      if (!res.ok) {
-        throw new Error('Export alınamadı');
-      }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `gdpr-export.json`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      setGdprError('Export indirilemedi');
-    } finally {
-      setGdprLoading(false);
-    }
-  };
+
 
   if (loading) {
     return <LoadingState label="Profil yükleniyor..." />;
