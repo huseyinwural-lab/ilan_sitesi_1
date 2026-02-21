@@ -2626,6 +2626,149 @@ async def refresh_token_endpoint(
     )
 
 
+@api_router.get("/countries/public")
+async def list_public_countries(session: AsyncSession = Depends(get_sql_session)):
+    result = await session.execute(
+        select(Country).where(Country.is_enabled == True).order_by(Country.code)
+    )
+    countries = result.scalars().all()
+    return [
+        {
+            "id": str(country.id),
+            "code": country.code,
+            "name": country.name,
+            "default_language": country.default_language,
+            "default_currency": country.default_currency,
+        }
+        for country in countries
+    ]
+
+
+@api_router.post("/auth/register/consumer", response_model=UserResponse, status_code=201)
+async def register_consumer(
+    payload: ConsumerRegisterPayload,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    email = (payload.email or "").lower().strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="E-posta zorunludur")
+
+    country_code = await _ensure_country_enabled(session, payload.country_code)
+
+    existing = await session.execute(select(SqlUser).where(SqlUser.email == email))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    hashed_password = get_password_hash(payload.password)
+    user = SqlUser(
+        email=email,
+        hashed_password=hashed_password,
+        full_name=payload.full_name.strip(),
+        role="individual",
+        country_code=country_code,
+        country_scope=[country_code],
+        preferred_language=payload.preferred_language or "tr",
+        is_verified=False,
+        is_active=True,
+    )
+
+    try:
+        session.add(user)
+        await session.flush()
+        session.add(UserCredential(user_id=user.id, provider="password", password_hash=hashed_password))
+        await session.commit()
+        await session.refresh(user)
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="Email already registered")
+
+    user_payload = {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role,
+        "country_scope": user.country_scope or [country_code],
+        "preferred_language": user.preferred_language,
+        "is_active": user.is_active,
+        "is_verified": user.is_verified,
+        "deleted_at": None,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "last_login": user.last_login.isoformat() if user.last_login else None,
+        "portal_scope": _resolve_portal_scope(user.role),
+    }
+
+    return _user_to_response(user_payload)
+
+
+@api_router.post("/auth/register/dealer", response_model=UserResponse, status_code=201)
+async def register_dealer(
+    payload: DealerRegisterPayload,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    email = (payload.email or "").lower().strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="E-posta zorunludur")
+
+    country_code = await _ensure_country_enabled(session, payload.country_code)
+
+    existing = await session.execute(select(SqlUser).where(SqlUser.email == email))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    hashed_password = get_password_hash(payload.password)
+    user = SqlUser(
+        email=email,
+        hashed_password=hashed_password,
+        full_name=payload.contact_name.strip(),
+        role="dealer",
+        country_code=country_code,
+        country_scope=[country_code],
+        preferred_language=payload.preferred_language or "tr",
+        is_verified=False,
+        is_active=True,
+    )
+
+    try:
+        session.add(user)
+        await session.flush()
+        slug = await _generate_unique_dealer_slug(session, payload.company_name)
+        dealer_profile = DealerProfile(
+            user_id=user.id,
+            slug=slug,
+            company_name=payload.company_name.strip(),
+            vat_number=(payload.tax_id.strip() if payload.tax_id else None),
+            address_country=country_code,
+            contact_email=email,
+            verification_status="pending",
+        )
+        session.add(UserCredential(user_id=user.id, provider="password", password_hash=hashed_password))
+        session.add(dealer_profile)
+        await session.commit()
+        await session.refresh(user)
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="Email already registered")
+
+    user_payload = {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role,
+        "country_scope": user.country_scope or [country_code],
+        "preferred_language": user.preferred_language,
+        "is_active": user.is_active,
+        "is_verified": user.is_verified,
+        "deleted_at": None,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "last_login": user.last_login.isoformat() if user.last_login else None,
+        "portal_scope": _resolve_portal_scope(user.role),
+    }
+
+    return _user_to_response(user_payload)
+
+
 class UpdateUserPayload(BaseModel):
     role: Optional[str] = None
 
