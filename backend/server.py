@@ -9290,43 +9290,54 @@ async def admin_create_invoice(
 ):
     await _ensure_invoices_db_ready(session)
 
-    try:
-        dealer_uuid = uuid.UUID(payload.dealer_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="dealer_id invalid")
+    target_user_id = payload.user_id or payload.dealer_id
+    if not target_user_id:
+        raise HTTPException(status_code=400, detail="user_id is required")
 
     try:
-        plan_uuid = uuid.UUID(payload.plan_id)
+        user_uuid = uuid.UUID(target_user_id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="plan_id invalid")
+        raise HTTPException(status_code=400, detail="user_id invalid")
 
-    dealer = await session.get(SqlUser, dealer_uuid)
-    if not dealer:
-        raise HTTPException(status_code=404, detail="Dealer not found")
+    subscription_uuid = None
+    subscription = None
+    if payload.subscription_id:
+        try:
+            subscription_uuid = uuid.UUID(payload.subscription_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="subscription_id invalid")
+        subscription = await session.get(UserSubscription, subscription_uuid)
+        if not subscription:
+            raise HTTPException(status_code=404, detail="Subscription not found")
 
-    plan = await session.get(Plan, plan_uuid)
-    if not plan:
-        raise HTTPException(status_code=404, detail="Plan not found")
+    plan_uuid = None
+    plan = None
+    if payload.plan_id:
+        try:
+            plan_uuid = uuid.UUID(payload.plan_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="plan_id invalid")
+        plan = await session.get(Plan, plan_uuid)
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
 
-    scope_value = plan.country_scope
-    country_code = plan.country_code if scope_value == "country" else "GLOBAL"
-    if scope_value == "country":
-        _assert_country_scope(country_code, current_user)
-        currency_code = plan.currency_code or _resolve_currency_code(country_code)
-    else:
-        currency_code = plan.currency_code or "EUR"
+    user = await session.get(SqlUser, user_uuid)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    if not currency_code:
-        raise HTTPException(status_code=400, detail="currency_code unavailable")
+    currency_value = (payload.currency or payload.currency_code or "").upper().strip()
+    if not currency_value and plan:
+        currency_value = (plan.currency_code or "").upper().strip()
+    if not currency_value:
+        raise HTTPException(status_code=400, detail="currency is required")
 
-    if payload.currency_code and payload.currency_code != currency_code:
-        raise HTTPException(status_code=400, detail="currency_code invalid for scope")
-
-    amount_value = payload.amount if payload.amount is not None else plan.price_amount
+    amount_value = payload.amount_total if payload.amount_total is not None else payload.amount
+    if amount_value is None and plan:
+        amount_value = plan.price_amount
     if amount_value is None:
-        raise HTTPException(status_code=400, detail="amount is required")
+        raise HTTPException(status_code=400, detail="amount_total is required")
     if amount_value < 0:
-        raise HTTPException(status_code=400, detail="amount must be >= 0")
+        raise HTTPException(status_code=400, detail="amount_total must be >= 0")
 
     due_at = _parse_iso_datetime(payload.due_at, "due_at") if payload.due_at else None
     issue_now = True if payload.issue_now is None else payload.issue_now
@@ -9335,17 +9346,24 @@ async def admin_create_invoice(
     status_value = "issued" if issue_now else "draft"
     issued_at = now if issue_now else None
 
+    scope_value = "country" if user.country_code else "global"
+    country_code = user.country_code or None
+
     invoice = AdminInvoice(
         invoice_no=_generate_invoice_no(),
-        dealer_id=dealer_uuid,
+        user_id=user_uuid,
+        subscription_id=subscription_uuid,
         plan_id=plan_uuid,
-        amount=amount_value,
-        currency_code=currency_code,
+        campaign_id=None,
+        amount_total=amount_value,
+        currency=currency_value,
         status=status_value,
         payment_status="requires_payment_method",
         issued_at=issued_at,
         paid_at=None,
         due_at=due_at,
+        provider_customer_id=payload.provider_customer_id,
+        meta_json=payload.meta_json,
         scope=scope_value,
         country_code=country_code,
         payment_method=None,
@@ -9357,7 +9375,7 @@ async def admin_create_invoice(
     await session.commit()
     await session.refresh(invoice)
 
-    return {"invoice": _admin_invoice_to_dict(invoice, dealer, plan)}
+    return {"invoice": _admin_invoice_to_dict(invoice, user, plan)}
 
 
 @api_router.get("/admin/invoices")
