@@ -6107,11 +6107,11 @@ async def admin_get_dealer_detail(
             "created_at": dealer.get("created_at"),
         },
         "active_plan": active_plan,
-        "last_invoice": last_invoice,
-        "unpaid_count": unpaid_count,
+        "last_invoice": last_invoice_payload,
+        "unpaid_count": int(unpaid_count or 0),
         "package": {
             "plan_id": dealer.get("plan_id"),
-            "last_invoice": last_invoice,
+            "last_invoice": last_invoice_payload,
         },
     }
 
