@@ -148,6 +148,8 @@ async def get_current_user_optional(
     payload = decode_token(credentials.credentials)
     if not payload or payload.get("type") != "access":
         return None
+    if payload.get("token_version") != TOKEN_VERSION:
+        return None
 
     user_id = payload.get("sub")
     if not user_id:
