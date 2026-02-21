@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const menuItems = [
   { key: 'dashboard', path: '/dealer', label: 'Dashboard', icon: LayoutDashboard, testId: 'dealer-nav-dashboard' },
+  { key: 'listings', path: '/dealer/listings', label: 'İlanlar', icon: ListChecks, testId: 'dealer-nav-listings' },
   { key: 'invoices', path: '/dealer/invoices', label: 'Faturalar', icon: FileText, testId: 'dealer-nav-invoices' },
 ];
 
