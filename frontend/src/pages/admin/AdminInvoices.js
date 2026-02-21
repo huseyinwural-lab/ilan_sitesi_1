@@ -54,9 +54,7 @@ const resolveStatusBadgeClass = (value) => {
       return 'bg-green-100 text-green-700';
     case 'issued':
       return 'bg-orange-100 text-orange-700';
-    case 'overdue':
-      return 'bg-red-200 text-red-800';
-    case 'cancelled':
+    case 'void':
       return 'bg-red-100 text-red-700';
     case 'refunded':
       return 'bg-blue-100 text-blue-700';
