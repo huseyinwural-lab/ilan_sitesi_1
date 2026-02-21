@@ -25,6 +25,7 @@ else:
         MONGO_ENABLED = MONGO_ENABLED_RAW.lower() in {"1", "true", "yes"}
 
 AUTH_PROVIDER = (os.environ.get("AUTH_PROVIDER") or ("mongo" if MONGO_ENABLED else "sql")).lower()
+TOKEN_VERSION = os.environ.get("TOKEN_VERSION", "v2")
 
 ADMIN_ROLES = {
     "super_admin",
