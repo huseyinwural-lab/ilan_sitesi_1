@@ -85,6 +85,7 @@ from app.models.moderation import Listing
 from app.models.analytics import ListingView
 from app.models.messaging import Conversation, Message
 from app.models.favorite import Favorite
+from app.models.notification import Notification
 from app.models.support_message import SupportMessage
 
 
