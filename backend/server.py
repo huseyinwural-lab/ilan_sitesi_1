@@ -15011,134 +15011,99 @@ async def public_search_v2(
     limit: int = 20,
     price_min: Optional[int] = None,
     price_max: Optional[int] = None,
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    """Mongo-backed search endpoint for Public Portal.
-
-    Contract (minimal, to match existing SearchPage.js):
-    - Requires ?country=XX
-    - Returns: { items: [], facets: {}, facet_meta: {}, pagination: {total,page,pages} }
-
-    Notes:
-    - For v1.0.0 release blocker fix, we search only published vehicle listings.
-    - Facets are returned empty for now (UI will still render; facet list stays empty).
-    """
-
-    db = request.app.state.db
+    """SQL-backed search endpoint for Public Portal (active listings only)."""
 
     country_norm = (country or "").strip().upper()
     if not country_norm:
         raise HTTPException(status_code=400, detail="country is required")
 
-    # Base query: published listings only
-    query: Dict = {
-        "status": "published",
-        "country": country_norm,
-    }
-
-    if q:
-        query["$or"] = [
-            {"title": {"$regex": q, "$options": "i"}},
-            {"vehicle.make_key": {"$regex": q, "$options": "i"}},
-            {"vehicle.model_key": {"$regex": q, "$options": "i"}},
-        ]
-
-    if category:
-        keys = [category]
-        cat = await db.categories.find_one(
-            {
-                "$and": [
-                    {
-                        "$or": [
-                            {"slug": category},
-                            {"id": category},
-                        ],
-                    },
-                    {
-                        "$or": [
-                            {"country_code": None},
-                            {"country_code": ""},
-                            {"country_code": country_norm},
-                        ],
-                    },
-                    {"active_flag": True},
-                ],
-            },
-            {"_id": 0, "id": 1, "slug": 1},
-        )
-        if cat:
-            if cat.get("id"):
-                keys.append(cat["id"])
-            slug_value = _pick_label(cat.get("slug"))
-            if slug_value:
-                keys.append(slug_value)
-
-        query["category_key"] = {"$in": list(set(keys))}
-
-    if make:
-        query["vehicle.make_key"] = make
-    if model:
-        query["vehicle.model_key"] = model
-
-    # Price filters: stored as attributes.price_eur
-    if price_min is not None or price_max is not None:
-        price_q: Dict = {}
-        if price_min is not None:
-            price_q["$gte"] = int(price_min)
-        if price_max is not None:
-            price_q["$lte"] = int(price_max)
-        query["attributes.price_eur"] = price_q
-
-    # Pagination guardrails
     page = max(1, int(page))
     limit = min(100, max(1, int(limit)))
 
-    # Sorting
-    sort_spec = [("created_at", -1)]
+    base_conditions = [Listing.status == "published", Listing.country == country_norm]
+
+    if q:
+        q_value = f"%{q.strip()}%"
+        base_conditions.append(or_(Listing.title.ilike(q_value), Listing.description.ilike(q_value)))
+
+    if category:
+        category_value = category.strip()
+        category_id = None
+        try:
+            category_id = uuid.UUID(category_value)
+        except ValueError:
+            result = await session.execute(
+                select(Category.id).where(
+                    or_(
+                        Category.slug["tr"].astext == category_value,
+                        Category.slug["de"].astext == category_value,
+                        Category.slug["fr"].astext == category_value,
+                        Category.slug["en"].astext == category_value,
+                    )
+                )
+            )
+            category_id = result.scalar_one_or_none()
+        if category_id:
+            base_conditions.append(Listing.category_id == category_id)
+
+    if make:
+        make_value = make.strip()
+        try:
+            make_id = uuid.UUID(make_value)
+            base_conditions.append(Listing.make_id == make_id)
+        except ValueError:
+            base_conditions.append(Listing.attributes["vehicle"]["make_key"].astext == make_value)
+
+    if model:
+        model_value = model.strip()
+        try:
+            model_id = uuid.UUID(model_value)
+            base_conditions.append(Listing.model_id == model_id)
+        except ValueError:
+            base_conditions.append(Listing.attributes["vehicle"]["model_key"].astext == model_value)
+
+    if price_min is not None:
+        base_conditions.append(Listing.price >= float(price_min))
+    if price_max is not None:
+        base_conditions.append(Listing.price <= float(price_max))
+
+    query_stmt = select(Listing).where(and_(*base_conditions))
+    total_stmt = select(func.count()).select_from(Listing).where(and_(*base_conditions))
+
     if sort == "price_asc":
-        sort_spec = [("attributes.price_eur", 1), ("created_at", -1)]
+        query_stmt = query_stmt.order_by(Listing.price.asc().nulls_last())
     elif sort == "price_desc":
-        sort_spec = [("attributes.price_eur", -1), ("created_at", -1)]
+        query_stmt = query_stmt.order_by(Listing.price.desc().nulls_last())
     elif sort == "date_asc":
-        sort_spec = [("created_at", 1)]
+        query_stmt = query_stmt.order_by(Listing.created_at.asc())
+    else:
+        query_stmt = query_stmt.order_by(Listing.created_at.desc())
 
-    total = await db.vehicle_listings.count_documents(query)
-
-    cursor = (
-        db.vehicle_listings.find(query, {"_id": 0})
-        .sort(sort_spec)
-        .skip((page - 1) * limit)
-        .limit(limit)
-    )
-    docs = await cursor.to_list(length=limit)
+    rows = (await session.execute(query_stmt.offset((page - 1) * limit).limit(limit))).scalars().all()
+    total = (await session.execute(total_stmt)).scalar_one() or 0
 
     items = []
-    for d in docs:
-        v = d.get("vehicle") or {}
-        attrs = d.get("attributes") or {}
-        title = (d.get("title") or "").strip()
+    for listing in rows:
+        attrs = listing.attributes or {}
+        vehicle = attrs.get("vehicle") or {}
+        title = (listing.title or "").strip()
         if not title:
-            title = f"{(v.get('make_key') or '').upper()} {v.get('model_key') or ''} {v.get('year') or ''}".strip()
+            title = f"{(vehicle.get('make_key') or '').upper()} {vehicle.get('model_key') or ''} {vehicle.get('year') or ''}".strip()
 
-        media = d.get("media") or []
-        cover = next((m for m in media if m.get("is_cover")), media[0] if media else None)
-        image_url = None
-        if cover and cover.get("file"):
-            image_url = f"/media/listings/{d['id']}/{cover['file']}"
+        image_url = listing.images[0] if listing.images else None
 
-        price_data = d.get("price") or {}
-        primary_price = price_data.get("amount")
-        if primary_price is None:
-            primary_price = attrs.get("price_eur")
         items.append(
             {
-                "id": d["id"],
+                "id": str(listing.id),
                 "title": title,
-                "price": primary_price,
-                "currency": price_data.get("currency_primary") or "EUR",
-                "secondary_price": price_data.get("secondary_amount"),
-                "secondary_currency": price_data.get("currency_secondary"),
+                "price": listing.price,
+                "currency": listing.currency or "EUR",
+                "secondary_price": None,
+                "secondary_currency": None,
                 "image": image_url,
-                "city": "",
+                "city": listing.city or "",
             }
         )
 
@@ -15148,13 +15113,8 @@ async def public_search_v2(
         "items": items,
         "facets": {},
         "facet_meta": {},
-        "pagination": {
-            "total": total,
-            "page": page,
-            "pages": pages,
-        },
+        "pagination": {"total": int(total), "page": page, "pages": pages},
     }
-
 
 
 # =====================
