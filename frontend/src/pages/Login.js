@@ -64,6 +64,10 @@ export default function Login({ portalContext = 'account' }) {
         setError({ code: 'INVALID_CREDENTIALS' });
       } else if (status === 429 && detail?.code === 'RATE_LIMITED') {
         setError({ code: 'RATE_LIMITED', retry_after_seconds: detail?.retry_after_seconds });
+      } else if (status === 403 && detail?.code === 'EMAIL_NOT_VERIFIED') {
+        sessionStorage.setItem('pending_email', email);
+        sessionStorage.setItem('pending_portal', portalSelection);
+        setError({ code: 'EMAIL_NOT_VERIFIED' });
       } else {
         setError({ code: 'UNKNOWN' });
       }
