@@ -61,6 +61,8 @@ async def search_real_estate(
         query = query.where(Listing.price >= price_min)
     if price_max:
         query = query.where(Listing.price <= price_max)
+    if price_min or price_max:
+        query = query.where(or_(Listing.price_type == "FIXED", Listing.price_type.is_(None)))
         
     # Sorting
     if sort == "price_asc":
