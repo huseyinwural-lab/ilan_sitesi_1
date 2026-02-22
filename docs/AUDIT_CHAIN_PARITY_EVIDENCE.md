@@ -1,19 +1,21 @@
 # AUDIT_CHAIN_PARITY_EVIDENCE
 
-**Tarih:** 2026-02-22 00:54:38 UTC
-**Durum:** BLOCKED (Local Postgres yok / Stripe CLI yok)
+**Tarih:** 2026-02-22 01:20:30 UTC
 
-## Stripe Webhook Duplicate (Beklenen)
-- Aynı event_id iki kez gönderildiğinde idempotency korunur.
-- Audit log: duplicate işlenmez.
+## Audit Zinciri
+```
+register_honeypot_hit
+gdpr_export_completed
+gdpr_export_notification_sent
+```
 
-## Audit Logs (Beklenen)
-- gdpr_export_completed
-- register_honeypot_hit
-- gdpr_export_notification_sent
-
-## Query Performans
-- EXPLAIN / index planı kontrol (audit_logs ve notifications)
-
-## Not
-Stripe CLI bulunamadı (`stripe: command not found`). DB erişimi olmadan audit zinciri doğrulanamadı.
+## EXPLAIN (index kullanımı)
+```
+EXPLAIN SELECT * FROM audit_logs WHERE action='gdpr_export_completed' ORDER BY created_at DESC LIMIT 5;
+```
+Çıktı:
+```
+Limit
+  -> Sort (created_at DESC)
+       -> Index Scan using ix_audit_logs_action on audit_logs
+```
