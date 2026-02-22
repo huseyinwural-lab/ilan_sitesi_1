@@ -1,6 +1,8 @@
 # PREVIEW_MIGRATION_PARITY_EVIDENCE
 
 **Tarih:** 2026-02-22
+**Ticket ID:** TBD
+**SLA:** 48 saat
 **Durum:** BLOCKED (Preview DB erişimi yok)
 
 ## Komutlar (Yapılacak)
