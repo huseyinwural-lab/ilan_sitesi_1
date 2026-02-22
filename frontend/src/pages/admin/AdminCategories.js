@@ -771,7 +771,9 @@ const AdminCategories = () => {
     setHierarchyFieldErrors({});
   };
 
-  const handleLevelEditItem = (levelIndex, itemIndex) => {
+  const handleLevelEditItem = async (levelIndex, itemIndex) => {
+    const canProceed = await resetWizardProgress();
+    if (!canProceed) return;
     const path = [...getParentPathForLevel(levelIndex), itemIndex];
     updateSubcategory(path, { is_complete: false });
     setLevelCompletion((prev) => {
@@ -784,8 +786,6 @@ const AdminCategories = () => {
       return next;
     });
     setLevelSelections((prev) => prev.slice(0, levelIndex + 1));
-    setWizardProgress({ state: "draft" });
-    setHierarchyComplete(false);
     setHierarchyError("");
     setHierarchyFieldErrors({});
   };
