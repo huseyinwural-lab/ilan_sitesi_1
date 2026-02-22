@@ -1,6 +1,8 @@
 # HEALTH_MIGRATION_GATE_PREVIEW_EVIDENCE
 
 **Tarih:** 2026-02-22
+**Ticket ID:** TBD
+**SLA:** 48 saat
 **Durum:** BLOCKED (Preview DB secret injection bekleniyor)
 
 ## Mevcut Durum
