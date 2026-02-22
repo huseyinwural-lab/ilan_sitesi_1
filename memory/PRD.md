@@ -47,10 +47,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - GET /api/v1/users/me/data-export (JSON)
   - DELETE /api/v1/users/me/account (soft delete + 30 gün + is_active=false)
 - Frontend (Consumer Panel): AccountProfile + PrivacyCenter yeni v1 endpointlerine bağlı
-- **Portal Demo:** /portal-demo (auth gerektirmeyen bireysel/ticari menü önizlemesi)
+- **Portal yeniden tasarımı (EU uyumlu):**
   - Turuncu zemin + üst yatay menü + sol alt menü
   - Bireysel/Ticari menü farkları uygulandı
   - TR/DE/FR menü dili toggle
+- **Portal Demo:** /portal-demo (auth gerektirmeyen bireysel/ticari menü önizlemesi)
 - Dealer portal ek sayfalar: Şirket Profili + Gizlilik Merkezi
 - Preview/Prod DB fail-fast: CONFIG_MISSING hatası + localhost yasak + DB_SSL_MODE=require
 - .env override kapatıldı (server.py, core/config.py, app/database.py)
