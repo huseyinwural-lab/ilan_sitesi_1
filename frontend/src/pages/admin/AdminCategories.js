@@ -773,6 +773,7 @@ const AdminCategories = () => {
     setWizardProgress(item.wizard_progress || { state: "draft" });
     setHierarchyComplete(false);
     setHierarchyError("");
+    setHierarchyFieldErrors({});
     const relatedSubs = buildSubcategoryTree(item.id);
     const nextSubcategories = relatedSubs.length ? relatedSubs : [createSubcategoryDraft()];
     setSubcategories(nextSubcategories);
