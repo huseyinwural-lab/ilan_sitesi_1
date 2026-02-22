@@ -29,3 +29,7 @@ Preview/Prod ortamlarında **DATABASE_URL** sağlanmadan deploy **bloklanır**. 
 ## Notlar
 - Ops bağımlılığı net: DATABASE_URL sağlanana kadar preview/prod deploy **kapalı**.
 - Staging ortamı, migrations ve smoke testler için kullanılmalıdır.
+
+## Preview geçici workaround (P0)
+- Preview ortamında DATABASE_URL secret injection sorunu sürdüğü sürece **yalnız preview** için `backend/.env` kabul edilebilir.
+- Prod/Stage ortamlarında `.env` kullanımı **yasak**; deploy gate fail olmalıdır.
