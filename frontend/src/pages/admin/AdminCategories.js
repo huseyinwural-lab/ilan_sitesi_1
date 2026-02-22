@@ -147,6 +147,36 @@ const createSubcategoryDraft = () => ({
   children: [],
 });
 
+const TURKISH_CHAR_MAP = {
+  ç: "c",
+  Ç: "C",
+  ğ: "g",
+  Ğ: "G",
+  ı: "i",
+  İ: "I",
+  ö: "o",
+  Ö: "O",
+  ş: "s",
+  Ş: "S",
+  ü: "u",
+  Ü: "U",
+};
+
+const sanitizeSchemaStrings = (value) => {
+  if (typeof value === "string") {
+    return value.replace(/[çÇğĞıİöÖşŞüÜ]/g, (char) => TURKISH_CHAR_MAP[char] || char);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeSchemaStrings(item));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, val]) => [key, sanitizeSchemaStrings(val)])
+    );
+  }
+  return value;
+};
+
 const AdminCategories = () => {
   const { selectedCountry } = useCountry();
   const [items, setItems] = useState([]);
