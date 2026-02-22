@@ -3225,41 +3225,32 @@ const AdminCategories = () => {
                 Vazgeç
               </button>
               <div className="flex flex-wrap gap-2">
-                {prevStep && (
+                {nextStep && (
                   <button
-                    className="px-4 py-2 border rounded"
-                    onClick={() => setWizardStep(prevStep)}
-                    data-testid="categories-step-prev"
+                    className={`px-4 py-2 border rounded text-sm flex items-center gap-1 ${isNextEnabled ? 'text-slate-700' : 'text-slate-400 cursor-not-allowed'}`}
+                    onClick={() => {
+                      if (!isNextEnabled) {
+                        setHierarchyError("Önce bu adımı tamamlayın.");
+                        return;
+                      }
+                      setHierarchyError("");
+                      setWizardStep(nextStep);
+                    }}
+                    title={!isNextEnabled ? "Önce bu adımı tamamlayın." : ""}
+                    disabled={!isNextEnabled}
+                    data-testid="categories-step-next"
                   >
-                    Geri
+                    <span>Next</span>
+                    <span aria-hidden>→</span>
                   </button>
                 )}
-                {wizardStep === "preview" ? (
-                  <button
-                    className={`px-4 py-2 rounded text-white ${publishValidation.canPublish ? 'bg-emerald-600' : 'bg-emerald-300 cursor-not-allowed'}`}
-                    onClick={() => handleSave("draft")}
-                    disabled={!publishValidation.canPublish}
-                    data-testid="categories-save-final"
-                  >
-                    Kaydet
-                  </button>
-                ) : (
-                  nextStep && (
-                    <button
-                      className="px-4 py-2 bg-blue-600 text-white rounded"
-                      onClick={() => {
-                        if (wizardStep === "hierarchy") {
-                          handleHierarchyComplete();
-                          return;
-                        }
-                        setWizardStep(nextStep);
-                      }}
-                      data-testid="categories-step-next"
-                    >
-                      {wizardStep === "hierarchy" ? "Tamam" : wizardStep === "dynamic" ? "Bitti" : "Devam"}
-                    </button>
-                  )
-                )}
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded"
+                  onClick={handleStepComplete}
+                  data-testid="categories-step-complete"
+                >
+                  Tamam
+                </button>
               </div>
             </div>
           </div>
