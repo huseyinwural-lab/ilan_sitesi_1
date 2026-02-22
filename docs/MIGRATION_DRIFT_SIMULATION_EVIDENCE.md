@@ -1,20 +1,47 @@
 # MIGRATION_DRIFT_SIMULATION_EVIDENCE
 
-**Tarih:** 2026-02-22 00:54:38 UTC
-**Durum:** BLOCKED (Local Postgres yok)
+**Tarih:** 2026-02-22 01:20:30 UTC
 
-## Denenen Komut
+## Adım 1 — Current
 ```
-APP_ENV=preview DB_SSL_MODE=require DATABASE_URL=postgresql://localhost:5432/admin_panel alembic current
+alembic current
 ```
-Çıktı (özet):
+**Not:** Çoklu head mevcut.
+
+## Adım 2 — Downgrade
 ```
-psycopg2.OperationalError: connection to server at "localhost" (127.0.0.1), port 5432 failed
+alembic downgrade -1
+```
+**Not:** Çoklu head uyarısı alındı (beklenen).
+
+## Adım 3 — Migration Gate (Preview Mode)
+```
+GET http://localhost:8001/api/health/db
+```
+Yanıt:
+```
+HTTP/1.1 503
+{"migration_state":"migration_required", "reason":"migration_required"}
 ```
 
-## Beklenen Akış (DB hazır olduğunda)
-1. `alembic current`
-2. `alembic downgrade -1`
-3. `/api/health/db` → 503 + migration_required
-4. `alembic upgrade head`
-5. `/api/health/db` → 200 + migration_state=ok
+## Adım 4 — Upgrade
+```
+alembic upgrade heads
+```
+İlk deneme: `DuplicateTable: category_schema_versions` (downgrade rollback eksikliği)
+
+**Düzeltme:**
+```
+DROP TABLE IF EXISTS category_schema_versions CASCADE;
+```
+Ardından `alembic upgrade heads` başarıyla tamamlandı.
+
+## Adım 5 — Gate OK
+```
+GET http://localhost:8001/api/health/db
+```
+Yanıt:
+```
+HTTP/1.1 200
+{"migration_state":"ok"}
+```
