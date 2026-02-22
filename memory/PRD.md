@@ -1,9 +1,9 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-21
+**Son güncelleme:** 2026-02-22
 
 ## Orijinal Problem Tanımı
-EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi. 
+EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
 GDPR/KVKK kapsamı gereği profil yönetimi, privacy center, 2FA ve veri minimizasyonu zorunlu.
 Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üzerinden ilerleyecek.
 
@@ -12,6 +12,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - GDPR Privacy Center (JSON export + soft delete + consent log)
 - 2FA (TOTP + Backup codes)
 - EU uyumlu şirket profili ve VAT doğrulama (regex)
+- Preview/Prod ortamlarında DB fail-fast doğrulama
 
 ## Kullanıcı Personaları
 - **Consumer (Bireysel)**
@@ -42,27 +43,38 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - GET/POST /api/v1/users/me/2fa/* (status/setup/verify/disable)
   - GET /api/v1/users/me/data-export (JSON)
   - DELETE /api/v1/users/me/account (soft delete + 30 gün)
-- Frontend (Consumer Panel): AccountProfile + PrivacyCenter artık /api/v1 endpointlerine bağlı
-- Kanıt: /app/docs/PROFILE_ENDPOINT_FIX_EVIDENCE.md
+- Frontend (Consumer Panel): AccountProfile + PrivacyCenter yeni v1 endpointlerine bağlı
+- Preview/Prod DB fail-fast: localhost yasak + DB_SSL_MODE=require (server.py)
+- .env override kapatıldı (config/database)
+- Kanıtlar:
+  - /app/docs/PROFILE_ENDPOINT_FIX_EVIDENCE.md
+  - /app/docs/PREVIEW_DB_FIX_EVIDENCE.md
+  - /app/docs/PREVIEW_MIGRATION_EVIDENCE.md
+  - /app/docs/SPRINT1_PREVIEW_API_EVIDENCE.md
+  - /app/docs/SPRINT1_CLOSEOUT.md
 
 ## Blokajlar / Riskler
-- Preview ortamında backend 520 (DATABASE_URL/SQL servis erişimi yok). Curl doğrulama ve migration apply **bloklu**.
+- Preview ortamında backend 520 (DATABASE_URL secret injection + DB erişimi yok)
+- PostgreSQL bağlantısı localhost’a gidiyor; ops secret/allowlist bekleniyor
 
 ## Öncelikli Backlog
 ### P0 (Hemen)
-- Preview DB erişimini aç (DATABASE_URL + SQL servis)
-- `alembic upgrade head` çalıştır
-- Curl ile doğrulama:
-  - /api/v1/users/me/profile (consumer/dealer)
-  - /api/v1/users/me/dealer-profile
-  - /api/v1/users/me/data-export
-  - /api/v1/users/me/account
+- Preview ortamı için DATABASE_URL secret injection (sslmode=require)
+- Firewall allowlist: “Preview backend → Postgres 5432 outbound allow”
+- /api/health/db 200 + db_status=ok doğrulaması
+- `alembic current` + `alembic upgrade head` (p34_dealer_gdpr_deleted_at)
+- Curl doğrulama: /api/v1/users/me/profile, /api/v1/users/me/dealer-profile, /api/v1/users/me/data-export, /api/v1/users/me/account
 
-### P1 (Sprint-2)
-- Dealer Panel UI (plan & kota, listing grid, accounting VAT)
-- Compliance regression testleri
+### P1 (Sprint‑1 closeout)
+- 2FA enable → verify → login challenge PASS
+- Backup codes doğrulaması
+- Soft delete grace doğrulaması
+- GDPR export JSON doğrulaması
 
-### P2 (Backlog)
+### P1.5 / P2 (Enhancement)
+- Privacy Center export geçmişi (gdpr_exports tablosu + UI) → /app/docs/PRIVACY_EXPORT_HISTORY_SPEC.md
+
+### P2
 - VIES VAT doğrulama (API)
 - GDPR CSV export
 - Moderation reject flow
