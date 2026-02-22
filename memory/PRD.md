@@ -107,7 +107,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 
 ## Öncelikli Backlog
 ### P0 (Hemen)
-- Preview consumer/dealer E2E kanıtları: /api/v1/users/me/profile, /api/v1/users/me/dealer-profile, /api/v1/users/me/data-export, /api/v1/users/me/account
+- Preview GDPR export + soft delete E2E kanıtları (/api/v1/users/me/data-export, /api/v1/users/me/account)
 - Honeypot 400 + register_honeypot_hit audit doğrulaması (preview)
 - GDPR export completion notification + audit doğrulaması (preview)
 - Stripe idempotency testi (geçerli test API key sağlanınca)
