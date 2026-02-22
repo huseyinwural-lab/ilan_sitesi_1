@@ -1613,6 +1613,11 @@ const AdminCategories = () => {
                       onChange={(e) => updateLevelItem(levelIndex, itemIndex, { slug: e.target.value })}
                       data-testid={`categories-level-item-slug-${levelIndex}-${itemIndex}`}
                     />
+                    {slugError && (
+                      <div className="text-[11px] text-rose-600" data-testid={`categories-level-item-slug-error-${levelIndex}-${itemIndex}`}>
+                        {slugError}
+                      </div>
+                    )}
                     <input
                       type="number"
                       min={0}
