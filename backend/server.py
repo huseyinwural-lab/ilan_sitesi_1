@@ -2951,6 +2951,9 @@ async def health_db():
     except Exception:
         target = {"host": None, "database": None}
 
+    config_state = "missing_database_url" if not RAW_DATABASE_URL else "ok"
+    last_migration_check_at = _format_migration_checked_at()
+
     if not RAW_DATABASE_URL:
         return JSONResponse(
             status_code=200,
@@ -2963,6 +2966,8 @@ async def health_db():
                 "migration_state": "unknown",
                 "migration_head": None,
                 "migration_current": None,
+                "config_state": config_state,
+                "last_migration_check_at": last_migration_check_at,
             },
         )
 
@@ -2970,6 +2975,7 @@ async def health_db():
         async with sql_engine.connect() as conn:
             await conn.execute(select(1))
             migration_info = await _get_migration_state(conn)
+            last_migration_check_at = _format_migration_checked_at()
 
         migration_state = migration_info.get("state") or "unknown"
         response_content = {
@@ -2980,6 +2986,8 @@ async def health_db():
             "migration_state": migration_state,
             "migration_head": migration_info.get("head"),
             "migration_current": migration_info.get("current"),
+            "config_state": config_state,
+            "last_migration_check_at": last_migration_check_at,
         }
 
         if migration_state == "migration_required":
@@ -3004,6 +3012,8 @@ async def health_db():
                 "migration_state": "unknown",
                 "migration_head": None,
                 "migration_current": None,
+                "config_state": config_state,
+                "last_migration_check_at": last_migration_check_at,
             },
         )
 
