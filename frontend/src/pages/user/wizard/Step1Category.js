@@ -59,7 +59,7 @@ const CategorySelector = () => {
 
   return (
     <div className="space-y-6" data-testid="listing-category-selector">
-      <h2 className="text-2xl font-bold">Kategori Seç</h2>
+      <h2 className="text-2xl font-bold" data-testid="listing-category-title">Kategori Seç</h2>
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
         <div className="space-y-2" data-testid="listing-category-parents">
           {rootCategories.map((cat) => (
@@ -81,8 +81,8 @@ const CategorySelector = () => {
 
         <div className="space-y-4" data-testid="listing-category-children">
           {childCategories.length === 0 && activeParentId ? (
-            <div className="p-6 border rounded-xl text-center">
-              <p className="text-muted-foreground mb-4">Bu kategori altında alt kategori yok.</p>
+            <div className="p-6 border rounded-xl text-center" data-testid="listing-category-empty">
+              <p className="text-muted-foreground mb-4" data-testid="listing-category-empty-text">Bu kategori altında alt kategori yok.</p>
               {rootCategories
                 .filter((cat) => cat.id === activeParentId)
                 .map((cat) => (

@@ -134,8 +134,8 @@ const PricingLocation = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" data-testid="listing-pricing-form">
-      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
-        <h3 className="font-semibold text-gray-900">Fiyat ve Başlık</h3>
+      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4" data-testid="listing-price-section">
+        <h3 className="font-semibold text-gray-900" data-testid="listing-price-title">Fiyat ve Başlık</h3>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Başlık *</label>
           <input
@@ -229,8 +229,8 @@ const PricingLocation = () => {
       </div>
 
       {schema?.modules?.address?.enabled && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
-          <h3 className="font-semibold text-gray-900">Konum Bilgileri</h3>
+        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4" data-testid="listing-location-section">
+          <h3 className="font-semibold text-gray-900" data-testid="listing-location-title">Konum Bilgileri</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <input
               type="text"
@@ -261,8 +261,8 @@ const PricingLocation = () => {
       )}
 
       {schema?.modules?.contact?.enabled && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
-          <h3 className="font-semibold text-gray-900">İletişim Tercihleri</h3>
+        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4" data-testid="listing-contact-section">
+          <h3 className="font-semibold text-gray-900" data-testid="listing-contact-title">İletişim Tercihleri</h3>
           <input
             type="text"
             className="w-full p-2 border rounded-md"

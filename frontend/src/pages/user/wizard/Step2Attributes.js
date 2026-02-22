@@ -158,8 +158,8 @@ const AttributeForm = () => {
         </div>
       )}
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
-        <h3 className="font-semibold text-gray-900">Araç Bilgileri</h3>
+      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4" data-testid="listing-vehicle-section">
+        <h3 className="font-semibold text-gray-900" data-testid="listing-vehicle-title">Araç Bilgileri</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Marka *</label>
@@ -208,8 +208,8 @@ const AttributeForm = () => {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
-        <h3 className="font-semibold text-gray-900">Temel Bilgiler</h3>
+      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4" data-testid="listing-basic-section">
+        <h3 className="font-semibold text-gray-900" data-testid="listing-basic-title">Temel Bilgiler</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">KM *</label>
@@ -277,8 +277,8 @@ const AttributeForm = () => {
       </div>
 
       {schema?.dynamic_fields?.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
-          <h3 className="font-semibold text-gray-900">Dinamik Alanlar</h3>
+        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4" data-testid="listing-dynamic-section">
+          <h3 className="font-semibold text-gray-900" data-testid="listing-dynamic-title">Dinamik Alanlar</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {schema.dynamic_fields.map((field) => (
               <div key={field.id || field.key}>
@@ -324,8 +324,8 @@ const AttributeForm = () => {
       )}
 
       {schema?.detail_groups?.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
-          <h3 className="font-semibold text-gray-900">Özel Detay Grupları</h3>
+        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4" data-testid="listing-detail-section">
+          <h3 className="font-semibold text-gray-900" data-testid="listing-detail-title">Özel Detay Grupları</h3>
           <div className="space-y-4">
             {schema.detail_groups.map((group, index) => (
               <details key={group.id || group.title} className="border rounded-lg p-4" data-testid={`listing-detail-group-${index}`}>
