@@ -1422,138 +1422,157 @@ const AdminCategories = () => {
     }));
   };
 
-  const renderSubcategoryNode = (node, path, depth = 0) => {
-    const pathKey = path.join("-");
-    const label = getSubcategoryLabel(path);
-    const children = node.children || [];
-    const childAddDisabled = node.is_complete || (children.length > 0 && !children[children.length - 1].is_complete);
-    const isExpanded = expandedNodes.has(pathKey);
-    const summaryName = node.name ? node.name : "İsim girilmedi";
-    const summarySlug = node.slug ? node.slug : "Slug girilmedi";
+  const renderLevelColumn = (levelIndex) => {
+    const items = getLevelItems(levelIndex);
+    const levelComplete = items.length > 0 && items.every((item) => item.is_complete && item.name?.trim() && item.slug?.trim());
+    const selectedIndex = levelSelections[levelIndex];
 
     return (
       <div
-        key={`sub-${pathKey}`}
-        className="rounded-lg border p-3 space-y-3 bg-white"
-        style={{ marginLeft: depth * 16 }}
-        data-testid={`categories-subcategory-row-${pathKey}`}
+        key={`level-${levelIndex}`}
+        className="min-w-[260px] rounded-lg border bg-slate-50 p-3 space-y-3"
+        data-testid={`categories-level-column-${levelIndex}`}
       >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1">
-            <div className="text-sm font-semibold text-slate-800" data-testid={`categories-subcategory-label-${pathKey}`}>
-              {label}
-            </div>
-            <div className="text-xs text-slate-600" data-testid={`categories-subcategory-summary-${pathKey}`}>
-              {summaryName} · {summarySlug}
-            </div>
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-semibold text-slate-900" data-testid={`categories-level-title-${levelIndex}`}>
+            Kategori {levelIndex + 1}
           </div>
-          <div className="flex items-center gap-2">
-            {node.is_complete ? (
-              <span className="text-xs font-semibold text-emerald-600" data-testid={`categories-subcategory-status-${pathKey}`}>
-                Tamamlandı
-              </span>
-            ) : (
-              <span className="text-xs font-semibold text-amber-600" data-testid={`categories-subcategory-status-${pathKey}`}>
-                Taslak
-              </span>
-            )}
-            <button
-              type="button"
-              className="text-xs px-3 py-1 border rounded"
-              onClick={() => toggleSubcategoryExpanded(pathKey)}
-              data-testid={`categories-subcategory-toggle-${pathKey}`}
-            >
-              {isExpanded ? "Kapat" : "Aç"}
-            </button>
-          </div>
+          <button
+            type="button"
+            className="text-xs px-2 py-1 rounded border disabled:opacity-60"
+            onClick={() => handleLevelComplete(levelIndex, items)}
+            disabled={!levelComplete}
+            data-testid={`categories-level-complete-${levelIndex}`}
+          >
+            Tamam
+          </button>
         </div>
-
-        {isExpanded && (
-          <div className="pt-3 border-t space-y-3" data-testid={`categories-subcategory-panel-${pathKey}`}>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-              <div className="space-y-1">
-                <label className={labelClassName}>Ad</label>
-                <input
-                  className={inputClassName}
-                  value={node.name}
-                  disabled={node.is_complete}
-                  onChange={(e) => updateSubcategory(path, { name: e.target.value })}
-                  data-testid={`categories-subcategory-name-${pathKey}`}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className={labelClassName}>Slug</label>
-                <input
-                  className={inputClassName}
-                  value={node.slug}
-                  disabled={node.is_complete}
-                  onChange={(e) => updateSubcategory(path, { slug: e.target.value })}
-                  data-testid={`categories-subcategory-slug-${pathKey}`}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className={labelClassName}>Sıra</label>
-                <input
-                  type="number"
-                  min={0}
-                  className={inputClassName}
-                  value={node.sort_order}
-                  disabled={node.is_complete}
-                  onChange={(e) => updateSubcategory(path, { sort_order: e.target.value })}
-                  data-testid={`categories-subcategory-sort-${pathKey}`}
-                />
-              </div>
-              <label className="flex items-center gap-2 text-sm text-slate-800" data-testid={`categories-subcategory-active-${pathKey}`}>
-                <input
-                  type="checkbox"
-                  checked={node.active_flag}
-                  disabled={node.is_complete}
-                  onChange={(e) => updateSubcategory(path, { active_flag: e.target.checked })}
-                  data-testid={`categories-subcategory-active-input-${pathKey}`}
-                />
-                Aktif
-              </label>
+        <div className="space-y-3 max-h-[420px] overflow-y-auto" data-testid={`categories-level-items-${levelIndex}`}>
+          {items.length === 0 ? (
+            <div className="text-xs text-slate-500" data-testid={`categories-level-empty-${levelIndex}`}>
+              Bu seviyede kategori yok.
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {!node.is_complete && (
-                <button
-                  type="button"
-                  className="text-sm text-white bg-[#1f2a44] rounded px-3 py-1"
-                  onClick={() => completeSubcategory(path)}
-                  data-testid={`categories-subcategory-complete-${pathKey}`}
+          ) : (
+            items.map((item, itemIndex) => {
+              const path = [...getParentPathForLevel(levelIndex), itemIndex];
+              const isSelected = selectedIndex === itemIndex;
+              return (
+                <div
+                  key={`level-${levelIndex}-item-${itemIndex}`}
+                  className={`rounded-md border p-3 space-y-2 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'}`}
+                  data-testid={`categories-level-item-${levelIndex}-${itemIndex}`}
                 >
-                  Tamam
-                </button>
-              )}
-              {!node.is_complete && (
-                <button
-                  type="button"
-                  className="text-sm text-rose-600 border rounded px-2 py-1"
-                  onClick={() => removeSubcategory(path)}
-                  data-testid={`categories-subcategory-remove-${pathKey}`}
-                >
-                  Sil
-                </button>
-              )}
-              <button
-                type="button"
-                className="text-sm px-3 py-1 border rounded disabled:opacity-60"
-                onClick={() => addNestedSubcategory(path)}
-                disabled={childAddDisabled}
-                data-testid={`categories-subcategory-child-add-${pathKey}`}
-              >
-                Alt kategori ekle
-              </button>
-            </div>
-            {children.length > 0 && (
-              <div className="space-y-2" data-testid={`categories-subcategory-children-${pathKey}`}>
-                {children.map((child, index) => renderSubcategoryNode(child, [...path, index], depth + 1))}
-              </div>
-            )}
-          </div>
-        )}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold text-slate-700" data-testid={`categories-level-item-label-${levelIndex}-${itemIndex}`}>
+                      {item.name || `Kategori ${itemIndex + 1}`}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {item.is_complete ? (
+                        <span className="text-[11px] font-semibold text-emerald-600" data-testid={`categories-level-item-status-${levelIndex}-${itemIndex}`}>
+                          Tamamlandı
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-semibold text-amber-600" data-testid={`categories-level-item-status-${levelIndex}-${itemIndex}`}>
+                          Taslak
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="text-[11px] px-2 py-1 border rounded"
+                        onClick={() => handleLevelSelect(levelIndex, itemIndex)}
+                        data-testid={`categories-level-item-select-${levelIndex}-${itemIndex}`}
+                      >
+                        Seç
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    <input
+                      className={inputClassName}
+                      placeholder="Ad"
+                      value={item.name}
+                      disabled={item.is_complete}
+                      onChange={(e) => updateLevelItem(levelIndex, itemIndex, { name: e.target.value })}
+                      data-testid={`categories-level-item-name-${levelIndex}-${itemIndex}`}
+                    />
+                    <input
+                      className={inputClassName}
+                      placeholder="Slug"
+                      value={item.slug}
+                      disabled={item.is_complete}
+                      onChange={(e) => updateLevelItem(levelIndex, itemIndex, { slug: e.target.value })}
+                      data-testid={`categories-level-item-slug-${levelIndex}-${itemIndex}`}
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      className={inputClassName}
+                      placeholder="Sıra"
+                      value={item.sort_order}
+                      disabled={item.is_complete}
+                      onChange={(e) => updateLevelItem(levelIndex, itemIndex, { sort_order: e.target.value })}
+                      data-testid={`categories-level-item-sort-${levelIndex}-${itemIndex}`}
+                    />
+                    <label className="flex items-center gap-2 text-xs text-slate-700" data-testid={`categories-level-item-active-${levelIndex}-${itemIndex}`}>
+                      <input
+                        type="checkbox"
+                        checked={item.active_flag}
+                        disabled={item.is_complete}
+                        onChange={(e) => updateLevelItem(levelIndex, itemIndex, { active_flag: e.target.checked })}
+                        data-testid={`categories-level-item-active-input-${levelIndex}-${itemIndex}`}
+                      />
+                      Aktif
+                    </label>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {!item.is_complete && (
+                      <button
+                        type="button"
+                        className="text-xs text-white bg-[#1f2a44] rounded px-3 py-1"
+                        onClick={() => completeSubcategory(path)}
+                        data-testid={`categories-level-item-complete-${levelIndex}-${itemIndex}`}
+                      >
+                        Tamam
+                      </button>
+                    )}
+                    {!item.is_complete && (
+                      <button
+                        type="button"
+                        className="text-xs text-rose-600 border rounded px-2 py-1"
+                        onClick={() => removeLevelItem(levelIndex, itemIndex)}
+                        data-testid={`categories-level-item-remove-${levelIndex}-${itemIndex}`}
+                      >
+                        Sil
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+        <button
+          type="button"
+          className="w-full text-sm border rounded px-3 py-2"
+          onClick={() => addLevelItem(levelIndex)}
+          data-testid={`categories-level-add-${levelIndex}`}
+        >
+          Ekle
+        </button>
       </div>
     );
+  };
+
+  const renderLevelColumns = () => {
+    const columns = [];
+    let levelIndex = 0;
+    while (levelIndex < 6) {
+      columns.push(renderLevelColumn(levelIndex));
+      if (!levelCompletion[levelIndex]) break;
+      if (levelSelections[levelIndex] === undefined) break;
+      levelIndex += 1;
+    }
+    return columns;
   };
 
 
