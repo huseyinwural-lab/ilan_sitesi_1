@@ -1140,7 +1140,7 @@ const AdminCategories = () => {
     const cleanedSubs = normalizeTree(subcategories);
     const validationError = validateTree(cleanedSubs);
     if (validationError) {
-      if (Object.keys(fieldErrors).length ) {
+      if (Object.keys(fieldErrors).length > 0) {
         setHierarchyFieldErrors(fieldErrors);
       }
       setHierarchyError(validationError);
