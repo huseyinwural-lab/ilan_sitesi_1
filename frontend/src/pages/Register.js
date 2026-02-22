@@ -35,6 +35,7 @@ export default function Register({ portalContext = 'account' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [taxId, setTaxId] = useState('');
+  const [companyWebsite, setCompanyWebsite] = useState('');
 
   const [codeDigits, setCodeDigits] = useState(Array(OTP_LENGTH).fill(''));
   const [verifyLoading, setVerifyLoading] = useState(false);
