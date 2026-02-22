@@ -265,6 +265,11 @@ const AdminCategories = () => {
   };
   const isHierarchyLocked = isStepCompleted("hierarchy");
   const isNextEnabled = Boolean(nextStep) && isStepCompleted(wizardStep) && !stepSaving;
+  const nextTooltip = stepSaving
+    ? "Kaydediliyor..."
+    : !isStepCompleted(wizardStep)
+      ? "Önce bu adımı tamamlayın."
+      : "";
   const schemaStatusLabel = schema.status === "published" ? "Yayında" : "Taslak";
   const publishValidation = useMemo(() => {
     const errors = [];
