@@ -1617,6 +1617,47 @@ def _get_masked_db_target() -> Dict[str, Optional[str]]:
     return {"host": masked_host, "database": masked_db}
 
 
+def _get_alembic_head_revision() -> Optional[str]:
+    try:
+        config = AlembicConfig(str(ROOT_DIR / "alembic.ini"))
+        script = ScriptDirectory.from_config(config)
+        return script.get_current_head()
+    except Exception:
+        return None
+
+
+async def _get_migration_state(conn: AsyncSession) -> Dict[str, Optional[str]]:
+    now_ts = time.time()
+    cached_at = _migration_state_cache.get("checked_at", 0) or 0
+    if cached_at and (now_ts - cached_at) < MIGRATION_STATE_CACHE_TTL_SECONDS:
+        return {
+            "state": _migration_state_cache.get("state", "unknown"),
+            "current": _migration_state_cache.get("current"),
+            "head": _migration_state_cache.get("head"),
+        }
+
+    head_revision = _get_alembic_head_revision()
+    current_revision = None
+    state = "unknown"
+    if head_revision:
+        try:
+            result = await conn.execute(text("SELECT version_num FROM alembic_version"))
+            current_revision = result.scalar_one_or_none()
+        except Exception:
+            current_revision = None
+
+    if head_revision and current_revision:
+        state = "ok" if current_revision == head_revision else "migration_required"
+
+    _migration_state_cache.update({
+        "checked_at": now_ts,
+        "state": state,
+        "current": current_revision,
+        "head": head_revision,
+    })
+    return {"state": state, "current": current_revision, "head": head_revision}
+
+
 def _sanitize_text(value: str) -> str:
     return html.escape(value or "").strip()
 
