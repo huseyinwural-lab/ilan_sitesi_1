@@ -1922,12 +1922,7 @@ const AdminCategories = () => {
                         <button
                           type="button"
                           className="text-xs border rounded px-2 py-1"
-                          onClick={() => {
-                            setWizardProgress({ state: "draft" });
-                            setHierarchyComplete(false);
-                            setHierarchyError("");
-                            setHierarchyFieldErrors({});
-                          }}
+                          onClick={handleHierarchyEdit}
                           data-testid="categories-hierarchy-edit"
                         >
                           Düzenle
