@@ -1375,8 +1375,6 @@ const AdminCategories = () => {
       setEditing(updatedParent);
       if (updatedParent?.wizard_progress) {
         setWizardProgress(updatedParent.wizard_progress);
-      } else {
-        setWizardProgress({ state: progressState });
       }
       setForm({
         name: updatedParent.name || name,
