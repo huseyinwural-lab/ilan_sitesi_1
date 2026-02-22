@@ -2914,18 +2914,38 @@ async def health_db():
                 "target": target,
                 "reason": "db_config_missing",
                 "db_status": "config_missing",
+                "migration_state": "unknown",
+                "migration_head": None,
+                "migration_current": None,
             },
         )
 
     try:
         async with sql_engine.connect() as conn:
             await conn.execute(select(1))
-        return {
-            "status": "healthy",
+            migration_info = await _get_migration_state(conn)
+
+        migration_state = migration_info.get("state") or "unknown"
+        response_content = {
+            "status": "healthy" if migration_state == "ok" else "degraded",
             "database": "postgres",
             "target": target,
             "db_status": "ok",
+            "migration_state": migration_state,
+            "migration_head": migration_info.get("head"),
+            "migration_current": migration_info.get("current"),
         }
+
+        if migration_state == "migration_required":
+            response_content["reason"] = "migration_required"
+            if APP_ENV in {"preview", "prod"}:
+                return JSONResponse(status_code=503, content=response_content)
+            return JSONResponse(status_code=200, content=response_content)
+
+        if migration_state == "unknown":
+            response_content["reason"] = "migration_state_unknown"
+
+        return JSONResponse(status_code=200, content=response_content)
     except Exception:
         return JSONResponse(
             status_code=200,
@@ -2935,6 +2955,9 @@ async def health_db():
                 "target": target,
                 "reason": "db_unreachable",
                 "db_status": "unreachable",
+                "migration_state": "unknown",
+                "migration_head": None,
+                "migration_current": None,
             },
         )
 
