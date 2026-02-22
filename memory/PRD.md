@@ -57,6 +57,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Hiyerarşi adı → Kategori
   - Alt kategori adımları sıralı: Alt kategori 1 tamamlanınca Alt kategori 2 açılır
   - "Tamam" ile alt kategori kilitlenir, sonraki alt kategori açılır
+- **Admin kategori parametre alanları:**
+  - Parametre alanlarında seçenekleri tek tek ekleme/çıkarma arayüzü
+  - Parametre listesinde seçenek ve zorunluluk özetleri
 
 - **İlan ver sihirbazı (create listing):**
   - Başlıklar/boş durumlar/section alanları için data-testid eklendi
