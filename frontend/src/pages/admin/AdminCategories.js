@@ -1032,7 +1032,8 @@ const AdminCategories = () => {
 
   const canAccessStep = (stepId) => {
     if (stepId === "hierarchy") return true;
-    return effectiveHierarchyComplete;
+    if (stepId === wizardStep) return true;
+    return isStepCompleted(stepId);
   };
 
   const completeSubcategory = (path) => {
