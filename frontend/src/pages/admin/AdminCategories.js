@@ -550,6 +550,88 @@ const AdminCategories = () => {
     });
   };
 
+  const getParentPathForLevel = (levelIndex) => {
+    if (levelIndex === 0) return [];
+    return levelSelections.slice(0, levelIndex);
+  };
+
+  const getLevelItems = (levelIndex) => {
+    if (levelIndex === 0) return subcategories;
+    const parent = getNodeByPath(subcategories, getParentPathForLevel(levelIndex));
+    return parent?.children || [];
+  };
+
+  const resetLevelCompletionFrom = (levelIndex) => {
+    setLevelCompletion((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((key) => {
+        if (Number(key) >= levelIndex) {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  };
+
+  const handleLevelSelect = (levelIndex, itemIndex) => {
+    setLevelSelections((prev) => {
+      const next = prev.slice(0, levelIndex);
+      next[levelIndex] = itemIndex;
+      return next;
+    });
+    resetLevelCompletionFrom(levelIndex + 1);
+  };
+
+  const addLevelItem = (levelIndex) => {
+    resetLevelCompletionFrom(levelIndex);
+    if (levelIndex === 0) {
+      setSubcategories((prev) => [...prev, createSubcategoryDraft()]);
+      return;
+    }
+    const parentPath = getParentPathForLevel(levelIndex);
+    if (parentPath.length === 0) return;
+    setSubcategories((prev) => updateNodeByPath(prev, parentPath, (node) => ({
+      ...node,
+      children: [...(node.children || []), createSubcategoryDraft()],
+    })));
+  };
+
+  const updateLevelItem = (levelIndex, itemIndex, patch) => {
+    resetLevelCompletionFrom(levelIndex);
+    const path = [...getParentPathForLevel(levelIndex), itemIndex];
+    updateSubcategory(path, patch);
+  };
+
+  const removeLevelItem = (levelIndex, itemIndex) => {
+    resetLevelCompletionFrom(levelIndex);
+    const path = [...getParentPathForLevel(levelIndex), itemIndex];
+    removeSubcategory(path);
+    if (levelSelections[levelIndex] === itemIndex) {
+      setLevelSelections((prev) => {
+        const next = prev.slice(0, levelIndex);
+        return next;
+      });
+    }
+  };
+
+  const handleLevelComplete = (levelIndex, items) => {
+    if (!items || items.length === 0) return;
+    const allComplete = items.every((item) => item.is_complete && item.name?.trim() && item.slug?.trim());
+    if (!allComplete) {
+      setHierarchyError(`Kategori ${levelIndex + 1} tamamlanmadan devam edilemez.`);
+      return;
+    }
+    setHierarchyError("");
+    setLevelCompletion((prev) => ({ ...prev, [levelIndex]: true }));
+    if (levelSelections[levelIndex] === undefined) {
+      setLevelSelections((prev) => {
+        const next = prev.slice(0, levelIndex);
+        next[levelIndex] = 0;
+        return next;
+      });
+    }
+  };
+
   const resetForm = () => {
     setForm({
       name: "",
