@@ -16756,8 +16756,13 @@ def _listing_to_dict(listing: Listing) -> dict:
         "description": listing.description,
         "price": {
             "amount": listing.price,
+            "hourly_rate": listing.hourly_rate,
+            "price_type": listing.price_type or "FIXED",
             "currency_primary": listing.currency,
         },
+        "price_type": listing.price_type or "FIXED",
+        "price_amount": listing.price,
+        "hourly_rate": listing.hourly_rate,
         "core_fields": attrs.get("core_fields") or {},
         "vehicle": attrs.get("vehicle") or {},
         "attributes": attrs.get("attributes") or {},
