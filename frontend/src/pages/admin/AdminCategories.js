@@ -909,7 +909,7 @@ const AdminCategories = () => {
     }
     if (status === "published" && !publishValidation.canPublish) {
       setPublishError("Yayınlama için zorunlu şartlar tamamlanmalı.");
-      return;
+      return { success: false };
     }
     const payload = buildSavePayload(status, activeEditing, progressState);
     if (!payload.name || !payload.slug) {
