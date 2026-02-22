@@ -1571,6 +1571,7 @@ const AdminCategories = () => {
               const errorKey = `level-${levelIndex}-${itemIndex}`;
               const nameError = hierarchyFieldErrors[`${errorKey}-name`];
               const slugError = hierarchyFieldErrors[`${errorKey}-slug`];
+              const itemInputsDisabled = item.is_complete || isHierarchyLocked;
               return (
                 <div
                   key={`level-${levelIndex}-item-${itemIndex}`}
