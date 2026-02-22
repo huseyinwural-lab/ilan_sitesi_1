@@ -263,13 +263,18 @@ const AdminCategories = () => {
     setTimeout(() => autosaveToastRef.current?.dismiss(), delay);
   };
 
-  const buildSavePayload = (status, activeEditing) => ({
-    ...form,
-    sort_order: Number(form.sort_order || 0),
-    hierarchy_complete: effectiveHierarchyComplete,
-    form_schema: { ...schema, status },
-    expected_updated_at: activeEditing?.updated_at,
-  });
+  const buildSavePayload = (status, activeEditing) => {
+    const payload = {
+      ...form,
+      sort_order: Number(form.sort_order || 0),
+      hierarchy_complete: effectiveHierarchyComplete,
+      expected_updated_at: activeEditing?.updated_at,
+    };
+    if (effectiveHierarchyComplete || status !== "draft") {
+      payload.form_schema = { ...schema, status };
+    }
+    return payload;
+  };
 
   const fetchItems = async () => {
     setLoading(true);
@@ -902,10 +907,6 @@ const AdminCategories = () => {
   };
 
   const handleDraftSave = async () => {
-    if (!effectiveHierarchyComplete) {
-      setHierarchyError("Önce hiyerarşiyi tamamlayın.");
-      return;
-    }
     await handleSave("draft", null, false);
   };
 
