@@ -7461,7 +7461,114 @@ async def list_categories(
     return [_serialize_category_sql(cat, include_schema=False, include_translations=True) for cat in filtered]
 
 
-@api_router.get("/catalog/schema")
+def _filter_categories_for_country(categories: list[Category], code: str) -> list[Category]:
+    filtered: list[Category] = []
+    for category in categories:
+        if category.country_code and category.country_code != code:
+            continue
+        allowed = category.allowed_countries or []
+        if allowed and code not in allowed:
+            continue
+        filtered.append(category)
+    filtered.sort(key=lambda c: (c.sort_order or 0, _pick_category_name(list(c.translations or []), _pick_category_slug(c.slug))))
+    return filtered
+
+
+@api_router.get("/categories/children")
+async def list_category_children(
+    request: Request,
+    country: str,
+    parent_id: Optional[str] = None,
+    module: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if not country:
+        raise HTTPException(status_code=400, detail="country is required")
+
+    code = country.upper()
+    query = (
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.is_deleted.is_(False), Category.is_enabled.is_(True))
+    )
+    if module:
+        query = query.where(Category.module == module)
+    if parent_id:
+        try:
+            parent_uuid = uuid.UUID(parent_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="parent_id not valid") from exc
+        query = query.where(Category.parent_id == parent_uuid)
+    else:
+        query = query.where(Category.parent_id.is_(None))
+
+    result = await session.execute(query)
+    categories = result.scalars().all()
+    filtered = _filter_categories_for_country(categories, code)
+    return [_serialize_category_sql(cat, include_schema=False, include_translations=True) for cat in filtered]
+
+
+@api_router.get("/categories/search")
+async def search_categories(
+    request: Request,
+    query: str,
+    country: str,
+    module: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if not country:
+        raise HTTPException(status_code=400, detail="country is required")
+    if not query:
+        return {"items": []}
+
+    code = country.upper()
+    search_value = query.strip().lower()
+    if len(search_value) < 2:
+        return {"items": []}
+
+    stmt = (
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.is_deleted.is_(False), Category.is_enabled.is_(True))
+    )
+    if module:
+        stmt = stmt.where(Category.module == module)
+
+    result = await session.execute(stmt)
+    categories = _filter_categories_for_country(result.scalars().all(), code)
+    category_map = {cat.id: cat for cat in categories}
+
+    def build_path(category: Category) -> list[Category]:
+        path_nodes: list[Category] = []
+        current = category
+        visited = set()
+        while current and current.id not in visited:
+            visited.add(current.id)
+            path_nodes.append(current)
+            current = category_map.get(current.parent_id)
+        return list(reversed(path_nodes))
+
+    items = []
+    for category in categories:
+        name_value = _pick_category_name(list(category.translations or []), _pick_category_slug(category.slug)) or ""
+        slug_value = _pick_category_slug(category.slug) or ""
+        if search_value in name_value.lower() or search_value in slug_value.lower():
+            path_nodes = build_path(category)
+            items.append({
+                "category": _serialize_category_sql(category, include_schema=False, include_translations=False),
+                "path": [
+                    {
+                        "id": str(node.id),
+                        "name": _pick_category_name(list(node.translations or []), _pick_category_slug(node.slug)),
+                        "slug": _pick_category_slug(node.slug),
+                    }
+                    for node in path_nodes
+                ],
+            })
+
+    items.sort(key=lambda item: (len(item.get("path") or []), item["category"].get("name") or ""))
+    return {"items": items}
+
 async def get_catalog_schema(
     category_id: str,
     request: Request,
