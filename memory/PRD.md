@@ -12,7 +12,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - GDPR Privacy Center (JSON export + soft delete + consent log)
 - 2FA (TOTP + Backup codes)
 - EU uyumlu şirket profili ve VAT doğrulama (regex)
-- Preview/Prod ortamlarında DB fail-fast doğrulama
+- Preview/Prod ortamlarında DB fail-fast + migration gate
+- Register anti-bot + GDPR export bildirimleri
 
 ## Kullanıcı Personaları
 - **Consumer (Bireysel)**
@@ -45,13 +46,23 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - DELETE /api/v1/users/me/account (soft delete + 30 gün)
 - Frontend (Consumer Panel): AccountProfile + PrivacyCenter yeni v1 endpointlerine bağlı
 - Preview/Prod DB fail-fast: localhost yasak + DB_SSL_MODE=require (server.py)
-- .env override kapatıldı (config/database)
+- .env override kapatıldı (server.py, core/config.py, app/database.py)
+- **P0 Sertleştirmeler:**
+  - /api/health/db → migration_state gate + 60sn cache
+  - Register honeypot (company_website) + server-side reject + audit log (register_honeypot_hit)
+  - GDPR export completion notification (in-app, warning) + audit trail
 - Kanıtlar:
   - /app/docs/PROFILE_ENDPOINT_FIX_EVIDENCE.md
   - /app/docs/PREVIEW_DB_FIX_EVIDENCE.md
   - /app/docs/PREVIEW_MIGRATION_EVIDENCE.md
   - /app/docs/SPRINT1_PREVIEW_API_EVIDENCE.md
   - /app/docs/SPRINT1_CLOSEOUT.md
+  - /app/docs/HEALTH_MIGRATION_GATE_SPEC.md
+  - /app/docs/HEALTH_MIGRATION_GATE_EVIDENCE.md
+  - /app/docs/REGISTER_ANTIBOT_HONEYPOT_SPEC.md
+  - /app/docs/REGISTER_ANTIBOT_HONEYPOT_EVIDENCE.md
+  - /app/docs/GDPR_EXPORT_NOTIFICATION_SPEC.md
+  - /app/docs/GDPR_EXPORT_NOTIFICATION_EVIDENCE.md
 
 ## Blokajlar / Riskler
 - Preview ortamında backend 520 (DATABASE_URL secret injection + DB erişimi yok)
@@ -61,7 +72,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### P0 (Hemen)
 - Preview ortamı için DATABASE_URL secret injection (sslmode=require)
 - Firewall allowlist: “Preview backend → Postgres 5432 outbound allow”
-- /api/health/db 200 + db_status=ok doğrulaması
+- /api/health/db 200 + db_status=ok + migration_state doğrulaması
 - `alembic current` + `alembic upgrade head` (p34_dealer_gdpr_deleted_at)
 - Curl doğrulama: /api/v1/users/me/profile, /api/v1/users/me/dealer-profile, /api/v1/users/me/data-export, /api/v1/users/me/account
 
