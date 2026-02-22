@@ -8,9 +8,14 @@ ROOT_DIR = Path(__file__).parent.parent
 load_dotenv(ROOT_DIR / '.env')
 load_dotenv(ROOT_DIR / '.env.local', override=False)
 
+APP_ENV = (os.environ.get("APP_ENV") or "dev").lower()
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL must be set")
+    raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
+if APP_ENV in {"preview", "prod"}:
+    lowered = DATABASE_URL.lower()
+    if "localhost" in lowered or "127.0.0.1" in lowered:
+        raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
 ASYNC_DATABASE_URL = DATABASE_URL.replace('postgresql://', 'postgresql+asyncpg://')
 
 engine = create_async_engine(ASYNC_DATABASE_URL, echo=False)
