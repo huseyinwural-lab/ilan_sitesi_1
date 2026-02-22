@@ -1557,87 +1557,8 @@ const AdminCategories = () => {
                     {subcategories.length === 0 ? (
                       <div className="text-sm text-slate-700" data-testid="categories-subcategory-empty">Henüz alt kategori başlatılmadı.</div>
                     ) : (
-                      <div className="space-y-3">
-                        {subcategories.map((sub, index) => (
-                          <div key={`sub-${index}`} className="rounded-lg border p-3 space-y-3" data-testid={`categories-subcategory-row-${index}`}>
-                            <div className="flex items-center justify-between">
-                              <div className="text-sm font-semibold text-slate-800" data-testid={`categories-subcategory-label-${index}`}>
-                                Alt kategori {index + 1}
-                              </div>
-                              {sub.is_complete ? (
-                                <span className="text-xs font-semibold text-emerald-600" data-testid={`categories-subcategory-status-${index}`}>Tamamlandı</span>
-                              ) : (
-                                <span className="text-xs font-semibold text-amber-600" data-testid={`categories-subcategory-status-${index}`}>Taslak</span>
-                              )}
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-                              <div className="space-y-1">
-                                <label className={labelClassName}>Ad</label>
-                                <input
-                                  className={inputClassName}
-                                  value={sub.name}
-                                  disabled={sub.is_complete}
-                                  onChange={(e) => updateSubcategory(index, { name: e.target.value })}
-                                  data-testid={`categories-subcategory-name-${index}`}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <label className={labelClassName}>Slug</label>
-                                <input
-                                  className={inputClassName}
-                                  value={sub.slug}
-                                  disabled={sub.is_complete}
-                                  onChange={(e) => updateSubcategory(index, { slug: e.target.value })}
-                                  data-testid={`categories-subcategory-slug-${index}`}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <label className={labelClassName}>Sıra</label>
-                                <input
-                                  type="number"
-                                  min={0}
-                                  className={inputClassName}
-                                  value={sub.sort_order}
-                                  disabled={sub.is_complete}
-                                  onChange={(e) => updateSubcategory(index, { sort_order: e.target.value })}
-                                  data-testid={`categories-subcategory-sort-${index}`}
-                                />
-                              </div>
-                              <label className="flex items-center gap-2 text-sm text-slate-800" data-testid={`categories-subcategory-active-${index}`}>
-                                <input
-                                  type="checkbox"
-                                  checked={sub.active_flag}
-                                  disabled={sub.is_complete}
-                                  onChange={(e) => updateSubcategory(index, { active_flag: e.target.checked })}
-                                  data-testid={`categories-subcategory-active-input-${index}`}
-                                />
-                                Aktif
-                              </label>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {!sub.is_complete && (
-                                <button
-                                  type="button"
-                                  className="text-sm text-white bg-[#1f2a44] rounded px-3 py-1"
-                                  onClick={() => completeSubcategory(index)}
-                                  data-testid={`categories-subcategory-complete-${index}`}
-                                >
-                                  Tamam
-                                </button>
-                              )}
-                              {!sub.is_complete && (
-                                <button
-                                  type="button"
-                                  className="text-sm text-rose-600 border rounded px-2 py-1"
-                                  onClick={() => removeSubcategory(index)}
-                                  data-testid={`categories-subcategory-remove-${index}`}
-                                >
-                                  Sil
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                      <div className="space-y-3" data-testid="categories-subcategory-tree">
+                        {subcategories.map((sub, index) => renderSubcategoryNode(sub, [index], 0))}
                       </div>
                     )}
                   </div>
