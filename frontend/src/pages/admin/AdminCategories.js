@@ -192,7 +192,7 @@ const AdminCategories = () => {
   const publishValidation = useMemo(() => {
     const errors = [];
     if (!effectiveHierarchyComplete) {
-      errors.push("Hiyerarşi tamamlanmalı.");
+      errors.push("Kategori tamamlanmalı.");
     }
     const titleRangeValid = schema.core_fields.title.min <= schema.core_fields.title.max;
     const descriptionRangeValid = schema.core_fields.description.min <= schema.core_fields.description.max;
@@ -644,7 +644,7 @@ const AdminCategories = () => {
       if (status === "draft") {
         showDraftToast({
           title: "Kaydetme başarısız",
-          description: "Hiyerarşi tamamlanmadan kaydedilemez.",
+          description: "Kategori tamamlanmadan kaydedilemez.",
           variant: "destructive",
         });
         dismissDraftToast(4000);
@@ -687,7 +687,7 @@ const AdminCategories = () => {
         if (String(data?.detail || "").toLowerCase().includes("hiyerar")) {
           showDraftToast({
             title: "Kaydetme başarısız",
-            description: "Hiyerarşi tamamlanmadan kaydedilemez.",
+            description: "Kategori tamamlanmadan kaydedilemez.",
             variant: "destructive",
           });
         } else {
@@ -885,7 +885,7 @@ const AdminCategories = () => {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          setHierarchyError(data?.detail || "Hiyerarşi güncellenemedi.");
+          setHierarchyError(data?.detail || "Kategori güncellenemedi.");
           return { success: false };
         }
 
@@ -948,7 +948,7 @@ const AdminCategories = () => {
         setWizardStep("core");
         return { success: true, parent: updated };
       } catch (error) {
-        setHierarchyError("Hiyerarşi güncellenemedi.");
+        setHierarchyError("Kategori güncellenemedi.");
         return { success: false };
       }
     }
@@ -1042,7 +1042,7 @@ const AdminCategories = () => {
       fetchItems();
       return { success: true, parent };
     } catch (error) {
-      setHierarchyError("Hiyerarşi oluşturulurken hata oluştu.");
+      setHierarchyError("Kategori oluşturulurken hata oluştu.");
       return { success: false };
     }
   };
