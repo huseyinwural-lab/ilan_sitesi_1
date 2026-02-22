@@ -3042,21 +3042,14 @@ const AdminCategories = () => {
                     Geri
                   </button>
                 )}
-                <button
-                  className="px-4 py-2 border rounded"
-                  onClick={handleDraftSave}
-                  data-testid="categories-save-draft"
-                >
-                  Taslak Kaydet
-                </button>
                 {wizardStep === "preview" ? (
                   <button
-                    className={`px-4 py-2 rounded text-white ${publishValidation.canPublish ? 'bg-blue-600' : 'bg-blue-300 cursor-not-allowed'}`}
-                    onClick={() => handleSave("published")}
+                    className={`px-4 py-2 rounded text-white ${publishValidation.canPublish ? 'bg-emerald-600' : 'bg-emerald-300 cursor-not-allowed'}`}
+                    onClick={() => handleSave("draft")}
                     disabled={!publishValidation.canPublish}
-                    data-testid="categories-publish"
+                    data-testid="categories-save-final"
                   >
-                    Yayınla
+                    Kaydet
                   </button>
                 ) : (
                   nextStep && (
