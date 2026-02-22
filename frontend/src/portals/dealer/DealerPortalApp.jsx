@@ -3,6 +3,8 @@ import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import DealerInvoices from '@/pages/dealer/DealerInvoices';
 import DealerListings from '@/pages/dealer/DealerListings';
 import DealerDashboard from '@/pages/dealer/DealerDashboard';
+import DealerCompanyProfile from '@/pages/dealer/DealerCompanyProfile';
+import DealerPrivacyCenter from '@/pages/dealer/DealerPrivacyCenter';
 import PaymentSuccess from '@/pages/dealer/PaymentSuccess';
 import PaymentCancel from '@/pages/dealer/PaymentCancel';
 import DealerLayout from '@/layouts/DealerLayout';
