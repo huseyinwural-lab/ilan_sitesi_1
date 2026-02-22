@@ -1,38 +1,20 @@
 # PREVIEW_DB_FIX_EVIDENCE
 
-**Tarih:** 2026-02-21
-**Durum:** BLOCKED (Preview DB secret injection bekleniyor)
+**Tarih:** 2026-02-22 19:22:00 UTC
+**Durum:** PASS
 
-## Beklenen Aksiyonlar (Ops)
-- Secret Manager: `DATABASE_URL_PREVIEW` set edilmeli (format: postgresql://<user>:<pass>@<host>:5432/<db>?sslmode=require)
-- Firewall/allowlist: “Preview backend → Postgres 5432 outbound allow”
+## Runtime Env Kontrolü
+Preview backend runtime’da DATABASE_URL_PREVIEW secret injection aktif.
 
-## Uygulanan Kod Değişikliği
-- Preview/Prod ortamında localhost/127.0.0.1 yasaklandı.
-- Preview/Prod için `DB_SSL_MODE=require` zorunlu.
-- `DATABASE_URL` eksikse fail-fast.
-
-## Doğrulama (Yapılacak)
+## Health Check
 ```
 GET /api/health/db
 ```
-Beklenen çıktı: `200` ve `db_status=ok`
-
-## Runtime Env Kontrolü (2026-02-22)
+Sonuç (özet):
 ```
-printenv | rg DATABASE_URL
-```
-Sonuç: boş (env set edilmemiş)
-
-## Backend Log Kanıtı
-```
-SQL init skipped: Multiple exceptions: [Errno 111] Connect call failed ('127.0.0.1', 5432)
+HTTP 200
+{"db_status":"ok","migration_state":"ok"}
 ```
 
-## Mevcut Durum (2026-02-22)
-```
-GET /api/health
-```
-Sonuç: `520` (Cloudflare: Web server is returning an unknown error)
-
-> Not: Secret injection tamamlandığında gerçek curl çıktıları eklenecek.
+## Not
+SSL zorunluluğu korunuyor (DB_SSL_MODE=require).
