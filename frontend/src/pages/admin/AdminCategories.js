@@ -890,7 +890,7 @@ const AdminCategories = () => {
   };
 
   const handleSave = async (status = "draft", overrideEditing = null, closeOnSuccess = true, options = {}) => {
-    const { autosave = false } = options;
+    const { autosave = false, progressState } = options;
     setHierarchyError("");
     setPublishError("");
     const activeEditing = overrideEditing ?? editing;
