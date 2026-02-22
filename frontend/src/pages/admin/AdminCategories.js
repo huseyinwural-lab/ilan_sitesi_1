@@ -914,7 +914,7 @@ const AdminCategories = () => {
     const payload = buildSavePayload(status, activeEditing, progressState);
     if (!payload.name || !payload.slug) {
       setHierarchyError("Kategori adı ve slug zorunludur.");
-      return;
+      return { success: false };
     }
     const url = activeEditing
       ? `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${activeEditing.id}`
