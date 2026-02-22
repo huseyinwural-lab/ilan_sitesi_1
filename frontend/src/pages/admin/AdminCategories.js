@@ -852,10 +852,26 @@ const AdminCategories = () => {
       setHierarchyError(`Alt kategori ${subcategories.length} tamamlanmadan yeni alt kategori eklenemez.`);
       return;
     }
-    setSubcategories((prev) => ([
-      ...prev,
-      { name: "", slug: "", active_flag: true, sort_order: 0, is_complete: false },
-    ]));
+    setSubcategories((prev) => ([...prev, createSubcategoryDraft()]));
+  };
+
+  const addNestedSubcategory = (path) => {
+    setHierarchyError("");
+    const target = getNodeByPath(subcategories, path);
+    if (!target) return;
+    if (target.is_complete) {
+      setHierarchyError(`${getSubcategoryLabel(path)} tamamlandıktan sonra alt kategori eklenemez.`);
+      return;
+    }
+    const children = target.children || [];
+    if (children.length > 0 && !children[children.length - 1].is_complete) {
+      setHierarchyError(`${getSubcategoryLabel(path)} içindeki alt kategori ${children.length} tamamlanmadan yeni alt kategori eklenemez.`);
+      return;
+    }
+    setSubcategories((prev) => updateNodeByPath(prev, path, (node) => ({
+      ...node,
+      children: [...(node.children || []), createSubcategoryDraft()],
+    })));
   };
 
   const completeSubcategory = (index) => {
