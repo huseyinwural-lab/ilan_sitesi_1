@@ -1754,8 +1754,8 @@ const AdminCategories = () => {
                     {subcategories.length === 0 ? (
                       <div className="text-sm text-slate-700" data-testid="categories-subcategory-empty">Henüz alt kategori başlatılmadı.</div>
                     ) : (
-                      <div className="space-y-3" data-testid="categories-subcategory-tree">
-                        {subcategories.map((sub, index) => renderSubcategoryNode(sub, [index], 0))}
+                      <div className="flex gap-4 overflow-x-auto pb-2" data-testid="categories-subcategory-levels">
+                        {renderLevelColumns()}
                       </div>
                     )}
                   </div>
