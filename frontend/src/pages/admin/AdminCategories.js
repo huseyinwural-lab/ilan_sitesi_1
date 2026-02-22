@@ -2251,13 +2251,26 @@ const AdminCategories = () => {
 
                   <div className="space-y-2" data-testid="categories-dynamic-list">
                     {schema.dynamic_fields.length === 0 ? (
-                      <div className="text-sm text-slate-700">Henüz parametre alanı eklenmedi.</div>
+                      <div className="text-sm text-slate-700" data-testid="categories-dynamic-empty">Henüz parametre alanı eklenmedi.</div>
                     ) : (
                       schema.dynamic_fields.map((field, index) => (
-                        <div key={field.id || field.key} className="border rounded p-3 flex flex-wrap items-center gap-3">
-                          <div className="flex-1">
-                            <div className="font-medium">{field.label} ({field.key})</div>
-                            <div className="text-xs text-slate-700">Tip: {field.type} · Sıra: {field.sort_order || 0}</div>
+                        <div
+                          key={field.id || field.key}
+                          className="border rounded p-3 flex flex-wrap items-center gap-3"
+                          data-testid={`categories-dynamic-item-${index}`}
+                        >
+                          <div className="flex-1 space-y-1">
+                            <div className="font-medium" data-testid={`categories-dynamic-label-${index}`}>
+                              {field.label} ({field.key})
+                            </div>
+                            <div className="text-xs text-slate-700" data-testid={`categories-dynamic-meta-${index}`}>
+                              Tip: {field.type} · Sıra: {field.sort_order || 0} · {field.required ? 'Zorunlu' : 'Opsiyonel'}
+                            </div>
+                            {(field.options || []).length > 0 && (
+                              <div className="text-xs text-slate-600" data-testid={`categories-dynamic-options-${index}`}>
+                                Seçenekler: {(field.options || []).join(', ')}
+                              </div>
+                            )}
                           </div>
                           <button
                             type="button"
