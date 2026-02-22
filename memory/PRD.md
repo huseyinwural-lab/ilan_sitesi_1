@@ -55,8 +55,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Dealer portal ek sayfalar: Şirket Profili + Gizlilik Merkezi
 - **Admin kategori modalı:**
   - Hiyerarşi adı → Kategori
-  - Alt kategori adımları sıralı: Alt kategori 1 tamamlanınca Alt kategori 2 açılır
-  - "Tamam" ile alt kategori kilitlenir, sonraki alt kategori açılır
+  - Alt kategoriler çok seviyeli (alt kategori içinde alt kategori) yapı ile oluşturulabiliyor
+  - "Tamam" ile alt kategori kilitlenir, üst seviye tamamlanınca yeni alt kategori eklenir
 - **Admin kategori parametre alanları:**
   - Parametre alanlarında seçenekleri tek tek ekleme/çıkarma arayüzü
   - Parametre listesinde seçenek ve zorunluluk özetleri
