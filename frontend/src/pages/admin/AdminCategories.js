@@ -718,6 +718,7 @@ const AdminCategories = () => {
     setWizardProgress({ state: "draft" });
     setHierarchyComplete(false);
     setHierarchyError("");
+    setHierarchyFieldErrors({});
     const initialSubcategories = [createSubcategoryDraft()];
     setSubcategories(initialSubcategories);
     setLevelSelections([]);
