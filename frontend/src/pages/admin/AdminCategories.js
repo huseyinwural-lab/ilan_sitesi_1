@@ -1021,6 +1021,7 @@ const AdminCategories = () => {
   };
 
   const handleStepComplete = async () => {
+    setHierarchyError("");
     const progressState = STEP_PROGRESS_STATE[wizardStep];
     if (!progressState) return;
 
