@@ -4569,7 +4569,8 @@ async def verify_two_factor_v1(
     current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    if current_user.get("role") == "dealer":
+    role = current_user.get("role")
+    if role != "individual":
         raise HTTPException(status_code=403, detail="2FA consumer only")
 
     user_row = await _get_user_row_from_current(session, current_user)
@@ -4604,7 +4605,8 @@ async def disable_two_factor_v1(
     current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    if current_user.get("role") == "dealer":
+    role = current_user.get("role")
+    if role != "individual":
         raise HTTPException(status_code=403, detail="2FA consumer only")
 
     user_row = await _get_user_row_from_current(session, current_user)
