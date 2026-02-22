@@ -62,6 +62,8 @@ async def create_vehicle_listing(db, payload: dict, user: dict) -> dict:
         "description": description,
         "price": {
             "amount": price_amount,
+            "hourly_rate": hourly_rate,
+            "price_type": price_type,
             "currency_primary": price_payload.get("currency_primary"),
             "currency_secondary": price_payload.get("currency_secondary"),
             "secondary_amount": price_payload.get("secondary_amount"),
