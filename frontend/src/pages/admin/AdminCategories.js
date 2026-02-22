@@ -1117,14 +1117,10 @@ const AdminCategories = () => {
   };
 
   const handleStepComplete = async () => {
+    if (stepSaving) return;
     setHierarchyError("");
     const progressState = STEP_PROGRESS_STATE[wizardStep];
     if (!progressState) return;
-
-    if (wizardStep === "hierarchy") {
-      await handleHierarchyComplete(progressState);
-      return;
-    }
 
     if (wizardStep === "core") {
       const titleRangeValid = schema.core_fields.title.min <= schema.core_fields.title.max;
@@ -1167,7 +1163,23 @@ const AdminCategories = () => {
       return;
     }
 
-    await handleSave("draft", null, false, { progressState });
+    if (wizardStep !== "hierarchy" && !editing?.id) {
+      setHierarchyError("Önce kategori kaydedilmeli.");
+      return;
+    }
+
+    setStepSaving(true);
+    try {
+      if (wizardStep === "hierarchy") {
+        const result = await handleHierarchyComplete(progressState);
+        if (!result?.success) return;
+      } else {
+        const result = await handleSave("draft", null, false, { progressState });
+        if (!result?.success) return;
+      }
+    } finally {
+      setStepSaving(false);
+    }
   };
 
   const handleToggle = async (item) => {
