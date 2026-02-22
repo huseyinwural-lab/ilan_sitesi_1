@@ -37,7 +37,7 @@ import DealerLogin from '@/portals/dealer/DealerLogin';
 import BackofficeLogin from '@/portals/backoffice/BackofficeLogin';
 import AdminInviteAccept from '@/pages/admin/AdminInviteAccept';
 import SupportPage from '@/pages/Support';
-import Register from '@/pages/Register';
+import PortalDemo from '@/pages/PortalDemo';
 import VerifyEmail from '@/pages/VerifyEmail';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
