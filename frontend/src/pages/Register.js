@@ -179,12 +179,14 @@ export default function Register({ portalContext = 'account' }) {
             password,
             country_code: countryCode,
             tax_id: taxId.trim() || null,
+            company_website: companyWebsite,
           }
         : {
             full_name: fullName.trim(),
             email: email.trim().toLowerCase(),
             password,
             country_code: countryCode,
+            company_website: companyWebsite,
           };
 
       const res = await fetch(`${API}${endpoint}`, {
