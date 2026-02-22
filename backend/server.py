@@ -2906,6 +2906,9 @@ ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
 
 @api_router.get("/health")
 async def health_check():
+    config_state = "missing_database_url" if not RAW_DATABASE_URL else "ok"
+    last_migration_check_at = _format_migration_checked_at()
+
     if not RAW_DATABASE_URL:
         return {
             "status": "degraded",
@@ -2913,15 +2916,21 @@ async def health_check():
             "database": "postgres",
             "reason": "db_config_missing",
             "db_status": "config_missing",
+            "config_state": config_state,
+            "last_migration_check_at": last_migration_check_at,
         }
     try:
         async with sql_engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
+            await _get_migration_state(conn)
+            last_migration_check_at = _format_migration_checked_at()
         return {
             "status": "healthy",
             "supported_countries": SUPPORTED_COUNTRIES,
             "database": "postgres",
             "db_status": "ok",
+            "config_state": config_state,
+            "last_migration_check_at": last_migration_check_at,
         }
     except Exception:
         return {
@@ -2930,6 +2939,8 @@ async def health_check():
             "database": "postgres",
             "reason": "db_unreachable",
             "db_status": "unreachable",
+            "config_state": config_state,
+            "last_migration_check_at": last_migration_check_at,
         }
 
 
