@@ -1340,7 +1340,7 @@ const AdminCategories = () => {
       const nextSubcategories = savedSubs.length ? savedSubs : [createSubcategoryDraft()];
       setSubcategories(nextSubcategories);
       setHierarchyComplete(true);
-      setWizardStep("core");
+      setHierarchyFieldErrors({});
       fetchItems();
       return { success: true, parent: updatedParent };
     } catch (error) {
