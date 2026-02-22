@@ -519,6 +519,7 @@ const AdminCategories = () => {
       slug: child.slug || "",
       active_flag: child.active_flag ?? true,
       sort_order: child.sort_order || 0,
+      is_complete: true,
     }));
     setSubcategories(relatedSubs);
     setDynamicDraft({
