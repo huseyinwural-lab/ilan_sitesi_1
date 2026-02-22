@@ -4651,6 +4651,8 @@ async def request_account_delete_v1(
 ):
     user_row = await _get_user_row_from_current(session, current_user)
     role = current_user.get("role")
+    if role not in {"individual", "dealer"}:
+        raise HTTPException(status_code=403, detail="Consumer/Dealer only")
 
     if role == "dealer":
         profile = await _get_or_create_dealer_profile(session, user_row)
