@@ -34,10 +34,10 @@ class Settings:
 settings = Settings()
 if settings.APP_ENV in {"preview", "prod"}:
     if not settings.DATABASE_URL:
-        raise RuntimeError("DATABASE_URL must be set in preview/prod")
+        raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
     lowered_url = settings.DATABASE_URL.lower()
     if "localhost" in lowered_url or "127.0.0.1" in lowered_url:
-        raise RuntimeError("DATABASE_URL cannot use localhost in preview/prod")
+        raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
 
 if settings.APP_ENV == "prod" and not os.environ.get("DATABASE_URL"):
-    raise RuntimeError("DATABASE_URL must be set in prod")
+    raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
