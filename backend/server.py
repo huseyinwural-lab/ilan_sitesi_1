@@ -4315,8 +4315,8 @@ async def update_user_profile_v1(
     session: AsyncSession = Depends(get_sql_session),
 ):
     role = current_user.get("role")
-    if role == "dealer":
-        raise HTTPException(status_code=403, detail="Dealer profile update uses /v1/users/me/dealer-profile")
+    if role != "individual":
+        raise HTTPException(status_code=403, detail="Consumer profile only")
 
     user_row = await _get_user_row_from_current(session, current_user)
     profile = await _get_or_create_consumer_profile(
