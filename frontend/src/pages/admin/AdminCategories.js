@@ -1799,7 +1799,22 @@ const AdminCategories = () => {
               {wizardStep === "hierarchy" && (
                 <div className="space-y-4" data-testid="category-hierarchy-step">
                   <div className="rounded-lg border p-4 space-y-4">
-                    <h3 className="text-md font-semibold">Ana Kategori</h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-md font-semibold">Ana Kategori</h3>
+                      {isHierarchyLocked && (
+                        <button
+                          type="button"
+                          className="text-xs border rounded px-2 py-1"
+                          onClick={() => {
+                            setWizardProgress({ state: "draft" });
+                            setHierarchyComplete(false);
+                          }}
+                          data-testid="categories-hierarchy-edit"
+                        >
+                          Düzenle
+                        </button>
+                      )}
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <label className={labelClassName}>Ana kategori adı</label>
