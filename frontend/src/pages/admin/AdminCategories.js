@@ -1359,7 +1359,7 @@ const AdminCategories = () => {
 
   const renderLevelColumn = (levelIndex) => {
     const items = getLevelItems(levelIndex);
-    const levelComplete = items.length > 0 && items.every((item) => item.is_complete && item.name?.trim() && item.slug?.trim());
+    const levelComplete = items.length > 0 && items.every((item) => item.name?.trim() && item.slug?.trim());
     const selectedIndex = levelSelections[levelIndex];
 
     return (
