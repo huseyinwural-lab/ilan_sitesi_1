@@ -790,10 +790,32 @@ const AdminCategories = () => {
   };
 
   const addSubcategory = () => {
+    setHierarchyError("");
+    if (subcategories.length > 0 && !subcategories[subcategories.length - 1].is_complete) {
+      setHierarchyError(`Alt kategori ${subcategories.length} tamamlanmadan yeni alt kategori eklenemez.`);
+      return;
+    }
     setSubcategories((prev) => ([
       ...prev,
-      { name: "", slug: "", active_flag: true, sort_order: 0 },
+      { name: "", slug: "", active_flag: true, sort_order: 0, is_complete: false },
     ]));
+  };
+
+  const completeSubcategory = (index) => {
+    setHierarchyError("");
+    const target = subcategories[index];
+    if (!target?.name?.trim() || !target?.slug?.trim()) {
+      setHierarchyError(`Alt kategori ${index + 1} için ad ve slug zorunludur.`);
+      return;
+    }
+    setSubcategories((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], is_complete: true };
+      if (index === updated.length - 1) {
+        updated.push({ name: "", slug: "", active_flag: true, sort_order: 0, is_complete: false });
+      }
+      return updated;
+    });
   };
 
   const updateSubcategory = (index, patch) => {
