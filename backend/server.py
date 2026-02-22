@@ -1686,6 +1686,13 @@ async def _get_migration_state(conn) -> Dict[str, Optional[str]]:
     return {"state": state, "current": current_revision, "head": head_revision, "checked_at": now_ts}
 
 
+def _format_migration_checked_at() -> Optional[str]:
+    checked_at = _migration_state_cache.get("checked_at") or 0
+    if not checked_at:
+        return None
+    return datetime.fromtimestamp(checked_at, tz=timezone.utc).isoformat()
+
+
 def _sanitize_text(value: str) -> str:
     return html.escape(value or "").strip()
 
