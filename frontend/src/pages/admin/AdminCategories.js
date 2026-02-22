@@ -147,6 +147,8 @@ const AdminCategories = () => {
   const [hierarchyComplete, setHierarchyComplete] = useState(false);
   const [hierarchyError, setHierarchyError] = useState("");
   const [subcategories, setSubcategories] = useState([createSubcategoryDraft()]);
+  const [levelSelections, setLevelSelections] = useState([]);
+  const [levelCompletion, setLevelCompletion] = useState({});
   const [expandedNodes, setExpandedNodes] = useState(new Set(["0"]));
   const [dynamicDraft, setDynamicDraft] = useState({
     label: "",
