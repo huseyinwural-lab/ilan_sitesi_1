@@ -12,6 +12,9 @@ class SearchResult(BaseModel):
     id: str
     title: str
     price: Optional[float]
+    price_type: Optional[str]
+    price_amount: Optional[float]
+    hourly_rate: Optional[float]
     currency: str
     location: dict
     specs: dict
