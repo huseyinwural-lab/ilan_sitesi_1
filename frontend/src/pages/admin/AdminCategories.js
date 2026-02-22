@@ -575,15 +575,8 @@ const AdminCategories = () => {
     setWizardStep("hierarchy");
     setHierarchyComplete(false);
     setHierarchyError("");
-    const relatedSubs = items.filter((child) => child.parent_id === item.id).map((child) => ({
-      id: child.id,
-      name: child.name || "",
-      slug: child.slug || "",
-      active_flag: child.active_flag ?? true,
-      sort_order: child.sort_order || 0,
-      is_complete: true,
-    }));
-    setSubcategories(relatedSubs);
+    const relatedSubs = buildSubcategoryTree(item.id);
+    setSubcategories(relatedSubs.length ? relatedSubs : [createSubcategoryDraft()]);
     setDynamicDraft({
       label: "",
       key: "",
