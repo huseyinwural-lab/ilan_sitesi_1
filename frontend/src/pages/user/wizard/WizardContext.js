@@ -121,12 +121,17 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     });
 
     const priceData = listing.price || {};
+    const priceType = String(priceData.price_type || listing.price_type || 'FIXED').toUpperCase();
+    const hourlyValue = priceData.hourly_rate ?? listing.hourly_rate;
     setCoreFields((prev) => ({
       ...prev,
       title: listing.title || '',
       description: listing.description || '',
-      price_amount: priceData.amount ? String(priceData.amount) : '',
-      price_display: priceData.amount ? formatDisplay(priceData.amount, prev.decimal_places) : '',
+      price_type: priceType,
+      price_amount: priceType === 'FIXED' && priceData.amount ? String(priceData.amount) : '',
+      price_display: priceType === 'FIXED' && priceData.amount ? formatDisplay(priceData.amount, prev.decimal_places) : '',
+      hourly_rate: priceType === 'HOURLY' && hourlyValue ? String(hourlyValue) : '',
+      hourly_display: priceType === 'HOURLY' && hourlyValue ? formatDisplay(hourlyValue, prev.decimal_places) : '',
       currency_primary: priceData.currency_primary || prev.currency_primary,
       currency_secondary: priceData.currency_secondary || prev.currency_secondary,
       secondary_amount: priceData.secondary_amount ? String(priceData.secondary_amount) : '',
