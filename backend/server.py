@@ -2859,7 +2859,8 @@ if DB_SSL_MODE == "require":
     ssl_context.verify_mode = ssl.CERT_NONE
     connect_args = {"ssl": ssl_context}
 
-ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+SAFE_DATABASE_URL = _sanitize_database_url(DATABASE_URL)
+ASYNC_DATABASE_URL = SAFE_DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
 sql_engine = create_async_engine(
     ASYNC_DATABASE_URL,
