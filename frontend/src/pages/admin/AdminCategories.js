@@ -976,10 +976,6 @@ const AdminCategories = () => {
     }
   };
 
-  const handleDraftSave = async () => {
-    await handleSave("draft", null, false);
-  };
-
   const handleToggle = async (item) => {
     await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${item.id}`, {
       method: "PATCH",
