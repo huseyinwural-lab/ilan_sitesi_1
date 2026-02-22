@@ -160,25 +160,45 @@ def validate_listing_schema(listing: dict, schema: dict) -> list[dict]:
             errs.append(_error("description", "CUSTOM", desc_cfg.get("custom_message", "Açıklama formatı geçersiz")))
 
     price_data = listing.get("price") or {}
+    price_type = str(price_data.get("price_type") or listing.get("price_type") or "FIXED").upper()
     price_amount = price_data.get("amount")
-    if price_amount is None:
+    hourly_rate = price_data.get("hourly_rate")
+    if price_amount is None and price_type != "HOURLY":
         price_amount = (listing.get("attributes") or {}).get("price_eur")
-    if price_cfg.get("required") and (price_amount is None or price_amount == ""):
-        errs.append(_error("price", "REQUIRED", price_cfg.get("messages", {}).get("required", "Fiyat zorunlu")))
-    if price_amount is not None:
-        try:
-            price_amount = float(price_amount)
-        except (TypeError, ValueError):
-            errs.append(_error("price", "NUMERIC", price_cfg.get("messages", {}).get("numeric", "Fiyat sayısal olmalı")))
-        else:
-            range_cfg = price_cfg.get("range") or {}
-            if range_cfg.get("min") is not None and price_amount < range_cfg.get("min"):
-                errs.append(_error("price", "RANGE", price_cfg.get("messages", {}).get("range", "Fiyat aralık dışında")))
-            if range_cfg.get("max") is not None and price_amount > range_cfg.get("max"):
-                errs.append(_error("price", "RANGE", price_cfg.get("messages", {}).get("range", "Fiyat aralık dışında")))
-            decimal_places = price_cfg.get("decimal_places")
-            if decimal_places == 0 and price_amount % 1 != 0:
-                errs.append(_error("price", "DECIMAL", price_cfg.get("messages", {}).get("numeric", "Fiyat ondalık içeremez")))
+
+    if price_type == "HOURLY" and price_amount not in (None, ""):
+        errs.append(_error("price", "INVALID", "Saatlik ücret giriniz."))
+    if price_type == "FIXED" and hourly_rate not in (None, ""):
+        errs.append(_error("price", "INVALID", "Fiyat giriniz."))
+
+    if price_type == "HOURLY":
+        if price_cfg.get("required") and (hourly_rate is None or hourly_rate == ""):
+            errs.append(_error("price", "REQUIRED", "Saatlik ücret giriniz."))
+        if hourly_rate is not None and hourly_rate != "":
+            try:
+                hourly_value = float(hourly_rate)
+            except (TypeError, ValueError):
+                errs.append(_error("price", "NUMERIC", "Saatlik ücret giriniz."))
+            else:
+                if hourly_value <= 0:
+                    errs.append(_error("price", "MIN", "Saatlik ücret giriniz."))
+    else:
+        if price_cfg.get("required") and (price_amount is None or price_amount == ""):
+            errs.append(_error("price", "REQUIRED", "Fiyat giriniz."))
+        if price_amount is not None and price_amount != "":
+            try:
+                price_amount = float(price_amount)
+            except (TypeError, ValueError):
+                errs.append(_error("price", "NUMERIC", price_cfg.get("messages", {}).get("numeric", "Fiyat sayısal olmalı")))
+            else:
+                range_cfg = price_cfg.get("range") or {}
+                if range_cfg.get("min") is not None and price_amount < range_cfg.get("min"):
+                    errs.append(_error("price", "RANGE", price_cfg.get("messages", {}).get("range", "Fiyat aralık dışında")))
+                if range_cfg.get("max") is not None and price_amount > range_cfg.get("max"):
+                    errs.append(_error("price", "RANGE", price_cfg.get("messages", {}).get("range", "Fiyat aralık dışında")))
+                decimal_places = price_cfg.get("decimal_places")
+                if decimal_places == 0 and price_amount % 1 != 0:
+                    errs.append(_error("price", "DECIMAL", price_cfg.get("messages", {}).get("numeric", "Fiyat ondalık içeremez")))
 
     attrs = listing.get("dynamic_fields") or listing.get("attributes") or {}
     for field in schema.get("dynamic_fields", []):
