@@ -1505,7 +1505,7 @@ const AdminCategories = () => {
                     </label>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {!item.is_complete && (
+                    {!item.is_complete ? (
                       <button
                         type="button"
                         className="text-xs text-white bg-[#1f2a44] rounded px-3 py-1"
@@ -1513,6 +1513,15 @@ const AdminCategories = () => {
                         data-testid={`categories-level-item-complete-${levelIndex}-${itemIndex}`}
                       >
                         Tamam
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="text-xs border rounded px-2 py-1"
+                        onClick={() => handleLevelEditItem(levelIndex, itemIndex)}
+                        data-testid={`categories-level-item-edit-${levelIndex}-${itemIndex}`}
+                      >
+                        Düzenle
                       </button>
                     )}
                     {!item.is_complete && (
