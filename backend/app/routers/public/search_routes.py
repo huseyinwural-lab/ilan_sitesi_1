@@ -95,8 +95,11 @@ async def search_real_estate(
         data.append(SearchResult(
             id=str(l.id),
             title=l.title,
-            price=float(l.price) if l.price else 0,
-            currency=l.currency,
+            price=float(l.price) if l.price is not None else None,
+            price_type=l.price_type or "FIXED",
+            price_amount=float(l.price) if l.price is not None else None,
+            hourly_rate=float(l.hourly_rate) if l.hourly_rate is not None else None,
+            currency=l.currency or "EUR",
             location={"city": l.city, "country": l.country},
             specs=specs,
             image_url=l.images[0] if l.images else None,
