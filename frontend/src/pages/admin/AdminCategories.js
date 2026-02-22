@@ -1759,13 +1759,20 @@ const AdminCategories = () => {
                   {WIZARD_STEPS.map((step) => {
                     const active = wizardStep === step.id;
                     const disabled = !canAccessStep(step.id);
-                    const tooltip = disabled ? "Önce kategori adımını tamamlayın" : "";
+                    const tooltip = disabled ? "Önce bu adımı tamamlayın." : "";
                     return (
                       <button
                         key={step.id}
                         type="button"
-                        disabled={disabled}
-                        onClick={() => !disabled && setWizardStep(step.id)}
+                        onClick={() => {
+                          if (disabled) {
+                            setHierarchyError("Önce bu adımı tamamlayın.");
+                            return;
+                          }
+                          setHierarchyError("");
+                          setWizardStep(step.id);
+                        }}
+                        aria-disabled={disabled}
                         className={`px-3 py-1 rounded text-xs border ${active ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title={tooltip}
                         data-testid={`category-step-${step.id}`}
