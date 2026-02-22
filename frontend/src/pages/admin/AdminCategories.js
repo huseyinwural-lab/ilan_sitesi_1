@@ -687,6 +687,8 @@ const AdminCategories = () => {
       return next;
     });
     setLevelSelections((prev) => prev.slice(0, levelIndex));
+    setWizardProgress({ state: "draft" });
+    setHierarchyComplete(false);
   };
 
   const handleLevelEditItem = (levelIndex, itemIndex) => {
@@ -702,6 +704,8 @@ const AdminCategories = () => {
       return next;
     });
     setLevelSelections((prev) => prev.slice(0, levelIndex + 1));
+    setWizardProgress({ state: "draft" });
+    setHierarchyComplete(false);
   };
 
   const resetForm = () => {
