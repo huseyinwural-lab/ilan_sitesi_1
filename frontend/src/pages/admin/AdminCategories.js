@@ -1009,6 +1009,7 @@ const AdminCategories = () => {
       setModalOpen(false);
       resetForm();
     }
+    return { success: true, category: savedCategory };
   };
 
   const handleToggle = async (item) => {
