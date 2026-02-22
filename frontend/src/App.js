@@ -174,6 +174,23 @@ function App() {
                   </Route>
 
                   <Route
+                    path="/ilan-ver/kategori-secimi"
+                    element={
+                      <ProtectedRoute portalScope="account">
+                        <ListingCategorySelect />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/ilan-ver/detaylar"
+                    element={
+                      <ProtectedRoute portalScope="account">
+                        <ListingDetails />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
                     path="/support"
                     element={
                       <ProtectedRoute portalScope="account">
