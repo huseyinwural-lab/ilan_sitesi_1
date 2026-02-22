@@ -2805,6 +2805,19 @@ def _db_url_is_localhost(value: Optional[str]) -> bool:
     return host in {"localhost", "127.0.0.1"}
 
 
+def _sanitize_database_url(value: str) -> str:
+    try:
+        parsed = urllib.parse.urlparse(value)
+        if not parsed.query:
+            return value
+        params = urllib.parse.parse_qs(parsed.query)
+        params.pop("sslmode", None)
+        new_query = urllib.parse.urlencode(params, doseq=True)
+        return parsed._replace(query=new_query).geturl()
+    except Exception:
+        return value
+
+
 if APP_ENV in {"preview", "prod"}:
     if not RAW_DATABASE_URL:
         raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
