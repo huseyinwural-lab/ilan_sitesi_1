@@ -1699,18 +1699,9 @@ const AdminCategories = () => {
                       <div>
                         <h3 className="text-md font-semibold">Alt Kategoriler</h3>
                         <p className="text-xs text-slate-600" data-testid="categories-subcategory-hint">
-                          Her alt kategori kendi içinde sınırsız alt kategori alır. Tamamlanan kategori sonrasında yeni alt kategoriye geçebilirsiniz.
+                          Her seviye içinde birden fazla kategori ekleyin, ardından Tamam ile bir sonraki seviyeyi açın.
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        className="px-3 py-1 border rounded text-sm disabled:opacity-60"
-                        onClick={addSubcategory}
-                        disabled={subcategories.length > 0 && !subcategories[subcategories.length - 1].is_complete}
-                        data-testid="categories-subcategory-add"
-                      >
-                        Alt kategori {subcategories.length + 1} oluştur
-                      </button>
                     </div>
                     {subcategories.length === 0 ? (
                       <div className="text-sm text-slate-700" data-testid="categories-subcategory-empty">Henüz alt kategori başlatılmadı.</div>
