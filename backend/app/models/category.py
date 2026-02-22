@@ -50,6 +50,7 @@ class Category(Base):
     # Schema metadata (admin wizard)
     hierarchy_complete: Mapped[bool] = mapped_column(Boolean, default=True)
     form_schema: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    wizard_progress: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Listing stats (cached)
     listing_count: Mapped[int] = mapped_column(Integer, default=0)

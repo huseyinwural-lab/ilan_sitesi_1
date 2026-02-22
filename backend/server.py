@@ -9036,6 +9036,7 @@ class CategoryCreatePayload(BaseModel):
     sort_order: Optional[int] = 0
     hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
+    wizard_progress: Optional[Dict[str, Any]] = None
 
 
 class CategoryUpdatePayload(BaseModel):
@@ -9047,6 +9048,7 @@ class CategoryUpdatePayload(BaseModel):
     sort_order: Optional[int] = None
     hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
+    wizard_progress: Optional[Dict[str, Any]] = None
     expected_updated_at: Optional[str] = None
 
 
