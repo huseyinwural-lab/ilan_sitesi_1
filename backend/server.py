@@ -10595,6 +10595,8 @@ async def admin_approve_listing(
         session=session,
         listing_id=listing_id,
         current_user=current_user,
+        new_status="published",
+        action_type="approve",
     )
     return {"ok": True, "listing": {"id": str(updated.id), "status": updated.status}}
 
