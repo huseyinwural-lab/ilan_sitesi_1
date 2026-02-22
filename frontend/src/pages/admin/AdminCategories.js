@@ -337,7 +337,7 @@ const AdminCategories = () => {
       expected_updated_at: activeEditing?.updated_at,
     };
     if (effectiveHierarchyComplete || status !== "draft") {
-      payload.form_schema = { ...schema, status };
+      payload.form_schema = sanitizeSchemaStrings({ ...schema, status });
     }
     if (progressState) {
       payload.wizard_progress = { state: progressState };
