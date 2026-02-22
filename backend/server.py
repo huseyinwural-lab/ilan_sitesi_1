@@ -1661,6 +1661,7 @@ async def _get_migration_state(conn) -> Dict[str, Optional[str]]:
             "state": _migration_state_cache.get("state", "unknown"),
             "current": _migration_state_cache.get("current"),
             "head": _migration_state_cache.get("head"),
+            "checked_at": _migration_state_cache.get("checked_at"),
         }
 
     head_revision = _get_alembic_head_revision()
@@ -1682,7 +1683,7 @@ async def _get_migration_state(conn) -> Dict[str, Optional[str]]:
         "current": current_revision,
         "head": head_revision,
     })
-    return {"state": state, "current": current_revision, "head": head_revision}
+    return {"state": state, "current": current_revision, "head": head_revision, "checked_at": now_ts}
 
 
 def _sanitize_text(value: str) -> str:
@@ -2788,9 +2789,9 @@ def _db_url_is_localhost(value: Optional[str]) -> bool:
 
 if APP_ENV in {"preview", "prod"}:
     if not RAW_DATABASE_URL:
-        raise RuntimeError("DATABASE_URL must be set for preview/prod")
+        raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
     if _db_url_is_localhost(RAW_DATABASE_URL):
-        raise RuntimeError("DATABASE_URL cannot use localhost in preview/prod")
+        raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
     if DB_SSL_MODE != "require":
         raise RuntimeError("DB_SSL_MODE must be require for preview/prod")
     if APP_ENV == "prod" and EMAIL_PROVIDER == "mock":
