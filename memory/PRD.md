@@ -48,10 +48,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - GET /api/v1/users/me/data-export (JSON)
   - DELETE /api/v1/users/me/account (soft delete + 30 gün + is_active=false)
 - Frontend (Consumer Panel): AccountProfile + PrivacyCenter yeni v1 endpointlerine bağlı
-- **Admin demo (auth gerektirmez):** /admin-demo
+- **Portal yeniden tasarımı (EU uyumlu):**
   - Turuncu zemin + üst yatay menü + sol alt menü
   - Bireysel/Ticari menü farkları uygulandı
   - TR/DE/FR menü dili toggle
+- **Admin demo (auth gerektirmez):** /admin-demo (listing moderasyon ekranı, placeholder data)
 - Dealer portal ek sayfalar: Şirket Profili + Gizlilik Merkezi
 - **İlan ver sihirbazı (create listing):**
   - Başlıklar/boş durumlar/section alanları için data-testid eklendi
