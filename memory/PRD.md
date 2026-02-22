@@ -66,6 +66,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **Mongo temizliği (moderasyon):**
   - Moderation queue/count/detail SQL’e taşındı
   - Approve/Reject/Needs‑revision SQL akışı + ModerationAction + audit log
+- **Admin Moderation Demo (DB yokken):**
+  - /admin/moderation-demo route’u (mock data + filtreler + Approve/Reject/Warning UI)
+  - Üstte “DEMO MODE – DB bağlantısı yok” bannerı
 - **Local Infra:**
   - PostgreSQL kuruldu, app_local DB oluşturuldu
   - Alembic upgrade heads PASS
