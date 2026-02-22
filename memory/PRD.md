@@ -16,6 +16,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Register anti-bot + GDPR export bildirimleri
 - Ops görünürlüğü (ops_attention + last_db_error)
 - EU uyumlu portal navigasyonu (TR/DE/FR)
+- İlan ver sihirbazı tamamlanması (test-id kapsamı)
 
 ## Kullanıcı Personaları
 - **Consumer (Bireysel)**
@@ -52,6 +53,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Bireysel/Ticari menü farkları uygulandı
   - TR/DE/FR menü dili toggle
 - Dealer portal ek sayfalar: Şirket Profili + Gizlilik Merkezi
+- **İlan ver sihirbazı (create listing):**
+  - Başlıklar/boş durumlar/section alanları için data-testid eklendi
+  - Dropzone + cover etiketleri test-id ile tamamlandı
 - Preview/Prod DB fail-fast: CONFIG_MISSING hatası + localhost yasak + DB_SSL_MODE=require
 - .env override kapatıldı (server.py, core/config.py, app/database.py)
 - **P0 Sertleştirmeler:**
