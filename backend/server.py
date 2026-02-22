@@ -86,7 +86,7 @@ from app.models.consumer_profile import ConsumerProfile
 from app.models.auth import UserCredential, EmailVerificationToken
 from app.utils.slug import slugify
 from app.models.dealer_listing import DealerListing
-from app.models.moderation import Listing
+from app.models.moderation import Listing, ModerationAction
 from app.models.analytics import ListingView
 from app.models.messaging import Conversation, Message
 from app.models.favorite import Favorite
