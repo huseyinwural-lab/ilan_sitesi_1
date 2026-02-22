@@ -1121,7 +1121,8 @@ const AdminCategories = () => {
       type: field.type || "select",
       required: field.required || false,
       sort_order: field.sort_order || 0,
-      optionsInput: (field.options || []).join(", "),
+      optionInput: "",
+      options: Array.isArray(field.options) ? field.options : [],
       messages: { required: field.messages?.required || "", invalid: field.messages?.invalid || "" },
     });
     setDynamicError("");
