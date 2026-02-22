@@ -18,6 +18,12 @@ GET /api/health/db
 ```
 Beklenen çıktı: `200` ve `db_status=ok`
 
+## Runtime Env Kontrolü (2026-02-22)
+```
+printenv | rg DATABASE_URL
+```
+Sonuç: boş (env set edilmemiş)
+
 ## Backend Log Kanıtı
 ```
 SQL init skipped: Multiple exceptions: [Errno 111] Connect call failed ('127.0.0.1', 5432)
