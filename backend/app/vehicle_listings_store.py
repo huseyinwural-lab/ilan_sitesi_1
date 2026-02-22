@@ -14,8 +14,16 @@ async def create_vehicle_listing(db, payload: dict, user: dict) -> dict:
     title = (core_fields.get("title") or payload.get("title") or "").strip()
     description = (core_fields.get("description") or payload.get("description") or "").strip()
     price_amount = price_payload.get("amount") if isinstance(price_payload, dict) else None
+    hourly_rate = price_payload.get("hourly_rate") if isinstance(price_payload, dict) else None
+    price_type = (price_payload.get("price_type") if isinstance(price_payload, dict) else None) or ("HOURLY" if hourly_rate else "FIXED")
+
+    if price_type == "HOURLY":
+        price_amount = None
     if price_amount is None:
         price_amount = payload.get("price_eur")
+    if price_type != "HOURLY":
+        hourly_rate = None
+
     attributes = {
         "mileage_km": payload.get("mileage_km"),
         "price_eur": price_amount,
