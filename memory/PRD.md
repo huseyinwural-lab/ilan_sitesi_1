@@ -88,6 +88,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/PREVIEW_MIGRATION_PARITY_EVIDENCE.md
 - /app/docs/SPRINT1_PREVIEW_API_EVIDENCE.md
 - /app/docs/SPRINT1_PREVIEW_E2E_EVIDENCE.md
+- /app/docs/SPRINT_PREVIEW_ADMIN_E2E_EVIDENCE.md
 - /app/docs/SPRINT1_CLOSEOUT.md
 - /app/docs/REGISTER_ANTIBOT_HONEYPOT_SPEC.md
 - /app/docs/REGISTER_ANTIBOT_HONEYPOT_EVIDENCE.md
