@@ -386,6 +386,31 @@ def _normalize_phone_candidates(value: Optional[str]) -> List[str]:
     return list(candidates)
 
 
+async def _check_register_honeypot(
+    session: AsyncSession,
+    request: Request,
+    email: Optional[str],
+    value: Optional[str],
+    role: str,
+) -> None:
+    if not value or not str(value).strip():
+        return
+
+    actor = {"id": None, "email": email}
+    await _write_audit_log_sql(
+        session=session,
+        action="register_honeypot_hit",
+        actor=actor,
+        resource_type="security",
+        resource_id=email,
+        metadata={"field": "company_website", "value": str(value).strip(), "role": role},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+    raise HTTPException(status_code=400, detail="Invalid request")
+
+
 def _normalize_notification_prefs(payload: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     prefs = payload or {}
     return {
