@@ -1541,7 +1541,7 @@ const AdminCategories = () => {
                       <div>
                         <h3 className="text-md font-semibold">Alt Kategoriler</h3>
                         <p className="text-xs text-slate-600" data-testid="categories-subcategory-hint">
-                          Alt kategori 1 tamamlanınca otomatik olarak alt kategori 2 açılır. İstediğiniz kadar devam edebilirsiniz.
+                          Her alt kategori kendi içinde sınırsız alt kategori alır. Tamamlanan kategori sonrasında yeni alt kategoriye geçebilirsiniz.
                         </p>
                       </div>
                       <button
