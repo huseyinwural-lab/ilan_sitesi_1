@@ -344,6 +344,22 @@ export default function Register({ portalContext = 'account' }) {
           )}
 
           <form onSubmit={step === 'form' ? handleSubmit : handleVerify} className="space-y-5" data-testid="register-form">
+            <div
+              style={{ position: 'absolute', left: '-10000px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}
+              aria-hidden="true"
+              data-testid="register-honeypot-wrapper"
+            >
+              <label htmlFor="company-website">Company website</label>
+              <input
+                id="company-website"
+                name="company_website"
+                value={companyWebsite}
+                onChange={(e) => setCompanyWebsite(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                data-testid="register-company-website"
+              />
+            </div>
             {error && (
               <div className="rounded-md bg-destructive/10 text-destructive text-sm px-3 py-2" data-testid="register-error">
                 {error}
