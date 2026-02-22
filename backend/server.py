@@ -1622,6 +1622,23 @@ def _get_client_ip(request: Request) -> str | None:
         return xff.split(",")[0].strip() or None
     return request.client.host if request.client else None
 
+async def _ensure_wizard_progress_column(conn) -> None:
+    try:
+        result = await conn.execute(
+            text(
+                """
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'categories'
+                  AND column_name = 'wizard_progress'
+                """
+            )
+        )
+        if result.first() is None:
+            await conn.execute(text("ALTER TABLE categories ADD COLUMN wizard_progress JSONB"))
+    except Exception as exc:
+        logging.getLogger("sql_config").warning("Wizard progress column check failed: %s", exc)
+
 
 def _get_masked_db_target() -> Dict[str, Optional[str]]:
     try:
