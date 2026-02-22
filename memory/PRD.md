@@ -61,6 +61,10 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **Admin kategori parametre alanları:**
   - Parametre alanlarında seçenekleri tek tek ekleme/çıkarma arayüzü
   - Parametre listesinde seçenek ve zorunluluk özetleri
+- **İlan Ver (Emlak) yeni akış:**
+  - /ilan-ver/kategori-secimi sütunlu drill-down + breadcrumb + arama kutusu
+  - /ilan-ver/detaylar placeholder (detay formu daha sonra)
+  - /api/categories/children + /api/categories/search endpointleri
 
 - **İlan ver sihirbazı (create listing):**
   - Başlıklar/boş durumlar/section alanları için data-testid eklendi
