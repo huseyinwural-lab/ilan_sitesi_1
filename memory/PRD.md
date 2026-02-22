@@ -18,6 +18,20 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - EU uyumlu portal navigasyonu (TR/DE/FR)
 - İlan ver sihirbazı tamamlanması (test-id kapsamı)
 
+## P0 Kapsam Kilidi (Admin Kategori Sihirbazı)
+- Akış düzeltmesi (Tamam→PATCH, Next gating + tooltip)
+- Backend authoritative wizard_progress
+- E2E test paketi (Frontend+Backend)
+- Preview DB env workaround notu (yalnız preview, prod/stage yasak)
+
+### P1 (Beklemede)
+- İlan ver / kategori seçimi
+- Public Search & Moderation Mongo→PostgreSQL
+
+### P2 (Plan)
+- Sihirbaz Edit (kilidi aç) yaklaşımı
+- Çekirdek Alanlar/Parametre alanları genişletme
+
 ## Kullanıcı Personaları
 - **Consumer (Bireysel)**
 - **Dealer (Kurumsal)**
