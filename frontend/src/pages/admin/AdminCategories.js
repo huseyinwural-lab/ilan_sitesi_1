@@ -226,7 +226,12 @@ const AdminCategories = () => {
     return idx === -1 ? 0 : idx;
   };
   const wizardProgressIndex = getProgressIndex(wizardProgressState);
-  const isStepCompleted = (stepId) => wizardProgressIndex >= getProgressIndex(STEP_PROGRESS_STATE[stepId] || "draft");
+  const isStepCompleted = (stepId) => {
+    if (stepId === "hierarchy") {
+      return hierarchyComplete || wizardProgressIndex >= getProgressIndex(STEP_PROGRESS_STATE[stepId] || "draft");
+    }
+    return wizardProgressIndex >= getProgressIndex(STEP_PROGRESS_STATE[stepId] || "draft");
+  };
   const isHierarchyLocked = isStepCompleted("hierarchy");
   const isNextEnabled = Boolean(nextStep) && isStepCompleted(wizardStep);
   const schemaStatusLabel = schema.status === "published" ? "Yayında" : "Taslak";
