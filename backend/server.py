@@ -16811,17 +16811,29 @@ def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
         if price_type == "FIXED":
             if hourly_rate not in (None, ""):
                 raise HTTPException(status_code=400, detail="Fiyat giriniz.")
-            if amount in (None, "") or float(amount) <= 0:
+            if amount in (None, ""):
                 raise HTTPException(status_code=400, detail="Fiyat giriniz.")
-            listing.price = float(amount)
+            try:
+                amount_value = float(amount)
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=400, detail="Fiyat giriniz.")
+            if amount_value <= 0:
+                raise HTTPException(status_code=400, detail="Fiyat giriniz.")
+            listing.price = amount_value
             listing.hourly_rate = None
         else:
             if amount not in (None, ""):
                 raise HTTPException(status_code=400, detail="Saatlik ücret giriniz.")
-            if hourly_rate in (None, "") or float(hourly_rate) <= 0:
+            if hourly_rate in (None, ""):
+                raise HTTPException(status_code=400, detail="Saatlik ücret giriniz.")
+            try:
+                hourly_value = float(hourly_rate)
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=400, detail="Saatlik ücret giriniz.")
+            if hourly_value <= 0:
                 raise HTTPException(status_code=400, detail="Saatlik ücret giriniz.")
             listing.price = None
-            listing.hourly_rate = float(hourly_rate)
+            listing.hourly_rate = hourly_value
 
         listing.price_type = price_type
         listing.currency = price_payload.get("currency_primary") or listing.currency
