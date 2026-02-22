@@ -1674,8 +1674,9 @@ const AdminCategories = () => {
                     {!item.is_complete && (
                       <button
                         type="button"
-                        className="text-xs text-rose-600 border rounded px-2 py-1"
+                        className="text-xs text-rose-600 border rounded px-2 py-1 disabled:opacity-60"
                         onClick={() => removeLevelItem(levelIndex, itemIndex)}
+                        disabled={isHierarchyLocked}
                         data-testid={`categories-level-item-remove-${levelIndex}-${itemIndex}`}
                       >
                         Sil
