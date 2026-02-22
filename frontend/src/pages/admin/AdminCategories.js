@@ -233,6 +233,7 @@ const AdminCategories = () => {
   const [versionDetails, setVersionDetails] = useState({});
   const [lastSavedAt, setLastSavedAt] = useState("");
   const [autosaveStatus, setAutosaveStatus] = useState("idle");
+  const [stepSaving, setStepSaving] = useState(false);
   const autosaveTimeoutRef = useRef(null);
   const autosaveToastRef = useRef(null);
   const lastSavedSnapshotRef = useRef("");
