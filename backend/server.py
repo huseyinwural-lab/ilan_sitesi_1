@@ -8739,44 +8739,55 @@ async def moderation_listing_detail(
     listing_id: str,
     request: Request,
     current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
     _ensure_moderation_rbac(current_user)
 
-    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    try:
+        listing_uuid = uuid.UUID(listing_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid listing id") from exc
+
+    listing = await session.get(Listing, listing_uuid)
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
 
-    # country-scope check for country_admin
     if current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
-        if "*" not in scope and listing.get("country") not in scope:
+        if "*" not in scope and listing.country not in scope:
             raise HTTPException(status_code=403, detail="Country scope forbidden")
 
-    v = listing.get("vehicle") or {}
-    attrs = listing.get("attributes") or {}
-    media = listing.get("media") or []
+    attrs = listing.attributes or {}
+    vehicle = attrs.get("vehicle") or {}
+    title = (listing.title or "").strip()
+    if not title:
+        title = f"{(vehicle.get('make_key') or '').upper()} {vehicle.get('model_key') or ''} {vehicle.get('year') or ''}".strip()
 
-    title = (listing.get("title") or "").strip() or f"{(v.get('make_key') or '').upper()} {v.get('model_key') or ''} {v.get('year') or ''}".strip()
+    history_rows = (
+        await session.execute(
+            select(AuditLog)
+            .where(AuditLog.resource_type == "listing", AuditLog.resource_id == listing_id)
+            .order_by(desc(AuditLog.created_at))
+            .limit(50)
+        )
+    ).scalars().all()
+    moderation_history = [_audit_log_sql_to_dict(row) for row in history_rows]
 
-    moderation_history = await db.audit_logs.find(
-        {"listing_id": listing_id, "resource_type": "listing"}, {"_id": 0}
-    ).sort("created_at", -1).to_list(length=50)
-
+    images = listing.images or []
     return {
         "id": listing_id,
         "title": title,
-        "status": listing.get("status"),
-        "module": "vehicle",
-        "country": listing.get("country"),
-        "city": "",
-        "price": attrs.get("price_eur"),
-        "currency": "EUR",
-        "description": "",
-        "attributes": {**(v or {}), **(attrs or {})},
-        "images": [],
-        "image_count": len(media),
-        "created_at": listing.get("created_at"),
+        "status": listing.status,
+        "module": listing.module,
+        "country": listing.country,
+        "city": listing.city or "",
+        "price": listing.price,
+        "currency": listing.currency,
+        "description": listing.description or "",
+        "attributes": attrs,
+        "images": images,
+        "image_count": listing.image_count or len(images),
+        "created_at": listing.created_at.isoformat() if listing.created_at else None,
         "moderation_history": moderation_history,
     }
 
