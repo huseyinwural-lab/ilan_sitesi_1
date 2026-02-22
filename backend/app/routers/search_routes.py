@@ -211,7 +211,10 @@ async def search_listings(
             "id": str(i.id),
             "title": i.title,
             "price": i.price,
-            "currency": i.currency,
+            "price_type": i.price_type or "FIXED",
+            "price_amount": i.price,
+            "hourly_rate": i.hourly_rate,
+            "currency": i.currency or "EUR",
             "image": i.images[0] if i.images else None
         } for i in items],
         "facets": facets,
