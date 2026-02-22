@@ -8528,7 +8528,7 @@ async def admin_export_audit_logs(
 
 
 # =====================
-# Moderation (Mongo) - Backoffice
+# Moderation (SQL) - Backoffice
 # =====================
 
 def _ensure_moderation_rbac(current_user: dict):
