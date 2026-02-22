@@ -10513,6 +10513,10 @@ async def _moderation_transition_sql(
     session: AsyncSession,
     listing_id: str,
     current_user: dict,
+    new_status: str,
+    action_type: str,
+    reason: Optional[str] = None,
+    reason_note: Optional[str] = None,
 ) -> Listing:
     _ensure_moderation_rbac(current_user)
 
@@ -10530,17 +10534,48 @@ async def _moderation_transition_sql(
         raise HTTPException(status_code=400, detail="Listing not pending_moderation")
 
     now = datetime.now(timezone.utc)
-    listing.status = "published"
-    listing.published_at = now
+    listing.status = new_status
     listing.updated_at = now
+    if new_status == "published":
+        listing.published_at = now
+
+    actor_id = current_user.get("id")
+    actor_uuid = None
+    try:
+        if actor_id:
+            actor_uuid = uuid.UUID(str(actor_id))
+    except ValueError:
+        actor_uuid = None
+
+    if actor_uuid:
+        moderation_action = ModerationAction(
+            listing_id=listing_uuid,
+            action_type=action_type,
+            reason=reason,
+            note=reason_note,
+            actor_admin_id=actor_uuid,
+            actor_email=current_user.get("email"),
+        )
+        session.add(moderation_action)
+
+    action_label = {
+        "published": "moderation_approved",
+        "rejected": "moderation_rejected",
+        "needs_revision": "moderation_needs_revision",
+    }.get(new_status, "moderation_updated")
 
     await _write_audit_log_sql(
         session=session,
-        action="moderation_approved",
+        action=action_label,
         actor={"id": current_user.get("id"), "email": current_user.get("email")},
         resource_type="listing",
         resource_id=listing_id,
-        metadata={"previous_status": prev_status, "new_status": "published"},
+        metadata={
+            "previous_status": prev_status,
+            "new_status": new_status,
+            "reason": reason,
+            "reason_note": reason_note,
+        },
         request=None,
         country_code=listing.country,
     )
