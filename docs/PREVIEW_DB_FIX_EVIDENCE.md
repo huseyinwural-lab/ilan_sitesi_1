@@ -18,4 +18,10 @@ GET /api/health/db
 ```
 Beklenen çıktı: `200` ve `db_status=ok`
 
-> Not: Secret injection tamamlandığında bu dosya güncellenerek gerçek curl çıktıları eklenecek.
+## Mevcut Durum (2026-02-22)
+```
+GET /api/health
+```
+Sonuç: `520` (Cloudflare: Web server is returning an unknown error)
+
+> Not: Secret injection tamamlandığında gerçek curl çıktıları eklenecek.
