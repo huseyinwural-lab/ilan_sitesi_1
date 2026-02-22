@@ -39,6 +39,8 @@ import AdminInviteAccept from '@/pages/admin/AdminInviteAccept';
 import SupportPage from '@/pages/Support';
 import Register from '@/pages/Register';
 import VerifyEmail from '@/pages/VerifyEmail';
+import ListingCategorySelect from '@/pages/listing/ListingCategorySelect';
+import ListingDetails from '@/pages/listing/ListingDetails';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
