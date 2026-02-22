@@ -1075,7 +1075,7 @@ const AdminCategories = () => {
       return;
     }
 
-    await handleSave("draft", null, wizardStep === "preview", { progressState });
+    await handleSave("draft", null, false, { progressState });
   };
 
   const handleToggle = async (item) => {
