@@ -1607,7 +1607,7 @@ const AdminCategories = () => {
                       className={inputClassName}
                       placeholder="Ad"
                       value={item.name}
-                      disabled={item.is_complete}
+                      disabled={itemInputsDisabled}
                       onChange={(e) => updateLevelItem(levelIndex, itemIndex, { name: e.target.value })}
                       data-testid={`categories-level-item-name-${levelIndex}-${itemIndex}`}
                     />
@@ -1620,7 +1620,7 @@ const AdminCategories = () => {
                       className={inputClassName}
                       placeholder="Slug"
                       value={item.slug}
-                      disabled={item.is_complete}
+                      disabled={itemInputsDisabled}
                       onChange={(e) => updateLevelItem(levelIndex, itemIndex, { slug: e.target.value })}
                       data-testid={`categories-level-item-slug-${levelIndex}-${itemIndex}`}
                     />
@@ -1635,7 +1635,7 @@ const AdminCategories = () => {
                       className={inputClassName}
                       placeholder="Sıra"
                       value={item.sort_order}
-                      disabled={item.is_complete}
+                      disabled={itemInputsDisabled}
                       onChange={(e) => updateLevelItem(levelIndex, itemIndex, { sort_order: e.target.value })}
                       data-testid={`categories-level-item-sort-${levelIndex}-${itemIndex}`}
                     />
@@ -1643,7 +1643,7 @@ const AdminCategories = () => {
                       <input
                         type="checkbox"
                         checked={item.active_flag}
-                        disabled={item.is_complete}
+                        disabled={itemInputsDisabled}
                         onChange={(e) => updateLevelItem(levelIndex, itemIndex, { active_flag: e.target.checked })}
                         data-testid={`categories-level-item-active-input-${levelIndex}-${itemIndex}`}
                       />
