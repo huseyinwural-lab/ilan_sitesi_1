@@ -896,16 +896,12 @@ const AdminCategories = () => {
     })));
   };
 
-  const updateSubcategory = (index, patch) => {
-    setSubcategories((prev) => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], ...patch };
-      return updated;
-    });
+  const updateSubcategory = (path, patch) => {
+    setSubcategories((prev) => updateNodeByPath(prev, path, patch));
   };
 
-  const removeSubcategory = (index) => {
-    setSubcategories((prev) => prev.filter((_, i) => i !== index));
+  const removeSubcategory = (path) => {
+    setSubcategories((prev) => removeNodeByPath(prev, path));
   };
 
   const handleHierarchyComplete = async () => {
