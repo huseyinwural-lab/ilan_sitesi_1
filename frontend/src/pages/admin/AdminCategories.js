@@ -966,7 +966,7 @@ const AdminCategories = () => {
         setHierarchyError(data?.detail || "Kaydetme sırasında hata oluştu.");
       }
       setAutosaveStatus("idle");
-      return;
+      return { success: false };
     }
     const savedCategory = data?.category || activeEditing;
     if (savedCategory) {
