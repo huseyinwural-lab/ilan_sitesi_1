@@ -790,6 +790,13 @@ const AdminCategories = () => {
     setHierarchyFieldErrors({});
   };
 
+  const handleHierarchyEdit = async () => {
+    const canProceed = await resetWizardProgress();
+    if (!canProceed) return;
+    setHierarchyError("");
+    setHierarchyFieldErrors({});
+  };
+
   const resetForm = () => {
     setForm({
       name: "",
