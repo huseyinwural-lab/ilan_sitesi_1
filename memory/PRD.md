@@ -58,7 +58,6 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Seviye bazlı sütunlar: her seviyede çoklu kategori kartı + Tamam ile bir sonraki seviyeye geçiş
   - Alt seviye kolonları, seçilen kategoriye göre açılıyor
   - "Tamam" ile kategori kartı kilitlenir, seviye tamamlanınca yeni seviye açılır
-  - Alt kategori listesi Accordion düzeninde (Aç/Kapat) gösteriliyor
 - **Admin kategori parametre alanları:**
   - Parametre alanlarında seçenekleri tek tek ekleme/çıkarma arayüzü
   - Parametre listesinde seçenek ve zorunluluk özetleri
