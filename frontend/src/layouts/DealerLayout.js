@@ -1,25 +1,86 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, LogOut, ListChecks } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const menuItems = [
-  { key: 'dashboard', path: '/dealer', label: 'Dashboard', icon: LayoutDashboard, testId: 'dealer-nav-dashboard' },
-  { key: 'listings', path: '/dealer/listings', label: 'İlanlar', icon: ListChecks, testId: 'dealer-nav-listings' },
-  { key: 'invoices', path: '/dealer/invoices', label: 'Faturalar', icon: FileText, testId: 'dealer-nav-invoices' },
+const languageOptions = [
+  { key: 'tr', label: 'TR' },
+  { key: 'de', label: 'DE' },
+  { key: 'fr', label: 'FR' },
 ];
 
-const navClass = ({ isActive }) =>
-  `flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition ${
-    isActive
-      ? 'bg-slate-900 text-white font-semibold'
-      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-  }`;
+const topNavItems = [
+  {
+    key: 'dashboard',
+    path: '/dealer',
+    labelKey: 'nav_dealer_dashboard',
+    match: ['/dealer'],
+    testId: 'dealer-top-nav-dashboard',
+  },
+  {
+    key: 'listings',
+    path: '/dealer/listings',
+    labelKey: 'nav_listings',
+    match: ['/dealer/listings'],
+    testId: 'dealer-top-nav-listings',
+  },
+  {
+    key: 'billing',
+    path: '/dealer/invoices',
+    labelKey: 'nav_invoices',
+    match: ['/dealer/invoices'],
+    testId: 'dealer-top-nav-invoices',
+  },
+  {
+    key: 'company',
+    path: '/dealer/company',
+    labelKey: 'nav_company',
+    match: ['/dealer/company'],
+    testId: 'dealer-top-nav-company',
+  },
+  {
+    key: 'privacy',
+    path: '/dealer/privacy',
+    labelKey: 'nav_privacy_center',
+    match: ['/dealer/privacy'],
+    testId: 'dealer-top-nav-privacy',
+  },
+];
 
 export default function DealerLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
+
+  const activeTopKey = useMemo(() => {
+    const matched = topNavItems.find((item) =>
+      item.match.some((prefix) => location.pathname.startsWith(prefix))
+    );
+    return matched?.key || 'dashboard';
+  }, [location.pathname]);
+
+  const sideMenuGroups = useMemo(
+    () => ({
+      dashboard: [
+        { path: '/dealer', labelKey: 'nav_dashboard', testId: 'dealer-side-overview' },
+      ],
+      listings: [
+        { path: '/dealer/listings', labelKey: 'nav_my_listings', testId: 'dealer-side-listings' },
+      ],
+      billing: [
+        { path: '/dealer/invoices', labelKey: 'nav_invoices', testId: 'dealer-side-invoices' },
+      ],
+      company: [
+        { path: '/dealer/company', labelKey: 'nav_company_profile', testId: 'dealer-side-company-profile' },
+      ],
+      privacy: [
+        { path: '/dealer/privacy', labelKey: 'nav_privacy_center', testId: 'dealer-side-privacy' },
+      ],
+    }),
+    []
+  );
 
   const handleLogout = () => {
     logout();
@@ -27,67 +88,104 @@ export default function DealerLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="dealer-layout">
-      <div className="flex">
-        <aside className="hidden lg:flex w-72 flex-col border-r bg-white" data-testid="dealer-sidebar">
-          <div className="p-6 border-b" data-testid="dealer-sidebar-header">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Kurumsal Panel</div>
-            <div className="text-xl font-bold text-slate-900" data-testid="dealer-sidebar-title">Dealer</div>
-          </div>
-          <div className="p-4" data-testid="dealer-sidebar-user">
-            <div className="rounded-lg border bg-slate-50 p-4">
-              <div className="text-xs text-muted-foreground">Giriş yapan</div>
-              <div className="font-semibold text-slate-900" data-testid="dealer-user-name">{user?.full_name || user?.email}</div>
-              <div className="text-xs text-muted-foreground" data-testid="dealer-user-role">{user?.role || 'dealer'}</div>
+    <div className="min-h-screen bg-[#f6c27a]" data-testid="dealer-layout">
+      <header className="bg-[#2f3854] text-white" data-testid="dealer-topbar">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
+          <div className="flex items-center gap-4" data-testid="dealer-topbar-left">
+            <div
+              className="flex h-10 w-28 items-center justify-center rounded bg-yellow-400 text-sm font-bold text-slate-900"
+              data-testid="dealer-logo"
+            >
+              ANNONCIA
+            </div>
+            <div className="text-xs uppercase tracking-[0.2em] text-white/70" data-testid="dealer-portal-label">
+              {t('portal_dealer')}
             </div>
           </div>
-          <nav className="flex-1 px-4 space-y-1" data-testid="dealer-sidebar-nav">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink key={item.key} to={item.path} className={navClass} data-testid={item.testId}>
-                  <Icon size={18} />
-                  <span data-testid={`${item.testId}-label`}>{item.label}</span>
-                </NavLink>
-              );
-            })}
-          </nav>
-          <div className="p-4 border-t" data-testid="dealer-sidebar-footer">
+          <div className="flex flex-wrap items-center gap-3" data-testid="dealer-topbar-right">
+            <div className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-1" data-testid="dealer-language-toggle">
+              {languageOptions.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setLanguage(option.key)}
+                  className={`rounded-full px-2 py-1 text-xs font-semibold transition ${
+                    language === option.key ? 'bg-white text-[#2f3854]' : 'text-white/70 hover:text-white'
+                  }`}
+                  data-testid={`dealer-language-${option.key}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <div className="text-sm" data-testid="dealer-user-name">
+              {user?.full_name || user?.email}
+            </div>
             <button
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm"
+              className="inline-flex items-center gap-2 rounded-full border border-white/40 px-3 py-1 text-xs uppercase tracking-wide"
               data-testid="dealer-logout"
             >
-              <LogOut size={16} /> Çıkış
+              <LogOut size={14} /> {t('logout')}
             </button>
           </div>
-        </aside>
+        </div>
+      </header>
 
-        <main className="flex-1 min-w-0" data-testid="dealer-main">
-          <header className="sticky top-0 z-10 border-b bg-white/90 backdrop-blur" data-testid="dealer-topbar">
-            <div className="flex items-center justify-between px-6 py-4">
-              <div>
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Kurumsal Portal</div>
-                <div className="text-lg font-semibold" data-testid="dealer-topbar-title">
-                  {menuItems.find((item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`))?.label || 'Dashboard'}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="lg:hidden inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs"
-                data-testid="dealer-mobile-logout"
+      <nav className="border-b bg-white/95" data-testid="dealer-top-nav">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="flex gap-6 overflow-x-auto py-3 text-sm font-semibold">
+            {topNavItems.map((item) => (
+              <NavLink
+                key={item.key}
+                to={item.path}
+                className={({ isActive }) =>
+                  `border-b-2 pb-2 transition ${
+                    isActive
+                      ? 'border-[#2f3854] text-[#2f3854]'
+                      : 'border-transparent text-slate-500 hover:text-[#2f3854]'
+                  }`
+                }
+                data-testid={item.testId}
               >
-                <LogOut size={14} /> Çıkış
-              </button>
-            </div>
-          </header>
-          <div className="p-6" data-testid="dealer-content">
-            <Outlet />
+                {t(item.labelKey)}
+              </NavLink>
+            ))}
           </div>
-        </main>
-      </div>
+        </div>
+      </nav>
+
+      <main className="mx-auto max-w-6xl px-6 py-8" data-testid="dealer-main">
+        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+          <aside className="rounded-2xl bg-white p-4 shadow-sm" data-testid="dealer-side-nav">
+            <div className="text-xs uppercase tracking-[0.2em] text-slate-400" data-testid="dealer-side-title">
+              {t('nav_section')}
+            </div>
+            <div className="mt-4 space-y-1" data-testid="dealer-side-items">
+              {sideMenuGroups[activeTopKey]?.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                      isActive
+                        ? 'bg-[#f6c27a]/30 text-[#2f3854]'
+                        : 'text-slate-500 hover:bg-slate-100'
+                    }`
+                  }
+                  data-testid={item.testId}
+                >
+                  <span>{t(item.labelKey)}</span>
+                </NavLink>
+              ))}
+            </div>
+          </aside>
+          <section className="rounded-2xl bg-white p-6 shadow-sm" data-testid="dealer-content">
+            <Outlet />
+          </section>
+        </div>
+      </main>
     </div>
   );
 }
