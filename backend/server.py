@@ -4909,6 +4909,43 @@ async def export_user_data_v1(
         request=request,
         country_code=user_row.country_code,
     )
+
+    notification_message = "Veri dışa aktarma tamamlandı. Hesabınızdan bir veri erişimi gerçekleşti."
+    notification = Notification(
+        user_id=user_row.id,
+        title="GDPR Veri Dışa Aktarım",
+        message=notification_message,
+        source_type="gdpr_export",
+        source_id=str(user_row.id),
+        action_url="/account/privacy",
+        payload_json={"severity": "warning", "event": "gdpr_export_completed"},
+        dedupe_key=None,
+    )
+    session.add(notification)
+    await session.flush()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="gdpr_export_completed",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={"format": "json"},
+        request=request,
+        country_code=user_row.country_code,
+    )
+
+    await _write_audit_log_sql(
+        session=session,
+        action="gdpr_export_notification_sent",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="notification",
+        resource_id=str(notification.id),
+        metadata={"channel": "in_app", "severity": "warning"},
+        request=request,
+        country_code=user_row.country_code,
+    )
+
     await session.commit()
 
     payload_text = json.dumps(export_payload, ensure_ascii=False, indent=2)
@@ -5406,6 +5443,43 @@ async def export_user_data(
         request=request,
         country_code=user_row.country_code,
     )
+
+    notification_message = "Veri dışa aktarma tamamlandı. Hesabınızdan bir veri erişimi gerçekleşti."
+    notification = Notification(
+        user_id=user_row.id,
+        title="GDPR Veri Dışa Aktarım",
+        message=notification_message,
+        source_type="gdpr_export",
+        source_id=str(user_row.id),
+        action_url="/account/privacy",
+        payload_json={"severity": "warning", "event": "gdpr_export_completed"},
+        dedupe_key=None,
+    )
+    session.add(notification)
+    await session.flush()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="gdpr_export_completed",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="user",
+        resource_id=str(user_row.id),
+        metadata={"format": "json"},
+        request=request,
+        country_code=user_row.country_code,
+    )
+
+    await _write_audit_log_sql(
+        session=session,
+        action="gdpr_export_notification_sent",
+        actor={"id": str(user_row.id), "email": user_row.email},
+        resource_type="notification",
+        resource_id=str(notification.id),
+        metadata={"channel": "in_app", "severity": "warning"},
+        request=request,
+        country_code=user_row.country_code,
+    )
+
     await session.commit()
 
     payload_text = json.dumps(export_payload, ensure_ascii=False, indent=2)
