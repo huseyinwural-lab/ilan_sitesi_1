@@ -3236,23 +3236,24 @@ const AdminCategories = () => {
               </button>
               <div className="flex flex-wrap gap-2">
                 {nextStep && (
-                  <button
-                    className={`px-4 py-2 border rounded text-sm flex items-center gap-1 ${isNextEnabled ? 'text-slate-700' : 'text-slate-400 cursor-not-allowed'}`}
-                    onClick={() => {
-                      if (!isNextEnabled) {
-                        setHierarchyError("Önce bu adımı tamamlayın.");
-                        return;
-                      }
-                      setHierarchyError("");
-                      setWizardStep(nextStep);
-                    }}
-                    title={!isNextEnabled ? "Önce bu adımı tamamlayın." : ""}
-                    disabled={!isNextEnabled}
-                    data-testid="categories-step-next"
-                  >
-                    <span>Next</span>
-                    <span aria-hidden>→</span>
-                  </button>
+                  <div title={!isNextEnabled ? "Önce bu adımı tamamlayın." : ""} data-testid="categories-next-tooltip">
+                    <button
+                      className={`px-4 py-2 border rounded text-sm flex items-center gap-1 ${isNextEnabled ? 'text-slate-700' : 'text-slate-400 cursor-not-allowed'}`}
+                      onClick={() => {
+                        if (!isNextEnabled) {
+                          setHierarchyError("Önce bu adımı tamamlayın.");
+                          return;
+                        }
+                        setHierarchyError("");
+                        setWizardStep(nextStep);
+                      }}
+                      disabled={!isNextEnabled}
+                      data-testid="categories-step-next"
+                    >
+                      <span>Next</span>
+                      <span aria-hidden>→</span>
+                    </button>
+                  </div>
                 )}
                 <button
                   className="px-4 py-2 bg-blue-600 text-white rounded"
