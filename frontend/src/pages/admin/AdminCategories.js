@@ -1336,6 +1336,9 @@ const AdminCategories = () => {
     const label = getSubcategoryLabel(path);
     const children = node.children || [];
     const childAddDisabled = node.is_complete || (children.length > 0 && !children[children.length - 1].is_complete);
+    const isExpanded = expandedNodes.has(pathKey);
+    const summaryName = node.name ? node.name : "İsim girilmedi";
+    const summarySlug = node.slug ? node.slug : "Slug girilmedi";
 
     return (
       <div
@@ -1344,98 +1347,118 @@ const AdminCategories = () => {
         style={{ marginLeft: depth * 16 }}
         data-testid={`categories-subcategory-row-${pathKey}`}
       >
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold text-slate-800" data-testid={`categories-subcategory-label-${pathKey}`}>
-            {label}
-          </div>
-          {node.is_complete ? (
-            <span className="text-xs font-semibold text-emerald-600" data-testid={`categories-subcategory-status-${pathKey}`}>
-              Tamamlandı
-            </span>
-          ) : (
-            <span className="text-xs font-semibold text-amber-600" data-testid={`categories-subcategory-status-${pathKey}`}>
-              Taslak
-            </span>
-          )}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
-            <label className={labelClassName}>Ad</label>
-            <input
-              className={inputClassName}
-              value={node.name}
-              disabled={node.is_complete}
-              onChange={(e) => updateSubcategory(path, { name: e.target.value })}
-              data-testid={`categories-subcategory-name-${pathKey}`}
-            />
+            <div className="text-sm font-semibold text-slate-800" data-testid={`categories-subcategory-label-${pathKey}`}>
+              {label}
+            </div>
+            <div className="text-xs text-slate-600" data-testid={`categories-subcategory-summary-${pathKey}`}>
+              {summaryName} · {summarySlug}
+            </div>
           </div>
-          <div className="space-y-1">
-            <label className={labelClassName}>Slug</label>
-            <input
-              className={inputClassName}
-              value={node.slug}
-              disabled={node.is_complete}
-              onChange={(e) => updateSubcategory(path, { slug: e.target.value })}
-              data-testid={`categories-subcategory-slug-${pathKey}`}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className={labelClassName}>Sıra</label>
-            <input
-              type="number"
-              min={0}
-              className={inputClassName}
-              value={node.sort_order}
-              disabled={node.is_complete}
-              onChange={(e) => updateSubcategory(path, { sort_order: e.target.value })}
-              data-testid={`categories-subcategory-sort-${pathKey}`}
-            />
-          </div>
-          <label className="flex items-center gap-2 text-sm text-slate-800" data-testid={`categories-subcategory-active-${pathKey}`}>
-            <input
-              type="checkbox"
-              checked={node.active_flag}
-              disabled={node.is_complete}
-              onChange={(e) => updateSubcategory(path, { active_flag: e.target.checked })}
-              data-testid={`categories-subcategory-active-input-${pathKey}`}
-            />
-            Aktif
-          </label>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {!node.is_complete && (
+          <div className="flex items-center gap-2">
+            {node.is_complete ? (
+              <span className="text-xs font-semibold text-emerald-600" data-testid={`categories-subcategory-status-${pathKey}`}>
+                Tamamlandı
+              </span>
+            ) : (
+              <span className="text-xs font-semibold text-amber-600" data-testid={`categories-subcategory-status-${pathKey}`}>
+                Taslak
+              </span>
+            )}
             <button
               type="button"
-              className="text-sm text-white bg-[#1f2a44] rounded px-3 py-1"
-              onClick={() => completeSubcategory(path)}
-              data-testid={`categories-subcategory-complete-${pathKey}`}
+              className="text-xs px-3 py-1 border rounded"
+              onClick={() => toggleSubcategoryExpanded(pathKey)}
+              data-testid={`categories-subcategory-toggle-${pathKey}`}
             >
-              Tamam
+              {isExpanded ? "Kapat" : "Aç"}
             </button>
-          )}
-          {!node.is_complete && (
-            <button
-              type="button"
-              className="text-sm text-rose-600 border rounded px-2 py-1"
-              onClick={() => removeSubcategory(path)}
-              data-testid={`categories-subcategory-remove-${pathKey}`}
-            >
-              Sil
-            </button>
-          )}
-          <button
-            type="button"
-            className="text-sm px-3 py-1 border rounded disabled:opacity-60"
-            onClick={() => addNestedSubcategory(path)}
-            disabled={childAddDisabled}
-            data-testid={`categories-subcategory-child-add-${pathKey}`}
-          >
-            Alt kategori ekle
-          </button>
+          </div>
         </div>
-        {children.length > 0 && (
-          <div className="space-y-2" data-testid={`categories-subcategory-children-${pathKey}`}>
-            {children.map((child, index) => renderSubcategoryNode(child, [...path, index], depth + 1))}
+
+        {isExpanded && (
+          <div className="pt-3 border-t space-y-3" data-testid={`categories-subcategory-panel-${pathKey}`}>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+              <div className="space-y-1">
+                <label className={labelClassName}>Ad</label>
+                <input
+                  className={inputClassName}
+                  value={node.name}
+                  disabled={node.is_complete}
+                  onChange={(e) => updateSubcategory(path, { name: e.target.value })}
+                  data-testid={`categories-subcategory-name-${pathKey}`}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className={labelClassName}>Slug</label>
+                <input
+                  className={inputClassName}
+                  value={node.slug}
+                  disabled={node.is_complete}
+                  onChange={(e) => updateSubcategory(path, { slug: e.target.value })}
+                  data-testid={`categories-subcategory-slug-${pathKey}`}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className={labelClassName}>Sıra</label>
+                <input
+                  type="number"
+                  min={0}
+                  className={inputClassName}
+                  value={node.sort_order}
+                  disabled={node.is_complete}
+                  onChange={(e) => updateSubcategory(path, { sort_order: e.target.value })}
+                  data-testid={`categories-subcategory-sort-${pathKey}`}
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm text-slate-800" data-testid={`categories-subcategory-active-${pathKey}`}>
+                <input
+                  type="checkbox"
+                  checked={node.active_flag}
+                  disabled={node.is_complete}
+                  onChange={(e) => updateSubcategory(path, { active_flag: e.target.checked })}
+                  data-testid={`categories-subcategory-active-input-${pathKey}`}
+                />
+                Aktif
+              </label>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {!node.is_complete && (
+                <button
+                  type="button"
+                  className="text-sm text-white bg-[#1f2a44] rounded px-3 py-1"
+                  onClick={() => completeSubcategory(path)}
+                  data-testid={`categories-subcategory-complete-${pathKey}`}
+                >
+                  Tamam
+                </button>
+              )}
+              {!node.is_complete && (
+                <button
+                  type="button"
+                  className="text-sm text-rose-600 border rounded px-2 py-1"
+                  onClick={() => removeSubcategory(path)}
+                  data-testid={`categories-subcategory-remove-${pathKey}`}
+                >
+                  Sil
+                </button>
+              )}
+              <button
+                type="button"
+                className="text-sm px-3 py-1 border rounded disabled:opacity-60"
+                onClick={() => addNestedSubcategory(path)}
+                disabled={childAddDisabled}
+                data-testid={`categories-subcategory-child-add-${pathKey}`}
+              >
+                Alt kategori ekle
+              </button>
+            </div>
+            {children.length > 0 && (
+              <div className="space-y-2" data-testid={`categories-subcategory-children-${pathKey}`}>
+                {children.map((child, index) => renderSubcategoryNode(child, [...path, index], depth + 1))}
+              </div>
+            )}
           </div>
         )}
       </div>
