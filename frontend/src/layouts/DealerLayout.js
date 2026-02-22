@@ -55,8 +55,15 @@ export default function DealerLayout() {
   const { t, language, setLanguage } = useLanguage();
 
   const activeTopKey = useMemo(() => {
-    const matched = topNavItems.find((item) =>
-      item.match.some((prefix) => location.pathname.startsWith(prefix))
+    const routeMap = [
+      { key: 'listings', prefixes: ['/dealer/listings'] },
+      { key: 'billing', prefixes: ['/dealer/invoices'] },
+      { key: 'company', prefixes: ['/dealer/company'] },
+      { key: 'privacy', prefixes: ['/dealer/privacy'] },
+      { key: 'dashboard', prefixes: ['/dealer'] },
+    ];
+    const matched = routeMap.find((item) =>
+      item.prefixes.some((prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`))
     );
     return matched?.key || 'dashboard';
   }, [location.pathname]);
