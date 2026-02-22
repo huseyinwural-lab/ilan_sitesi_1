@@ -776,7 +776,7 @@ const AdminCategories = () => {
     setSchema(applySchemaDefaults(item.form_schema));
     setWizardStep("hierarchy");
     setWizardProgress(item.wizard_progress || { state: "draft" });
-    setHierarchyComplete(false);
+    setHierarchyComplete(Boolean(item.hierarchy_complete));
     setHierarchyError("");
     setHierarchyFieldErrors({});
     const relatedSubs = buildSubcategoryTree(item.id);
