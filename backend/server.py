@@ -13848,6 +13848,9 @@ async def admin_update_category(
             _validate_category_schema(schema)
         updates["form_schema"] = schema
 
+    if payload.wizard_progress is not None:
+        updates["wizard_progress"] = payload.wizard_progress
+
     if not updates:
         return {"category": _serialize_category_sql(category, include_schema=True, include_translations=False)}
 
