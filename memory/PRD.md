@@ -14,7 +14,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - EU uyumlu şirket profili ve VAT doğrulama (regex)
 - Preview/Prod ortamlarında DB fail-fast + migration gate
 - Register anti-bot + GDPR export bildirimleri
-- Ops görünürlüğü (ops_attention flag)
+- Ops görünürlüğü (ops_attention + last_db_error)
 
 ## Kullanıcı Personaları
 - **Consumer (Bireysel)**
@@ -44,44 +44,53 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - GET/PUT /api/v1/dealers/me/profile (alias)
   - GET/POST /api/v1/users/me/2fa/* (status/setup/verify/disable)
   - GET /api/v1/users/me/data-export (JSON)
-  - DELETE /api/v1/users/me/account (soft delete + 30 gün)
+  - DELETE /api/v1/users/me/account (soft delete + 30 gün + is_active=false)
 - Frontend (Consumer Panel): AccountProfile + PrivacyCenter yeni v1 endpointlerine bağlı
 - Preview/Prod DB fail-fast: CONFIG_MISSING hatası + localhost yasak + DB_SSL_MODE=require
 - .env override kapatıldı (server.py, core/config.py, app/database.py)
 - **P0 Sertleştirmeler:**
   - /api/health/db → migration_state gate + 60sn cache + last_migration_check_at
-  - /api/health → config_state + last_migration_check_at + ops_attention
+  - /api/health → config_state + last_migration_check_at + ops_attention + last_db_error
   - Register honeypot (company_website) + server-side reject + audit log (register_honeypot_hit)
   - GDPR export completion notification (in-app, warning) + audit trail
-- Kanıtlar:
-  - /app/docs/PROFILE_ENDPOINT_FIX_EVIDENCE.md
-  - /app/docs/PREVIEW_DB_FIX_EVIDENCE.md
-  - /app/docs/PREVIEW_MIGRATION_EVIDENCE.md
-  - /app/docs/HEALTH_MIGRATION_GATE_SPEC.md
-  - /app/docs/HEALTH_ENDPOINT_OPS_FLAG_SPEC.md
-  - /app/docs/HEALTH_MIGRATION_GATE_EVIDENCE.md
-  - /app/docs/HEALTH_MIGRATION_GATE_PREVIEW_EVIDENCE.md
-  - /app/docs/PREVIEW_MIGRATION_PARITY_EVIDENCE.md
-  - /app/docs/SPRINT1_PREVIEW_API_EVIDENCE.md
-  - /app/docs/SPRINT1_PREVIEW_E2E_EVIDENCE.md
-  - /app/docs/SPRINT1_CLOSEOUT.md
-  - /app/docs/REGISTER_ANTIBOT_HONEYPOT_SPEC.md
-  - /app/docs/REGISTER_ANTIBOT_HONEYPOT_EVIDENCE.md
-  - /app/docs/GDPR_EXPORT_NOTIFICATION_SPEC.md
-  - /app/docs/GDPR_EXPORT_NOTIFICATION_EVIDENCE.md
-  - /app/docs/OPS_ESCALATION_TICKET.md
-  - /app/docs/PREVIEW_UNBLOCK_TRACKER.md
-  - /app/docs/LOCAL_PREVIEW_SIMULATION_EVIDENCE.md
-  - /app/docs/MIGRATION_DRIFT_SIMULATION_EVIDENCE.md
-  - /app/docs/AUTH_SECURITY_STRESS_EVIDENCE.md
-  - /app/docs/AUDIT_CHAIN_PARITY_EVIDENCE.md
-  - /app/docs/STRIPE_IDEMPOTENCY_LOCAL_EVIDENCE.md
-  - /app/docs/PREVIEW_ACTIVATION_RUNBOOK.md
+- **Mongo temizliği (moderasyon):**
+  - Moderation queue/count/listing detail SQL’e taşındı
+  - Approve/Reject/Needs‑revision SQL akışı + ModerationAction + audit log
+- **Local Infra:**
+  - PostgreSQL kuruldu, app_local DB oluşturuldu
+  - Alembic upgrade heads PASS
+  - Stripe CLI kuruldu (auth/test key invalid → idempotency BLOCKED)
+
+## Kanıtlar
+- /app/docs/LOCAL_DB_READY_EVIDENCE.md
+- /app/docs/MIGRATION_DRIFT_SIMULATION_EVIDENCE.md
+- /app/docs/STRIPE_CLI_INSTALL_EVIDENCE.md
+- /app/docs/STRIPE_IDEMPOTENCY_LOCAL_EVIDENCE.md
+- /app/docs/AUTH_SECURITY_STRESS_EVIDENCE.md
+- /app/docs/AUDIT_CHAIN_PARITY_EVIDENCE.md
+- /app/docs/HEALTH_OPS_VISIBILITY_SPEC.md
+- /app/docs/PROFILE_ENDPOINT_FIX_EVIDENCE.md
+- /app/docs/PREVIEW_DB_FIX_EVIDENCE.md
+- /app/docs/PREVIEW_MIGRATION_EVIDENCE.md
+- /app/docs/HEALTH_MIGRATION_GATE_SPEC.md
+- /app/docs/HEALTH_MIGRATION_GATE_EVIDENCE.md
+- /app/docs/HEALTH_MIGRATION_GATE_PREVIEW_EVIDENCE.md
+- /app/docs/PREVIEW_MIGRATION_PARITY_EVIDENCE.md
+- /app/docs/SPRINT1_PREVIEW_API_EVIDENCE.md
+- /app/docs/SPRINT1_PREVIEW_E2E_EVIDENCE.md
+- /app/docs/SPRINT1_CLOSEOUT.md
+- /app/docs/REGISTER_ANTIBOT_HONEYPOT_SPEC.md
+- /app/docs/REGISTER_ANTIBOT_HONEYPOT_EVIDENCE.md
+- /app/docs/GDPR_EXPORT_NOTIFICATION_SPEC.md
+- /app/docs/GDPR_EXPORT_NOTIFICATION_EVIDENCE.md
+- /app/docs/OPS_ESCALATION_TICKET.md
+- /app/docs/PREVIEW_UNBLOCK_TRACKER.md
+- /app/docs/LOCAL_PREVIEW_SIMULATION_EVIDENCE.md
+- /app/docs/PREVIEW_ACTIVATION_RUNBOOK.md
 
 ## Blokajlar / Riskler
 - Preview ortamında backend 520 (DATABASE_URL secret injection + DB erişimi yok)
-- Local Postgres servisi/CLI yok (local drift ve auth stress test bloklu)
-- Stripe CLI yok (idempotency test bloklu)
+- Stripe API key geçersiz (idempotency testi BLOCKED)
 
 ## Öncelikli Backlog
 ### P0 (Hemen)
@@ -109,5 +118,5 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### P2
 - VIES VAT doğrulama (API)
 - GDPR CSV export
-- Moderation reject flow
+- Moderation reject flow (admin_listings SQL parity)
 - Verification token cleanup job
