@@ -2921,8 +2921,11 @@ async def health_check():
     config_state = "missing_database_url" if not RAW_DATABASE_URL else "ok"
     last_migration_check_at = _format_migration_checked_at()
     ops_attention = config_state != "ok"
+    last_db_error = _last_db_error
 
     if not RAW_DATABASE_URL:
+        _set_last_db_error("CONFIG_MISSING: DATABASE_URL")
+        last_db_error = _last_db_error
         return {
             "status": "degraded",
             "supported_countries": SUPPORTED_COUNTRIES,
@@ -2932,6 +2935,7 @@ async def health_check():
             "config_state": config_state,
             "last_migration_check_at": last_migration_check_at,
             "ops_attention": ops_attention,
+            "last_db_error": last_db_error,
         }
     try:
         async with sql_engine.connect() as conn:
@@ -2940,6 +2944,7 @@ async def health_check():
             last_migration_check_at = _format_migration_checked_at()
         migration_state = migration_info.get("state") or "unknown"
         ops_attention = config_state != "ok" or migration_state == "migration_required"
+        _set_last_db_error(None)
         return {
             "status": "healthy",
             "supported_countries": SUPPORTED_COUNTRIES,
@@ -2948,8 +2953,10 @@ async def health_check():
             "config_state": config_state,
             "last_migration_check_at": last_migration_check_at,
             "ops_attention": ops_attention,
+            "last_db_error": None,
         }
-    except Exception:
+    except Exception as exc:
+        _set_last_db_error(str(exc))
         return {
             "status": "degraded",
             "supported_countries": SUPPORTED_COUNTRIES,
@@ -2959,6 +2966,7 @@ async def health_check():
             "config_state": config_state,
             "last_migration_check_at": last_migration_check_at,
             "ops_attention": True,
+            "last_db_error": _last_db_error,
         }
 
 
