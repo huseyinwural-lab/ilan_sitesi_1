@@ -3215,6 +3215,14 @@ async def register_dealer(
     if not email:
         raise HTTPException(status_code=400, detail="E-posta zorunludur")
 
+    await _check_register_honeypot(
+        session=session,
+        request=request,
+        email=email,
+        value=payload.company_website,
+        role="dealer",
+    )
+
     country_code = await _ensure_country_enabled(session, payload.country_code)
 
     existing = await session.execute(select(SqlUser).where(SqlUser.email == email))
