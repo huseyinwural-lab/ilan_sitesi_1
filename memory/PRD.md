@@ -15,6 +15,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Preview/Prod ortamlarında DB fail-fast + migration gate
 - Register anti-bot + GDPR export bildirimleri
 - Ops görünürlüğü (ops_attention + last_db_error)
+- EU uyumlu portal navigasyonu (TR/DE/FR)
 
 ## Kullanıcı Personaları
 - **Consumer (Bireysel)**
@@ -46,6 +47,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - GET /api/v1/users/me/data-export (JSON)
   - DELETE /api/v1/users/me/account (soft delete + 30 gün + is_active=false)
 - Frontend (Consumer Panel): AccountProfile + PrivacyCenter yeni v1 endpointlerine bağlı
+- **Portal yeniden tasarımı (EU uyumlu):**
+  - Turuncu zemin + üst yatay menü + sol alt menü
+  - Bireysel/Ticari menü farkları uygulandı
+  - TR/DE/FR menü dili toggle
+- Dealer portal ek sayfalar: Şirket Profili + Gizlilik Merkezi
 - Preview/Prod DB fail-fast: CONFIG_MISSING hatası + localhost yasak + DB_SSL_MODE=require
 - .env override kapatıldı (server.py, core/config.py, app/database.py)
 - **P0 Sertleştirmeler:**
@@ -54,7 +60,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Register honeypot (company_website) + server-side reject + audit log (register_honeypot_hit)
   - GDPR export completion notification (in-app, warning) + audit trail
 - **Mongo temizliği (moderasyon):**
-  - Moderation queue/count/listing detail SQL’e taşındı
+  - Moderation queue/count/detail SQL’e taşındı
   - Approve/Reject/Needs‑revision SQL akışı + ModerationAction + audit log
 - **Local Infra:**
   - PostgreSQL kuruldu, app_local DB oluşturuldu
@@ -118,5 +124,5 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### P2
 - VIES VAT doğrulama (API)
 - GDPR CSV export
-- Moderation reject flow (admin_listings SQL parity)
+- Public search + admin listings Mongo bağımlılıklarının SQL’e taşınması
 - Verification token cleanup job
