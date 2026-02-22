@@ -1420,11 +1420,11 @@ const AdminCategories = () => {
           <button
             type="button"
             className="text-xs px-2 py-1 rounded border disabled:opacity-60"
-            onClick={() => handleLevelComplete(levelIndex, items)}
-            disabled={!levelComplete}
+            onClick={() => (isLevelLocked ? handleLevelEditColumn(levelIndex, items) : handleLevelComplete(levelIndex, items))}
+            disabled={!isLevelLocked && !levelComplete}
             data-testid={`categories-level-complete-${levelIndex}`}
           >
-            Tamam
+            {isLevelLocked ? "Düzenle" : "Tamam"}
           </button>
         </div>
         <div className="space-y-3 max-h-[420px] overflow-y-auto" data-testid={`categories-level-items-${levelIndex}`}>
