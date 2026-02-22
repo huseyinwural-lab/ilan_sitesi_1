@@ -518,7 +518,7 @@ const AdminCategories = () => {
       items.forEach((node, index) => {
         const current = [...path, index];
         const key = current.join("-");
-        if (path.length === 0 || !node.is_complete) {
+        if (!node.is_complete || !node.name || !node.slug) {
           keys.add(key);
         }
         if ((node.children || []).length > 0) {
@@ -527,6 +527,9 @@ const AdminCategories = () => {
       });
     };
     traverse(nodes);
+    if (keys.size === 0 && nodes.length > 0) {
+      keys.add("0");
+    }
     if (nodes.length === 0) {
       keys.add("0");
     }
