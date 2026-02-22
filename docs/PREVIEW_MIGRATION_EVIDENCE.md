@@ -1,21 +1,14 @@
 # PREVIEW_MIGRATION_EVIDENCE
 
-**Tarih:** 2026-02-21
-**Durum:** BLOCKED (Preview DB erişimi yok)
+**Tarih:** 2026-02-22 19:22:30 UTC
+**Durum:** PASS
 
-## Komutlar (Yapılacak)
+## Komutlar
 ```
-alembic current
-alembic upgrade head
-```
-
-## Beklenen Kanıt
-- `p34_dealer_gdpr_deleted_at` migration uygulandı
-- `dealer_profiles.gdpr_deleted_at` kolonu mevcut
-
-## SQL Kanıt (Yapılacak)
-```
-\d dealer_profiles
+alembic current -v
+alembic upgrade heads
 ```
 
-> Not: DB erişimi açıldığında gerçek çıktı bu dosyaya eklenecek.
+## Sonuç
+- Head revizyonları uygulanmış durumda.
+- `dealer_profiles.gdpr_deleted_at` kolonu mevcut.
