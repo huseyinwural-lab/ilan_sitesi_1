@@ -219,6 +219,14 @@ const AdminCategories = () => {
   const currentStepIndex = WIZARD_STEPS.findIndex((step) => step.id === wizardStep);
   const nextStep = WIZARD_STEPS[currentStepIndex + 1]?.id;
   const prevStep = WIZARD_STEPS[currentStepIndex - 1]?.id;
+  const wizardProgressState = wizardProgress?.state || "draft";
+  const getProgressIndex = (state) => {
+    const idx = WIZARD_PROGRESS_ORDER.indexOf(state || "draft");
+    return idx === -1 ? 0 : idx;
+  };
+  const wizardProgressIndex = getProgressIndex(wizardProgressState);
+  const isStepCompleted = (stepId) => wizardProgressIndex >= getProgressIndex(STEP_PROGRESS_STATE[stepId] || "draft");
+  const isNextEnabled = Boolean(nextStep) && isStepCompleted(wizardStep);
   const schemaStatusLabel = schema.status === "published" ? "Yayında" : "Taslak";
   const publishValidation = useMemo(() => {
     const errors = [];
