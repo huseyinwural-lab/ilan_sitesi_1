@@ -79,6 +79,7 @@ class Listing(Base):
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     __table_args__ = (
+        CheckConstraint("NOT (price IS NOT NULL AND hourly_rate IS NOT NULL)", name="ck_listings_price_single_mode"),
         Index('ix_listings_country_status', 'country', 'status'),
         Index('ix_listings_module_status', 'module', 'status'),
         Index('ix_listings_moderation', 'status', 'country', 'module', 'created_at'),
