@@ -166,6 +166,7 @@ const AdminCategories = () => {
   const [wizardProgress, setWizardProgress] = useState({ state: "draft" });
   const [hierarchyComplete, setHierarchyComplete] = useState(false);
   const [hierarchyError, setHierarchyError] = useState("");
+  const [hierarchyFieldErrors, setHierarchyFieldErrors] = useState({});
   const [subcategories, setSubcategories] = useState([createSubcategoryDraft()]);
   const [levelSelections, setLevelSelections] = useState([]);
   const [levelCompletion, setLevelCompletion] = useState({});
