@@ -583,12 +583,38 @@ const AdminCategories = () => {
   };
 
   const handleLevelComplete = (levelIndex, items) => {
-    if (!items || items.length === 0) return;
-    const allComplete = items.every((item) => item.is_complete && item.name?.trim() && item.slug?.trim());
-    if (!allComplete) {
-      setHierarchyError(`Kategori ${levelIndex + 1} tamamlanmadan devam edilemez.`);
+    if (!items || items.length === 0) {
+      setHierarchyError(`Kategori ${levelIndex + 1} için en az bir kayıt gerekir.`);
       return;
     }
+    const missing = items.find((item) => !item.name?.trim() || !item.slug?.trim());
+    if (missing) {
+      setHierarchyError(`Kategori ${levelIndex + 1} için ad ve slug zorunludur.`);
+      return;
+    }
+
+    const normalizedItems = items.map((item) => ({
+      ...item,
+      name: item.name.trim(),
+      slug: item.slug.trim().toLowerCase(),
+      is_complete: true,
+      children: item.children || [],
+    }));
+
+    if (levelIndex === 0) {
+      setSubcategories(normalizedItems);
+    } else {
+      const parentPath = getParentPathForLevel(levelIndex);
+      if (parentPath.length === 0) {
+        setHierarchyError("Önce üst seviyeden bir kategori seçin.");
+        return;
+      }
+      setSubcategories((prev) => updateNodeByPath(prev, parentPath, (node) => ({
+        ...node,
+        children: normalizedItems,
+      })));
+    }
+
     setHierarchyError("");
     setLevelCompletion((prev) => ({ ...prev, [levelIndex]: true }));
     if (levelSelections[levelIndex] === undefined) {
