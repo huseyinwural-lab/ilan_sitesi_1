@@ -1851,9 +1851,15 @@ const AdminCategories = () => {
                         <input
                           className={inputClassName}
                           value={form.country_code}
+                          disabled={isHierarchyLocked}
                           onChange={(e) => setForm((prev) => ({ ...prev, country_code: e.target.value.toUpperCase() }))}
                           data-testid="categories-country-input"
                         />
+                        {hierarchyFieldErrors.main_country && (
+                          <div className="text-xs text-rose-600" data-testid="categories-country-error">
+                            {hierarchyFieldErrors.main_country}
+                          </div>
+                        )}
                       </div>
                       <div className="space-y-1">
                         <label className={labelClassName}>Sıra</label>
