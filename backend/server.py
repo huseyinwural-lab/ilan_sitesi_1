@@ -2979,8 +2979,11 @@ async def health_db():
 
     config_state = "missing_database_url" if not RAW_DATABASE_URL else "ok"
     last_migration_check_at = _format_migration_checked_at()
+    last_db_error = _last_db_error
 
     if not RAW_DATABASE_URL:
+        _set_last_db_error("CONFIG_MISSING: DATABASE_URL")
+        last_db_error = _last_db_error
         return JSONResponse(
             status_code=200,
             content={
@@ -2994,6 +2997,7 @@ async def health_db():
                 "migration_current": None,
                 "config_state": config_state,
                 "last_migration_check_at": last_migration_check_at,
+                "last_db_error": last_db_error,
             },
         )
 
@@ -3014,6 +3018,7 @@ async def health_db():
             "migration_current": migration_info.get("current"),
             "config_state": config_state,
             "last_migration_check_at": last_migration_check_at,
+            "last_db_error": None,
         }
 
         if migration_state == "migration_required":
@@ -3025,8 +3030,10 @@ async def health_db():
         if migration_state == "unknown":
             response_content["reason"] = "migration_state_unknown"
 
+        _set_last_db_error(None)
         return JSONResponse(status_code=200, content=response_content)
-    except Exception:
+    except Exception as exc:
+        _set_last_db_error(str(exc))
         return JSONResponse(
             status_code=200,
             content={
@@ -3040,6 +3047,7 @@ async def health_db():
                 "migration_current": None,
                 "config_state": config_state,
                 "last_migration_check_at": last_migration_check_at,
+                "last_db_error": _last_db_error,
             },
         )
 
