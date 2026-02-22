@@ -696,8 +696,52 @@ const AdminCategories = () => {
     }
   };
 
-  const handleLevelEditColumn = (levelIndex, items) => {
+  const resetWizardProgress = async () => {
+    if (stepSaving) return false;
+    if (!editing?.id) {
+      setWizardProgress({ state: "draft" });
+      setHierarchyComplete(false);
+      return true;
+    }
+    setStepSaving(true);
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify({
+          wizard_progress: { state: "draft" },
+          hierarchy_complete: false,
+          expected_updated_at: editing.updated_at,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.category) {
+        setHierarchyError(data?.detail || "İlerleme güncellenemedi.");
+        return false;
+      }
+      const updated = data.category;
+      setEditing(updated);
+      if (updated.wizard_progress) {
+        setWizardProgress(updated.wizard_progress);
+      }
+      setHierarchyComplete(Boolean(updated.hierarchy_complete));
+      setLastSavedAt(formatTime(updated.updated_at || new Date()));
+      return true;
+    } catch (error) {
+      setHierarchyError("İlerleme güncellenemedi.");
+      return false;
+    } finally {
+      setStepSaving(false);
+    }
+  };
+
+  const handleLevelEditColumn = async (levelIndex, items) => {
     if (!items || items.length === 0) return;
+    const canProceed = await resetWizardProgress();
+    if (!canProceed) return;
     const resetItems = items.map((item) => ({
       ...item,
       is_complete: false,
@@ -723,8 +767,6 @@ const AdminCategories = () => {
       return next;
     });
     setLevelSelections((prev) => prev.slice(0, levelIndex));
-    setWizardProgress({ state: "draft" });
-    setHierarchyComplete(false);
     setHierarchyError("");
     setHierarchyFieldErrors({});
   };
