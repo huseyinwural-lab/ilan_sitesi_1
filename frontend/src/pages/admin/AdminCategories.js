@@ -2116,11 +2116,16 @@ const AdminCategories = () => {
                         <select
                           className={selectClassName}
                           value={dynamicDraft.type}
-                          onChange={(e) => setDynamicDraft((prev) => ({
-                            ...prev,
-                            type: e.target.value,
-                            optionsInput: ['text', 'number'].includes(e.target.value) ? '' : prev.optionsInput,
-                          }))}
+                          onChange={(e) => setDynamicDraft((prev) => {
+                            const nextType = e.target.value;
+                            const isTextLike = ['text', 'number'].includes(nextType);
+                            return {
+                              ...prev,
+                              type: nextType,
+                              optionInput: isTextLike ? "" : prev.optionInput,
+                              options: isTextLike ? [] : prev.options,
+                            };
+                          })}
                           data-testid="categories-dynamic-draft-type"
                         >
                           <option value="select">Select</option>
