@@ -1180,6 +1180,7 @@ const AdminCategories = () => {
             active_flag: form.active_flag,
             sort_order: Number(form.sort_order || 0),
             hierarchy_complete: true,
+            wizard_progress: { state: progressState },
             expected_updated_at: editing.updated_at,
           }),
         });
