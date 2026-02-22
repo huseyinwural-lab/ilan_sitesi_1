@@ -1821,9 +1821,15 @@ const AdminCategories = () => {
                         <input
                           className={inputClassName}
                           value={form.name}
+                          disabled={isHierarchyLocked}
                           onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
                           data-testid="categories-name-input"
                         />
+                        {hierarchyFieldErrors.main_name && (
+                          <div className="text-xs text-rose-600" data-testid="categories-name-error">
+                            {hierarchyFieldErrors.main_name}
+                          </div>
+                        )}
                       </div>
                       <div className="space-y-1">
                         <label className={labelClassName}>Slug</label>
