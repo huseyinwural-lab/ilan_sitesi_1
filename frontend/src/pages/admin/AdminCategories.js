@@ -264,7 +264,7 @@ const AdminCategories = () => {
     return wizardProgressIndex >= getProgressIndex(STEP_PROGRESS_STATE[stepId] || "draft");
   };
   const isHierarchyLocked = isStepCompleted("hierarchy");
-  const isNextEnabled = Boolean(nextStep) && isStepCompleted(wizardStep);
+  const isNextEnabled = Boolean(nextStep) && isStepCompleted(wizardStep) && !stepSaving;
   const schemaStatusLabel = schema.status === "published" ? "Yayında" : "Taslak";
   const publishValidation = useMemo(() => {
     const errors = [];
