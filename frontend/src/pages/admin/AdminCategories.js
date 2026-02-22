@@ -704,6 +704,8 @@ const AdminCategories = () => {
     const nextSubcategories = relatedSubs.length ? relatedSubs : [createSubcategoryDraft()];
     setSubcategories(nextSubcategories);
     setExpandedNodes(buildExpandedKeys(nextSubcategories));
+    setLevelSelections([]);
+    setLevelCompletion({});
     setDynamicDraft({
       label: "",
       key: "",
