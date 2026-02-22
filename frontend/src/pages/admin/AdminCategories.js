@@ -145,7 +145,8 @@ const AdminCategories = () => {
     type: "select",
     required: false,
     sort_order: 0,
-    optionsInput: "",
+    optionInput: "",
+    options: [],
     messages: { required: "", invalid: "" },
   });
   const [dynamicEditIndex, setDynamicEditIndex] = useState(null);
