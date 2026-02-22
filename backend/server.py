@@ -1626,7 +1626,7 @@ def _get_alembic_head_revision() -> Optional[str]:
         return None
 
 
-async def _get_migration_state(conn: AsyncSession) -> Dict[str, Optional[str]]:
+async def _get_migration_state(conn) -> Dict[str, Optional[str]]:
     now_ts = time.time()
     cached_at = _migration_state_cache.get("checked_at", 0) or 0
     if cached_at and (now_ts - cached_at) < MIGRATION_STATE_CACHE_TTL_SECONDS:
