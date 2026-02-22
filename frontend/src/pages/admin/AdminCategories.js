@@ -1142,7 +1142,6 @@ const AdminCategories = () => {
       });
       const nextSubcategories = savedSubs.length ? savedSubs : [createSubcategoryDraft()];
       setSubcategories(nextSubcategories);
-      setExpandedNodes(buildExpandedKeys(nextSubcategories));
       setHierarchyComplete(true);
       setWizardStep("core");
       fetchItems();
