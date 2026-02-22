@@ -1030,7 +1030,7 @@ const AdminCategories = () => {
       });
       const patchData = await patchRes.json().catch(() => ({}));
       if (!patchRes.ok) {
-        setHierarchyError(patchData?.detail || "Hiyerarşi güncellenemedi.");
+        setHierarchyError(patchData?.detail || "Kategori güncellenemedi.");
         return { success: false };
       }
       const updatedParent = patchData?.category || parent;
