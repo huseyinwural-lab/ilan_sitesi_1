@@ -911,7 +911,7 @@ const AdminCategories = () => {
       setPublishError("Yayınlama için zorunlu şartlar tamamlanmalı.");
       return;
     }
-    const payload = buildSavePayload(status, activeEditing);
+    const payload = buildSavePayload(status, activeEditing, progressState);
     if (!payload.name || !payload.slug) {
       setHierarchyError("Kategori adı ve slug zorunludur.");
       return;
