@@ -110,7 +110,7 @@ const MODULE_LABELS = {
 };
 
 const WIZARD_STEPS = [
-  { id: "hierarchy", label: "Hiyerarşi" },
+  { id: "hierarchy", label: "Kategori" },
   { id: "core", label: "Çekirdek Alanlar" },
   { id: "dynamic", label: "Parametre Alanları (2a)" },
   { id: "detail", label: "Detay Grupları (2c)" },
@@ -1250,7 +1250,7 @@ const AdminCategories = () => {
                   {WIZARD_STEPS.map((step) => {
                     const active = wizardStep === step.id;
                     const disabled = !canAccessStep(step.id);
-                    const tooltip = disabled ? "Önce hiyerarşiyi tamamlayın" : "";
+                    const tooltip = disabled ? "Önce kategori adımını tamamlayın" : "";
                     return (
                       <button
                         key={step.id}
