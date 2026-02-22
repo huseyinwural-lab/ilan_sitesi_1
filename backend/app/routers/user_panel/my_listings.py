@@ -31,7 +31,11 @@ async def get_my_listings(
         ListingResponse(
             id=str(l.id),
             title=l.title,
-            price=float(l.price) if l.price else 0.0,
+            price=float(l.price) if l.price is not None else None,
+            price_type=l.price_type or "FIXED",
+            price_amount=float(l.price) if l.price is not None else None,
+            hourly_rate=float(l.hourly_rate) if l.hourly_rate is not None else None,
+            currency=l.currency or "EUR",
             status=l.status,
             image_url=l.images[0] if l.images else None,
             view_count=l.view_count,
