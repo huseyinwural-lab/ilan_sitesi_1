@@ -4,12 +4,15 @@
 DB bağlı olsa bile Alembic head değilse servis “ready” sayılmasın.
 
 ## API
-`GET /api/health/db`
+`GET /api/health/db` (migration gate)
+`GET /api/health` (config visibility)
 
 ## Yeni Alanlar
 - `migration_state`: `ok | migration_required | unknown`
 - `migration_head`: Alembic head revizyonu (varsa)
 - `migration_current`: DB'deki revizyon (alembic_version)
+- `last_migration_check_at`: ISO timestamp (cache zamanı)
+- `config_state`: `missing_database_url | ok`
 
 ## Davranış
 - **Preview/Prod**: `migration_required` → HTTP **503**
