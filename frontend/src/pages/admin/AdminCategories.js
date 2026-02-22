@@ -972,6 +972,9 @@ const AdminCategories = () => {
       if (savedCategory.form_schema) {
         setSchema(nextSchema);
       }
+      if (savedCategory.wizard_progress) {
+        setWizardProgress(savedCategory.wizard_progress);
+      }
       setHierarchyComplete(Boolean(savedCategory.hierarchy_complete));
       if (wizardStep === "hierarchy" && savedCategory.hierarchy_complete) {
         setWizardStep("core");
