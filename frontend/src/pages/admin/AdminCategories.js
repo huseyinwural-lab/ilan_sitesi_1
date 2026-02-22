@@ -1821,6 +1821,8 @@ const AdminCategories = () => {
                           onClick={() => {
                             setWizardProgress({ state: "draft" });
                             setHierarchyComplete(false);
+                            setHierarchyError("");
+                            setHierarchyFieldErrors({});
                           }}
                           data-testid="categories-hierarchy-edit"
                         >
