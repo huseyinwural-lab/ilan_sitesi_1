@@ -920,31 +920,89 @@ const AdminCategories = () => {
       return { success: false };
     }
 
-    const cleanedSubs = subcategories
-      .filter((item) => item.is_complete || item.name?.trim() || item.slug?.trim())
-      .map((item) => {
-        const { is_complete, ...rest } = item;
-        return {
-          ...rest,
-          name: item.name.trim(),
-          slug: item.slug.trim().toLowerCase(),
+    const normalizeTree = (nodes) => nodes
+      .map((node) => ({
+        ...node,
+        name: node.name ? node.name.trim() : "",
+        slug: node.slug ? node.slug.trim().toLowerCase() : "",
+        children: normalizeTree(node.children || []),
+      }))
+      .filter((node) => node.name || node.slug || (node.children || []).length > 0);
+
+    const validateTree = (nodes, path = []) => {
+      if (path.length === 0 && nodes.length === 0) {
+        return "En az 1 alt kategori eklenmelidir.";
+      }
+      for (let index = 0; index < nodes.length; index += 1) {
+        const node = nodes[index];
+        const nodePath = [...path, index];
+        const label = getSubcategoryLabel(nodePath);
+        if (!node.name || !node.slug) {
+          return `${label} için ad ve slug zorunludur.`;
+        }
+        if (!node.is_complete) {
+          return `${label} tamamlanmadan devam edilemez.`;
+        }
+        if ((node.children || []).length > 0) {
+          const childError = validateTree(node.children, nodePath);
+          if (childError) return childError;
+        }
+      }
+      return "";
+    };
+
+    const cleanedSubs = normalizeTree(subcategories);
+    const validationError = validateTree(cleanedSubs);
+    if (validationError) {
+      setHierarchyError(validationError);
+      return { success: false };
+    }
+
+    const persistSubcategories = async (nodes, parentId) => {
+      const savedNodes = [];
+      for (const child of nodes) {
+        const payload = {
+          name: child.name,
+          slug: child.slug,
+          parent_id: parentId,
+          country_code: country,
+          active_flag: child.active_flag,
+          sort_order: Number(child.sort_order || 0),
+          hierarchy_complete: true,
         };
-      })
-      .filter((item) => item.name || item.slug);
+        const url = child.id
+          ? `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${child.id}`
+          : `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`;
+        const method = child.id ? "PATCH" : "POST";
+        const res = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeader,
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data?.detail || "Alt kategori kaydedilemedi.");
+        }
+        const saved = data?.category || child;
+        const savedId = saved.id || child.id;
+        const savedChildren = await persistSubcategories(child.children || [], savedId);
+        savedNodes.push({
+          ...child,
+          id: savedId,
+          is_complete: true,
+          children: savedChildren,
+        });
+      }
+      return savedNodes;
+    };
 
-    if (cleanedSubs.length === 0) {
-      setHierarchyError("En az 1 alt kategori eklenmelidir.");
-      return { success: false };
-    }
+    try {
+      let updatedParent = editing;
 
-    const invalidSub = cleanedSubs.find((item) => !item.name || !item.slug);
-    if (invalidSub) {
-      setHierarchyError("Alt kategorilerde ad + slug zorunludur.");
-      return { success: false };
-    }
-
-    if (editing) {
-      try {
+      if (editing) {
         const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`, {
           method: "PATCH",
           headers: {
@@ -966,145 +1024,50 @@ const AdminCategories = () => {
           setHierarchyError(data?.detail || "Kategori güncellenemedi.");
           return { success: false };
         }
-
-        const savedSubs = [];
-        for (const child of cleanedSubs) {
-          const childPayload = {
-            name: child.name,
-            slug: child.slug,
-            parent_id: editing.id,
-            country_code: country,
-            active_flag: child.active_flag,
-            sort_order: Number(child.sort_order || 0),
-            hierarchy_complete: true,
-          };
-          if (child.id) {
-            const childRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${child.id}`, {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                ...authHeader,
-              },
-              body: JSON.stringify(childPayload),
-            });
-            const childData = await childRes.json().catch(() => ({}));
-            if (childRes.ok && childData?.category) {
-              savedSubs.push({
-                id: childData.category.id,
-                name: childData.category.name,
-                slug: childData.category.slug,
-                active_flag: childData.category.active_flag,
-                sort_order: childData.category.sort_order || 0,
-              });
-            }
-          } else {
-            const childRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                ...authHeader,
-              },
-              body: JSON.stringify(childPayload),
-            });
-            const childData = await childRes.json().catch(() => ({}));
-            if (childRes.ok && childData?.category) {
-              savedSubs.push({
-                id: childData.category.id,
-                name: childData.category.name,
-                slug: childData.category.slug,
-                active_flag: childData.category.active_flag,
-                sort_order: childData.category.sort_order || 0,
-              });
-            }
-          }
-        }
-
-        const updated = data?.category || editing;
-        setEditing(updated);
-        const withCompletion = (items) => items.map((item) => ({ ...item, is_complete: true }));
-        setSubcategories(savedSubs.length ? withCompletion(savedSubs) : withCompletion(cleanedSubs));
-        setHierarchyComplete(true);
-        setWizardStep("core");
-        return { success: true, parent: updated };
-      } catch (error) {
-        setHierarchyError("Kategori güncellenemedi.");
-        return { success: false };
-      }
-    }
-
-    try {
-      const parentPayload = {
-        name,
-        slug,
-        country_code: country,
-        active_flag: form.active_flag,
-        sort_order: Number(form.sort_order || 0),
-        hierarchy_complete: false,
-      };
-      const parentRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeader,
-        },
-        body: JSON.stringify(parentPayload),
-      });
-      const parentData = await parentRes.json();
-      if (!parentRes.ok) {
-        setHierarchyError(parentData?.detail || "Ana kategori oluşturulamadı.");
-        return { success: false };
-      }
-      const parent = parentData.category;
-
-      const savedSubs = [];
-      for (const child of cleanedSubs) {
-        const childPayload = {
-          name: child.name,
-          slug: child.slug,
-          parent_id: parent.id,
+        updatedParent = data?.category || editing;
+      } else {
+        const parentPayload = {
+          name,
+          slug,
           country_code: country,
-          active_flag: child.active_flag,
-          sort_order: Number(child.sort_order || 0),
-          hierarchy_complete: true,
+          active_flag: form.active_flag,
+          sort_order: Number(form.sort_order || 0),
+          hierarchy_complete: false,
         };
-        const childRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
+        const parentRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             ...authHeader,
           },
-          body: JSON.stringify(childPayload),
+          body: JSON.stringify(parentPayload),
         });
-        const childData = await childRes.json().catch(() => ({}));
-        if (!childRes.ok) {
-          setHierarchyError(childData?.detail || "Alt kategori oluşturulamadı.");
+        const parentData = await parentRes.json();
+        if (!parentRes.ok) {
+          setHierarchyError(parentData?.detail || "Ana kategori oluşturulamadı.");
           return { success: false };
         }
-        if (childData?.category) {
-          savedSubs.push({
-            id: childData.category.id,
-            name: childData.category.name,
-            slug: childData.category.slug,
-            active_flag: childData.category.active_flag,
-            sort_order: childData.category.sort_order || 0,
-          });
-        }
+        updatedParent = parentData.category;
       }
 
-      const patchRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${parent.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeader,
-        },
-        body: JSON.stringify({ hierarchy_complete: true }),
-      });
-      const patchData = await patchRes.json().catch(() => ({}));
-      if (!patchRes.ok) {
-        setHierarchyError(patchData?.detail || "Kategori güncellenemedi.");
-        return { success: false };
+      const savedSubs = await persistSubcategories(cleanedSubs, updatedParent.id);
+
+      if (!editing && updatedParent?.id) {
+        const patchRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${updatedParent.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeader,
+          },
+          body: JSON.stringify({ hierarchy_complete: true }),
+        });
+        const patchData = await patchRes.json().catch(() => ({}));
+        if (!patchRes.ok) {
+          setHierarchyError(patchData?.detail || "Kategori güncellenemedi.");
+          return { success: false };
+        }
+        updatedParent = patchData?.category || updatedParent;
       }
-      const updatedParent = patchData?.category || parent;
 
       setEditing(updatedParent);
       setForm({
@@ -1115,13 +1078,13 @@ const AdminCategories = () => {
         active_flag: updatedParent.active_flag ?? true,
         sort_order: updatedParent.sort_order || 0,
       });
-      setSubcategories(savedSubs.length ? savedSubs : cleanedSubs);
+      setSubcategories(savedSubs.length ? savedSubs : [createSubcategoryDraft()]);
       setHierarchyComplete(true);
       setWizardStep("core");
       fetchItems();
-      return { success: true, parent };
+      return { success: true, parent: updatedParent };
     } catch (error) {
-      setHierarchyError("Kategori oluşturulurken hata oluştu.");
+      setHierarchyError(error?.message || "Kategori güncellenemedi.");
       return { success: false };
     }
   };
