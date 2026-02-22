@@ -1081,12 +1081,23 @@ const AdminCategories = () => {
     const slug = form.slug.trim().toLowerCase();
     const country = (form.country_code || "").trim().toUpperCase();
 
-    if (!name || !slug) {
-      setHierarchyError("Ana kategori adı ve slug zorunludur.");
-      return { success: false };
+    const fieldErrors = {};
+    if (!name) {
+      fieldErrors.main_name = "Ana kategori adı zorunludur.";
+    }
+    if (!slug) {
+      fieldErrors.main_slug = "Slug zorunludur.";
     }
     if (!country) {
-      setHierarchyError("Ülke (country) zorunludur.");
+      fieldErrors.main_country = "Ülke zorunludur.";
+    }
+    if (form.sort_order === "" || form.sort_order === null || Number.isNaN(Number(form.sort_order))) {
+      fieldErrors.main_sort = "Sıra zorunludur.";
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      setHierarchyFieldErrors(fieldErrors);
+      setHierarchyError("Lütfen işaretli alanları doldurun.");
       return { success: false };
     }
 
