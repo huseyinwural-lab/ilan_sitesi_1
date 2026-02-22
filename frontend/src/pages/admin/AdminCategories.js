@@ -118,6 +118,25 @@ const WIZARD_STEPS = [
   { id: "preview", label: "Önizleme" },
 ];
 
+const WIZARD_PROGRESS_ORDER = [
+  "draft",
+  "category_completed",
+  "core_completed",
+  "param_completed",
+  "detail_completed",
+  "module_completed",
+  "ready_for_preview",
+];
+
+const STEP_PROGRESS_STATE = {
+  hierarchy: "category_completed",
+  core: "core_completed",
+  dynamic: "param_completed",
+  detail: "detail_completed",
+  modules: "module_completed",
+  preview: "ready_for_preview",
+};
+
 const createId = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 const createSubcategoryDraft = () => ({
   name: "",
