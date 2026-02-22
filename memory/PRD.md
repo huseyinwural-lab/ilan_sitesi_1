@@ -103,19 +103,15 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 
 ## Öncelikli Backlog
 ### P0 (Hemen)
-- Ops ticket açılıp Ticket ID + SLA girilmeli (OPS_ESCALATION_TICKET.md)
-- Preview ortamı için DATABASE_URL_PREVIEW secret injection (sslmode=require)
-- Firewall allowlist: “Preview backend → Postgres 5432 outbound allow”
-- /api/health/db 200 + db_status=ok + migration_state doğrulaması
-- `alembic current` + `alembic upgrade head` (p34_dealer_gdpr_deleted_at)
-- Curl doğrulama: /api/v1/users/me/profile, /api/v1/users/me/dealer-profile, /api/v1/users/me/data-export, /api/v1/users/me/account
-- Honeypot 400 + register_honeypot_hit audit doğrulaması
-- GDPR export completion notification + audit doğrulaması
+- Preview consumer/dealer E2E kanıtları: /api/v1/users/me/profile, /api/v1/users/me/dealer-profile, /api/v1/users/me/data-export, /api/v1/users/me/account
+- Honeypot 400 + register_honeypot_hit audit doğrulaması (preview)
+- GDPR export completion notification + audit doğrulaması (preview)
+- Stripe idempotency testi (geçerli test API key sağlanınca)
 
 ### P0.1 (Güvenlik Doğrulama)
-- Login rate limit tetikleme testi
-- 2FA challenge + backup code tek kullanımlık testi
-- Soft delete → login blocked testi
+- Login rate limit tetikleme testi (preview)
+- 2FA challenge + backup code tek kullanımlık testi (preview)
+- Soft delete → login blocked testi (preview)
 - GDPR export sonrası notification severity=warning UI doğrulaması
 
 ### P1 (Sprint‑1 closeout)
