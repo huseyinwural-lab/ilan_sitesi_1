@@ -35,8 +35,11 @@ export const WizardProvider = ({ children, editListingId = null }) => {
   const [coreFields, setCoreFields] = useState({
     title: '',
     description: '',
+    price_type: 'FIXED',
     price_amount: '',
     price_display: '',
+    hourly_rate: '',
+    hourly_display: '',
     currency_primary: 'EUR',
     currency_secondary: 'CHF',
     secondary_amount: '',
