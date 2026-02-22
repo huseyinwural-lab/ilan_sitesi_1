@@ -474,7 +474,8 @@ const AdminCategories = () => {
       type: "select",
       required: false,
       sort_order: 0,
-      optionsInput: "",
+      optionInput: "",
+      options: [],
       messages: { required: "", invalid: "" },
     });
     setDynamicEditIndex(null);
@@ -531,7 +532,8 @@ const AdminCategories = () => {
       type: "select",
       required: false,
       sort_order: 0,
-      optionsInput: "",
+      optionInput: "",
+      options: [],
       messages: { required: "", invalid: "" },
     });
     setDynamicEditIndex(null);
@@ -1102,7 +1104,8 @@ const AdminCategories = () => {
       type: "select",
       required: false,
       sort_order: 0,
-      optionsInput: "",
+      optionInput: "",
+      options: [],
       messages: { required: "", invalid: "" },
     });
     setDynamicEditIndex(null);
