@@ -70,6 +70,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - PostgreSQL kuruldu, app_local DB oluşturuldu
   - Alembic upgrade heads PASS
   - Stripe CLI kuruldu (auth/test key invalid → idempotency BLOCKED)
+- **Preview E2E:**
+  - Admin login + Moderation Queue PASS
+  - Consumer/Dealer login + profil endpointleri PASS
 
 ## Kanıtlar
 - /app/docs/LOCAL_DB_READY_EVIDENCE.md
