@@ -14,6 +14,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - EU uyumlu şirket profili ve VAT doğrulama (regex)
 - Preview/Prod ortamlarında DB fail-fast + migration gate
 - Register anti-bot + GDPR export bildirimleri
+- Ops görünürlüğü (ops_attention flag)
 
 ## Kullanıcı Personaları
 - **Consumer (Bireysel)**
@@ -49,7 +50,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - .env override kapatıldı (server.py, core/config.py, app/database.py)
 - **P0 Sertleştirmeler:**
   - /api/health/db → migration_state gate + 60sn cache + last_migration_check_at
-  - /api/health → config_state + last_migration_check_at
+  - /api/health → config_state + last_migration_check_at + ops_attention
   - Register honeypot (company_website) + server-side reject + audit log (register_honeypot_hit)
   - GDPR export completion notification (in-app, warning) + audit trail
 - Kanıtlar:
@@ -57,6 +58,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - /app/docs/PREVIEW_DB_FIX_EVIDENCE.md
   - /app/docs/PREVIEW_MIGRATION_EVIDENCE.md
   - /app/docs/HEALTH_MIGRATION_GATE_SPEC.md
+  - /app/docs/HEALTH_ENDPOINT_OPS_FLAG_SPEC.md
   - /app/docs/HEALTH_MIGRATION_GATE_EVIDENCE.md
   - /app/docs/HEALTH_MIGRATION_GATE_PREVIEW_EVIDENCE.md
   - /app/docs/PREVIEW_MIGRATION_PARITY_EVIDENCE.md
@@ -69,10 +71,17 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - /app/docs/GDPR_EXPORT_NOTIFICATION_EVIDENCE.md
   - /app/docs/OPS_ESCALATION_TICKET.md
   - /app/docs/PREVIEW_UNBLOCK_TRACKER.md
+  - /app/docs/LOCAL_PREVIEW_SIMULATION_EVIDENCE.md
+  - /app/docs/MIGRATION_DRIFT_SIMULATION_EVIDENCE.md
+  - /app/docs/AUTH_SECURITY_STRESS_EVIDENCE.md
+  - /app/docs/AUDIT_CHAIN_PARITY_EVIDENCE.md
+  - /app/docs/STRIPE_IDEMPOTENCY_LOCAL_EVIDENCE.md
+  - /app/docs/PREVIEW_ACTIVATION_RUNBOOK.md
 
 ## Blokajlar / Riskler
 - Preview ortamında backend 520 (DATABASE_URL secret injection + DB erişimi yok)
-- PostgreSQL bağlantısı localhost’a gidiyor; ops secret/allowlist bekleniyor
+- Local Postgres servisi/CLI yok (local drift ve auth stress test bloklu)
+- Stripe CLI yok (idempotency test bloklu)
 
 ## Öncelikli Backlog
 ### P0 (Hemen)
