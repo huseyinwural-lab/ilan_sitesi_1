@@ -26,6 +26,10 @@ class ListingResponse(BaseModel):
     id: str
     title: str
     price: Optional[float]
+    price_type: Optional[str] = None
+    price_amount: Optional[float] = None
+    hourly_rate: Optional[float] = None
+    currency: Optional[str] = None
     status: str
     image_url: Optional[str]
     view_count: int
