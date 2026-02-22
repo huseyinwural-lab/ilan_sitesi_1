@@ -294,7 +294,7 @@ const translations = {
     nav_billing_overview: 'Aperçu facturation',
     nav_invoice_history: 'Historique des factures',
     nav_payment_methods: 'Moyens de paiement',
-    nav_company_team: 'Équipe  rôles',
+    nav_company_team: 'Équipe & rôles',
     nav_company_branches: 'Agences',
     portal_demo_title: 'Aperçu du portail',
     portal_demo_subtitle: 'Structure conforme aux standards EU et GDPR.',
