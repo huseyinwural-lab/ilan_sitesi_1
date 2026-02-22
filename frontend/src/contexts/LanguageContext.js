@@ -197,6 +197,26 @@ const translations = {
     login_error: 'Échec de la connexion',
     save_success: 'Enregistré',
     delete_success: 'Supprimé',
+    // Portals
+    portal_consumer: 'Portail personnel',
+    portal_dealer: 'Portail professionnel',
+    nav_section: 'Menu',
+    nav_listings: 'Gestion des annonces',
+    nav_favorites: 'Favoris',
+    nav_messages: 'Messages & notifications',
+    nav_services: 'Services',
+    nav_account: 'Compte',
+    nav_dashboard: 'Vue d\'ensemble',
+    nav_my_listings: 'Mes annonces',
+    nav_create_listing: 'Nouvelle annonce',
+    nav_support: 'Demandes de support',
+    nav_profile: 'Profil',
+    nav_privacy_center: 'Centre de confidentialité',
+    nav_favorite_listings: 'Annonces favorites',
+    nav_invoices: 'Factures',
+    nav_company: 'Société',
+    nav_company_profile: 'Profil société',
+    nav_dealer_dashboard: 'Tableau pro',
   }
 };
 
