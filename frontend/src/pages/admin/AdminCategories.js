@@ -1558,6 +1558,9 @@ const AdminCategories = () => {
             items.map((item, itemIndex) => {
               const path = [...getParentPathForLevel(levelIndex), itemIndex];
               const isSelected = selectedIndex === itemIndex;
+              const errorKey = `level-${levelIndex}-${itemIndex}`;
+              const nameError = hierarchyFieldErrors[`${errorKey}-name`];
+              const slugError = hierarchyFieldErrors[`${errorKey}-slug`];
               return (
                 <div
                   key={`level-${levelIndex}-item-${itemIndex}`}
