@@ -9363,6 +9363,7 @@ def _serialize_category_sql(category: Category, include_schema: bool = False, in
         "active_flag": category.is_enabled,
         "sort_order": category.sort_order,
         "hierarchy_complete": category.hierarchy_complete,
+        "wizard_progress": category.wizard_progress,
         "module": category.module,
         "allowed_countries": category.allowed_countries or [],
         "icon": category.icon,
@@ -13700,6 +13701,8 @@ async def admin_create_category(
     path = f"{parent.path}.{slug}" if parent and parent.path else slug
     allowed_countries = [country_code] if country_code else sorted(SUPPORTED_COUNTRIES)
 
+    wizard_progress = payload.wizard_progress or {"state": "draft"}
+
     category = Category(
         id=uuid.uuid4(),
         parent_id=parent.id if parent else None,
@@ -13722,6 +13725,7 @@ async def admin_create_category(
         country_code=country_code,
         hierarchy_complete=hierarchy_complete,
         form_schema=schema,
+        wizard_progress=wizard_progress,
         created_at=now,
         updated_at=now,
     )
