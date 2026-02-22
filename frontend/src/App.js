@@ -37,7 +37,6 @@ import DealerLogin from '@/portals/dealer/DealerLogin';
 import BackofficeLogin from '@/portals/backoffice/BackofficeLogin';
 import AdminInviteAccept from '@/pages/admin/AdminInviteAccept';
 import SupportPage from '@/pages/Support';
-import PortalDemo from '@/pages/PortalDemo';
 import Register from '@/pages/Register';
 import VerifyEmail from '@/pages/VerifyEmail';
 
@@ -117,7 +116,6 @@ function App() {
                   {/* Public Routes */}
                   <Route path="/" element={<HomePage />} />
                   <Route path="/search" element={<SearchPage />} />
-                  <Route path="/portal-demo" element={<PortalDemo />} />
                   <Route path="/ilan/:id" element={<DetailPage />} /> {/* P8: Detail Route (captures slug-id) */}
                   <Route path="/ilan-olustur" element={<Navigate to="/account/create/vehicle-wizard" />} />
 
