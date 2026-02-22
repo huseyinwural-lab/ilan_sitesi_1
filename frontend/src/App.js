@@ -117,6 +117,7 @@ function App() {
                   {/* Public Routes */}
                   <Route path="/" element={<HomePage />} />
                   <Route path="/search" element={<SearchPage />} />
+                  <Route path="/admin/moderation-demo" element={<AdminModerationDemo />} />
                   <Route path="/ilan/:id" element={<DetailPage />} /> {/* P8: Detail Route (captures slug-id) */}
                   <Route path="/ilan-olustur" element={<Navigate to="/account/create/vehicle-wizard" />} />
 
