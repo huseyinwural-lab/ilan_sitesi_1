@@ -611,7 +611,6 @@ const AdminCategories = () => {
     setHierarchyError("");
     const initialSubcategories = [createSubcategoryDraft()];
     setSubcategories(initialSubcategories);
-    setExpandedNodes(buildExpandedKeys(initialSubcategories));
     setLevelSelections([]);
     setLevelCompletion({});
     setDynamicDraft({
