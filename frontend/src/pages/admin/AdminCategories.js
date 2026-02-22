@@ -1020,6 +1020,59 @@ const AdminCategories = () => {
     return { success: true, category: savedCategory };
   };
 
+  const handleStepComplete = async () => {
+    const progressState = STEP_PROGRESS_STATE[wizardStep];
+    if (!progressState) return;
+
+    if (wizardStep === "hierarchy") {
+      await handleHierarchyComplete(progressState);
+      return;
+    }
+
+    if (wizardStep === "core") {
+      const titleRangeValid = schema.core_fields.title.min <= schema.core_fields.title.max;
+      const descriptionRangeValid = schema.core_fields.description.min <= schema.core_fields.description.max;
+      const priceRange = schema.core_fields.price.range || { min: 0, max: null };
+      const priceRangeValid = priceRange.max === null || priceRange.max === undefined || priceRange.min <= priceRange.max;
+      const coreRequiredValid = schema.core_fields.title.required && schema.core_fields.description.required && schema.core_fields.price.required;
+      if (!coreRequiredValid || !titleRangeValid || !descriptionRangeValid || !priceRangeValid) {
+        setHierarchyError("Çekirdek alanlarda zorunlu ve aralık kontrolleri tamamlanmalı.");
+        return;
+      }
+    }
+
+    if (wizardStep === "dynamic") {
+      const dynamicValid = (schema.dynamic_fields || []).every((field) => {
+        if (!field.label || !field.key) return false;
+        if (field.type === "select" || field.type === "radio") {
+          return Array.isArray(field.options) && field.options.length > 0;
+        }
+        return true;
+      });
+      if (!dynamicValid) {
+        setHierarchyError("Parametre alanlarında type-driven kurallar geçerli olmalı.");
+        return;
+      }
+    }
+
+    if (wizardStep === "detail") {
+      const detailValid = (schema.detail_groups || []).length > 0 && (schema.detail_groups || []).every((group) => (
+        group.title && group.id && Array.isArray(group.options) && group.options.length > 0
+      ));
+      if (!detailValid) {
+        setHierarchyError("Detay gruplarında en az 1 seçenekli grup bulunmalı.");
+        return;
+      }
+    }
+
+    if (wizardStep === "preview" && !previewComplete) {
+      setHierarchyError("Önizleme adımı tamamlanmalı.");
+      return;
+    }
+
+    await handleSave("draft", null, wizardStep === "preview", { progressState });
+  };
+
   const handleToggle = async (item) => {
     await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${item.id}`, {
       method: "PATCH",
