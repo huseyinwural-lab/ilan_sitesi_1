@@ -16,9 +16,9 @@ const languageOptions = [
 const topNavItems = [
   {
     key: 'listings',
-    path: '/account/listings',
+    path: '/account',
     labelKey: 'nav_listings',
-    match: ['/account', '/account/listings', '/account/create'],
+    match: ['/account'],
     testId: 'account-top-nav-listings',
   },
   {
