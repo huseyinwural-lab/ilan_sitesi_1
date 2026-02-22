@@ -292,7 +292,7 @@ const AdminCategories = () => {
     setTimeout(() => autosaveToastRef.current?.dismiss(), delay);
   };
 
-  const buildSavePayload = (status, activeEditing) => {
+  const buildSavePayload = (status, activeEditing, progressState) => {
     const payload = {
       ...form,
       sort_order: Number(form.sort_order || 0),
@@ -301,6 +301,9 @@ const AdminCategories = () => {
     };
     if (effectiveHierarchyComplete || status !== "draft") {
       payload.form_schema = { ...schema, status };
+    }
+    if (progressState) {
+      payload.wizard_progress = { state: progressState };
     }
     return payload;
   };
