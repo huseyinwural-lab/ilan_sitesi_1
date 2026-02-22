@@ -936,48 +936,6 @@ const AdminCategories = () => {
     return effectiveHierarchyComplete;
   };
 
-  const addSubcategory = () => {
-    setHierarchyError("");
-    if (subcategories.length > 0 && !subcategories[subcategories.length - 1].is_complete) {
-      setHierarchyError(`Alt kategori ${subcategories.length} tamamlanmadan yeni alt kategori eklenemez.`);
-      return;
-    }
-    const newIndex = subcategories.length;
-    setSubcategories((prev) => ([...prev, createSubcategoryDraft()]));
-    setExpandedNodes((prev) => {
-      const next = new Set(prev);
-      next.add(String(newIndex));
-      return next;
-    });
-  };
-
-  const addNestedSubcategory = (path) => {
-    setHierarchyError("");
-    const target = getNodeByPath(subcategories, path);
-    if (!target) return;
-    if (target.is_complete) {
-      setHierarchyError(`${getSubcategoryLabel(path)} tamamlandıktan sonra alt kategori eklenemez.`);
-      return;
-    }
-    const children = target.children || [];
-    if (children.length > 0 && !children[children.length - 1].is_complete) {
-      setHierarchyError(`${getSubcategoryLabel(path)} içindeki alt kategori ${children.length} tamamlanmadan yeni alt kategori eklenemez.`);
-      return;
-    }
-    const childIndex = children.length;
-    const childPathKey = [...path, childIndex].join("-");
-    setSubcategories((prev) => updateNodeByPath(prev, path, (node) => ({
-      ...node,
-      children: [...(node.children || []), createSubcategoryDraft()],
-    })));
-    setExpandedNodes((prev) => {
-      const next = new Set(prev);
-      next.add(path.join("-"));
-      next.add(childPathKey);
-      return next;
-    });
-  };
-
   const completeSubcategory = (path) => {
     setHierarchyError("");
     const target = getNodeByPath(subcategories, path);
