@@ -3358,11 +3358,12 @@ const AdminCategories = () => {
                   </div>
                 )}
                 <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded"
+                  className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-60"
                   onClick={handleStepComplete}
+                  disabled={stepSaving}
                   data-testid="categories-step-complete"
                 >
-                  Tamam
+                  {stepSaving ? "Kaydediliyor..." : "Tamam"}
                 </button>
               </div>
             </div>
