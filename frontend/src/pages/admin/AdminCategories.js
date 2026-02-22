@@ -1450,7 +1450,7 @@ const AdminCategories = () => {
       setHierarchyComplete(true);
       setHierarchyFieldErrors({});
       fetchItems();
-      return { success: true, parent: updatedParent };
+      return { success: true, category: updatedParent };
     } catch (error) {
       setHierarchyError(error?.message || "Kategori güncellenemedi.");
       return { success: false };
