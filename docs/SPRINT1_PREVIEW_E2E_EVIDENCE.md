@@ -1,22 +1,18 @@
 # SPRINT1_PREVIEW_E2E_EVIDENCE
 
-**Tarih:** 2026-02-22 00:54:38 UTC
+**Tarih:** 2026-02-22 19:35:00 UTC
 **Ticket ID:** #1
 **SLA:** 24 saat
 **Target resolution:** 23 Feb 2026
-**Durum:** BLOCKED (Preview DB erişimi yok)
+**Durum:** PARTIAL PASS
 
-## API E2E (Beklenen)
-- `GET /api/v1/users/me/profile` → 200
-- `GET /api/v1/users/me/dealer-profile` → 200
-- `GET /api/v1/users/me/data-export` → JSON + gdpr_export_completed + notification
-- `DELETE /api/v1/users/me/account` → soft delete (30 gün)
+## Consumer Login + Profile
+- POST /api/auth/login (user@platform.com) → 200 OK
+- GET /api/v1/users/me/profile → 200 OK (consumer profile döndü)
 
-## Honeypot
-- company_website dolu → 400 + audit event: `register_honeypot_hit`
-
-## Bildirim
-- Export sonrası notification (severity=warning) UI’da görünür.
+## Dealer Login + Profile
+- POST /api/auth/login (dealer@platform.com) → 200 OK
+- GET /api/v1/users/me/dealer-profile → 200 OK (dealer profile döndü)
 
 ## Not
-DB erişimi açıldığında gerçek curl çıktıları eklenecek.
+GDPR export / soft delete / honeypot kanıtları sonraki adımda doğrulanacak.
