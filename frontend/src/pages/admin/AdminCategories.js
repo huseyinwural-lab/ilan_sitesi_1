@@ -950,7 +950,8 @@ const AdminCategories = () => {
 
         const updated = data?.category || editing;
         setEditing(updated);
-        setSubcategories(savedSubs.length ? savedSubs : cleanedSubs);
+        const withCompletion = (items) => items.map((item) => ({ ...item, is_complete: true }));
+        setSubcategories(savedSubs.length ? withCompletion(savedSubs) : withCompletion(cleanedSubs));
         setHierarchyComplete(true);
         setWizardStep("core");
         return { success: true, parent: updated };
