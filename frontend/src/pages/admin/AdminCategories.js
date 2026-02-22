@@ -459,6 +459,58 @@ const AdminCategories = () => {
 
   const parentOptions = useMemo(() => items.filter((item) => item.id !== editing?.id), [items, editing]);
 
+  const getSubcategoryLabel = (path) => `Alt kategori ${path.map((index) => index + 1).join(".")}`;
+
+  const getNodeByPath = (nodes, path) => {
+    let current = null;
+    let list = nodes;
+    for (const idx of path) {
+      current = list[idx];
+      if (!current) return null;
+      list = current.children || [];
+    }
+    return current;
+  };
+
+  const updateNodeByPath = (nodes, path, updater) => {
+    if (!path.length) return nodes;
+    const [index, ...rest] = path;
+    return nodes.map((node, idx) => {
+      if (idx !== index) return node;
+      if (rest.length === 0) {
+        return typeof updater === "function" ? updater(node) : { ...node, ...updater };
+      }
+      return { ...node, children: updateNodeByPath(node.children || [], rest, updater) };
+    });
+  };
+
+  const removeNodeByPath = (nodes, path) => {
+    if (!path.length) return nodes;
+    const [index, ...rest] = path;
+    if (rest.length === 0) {
+      return nodes.filter((_, idx) => idx !== index);
+    }
+    return nodes.map((node, idx) => {
+      if (idx !== index) return node;
+      return { ...node, children: removeNodeByPath(node.children || [], rest) };
+    });
+  };
+
+  const buildSubcategoryTree = (parentId) => {
+    const children = items
+      .filter((child) => child.parent_id === parentId)
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    return children.map((child) => ({
+      id: child.id,
+      name: child.name || "",
+      slug: child.slug || "",
+      active_flag: child.active_flag ?? true,
+      sort_order: child.sort_order || 0,
+      is_complete: true,
+      children: buildSubcategoryTree(child.id),
+    }));
+  };
+
   const resetForm = () => {
     setForm({
       name: "",
