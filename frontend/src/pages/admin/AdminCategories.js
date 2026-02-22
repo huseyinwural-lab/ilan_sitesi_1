@@ -905,7 +905,7 @@ const AdminCategories = () => {
         });
         dismissDraftToast(4000);
       }
-      return;
+      return { success: false };
     }
     if (status === "published" && !publishValidation.canPublish) {
       setPublishError("Yayınlama için zorunlu şartlar tamamlanmalı.");
