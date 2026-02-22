@@ -2908,6 +2908,7 @@ ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
 async def health_check():
     config_state = "missing_database_url" if not RAW_DATABASE_URL else "ok"
     last_migration_check_at = _format_migration_checked_at()
+    ops_attention = config_state != "ok"
 
     if not RAW_DATABASE_URL:
         return {
@@ -2918,12 +2919,15 @@ async def health_check():
             "db_status": "config_missing",
             "config_state": config_state,
             "last_migration_check_at": last_migration_check_at,
+            "ops_attention": ops_attention,
         }
     try:
         async with sql_engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
-            await _get_migration_state(conn)
+            migration_info = await _get_migration_state(conn)
             last_migration_check_at = _format_migration_checked_at()
+        migration_state = migration_info.get("state") or "unknown"
+        ops_attention = config_state != "ok" or migration_state == "migration_required"
         return {
             "status": "healthy",
             "supported_countries": SUPPORTED_COUNTRIES,
@@ -2931,6 +2935,7 @@ async def health_check():
             "db_status": "ok",
             "config_state": config_state,
             "last_migration_check_at": last_migration_check_at,
+            "ops_attention": ops_attention,
         }
     except Exception:
         return {
@@ -2941,6 +2946,7 @@ async def health_check():
             "db_status": "unreachable",
             "config_state": config_state,
             "last_migration_check_at": last_migration_check_at,
+            "ops_attention": True,
         }
 
 
