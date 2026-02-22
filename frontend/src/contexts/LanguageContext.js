@@ -133,7 +133,7 @@ const translations = {
     nav_section: 'Menü',
     nav_listings: 'Anzeigenverwaltung',
     nav_favorites: 'Favoriten',
-    nav_messages: 'Nachrichten  Hinweise',
+    nav_messages: 'Nachrichten & Hinweise',
     nav_services: 'Services',
     nav_account: 'Konto',
     nav_dashboard: 'Übersicht',
