@@ -1058,6 +1058,33 @@ const AdminCategories = () => {
     }
   };
 
+  const normalizeDynamicOptions = () => {
+    const base = Array.isArray(dynamicDraft.options) ? dynamicDraft.options : [];
+    const pending = (dynamicDraft.optionInput || "").trim();
+    const merged = pending ? [...base, pending] : [...base];
+    const cleaned = merged.map((opt) => opt.trim()).filter(Boolean);
+    return Array.from(new Set(cleaned));
+  };
+
+  const handleDynamicOptionAdd = () => {
+    const value = (dynamicDraft.optionInput || "").trim();
+    if (!value) return;
+    setDynamicDraft((prev) => {
+      const existing = Array.isArray(prev.options) ? prev.options : [];
+      if (existing.includes(value)) {
+        return { ...prev, optionInput: "" };
+      }
+      return { ...prev, optionInput: "", options: [...existing, value] };
+    });
+  };
+
+  const handleDynamicOptionRemove = (index) => {
+    setDynamicDraft((prev) => ({
+      ...prev,
+      options: (prev.options || []).filter((_, i) => i !== index),
+    }));
+  };
+
   const handleDynamicNext = () => {
     setDynamicError("");
     const label = dynamicDraft.label.trim();
@@ -1067,10 +1094,7 @@ const AdminCategories = () => {
       setDynamicError("Etiket ve key zorunludur.");
       return;
     }
-    const options = (dynamicDraft.optionsInput || "")
-      .split(",")
-      .map((opt) => opt.trim())
-      .filter(Boolean);
+    const options = (type === "select" || type === "radio") ? normalizeDynamicOptions() : [];
     if ((type === "select" || type === "radio") && options.length === 0) {
       setDynamicError("Select/Radio için seçenek listesi zorunludur.");
       return;
@@ -1084,7 +1108,7 @@ const AdminCategories = () => {
       label,
       key,
       type,
-      options: type === "select" || type === "radio" ? options : [],
+      options,
       required: dynamicDraft.required,
       sort_order: Number(dynamicDraft.sort_order || 0),
       messages,
