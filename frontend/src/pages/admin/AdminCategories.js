@@ -1470,7 +1470,7 @@ const AdminCategories = () => {
 
                   {editing && (
                     <div className="rounded-lg border border-dashed p-4 text-sm text-slate-700" data-testid="categories-hierarchy-locked">
-                      Mevcut kategori üzerinde hiyerarşi düzenleme devre dışı. Devam ederek form şemasını güncelleyebilirsiniz.
+                      Mevcut kategori üzerinde kategori düzenleme devre dışı. Devam ederek form şemasını güncelleyebilirsiniz.
                     </div>
                   )}
 
