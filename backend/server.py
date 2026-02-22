@@ -174,6 +174,7 @@ class ConsumerRegisterPayload(BaseModel):
     password: str = Field(..., min_length=8)
     country_code: str = Field(..., min_length=2, max_length=5)
     preferred_language: Optional[str] = "tr"
+    company_website: Optional[str] = None
 
 
 class DealerRegisterPayload(BaseModel):
@@ -184,6 +185,7 @@ class DealerRegisterPayload(BaseModel):
     country_code: str = Field(..., min_length=2, max_length=5)
     tax_id: Optional[str] = None
     preferred_language: Optional[str] = "tr"
+    company_website: Optional[str] = None
 
 
 
