@@ -261,7 +261,8 @@ const AdminCategories = () => {
     form,
     schema,
     hierarchy_complete: effectiveHierarchyComplete,
-  }), [form, schema, effectiveHierarchyComplete]);
+    wizard_progress: wizardProgress,
+  }), [form, schema, effectiveHierarchyComplete, wizardProgress]);
 
   const formatTime = (value) => {
     if (!value) return "";
