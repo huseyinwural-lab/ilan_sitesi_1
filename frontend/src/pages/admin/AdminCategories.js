@@ -1119,6 +1119,13 @@ const AdminCategories = () => {
         const node = nodes[index];
         const nodePath = [...path, index];
         const label = getSubcategoryLabel(nodePath);
+        const pathKey = nodePath.join("-");
+        if (!node.name) {
+          fieldErrors[`level-${pathKey}-name`] = "Ad zorunludur.";
+        }
+        if (!node.slug) {
+          fieldErrors[`level-${pathKey}-slug`] = "Slug zorunludur.";
+        }
         if (!node.name || !node.slug) {
           return `${label} için ad ve slug zorunludur.`;
         }
