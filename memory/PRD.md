@@ -45,10 +45,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - GET /api/v1/users/me/data-export (JSON)
   - DELETE /api/v1/users/me/account (soft delete + 30 gün)
 - Frontend (Consumer Panel): AccountProfile + PrivacyCenter yeni v1 endpointlerine bağlı
-- Preview/Prod DB fail-fast: localhost yasak + DB_SSL_MODE=require (server.py)
+- Preview/Prod DB fail-fast: CONFIG_MISSING hatası + localhost yasak + DB_SSL_MODE=require
 - .env override kapatıldı (server.py, core/config.py, app/database.py)
 - **P0 Sertleştirmeler:**
-  - /api/health/db → migration_state gate + 60sn cache
+  - /api/health/db → migration_state gate + 60sn cache + last_migration_check_at
+  - /api/health → config_state + last_migration_check_at
   - Register honeypot (company_website) + server-side reject + audit log (register_honeypot_hit)
   - GDPR export completion notification (in-app, warning) + audit trail
 - Kanıtlar:
@@ -66,6 +67,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - /app/docs/REGISTER_ANTIBOT_HONEYPOT_EVIDENCE.md
   - /app/docs/GDPR_EXPORT_NOTIFICATION_SPEC.md
   - /app/docs/GDPR_EXPORT_NOTIFICATION_EVIDENCE.md
+  - /app/docs/OPS_ESCALATION_TICKET.md
+  - /app/docs/PREVIEW_UNBLOCK_TRACKER.md
 
 ## Blokajlar / Riskler
 - Preview ortamında backend 520 (DATABASE_URL secret injection + DB erişimi yok)
@@ -73,7 +76,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 
 ## Öncelikli Backlog
 ### P0 (Hemen)
-- Preview ortamı için DATABASE_URL secret injection (sslmode=require)
+- Ops ticket açılıp Ticket ID + SLA girilmeli (OPS_ESCALATION_TICKET.md)
+- Preview ortamı için DATABASE_URL_PREVIEW secret injection (sslmode=require)
 - Firewall allowlist: “Preview backend → Postgres 5432 outbound allow”
 - /api/health/db 200 + db_status=ok + migration_state doğrulaması
 - `alembic current` + `alembic upgrade head` (p34_dealer_gdpr_deleted_at)
