@@ -513,42 +513,6 @@ const AdminCategories = () => {
     }));
   };
 
-  const buildExpandedKeys = (nodes) => {
-    const keys = new Set();
-    const traverse = (items, path = []) => {
-      items.forEach((node, index) => {
-        const current = [...path, index];
-        const key = current.join("-");
-        if (!node.is_complete || !node.name || !node.slug) {
-          keys.add(key);
-        }
-        if ((node.children || []).length > 0) {
-          traverse(node.children, current);
-        }
-      });
-    };
-    traverse(nodes);
-    if (keys.size === 0 && nodes.length > 0) {
-      keys.add("0");
-    }
-    if (nodes.length === 0) {
-      keys.add("0");
-    }
-    return keys;
-  };
-
-  const toggleSubcategoryExpanded = (pathKey) => {
-    setExpandedNodes((prev) => {
-      const next = new Set(prev);
-      if (next.has(pathKey)) {
-        next.delete(pathKey);
-      } else {
-        next.add(pathKey);
-      }
-      return next;
-    });
-  };
-
   const getParentPathForLevel = (levelIndex) => {
     if (levelIndex === 0) return [];
     return levelSelections.slice(0, levelIndex);
