@@ -31,7 +31,9 @@ class Listing(Base):
     city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     
     # Pricing
+    price_type: Mapped[str] = mapped_column(PRICE_TYPE_ENUM, nullable=False, server_default="FIXED")
     price: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    hourly_rate: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     currency: Mapped[str] = mapped_column(String(5), default="EUR")
     
     # Owner
