@@ -52,7 +52,6 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Turuncu zemin + üst yatay menü + sol alt menü
   - Bireysel/Ticari menü farkları uygulandı
   - TR/DE/FR menü dili toggle
-- **Admin demo (auth gerektirmez):** /admin-demo (listing moderasyon ekranı, placeholder data)
 - Dealer portal ek sayfalar: Şirket Profili + Gizlilik Merkezi
 - **İlan ver sihirbazı (create listing):**
   - Başlıklar/boş durumlar/section alanları için data-testid eklendi
