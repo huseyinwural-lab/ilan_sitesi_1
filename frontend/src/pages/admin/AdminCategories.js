@@ -1600,6 +1600,11 @@ const AdminCategories = () => {
                       onChange={(e) => updateLevelItem(levelIndex, itemIndex, { name: e.target.value })}
                       data-testid={`categories-level-item-name-${levelIndex}-${itemIndex}`}
                     />
+                    {nameError && (
+                      <div className="text-[11px] text-rose-600" data-testid={`categories-level-item-name-error-${levelIndex}-${itemIndex}`}>
+                        {nameError}
+                      </div>
+                    )}
                     <input
                       className={inputClassName}
                       placeholder="Slug"
