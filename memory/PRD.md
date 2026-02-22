@@ -56,6 +56,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **Admin kategori modalı:**
   - Hiyerarşi adı → Kategori
   - Alt kategoriler çok seviyeli (alt kategori içinde alt kategori) yapı ile oluşturulabiliyor
+  - Alt kategori listesi Accordion düzeninde (Aç/Kapat) gösteriliyor
   - "Tamam" ile alt kategori kilitlenir, üst seviye tamamlanınca yeni alt kategori eklenir
 - **Admin kategori parametre alanları:**
   - Parametre alanlarında seçenekleri tek tek ekleme/çıkarma arayüzü
