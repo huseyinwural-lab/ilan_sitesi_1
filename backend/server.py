@@ -105,7 +105,7 @@ from app.vehicle_master_admin_file import validate_upload, rollback as vehicle_m
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
-load_dotenv(ROOT_DIR / ".env.local", override=True)
+load_dotenv(ROOT_DIR / ".env.local", override=False)
 
 SUPPORTED_COUNTRIES = {"DE", "CH", "FR", "AT"}
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
