@@ -963,17 +963,7 @@ const AdminCategories = () => {
   };
 
   const removeSubcategory = (path) => {
-    const prefix = path.join("-");
     setSubcategories((prev) => removeNodeByPath(prev, path));
-    setExpandedNodes((prev) => {
-      const next = new Set(prev);
-      Array.from(next).forEach((key) => {
-        if (key === prefix || key.startsWith(`${prefix}-`)) {
-          next.delete(key);
-        }
-      });
-      return next;
-    });
   };
 
   const handleHierarchyComplete = async () => {
