@@ -77,7 +77,7 @@ const UserPanelLayout = () => {
       listings: [
         { path: '/account', labelKey: 'nav_dashboard', testId: 'account-side-overview' },
         { path: '/account/listings', labelKey: 'nav_my_listings', testId: 'account-side-listings' },
-        { path: '/account/create/vehicle-wizard', labelKey: 'nav_create_listing', testId: 'account-side-create' },
+        { path: '/ilan-ver/kategori-secimi', labelKey: 'nav_create_listing', testId: 'account-side-create' },
       ],
       favorites: [
         { path: '/account/favorites', labelKey: 'nav_favorite_listings', testId: 'account-side-favorites' },
