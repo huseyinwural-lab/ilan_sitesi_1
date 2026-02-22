@@ -99,7 +99,6 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/PREVIEW_ACTIVATION_RUNBOOK.md
 
 ## Blokajlar / Riskler
-- Preview ortamında backend 520 (DATABASE_URL secret injection + DB erişimi yok)
 - Stripe API key geçersiz (idempotency testi BLOCKED)
 
 ## Öncelikli Backlog
