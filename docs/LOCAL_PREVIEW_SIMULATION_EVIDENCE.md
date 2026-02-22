@@ -33,5 +33,13 @@ APP_ENV=preview DB_SSL_MODE=require DATABASE_URL=postgresql://db.example:5432/ad
 import_ok
 ```
 
+## 4) Preview Modu + Local DB (host alias)
+```
+DATABASE_URL=postgresql://app_user:app_pass@db:5432/app_local
+APP_ENV=preview
+DB_SSL_MODE=require
+```
+`/api/health/db` → 200 + migration_state=ok
+
 ## Not
-Local Postgres servisi/binary bulunmadığı için gerçek DB bağlantı testi yapılamadı.
+Local Postgres kuruldu ve preview strict mode başarıyla simüle edildi.
