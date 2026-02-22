@@ -68,7 +68,11 @@ async def create_draft(
     return ListingResponse(
         id=str(listing.id),
         title=listing.title,
-        price=0.0,
+        price=None,
+        price_type=listing.price_type or "FIXED",
+        price_amount=None,
+        hourly_rate=None,
+        currency=listing.currency or "EUR",
         status=listing.status,
         image_url=None,
         view_count=0,
