@@ -8648,43 +8648,57 @@ async def moderation_queue(
     limit: int = 50,
     skip: int = 0,
     current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
     _ensure_moderation_rbac(current_user)
 
-    q: Dict = {"status": status}
+    conditions = [Listing.status == status]
     if dealer_only is not None:
-        q["dealer_only"] = dealer_only
+        conditions.append(Listing.is_dealer_listing == dealer_only)
     if country:
-        q["country"] = country.strip().upper()
-    if module and module != "vehicle":
-        # Only vehicle listings exist in Mongo MVP
-        return []
+        conditions.append(Listing.country == country.strip().upper())
+    if module:
+        conditions.append(Listing.module == module)
 
-    cursor = db.vehicle_listings.find(q, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(int(limit))
-    docs = await cursor.to_list(length=int(limit))
+    if current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope:
+            conditions.append(Listing.country.in_(scope))
+
+    limit = min(200, max(1, int(limit)))
+    offset = max(0, int(skip))
+    query_stmt = (
+        select(Listing)
+        .where(and_(*conditions))
+        .order_by(desc(Listing.created_at))
+        .offset(offset)
+        .limit(limit)
+    )
+    rows = (await session.execute(query_stmt)).scalars().all()
 
     out = []
-    for d in docs:
-        attrs = d.get("attributes") or {}
-        media = d.get("media") or []
-        vehicle = d.get("vehicle") or {}
-        title = (d.get("title") or "").strip() or f"{(vehicle.get('make_key') or '').upper()} {vehicle.get('model_key') or ''} {vehicle.get('year') or ''}".strip()
+    for listing in rows:
+        attrs = listing.attributes or {}
+        vehicle = attrs.get("vehicle") or {}
+        title = (listing.title or "").strip()
+        if not title:
+            title = f"{(vehicle.get('make_key') or '').upper()} {vehicle.get('model_key') or ''} {vehicle.get('year') or ''}".strip()
+        images = listing.images or []
         out.append(
             {
-                "id": d["id"],
+                "id": str(listing.id),
                 "title": title,
-                "status": d.get("status"),
-                "country": d.get("country"),
-                "module": "vehicle",
-                "city": "",
-                "price": attrs.get("price_eur"),
-                "currency": "EUR",
-                "image_count": len(media),
-                "created_at": d.get("created_at"),
-                "is_dealer_listing": bool(d.get("dealer_only")),
-                "dealer_only": bool(d.get("dealer_only")),
-                "is_premium": False,
+                "status": listing.status,
+                "country": listing.country,
+                "module": listing.module,
+                "city": listing.city or "",
+                "price": listing.price,
+                "currency": listing.currency,
+                "image_count": listing.image_count or len(images),
+                "created_at": listing.created_at.isoformat() if listing.created_at else None,
+                "is_dealer_listing": bool(listing.is_dealer_listing),
+                "dealer_only": bool(listing.is_dealer_listing),
+                "is_premium": bool(listing.is_premium),
             }
         )
 
