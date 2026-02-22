@@ -1,9 +1,10 @@
 # OPS_ESCALATION_TICKET
 
 **Başlık:** P0 BLOCKER – DATABASE_URL_PREVIEW Secret Injection Missing
-**Ticket ID:** TBD
-**SLA:** 48 saat
+**Ticket ID:** #1
+**SLA:** 24 saat
 **Tarih:** 2026-02-22
+**Target resolution:** 23 Feb 2026
 
 ## İçerik (Ops’a iletilecek)
 - DATABASE_URL_PREVIEW runtime env’de **set edilmedi** (printenv boş)
