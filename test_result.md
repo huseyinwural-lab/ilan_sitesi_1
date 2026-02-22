@@ -9309,3 +9309,73 @@ All required data-testids present and functional:
 
 ---
 
+
+
+
+## Login Page UI Smoke Test (Feb 22, 2026 - 01:31) ✅ COMPLETE PASS
+
+### Test Summary
+Frontend smoke test to verify login page UI renders at https://privacy-center-dev.preview.emergentagent.com/login. Backend changed to local (may show 520), but test focused ONLY on UI rendering per review request.
+
+### Test Flow Executed:
+1. ✅ Navigate to https://privacy-center-dev.preview.emergentagent.com/login
+2. ✅ Verify page loads without critical frontend errors
+3. ✅ Verify all login form UI elements present and visible
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**Login Page UI Rendering**: ✅ WORKING
+  - **Page Load**: ✅ Page loads successfully without critical errors
+  - **Page Container**: data-testid="login-page" present and visible
+  - **Login Form**: data-testid="login-form" rendered correctly
+  
+  - **UI Elements Verified**:
+    - ✅ Orange background (rgb(247, 194, 122) / #f7c27a) rendering correctly
+    - ✅ White centered card with login form
+    - ✅ Welcome banner text with "Annoncia" branding visible
+    - ✅ Login type selector (Bireysel/Ticari radio buttons) present
+    - ✅ Email input field (data-testid="login-email") - Visible: True
+    - ✅ Password input field (data-testid="login-password") - Visible: True
+    - ✅ Submit button (data-testid="login-submit") with text "E-posta ile giriş yap" - Visible: True
+    - ✅ "Oturumum açık kalsın" (Remember me) checkbox visible
+    - ✅ "Şifremi unuttum" (Forgot password) link visible
+    - ✅ "Hesap aç" (Sign up) link visible
+    - ✅ Alternative login options (Google, Apple) visible
+    - ✅ QR code mobile login option link visible
+    - ✅ Theme toggle (top right) visible
+    - ✅ Language selector (top right) showing "TR" visible
+  
+  - **No Error Messages**: ✅ No error messages found on the page
+  - **Console Status**: ✅ Clean (no critical JavaScript errors in browser console)
+
+### Screenshots Captured:
+- **login-page-smoke-test.png**: Login page showing all UI elements rendered correctly
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (UI Loading Verified)
+- **Page Accessibility**: ✅ WORKING (page loads at preview URL)
+- **UI Rendering**: ✅ WORKING (all elements visible and properly styled)
+- **Form Elements**: ✅ WORKING (email, password, submit button all present)
+- **No Frontend Errors**: ✅ CONFIRMED
+
+### Note on Backend:
+- As mentioned in review request, backend changed to local (may be 520 on preview)
+- This test focused ONLY on frontend UI rendering per review request
+- Backend connectivity NOT tested per instructions
+
+### Final Status:
+- **Overall Result**: ✅ **PASS** - Login page UI loads and renders correctly
+- **Frontend Status**: ✅ HEALTHY (UI rendering without issues)
+- **All UI Elements**: ✅ PRESENT and properly styled
+- **Page Load**: ✅ SUCCESSFUL at https://privacy-center-dev.preview.emergentagent.com/login
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 22, 2026 - 01:31
+- **Message**: Login page UI smoke test SUCCESSFULLY COMPLETED. Frontend UI at https://privacy-center-dev.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit" with text "E-posta ile giriş yap") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, login type selector (Bireysel/Ticari), remember me checkbox, forgot password link, sign up link, alternative login options (Google, Apple, QR code), and theme/language toggles all present. No error messages or critical console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend changed to local). Frontend UI rendering is healthy.
+
+---
+
+
