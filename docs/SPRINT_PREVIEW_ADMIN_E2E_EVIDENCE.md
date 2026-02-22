@@ -1,6 +1,6 @@
 # SPRINT_PREVIEW_ADMIN_E2E_EVIDENCE
 
-**Tarih:** 2026-02-22 19:14:00 UTC
+**Tarih:** 2026-02-22 19:20:00 UTC
 **Ticket ID:** #1
 **SLA:** 24 saat
 **Target resolution:** 23 Feb 2026
@@ -16,7 +16,7 @@ Sonuç: **200 OK** (token alındı)
 ```
 GET /api/admin/moderation/queue
 ```
-Sonuç: **1 ilan** listelendi (pending_moderation)
+Sonuç: **en az 1 ilan** listelendi (`pending_moderation`).
 
 ## Approve Akışı
 ```
