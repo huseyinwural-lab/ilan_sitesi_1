@@ -8710,15 +8710,28 @@ async def moderation_queue_count(
     request: Request,
     status: str = "pending_moderation",
     dealer_only: Optional[bool] = None,
+    country: Optional[str] = None,
+    module: Optional[str] = None,
     current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
     _ensure_moderation_rbac(current_user)
-    query: Dict[str, Any] = {"status": status}
+    conditions = [Listing.status == status]
     if dealer_only is not None:
-        query["dealer_only"] = dealer_only
-    count = await db.vehicle_listings.count_documents(query)
-    return {"count": count}
+        conditions.append(Listing.is_dealer_listing == dealer_only)
+    if country:
+        conditions.append(Listing.country == country.strip().upper())
+    if module:
+        conditions.append(Listing.module == module)
+
+    if current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope:
+            conditions.append(Listing.country.in_(scope))
+
+    count_stmt = select(func.count()).select_from(Listing).where(and_(*conditions))
+    count = (await session.execute(count_stmt)).scalar_one() or 0
+    return {"count": int(count)}
 
 
 @api_router.get("/admin/moderation/listings/{listing_id}")
