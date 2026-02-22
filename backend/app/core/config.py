@@ -4,11 +4,11 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent.parent
 load_dotenv(ROOT_DIR / '.env')
-load_dotenv(ROOT_DIR / '.env.local', override=True)
+load_dotenv(ROOT_DIR / '.env.local', override=False)
 
 class Settings:
     APP_ENV: str = os.environ.get('APP_ENV', 'dev').lower()
-    DATABASE_URL: str = os.environ.get('DATABASE_URL', 'postgresql://admin_user:admin_pass@localhost:5432/admin_panel')
+    DATABASE_URL: str = os.environ.get('DATABASE_URL')
     SECRET_KEY: str = os.environ.get('SECRET_KEY', 'change-this-in-production')
     ALGORITHM: str = os.environ.get('ALGORITHM', 'HS256')
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.environ.get('ACCESS_TOKEN_EXPIRE_MINUTES', 30))
