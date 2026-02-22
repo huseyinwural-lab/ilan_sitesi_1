@@ -756,6 +756,7 @@ const AdminCategories = () => {
     });
     setSchema(applySchemaDefaults(item.form_schema));
     setWizardStep("hierarchy");
+    setWizardProgress(item.wizard_progress || { state: "draft" });
     setHierarchyComplete(false);
     setHierarchyError("");
     const relatedSubs = buildSubcategoryTree(item.id);
