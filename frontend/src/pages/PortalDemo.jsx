@@ -140,7 +140,7 @@ const PortalDemo = () => {
               ))}
             </div>
             <div className="text-sm" data-testid="portal-demo-user">
-              He4mmermann V.
+              Hämmermann V.
             </div>
             <button
               type="button"
