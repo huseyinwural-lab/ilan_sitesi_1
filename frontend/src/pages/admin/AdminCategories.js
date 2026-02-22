@@ -119,6 +119,14 @@ const WIZARD_STEPS = [
 ];
 
 const createId = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+const createSubcategoryDraft = () => ({
+  name: "",
+  slug: "",
+  active_flag: true,
+  sort_order: 0,
+  is_complete: false,
+  children: [],
+});
 
 const AdminCategories = () => {
   const { selectedCountry } = useCountry();
