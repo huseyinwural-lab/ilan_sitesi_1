@@ -473,9 +473,7 @@ const AdminCategories = () => {
     setWizardStep("hierarchy");
     setHierarchyComplete(false);
     setHierarchyError("");
-    setSubcategories([
-      { name: "", slug: "", active_flag: true, sort_order: 0, is_complete: false },
-    ]);
+    setSubcategories([createSubcategoryDraft()]);
     setDynamicDraft({
       label: "",
       key: "",
