@@ -2870,12 +2870,16 @@ except ValueError:
     DB_MAX_OVERFLOW = 5
 
 ssl_context = None
-connect_args: Dict[str, Any] = {}
+connect_args: Dict[str, Any] = {
+    "server_settings": {
+        "client_encoding": "SQL_ASCII",
+    }
+}
 if DB_SSL_MODE == "require":
     ssl_context = ssl.create_default_context()
     ssl_context.check_hostname = False
     ssl_context.verify_mode = ssl.CERT_NONE
-    connect_args = {"ssl": ssl_context}
+    connect_args["ssl"] = ssl_context
 
 SAFE_DATABASE_URL = _sanitize_database_url(DATABASE_URL)
 ASYNC_DATABASE_URL = SAFE_DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
