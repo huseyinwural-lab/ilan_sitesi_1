@@ -848,11 +848,15 @@ const AdminCategories = () => {
     }
 
     const cleanedSubs = subcategories
-      .map((item) => ({
-        ...item,
-        name: item.name.trim(),
-        slug: item.slug.trim().toLowerCase(),
-      }))
+      .filter((item) => item.is_complete || item.name?.trim() || item.slug?.trim())
+      .map((item) => {
+        const { is_complete, ...rest } = item;
+        return {
+          ...rest,
+          name: item.name.trim(),
+          slug: item.slug.trim().toLowerCase(),
+        };
+      })
       .filter((item) => item.name || item.slug);
 
     if (cleanedSubs.length === 0) {
