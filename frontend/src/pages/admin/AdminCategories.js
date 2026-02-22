@@ -1164,7 +1164,7 @@ const AdminCategories = () => {
       return { success: false };
     }
 
-    const hasCompletedSubcategory = subcategories.some((item) => item.is_complete && item.name?.trim() && item.slug?.trim());
+    const hasCompletedSubcategory = subcategories.some((item) => item.name?.trim() && item.slug?.trim());
     if (!hasCompletedSubcategory) {
       setHierarchyError("En az 1 alt kategori tamamlanmalıdır.");
       return { success: false };
