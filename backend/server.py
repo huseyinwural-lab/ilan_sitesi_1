@@ -10609,7 +10609,18 @@ async def admin_reject_listing(
     current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    raise HTTPException(status_code=501, detail="Reject flow not supported in Moderation V1")
+    if not payload.reason:
+        raise HTTPException(status_code=400, detail="Reason is required")
+    updated = await _moderation_transition_sql(
+        session=session,
+        listing_id=listing_id,
+        current_user=current_user,
+        new_status="rejected",
+        action_type="reject",
+        reason=payload.reason,
+        reason_note=payload.reason_note,
+    )
+    return {"ok": True, "listing": {"id": str(updated.id), "status": updated.status}}
 
 
 @api_router.post("/admin/listings/{listing_id}/needs_revision")
@@ -10620,7 +10631,18 @@ async def admin_needs_revision_listing(
     current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    raise HTTPException(status_code=501, detail="Needs revision flow not supported in Moderation V1")
+    if not payload.reason:
+        raise HTTPException(status_code=400, detail="Reason is required")
+    updated = await _moderation_transition_sql(
+        session=session,
+        listing_id=listing_id,
+        current_user=current_user,
+        new_status="needs_revision",
+        action_type="needs_revision",
+        reason=payload.reason,
+        reason_note=payload.reason_note,
+    )
+    return {"ok": True, "listing": {"id": str(updated.id), "status": updated.status}}
 
 
 # =====================
