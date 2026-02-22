@@ -1,42 +1,93 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  FileText,
-  Heart,
-  MessageSquare,
-  LifeBuoy,
-  User,
-  LogOut,
-  Shield,
-} from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const menuItems = [
-  { key: 'dashboard', path: '/account', label: 'Dashboard', icon: LayoutDashboard, testId: 'account-nav-dashboard' },
-  { key: 'listings', path: '/account/listings', label: 'İlanlarım', icon: FileText, testId: 'account-nav-listings' },
-  { key: 'favorites', path: '/account/favorites', label: 'Favoriler', icon: Heart, testId: 'account-nav-favorites' },
-  { key: 'messages', path: '/account/messages', label: 'Mesajlar', icon: MessageSquare, testId: 'account-nav-messages' },
-  { key: 'support', path: '/account/support', label: 'Destek', icon: LifeBuoy, testId: 'account-nav-support' },
-  { key: 'profile', path: '/account/profile', label: 'Hesap', icon: User, testId: 'account-nav-profile' },
-  { key: 'privacy', path: '/account/privacy', label: 'Gizlilik', icon: Shield, testId: 'account-nav-privacy' },
+const languageOptions = [
+  { key: 'tr', label: 'TR' },
+  { key: 'de', label: 'DE' },
+  { key: 'fr', label: 'FR' },
 ];
 
-const navClass = ({ isActive }) =>
-  `flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition ${
-    isActive
-      ? 'bg-primary/10 text-primary font-semibold'
-      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-  }`;
+const topNavItems = [
+  {
+    key: 'listings',
+    path: '/account/listings',
+    labelKey: 'nav_listings',
+    match: ['/account', '/account/listings', '/account/create'],
+    testId: 'account-top-nav-listings',
+  },
+  {
+    key: 'favorites',
+    path: '/account/favorites',
+    labelKey: 'nav_favorites',
+    match: ['/account/favorites'],
+    testId: 'account-top-nav-favorites',
+  },
+  {
+    key: 'messages',
+    path: '/account/messages',
+    labelKey: 'nav_messages',
+    match: ['/account/messages'],
+    testId: 'account-top-nav-messages',
+  },
+  {
+    key: 'services',
+    path: '/account/support',
+    labelKey: 'nav_services',
+    match: ['/account/support'],
+    testId: 'account-top-nav-services',
+  },
+  {
+    key: 'account',
+    path: '/account/profile',
+    labelKey: 'nav_account',
+    match: ['/account/profile', '/account/privacy'],
+    testId: 'account-top-nav-account',
+  },
+];
 
 const UserPanelLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
   const [counts, setCounts] = useState({ favorites: 0, messages: 0 });
+
+  const activeTopKey = useMemo(() => {
+    const matched = topNavItems.find((item) =>
+      item.match.some((prefix) => location.pathname.startsWith(prefix))
+    );
+    return matched?.key || 'listings';
+  }, [location.pathname]);
+
+  const sideMenuGroups = useMemo(
+    () => ({
+      listings: [
+        { path: '/account', labelKey: 'nav_dashboard', testId: 'account-side-overview' },
+        { path: '/account/listings', labelKey: 'nav_my_listings', testId: 'account-side-listings' },
+        { path: '/account/create/vehicle-wizard', labelKey: 'nav_create_listing', testId: 'account-side-create' },
+      ],
+      favorites: [
+        { path: '/account/favorites', labelKey: 'nav_favorite_listings', testId: 'account-side-favorites' },
+      ],
+      messages: [
+        { path: '/account/messages', labelKey: 'nav_messages', testId: 'account-side-messages' },
+      ],
+      services: [
+        { path: '/account/support', labelKey: 'nav_support', testId: 'account-side-support' },
+      ],
+      account: [
+        { path: '/account/profile', labelKey: 'nav_profile', testId: 'account-side-profile' },
+        { path: '/account/privacy', labelKey: 'nav_privacy_center', testId: 'account-side-privacy' },
+      ],
+    }),
+    []
+  );
 
   useEffect(() => {
     let active = true;
@@ -73,7 +124,7 @@ const UserPanelLayout = () => {
     if (!value) return null;
     return (
       <span
-        className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground"
+        className="ml-auto inline-flex min-w-[22px] items-center justify-center rounded-full bg-[#2f3854] px-2 py-0.5 text-[11px] text-white"
         data-testid={testId}
       >
         {value}
@@ -82,95 +133,108 @@ const UserPanelLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-orange-50 account-theme" data-testid="account-layout">
-      <div className="flex">
-        <aside className="hidden lg:flex w-72 flex-col border-r bg-white" data-testid="account-sidebar">
-          <div className="p-6 border-b" data-testid="account-sidebar-header">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground" data-testid="account-sidebar-label">Bireysel Panel</div>
-            <div className="text-xl font-bold text-slate-900" data-testid="account-sidebar-title">Hesabım</div>
-          </div>
-          <div className="p-4" data-testid="account-sidebar-user">
-            <div className="rounded-lg border bg-slate-50 p-4">
-              <div className="text-xs text-muted-foreground">Giriş yapan</div>
-              <div className="font-semibold text-slate-900" data-testid="account-user-name">{user?.full_name || user?.email}</div>
-              <div className="text-xs text-muted-foreground" data-testid="account-user-role">{user?.role || 'individual'}</div>
+    <div className="min-h-screen bg-[#f6c27a] account-theme" data-testid="account-layout">
+      <header className="bg-[#2f3854] text-white" data-testid="account-topbar">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
+          <div className="flex items-center gap-4" data-testid="account-topbar-left">
+            <div
+              className="flex h-10 w-28 items-center justify-center rounded bg-yellow-400 text-sm font-bold text-slate-900"
+              data-testid="account-logo"
+            >
+              ANNONCIA
+            </div>
+            <div className="text-xs uppercase tracking-[0.2em] text-white/70" data-testid="account-portal-label">
+              {t('portal_consumer')}
             </div>
           </div>
-          <nav className="flex-1 px-4 space-y-1" data-testid="account-sidebar-nav">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const badge = item.key === 'favorites'
-                ? renderBadge(counts.favorites, 'account-nav-favorites-badge')
-                : item.key === 'messages'
-                ? renderBadge(counts.messages, 'account-nav-messages-badge')
-                : null;
-              return (
-                <NavLink key={item.key} to={item.path} className={navClass} data-testid={item.testId}>
-                  <Icon size={18} />
-                  <span data-testid={`${item.testId}-label`}>{item.label}</span>
-                  {badge}
-                </NavLink>
-              );
-            })}
-          </nav>
-          <div className="p-4 border-t" data-testid="account-sidebar-footer">
+          <div className="flex flex-wrap items-center gap-3" data-testid="account-topbar-right">
+            <div className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-1" data-testid="account-language-toggle">
+              {languageOptions.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setLanguage(option.key)}
+                  className={`rounded-full px-2 py-1 text-xs font-semibold transition ${
+                    language === option.key ? 'bg-white text-[#2f3854]' : 'text-white/70 hover:text-white'
+                  }`}
+                  data-testid={`account-language-${option.key}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <div className="text-sm" data-testid="account-user-name">
+              {user?.full_name || user?.email}
+            </div>
             <button
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm"
+              className="inline-flex items-center gap-2 rounded-full border border-white/40 px-3 py-1 text-xs uppercase tracking-wide"
               data-testid="account-logout"
             >
-              <LogOut size={16} /> Çıkış
+              <LogOut size={14} /> {t('logout')}
             </button>
           </div>
-        </aside>
+        </div>
+      </header>
 
-        <main className="flex-1 min-w-0" data-testid="account-main">
-          <header className="sticky top-0 z-10 border-b bg-white/90 backdrop-blur" data-testid="account-topbar">
-            <div className="flex items-center justify-between px-6 py-4">
-              <div>
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Bireysel Portal</div>
-                <div className="text-lg font-semibold" data-testid="account-topbar-title">
-                  {menuItems.find((item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`))?.label || 'Dashboard'}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="lg:hidden inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs"
-                data-testid="account-mobile-logout"
-              >
-                <LogOut size={14} /> Çıkış
-              </button>
-            </div>
-          </header>
-          <div className="p-6" data-testid="account-content">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 border-t bg-white" data-testid="account-mobile-nav">
-        <div className="grid grid-cols-6">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
+      <nav className="border-b bg-white/95" data-testid="account-top-nav">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="flex gap-6 overflow-x-auto py-3 text-sm font-semibold">
+            {topNavItems.map((item) => (
               <NavLink
                 key={item.key}
                 to={item.path}
-                className={`flex flex-col items-center gap-1 py-2 text-xs ${
-                  isActive ? 'text-primary' : 'text-muted-foreground'
-                }`}
-                data-testid={`${item.testId}-mobile`}
+                className={({ isActive }) =>
+                  `border-b-2 pb-2 transition ${
+                    isActive
+                      ? 'border-[#2f3854] text-[#2f3854]'
+                      : 'border-transparent text-slate-500 hover:text-[#2f3854]'
+                  }`
+                }
+                data-testid={item.testId}
               >
-                <Icon size={18} />
-                <span>{item.label}</span>
+                {t(item.labelKey)}
               </NavLink>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </nav>
+
+      <main className="mx-auto max-w-6xl px-6 py-8" data-testid="account-main">
+        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+          <aside className="rounded-2xl bg-white p-4 shadow-sm" data-testid="account-side-nav">
+            <div className="text-xs uppercase tracking-[0.2em] text-slate-400" data-testid="account-side-title">
+              {t('nav_section')}
+            </div>
+            <div className="mt-4 space-y-1" data-testid="account-side-items">
+              {sideMenuGroups[activeTopKey]?.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                      isActive
+                        ? 'bg-[#f6c27a]/30 text-[#2f3854]'
+                        : 'text-slate-500 hover:bg-slate-100'
+                    }`
+                  }
+                  data-testid={item.testId}
+                >
+                  <span>{t(item.labelKey)}</span>
+                  {item.path === '/account/favorites' &&
+                    renderBadge(counts.favorites, 'account-side-favorites-badge')}
+                  {item.path === '/account/messages' &&
+                    renderBadge(counts.messages, 'account-side-messages-badge')}
+                </NavLink>
+              ))}
+            </div>
+          </aside>
+          <section className="rounded-2xl bg-white p-6 shadow-sm" data-testid="account-content">
+            <Outlet />
+          </section>
+        </div>
+      </main>
     </div>
   );
 };
