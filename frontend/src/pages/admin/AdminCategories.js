@@ -1690,8 +1690,9 @@ const AdminCategories = () => {
         </div>
         <button
           type="button"
-          className="w-full text-sm border rounded px-3 py-2"
+          className="w-full text-sm border rounded px-3 py-2 disabled:opacity-60"
           onClick={() => addLevelItem(levelIndex)}
+          disabled={isHierarchyLocked}
           data-testid={`categories-level-add-${levelIndex}`}
         >
           Ekle
