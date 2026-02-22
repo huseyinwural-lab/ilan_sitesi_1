@@ -976,13 +976,11 @@ const AdminCategories = () => {
         setWizardProgress(savedCategory.wizard_progress);
       }
       setHierarchyComplete(Boolean(savedCategory.hierarchy_complete));
-      if (wizardStep === "hierarchy" && savedCategory.hierarchy_complete) {
-        setWizardStep("core");
-      }
       lastSavedSnapshotRef.current = JSON.stringify({
         form: nextForm,
         schema: nextSchema,
         hierarchy_complete: Boolean(savedCategory.hierarchy_complete),
+        wizard_progress: savedCategory.wizard_progress,
       });
       setLastSavedAt(formatTime(savedCategory.updated_at || new Date()));
     }
