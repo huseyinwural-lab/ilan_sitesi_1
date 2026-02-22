@@ -51,7 +51,6 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Turuncu zemin + üst yatay menü + sol alt menü
   - Bireysel/Ticari menü farkları uygulandı
   - TR/DE/FR menü dili toggle
-- **Portal Demo:** /portal-demo (auth gerektirmeyen bireysel/ticari menü önizlemesi)
 - Dealer portal ek sayfalar: Şirket Profili + Gizlilik Merkezi
 - Preview/Prod DB fail-fast: CONFIG_MISSING hatası + localhost yasak + DB_SSL_MODE=require
 - .env override kapatıldı (server.py, core/config.py, app/database.py)
