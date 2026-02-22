@@ -1882,6 +1882,7 @@ const AdminCategories = () => {
                         <input
                           type="checkbox"
                           checked={form.active_flag}
+                          disabled={isHierarchyLocked}
                           onChange={(e) => setForm((prev) => ({ ...prev, active_flag: e.target.checked }))}
                           data-testid="categories-active-checkbox"
                         />
