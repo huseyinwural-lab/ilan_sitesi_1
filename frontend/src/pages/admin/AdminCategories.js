@@ -1140,7 +1140,9 @@ const AdminCategories = () => {
         active_flag: updatedParent.active_flag ?? true,
         sort_order: updatedParent.sort_order || 0,
       });
-      setSubcategories(savedSubs.length ? savedSubs : [createSubcategoryDraft()]);
+      const nextSubcategories = savedSubs.length ? savedSubs : [createSubcategoryDraft()];
+      setSubcategories(nextSubcategories);
+      setExpandedNodes(buildExpandedKeys(nextSubcategories));
       setHierarchyComplete(true);
       setWizardStep("core");
       fetchItems();
