@@ -1075,6 +1075,7 @@ const AdminCategories = () => {
 
   const handleHierarchyComplete = async (progressState = STEP_PROGRESS_STATE.hierarchy) => {
     setHierarchyError("");
+    setHierarchyFieldErrors({});
 
     const name = form.name.trim();
     const slug = form.slug.trim().toLowerCase();
