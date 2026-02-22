@@ -55,10 +55,13 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - /app/docs/PROFILE_ENDPOINT_FIX_EVIDENCE.md
   - /app/docs/PREVIEW_DB_FIX_EVIDENCE.md
   - /app/docs/PREVIEW_MIGRATION_EVIDENCE.md
-  - /app/docs/SPRINT1_PREVIEW_API_EVIDENCE.md
-  - /app/docs/SPRINT1_CLOSEOUT.md
   - /app/docs/HEALTH_MIGRATION_GATE_SPEC.md
   - /app/docs/HEALTH_MIGRATION_GATE_EVIDENCE.md
+  - /app/docs/HEALTH_MIGRATION_GATE_PREVIEW_EVIDENCE.md
+  - /app/docs/PREVIEW_MIGRATION_PARITY_EVIDENCE.md
+  - /app/docs/SPRINT1_PREVIEW_API_EVIDENCE.md
+  - /app/docs/SPRINT1_PREVIEW_E2E_EVIDENCE.md
+  - /app/docs/SPRINT1_CLOSEOUT.md
   - /app/docs/REGISTER_ANTIBOT_HONEYPOT_SPEC.md
   - /app/docs/REGISTER_ANTIBOT_HONEYPOT_EVIDENCE.md
   - /app/docs/GDPR_EXPORT_NOTIFICATION_SPEC.md
@@ -75,12 +78,17 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /api/health/db 200 + db_status=ok + migration_state doğrulaması
 - `alembic current` + `alembic upgrade head` (p34_dealer_gdpr_deleted_at)
 - Curl doğrulama: /api/v1/users/me/profile, /api/v1/users/me/dealer-profile, /api/v1/users/me/data-export, /api/v1/users/me/account
+- Honeypot 400 + register_honeypot_hit audit doğrulaması
+- GDPR export completion notification + audit doğrulaması
+
+### P0.1 (Güvenlik Doğrulama)
+- Login rate limit tetikleme testi
+- 2FA challenge + backup code tek kullanımlık testi
+- Soft delete → login blocked testi
+- GDPR export sonrası notification severity=warning UI doğrulaması
 
 ### P1 (Sprint‑1 closeout)
-- 2FA enable → verify → login challenge PASS
-- Backup codes doğrulaması
-- Soft delete grace doğrulaması
-- GDPR export JSON doğrulaması
+- Sprint‑1 E2E kanıt paketi
 
 ### P1.5 / P2 (Enhancement)
 - Privacy Center export geçmişi (gdpr_exports tablosu + UI) → /app/docs/PRIVACY_EXPORT_HISTORY_SPEC.md
