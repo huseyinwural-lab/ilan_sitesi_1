@@ -31,6 +31,8 @@ from fastapi import FastAPI, APIRouter, Depends, HTTPException, Request, Body, R
 from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, EmailStr
+from alembic.config import Config as AlembicConfig
+from alembic.script import ScriptDirectory
 from emergentintegrations.payments.stripe.checkout import (
     StripeCheckout,
     CheckoutSessionRequest,
