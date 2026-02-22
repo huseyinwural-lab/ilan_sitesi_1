@@ -890,7 +890,13 @@ const AdminCategories = () => {
       setHierarchyError(`Alt kategori ${subcategories.length} tamamlanmadan yeni alt kategori eklenemez.`);
       return;
     }
+    const newIndex = subcategories.length;
     setSubcategories((prev) => ([...prev, createSubcategoryDraft()]));
+    setExpandedNodes((prev) => {
+      const next = new Set(prev);
+      next.add(String(newIndex));
+      return next;
+    });
   };
 
   const addNestedSubcategory = (path) => {
@@ -906,10 +912,18 @@ const AdminCategories = () => {
       setHierarchyError(`${getSubcategoryLabel(path)} içindeki alt kategori ${children.length} tamamlanmadan yeni alt kategori eklenemez.`);
       return;
     }
+    const childIndex = children.length;
+    const childPathKey = [...path, childIndex].join("-");
     setSubcategories((prev) => updateNodeByPath(prev, path, (node) => ({
       ...node,
       children: [...(node.children || []), createSubcategoryDraft()],
     })));
+    setExpandedNodes((prev) => {
+      const next = new Set(prev);
+      next.add(path.join("-"));
+      next.add(childPathKey);
+      return next;
+    });
   };
 
   const completeSubcategory = (path) => {
