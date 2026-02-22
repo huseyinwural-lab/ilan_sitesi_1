@@ -1868,9 +1868,15 @@ const AdminCategories = () => {
                           min={0}
                           className={inputClassName}
                           value={form.sort_order}
+                          disabled={isHierarchyLocked}
                           onChange={(e) => setForm((prev) => ({ ...prev, sort_order: e.target.value }))}
                           data-testid="categories-sort-input"
                         />
+                        {hierarchyFieldErrors.main_sort && (
+                          <div className="text-xs text-rose-600" data-testid="categories-sort-error">
+                            {hierarchyFieldErrors.main_sort}
+                          </div>
+                        )}
                       </div>
                       <label className="flex items-center gap-2 text-sm text-slate-800" data-testid="categories-active-wrapper">
                         <input
