@@ -59,8 +59,15 @@ const UserPanelLayout = () => {
   const [counts, setCounts] = useState({ favorites: 0, messages: 0 });
 
   const activeTopKey = useMemo(() => {
-    const matched = topNavItems.find((item) =>
-      item.match.some((prefix) => location.pathname.startsWith(prefix))
+    const routeMap = [
+      { key: 'favorites', prefixes: ['/account/favorites'] },
+      { key: 'messages', prefixes: ['/account/messages'] },
+      { key: 'services', prefixes: ['/account/support'] },
+      { key: 'account', prefixes: ['/account/profile', '/account/privacy'] },
+      { key: 'listings', prefixes: ['/account'] },
+    ];
+    const matched = routeMap.find((item) =>
+      item.prefixes.some((prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`))
     );
     return matched?.key || 'listings';
   }, [location.pathname]);
