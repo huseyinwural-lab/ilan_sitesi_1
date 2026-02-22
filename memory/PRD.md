@@ -77,6 +77,10 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **Admin kategori parametre alanları:**
   - Parametre alanlarında seçenekleri tek tek ekleme/çıkarma arayüzü
   - Parametre listesinde seçenek ve zorunluluk özetleri
+- **Admin kategori sihirbazı P0 düzeltmeleri (2026-02-22):**
+  - Tamam → PATCH (server response authoritative)
+  - Next gating + tooltip: “Önce bu adımı tamamlayın.”
+  - Kategori → Çekirdek Alanlar → Parametre Alanları sırası enforce
 - **İlan Ver (Emlak) yeni akış:**
   - /ilan-ver/kategori-secimi sütunlu drill-down + breadcrumb + arama kutusu
   - /ilan-ver/detaylar placeholder (detay formu daha sonra)
