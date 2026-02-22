@@ -1054,6 +1054,7 @@ const AdminCategories = () => {
         ...node,
         name: node.name ? node.name.trim() : "",
         slug: node.slug ? node.slug.trim().toLowerCase() : "",
+        is_complete: true,
         children: normalizeTree(node.children || []),
       }))
       .filter((node) => node.name || node.slug || (node.children || []).length > 0);
@@ -1068,9 +1069,6 @@ const AdminCategories = () => {
         const label = getSubcategoryLabel(nodePath);
         if (!node.name || !node.slug) {
           return `${label} için ad ve slug zorunludur.`;
-        }
-        if (!node.is_complete) {
-          return `${label} tamamlanmadan devam edilemez.`;
         }
         if ((node.children || []).length > 0) {
           const childError = validateTree(node.children, nodePath);
