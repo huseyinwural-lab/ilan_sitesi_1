@@ -626,6 +626,50 @@ const AdminCategories = () => {
     }
   };
 
+  const handleLevelEditColumn = (levelIndex, items) => {
+    if (!items || items.length === 0) return;
+    const resetItems = items.map((item) => ({
+      ...item,
+      is_complete: false,
+      children: item.children || [],
+    }));
+    if (levelIndex === 0) {
+      setSubcategories(resetItems);
+    } else {
+      const parentPath = getParentPathForLevel(levelIndex);
+      if (parentPath.length === 0) return;
+      setSubcategories((prev) => updateNodeByPath(prev, parentPath, (node) => ({
+        ...node,
+        children: resetItems,
+      })));
+    }
+    setLevelCompletion((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((key) => {
+        if (Number(key) >= levelIndex) {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+    setLevelSelections((prev) => prev.slice(0, levelIndex));
+  };
+
+  const handleLevelEditItem = (levelIndex, itemIndex) => {
+    const path = [...getParentPathForLevel(levelIndex), itemIndex];
+    updateSubcategory(path, { is_complete: false });
+    setLevelCompletion((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((key) => {
+        if (Number(key) >= levelIndex) {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+    setLevelSelections((prev) => prev.slice(0, levelIndex + 1));
+  };
+
   const resetForm = () => {
     setForm({
       name: "",
@@ -817,7 +861,7 @@ const AdminCategories = () => {
     setPublishError("");
     const activeEditing = overrideEditing ?? editing;
     const hierarchyOk = effectiveHierarchyComplete;
-    if (!hierarchyOk) {
+    if (!hierarchyOk && status !== "draft") {
       setHierarchyError("Önce hiyerarşiyi tamamlayın.");
       if (status === "draft") {
         showDraftToast({
