@@ -702,6 +702,7 @@ const AdminCategories = () => {
     setSchema(createDefaultSchema());
     setEditing(null);
     setWizardStep("hierarchy");
+    setWizardProgress({ state: "draft" });
     setHierarchyComplete(false);
     setHierarchyError("");
     const initialSubcategories = [createSubcategoryDraft()];
