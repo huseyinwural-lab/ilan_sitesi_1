@@ -1016,7 +1016,14 @@ const AdminCategories = () => {
       setAutosaveStatus("idle");
       return { success: false };
     }
-    const savedCategory = data?.category || activeEditing;
+    if (!data?.category) {
+      if (!autosave) {
+        setHierarchyError("Sunucu yanıtı eksik. Lütfen tekrar deneyin.");
+      }
+      setAutosaveStatus("idle");
+      return { success: false };
+    }
+    const savedCategory = data.category;
     if (savedCategory) {
       const nextForm = {
         name: savedCategory.name || form.name,
