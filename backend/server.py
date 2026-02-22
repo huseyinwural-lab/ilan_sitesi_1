@@ -16584,6 +16584,8 @@ async def public_search_v2(
         base_conditions.append(Listing.price >= float(price_min))
     if price_max is not None:
         base_conditions.append(Listing.price <= float(price_max))
+    if price_min is not None or price_max is not None:
+        base_conditions.append(or_(Listing.price_type == "FIXED", Listing.price_type.is_(None)))
 
     query_stmt = select(Listing).where(and_(*base_conditions))
     total_stmt = select(func.count()).select_from(Listing).where(and_(*base_conditions))
