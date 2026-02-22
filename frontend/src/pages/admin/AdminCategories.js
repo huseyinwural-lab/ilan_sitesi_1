@@ -512,6 +512,39 @@ const AdminCategories = () => {
     }));
   };
 
+  const buildExpandedKeys = (nodes) => {
+    const keys = new Set();
+    const traverse = (items, path = []) => {
+      items.forEach((node, index) => {
+        const current = [...path, index];
+        const key = current.join("-");
+        if (path.length === 0 || !node.is_complete) {
+          keys.add(key);
+        }
+        if ((node.children || []).length > 0) {
+          traverse(node.children, current);
+        }
+      });
+    };
+    traverse(nodes);
+    if (nodes.length === 0) {
+      keys.add("0");
+    }
+    return keys;
+  };
+
+  const toggleSubcategoryExpanded = (pathKey) => {
+    setExpandedNodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(pathKey)) {
+        next.delete(pathKey);
+      } else {
+        next.add(pathKey);
+      }
+      return next;
+    });
+  };
+
   const resetForm = () => {
     setForm({
       name: "",
