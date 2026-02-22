@@ -52,6 +52,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Turuncu zemin + üst yatay menü + sol alt menü
   - Bireysel/Ticari menü farkları uygulandı
   - TR/DE/FR menü dili toggle
+- Dealer portal ek sayfalar: Şirket Profili + Gizlilik Merkezi
 - **Admin kategori modalı:**
   - Hiyerarşi adı → Kategori
   - Alt kategori adımları sıralı: Alt kategori 1 tamamlanınca Alt kategori 2 açılır
