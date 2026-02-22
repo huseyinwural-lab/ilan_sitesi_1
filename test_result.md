@@ -1,5 +1,6 @@
-## Admin UI Moderation Queue Re-Test (Feb 22, 2026 - LATEST) ✅ COMPLETE PASS
-## Admin Categories UI Test - Subcategory Workflow (Feb 22, 2026 - LATEST) ✅ COMPLETE PASS
+## Admin Categories Wizard E2E Test (Feb 22, 2026 - LATEST) ✅ COMPLETE PASS
+## Admin UI Moderation Queue Re-Test (Feb 22, 2026) ✅ COMPLETE PASS
+## Admin Categories UI Test - Subcategory Workflow (Feb 22, 2026) ✅ COMPLETE PASS
 
 ### Test Summary
 Comprehensive UI test for Admin Categories page subcategory workflow as per review request: "Admin UI test: 1) Login at /admin/login with admin@platform.com / Admin123!. 2) Navigate to /admin/categories. 3) Click 'Yeni Kategori' (or add category) to open modal. 4) Verify step label shows 'Kategori' (not Hiyerarşi). 5) In Alt Kategoriler section: Alt kategori 1 form appears, after filling name+slug click 'Tamam' and confirm Alt kategori 2 appears (new row). 6) Confirm completed row is locked and shows 'Tamamlandı' badge."
