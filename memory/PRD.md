@@ -59,6 +59,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Alt seviye kolonları, seçilen kategoriye göre açılıyor
   - Seviye Tamam: ad/slug doluysa tüm kartları tamamlar ve sonraki seviyeyi açar
   - Taslak kaydet: hiyerarşi tamamlanmadan da kayıt alır
+  - Seviye/öğe düzenleme: kilitlenen seviyede “Düzenle” ile tekrar açılır
 - **Admin kategori parametre alanları:**
   - Parametre alanlarında seçenekleri tek tek ekleme/çıkarma arayüzü
   - Parametre listesinde seçenek ve zorunluluk özetleri
