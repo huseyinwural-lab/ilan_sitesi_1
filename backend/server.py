@@ -16800,9 +16800,36 @@ def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
     price_payload = core_fields.get("price") if isinstance(core_fields, dict) else None
     price_payload = price_payload or payload.get("price") or {}
     if price_payload:
-        listing.price = price_payload.get("amount")
+        price_type_raw = price_payload.get("price_type") or payload.get("price_type") or listing.price_type or "FIXED"
+        price_type = str(price_type_raw).upper()
+        amount = price_payload.get("amount")
+        hourly_rate = price_payload.get("hourly_rate")
+
+        if price_type not in {"FIXED", "HOURLY"}:
+            raise HTTPException(status_code=400, detail="price_type invalid")
+
+        if price_type == "FIXED":
+            if hourly_rate not in (None, ""):
+                raise HTTPException(status_code=400, detail="Fiyat giriniz.")
+            if amount in (None, "") or float(amount) <= 0:
+                raise HTTPException(status_code=400, detail="Fiyat giriniz.")
+            listing.price = float(amount)
+            listing.hourly_rate = None
+        else:
+            if amount not in (None, ""):
+                raise HTTPException(status_code=400, detail="Saatlik ücret giriniz.")
+            if hourly_rate in (None, "") or float(hourly_rate) <= 0:
+                raise HTTPException(status_code=400, detail="Saatlik ücret giriniz.")
+            listing.price = None
+            listing.hourly_rate = float(hourly_rate)
+
+        listing.price_type = price_type
         listing.currency = price_payload.get("currency_primary") or listing.currency
-        attrs["price"] = price_payload
+        normalized_price = dict(price_payload)
+        normalized_price["price_type"] = price_type
+        normalized_price["amount"] = listing.price
+        normalized_price["hourly_rate"] = listing.hourly_rate
+        attrs["price"] = normalized_price
 
     if core_fields:
         attrs["core_fields"] = core_fields
