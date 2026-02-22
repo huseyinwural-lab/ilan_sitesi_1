@@ -10,6 +10,8 @@ from typing import Optional, List
 import uuid
 from app.models.base import Base
 
+PRICE_TYPE_ENUM = Enum("FIXED", "HOURLY", name="price_type_enum")
+
 class Listing(Base):
     """Listing modeli (minimum - moderation için)"""
     __tablename__ = "listings"
