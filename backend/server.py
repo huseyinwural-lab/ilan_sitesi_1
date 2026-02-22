@@ -1644,13 +1644,13 @@ def _get_masked_db_target() -> Dict[str, Optional[str]]:
     return {"host": masked_host, "database": masked_db}
 
 
-def _get_alembic_head_revision() -> Optional[str]:
+def _get_alembic_head_revisions() -> List[str]:
     try:
         config = AlembicConfig(str(ROOT_DIR / "alembic.ini"))
         script = ScriptDirectory.from_config(config)
-        return script.get_current_head()
+        return script.get_heads() or []
     except Exception:
-        return None
+        return []
 
 
 async def _get_migration_state(conn) -> Dict[str, Optional[str]]:
@@ -1664,26 +1664,26 @@ async def _get_migration_state(conn) -> Dict[str, Optional[str]]:
             "checked_at": _migration_state_cache.get("checked_at"),
         }
 
-    head_revision = _get_alembic_head_revision()
-    current_revision = None
+    head_revisions = _get_alembic_head_revisions()
+    current_revisions: List[str] = []
     state = "unknown"
-    if head_revision:
+    if head_revisions:
         try:
             result = await conn.execute(text("SELECT version_num FROM alembic_version"))
-            current_revision = result.scalar_one_or_none()
+            current_revisions = [row[0] for row in result.fetchall() if row and row[0]]
         except Exception:
-            current_revision = None
+            current_revisions = []
 
-    if head_revision and current_revision:
-        state = "ok" if current_revision == head_revision else "migration_required"
+    if head_revisions and current_revisions:
+        state = "ok" if set(current_revisions) == set(head_revisions) else "migration_required"
 
     _migration_state_cache.update({
         "checked_at": now_ts,
         "state": state,
-        "current": current_revision,
-        "head": head_revision,
+        "current": current_revisions or None,
+        "head": head_revisions or None,
     })
-    return {"state": state, "current": current_revision, "head": head_revision, "checked_at": now_ts}
+    return {"state": state, "current": current_revisions or None, "head": head_revisions or None, "checked_at": now_ts}
 
 
 def _format_migration_checked_at() -> Optional[str]:
