@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).parent.parent
 load_dotenv(ROOT_DIR / ".env")
-load_dotenv(ROOT_DIR / ".env.local", override=True)
+load_dotenv(ROOT_DIR / ".env.local", override=False)
 
 config = context.config
 
