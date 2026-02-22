@@ -93,6 +93,8 @@ async def search_listings(
     # 4. Standard Filters
     if price_min: query = query.where(Listing.price >= price_min)
     if price_max: query = query.where(Listing.price <= price_max)
+    if price_min or price_max:
+        query = query.where(or_(Listing.price_type == "FIXED", Listing.price_type.is_(None)))
     
     # 5. Attribute Filters (The Core Logic)
     if filters:
