@@ -37,7 +37,7 @@ Aşağıdaki klasör, agent otomasyon çıktılarının **statik** kanıtların�
 ## C) API Response Kanıtı (örnek payload)
 
 Base URL:
-- `https://privacy-center-dev.preview.emergentagent.com`
+- `https://dynamic-params.preview.emergentagent.com`
 
 ### 1) GET /api/menu/top-items
 Örnek response (kısaltılmış):
