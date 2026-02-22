@@ -4850,6 +4850,8 @@ async def request_account_delete_v1(
 
     now = datetime.now(timezone.utc)
     profile.gdpr_deleted_at = now + timedelta(days=30)
+    user_row.is_active = False
+    user_row.updated_at = now
 
     await _write_audit_log_sql(
         session=session,
