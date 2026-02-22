@@ -874,21 +874,26 @@ const AdminCategories = () => {
     })));
   };
 
-  const completeSubcategory = (index) => {
+  const completeSubcategory = (path) => {
     setHierarchyError("");
-    const target = subcategories[index];
+    const target = getNodeByPath(subcategories, path);
+    if (!target) return;
+    const label = getSubcategoryLabel(path);
     if (!target?.name?.trim() || !target?.slug?.trim()) {
-      setHierarchyError(`Alt kategori ${index + 1} için ad ve slug zorunludur.`);
+      setHierarchyError(`${label} için ad ve slug zorunludur.`);
       return;
     }
-    setSubcategories((prev) => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], is_complete: true };
-      if (index === updated.length - 1) {
-        updated.push({ name: "", slug: "", active_flag: true, sort_order: 0, is_complete: false });
-      }
-      return updated;
-    });
+    const incompleteChild = (target.children || []).find((child) => !child.is_complete);
+    if (incompleteChild) {
+      setHierarchyError(`${label} içindeki alt kategoriler tamamlanmadan devam edilemez.`);
+      return;
+    }
+    setSubcategories((prev) => updateNodeByPath(prev, path, (node) => ({
+      ...node,
+      name: node.name.trim(),
+      slug: node.slug.trim().toLowerCase(),
+      is_complete: true,
+    })));
   };
 
   const updateSubcategory = (index, patch) => {
