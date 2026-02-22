@@ -612,7 +612,9 @@ const AdminCategories = () => {
     setHierarchyComplete(false);
     setHierarchyError("");
     const relatedSubs = buildSubcategoryTree(item.id);
-    setSubcategories(relatedSubs.length ? relatedSubs : [createSubcategoryDraft()]);
+    const nextSubcategories = relatedSubs.length ? relatedSubs : [createSubcategoryDraft()];
+    setSubcategories(nextSubcategories);
+    setExpandedNodes(buildExpandedKeys(nextSubcategories));
     setDynamicDraft({
       label: "",
       key: "",
