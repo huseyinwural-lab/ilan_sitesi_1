@@ -1,13 +1,17 @@
 # STRIPE_IDEMPOTENCY_LOCAL_EVIDENCE
 
-**Tarih:** 2026-02-22 00:54:38 UTC
-**Durum:** BLOCKED (Stripe CLI yok)
+**Tarih:** 2026-02-22 01:20:30 UTC
+**Durum:** BLOCKED (Stripe API key invalid)
 
-## Öncelik (Gerçek imza)
-- Stripe CLI ile aynı event iki kez gönderilecek.
+## Deneme
+```
+stripe listen --api-key sk_test_emergent --forward-to http://localhost:8001/api/v1/billing/webhooks/stripe
+```
+Çıktı:
+```
+Authorization failed (401) - Invalid API Key
+```
 
-## Mevcut Durum
-`stripe --version` → `command not found`
-
-## Fallback
-- CLI sağlanırsa gerçek signature ile test yapılacak.
+## Sonraki Adım
+- Geçerli Stripe test API key ile tekrar denenmeli.
+- Duplicate event testi yapılmalı.
