@@ -1197,6 +1197,7 @@ const AdminCategories = () => {
           active_flag: form.active_flag,
           sort_order: Number(form.sort_order || 0),
           hierarchy_complete: false,
+          wizard_progress: { state: progressState },
         };
         const parentRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
           method: "POST",
