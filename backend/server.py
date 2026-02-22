@@ -16314,7 +16314,7 @@ async def admin_session_health(request: Request, response: Response, current_use
 
 
 # =====================
-# Public Search v2 (Mongo)
+# Public Search v2 (SQL)
 # =====================
 
 @api_router.get("/v2/search")
