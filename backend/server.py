@@ -14395,7 +14395,13 @@ async def admin_cloudflare_canary(
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     db = request.app.state.db
-    account_id, zone_id, _ = await resolve_cloudflare_config(db)
+    account_id = None
+    zone_id = None
+    try:
+        account_id, zone_id, _ = await resolve_cloudflare_config(db)
+    except CloudflareConfigError:
+        account_id = None
+        zone_id = None
     api_token = os.environ.get("CLOUDFLARE_API_TOKEN")
     canary_status = CANARY_CONFIG_MISSING
     if account_id and zone_id and api_token:
