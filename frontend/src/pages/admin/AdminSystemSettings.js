@@ -388,6 +388,7 @@ export default function AdminSystemSettingsPage() {
                 onClick={handleSaveCloudflare}
                 className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
                 disabled={!isSuperAdmin || cloudflareSaving || !encryptionKeyPresent}
+                title={!encryptionKeyPresent ? 'Önce güvenlik anahtarı tanımlanmalı.' : undefined}
                 data-testid="system-settings-cloudflare-save"
               >
                 {cloudflareSaving ? 'Kaydediliyor…' : 'Kaydet'}
