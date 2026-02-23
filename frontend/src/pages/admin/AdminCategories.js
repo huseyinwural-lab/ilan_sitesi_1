@@ -1166,9 +1166,6 @@ const AdminCategories = () => {
             : [],
         });
       }
-      if (progressState ddd wizardStep ff false) {
-        // placeholder
-      }
       if (progressState && editModeStep === wizardStep) {
         setEditModeStep(null);
       }
