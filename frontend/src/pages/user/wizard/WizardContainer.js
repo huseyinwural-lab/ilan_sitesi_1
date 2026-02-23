@@ -46,7 +46,7 @@ const WizardContent = () => {
                   step >= s.step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
                 }`}
               >
-                {s.step}
+                {s.display}
               </div>
               <span className={`ml-2 text-sm ${step >= s.step ? 'text-gray-900' : 'text-gray-500'}`}>
                 {s.label}
