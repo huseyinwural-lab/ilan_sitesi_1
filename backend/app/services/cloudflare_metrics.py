@@ -21,11 +21,9 @@ CDN_TARGETS = {
 }
 
 CANARY_OK = "OK"
-CANARY_AUTH_ERROR = "AUTH_ERROR"
-CANARY_SCOPE_ERROR = "SCOPE_ERROR"
-CANARY_NO_DATA = "NO_DATA"
-CANARY_RATE_LIMIT = "RATE_LIMIT"
 CANARY_CONFIG_MISSING = "CONFIG_MISSING"
+CANARY_SCOPE_ERROR = "SCOPE_ERROR"
+CANARY_API_ERROR = "API_ERROR"
 
 
 class CloudflareMetricsError(RuntimeError):
@@ -223,9 +221,9 @@ class CloudflareMetricsService:
         except ValueError:
             return DEFAULT_CACHE_TTL_SECONDS
 
-    async def run_canary(self, credentials: Optional[CloudflareCredentials]) -> str:
+    async def run_canary(self, credentials: Optional[CloudflareCredentials]) -> tuple[str, str | None]:
         if not credentials:
-            return CANARY_CONFIG_MISSING
+            return CANARY_CONFIG_MISSING, "config_missing"
         adapter = CloudflareMetricsAdapter(credentials)
         cache_payload = await adapter.fetch_cache_metrics()
         cache_metrics = _extract_cache_metrics(cache_payload)
@@ -296,8 +294,9 @@ class CloudflareMetricsService:
         }
 
         payload["alerts"] = _evaluate_alerts(payload)
-        payload["canary_status"] = _build_canary_status(adapter, cache_metrics)
-        logger.info("cloudflare_metrics_canary", extra={"status": payload["canary_status"], "errors": adapter.error_codes})
+        canary_status, canary_reason = _build_canary_status(adapter, cache_metrics)
+        payload["canary_status"] = canary_status
+        logger.info("cloudflare_metrics_canary", extra={"status": canary_status, "reason": canary_reason, "errors": adapter.error_codes})
 
         self._cache.update({"checked_at": now_ts, "payload": payload})
         return payload
@@ -454,19 +453,16 @@ def _build_country_metrics(
     return metrics
 
 
-def _build_canary_status(adapter: CloudflareMetricsAdapter, cache_metrics: Dict[str, Any]) -> str:
-    if "auth_error" in adapter.error_codes:
-        return CANARY_AUTH_ERROR
+def _build_canary_status(adapter: CloudflareMetricsAdapter, cache_metrics: Dict[str, Any]) -> tuple[str, str | None]:
     if "scope_error" in adapter.error_codes:
-        return CANARY_SCOPE_ERROR
-    if "rate_limit" in adapter.error_codes:
-        return CANARY_RATE_LIMIT
+        return CANARY_SCOPE_ERROR, "scope_error"
+    if adapter.error_codes:
+        return CANARY_API_ERROR, adapter.error_codes[0]
     total_requests = cache_metrics.get("total_requests") or 0
     if total_requests > 0:
-        return CANARY_OK
-    if adapter.error_codes:
-        return CANARY_AUTH_ERROR
-    return CANARY_NO_DATA
+        return CANARY_OK, None
+    return CANARY_API_ERROR, "no_data"
+
 
 
 def _evaluate_alerts(payload: Dict[str, Any]) -> Dict[str, Any]:
