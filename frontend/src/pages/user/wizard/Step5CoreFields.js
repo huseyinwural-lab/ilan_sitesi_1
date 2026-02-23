@@ -118,7 +118,10 @@ const CoreFieldsStep = () => {
     if (!bodyType) nextErrors.body_type = 'Kasa tipi seçiniz.';
     if (!color) nextErrors.color = 'Renk seçiniz.';
     if (!damageStatus) nextErrors.damage_status = 'Hasar bilgisi seçiniz.';
+    if (!engineCc) nextErrors.engine_cc = 'Motor hacmi giriniz.';
+    if (!engineHp) nextErrors.engine_hp = 'Motor gücü giriniz.';
     if (tradeIn === '') nextErrors.trade_in = 'Takas seçiniz.';
+    if (!moduleData.address?.city) nextErrors.address_city = 'Şehir bilgisi zorunlu.';
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
