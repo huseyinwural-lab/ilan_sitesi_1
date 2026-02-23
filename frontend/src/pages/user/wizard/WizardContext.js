@@ -288,7 +288,8 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     fetchDraft();
   }, [editListingId]);
 
-  const createDraft = async (selectedCategory) => {
+  const createDraft = async (selectedCategory, options = {}) => {
+    const { autoAdvance = false } = options;
     setLoading(true);
     setValidationErrors([]);
     try {
@@ -325,10 +326,16 @@ export const WizardProvider = ({ children, editListingId = null }) => {
         category_key: selectedCategory.id,
         category_id: selectedCategory.id,
       }));
-      setStep(2);
+
+      if (autoAdvance) {
+        setStep(2);
+      }
+
+      return true;
     } catch (error) {
       console.error(error);
       setValidationErrors([{ field: 'draft', code: 'DRAFT_CREATE_FAILED', message: 'Draft oluşturulamadı' }]);
+      return false;
     } finally {
       setLoading(false);
     }
