@@ -4557,9 +4557,9 @@ async def create_admin_user(
     request: Request,
     payload: AdminUserCreatePayload,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     _enforce_admin_invite_rate_limit(request, current_user.get("id"))
 
@@ -4574,91 +4574,85 @@ async def create_admin_user(
         raise HTTPException(status_code=400, detail="Invalid admin role")
 
     email_value = payload.email.lower().strip()
-    existing = await db.users.find_one({"email": email_value}, {"_id": 0})
-    if existing:
+    existing = await session.execute(select(SqlUser).where(SqlUser.email == email_value))
+    if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Email already exists")
 
-    active_countries_docs = await db.countries.find({"active_flag": True}, {"_id": 0, "country_code": 1, "code": 1}).to_list(length=200)
-    active_countries = [
-        (doc.get("country_code") or doc.get("code") or "").upper()
-        for doc in active_countries_docs
-        if doc.get("country_code") or doc.get("code")
-    ]
+    result = await session.execute(select(Country).where(Country.is_enabled.is_(True)))
+    active_countries = [country.code.upper() for country in result.scalars().all()]
 
     country_scope = _normalize_scope(role_value, payload.country_scope, active_countries)
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    user_id = str(uuid.uuid4())
-    invite_expires_at = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+    now_dt = datetime.now(timezone.utc)
+    user_id = uuid.uuid4()
+    invite_expires_at = now_dt + timedelta(hours=24)
 
-    user_doc = {
-        "id": user_id,
-        "email": email_value,
-        "full_name": payload.full_name.strip(),
-        "role": role_value,
-        "country_scope": country_scope,
-        "status": "active",
-        "is_active": bool(payload.is_active),
-        "is_verified": False,
-        "invite_status": "pending",
-        "created_at": now_iso,
-        "updated_at": now_iso,
-        "last_login": None,
-        "preferred_language": "tr",
-    }
-    await db.users.insert_one(user_doc)
+    temp_password = secrets.token_urlsafe(32)
+    user_doc = SqlUser(
+        id=user_id,
+        email=email_value,
+        full_name=payload.full_name.strip(),
+        role=role_value,
+        country_scope=country_scope,
+        is_active=bool(payload.is_active),
+        is_verified=False,
+        preferred_language="tr",
+        hashed_password=get_password_hash(temp_password),
+        last_login=None,
+    )
 
     token = secrets.token_urlsafe(32)
     token_hash = _hash_invite_token(token)
-    invite_id = str(uuid.uuid4())
-    invite_doc = {
-        "id": invite_id,
-        "token_hash": token_hash,
-        "user_id": user_id,
-        "email": email_value,
-        "role": role_value,
-        "country_scope": country_scope,
-        "expires_at": invite_expires_at,
-        "created_at": now_iso,
-        "created_by": current_user.get("id"),
-        "used_at": None,
-    }
-    await db.admin_invites.insert_one(invite_doc)
+    invite = AdminInvite(
+        token_hash=token_hash,
+        user_id=user_id,
+        email=email_value,
+        role=role_value,
+        country_scope=country_scope,
+        expires_at=invite_expires_at,
+        created_by=current_user.get("id"),
+    )
+
+    session.add(user_doc)
+    session.add(invite)
 
     invite_link = f"{_get_admin_base_url(request)}/admin/invite/accept?token={token}"
 
     try:
+        await session.flush()
         _send_admin_invite_email(email_value, payload.full_name.strip(), invite_link)
+
+        await _write_audit_log_sql(
+            session=session,
+            action="ADMIN_USER_CREATED",
+            actor=current_user,
+            resource_type="admin_user",
+            resource_id=str(user_id),
+            metadata={"email": email_value, "role": role_value},
+            request=request,
+            country_code=None,
+        )
+        await _write_audit_log_sql(
+            session=session,
+            action="ADMIN_INVITED",
+            actor=current_user,
+            resource_type="admin_invite",
+            resource_id=str(invite.id),
+            metadata={"email": email_value, "role": role_value, "invite_expires_at": invite_expires_at.isoformat()},
+            request=request,
+            country_code=None,
+        )
+
+        await session.commit()
     except HTTPException:
-        await db.admin_invites.delete_one({"id": invite_id})
-        await db.users.delete_one({"id": user_id})
+        await session.rollback()
         raise
+    except Exception as exc:
+        await session.rollback()
+        _admin_invite_logger.exception("Admin invite create failed")
+        raise HTTPException(status_code=500, detail="Admin invite creation failed") from exc
 
-    audit_created = await build_audit_entry(
-        event_type="admin_user_created",
-        actor=current_user,
-        target_id=user_id,
-        target_type="admin_user",
-        country_code=None,
-        details={"email": email_value, "role": role_value},
-        request=request,
-    )
-    audit_created["action"] = "admin_user_created"
-    await db.audit_logs.insert_one(audit_created)
-
-    audit_invited = await build_audit_entry(
-        event_type="admin_invited",
-        actor=current_user,
-        target_id=user_id,
-        target_type="admin_user",
-        country_code=None,
-        details={"email": email_value, "role": role_value, "invite_expires_at": invite_expires_at},
-        request=request,
-    )
-    audit_invited["action"] = "admin_invited"
-    await db.audit_logs.insert_one(audit_invited)
-
-    return {"ok": True, "invite_expires_at": invite_expires_at}
+    return {"ok": True, "invite_expires_at": invite_expires_at.isoformat()}
 
 
 @api_router.patch("/admin/users/{user_id}")
