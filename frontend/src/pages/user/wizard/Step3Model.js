@@ -65,6 +65,17 @@ const ModelStep = () => {
     if (found) setSelectedModel(found);
   }, [basicInfo.model_key, models]);
 
+  useEffect(() => {
+    if (!basicInfo.model_key) {
+      setSelectedModel(null);
+    }
+  }, [basicInfo.model_key]);
+
+  useEffect(() => {
+    setSelectedModel(null);
+    setSearch('');
+  }, [basicInfo.make_key]);
+
   const filteredModels = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return models;
