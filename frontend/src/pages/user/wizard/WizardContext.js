@@ -131,6 +131,10 @@ export const WizardProvider = ({ children, editListingId = null }) => {
       ? (pricePayload.hourly_rate ?? data.hourly_rate)
       : (pricePayload.amount ?? data.price_amount);
 
+    const moduleInfo = data.modules || attrs.modules || {};
+    const addressInfo = moduleInfo.address || {};
+    const cityValue = addressInfo.city || null;
+
     const coreComplete = Boolean(data.title && data.description && priceValue) 
       && attributeValues.mileage_km
       && attributeValues.fuel_type
@@ -139,6 +143,9 @@ export const WizardProvider = ({ children, editListingId = null }) => {
       && attributeValues.body_type
       && attributeValues.color
       && attributeValues.damage_status
+      && attributeValues.engine_cc
+      && attributeValues.engine_hp
+      && cityValue
       && attributeValues.trade_in !== null
       && attributeValues.trade_in !== undefined
       && attributeValues.trade_in !== '';
