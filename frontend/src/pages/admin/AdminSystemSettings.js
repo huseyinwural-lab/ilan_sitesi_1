@@ -330,6 +330,11 @@ export default function AdminSystemSettingsPage() {
             <div className="text-xs text-slate-600" data-testid="system-settings-cloudflare-canary-status" title={canaryDescriptions[cloudflareConfig.canary_status] || canaryDescriptions.UNKNOWN}>
               Son Canary: {cloudflareConfig.canary_status || 'UNKNOWN'}
             </div>
+            {configMissingReason && (
+              <div className="text-[11px] text-amber-600" data-testid="system-settings-cloudflare-config-missing">
+                Config Missing Reason: {configMissingReason}
+              </div>
+            )}
           </>
         )}
 
