@@ -889,8 +889,7 @@ const AdminCategories = () => {
   };
 
   const handleLevelEditItem = async (levelIndex, itemIndex) => {
-    const canProceed = await resetWizardProgress();
-    if (!canProceed) return;
+    await handleUnlockStep("hierarchy");
     const path = [...getParentPathForLevel(levelIndex), itemIndex];
     updateSubcategory(path, { is_complete: false });
     setLevelCompletion((prev) => {
