@@ -96,7 +96,7 @@ const ModelStep = () => {
   const handleComplete = async () => {
     if (!selectedModel) {
       setError('Lütfen model seçin.');
-      return;
+      return false;
     }
 
     const modelLabel = selectedModel.label || selectedModel.name || selectedModel.key;
@@ -112,7 +112,7 @@ const ModelStep = () => {
 
     if (!ok) {
       setError('Model kaydedilemedi.');
-      return;
+      return false;
     }
 
     setBasicInfo((prev) => ({
@@ -132,9 +132,22 @@ const ModelStep = () => {
       6: false,
     }));
     setError('');
+    return true;
   };
 
-  const nextDisabled = !completedSteps[3];
+  const handleNext = async () => {
+    if (!selectedModel) {
+      setError('Lütfen model seçin.');
+      return;
+    }
+    if (!completedSteps[3]) {
+      const ok = await handleComplete();
+      if (!ok) return;
+    }
+    setStep(4);
+  };
+
+  const nextDisabled = !selectedModel || loading;
 
   if (!basicInfo.make_key) {
     return (
