@@ -28,6 +28,14 @@
 - Warm p50/p95: ~145.49 / 147.9 ms
 
 
+## 2026-02-23 — Admin System Health Detail Panel
+
+**Kapsam**
+- /api/admin/system/health-detail endpointi (24s hata buckets, latency avg/p95, son ETL)
+- Admin header panel: sparkline + metrik kartları
+
+## 2026-02-23 — P0 Edit Mode State Sync Closeout
+
 **Kapsam**
 - Admin Category Wizard “Edit Mode” state senkronizasyonu (backend wizard_progress tek kaynak)
 - Save sonrası downstream dirty adımların UI’da görünmesi
