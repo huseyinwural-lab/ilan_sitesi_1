@@ -84,7 +84,7 @@ export default function SearchPage() {
       setLoadingMakes(true);
       try {
         const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
-        const res = await fetch(`${API}/api/v1/vehicle/makes?country=${country}`);
+        const res = await fetch(`${API}/v1/vehicle/makes?country=${country}`);
         if (res.ok) {
           const json = await res.json();
           if (alive) setMakes(json.items || []);
