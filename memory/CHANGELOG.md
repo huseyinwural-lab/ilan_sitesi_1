@@ -46,6 +46,7 @@
 **Kapsam**
 - /api/admin/system/health-detail endpointi (24s hata buckets, latency avg/p95, son ETL)
 - Admin header panel: sparkline + metrik kartları
+- Slow queries (24s) rozeti + threshold >800ms
 
 ## 2026-02-23 — P0 Edit Mode State Sync Closeout
 
