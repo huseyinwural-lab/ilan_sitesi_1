@@ -14223,9 +14223,12 @@ def _read_import_file(file: UploadFile) -> bytes:
     return content
 
 
+CATEGORY_SCHEMA_VERSION = "v1"
+
 CATEGORY_IMPORT_COLUMNS = [
     "module",
     "country",
+    "schema_version",
     "slug",
     "parent_slug",
     "name_tr",
