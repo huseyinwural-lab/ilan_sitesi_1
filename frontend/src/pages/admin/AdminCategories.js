@@ -1055,7 +1055,30 @@ const AdminCategories = () => {
       setPublishError("Yayınlama için zorunlu şartlar tamamlanmalı.");
       return { success: false };
     }
-    const payload = buildSavePayload(status, activeEditing, progressState);
+
+    const nextDirtySteps = progressState ? dirtySteps.filter((step) => step !== wizardStep) : dirtySteps;
+    let wizardEditEvent = null;
+    if (editModeStep === wizardStep && progressState) {
+      let previousSnapshot = {};
+      try {
+        previousSnapshot = lastSavedSnapshotRef.current ? JSON.parse(lastSavedSnapshotRef.current) : {};
+      } catch (error) {
+        previousSnapshot = {};
+      }
+      const changedFields = diffObjects(previousSnapshot, autosaveSnapshot);
+      wizardEditEvent = {
+        action: "save",
+        step_id: wizardStep,
+        dirty_chain: buildDirtyChain(wizardStep),
+        changed_fields: changedFields,
+        event_timestamp: new Date().toISOString(),
+      };
+    }
+
+    const payload = buildSavePayload(status, activeEditing, progressState, {
+      dirtySteps: nextDirtySteps,
+      wizardEditEvent,
+    });
     if (!payload.name || !payload.slug) {
       setHierarchyError("Kategori adı ve slug zorunludur.");
       return { success: false };
