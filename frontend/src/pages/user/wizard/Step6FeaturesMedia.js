@@ -143,11 +143,13 @@ const FeaturesMediaStep = () => {
   };
 
   const scrollToFirstError = () => {
-    const container = document.querySelector('[data-testid="wizard-features-step"]');
-    const target = container?.querySelector('[data-testid$="-error"]');
-    if (target) {
-      target.scrollIntoView({ behavior: window.innerWidth < 768 ? 'smooth' : 'auto', block: 'center' });
-    }
+    setTimeout(() => {
+      const container = document.querySelector('[data-testid="wizard-features-step"]');
+      const target = container?.querySelector('[data-testid$="-error"]');
+      if (target) {
+        target.scrollIntoView({ behavior: window.innerWidth < 768 ? 'smooth' : 'auto', block: 'center' });
+      }
+    }, 0);
   };
 
   const uploadFiles = async () => {
