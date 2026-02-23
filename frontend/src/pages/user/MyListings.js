@@ -43,6 +43,18 @@ const formatDate = (value) => {
   return d.toLocaleDateString('tr-TR');
 };
 
+const formatListingPrice = (listing) => {
+  if (!listing) return '-';
+  const priceType = String(listing.price_type || listing.price?.price_type || 'FIXED').toUpperCase();
+  const currency = listing.currency || listing.price?.currency_primary || 'EUR';
+  const amount = priceType === 'HOURLY'
+    ? (listing.hourly_rate ?? listing.price?.hourly_rate)
+    : (listing.price_amount ?? listing.price?.amount ?? listing.attributes?.price_eur);
+  if (amount === null || amount === undefined || amount === '') return '-';
+  const formatted = Number(amount).toLocaleString('tr-TR');
+  return priceType === 'HOURLY' ? `${formatted} ${currency} / saat` : `${formatted} ${currency}`;
+};
+
 export default function MyListings() {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
