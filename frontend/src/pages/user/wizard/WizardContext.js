@@ -243,8 +243,10 @@ export const WizardProvider = ({ children, editListingId = null }) => {
       category_id: listing.category_id,
       make_key: vehicleInfo.make_key || null,
       make_id: vehicleInfo.make_id || null,
+      make_label: null,
       model_key: vehicleInfo.model_key || null,
       model_id: vehicleInfo.model_id || null,
+      model_label: null,
       year: vehicleInfo.year || null,
       trim_key: vehicleInfo.trim_key || null,
       mileage_km: attributeValues.mileage_km || null,
@@ -254,6 +256,8 @@ export const WizardProvider = ({ children, editListingId = null }) => {
       body_type: attributeValues.body_type || null,
       color: attributeValues.color || null,
       damage_status: attributeValues.damage_status || null,
+      engine_cc: attributeValues.engine_cc || null,
+      engine_hp: attributeValues.engine_hp || null,
       trade_in: attributeValues.trade_in ?? null,
     }));
 
