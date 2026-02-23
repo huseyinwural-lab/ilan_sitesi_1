@@ -14811,7 +14811,12 @@ async def admin_update_system_setting(
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
 
-    result = await session.execute(select(SystemSetting).where(SystemSetting.id == setting_id))
+    try:
+        setting_uuid = uuid.UUID(setting_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid setting id") from exc
+
+    result = await session.execute(select(SystemSetting).where(SystemSetting.id == setting_uuid))
     setting = result.scalar_one_or_none()
     if not setting:
         raise HTTPException(status_code=404, detail="Setting not found")
