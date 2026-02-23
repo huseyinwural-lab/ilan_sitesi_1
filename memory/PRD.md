@@ -25,8 +25,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Preview DB env workaround notu (yalnız preview, prod/stage yasak)
 
 ### P1 (Beklemede)
-- İlan ver / kategori seçimi
 - Public Search & Moderation Mongo→PostgreSQL
+- Moderation reject flow (P2’den yükseltilirse)
 
 ### P2 (Plan)
 - Sihirbaz Edit (kilidi aç) yaklaşımı
