@@ -9524,6 +9524,8 @@ async def moderation_queue(
                 "title": title,
                 "status": listing.status,
                 "moderation_status": item.status,
+                "moderation_created_at": item.created_at.isoformat() if item.created_at else None,
+                "moderation_updated_at": item.updated_at.isoformat() if item.updated_at else None,
                 "country": listing.country,
                 "module": listing.module,
                 "city": listing.city or "",
