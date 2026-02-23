@@ -13,6 +13,8 @@ import json
 import logging
 import uuid
 import os
+import hashlib
+import random
 
 from app.core.redis_cache import cache_service, build_cache_key
 import asyncio
