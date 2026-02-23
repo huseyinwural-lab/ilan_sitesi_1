@@ -472,6 +472,8 @@ export const WizardProvider = ({ children, editListingId = null }) => {
 
   return (
     <WizardContext.Provider value={{
+      completedSteps,
+      setCompletedSteps,
       step,
       setStep,
       draftId,
