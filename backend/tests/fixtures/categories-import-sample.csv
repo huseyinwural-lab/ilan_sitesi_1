@@ -1,3 +1,3 @@
-module,country,slug,parent_slug,name_tr,name_de,name_fr,is_active,sort_order,wizard_progress
-vehicle,DE,otomobil,,Otomobil,Auto,Voiture,true,1,"{""step"": ""core""}"
-vehicle,DE,suv,otomobil,SUV,SUV,SUV,true,2,
+module,country,schema_version,slug,parent_slug,name_tr,name_de,name_fr,is_active,sort_order,wizard_progress
+vehicle,DE,v1,ornek-vehicle,,Örnek Ana Kategori,Beispiel Hauptkategorie,Categorie Exemple,true,1,"{""step"": ""core""}"
+vehicle,DE,v1,ornek-vehicle-alt,ornek-vehicle,Örnek Alt Kategori,Beispiel Unterkategorie,Sous-categorie Exemple,true,2,
