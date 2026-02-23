@@ -588,7 +588,25 @@ const ListingCategorySelect = () => {
         ) : (
           <div className="mt-4 flex gap-4 overflow-x-auto pb-2" data-testid="ilan-ver-columns">
             {columns.length === 0 && !pageLoading ? (
-              <div className="text-sm text-slate-500" data-testid="ilan-ver-columns-empty">Kategori bulunamadı.</div>
+              <div
+                className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"
+                data-testid="ilan-ver-fallback"
+              >
+                <div className="font-semibold" data-testid="ilan-ver-fallback-message">
+                  Kategori bulunamadı – yöneticiye başvurun.
+                </div>
+                <div className="text-xs text-amber-700" data-testid="ilan-ver-fallback-hint">
+                  Farklı bir modül seçebilir veya daha sonra tekrar deneyebilirsiniz.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateUrlState('', [])}
+                  className="self-start rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-700"
+                  data-testid="ilan-ver-fallback-cta"
+                >
+                  Modül seçimine dön
+                </button>
+              </div>
             ) : (
               columns.map((column, columnIndex) => (
                 <div
