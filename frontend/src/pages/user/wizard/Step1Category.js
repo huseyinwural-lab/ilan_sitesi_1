@@ -118,7 +118,9 @@ const CategorySelector = () => {
                     disabled={loading}
                     onClick={() => handleCategorySelect(cat)}
                     data-testid={`category-select-${cat.id}`}
-                    className="px-6 py-3 rounded-lg bg-blue-600 text-white"
+                    className={`px-6 py-3 rounded-lg ${
+                      selectedCategory?.id === cat.id ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700'
+                    }`}
                   >
                     {cat.name} seç
                   </button>
