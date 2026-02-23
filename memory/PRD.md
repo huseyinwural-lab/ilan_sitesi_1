@@ -263,6 +263,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 
 ## Öncelikli Backlog
 ### P0 (Hemen)
+- Admin V1 Phase B (RBAC Final Freeze): allowlist doğrulama + negatif testlerin çalıştırılması + rol eşleme netleştirme
 - Preview GDPR export + soft delete E2E kanıtları (/api/v1/users/me/data-export, /api/v1/users/me/account)
 - Honeypot 400 + register_honeypot_hit audit doğrulaması (preview)
 - GDPR export completion notification + audit doğrulaması (preview)
