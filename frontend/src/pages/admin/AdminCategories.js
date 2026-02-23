@@ -1586,31 +1586,11 @@ const AdminCategories = () => {
         updatedParent = patchData?.category || updatedParent;
       }
 
-      setEditing(updatedParent);
-      if (updatedParent?.wizard_progress) {
-        setWizardProgress({
-          state: updatedParent.wizard_progress.state || "draft",
-          dirty_steps: Array.isArray(updatedParent.wizard_progress.dirty_steps)
-            ? updatedParent.wizard_progress.dirty_steps
-            : [],
-        });
-      }
-      setForm({
-        name: updatedParent.name || name,
-        slug: updatedParent.slug || slug,
-        parent_id: updatedParent.parent_id || "",
-        country_code: updatedParent.country_code || country,
-        active_flag: updatedParent.active_flag ?? true,
-        sort_order: updatedParent.sort_order || 0,
-      });
+      applyCategoryFromServer(updatedParent, { clearEditMode: editModeStep === "hierarchy" });
       const nextSubcategories = savedSubs.length ? savedSubs : [createSubcategoryDraft()];
       setSubcategories(nextSubcategories);
-      setHierarchyComplete(true);
       setHierarchyFieldErrors({});
       fetchItems();
-      if (editModeStep === "hierarchy") {
-        setEditModeStep(null);
-      }
       return { success: true, category: updatedParent };
     } catch (error) {
       setHierarchyError(error?.message || "Kategori güncellenemedi.");
