@@ -105,6 +105,90 @@ export default function ModerationQueue({
     }
   };
 
+  const selectedCount = selectedIds.length;
+  const allSelected = listings.length > 0 && selectedCount === listings.length;
+
+  const formatDuration = (seconds) => {
+    if (seconds === null || seconds === undefined) return '--';
+    if (seconds < 60) return `${Math.floor(seconds)}sn`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}dk`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes ? `${hours}sa ${remainingMinutes}dk` : `${hours}sa`;
+  };
+
+  const getSlaMeta = (createdAt) => {
+    if (!createdAt) {
+      return { label: 'SLA --', badgeClass: 'bg-slate-100 text-slate-600' };
+    }
+    const seconds = Math.max(0, (Date.now() - new Date(createdAt).getTime()) / 1000);
+    if (seconds >= SLA_CRITICAL_SECONDS) {
+      return { label: `SLA ${formatDuration(seconds)}`, badgeClass: 'bg-rose-100 text-rose-700' };
+    }
+    if (seconds >= SLA_WARNING_SECONDS) {
+      return { label: `SLA ${formatDuration(seconds)}`, badgeClass: 'bg-amber-100 text-amber-700' };
+    }
+    return { label: `SLA ${formatDuration(seconds)}`, badgeClass: 'bg-emerald-100 text-emerald-700' };
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([]);
+      return;
+    }
+    setSelectedIds(listings.map((listing) => listing.id));
+  };
+
+  const toggleSelect = (listingId) => {
+    setSelectedIds((prev) => (prev.includes(listingId) ? prev.filter((id) => id !== listingId) : [...prev, listingId]));
+  };
+
+  const openBulkDialog = (actionType) => {
+    if (!selectedCount) return;
+    setBulkDialog({ actionType });
+    setBulkReason('');
+    setBulkReasonNote('');
+  };
+
+  const submitBulkDialog = async () => {
+    if (!bulkDialog) return;
+    try {
+      if (bulkDialog.actionType === 'approve') {
+        await axios.post(`${API}/admin/moderation/bulk-approve`, {
+          listing_ids: selectedIds,
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+      } else if (bulkDialog.actionType === 'reject') {
+        if (!bulkReason) {
+          alert('Reason is required');
+          return;
+        }
+        await axios.post(`${API}/admin/moderation/bulk-reject`, {
+          listing_ids: selectedIds,
+          reason: bulkReason,
+          reason_note: bulkReasonNote?.trim() || undefined,
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+      }
+
+      await fetchQueue();
+      await fetchCount();
+      setSelectedIds([]);
+      setBulkDialog(null);
+    } catch (error) {
+      console.error('Failed to bulk moderate:', error);
+      alert(error.response?.data?.detail || 'Failed to bulk moderate');
+    }
+  };
+
+
   const handleAction = async (listingId, actionType, reasonPayload = null) => {
     try {
       if (actionType === 'approve') {
