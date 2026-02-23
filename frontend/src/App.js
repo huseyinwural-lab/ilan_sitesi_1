@@ -19,7 +19,7 @@ import HomePage from '@/pages/public/HomePage';
 import SearchPage from '@/pages/public/SearchPage';
 import DetailPage from '@/pages/public/DetailPage';
 import VehicleLandingPage from '@/pages/public/VehicleLandingPage';
-import VehicleSegmentPage from '@/pages/public/VehicleSegmentPage';
+import VehicleMakeModelPage from '@/pages/public/VehicleMakeModelPage';
 import RedirectToCountry from '@/pages/public/RedirectToCountry';
 // Login moved under portal-specific paths
 
