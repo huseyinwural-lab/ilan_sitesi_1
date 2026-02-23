@@ -9364,6 +9364,23 @@ def _resolve_moderation_actor_id(value: Optional[str]) -> uuid.UUID:
     return actor_uuid or SYSTEM_MODERATOR_ID
 
 
+MODERATION_ETL_LOCK_PATH = Path("/app/memory/MODERATION_ETL_LOCK.json")
+MODERATION_ETL_ALLOWED_ENVS = {"preview", "ops"}
+
+
+def _load_moderation_etl_lock() -> Optional[dict]:
+    if not MODERATION_ETL_LOCK_PATH.exists():
+        return None
+    try:
+        return json.loads(MODERATION_ETL_LOCK_PATH.read_text())
+    except Exception:
+        return None
+
+
+def _write_moderation_etl_lock(payload: dict) -> None:
+    MODERATION_ETL_LOCK_PATH.write_text(json.dumps(payload, indent=2))
+
+
 async def _upsert_moderation_item(
     *,
     session: AsyncSession,
