@@ -348,6 +348,26 @@ export default function Layout({ children }) {
 
   const sparkMax = selectedCountrySeries.reduce((max, item) => (item.hit_ratio > max ? item.hit_ratio : max), 0) || 100;
 
+  const canaryLabels = {
+    OK: 'OK',
+    AUTH_ERROR: 'Auth Error',
+    SCOPE_ERROR: 'Scope Error',
+    NO_DATA: 'No Data',
+    RATE_LIMIT: 'Rate Limit',
+    CONFIG_MISSING: 'Config Missing',
+  };
+  const canaryTooltips = {
+    OK: 'Analytics okundu ve veri alındı.',
+    AUTH_ERROR: 'Token doğrulanamadı (401).',
+    SCOPE_ERROR: 'Token scope yetersiz (403).',
+    NO_DATA: 'Veri yok (son 1 saatte trafik yok).',
+    RATE_LIMIT: 'Rate limit aşıldı (429).',
+    CONFIG_MISSING: 'Account/Zone ID veya token eksik.',
+  };
+  const canaryRaw = healthDetailDisplay.cdnCanaryStatus || 'UNKNOWN';
+  const canaryLabel = canaryLabels[canaryRaw] || canaryRaw;
+  const canaryTooltip = canaryTooltips[canaryRaw] || 'Canary sonucu bilinmiyor.';
+
 
   const canViewSystemHealth = Boolean(
     user && ['super_admin', 'country_admin'].includes(user.role) && location.pathname.startsWith('/admin')
