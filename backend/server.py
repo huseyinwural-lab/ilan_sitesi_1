@@ -51,9 +51,10 @@ import html
 from app.core.config import settings
 
 try:
-    from asgi_correlation_id import correlation_id
+    from asgi_correlation_id import correlation_id, CorrelationIdMiddleware
 except Exception:  # pragma: no cover
     correlation_id = None
+    CorrelationIdMiddleware = None
 
 from app.core.security import (
     verify_password,
