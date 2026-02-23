@@ -3429,6 +3429,7 @@ async def admin_system_health_detail(
         moderation_sla_pending = 0
 
     endpoint_stats = get_endpoint_stats()
+    cf_ids_present = bool(os.environ.get("CLOUDFLARE_ACCOUNT_ID") and os.environ.get("CLOUDFLARE_ZONE_ID"))
     cdn_metrics = None
     try:
         cdn_metrics = await cloudflare_metrics_service.get_metrics()
