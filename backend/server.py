@@ -16666,7 +16666,7 @@ async def public_vehicle_makes(country: str | None = None, request: Request = No
     code = country.upper()
     db = request.app.state.db if request else None
     if not db:
-        result = await session.execute(select(VehicleMake).where(VehicleMake.is_active == True))
+        result = await session.execute(select(VehicleMake).where(VehicleMake.is_active.is_(True)))
         items = [
             {"id": str(make.id), "key": make.slug, "label": make.name}
             for make in result.scalars().all()
