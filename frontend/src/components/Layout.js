@@ -300,6 +300,7 @@ export default function Layout({ children }) {
     const cdnCanaryStatus = cdnMetrics.canary_status || 'unknown';
     const cfIdsPresent = systemHealthDetail.cf_ids_present ?? false;
     const cfIdsSource = systemHealthDetail.cf_ids_source ?? 'unknown';
+    const cfMetricsEnabled = systemHealthDetail.cf_metrics_enabled ?? false;
     return {
       status: systemHealthDetail.db_status === 'ok' ? 'ok' : 'error',
       errorBuckets: buckets.map((bucket) => ({
