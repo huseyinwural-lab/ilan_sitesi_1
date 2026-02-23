@@ -119,6 +119,8 @@ function App() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/ilan/:id" element={<DetailPage />} /> {/* P8: Detail Route (captures slug-id) */}
+                  <Route path="/vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />
+                  <Route path="/:country/vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />
                   <Route path="/ilan-olustur" element={<Navigate to="/ilan-ver/kategori-secimi" />} />
 
                   {/* Vehicle (country-aware) */}
