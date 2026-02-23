@@ -421,9 +421,7 @@ export default function AdminSystemSettingsPage() {
           </>
         )}
 
-        {cloudflareError && (
-          <div className="text-xs text-destructive" data-testid="system-settings-cloudflare-error">{cloudflareError}</div>
-        )}
+
       </div>
 
       <div className="flex flex-wrap items-center gap-3" data-testid="system-settings-filters">
