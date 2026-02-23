@@ -153,7 +153,7 @@ const ModelStep = () => {
         6: false,
       }));
       setError('');
-      return true;
+      return { ok: true, updatedAt: result?.updatedAt || null };
     } finally {
       setSaving(false);
       saveLockRef.current = false;
