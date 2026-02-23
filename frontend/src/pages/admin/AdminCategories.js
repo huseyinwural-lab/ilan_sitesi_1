@@ -746,7 +746,7 @@ const AdminCategories = () => {
   const resetWizardProgress = async () => {
     if (stepSaving) return false;
     if (!editing?.id) {
-      setWizardProgress({ state: "draft" });
+      setWizardProgress({ state: "draft", dirty_steps: [] });
       setHierarchyComplete(false);
       return true;
     }
@@ -759,7 +759,7 @@ const AdminCategories = () => {
           ...authHeader,
         },
         body: JSON.stringify({
-          wizard_progress: { state: "draft" },
+          wizard_progress: { state: "draft", dirty_steps: [] },
           hierarchy_complete: false,
           expected_updated_at: editing.updated_at,
         }),
