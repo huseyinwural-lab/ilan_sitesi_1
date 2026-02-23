@@ -113,14 +113,17 @@ def main() -> None:
     if database_url.startswith("postgresql+asyncpg"):
         database_url = database_url.replace("postgresql+asyncpg", "postgresql")
 
-    try:
-        from pymongo import MongoClient
-    except Exception as exc:
-        raise RuntimeError("pymongo is required for moderation migration") from exc
-
     mongo_client = None
     mongo_db = None
-    if args.mongo_url and args.mongo_db:
+    pymongo_available = True
+    try:
+        from pymongo import MongoClient
+    except Exception:
+        pymongo_available = False
+        MongoClient = None
+        print("pymongo not available; skipping Mongo ETL")
+
+    if pymongo_available and args.mongo_url and args.mongo_db:
         mongo_client = MongoClient(args.mongo_url)
         mongo_db = mongo_client[args.mongo_db]
 
