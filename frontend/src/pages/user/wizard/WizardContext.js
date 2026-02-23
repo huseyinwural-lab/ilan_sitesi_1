@@ -110,6 +110,70 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     }).format(value);
   };
 
+  const MIN_MEDIA_COUNT = 3;
+
+  const computeCompletionFromData = (data, schemaData) => {
+    if (!data) return {};
+    const attrs = data.attributes || {};
+    const attributeValues = attrs.attributes || {};
+    const vehicleInfo = data.vehicle || attrs.vehicle || {};
+    const makeKey = vehicleInfo.make_key || null;
+    const modelKey = vehicleInfo.model_key || null;
+    const yearValue = vehicleInfo.year || null;
+
+    const pricePayload = data.price || {};
+    const priceType = String(pricePayload.price_type || data.price_type || 'FIXED').toUpperCase();
+    const priceValue = priceType === 'HOURLY'
+      ? (pricePayload.hourly_rate ?? data.hourly_rate)
+      : (pricePayload.amount ?? data.price_amount);
+
+    const coreComplete = Boolean(data.title && data.description && priceValue) 
+      && attributeValues.mileage_km
+      && attributeValues.fuel_type
+      && attributeValues.transmission
+      && attributeValues.drive_type
+      && attributeValues.body_type
+      && attributeValues.color
+      && attributeValues.damage_status
+      && attributeValues.trade_in !== null
+      && attributeValues.trade_in !== undefined
+      && attributeValues.trade_in !== '';
+
+    const dynamicFields = schemaData?.dynamic_fields || [];
+    const detailGroups = schemaData?.detail_groups || [];
+
+    const dynamicComplete = dynamicFields.every((field) => {
+      if (!field.required) return true;
+      const value = attributeValues[field.key];
+      return value !== undefined && value !== null && value !== '';
+    });
+
+    const detailComplete = detailGroups.every((group) => {
+      if (!group.required) return true;
+      const selected = (data.detail_groups || attrs.detail_groups || {})[group.id] || [];
+      return Array.isArray(selected) && selected.length > 0;
+    });
+
+    const mediaCount = (data.media || []).length;
+    const featuresComplete = dynamicComplete && detailComplete && mediaCount >= MIN_MEDIA_COUNT;
+
+    return {
+      1: Boolean(data.category_id || data.category_key),
+      2: Boolean(makeKey),
+      3: Boolean(modelKey),
+      4: Boolean(yearValue),
+      5: Boolean(coreComplete),
+      6: Boolean(featuresComplete),
+    };
+  };
+
+  const getFirstIncompleteStep = (completion) => {
+    for (let i = 1; i <= 6; i += 1) {
+      if (!completion[i]) return i;
+    }
+    return 7;
+  };
+
   const hydrateFromListing = async (listing) => {
     if (!listing) return;
     const categoryId = listing.category_id || listing.category_key;
