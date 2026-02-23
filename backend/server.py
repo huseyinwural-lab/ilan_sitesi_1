@@ -14736,7 +14736,7 @@ async def admin_create_category(
         path=path,
         depth=depth,
         sort_order=payload.sort_order or 0,
-        module="vehicle",
+        module=module_value,
         slug=slug_json,
         icon=None,
         image_url=None,
