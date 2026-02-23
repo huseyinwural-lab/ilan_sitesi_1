@@ -307,7 +307,7 @@ export default function AdminSystemSettingsPage() {
               <button
                 onClick={handleSaveCloudflare}
                 className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
-                disabled={!isSuperAdmin || cloudflareSaving}
+                disabled={!isSuperAdmin || cloudflareSaving || !encryptionKeyPresent}
                 data-testid="system-settings-cloudflare-save"
               >
                 {cloudflareSaving ? 'Kaydediliyor…' : 'Kaydet'}
