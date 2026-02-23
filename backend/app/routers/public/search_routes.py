@@ -5,6 +5,7 @@ from typing import Optional, List
 from app.dependencies import get_db
 from app.models.moderation import Listing
 from app.models.listing_search import ListingSearch
+from app.utils.monitoring import record_slow_query
 from pydantic import BaseModel
 import os
 import hashlib
