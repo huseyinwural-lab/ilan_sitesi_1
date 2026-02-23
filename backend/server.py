@@ -3393,6 +3393,7 @@ async def admin_system_health_detail(
     error_buckets = _build_error_buckets()
     latency_avg, latency_p95 = _get_db_latency_stats()
     etl_state = _read_search_etl_state()
+    slow_query_count, slow_query_threshold = get_slow_query_summary()
 
     payload = {
         "db_status": db_status,
@@ -3403,6 +3404,8 @@ async def admin_system_health_detail(
         "error_count_5m": error_count,
         "error_rate_per_min_5m": error_rate,
         "error_buckets_24h": error_buckets,
+        "slow_query_count_24h": slow_query_count,
+        "slow_query_threshold_ms": slow_query_threshold,
         "last_db_error": _last_db_error,
         "last_etl_at": etl_state.get("last_etl_at"),
         "last_etl_inserted": etl_state.get("inserted"),
