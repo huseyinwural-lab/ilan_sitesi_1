@@ -373,18 +373,25 @@ const AdminCategories = () => {
     return payload;
   };
 
-  const fetchItems = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories?country=${selectedCountry}`, {
-        headers: authHeader,
-      });
-      const data = await res.json();
-      setItems(data.items || []);
-    } finally {
-      setLoading(false);
-    }
+  const buildDirtyChain = (stepId) => {
+    const chain = DIRTY_DEPENDENCIES[stepId] || [];
+    return [stepId, ...chain];
   };
+
+  const diffObjects = (prevValue, nextValue, prefix = "") => {
+    if (prevValue === nextValue) return [];
+    if (typeof prevValue !== "object" || prevValue === null || typeof nextValue !== "object" || nextValue === null) {
+      return [prefix || "root"];
+    }
+    const keys = new Set([...Object.keys(prevValue), ...Object.keys(nextValue)]);
+    const changes = [];
+    keys.forEach((key) => {
+      const path = prefix ? `${prefix}.${key}` : key;
+      changes.push(...diffObjects(prevValue[key], nextValue[key], path));
+    });
+    return changes;
+  };
+
 
   const fetchVersions = async () => {
     if (!editing?.id) return;
