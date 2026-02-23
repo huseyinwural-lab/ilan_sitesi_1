@@ -127,34 +127,7 @@ export default function AdminCategoriesImportExport() {
     }
   };
 
-  const runPublish = async () => {
-    if (!commitResult?.batch_id) {
-      setError('Publish için batch bulunamadı.');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`${API}/admin/categories/import-export/publish`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ batch_id: commitResult.batch_id }),
-      });
-      if (!res.ok) {
-        const detail = await res.json();
-        throw new Error(detail?.detail || 'Publish başarısız');
-      }
-      const data = await res.json();
-      setPublishResult(data);
-    } catch (err) {
-      setError(err?.message || 'Publish başarısız');
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const downloadPdfReport = async () => {
     setError('');
