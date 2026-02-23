@@ -2232,6 +2232,26 @@ const AdminCategories = () => {
                         )}
                       </div>
                       <div className="space-y-1">
+                        <label className={labelClassName}>Modül</label>
+                        <select
+                          className={selectClassName}
+                          value={form.module}
+                          disabled={isHierarchyLocked}
+                          onChange={(e) => setForm((prev) => ({ ...prev, module: e.target.value }))}
+                          data-testid="categories-module-select"
+                        >
+                          <option value="">Seçiniz</option>
+                          {CATEGORY_MODULE_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                        {hierarchyFieldErrors.main_module && (
+                          <div className="text-xs text-rose-600" data-testid="categories-module-error">
+                            {hierarchyFieldErrors.main_module}
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-1">
                         <label className={labelClassName}>Sıra</label>
                         <input
                           type="number"
