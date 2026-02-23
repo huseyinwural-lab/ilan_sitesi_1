@@ -3387,7 +3387,7 @@ const AdminCategories = () => {
                   </div>
 
                   <div className="rounded-lg border p-4 space-y-3" data-testid="categories-preview-summary">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm">
                       <div>
                         <div className="text-xs text-slate-700">Kategori</div>
                         <div className="font-medium" data-testid="categories-preview-name">{form.name || '-'}</div>
@@ -3399,6 +3399,10 @@ const AdminCategories = () => {
                       <div>
                         <div className="text-xs text-slate-700">Ülke</div>
                         <div className="font-medium" data-testid="categories-preview-country">{form.country_code || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-700">Modül</div>
+                        <div className="font-medium" data-testid="categories-preview-module">{form.module || '-'}</div>
                       </div>
                       <div>
                         <div className="text-xs text-slate-700">Durum</div>
