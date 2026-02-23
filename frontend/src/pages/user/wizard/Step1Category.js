@@ -147,6 +147,31 @@ const CategorySelector = () => {
             </div>
           )}
         </div>
+      {error && (
+        <div className="text-sm text-red-600" data-testid="category-error">{error}</div>
+      )}
+
+      <div className="flex items-center justify-end gap-3" data-testid="category-actions">
+        <div title={nextDisabled ? 'Önce bu adımı tamamlayın.' : ''} data-testid="category-next-tooltip">
+          <button
+            type="button"
+            onClick={() => setStep(2)}
+            disabled={nextDisabled}
+            className="px-4 py-2 border rounded-md text-sm disabled:opacity-50"
+            data-testid="category-next"
+          >
+            Next
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={handleComplete}
+          disabled={loading}
+          className="px-5 py-2 bg-blue-600 text-white rounded-md disabled:opacity-60"
+          data-testid="category-complete"
+        >
+          Tamam
+        </button>
       </div>
     </div>
   );
