@@ -171,19 +171,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **System Health Detail Panel (2026-02-23):**
   - /api/admin/system/health-detail endpointi + 60sn cache
   - 24s hata oranı sparkline + DB latency avg/p95 + son ETL zamanı
-- **Search Migration Execution (Preview, 2026-02-23):**
-  - p36 migration preview ortamında uygulandı
-  - ETL çalıştırıldı (0 kayıt, preview datası yok)
-  - Parity raporu: /app/memory/SEARCH_PARITY_REPORT.md
-  - Parity raw ID karşılaştırma: /app/memory/SEARCH_PARITY_RAW.md
-  - Benchmark raporu: /app/memory/SEARCH_BENCHMARK_REPORT.md
-  - EXPLAIN ANALYZE raw: /app/memory/SEARCH_EXPLAIN_ANALYZE_RAW.md
-  - Cutover plan: /app/memory/SEARCH_CUTOVER_PLAN.md
-  - Feature flag: SEARCH_SQL_ROLLOUT (0.1 → 0.5 → 1.0)
-- **Search Migration Kickoff (2026-02-23):**
-  - listings_search SQL schema + indexes (migration p36)
-  - Mongo → SQL transform script: /app/backend/scripts/migrate_listings_search_from_mongo.py
-  - Parity checklist + benchmark raporu şablonları
+  - Slow queries (24s) rozeti, threshold >800ms
+- **Search Postgres Cutover (2026-02-23):**
+  - SEARCH_SQL_ROLLOUT %50 → %100
+  - Seed demo data (5000 ilan) + ETL tekrar çalıştırıldı
+  - Parity + benchmark raporları güncellendi
 
 ## Kanıtlar
 - /app/docs/LOCAL_DB_READY_EVIDENCE.md
