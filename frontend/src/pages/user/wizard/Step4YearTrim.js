@@ -5,7 +5,6 @@ const YearTrimStep = () => {
   const {
     basicInfo,
     setBasicInfo,
-    schema,
     saveDraft,
     setStep,
     completedSteps,
@@ -19,14 +18,13 @@ const YearTrimStep = () => {
 
   const yearOptions = useMemo(() => {
     const start = 2026;
+    const end = 2010;
     const years = [];
-    for (let y = start; y >= 1980; y -= 1) {
+    for (let y = start; y >= end; y -= 1) {
       years.push(y);
     }
     return years;
   }, []);
-
-  const trimOptions = schema?.vehicle_trims || [];
 
   const handleComplete = async () => {
     if (!year) {
@@ -34,6 +32,7 @@ const YearTrimStep = () => {
       return;
     }
 
+    const trimmedTrim = trimKey.trim();
     const ok = await saveDraft({
       vehicle: {
         make_key: basicInfo.make_key,
@@ -41,7 +40,7 @@ const YearTrimStep = () => {
         model_key: basicInfo.model_key,
         model_id: basicInfo.model_id,
         year: Number(year),
-        trim_key: trimKey || null,
+        trim_key: trimmedTrim || null,
       },
     });
 
@@ -53,7 +52,7 @@ const YearTrimStep = () => {
     setBasicInfo((prev) => ({
       ...prev,
       year: Number(year),
-      trim_key: trimKey || null,
+      trim_key: trimmedTrim || null,
     }));
 
     setCompletedSteps((prev) => ({
@@ -71,7 +70,9 @@ const YearTrimStep = () => {
     <div className="space-y-6" data-testid="wizard-year-step">
       <div className="space-y-1">
         <h2 className="text-2xl font-bold" data-testid="wizard-year-title">Yıl ve Versiyon</h2>
-        <p className="text-sm text-muted-foreground" data-testid="wizard-year-subtitle">Yıl seçimi zorunlu, trim varsa opsiyoneldir.</p>
+        <p className="text-sm text-muted-foreground" data-testid="wizard-year-subtitle">
+          Yıl seçimi zorunlu, versiyon/donanım alanı isteğe bağlıdır.
+        </p>
       </div>
 
       <div className="bg-white rounded-xl border p-5 space-y-4" data-testid="wizard-year-form">
@@ -90,28 +91,19 @@ const YearTrimStep = () => {
           </select>
         </div>
 
-        {trimOptions.length > 0 && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Versiyon (Opsiyonel)</label>
-            <select
-              className="w-full p-2 border rounded-md"
-              value={trimKey}
-              onChange={(e) => setTrimKey(e.target.value)}
-              data-testid="trim-select"
-            >
-              <option value="">Seçiniz</option>
-              {trimOptions.map((trim) => (
-                <option key={trim.key || trim.id} value={trim.key || trim.id}>{trim.label || trim.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {trimOptions.length === 0 && (
-          <div className="text-sm text-gray-500" data-testid="trim-disabled-note">
-            Trim bilgisi bulunmuyor, bu adım kapalı.
-          </div>
-        )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Versiyon / Donanım (Opsiyonel)</label>
+          <input
+            className="w-full p-2 border rounded-md"
+            value={trimKey}
+            onChange={(e) => setTrimKey(e.target.value)}
+            placeholder="Örn: Comfortline, Premium"
+            data-testid="trim-input"
+          />
+          <p className="text-xs text-gray-500 mt-1" data-testid="trim-help">
+            Bu alan opsiyoneldir. Girmediğinizde boş bırakabilirsiniz.
+          </p>
+        </div>
 
         {error && (
           <div className="text-sm text-red-600" data-testid="year-error">{error}</div>
