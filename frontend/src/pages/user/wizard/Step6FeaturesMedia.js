@@ -253,7 +253,7 @@ const FeaturesMediaStep = () => {
       console.error(err);
       setErrors((prev) => ({ ...prev, submit: 'Medya kaydedilemedi.' }));
       scrollToFirstError();
-      return false;
+      return { ok: false };
     } finally {
       setSaving(false);
       saveLockRef.current = false;
