@@ -4,8 +4,14 @@ import { Link } from 'react-router-dom';
 const SearchCard = ({ listing }) => {
   const { id, title, price, price_type, price_amount, hourly_rate, currency, location, specs, image_url, badges, published_at } = listing;
 
-  const formatPrice = (p, c) => {
-    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: c }).format(p);
+  const formatPrice = (amount, currencyLabel, type = 'FIXED', hourlyValue = null) => {
+    const numeric = type === 'HOURLY' ? hourlyValue : amount;
+    if (numeric === null || numeric === undefined || numeric === '') return '-';
+    const formatted = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(Number(numeric));
+    const currencyText = currencyLabel || 'EUR';
+    return type === 'HOURLY'
+      ? `${formatted} ${currencyText} / saat`
+      : `${formatted} ${currencyText}`;
   };
 
   return (
