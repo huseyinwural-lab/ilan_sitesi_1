@@ -215,6 +215,10 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Soft delete → login blocked testi (preview)
 - GDPR export sonrası notification severity=warning UI doğrulaması
 
+### P1 (Aktif)
+- Public Search → PostgreSQL migration (listings_search ETL + parity + benchmark)
+- Moderation migration (search parity sonrası): parity testleri + freeze window + rollback
+
 ### P1 (Sprint‑1 closeout)
 - Sprint‑1 E2E kanıt paketi
 
