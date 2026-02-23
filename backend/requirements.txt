@@ -38,7 +38,7 @@ fsspec==2026.1.0
 gevent==25.9.1
 geventhttpclient==2.3.7
 google-ai-generativelanguage==0.6.15
-google-api-core==2.29.0
+# google-api-core==2.29.0
 google-api-python-client==2.189.0
 google-auth==2.49.0.dev0
 google-auth-httplib2==0.3.0
