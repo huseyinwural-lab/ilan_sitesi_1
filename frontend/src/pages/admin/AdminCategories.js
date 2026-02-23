@@ -579,12 +579,7 @@ const AdminCategories = () => {
   useEffect(() => {
     if (modalOpen && editing?.id) {
       fetchVersions();
-      const snapshot = JSON.stringify({
-        form,
-        schema,
-        hierarchy_complete: effectiveHierarchyComplete,
-      });
-      lastSavedSnapshotRef.current = snapshot;
+      persistSnapshot();
       setLastSavedAt(formatTime(editing.updated_at));
       return;
     }
