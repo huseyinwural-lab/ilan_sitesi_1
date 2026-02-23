@@ -115,8 +115,8 @@ const YearTrimStep = () => {
       return;
     }
     if (!completedSteps[4]) {
-      const ok = await handleComplete();
-      if (!ok) {
+      const result = await handleComplete();
+      if (!result?.ok) {
         await trackWizardEvent('wizard_step_autosave_error', {
           step_id: 'year',
           category_id: basicInfo.category_id,
@@ -131,6 +131,11 @@ const YearTrimStep = () => {
         }));
         return;
       }
+      setAutosaveStatus((prev) => ({
+        ...prev,
+        status: 'success',
+        lastSuccessAt: result?.updatedAt || new Date().toISOString(),
+      }));
     }
     await trackWizardEvent('wizard_step_autosave_success', {
       step_id: 'year',
@@ -138,11 +143,13 @@ const YearTrimStep = () => {
       module: basicInfo.module || 'vehicle',
       country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
     });
-    setAutosaveStatus((prev) => ({
-      ...prev,
-      status: 'success',
-      lastSuccessAt: new Date().toISOString(),
-    }));
+    if (completedSteps[4]) {
+      setAutosaveStatus((prev) => ({
+        ...prev,
+        status: 'success',
+        lastSuccessAt: prev.lastSuccessAt || new Date().toISOString(),
+      }));
+    }
     toast({
       title: 'Kaydedildi',
       duration: 2500,
