@@ -11538,6 +11538,64 @@ async def admin_needs_revision_listing(
     return {"ok": True, "listing": {"id": str(updated.id), "status": updated.status}}
 
 
+@api_router.post("/admin/moderation/bulk-approve")
+async def admin_bulk_approve_listings(
+    payload: BulkModerationPayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    _ensure_moderation_rbac(current_user)
+    listing_ids = [str(item).strip() for item in (payload.listing_ids or []) if str(item).strip()]
+    if not listing_ids:
+        raise HTTPException(status_code=400, detail="listing_ids is required")
+    unique_ids = list(dict.fromkeys(listing_ids))
+
+    async with session.begin():
+        for listing_id in unique_ids:
+            await _moderation_transition_sql(
+                session=session,
+                listing_id=listing_id,
+                current_user=current_user,
+                new_status="published",
+                action_type="approve",
+                commit=False,
+            )
+
+    return {"ok": True, "processed": len(unique_ids)}
+
+
+@api_router.post("/admin/moderation/bulk-reject")
+async def admin_bulk_reject_listings(
+    payload: BulkModerationPayload,
+    request: Request,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    _ensure_moderation_rbac(current_user)
+    if not payload.reason:
+        raise HTTPException(status_code=400, detail="Reason is required")
+    listing_ids = [str(item).strip() for item in (payload.listing_ids or []) if str(item).strip()]
+    if not listing_ids:
+        raise HTTPException(status_code=400, detail="listing_ids is required")
+    unique_ids = list(dict.fromkeys(listing_ids))
+
+    async with session.begin():
+        for listing_id in unique_ids:
+            await _moderation_transition_sql(
+                session=session,
+                listing_id=listing_id,
+                current_user=current_user,
+                new_status="rejected",
+                action_type="reject",
+                reason=payload.reason,
+                reason_note=payload.reason_note,
+                commit=False,
+            )
+
+    return {"ok": True, "processed": len(unique_ids)}
+
+
 # =====================
 # Sprint 2.1 — Admin Global Listing Management
 # =====================
