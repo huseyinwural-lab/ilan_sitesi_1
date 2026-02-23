@@ -39,6 +39,7 @@
 - Slow query listesi: `/app/memory/SEARCH_SLOW_QUERIES.md`
 - 24h monitoring owner: Ops/Owner
 
+## 2026-02-23 — Admin System Health Detail Panel
 
 **Kapsam**
 - /api/admin/system/health-detail endpointi (24s hata buckets, latency avg/p95, son ETL)
