@@ -325,6 +325,7 @@ export default function Layout({ children }) {
       cdnCountrySeries,
       cdnCanaryStatus,
       cfIdsPresent,
+      cfIdsSource,
     };
   }, [systemHealthDetail, systemHealthDetailStatus]);
 
