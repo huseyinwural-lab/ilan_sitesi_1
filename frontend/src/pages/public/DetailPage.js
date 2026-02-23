@@ -57,6 +57,9 @@ const DetailPage = () => {
       : `${formatted} ${currency}`;
   };
 
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [favoriteError, setFavoriteError] = useState('');
+
   const fetchFavoriteState = async (listingId) => {
     if (!user || !listingId) {
       setIsFavorite(false);
