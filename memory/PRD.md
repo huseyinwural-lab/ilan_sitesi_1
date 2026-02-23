@@ -107,6 +107,12 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Şema yükleme 409 notice + kullanıcıya bilgi mesajı
   - DB client_encoding UTF8 (TR karakterler)
   - App.js VehicleSegmentPage import fix
+- **Kategori import/export (2026-02-23):**
+  - CSV + XLSX export (module + country filtreleri)
+  - Import dry-run + apply, slug ile eşleştirme, wizard_progress taşıma
+  - Validasyon: zorunlu alanlar, duplicate slug, cycle, satır hata raporu
+  - Audit log (import.dry_run, import.apply)
+  - Örnek dosyalar: backend/tests/fixtures/categories-import-sample.(csv/xlsx)
 - Preview/Prod DB fail-fast: CONFIG_MISSING hatası + localhost yasak + DB_SSL_MODE=require
 - .env override kapatıldı (server.py, core/config.py, app/database.py)
 - **P0 Sertleştirmeler:**
