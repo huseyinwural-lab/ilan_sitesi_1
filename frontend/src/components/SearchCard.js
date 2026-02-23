@@ -35,8 +35,8 @@ const SearchCard = ({ listing }) => {
 
         {/* Content */}
         <div className="p-3">
-          <div className="font-bold text-lg text-blue-700 mb-1">
-            {formatPrice(price, currency)}
+          <div className="font-bold text-lg text-blue-700 mb-1" data-testid={`search-card-price-${id}`}>
+            {formatPrice(price_amount ?? price, currency, price_type, hourly_rate)}
           </div>
           
           <h3 className="text-gray-900 font-medium text-sm line-clamp-2 mb-2 group-hover:text-blue-600">
