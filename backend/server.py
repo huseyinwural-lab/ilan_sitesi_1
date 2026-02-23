@@ -14378,6 +14378,7 @@ def _validate_category_import_rows(rows: list[dict], existing: list[Category], c
         slug_raw = _normalize_import_value(row.get("slug")).lower()
         module_raw = _normalize_import_value(row.get("module")).lower()
         country_raw = _normalize_import_value(row.get("country")).upper()
+        schema_version = _normalize_import_value(row.get("schema_version")).lower()
         parent_slug_raw = _normalize_import_value(row.get("parent_slug")).lower() or None
         name_tr = _normalize_import_value(row.get("name_tr"))
         name_de = _normalize_import_value(row.get("name_de"))
