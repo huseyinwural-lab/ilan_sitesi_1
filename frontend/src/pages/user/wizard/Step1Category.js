@@ -54,7 +54,8 @@ const CategorySelector = () => {
   };
 
   const handleCategorySelect = (category) => {
-    if (!loading) createDraft(category);
+    setSelectedCategory(category);
+    setError('');
   };
 
   const getIcon = (category) => CATEGORY_ICONS[category.slug] || '🚗';
