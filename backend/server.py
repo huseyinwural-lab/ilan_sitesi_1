@@ -14343,31 +14343,37 @@ async def admin_update_cloudflare_config(
     payload: CloudflareConfigPayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
     if not payload.account_id or not payload.zone_id:
         raise HTTPException(status_code=400, detail="Cloudflare IDs required")
 
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
     try:
-        encrypted_account = encrypt_config_value(payload.account_id)
-        encrypted_zone = encrypt_config_value(payload.zone_id)
+        encrypted_account, account_last4 = encrypt_config_value(payload.account_id)
+        encrypted_zone, zone_last4 = encrypt_config_value(payload.zone_id)
     except CloudflareConfigError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    await upsert_cloudflare_setting(db, CLOUDFLARE_ACCOUNT_KEY, encrypted_account, current_user)
-    await upsert_cloudflare_setting(db, CLOUDFLARE_ZONE_KEY, encrypted_zone, current_user)
-
-    await write_cloudflare_audit(
-        db,
-        current_user,
-        action="CLOUDFLARE_CONFIG_UPDATE",
-        metadata={
-            "account_last4": encrypted_account.get("last4"),
-            "zone_last4": encrypted_zone.get("last4"),
-        },
+    config = await upsert_cloudflare_config(
+        session,
+        account_token=encrypted_account,
+        account_last4=account_last4,
+        zone_token=encrypted_zone,
+        zone_last4=zone_last4,
+        updated_by=current_user.get("id"),
     )
+
+    await _write_audit_log_sql(
+        session=session,
+        action="CLOUDFLARE_CONFIG_UPDATE",
+        actor=current_user,
+        resource_type="cloudflare_config",
+        resource_id=str(config.id),
+        metadata={"account_last4": account_last4, "zone_last4": zone_last4},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
 
     canary_status = CANARY_CONFIG_MISSING
     api_token = os.environ.get("CLOUDFLARE_API_TOKEN")
@@ -14379,13 +14385,7 @@ async def admin_update_cloudflare_config(
         )
         canary_status = await cloudflare_metrics_service.run_canary(credentials)
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    await upsert_cloudflare_setting(
-        db,
-        CLOUDFLARE_CANARY_KEY,
-        {"status": canary_status, "checked_at": now_iso},
-        current_user,
-    )
+    await update_canary_status(session, canary_status, current_user.get("id"))
 
     return {
         "ok": True,
