@@ -9773,7 +9773,7 @@ async def moderation_queue(
     module: Optional[str] = None,
     limit: int = 50,
     skip: int = 0,
-    current_user=Depends(get_current_user),
+    current_user=Depends(check_permissions(list(ALLOWED_MODERATION_ROLES))),
     session: AsyncSession = Depends(get_sql_session),
 ):
     _ensure_moderation_rbac(current_user)
