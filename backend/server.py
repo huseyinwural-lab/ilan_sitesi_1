@@ -17287,7 +17287,7 @@ async def create_vehicle_draft(
     listing = Listing(
         user_id=user_uuid,
         status="draft",
-        module="vehicle",
+        module=module_value,
         country=country,
         title=payload.get("title") or "",
         description=payload.get("description") or "",
@@ -17298,7 +17298,7 @@ async def create_vehicle_draft(
         category_id=category_uuid,
         make_id=make_uuid,
         model_id=model_uuid,
-        attributes={"category_id": str(category_uuid), "vehicle": vehicle_payload},
+        attributes={"category_id": str(category_uuid), "module": module_value, "vehicle": vehicle_payload},
         images=[],
     )
     _apply_listing_payload_sql(listing, payload)
