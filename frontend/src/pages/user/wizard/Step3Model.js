@@ -43,6 +43,7 @@ const ModelStep = () => {
 
     const fetchModels = async () => {
       try {
+        setLoadingModels(true);
         const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v2/vehicle/models?country=${basicInfo.country}&make_key=${basicInfo.make_key}`);
         const data = await res.json();
         const items = data.items || [];
@@ -50,6 +51,8 @@ const ModelStep = () => {
         localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items }));
       } catch (err) {
         console.error('Fetch models error', err);
+      } finally {
+        setLoadingModels(false);
       }
     };
 
