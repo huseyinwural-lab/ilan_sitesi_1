@@ -192,6 +192,13 @@ async def build_masked_config(session: Optional[AsyncSession]) -> CloudflareMask
     env_account, env_zone = resolve_env_fallback()
     if env_account and env_zone:
         source = resolve_env_source(env_account, env_zone)
+        canary_status = None
+        canary_checked_at = None
+        if session is not None:
+            config = await fetch_cloudflare_config(session)
+            if config:
+                canary_status = config.canary_status
+                canary_checked_at = config.canary_checked_at.isoformat() if config.canary_checked_at else None
         return CloudflareMaskedConfig(
             account_masked=_mask_last4(env_account[-4:]),
             zone_masked=_mask_last4(env_zone[-4:]),
@@ -199,8 +206,8 @@ async def build_masked_config(session: Optional[AsyncSession]) -> CloudflareMask
             zone_last4=env_zone[-4:],
             source=source,
             present=True,
-            canary_status=None,
-            canary_checked_at=None,
+            canary_status=canary_status,
+            canary_checked_at=canary_checked_at,
         )
 
     if session is not None:
