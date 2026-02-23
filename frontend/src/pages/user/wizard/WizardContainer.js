@@ -36,6 +36,41 @@ const WizardContent = () => {
     ];
   }, [isVehicleModule]);
 
+  const stepIdMap = useMemo(
+    () => ({
+      1: 'category',
+      2: 'brand',
+      3: 'model',
+      4: 'year',
+      5: 'core',
+      6: 'features',
+      7: 'review',
+    }),
+    []
+  );
+
+  const showAutosaveBadge = step !== 7 && autosaveStatus?.status && autosaveStatus.status !== 'idle';
+
+  const autosaveBadgeLabel = useMemo(() => {
+    if (!showAutosaveBadge) return '';
+    if (autosaveStatus.status === 'error') return 'Kaydedilemedi';
+    const time = autosaveStatus.lastSuccessAt ? new Date(autosaveStatus.lastSuccessAt) : null;
+    if (!time || Number.isNaN(time.getTime())) return 'Kaydedildi';
+    return `Kaydedildi • ${time.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
+  }, [autosaveStatus, showAutosaveBadge]);
+
+  useEffect(() => {
+    if (!showAutosaveBadge) return;
+    const badgeKey = `${autosaveStatus.status}-${autosaveStatus.lastSuccessAt}-${autosaveStatus.lastErrorAt}-${step}`;
+    if (badgeEventRef.current === badgeKey) return;
+    badgeEventRef.current = badgeKey;
+    trackWizardEvent('wizard_autosave_badge_rendered', {
+      step_id: stepIdMap[step] || `step_${step}`,
+      status: autosaveStatus.status,
+      timestamp: autosaveStatus.lastSuccessAt || autosaveStatus.lastErrorAt,
+    });
+  }, [autosaveStatus, showAutosaveBadge, step, stepIdMap, trackWizardEvent]);
+
   const prevStepRef = useRef(step);
 
   useEffect(() => {
