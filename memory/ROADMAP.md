@@ -5,7 +5,7 @@
 Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tutulur.
 
 ## Admin V1 Operational Freeze
-- Phase A: Cloudflare 6 System Health — **CLOSED** (canary OK + evidence)
+- Phase A: Cloudflare & System Health — **CLOSED** (canary OK + evidence)
 - Phase B: RBAC Final Freeze — **IN PROGRESS** (deny-by-default allowlist + UI guard + docs)
 - Phase C: Audit Log %100 kapsama — BACKLOG
 - Phase D: Moderation Pipeline Final — BACKLOG
