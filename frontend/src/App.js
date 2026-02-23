@@ -20,6 +20,7 @@ import SearchPage from '@/pages/public/SearchPage';
 import DetailPage from '@/pages/public/DetailPage';
 import VehicleLandingPage from '@/pages/public/VehicleLandingPage';
 import VehicleMakeModelPage from '@/pages/public/VehicleMakeModelPage';
+import VehicleSegmentPage from '@/pages/public/VehicleSegmentPage';
 import RedirectToCountry from '@/pages/public/RedirectToCountry';
 // Login moved under portal-specific paths
 
