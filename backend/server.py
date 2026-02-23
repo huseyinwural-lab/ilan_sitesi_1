@@ -9797,6 +9797,7 @@ class CategoryCreatePayload(BaseModel):
     slug: str
     parent_id: Optional[str] = None
     country_code: Optional[str] = None
+    module: Optional[str] = None
     active_flag: Optional[bool] = True
     sort_order: Optional[int] = 0
     hierarchy_complete: Optional[bool] = None
@@ -9809,6 +9810,7 @@ class CategoryUpdatePayload(BaseModel):
     slug: Optional[str] = None
     parent_id: Optional[str] = None
     country_code: Optional[str] = None
+    module: Optional[str] = None
     active_flag: Optional[bool] = None
     sort_order: Optional[int] = None
     hierarchy_complete: Optional[bool] = None
