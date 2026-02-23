@@ -14870,6 +14870,7 @@ async def admin_update_category(
         if code:
             _assert_country_scope(code, current_user)
         updates["country_code"] = code
+        country_value = code
         if code:
             updates["allowed_countries"] = [code]
 
