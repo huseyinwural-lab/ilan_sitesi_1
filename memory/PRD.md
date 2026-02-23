@@ -113,6 +113,14 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Validasyon: zorunlu alanlar, duplicate slug, cycle, satır hata raporu
   - Audit log (import.dry_run, import.apply)
   - Örnek dosyalar: backend/tests/fixtures/categories-import-sample.(csv/xlsx)
+- **Kategori import/export P0.1 (2026-02-23):**
+  - Örnek CSV/XLSX indir endpoint’leri (module/country filtreli)
+  - schema_version = v1 kolonlu şablon + root/child örnek satır
+- **Genel “İlan Ver” drill-down (P1 başlangıcı, 2026-02-23):**
+  - Modül seçimi + L1..Ln kategori drill-down + arama
+  - Seçilen kategori ile /account/create/listing-wizard başlatma
+  - Analytics event’leri: step_select_module, step_select_category_Ln
+  - /api/analytics/events endpointi audit log ile kayıt
 - Preview/Prod DB fail-fast: CONFIG_MISSING hatası + localhost yasak + DB_SSL_MODE=require
 - .env override kapatıldı (server.py, core/config.py, app/database.py)
 - **P0 Sertleştirmeler:**
