@@ -168,6 +168,16 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **System Health Mini-Badge (2026-02-23):**
   - /api/admin/system/health-summary endpointi + 60sn cache
   - Admin header badge (DB status, last check, 5dk error rate)
+- **System Health Detail Panel (2026-02-23):**
+  - /api/admin/system/health-detail endpointi + 60sn cache
+  - 24s hata oranı sparkline + DB latency avg/p95 + son ETL zamanı
+- **Search Migration Execution (Preview, 2026-02-23):**
+  - p36 migration preview ortamında uygulandı
+  - ETL çalıştırıldı (0 kayıt, preview datası yok)
+  - Parity raporu: /app/memory/SEARCH_PARITY_REPORT.md
+  - Benchmark raporu: /app/memory/SEARCH_BENCHMARK_REPORT.md
+  - EXPLAIN ANALYZE raw: /app/memory/SEARCH_EXPLAIN_ANALYZE_RAW.md
+  - Feature flag: SEARCH_SQL_ROLLOUT (0.1 → 0.5 → 1.0)
 - **Search Migration Kickoff (2026-02-23):**
   - listings_search SQL schema + indexes (migration p36)
   - Mongo → SQL transform script: /app/backend/scripts/migrate_listings_search_from_mongo.py
