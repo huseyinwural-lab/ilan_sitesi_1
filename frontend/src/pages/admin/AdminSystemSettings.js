@@ -59,6 +59,16 @@ export default function AdminSystemSettingsPage() {
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
   }), []);
 
+  const canaryDescriptions = {
+    OK: 'Analytics okundu ve veri alındı.',
+    AUTH_ERROR: 'Token doğrulanamadı (401).',
+    SCOPE_ERROR: 'Token scope yetersiz (403).',
+    NO_DATA: 'Veri yok (son 1 saatte trafik yok).',
+    RATE_LIMIT: 'Rate limit aşıldı (429).',
+    CONFIG_MISSING: 'Account/Zone ID veya token eksik.',
+    UNKNOWN: 'Canary sonucu bilinmiyor.',
+  };
+
   const fetchSettings = async () => {
     setLoading(true);
     try {
