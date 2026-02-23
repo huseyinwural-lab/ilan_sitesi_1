@@ -151,6 +151,7 @@ const CoreFieldsStep = () => {
     saveLockRef.current = true;
     if (!validate()) {
       scrollToFirstError();
+      saveLockRef.current = false;
       return false;
     }
     setSaving(true);
