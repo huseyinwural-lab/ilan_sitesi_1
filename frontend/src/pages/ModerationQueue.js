@@ -667,6 +667,71 @@ export default function ModerationQueue({
         </div>
       )}
 
+      {bulkDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="moderation-bulk-dialog">
+          <div className="bg-card rounded-lg border shadow-xl w-full max-w-md">
+            <div className="p-4 border-b">
+              <h3 className="text-lg font-semibold">
+                {bulkDialog.actionType === 'approve' ? 'Toplu Onayla' : 'Toplu Reddet'}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1" data-testid="moderation-bulk-summary">
+                Seçili {selectedCount} ilan için bu işlemi onaylayın.
+              </p>
+            </div>
+
+            {bulkDialog.actionType === 'reject' && (
+              <div className="p-4 space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Reason</label>
+                  <select
+                    value={bulkReason}
+                    onChange={(e) => setBulkReason(e.target.value)}
+                    className="mt-1 w-full h-9 px-3 rounded-md border bg-background text-sm"
+                    data-testid="moderation-bulk-reason"
+                  >
+                    <option value="">Select…</option>
+                    {REJECT_REASONS_V1.map((r) => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Not (opsiyonel)</label>
+                  <textarea
+                    value={bulkReasonNote}
+                    onChange={(e) => setBulkReasonNote(e.target.value)}
+                    className="mt-1 w-full min-h-[90px] p-3 rounded-md border bg-background text-sm"
+                    placeholder="Ek açıklama..."
+                    data-testid="moderation-bulk-reason-note"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="p-4 border-t flex items-center justify-end gap-2">
+              <button
+                onClick={() => setBulkDialog(null)}
+                className="h-9 px-3 rounded-md border hover:bg-muted text-sm"
+                data-testid="moderation-bulk-cancel"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitBulkDialog}
+                className={`h-9 px-3 rounded-md text-white text-sm ${
+                  bulkDialog.actionType === 'approve'
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : 'bg-rose-600 hover:bg-rose-700'
+                }`}
+                data-testid="moderation-bulk-submit"
+              >
+                Onayla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
