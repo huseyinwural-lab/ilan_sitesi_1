@@ -19,6 +19,8 @@ const PricingLocation = () => {
   const priceConfig = schema?.core_fields?.price || {};
   const titleConfig = schema?.core_fields?.title || {};
   const descriptionConfig = schema?.core_fields?.description || {};
+  const priceType = (coreFields.price_type || 'FIXED').toUpperCase();
+  const allowedPriceTypes = priceConfig.allowed_types || (priceConfig.hourly_enabled === false ? ['FIXED'] : ['FIXED', 'HOURLY']);
 
   const formatNumberInput = (rawValue, decimals) => {
     if (rawValue === '') return { display: '', numeric: '' };
