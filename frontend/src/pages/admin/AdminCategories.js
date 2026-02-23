@@ -110,6 +110,20 @@ const MODULE_LABELS = {
   payment: "Ödeme",
 };
 
+const CATEGORY_MODULE_OPTIONS = [
+  { value: "real_estate", label: "Emlak" },
+  { value: "vehicle", label: "Vasıta" },
+  { value: "machinery", label: "Makine" },
+  { value: "services", label: "Hizmet" },
+  { value: "jobs", label: "İş" },
+];
+
+const TRANSACTION_TYPE_OPTIONS = [
+  { value: "satilik", label: "Satılık" },
+  { value: "kiralik", label: "Kiralık" },
+  { value: "gunluk", label: "Günlük Kiralık" },
+];
+
 const WIZARD_STEPS = [
   { id: "hierarchy", label: "Kategori" },
   { id: "core", label: "Çekirdek Alanlar" },
