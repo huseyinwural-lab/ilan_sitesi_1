@@ -147,6 +147,8 @@ const CategorySelector = () => {
             </div>
           )}
         </div>
+      </div>
+
       {error && (
         <div className="text-sm text-red-600" data-testid="category-error">{error}</div>
       )}
