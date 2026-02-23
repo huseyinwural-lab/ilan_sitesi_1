@@ -10122,7 +10122,7 @@ def _normalize_category_module(value: Optional[str]) -> str:
     if not value:
         return "vehicle"
     module_value = value.strip().lower()
-    if module_value not in CATEGORY_MODULE_OPTIONS:
+    if module_value not in SUPPORTED_CATEGORY_MODULES:
         raise HTTPException(status_code=400, detail="module invalid")
     return module_value
 
