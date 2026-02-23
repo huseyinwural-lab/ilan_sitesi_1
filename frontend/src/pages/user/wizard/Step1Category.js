@@ -93,7 +93,7 @@ const CategorySelector = () => {
       }));
       setError('');
       setPreselectApplied(true);
-      setStep(2);
+      setStep(moduleKey === 'vehicle' ? 2 : 5);
     };
 
     applyPreselect();
