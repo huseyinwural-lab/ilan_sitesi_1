@@ -1608,6 +1608,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+if CorrelationIdMiddleware:
+    app.add_middleware(CorrelationIdMiddleware)
+
 DB_ERROR_CODES = {
     "pool_timeout": "DB_POOL_TIMEOUT",
     "connection_closed": "DB_CONN_CLOSED",
