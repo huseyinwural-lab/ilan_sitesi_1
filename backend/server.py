@@ -9484,7 +9484,8 @@ async def moderation_queue(
 ):
     _ensure_moderation_rbac(current_user)
 
-    conditions = [Listing.status == status]
+    normalized_status = _normalize_moderation_item_status(status)
+    conditions = [ModerationItem.status == normalized_status]
     if dealer_only is not None:
         conditions.append(Listing.is_dealer_listing == dealer_only)
     if country:
@@ -9500,16 +9501,17 @@ async def moderation_queue(
     limit = min(200, max(1, int(limit)))
     offset = max(0, int(skip))
     query_stmt = (
-        select(Listing)
+        select(ModerationItem, Listing)
+        .join(Listing, ModerationItem.listing_id == Listing.id)
         .where(and_(*conditions))
-        .order_by(desc(Listing.created_at))
+        .order_by(desc(ModerationItem.created_at))
         .offset(offset)
         .limit(limit)
     )
-    rows = (await session.execute(query_stmt)).scalars().all()
+    rows = (await session.execute(query_stmt)).all()
 
     out = []
-    for listing in rows:
+    for item, listing in rows:
         attrs = listing.attributes or {}
         vehicle = attrs.get("vehicle") or {}
         title = (listing.title or "").strip()
@@ -9521,6 +9523,7 @@ async def moderation_queue(
                 "id": str(listing.id),
                 "title": title,
                 "status": listing.status,
+                "moderation_status": item.status,
                 "country": listing.country,
                 "module": listing.module,
                 "city": listing.city or "",
