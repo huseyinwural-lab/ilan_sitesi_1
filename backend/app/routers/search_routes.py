@@ -21,6 +21,32 @@ import asyncio
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v2", tags=["search"])
 
+
+def _get_search_sql_rollout() -> float:
+    try:
+        rollout = float(os.environ.get("SEARCH_SQL_ROLLOUT", "0"))
+    except ValueError:
+        rollout = 0.0
+    return max(0.0, min(1.0, rollout))
+
+
+def _stable_bucket_for_request(request: Request) -> float:
+    key = request.headers.get("X-Request-ID")
+    if not key:
+        key = request.client.host if request.client else "anonymous"
+    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
+    bucket_int = int(digest[:8], 16)
+    return bucket_int / 0xFFFFFFFF
+
+
+def _use_listings_search(request: Request) -> bool:
+    rollout = _get_search_sql_rollout()
+    if rollout >= 1:
+        return True
+    if rollout <= 0:
+        return False
+    return _stable_bucket_for_request(request) < rollout
+
 @router.on_event("startup")
 async def startup():
     await cache_service.connect()
