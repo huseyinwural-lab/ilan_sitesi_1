@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 2026-02-23 — P0 DB 520 Stabilizasyonu Closeout
+
+**Kapsam**
+- Pool effective config doğrulandı: pool_size=5, max_overflow=5, pool_timeout=30, pool_recycle=1800, pool_pre_ping=true
+- Connection lifecycle logları (connect/checkout/checkin/invalidate) + CorrelationIdMiddleware
+- get_db/get_sql_session rollback + deterministic close
+- Load test sonuçları:
+  - Faz-1: 1000 sequential login+me, 0×520, p95=2923.81ms
+  - Faz-2: 10 paralel kullanıcı, toplam 1000 istek, 0×520, p95=5074.31ms
+
+**Not**
+- Stabilizasyon başarı kriterleri sağlandı.
+
 ## 2026-02-23 — P0 Edit Mode State Sync Closeout
 
 **Kapsam**
