@@ -51,6 +51,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **Database:** PostgreSQL (DATABASE_URL)
 - **Mongo:** EU panel sprintlerinde devre dışı (MONGO_ENABLED=false)
 
+## ADR Referansları
+- /app/memory/ADR.md (tek kaynak)
+
 ## Uygulanan Özellikler
 - EU panel dokümantasyon paketi (/app/docs/CONSUMER_IA_V1.md, DEALER_IA_V1.md, PRIVACY_CENTER_EU.md, DATA_MODEL_SPEC_EU_PROFILES_V1.md)
 - ConsumerProfile ve DealerProfile modelleri
