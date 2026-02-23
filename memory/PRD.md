@@ -218,6 +218,10 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/SEARCH_SLOW_QUERIES.md
 - /app/memory/SEARCH_EXPLAIN_ANALYZE_RAW.md
 - /app/memory/SEARCH_CUTOVER_PLAN.md
+- /app/memory/SEARCH_24H_MONITORING_REPORT.md
+- /app/memory/MODERATION_PARITY_REPORT.md
+- /app/memory/MODERATION_CUTOVER_PLAN.md
+- /app/memory/MONGO_DEPENDENCY_REPORT.md
 
 ## Blokajlar / Riskler
 - Stripe API key geçersiz (idempotency testi BLOCKED)
