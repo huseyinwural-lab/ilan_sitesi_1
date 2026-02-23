@@ -256,6 +256,7 @@ const FeaturesMediaStep = () => {
       return false;
     } finally {
       setSaving(false);
+      saveLockRef.current = false;
     }
   };
 
