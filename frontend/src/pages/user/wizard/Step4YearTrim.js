@@ -16,6 +16,11 @@ const YearTrimStep = () => {
   const [trimKey, setTrimKey] = useState(basicInfo.trim_key || '');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    setYear(basicInfo.year ? String(basicInfo.year) : '');
+    setTrimKey(basicInfo.trim_key || '');
+  }, [basicInfo.year, basicInfo.trim_key]);
+
   const yearOptions = useMemo(() => {
     const start = 2026;
     const end = 2010;
