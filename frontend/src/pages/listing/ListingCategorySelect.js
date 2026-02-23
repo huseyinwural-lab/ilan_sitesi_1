@@ -23,6 +23,9 @@ const ListingCategorySelect = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [selectedModule, setSelectedModule] = useState('');
+  const [recentCategory, setRecentCategory] = useState(null);
+  const [recentLoading, setRecentLoading] = useState(true);
+  const [recentError, setRecentError] = useState('');
 
   const country = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
