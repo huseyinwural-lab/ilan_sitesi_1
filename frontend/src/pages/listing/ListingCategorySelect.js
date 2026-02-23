@@ -165,6 +165,9 @@ const ListingCategorySelect = () => {
       }
       if (nextPath.length === 0) {
         await loadRootCategories(moduleKey);
+        setSelectedPath([]);
+        setSelectionComplete(false);
+        setActiveCategory(null);
         return;
       }
       const children = await fetchChildren(parentId, moduleKey);
