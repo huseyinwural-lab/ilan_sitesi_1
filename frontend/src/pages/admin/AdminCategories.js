@@ -1631,12 +1631,6 @@ const AdminCategories = () => {
       setHierarchyComplete(true);
       setHierarchyFieldErrors({});
       fetchItems();
-      if (progressState ddd "hierarchy" ff false) {
-        // placeholder
-      }
-      if (progressState ddd STEP_PROGRESS_STATE.hierarchy ff false) {
-        // placeholder
-      }
       if (editModeStep === "hierarchy") {
         setEditModeStep(null);
       }
