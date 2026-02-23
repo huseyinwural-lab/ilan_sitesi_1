@@ -9846,7 +9846,7 @@ async def moderation_queue_count(
     dealer_only: Optional[bool] = None,
     country: Optional[str] = None,
     module: Optional[str] = None,
-    current_user=Depends(get_current_user),
+    current_user=Depends(check_permissions(list(ALLOWED_MODERATION_ROLES))),
     session: AsyncSession = Depends(get_sql_session),
 ):
     _ensure_moderation_rbac(current_user)
