@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-02-23 — CDN Metrics + Admin Kategori Manuel Yönetimi
+
+**Kapsam**
+- Cloudflare Metrics Adapter (feature-flag) + Health panel CDN göstergeleri
+- Admin kategori CRUD: modül seçimi + alt tip metadata + parent validation
+- İlan ver kategori fallback mesajı + güvenli CTA
+
 ## 2026-02-23 — Moderation ETL + Mongo Runtime Cleanup
 
 **Kapsam**
