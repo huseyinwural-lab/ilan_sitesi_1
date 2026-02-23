@@ -476,3 +476,32 @@ graph LR
 
 **Gerekçe:** Basit izleme standardı.
 
+---
+
+## ADR-OPS-PHASEA-001 — Phase A kapanış kriteri (Cloudflare Ops Inject)
+
+**Karar:** Phase A kapanış kriteri = env/secret inject + backend restart + health-detail canary OK + admin UI canary OK + kanıt dosyaları.
+
+**Gerekçe:** Kod hazır olsa bile operasyonel doğrulama yoksa faz kapanmış sayılmaz.
+
+**Etkileri / trade-off:**
+- (+) Prod benzeri doğrulama kanıtı oluşur
+- (+) RBAC’a geçişte belirsizlik kalmaz
+- (-) Restart gerektirir (kısa kesinti riski)
+
+**Varsayımlar:** Cloudflare entegrasyonu token ile çalışır ve token sağlanabilir.
+
+**Risk & Önlem:** Secret sızıntı riski → yalnızca env/secret manager, UI maskeli gösterim.
+
+---
+
+## ADR-SEC-CF-004 — Cloudflare kimlik bilgileri env/secret + UI maskeli
+
+**Karar:** Cloudflare kimlik bilgileri env/secret üzerinden yönetilir; Admin UI yalnızca maskeli gösterir.
+
+**Gerekçe:** Güvenlik ve izlenebilirlik.
+
+**Etkileri / trade-off:**
+- (+) Sızıntı riski düşer
+- (-) Ops bağımlılığı artar
+
