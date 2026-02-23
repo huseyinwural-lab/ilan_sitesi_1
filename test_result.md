@@ -1,4 +1,180 @@
-## Frontend Verification: Cloudflare Encryption Key & CDN Flag (Feb 23, 2026 - LATEST) ✅ COMPLETE PASS
+## Cloudflare Settings UX Guard Test (Feb 23, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Comprehensive UX guard test for Cloudflare Settings as per review request: "Cloudflare Settings UX Guard — PASS. Base URL: https://postgres-cutover.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!) → /admin/system-settings. 2) Cloudflare kartında tek bir 'Durum' satırı görünüyor mu? (Tek mesaj, öncelikli blokaj) Metin şu formatta mı: '🔒 Güvenlik anahtarı tanımlı değil. Bu nedenle Cloudflare bilgileri kaydedilemez. (CONFIG_ENCRYPTION_KEY)' Alt satır: 'Lütfen sistem yöneticinizden bu anahtarı ortam değişkeni/secret olarak eklemesini isteyin.' 3) Save + Canary butonları disabled mı? Hover tooltip: 'Önce güvenlik anahtarı tanımlanmalı.' 4) Canary sonucu inline: 'Bağlantı testi yapılamadı / Başarılı' metni + Detaylar altında canary_status, reason, cf_ids_source görünüyor mu? PASS/FAIL raporu ver."
+
+### Test Flow Executed:
+1. ✅ Admin login at /admin/login with admin@platform.com / Admin123! → authentication successful
+2. ✅ Navigate to /admin/system-settings → page loads correctly
+3. ✅ Verify single "Durum" status row in Cloudflare card → VERIFIED
+4. ✅ Verify status message format with emoji and text → EXACT MATCH
+5. ✅ Verify status subtitle text → EXACT MATCH
+6. ✅ Verify Save button disabled with tooltip → VERIFIED
+7. ✅ Verify Canary button disabled with tooltip → VERIFIED
+8. ✅ Verify Canary result inline display → VERIFIED
+9. ✅ Verify Canary details (canary_status, reason, cf_ids_source) → ALL PRESENT
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Admin Login**: ✅ WORKING PERFECTLY
+  - **URL**: https://postgres-cutover.preview.emergentagent.com/admin/login loads successfully
+  - **Credentials**: admin@platform.com / Admin123!
+  - **Login Result**: ✅ SUCCESS - redirected to /admin area
+  - **No Errors**: No login errors detected
+
+**2. System Settings Page Navigation**: ✅ WORKING
+  - **URL**: https://postgres-cutover.preview.emergentagent.com/admin/system-settings loads successfully
+  - **Page Container**: data-testid="admin-system-settings-page" present and visible
+  - **Page Title**: "System Settings" displayed correctly
+
+**3. Single "Durum" Status Row**: ✅ VERIFIED
+  - **Status Element**: data-testid="system-settings-cloudflare-status"
+  - **Visibility**: ✅ VISIBLE (single prioritized status message in Cloudflare card)
+  - **Status Title Format**: ✅ EXACT MATCH
+    - Text: "Durum: 🔒 Güvenlik anahtarı tanımlı değil. Bu nedenle Cloudflare bilgileri kaydedilemez. (CONFIG_ENCRYPTION_KEY)"
+    - Contains lock emoji 🔒
+    - References CONFIG_ENCRYPTION_KEY explicitly
+  - **Status Subtitle**: ✅ EXACT MATCH
+    - Text: "Lütfen sistem yöneticinizden bu anahtarı ortam değişkeni/secret olarak eklemesini isteyin."
+  - **Technical Tooltip**: Available on hover with details (CONFIG_ENCRYPTION_KEY=missing, cf_metrics_enabled=false, etc.)
+  - **Styling**: Rose-50 background, rose-200 border, rose-700 text (error styling)
+  - **CRITICAL**: Single prioritized blocking message displayed correctly with exact text format
+
+**4. Save Button - Disabled State & Tooltip**: ✅ VERIFIED
+  - **Button Element**: data-testid="system-settings-cloudflare-save"
+  - **Button Text**: "Kaydet" ✅
+  - **Disabled State**: ✅ TRUE (correctly disabled when encryption key is missing)
+  - **Hover Tooltip**: "Önce güvenlik anahtarı tanımlanmalı." ✅ EXACT MATCH
+  - **Disabled Logic**: `disabled={!isSuperAdmin || cloudflareSaving || !encryptionKeyPresent}`
+  - **CRITICAL**: Save button properly disabled with correct tooltip when CONFIG_ENCRYPTION_KEY is not configured
+
+**5. Canary Button - Disabled State & Tooltip**: ✅ VERIFIED
+  - **Button Element**: data-testid="system-settings-cloudflare-canary"
+  - **Button Text**: "Test Connection (Canary)" ✅
+  - **Disabled State**: ✅ TRUE (correctly disabled when encryption key is missing)
+  - **Hover Tooltip**: "Önce güvenlik anahtarı tanımlanmalı." ✅ EXACT MATCH
+  - **Disabled Logic**: `disabled={!isSuperAdmin || canaryLoading || !encryptionKeyPresent}`
+  - **CRITICAL**: Canary button properly disabled with correct tooltip when CONFIG_ENCRYPTION_KEY is not configured
+
+**6. Canary Result Inline Display**: ✅ VERIFIED
+  - **Status Element**: data-testid="system-settings-cloudflare-canary-status"
+  - **Display Location**: ✅ INLINE in Cloudflare card (NOT in toast notification)
+  - **Status Text**: "Bağlantı testi: Bağlantı testi yapılamadı" ✅
+  - **Text Color**: Rose-600 (red) for failed status
+  - **CRITICAL**: Canary status displayed inline with proper formatting, shows "Bağlantı testi yapılamadı" (Connection test failed) when encryption key is missing
+
+**7. Canary Details Section**: ✅ VERIFIED
+  - **Details Element**: data-testid="system-settings-cloudflare-canary-details"
+  - **Display**: Collapsible <details> section visible below canary status
+  - **Content**:
+    - ✅ canary_status: CONFIG_MISSING
+    - ✅ reason: cf_metrics_disabled
+    - ✅ cf_ids_source: - (dash indicating no source)
+  - **CRITICAL**: All required technical details (canary_status, reason, cf_ids_source) are displayed in expandable details section
+
+### UI Elements Verified:
+
+#### ✅ CLOUDFLARE CARD (System Settings):
+- ✅ Card container: data-testid="system-settings-cloudflare-card"
+- ✅ Card title: "Cloudflare (CDN & Analytics)"
+- ✅ Card subtitle explaining masked display
+- ✅ Single "Durum" status row with prioritized blocking message
+- ✅ Status box with rose/error styling (red background)
+- ✅ Status title with lock emoji 🔒
+- ✅ Status subtitle with instruction for sys admin
+- ✅ Technical tooltip on status box (hover)
+- ✅ Account ID and Zone ID inputs (masked, type="password")
+- ✅ Save button (disabled) with tooltip
+- ✅ Test Connection (Canary) button (disabled) with tooltip
+- ✅ Inline canary status with text
+- ✅ Collapsible details section with canary_status, reason, cf_ids_source
+
+### Screenshots Captured:
+1. **cloudflare-full-page.png**: Full page showing System Settings with Cloudflare card and complete UX guard implementation
+
+### Technical Details:
+
+**Environment State**:
+- CONFIG_ENCRYPTION_KEY: MISSING (not configured)
+- cf_metrics_enabled: FALSE
+- cf_ids_present: FALSE
+- cf_ids_source: none
+- canary_status: CONFIG_MISSING
+- config_missing_reason: cf_metrics_disabled
+
+**Code Implementation** (AdminSystemSettings.js):
+- **Status Logic**: Lines 241-289 - Priority cascade with encryption key check first
+- **Status Display**: Lines 332-341 - Single "Durum" box with title/subtitle
+- **Save Button**: Lines 381-389 - Disabled when !encryptionKeyPresent, tooltip on title attribute
+- **Canary Button**: Lines 390-398 - Disabled when !encryptionKeyPresent, tooltip on title attribute
+- **Canary Status Inline**: Lines 406-414 - Shows inline text and expandable details
+
+### PASS/FAIL Report:
+
+**1) Cloudflare kartında tek bir "Durum" satırı görünüyor mu? (Tek mesaj, öncelikli blokaj)**
+   ✅ **PASS** - Single prioritized status row displayed
+   - Only one status message shown (encryption key error has priority)
+   - Blocks other status messages when encryption key is missing
+
+**2) Metin şu formatta mı: "🔒 Güvenlik anahtarı tanımlı değil. Bu nedenle Cloudflare bilgileri kaydedilemez. (CONFIG_ENCRYPTION_KEY)"**
+   ✅ **PASS** - Exact text match
+   - Title: "Durum: 🔒 Güvenlik anahtarı tanımlı değil. Bu nedenle Cloudflare bilgileri kaydedilemez. (CONFIG_ENCRYPTION_KEY)" ✅
+   - Lock emoji present ✅
+   - CONFIG_ENCRYPTION_KEY referenced ✅
+
+**   Alt satır: "Lütfen sistem yöneticinizden bu anahtarı ortam değişkeni/secret olarak eklemesini isteyin."**
+   ✅ **PASS** - Exact subtitle match
+   - Subtitle text matches exactly ✅
+   - Provides clear instruction for sys admin ✅
+
+**3) Save + Canary butonları disabled mı? Hover tooltip: "Önce güvenlik anahtarı tanımlanmalı."**
+   ✅ **PASS** - Both buttons disabled with correct tooltips
+   - Save button ("Kaydet"): Disabled = TRUE ✅
+   - Save button tooltip: "Önce güvenlik anahtarı tanımlanmalı." ✅
+   - Canary button ("Test Connection (Canary)"): Disabled = TRUE ✅
+   - Canary button tooltip: "Önce güvenlik anahtarı tanımlanmalı." ✅
+
+**4) Canary sonucu inline: "Bağlantı testi yapılamadı / Başarılı" metni + Detaylar altında canary_status, reason, cf_ids_source görünüyor mu?**
+   ✅ **PASS** - Canary result inline with all details
+   - Inline text: "Bağlantı testi: Bağlantı testi yapılamadı" ✅
+   - Details section present and expandable ✅
+   - canary_status: CONFIG_MISSING ✅
+   - reason: cf_metrics_disabled ✅
+   - cf_ids_source: - ✅
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (9/9 requirements verified)
+- **Admin Login**: ✅ WORKING
+- **Page Navigation**: ✅ WORKING (/admin/system-settings loads correctly)
+- **Single "Durum" Status Row**: ✅ VERIFIED (prioritized blocking message)
+- **Status Text Format**: ✅ EXACT MATCH (with emoji and CONFIG_ENCRYPTION_KEY reference)
+- **Status Subtitle**: ✅ EXACT MATCH (sys admin instruction)
+- **Save Button Disabled**: ✅ VERIFIED (with correct tooltip)
+- **Canary Button Disabled**: ✅ VERIFIED (with correct tooltip)
+- **Canary Result Inline**: ✅ VERIFIED (shows failure text)
+- **Canary Details**: ✅ VERIFIED (canary_status, reason, cf_ids_source all present)
+- **No Console Errors**: ✅ CONFIRMED
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - All requirements satisfied 100%
+- **Login**: ✅ SUCCESS (admin@platform.com / Admin123!)
+- **Page Load**: ✅ SUCCESS (/admin/system-settings loads correctly)
+- **UX Guard Status**: ✅ PRODUCTION-READY (single prioritized message with exact text format)
+- **Button States**: ✅ PRODUCTION-READY (both disabled with correct tooltips)
+- **Canary Inline Display**: ✅ PRODUCTION-READY (inline status + expandable details)
+- **UI**: ✅ PRODUCTION-READY (all elements render correctly, proper error states, no errors)
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 23, 2026 (LATEST)
+- **Message**: Cloudflare Settings UX Guard test SUCCESSFULLY COMPLETED with 100% PASS rate. All requirements from review request satisfied. FLOW VERIFICATION: 1) Admin login works perfectly with admin@platform.com / Admin123! at /admin/login ✅. 2) Navigation to /admin/system-settings successful, page loads with data-testid="admin-system-settings-page" ✅. 3) CRITICAL FINDING 1: Single "Durum" status row (data-testid="system-settings-cloudflare-status") displays prioritized blocking message when CONFIG_ENCRYPTION_KEY is missing ✅. 4) CRITICAL FINDING 2: Status title matches EXACTLY: "Durum: 🔒 Güvenlik anahtarı tanımlı değil. Bu nedenle Cloudflare bilgileri kaydedilemez. (CONFIG_ENCRYPTION_KEY)" with lock emoji and explicit CONFIG_ENCRYPTION_KEY reference ✅. 5) CRITICAL FINDING 3: Status subtitle matches EXACTLY: "Lütfen sistem yöneticinizden bu anahtarı ortam değişkeni/secret olarak eklemesini isteyin." ✅. 6) CRITICAL FINDING 4: Save button (data-testid="system-settings-cloudflare-save": "Kaydet") is DISABLED with hover tooltip "Önce güvenlik anahtarı tanımlanmalı." ✅. 7) CRITICAL FINDING 5: Canary button (data-testid="system-settings-cloudflare-canary": "Test Connection (Canary)") is DISABLED with hover tooltip "Önce güvenlik anahtarı tanımlanmalı." ✅. 8) CRITICAL FINDING 6: Canary result displays INLINE (data-testid="system-settings-cloudflare-canary-status") showing "Bağlantı testi: Bağlantı testi yapılamadı" in red ✅. 9) CRITICAL FINDING 7: Canary details section (data-testid="system-settings-cloudflare-canary-details") displays all required fields: canary_status=CONFIG_MISSING, reason=cf_metrics_disabled, cf_ids_source=- ✅. All data-testids present and functional. No console errors detected. All UI elements working correctly with proper UX guard behavior, prioritized blocking, and user feedback. Cloudflare Settings UX Guard is production-ready and fully functional.
+
+---
+
+
+## Frontend Verification: Cloudflare Encryption Key & CDN Flag (Feb 23, 2026) ✅ COMPLETE PASS
 
 ### Test Summary
 Frontend verification test for Cloudflare CONFIG_ENCRYPTION_KEY banner, Save button state, inline canary status, System Health CDN "Flag Off" badge, and canary tooltip as per review request: "Frontend verification: Base URL: https://postgres-cutover.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!) → /admin/system-settings. Cloudflare kartında banner 'CONFIG_ENCRYPTION_KEY tanımlı değil…' görünüyor mu? Save butonu disabled mı? 2) Cloudflare kartında canary status inline görünüyor mu? (toast yerine) 3) System Health paneli aç: CDN bölümünde 'Flag Off' rozeti görünüyor mu? Canary tooltip var mı? PASS/FAIL raporu ver."
