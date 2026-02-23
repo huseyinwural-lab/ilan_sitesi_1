@@ -14,6 +14,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
   const [editLoading, setEditLoading] = useState(false);
 
   const [category, setCategory] = useState(null);
+  const moduleKey = useMemo(() => localStorage.getItem('ilan_ver_module') || 'vehicle', []);
   const [validationErrors, setValidationErrors] = useState([]);
   const [publishedDetailUrl, setPublishedDetailUrl] = useState(null);
   const [basicInfo, setBasicInfo] = useState({
