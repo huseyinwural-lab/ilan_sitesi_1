@@ -14348,6 +14348,8 @@ async def admin_update_cloudflare_config(
         raise HTTPException(status_code=400, detail="Cloudflare IDs required")
 
     db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
     try:
         encrypted_account = encrypt_config_value(payload.account_id)
         encrypted_zone = encrypt_config_value(payload.zone_id)
