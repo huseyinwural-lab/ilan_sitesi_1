@@ -16,6 +16,7 @@ const YearTrimStep = () => {
   } = useWizard();
 
   const [saving, setSaving] = useState(false);
+  const saveLockRef = useRef(false);
 
   const [year, setYear] = useState(basicInfo.year || '');
   const [trimKey, setTrimKey] = useState(basicInfo.trim_key || '');
