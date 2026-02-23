@@ -3446,25 +3446,61 @@ async def admin_system_health_detail(
         moderation_sla_pending = 0
 
     endpoint_stats = get_endpoint_stats()
-    cf_ids_present = bool(os.environ.get("CLOUDFLARE_ACCOUNT_ID") and os.environ.get("CLOUDFLARE_ZONE_ID"))
-    cdn_metrics = None
+    account_id = None
+    zone_id = None
+    cf_ids_source = None
+    cf_ids_present = False
+    canary_status = None
     try:
-        cdn_metrics = await cloudflare_metrics_service.get_metrics()
-    except CloudflareMetricsError as exc:
-        cdn_metrics = {
-            "enabled": True,
-            "status": "error",
-            "error_code": exc.code,
-            "message": str(exc),
-        }
-    except Exception as exc:
-        cdn_metrics = {
-            "enabled": True,
-            "status": "error",
-            "error_code": "cloudflare_runtime_error",
-            "message": str(exc),
-        }
+        account_id, zone_id, cf_ids_source = await resolve_cloudflare_config(db)
+        cf_ids_present = bool(account_id and zone_id)
+    except CloudflareConfigError:
+        cf_ids_source = "db"
+        cf_ids_present = False
 
+    canary_doc = await load_canary_status(db)
+    if canary_doc:
+        value = canary_doc.get("value")
+        if isinstance(value, dict):
+            canary_status = value.get("status")
+        elif isinstance(value, str):
+            canary_status = value
+
+    cdn_metrics = None
+    if cloudflare_metrics_service.is_enabled():
+        if cf_ids_present and os.environ.get("CLOUDFLARE_API_TOKEN"):
+            try:
+                credentials = CloudflareCredentials(
+                    api_token=os.environ.get("CLOUDFLARE_API_TOKEN"),
+                    account_id=account_id,
+                    zone_id=zone_id,
+                )
+                cdn_metrics = await cloudflare_metrics_service.get_metrics(credentials)
+            except CloudflareMetricsError as exc:
+                cdn_metrics = {
+                    "enabled": True,
+                    "status": "error",
+                    "error_code": exc.code,
+                    "message": str(exc),
+                }
+            except Exception as exc:
+                cdn_metrics = {
+                    "enabled": True,
+                    "status": "error",
+                    "error_code": "cloudflare_runtime_error",
+                    "message": str(exc),
+                }
+        else:
+            cdn_metrics = {
+                "enabled": True,
+                "status": "config_missing",
+                "canary_status": CANARY_CONFIG_MISSING,
+            }
+    else:
+        cdn_metrics = {"enabled": False, "status": "disabled"}
+
+    if canary_status and isinstance(cdn_metrics, dict) and not cdn_metrics.get("canary_status"):
+        cdn_metrics["canary_status"] = canary_status
     payload = {
         "db_status": db_status,
         "last_check_at": last_check_at.isoformat(),
