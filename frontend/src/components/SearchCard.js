@@ -15,7 +15,7 @@ const SearchCard = ({ listing }) => {
   };
 
   return (
-    <Link to={`/ilan/${id}`} className="block group">
+    <Link to={`/ilan/${id}`} className="block group" data-testid={`search-card-link-${id}`}>
       <div className="bg-white border rounded-lg overflow-hidden hover:shadow-md transition duration-200">
         {/* Image */}
         <div className="relative aspect-[4/3] bg-gray-200">
