@@ -179,10 +179,13 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Parity + benchmark raporları güncellendi
   - Pending Ops 24h monitoring: /app/memory/SEARCH_24H_MONITORING_REPORT.md
   - Raporlar: /app/memory/SEARCH_PARITY_REPORT.md, /app/memory/SEARCH_PARITY_RAW.md, /app/memory/SEARCH_BENCHMARK_REPORT.md, /app/memory/SEARCH_SLOW_QUERIES.md
-- **Moderation Migration Kickoff (2026-02-23):**
-  - moderation_queue SQL şeması + p37 migration
-  - ETL scripti + parity raporu (koleksiyon yoksa 0/0)
-  - Cutover plan: /app/memory/MODERATION_CUTOVER_PLAN.md
+- **Moderation Items Migration (2026-02-23):**
+  - moderation_items SQL tablosu + model + Pydantic schema
+  - p38 migration uygulandı
+  - ETL: scripts/migrate_moderation_items_from_mongo.py (reason sanitize + status normalize + UTC)
+  - Parity raporu: /app/memory/MODERATION_PARITY_REPORT.md (sample 50)
+  - Admin moderation queue/count SQL artık moderation_items üzerinden
+  - Listing submit/request-publish sırasında moderation_item upsert
 
 ## Kanıtlar
 - /app/docs/LOCAL_DB_READY_EVIDENCE.md
