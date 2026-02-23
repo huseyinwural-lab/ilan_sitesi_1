@@ -669,7 +669,6 @@ export default function Layout({ children }) {
                         : 'border-slate-200 bg-slate-50 text-slate-600'
                   }`}
                   data-testid="admin-system-health-badge"
-                  data-testid-toggle="admin-system-health-toggle"
                   title={healthDisplay.title}
                 >
                   <span
