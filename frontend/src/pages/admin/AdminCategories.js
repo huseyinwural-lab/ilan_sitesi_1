@@ -867,12 +867,12 @@ const AdminCategories = () => {
     }
     const dirtyChain = buildDirtyChain(stepId);
     const nextDirtySteps = Array.from(new Set([...dirtySteps, ...dirtyChain]));
-    setWizardProgress((prev) => ({
-      state: prev?.state || "draft",
-      dirty_steps: nextDirtySteps,
-    }));
+    const previousWizardStep = wizardStep;
+    const previousEditModeStep = editModeStep;
+
     setWizardStep(stepId);
     setEditModeStep(stepId);
+    setStepSaving(true);
 
     try {
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`, {
@@ -896,21 +896,18 @@ const AdminCategories = () => {
           expected_updated_at: editing.updated_at,
         }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.category) {
         throw new Error(data?.detail || "Edit modu açılamadı.");
       }
-      const data = await res.json();
-      if (data?.category?.wizard_progress) {
-        setWizardProgress({
-          state: data.category.wizard_progress.state || "draft",
-          dirty_steps: Array.isArray(data.category.wizard_progress.dirty_steps)
-            ? data.category.wizard_progress.dirty_steps
-            : [],
-        });
-      }
+      applyCategoryFromServer(data.category);
     } catch (error) {
       setHierarchyError(error?.message || "Edit modu açılamadı.");
+      setWizardStep(previousWizardStep);
+      setEditModeStep(previousEditModeStep);
+      restoreSnapshot();
+    } finally {
+      setStepSaving(false);
     }
   };
 
