@@ -1655,6 +1655,7 @@ def _get_request_id(request: Optional[Request] = None) -> Optional[str]:
 
 def _log_db_exception(exc: Exception, code: str, request: Optional[Request] = None):
     request_id = _get_request_id(request)
+    _db_error_events.append(time.time())
     db_error_logger.info(
         "db_error",
         extra={
@@ -1664,6 +1665,15 @@ def _log_db_exception(exc: Exception, code: str, request: Optional[Request] = No
             "request_id": request_id,
         },
     )
+
+
+def _get_db_error_rate(window_seconds: int = 300) -> tuple[int, float]:
+    now_ts = time.time()
+    while _db_error_events and (now_ts - _db_error_events[0]) > window_seconds:
+        _db_error_events.popleft()
+    count = len(_db_error_events)
+    rate_per_min = round(count / (window_seconds / 60), 2) if window_seconds else 0.0
+    return count, rate_per_min
 
 
 @app.exception_handler(SATimeoutError)
