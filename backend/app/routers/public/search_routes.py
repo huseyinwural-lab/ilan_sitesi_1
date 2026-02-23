@@ -128,26 +128,37 @@ async def search_real_estate(
     for l in listings:
         # Extract m2 and rooms from attributes if available
         specs = {}
-        if l.attributes:
-            if "m2_gross" in l.attributes: specs["m2"] = l.attributes["m2_gross"]
-            if "room_count" in l.attributes: specs["rooms"] = l.attributes["room_count"]
-            
+        attributes = l.attributes or {}
+        if "m2_gross" in attributes: specs["m2"] = attributes["m2_gross"]
+        if "room_count" in attributes: specs["rooms"] = attributes["room_count"]
+
         badges = []
         if l.is_premium: badges.append("premium")
-        if l.user_type_snapshot == "commercial": badges.append("commercial")
-        
+        if use_listings_search:
+            if (l.seller_type or "") == "commercial":
+                badges.append("commercial")
+        else:
+            if l.user_type_snapshot == "commercial":
+                badges.append("commercial")
+
+        price_value = l.price_amount if use_listings_search else l.price
+        currency_value = l.currency or "EUR"
+        price_type_value = l.price_type or "FIXED"
+        location_country = l.country_code if use_listings_search else l.country
+        published_at = l.published_at if use_listings_search else l.created_at
+
         data.append(SearchResult(
-            id=str(l.id),
+            id=str(l.listing_id if use_listings_search else l.id),
             title=l.title,
-            price=float(l.price) if l.price is not None else None,
-            price_type=l.price_type or "FIXED",
-            price_amount=float(l.price) if l.price is not None else None,
+            price=float(price_value) if price_value is not None else None,
+            price_type=price_type_value,
+            price_amount=float(price_value) if price_value is not None else None,
             hourly_rate=float(l.hourly_rate) if l.hourly_rate is not None else None,
-            currency=l.currency or "EUR",
-            location={"city": l.city, "country": l.country},
+            currency=currency_value,
+            location={"city": l.city, "country": location_country},
             specs=specs,
             image_url=l.images[0] if l.images else None,
-            published_at=l.created_at.isoformat() if l.created_at else "",
+            published_at=published_at.isoformat() if published_at else "",
             badges=badges
         ))
         
