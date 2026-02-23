@@ -169,7 +169,7 @@ async def search_listings(
 
             elif attr.attribute_type == 'boolean':
                 if val is True:
-                    sub_q = sub_q.where(ListingAttribute.value_boolean == True)
+                    sub_q = sub_q.where(ListingAttribute.value_boolean.is_(True))
 
             elif attr.attribute_type == 'number':
                 if isinstance(val, dict):
