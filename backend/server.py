@@ -69,7 +69,15 @@ from app.repositories.auth_repository import SqlAuthRepository
 from app.repositories.applications_repository import SqlApplicationsRepository
 from app.admin_country_context import resolve_admin_country_context
 
-from app.dependencies import get_current_user, get_current_user_optional, check_permissions, require_portal_scope
+from app.dependencies import (
+    get_current_user,
+    get_current_user_optional,
+    check_permissions,
+    require_portal_scope,
+    TOKEN_VERSION,
+    _get_sql_user,
+    _resolve_portal_scope,
+)
 from app.countries_seed import default_countries
 from app.menu_seed import default_top_menu
 from app.categories_seed import vehicle_category_tree
