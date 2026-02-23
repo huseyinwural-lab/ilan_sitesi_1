@@ -56,6 +56,35 @@ export default function AdminCategoriesImportExport() {
     }
   };
 
+  const handleSampleDownload = async (type) => {
+    setError('');
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (moduleFilter) params.set('module', moduleFilter);
+      if (countryFilter) params.set('country', countryFilter);
+      const res = await fetch(`${API}/admin/categories/import-export/sample/${type}?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        throw new Error('Örnek dosya indirilemedi');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = type === 'xlsx' ? 'categories-sample.xlsx' : 'categories-sample.csv';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err?.message || 'Örnek dosya indirilemedi');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const validateFile = (selectedFile) => {
     if (!selectedFile) {
       setError('Dosya seçiniz.');
