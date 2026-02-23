@@ -881,6 +881,71 @@ export default function Layout({ children }) {
                         </div>
                       </div>
                     </div>
+                    <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50 p-3" data-testid="admin-system-health-cdn-country-section">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-semibold text-slate-700" data-testid="admin-system-health-cdn-country-title">CDN Country Breakdown</div>
+                        <div className="text-[11px] text-slate-500" data-testid="admin-system-health-cdn-active">
+                          {healthDetailDisplay.cdnStatus === 'disabled' ? 'Inactive' : 'CDN Metrics Active'}
+                        </div>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2" data-testid="admin-system-health-cdn-country-toggle">
+                        {cdnCountries.map((code) => (
+                          <button
+                            key={`cdn-country-${code}`}
+                            type="button"
+                            onClick={() => setCdnCountry(code)}
+                            className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${cdnCountry === code ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600'}`}
+                            data-testid={`admin-system-health-cdn-country-${code}`}
+                          >
+                            {code}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-2 space-y-1 text-[11px] text-slate-600" data-testid="admin-system-health-cdn-country-metrics">
+                        {cdnCountries.map((code) => {
+                          const metrics = cdnCountryMetrics[code] || {};
+                          const hit = metrics.hit_ratio ?? '--';
+                          const warm = metrics.warm_p95 ?? '--';
+                          const cold = metrics.cold_p95 ?? '--';
+                          const hitClass = getCdnMetricClass(hit, metrics.targets?.hit_ratio_min ?? healthDetailDisplay.cdnTargets.hit_ratio_min, 'min');
+                          const warmClass = getCdnMetricClass(warm, metrics.targets?.warm_p95 ?? healthDetailDisplay.cdnTargets.warm_p95_ms?.[code], 'max');
+                          const coldClass = getCdnMetricClass(cold, metrics.targets?.cold_p95 ?? healthDetailDisplay.cdnTargets.cold_p95_ms?.[code], 'max');
+                          return (
+                            <div
+                              key={`cdn-row-${code}`}
+                              className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-2 py-1"
+                              data-testid={`admin-system-health-cdn-row-${code}`}
+                            >
+                              <span className="text-slate-700" data-testid={`admin-system-health-cdn-row-country-${code}`}>{code}</span>
+                              <span className={hitClass} data-testid={`admin-system-health-cdn-row-hit-${code}`}>Hit {hit}%</span>
+                              <span className={warmClass} data-testid={`admin-system-health-cdn-row-warm-${code}`}>Warm {warm}ms</span>
+                              <span className={coldClass} data-testid={`admin-system-health-cdn-row-cold-${code}`}>Cold {cold}ms</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-3" data-testid="admin-system-health-cdn-sparkline">
+                        <div className="text-[11px] text-slate-500">24s Hit Ratio Sparkline ({cdnCountry})</div>
+                        <div className="mt-2 flex items-end gap-[2px] h-10" data-testid="admin-system-health-cdn-sparkline-bars">
+                          {selectedCountrySeries.length ? (
+                            selectedCountrySeries.map((point, idx) => (
+                              <div
+                                key={`cdn-spark-${idx}`}
+                                className="flex-1 rounded-sm bg-blue-200"
+                                style={{ height: `${Math.max(6, Math.round((point.hit_ratio / sparkMax) * 100))}%` }}
+                                title={`${point.hour} • ${point.hit_ratio}%`}
+                                data-testid={`admin-system-health-cdn-sparkline-bar-${idx}`}
+                              />
+                            ))
+                          ) : (
+                            <div className="text-[11px] text-slate-400" data-testid="admin-system-health-cdn-sparkline-empty">Veri yok</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-[11px] text-slate-500" data-testid="admin-system-health-cdn-canary">
+                        Canary: {healthDetailDisplay.cdnCanaryStatus} · cf_ids_present: {healthDetailDisplay.cfIdsPresent ? 'true' : 'false'}
+                      </div>
+                    </div>
                     <div className="mt-2 text-[11px] text-slate-500" data-testid="admin-system-health-cdn-targets">
                       Hedefler: Hit ≥ {healthDetailDisplay.cdnTargets.hit_ratio_min ?? 85}% · Cold ≤ {healthDetailDisplay.cdnTargets.origin_fetch_ratio_max ?? 15}% · Warm/Cold p95 ADR-MEDIA-002
                     </div>
