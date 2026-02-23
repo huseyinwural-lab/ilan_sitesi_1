@@ -26,7 +26,6 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 
 ### P1 (Beklemede)
 - Public Search & Moderation Mongo→PostgreSQL
-- Moderation reject flow (P2’den yükseltilirse)
 
 ### P2 (Plan)
 - Sihirbaz Edit (kilidi aç) yaklaşımı
