@@ -229,6 +229,91 @@ export default function AdminSystemSettingsPage() {
         </button>
       </div>
 
+      <div className="rounded-lg border bg-white p-4 space-y-3" data-testid="system-settings-cloudflare-card">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold" data-testid="system-settings-cloudflare-title">Cloudflare (CDN & Analytics)</h2>
+            <div className="text-xs text-muted-foreground" data-testid="system-settings-cloudflare-subtitle">
+              Account/Zone ID sadece masked olarak görüntülenir.
+            </div>
+          </div>
+          <div className="text-xs text-slate-500" data-testid="system-settings-cloudflare-source">
+            Source: {cloudflareConfig.cf_ids_source || 'unknown'} · Present: {cloudflareConfig.cf_ids_present ? 'true' : 'false'}
+          </div>
+        </div>
+
+        {cloudflareLoading ? (
+          <div className="text-xs text-muted-foreground" data-testid="system-settings-cloudflare-loading">Yükleniyor…</div>
+        ) : (
+          <>
+            <div className="grid gap-4 md:grid-cols-2" data-testid="system-settings-cloudflare-inputs">
+              <div className="space-y-1">
+                <label className="text-xs text-slate-600" data-testid="system-settings-cloudflare-account-label">Cloudflare Account ID</label>
+                <input
+                  type="password"
+                  value={cloudflareForm.account_id}
+                  onChange={(e) => setCloudflareForm((prev) => ({ ...prev, account_id: e.target.value }))}
+                  placeholder={cloudflareConfig.account_id_masked || '••••'}
+                  className="h-9 px-3 rounded-md border bg-background text-sm w-full"
+                  disabled={!isSuperAdmin || cloudflareSaving}
+                  data-testid="system-settings-cloudflare-account-input"
+                />
+                <div className="text-[11px] text-slate-500" data-testid="system-settings-cloudflare-account-hint">
+                  Mevcut: {cloudflareConfig.account_id_masked || '—'}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-slate-600" data-testid="system-settings-cloudflare-zone-label">Cloudflare Zone ID</label>
+                <input
+                  type="password"
+                  value={cloudflareForm.zone_id}
+                  onChange={(e) => setCloudflareForm((prev) => ({ ...prev, zone_id: e.target.value }))}
+                  placeholder={cloudflareConfig.zone_id_masked || '••••'}
+                  className="h-9 px-3 rounded-md border bg-background text-sm w-full"
+                  disabled={!isSuperAdmin || cloudflareSaving}
+                  data-testid="system-settings-cloudflare-zone-input"
+                />
+                <div className="text-[11px] text-slate-500" data-testid="system-settings-cloudflare-zone-hint">
+                  Mevcut: {cloudflareConfig.zone_id_masked || '—'}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3" data-testid="system-settings-cloudflare-actions">
+              <button
+                onClick={handleSaveCloudflare}
+                className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
+                disabled={!isSuperAdmin || cloudflareSaving}
+                data-testid="system-settings-cloudflare-save"
+              >
+                {cloudflareSaving ? 'Kaydediliyor…' : 'Kaydet'}
+              </button>
+              <button
+                onClick={handleCloudflareCanary}
+                className="h-9 px-3 rounded-md border text-sm"
+                disabled={!isSuperAdmin || canaryLoading}
+                data-testid="system-settings-cloudflare-canary"
+              >
+                {canaryLoading ? 'Test Ediliyor…' : 'Test Connection (Canary)'}
+              </button>
+              {!isSuperAdmin && (
+                <span className="text-xs text-amber-600" data-testid="system-settings-cloudflare-permission">
+                  Sadece super_admin düzenleyebilir.
+                </span>
+              )}
+            </div>
+
+            <div className="text-xs text-slate-600" data-testid="system-settings-cloudflare-canary-status" title={canaryDescriptions[cloudflareConfig.canary_status] || canaryDescriptions.UNKNOWN}>
+              Son Canary: {cloudflareConfig.canary_status || 'UNKNOWN'}
+            </div>
+          </>
+        )}
+
+        {cloudflareError && (
+          <div className="text-xs text-destructive" data-testid="system-settings-cloudflare-error">{cloudflareError}</div>
+        )}
+      </div>
+
       <div className="flex flex-wrap items-center gap-3" data-testid="system-settings-filters">
         <input
           value={filterKey}
