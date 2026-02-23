@@ -14424,6 +14424,7 @@ async def admin_update_cloudflare_config(
         canary_status, canary_reason = await cloudflare_metrics_service.run_canary(credentials)
 
     await update_canary_status(session, canary_status, current_user.get("id"))
+    _system_health_detail_cache["checked_at"] = 0
 
     logger.info(
         "cloudflare_canary_result",
