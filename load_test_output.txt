@@ -4,3 +4,4 @@ Phase 1 progress: 200/1000
 Phase 1 progress: 300/1000
 Phase 1 progress: 400/1000
 Phase 1 progress: 500/1000
+Phase 1 progress: 600/1000
