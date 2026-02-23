@@ -1043,10 +1043,7 @@ const AdminCategories = () => {
     });
     setSchema(applySchemaDefaults(item.form_schema));
     setWizardStep("hierarchy");
-    setWizardProgress({
-      state: item.wizard_progress?.state || "draft",
-      dirty_steps: Array.isArray(item.wizard_progress?.dirty_steps) ? item.wizard_progress.dirty_steps : [],
-    });
+    setWizardProgress(normalizeWizardProgress(item.wizard_progress));
     setEditModeStep(null);
     setHierarchyComplete(Boolean(item.hierarchy_complete));
     setHierarchyError("");
