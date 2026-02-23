@@ -325,6 +325,25 @@ export default function Layout({ children }) {
     };
   }, [systemHealthDetail, systemHealthDetailStatus]);
 
+  const cdnCountries = ['DE', 'AT', 'CH', 'FR'];
+  const cdnCountryMetrics = healthDetailDisplay.cdnCountryMetrics || {};
+  const cdnCountrySeries = healthDetailDisplay.cdnCountrySeries || {};
+  const selectedCountryMetrics = cdnCountryMetrics[cdnCountry] || {};
+  const selectedCountrySeries = cdnCountrySeries[cdnCountry] || [];
+
+  const getCdnMetricClass = (value, target, type = 'max') => {
+    if (value === '--' || value === null || value === undefined) return 'text-slate-500';
+    if (target === null || target === undefined) return 'text-slate-700';
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return 'text-slate-500';
+    if (type === 'min') {
+      return numeric >= target ? 'text-emerald-600' : 'text-rose-600';
+    }
+    return numeric <= target ? 'text-emerald-600' : 'text-rose-600';
+  };
+
+  const sparkMax = selectedCountrySeries.reduce((max, item) => (item.hit_ratio > max ? item.hit_ratio : max), 0) || 100;
+
 
   const canViewSystemHealth = Boolean(
     user && ['super_admin', 'country_admin'].includes(user.role) && location.pathname.startsWith('/admin')
