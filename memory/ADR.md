@@ -432,3 +432,47 @@ graph LR
 
 **Gerekçe:** Hızlı teşhis.
 
+---
+
+## ADR-UX-CF-001 — Teknik enum UI’dan ayrıştırılacak
+
+**Karar:** CONFIG_MISSING, cf_metrics_disabled gibi teknik durumlar ana UI metninde gösterilmeyecek; yalnız tooltip/expand altında gösterilecek.
+
+**Gerekçe:** Teknik enumlar “sistem bozuk” algısı yaratır.
+
+**Etkileri / trade-off:**
+- (+) Daha net UX
+- (-) Teknik detay görmek için ek tıklama gerekir
+
+---
+
+## ADR-UX-CF-002 — Tek durum mesajı kuralı
+
+**Karar:** Kart üzerinde aynı anda tek blokaj mesajı gösterilecek; öncelik sırası sabit.
+
+**Gerekçe:** Çakışan mesajlar kullanıcıyı yanıltıyor.
+
+**Etkileri / trade-off:**
+- (+) Netlik artar
+- (-) İkincil uyarılar tooltip ile görünür
+
+---
+
+## ADR-UX-CF-003 — Guard durumunda canary kapalı
+
+**Karar:** Encryption key yokken canary çalıştırılamaz (disabled).
+
+**Gerekçe:** Test edilemeyecek akışları kullanıcıya sunmamak.
+
+**Etkileri / trade-off:**
+- (+) Gereksiz hata trafiği azalır
+- (-) “Deneyeyim” yaklaşımı engellenir
+
+---
+
+## ADR-CANARY-LOCK-001 — Canary enum kilidi
+
+**Karar:** Canary enum sadece OK | CONFIG_MISSING | SCOPE_ERROR | API_ERROR.
+
+**Gerekçe:** Basit izleme standardı.
+
