@@ -407,6 +407,26 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     }
   };
 
+  const trackWizardEvent = useCallback(async (eventName, metadata = {}) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/analytics/events`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_name: eventName,
+          metadata,
+        }),
+      });
+    } catch (err) {
+      console.error('Analytics event error', err);
+    }
+  }, []);
+
   const saveStep = async (data) => {
     setLoading(true);
     setValidationErrors([]);
