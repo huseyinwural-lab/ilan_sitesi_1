@@ -85,49 +85,53 @@ const BrandStep = () => {
   const handleComplete = async () => {
     if (saving) return false;
     setSaving(true);
-    if (!selectedMake) {
-      setError('Lütfen marka seçin.');
-      scrollToError();
-      setSaving(false);
-      return false;
-    }
+    try {
+      if (!selectedMake) {
+        setError('Lütfen marka seçin.');
+        scrollToError();
+        return false;
+      }
 
-    const makeLabel = selectedMake.label || selectedMake.name || selectedMake.key;
+      const makeLabel = selectedMake.label || selectedMake.name || selectedMake.key;
 
-    const ok = await saveDraft({
-      vehicle: {
+      const ok = await saveDraft({
+        vehicle: {
+          make_key: selectedMake.key,
+          make_id: selectedMake.id,
+        },
+      });
+
+      if (!ok) {
+        setError('Marka kaydedilemedi.');
+        scrollToError();
+        return false;
+      }
+
+      setBasicInfo((prev) => ({
+        ...prev,
         make_key: selectedMake.key,
         make_id: selectedMake.id,
-      },
-    });
+        make_label: makeLabel,
+        model_key: null,
+        model_id: null,
+        model_label: null,
+        year: null,
+        trim_key: null,
+      }));
 
-    if (!ok) {
-      setError('Marka kaydedilemedi.');
-      return false;
+      setCompletedSteps((prev) => ({
+        ...prev,
+        2: true,
+        3: false,
+        4: false,
+        5: false,
+        6: false,
+      }));
+      setError('');
+      return true;
+    } finally {
+      setSaving(false);
     }
-
-    setBasicInfo((prev) => ({
-      ...prev,
-      make_key: selectedMake.key,
-      make_id: selectedMake.id,
-      make_label: makeLabel,
-      model_key: null,
-      model_id: null,
-      model_label: null,
-      year: null,
-      trim_key: null,
-    }));
-
-    setCompletedSteps((prev) => ({
-      ...prev,
-      2: true,
-      3: false,
-      4: false,
-      5: false,
-      6: false,
-    }));
-    setError('');
-    return true;
   };
 
   const handleNext = async () => {
