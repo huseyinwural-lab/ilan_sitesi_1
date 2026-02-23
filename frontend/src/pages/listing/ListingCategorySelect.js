@@ -134,6 +134,46 @@ const ListingCategorySelect = () => {
     loadRootCategories();
   }, [loadRootCategories]);
 
+  const fetchRecentCategory = useCallback(async () => {
+    setRecentLoading(true);
+    setRecentError('');
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setRecentCategory(readRecentFromStorage());
+      setRecentLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/account/recent-category`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) {
+        const fallback = readRecentFromStorage();
+        setRecentCategory(fallback);
+        return;
+      }
+      const data = await res.json();
+      if (data?.recent) {
+        setRecentCategory(data.recent);
+        persistRecentToStorage(data.recent);
+      } else {
+        setRecentCategory(null);
+      }
+    } catch (err) {
+      const fallback = readRecentFromStorage();
+      setRecentCategory(fallback);
+      setRecentError('Son seçiminiz yüklenemedi.');
+    } finally {
+      setRecentLoading(false);
+    }
+  }, [persistRecentToStorage, readRecentFromStorage]);
+
+  useEffect(() => {
+    fetchRecentCategory();
+  }, [fetchRecentCategory]);
+
   const breadcrumbLabel = selectedPath.length
     ? selectedPath.map((item) => item.name).join(' > ')
     : selectedModuleLabel
