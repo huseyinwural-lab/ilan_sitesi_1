@@ -888,15 +888,20 @@ export default function Layout({ children }) {
                       <div className="rounded-lg border border-slate-100 bg-slate-50 p-2" data-testid="admin-system-health-cdn-section">
                         <div className="flex items-center justify-between">
                           <div className="text-slate-500">CDN (Cloudflare)</div>
-                          {healthDetailDisplay.cdnStatus === 'disabled' ? (
-                            <span className="text-[11px] font-semibold text-slate-500" data-testid="admin-system-health-cdn-disabled">Kapalı</span>
-                          ) : healthDetailDisplay.cdnStatus === 'config_missing' ? (
-                            <span className="text-[11px] font-semibold text-amber-600" data-testid="admin-system-health-cdn-config-missing">Configuration Missing</span>
-                          ) : healthDetailDisplay.cdnAlerts.has_alert ? (
-                            <span className="text-[11px] font-semibold text-rose-600" data-testid="admin-system-health-cdn-alert">Uyarı</span>
-                          ) : (
-                            <span className="text-[11px] font-semibold text-emerald-600" data-testid="admin-system-health-cdn-ok">OK</span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {healthDetailDisplay.cdnStatus === 'disabled' ? (
+                              <span className="text-[11px] font-semibold text-slate-500" data-testid="admin-system-health-cdn-disabled">Kapalı</span>
+                            ) : healthDetailDisplay.cdnStatus === 'config_missing' ? (
+                              <span className="text-[11px] font-semibold text-amber-600" data-testid="admin-system-health-cdn-config-missing">Configuration Missing</span>
+                            ) : healthDetailDisplay.cdnAlerts.has_alert ? (
+                              <span className="text-[11px] font-semibold text-rose-600" data-testid="admin-system-health-cdn-alert">Uyarı</span>
+                            ) : (
+                              <span className="text-[11px] font-semibold text-emerald-600" data-testid="admin-system-health-cdn-ok">OK</span>
+                            )}
+                            {!healthDetailDisplay.cfMetricsEnabled && (
+                              <span className="text-[11px] font-semibold text-amber-600" data-testid="admin-system-health-cf-flag-warning">Flag Off</span>
+                            )}
+                          </div>
                         </div>
                         <div className="mt-2 space-y-1 text-[11px] text-slate-600" data-testid="admin-system-health-cdn-metrics">
                           <div data-testid="admin-system-health-cdn-hit">Hit Ratio: {healthDetailDisplay.cdnHitRatio}%</div>
