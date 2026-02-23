@@ -7668,6 +7668,7 @@ async def track_listing_flow_event(
 class RecentCategoryPayload(BaseModel):
     category_id: str
     module: str
+    country: Optional[str] = None
     path: Optional[list] = None
     category_name: Optional[str] = None
 
