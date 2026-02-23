@@ -796,6 +796,66 @@ const AdminCategories = () => {
     }
   };
 
+  const handleUnlockStep = async (stepId) => {
+    if (!editing) return;
+    if (!canEditUnlock) {
+      setHierarchyError("Bu adımı düzenlemek için yetkiniz yok.");
+      return;
+    }
+    const dirtyChain = buildDirtyChain(stepId);
+    const nextDirtySteps = Array.from(new Set([...dirtySteps, ...dirtyChain]));
+    setWizardProgress((prev) => ({
+      state: prev?.state || "draft",
+      dirty_steps: nextDirtySteps,
+    }));
+    setWizardStep(stepId);
+    setEditModeStep(stepId);
+
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify({
+          wizard_progress: {
+            state: wizardProgressState,
+            dirty_steps: nextDirtySteps,
+          },
+          wizard_edit_event: {
+            action: "unlock",
+            step_id: stepId,
+            dirty_chain: dirtyChain,
+            changed_fields: [],
+            event_timestamp: new Date().toISOString(),
+          },
+          expected_updated_at: editing.updated_at,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.detail || "Edit modu açılamadı.");
+      }
+      const data = await res.json();
+      if (data?.category?.wizard_progress) {
+        setWizardProgress({
+          state: data.category.wizard_progress.state || "draft",
+          dirty_steps: Array.isArray(data.category.wizard_progress.dirty_steps)
+            ? data.category.wizard_progress.dirty_steps
+            : [],
+        });
+      }
+    } catch (error) {
+      setHierarchyError(error?.message || "Edit modu açılamadı.");
+    }
+  };
+
+  const handleHierarchyEdit = async () => {
+    if (!editing) return;
+    await handleUnlockStep("hierarchy");
+  };
+
   const handleLevelEditColumn = async (levelIndex, items) => {
     if (!items || items.length === 0) return;
     const canProceed = await resetWizardProgress();
