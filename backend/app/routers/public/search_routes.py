@@ -93,7 +93,7 @@ async def search_real_estate(
     premium_col = ListingSearch.is_premium if use_listings_search else Listing.is_premium
 
     query = select(ListingModel).where(
-        ListingModelisting.status == 'active',
+        ListingModel.status == 'active',
         country_col == country.upper(),
         module_col == 'real_estate' # or 'residential', need to align with Category seed
     )
