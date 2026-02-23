@@ -11,6 +11,36 @@ import hashlib
 
 router = APIRouter()
 
+
+def _get_search_sql_rollout() -> float:
+    try:
+        rollout = float(os.environ.get("SEARCH_SQL_ROLLOUT", "0"))
+    except ValueError:
+        rollout = 0.0
+    return max(0.0, min(1.0, rollout))
+
+
+def _stable_bucket_for_request(request) -> float:
+    key = None
+    if request:
+        key = request.headers.get("X-Request-ID")
+        if not key and request.client:
+            key = request.client.host
+    if not key:
+        key = "anonymous"
+    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
+    bucket_int = int(digest[:8], 16)
+    return bucket_int / 0xFFFFFFFF
+
+
+def _use_listings_search(request) -> bool:
+    rollout = _get_search_sql_rollout()
+    if rollout >= 1:
+        return True
+    if rollout <= 0:
+        return False
+    return _stable_bucket_for_request(request) < rollout
+
 class SearchResult(BaseModel):
     id: str
     title: str
