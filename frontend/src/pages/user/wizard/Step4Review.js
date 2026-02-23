@@ -30,6 +30,16 @@ const ReviewSubmit = () => {
           decimal_places: coreFields.decimal_places,
         },
       },
+      attributes: {
+        mileage_km: basicInfo.mileage_km,
+        fuel_type: basicInfo.fuel_type,
+        transmission: basicInfo.transmission,
+        drive_type: basicInfo.drive_type,
+        body_type: basicInfo.body_type,
+        color: basicInfo.color,
+        damage_status: basicInfo.damage_status,
+        trade_in: basicInfo.trade_in,
+      },
       modules: moduleData,
     });
   };
