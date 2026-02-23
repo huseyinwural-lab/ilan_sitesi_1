@@ -4661,73 +4661,85 @@ async def update_admin_user(
     payload: AdminUserUpdatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
-    target = await db.users.find_one({"id": user_id}, {"_id": 0})
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    target = result.scalar_one_or_none()
     if not target:
         raise HTTPException(status_code=404, detail="Admin user not found")
 
-    next_role = payload.role or target.get("role")
+    next_role = payload.role or target.role
     if payload.role and payload.role not in ADMIN_ROLE_OPTIONS:
         raise HTTPException(status_code=400, detail="Invalid admin role")
 
-    active_countries_docs = await db.countries.find({"active_flag": True}, {"_id": 0, "country_code": 1, "code": 1}).to_list(length=200)
-    active_countries = [
-        (doc.get("country_code") or doc.get("code") or "").upper()
-        for doc in active_countries_docs
-        if doc.get("country_code") or doc.get("code")
-    ]
+    result = await session.execute(select(Country).where(Country.is_enabled.is_(True)))
+    active_countries = [country.code.upper() for country in result.scalars().all()]
 
-    if next_role == "country_admin" and payload.country_scope is None and not (target.get("country_scope") or []):
+    if next_role == "country_admin" and payload.country_scope is None and not (target.country_scope or []):
         raise HTTPException(status_code=400, detail="Country scope required for country_admin")
 
-    next_scope = target.get("country_scope") or []
+    next_scope = target.country_scope or []
     if payload.country_scope is not None or payload.role:
         next_scope = _normalize_scope(next_role, payload.country_scope or next_scope, active_countries)
 
-    await _assert_super_admin_invariant(db, target, payload.role, payload.is_active, current_user)
+    await _assert_super_admin_invariant_sql(session, target, payload.role, payload.is_active, current_user)
 
-    updates: Dict[str, Any] = {}
-    if payload.role and payload.role != target.get("role"):
-        updates["role"] = payload.role
+    role_changed = payload.role and payload.role != target.role
+    deactivated = payload.is_active is False and target.is_active
+
+    if payload.role and payload.role != target.role:
+        target.role = payload.role
     if payload.country_scope is not None or payload.role:
-        updates["country_scope"] = next_scope
-    if payload.is_active is not None and payload.is_active != target.get("is_active", True):
-        updates["is_active"] = bool(payload.is_active)
+        target.country_scope = next_scope
+    if payload.is_active is not None and payload.is_active != target.is_active:
+        target.is_active = bool(payload.is_active)
 
-    if not updates:
+    if not (role_changed or payload.country_scope is not None or payload.role or payload.is_active is not None):
         return {"ok": True}
 
-    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
-    await db.users.update_one({"id": user_id}, {"$set": updates})
+    await _write_audit_log_sql(
+        session=session,
+        action="ADMIN_USER_UPDATED",
+        actor=current_user,
+        resource_type="admin_user",
+        resource_id=str(target.id),
+        metadata={"email": target.email},
+        request=request,
+        country_code=None,
+    )
 
-    if payload.role and payload.role != target.get("role"):
-        audit_role = await build_audit_entry(
-            event_type="admin_role_changed",
+    if role_changed:
+        await _write_audit_log_sql(
+            session=session,
+            action="ADMIN_ROLE_CHANGED",
             actor=current_user,
-            target_id=user_id,
-            target_type="admin_user",
-            country_code=None,
-            details={"from": target.get("role"), "to": payload.role},
+            resource_type="admin_user",
+            resource_id=str(target.id),
+            metadata={"from": target.role, "to": payload.role},
             request=request,
+            country_code=None,
         )
-        audit_role["action"] = "admin_role_changed"
-        await db.audit_logs.insert_one(audit_role)
 
-    if payload.is_active is not None and payload.is_active is False:
-        audit_deactivate = await build_audit_entry(
-            event_type="admin_deactivated",
+    if deactivated:
+        await _write_audit_log_sql(
+            session=session,
+            action="ADMIN_DEACTIVATED",
             actor=current_user,
-            target_id=user_id,
-            target_type="admin_user",
-            country_code=None,
-            details={"email": target.get("email")},
+            resource_type="admin_user",
+            resource_id=str(target.id),
+            metadata={"email": target.email},
             request=request,
+            country_code=None,
         )
-        audit_deactivate["action"] = "admin_deactivated"
-        await db.audit_logs.insert_one(audit_deactivate)
+
+    await session.commit()
 
     return {"ok": True}
 
