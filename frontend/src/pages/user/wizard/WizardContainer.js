@@ -2,10 +2,12 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { WizardProvider, useWizard } from './WizardContext';
 import Step1Category from './Step1Category';
-import Step2Attributes from './Step2Attributes';
-import Step3PricingLocation from './Step3PricingLocation';
-import Step3Media from './Step3Media';
-import Step4Review from './Step4Review';
+import Step2Brand from './Step2Brand';
+import Step3Model from './Step3Model';
+import Step4YearTrim from './Step4YearTrim';
+import Step5CoreFields from './Step5CoreFields';
+import Step6FeaturesMedia from './Step6FeaturesMedia';
+import Step7Review from './Step4Review';
 
 const WizardContent = () => {
   const { step, loading, editLoading } = useWizard();
