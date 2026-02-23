@@ -1669,13 +1669,14 @@ RBAC_MISSING_POLICIES: list[str] = []
 
 def _normalize_admin_path(path: str) -> str:
     if path.startswith("/api/"):
-        return path[4:]
+        return path
+    if path.startswith("/admin") or path.startswith("/v1/admin"):
+        return f"/api{path}"
     return path
 
 
 def _is_admin_path(path: str) -> bool:
-    normalized = _normalize_admin_path(path)
-    return normalized.startswith("/admin") or normalized.startswith("/v1/admin")
+    return path.startswith("/api/admin") or path.startswith("/admin") or path.startswith("/api/v1/admin") or path.startswith("/v1/admin")
 
 
 def _extract_route_roles(route: APIRoute) -> Optional[list[str]]:
