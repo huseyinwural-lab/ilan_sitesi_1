@@ -11447,7 +11447,10 @@ async def _moderation_transition_sql(
         moderator_id=moderator_id,
         audit_ref=audit_ref,
     )
-    await session.commit()
+    if commit:
+        await session.commit()
+    else:
+        await session.flush()
 
     return listing
 
