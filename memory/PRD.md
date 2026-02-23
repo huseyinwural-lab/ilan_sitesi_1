@@ -28,8 +28,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Public Search & Moderation Mongo→PostgreSQL
 
 ### P2 (Plan)
-- Sihirbaz Edit (kilidi aç) yaklaşımı
-- Çekirdek Alanlar/Parametre alanları genişletme
+- Parametre Alanları tabı
+- VIES VAT doğrulama
+- GDPR CSV export
+- Moderation reject flow
+- Scheduled token cleanup
 
 ## Kullanıcı Personaları
 - **Consumer (Bireysel)**
