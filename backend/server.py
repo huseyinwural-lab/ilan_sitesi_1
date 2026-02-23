@@ -3412,6 +3412,20 @@ async def admin_system_health_detail(
     etl_state = _read_search_etl_state()
     slow_query_count, slow_query_threshold = get_slow_query_summary()
 
+    moderation_sla_avg = None
+    moderation_sla_pending = 0
+    try:
+        async with AsyncSessionLocal() as session:
+            avg_stmt = select(func.avg(func.extract('epoch', func.now() - ModerationItem.created_at))).where(
+                ModerationItem.status == "PENDING"
+            )
+            moderation_sla_avg = (await session.execute(avg_stmt)).scalar()
+            count_stmt = select(func.count()).select_from(ModerationItem).where(ModerationItem.status == "PENDING")
+            moderation_sla_pending = (await session.execute(count_stmt)).scalar_one() or 0
+    except Exception:
+        moderation_sla_avg = None
+        moderation_sla_pending = 0
+
     endpoint_stats = get_endpoint_stats()
     payload = {
         "db_status": db_status,
