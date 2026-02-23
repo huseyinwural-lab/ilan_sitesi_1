@@ -74,7 +74,7 @@ const BrandStep = () => {
   const handleComplete = async () => {
     if (!selectedMake) {
       setError('Lütfen marka seçin.');
-      return;
+      return false;
     }
 
     const makeLabel = selectedMake.label || selectedMake.name || selectedMake.key;
@@ -88,7 +88,7 @@ const BrandStep = () => {
 
     if (!ok) {
       setError('Marka kaydedilemedi.');
-      return;
+      return false;
     }
 
     setBasicInfo((prev) => ({
@@ -112,9 +112,22 @@ const BrandStep = () => {
       6: false,
     }));
     setError('');
+    return true;
   };
 
-  const nextDisabled = !completedSteps[2];
+  const handleNext = async () => {
+    if (!selectedMake) {
+      setError('Lütfen marka seçin.');
+      return;
+    }
+    if (!completedSteps[2]) {
+      const ok = await handleComplete();
+      if (!ok) return;
+    }
+    setStep(3);
+  };
+
+  const nextDisabled = !selectedMake || loading;
 
   return (
     <div className="space-y-6" data-testid="wizard-brand-step">
