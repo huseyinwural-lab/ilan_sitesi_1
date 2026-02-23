@@ -14306,6 +14306,120 @@ async def admin_list_system_settings(
     return {"items": items}
 
 
+@api_router.get("/admin/system-settings/cloudflare")
+async def admin_get_cloudflare_config(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    masked = await build_masked_config(db)
+    canary_doc = await load_canary_status(db)
+    canary_status = None
+    canary_checked_at = None
+    if canary_doc:
+        value = canary_doc.get("value")
+        if isinstance(value, dict):
+            canary_status = value.get("status")
+            canary_checked_at = value.get("checked_at")
+        elif isinstance(value, str):
+            canary_status = value
+    return {
+        "account_id_masked": masked.account_masked,
+        "zone_id_masked": masked.zone_masked,
+        "account_id_last4": masked.account_last4,
+        "zone_id_last4": masked.zone_last4,
+        "cf_ids_source": masked.source,
+        "cf_ids_present": masked.present,
+        "canary_status": canary_status,
+        "canary_checked_at": canary_checked_at,
+    }
+
+
+@api_router.post("/admin/system-settings/cloudflare")
+async def admin_update_cloudflare_config(
+    payload: CloudflareConfigPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    if not payload.account_id or not payload.zone_id:
+        raise HTTPException(status_code=400, detail="Cloudflare IDs required")
+
+    db = request.app.state.db
+    try:
+        encrypted_account = encrypt_config_value(payload.account_id)
+        encrypted_zone = encrypt_config_value(payload.zone_id)
+    except CloudflareConfigError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    await upsert_cloudflare_setting(db, CLOUDFLARE_ACCOUNT_KEY, encrypted_account, current_user)
+    await upsert_cloudflare_setting(db, CLOUDFLARE_ZONE_KEY, encrypted_zone, current_user)
+
+    await write_cloudflare_audit(
+        db,
+        current_user,
+        action="CLOUDFLARE_CONFIG_UPDATE",
+        metadata={
+            "account_last4": encrypted_account.get("last4"),
+            "zone_last4": encrypted_zone.get("last4"),
+        },
+    )
+
+    canary_status = CANARY_CONFIG_MISSING
+    api_token = os.environ.get("CLOUDFLARE_API_TOKEN")
+    if api_token:
+        credentials = CloudflareCredentials(
+            api_token=api_token,
+            account_id=payload.account_id,
+            zone_id=payload.zone_id,
+        )
+        canary_status = await cloudflare_metrics_service.run_canary(credentials)
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await upsert_cloudflare_setting(
+        db,
+        CLOUDFLARE_CANARY_KEY,
+        {"status": canary_status, "checked_at": now_iso},
+        current_user,
+    )
+
+    return {
+        "ok": True,
+        "canary_status": canary_status,
+        "cf_ids_present": True,
+    }
+
+
+@api_router.post("/admin/system-settings/cloudflare/canary")
+async def admin_cloudflare_canary(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    db = request.app.state.db
+    account_id, zone_id, _ = await resolve_cloudflare_config(db)
+    api_token = os.environ.get("CLOUDFLARE_API_TOKEN")
+    canary_status = CANARY_CONFIG_MISSING
+    if account_id and zone_id and api_token:
+        credentials = CloudflareCredentials(api_token=api_token, account_id=account_id, zone_id=zone_id)
+        canary_status = await cloudflare_metrics_service.run_canary(credentials)
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await upsert_cloudflare_setting(
+        db,
+        CLOUDFLARE_CANARY_KEY,
+        {"status": canary_status, "checked_at": now_iso},
+        current_user,
+    )
+
+    await write_cloudflare_audit(
+        db,
+        current_user,
+        action="CLOUDFLARE_CANARY",
+        metadata={"status": canary_status},
+    )
+
+    return {"status": canary_status}
+
+
 @api_router.post("/admin/system-settings", status_code=201)
 async def admin_create_system_setting(
     payload: SystemSettingCreatePayload,
