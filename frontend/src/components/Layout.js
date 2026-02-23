@@ -130,10 +130,10 @@ export default function Layout({ children }) {
 
   const healthDisplay = useMemo(() => {
     if (systemHealthStatus === 'error') {
-      return { status: 'error', label: 'DB Hata', timeLabel: '--:--', errorLabel: '--/5dk' };
+      return { status: 'error', label: 'DB Hata', timeLabel: '--:--', errorLabel: '--/5dk', title: 'Sağlık verisi alınamadı' };
     }
     if (!systemHealth) {
-      return { status: 'idle', label: 'DB --', timeLabel: '--:--', errorLabel: '--/5dk' };
+      return { status: 'idle', label: 'DB --', timeLabel: '--:--', errorLabel: '--/5dk', title: 'Sağlık kontrolü bekleniyor' };
     }
     const dbOk = systemHealth.db_status === 'ok';
     const timeLabel = systemHealth.last_check_at
@@ -141,11 +141,15 @@ export default function Layout({ children }) {
       : '--:--';
     const errorCount = systemHealth.error_count_5m ?? 0;
     const errorRate = systemHealth.error_rate_per_min_5m ?? 0;
+    const title = systemHealth.last_db_error
+      ? `Son hata: ${systemHealth.last_db_error}`
+      : 'Son 5dk hata oranı';
     return {
       status: dbOk ? 'ok' : 'error',
       label: dbOk ? 'DB OK' : 'DB Down',
       timeLabel,
       errorLabel: `${errorCount}/5dk (${errorRate}/dk)`,
+      title,
     };
   }, [systemHealth, systemHealthStatus]);
 
