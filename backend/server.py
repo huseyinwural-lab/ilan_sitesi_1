@@ -16650,11 +16650,20 @@ async def public_search_v2(
 # =====================
 
 @api_router.get("/v1/vehicle/makes")
-async def public_vehicle_makes(country: str | None = None, request: Request = None):
+async def public_vehicle_makes(country: str | None = None, request: Request = None, session: AsyncSession = Depends(get_sql_session)):
     if not country:
         raise HTTPException(status_code=400, detail="country is required")
     code = country.upper()
-    db = request.app.state.db
+    db = request.app.state.db if request else None
+    if not db:
+        result = await session.execute(select(VehicleMake).where(VehicleMake.is_active == True))
+        items = [
+            {"id": str(make.id), "key": make.slug, "label": make.name}
+            for make in result.scalars().all()
+            if make.slug
+        ]
+        return {"version": "sql", "items": items}
+
     docs = await db.vehicle_makes.find(
         {
             "country_code": code,
