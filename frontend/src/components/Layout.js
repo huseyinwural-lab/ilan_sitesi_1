@@ -206,6 +206,7 @@ export default function Layout({ children }) {
         errorLabel: 'Veri alınamadı',
         slowQueryCount: 0,
         slowQueryThreshold: 800,
+        endpointStats: [],
       };
     }
     if (!systemHealthDetail) {
@@ -218,6 +219,7 @@ export default function Layout({ children }) {
         errorLabel: 'Bekleniyor',
         slowQueryCount: 0,
         slowQueryThreshold: 800,
+        endpointStats: [],
       };
     }
     const buckets = systemHealthDetail.error_buckets_24h || [];
