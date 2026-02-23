@@ -215,7 +215,7 @@ export default function AdminCategoriesImportExport() {
                 <input
                   id="import-file"
                   type="file"
-                  accept={format === 'json' ? '.json' : '.csv'}
+                  accept={format === 'xlsx' ? '.xlsx' : '.csv'}
                   onChange={(event) => setFile(event.target.files?.[0] || null)}
                   className="mt-1 block w-full text-sm"
                   data-testid="categories-import-file"
