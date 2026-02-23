@@ -10165,7 +10165,7 @@ def _assert_category_parent_compatible(
         if parent.path == category.path or parent.path.startswith(f"{category.path}."):
             raise HTTPException(status_code=409, detail="parent cycle detected")
     if parent.country_code:
-        if country_code and parent.country_code != country_code:
+        if not country_code or parent.country_code != country_code:
             raise HTTPException(status_code=409, detail="parent country mismatch")
 
 
