@@ -110,7 +110,7 @@ export default function AdminSystemSettingsPage() {
 
   const handleSaveCloudflare = async () => {
     if (!encryptionKeyPresent) {
-      setCloudflareError('CONFIG_ENCRYPTION_KEY tanımlı değil. Config kaydedilemez.');
+      setCloudflareError('Kaydedilemedi: Güvenlik anahtarı eksik.');
       return;
     }
     if (!cloudflareForm.account_id || !cloudflareForm.zone_id) {
@@ -134,10 +134,14 @@ export default function AdminSystemSettingsPage() {
       });
       setCloudflareForm({ account_id: '', zone_id: '' });
       fetchCloudflareConfig();
+      fetchHealthDetail();
     } catch (e) {
       const detail = e.response?.data?.detail || 'Kaydedilemedi';
-      setCloudflareError(detail);
-      toast({ title: 'Cloudflare IDs Save Failed', description: detail, variant: 'destructive' });
+      if (detail.includes('CONFIG_ENCRYPTION_KEY')) {
+        setCloudflareError('Kaydedilemedi: Güvenlik anahtarı eksik.');
+      } else {
+        setCloudflareError(detail);
+      }
     } finally {
       setCloudflareSaving(false);
     }
