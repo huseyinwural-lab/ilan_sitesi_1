@@ -292,3 +292,79 @@ graph LR
 - (+) Operasyonel kontrol, şema disiplini
 - (-) Zaman alır
 
+---
+
+## ADR-CONFIG-002 — Cloudflare ID’ler Admin UI üzerinden girilebilir
+
+**Karar:** CLOUDFLARE_ACCOUNT_ID ve CLOUDFLARE_ZONE_ID admin panelinden manuel girilebilir.
+
+**Gerekçe:** Ops bağımlılığını azaltmak, hızlı aktivasyon.
+
+**Etkileri / trade-off:**
+- (+) Hızlı test ve preview aktivasyonu
+- (-) Yanlış giriş riski → canary validation zorunlu
+
+**Risk & Önlem:** Hatalı ID → adapter error; canary zorunlu doğrulama.
+
+---
+
+## ADR-SEC-CONFIG-002 — Config şifreli saklama
+
+**Karar:** Admin üzerinden girilen ID’ler encrypted olarak saklanır.
+
+**Gerekçe:** Hassas yapı bilgisi.
+
+**Etkileri / trade-off:**
+- (+) Güvenlik
+- (-) Key management gerektirir
+
+---
+
+## ADR-OBS-CF-004 — Config source görünürlüğü
+
+**Karar:** Health panel config kaynağını gösterir (secret/db/env).
+
+**Gerekçe:** Debug ve operasyonel şeffaflık.
+
+**Etkileri / trade-off:**
+- (+) Hızlı sorun tespiti
+- (-) Ek endpoint alanı
+
+---
+
+## ADR-UI-CONFIG-001 — Cloudflare konfigürasyonu kart bazlı
+
+**Karar:** Cloudflare ayarları mevcut System Settings içinde kart olarak yer alacak.
+
+**Gerekçe:** Entegrasyon mantıksal olarak “system integration” kategorisinde.
+
+**Etkileri / trade-off:**
+- (+) Dağınık sayfa oluşmaz
+- (-) Settings sayfası büyür (kabul)
+
+---
+
+## ADR-SEC-ENC-001 — Konfigürasyon şifreleme anahtarı
+
+**Karar:** CONFIG_ENCRYPTION_KEY env zorunlu (32-byte base64).
+
+**Gerekçe:** DB’de saklanan integration ID’leri plaintext olmamalı.
+
+**Etkileri / trade-off:**
+- (+) Güvenlik
+- (-) Key yönetimi gerektirir
+
+**Risk & Önlem:** Key kaybı → config decrypt edilemez → rotation prosedürü dokümante edilecek.
+
+---
+
+## ADR-OBS-CANARY-001 — Canary enum standardı
+
+**Karar:** Canary sonuçları enum ile gösterilecek: OK / AUTH_ERROR / SCOPE_ERROR / NO_DATA / RATE_LIMIT / CONFIG_MISSING.
+
+**Gerekçe:** Debug netliği.
+
+**Etkileri / trade-off:**
+- (+) Operasyonel şeffaflık
+- (-) UI karmaşıklığı hafif artar
+
