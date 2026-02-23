@@ -3201,6 +3201,7 @@ _db_error_events = deque(maxlen=5000)
 _db_latency_events = deque(maxlen=5000)
 _system_health_cache: Dict[str, Any] = {"checked_at": 0, "data": None}
 _system_health_detail_cache: Dict[str, Any] = {"checked_at": 0, "data": None}
+cloudflare_metrics_service = CloudflareMetricsService()
 SYSTEM_HEALTH_CACHE_TTL_SECONDS = 60
 SYSTEM_HEALTH_DETAIL_CACHE_TTL_SECONDS = 60
 _ecb_rates_fallback: Optional[Dict[str, Any]] = None
