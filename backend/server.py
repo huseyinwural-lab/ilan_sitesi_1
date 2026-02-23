@@ -10117,6 +10117,36 @@ def _pick_category_slug(slug_value) -> Optional[str]:
     return slug_value
 
 
+def _normalize_category_module(value: Optional[str]) -> str:
+    if not value:
+        return "vehicle"
+    module_value = value.strip().lower()
+    if module_value not in CATEGORY_MODULE_OPTIONS:
+        raise HTTPException(status_code=400, detail="module invalid")
+    return module_value
+
+
+def _assert_category_parent_compatible(
+    *,
+    category: Optional[Category],
+    parent: Optional[Category],
+    module_value: str,
+    country_code: Optional[str],
+):
+    if not parent:
+        return
+    if parent.module != module_value:
+        raise HTTPException(status_code=409, detail="parent module mismatch")
+    if category and parent.id == category.id:
+        raise HTTPException(status_code=409, detail="parent cycle detected")
+    if category and category.path and parent.path:
+        if parent.path == category.path or parent.path.startswith(f"{category.path}."):
+            raise HTTPException(status_code=409, detail="parent cycle detected")
+    if parent.country_code:
+        if country_code and parent.country_code != country_code:
+            raise HTTPException(status_code=409, detail="parent country mismatch")
+
+
 def _serialize_category_sql(category: Category, include_schema: bool = False, include_translations: bool = True) -> dict:
     translations = list(category.translations or [])
     slug_value = _pick_category_slug(category.slug)
