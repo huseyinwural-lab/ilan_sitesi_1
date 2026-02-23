@@ -174,8 +174,8 @@ const FeaturesMediaStep = () => {
   };
 
   const handleComplete = async () => {
-    if (saving) return;
-    if (!validate()) return;
+    if (saving) return false;
+    if (!validate()) return false;
     setSaving(true);
 
     try {
@@ -185,7 +185,7 @@ const FeaturesMediaStep = () => {
       });
       if (!saved) {
         setErrors((prev) => ({ ...prev, submit: 'Özellikler kaydedilemedi.' }));
-        return;
+        return false;
       }
 
       const existingIds = new Set(files.filter((item) => item.media_id).map((item) => item.media_id));
@@ -227,15 +227,26 @@ const FeaturesMediaStep = () => {
       })));
 
       setCompletedSteps((prev) => ({ ...prev, 6: true }));
+      return true;
     } catch (err) {
       console.error(err);
       setErrors((prev) => ({ ...prev, submit: 'Medya kaydedilemedi.' }));
+      return false;
     } finally {
       setSaving(false);
     }
   };
 
-  const nextDisabled = !completedSteps[6];
+  const handleNext = async () => {
+    if (!validate()) return;
+    if (!completedSteps[6]) {
+      const ok = await handleComplete();
+      if (!ok) return;
+    }
+    setStep(7);
+  };
+
+  const nextDisabled = saving;
 
   return (
     <div className="space-y-8" data-testid="wizard-features-step">
