@@ -224,6 +224,7 @@ export default function AdminSystemSettingsPage() {
   useEffect(() => {
     fetchSettings();
     fetchCloudflareConfig();
+    fetchHealthDetail();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCountry]);
 
