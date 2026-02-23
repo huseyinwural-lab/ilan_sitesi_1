@@ -89,6 +89,7 @@ from app.utils.slug import slugify
 from app.models.dealer_listing import DealerListing
 from app.models.moderation import Listing, ModerationAction
 from app.models.vehicle_mdm import VehicleMake, VehicleModel
+from app.models.user_recent_category import UserRecentCategory
 from app.models.analytics import ListingView
 from app.models.messaging import Conversation, Message
 from app.models.favorite import Favorite
