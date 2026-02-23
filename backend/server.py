@@ -14172,6 +14172,325 @@ def _read_import_file(file: UploadFile) -> bytes:
     return content
 
 
+CATEGORY_IMPORT_COLUMNS = [
+    "module",
+    "country",
+    "slug",
+    "parent_slug",
+    "name_tr",
+    "name_de",
+    "name_fr",
+    "is_active",
+    "sort_order",
+    "wizard_progress",
+]
+
+SUPPORTED_CATEGORY_MODULES = {"vehicle", "real_estate", "machinery", "services", "jobs"}
+
+
+def _normalize_import_value(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    return str(value).strip()
+
+
+def _parse_bool_value(value: Any) -> Optional[bool]:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return None
+    text = str(value).strip().lower()
+    if text in {"true", "1", "yes", "y"}:
+        return True
+    if text in {"false", "0", "no", "n"}:
+        return False
+    return None
+
+
+def _parse_int_value(value: Any) -> Optional[int]:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if text == "":
+        return None
+    try:
+        return int(text)
+    except ValueError:
+        return None
+
+
+def _parse_wizard_progress_value(value: Any) -> Tuple[Optional[dict], Optional[str]]:
+    if value is None:
+        return None, None
+    if isinstance(value, dict):
+        return value, None
+    raw = _normalize_import_value(value)
+    if not raw:
+        return None, None
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return None, "WIZARD_PROGRESS_INVALID"
+    if parsed is not None and not isinstance(parsed, dict):
+        return None, "WIZARD_PROGRESS_INVALID"
+    return parsed, None
+
+
+def _parse_category_import_csv(content: bytes) -> list[dict]:
+    decoded = content.decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(decoded), delimiter=",")
+    headers = [h.strip() for h in (reader.fieldnames or [])]
+    missing = [col for col in CATEGORY_IMPORT_COLUMNS if col not in headers]
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Missing columns: {', '.join(missing)}")
+
+    rows = []
+    for index, row in enumerate(reader, start=2):
+        if not any(_normalize_import_value(row.get(col)) for col in CATEGORY_IMPORT_COLUMNS):
+            continue
+        rows.append({
+            "row_number": index,
+            **{col: row.get(col) for col in CATEGORY_IMPORT_COLUMNS},
+        })
+    return rows
+
+
+def _parse_category_import_xlsx(content: bytes) -> list[dict]:
+    workbook = load_workbook(io.BytesIO(content))
+    sheet = workbook.active
+    rows_iter = sheet.iter_rows(values_only=True)
+    try:
+        header_row = next(rows_iter)
+    except StopIteration:
+        raise HTTPException(status_code=400, detail="XLSX file is empty")
+
+    headers = [_normalize_import_value(cell).lower() for cell in header_row]
+    header_map = {header: idx for idx, header in enumerate(headers) if header}
+    missing = [col for col in CATEGORY_IMPORT_COLUMNS if col not in header_map]
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Missing columns: {', '.join(missing)}")
+
+    rows = []
+    row_number = 1
+    for row in rows_iter:
+        row_number += 1
+        row_values = {}
+        for col in CATEGORY_IMPORT_COLUMNS:
+            idx = header_map[col]
+            row_values[col] = row[idx] if idx < len(row) else None
+        if not any(_normalize_import_value(row_values.get(col)) for col in CATEGORY_IMPORT_COLUMNS):
+            continue
+        rows.append({"row_number": row_number, **row_values})
+    return rows
+
+
+def _parse_category_import_rows(content: bytes, file_type: str) -> list[dict]:
+    if file_type == "csv":
+        return _parse_category_import_csv(content)
+    if file_type == "xlsx":
+        return _parse_category_import_xlsx(content)
+    raise HTTPException(status_code=400, detail="Unsupported import format")
+
+
+def _build_existing_category_maps(existing: list[Category]) -> Tuple[Dict[str, Category], Dict[str, Optional[str]], set]:
+    existing_map: Dict[str, Category] = {}
+    duplicates: set = set()
+    slug_by_id = {str(cat.id): (_pick_category_slug(cat.slug) or "").lower() for cat in existing}
+    parent_map: Dict[str, Optional[str]] = {}
+    for category in existing:
+        slug_key = (_pick_category_slug(category.slug) or "").lower()
+        if not slug_key:
+            continue
+        if slug_key in existing_map:
+            duplicates.add(slug_key)
+        existing_map[slug_key] = category
+        parent_slug = slug_by_id.get(str(category.parent_id)) if category.parent_id else None
+        parent_map[slug_key] = parent_slug
+    return existing_map, parent_map, duplicates
+
+
+def _validate_category_import_rows(rows: list[dict], existing: list[Category], current_user: dict) -> dict:
+    existing_map, existing_parent_map, duplicate_db = _build_existing_category_maps(existing)
+    errors: list[dict] = []
+    parsed_rows: list[dict] = []
+    seen_slugs: set = set()
+
+    for row in rows:
+        row_number = row.get("row_number")
+        slug_raw = _normalize_import_value(row.get("slug")).lower()
+        module_raw = _normalize_import_value(row.get("module")).lower()
+        country_raw = _normalize_import_value(row.get("country")).upper()
+        parent_slug_raw = _normalize_import_value(row.get("parent_slug")).lower() or None
+        name_tr = _normalize_import_value(row.get("name_tr"))
+        name_de = _normalize_import_value(row.get("name_de"))
+        name_fr = _normalize_import_value(row.get("name_fr"))
+        is_active = _parse_bool_value(row.get("is_active"))
+        sort_order = _parse_int_value(row.get("sort_order"))
+        wizard_progress, wizard_error = _parse_wizard_progress_value(row.get("wizard_progress"))
+
+        if not module_raw:
+            errors.append({"row_number": row_number, "error_code": "REQUIRED_FIELD", "message": "module zorunlu."})
+        elif module_raw not in SUPPORTED_CATEGORY_MODULES:
+            errors.append({"row_number": row_number, "error_code": "INVALID_MODULE", "message": "Geçersiz module."})
+
+        if not country_raw:
+            errors.append({"row_number": row_number, "error_code": "REQUIRED_FIELD", "message": "country zorunlu."})
+
+        if not slug_raw:
+            errors.append({"row_number": row_number, "error_code": "REQUIRED_FIELD", "message": "slug zorunlu."})
+        elif not SLUG_PATTERN.match(slug_raw):
+            errors.append({"row_number": row_number, "error_code": "INVALID_SLUG", "message": "Slug formatı geçersiz."})
+
+        if slug_raw:
+            if slug_raw in seen_slugs:
+                errors.append({"row_number": row_number, "error_code": "DUPLICATE_SLUG", "message": "Dosyada tekrarlayan slug."})
+            seen_slugs.add(slug_raw)
+
+        if slug_raw and slug_raw in duplicate_db:
+            errors.append({"row_number": row_number, "error_code": "DUPLICATE_SLUG_DB", "message": "Slug veritabanında tekil değil."})
+
+        if parent_slug_raw and slug_raw and parent_slug_raw == slug_raw:
+            errors.append({"row_number": row_number, "error_code": "PARENT_SELF", "message": "parent_slug kendisi olamaz."})
+
+        if not name_tr:
+            errors.append({"row_number": row_number, "error_code": "REQUIRED_FIELD", "message": "name_tr zorunlu."})
+        if not name_de:
+            errors.append({"row_number": row_number, "error_code": "REQUIRED_FIELD", "message": "name_de zorunlu."})
+        if not name_fr:
+            errors.append({"row_number": row_number, "error_code": "REQUIRED_FIELD", "message": "name_fr zorunlu."})
+
+        if is_active is None:
+            errors.append({"row_number": row_number, "error_code": "INVALID_BOOLEAN", "message": "is_active true/false olmalı."})
+
+        if sort_order is None:
+            errors.append({"row_number": row_number, "error_code": "INVALID_SORT_ORDER", "message": "sort_order sayısal olmalı."})
+
+        if wizard_error:
+            errors.append({"row_number": row_number, "error_code": wizard_error, "message": "wizard_progress JSON olmalı."})
+
+        if slug_raw:
+            existing_category = existing_map.get(slug_raw)
+            if existing_category and module_raw and existing_category.module != module_raw:
+                errors.append({"row_number": row_number, "error_code": "MODULE_MISMATCH", "message": "Modül uyuşmuyor."})
+            if existing_category and country_raw and existing_category.country_code and existing_category.country_code != country_raw:
+                errors.append({"row_number": row_number, "error_code": "COUNTRY_MISMATCH", "message": "Ülke uyuşmuyor."})
+
+        if country_raw and current_user.get("role") == "country_admin":
+            scope = current_user.get("country_scope") or []
+            if "*" not in scope and country_raw not in scope:
+                errors.append({"row_number": row_number, "error_code": "COUNTRY_SCOPE_FORBIDDEN", "message": "Ülke yetkisi yok."})
+
+        parsed_rows.append({
+            "row_number": row_number,
+            "module": module_raw,
+            "country": country_raw,
+            "slug": slug_raw,
+            "parent_slug": parent_slug_raw,
+            "name_tr": name_tr,
+            "name_de": name_de,
+            "name_fr": name_fr,
+            "is_active": is_active,
+            "sort_order": sort_order,
+            "wizard_progress": wizard_progress,
+        })
+
+    parent_map = dict(existing_parent_map)
+    for row in parsed_rows:
+        if row.get("slug"):
+            parent_map[row["slug"]] = row.get("parent_slug")
+
+    slug_errors = defaultdict(list)
+    for error in errors:
+        slug_errors[error.get("row_number")].append(error)
+
+    # parent existence check
+    for row in parsed_rows:
+        if slug_errors.get(row.get("row_number")):
+            continue
+        parent_slug = row.get("parent_slug")
+        if parent_slug and parent_slug not in parent_map:
+            errors.append({"row_number": row.get("row_number"), "error_code": "PARENT_NOT_FOUND", "message": "parent_slug bulunamadı."})
+
+    # cycle detection
+    cycle_nodes = set()
+    visited: set = set()
+    stack: set = set()
+
+    def dfs(node: str):
+        if node in stack:
+            cycle_nodes.add(node)
+            return True
+        if node in visited:
+            return False
+        visited.add(node)
+        stack.add(node)
+        parent = parent_map.get(node)
+        if parent and dfs(parent):
+            cycle_nodes.add(node)
+            stack.remove(node)
+            return True
+        stack.remove(node)
+        return False
+
+    for row in parsed_rows:
+        slug = row.get("slug")
+        if not slug:
+            continue
+        if dfs(slug):
+            continue
+
+    for row in parsed_rows:
+        if row.get("slug") in cycle_nodes:
+            errors.append({"row_number": row.get("row_number"), "error_code": "CYCLE_DETECTED", "message": "Döngüsel parent ilişkisi."})
+
+    valid_rows = [row for row in parsed_rows if not any(err["row_number"] == row.get("row_number") for err in errors)]
+
+    creates = sum(1 for row in valid_rows if row.get("slug") not in existing_map)
+    updates = sum(1 for row in valid_rows if row.get("slug") in existing_map)
+
+    return {
+        "rows": valid_rows,
+        "errors": errors,
+        "summary": {
+            "total": len(parsed_rows),
+            "creates": creates,
+            "updates": updates,
+            "errors": len(errors),
+        },
+        "existing_map": existing_map,
+        "parent_map": parent_map,
+    }
+
+
+def _update_category_paths(session: AsyncSession, category: Category, new_parent: Optional[Category]) -> bool:
+    slug_value = _pick_category_slug(category.slug) or ""
+    new_depth = new_parent.depth + 1 if new_parent else 0
+    new_path = f"{new_parent.path}.{slug_value}" if new_parent and new_parent.path else slug_value
+    old_path = category.path or ""
+    old_depth = category.depth or 0
+
+    if old_path == new_path and old_depth == new_depth and category.parent_id == (new_parent.id if new_parent else None):
+        return False
+
+    category.parent_id = new_parent.id if new_parent else None
+    category.depth = new_depth
+    category.path = new_path
+
+    if old_path:
+        descendants = (await session.execute(
+            select(Category).where(Category.path.like(f"{old_path}.%"))
+        )).scalars().all()
+        for desc in descendants:
+            if not desc.path:
+                continue
+            desc.path = desc.path.replace(old_path, new_path, 1)
+            depth_delta = desc.depth - old_depth
+            desc.depth = new_depth + depth_delta
+    return True
+
+
 @api_router.post("/admin/categories/import-export/import/dry-run")
 async def admin_import_categories_dry_run(
     request: Request,
