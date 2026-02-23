@@ -105,7 +105,6 @@ async def search_listings(
     else:
         filters = {}
 
-    use_listings_search = _use_listings_search(request) if request else False
     ListingModel = ListingSearch if use_listings_search else Listing
     id_col = ListingSearch.listing_id if use_listings_search else Listing.id
     price_col = ListingSearch.price_amount if use_listings_search else Listing.price
