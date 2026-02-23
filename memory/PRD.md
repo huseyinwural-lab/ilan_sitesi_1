@@ -161,6 +161,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - CorrelationIdMiddleware aktif + DB error loglarında request_id
   - Load test: Faz‑1 1000 sequential login+me, Faz‑2 10 paralel toplam 1000 istek → 0 adet 520 (p95 ~2924ms / 5074ms)
   - /app/load_test.py eklendi
+  - P1 smoke: Auth + Vehicle wizard + Admin categories edit modal PASS
 
 ## Kanıtlar
 - /app/docs/LOCAL_DB_READY_EVIDENCE.md
