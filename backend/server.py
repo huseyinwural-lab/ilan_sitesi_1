@@ -17040,6 +17040,7 @@ async def create_vehicle_draft(
     return {"id": str(listing.id), "status": listing.status, "validation_errors": [], "next_actions": ["upload_media", "submit"]}
 
 
+@api_router.patch("/v1/listings/vehicle/{listing_id}/draft")
 @api_router.post("/v1/listings/vehicle/{listing_id}/draft")
 async def save_vehicle_draft(
     listing_id: str,
