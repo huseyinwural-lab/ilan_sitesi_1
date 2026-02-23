@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import AccountLayout from './layouts/AccountLayout';
 import MyListings from './pages/user/MyListings';
 import WizardContainer from './pages/user/wizard/WizardContainer';
+import CreateListing from './pages/user/CreateListing';
 import AccountDashboard from './pages/user/AccountDashboard';
 import AccountFavorites from './pages/user/AccountFavorites';
 import AccountMessages from './pages/user/AccountMessages';
