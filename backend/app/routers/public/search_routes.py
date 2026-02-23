@@ -79,6 +79,7 @@ async def search_real_estate(
     limit: int = 20,
     page: int = 1,
     
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     query = select(Listing).where(
