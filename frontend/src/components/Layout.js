@@ -433,19 +433,7 @@ export default function Layout({ children }) {
     navigate('/admin/login');
   };
 
-  const roles = {
-    dashboard: ['super_admin', 'country_admin', 'finance'],
-    adminOnly: ['super_admin'],
-    auditViewer: ['super_admin', 'ROLE_AUDIT_VIEWER', 'audit_viewer'],
-    userOps: ['super_admin', 'country_admin', 'support', 'moderator'],
-    moderation: ['super_admin', 'country_admin', 'moderator'],
-    moderationWithSupport: ['super_admin', 'country_admin', 'moderator', 'support'],
-    catalogView: ['super_admin', 'country_admin', 'moderator'],
-    catalogAdmin: ['super_admin', 'country_admin'],
-    vehicleAdmin: ['super_admin', 'country_admin'],
-    finance: ['super_admin', 'finance'],
-    system: ['super_admin', 'country_admin'],
-  };
+  const roles = ADMIN_ROLE_GROUPS;
 
   const navItems = [
     { divider: true, label: 'Dashboard', roles: roles.dashboard },
