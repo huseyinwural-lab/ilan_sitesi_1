@@ -1660,6 +1660,16 @@ async def db_api_handler(request: Request, exc: DBAPIError):
     )
 
 
+@app.exception_handler(AsyncAdapt_asyncpg_dbapi.Error)
+async def db_asyncpg_handler(request: Request, exc: AsyncAdapt_asyncpg_dbapi.Error):
+    code = _classify_db_error(exc)
+    _log_db_exception(exc, code)
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database connection error", "error_code": code},
+    )
+
+
 @app.exception_handler(OperationalError)
 async def db_operational_handler(request: Request, exc: OperationalError):
     code = _classify_db_error(exc)
