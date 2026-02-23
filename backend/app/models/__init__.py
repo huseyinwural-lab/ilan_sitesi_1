@@ -35,5 +35,5 @@ from app.models.favorite import Favorite
 from app.models.support_message import SupportMessage
 from app.models.notification import Notification, UserDevice
 from app.models.webhook_event_log import WebhookEventLog
-from app.models.category_schema_version import CategorySchemaVersion
-from app.models.dealer_listing import DealerListing
+from app.models.system_setting import SystemSetting
+from app.models.admin_invite import AdminInvite
