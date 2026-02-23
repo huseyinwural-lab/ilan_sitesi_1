@@ -270,6 +270,8 @@ export default function Layout({ children }) {
       slowQueryCount,
       slowQueryThreshold,
       endpointStats,
+      moderationSlaAvg,
+      moderationSlaPending,
     };
   }, [systemHealthDetail, systemHealthDetailStatus]);
 
