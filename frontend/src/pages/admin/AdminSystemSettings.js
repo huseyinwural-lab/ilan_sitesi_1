@@ -22,6 +22,24 @@ const formatValue = (value) => {
 };
 
 export default function AdminSystemSettingsPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const isSuperAdmin = user?.role === 'super_admin';
+  const [cloudflareConfig, setCloudflareConfig] = useState({
+    account_id_masked: '',
+    zone_id_masked: '',
+    account_id_last4: '',
+    zone_id_last4: '',
+    cf_ids_source: '',
+    cf_ids_present: false,
+    canary_status: 'UNKNOWN',
+    canary_checked_at: null,
+  });
+  const [cloudflareForm, setCloudflareForm] = useState({ account_id: '', zone_id: '' });
+  const [cloudflareLoading, setCloudflareLoading] = useState(true);
+  const [cloudflareSaving, setCloudflareSaving] = useState(false);
+  const [cloudflareError, setCloudflareError] = useState('');
+  const [canaryLoading, setCanaryLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
