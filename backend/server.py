@@ -7664,7 +7664,6 @@ async def track_listing_flow_event(
     return {"status": "ok"}
 
 
-@api_router.get("/catalog/schema")
 class RecentCategoryPayload(BaseModel):
     category_id: str
     module: str
