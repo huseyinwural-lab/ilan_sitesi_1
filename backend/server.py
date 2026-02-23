@@ -13614,6 +13614,8 @@ async def admin_export_categories_json(
 @api_router.get("/admin/categories/import-export/export/csv")
 async def admin_export_categories_csv(
     request: Request,
+    module: Optional[str] = None,
+    country: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
@@ -13625,69 +13627,118 @@ async def admin_export_categories_csv(
     )
     categories = result.scalars().all()
 
-    versions_result = await session.execute(
-        select(CategorySchemaVersion)
-        .order_by(CategorySchemaVersion.version.desc())
-    )
-    versions = versions_result.scalars().all()
-    latest_versions: Dict[str, int] = {}
-    for version in versions:
-        key = str(version.category_id)
-        if key not in latest_versions:
-            latest_versions[key] = version.version
+    module_filter = module.strip().lower() if module else None
+    country_filter = country.strip().upper() if country else None
+
+    filtered: list[Category] = []
+    for category in categories:
+        if module_filter and category.module != module_filter:
+            continue
+        if country_filter:
+            if category.country_code and category.country_code != country_filter:
+                continue
+            allowed = category.allowed_countries or []
+            if allowed and country_filter not in allowed:
+                continue
+        filtered.append(category)
 
     slug_by_id = {str(cat.id): (_pick_category_slug(cat.slug) or "") for cat in categories}
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=",")
-    writer.writerow([
-        "id",
-        "parent_slug",
-        "path",
-        "module",
-        "country_code",
-        "allowed_countries",
-        "sort_order",
-        "active_flag",
-        "slug_tr",
-        "slug_en",
-        "slug_de",
-        "name_tr",
-        "name_en",
-        "name_de",
-        "schema_status",
-        "schema_version",
-        "form_schema",
-    ])
+    writer.writerow(CATEGORY_IMPORT_COLUMNS)
 
-    for category in categories:
-        slug_map = category.slug if isinstance(category.slug, dict) else {"tr": category.slug}
+    for category in filtered:
         translation_map = _category_translation_map(list(category.translations or []))
+        slug_value = _pick_category_slug(category.slug) or ""
         parent_slug = slug_by_id.get(str(category.parent_id)) if category.parent_id else ""
+        country_value = category.country_code or (country_filter or (category.allowed_countries or [""])[0])
+        wizard_raw = json.dumps(category.wizard_progress or {}, ensure_ascii=False) if category.wizard_progress else ""
         writer.writerow([
-            str(category.id),
-            parent_slug or "",
-            category.path or "",
             category.module,
-            category.country_code or "",
-            "|".join(category.allowed_countries or []),
-            category.sort_order,
-            "true" if category.is_enabled else "false",
-            slug_map.get("tr") or "",
-            slug_map.get("en") or "",
-            slug_map.get("de") or "",
+            country_value,
+            slug_value,
+            parent_slug or "",
             (translation_map.get("tr") or {}).get("name") or "",
-            (translation_map.get("en") or {}).get("name") or "",
             (translation_map.get("de") or {}).get("name") or "",
-            (category.form_schema or {}).get("status") if isinstance(category.form_schema, dict) else "",
-            latest_versions.get(str(category.id), 0),
-            json.dumps(category.form_schema or {}, ensure_ascii=False),
+            (translation_map.get("fr") or {}).get("name") or "",
+            "true" if category.is_enabled else "false",
+            category.sort_order or 0,
+            wizard_raw,
         ])
 
     filename = f"categories-export-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.csv"
     return Response(
         content=output.getvalue(),
         media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+    )
+
+
+@api_router.get("/admin/categories/import-export/export/xlsx")
+async def admin_export_categories_xlsx(
+    request: Request,
+    module: Optional[str] = None,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.is_deleted.is_(False))
+        .order_by(Category.depth.asc(), Category.sort_order.asc())
+    )
+    categories = result.scalars().all()
+
+    module_filter = module.strip().lower() if module else None
+    country_filter = country.strip().upper() if country else None
+
+    filtered: list[Category] = []
+    for category in categories:
+        if module_filter and category.module != module_filter:
+            continue
+        if country_filter:
+            if category.country_code and category.country_code != country_filter:
+                continue
+            allowed = category.allowed_countries or []
+            if allowed and country_filter not in allowed:
+                continue
+        filtered.append(category)
+
+    slug_by_id = {str(cat.id): (_pick_category_slug(cat.slug) or "") for cat in categories}
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.append(CATEGORY_IMPORT_COLUMNS)
+
+    for category in filtered:
+        translation_map = _category_translation_map(list(category.translations or []))
+        slug_value = _pick_category_slug(category.slug) or ""
+        parent_slug = slug_by_id.get(str(category.parent_id)) if category.parent_id else ""
+        country_value = category.country_code or (country_filter or (category.allowed_countries or [""])[0])
+        wizard_raw = json.dumps(category.wizard_progress or {}, ensure_ascii=False) if category.wizard_progress else ""
+        sheet.append([
+            category.module,
+            country_value,
+            slug_value,
+            parent_slug or "",
+            (translation_map.get("tr") or {}).get("name") or "",
+            (translation_map.get("de") or {}).get("name") or "",
+            (translation_map.get("fr") or {}).get("name") or "",
+            "true" if category.is_enabled else "false",
+            category.sort_order or 0,
+            wizard_raw,
+        ])
+
+    stream = io.BytesIO()
+    workbook.save(stream)
+    stream.seek(0)
+
+    filename = f"categories-export-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.xlsx"
+    return Response(
+        content=stream.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
     )
 
