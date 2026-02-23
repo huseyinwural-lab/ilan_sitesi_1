@@ -13,3 +13,5 @@ Phase 1 p95 latency: 2923.81 ms
 Phase 1: 0 hata
 
 Phase 2: 10 parallel users, total 1000 login+me
+Phase 2 p95 latency: 5074.31 ms
+Phase 2: 0 hata
