@@ -263,149 +263,60 @@ export default function AdminCategoriesImportExport() {
                 <div className="grid gap-3 md:grid-cols-4">
                   <div className="rounded-md border p-3" data-testid="categories-preview-create-count">Eklenecek: {dryRunResult.summary?.creates ?? 0}</div>
                   <div className="rounded-md border p-3" data-testid="categories-preview-update-count">Güncellenecek: {dryRunResult.summary?.updates ?? 0}</div>
-                  <div className="rounded-md border p-3" data-testid="categories-preview-delete-count">Silinecek: {dryRunResult.summary?.deletes ?? 0}</div>
+                  <div className="rounded-md border p-3" data-testid="categories-preview-error-count">Hata: {dryRunResult.summary?.errors ?? 0}</div>
                   <div className="rounded-md border p-3" data-testid="categories-preview-total-count">Toplam: {dryRunResult.summary?.total ?? 0}</div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3" data-testid="categories-preview-actions">
-                  <button
-                    type="button"
-                    className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm"
-                    onClick={downloadPdfReport}
-                    disabled={loading || !dryRunResult?.dry_run_hash}
-                    data-testid="categories-preview-download-pdf"
-                  >
-                    PDF Raporu İndir
-                  </button>
-                  {!dryRunResult?.dry_run_hash && (
-                    <span className="text-xs text-slate-500" data-testid="categories-preview-pdf-hint">
-                      PDF raporu için önce dry-run çalıştırılmalı.
-                    </span>
-                  )}
-                </div>
-
-                {dryRunResult.warnings && dryRunResult.warnings.length > 0 && (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700" data-testid="categories-preview-warning">
-                    <div className="font-semibold mb-1" data-testid="categories-preview-warning-title">Kritik Uyarı</div>
-                    <ul className="list-disc list-inside space-y-1" data-testid="categories-preview-warning-list">
-                      {dryRunResult.warnings.map((warning, index) => (
-                        <li key={`${warning.slug || 'warn'}-${index}`} data-testid={`categories-preview-warning-${index}`}>
-                          {warning.message}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                <div className="grid gap-4 md:grid-cols-3" data-testid="categories-preview-lists">
+                <div className="grid gap-4 md:grid-cols-2" data-testid="categories-preview-lists">
                   <div className="border rounded-md p-3" data-testid="categories-preview-creates">
                     <h3 className="font-semibold text-sm mb-2">Eklenecek</h3>
-                    {(dryRunResult.creates || []).length === 0 ? (
+                    {previewCreates.length === 0 ? (
                       <p className="text-xs text-slate-500" data-testid="categories-preview-creates-empty">Yok</p>
                     ) : (
                       <ul className="text-xs space-y-1" data-testid="categories-preview-creates-list">
-                        {dryRunResult.creates.map((item) => (
-                          <li key={item.slug_tr} data-testid={`categories-preview-create-${item.slug_tr}`}>{item.slug_tr}</li>
+                        {previewCreates.map((slug) => (
+                          <li key={slug} data-testid={`categories-preview-create-${slug}`}>{slug}</li>
                         ))}
                       </ul>
                     )}
                   </div>
                   <div className="border rounded-md p-3" data-testid="categories-preview-updates">
-                    <div className="flex items-center justify-between mb-2" data-testid="categories-preview-updates-header">
-                      <h3 className="font-semibold text-sm">Güncellenecek</h3>
-                      <label className="text-xs text-slate-500 flex items-center gap-2" data-testid="categories-preview-changed-toggle">
-                        <input
-                          type="checkbox"
-                          checked={showOnlyChanged}
-                          onChange={(event) => setShowOnlyChanged(event.target.checked)}
-                          data-testid="categories-preview-changed-toggle-input"
-                        />
-                        Sadece değişen alanlar
-                      </label>
-                    </div>
-                    {updates.length === 0 ? (
+                    <h3 className="font-semibold text-sm mb-2">Güncellenecek</h3>
+                    {previewUpdates.length === 0 ? (
                       <p className="text-xs text-slate-500" data-testid="categories-preview-updates-empty">Yok</p>
                     ) : (
-                      <div className="space-y-2" data-testid="categories-preview-updates-list">
-                        {pagedUpdates.map((item) => (
-                          <div key={item.slug} className="rounded-md border p-2" data-testid={`categories-preview-update-${item.slug}`}>
-                            <button
-                              type="button"
-                              onClick={() => setExpandedSlug(expandedSlug === item.slug ? null : item.slug)}
-                              className="w-full flex items-center justify-between text-xs font-medium"
-                              data-testid={`categories-preview-update-toggle-${item.slug}`}
-                            >
-                              <span>{item.slug}</span>
-                              <span className="text-slate-500">{item.changed_fields || 0} değişiklik</span>
-                            </button>
-                            {expandedSlug === item.slug && (
-                              <div className="mt-2" data-testid={`categories-preview-update-detail-${item.slug}`}>
-                                <div className="grid grid-cols-4 gap-2 text-[11px] font-semibold text-slate-500" data-testid={`categories-preview-update-header-${item.slug}`}>
-                                  <div>Alan</div>
-                                  <div>Önce</div>
-                                  <div>Sonra</div>
-                                  <div>Tip</div>
-                                </div>
-                                <div className="mt-1 space-y-1 text-[11px]" data-testid={`categories-preview-update-fields-${item.slug}`}>
-                                  {(item.fields || [])
-                                    .filter((field) => (showOnlyChanged ? field.change_type !== 'unchanged' : true))
-                                    .map((field, idx) => (
-                                      <div key={`${field.field_name}-${idx}`} className="grid grid-cols-4 gap-2" data-testid={`categories-preview-update-field-${item.slug}-${idx}`}>
-                                        <div>{field.field_name}</div>
-                                        <div className="truncate">{String(field.before_value ?? '')}</div>
-                                        <div className="truncate">{String(field.after_value ?? '')}</div>
-                                        <div>{field.change_type}</div>
-                                      </div>
-                                    ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                        {updates.length > UPDATE_PAGE_SIZE && (
-                          <div className="flex items-center justify-between text-xs pt-2" data-testid="categories-preview-updates-pagination">
-                            <button
-                              type="button"
-                              className="px-2 py-1 border rounded"
-                              onClick={() => setUpdatePage(Math.max(1, safeUpdatePage - 1))}
-                              disabled={safeUpdatePage === 1}
-                              data-testid="categories-preview-updates-prev"
-                            >
-                              Önceki
-                            </button>
-                            <span data-testid="categories-preview-updates-page">Sayfa {safeUpdatePage} / {totalUpdatePages}</span>
-                            <button
-                              type="button"
-                              className="px-2 py-1 border rounded"
-                              onClick={() => setUpdatePage(Math.min(totalUpdatePages, safeUpdatePage + 1))}
-                              disabled={safeUpdatePage === totalUpdatePages}
-                              data-testid="categories-preview-updates-next"
-                            >
-                              Sonraki
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="border rounded-md p-3" data-testid="categories-preview-deletes">
-                    <h3 className="font-semibold text-sm mb-2">Silinecek</h3>
-                    {(dryRunResult.deletes || []).length === 0 ? (
-                      <p className="text-xs text-slate-500" data-testid="categories-preview-deletes-empty">Yok</p>
-                    ) : (
-                      <ul className="text-xs space-y-1" data-testid="categories-preview-deletes-list">
-                        {dryRunResult.deletes.map((item) => (
-                          <li key={item.slug} data-testid={`categories-preview-delete-${item.slug}`}>
-                            {item.slug}{item.is_root ? ' (root)' : ''}
-                          </li>
+                      <ul className="text-xs space-y-1" data-testid="categories-preview-updates-list">
+                        {previewUpdates.map((slug) => (
+                          <li key={slug} data-testid={`categories-preview-update-${slug}`}>{slug}</li>
                         ))}
                       </ul>
                     )}
                   </div>
                 </div>
+
+                <div className="border rounded-md p-3" data-testid="categories-preview-errors">
+                  <h3 className="font-semibold text-sm mb-2">Hatalar</h3>
+                  {previewErrors.length === 0 ? (
+                    <p className="text-xs text-slate-500" data-testid="categories-preview-errors-empty">Yok</p>
+                  ) : (
+                    <ul className="text-xs space-y-1" data-testid="categories-preview-errors-list">
+                      {previewErrors.map((err, idx) => (
+                        <li key={`${err.row_number || idx}-${idx}`} data-testid={`categories-preview-error-${idx}`}>
+                          Satır {err.row_number}: [{err.error_code}] {err.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             ) : (
               <p className="text-sm text-slate-500" data-testid="categories-preview-empty">Önce dry-run çalıştırın.</p>
+            )}
+
+            {applyResult && (
+              <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700" data-testid="categories-apply-result">
+                Import uygulandı. Yeni: {applyResult.summary?.created ?? 0}, Güncellenen: {applyResult.summary?.updated ?? 0}
+              </div>
             )}
           </div>
         </div>
