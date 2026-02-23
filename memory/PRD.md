@@ -184,6 +184,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - System Settings kartı + masked inputs + canary test
   - CONFIG_ENCRYPTION_KEY health flag + save guard + failure reason logs
   - Tek durum mesajı + kullanıcı dostu canary + teknik detay tooltip
+- **Dependency Resolver Fix (2026-02-23):**
+  - google-api-core hard pin kaldırıldı, dar aralıkla sabitlendi (>=2.28.1,<2.31.0)
 - **Admin Kategori Manuel Yönetimi (2026-02-23):**
   - Modül seçimi + parent validation + alt tip metadata
 - **İlan Ver Kategori Fallback (2026-02-23):**
