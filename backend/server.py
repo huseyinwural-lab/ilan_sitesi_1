@@ -9122,6 +9122,7 @@ class CategoryUpdatePayload(BaseModel):
     hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
     wizard_progress: Optional[Dict[str, Any]] = None
+    wizard_edit_event: Optional[Dict[str, Any]] = None
     expected_updated_at: Optional[str] = None
 
 
