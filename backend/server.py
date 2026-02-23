@@ -14521,20 +14521,48 @@ async def admin_list_system_settings(
     request: Request,
     country: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    q: Dict = {}
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    filters = []
     if country:
         code = country.upper()
         _assert_country_scope(code, current_user)
-        q["country_code"] = code
+        filters.append(SystemSetting.country_code == code)
     elif current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
         if "*" not in scope:
-            q["$or"] = [{"country_code": None}, {"country_code": ""}, {"country_code": {"$in": scope}}]
-    items = await db.system_settings.find(q, {"_id": 0}).sort("key", 1).to_list(length=1000)
-    return {"items": items}
+            filters.append(
+                or_(
+                    SystemSetting.country_code.is_(None),
+                    SystemSetting.country_code == "",
+                    SystemSetting.country_code.in_(scope),
+                )
+            )
+
+    query = select(SystemSetting)
+    if filters:
+        for condition in filters:
+            query = query.where(condition)
+
+    result = await session.execute(query.order_by(SystemSetting.key.asc()))
+    items = result.scalars().all()
+
+    return {
+        "items": [
+            {
+                "id": str(item.id),
+                "key": item.key,
+                "value": item.value,
+                "country_code": item.country_code,
+                "is_readonly": item.is_readonly,
+                "description": item.description,
+                "created_at": item.created_at.isoformat() if item.created_at else None,
+                "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+            }
+            for item in items
+        ]
+    }
 
 
 @api_router.get("/admin/system-settings/cloudflare")
