@@ -255,6 +255,10 @@ export default function Layout({ children }) {
         cdnColdP95: '--',
         cdnAlerts: {},
         cdnTargets: {},
+        cdnCountryMetrics: {},
+        cdnCountrySeries: {},
+        cdnCanaryStatus: 'unknown',
+        cfIdsPresent: false,
       };
     }
     const buckets = systemHealthDetail.error_buckets_24h || [];
