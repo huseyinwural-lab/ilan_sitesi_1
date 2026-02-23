@@ -120,12 +120,13 @@ const CategorySelector = () => {
       setError('Kategori kaydedilemedi.');
       return;
     }
+    const skipVehicle = moduleKey !== 'vehicle';
     setCompletedSteps((prev) => ({
       ...prev,
       1: true,
-      2: false,
-      3: false,
-      4: false,
+      2: skipVehicle ? true : false,
+      3: skipVehicle ? true : false,
+      4: skipVehicle ? true : false,
       5: false,
       6: false,
     }));
