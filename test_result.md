@@ -10927,3 +10927,285 @@ Re-tested vehicle wizard Step3 price type toggle persistence after backend fixes
 
 
 
+
+
+## Premium Automobile Ad Posting Wizard E2E Test (Feb 23, 2026 - CURRENT) ❌ CRITICAL FAILURE
+
+### Test Summary
+Comprehensive E2E test for premium automobile ad posting wizard as per review request: "Test the premium automobile ad posting wizard end-to-end. Context: App URL: https://auto-wizard-7.preview.emergentagent.com, Login: user@platform.com / User123!, Wizard route: /account/create/vehicle-wizard. Key flows to test: 1) Step1 Category selection -> click a category and complete; verify Next becomes enabled and advances. 2) Step2 Brand grid: search (if available), select brand card, complete, persist selection when going back. 3) Step3 Model grid: search, select model, complete, persist selection when going back. 4) Step4 Year/Versiyon: year dropdown 2010–2026, optional trim text; validate year required; verify save+next works. 5) Step5 Core Fields (auto-specific): mileage, fuel, transmission, drive, body, engine cc/hp, color, damage, trade, city required; verify validation; save and advance. 6) Step6 Features/Media: upload min 3 photos, set cover, reorder; save and advance. 7) Step7 Review: confirm summary shows brand/model/year, price type, km, fuel, transmission, body, engine cc/hp, color, damage, trade, location, cover + gallery thumbnails, description, feature summaries. Also verify data-testid coverage for the new fields (trim-input, core-engine-cc-input, core-engine-hp-input, core-address-city, wizard-review-gallery, etc.)."
+
+### Test Flow Attempted:
+1. ✅ Login at /login with user@platform.com / User123! → authentication successful
+2. ✅ Navigate to /account/create/vehicle-wizard → wizard page loaded
+3. ❌ Step1 Category selection → **CRITICAL FAILURE - cannot complete step**
+4. ❌ Steps 2-7 → **UNABLE TO TEST** due to Step1 blocking issue
+
+### Critical Findings:
+
+#### ❌ CRITICAL BUG - BLOCKS ENTIRE WIZARD (PRODUCTION BLOCKER):
+
+**Bug Location**: `/app/frontend/src/pages/user/wizard/WizardContext.js` lines 76-105, specifically lines 83-84
+
+**Issue**: `loadCategorySchema` function has a critical bug:
+```javascript
+// LINE 83 - BUG: Reads body BEFORE checking status
+const data = await res.json();
+// LINE 84 - Error: Body already consumed when checking status
+if (!res.ok) {
+  throw new Error(data?.detail || 'Schema yüklenemedi');
+}
+```
+
+**Error Message**: `TypeError: Failed to execute 'json' on 'Response': body stream already read`
+
+**Root Cause**: 
+- Function calls `await res.json()` on line 83 to parse response body
+- Then checks `if (!res.ok)` on line 84 AFTER body stream already consumed
+- When backend returns 409 Conflict for schema API, body has been read
+- Error handler cannot access response data, causing JavaScript exception
+- This exception prevents Step1 completion, leaving Next button disabled
+
+**Impact**:
+- ❌ User cannot complete Step1 (Category Selection)
+- ❌ Next button remains DISABLED even after clicking "Tamam"
+- ❌ Entire wizard flow is blocked - users cannot create vehicle listings
+- ❌ **SEVERITY: CRITICAL - PRODUCTION BLOCKER**
+
+**Backend Contributing Issue**:
+- GET `/api/catalog/schema?category_id={id}&country=DE` returns **409 Conflict**
+- This 409 response triggers the frontend bug
+- However, POST `/api/v1/listings/vehicle` succeeds with **200 OK**
+- Schema issue doesn't prevent listing creation, but frontend bug does
+
+**FIX REQUIRED** (URGENT):
+```javascript
+const loadCategorySchema = async (categoryId) => {
+  if (!categoryId) return null;
+  try {
+    setSchemaLoading(true);
+    const res = await fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/catalog/schema?category_id=${categoryId}&country=${selectedCountry || 'DE'}`
+    );
+    
+    // FIX: Check res.ok BEFORE calling res.json()
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.warn('Schema load failed:', errorText);
+      throw new Error(errorText || 'Schema yüklenemedi');
+    }
+    
+    const data = await res.json();
+    setSchema(data.schema);
+    // ... rest unchanged
+  } catch (error) {
+    console.error('Schema load error:', error);
+    return null;
+  } finally {
+    setSchemaLoading(false);
+  }
+};
+```
+
+### Test Results by Step:
+
+#### ❌ STEP 1 - CATEGORY SELECTION: FAILED
+**UI Rendering**: ✅ WORKING
+- Page loads: ✅ `data-testid="wizard-progress"` present
+- Category selector renders: ✅ `data-testid="listing-category-selector"` visible
+- Parent categories load: ✅ Found 20 parent categories from API
+- Child categories display: ✅ Found child categories under parent
+- Category selection UI works: ✅ User can click and select categories
+- Complete button present: ✅ `data-testid="category-complete"` found
+
+**Functionality**: ❌ CRITICAL FAILURE
+- Clicking "Tamam" (Complete) triggers API call ✅
+- Backend creates listing: ✅ POST `/api/v1/listings/vehicle` returns 200 OK
+- Backend schema API fails: ❌ GET `/api/catalog/schema` returns 409 Conflict
+- Frontend catches 409 but hits JavaScript error: ❌ "body stream already read"
+- Step1 completion state not updated: ❌ `completedSteps[1]` remains false
+- Next button stays DISABLED: ❌ Cannot proceed to Step2
+- Error message not shown: ⚠️ Error silently fails (caught in try-catch)
+
+**Console Errors Observed**:
+```
+error: Failed to load resource: the server responded with a status of 409 () 
+  at https://auto-wizard-7.preview.emergentagent.com/api/catalog/schema?category_id=...
+error: TypeError: Failed to execute 'json' on 'Response': body stream already read
+  at loadCategorySchema (bundle.js:29046:30)
+  at async createDraft (bundle.js:29242:7)
+  at async handleComplete (bundle.js:22202:16)
+```
+
+#### ⚠️ STEPS 2-7: UNABLE TO TEST
+Due to Step1 blocking issue, could not proceed to test:
+
+**Step 2 - Brand Grid**: ❌ NOT TESTED
+- Brand search functionality
+- Brand card selection
+- Persistence when navigating back
+- data-testid verification: `wizard-brand-step`, `brand-search-input`, `brand-card-{key}`, `brand-complete`, `brand-next`
+
+**Step 3 - Model Grid**: ❌ NOT TESTED
+- Model search functionality
+- Model card selection  
+- Persistence when navigating back
+- data-testid verification: `wizard-model-step`, `model-search-input`, `model-card-{key}`, `model-complete`, `model-next`
+
+**Step 4 - Year/Versiyon**: ❌ NOT TESTED
+- Year dropdown (2010-2026)
+- Optional trim text input
+- Year required validation
+- data-testid verification: `wizard-year-step`, `year-select`, `trim-input`, `year-complete`, `year-next`
+
+**Step 5 - Core Fields**: ❌ NOT TESTED
+- Mileage input (required)
+- Fuel type select (required)
+- Transmission select (required)
+- Drive type select (required)
+- Body type select (required)
+- Engine CC input (required) 
+- Engine HP input (required)
+- Color input (required)
+- Damage status select (required)
+- Trade-in select (required)
+- City input (required)
+- Validation testing
+- data-testid verification: `wizard-core-step`, `core-mileage-input`, `core-fuel-select`, `core-transmission-select`, `core-drive-select`, `core-body-select`, `core-engine-cc-input`, `core-engine-hp-input`, `core-color-input`, `core-damage-select`, `core-trade-select`, `core-address-city`
+
+**Step 6 - Features/Media**: ❌ NOT TESTED
+- Min 3 photos requirement
+- Photo upload functionality
+- Set cover photo
+- Reorder photos (drag & drop)
+- data-testid verification: `wizard-features-step`, `media-file-input`, `media-grid`, `media-cover-button-{idx}`, `features-complete`
+
+**Step 7 - Review/Summary**: ❌ NOT TESTED
+- Brand/Model/Year display
+- Price type display
+- Km, fuel, transmission display
+- Body type, engine cc/hp display
+- Color, damage, trade display
+- Location display
+- Cover image display
+- Gallery thumbnails
+- Description display
+- Feature summaries
+- data-testid verification: `wizard-review`, `wizard-review-title`, `wizard-review-brand-line`, `wizard-review-specs`, `wizard-review-gallery`, `wizard-review-cover-image`, `wizard-review-gallery-image-{idx}`
+
+### Data-testid Coverage Verification (Code Review):
+
+✅ **VERIFIED** - All requested data-testids are present in code:
+
+**Step 4 (Year/Trim)**:
+- ✅ `trim-input` - Step4YearTrim.js line 101
+
+**Step 5 (Core Fields)**:
+- ✅ `core-engine-cc-input` - Step5CoreFields.js line 379
+- ✅ `core-engine-hp-input` - Step5CoreFields.js line 390  
+- ✅ `core-address-city` - Step5CoreFields.js line 461
+- ✅ All auto-specific fields have proper data-testids
+
+**Step 7 (Review)**:
+- ✅ `wizard-review-gallery` - Step4Review.js line 154
+- ✅ `wizard-review-cover-image` - Step4Review.js line 106
+- ✅ `wizard-review-gallery-image-{idx}` - Step4Review.js line 164
+- ✅ `wizard-review-specs` - Step4Review.js line 130
+- ✅ `wizard-review-brand-line` - Step4Review.js line 121
+
+**All Wizard Steps**:
+- ✅ `wizard-progress` - WizardContainer.js line 27
+- ✅ `wizard-step-{1-7}` - WizardContainer.js line 30
+- ✅ Each step component has comprehensive data-testid coverage
+
+### Backend API Status:
+
+**Working APIs**:
+- ✅ GET `/api/categories?module=vehicle&country=DE` → 200 OK (returns categories)
+- ✅ POST `/api/v1/listings/vehicle` → 200 OK (creates listing successfully)
+- ✅ GET `/api/v2/vehicle/makes?country=DE` → 200 OK (returns makes)
+- ✅ GET `/api/v2/vehicle/models?country={country}&make_key={make}` → 200 OK
+
+**Failing APIs**:
+- ❌ GET `/api/catalog/schema?category_id={id}&country=DE` → **409 Conflict**
+  - Returns 409 for vehicle categories
+  - Suggests category schemas not properly configured
+  - Causes frontend bug to trigger
+- ❌ POST `/api/v1/listings/vehicle/draft` → **405 Method Not Allowed**
+  - Endpoint doesn't support POST method
+  - Frontend expects this endpoint for draft creation
+
+### Screenshots Captured:
+1. **step1-initial.png**: Initial Step1 category selector showing all parent categories and child category selected
+2. **step1-after-complete.png**: State after clicking "Tamam" - Next button still disabled (bug state)
+
+### What Works:
+1. ✅ Login system working perfectly (user@platform.com / User123!)
+2. ✅ Wizard page loads and renders correctly
+3. ✅ 7-step progress indicator displays correctly
+4. ✅ Category API loads 20+ categories successfully
+5. ✅ Category selection UI fully functional
+6. ✅ All wizard step components exist with proper structure
+7. ✅ Comprehensive data-testid coverage across all 7 steps
+8. ✅ Backend listing creation works (POST returns 200 OK)
+9. ✅ Makes/Models APIs working correctly
+
+### What's Broken:
+1. ❌ **CRITICAL**: WizardContext.js line 83 - "body stream already read" error
+2. ❌ **CRITICAL**: Step1 cannot be completed - Next button stays disabled
+3. ❌ **CRITICAL**: Entire wizard flow blocked - no way to advance past Step1
+4. ❌ Backend schema API returns 409 Conflict (triggers frontend bug)
+5. ❌ Draft creation endpoint returns 405 Method Not Allowed
+6. ❌ Error not surfaced to user - fails silently in console
+
+### Test Results Summary:
+- **Test Success Rate**: 0% (0/7 steps completed)
+- **Step 1 - Category**: ❌ BLOCKED by critical bug
+- **Step 2 - Brand**: ❌ NOT TESTED (cannot reach)
+- **Step 3 - Model**: ❌ NOT TESTED (cannot reach)
+- **Step 4 - Year/Trim**: ❌ NOT TESTED (cannot reach)
+- **Step 5 - Core Fields**: ❌ NOT TESTED (cannot reach)
+- **Step 6 - Features/Media**: ❌ NOT TESTED (cannot reach)
+- **Step 7 - Review**: ❌ NOT TESTED (cannot reach)
+- **Data-testid Coverage**: ✅ 100% (all verified in code)
+
+### Final Status:
+- **Overall Result**: ❌ **CRITICAL FAILURE - PRODUCTION BLOCKER**
+- **Wizard Functionality**: ❌ **NOT WORKING** - Blocked at Step1
+- **User Impact**: ❌ **HIGH** - Users cannot create any vehicle listings
+- **Production Ready**: ❌ **NO** - Must fix critical bug before any user access
+- **Code Quality**: ✅ Good data-testid coverage, ❌ Critical error handling bug
+
+### Priority Actions Required:
+
+1. **HIGH PRIORITY** ❗❗❗ - Fix WizardContext.js loadCategorySchema function:
+   - Move `if (!res.ok)` check BEFORE `await res.json()`
+   - Change to `await res.text()` for error cases
+   - Test fix ensures Step1 completion works even with 409 response
+
+2. **HIGH PRIORITY** ❗❗ - Fix backend schema API 409 issue:
+   - Investigate why `/api/catalog/schema` returns 409 Conflict
+   - Either fix schema configuration or handle 409 gracefully
+   - Ensure schemas exist for all vehicle categories
+
+3. **MEDIUM PRIORITY** ❗ - Improve error handling:
+   - Surface schema loading errors to user (don't fail silently)
+   - Add retry logic for failed schema loads
+   - Show user-friendly error messages
+
+4. **MEDIUM PRIORITY** - Fix draft endpoint:
+   - POST `/api/v1/listings/vehicle/draft` returns 405
+   - Either implement endpoint or update frontend to use correct endpoint
+
+5. **LOW PRIORITY** - After fixes, re-test complete wizard flow:
+   - Steps 1-7 end-to-end
+   - Persistence testing (back/forward navigation)
+   - Media upload testing
+   - Final review/publish flow
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 23, 2026 (CURRENT)
+- **Message**: Premium automobile ad posting wizard E2E test FAILED with CRITICAL PRODUCTION-BLOCKING BUG. ❌ CRITICAL ISSUE FOUND in /app/frontend/src/pages/user/wizard/WizardContext.js lines 83-84: loadCategorySchema function calls `await res.json()` on line 83 BEFORE checking `if (!res.ok)` on line 84. When backend returns 409 Conflict for GET /api/catalog/schema, response body has already been consumed, causing JavaScript error "Failed to execute 'json' on 'Response': body stream already read". This error prevents Step1 (Category Selection) from completing - user can select category and click "Tamam" button, but completedSteps[1] never becomes true, so Next button remains DISABLED forever. User is completely BLOCKED from advancing past Step1, making entire vehicle wizard unusable. Backend does successfully create listing (POST /api/v1/listings/vehicle returns 200 OK), but frontend bug prevents wizard progression. FIX REQUIRED: Move `if (!res.ok)` check to line 83 BEFORE calling res.json(), and use `await res.text()` for error cases. Backend issue: schema API returns 409 Conflict for vehicle categories (should return 200 with schema or proper error). Impact: SEVERITY CRITICAL - Users cannot create ANY vehicle listings. Production ready: NO - Must fix before any user testing. Successfully verified all data-testids exist in code: trim-input (Step4YearTrim.js:101), core-engine-cc-input (Step5CoreFields.js:379), core-engine-hp-input (Step5CoreFields.js:390), core-address-city (Step5CoreFields.js:461), wizard-review-gallery (Step4Review.js:154), and all other requested testids. Unable to test Steps 2-7 (Brand, Model, Year/Trim, Core Fields, Features/Media, Review) due to Step1 blocking bug. Wizard structure is well-implemented with comprehensive data-testid coverage across all 7 steps, but critical error handling bug makes it non-functional.
+
+---
+
