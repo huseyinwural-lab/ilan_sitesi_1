@@ -64,11 +64,9 @@ export default function AdminSystemSettingsPage() {
 
   const canaryDescriptions = {
     OK: 'Analytics okundu ve veri alındı.',
-    AUTH_ERROR: 'Token doğrulanamadı (401).',
-    SCOPE_ERROR: 'Token scope yetersiz (403).',
-    NO_DATA: 'Veri yok (son 1 saatte trafik yok).',
-    RATE_LIMIT: 'Rate limit aşıldı (429).',
     CONFIG_MISSING: 'Account/Zone ID veya token eksik.',
+    SCOPE_ERROR: 'Token scope yetersiz (403).',
+    API_ERROR: 'API çağrısı başarısız veya veri yok.',
     UNKNOWN: 'Canary sonucu bilinmiyor.',
   };
 
