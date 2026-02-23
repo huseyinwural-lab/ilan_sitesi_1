@@ -113,17 +113,13 @@ from app.services.cloudflare_metrics import (
 )
 from app.services.cloudflare_config import (
     CloudflareConfigError,
-    CLOUDFLARE_ACCOUNT_KEY,
-    CLOUDFLARE_ZONE_KEY,
-    CLOUDFLARE_CANARY_KEY,
     build_masked_config,
     encrypt_config_value,
-    load_canary_status,
     resolve_cloudflare_config,
     resolve_env_fallback,
     resolve_env_source,
-    upsert_cloudflare_setting,
-    write_cloudflare_audit,
+    upsert_cloudflare_config,
+    update_canary_status,
 )
 
 
