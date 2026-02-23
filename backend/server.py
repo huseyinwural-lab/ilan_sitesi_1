@@ -1618,6 +1618,18 @@ app = FastAPI(
 if CorrelationIdMiddleware:
     app.add_middleware(CorrelationIdMiddleware)
 
+
+@app.middleware("http")
+async def record_request_metrics(request: Request, call_next):
+    start_ts = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = (time.perf_counter() - start_ts) * 1000
+    endpoint_group = classify_endpoint(request.url.path)
+    if endpoint_group:
+        record_request_latency(endpoint_group, duration_ms)
+    response.headers["X-Response-Time-ms"] = f"{duration_ms:.2f}"
+    return response
+
 DB_ERROR_CODES = {
     "pool_timeout": "DB_POOL_TIMEOUT",
     "connection_closed": "DB_CONN_CLOSED",
