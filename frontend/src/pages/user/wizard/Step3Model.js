@@ -24,6 +24,7 @@ const ModelStep = () => {
   useEffect(() => {
     if (!basicInfo.make_key) {
       setModels([]);
+      setLoadingModels(false);
       return;
     }
 
