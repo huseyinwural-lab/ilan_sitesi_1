@@ -167,26 +167,54 @@ export default function AdminCategoriesImportExport() {
       {activeTab === 'export' && (
         <div className="space-y-4" data-testid="categories-import-export-export">
           <div className="rounded-lg border bg-white p-4">
-            <h2 className="text-lg font-semibold mb-2" data-testid="categories-export-title">Tam Paket Export</h2>
-            <p className="text-sm text-slate-600" data-testid="categories-export-desc">Tüm kategoriler + translations + schema.</p>
+            <h2 className="text-lg font-semibold mb-2" data-testid="categories-export-title">Kategori Export</h2>
+            <p className="text-sm text-slate-600" data-testid="categories-export-desc">Modül ve ülke filtresiyle CSV/XLSX dışa aktarım.</p>
+            <div className="grid gap-4 md:grid-cols-2 mt-4" data-testid="categories-export-filters">
+              <div>
+                <label className="text-sm text-slate-600" htmlFor="export-module">Module</label>
+                <select
+                  id="export-module"
+                  value={moduleFilter}
+                  onChange={(event) => setModuleFilter(event.target.value)}
+                  className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
+                  data-testid="categories-export-module"
+                >
+                  {MODULE_OPTIONS.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-slate-600" htmlFor="export-country">Country</label>
+                <input
+                  id="export-country"
+                  type="text"
+                  value={countryFilter}
+                  onChange={(event) => setCountryFilter(event.target.value.toUpperCase())}
+                  className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
+                  placeholder="DE"
+                  data-testid="categories-export-country"
+                />
+              </div>
+            </div>
             <div className="flex flex-wrap gap-3 mt-4" data-testid="categories-export-actions">
               <button
                 type="button"
                 className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm"
-                onClick={() => handleDownload('json')}
-                disabled={loading}
-                data-testid="categories-export-json"
-              >
-                JSON Export
-              </button>
-              <button
-                type="button"
-                className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm"
                 onClick={() => handleDownload('csv')}
                 disabled={loading}
                 data-testid="categories-export-csv"
               >
                 CSV Export
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm"
+                onClick={() => handleDownload('xlsx')}
+                disabled={loading}
+                data-testid="categories-export-xlsx"
+              >
+                XLSX Export
               </button>
             </div>
           </div>
