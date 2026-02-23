@@ -14400,6 +14400,8 @@ async def admin_cloudflare_canary(
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
     account_id = None
     zone_id = None
     try:
