@@ -14394,14 +14394,12 @@ async def admin_update_cloudflare_config(
 async def admin_cloudflare_canary(
     request: Request,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
     account_id = None
     zone_id = None
     try:
-        account_id, zone_id, _ = await resolve_cloudflare_config(db)
+        account_id, zone_id, _ = await resolve_cloudflare_config(session)
     except CloudflareConfigError:
         account_id = None
         zone_id = None
@@ -14411,20 +14409,19 @@ async def admin_cloudflare_canary(
         credentials = CloudflareCredentials(api_token=api_token, account_id=account_id, zone_id=zone_id)
         canary_status = await cloudflare_metrics_service.run_canary(credentials)
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    await upsert_cloudflare_setting(
-        db,
-        CLOUDFLARE_CANARY_KEY,
-        {"status": canary_status, "checked_at": now_iso},
-        current_user,
-    )
+    await update_canary_status(session, canary_status, current_user.get("id"))
 
-    await write_cloudflare_audit(
-        db,
-        current_user,
+    await _write_audit_log_sql(
+        session=session,
         action="CLOUDFLARE_CANARY",
+        actor=current_user,
+        resource_type="cloudflare_config",
+        resource_id=None,
         metadata={"status": canary_status},
+        request=request,
+        country_code=None,
     )
+    await session.commit()
 
     return {"status": canary_status}
 
