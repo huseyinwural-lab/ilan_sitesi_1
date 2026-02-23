@@ -911,7 +911,11 @@ export default function Layout({ children }) {
                       <div className="flex items-center justify-between">
                         <div className="text-xs font-semibold text-slate-700" data-testid="admin-system-health-cdn-country-title">CDN Country Breakdown</div>
                         <div className="text-[11px] text-slate-500" data-testid="admin-system-health-cdn-active">
-                          {healthDetailDisplay.cdnStatus === 'disabled' ? 'Inactive' : 'CDN Metrics Active'}
+                          {healthDetailDisplay.cdnStatus === 'disabled'
+                            ? 'Inactive'
+                            : healthDetailDisplay.cdnStatus === 'config_missing'
+                              ? 'Configuration Missing'
+                              : 'CDN Metrics Active'}
                         </div>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2" data-testid="admin-system-health-cdn-country-toggle">
