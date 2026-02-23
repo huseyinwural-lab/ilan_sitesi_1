@@ -83,7 +83,6 @@ async def search_real_estate(
     db: AsyncSession = Depends(get_db)
 ):
     use_listings_search = _use_listings_search(request)
-    start_ts = time.perf_counter()
     ListingModel = ListingSearch if use_listings_search else Listing
     price_col = ListingSearch.price_amount if use_listings_search else Listing.price
     price_type_col = ListingSearch.price_type if use_listings_search else Listing.price_type
