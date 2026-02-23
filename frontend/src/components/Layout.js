@@ -195,7 +195,47 @@ export default function Layout({ children }) {
     };
   }, [systemHealth, systemHealthStatus]);
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const healthDetailDisplay = useMemo(() => {
+    if (systemHealthDetailStatus === 'error') {
+      return {
+        status: 'error',
+        errorBuckets: [],
+        latencyAvg: '--',
+        latencyP95: '--',
+        lastEtl: '--',
+        errorLabel: 'Veri alınamadı',
+      };
+    }
+    if (!systemHealthDetail) {
+      return {
+        status: 'idle',
+        errorBuckets: [],
+        latencyAvg: '--',
+        latencyP95: '--',
+        lastEtl: '--',
+        errorLabel: 'Bekleniyor',
+      };
+    }
+    const buckets = systemHealthDetail.error_buckets_24h || [];
+    const maxBucket = buckets.reduce((max, b) => (b.count > max ? b.count : max), 0) || 1;
+    const latencyAvg = systemHealthDetail.latency_avg_ms_24h ?? '--';
+    const latencyP95 = systemHealthDetail.latency_p95_ms_24h ?? '--';
+    const lastEtl = systemHealthDetail.last_etl_at
+      ? new Date(systemHealthDetail.last_etl_at).toLocaleString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+      : '--';
+    return {
+      status: systemHealthDetail.db_status === 'ok' ? 'ok' : 'error',
+      errorBuckets: buckets.map((bucket) => ({
+        ...bucket,
+        heightPct: Math.max(8, Math.round((bucket.count / maxBucket) * 100)),
+      })),
+      latencyAvg,
+      latencyP95,
+      lastEtl,
+      errorLabel: `${systemHealthDetail.error_count_5m ?? 0}/5dk`,
+    };
+  }, [systemHealthDetail, systemHealthDetailStatus]);
+
 
   // NOTE: Side effects (localStorage / URL normalization) should live in effects,
   // but kept minimal here for MVP. If this causes re-render loops, we will migrate.
