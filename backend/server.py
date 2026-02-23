@@ -2873,7 +2873,7 @@ except ValueError:
 ssl_context = None
 connect_args: Dict[str, Any] = {
     "server_settings": {
-        "client_encoding": "SQL_ASCII",
+        "client_encoding": "UTF8",
     }
 }
 if DB_SSL_MODE == "require":
