@@ -177,6 +177,12 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - 24s hata oranı sparkline + DB latency avg/p95 + son ETL zamanı
   - Slow queries (24s) rozeti, threshold >800ms
   - Endpoint bazlı slow query kırılımı (/api/search, /api/listings, /api/admin/*)
+- **CDN Metrics Adapter (Cloudflare) (2026-02-23):**
+  - Health panel CDN hit ratio, origin fetch, warm/cold p95 (feature-flag)
+- **Admin Kategori Manuel Yönetimi (2026-02-23):**
+  - Modül seçimi + parent validation + alt tip metadata
+- **İlan Ver Kategori Fallback (2026-02-23):**
+  - Veri yoksa güvenli fallback + CTA
 - **Search Postgres Cutover (2026-02-23):**
   - SEARCH_SQL_ROLLOUT %50 → %100
   - Seed demo data (5000 ilan) + ETL tekrar çalıştırıldı
