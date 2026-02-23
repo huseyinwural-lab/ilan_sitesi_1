@@ -7594,6 +7594,45 @@ async def search_categories(
     return {"items": items}
 
 
+@api_router.get("/categories/validate")
+async def validate_category_selection(
+    request: Request,
+    category_id: str,
+    country: Optional[str] = None,
+    module: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        category_uuid = uuid.UUID(category_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid category id") from exc
+
+    result = await session.execute(
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.id == category_uuid, Category.is_deleted.is_(False))
+    )
+    category = result.scalar_one_or_none()
+    if not category or not category.is_enabled:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    if module and category.module != module:
+        raise HTTPException(status_code=409, detail="Module mismatch")
+
+    if country:
+        code = country.upper()
+        if category.country_code and category.country_code != code:
+            raise HTTPException(status_code=409, detail="Country mismatch")
+        allowed = category.allowed_countries or []
+        if allowed and code not in allowed:
+            raise HTTPException(status_code=409, detail="Country mismatch")
+
+    return {
+        "valid": True,
+        "category": _serialize_category_sql(category, include_schema=False, include_translations=True),
+    }
+
+
 class ListingFlowEventPayload(BaseModel):
     event_name: str
     metadata: Optional[dict] = None
