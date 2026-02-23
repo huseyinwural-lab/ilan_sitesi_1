@@ -1,0 +1,55 @@
+export const ADMIN_ROLE_GROUPS = {
+  dashboard: ['super_admin', 'country_admin', 'finance'],
+  adminOnly: ['super_admin'],
+  auditViewer: ['super_admin', 'ROLE_AUDIT_VIEWER', 'audit_viewer'],
+  userOps: ['super_admin', 'country_admin', 'support', 'moderator'],
+  moderation: ['super_admin', 'country_admin', 'moderator'],
+  moderationWithSupport: ['super_admin', 'country_admin', 'moderator', 'support'],
+  catalogView: ['super_admin', 'country_admin', 'moderator'],
+  catalogAdmin: ['super_admin', 'country_admin'],
+  vehicleAdmin: ['super_admin', 'country_admin'],
+  finance: ['super_admin', 'finance'],
+  system: ['super_admin', 'country_admin'],
+};
+
+export const ADMIN_ROUTE_RULES = [
+  { pattern: /^\/admin\/?$/, roles: ADMIN_ROLE_GROUPS.dashboard },
+  { pattern: /^\/admin\/dashboard$/, roles: ADMIN_ROLE_GROUPS.dashboard },
+  { pattern: /^\/admin\/country-compare$/, roles: ADMIN_ROLE_GROUPS.dashboard },
+  { pattern: /^\/admin\/admin-users$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
+  { pattern: /^\/admin\/roles$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
+  { pattern: /^\/admin\/rbac-matrix$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
+  { pattern: /^\/admin\/feature-flags$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
+  { pattern: /^\/admin\/menu-management$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
+  { pattern: /^\/admin\/individual-users$/, roles: ADMIN_ROLE_GROUPS.userOps },
+  { pattern: /^\/admin\/individual-applications$/, roles: ADMIN_ROLE_GROUPS.userOps },
+  { pattern: /^\/admin\/dealers$/, roles: ADMIN_ROLE_GROUPS.userOps },
+  { pattern: /^\/admin\/dealer-applications$/, roles: ADMIN_ROLE_GROUPS.userOps },
+  { pattern: /^\/admin\/dealers\/.+$/, roles: ADMIN_ROLE_GROUPS.userOps },
+  { pattern: /^\/admin\/moderation$/, roles: ADMIN_ROLE_GROUPS.moderation },
+  { pattern: /^\/admin\/listings$/, roles: ADMIN_ROLE_GROUPS.moderation },
+  { pattern: /^\/admin\/individual-listing-applications$/, roles: ADMIN_ROLE_GROUPS.moderation },
+  { pattern: /^\/admin\/corporate-listing-applications$/, roles: ADMIN_ROLE_GROUPS.moderation },
+  { pattern: /^\/admin\/individual-campaigns$/, roles: ADMIN_ROLE_GROUPS.moderation },
+  { pattern: /^\/admin\/corporate-campaigns$/, roles: ADMIN_ROLE_GROUPS.moderation },
+  { pattern: /^\/admin\/campaigns$/, roles: ADMIN_ROLE_GROUPS.moderation },
+  { pattern: /^\/admin\/categories$/, roles: ADMIN_ROLE_GROUPS.catalogView },
+  { pattern: /^\/admin\/categories\/import-export$/, roles: ADMIN_ROLE_GROUPS.catalogAdmin },
+  { pattern: /^\/admin\/attributes$/, roles: ADMIN_ROLE_GROUPS.catalogAdmin },
+  { pattern: /^\/admin\/vehicle-makes$/, roles: ADMIN_ROLE_GROUPS.vehicleAdmin },
+  { pattern: /^\/admin\/vehicle-models$/, roles: ADMIN_ROLE_GROUPS.vehicleAdmin },
+  { pattern: /^\/admin\/invoices$/, roles: ADMIN_ROLE_GROUPS.finance },
+  { pattern: /^\/admin\/payments$/, roles: ADMIN_ROLE_GROUPS.finance },
+  { pattern: /^\/admin\/tax-rates$/, roles: ADMIN_ROLE_GROUPS.finance },
+  { pattern: /^\/admin\/plans$/, roles: ADMIN_ROLE_GROUPS.finance },
+  { pattern: /^\/admin\/billing$/, roles: ADMIN_ROLE_GROUPS.finance },
+  { pattern: /^\/admin\/countries$/, roles: ADMIN_ROLE_GROUPS.system },
+  { pattern: /^\/admin\/system-settings$/, roles: ADMIN_ROLE_GROUPS.system },
+  { pattern: /^\/admin\/audit$/, roles: ADMIN_ROLE_GROUPS.auditViewer },
+  { pattern: /^\/admin\/audit-logs$/, roles: ADMIN_ROLE_GROUPS.auditViewer },
+];
+
+export const resolveAdminRouteRoles = (pathname) => {
+  const rule = ADMIN_ROUTE_RULES.find((item) => item.pattern.test(pathname));
+  return rule ? rule.roles : null;
+};
