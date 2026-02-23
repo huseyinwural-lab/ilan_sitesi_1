@@ -120,7 +120,7 @@ const ReviewSubmit = () => {
       <div className="flex flex-wrap justify-end gap-4" data-testid="wizard-review-actions">
         <button
           type="button"
-          onClick={() => setStep(3)}
+          onClick={() => setStep(5)}
           className="px-6 py-3 text-gray-600 hover:bg-gray-100 rounded-lg"
           data-testid="wizard-review-edit"
         >
