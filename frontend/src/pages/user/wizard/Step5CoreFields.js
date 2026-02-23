@@ -133,8 +133,8 @@ const CoreFieldsStep = () => {
   };
 
   const handleComplete = async () => {
-    if (saving) return;
-    if (!validate()) return;
+    if (saving) return false;
+    if (!validate()) return false;
     setSaving(true);
 
     const vehicleAttributes = isVehicleModule
@@ -178,7 +178,7 @@ const CoreFieldsStep = () => {
     if (!ok) {
       setErrors((prev) => ({ ...prev, submit: 'Kaydetme başarısız.' }));
       setSaving(false);
-      return;
+      return false;
     }
 
     setCoreFields((prev) => ({
@@ -213,9 +213,19 @@ const CoreFieldsStep = () => {
       6: false,
     }));
     setSaving(false);
+    return true;
   };
 
-  const nextDisabled = !completedSteps[5];
+  const handleNext = async () => {
+    if (!validate()) return;
+    if (!completedSteps[5]) {
+      const ok = await handleComplete();
+      if (!ok) return;
+    }
+    setStep(6);
+  };
+
+  const nextDisabled = saving || Object.keys(errors).length > 0;
 
   return (
     <form className="space-y-8" data-testid="wizard-core-step" onSubmit={(e) => e.preventDefault()}>
