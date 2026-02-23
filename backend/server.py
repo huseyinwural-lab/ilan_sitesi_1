@@ -95,7 +95,7 @@ from app.utils.monitoring import (
     record_request_latency,
 )
 from app.models.dealer_listing import DealerListing
-from app.models.moderation import Listing, ModerationAction
+from app.models.moderation import Listing, ModerationAction, ModerationItem
 from app.models.listing_search import ListingSearch
 from app.models.vehicle_mdm import VehicleMake, VehicleModel
 from app.models.user_recent_category import UserRecentCategory
