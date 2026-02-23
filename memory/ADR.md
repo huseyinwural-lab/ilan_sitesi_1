@@ -505,3 +505,27 @@ graph LR
 - (+) Sızıntı riski düşer
 - (-) Ops bağımlılığı artar
 
+---
+
+## ADR-RBAC-001 — Deny-by-default + Allowlist RBAC
+
+**Karar:** Phase B RBAC yaklaşımı deny-by-default + explicit allowlist + audit log (RBAC_DENY / RBAC_POLICY_MISSING).
+
+**Gerekçe:** Yanlışlıkla açık kalan endpoint riskini minimize etmek.
+
+**Etkileri / trade-off:**
+- (+) Güvenlik artar, saldırı yüzeyi daralır
+- (-) İlk kurulumda endpoint/rol haritalama yükü artar
+
+---
+
+## ADR-RBAC-002 — Kanonik rol seti (Freeze v1)
+
+**Karar:** Başlangıç rol seti = SUPER_ADMIN, ADMIN, MODERATOR, SUPPORT, DEALER_ADMIN, DEALER_USER, CONSUMER.
+
+**Gerekçe:** Admin/portal ayrımı için minimum rol seti.
+
+**Etkileri / trade-off:**
+- (+) Rol karmaşıklığı sınırlı kalır
+- (-) Legacy roller için eşleme yönetimi gerekir
+
