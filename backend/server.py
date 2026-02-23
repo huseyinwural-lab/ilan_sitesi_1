@@ -14874,6 +14874,17 @@ async def admin_update_category(
         if code:
             updates["allowed_countries"] = [code]
 
+    should_validate_parent = payload.parent_id is not None or payload.module is not None or payload.country_code is not None
+    if should_validate_parent:
+        if parent_candidate is None and category.parent_id:
+            parent_candidate = await session.get(Category, category.parent_id)
+        _assert_category_parent_compatible(
+            category=category,
+            parent=parent_candidate,
+            module_value=module_value,
+            country_code=country_value,
+        )
+
     if payload.active_flag is not None:
         updates["is_enabled"] = payload.active_flag
 
