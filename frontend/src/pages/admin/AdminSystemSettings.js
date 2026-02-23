@@ -247,11 +247,6 @@ export default function AdminSystemSettingsPage() {
       </div>
 
       <div className="rounded-lg border bg-white p-4 space-y-3" data-testid="system-settings-cloudflare-card">
-        {!encryptionKeyPresent && (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700" data-testid="system-settings-cloudflare-encryption-banner">
-            CONFIG_ENCRYPTION_KEY tanımlı değil. Config kaydedilemez.
-          </div>
-        )}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold" data-testid="system-settings-cloudflare-title">Cloudflare (CDN & Analytics)</h2>
