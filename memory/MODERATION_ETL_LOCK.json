@@ -1,0 +1,23 @@
+{
+  "status": "completed",
+  "started_at": "2026-02-23T16:34:13.700531+00:00",
+  "actor_id": "9dbd1bdc-9d5a-401c-a650-29ffda5e6b55",
+  "request_id": "a7aa0ac479b94053a21926a90f8d1ed9",
+  "completed_at": "2026-02-23T16:34:23.550187+00:00",
+  "state": {
+    "last_etl_at": "2026-02-23T16:34:20.567262+00:00",
+    "queue_inserted": 0,
+    "queue_skipped": 0,
+    "queue_errors": 0,
+    "queue_skipped_existing": 0,
+    "queue_collection_exists": false,
+    "mongo_count": 0
+  },
+  "parity": {
+    "mongo_count": 0,
+    "sql_count": 0,
+    "sample_size": 0,
+    "collection_exists": false,
+    "report_path": "/app/memory/MODERATION_PARITY_REPORT.md"
+  }
+}

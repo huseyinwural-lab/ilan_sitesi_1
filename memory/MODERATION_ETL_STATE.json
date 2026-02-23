@@ -1,8 +1,9 @@
 {
-  "last_etl_at": "2026-02-23T15:41:52.686490+00:00",
+  "last_etl_at": "2026-02-23T16:34:20.567262+00:00",
   "queue_inserted": 0,
   "queue_skipped": 0,
   "queue_errors": 0,
+  "queue_skipped_existing": 0,
   "queue_collection_exists": false,
-  "pymongo_available": true
+  "mongo_count": 0
 }
