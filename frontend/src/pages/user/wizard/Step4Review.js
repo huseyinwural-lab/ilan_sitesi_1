@@ -139,7 +139,7 @@ const ReviewSubmit = () => {
               ['Renk', basicInfo.color],
               ['Hasar', basicInfo.damage_status],
               ['Takas', basicInfo.trade_in === true ? 'Var' : basicInfo.trade_in === false ? 'Yok' : '-'],
-              ['Fiyat Tipi', coreFields.price_type || 'FIXED'],
+              ['Fiyat Tipi', priceTypeLabel],
             ].map(([key, val]) => (
               <div key={key} data-testid={`wizard-review-spec-${key}`}>
                 <span className="text-gray-500 text-sm">{key}:</span>
