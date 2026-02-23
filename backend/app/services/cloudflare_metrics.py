@@ -20,6 +20,13 @@ CDN_TARGETS = {
     "cold_p95_ms": {"DE": 450, "AT": 450, "CH": 500, "FR": 500},
 }
 
+CANARY_OK = "OK"
+CANARY_AUTH_ERROR = "AUTH_ERROR"
+CANARY_SCOPE_ERROR = "SCOPE_ERROR"
+CANARY_NO_DATA = "NO_DATA"
+CANARY_RATE_LIMIT = "RATE_LIMIT"
+CANARY_CONFIG_MISSING = "CONFIG_MISSING"
+
 
 class CloudflareMetricsError(RuntimeError):
     def __init__(self, message: str, code: str = "cloudflare_error") -> None:
@@ -77,8 +84,12 @@ class CloudflareMetricsAdapter:
                     headers=self.headers,
                 )
             if response.status_code != 200:
-                if response.status_code in {401, 403}:
+                if response.status_code == 401:
+                    self.error_codes.append("auth_error")
+                elif response.status_code == 403:
                     self.error_codes.append("scope_error")
+                elif response.status_code == 429:
+                    self.error_codes.append("rate_limit")
                 else:
                     self.error_codes.append(f"http_{response.status_code}")
                 logger.warning("cloudflare_graphql_error", extra={"status": response.status_code, "body": response.text})
@@ -212,7 +223,15 @@ class CloudflareMetricsService:
         except ValueError:
             return DEFAULT_CACHE_TTL_SECONDS
 
-    async def get_metrics(self) -> Dict[str, Any]:
+    async def run_canary(self, credentials: Optional[CloudflareCredentials]) -> str:
+        if not credentials:
+            return CANARY_CONFIG_MISSING
+        adapter = CloudflareMetricsAdapter(credentials)
+        cache_payload = await adapter.fetch_cache_metrics()
+        cache_metrics = _extract_cache_metrics(cache_payload)
+        return _build_canary_status(adapter, cache_metrics)
+
+    async def get_metrics(self, credentials: Optional[CloudflareCredentials] = None) -> Dict[str, Any]:
         if not self.is_enabled():
             return {"enabled": False, "status": "disabled"}
 
@@ -222,7 +241,7 @@ class CloudflareMetricsService:
         if cached and (now_ts - (self._cache.get("checked_at") or 0)) < ttl:
             return cached
 
-        credentials = self._load_credentials()
+        credentials = credentials or self._load_credentials()
         adapter = CloudflareMetricsAdapter(credentials)
 
         cache_payload = await adapter.fetch_cache_metrics()
@@ -277,7 +296,7 @@ class CloudflareMetricsService:
         }
 
         payload["alerts"] = _evaluate_alerts(payload)
-        payload["canary_status"] = _build_canary_status(adapter, total_requests, country_metrics)
+        payload["canary_status"] = _build_canary_status(adapter, cache_metrics)
         logger.info("cloudflare_metrics_canary", extra={"status": payload["canary_status"], "errors": adapter.error_codes})
 
         self._cache.update({"checked_at": now_ts, "payload": payload})
@@ -435,16 +454,19 @@ def _build_country_metrics(
     return metrics
 
 
-def _build_canary_status(adapter: CloudflareMetricsAdapter, total_requests: int, country_metrics: Dict[str, Dict[str, Any]]) -> str:
-    if total_requests and total_requests > 0:
-        return "analytics_read_ok"
-    if any(metric.get("requests") for metric in country_metrics.values()):
-        return "analytics_read_ok"
+def _build_canary_status(adapter: CloudflareMetricsAdapter, cache_metrics: Dict[str, Any]) -> str:
+    if "auth_error" in adapter.error_codes:
+        return CANARY_AUTH_ERROR
+    if "scope_error" in adapter.error_codes:
+        return CANARY_SCOPE_ERROR
+    if "rate_limit" in adapter.error_codes:
+        return CANARY_RATE_LIMIT
+    total_requests = cache_metrics.get("total_requests") or 0
+    if total_requests > 0:
+        return CANARY_OK
     if adapter.error_codes:
-        if "scope_error" in adapter.error_codes:
-            return "scope_error"
-        return "analytics_read_error"
-    return "no_data"
+        return CANARY_AUTH_ERROR
+    return CANARY_NO_DATA
 
 
 def _evaluate_alerts(payload: Dict[str, Any]) -> Dict[str, Any]:
