@@ -3364,6 +3364,54 @@ async def admin_system_health_summary(
     return payload
 
 
+@api_router.get("/admin/system/health-detail")
+async def admin_system_health_detail(
+    current_user=Depends(check_permissions(list(ADMIN_ROLE_OPTIONS))),
+):
+    now_ts = time.time()
+    cached_at = _system_health_detail_cache.get("checked_at") or 0
+    cached_payload = _system_health_detail_cache.get("data")
+    if cached_payload and cached_at and (now_ts - cached_at) < SYSTEM_HEALTH_DETAIL_CACHE_TTL_SECONDS:
+        return cached_payload
+
+    last_check_at = datetime.now(timezone.utc)
+    db_status = "ok"
+    latency_ms = None
+    try:
+        start_ts = time.perf_counter()
+        async with sql_engine.connect() as conn:
+            await conn.execute(select(1))
+        latency_ms = (time.perf_counter() - start_ts) * 1000
+        _record_db_latency(latency_ms)
+        _set_last_db_error(None)
+    except Exception as exc:
+        db_status = "unreachable"
+        _set_last_db_error(str(exc))
+
+    error_count, error_rate = _get_db_error_rate()
+    error_buckets = _build_error_buckets()
+    latency_avg, latency_p95 = _get_db_latency_stats()
+    etl_state = _read_search_etl_state()
+
+    payload = {
+        "db_status": db_status,
+        "last_check_at": last_check_at.isoformat(),
+        "latency_ms": round(latency_ms, 2) if latency_ms is not None else None,
+        "latency_avg_ms_24h": latency_avg,
+        "latency_p95_ms_24h": latency_p95,
+        "error_count_5m": error_count,
+        "error_rate_per_min_5m": error_rate,
+        "error_buckets_24h": error_buckets,
+        "last_db_error": _last_db_error,
+        "last_etl_at": etl_state.get("last_etl_at"),
+        "last_etl_inserted": etl_state.get("inserted"),
+        "last_etl_skipped": etl_state.get("skipped"),
+        "last_etl_total": etl_state.get("total"),
+    }
+    _system_health_detail_cache.update({"checked_at": now_ts, "data": payload})
+    return payload
+
+
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(
     credentials: UserLogin,
