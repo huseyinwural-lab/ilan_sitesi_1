@@ -43,6 +43,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
   const [attributes, setAttributes] = useState({});
   const [schema, setSchema] = useState(null);
   const [schemaLoading, setSchemaLoading] = useState(false);
+  const [schemaNotice, setSchemaNotice] = useState('');
   const [coreFields, setCoreFields] = useState({
     title: '',
     description: '',
