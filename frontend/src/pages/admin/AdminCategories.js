@@ -153,6 +153,7 @@ const createSubcategoryDraft = () => ({
   slug: "",
   active_flag: true,
   sort_order: 0,
+  transaction_type: "",
   is_complete: false,
   children: [],
 });
