@@ -79,7 +79,7 @@ async def search_real_estate(
     limit: int = 20,
     page: int = 1,
     
-    request: Request,
+    request: Request = None,
     db: AsyncSession = Depends(get_db)
 ):
     use_listings_search = _use_listings_search(request)
