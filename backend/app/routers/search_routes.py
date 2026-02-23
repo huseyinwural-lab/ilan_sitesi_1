@@ -251,7 +251,8 @@ async def search_listings(
         results = await asyncio.gather(*tasks)
         
         for key, rows in results:
-            if not rows: continue
+            if not rows:
+                continue
             options = []
             for val, label, count in rows:
                 options.append({
