@@ -199,6 +199,41 @@ def main() -> None:
         if not row:
             skipped += 1
             continue
+        listing_batch.append(
+            {
+                "id": row.listing_id,
+                "title": row.title,
+                "description": row.description,
+                "module": row.module,
+                "category_id": row.category_id,
+                "country": row.country_code,
+                "city": row.city,
+                "price_type": row.price_type or "FIXED",
+                "price": row.price_amount,
+                "hourly_rate": row.hourly_rate,
+                "currency": row.currency or "EUR",
+                "user_id": uuid.uuid5(DEFAULT_NAMESPACE, f"user-{row.listing_id}"),
+                "dealer_id": None,
+                "is_dealer_listing": False,
+                "images": json.dumps(row.images or []),
+                "image_count": len(row.images or []),
+                "view_count": 0,
+                "attributes": json.dumps(row.attributes or {}),
+                "make_id": row.make_id,
+                "model_id": row.model_id,
+                "contact_option_phone": True,
+                "contact_option_message": True,
+                "status": row.status or "active",
+                "is_premium": bool(row.is_premium),
+                "premium_until": None,
+                "is_showcase": bool(row.is_showcase),
+                "showcase_expires_at": None,
+                "created_at": row.created_at,
+                "updated_at": row.updated_at,
+                "published_at": row.published_at,
+                "expires_at": None,
+            }
+        )
         batch.append(row)
         if len(batch) >= args.batch_size:
             if args.dry_run:
