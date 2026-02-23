@@ -14378,6 +14378,8 @@ async def admin_update_cloudflare_config(
         raise HTTPException(status_code=status_code, detail=str(exc)) from exc
 
     try:
+        if APP_ENV != "prod" and request.headers.get("X-Force-DB-Write-Fail") == "true":
+            raise RuntimeError("forced_db_write_fail")
         config = await upsert_cloudflare_config(
             session,
             account_token=encrypted_account,
