@@ -171,10 +171,6 @@ def run_parity(stage_label: str, queries):
             f"| {row['id']} | {row['mongo_count']} | {row['sql_count']} | {row['top20_overlap_pct']} |"
         )
 
-    if mongo_total == 0 and sql_total == 0:
-        lines.append("
-> Not: Preview ortamında listing datası bulunmadığı için tüm sonuçlar 0 döndü.")
-
     _append_section(Path('/app/memory/SEARCH_PARITY_REPORT.md'), "
 ".join(lines))
 
@@ -333,7 +329,13 @@ def main():
         })
 
     benchmark_queries = [
-        {"id": f"B{i+1:02d}", "q": keywords[i % len(keywords)] if i % 2 == 0 else None, "price_min": price_ranges[i % len(price_ranges)][0], "price_max": price_ranges[i % len(price_ranges)][1], "sort": sorts[i % len(sorts)]}
+        {
+            "id": f"B{i+1:02d}",
+            "q": keywords[i % len(keywords)] if i % 2 == 0 else None,
+            "price_min": price_ranges[i % len(price_ranges)][0],
+            "price_max": price_ranges[i % len(price_ranges)][1],
+            "sort": sorts[i % len(sorts)],
+        }
         for i in range(10)
     ]
 
