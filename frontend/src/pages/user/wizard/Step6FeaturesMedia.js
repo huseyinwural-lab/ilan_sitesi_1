@@ -54,6 +54,7 @@ const FeaturesMediaStep = () => {
   const [files, setFiles] = useState([]);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const saveLockRef = useRef(false);
   const [dragIndex, setDragIndex] = useState(null);
 
   useEffect(() => {
