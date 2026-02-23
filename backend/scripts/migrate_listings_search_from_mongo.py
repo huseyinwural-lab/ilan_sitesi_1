@@ -253,6 +253,7 @@ def main() -> None:
             inserted += len(batch)
         else:
             with SessionLocal() as session:
+                session.execute(insert_listing_sql, listing_batch)
                 session.bulk_save_objects(batch)
                 session.commit()
             inserted += len(batch)
