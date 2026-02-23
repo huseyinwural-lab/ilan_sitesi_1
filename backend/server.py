@@ -14730,56 +14730,60 @@ async def admin_create_system_setting(
     payload: SystemSettingCreatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     key = payload.key.strip()
     if not KEY_NAMESPACE_REGEX.match(key):
         raise HTTPException(status_code=400, detail="Invalid key namespace")
     country_code = payload.country_code.upper() if payload.country_code else None
 
-    existing = await db.system_settings.find_one({"key": key, "country_code": country_code})
-    if existing:
+    result = await session.execute(
+        select(SystemSetting).where(SystemSetting.key == key, SystemSetting.country_code == country_code)
+    )
+    if result.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Setting already exists")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    setting_id = str(uuid.uuid4())
-    setting_doc = {
-        "id": setting_id,
-        "key": key,
-        "value": payload.value,
-        "country_code": country_code,
-        "is_readonly": bool(payload.is_readonly),
-        "description": payload.description,
-        "created_at": now_iso,
-        "updated_at": now_iso,
+    setting = SystemSetting(
+        key=key,
+        value=payload.value,
+        country_code=country_code,
+        is_readonly=bool(payload.is_readonly),
+        description=payload.description,
+    )
+    session.add(setting)
+    await session.flush()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="SYSTEM_SETTING_CREATE",
+        actor=current_user,
+        resource_type="system_setting",
+        resource_id=str(setting.id),
+        metadata={
+            "key": key,
+            "country_code": country_code,
+            "value": payload.value,
+        },
+        request=request,
+        country_code=country_code,
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "setting": {
+            "id": str(setting.id),
+            "key": setting.key,
+            "value": setting.value,
+            "country_code": setting.country_code,
+            "is_readonly": setting.is_readonly,
+            "description": setting.description,
+            "created_at": setting.created_at.isoformat() if setting.created_at else None,
+            "updated_at": setting.updated_at.isoformat() if setting.updated_at else None,
+        },
     }
-
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "SYSTEM_SETTING_CHANGE",
-        "action": "SYSTEM_SETTING_CREATE",
-        "setting_id": setting_id,
-        "key": key,
-        "country_code": country_code,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "system_setting",
-        "resource_id": setting_id,
-        "applied": False,
-    }
-
-    await db.audit_logs.insert_one(audit_doc)
-    await db.system_settings.insert_one(setting_doc)
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-
-    setting_doc.pop("_id", None)
-    return {"ok": True, "setting": setting_doc}
 
 
 @api_router.patch("/admin/system-settings/{setting_id}")
