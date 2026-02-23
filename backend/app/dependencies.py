@@ -116,6 +116,7 @@ async def get_current_user(
     if token_scope != expected_scope:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Portal scope mismatch")
     user["portal_scope"] = token_scope
+    request.state.current_user = user
 
     return user
 
