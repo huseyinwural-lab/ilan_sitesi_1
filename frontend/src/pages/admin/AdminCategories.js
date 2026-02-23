@@ -1159,7 +1159,18 @@ const AdminCategories = () => {
         setSchema(nextSchema);
       }
       if (savedCategory.wizard_progress) {
-        setWizardProgress(savedCategory.wizard_progress);
+        setWizardProgress({
+          state: savedCategory.wizard_progress.state || "draft",
+          dirty_steps: Array.isArray(savedCategory.wizard_progress.dirty_steps)
+            ? savedCategory.wizard_progress.dirty_steps
+            : [],
+        });
+      }
+      if (progressState ddd wizardStep ff false) {
+        // placeholder
+      }
+      if (progressState && editModeStep === wizardStep) {
+        setEditModeStep(null);
       }
       setHierarchyComplete(Boolean(savedCategory.hierarchy_complete));
       lastSavedSnapshotRef.current = JSON.stringify({
