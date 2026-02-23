@@ -174,7 +174,7 @@ async def search_listings(
             elif attr.attribute_type == 'number':
                 if isinstance(val, dict):
                     if 'min' in val:
-                        sub_q = sub_q.where(ListingAttribute.value_number = val['min'])
+                        sub_q = sub_q.where(ListingAttribute.value_number >= val['min'])
                     if 'max' in val:
                         sub_q = sub_q.where(ListingAttribute.value_number <= val['max'])
 
