@@ -264,12 +264,16 @@ const AdminCategories = () => {
   const nextStep = WIZARD_STEPS[currentStepIndex + 1]?.id;
   const prevStep = WIZARD_STEPS[currentStepIndex - 1]?.id;
   const wizardProgressState = wizardProgress?.state || "draft";
+  const dirtySteps = Array.isArray(wizardProgress?.dirty_steps) ? wizardProgress.dirty_steps : [];
+  const canEditUnlock = useMemo(() => hasPermission?.(["super_admin", "country_admin"]) ?? false, [hasPermission]);
   const getProgressIndex = (state) => {
     const idx = WIZARD_PROGRESS_ORDER.indexOf(state || "draft");
     return idx === -1 ? 0 : idx;
   };
   const wizardProgressIndex = getProgressIndex(wizardProgressState);
+  const isStepDirty = (stepId) => dirtySteps.includes(stepId);
   const isStepCompleted = (stepId) => {
+    if (isStepDirty(stepId)) return false;
     if (stepId === "hierarchy") {
       return hierarchyComplete || wizardProgressIndex >= getProgressIndex(STEP_PROGRESS_STATE[stepId] || "draft");
     }
