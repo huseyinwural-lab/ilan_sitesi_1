@@ -64,6 +64,10 @@ export default function ModerationQueue({
     fetchCount();
   }, [countryFilter, moduleFilter, dealerOnly]);
 
+  useEffect(() => {
+    setSelectedIds((prev) => prev.filter((id) => listings.some((listing) => listing.id === id)));
+  }, [listings]);
+
   const fetchQueue = async () => {
     try {
       const params = new URLSearchParams();
