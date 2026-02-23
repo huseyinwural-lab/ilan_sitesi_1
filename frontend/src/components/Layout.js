@@ -656,31 +656,95 @@ export default function Layout({ children }) {
 
           {/* Right - Theme, Language, User */}
           <div className="flex items-center gap-2">
-            <div
-              className={`hidden md:flex items-center gap-2 px-3 py-1 rounded-full border text-xs ${
-                healthDisplay.status === 'ok'
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : healthDisplay.status === 'error'
-                    ? 'border-rose-200 bg-rose-50 text-rose-700'
-                    : 'border-slate-200 bg-slate-50 text-slate-600'
-              }`}
-              data-testid="admin-system-health-badge"
-              title={healthDisplay.title}
-            >
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  healthDisplay.status === 'ok'
-                    ? 'bg-emerald-500'
-                    : healthDisplay.status === 'error'
-                      ? 'bg-rose-500'
-                      : 'bg-slate-400'
-                }`}
-                data-testid="admin-system-health-indicator"
-              />
-              <span data-testid="admin-system-health-status">{healthDisplay.label}</span>
-              <span className="text-muted-foreground" data-testid="admin-system-health-time">{healthDisplay.timeLabel}</span>
-              <span className="text-muted-foreground" data-testid="admin-system-health-error-rate">{healthDisplay.errorLabel}</span>
-            </div>
+            {canViewSystemHealth && (
+              <div className="relative" ref={healthPanelRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowHealthPanel((prev) => !prev)}
+                  className={`hidden md:flex items-center gap-2 px-3 py-1 rounded-full border text-xs ${
+                    healthDisplay.status === 'ok'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : healthDisplay.status === 'error'
+                        ? 'border-rose-200 bg-rose-50 text-rose-700'
+                        : 'border-slate-200 bg-slate-50 text-slate-600'
+                  }`}
+                  data-testid="admin-system-health-badge"
+                  data-testid-toggle="admin-system-health-toggle"
+                  title={healthDisplay.title}
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      healthDisplay.status === 'ok'
+                        ? 'bg-emerald-500'
+                        : healthDisplay.status === 'error'
+                          ? 'bg-rose-500'
+                          : 'bg-slate-400'
+                    }`}
+                    data-testid="admin-system-health-indicator"
+                  />
+                  <span data-testid="admin-system-health-status">{healthDisplay.label}</span>
+                  <span className="text-muted-foreground" data-testid="admin-system-health-time">{healthDisplay.timeLabel}</span>
+                  <span className="text-muted-foreground" data-testid="admin-system-health-error-rate">{healthDisplay.errorLabel}</span>
+                </button>
+
+                {showHealthPanel && (
+                  <div
+                    className="absolute right-0 mt-2 w-80 rounded-xl border bg-white p-4 shadow-lg z-50"
+                    data-testid="admin-system-health-panel"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-semibold text-slate-900" data-testid="admin-system-health-panel-title">System Health</div>
+                      <button
+                        type="button"
+                        onClick={() => setShowHealthPanel(false)}
+                        className="text-xs text-slate-500 hover:text-slate-700"
+                        data-testid="admin-system-health-panel-close"
+                      >
+                        Kapat
+                      </button>
+                    </div>
+                    <div className="mt-3">
+                      <div className="text-xs text-slate-500" data-testid="admin-system-health-panel-error-label">Son 24s Hata Oranı (5dk)</div>
+                      <div className="mt-2 flex items-end gap-[2px] h-16" data-testid="admin-system-health-sparkline">
+                        {healthDetailDisplay.errorBuckets.length ? (
+                          healthDetailDisplay.errorBuckets.map((bucket, idx) => (
+                            <div
+                              key={`bucket-${idx}`}
+                              className="flex-1 rounded-sm bg-slate-300"
+                              style={{ height: `${bucket.heightPct}%` }}
+                              data-testid={`admin-system-health-bar-${idx}`}
+                              title={`${bucket.bucket_start} • ${bucket.count}`}
+                            />
+                          ))
+                        ) : (
+                          <div className="text-xs text-slate-400" data-testid="admin-system-health-sparkline-empty">
+                            Veri yok
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                      <div className="rounded-lg border border-slate-100 bg-slate-50 p-2" data-testid="admin-system-health-latency-avg">
+                        <div className="text-slate-500">DB Ortalama</div>
+                        <div className="font-semibold text-slate-900">{healthDetailDisplay.latencyAvg} ms</div>
+                      </div>
+                      <div className="rounded-lg border border-slate-100 bg-slate-50 p-2" data-testid="admin-system-health-latency-p95">
+                        <div className="text-slate-500">DB p95</div>
+                        <div className="font-semibold text-slate-900">{healthDetailDisplay.latencyP95} ms</div>
+                      </div>
+                      <div className="rounded-lg border border-slate-100 bg-slate-50 p-2" data-testid="admin-system-health-last-etl">
+                        <div className="text-slate-500">Son ETL</div>
+                        <div className="font-semibold text-slate-900">{healthDetailDisplay.lastEtl}</div>
+                      </div>
+                      <div className="rounded-lg border border-slate-100 bg-slate-50 p-2" data-testid="admin-system-health-error-5m">
+                        <div className="text-slate-500">Hata (5dk)</div>
+                        <div className="font-semibold text-slate-900">{healthDetailDisplay.errorLabel}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
