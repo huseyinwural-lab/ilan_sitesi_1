@@ -230,7 +230,7 @@ export default function MyListings() {
                     </span>
                   </td>
                   <td className="p-3" data-testid={`account-listings-price-${listing.id}`}>
-                    {listing.price?.amount || listing.attributes?.price_eur || '-'}
+                    {formatListingPrice(listing)}
                   </td>
                   <td className="p-3" data-testid={`account-listings-created-${listing.id}`}>
                     {formatDate(listing.created_at)}
