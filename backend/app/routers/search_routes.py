@@ -103,39 +103,59 @@ async def search_listings(
     else:
         filters = {}
 
+    use_listings_search = _use_listings_search(request) if request else False
+    ListingModel = ListingSearch if use_listings_search else Listing
+    id_col = ListingSearch.listing_id if use_listings_search else Listing.id
+    price_col = ListingSearch.price_amount if use_listings_search else Listing.price
+    price_type_col = ListingSearch.price_type if use_listings_search else Listing.price_type
+    created_col = ListingSearch.published_at if use_listings_search else Listing.created_at
+
     # 1. Base Query
-    query = select(Listing).where(Listing.status == 'active')
-    
+    query = select(ListingModel).where(ListingModel.status == 'active')
+
     # 2. Text Search
     if q:
-        query = query.where(Listing.title.ilike(f"%{q}%"))
-        
+        if use_listings_search:
+            ts_query_tr = func.plainto_tsquery('turkish', q)
+            ts_query_de = func.plainto_tsquery('german', q)
+            query = query.where(
+                or_(
+                    ListingSearch.tsv_tr.op('@@')(ts_query_tr),
+                    ListingSearch.tsv_de.op('@@')(ts_query_de),
+                    ListingSearch.title.ilike(f"%{q}%"),
+                    ListingSearch.description.ilike(f"%{q}%"),
+                )
+            )
+        else:
+            query = query.where(Listing.title.ilike(f"%{q}%"))
+
     # 3. Category Filter
     current_cat = None
     if category_slug:
         cat_all = (await db.execute(select(Category))).scalars().all()
         current_cat = next((c for c in cat_all if c.slug.get('en') == category_slug), None)
-        
+
         if current_cat:
-            query = query.where(Listing.category_id == current_cat.id)
-    
+            query = query.where(ListingModel.category_id == current_cat.id)
+
     # 4. Standard Filters
-    if price_min: query = query.where(Listing.price >= price_min)
-    if price_max: query = query.where(Listing.price <= price_max)
+    if price_min: query = query.where(price_col >= price_min)
+    if price_max: query = query.where(price_col <= price_max)
     if price_min or price_max:
-        query = query.where(or_(Listing.price_type == "FIXED", Listing.price_type.is_(None)))
-    
+        query = query.where(or_(price_type_col == "FIXED", price_type_col.is_(None)))
+
     # 5. Attribute Filters (The Core Logic)
     if filters:
         for key, val in filters.items():
             attr_res = await db.execute(select(Attribute).where(Attribute.key == key))
             attr = attr_res.scalar_one_or_none()
-            if not attr: continue
-            
+            if not attr:
+                continue
+
             sub_q = select(ListingAttribute.listing_id).where(
                 ListingAttribute.attribute_id == attr.id
             )
-            
+
             if attr.attribute_type == 'select' or attr.attribute_type == 'multi_select':
                 if isinstance(val, list):
                     opt_ids = (await db.execute(select(AttributeOption.id).where(
@@ -143,26 +163,31 @@ async def search_listings(
                         AttributeOption.value.in_(val)
                     ))).scalars().all()
                     sub_q = sub_q.where(ListingAttribute.value_option_id.in_(opt_ids))
-                
+
             elif attr.attribute_type == 'boolean':
                 if val is True:
                     sub_q = sub_q.where(ListingAttribute.value_boolean == True)
-                    
+
             elif attr.attribute_type == 'number':
                 if isinstance(val, dict):
-                    if 'min' in val: sub_q = sub_q.where(ListingAttribute.value_number >= val['min'])
-                    if 'max' in val: sub_q = sub_q.where(ListingAttribute.value_number <= val['max'])
-            
-            query = query.where(Listing.id.in_(sub_q))
+                    if 'min' in val:
+                        sub_q = sub_q.where(ListingAttribute.value_number >= val['min'])
+                    if 'max' in val:
+                        sub_q = sub_q.where(ListingAttribute.value_number <= val['max'])
+
+            query = query.where(id_col.in_(sub_q))
 
     # 6. Pagination & Execution (Items)
     count_q = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_q)).scalar()
-    
-    if sort == 'price_asc': query = query.order_by(Listing.price.asc())
-    elif sort == 'price_desc': query = query.order_by(Listing.price.desc())
-    else: query = query.order_by(Listing.created_at.desc())
-    
+
+    if sort == 'price_asc':
+        query = query.order_by(price_col.asc())
+    elif sort == 'price_desc':
+        query = query.order_by(price_col.desc())
+    else:
+        query = query.order_by(created_col.desc())
+
     items_res = await db.execute(query.offset((page-1)*limit).limit(limit))
     items = items_res.scalars().all()
     
