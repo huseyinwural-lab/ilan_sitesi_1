@@ -199,6 +199,7 @@ const AdminCategories = () => {
     slug: "",
     parent_id: "",
     country_code: "",
+    module: "",
     active_flag: true,
     sort_order: 0,
   });
