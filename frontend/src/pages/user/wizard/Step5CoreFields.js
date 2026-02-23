@@ -29,6 +29,7 @@ const CoreFieldsStep = () => {
     setAttributes,
     schema,
     saveDraft,
+    trackWizardEvent,
     setStep,
     completedSteps,
     setCompletedSteps,
