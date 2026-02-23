@@ -2,3 +2,4 @@ Phase 1: 1000 sequential login+me
 Phase 1 progress: 100/1000
 Phase 1 progress: 200/1000
 Phase 1 progress: 300/1000
+Phase 1 progress: 400/1000
