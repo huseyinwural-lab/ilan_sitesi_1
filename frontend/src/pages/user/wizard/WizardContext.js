@@ -78,14 +78,29 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     if (!categoryId) return null;
     try {
       setSchemaLoading(true);
+      setSchemaNotice('');
       const res = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/catalog/schema?category_id=${categoryId}&country=${selectedCountry || 'DE'}`
       );
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.detail || 'Schema yüklenemedi');
+        const raw = await res.text();
+        let detail = 'Schema yüklenemedi';
+        try {
+          const parsed = JSON.parse(raw);
+          detail = parsed?.detail || detail;
+        } catch (err) {
+          if (raw) detail = raw;
+        }
+        if (res.status === 409) {
+          setSchema(null);
+          setSchemaNotice(detail);
+          return null;
+        }
+        throw new Error(detail);
       }
+      const data = await res.json();
       setSchema(data.schema);
+      setSchemaNotice('');
       const priceConfig = data.schema?.core_fields?.price || {};
       const allowedPriceTypes = priceConfig.allowed_types || (priceConfig.hourly_enabled === false ? ['FIXED'] : ['FIXED', 'HOURLY']);
       setCoreFields((prev) => ({
