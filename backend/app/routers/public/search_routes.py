@@ -129,11 +129,14 @@ async def search_real_estate(
         # Extract m2 and rooms from attributes if available
         specs = {}
         attributes = l.attributes or {}
-        if "m2_gross" in attributes: specs["m2"] = attributes["m2_gross"]
-        if "room_count" in attributes: specs["rooms"] = attributes["room_count"]
+        if "m2_gross" in attributes:
+            specs["m2"] = attributes["m2_gross"]
+        if "room_count" in attributes:
+            specs["rooms"] = attributes["room_count"]
 
         badges = []
-        if l.is_premium: badges.append("premium")
+        if l.is_premium:
+            badges.append("premium")
         if use_listings_search:
             if (l.seller_type or "") == "commercial":
                 badges.append("commercial")
