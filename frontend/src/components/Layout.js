@@ -237,6 +237,8 @@ export default function Layout({ children }) {
   }, [systemHealthDetail, systemHealthDetailStatus]);
 
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   // NOTE: Side effects (localStorage / URL normalization) should live in effects,
   // but kept minimal here for MVP. If this causes re-render loops, we will migrate.
 
