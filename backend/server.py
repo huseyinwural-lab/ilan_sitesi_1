@@ -3412,6 +3412,8 @@ async def admin_system_health_detail(
     if cached_payload and cached_at and (now_ts - cached_at) < SYSTEM_HEALTH_DETAIL_CACHE_TTL_SECONDS:
         return cached_payload
 
+    db = request.app.state.db
+
     last_check_at = datetime.now(timezone.utc)
     db_status = "ok"
     latency_ms = None
