@@ -142,6 +142,14 @@ const FeaturesMediaStep = () => {
     return Object.keys(nextErrors).length === 0;
   };
 
+  const scrollToFirstError = () => {
+    const container = document.querySelector('[data-testid="wizard-features-step"]');
+    const target = container?.querySelector('[data-testid$="-error"]');
+    if (target) {
+      target.scrollIntoView({ behavior: window.innerWidth < 768 ? 'smooth' : 'auto', block: 'center' });
+    }
+  };
+
   const uploadFiles = async () => {
     const newFiles = files.filter((item) => item.file && !item.media_id);
     if (newFiles.length === 0) return { media: media };
