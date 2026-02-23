@@ -71,6 +71,15 @@ const YearTrimStep = () => {
 
   const nextDisabled = !completedSteps[4];
 
+  if (!basicInfo.model_key) {
+    return (
+      <div className="bg-white border rounded-xl p-6 text-center" data-testid="wizard-year-locked">
+        <h2 className="text-xl font-bold mb-2">Yıl seçimi kilitli</h2>
+        <p className="text-sm text-muted-foreground">Önce bir model seçmelisiniz.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6" data-testid="wizard-year-step">
       <div className="space-y-1">
