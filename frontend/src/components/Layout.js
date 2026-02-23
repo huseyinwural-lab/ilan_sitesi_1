@@ -29,6 +29,8 @@ export default function Layout({ children }) {
   });
   const [sessionStatus, setSessionStatus] = useState('loading');
   const [sessionError, setSessionError] = useState('');
+  const [systemHealth, setSystemHealth] = useState(null);
+  const [systemHealthStatus, setSystemHealthStatus] = useState('idle');
 
   const checkSession = async () => {
     const token = localStorage.getItem('access_token');
