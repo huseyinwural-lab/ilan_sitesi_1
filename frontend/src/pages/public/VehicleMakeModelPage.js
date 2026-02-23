@@ -11,7 +11,7 @@ const VehicleMakeModelPage = () => {
 
   useEffect(() => {
     if (!make || !model) return;
-    if (searchState.make === make && searchState.model === model) return;
+    if (searchState.make === make && searchState.model === model && (!year || searchState.filters?.year === year)) return;
     setSearchState({
       ...searchState,
       category: 'otomobil',
@@ -20,7 +20,7 @@ const VehicleMakeModelPage = () => {
       page: 1,
       filters: year ? { ...searchState.filters, year } : searchState.filters,
     });
-  }, [make, model, year]);
+  }, [make, model, year, searchState, setSearchState]);
 
   return <SearchPage />;
 };
