@@ -9302,6 +9302,82 @@ def _validate_reason(reason: str, allowed: set[str]) -> str:
     return r
 
 
+MODERATION_REASON_MAX_LEN = 500
+SYSTEM_MODERATOR_ID = uuid.UUID("00000000-0000-0000-0000-000000000000")
+MODERATION_STATUS_MAP = {
+    "pending": "PENDING",
+    "pending_moderation": "PENDING",
+    "approved": "APPROVED",
+    "published": "APPROVED",
+    "rejected": "REJECTED",
+    "needs_revision": "NEEDS_REVISION",
+    "needs-revision": "NEEDS_REVISION",
+}
+
+
+def _normalize_moderation_item_status(value: Optional[str]) -> str:
+    if not value:
+        return "PENDING"
+    cleaned = value.strip().lower()
+    if cleaned in MODERATION_STATUS_MAP:
+        return MODERATION_STATUS_MAP[cleaned]
+    upper = value.strip().upper()
+    if upper in {"PENDING", "APPROVED", "REJECTED", "NEEDS_REVISION"}:
+        return upper
+    return upper
+
+
+def _sanitize_moderation_reason(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    cleaned = str(value).strip()
+    if not cleaned:
+        return None
+    if len(cleaned) > MODERATION_REASON_MAX_LEN:
+        cleaned = cleaned[:MODERATION_REASON_MAX_LEN]
+    return cleaned
+
+
+def _resolve_moderation_actor_id(value: Optional[str]) -> uuid.UUID:
+    actor_uuid = _safe_uuid(value)
+    return actor_uuid or SYSTEM_MODERATOR_ID
+
+
+async def _upsert_moderation_item(
+    *,
+    session: AsyncSession,
+    listing: Listing,
+    status: str,
+    reason: Optional[str],
+    moderator_id: Optional[uuid.UUID],
+    audit_ref: Optional[str],
+) -> ModerationItem:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(ModerationItem).where(ModerationItem.listing_id == listing.id)
+    )
+    item = result.scalar_one_or_none()
+    if not item:
+        item = ModerationItem(
+            listing_id=listing.id,
+            status=status,
+            reason=reason,
+            moderator_id=moderator_id,
+            audit_ref=audit_ref,
+            created_at=now,
+            updated_at=now,
+        )
+        session.add(item)
+        return item
+
+    item.status = status
+    item.reason = reason
+    item.moderator_id = moderator_id
+    item.audit_ref = audit_ref
+    item.updated_at = now
+    return item
+
+
 async def _moderation_transition(
     *,
     db,
