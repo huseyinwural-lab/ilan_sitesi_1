@@ -81,6 +81,10 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Tamam → PATCH (server response authoritative)
   - Next gating + tooltip: “Önce bu adımı tamamlayın.”
   - Kategori → Çekirdek Alanlar → Parametre Alanları sırası enforce
+- **Admin kategori sihirbazı Edit Mode state sync (2026-02-23):**
+  - wizard_progress backend tek kaynak; save/unlock sonrası UI store güncelleniyor
+  - Edit unlock başarısızsa snapshot rollback
+  - Downstream dirty adımlar UI’da görünür
 - **İlan Ver (Emlak) yeni akış:**
   - /ilan-ver/kategori-secimi sütunlu drill-down + breadcrumb + arama kutusu
   - /ilan-ver/detaylar placeholder (detay formu daha sonra)
