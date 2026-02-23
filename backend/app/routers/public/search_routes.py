@@ -9,7 +9,6 @@ from app.utils.monitoring import record_slow_query
 from pydantic import BaseModel
 import os
 import hashlib
-import time
 
 router = APIRouter()
 
