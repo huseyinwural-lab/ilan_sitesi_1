@@ -38,6 +38,7 @@ const FeaturesMediaStep = () => {
     detailGroups,
     setDetailGroups,
     schema,
+    basicInfo,
     media,
     setMedia,
     draftId,
