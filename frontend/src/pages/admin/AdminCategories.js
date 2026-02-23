@@ -772,7 +772,12 @@ const AdminCategories = () => {
       const updated = data.category;
       setEditing(updated);
       if (updated.wizard_progress) {
-        setWizardProgress(updated.wizard_progress);
+        setWizardProgress({
+          state: updated.wizard_progress.state || "draft",
+          dirty_steps: Array.isArray(updated.wizard_progress.dirty_steps)
+            ? updated.wizard_progress.dirty_steps
+            : [],
+        });
       }
       setHierarchyComplete(Boolean(updated.hierarchy_complete));
       setLastSavedAt(formatTime(updated.updated_at || new Date()));
