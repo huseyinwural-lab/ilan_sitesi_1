@@ -172,11 +172,17 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - /api/admin/system/health-detail endpointi + 60sn cache
   - 24s hata oranı sparkline + DB latency avg/p95 + son ETL zamanı
   - Slow queries (24s) rozeti, threshold >800ms
+  - Endpoint bazlı slow query kırılımı (/api/search, /api/listings, /api/admin/*)
 - **Search Postgres Cutover (2026-02-23):**
   - SEARCH_SQL_ROLLOUT %50 → %100
   - Seed demo data (5000 ilan) + ETL tekrar çalıştırıldı
   - Parity + benchmark raporları güncellendi
+  - Pending Ops 24h monitoring: /app/memory/SEARCH_24H_MONITORING_REPORT.md
   - Raporlar: /app/memory/SEARCH_PARITY_REPORT.md, /app/memory/SEARCH_PARITY_RAW.md, /app/memory/SEARCH_BENCHMARK_REPORT.md, /app/memory/SEARCH_SLOW_QUERIES.md
+- **Moderation Migration Kickoff (2026-02-23):**
+  - moderation_queue SQL şeması + p37 migration
+  - ETL scripti + parity raporu (koleksiyon yoksa 0/0)
+  - Cutover plan: /app/memory/MODERATION_CUTOVER_PLAN.md
 
 ## Kanıtlar
 - /app/docs/LOCAL_DB_READY_EVIDENCE.md
