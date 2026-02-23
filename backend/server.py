@@ -7665,6 +7665,37 @@ async def track_listing_flow_event(
 
 
 @api_router.get("/catalog/schema")
+class RecentCategoryPayload(BaseModel):
+    category_id: str
+    module: str
+    path: Optional[list] = None
+    category_name: Optional[str] = None
+
+
+@api_router.post("/account/recent-category")
+async def set_recent_category(
+    payload: RecentCategoryPayload,
+    request: Request,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _write_audit_log_sql(
+        session,
+        "listing_recent_category",
+        current_user,
+        "listing_category_flow",
+        payload.category_id,
+        {
+            "module": payload.module,
+            "path": payload.path or [],
+            "category_name": payload.category_name,
+        },
+        request,
+    )
+    await session.commit()
+    return {"status": "ok"}
+
+
 async def get_catalog_schema(
     category_id: str,
     request: Request,
