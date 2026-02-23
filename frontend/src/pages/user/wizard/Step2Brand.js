@@ -77,6 +77,8 @@ const BrandStep = () => {
       return;
     }
 
+    const makeLabel = selectedMake.label || selectedMake.name || selectedMake.key;
+
     const ok = await saveDraft({
       vehicle: {
         make_key: selectedMake.key,
@@ -93,8 +95,10 @@ const BrandStep = () => {
       ...prev,
       make_key: selectedMake.key,
       make_id: selectedMake.id,
+      make_label: makeLabel,
       model_key: null,
       model_id: null,
+      model_label: null,
       year: null,
       trim_key: null,
     }));
