@@ -21,7 +21,21 @@
 - [x] Multi-save ardışık deneme (Playwright: `/app/screenshots/admin-multi-save.png`)
 - [x] Dirty zinciri görünürlüğü (Playwright: `/app/screenshots/admin-dirty-cta.png`)
 
-## 2026-02-23 — Kategori Import/Export P0 Closeout
+## 2026-02-23 — P1 Recent Category + Dirty CTA + Vehicle Wizard
+
+**Kapsam**
+- user_recent_categories tablosu + upsert + GET endpoint
+- “Son Seçiminiz” kartı (module + ülke + breadcrumb + tek tıkla devam)
+- Dirty CTA (Sıradaki eksik adımı tamamla) + admin analytics eventleri
+- Premium araç wizard akışı: Make/Model/Year gating + E2E publish
+
+**Kanıt Referansları**
+- Recent card: `/app/screenshots/recent-card.png`
+- Dirty CTA: `/app/screenshots/admin-dirty-cta.png`
+- Vehicle wizard review/publish:
+  - `/app/screenshots/vehicle-wizard-review.png`
+  - `/app/screenshots/vehicle-wizard-published.png`
+
 
 **Kapsam**
 - CSV + XLSX export (module + country filtreli)
