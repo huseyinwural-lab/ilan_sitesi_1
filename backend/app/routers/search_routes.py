@@ -211,7 +211,7 @@ async def search_listings(
                 CategoryAttributeMap.category_id == current_cat.id,
                 and_(
                     CategoryAttributeMap.category_id.in_(cat_ids),
-                    CategoryAttributeMap.inherit_to_children == True
+                    CategoryAttributeMap.inherit_to_children.is_(True)
                 )
             )
         )
