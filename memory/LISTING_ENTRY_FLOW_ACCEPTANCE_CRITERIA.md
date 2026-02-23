@@ -59,3 +59,11 @@ Bu doküman `/ilan-ver/kategori-secimi` akışı için kabul kriterlerini kilitl
 6. Sistem otomatik olarak **Çekirdek Alanlar** adımına yönlenir.
 
 **Kabul kriteri:** Bu senaryo **PASS** olmadan değişiklik tamamlanmış sayılmaz.
+
+---
+
+## Veri Eksikliği Durumu (SKIP)
+- Eğer seçilen modül için kategori verisi yoksa ekranda **“Kategori bulunamadı – yöneticiye başvurun.”** fallback mesajı gösterilir.
+- Bu durumda referans akış testi **FAIL değil, SKIP** olarak işaretlenir.
+- Kullanıcıya “Modül seçimine dön” CTA’sı sunulur.
+
