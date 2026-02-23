@@ -103,10 +103,17 @@ report_lines = [
     f'Mongo moderation_queue count: {queue_mongo_count}',
     f'SQL moderation_items count: {queue_sql_count}',
     '',
+]
+
+if not pymongo_available:
+    report_lines.append('> Not: pymongo yok; Mongo parity kontrolleri atlandı.')
+    report_lines.append('')
+
+report_lines.extend([
     '## Sample Field Match (50)',
     '| Listing ID | Status Match | Reason Match | Moderator Match | Mongo Status | SQL Status |',
     '| --- | --- | --- | --- | --- | --- |',
-]
+])
 
 if not sample_rows:
     report_lines.append('| - | - | - | - | - | - |')
