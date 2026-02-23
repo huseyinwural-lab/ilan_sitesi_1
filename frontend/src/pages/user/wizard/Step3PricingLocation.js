@@ -209,18 +209,53 @@ const PricingLocation = () => {
           {errors.description && <div className="text-xs text-red-600 mt-1" data-testid="listing-description-error">{errors.description}</div>}
         </div>
 
+        <div className="space-y-2" data-testid="listing-price-type-section">
+          <label className="block text-sm font-medium text-gray-700">Fiyat Tipi</label>
+          <div className="inline-flex rounded-lg border bg-gray-100 p-1" data-testid="listing-price-type-toggle">
+            {allowedPriceTypes.includes('FIXED') && (
+              <button
+                type="button"
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${priceType === 'FIXED' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
+                onClick={() => handlePriceTypeChange('FIXED')}
+                data-testid="listing-price-type-fixed"
+              >
+                Fiyat
+              </button>
+            )}
+            {allowedPriceTypes.includes('HOURLY') && (
+              <button
+                type="button"
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${priceType === 'HOURLY' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
+                onClick={() => handlePriceTypeChange('HOURLY')}
+                data-testid="listing-price-type-hourly"
+              >
+                Saatlik Ücret
+              </button>
+            )}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fiyat ({coreFields.currency_primary}) *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {priceType === 'FIXED' ? 'Fiyat' : 'Saatlik Ücret'} ({coreFields.currency_primary}) *
+            </label>
             <input
               type="text"
               className="w-full p-2 border rounded-md"
-              value={coreFields.price_display}
-              onChange={(e) => handlePriceChange(e.target.value)}
-              placeholder="15.000"
-              data-testid="listing-price-input"
+              value={priceType === 'FIXED' ? coreFields.price_display : coreFields.hourly_display}
+              onChange={(e) =>
+                priceType === 'FIXED' ? handlePriceChange(e.target.value) : handleHourlyChange(e.target.value)
+              }
+              placeholder={priceType === 'FIXED' ? 'Fiyat' : 'Saatlik Ücret'}
+              data-testid={priceType === 'FIXED' ? 'listing-price-input' : 'listing-hourly-rate-input'}
             />
-            {errors.price_amount && <div className="text-xs text-red-600 mt-1" data-testid="listing-price-error">{errors.price_amount}</div>}
+            {priceType === 'FIXED' && errors.price_amount && (
+              <div className="text-xs text-red-600 mt-1" data-testid="listing-price-error">{errors.price_amount}</div>
+            )}
+            {priceType === 'HOURLY' && errors.hourly_rate && (
+              <div className="text-xs text-red-600 mt-1" data-testid="listing-hourly-rate-error">{errors.hourly_rate}</div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Birincil Para Birimi</label>
@@ -236,7 +271,7 @@ const PricingLocation = () => {
           </div>
         </div>
 
-        {coreFields.secondary_enabled && (
+        {coreFields.secondary_enabled && priceType === 'FIXED' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">İkincil Fiyat ({coreFields.currency_secondary})</label>
