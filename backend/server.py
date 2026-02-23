@@ -14326,39 +14326,67 @@ async def admin_update_cloudflare_config(
     current_user=Depends(check_permissions(["super_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    logger = logging.getLogger("cloudflare_config")
+    request_id = _get_request_id(request)
+
     if not payload.account_id or not payload.zone_id:
+        logger.warning(
+            "cloudflare_config_save_failed",
+            extra={"reason": "validation_failed", "admin_id": current_user.get("id"), "request_id": request_id},
+        )
         raise HTTPException(status_code=400, detail="Cloudflare IDs required")
+
+    if not os.environ.get("CONFIG_ENCRYPTION_KEY"):
+        logger.warning(
+            "cloudflare_config_save_failed",
+            extra={"reason": "encryption_key_missing", "admin_id": current_user.get("id"), "request_id": request_id},
+        )
+        raise HTTPException(status_code=400, detail="CONFIG_ENCRYPTION_KEY missing")
 
     try:
         encrypted_account, account_last4 = encrypt_config_value(payload.account_id)
         encrypted_zone, zone_last4 = encrypt_config_value(payload.zone_id)
     except CloudflareConfigError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        reason = "encryption_key_missing" if exc.code in {"config_key_missing", "config_key_invalid", "config_key_mismatch"} else "validation_failed"
+        logger.warning(
+            "cloudflare_config_save_failed",
+            extra={"reason": reason, "admin_id": current_user.get("id"), "request_id": request_id},
+        )
+        status_code = 400 if reason == "encryption_key_missing" else 500
+        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
 
-    config = await upsert_cloudflare_config(
-        session,
-        account_token=encrypted_account,
-        account_last4=account_last4,
-        zone_token=encrypted_zone,
-        zone_last4=zone_last4,
-        updated_by=current_user.get("id"),
-    )
+    try:
+        config = await upsert_cloudflare_config(
+            session,
+            account_token=encrypted_account,
+            account_last4=account_last4,
+            zone_token=encrypted_zone,
+            zone_last4=zone_last4,
+            updated_by=current_user.get("id"),
+        )
 
-    await _write_audit_log_sql(
-        session=session,
-        action="CLOUDFLARE_CONFIG_UPDATE",
-        actor=current_user,
-        resource_type="cloudflare_config",
-        resource_id=str(config.id),
-        metadata={
-            "account_last4": account_last4,
-            "zone_last4": zone_last4,
-            "message": f"Cloudflare config updated by {current_user.get('id')}",
-        },
-        request=request,
-        country_code=None,
-    )
-    await session.commit()
+        await _write_audit_log_sql(
+            session=session,
+            action="CLOUDFLARE_CONFIG_UPDATE",
+            actor=current_user,
+            resource_type="cloudflare_config",
+            resource_id=str(config.id),
+            metadata={
+                "account_last4": account_last4,
+                "zone_last4": zone_last4,
+                "message": f"Cloudflare config updated by {current_user.get('id')}",
+            },
+            request=request,
+            country_code=None,
+        )
+        await session.commit()
+    except Exception as exc:
+        await session.rollback()
+        logger.exception(
+            "cloudflare_config_save_failed",
+            extra={"reason": "db_write_failed", "admin_id": current_user.get("id"), "request_id": request_id},
+        )
+        raise HTTPException(status_code=500, detail="Cloudflare config save failed") from exc
 
     canary_status = CANARY_CONFIG_MISSING
     canary_reason = None
@@ -14373,10 +14401,9 @@ async def admin_update_cloudflare_config(
 
     await update_canary_status(session, canary_status, current_user.get("id"))
 
-    logger = logging.getLogger("cloudflare_config")
     logger.info(
         "cloudflare_canary_result",
-        extra={"status": canary_status, "reason": canary_reason, "admin_id": current_user.get("id"), "request_id": _get_request_id(request)},
+        extra={"status": canary_status, "reason": canary_reason, "admin_id": current_user.get("id"), "request_id": request_id},
     )
 
     return {
