@@ -1446,6 +1446,7 @@ const AdminCategories = () => {
     const name = form.name.trim();
     const slug = form.slug.trim().toLowerCase();
     const country = (form.country_code || "").trim().toUpperCase();
+    const moduleValue = (form.module || "").trim().toLowerCase();
 
     const fieldErrors = {};
     if (!name) {
@@ -1456,6 +1457,9 @@ const AdminCategories = () => {
     }
     if (!country) {
       fieldErrors.main_country = "Ülke zorunludur.";
+    }
+    if (!moduleValue) {
+      fieldErrors.main_module = "Modül zorunludur.";
     }
     if (form.sort_order === "" || form.sort_order === null || Number.isNaN(Number(form.sort_order))) {
       fieldErrors.main_sort = "Sıra zorunludur.";
