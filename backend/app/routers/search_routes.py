@@ -76,6 +76,7 @@ async def search_listings(
     price_min: Optional[int] = None,
     price_max: Optional[int] = None,
     attrs: Optional[str] = Query(None, description="JSON encoded attribute filters"),
+    request: Request = None,
     db: AsyncSession = Depends(get_db)
 ):
     """
