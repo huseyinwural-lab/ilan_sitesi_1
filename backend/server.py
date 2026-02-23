@@ -14313,6 +14313,8 @@ async def admin_get_cloudflare_config(
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     db = request.app.state.db
+    if db is None:
+        raise HTTPException(status_code=503, detail="Mongo disabled")
     masked = await build_masked_config(db)
     canary_doc = await load_canary_status(db)
     canary_status = None
