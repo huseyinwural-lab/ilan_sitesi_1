@@ -3119,6 +3119,9 @@ _ecb_rates_cache: Dict[str, Any] = {"timestamp": 0, "rates": None, "last_success
 MIGRATION_STATE_CACHE_TTL_SECONDS = 60
 _migration_state_cache: Dict[str, Any] = {"checked_at": 0, "state": "unknown", "current": None, "head": None}
 _last_db_error: Optional[str] = None
+_db_error_events = deque(maxlen=5000)
+_system_health_cache: Dict[str, Any] = {"checked_at": 0, "data": None}
+SYSTEM_HEALTH_CACHE_TTL_SECONDS = 60
 _ecb_rates_fallback: Optional[Dict[str, Any]] = None
 _dashboard_cache_hits = 0
 _dashboard_cache_misses = 0
