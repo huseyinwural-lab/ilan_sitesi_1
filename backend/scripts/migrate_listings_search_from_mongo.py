@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT_DIR))
 load_dotenv(ROOT_DIR / '.env')
 load_dotenv(ROOT_DIR / '.env.local', override=False)
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from app.models.listing_search import ListingSearch
