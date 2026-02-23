@@ -155,6 +155,7 @@ async def get_current_user_optional(
     if token_scope != expected_scope:
         return None
     user["portal_scope"] = token_scope
+    request.state.current_user = user
 
     return user
 
