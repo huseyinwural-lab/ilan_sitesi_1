@@ -16665,7 +16665,7 @@ async def public_vehicle_makes(country: str | None = None, request: Request = No
         raise HTTPException(status_code=400, detail="country is required")
     code = country.upper()
     db = request.app.state.db if request else None
-    if not db:
+    if not db or not hasattr(db, "vehicle_makes"):
         result = await session.execute(select(VehicleMake).where(VehicleMake.is_active.is_(True)))
         items = [
             {"id": str(make.id), "key": make.slug, "label": make.name}
