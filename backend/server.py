@@ -4796,69 +4796,70 @@ async def bulk_deactivate_admins(
 
 
 @api_router.get("/admin/invite/preview")
-async def admin_invite_preview(token: str, request: Request):
-    db = request.app.state.db
+async def admin_invite_preview(
+    token: str,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
     token_hash = _hash_invite_token(token)
-    invite = await db.admin_invites.find_one({"token_hash": token_hash}, {"_id": 0})
-    if not invite or invite.get("used_at"):
+    result = await session.execute(select(AdminInvite).where(AdminInvite.token_hash == token_hash))
+    invite = result.scalar_one_or_none()
+    if not invite or invite.used_at:
         raise HTTPException(status_code=404, detail="Invite not found")
 
-    if invite.get("expires_at") and invite.get("expires_at") < datetime.now(timezone.utc).isoformat():
+    if invite.expires_at and invite.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Invite expired")
 
-    user = await db.users.find_one({"id": invite.get("user_id")}, {"_id": 0})
+    result = await session.execute(select(SqlUser).where(SqlUser.id == invite.user_id))
+    user = result.scalar_one_or_none()
+
     return {
-        "email": invite.get("email"),
-        "full_name": user.get("full_name") if user else None,
-        "role": invite.get("role"),
-        "expires_at": invite.get("expires_at"),
+        "email": invite.email,
+        "full_name": user.full_name if user else None,
+        "role": invite.role,
+        "expires_at": invite.expires_at.isoformat() if invite.expires_at else None,
     }
 
 
 @api_router.post("/admin/invite/accept")
-async def admin_invite_accept(payload: AdminInviteAcceptPayload, request: Request):
-    db = request.app.state.db
+async def admin_invite_accept(
+    payload: AdminInviteAcceptPayload,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
     token_hash = _hash_invite_token(payload.token)
-    invite = await db.admin_invites.find_one({"token_hash": token_hash}, {"_id": 0})
-    if not invite or invite.get("used_at"):
+    result = await session.execute(select(AdminInvite).where(AdminInvite.token_hash == token_hash))
+    invite = result.scalar_one_or_none()
+    if not invite or invite.used_at:
         raise HTTPException(status_code=404, detail="Invite not found")
 
-    if invite.get("expires_at") and invite.get("expires_at") < datetime.now(timezone.utc).isoformat():
+    if invite.expires_at and invite.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Invite expired")
 
     if not payload.password or len(payload.password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
 
-    user = await db.users.find_one({"id": invite.get("user_id")}, {"_id": 0})
+    result = await session.execute(select(SqlUser).where(SqlUser.id == invite.user_id))
+    user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    await db.users.update_one(
-        {"id": invite.get("user_id")},
-        {
-            "$set": {
-                "hashed_password": get_password_hash(payload.password),
-                "is_verified": True,
-                "invite_status": None,
-                "invite_accepted_at": now_iso,
-                "updated_at": now_iso,
-            }
-        },
-    )
-    await db.admin_invites.update_one({"id": invite.get("id")}, {"$set": {"used_at": now_iso}})
+    now_dt = datetime.now(timezone.utc)
+    user.hashed_password = get_password_hash(payload.password)
+    user.is_verified = True
+    invite.used_at = now_dt
 
-    audit_accept = await build_audit_entry(
-        event_type="admin_invite_accepted",
-        actor=user,
-        target_id=user.get("id"),
-        target_type="admin_user",
-        country_code=None,
-        details={"email": user.get("email")},
+    await _write_audit_log_sql(
+        session=session,
+        action="ADMIN_INVITE_ACCEPTED",
+        actor={"id": str(user.id), "email": user.email},
+        resource_type="admin_user",
+        resource_id=str(user.id),
+        metadata={"email": user.email},
         request=request,
+        country_code=None,
     )
-    audit_accept["action"] = "admin_invite_accepted"
-    await db.audit_logs.insert_one(audit_accept)
+    await session.commit()
 
     return {"ok": True}
 
