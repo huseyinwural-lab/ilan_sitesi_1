@@ -234,6 +234,7 @@ const CoreFieldsStep = () => {
       6: false,
     }));
     setSaving(false);
+    saveLockRef.current = false;
     return true;
   };
 
