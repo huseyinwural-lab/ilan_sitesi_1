@@ -116,7 +116,7 @@ const ModelStep = () => {
       if (!selectedModel) {
         setError('Lütfen model seçin.');
         scrollToError();
-        return false;
+        return { ok: false };
       }
 
       const modelLabel = selectedModel.label || selectedModel.name || selectedModel.key;
