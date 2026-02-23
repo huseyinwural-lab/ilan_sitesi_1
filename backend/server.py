@@ -9554,7 +9554,8 @@ async def moderation_queue_count(
     session: AsyncSession = Depends(get_sql_session),
 ):
     _ensure_moderation_rbac(current_user)
-    conditions = [Listing.status == status]
+    normalized_status = _normalize_moderation_item_status(status)
+    conditions = [ModerationItem.status == normalized_status]
     if dealer_only is not None:
         conditions.append(Listing.is_dealer_listing == dealer_only)
     if country:
@@ -9567,7 +9568,12 @@ async def moderation_queue_count(
         if "*" not in scope:
             conditions.append(Listing.country.in_(scope))
 
-    count_stmt = select(func.count()).select_from(Listing).where(and_(*conditions))
+    count_stmt = (
+        select(func.count())
+        .select_from(ModerationItem)
+        .join(Listing, ModerationItem.listing_id == Listing.id)
+        .where(and_(*conditions))
+    )
     count = (await session.execute(count_stmt)).scalar_one() or 0
     return {"count": int(count)}
 
