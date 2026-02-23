@@ -305,13 +305,70 @@ const ListingCategorySelect = () => {
     await hydratePathFromSearch(path);
   };
 
-  const handleContinue = () => {
+  const persistWizardSelection = useCallback((category, path, moduleKey, moduleLabel) => {
+    if (!category?.id || !moduleKey) return;
+    localStorage.setItem('ilan_ver_category', JSON.stringify({ ...category, module: moduleKey }));
+    localStorage.setItem('ilan_ver_category_path', JSON.stringify(path || []));
+    localStorage.setItem('ilan_ver_module', moduleKey);
+    localStorage.setItem('ilan_ver_module_label', moduleLabel || moduleKey);
+  }, []);
+
+  const saveRecentCategory = useCallback(async (category, path, moduleKey) => {
+    if (!category?.id || !moduleKey) return;
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/account/recent-category`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          category_id: category.id,
+          module: moduleKey,
+          country,
+          path: path || [],
+          category_name: category.name,
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.recent) {
+        setRecentCategory(data.recent);
+        persistRecentToStorage(data.recent);
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, [country, persistRecentToStorage]);
+
+  const handleContinue = async () => {
     if (!activeCategory || !selectedModule) return;
-    localStorage.setItem('ilan_ver_category', JSON.stringify({ ...activeCategory, module: selectedModule }));
-    localStorage.setItem('ilan_ver_category_path', JSON.stringify(selectedPath));
-    localStorage.setItem('ilan_ver_module', selectedModule);
-    localStorage.setItem('ilan_ver_module_label', selectedModuleLabel || selectedModule);
-    navigate('/account/create/listing-wizard');
+    const nextPath = selectedPath.length ? selectedPath : [activeCategory];
+    const localRecent = {
+      category: activeCategory,
+      module: selectedModule,
+      country,
+      path: nextPath,
+    };
+    persistRecentToStorage(localRecent);
+    persistWizardSelection(activeCategory, nextPath, selectedModule, selectedModuleLabel || selectedModule);
+    await saveRecentCategory(activeCategory, nextPath, selectedModule);
+    const targetRoute = selectedModule === 'vehicle' ? '/account/create/vehicle-wizard' : '/account/create/listing-wizard';
+    navigate(targetRoute);
+  };
+
+  const handleRecentContinue = () => {
+    if (!recentCategory?.category?.id) return;
+    const moduleKey = recentCategory.module;
+    const path = recentCategory.path || [];
+    persistWizardSelection(recentCategory.category, path, moduleKey, moduleLabelByKey(moduleKey));
+    if (recentCategory.country) {
+      localStorage.setItem('selected_country', recentCategory.country);
+    }
+    const targetRoute = moduleKey === 'vehicle' ? '/account/create/vehicle-wizard' : '/account/create/listing-wizard';
+    navigate(targetRoute);
   };
 
   return (
