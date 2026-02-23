@@ -11415,7 +11415,7 @@ async def _moderation_transition_sql(
         "needs_revision": "moderation_needs_revision",
     }.get(new_status, "moderation_updated")
 
-    await _write_audit_log_sql(
+    audit_entry = await _write_audit_log_sql(
         session=session,
         action=action_label,
         actor={"id": current_user.get("id"), "email": current_user.get("email")},
@@ -11429,6 +11429,20 @@ async def _moderation_transition_sql(
         },
         request=None,
         country_code=listing.country,
+    )
+
+    moderation_status = _normalize_moderation_item_status(new_status)
+    moderation_reason = _sanitize_moderation_reason(reason)
+    moderator_id = _resolve_moderation_actor_id(current_user.get("id"))
+    audit_ref = str(audit_entry.id) if audit_entry else None
+
+    await _upsert_moderation_item(
+        session=session,
+        listing=listing,
+        status=moderation_status,
+        reason=moderation_reason,
+        moderator_id=moderator_id,
+        audit_ref=audit_ref,
     )
     await session.commit()
 
