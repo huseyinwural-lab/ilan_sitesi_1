@@ -9667,6 +9667,12 @@ class ListingAdminActionPayload(BaseModel):
     reason_note: Optional[str] = None
 
 
+class BulkModerationPayload(BaseModel):
+    listing_ids: List[str] = Field(..., min_length=1)
+    reason: Optional[str] = None
+    reason_note: Optional[str] = None
+
+
 class ReportCreatePayload(BaseModel):
     listing_id: str
     reason: str
