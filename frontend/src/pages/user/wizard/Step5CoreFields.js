@@ -308,9 +308,10 @@ const CoreFieldsStep = () => {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border space-y-4" data-testid="core-auto-section">
-        <h3 className="text-lg font-semibold">Otomobil Bilgileri</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {isVehicleModule && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border space-y-4" data-testid="core-auto-section">
+          <h3 className="text-lg font-semibold">Otomobil Bilgileri</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Km *</label>
             <input
