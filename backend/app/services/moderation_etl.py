@@ -84,8 +84,7 @@ def _sanitize_reason(value: Any) -> Optional[str]:
 
 def _log_error(path: Path, payload: dict) -> None:
     with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(payload, ensure_ascii=False) + "
-")
+        handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
 def _get_collection(db, name: str):
