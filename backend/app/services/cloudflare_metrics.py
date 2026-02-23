@@ -76,27 +76,17 @@ class CloudflareMetricsAdapter:
 
     def _build_cache_query(self) -> str:
         since, until = _last_hour_window()
-        return (
-            "query {
-"
-            "  viewer {
-"
-            f"    zones(filter: {{ zoneTag: "{self.credentials.zone_id}" }}) {{
-"
-            "      httpRequests1hGroups(limit: 1, filter: {"
-            f"datetime_geq: "{since}", datetime_lt: "{until}"" + "}) {
-"
-            "        sum { requests cachedRequests cachedBytes bytes }
-"
-            "      }
-"
-            "    }
-"
-            "  }
-"
-            "}
-"
-        )
+        return f"""
+        query {{
+          viewer {{
+            zones(filter: {{ zoneTag: "{self.credentials.zone_id}" }}) {{
+              httpRequests1hGroups(limit: 1, filter: {{ datetime_geq: "{since}", datetime_lt: "{until}" }}) {{
+                sum {{ requests cachedRequests cachedBytes bytes }}
+              }}
+            }}
+          }}
+        }}
+        """.strip()
 
     def _build_origin_fetch_query(self) -> str:
         since, until = _last_hour_window()
