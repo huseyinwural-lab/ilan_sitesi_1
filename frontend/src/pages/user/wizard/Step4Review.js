@@ -67,8 +67,8 @@ const ReviewSubmit = () => {
 
       <div className="bg-white border rounded-xl overflow-hidden shadow-sm" data-testid="wizard-review-card">
         <div className="h-48 bg-gray-200 w-full relative" data-testid="wizard-review-cover">
-          {media[0] ? (
-            <img src={media[0]} alt="cover" className="w-full h-full object-cover" data-testid="wizard-review-cover-image" />
+          {coverMedia ? (
+            <img src={coverMedia.url} alt="cover" className="w-full h-full object-cover" data-testid="wizard-review-cover-image" />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400" data-testid="wizard-review-no-image">No Image</div>
           )}
