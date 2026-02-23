@@ -153,21 +153,30 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     const addressInfo = moduleInfo.address || {};
     const cityValue = addressInfo.city || null;
 
-    const coreComplete = Boolean(data.title && data.description && priceValue) 
-      && attributeValues.mileage_km
-      && attributeValues.fuel_type
-      && attributeValues.transmission
-      && attributeValues.drive_type
-      && attributeValues.body_type
-      && attributeValues.color
-      && attributeValues.damage_status
-      && attributeValues.engine_cc
-      && attributeValues.engine_hp
-      && cityValue
-      && attributeValues.trade_in !== null
-      && attributeValues.trade_in !== undefined
-      && attributeValues.trade_in !== '';
+    const isVehicleModule = moduleKey === 'vehicle';
 
+    const coreComplete = Boolean(data.title && data.description && priceValue)
+      && cityValue
+      && (isVehicleModule
+        ? (
+          attributeValues.mileage_km
+          && attributeValues.fuel_type
+          && attributeValues.transmission
+          && attributeValues.drive_type
+          && attributeValues.body_type
+          && attributeValues.color
+          && attributeValues.damage_status
+          && attributeValues.engine_cc
+          && attributeValues.engine_hp
+          && attributeValues.trade_in !== null
+          && attributeValues.trade_in !== undefined
+          && attributeValues.trade_in !== ''
+        )
+        : true);
+
+    const step2Complete = isVehicleModule ? Boolean(makeKey) : true;
+    const step3Complete = isVehicleModule ? Boolean(modelKey) : true;
+    const step4Complete = isVehicleModule ? Boolean(yearValue) : true;
     const dynamicFields = schemaData?.dynamic_fields || [];
     const detailGroups = schemaData?.detail_groups || [];
 
