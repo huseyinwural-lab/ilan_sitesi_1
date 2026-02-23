@@ -260,17 +260,29 @@ async def search_listings(
             if options:
                 facets[key] = options
 
+    items_payload = []
+    for item in items:
+        listing_id = item.listing_id if use_listings_search else item.id
+        price_value = item.price_amount if use_listings_search else item.price
+        price_type_value = item.price_type or "FIXED"
+        hourly_rate_value = item.hourly_rate
+        currency_value = item.currency or "EUR"
+        image_value = item.images[0] if item.images else None
+        items_payload.append(
+            {
+                "id": str(listing_id),
+                "title": item.title,
+                "price": price_value,
+                "price_type": price_type_value,
+                "price_amount": price_value,
+                "hourly_rate": hourly_rate_value,
+                "currency": currency_value,
+                "image": image_value,
+            }
+        )
+
     response = {
-        "items": [{
-            "id": str(i.id),
-            "title": i.title,
-            "price": i.price,
-            "price_type": i.price_type or "FIXED",
-            "price_amount": i.price,
-            "hourly_rate": i.hourly_rate,
-            "currency": i.currency or "EUR",
-            "image": i.images[0] if i.images else None
-        } for i in items],
+        "items": items_payload,
         "facets": facets,
         "facet_meta": facet_meta,
         "pagination": {
