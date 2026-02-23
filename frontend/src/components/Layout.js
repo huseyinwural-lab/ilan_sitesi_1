@@ -112,6 +112,13 @@ export default function Layout({ children }) {
   }, []);
 
   useEffect(() => {
+    if (!user) return;
+    fetchSystemHealth();
+    const interval = setInterval(fetchSystemHealth, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  useEffect(() => {
     if (!user || !showHealthPanel) return;
     fetchSystemHealthDetail();
     const interval = setInterval(fetchSystemHealthDetail, 60000);
