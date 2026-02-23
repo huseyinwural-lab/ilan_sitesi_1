@@ -227,6 +227,8 @@ export default function Layout({ children }) {
     const lastEtl = systemHealthDetail.last_etl_at
       ? new Date(systemHealthDetail.last_etl_at).toLocaleString('tr-TR', { hour: '2-digit', minute: '2-digit' })
       : '--';
+    const slowQueryCount = systemHealthDetail.slow_query_count_24h ?? 0;
+    const slowQueryThreshold = systemHealthDetail.slow_query_threshold_ms ?? 800;
     return {
       status: systemHealthDetail.db_status === 'ok' ? 'ok' : 'error',
       errorBuckets: buckets.map((bucket) => ({
@@ -237,6 +239,8 @@ export default function Layout({ children }) {
       latencyP95,
       lastEtl,
       errorLabel: `${systemHealthDetail.error_count_5m ?? 0}/5dk`,
+      slowQueryCount,
+      slowQueryThreshold,
     };
   }, [systemHealthDetail, systemHealthDetailStatus]);
 
