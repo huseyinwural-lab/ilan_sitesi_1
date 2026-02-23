@@ -75,9 +75,20 @@ const BrandStep = () => {
     setError('');
   };
 
+  const scrollToError = () => {
+    const el = document.querySelector('[data-testid="brand-error"]');
+    if (el) {
+      el.scrollIntoView({ behavior: window.innerWidth < 768 ? 'smooth' : 'auto', block: 'center' });
+    }
+  };
+
   const handleComplete = async () => {
+    if (saving) return false;
+    setSaving(true);
     if (!selectedMake) {
       setError('Lütfen marka seçin.');
+      scrollToError();
+      setSaving(false);
       return false;
     }
 
