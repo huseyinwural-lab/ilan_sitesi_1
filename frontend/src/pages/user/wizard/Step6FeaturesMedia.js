@@ -186,7 +186,10 @@ const FeaturesMediaStep = () => {
 
   const handleComplete = async () => {
     if (saving) return false;
-    if (!validate()) return false;
+    if (!validate()) {
+      scrollToFirstError();
+      return false;
+    }
     setSaving(true);
 
     try {
@@ -196,6 +199,7 @@ const FeaturesMediaStep = () => {
       });
       if (!saved) {
         setErrors((prev) => ({ ...prev, submit: 'Özellikler kaydedilemedi.' }));
+        scrollToFirstError();
         return false;
       }
 
