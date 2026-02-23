@@ -394,7 +394,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
 
 
   const saveDraft = async (payload) => {
-    if (!draftId) return false;
+    if (!draftId) return { ok: false };
     try {
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle/${draftId}/draft`, {
         method: 'PATCH',
@@ -404,11 +404,17 @@ export const WizardProvider = ({ children, editListingId = null }) => {
         },
         body: JSON.stringify(payload || {}),
       });
-      if (!res.ok) return false;
-      return true;
+      if (!res.ok) return { ok: false };
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (err) {
+        data = {};
+      }
+      return { ok: true, updatedAt: data?.updated_at || data?.updatedAt || null };
     } catch (error) {
       console.error(error);
-      return false;
+      return { ok: false };
     }
   };
 
