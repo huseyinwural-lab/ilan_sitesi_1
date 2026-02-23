@@ -173,6 +173,11 @@ const ModelStep = () => {
         country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
         reason: 'missing_model',
       });
+      setAutosaveStatus((prev) => ({
+        ...prev,
+        status: 'error',
+        lastErrorAt: new Date().toISOString(),
+      }));
       return;
     }
     if (!completedSteps[3]) {
