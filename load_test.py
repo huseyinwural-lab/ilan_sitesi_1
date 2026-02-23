@@ -119,6 +119,8 @@ async def run_sequential(total: int) -> Tuple[List[float], List[Dict[str, Any]]]
             latencies.append(time.perf_counter() - start)
             if not ok and error:
                 errors.append(error)
+            if (i + 1) % 100 == 0:
+                print(f"Phase 1 progress: {i + 1}/{total}", flush=True)
     return latencies, errors
 
 
