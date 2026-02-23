@@ -988,7 +988,7 @@ const AdminCategories = () => {
     setSchema(createDefaultSchema());
     setEditing(null);
     setWizardStep("hierarchy");
-    setWizardProgress({ state: "draft" });
+    setWizardProgress({ state: "draft", dirty_steps: [] });
     setHierarchyComplete(false);
     setHierarchyError("");
     setHierarchyFieldErrors({});
