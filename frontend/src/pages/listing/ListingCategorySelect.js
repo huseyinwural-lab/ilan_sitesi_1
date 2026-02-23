@@ -180,6 +180,16 @@ const ListingCategorySelect = () => {
       ? `${selectedModuleLabel} seçildi, kategori bekleniyor`
       : 'Modül seçimi bekleniyor';
 
+  const recentBreadcrumb = useMemo(() => {
+    if (!recentCategory?.path?.length) return '';
+    return recentCategory.path.map((item) => item.name).join(' > ');
+  }, [recentCategory]);
+
+  const recentModuleLabel = useMemo(() => {
+    if (!recentCategory?.module) return '';
+    return moduleLabelByKey(recentCategory.module);
+  }, [moduleLabelByKey, recentCategory]);
+
   const handleSelectModule = (moduleKey) => {
     setSelectedModule(moduleKey);
     setColumns([]);
