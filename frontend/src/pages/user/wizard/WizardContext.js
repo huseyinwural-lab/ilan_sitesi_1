@@ -75,8 +75,10 @@ export const WizardProvider = ({ children, editListingId = null }) => {
       }
       setSchema(data.schema);
       const priceConfig = data.schema?.core_fields?.price || {};
+      const allowedPriceTypes = priceConfig.allowed_types || (priceConfig.hourly_enabled === false ? ['FIXED'] : ['FIXED', 'HOURLY']);
       setCoreFields((prev) => ({
         ...prev,
+        price_type: allowedPriceTypes.includes(prev.price_type) ? prev.price_type : 'FIXED',
         currency_primary: priceConfig.currency_primary || 'EUR',
         currency_secondary: priceConfig.currency_secondary || 'CHF',
         secondary_enabled: priceConfig.secondary_enabled || false,
