@@ -11856,7 +11856,7 @@ async def admin_needs_revision_listing(
 @api_router.post("/admin/moderation/bulk-approve")
 async def admin_bulk_approve_listings(
     payload: BulkModerationPayload,
-    current_user=Depends(get_current_user),
+    current_user=Depends(check_permissions(list(ALLOWED_MODERATION_ROLES))),
     session: AsyncSession = Depends(get_sql_session),
 ):
     _ensure_moderation_rbac(current_user)
