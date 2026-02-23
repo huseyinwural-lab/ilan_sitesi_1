@@ -28,7 +28,17 @@
 - Warm p50/p95: ~145.49 / 147.9 ms
 
 
-## 2026-02-23 — Admin System Health Detail Panel
+## 2026-02-23 — Search Postgres Cutover Complete
+
+**Kapsam**
+- SEARCH_SQL_ROLLOUT %50 → %100 (preview)
+- Seed demo data: 5000 ilan (multi kategori/modül)
+- ETL tekrar çalıştırıldı (mongo_total=5000)
+- Parity raporu güncellendi: `/app/memory/SEARCH_PARITY_REPORT.md`
+- Benchmark raporu güncellendi (p50/p95/max): `/app/memory/SEARCH_BENCHMARK_REPORT.md`
+- Slow query listesi: `/app/memory/SEARCH_SLOW_QUERIES.md`
+- 24h monitoring owner: Ops/Owner
+
 
 **Kapsam**
 - /api/admin/system/health-detail endpointi (24s hata buckets, latency avg/p95, son ETL)
