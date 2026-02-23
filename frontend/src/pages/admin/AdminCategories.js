@@ -2095,6 +2095,12 @@ const AdminCategories = () => {
                 </div>
               )}
 
+              {isStepDirty(wizardStep) && (
+                <div className="p-3 rounded border border-amber-200 bg-amber-50 text-amber-700 text-sm" data-testid="categories-step-dirty-warning">
+                  Bu adım yeniden tamamlanmalı. Değişiklikler downstream adımları da etkiledi.
+                </div>
+              )}
+
               {wizardStep === "hierarchy" && (
                 <div className="space-y-4" data-testid="category-hierarchy-step">
                   <div className="rounded-lg border p-4 space-y-4">
