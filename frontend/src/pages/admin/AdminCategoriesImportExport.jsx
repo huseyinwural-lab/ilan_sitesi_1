@@ -282,6 +282,59 @@ export default function AdminCategoriesImportExport() {
                 </p>
               </div>
             </div>
+            <div className="grid gap-4 md:grid-cols-2" data-testid="categories-import-filters">
+              <div>
+                <label className="text-sm text-slate-600" htmlFor="import-module">Module</label>
+                <select
+                  id="import-module"
+                  value={moduleFilter}
+                  onChange={(event) => setModuleFilter(event.target.value)}
+                  className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
+                  data-testid="categories-import-module"
+                >
+                  {MODULE_OPTIONS.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-slate-600" htmlFor="import-country">Country</label>
+                <input
+                  id="import-country"
+                  type="text"
+                  value={countryFilter}
+                  onChange={(event) => setCountryFilter(event.target.value.toUpperCase())}
+                  className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
+                  placeholder="DE"
+                  data-testid="categories-import-country"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3" data-testid="categories-import-sample-actions">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md border text-sm"
+                onClick={() => handleSampleDownload('csv')}
+                disabled={loading}
+                data-testid="categories-import-sample-csv"
+              >
+                Örnek CSV indir
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md border text-sm"
+                onClick={() => handleSampleDownload('xlsx')}
+                disabled={loading}
+                data-testid="categories-import-sample-xlsx"
+              >
+                Örnek XLSX indir
+              </button>
+              <span className="text-xs text-slate-500" data-testid="categories-import-sample-note">
+                schema_version: v1
+              </span>
+            </div>
+
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
