@@ -812,52 +812,6 @@ const AdminCategories = () => {
     }
   };
 
-  const resetWizardProgress = async () => {
-    if (stepSaving) return false;
-    if (!editing?.id) {
-      setWizardProgress({ state: "draft", dirty_steps: [] });
-      setHierarchyComplete(false);
-      return true;
-    }
-    setStepSaving(true);
-    try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeader,
-        },
-        body: JSON.stringify({
-          wizard_progress: { state: "draft", dirty_steps: [] },
-          hierarchy_complete: false,
-          expected_updated_at: editing.updated_at,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.category) {
-        setHierarchyError(data?.detail || "İlerleme güncellenemedi.");
-        return false;
-      }
-      const updated = data.category;
-      setEditing(updated);
-      if (updated.wizard_progress) {
-        setWizardProgress({
-          state: updated.wizard_progress.state || "draft",
-          dirty_steps: Array.isArray(updated.wizard_progress.dirty_steps)
-            ? updated.wizard_progress.dirty_steps
-            : [],
-        });
-      }
-      setHierarchyComplete(Boolean(updated.hierarchy_complete));
-      setLastSavedAt(formatTime(updated.updated_at || new Date()));
-      return true;
-    } catch (error) {
-      setHierarchyError("İlerleme güncellenemedi.");
-      return false;
-    } finally {
-      setStepSaving(false);
-    }
-  };
 
   const handleUnlockStep = async (stepId) => {
     if (!editing) return;
