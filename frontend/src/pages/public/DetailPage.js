@@ -43,8 +43,19 @@ const DetailPage = () => {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-');
 
-  const [favoriteLoading, setFavoriteLoading] = useState(false);
-  const [favoriteError, setFavoriteError] = useState('');
+  const formatPriceLabel = (data) => {
+    if (!data) return '-';
+    const priceType = String(data.price_type || 'FIXED').toUpperCase();
+    const currency = data.currency || 'EUR';
+    const amount = priceType === 'HOURLY'
+      ? data.hourly_rate
+      : (data.price_amount ?? data.price);
+    if (amount === null || amount === undefined || amount === '') return '-';
+    const formatted = Number(amount).toLocaleString();
+    return priceType === 'HOURLY'
+      ? `${formatted} ${currency} / saat`
+      : `${formatted} ${currency}`;
+  };
 
   const fetchFavoriteState = async (listingId) => {
     if (!user || !listingId) {
