@@ -190,16 +190,20 @@ const CoreFieldsStep = () => {
 
     setBasicInfo((prev) => ({
       ...prev,
-      mileage_km: mileageKm,
-      fuel_type: fuelType,
-      transmission,
-      drive_type: driveType,
-      body_type: bodyType,
-      color,
-      damage_status: damageStatus,
-      engine_cc: engineCc,
-      engine_hp: engineHp,
-      trade_in: tradeIn === 'true',
+      ...(isVehicleModule
+        ? {
+          mileage_km: mileageKm,
+          fuel_type: fuelType,
+          transmission,
+          drive_type: driveType,
+          body_type: bodyType,
+          color,
+          damage_status: damageStatus,
+          engine_cc: engineCc,
+          engine_hp: engineHp,
+          trade_in: tradeIn === 'true',
+        }
+        : {}),
     }));
     setAttributes(nextAttributes);
 
