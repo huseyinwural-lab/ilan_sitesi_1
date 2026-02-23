@@ -242,6 +242,14 @@ export default function Layout({ children }) {
         endpointStats: [],
         moderationSlaAvg: '--',
         moderationSlaPending: 0,
+        cdnStatus: 'disabled',
+        cdnHitRatio: '--',
+        cdnOriginFetch: '--',
+        cdnOriginRatio: '--',
+        cdnWarmP95: '--',
+        cdnColdP95: '--',
+        cdnAlerts: {},
+        cdnTargets: {},
       };
     }
     const buckets = systemHealthDetail.error_buckets_24h || [];
