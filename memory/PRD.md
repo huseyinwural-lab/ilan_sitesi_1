@@ -209,6 +209,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/SEARCH_PARITY_REPORT.md
 - /app/memory/SEARCH_PARITY_RAW.md
 - /app/memory/SEARCH_BENCHMARK_REPORT.md
+- /app/memory/SEARCH_SLOW_QUERIES.md
 - /app/memory/SEARCH_EXPLAIN_ANALYZE_RAW.md
 - /app/memory/SEARCH_CUTOVER_PLAN.md
 
