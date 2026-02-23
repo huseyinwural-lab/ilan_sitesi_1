@@ -7624,6 +7624,16 @@ async def get_catalog_schema(
     return {"category": _serialize_category_sql(category, include_schema=False), "schema": schema}
 
 
+@api_router.get("/catalog/schema")
+async def catalog_schema_endpoint(
+    category_id: str,
+    request: Request,
+    country: str | None = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    return await get_catalog_schema(category_id=category_id, request=request, country=country, session=session)
+
+
 # =====================
 # Sprint 1.1 — Dealer Management (Admin)
 # =====================
