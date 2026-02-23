@@ -1,57 +1,56 @@
 <analysis>**original_problem_statement:**
-The user's initial project was to build EU-compliant Consumer and Dealer dashboard panels. This has evolved into creating a complex classifieds platform.
+The user's initial project was to build a classifieds platform with EU-compliant Consumer and Dealer dashboard panels. The project has since evolved with several major feature requests.
 
-The current primary objectives are:
-1.  **Admin Category Management:** Build a dynamic system in the admin panel where administrators can create a nested hierarchy of categories using a multi-step wizard. This wizard involves defining parent categories, multiple levels of sub-categories, and associated parameters. The user has provided very specific architectural and UX requirements for this wizard's state management and flow.
-2.  **Post Ad Page (ilan ver):** Implement the user-facing ilan ver (post ad) page. This page will feature a drill-down UI where selecting a category in one column dynamically loads the next column of sub-categories. This process continues until the user reaches the final category level.
-3.  **Mongo to PostgreSQL Migration:** Complete the migration of remaining MongoDB dependencies, specifically in the Public Search and Moderation Flow features.
+Current primary objectives are:
+1.  **Admin Category Management:** Build a dynamic, multi-step wizard for admins to create a nested hierarchy of categories. This was the initial P0 task and has been largely completed.
+2.  **Dual Pricing Model:** Implement a system in the ad posting flow to allow sellers to specify a price as either a Fixed Price () or an Hourly Rate (). This has been implemented.
+3.  **Premium Automobile Ad Posting UX (Current P0):** Create a new, specialized, and visually-driven multi-step wizard specifically for posting automobile ads. This flow deviates from the general ad posting process and includes steps for selecting Brand (with logos), Model, Year, etc. This is the current work in progress.
+4.  **Post Ad Page (ilan ver):** Implement the general user-facing ilan ver (post ad) page, which will use a drill-down UI where selecting a category dynamically loads sub-categories in adjacent columns.
+5.  **Mongo to PostgreSQL Migration:** Complete the migration of remaining features (Public Search, Moderation) from MongoDB to PostgreSQL.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application has a React frontend and a FastAPI backend connected to an external user-provided PostgreSQL database. The backend includes basic CRUD for categories. The frontend's Admin Panel () features a complex, multi-tab modal wizard for creating and editing categories. This wizard is intended to guide the admin through several steps (Main Category, Sub-categories, Core Fields, etc.), but its core functionality is broken. While the UI components and backend fields ( in the  table) have been created, the state management and save/navigation logic are not working as per the user's detailed specifications.
+The application is a full-stack platform with a React frontend and a FastAPI backend using a PostgreSQL database.
+-   **Admin Category Wizard:** The previously broken wizard in  is now functional. Admins can navigate through steps, save progress for each step ( button), and the state is persisted in the backend ( field).
+-   **Dual Pricing Model:** The Core Fields tab within the ad creation process now supports both  and  price types. The backend  table has been migrated to include , , and  columns, and the UI conditionally displays the correct input field.
+-   **Automobile Ad Wizard (In-Progress):** A new, dedicated flow for posting automobile ads has been started.
+    -   **Backend:** New  and  tables have been created and seeded with data. API endpoints () exist to serve this data.
+    -   **Frontend:** A new route  and a parent component  have been created to manage the wizard's state. The first step, , which displays a searchable grid of car brand logos, is complete. The second step, , is partially built.
 
 **Last working item**:
--   **Last item agent was working:** Debugging the category creation wizard (). The user reported that the Tamam (Complete/Save) button was not saving the data and the Next button was not navigating between tabs correctly. The agent was attempting to implement a complex state machine defined by the user, involving separate Save and Navigate actions and locking/unlocking tabs based on completion status. The work involved modifying both the frontend state logic in React and the backend  endpoint in FastAPI.
+-   **Last item agent was working:** Implementing the  component for the new Premium Automobile Ad Posting wizard. The agent was working on fetching and displaying a grid of vehicle models based on the brand ID selected in the previous step. The focus was on wiring the API call to the frontend, managing the loading/selected states, and passing the selected model ID back to the parent  component.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **User Testing Done:** N (User reported the feature is not working)
+-   **Which testing method agent to use?** both
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Admin Category Wizard is non-functional (P0)**
-    -   **Description:** The core feature for creating categories is broken. The Tamam button in the wizard's modal does not persist the data to the backend, and the state-driven navigation (Next button, tab locking) is not implemented correctly. This blocks the entire category creation flow.
-    -   **Attempted fixes:** The agent created a  field in the  model and updated the  endpoint to handle state updates. Numerous patches were applied to  to refactor the state management (, ) and button handlers (, ), but the logic remains incomplete and buggy.
-    -   **Next debug checklist:**
-        1.  Review the user's explicit architectural decisions (ADRs) in messages #432 and #435. The logic must conform to these rules.
-        2.  In , trace the  function. Ensure the  call to  is correctly formatted and sent. Use browser developer tools to inspect the network request and response.
-        3.  Verify the  callback of the API call correctly updates the frontend state (, enabling the Next button).
-        4.  Trace the  function to ensure it correctly changes the  only after the current tab is marked as complete.
-        5.  Check the backend logic in  (specifically the  function) to confirm it correctly saves both category data and the  state.
-    -   **Why fix this issue and what will be achieved with the fix?** This is the highest priority task and the main blocker for defining the site's structure.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** both
-
--   **Issue 2: Preview Environment DB Connection (P0, CRITICAL BLOCKER)**
-    -   **Description:** A persistent platform issue prevents the  secret from being injected into the preview environment, making any database-dependent feature (like login) fail on the preview URL.
+-   **Issue 1: Preview Environment DB Connection (P2, Recurring)**
+    -   **Description:** A persistent platform issue prevents the  secret from being injected into the preview environment. This has been a recurring issue across multiple forks.
     -   **Next debug checklist:** This is a platform-level issue. The established workaround is to continue using the external DB credentials stored in . The next agent must NOT attempt to fix the preview environment but should be aware of this limitation.
     -   **Status:** BLOCKED (Workaround in place)
     -   **Is recurring issue?** Y
 
 **In progress Task List**:
--   **Task 1: Complete Admin Category & Parameter Management System (P0)**
-    -   **Where to resume:** Resume by debugging the save and navigation functionality within  as detailed in Issue 1 above.
-    -   **What will be achieved with this?** A functional wizard for admins to create the nested category structure for the entire application.
+-   **Task 1: Complete Premium Automobile Ad Posting Wizard (P0)**
+    -   **Description:** This is the highest priority task. The goal is to complete the multi-step, visually-driven wizard for posting car ads.
+    -   **Where to resume:** Resume work on .
+        1.  Finalize the UI for displaying the model grid, including selection state and styling.
+        2.  Ensure the selected  is correctly passed up to the  parent component.
+        3.  Implement the subsequent steps as defined in the user's plan (ADR-AUTO-UX): Yıl/Versiyon (Year/Version), Çekirdek Alanlar (Core Fields, auto-specific), and Özellikler/Medya (Features/Media).
+        4.  Implement the final Preview and submission logic.
+    -   **What will be achieved with this?** A fully functional, premium user experience for posting automobile ads, which is a critical vertical for the classifieds platform.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** The buggy implementation of the wizard's state machine.
+    -   **Blocked on something:** No.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P1: Implement Post Ad (ilan ver) Page:** After the admin category creation is functional, build the user-facing category selection page at . This requires a drill-down UI with columns, breadcrumbs, and a search feature as specified by the user (messages #215, #218, #221).
-    -   **P1: Complete Mongo to PostgreSQL Migration:** Migrate the Public Search and Moderation Flow features from MongoDB to PostgreSQL as originally requested.
-    -   **P2: Implement Wizard Edit Functionality:** Add an Edit button to completed/locked tabs in the category wizard to allow admins to make changes, as requested by the user.
-    -   **P2: Flesh out Wizard Tabs:** Implement the UI and backend logic for the Çekirdek Alanlar (Core Fields) and other planned tabs in the admin category wizard.
+    -   **P1: Implement General Post Ad (ilan ver) Page:** Build the user-facing category selection page at . This requires the drill-down column UI, breadcrumbs, and search feature as originally specified by the user.
+    -   **P1: Implement Wizard Edit Functionality:** Add an Edit button to completed/locked tabs in the admin category wizard to allow admins to make changes.
+    -   **P2: Complete Mongo to PostgreSQL Migration:** Migrate the remaining Public Search and Moderation Flow features from MongoDB to PostgreSQL.
+    -   **P2: Flesh out Remaining Wizard Tabs:** Implement the UI and backend logic for the Parametre Alanları (Parameter Fields) and other planned tabs in the admin category wizard.
 -   **Future Tasks (Backlog):**
     -   Integrate VIES API for server-side VAT ID validation.
     -   Implement CSV format for GDPR data export.
@@ -59,71 +58,78 @@ The application has a React frontend and a FastAPI backend connected to an exter
     -   Implement a daily scheduled job to clean up expired tokens.
 
 **Completed work in this session**
--   Significantly refactored the Admin Category Management page from a simple tree/accordion view into a complex multi-tab modal wizard ().
--   Created the UI structure for the wizard, including tabs for Ana Kategori (Main Category), Alt Kategoriler (Sub-categories), and Çekirdek Alanlar (Core Fields).
--   Modified the backend  model () to include a  JSON field to store the wizard's state.
--   Updated the backend category update endpoint () to handle partial updates to the  state.
+-   **Admin Category Wizard (FIXED):** The non-functional admin category creation wizard () has been fixed. The state management now correctly follows the user's architectural requirements, allowing admins to save progress per tab and navigate sequentially.
+-   **Dual Pricing Model (IMPLEMENTED):** Added Fixed Price vs. Hourly Rate options. This involved:
+    -   Backend migration of the  table (,  columns).
+    -   API validation to ensure data integrity.
+    -   Frontend implementation in  with conditional UI.
+-   **Premium Automobile Ad Wizard (STARTED):** Began building a new, dedicated ad posting flow for automobiles. This included:
+    -   **Data Layer:** Created and seeded  and  tables in PostgreSQL.
+    -   **API Layer:** Created new endpoints () to serve brand and model data.
+    -   **Frontend Scaffolding:** Set up the new route and parent component ().
+    -   **Brand Selection UI:** Completed the  component with a searchable logo grid.
 
 **Earlier issues found/mentioned but not fixed**
 -   **Issue 1: Mongo to PostgreSQL Migration for Search/Moderation**
-    -   **Debug checklist:** Identify all code paths in  still using  or  for search and moderation features. Create equivalent PostgreSQL tables/models and rewrite the data access layer to use SQLAlchemy.
-    -   **Why to solve this issue and what will be achieved with this?** To fully deprecate MongoDB and consolidate on PostgreSQL for data consistency and easier maintenance.
+    -   **Debug checklist:** Identify all code paths in  still using  or . Create equivalent PostgreSQL tables/models and rewrite the data access layer to use SQLAlchemy.
+    -   **Why to solve this issue and what will be achieved with this?** To fully deprecate MongoDB and consolidate on a single database technology for consistency and maintainability.
     -   **Should Test frontend/backend/both after fix:** backend
-    -   **Is recurring issue?** N
+    -   **Is recurring issue?** Y (Carried over from previous forks).
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork**: The non-functional preview environment due to the missing  has been a persistent blocker across multiple forks.
+-   **Issue recurrence in previous fork**: The preview environment's failure to inject the  secret has been a persistent blocker across multiple forks.
 -   **Recurrence count:** 10+
--   **Status:** BLOCKED (Workaround is in place).
+-   **Status:** BLOCKED (A stable workaround is in place: using ).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Complex Frontend State Machine:** The category wizard requires managing a strict, multi-step flow with states like 'draft', 'completed', and 'locked'. The logic is dictated by user-provided Architecture Decision Records (ADRs).
--   **Wizard UI with Step-based Locking:** The UI uses a multi-tab modal where progress is sequential. A tab cannot be accessed until the previous one is explicitly saved (Tamam), and navigation is handled by a separate Next button.
--   **Separation of Concerns (Save vs. Navigate):** A key concept is that the Tamam button saves the state of the current tab, while the Next button navigates between saved tabs. This is the core of the current bug.
--   **External Database Connection:** The application is connected to a live, external PostgreSQL database.
+-   **Complex Frontend State Machine:** The category wizard () implements a strict, multi-step flow where progress is saved at each step and gates navigation to subsequent steps.
+-   **Specialized Multi-Step Wizard:** The new automobile ad posting flow is a separate, specialized wizard with its own state management () and unique UI components.
+-   **Master Data for Attributes:** Vehicle brands and models are handled as master data in their own tables, not as part of the flexible category hierarchy. This is a key architectural decision (ADR-AUTO-UX-002).
+-   **Conditional Data Modeling:** The  model uses a  ENUM to determine whether to use the  or  column, enforced by server-side validation.
 
 **key DB schema**
 -   **categories:** 
+-   **listings:** 
+-   **vehicle_brands:** 
+-   **vehicle_models:** 
 
 **changes in tech stack**
 -   None.
 
 **All files of reference**
--   : **CRITICAL**. The file containing the broken wizard logic that needs to be fixed.
--   : The parent component that launches the modal.
--   : The API endpoint () that handles saving the wizard state.
--   : The SQLAlchemy model defining the  field.
-
-**Areas that need refactoring**:
--   The state management in  is overly complex and buggy. It needs to be simplified and aligned strictly with the user's ADRs.
-
-**key api endpoints**
--   : Updates a category, including its  state. This is critical for the wizard functionality.
--   : Creates a new category.
--   : Fetches the category tree.
+-   : Parent component for the new wizard.
+-   : **Current file being worked on.**
+-   : First step of the new wizard.
+-   : API endpoints for fetching vehicle data.
+-   : DB models for brands and models.
+-   : The now-functional admin wizard.
+-   : The tab containing the fixed/hourly price logic.
 
 **Critical Info for New Agent**
--   **The user has provided extremely detailed specifications** for the wizard's behavior in messages #432 and #435. You **MUST** read and understand these Architecture Decision Records (ADRs) before writing any code. They are the source of truth for the required functionality.
--   **Fix the Admin Wizard First:** The user has clearly prioritized fixing the admin category wizard *before* starting work on the user-facing Post Ad page. Do not confuse the two features.
--   **Understand the Tamam vs Next Logic:** This is the core of the problem. Tamam finalizes and saves the current step. Next navigates to the next step *only if* the current one is saved. The Next button should be disabled until Tamam is successfully clicked for the current tab.
--   **Live Database:** The application is connected to a live external database. Be careful with data operations.
--   **All communication must be in Turkish.**
+-   **Follow the User's ADRs:** The user provides extremely detailed plans and Architecture Decision Records (ADRs) in Turkish (e.g., messages #709, #150, #7). You **MUST** read and follow these plans exactly. The user approved the plan for the auto wizard with planı aynen uygula (implement the plan exactly).
+-   **Current Priority is the Auto Wizard:** The P0 task is to complete the premium automobile ad posting wizard. Do not get distracted by other pending tasks until this is complete.
+-   **Two Separate Post Ad Flows:** Be aware there are two distinct Post Ad features: the *general* category drill-down UI (not started) and the *automobile-specific* wizard (in progress). The current focus is ONLY on the automobile wizard.
+-   **DB Workaround:** Remember that the preview environment requires database credentials to be in . Do not try to fix the platform-level secret injection issue.
 
 **documents and test reports created in this job**
--   : User-provided document detailing the logic for the Post Ad category selection flow.
+-   /app/ilan alt yapısı.pdf
 
 **Last 10 User Messages and any pending HUMAN messages**
--   **#435:** User provides final, detailed architectural decisions: wizard progress state must be in a separate DB field (), Tamam button must trigger an immediate PATCH request, and the tooltip for a disabled Next button should be Önce bu adımı tamamlayın. (First, complete this step).
--   **#432:** User provides a comprehensive task list and architectural breakdown for the wizard's button layout and state machine. Key decisions: Button order is [Cancel] [Next] [Complete], Complete saves the step, Next navigates between completed steps, and forward navigation is locked until a step is completed.
--   **#409:** User reports taslağı kaydet (save draft) is not working and suggests changing it to Next to avoid confusion, with a final Save at the end of the whole process. This led to the more detailed specs in #432.
--   **#388:** User reports they still cannot save the category and suggests adding an Edit button for locked/completed columns.
--   **#345:** User reports taslağı kaydet (save draft) and tamam (complete) buttons are not working.
+-   **#950-952:** User gives a final confirmation to proceed.
+-   **#940-949:** Agent is working on  and .
+-   **#930-939:** Agent is setting up the vehicle data seeding.
+-   **#917-929:** Agent is creating the backend models and API endpoints for vehicles.
+-   **#712:** User gives explicit approval to the agent's plan for the auto wizard: **planı aynen uygula** (implement the plan exactly).
+-   **#709:** User provides a very detailed task list and architectural plan for the new Premium Automobile Ad Posting UX. This is the current P0 task.
 
 **Project Health Check:**
--   **Broken:** The primary feature under development, the Admin Category Wizard, is non-functional. The preview deployment is also broken for any authenticated user flows.
+-   **Broken:**
+    -   The new Premium Automobile Ad Posting feature is incomplete and therefore non-functional.
+-   **Mocked:**
+    -   None.
 
 **3rd Party Integrations**
 -   FastAPI
@@ -135,13 +141,13 @@ The application has a React frontend and a FastAPI backend connected to an exter
 -   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
--   **Known regressions:** The entire Admin Category creation flow is regressed due to the broken wizard.
+-   **Known regressions:** None in this session; a major broken feature was fixed.
 
 **Credentials to test flow:**
--   Credentials are in  for the external PostgreSQL database.
+-   Credentials for the external PostgreSQL database are in .
 -   **Admin:**  / 
 -   **Dealer:**  / 
 -   **User:**  / 
 
 **What agent forgot to execute**
--   The task to migrate remaining Public Search and Moderation Flow features from MongoDB to PostgreSQL was not started, despite being carried over from the previous fork and being an explicit user requirement. It was de-prioritized in favor of the extensive work on the category management UI.</analysis>
+-   The task to migrate remaining Public Search and Moderation Flow features from MongoDB to PostgreSQL was not started. It has been deprioritized in favor of the user's new feature requests (Price Type and Auto Wizard) and remains on the backlog.</analysis>

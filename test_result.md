@@ -20,13 +20,13 @@ Comprehensive E2E test for Admin Category Wizard flow as per review request: "Ad
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No login errors detected
 
 **2. Categories Page Navigation**: ✅ WORKING
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/admin/categories loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/admin/categories loads successfully
   - **Page Container**: data-testid="admin-categories-page" present and visible
   - **"Yeni Kategori" Button**: data-testid="categories-create-open" found with correct text "Yeni Kategori"
 
@@ -206,13 +206,13 @@ Comprehensive UI test for Admin Categories page subcategory workflow as per revi
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No login errors detected
 
 **2. Categories Page Navigation**: ✅ WORKING
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/admin/categories loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/admin/categories loads successfully
   - **Page Container**: data-testid="admin-categories-page" present and visible
   - **"Yeni Kategori" Button**: data-testid="categories-create-open" found with correct text "Yeni Kategori"
   - **Page Title**: "Kategoriler" displayed correctly
@@ -345,7 +345,7 @@ Comprehensive UI test for Admin Categories page subcategory workflow as per revi
 Re-tested admin UI moderation queue as per review request: "Re-test admin UI: login at /admin/login with admin@platform.com / Admin123!, go to /admin/moderation and confirm at least 1 row in moderation queue is visible."
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/admin/login
+1. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/admin/login
 2. ✅ Login with admin@platform.com / Admin123! → authentication successful
 3. ✅ Navigate to /admin/moderation → page loads successfully
 4. ✅ Verify moderation queue list → **1 item found** ✅ (requirement met: at least 1 row)
@@ -355,13 +355,13 @@ Re-tested admin UI moderation queue as per review request: "Re-test admin UI: lo
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No login errors detected
 
 **2. Moderation Queue Page**: ✅ LOADS SUCCESSFULLY
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/admin/moderation loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/admin/moderation loads successfully
   - **Page Container**: data-testid="moderation-queue-page" present and visible
   - **Page Title**: "Moderation Queue" displayed correctly
   - **Filter Controls**: ✅ PRESENT (All Countries, All Modules dropdowns visible)
@@ -438,10 +438,10 @@ Re-tested admin UI moderation queue as per review request: "Re-test admin UI: lo
 ## Admin UI Test - Moderation Queue (Feb 22, 2026 - CURRENT) ⚠️ EMPTY QUEUE
 
 ### Test Summary
-Admin UI test verification as per review request: "Admin UI test: 1) go to https://kategori-kurulum.preview.emergentagent.com/admin/login, login with admin@platform.com / Admin123!. 2) After login, navigate to /admin/moderation (or moderation queue) and confirm list loads (at least 1 row). Report result."
+Admin UI test verification as per review request: "Admin UI test: 1) go to https://auto-wizard-7.preview.emergentagent.com/admin/login, login with admin@platform.com / Admin123!. 2) After login, navigate to /admin/moderation (or moderation queue) and confirm list loads (at least 1 row). Report result."
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/admin/login
+1. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/admin/login
 2. ✅ Login with admin@platform.com / Admin123! → authentication successful
 3. ✅ Navigate to /admin/moderation → page loads successfully
 4. ❌ Verify moderation queue list → 0 items found (requirement: at least 1 row)
@@ -451,7 +451,7 @@ Admin UI test verification as per review request: "Admin UI test: 1) go to https
 #### ✅ UI AND AUTHENTICATION WORKING:
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/admin/login loads successfully
   - **Page Container**: data-testid="login-page" present and visible
   - **Form Elements**: Email input, password input, and submit button all found
   - **Credentials**: admin@platform.com / Admin123!
@@ -459,7 +459,7 @@ Admin UI test verification as per review request: "Admin UI test: 1) go to https
   - **No Errors**: No "Giriş başarısız" or error messages detected
 
 **2. Moderation Queue Page**: ✅ LOADS SUCCESSFULLY
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/admin/moderation loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/admin/moderation loads successfully
   - **Page Container**: data-testid="moderation-queue-page" present and visible
   - **Page Title**: "Moderation Queue" displayed (data-testid="moderation-queue-title")
   - **Page Description**: "Review pending listings and apply moderation decisions. · 0"
@@ -556,7 +556,7 @@ All required data-testids present and functional on moderation page:
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 22, 2026 (CURRENT)
-- **Message**: Admin UI test COMPLETED with findings. Login successful: admin@platform.com / Admin123! works correctly at https://kategori-kurulum.preview.emergentagent.com/admin/login and redirects to /admin. Navigation to /admin/moderation successful - page loads with title "Moderation Queue", filters (country, module), and proper UI structure (all data-testids present). However, moderation queue is EMPTY (0 items found). Page displays clean empty state: "All caught up! No listings pending moderation". UI is fully functional (no errors, no crashes, empty state handled properly), but TEST REQUIREMENT NOT MET: need at least 1 row, found 0 rows. ROOT CAUSE: Database has no listings with status="pending_moderation" - this is a DATA/SEEDING issue, not a UI/code issue. All frontend and backend components are working correctly. RECOMMENDATION: Seed test database with listings in "pending_moderation" status to verify full moderation workflow.
+- **Message**: Admin UI test COMPLETED with findings. Login successful: admin@platform.com / Admin123! works correctly at https://auto-wizard-7.preview.emergentagent.com/admin/login and redirects to /admin. Navigation to /admin/moderation successful - page loads with title "Moderation Queue", filters (country, module), and proper UI structure (all data-testids present). However, moderation queue is EMPTY (0 items found). Page displays clean empty state: "All caught up! No listings pending moderation". UI is fully functional (no errors, no crashes, empty state handled properly), but TEST REQUIREMENT NOT MET: need at least 1 row, found 0 rows. ROOT CAUSE: Database has no listings with status="pending_moderation" - this is a DATA/SEEDING issue, not a UI/code issue. All frontend and backend components are working correctly. RECOMMENDATION: Seed test database with listings in "pending_moderation" status to verify full moderation workflow.
 
 ---
 
@@ -567,9 +567,9 @@ All required data-testids present and functional on moderation page:
 ## Admin Demo Page UI Smoke Test (Feb 22, 2026 - CURRENT) ✅ COMPLETE PASS
 
 ### Test Summary
-UI smoke test verification for /admin-demo page as per review request: "UI smoke: https://kategori-kurulum.preview.emergentagent.com/admin-demo sayfası yükleniyor mu? Başlık ve moderasyon formu görünüyor mu? (Auth gerekmemeli)"
+UI smoke test verification for /admin-demo page as per review request: "UI smoke: https://auto-wizard-7.preview.emergentagent.com/admin-demo sayfası yükleniyor mu? Başlık ve moderasyon formu görünüyor mu? (Auth gerekmemeli)"
 
-Translation: "UI smoke: Is the https://kategori-kurulum.preview.emergentagent.com/admin-demo page loading? Are the title and moderation form visible? (Should not require auth)"
+Translation: "UI smoke: Is the https://auto-wizard-7.preview.emergentagent.com/admin-demo page loading? Are the title and moderation form visible? (Should not require auth)"
 
 ### Test Flow Executed:
 1. ✅ Navigate to /admin-demo → verify page loads without authentication
@@ -581,9 +581,9 @@ Translation: "UI smoke: Is the https://kategori-kurulum.preview.emergentagent.co
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Page Loading**: ✅ WORKING PERFECTLY
-  - **Page Load**: ✅ https://kategori-kurulum.preview.emergentagent.com/admin-demo loads successfully
+  - **Page Load**: ✅ https://auto-wizard-7.preview.emergentagent.com/admin-demo loads successfully
   - **No Redirect**: ✅ Page does NOT redirect to login - publicly accessible
-  - **Current URL**: https://kategori-kurulum.preview.emergentagent.com/admin-demo
+  - **Current URL**: https://auto-wizard-7.preview.emergentagent.com/admin-demo
   - **Page Container**: data-testid="admin-demo" present and visible (True)
   - **No Errors**: No error messages found on page, no console errors
 
@@ -652,7 +652,7 @@ Translation: "UI smoke: Is the https://kategori-kurulum.preview.emergentagent.co
 - **Production Ready**: ✅ CONFIRMED for public demo access
 
 ### Review Request Compliance:
-✅ **Review Request**: "UI smoke: https://kategori-kurulum.preview.emergentagent.com/admin-demo sayfası yükleniyor mu? Başlık ve moderasyon formu görünüyor mu? (Auth gerekmemeli)"
+✅ **Review Request**: "UI smoke: https://auto-wizard-7.preview.emergentagent.com/admin-demo sayfası yükleniyor mu? Başlık ve moderasyon formu görünüyor mu? (Auth gerekmemeli)"
   - **Result**: 
     - ✅ Sayfa yükleniyor (Page is loading)
     - ✅ Başlık görünüyor (Title is visible: "İlan Moderasyon İncelemesi")
@@ -681,7 +681,7 @@ UI smoke test verification as per review request: "UI smoke (backend 520 olabili
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. /login Page Rendering**: ✅ WORKING PERFECTLY
-  - **Page Load**: ✅ https://kategori-kurulum.preview.emergentagent.com/login loads successfully
+  - **Page Load**: ✅ https://auto-wizard-7.preview.emergentagent.com/login loads successfully
   - **Page Container**: data-testid="login-page" present and visible
   - **Login Form**: data-testid="login-form" rendered correctly
   - **Email Input**: data-testid="login-email" visible (True)
@@ -693,7 +693,7 @@ UI smoke test verification as per review request: "UI smoke (backend 520 olabili
 **2. /account/create/vehicle-wizard Accessibility**: ✅ PROPERLY PROTECTED
   - **Route Protection**: ✅ Route requires authentication (as expected)
   - **Redirect Behavior**: When accessed without login, redirects to /login page
-  - **Final URL**: https://kategori-kurulum.preview.emergentagent.com/login
+  - **Final URL**: https://auto-wizard-7.preview.emergentagent.com/login
   - **Expected Behavior**: ✅ CONFIRMED - Protected route correctly enforces authentication
   - **No Errors**: No error messages or console errors during redirect
   - **Portal Pages**: CANNOT be tested without authentication (as mentioned in review request)
@@ -739,16 +739,16 @@ UI smoke test verification as per review request: "UI smoke (backend 520 olabili
 Re-verified UI smoke test for all three login pages (/login, /dealer/login, /admin/login) at preview URL as per review request: "UI smoke (backend 520 olabilir): /login, /dealer/login ve /admin/login sayfaları render oluyor mu? Menü/portallar için sadece UI load kontrolü yeterli."
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/login → UI renders correctly
-2. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/dealer/login → UI renders correctly
-3. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/admin/login → UI renders correctly
+1. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/login → UI renders correctly
+2. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/dealer/login → UI renders correctly
+3. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/admin/login → UI renders correctly
 
 ### Critical Findings:
 
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **Main Login Page (/login)**: ✅ WORKING
-  - **Page Load**: ✅ https://kategori-kurulum.preview.emergentagent.com/login loads successfully
+  - **Page Load**: ✅ https://auto-wizard-7.preview.emergentagent.com/login loads successfully
   - **Page Container**: data-testid="login-page" present and visible
   - **Login Form**: data-testid="login-form" rendered correctly
   - **Email Input**: data-testid="login-email" visible (True)
@@ -758,7 +758,7 @@ Re-verified UI smoke test for all three login pages (/login, /dealer/login, /adm
   - **No Errors**: No error messages found on page, no console errors
 
 **Dealer Login Page (/dealer/login)**: ✅ WORKING
-  - **Page Load**: ✅ https://kategori-kurulum.preview.emergentagent.com/dealer/login loads successfully
+  - **Page Load**: ✅ https://auto-wizard-7.preview.emergentagent.com/dealer/login loads successfully
   - **Page Container**: data-testid="login-page" present and visible
   - **Login Form**: data-testid="login-form" rendered correctly
   - **Email Input**: data-testid="login-email" visible (True) - placeholder: "E-posta adresi"
@@ -768,7 +768,7 @@ Re-verified UI smoke test for all three login pages (/login, /dealer/login, /adm
   - **No Errors**: No error messages found on page, no console errors
 
 **Admin Login Page (/admin/login)**: ✅ WORKING
-  - **Page Load**: ✅ https://kategori-kurulum.preview.emergentagent.com/admin/login loads successfully
+  - **Page Load**: ✅ https://auto-wizard-7.preview.emergentagent.com/admin/login loads successfully
   - **Page Container**: data-testid="login-page" present and visible
   - **Login Form**: data-testid="login-form" rendered correctly
   - **Email Input**: data-testid="login-email" visible (True) - placeholder: "E-posta adresi"
@@ -793,7 +793,7 @@ Re-verified UI smoke test for all three login pages (/login, /dealer/login, /adm
 ### Final Status:
 - **Overall Result**: ✅ **PASS** - All three login pages render correctly
 - **Frontend Health**: ✅ HEALTHY (UI rendering without issues on all portals)
-- **All Pages Load**: ✅ SUCCESSFUL at preview URL (https://kategori-kurulum.preview.emergentagent.com)
+- **All Pages Load**: ✅ SUCCESSFUL at preview URL (https://auto-wizard-7.preview.emergentagent.com)
 - **Form Elements**: ✅ PRESENT and visible on all pages (email input, password input, submit button)
 - **UI Consistency**: ✅ CONFIRMED (shared login component across all three portals with consistent data-testids)
 - **Production Ready**: ✅ CONFIRMED for login UI rendering
@@ -819,9 +819,9 @@ Re-verified UI smoke test for all three login pages (/login, /dealer/login, /adm
 Quick UI smoke test to verify all three login pages load and render correctly at preview URL. Tested: /login, /dealer/login, and /admin/login as requested. Backend may be 520, but frontend UI renders correctly on all pages.
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/login → page loads, all UI elements present
-2. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/dealer/login → page loads, login form renders
-3. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/admin/login → page loads, login form renders
+1. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/login → page loads, all UI elements present
+2. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/dealer/login → page loads, login form renders
+3. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/admin/login → page loads, login form renders
 
 ### Critical Findings:
 
@@ -899,10 +899,10 @@ Quick UI smoke test to verify all three login pages load and render correctly at
 ## Login Page UI Smoke Test (Feb 22, 2026) ✅ COMPLETE PASS
 
 ### Test Summary
-Quick UI smoke test to verify login page loads and renders at https://kategori-kurulum.preview.emergentagent.com/login as requested. Backend may be CONFIG_MISSING, but frontend UI renders correctly.
+Quick UI smoke test to verify login page loads and renders at https://auto-wizard-7.preview.emergentagent.com/login as requested. Backend may be CONFIG_MISSING, but frontend UI renders correctly.
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/login
+1. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/login
 2. ✅ Verify page loads without errors
 3. ✅ Verify all login form UI elements present and visible
 
@@ -951,12 +951,12 @@ Quick UI smoke test to verify login page loads and renders at https://kategori-k
 - **Overall Result**: ✅ **PASS** - Login page UI loads and renders correctly
 - **Frontend Status**: ✅ HEALTHY (UI rendering without issues)
 - **All UI Elements**: ✅ PRESENT and properly styled
-- **Page Load**: ✅ SUCCESSFUL at https://kategori-kurulum.preview.emergentagent.com/login
+- **Page Load**: ✅ SUCCESSFUL at https://auto-wizard-7.preview.emergentagent.com/login
 
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 22, 2026
-- **Message**: Login page UI smoke test SUCCESSFULLY COMPLETED. Frontend UI at https://kategori-kurulum.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit" with text "E-posta ile giriş yap") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, login type selector, remember me checkbox, forgot password link, alternative login options (Google, Apple), and theme/language toggles all present. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be CONFIG_MISSING). Frontend UI rendering is healthy.
+- **Message**: Login page UI smoke test SUCCESSFULLY COMPLETED. Frontend UI at https://auto-wizard-7.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit" with text "E-posta ile giriş yap") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, login type selector, remember me checkbox, forgot password link, alternative login options (Google, Apple), and theme/language toggles all present. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be CONFIG_MISSING). Frontend UI rendering is healthy.
 
 ---
 
@@ -966,10 +966,10 @@ Quick UI smoke test to verify login page loads and renders at https://kategori-k
 ## Register Page UI Loading Test (Feb 22, 2026) ✅ COMPLETE PASS
 
 ### Test Summary
-Quick frontend UI loading verification for /register page at https://kategori-kurulum.preview.emergentagent.com/register as requested. Backend may be experiencing 520 errors, but frontend UI renders correctly. Honeypot field is properly hidden from users.
+Quick frontend UI loading verification for /register page at https://auto-wizard-7.preview.emergentagent.com/register as requested. Backend may be experiencing 520 errors, but frontend UI renders correctly. Honeypot field is properly hidden from users.
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/register
+1. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/register
 2. ✅ Verify page loads without errors
 3. ✅ Verify all registration form UI elements present and visible
 4. ✅ Verify honeypot field is properly hidden (CRITICAL REQUIREMENT)
@@ -1028,12 +1028,12 @@ Quick frontend UI loading verification for /register page at https://kategori-ku
 - **Frontend Status**: ✅ HEALTHY (UI rendering without issues)
 - **All UI Elements**: ✅ PRESENT and properly styled
 - **Honeypot Field**: ✅ CORRECTLY HIDDEN (anti-bot protection working)
-- **Page Load**: ✅ SUCCESSFUL at https://kategori-kurulum.preview.emergentagent.com/register
+- **Page Load**: ✅ SUCCESSFUL at https://auto-wizard-7.preview.emergentagent.com/register
 
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 22, 2026
-- **Message**: Registration page UI loading test SUCCESSFULLY COMPLETED. Frontend UI at https://kategori-kurulum.preview.emergentagent.com/register loads correctly with all expected elements: registration form (data-testid="register-form"), full name input (data-testid="register-full-name"), email input (data-testid="register-email"), password input (data-testid="register-password"), country dropdown (data-testid="register-country-button" showing "Almanya"), and submit button (data-testid="register-submit" with text "Hesap Oluştur") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, page header "Bireysel Kayıt", login link, and theme/language toggles all present. CRITICAL: Honeypot field (data-testid="register-honeypot-wrapper") is correctly hidden from users using CSS positioning (position: absolute, left: -10000px) - anti-bot protection working as designed. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be 520). Frontend UI rendering is healthy.
+- **Message**: Registration page UI loading test SUCCESSFULLY COMPLETED. Frontend UI at https://auto-wizard-7.preview.emergentagent.com/register loads correctly with all expected elements: registration form (data-testid="register-form"), full name input (data-testid="register-full-name"), email input (data-testid="register-email"), password input (data-testid="register-password"), country dropdown (data-testid="register-country-button" showing "Almanya"), and submit button (data-testid="register-submit" with text "Hesap Oluştur") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, page header "Bireysel Kayıt", login link, and theme/language toggles all present. CRITICAL: Honeypot field (data-testid="register-honeypot-wrapper") is correctly hidden from users using CSS positioning (position: absolute, left: -10000px) - anti-bot protection working as designed. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be 520). Frontend UI rendering is healthy.
 
 ---
 
@@ -1043,10 +1043,10 @@ Quick frontend UI loading verification for /register page at https://kategori-ku
 ## Login Page UI Loading Test (Feb 21, 2026) ✅ COMPLETE PASS
 
 ### Test Summary
-Quick frontend UI loading verification for /login page at https://kategori-kurulum.preview.emergentagent.com/login as requested. Backend may be experiencing 520 errors, but frontend UI renders correctly.
+Quick frontend UI loading verification for /login page at https://auto-wizard-7.preview.emergentagent.com/login as requested. Backend may be experiencing 520 errors, but frontend UI renders correctly.
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/login
+1. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/login
 2. ✅ Verify page loads without errors
 3. ✅ Verify all login form UI elements present and visible
 
@@ -1097,12 +1097,12 @@ Quick frontend UI loading verification for /login page at https://kategori-kurul
 - **Overall Result**: ✅ **PASS** - Login page UI loads and renders correctly
 - **Frontend Status**: ✅ HEALTHY (UI rendering without issues)
 - **All UI Elements**: ✅ PRESENT and properly styled
-- **Page Load**: ✅ SUCCESSFUL at https://kategori-kurulum.preview.emergentagent.com/login
+- **Page Load**: ✅ SUCCESSFUL at https://auto-wizard-7.preview.emergentagent.com/login
 
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 21, 2026
-- **Message**: Login page UI loading test SUCCESSFULLY COMPLETED. Frontend UI at https://kategori-kurulum.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit") all visible and properly rendered. Orange background, welcome banner, login type selector (Bireysel/Ticari), remember me checkbox, forgot password link, sign up link, and alternative login options (Google, Apple, QR code) all present. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be 520). Frontend UI rendering is healthy.
+- **Message**: Login page UI loading test SUCCESSFULLY COMPLETED. Frontend UI at https://auto-wizard-7.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit") all visible and properly rendered. Orange background, welcome banner, login type selector (Bireysel/Ticari), remember me checkbox, forgot password link, sign up link, and alternative login options (Google, Apple, QR code) all present. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be 520). Frontend UI rendering is healthy.
 
 ---
 
@@ -1660,7 +1660,7 @@ All required data-testids present and functional:
 Verified all 5 NEW requirements from review request for Individual Users page updates (phone field, CSV export).
 
 ### Test Flow Executed:
-1. ✅ Login as admin (admin@platform.com / Admin123!) → https://kategori-kurulum.preview.emergentagent.com/admin/login
+1. ✅ Login as admin (admin@platform.com / Admin123!) → https://auto-wizard-7.preview.emergentagent.com/admin/login
 2. ✅ Navigate to /admin/individual-users → verify page renders
 3. ✅ Verify search placeholder mentions phone ("telefon")
 4. ✅ Verify result count label is visible
@@ -1674,7 +1674,7 @@ Verified all 5 NEW requirements from review request for Individual Users page up
 **1. Admin Login**: ✅ WORKING
   - Login successful with admin@platform.com / Admin123!
   - Successfully authenticated and accessed admin panel
-  - Preview URL: https://kategori-kurulum.preview.emergentagent.com/admin/login
+  - Preview URL: https://auto-wizard-7.preview.emergentagent.com/admin/login
 
 **2. Page Rendering**: ✅ VERIFIED
   - **URL**: /admin/individual-users loads successfully
@@ -1928,13 +1928,13 @@ Verified all 5 requirements from review request for admin IA cleanup and admin d
 
 **2. URL Redirects Verification**: ✅ BOTH WORKING
   - **/admin/users → /admin/admin-users**: ✅ Redirect confirmed
-    - Navigated to https://kategori-kurulum.preview.emergentagent.com/admin/users
-    - URL changed to https://kategori-kurulum.preview.emergentagent.com/admin/admin-users
+    - Navigated to https://auto-wizard-7.preview.emergentagent.com/admin/users
+    - URL changed to https://auto-wizard-7.preview.emergentagent.com/admin/admin-users
     - React Router redirect working correctly (BackofficePortalApp.jsx line 43)
   
   - **/admin/user-management → /admin/admin-users**: ✅ Redirect confirmed
-    - Navigated to https://kategori-kurulum.preview.emergentagent.com/admin/user-management
-    - URL changed to https://kategori-kurulum.preview.emergentagent.com/admin/admin-users
+    - Navigated to https://auto-wizard-7.preview.emergentagent.com/admin/user-management
+    - URL changed to https://auto-wizard-7.preview.emergentagent.com/admin/admin-users
     - React Router redirect working correctly (BackofficePortalApp.jsx line 44)
 
 **3. Sidebar Navigation Cleanup**: ✅ VERIFIED
@@ -2385,7 +2385,7 @@ Frontend smoke test requested to verify: 1) Login page loads, 2) Consumer login 
 #### ✅ FRONTEND UI WORKING:
 
 **1. Login Page Loading**: ✅ VERIFIED
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/login loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/login loads successfully
   - **UI Rendering**: Login form renders properly with orange background
   - **Form Elements**: Email input, password input, and submit button all visible
   - **data-testid**: "login-page" container present
@@ -2884,7 +2884,7 @@ All required data-testids present and functional:
 Verified all 5 requirements from smoke test review request: Ana sayfa (homepage), /login, /dealer/login, /register, and /dealer/register pages accessibility and basic UI elements.
 
 ### Test Flow Executed:
-1. ✅ Ana sayfa (Homepage) - https://kategori-kurulum.preview.emergentagent.com → page loads successfully
+1. ✅ Ana sayfa (Homepage) - https://auto-wizard-7.preview.emergentagent.com → page loads successfully
 2. ✅ /login sayfası → page opens with all form elements
 3. ✅ /dealer/login sayfası → page opens with all form elements
 4. ✅ /register sayfası → page opens with all form elements
@@ -2895,7 +2895,7 @@ Verified all 5 requirements from smoke test review request: Ana sayfa (homepage)
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Ana Sayfa (Homepage)**: ✅ WORKING
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com loads successfully
   - **HTTP Status**: 200 OK
   - **Page Title**: "Emergent | Fullstack App"
   - **UI Elements**:
@@ -3006,7 +3006,7 @@ Verified all 5 requirements from smoke test review request: Ana sayfa (homepage)
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 21, 2026
-- **Message**: Frontend smoke test SUCCESSFULLY COMPLETED. All 5 requirements verified and passing (100% success rate). 1) Ana sayfa (homepage) loads successfully at https://kategori-kurulum.preview.emergentagent.com with HTTP 200 status, displaying welcome banner, navigation, and action buttons. 2) /login sayfası opens correctly with all form elements present (email, password, submit button) and Bireysel/Ticari tabs. 3) /dealer/login sayfası opens correctly with identical form elements. 4) /register sayfası opens correctly with individual registration form (full name, email, password, country, submit button). 5) /dealer/register sayfası opens correctly with dealer-specific form fields (company name, contact name, email, password, country, optional tax ID, submit button). All pages use orange background theme, display Annoncia branding, and have proper data-testids. Screenshots captured for all 5 pages. No critical errors found. IMPORTANT NOTE: As mentioned in review request, /api/auth/login endpoint currently returns 520 errors - this is expected and does not affect page loading. All frontend pages are production-ready.
+- **Message**: Frontend smoke test SUCCESSFULLY COMPLETED. All 5 requirements verified and passing (100% success rate). 1) Ana sayfa (homepage) loads successfully at https://auto-wizard-7.preview.emergentagent.com with HTTP 200 status, displaying welcome banner, navigation, and action buttons. 2) /login sayfası opens correctly with all form elements present (email, password, submit button) and Bireysel/Ticari tabs. 3) /dealer/login sayfası opens correctly with identical form elements. 4) /register sayfası opens correctly with individual registration form (full name, email, password, country, submit button). 5) /dealer/register sayfası opens correctly with dealer-specific form fields (company name, contact name, email, password, country, optional tax ID, submit button). All pages use orange background theme, display Annoncia branding, and have proper data-testids. Screenshots captured for all 5 pages. No critical errors found. IMPORTANT NOTE: As mentioned in review request, /api/auth/login endpoint currently returns 520 errors - this is expected and does not affect page loading. All frontend pages are production-ready.
 
 ---
 
@@ -3156,7 +3156,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ### Backend Testing Results (Feb 17, 2026)
 - **Test Suite**: FAZ-FINAL-02 Security & Permission Audit
 - **Test File**: `/app/backend/tests/test_faz_final_02_security_audit.py`
-- **Base URL**: https://kategori-kurulum.preview.emergentagent.com/api
+- **Base URL**: https://auto-wizard-7.preview.emergentagent.com/api
 - **Credentials**: admin@platform.com / Admin123!
 
 #### Test Results Summary:
@@ -3609,7 +3609,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 
 ### Network Analysis:
 - **All API Endpoints**: Return successful HTTP responses as expected
-- **Base URL**: https://kategori-kurulum.preview.emergentagent.com/api (from frontend/.env)
+- **Base URL**: https://auto-wizard-7.preview.emergentagent.com/api (from frontend/.env)
 - **Authentication**: admin@platform.com / Admin123! login successful
 - **No Network Errors**: All requests completed successfully
 
@@ -3900,7 +3900,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ## Portal Split v1 No-Chunk-Load Acceptance Verification Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com
 
 **Credentials Tested**:
 - Admin: admin@platform.com / Admin123! ✅ WORKING
@@ -3985,7 +3985,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ## Portal Split v1 No-Chunk-Load Re-Test Results (Feb 17, 2026) - MAJOR IMPROVEMENT
 
 ### Test Flow Re-executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com
 
 **Credentials Tested**:
 - Admin: admin@platform.com / Admin123! ✅ WORKING
@@ -4170,7 +4170,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ## Sprint 1.2 Dealer Applications UI E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 **Target Route**: /admin/dealer-applications
 
@@ -4222,7 +4222,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ## Sprint 1.2 Dealer Applications Backend E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 **Country Admin**: country_admin_fr@test.com / CountryAdmin123! ✅ WORKING
 
@@ -4281,7 +4281,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 
 ### Network Analysis:
 - **All API Calls**: Successful HTTP responses
-- **Base URL**: https://kategori-kurulum.preview.emergentagent.com/api (from frontend/.env)
+- **Base URL**: https://auto-wizard-7.preview.emergentagent.com/api (from frontend/.env)
 - **Authentication**: Bearer token authentication working
 - **Country Context**: Scope enforcement via ?country= query parameter working
 
@@ -4305,7 +4305,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ## Admin Dealers Module Testing Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 1. ✅ **Admin Login** - Authentication successful, redirected to /admin
@@ -4365,7 +4365,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## Dealer Portal Positive Smoke + Chunk Assertions Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com
 **Credentials**: dealer@platform.com / Dealer123! ✅ WORKING
 
 1. ✅ **Dealer Login Page Access** - /dealer/login loads successfully with login form
@@ -4497,7 +4497,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-01 P0 Backend Regression Tests (Feb 17, 2026) - ALL PASSED
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com/api
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com/api
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 ### Critical Findings:
@@ -4563,7 +4563,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-01 Frontend E2E Smoke Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123!
 
 ### Critical Findings:
@@ -4614,8 +4614,8 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-02 (P1) UI Changes - Audit Logs Filters Frontend E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Attempted:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com/admin/login
-**Target URL**: https://kategori-kurulum.preview.emergentagent.com/admin/audit-logs?country=DE
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com/admin/login
+**Target URL**: https://auto-wizard-7.preview.emergentagent.com/admin/audit-logs?country=DE
 **Credentials**: admin@platform.com / Admin123!
 
 ### Critical Findings:
@@ -4697,9 +4697,9 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 
 ### Test Flow Executed:
 **Base URLs Tested**:
-- Public: https://kategori-kurulum.preview.emergentagent.com/login
-- Dealer: https://kategori-kurulum.preview.emergentagent.com/dealer/login  
-- Admin: https://kategori-kurulum.preview.emergentagent.com/admin/login
+- Public: https://auto-wizard-7.preview.emergentagent.com/login
+- Dealer: https://auto-wizard-7.preview.emergentagent.com/dealer/login  
+- Admin: https://auto-wizard-7.preview.emergentagent.com/admin/login
 
 **Test Credentials**: admin@platform.com with wrong passwords + test@example.com
 
@@ -4774,7 +4774,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## Sprint 1.1 Dealer Management Backend API Tests (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com/api
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com/api
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 ### Test Cases Executed:
@@ -4833,7 +4833,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## Category Wizard UI Regression Test Results (Feb 19, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com
 **Route**: /admin/categories
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
@@ -5198,7 +5198,7 @@ All required data-testids present and functional:
 ## Admin UI Routing and Labels Test (Feb 20, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com
 **Route Tested**: /admin/users → /admin/admin-users redirect
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
@@ -5214,7 +5214,7 @@ All required data-testids present and functional:
 **2. URL Redirect Test**: ✅ WORKING PERFECTLY
   - **Test**: Navigate to `/admin/users`
   - **Expected**: Redirect/alias to `/admin/admin-users`
-  - **Result**: ✅ Redirect confirmed - URL changed to `https://kategori-kurulum.preview.emergentagent.com/admin/admin-users`
+  - **Result**: ✅ Redirect confirmed - URL changed to `https://auto-wizard-7.preview.emergentagent.com/admin/admin-users`
   - **Implementation**: React Router redirect in BackofficePortalApp.jsx line 43: `<Route path="/users" element={<Navigate to="/admin/admin-users" replace />} />`
 
 **3. Sidebar Label Verification**: ✅ CORRECT
@@ -5562,7 +5562,7 @@ Verified all 6 requirements from review request for dashboard regression test on
 **1. Admin Login → /admin Dashboard**: ✅ WORKING
   - Login successful with admin@platform.com / Admin123!
   - Dashboard page loads with title "Kontrol Paneli"
-  - URL after login: https://kategori-kurulum.preview.emergentagent.com/admin
+  - URL after login: https://auto-wizard-7.preview.emergentagent.com/admin
   - No errors during login/navigation
 
 **2. Dashboard Cards (Kartlar) - Real Values Verification**: ✅ ALL 4 CARDS WORKING
@@ -6032,7 +6032,7 @@ All required data-testids present and functional:
 ## Admin Country Compare Feature Testing Results (Feb 19, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://kategori-kurulum.preview.emergentagent.com
+**Base URL**: https://auto-wizard-7.preview.emergentagent.com
 **Test Date**: February 19, 2026
 **Tester**: Frontend Testing Subagent
 
@@ -7297,7 +7297,7 @@ Verified all 4 requirements from review request for Campaigns V1 UI in DB not re
     - `<span>` cannot be child of `<tbody>` (in table body)
     - These are existing hydration issues present across admin panel, not specific to campaigns
   - **API Health Endpoint**: ✅ Returns 520 as expected
-    - Error: "Failed to load resource: the server responded with a status of 520 () at https://kategori-kurulum.preview.emergentagent.com/api/health/db"
+    - Error: "Failed to load resource: the server responded with a status of 520 () at https://auto-wizard-7.preview.emergentagent.com/api/health/db"
     - Appears twice (once for each campaigns page)
     - Note from review request: "backend /admin/campaigns returns 503 (DB_NOT_READY) and external proxy may show 520"
   - **UI Handling**: ✅ UI gracefully handles 520/503 error
@@ -7738,8 +7738,8 @@ Re-verified all Turkish UI functionality from review request "Tekrar UI doğrula
   - **Test Scenario**: Dealer user attempting to access /admin route
   - **Expected Behavior**: Redirect to /dealer (access denied)
   - **Actual Result**: 
-    - Attempted URL: https://kategori-kurulum.preview.emergentagent.com/admin
-    - Final URL: https://kategori-kurulum.preview.emergentagent.com/dealer
+    - Attempted URL: https://auto-wizard-7.preview.emergentagent.com/admin
+    - Final URL: https://auto-wizard-7.preview.emergentagent.com/dealer
     - ✅ Successfully redirected to dealer portal
     - ✅ Admin layout NOT visible to dealer user
   - **Guard Mechanism**: ✅ ENFORCED CORRECTLY
@@ -8861,7 +8861,7 @@ Verified all 4 requirements from review request for new register pages UI across
 
 **3. /admin/register Does Not Exist**: ✅ CORRECT
   - **Navigation Result**: Attempting to access /admin/register redirects to /admin/login
-  - **Current URL**: https://kategori-kurulum.preview.emergentagent.com/admin/login
+  - **Current URL**: https://auto-wizard-7.preview.emergentagent.com/admin/login
   - **Redirect Behavior**: ✅ WORKING CORRECTLY
   - **Register Page**: ✅ DOES NOT RENDER (correct - admin accounts must be invited)
   - Implementation: App.js routes (no /admin/register route defined)
@@ -9429,7 +9429,7 @@ const handleHelpToggle = async () => {
 Verified frontend accessibility for campaigns and plans pages as requested. Backend Campaigns V1 + Plans period seed reportedly completed, but period field NOT visible in frontend UI.
 
 ### Test Flow Executed:
-1. ✅ Login page loads - https://kategori-kurulum.preview.emergentagent.com/admin/login
+1. ✅ Login page loads - https://auto-wizard-7.preview.emergentagent.com/admin/login
 2. ✅ Admin login successful - admin@platform.com / Admin123!
 3. ✅ Individual campaigns page loads - /admin/individual-campaigns
 4. ✅ Corporate campaigns page loads - /admin/corporate-campaigns
@@ -9442,7 +9442,7 @@ Verified frontend accessibility for campaigns and plans pages as requested. Back
 #### ✅ WORKING FEATURES:
 
 **1. Login Page**: ✅ ACCESSIBLE
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/admin/login loads successfully
   - **Form Elements**: Email, password, and submit button all present
   - **Authentication**: Login with admin@platform.com / Admin123! works correctly
 
@@ -9594,7 +9594,7 @@ Verified all 4 requirements from Turkish review request for admin panel routes a
   - **Status**: ✅ REDIRECT WORKING
     - Navigated to /admin/campaigns
     - Successfully redirected to /admin/individual-campaigns
-    - Final URL confirmed: https://kategori-kurulum.preview.emergentagent.com/admin/individual-campaigns
+    - Final URL confirmed: https://auto-wizard-7.preview.emergentagent.com/admin/individual-campaigns
     - Implementation: BackofficePortalApp.jsx line 75
       ```jsx
       <Route path="/campaigns" element={<Navigate to="/admin/individual-campaigns" replace />} />
@@ -9828,7 +9828,7 @@ Verified all 4 requirements from review request after CampaignsManager update: a
   - **URL**: /admin/campaigns successfully redirects to /admin/individual-campaigns
   - **Route Configuration**: BackofficePortalApp.jsx line 75
   - **Redirect Type**: React Router Navigate with replace flag
-  - **Final URL**: https://kategori-kurulum.preview.emergentagent.com/admin/individual-campaigns
+  - **Final URL**: https://auto-wizard-7.preview.emergentagent.com/admin/individual-campaigns
 
 **3. Individual Campaigns List**: ✅ ALL ELEMENTS VERIFIED
   - **URL**: /admin/individual-campaigns loads successfully
@@ -10211,10 +10211,10 @@ All required data-testids present and functional:
 ## Login Page UI Smoke Test (Feb 22, 2026 - 01:31) ✅ COMPLETE PASS
 
 ### Test Summary
-Frontend smoke test to verify login page UI renders at https://kategori-kurulum.preview.emergentagent.com/login. Backend changed to local (may show 520), but test focused ONLY on UI rendering per review request.
+Frontend smoke test to verify login page UI renders at https://auto-wizard-7.preview.emergentagent.com/login. Backend changed to local (may show 520), but test focused ONLY on UI rendering per review request.
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/login
+1. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/login
 2. ✅ Verify page loads without critical frontend errors
 3. ✅ Verify all login form UI elements present and visible
 
@@ -10265,12 +10265,12 @@ Frontend smoke test to verify login page UI renders at https://kategori-kurulum.
 - **Overall Result**: ✅ **PASS** - Login page UI loads and renders correctly
 - **Frontend Status**: ✅ HEALTHY (UI rendering without issues)
 - **All UI Elements**: ✅ PRESENT and properly styled
-- **Page Load**: ✅ SUCCESSFUL at https://kategori-kurulum.preview.emergentagent.com/login
+- **Page Load**: ✅ SUCCESSFUL at https://auto-wizard-7.preview.emergentagent.com/login
 
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 22, 2026 - 01:31
-- **Message**: Login page UI smoke test SUCCESSFULLY COMPLETED. Frontend UI at https://kategori-kurulum.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit" with text "E-posta ile giriş yap") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, login type selector (Bireysel/Ticari), remember me checkbox, forgot password link, sign up link, alternative login options (Google, Apple, QR code), and theme/language toggles all present. No error messages or critical console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend changed to local). Frontend UI rendering is healthy.
+- **Message**: Login page UI smoke test SUCCESSFULLY COMPLETED. Frontend UI at https://auto-wizard-7.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit" with text "E-posta ile giriş yap") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, login type selector (Bireysel/Ticari), remember me checkbox, forgot password link, sign up link, alternative login options (Google, Apple, QR code), and theme/language toggles all present. No error messages or critical console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend changed to local). Frontend UI rendering is healthy.
 
 ---
 
@@ -10283,10 +10283,10 @@ Frontend smoke test to verify login page UI renders at https://kategori-kurulum.
 Verified all 3 requirements from review request for /portal-demo page UI smoke test: page loading, Bireysel/Ticari toggle with menu title changes, and TR/DE/FR language toggle clickability.
 
 ### Review Request (Turkish):
-"UI smoke: https://kategori-kurulum.preview.emergentagent.com/portal-demo sayfası yükleniyor mu? Bireysel/Ticari toggle'ına tıklayıp menü başlıklarının değiştiğini kontrol et; TR/DE/FR dil toggle'ı tıklanabiliyor mu? Backend gerekmiyor, sadece UI kontrol."
+"UI smoke: https://auto-wizard-7.preview.emergentagent.com/portal-demo sayfası yükleniyor mu? Bireysel/Ticari toggle'ına tıklayıp menü başlıklarının değiştiğini kontrol et; TR/DE/FR dil toggle'ı tıklanabiliyor mu? Backend gerekmiyor, sadece UI kontrol."
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://kategori-kurulum.preview.emergentagent.com/portal-demo → page loads successfully
+1. ✅ Navigate to https://auto-wizard-7.preview.emergentagent.com/portal-demo → page loads successfully
 2. ✅ Verify initial state shows Consumer (Bireysel) portal with correct navigation menu
 3. ✅ Click Ticari (dealer) toggle → verify top and side navigation menus change
 4. ✅ Click back to Bireysel (consumer) toggle → verify menus return to original state
@@ -10297,7 +10297,7 @@ Verified all 3 requirements from review request for /portal-demo page UI smoke t
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Page Load**: ✅ WORKING
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/portal-demo loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/portal-demo loads successfully
   - **data-testid**: "portal-demo" present and visible
   - **Background**: Orange background (#f6c27a) rendering correctly
   - **Header**: ANNONCIA logo, portal label, language toggles, user info all visible
@@ -10420,7 +10420,7 @@ Verified all 3 requirements from review request for /portal-demo page UI smoke t
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Current test run
-- **Message**: Portal Demo UI smoke test SUCCESSFULLY COMPLETED with 100% pass rate. All 3 requirements from review request verified: 1) Page loads successfully at https://kategori-kurulum.preview.emergentagent.com/portal-demo with data-testid="portal-demo" visible. 2) Bireysel/Ticari toggle fully functional - clicking Ticari changes top navigation from "İlan Yönetimi, Favoriler, Mesajlar & Bildirimler, Servisler, Hesabım" to "Panel, İlan Yönetimi, Faturalar, Şirket, Gizlilik Merkezi", and side navigation from "Özet, İlanlarım, Yeni İlan" to "Özet, Plan ve Kota". Toggle works bidirectionally. 3) TR/DE/FR language toggle buttons all clickable and functional - verified German ("Privater Kontrollbereich", "Anzeigenverwaltung") and French ("Espace personnel", "Gestion des annonces") translations applied correctly. No console errors, no page errors. Backend not required as requested. Portal Demo page is production-ready.
+- **Message**: Portal Demo UI smoke test SUCCESSFULLY COMPLETED with 100% pass rate. All 3 requirements from review request verified: 1) Page loads successfully at https://auto-wizard-7.preview.emergentagent.com/portal-demo with data-testid="portal-demo" visible. 2) Bireysel/Ticari toggle fully functional - clicking Ticari changes top navigation from "İlan Yönetimi, Favoriler, Mesajlar & Bildirimler, Servisler, Hesabım" to "Panel, İlan Yönetimi, Faturalar, Şirket, Gizlilik Merkezi", and side navigation from "Özet, İlanlarım, Yeni İlan" to "Özet, Plan ve Kota". Toggle works bidirectionally. 3) TR/DE/FR language toggle buttons all clickable and functional - verified German ("Privater Kontrollbereich", "Anzeigenverwaltung") and French ("Espace personnel", "Gestion des annonces") translations applied correctly. No console errors, no page errors. Backend not required as requested. Portal Demo page is production-ready.
 
 ---
 
@@ -10444,7 +10444,7 @@ Verified user and dealer login flows as per review request: "Preview user/dealer
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. User Login (Bireysel)**: ✅ WORKING PERFECTLY
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/login loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/login loads successfully
   - **Credentials**: user@platform.com / User123!
   - **Portal Selection**: Bireysel radio button (data-testid="login-portal-account") checked by default
   - **Login Result**: ✅ SUCCESS - no errors detected
@@ -10471,7 +10471,7 @@ Verified user and dealer login flows as per review request: "Preview user/dealer
   - **Session**: User session established correctly
 
 **2. Dealer Login (Ticari)**: ✅ WORKING PERFECTLY
-  - **URL**: https://kategori-kurulum.preview.emergentagent.com/dealer/login loads successfully
+  - **URL**: https://auto-wizard-7.preview.emergentagent.com/dealer/login loads successfully
   - **Credentials**: dealer@platform.com / Dealer123!
   - **Portal Selection**: Ticari radio button (data-testid="login-portal-dealer") checked by default on /dealer/login
   - **Login Result**: ✅ SUCCESS - no errors detected
@@ -10578,11 +10578,11 @@ Verified user and dealer login flows as per review request: "Preview user/dealer
 ## Vehicle Wizard Step3 (Fiyat Tipi) E2E Test (Feb 23, 2026) - PARTIAL PASS ✅⚠️
 
 ### Test Summary
-Comprehensive E2E test for vehicle listing wizard Step3 (Price type) as per review request: "Frontend E2E test: User listing wizard Step3 (Fiyat tipi). Hedef akış: 1) /login ile user@platform.com / User123! giriş. 2) /account/create/vehicle-wizard?edit=0e840710-71dd-4529-82a2-64961cedce68 aç. 3) Step2'de marka/model select'leri API'den gelmiyorsa (v2/vehicle/makes 520) test amaçlı DOM'a option ekleyip seç (value: test-make/test-model). Yıl=2022, KM=12000, Yakıt=petrol, Vites=automatic, Kondisyon=used. 4) 'Sonraki: Fiyat + Konum' ile Step3'e geç. 5) Step3'de Fiyat/Saatlik Ücret toggle: HOURLY seç, 'Saatlik Ücret' inputu görünür olsun, sabit fiyat inputu görünmesin; 50 gir. 6) 'Taslak Kaydet' tıkla, sayfayı refresh et, Step2'yi hızlıca geçip Step3'te seçimin ve değerin persist olduğuna bak."
+Comprehensive E2E test for vehicle listing wizard Step3 (Price type) as per review request: "Frontend E2E test: User listing wizard Step3 (Fiyat tipi). Hedef akış: 1) /login ile user@platform.com / User123! giriş. 2) /account/create/vehicle-wizard?edit=auto-wizard-7 aç. 3) Step2'de marka/model select'leri API'den gelmiyorsa (v2/vehicle/makes 520) test amaçlı DOM'a option ekleyip seç (value: test-make/test-model). Yıl=2022, KM=12000, Yakıt=petrol, Vites=automatic, Kondisyon=used. 4) 'Sonraki: Fiyat + Konum' ile Step3'e geç. 5) Step3'de Fiyat/Saatlik Ücret toggle: HOURLY seç, 'Saatlik Ücret' inputu görünür olsun, sabit fiyat inputu görünmesin; 50 gir. 6) 'Taslak Kaydet' tıkla, sayfayı refresh et, Step2'yi hızlıca geçip Step3'te seçimin ve değerin persist olduğuna bak."
 
 ### Test Flow Executed:
 1. ✅ Login at /login with user@platform.com / User123! → authentication successful, redirected to /account
-2. ✅ Navigate to /account/create/vehicle-wizard?edit=0e840710-71dd-4529-82a2-64961cedce68 → wizard loaded, started at Step2
+2. ✅ Navigate to /account/create/vehicle-wizard?edit=auto-wizard-7 → wizard loaded, started at Step2
 3. ✅ Step2: Make/Model API check → /api/v2/vehicle/makes returned 520, fallback to DOM injection → injected test-make/test-model options
 4. ✅ Step2: Filled all fields → Year=2022, KM=12000, Fuel=petrol, Transmission=automatic, Condition=used
 5. ✅ Clicked "Sonraki: Fiyat + Konum" → successfully navigated to Step3
@@ -10601,7 +10601,7 @@ Comprehensive E2E test for vehicle listing wizard Step3 (Price type) as per revi
   - **Authentication**: Token stored and authenticated correctly
 
 **2. Wizard Navigation with Edit Parameter**: ✅ WORKING
-  - **URL**: /account/create/vehicle-wizard?edit=0e840710-71dd-4529-82a2-64961cedce68 loads correctly
+  - **URL**: /account/create/vehicle-wizard?edit=auto-wizard-7 loads correctly
   - **Draft Loading**: Wizard loads with edit parameter, starts at Step2 (expected for edit mode)
   - **Progress Indicator**: data-testid="wizard-progress" visible with 5 steps displayed
 
@@ -10667,7 +10667,7 @@ Comprehensive E2E test for vehicle listing wizard Step3 (Price type) as per revi
 #### ⚠️ API ERRORS DETECTED (8 total errors):
 
 **1. Catalog Schema API** (4 occurrences):
-  - **Endpoint**: GET /api/catalog/schema?category_id=9ec98715-3e2f-4af6-aa84-12d87f8ef9ea&country=DE
+  - **Endpoint**: GET /api/catalog/schema?category_id=auto-wizard-7&country=DE
   - **Status**: 404 Not Found
   - **Impact**: Schema not loaded for category, dynamic fields and detail groups may not render
   - **Context**: Called multiple times during wizard flow (initial load, after refresh)
@@ -10734,7 +10734,7 @@ Comprehensive E2E test for vehicle listing wizard Step3 (Price type) as per revi
    - Ensure Step2 form inputs use controlled pattern: `value={basicInfo.make_key}` etc.
 
 2. **MEDIUM PRIORITY - Fix Backend APIs** (if possible):
-   - Fix `/api/catalog/schema` 404 errors → ensure schema exists for category_id=9ec98715-3e2f-4af6-aa84-12d87f8ef9ea
+   - Fix `/api/catalog/schema` 404 errors → ensure schema exists for category_id=auto-wizard-7
    - Fix `/api/v2/vehicle/makes` 520 errors → or document that this is expected behavior in test environment
 
 3. **LOW PRIORITY - Complete Persistence Verification**:
@@ -10753,11 +10753,11 @@ Comprehensive E2E test for vehicle listing wizard Step3 (Price type) as per revi
 ## Vehicle Wizard Step3 Price Type Persistence Test - RE-TEST AFTER FIXES (Feb 23, 2026 - LATEST) ✅ SUCCESS
 
 ### Test Summary
-Re-tested vehicle wizard Step3 price type toggle persistence after backend fixes as per review request: "Re-test frontend E2E for price type toggle (after fixes): 1) Login user@platform.com / User123! 2) Open /account/create/vehicle-wizard?edit=dced1f29-f5db-4945-af52-282df116aeb3 3) Step2: select make=testmake-fb81ee, model=testmodel-ace8d3; Year=2022, KM=12000, Fuel=petrol, Transmission=automatic, Condition=used. 4) Submit to Step3; toggle to Saatlik Ücret, enter 50, click Taslak Kaydet. 5) Refresh, re-run Step2 quickly and verify Step3 persists hourly selection/value. Note: /api/catalog/schema now should return 200 (draft schemas allowed), /api/v2/vehicle/makes now uses SQL fallback."
+Re-tested vehicle wizard Step3 price type toggle persistence after backend fixes as per review request: "Re-test frontend E2E for price type toggle (after fixes): 1) Login user@platform.com / User123! 2) Open /account/create/vehicle-wizard?edit=auto-wizard-7 3) Step2: select make=testmake-fb81ee, model=testmodel-ace8d3; Year=2022, KM=12000, Fuel=petrol, Transmission=automatic, Condition=used. 4) Submit to Step3; toggle to Saatlik Ücret, enter 50, click Taslak Kaydet. 5) Refresh, re-run Step2 quickly and verify Step3 persists hourly selection/value. Note: /api/catalog/schema now should return 200 (draft schemas allowed), /api/v2/vehicle/makes now uses SQL fallback."
 
 ### Test Flow Executed:
 1. ✅ Login at /login with user@platform.com / User123! → authentication successful
-2. ✅ Navigate to /account/create/vehicle-wizard?edit=dced1f29-f5db-4945-af52-282df116aeb3 → wizard loaded at Step2
+2. ✅ Navigate to /account/create/vehicle-wizard?edit=auto-wizard-7 → wizard loaded at Step2
 3. ✅ Fill Step2 form → make=testmake-fb81ee, model=testmodel-ace8d3, Year=2022, KM=12000, Fuel=petrol, Transmission=automatic, Condition=used
 4. ✅ Submit to Step3 → navigation successful
 5. ✅ Toggle to "Saatlik Ücret" (HOURLY) → toggle working, HOURLY input visible, FIXED input hidden
@@ -10828,7 +10828,7 @@ Re-tested vehicle wizard Step3 price type toggle persistence after backend fixes
 
 **API Calls During Test** (from /var/log/supervisor/backend.out.log):
 ```
-✅ GET /api/catalog/schema?category_id=e5126eee-9e29-46df-9a6f-af6dba17511e&country=DE → 200 OK
+✅ GET /api/catalog/schema?category_id=auto-wizard-7&country=DE → 200 OK
 ✅ GET /api/v2/vehicle/makes?country=DE → 200 OK
 ✅ GET /api/v2/vehicle/models?country=DE&make_key=testmake-fb81ee → 200 OK
 ✅ POST /api/v1/listings/vehicle/dced1f29-f5db-4945-af52-282df116aeb3/draft → 200 OK
@@ -10893,7 +10893,7 @@ Re-tested vehicle wizard Step3 price type toggle persistence after backend fixes
 ### Test Execution Details:
 
 **Test Environment**:
-- Frontend URL: https://kategori-kurulum.preview.emergentagent.com
+- Frontend URL: https://auto-wizard-7.preview.emergentagent.com
 - Browser: Chromium (Playwright)
 - Viewport: 1920x1080 (Desktop)
 - User: user@platform.com / User123!
