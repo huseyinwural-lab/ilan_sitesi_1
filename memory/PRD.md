@@ -85,6 +85,13 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - wizard_progress backend tek kaynak; save/unlock sonrası UI store güncelleniyor
   - Edit unlock başarısızsa snapshot rollback
   - Downstream dirty adımlar UI’da görünür
+- **Admin Dirty CTA + Analytics (2026-02-23):**
+  - “Sıradaki eksik adımı tamamla” CTA + ilk dirty tab yönlendirmesi
+  - admin_dirty_cta_clicked / admin_dirty_first_step_opened payload (category_id, step_id, admin_user_id, wizard_state)
+- **Son Seçiminiz (2026-02-23):**
+  - user_recent_categories tablosu + upsert + GET endpoint
+  - Drill-down ekranında kategori adı + breadcrumb + modül + ülke kartı
+  - Vehicle modülünde /account/create/vehicle-wizard yönlendirmesi
 - **İlan Ver (Emlak) yeni akış:**
   - /ilan-ver/kategori-secimi sütunlu drill-down + breadcrumb + arama kutusu
   - /ilan-ver/detaylar placeholder (detay formu daha sonra)
