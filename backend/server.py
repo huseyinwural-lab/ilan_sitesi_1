@@ -26,6 +26,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Preformatted
+from openpyxl import Workbook, load_workbook
 
 from fastapi import FastAPI, APIRouter, Depends, HTTPException, Request, Body, Response, Query, WebSocket, WebSocketDisconnect
 from starlette.middleware.cors import CORSMiddleware
