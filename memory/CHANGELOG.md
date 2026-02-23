@@ -1,0 +1,41 @@
+# CHANGELOG
+
+## 2026-02-23 — Kategori Import/Export P0 Closeout
+
+**Kapsam**
+- CSV + XLSX export (module + country filtreli)
+- Import dry-run + apply (slug eşleştirme), translations + wizard_progress taşıma
+- Validasyon: zorunlu alanlar, duplicate slug, cycle tespiti, satır bazlı hata raporu
+- Yetki: super_admin + country_admin, audit log (import.dry_run, import.apply)
+
+**Endpoint’ler**
+- `GET /api/admin/categories/import-export/export/csv`
+- `GET /api/admin/categories/import-export/export/xlsx`
+- `POST /api/admin/categories/import-export/import/dry-run`
+- `POST /api/admin/categories/import-export/import/commit`
+- `GET /api/admin/categories/import-export/sample/csv`
+- `GET /api/admin/categories/import-export/sample/xlsx`
+
+**UI Akışı**
+- Admin → Kategoriler → Import/Export (Export / Import / Dry-run Sonucu tabları)
+
+**Kanıt Referansları**
+- **API curl komut seti:** `cat_import_export_smoke_20260223`
+  - login: `POST /api/auth/login`
+  - export: `GET /api/admin/categories/import-export/export/csv?module=vehicle&country=DE`
+  - sample: `GET /api/admin/categories/import-export/sample/csv?module=vehicle&country=DE`
+  - dry-run: `POST /api/admin/categories/import-export/import/dry-run?format=csv`
+  - apply: `POST /api/admin/categories/import-export/import/commit?format=csv&dry_run_hash=...`
+- **UI screenshot paketi:** `automation_output/20260223_063203`  
+  - `admin-categories-export.png`  
+  - `admin-categories-import-sample.png`
+- **auto_frontend_testing_agent:** “User Category Selection Drill-Down & Sample Download UI Test — PASS” (2026-02-23)
+
+**Done Checklist**
+- [x] Export filtreli (module + country)
+- [x] Import dry-run + apply
+- [x] Slug match (update)
+- [x] Translations + wizard_progress
+- [x] Row-level error raporu
+- [x] Yetki kontrolü (admin-only)
+- [x] Audit log
