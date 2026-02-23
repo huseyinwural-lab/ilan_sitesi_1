@@ -145,7 +145,7 @@ const BrandStep = () => {
                     data-testid={`brand-card-${make.key}`}
                   >
                     <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold">
-                      {label[0]}
+                      {label ? label[0] : '?'}
                     </div>
                     <span className="font-medium text-sm">{label}</span>
                   </button>
@@ -171,7 +171,7 @@ const BrandStep = () => {
                     data-testid={`brand-search-card-${make.key}`}
                   >
                     <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold">
-                      {label[0]}
+                      {label ? label[0] : '?'}
                     </div>
                     <span className="font-medium text-sm">{label}</span>
                   </button>
