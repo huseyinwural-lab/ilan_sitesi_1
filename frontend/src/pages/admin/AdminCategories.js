@@ -1431,6 +1431,24 @@ const AdminCategories = () => {
       return { success: false };
     }
 
+    let wizardEditEvent = null;
+    if (editModeStep === "hierarchy") {
+      let previousSnapshot = {};
+      try {
+        previousSnapshot = lastSavedSnapshotRef.current ? JSON.parse(lastSavedSnapshotRef.current) : {};
+      } catch (error) {
+        previousSnapshot = {};
+      }
+      const changedFields = diffObjects(previousSnapshot, autosaveSnapshot);
+      wizardEditEvent = {
+        action: "save",
+        step_id: "hierarchy",
+        dirty_chain: buildDirtyChain("hierarchy"),
+        changed_fields: changedFields,
+        event_timestamp: new Date().toISOString(),
+      };
+    }
+
     const normalizeTree = (nodes) => nodes
       .map((node) => ({
         ...node,
