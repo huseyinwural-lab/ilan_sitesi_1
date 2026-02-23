@@ -1,73 +1,94 @@
 <analysis>**original_problem_statement:**
-The user's initial project was to build a classifieds platform with EU-compliant Consumer and Dealer dashboard panels. The project has since evolved with several major feature requests.
+The user's project is a classifieds platform. The initial goal was to create a Premium Automobile Ad Posting wizard. However, priorities shifted significantly during the session.
 
-Current primary objectives are:
-1.  **Admin Category Management:** Build a dynamic, multi-step wizard for admins to create a nested hierarchy of categories. This was the initial P0 task and has been largely completed.
-2.  **Dual Pricing Model:** Implement a system in the ad posting flow to allow sellers to specify a price as either a Fixed Price () or an Hourly Rate (). This has been implemented.
-3.  **Premium Automobile Ad Posting UX (Current P0):** Create a new, specialized, and visually-driven multi-step wizard specifically for posting automobile ads. This flow deviates from the general ad posting process and includes steps for selecting Brand (with logos), Model, Year, etc. This is the current work in progress.
-4.  **Post Ad Page (ilan ver):** Implement the general user-facing ilan ver (post ad) page, which will use a drill-down UI where selecting a category dynamically loads sub-categories in adjacent columns.
-5.  **Mongo to PostgreSQL Migration:** Complete the migration of remaining features (Public Search, Moderation) from MongoDB to PostgreSQL.
+The current set of requirements, as dictated by the user through a series of detailed task lists and Architecture Decision Records (ADRs), are:
+
+1.  **Automobile Ad Posting Wizard (PAUSED):** A multi-step, premium UX for posting car ads. This was the initial P0 task but was deprioritized by the user. Key steps included Brand, Model, Year/Version, Core Fields, Media, and Preview.
+2.  **Category Import/Export (COMPLETED):** A P0 feature for admins to bulk-manage the category hierarchy.
+    *   **PRODUCT REQUIREMENTS (ADR-CAT-IMP-*):**
+        *   Support both CSV and XLSX formats.
+        *   Export should include the full hierarchy, translations, and  data.
+        *   Import must update existing categories by matching on a unique .
+        *   Implement a mandatory  mode before applying changes to the database.
+        *   Provide row-level error reporting for failed imports.
+        *   Include an enhancement to allow downloading a sample template file.
+3.  **General Post Ad Page (COMPLETED):** A user-facing drill-down UI where selecting a category in one column dynamically loads its sub-categories in the next, allowing users to select a category before starting the ad creation wizard.
+4.  **Admin Wizard Edit Mode (CURRENT P0):** A feature for authorized admins to unlock and edit a completed category configuration.
+    *   **PRODUCT REQUIREMENTS (ADR-EDIT-*):**
+        *   Editing an upstream step (e.g., Core Fields) must automatically invalidate all downstream dependent steps (e.g., Parameter Fields), marking them as dirty.
+        *   Dirty steps must be re-completed by the admin before the category can be published again.
+        *   Access should be restricted to  and  roles.
+        *   All edit actions must be recorded in an audit log.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application is a full-stack platform with a React frontend and a FastAPI backend using a PostgreSQL database.
--   **Admin Category Wizard:** The previously broken wizard in  is now functional. Admins can navigate through steps, save progress for each step ( button), and the state is persisted in the backend ( field).
--   **Dual Pricing Model:** The Core Fields tab within the ad creation process now supports both  and  price types. The backend  table has been migrated to include , , and  columns, and the UI conditionally displays the correct input field.
--   **Automobile Ad Wizard (In-Progress):** A new, dedicated flow for posting automobile ads has been started.
-    -   **Backend:** New  and  tables have been created and seeded with data. API endpoints () exist to serve this data.
-    -   **Frontend:** A new route  and a parent component  have been created to manage the wizard's state. The first step, , which displays a searchable grid of car brand logos, is complete. The second step, , is partially built.
+The application is a full-stack platform with a React frontend and a FastAPI backend using PostgreSQL.
+- **Category Import/Export:** A fully functional admin page at  allows admins to export categories to CSV/XLSX, download sample templates, and import data using a safe  +  workflow.
+- **Post Ad Category Selection:** A functional user-facing page at  provides a multi-column drill-down interface for selecting a category. Upon selection, it navigates to the appropriate ad creation wizard.
+- **Admin Wizard Edit Mode:** The backend logic and frontend UI for this feature are partially implemented. The API supports locking/unlocking and dirtying dependent steps. The UI shows an Edit Mode toggle and is supposed to reflect the dirty state of wizard tabs, but this part is currently buggy.
+- **Automobile Ad Wizard:** This feature is partially built but was paused. The backend data models (, ) and APIs exist. The frontend has components for the initial steps (Brand, Model, Year).
 
 **Last working item**:
--   **Last item agent was working:** Implementing the  component for the new Premium Automobile Ad Posting wizard. The agent was working on fetching and displaying a grid of vehicle models based on the brand ID selected in the previous step. The focus was on wiring the API call to the frontend, managing the loading/selected states, and passing the selected model ID back to the parent  component.
+-   **Last item agent was working:** Debugging the state management for the Edit Mode in the Admin Category Wizard. The agent was trying to fix a bug where the frontend UI in  was not correctly updating to show that downstream tabs are dirty after an upstream tab is edited and saved. The goal was to force the admin to re-complete the invalidated steps.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
 -   **Which testing method agent to use?** both
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Preview Environment DB Connection (P2, Recurring)**
-    -   **Description:** A persistent platform issue prevents the  secret from being injected into the preview environment. This has been a recurring issue across multiple forks.
-    -   **Next debug checklist:** This is a platform-level issue. The established workaround is to continue using the external DB credentials stored in . The next agent must NOT attempt to fix the preview environment but should be aware of this limitation.
+-   **Issue 1: Admin Edit Mode State Synchronization (P0)**
+    -   **Description:** When an admin edits and saves a step in the category wizard, the backend correctly identifies and marks dependent downstream steps as . However, the frontend state in  does not properly refresh to reflect this change. The UI fails to visually indicate that the downstream tabs are now invalid and require re-completion.
+    -   **Attempted fixes:** The agent tried various approaches using  and passing state between  and , but the synchronization between the backend response and the UI state remains broken.
+    -   **Next debug checklist:**
+        1.  In , inside the  function for each tab, verify that the API response containing the updated category data (with the new  and dirty flags) is correctly received.
+        2.  Ensure the  prop function is called with the *complete and fresh* category object from the API response.
+        3.  In the parent , ensure the state holding the list of categories is correctly updated with the new object, forcing a re-render of .
+        4.  Verify the props passed to  contain the updated dirty flags.
+    -   **Why fix this issue and what will be achieved with the fix?** This is the core logic of the Edit Mode feature. Fixing it will ensure data integrity by preventing admins from publishing a category with inconsistent configurations.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue:** No
+
+-   **Issue 2: Preview Environment DB Connection (P2, Recurring)**
+    -   **Description:** A persistent platform issue prevents the  secret from being injected into the preview environment. The established workaround is to use the external DB credentials stored in .
     -   **Status:** BLOCKED (Workaround in place)
     -   **Is recurring issue?** Y
 
 **In progress Task List**:
--   **Task 1: Complete Premium Automobile Ad Posting Wizard (P0)**
-    -   **Description:** This is the highest priority task. The goal is to complete the multi-step, visually-driven wizard for posting car ads.
-    -   **Where to resume:** Resume work on .
-        1.  Finalize the UI for displaying the model grid, including selection state and styling.
-        2.  Ensure the selected  is correctly passed up to the  parent component.
-        3.  Implement the subsequent steps as defined in the user's plan (ADR-AUTO-UX): Yıl/Versiyon (Year/Version), Çekirdek Alanlar (Core Fields, auto-specific), and Özellikler/Medya (Features/Media).
-        4.  Implement the final Preview and submission logic.
-    -   **What will be achieved with this?** A fully functional, premium user experience for posting automobile ads, which is a critical vertical for the classifieds platform.
+-   **Task 1: Complete Admin Category Wizard Edit Mode (P0)**
+    -   **Where to resume:** Resume debugging the state synchronization issue in  and .
+    -   **What will be achieved with this?** A fully functional and safe editing experience for category administrators, which was the user's last P1 request.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** No.
+    -   **Blocked on something:** The bug described in Issue 1.
 
 **Upcoming and Future Tasks**
--   **Upcoming Tasks:**
-    -   **P1: Implement General Post Ad (ilan ver) Page:** Build the user-facing category selection page at . This requires the drill-down column UI, breadcrumbs, and search feature as originally specified by the user.
-    -   **P1: Implement Wizard Edit Functionality:** Add an Edit button to completed/locked tabs in the admin category wizard to allow admins to make changes.
-    -   **P2: Complete Mongo to PostgreSQL Migration:** Migrate the remaining Public Search and Moderation Flow features from MongoDB to PostgreSQL.
-    -   **P2: Flesh out Remaining Wizard Tabs:** Implement the UI and backend logic for the Parametre Alanları (Parameter Fields) and other planned tabs in the admin category wizard.
--   **Future Tasks (Backlog):**
-    -   Integrate VIES API for server-side VAT ID validation.
-    -   Implement CSV format for GDPR data export.
-    -   Implement a Reject flow for the admin moderation panel.
-    -   Implement a daily scheduled job to clean up expired tokens.
+- **Upcoming Tasks:**
+  - **P1: Implement Last Selected Category Shortcut:** Add a Son Seçiminiz (Your Last Selection) card to the  page to speed up recurring ad postings for users (ADR-DRILL-RECENT-001).
+  - **P1: Complete Premium Automobile Ad Posting Wizard:** Resume and complete the work on the multi-step wizard for posting car ads, which was paused. This includes finalizing the , , , and  steps.
+- **Future Tasks:**
+  - **P2: Flesh out Parametre Alanları Wizard Tab:** Implement the UI and backend for the Parameter Fields tab in the admin category wizard.
+  - **P2: Complete Mongo to PostgreSQL Migration:** Migrate the remaining Public Search and Moderation Flow features.
+  - **P2: VIES API Integration:** Integrate for server-side VAT ID validation.
+  - **P2: GDPR Data Export:** Implement CSV format for data export.
+  - **P2: Moderation Reject Flow:** Implement a Reject flow for the admin panel.
+  - **P2: Scheduled Token Cleanup:** Create a daily job to clean up expired tokens.
 
 **Completed work in this session**
--   **Admin Category Wizard (FIXED):** The non-functional admin category creation wizard () has been fixed. The state management now correctly follows the user's architectural requirements, allowing admins to save progress per tab and navigate sequentially.
--   **Dual Pricing Model (IMPLEMENTED):** Added Fixed Price vs. Hourly Rate options. This involved:
-    -   Backend migration of the  table (,  columns).
-    -   API validation to ensure data integrity.
-    -   Frontend implementation in  with conditional UI.
--   **Premium Automobile Ad Wizard (STARTED):** Began building a new, dedicated ad posting flow for automobiles. This included:
-    -   **Data Layer:** Created and seeded  and  tables in PostgreSQL.
-    -   **API Layer:** Created new endpoints () to serve brand and model data.
-    -   **Frontend Scaffolding:** Set up the new route and parent component ().
-    -   **Brand Selection UI:** Completed the  component with a searchable logo grid.
+-   **Category Import/Export Feature (DONE):**
+    -   Created backend endpoints (, ) and services in .
+    -   Created frontend UI at .
+    -   Implemented support for both CSV and XLSX, including  and  logic.
+-   **Download Sample File Enhancement (DONE):**
+    -   Added backend endpoint .
+    -   Added buttons to the UI in .
+-   **Post Ad Category Drill-Down Page (DONE):**
+    -   Created frontend component .
+    -   Implemented multi-column dynamic category loading and selection.
+-   **Premium Automobile Ad Posting Wizard (PARTIALLY COMPLETED):**
+    -   Significant progress was made before the user pivoted. Steps for Brand, Model, and Year selection are mostly complete.
 
 **Earlier issues found/mentioned but not fixed**
 -   **Issue 1: Mongo to PostgreSQL Migration for Search/Moderation**
@@ -85,49 +106,53 @@ The application is a full-stack platform with a React frontend and a FastAPI bac
 
 
 **Key Technical Concepts**
--   **Complex Frontend State Machine:** The category wizard () implements a strict, multi-step flow where progress is saved at each step and gates navigation to subsequent steps.
--   **Specialized Multi-Step Wizard:** The new automobile ad posting flow is a separate, specialized wizard with its own state management () and unique UI components.
--   **Master Data for Attributes:** Vehicle brands and models are handled as master data in their own tables, not as part of the flexible category hierarchy. This is a key architectural decision (ADR-AUTO-UX-002).
--   **Conditional Data Modeling:** The  model uses a  ENUM to determine whether to use the  or  column, enforced by server-side validation.
+-   **Bulk Data Operations:** Implemented a robust import/export system with a  validation phase to prevent data corruption. Uses  and  libraries on the backend.
+-   **Drill-Down UI:** A multi-column navigation pattern where user selections in one list dynamically populate the next, used for category selection.
+-   **Conditional State Machine (Dirty Flag):** The Admin Edit Mode introduces a state machine where changing an upstream configuration () invalidates dependent downstream configurations () by setting a  flag, enforcing a specific re-validation workflow.
+-   **Dependency-Aware Backend:** The backend maintains a dependency map to programmatically determine which parts of a category's configuration become dirty when another part changes.
 
 **key DB schema**
 -   **categories:** 
--   **listings:** 
+-   **audit_logs:** 
 -   **vehicle_brands:** 
 -   **vehicle_models:** 
 
 **changes in tech stack**
--   None.
+-   **Backend:** Added  and  for file operations.
 
 **All files of reference**
--   : Parent component for the new wizard.
--   : **Current file being worked on.**
--   : First step of the new wizard.
--   : API endpoints for fetching vehicle data.
--   : DB models for brands and models.
--   : The now-functional admin wizard.
--   : The tab containing the fixed/hourly price logic.
+-   **Current Task (Admin Edit Mode):**
+    -    (Primary file with the bug)
+    -    (Parent component managing state)
+    -    (Endpoints for  and category updates)
+    -    (DB model with  field)
+-   **Recently Completed:**
+    -   
+    -   
+    -   
+-   **Documents:**
+    -    (Contains close-out notes for Import/Export feature)
 
 **Critical Info for New Agent**
--   **Follow the User's ADRs:** The user provides extremely detailed plans and Architecture Decision Records (ADRs) in Turkish (e.g., messages #709, #150, #7). You **MUST** read and follow these plans exactly. The user approved the plan for the auto wizard with planı aynen uygula (implement the plan exactly).
--   **Current Priority is the Auto Wizard:** The P0 task is to complete the premium automobile ad posting wizard. Do not get distracted by other pending tasks until this is complete.
--   **Two Separate Post Ad Flows:** Be aware there are two distinct Post Ad features: the *general* category drill-down UI (not started) and the *automobile-specific* wizard (in progress). The current focus is ONLY on the automobile wizard.
--   **DB Workaround:** Remember that the preview environment requires database credentials to be in . Do not try to fix the platform-level secret injection issue.
+-   **User dictates priorities and architecture:** The user frequently provides very detailed, multi-page task lists and ADRs in Turkish. You **MUST** read and follow these directives exactly. The user will pivot priorities abruptly; adapt the plan accordingly.
+-   **Focus on the Edit Mode bug:** The highest priority (P0) is to fix the state synchronization bug in the Admin Category Wizard's Edit Mode. Do not move to other tasks until this is resolved and verified.
+-   **Automobile Wizard is Paused:** Do not resume work on the automobile ad wizard unless the user explicitly re-prioritizes it.
+-   **DB Workaround is Still Active:** The preview environment requires database credentials to be in . Do not attempt to fix the platform-level secret injection issue.
 
 **documents and test reports created in this job**
--   /app/ilan alt yapısı.pdf
+- /app/memory/CHANGELOG.md
 
 **Last 10 User Messages and any pending HUMAN messages**
--   **#950-952:** User gives a final confirmation to proceed.
--   **#940-949:** Agent is working on  and .
--   **#930-939:** Agent is setting up the vehicle data seeding.
--   **#917-929:** Agent is creating the backend models and API endpoints for vehicles.
--   **#712:** User gives explicit approval to the agent's plan for the auto wizard: **planı aynen uygula** (implement the plan exactly).
--   **#709:** User provides a very detailed task list and architectural plan for the new Premium Automobile Ad Posting UX. This is the current P0 task.
+The last several user messages have been detailed, multi-point task lists and architecture decision records (ADRs) in Turkish, dictating the project's direction.
+-   **#638:** Provided a task list to implement the Admin Edit lock/unlock feature (P1) and an enhancement for a recently selected category shortcut. This is the current active task list.
+-   **#465 & #462:** Provided a task list to close out the Category Import/Export P0, implement the Download Sample File enhancement (P0.1), and begin the P1 tasks (Drill-down page and Admin Edit design).
+-   **#257:** Provided a comprehensive task list and ADRs for the Category Import/Export feature, pivoting the project's focus.
+-   **#254:** User message: katagori import / export u tamamlayalım (Let's complete the category import/export). This was the pivot point.
+-   **#7:** Provided the original, detailed task list and ADRs for the Premium Automobile Ad Posting Wizard.
 
 **Project Health Check:**
 -   **Broken:**
-    -   The new Premium Automobile Ad Posting feature is incomplete and therefore non-functional.
+    -   Admin Category Wizard Edit Mode is non-functional due to the state synchronization bug.
 -   **Mocked:**
     -   None.
 
@@ -136,12 +161,13 @@ The application is a full-stack platform with a React frontend and a FastAPI bac
 -   React
 -   PostgreSQL (, , )
 -   Stripe (Configured, but not used in any active feature)
+-    (newly added for Excel file handling)
 
 **Testing status**
 -   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
--   **Known regressions:** None in this session; a major broken feature was fixed.
+-   **Known regressions:** None.
 
 **Credentials to test flow:**
 -   Credentials for the external PostgreSQL database are in .
@@ -150,4 +176,5 @@ The application is a full-stack platform with a React frontend and a FastAPI bac
 -   **User:**  / 
 
 **What agent forgot to execute**
--   The task to migrate remaining Public Search and Moderation Flow features from MongoDB to PostgreSQL was not started. It has been deprioritized in favor of the user's new feature requests (Price Type and Auto Wizard) and remains on the backlog.</analysis>
+-   The Premium Automobile Ad Posting Wizard task was intentionally paused based on user request, not forgotten.
+-   The Mongo to PostgreSQL Migration task remains on the backlog as a P2 item and has not been addressed, following the user's prioritization of feature development.</analysis>
