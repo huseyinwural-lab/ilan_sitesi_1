@@ -411,33 +411,7 @@ export default function AdminCategoriesImportExport() {
         </div>
       )}
 
-      {activeTab === 'publish' && (
-        <div className="space-y-4" data-testid="categories-import-export-publish">
-          <div className="rounded-lg border bg-white p-4">
-            <h2 className="text-lg font-semibold" data-testid="categories-publish-title">Publish Batch</h2>
-            <p className="text-sm text-slate-600" data-testid="categories-publish-desc">Import sonrası draft schema versiyonlarını publish eder.</p>
-            <div className="mt-4">
-              <div className="text-xs text-slate-500" data-testid="categories-publish-batch">
-                Batch ID: {commitResult?.batch_id || '-'}
-              </div>
-              <button
-                type="button"
-                className="mt-3 px-4 py-2 rounded-md bg-emerald-600 text-white text-sm"
-                onClick={runPublish}
-                disabled={loading || !commitResult?.batch_id}
-                data-testid="categories-publish-action"
-              >
-                Publish Et
-              </button>
-            </div>
-            {publishResult && (
-              <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700" data-testid="categories-publish-result">
-                Yayınlanan schema sayısı: {publishResult.published}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
