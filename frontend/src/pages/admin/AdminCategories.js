@@ -1971,6 +1971,27 @@ const AdminCategories = () => {
                       onChange={(e) => updateLevelItem(levelIndex, itemIndex, { sort_order: e.target.value })}
                       data-testid={`categories-level-item-sort-${levelIndex}-${itemIndex}`}
                     />
+                    {levelIndex >= 3 && (
+                      <div className="space-y-1" data-testid={`categories-level-item-transaction-${levelIndex}-${itemIndex}`}>
+                        <select
+                          className={selectClassName}
+                          value={item.transaction_type || ""}
+                          disabled={itemInputsDisabled}
+                          onChange={(e) => updateLevelItem(levelIndex, itemIndex, { transaction_type: e.target.value })}
+                          data-testid={`categories-level-item-transaction-select-${levelIndex}-${itemIndex}`}
+                        >
+                          <option value="">Alt Tip Seçiniz</option>
+                          {TRANSACTION_TYPE_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                        {transactionError && (
+                          <div className="text-[11px] text-rose-600" data-testid={`categories-level-item-transaction-error-${levelIndex}-${itemIndex}`}>
+                            {transactionError}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <label className="flex items-center gap-2 text-xs text-slate-700" data-testid={`categories-level-item-active-${levelIndex}-${itemIndex}`}>
                       <input
                         type="checkbox"
