@@ -3438,6 +3438,8 @@ async def admin_system_health_detail(
         "error_buckets_24h": error_buckets,
         "slow_query_count_24h": slow_query_count,
         "slow_query_threshold_ms": slow_query_threshold,
+        "moderation_sla_avg_seconds": round(float(moderation_sla_avg), 2) if moderation_sla_avg is not None else None,
+        "moderation_sla_pending_count": int(moderation_sla_pending or 0),
         "endpoint_stats": endpoint_stats,
         "last_db_error": _last_db_error,
         "last_etl_at": etl_state.get("last_etl_at"),
