@@ -237,6 +237,10 @@ export default function Layout({ children }) {
   }, [systemHealthDetail, systemHealthDetailStatus]);
 
 
+  const canViewSystemHealth = Boolean(
+    user && ['super_admin', 'country_admin'].includes(user.role) && location.pathname.startsWith('/admin')
+  );
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // NOTE: Side effects (localStorage / URL normalization) should live in effects,
