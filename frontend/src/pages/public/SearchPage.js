@@ -239,6 +239,11 @@ export default function SearchPage() {
             <p className="text-muted-foreground text-sm mt-1">
               {data.pagination.total || 0} sonuç bulundu
             </p>
+            {(searchState.filters?.price_min || searchState.filters?.price_max) && (
+              <p className="text-xs text-muted-foreground mt-1" data-testid="search-price-filter-note">
+                Not: Saatlik ücretli ilanlar fiyat filtresinde gösterilmez.
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2 w-full md:w-auto">
