@@ -88,7 +88,12 @@ from app.models.dealer_profile import DealerProfile
 from app.models.consumer_profile import ConsumerProfile
 from app.models.auth import UserCredential, EmailVerificationToken
 from app.utils.slug import slugify
-from app.utils.monitoring import get_slow_query_summary
+from app.utils.monitoring import (
+    classify_endpoint,
+    get_endpoint_stats,
+    get_slow_query_summary,
+    record_request_latency,
+)
 from app.models.dealer_listing import DealerListing
 from app.models.moderation import Listing, ModerationAction
 from app.models.listing_search import ListingSearch
