@@ -571,6 +571,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
       publishedDetailUrl,
       createDraft,
       saveDraft,
+      trackWizardEvent,
       saveStep,
       publishListing,
       setDraftId,
