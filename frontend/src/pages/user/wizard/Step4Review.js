@@ -61,7 +61,7 @@ const ReviewSubmit = () => {
             <div className="flex items-center justify-center h-full text-gray-400" data-testid="wizard-review-no-image">No Image</div>
           )}
           <span className="absolute bottom-4 left-4 bg-white px-3 py-1 rounded-full text-sm font-bold shadow" data-testid="wizard-review-price">
-            {coreFields.currency_primary} {coreFields.price_amount || '-'}
+            {priceLabel}
           </span>
         </div>
 
