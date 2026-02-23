@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func, desc, or_
 from app.dependencies import get_db
 from app.models.moderation import Listing
+from app.models.listing_search import ListingSearch
 from app.models.attribute import ListingAttribute, Attribute, AttributeOption, CategoryAttributeMap
 from app.models.category import Category
 from app.core.redis_rate_limit import RedisRateLimiter
