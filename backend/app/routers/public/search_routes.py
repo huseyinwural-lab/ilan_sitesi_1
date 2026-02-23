@@ -6,6 +6,8 @@ from app.dependencies import get_db
 from app.models.moderation import Listing
 from app.models.listing_search import ListingSearch
 from pydantic import BaseModel
+import os
+import hashlib
 
 router = APIRouter()
 
