@@ -22,7 +22,7 @@ from app.models.escrow import EscrowTransaction, Dispute
 from app.models.consumer_profile import ConsumerProfile
 from app.models.dealer_profile import DealerProfile
 from app.models.legal import LegalConsent
-from app.models.vehicle_mdm import VehicleMake, VehicleModel
+from app.models.user_recent_category import UserRecentCategory
 from app.models.application import Application
 from app.models.campaign import Campaign
 from app.models.plan import Plan
