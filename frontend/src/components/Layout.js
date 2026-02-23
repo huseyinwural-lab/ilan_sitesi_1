@@ -232,6 +232,7 @@ export default function Layout({ children }) {
         cdnCountrySeries: {},
         cdnCanaryStatus: 'unknown',
         cfIdsPresent: false,
+        cfIdsSource: 'unknown',
       };
     }
     if (!systemHealthDetail) {
@@ -259,6 +260,7 @@ export default function Layout({ children }) {
         cdnCountrySeries: {},
         cdnCanaryStatus: 'unknown',
         cfIdsPresent: false,
+        cfIdsSource: 'unknown',
       };
     }
     const buckets = systemHealthDetail.error_buckets_24h || [];
