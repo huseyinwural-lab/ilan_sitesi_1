@@ -8,3 +8,8 @@ Phase 1 progress: 600/1000
 Phase 1 progress: 700/1000
 Phase 1 progress: 800/1000
 Phase 1 progress: 900/1000
+Phase 1 progress: 1000/1000
+Phase 1 p95 latency: 2923.81 ms
+Phase 1: 0 hata
+
+Phase 2: 10 parallel users, total 1000 login+me
