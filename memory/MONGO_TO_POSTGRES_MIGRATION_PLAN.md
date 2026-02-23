@@ -99,6 +99,16 @@
 
 ---
 
+## 7) Migration Adımları (Özet)
+
+1. Snapshot
+2. Transform
+3. Load
+4. Integrity check
+5. Switch read source
+6. Monitor
+7. Rollback window (Mongo read fallback)
+
 ## 8) Migration Task Breakdown (Uygulama)
 
 1. **Schema Create**
