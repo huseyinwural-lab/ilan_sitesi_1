@@ -54,7 +54,7 @@ const YearTrimStep = () => {
       if (!year) {
         setError('Yıl seçiniz.');
         scrollToError();
-        return false;
+        return { ok: false };
       }
 
       const trimmedTrim = trimKey.trim();
