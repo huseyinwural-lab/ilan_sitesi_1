@@ -207,7 +207,7 @@ const ListingCategorySelect = () => {
       setSelectedPath([]);
       loadRootCategories(moduleParam);
     }
-  }, [hydratePathFromIds, loadRootCategories, searchParams, selectedModule, selectedPath]);
+  }, [hydratePathFromIds, loadRootCategories, searchParams]);
 
   const fetchRecentCategory = useCallback(async () => {
     setRecentLoading(true);
