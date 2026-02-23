@@ -176,6 +176,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - SEARCH_SQL_ROLLOUT %50 → %100
   - Seed demo data (5000 ilan) + ETL tekrar çalıştırıldı
   - Parity + benchmark raporları güncellendi
+  - Raporlar: /app/memory/SEARCH_PARITY_REPORT.md, /app/memory/SEARCH_PARITY_RAW.md, /app/memory/SEARCH_BENCHMARK_REPORT.md, /app/memory/SEARCH_SLOW_QUERIES.md
 
 ## Kanıtlar
 - /app/docs/LOCAL_DB_READY_EVIDENCE.md
