@@ -24,12 +24,16 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${API_URL}/api`;
 
 // Helper to format currency
-const formatPrice = (price, currency) => {
-  return new Intl.NumberFormat('tr-TR', {
-    style: 'currency',
-    currency: currency || 'EUR',
+const formatPrice = (priceAmount, currency, priceType = 'FIXED', hourlyRate = null) => {
+  const numeric = priceType === 'HOURLY' ? hourlyRate : priceAmount;
+  if (numeric === null || numeric === undefined || numeric === '') return '-';
+  const formatted = new Intl.NumberFormat('tr-TR', {
     maximumFractionDigits: 0,
-  }).format(price);
+  }).format(Number(numeric));
+  const currencyLabel = currency || 'EUR';
+  return priceType === 'HOURLY'
+    ? `${formatted} ${currencyLabel} / saat`
+    : `${formatted} ${currencyLabel}`;
 };
 
 const slugify = (text) => {
