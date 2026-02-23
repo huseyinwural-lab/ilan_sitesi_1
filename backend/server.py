@@ -16680,8 +16680,26 @@ async def public_vehicle_makes(country: str | None = None, request: Request = No
 
 
 @api_router.get("/v1/vehicle/models")
-async def public_vehicle_models(make: str, country: str | None = None, request: Request = None):
-    db = request.app.state.db
+async def public_vehicle_models(make: str, country: str | None = None, request: Request = None, session: AsyncSession = Depends(get_sql_session)):
+    db = request.app.state.db if request else None
+    if not db:
+        make_row = await session.execute(select(VehicleMake).where(VehicleMake.slug == make))
+        make_obj = make_row.scalars().first()
+        if not make_obj:
+            raise HTTPException(status_code=404, detail="Make not found")
+        result = await session.execute(
+            select(VehicleModel).where(
+                VehicleModel.make_id == make_obj.id,
+                VehicleModel.is_active == True
+            ).order_by(VehicleModel.name.asc())
+        )
+        items = [
+            {"id": str(model.id), "key": model.slug, "label": model.name}
+            for model in result.scalars().all()
+            if model.slug
+        ]
+        return {"version": "sql", "make": make, "items": items}
+
     make_doc = await db.vehicle_makes.find_one(
         {
             "slug": make,
