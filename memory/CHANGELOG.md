@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2026-02-23 — Admin V1 Phase A Closeout (Cloudflare Ops Inject)
+
+**Kapsam**
+- Env/secret inject + backend restart doğrulandı
+- /api/admin/system/health-detail canary_status=OK
+- Admin UI canary OK (screenshot: `/app/screenshots/cloudflare-phase-a.png`)
+- Kanıt: `/app/docs/ADMIN_V1_PHASE_A_EVIDENCE.md`
+
 ## 2026-02-23 — CDN Metrics + Admin Kategori Manuel Yönetimi
 
 **Kapsam**
