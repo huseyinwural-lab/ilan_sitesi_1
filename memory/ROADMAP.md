@@ -10,3 +10,5 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 - Theme Palette Uygulaması
 - Dark/Light kontrast düzeltmesi
 - İlan verme UI sadeleştirme
+- Eski yapı korunarak modernize edilir (mimari bozulmaz)
+- Tema değişimi mimariyi değil yalnızca UI katmanını etkiler
