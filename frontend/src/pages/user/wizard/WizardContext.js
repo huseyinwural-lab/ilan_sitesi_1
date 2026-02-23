@@ -279,7 +279,6 @@ export const WizardProvider = ({ children, editListingId = null }) => {
         }
         const data = await res.json();
         await hydrateFromListing(data.item);
-        setStep(2);
       } catch (error) {
         console.error(error);
       } finally {
