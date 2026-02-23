@@ -444,6 +444,8 @@ export const WizardProvider = ({ children, editListingId = null }) => {
           body_type: basicInfo.body_type,
           color: basicInfo.color,
           damage_status: basicInfo.damage_status,
+          engine_cc: basicInfo.engine_cc,
+          engine_hp: basicInfo.engine_hp,
           trade_in: basicInfo.trade_in,
         },
         dynamic_fields: dynamicValues,
