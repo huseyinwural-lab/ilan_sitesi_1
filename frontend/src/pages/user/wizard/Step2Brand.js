@@ -76,10 +76,12 @@ const BrandStep = () => {
   };
 
   const scrollToError = () => {
-    const el = document.querySelector('[data-testid="brand-error"]');
-    if (el) {
-      el.scrollIntoView({ behavior: window.innerWidth < 768 ? 'smooth' : 'auto', block: 'center' });
-    }
+    setTimeout(() => {
+      const el = document.querySelector('[data-testid="brand-error"]');
+      if (el) {
+        el.scrollIntoView({ behavior: window.innerWidth < 768 ? 'smooth' : 'auto', block: 'center' });
+      }
+    }, 0);
   };
 
   const handleComplete = async () => {
