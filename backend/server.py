@@ -11370,6 +11370,7 @@ async def _moderation_transition_sql(
     action_type: str,
     reason: Optional[str] = None,
     reason_note: Optional[str] = None,
+    commit: bool = True,
 ) -> Listing:
     _ensure_moderation_rbac(current_user)
 
