@@ -700,7 +700,15 @@ export default function Layout({ children }) {
                     data-testid="admin-system-health-panel"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="text-sm font-semibold text-slate-900" data-testid="admin-system-health-panel-title">System Health</div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-semibold text-slate-900" data-testid="admin-system-health-panel-title">System Health</div>
+                        <span
+                          className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600"
+                          data-testid="admin-system-health-slow-query-badge"
+                        >
+                          Slow Queries (24s): {healthDetailDisplay.slowQueryCount}
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => setShowHealthPanel(false)}
