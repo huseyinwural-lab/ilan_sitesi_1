@@ -1520,8 +1520,14 @@ const AdminCategories = () => {
         if (!node.slug) {
           fieldErrors[`level-${pathKey}-slug`] = "Slug zorunludur.";
         }
+        if (nodePath.length === 3 && !node.transaction_type) {
+          fieldErrors[`level-${pathKey}-transaction`] = "Alt tip zorunludur.";
+        }
         if (!node.name || !node.slug) {
           return `${label} için ad ve slug zorunludur.`;
+        }
+        if (nodePath.length === 3 && !node.transaction_type) {
+          return `${label} için alt tip zorunludur.`;
         }
         if ((node.children || []).length > 0) {
           const childError = validateTree(node.children, nodePath);
