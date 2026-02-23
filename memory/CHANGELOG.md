@@ -9,15 +9,17 @@
 
 **Kanıt Referansları**
 - Repro/analiz notu: `/app/memory/EDIT_MODE_SYNC_NOTES.md`
-- Playwright senaryosu: admin login → kategori edit → save → dirty görünür
+- Playwright senaryosu: admin login → edit unlock → dirty CTA görünür → CTA tıklandı
 - Screenshot seti:
-  - `/app/screenshots/edit-mode-modal.png`
-  - `/app/screenshots/edit-mode-dirty.png`
+  - `/app/screenshots/admin-dirty-cta.png`
+  - `/app/screenshots/admin-dirty-cta-after.png`
+  - `/app/screenshots/admin-save-rollback.png`
+  - `/app/screenshots/admin-multi-save.png`
 
 **Regression Checklist**
-- [x] Save rollback (Playwright: edit save hata senaryosu + restoreSnapshot)
-- [x] Multi-save ardışık deneme (Manual: aynı oturumda iki kez Tamam → dirty görünür)
-- [x] Dirty zinciri görünürlüğü (Playwright: dirty indikatorleri göründü)
+- [x] Save rollback (Playwright: `/app/screenshots/admin-save-rollback.png`)
+- [x] Multi-save ardışık deneme (Playwright: `/app/screenshots/admin-multi-save.png`)
+- [x] Dirty zinciri görünürlüğü (Playwright: `/app/screenshots/admin-dirty-cta.png`)
 
 ## 2026-02-23 — Kategori Import/Export P0 Closeout
 
