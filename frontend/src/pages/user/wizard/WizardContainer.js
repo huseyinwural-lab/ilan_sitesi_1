@@ -13,11 +13,13 @@ const WizardContent = () => {
   const { step, loading, editLoading } = useWizard();
 
   const steps = [
-    { step: 1, label: 'Kategori' },
-    { step: 2, label: 'Dinamik Alanlar' },
-    { step: 3, label: 'Fiyat + Konum' },
-    { step: 4, label: 'Medya' },
-    { step: 5, label: 'Önizleme' },
+    { step: 1, label: 'Kategori/Segment' },
+    { step: 2, label: 'Marka' },
+    { step: 3, label: 'Model' },
+    { step: 4, label: 'Yıl/Versiyon' },
+    { step: 5, label: 'Çekirdek Alanlar' },
+    { step: 6, label: 'Özellikler + Medya' },
+    { step: 7, label: 'Önizleme' },
   ];
 
   return (
