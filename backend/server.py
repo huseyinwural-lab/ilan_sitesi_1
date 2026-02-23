@@ -14860,6 +14860,7 @@ async def admin_update_category(
             parent = await session.get(Category, parent_uuid)
             if not parent:
                 raise HTTPException(status_code=400, detail="parent_id not found")
+        parent_candidate = parent
         updates["parent_id"] = parent.id if parent else None
         updates["path"] = f"{parent.path}.{updates.get('slug') or _pick_category_slug(category.slug)}" if parent and parent.path else (updates.get("slug") or _pick_category_slug(category.slug))
         updates["depth"] = (parent.depth + 1) if parent else 0
