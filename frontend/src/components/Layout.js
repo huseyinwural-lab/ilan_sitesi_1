@@ -128,6 +128,27 @@ export default function Layout({ children }) {
 
   const isCountryMode = adminPreferredMode === 'country';
 
+  const healthDisplay = useMemo(() => {
+    if (systemHealthStatus === 'error') {
+      return { status: 'error', label: 'DB Hata', timeLabel: '--:--', errorLabel: '--/5dk' };
+    }
+    if (!systemHealth) {
+      return { status: 'idle', label: 'DB --', timeLabel: '--:--', errorLabel: '--/5dk' };
+    }
+    const dbOk = systemHealth.db_status === 'ok';
+    const timeLabel = systemHealth.last_check_at
+      ? new Date(systemHealth.last_check_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+      : '--:--';
+    const errorCount = systemHealth.error_count_5m ?? 0;
+    const errorRate = systemHealth.error_rate_per_min_5m ?? 0;
+    return {
+      status: dbOk ? 'ok' : 'error',
+      label: dbOk ? 'DB OK' : 'DB Down',
+      timeLabel,
+      errorLabel: `${errorCount}/5dk (${errorRate}/dk)`,
+    };
+  }, [systemHealth, systemHealthStatus]);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // NOTE: Side effects (localStorage / URL normalization) should live in effects,
