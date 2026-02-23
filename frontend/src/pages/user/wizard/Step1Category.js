@@ -11,7 +11,7 @@ const CATEGORY_ICONS = {
 };
 
 const CategorySelector = () => {
-  const { createDraft, loading, setStep, completedSteps, setCompletedSteps } = useWizard();
+  const { createDraft, loading, setStep, completedSteps, setCompletedSteps, schemaNotice } = useWizard();
   const [categories, setCategories] = useState([]);
   const [activeParentId, setActiveParentId] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
