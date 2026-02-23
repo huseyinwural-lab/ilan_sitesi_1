@@ -175,14 +175,17 @@ const ReviewSubmit = () => {
             )}
             {detailSummary.length > 0 && (
               <div className="space-y-2" data-testid="wizard-review-detail-list">
-                {detailSummary.map((group) => (
-                  <div key={group.id} data-testid={`wizard-review-detail-${group.id}`}>
-                    <div className="text-xs uppercase text-gray-400">{group.title}</div>
-                    <div className="text-sm text-gray-700">
-                      {(group.selections || []).join(', ')}
+                {detailSummary.map((group) => {
+                  const safeGroup = String(group.id).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                  return (
+                    <div key={group.id} data-testid={`wizard-review-detail-${safeGroup}`}>
+                      <div className="text-xs uppercase text-gray-400">{group.title}</div>
+                      <div className="text-sm text-gray-700">
+                        {(group.selections || []).join(', ')}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
