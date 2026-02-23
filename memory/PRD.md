@@ -186,6 +186,10 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Tek durum mesajı + kullanıcı dostu canary + teknik detay tooltip
 - **Phase A Ops Inject Closeout (2026-02-23):** env/secret inject + canary OK + kanıt: `/app/docs/ADMIN_V1_PHASE_A_EVIDENCE.md`
 - **Phase B RBAC Hard Lock Kickoff (2026-02-23):** deny-by-default allowlist + admin UI guard + docs: `/app/docs/RBAC_MATRIX.md`, `/app/docs/RBAC_ENDPOINT_MAP.md`, `/app/docs/RBAC_NEGATIVE_TESTS.md`
+- **Data Layer Cutover Kickoff (Mongo Tasfiye) (2026-02-23):**
+  - Mongo envanteri + dönüşüm haritası + şema gap raporu
+  - P0 admin chain SQL: system-settings + admin invite (520 → 0)
+  - Dokümanlar: `/app/docs/MONGO_INVENTORY.md`, `/app/docs/MONGO_TO_SQL_MAP.md`, `/app/docs/SQL_SCHEMA_GAP_REPORT.md`, `/app/docs/SQL_SCHEMA_COMPLETION_PACKAGE.md`, `/app/docs/MONGO_SQL_MIGRATION_PLAN.md`, `/app/docs/MONGO_SQL_MIGRATION_EVIDENCE.md`
 - **Dependency Resolver Fix (2026-02-23):**
   - google-api-core hard pin kaldırıldı, dar aralıkla sabitlendi (>=2.28.1,<2.31.0)
 - **Admin Kategori Manuel Yönetimi (2026-02-23):**
