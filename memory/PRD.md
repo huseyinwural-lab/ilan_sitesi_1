@@ -244,6 +244,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ## Blokajlar / Riskler
 - Stripe API key geçersiz (idempotency testi BLOCKED)
 - Moderation Mongo koleksiyonu bulunamadı; ops ile doğrulama gerekli (parity 0/0)
+- Cloudflare metrics için Account ID / Zone ID secret manager’da eksik (CDN metrikleri disabled)
 
 ## Öncelikli Backlog
 ### P0 (Hemen)
