@@ -1535,7 +1535,8 @@ const AdminCategories = () => {
             active_flag: form.active_flag,
             sort_order: Number(form.sort_order || 0),
             hierarchy_complete: true,
-            wizard_progress: { state: progressState },
+            wizard_progress: { state: progressState, dirty_steps: dirtyStepsOverride },
+            wizard_edit_event: wizardEditEvent || undefined,
             expected_updated_at: editing.updated_at,
           }),
         });
