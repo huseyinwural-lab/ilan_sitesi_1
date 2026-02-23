@@ -1611,7 +1611,12 @@ const AdminCategories = () => {
 
       setEditing(updatedParent);
       if (updatedParent?.wizard_progress) {
-        setWizardProgress(updatedParent.wizard_progress);
+        setWizardProgress({
+          state: updatedParent.wizard_progress.state || "draft",
+          dirty_steps: Array.isArray(updatedParent.wizard_progress.dirty_steps)
+            ? updatedParent.wizard_progress.dirty_steps
+            : [],
+        });
       }
       setForm({
         name: updatedParent.name || name,
