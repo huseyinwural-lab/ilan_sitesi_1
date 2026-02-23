@@ -13745,6 +13745,99 @@ async def admin_export_categories_xlsx(
     )
 
 
+def _build_category_sample_rows(module_value: str, country_value: str) -> list[dict]:
+    root_slug = f"ornek-{module_value}"
+    child_slug = f"{root_slug}-alt"
+    return [
+        {
+            "module": module_value,
+            "country": country_value,
+            "schema_version": CATEGORY_SCHEMA_VERSION,
+            "slug": root_slug,
+            "parent_slug": "",
+            "name_tr": "Örnek Ana Kategori",
+            "name_de": "Beispiel Hauptkategorie",
+            "name_fr": "Categorie Exemple",
+            "is_active": "true",
+            "sort_order": 1,
+            "wizard_progress": json.dumps({"step": "core"}, ensure_ascii=False),
+        },
+        {
+            "module": module_value,
+            "country": country_value,
+            "schema_version": CATEGORY_SCHEMA_VERSION,
+            "slug": child_slug,
+            "parent_slug": root_slug,
+            "name_tr": "Örnek Alt Kategori",
+            "name_de": "Beispiel Unterkategorie",
+            "name_fr": "Sous-categorie Exemple",
+            "is_active": "true",
+            "sort_order": 2,
+            "wizard_progress": "",
+        },
+    ]
+
+
+def _category_row_values(row: dict) -> list:
+    return [row.get(col, "") for col in CATEGORY_IMPORT_COLUMNS]
+
+
+@api_router.get("/admin/categories/import-export/sample/csv")
+async def admin_export_category_sample_csv(
+    request: Request,
+    module: Optional[str] = None,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    module_value = (module or "vehicle").strip().lower()
+    if module_value not in SUPPORTED_CATEGORY_MODULES:
+        raise HTTPException(status_code=400, detail="Invalid module")
+    country_value = (country or "DE").strip().upper()
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=",")
+    writer.writerow(CATEGORY_IMPORT_COLUMNS)
+    for row in _build_category_sample_rows(module_value, country_value):
+        writer.writerow(_category_row_values(row))
+
+    filename = f"categories-sample-{module_value}-{country_value}.csv"
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+    )
+
+
+@api_router.get("/admin/categories/import-export/sample/xlsx")
+async def admin_export_category_sample_xlsx(
+    request: Request,
+    module: Optional[str] = None,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+):
+    module_value = (module or "vehicle").strip().lower()
+    if module_value not in SUPPORTED_CATEGORY_MODULES:
+        raise HTTPException(status_code=400, detail="Invalid module")
+    country_value = (country or "DE").strip().upper()
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.append(CATEGORY_IMPORT_COLUMNS)
+    for row in _build_category_sample_rows(module_value, country_value):
+        sheet.append(_category_row_values(row))
+
+    stream = io.BytesIO()
+    workbook.save(stream)
+    stream.seek(0)
+
+    filename = f"categories-sample-{module_value}-{country_value}.xlsx"
+    return Response(
+        content=stream.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+    )
+
+
 @api_router.post("/admin/categories", status_code=201)
 async def admin_create_category(
     payload: CategoryCreatePayload,
