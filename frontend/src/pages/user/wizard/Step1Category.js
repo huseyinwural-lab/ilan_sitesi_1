@@ -83,7 +83,7 @@ const CategorySelector = () => {
         setPreselectApplied(true);
         return;
       }
-      const skipVehicle = moduleKey !== 'vehicle';
+      const skipVehicle = moduleKey !== 'vehicle' || forceCoreStep;
       setCompletedSteps((prev) => ({
         ...prev,
         1: true,
@@ -95,7 +95,10 @@ const CategorySelector = () => {
       }));
       setError('');
       setPreselectApplied(true);
-      setStep(moduleKey === 'vehicle' ? 2 : 5);
+      setStep(forceCoreStep ? 5 : (moduleKey === 'vehicle' ? 2 : 5));
+      if (forceCoreStep) {
+        localStorage.removeItem('ilan_ver_force_core_step');
+      }
     };
 
     applyPreselect();
