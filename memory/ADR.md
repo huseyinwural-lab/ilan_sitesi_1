@@ -368,3 +368,67 @@ graph LR
 - (+) Operasyonel şeffaflık
 - (-) UI karmaşıklığı hafif artar
 
+---
+
+## ADR-CONFIG-SEC-001 — Encryption Key Hard Gate
+
+**Karar:** CONFIG_ENCRYPTION_KEY olmadan config yazılamaz.
+
+**Gerekçe:** Production güvenlik standardı.
+
+**Etkileri:**
+- (+) Config sızıntısı engellenir
+- (-) Setup aşamasında blokaj yaratır
+
+---
+
+## ADR-OBS-ERR-002 — Teknik hata sebepleri UI’da gösterilmeli
+
+**Karar:** “Kaydedilemedi” yerine spesifik sebep gösterilecek.
+
+**Gerekçe:** Ops debug hızlanır.
+
+**Etkileri:**
+- (+) Debug süresi azalır
+- (-) Enum yönetimi gerekir
+
+---
+
+## ADR-CANARY-003 — Canary enum standardizasyonu
+
+**Karar:** Canary enum sadece: OK | CONFIG_MISSING | SCOPE_ERROR | API_ERROR.
+
+**Gerekçe:** İzlenebilirlik standardı.
+
+**Etkileri:**
+- (+) Basit raporlama
+- (-) Detaylar log reason alanında
+
+---
+
+## ADR-OPS-ENC-001 — Encryption key ops sorumluluğunda
+
+**Karar:** CONFIG_ENCRYPTION_KEY preview dahil ops tarafından sağlanır.
+
+**Gerekçe:** Anahtar yönetimi güvenlik sorumluluğu.
+
+**Etkileri / trade-off:**
+- (+) Güvenli yönetim
+- (-) Ops bağımlılığı
+
+---
+
+## ADR-CANARY-LOCK-001 — Canary enum kilidi
+
+**Karar:** OK | CONFIG_MISSING | SCOPE_ERROR | API_ERROR dışına çıkılmaz.
+
+**Gerekçe:** UI/raporlama karmaşıklığını azaltır.
+
+---
+
+## ADR-LOG-STD-001 — Startup log standardı
+
+**Karar:** Startup’ta `CONFIG_ENCRYPTION_KEY loaded=true/false` satırı zorunlu.
+
+**Gerekçe:** Hızlı teşhis.
+
