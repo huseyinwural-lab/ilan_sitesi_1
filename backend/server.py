@@ -14323,21 +14323,9 @@ async def admin_list_system_settings(
 async def admin_get_cloudflare_config(
     request: Request,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-    masked = await build_masked_config(db)
-    canary_doc = await load_canary_status(db)
-    canary_status = None
-    canary_checked_at = None
-    if canary_doc:
-        value = canary_doc.get("value")
-        if isinstance(value, dict):
-            canary_status = value.get("status")
-            canary_checked_at = value.get("checked_at")
-        elif isinstance(value, str):
-            canary_status = value
+    masked = await build_masked_config(session)
     return {
         "account_id_masked": masked.account_masked,
         "zone_id_masked": masked.zone_masked,
@@ -14345,8 +14333,8 @@ async def admin_get_cloudflare_config(
         "zone_id_last4": masked.zone_last4,
         "cf_ids_source": masked.source,
         "cf_ids_present": masked.present,
-        "canary_status": canary_status,
-        "canary_checked_at": canary_checked_at,
+        "canary_status": masked.canary_status,
+        "canary_checked_at": masked.canary_checked_at,
     }
 
 
