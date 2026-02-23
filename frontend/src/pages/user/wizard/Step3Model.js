@@ -97,47 +97,63 @@ const ModelStep = () => {
     setError('');
   };
 
-  const handleComplete = async () => {
-    if (!selectedModel) {
-      setError('Lütfen model seçin.');
-      return false;
+  const scrollToError = () => {
+    const el = document.querySelector('[data-testid="model-error"]');
+    if (el) {
+      el.scrollIntoView({ behavior: window.innerWidth < 768 ? 'smooth' : 'auto', block: 'center' });
     }
+  };
 
-    const modelLabel = selectedModel.label || selectedModel.name || selectedModel.key;
+  const handleComplete = async () => {
+    if (saving) return false;
+    setSaving(true);
+    try {
+      if (!selectedModel) {
+        setError('Lütfen model seçin.');
+        scrollToError();
+        return false;
+      }
 
-    const ok = await saveDraft({
-      vehicle: {
-        make_key: basicInfo.make_key,
-        make_id: basicInfo.make_id,
+      const modelLabel = selectedModel.label || selectedModel.name || selectedModel.key;
+
+      const ok = await saveDraft({
+        vehicle: {
+          make_key: basicInfo.make_key,
+          make_id: basicInfo.make_id,
+          model_key: selectedModel.key,
+          model_id: selectedModel.id,
+        },
+      });
+
+      if (!ok) {
+        setError('Model kaydedilemedi.');
+        scrollToError();
+        return false;
+      }
+
+      setBasicInfo((prev) => ({
+        ...prev,
         model_key: selectedModel.key,
         model_id: selectedModel.id,
-      },
-    });
+        model_label: modelLabel,
+        year: null,
+        trim_key: null,
+      }));
 
-    if (!ok) {
-      setError('Model kaydedilemedi.');
-      return false;
+      setCompletedSteps((prev) => ({
+        ...prev,
+        3: true,
+        4: false,
+        5: false,
+        6: false,
+      }));
+      setError('');
+      return true;
+    } finally {
+      setSaving(false);
     }
-
-    setBasicInfo((prev) => ({
-      ...prev,
-      model_key: selectedModel.key,
-      model_id: selectedModel.id,
-      model_label: modelLabel,
-      year: null,
-      trim_key: null,
-    }));
-
-    setCompletedSteps((prev) => ({
-      ...prev,
-      3: true,
-      4: false,
-      5: false,
-      6: false,
-    }));
-    setError('');
-    return true;
   };
+
 
   const handleNext = async () => {
     if (!selectedModel) {
