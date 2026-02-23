@@ -1224,39 +1224,9 @@ const AdminCategories = () => {
     }
     const savedCategory = data.category;
     if (savedCategory) {
-      const nextForm = {
-        name: savedCategory.name || form.name,
-        slug: savedCategory.slug || form.slug,
-        parent_id: savedCategory.parent_id || form.parent_id,
-        country_code: savedCategory.country_code || form.country_code,
-        active_flag: savedCategory.active_flag ?? form.active_flag,
-        sort_order: savedCategory.sort_order ?? form.sort_order,
-      };
-      const nextSchema = savedCategory.form_schema ? applySchemaDefaults(savedCategory.form_schema) : schema;
-      setEditing(savedCategory);
-      setForm(nextForm);
-      if (savedCategory.form_schema) {
-        setSchema(nextSchema);
-      }
-      if (savedCategory.wizard_progress) {
-        setWizardProgress({
-          state: savedCategory.wizard_progress.state || "draft",
-          dirty_steps: Array.isArray(savedCategory.wizard_progress.dirty_steps)
-            ? savedCategory.wizard_progress.dirty_steps
-            : [],
-        });
-      }
-      if (progressState && editModeStep === wizardStep) {
-        setEditModeStep(null);
-      }
-      setHierarchyComplete(Boolean(savedCategory.hierarchy_complete));
-      lastSavedSnapshotRef.current = JSON.stringify({
-        form: nextForm,
-        schema: nextSchema,
-        hierarchy_complete: Boolean(savedCategory.hierarchy_complete),
-        wizard_progress: savedCategory.wizard_progress,
+      applyCategoryFromServer(savedCategory, {
+        clearEditMode: Boolean(progressState && editModeStep === wizardStep),
       });
-      setLastSavedAt(formatTime(savedCategory.updated_at || new Date()));
     }
     if (status === "draft") {
       showDraftToast({
