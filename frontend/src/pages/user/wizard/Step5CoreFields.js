@@ -449,6 +449,7 @@ const CoreFieldsStep = () => {
           </div>
         </div>
       </div>
+      )}
 
       <div className="bg-white p-6 rounded-xl shadow-sm border space-y-4" data-testid="core-location-section">
         <h3 className="text-lg font-semibold">Konum Bilgileri</h3>
