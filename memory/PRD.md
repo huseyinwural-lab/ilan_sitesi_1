@@ -113,8 +113,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **Premium otomobil ilan sihirbazı P0 (2026-02-23):**
   - Model grid + arama + seçim (geri/ileri persist)
   - Yıl dropdown (2010–2026) + opsiyonel Versiyon/Donanım metin alanı
-  - Make/Model/Year Next butonları seçim sonrası aktif (auto-save)
-  - Yıl adımı model seçilmeden kilitli + state sync
+  - Make/Model/Year Next autosave + “Kaydedildi” toast + step değişiminde scroll-to-top (preview hariç)
+  - Autosave analytics eventleri: wizard_step_autosave_success / wizard_step_autosave_error
   - Oto çekirdek alanları: km, yakıt, vites, çekiş, kasa, motor cc/hp, hasar, takas, konum + fiyat tipi entegrasyonu
   - Özellikler/Medya: min 3 foto + kapak + sıralama, review’da galeri özeti
   - Önizleme: marka/model/yıl, fiyat tipi, motor, konum, özellik özetleri
