@@ -3412,6 +3412,7 @@ async def admin_system_health_detail(
     etl_state = _read_search_etl_state()
     slow_query_count, slow_query_threshold = get_slow_query_summary()
 
+    endpoint_stats = get_endpoint_stats()
     payload = {
         "db_status": db_status,
         "last_check_at": last_check_at.isoformat(),
@@ -3423,6 +3424,7 @@ async def admin_system_health_detail(
         "error_buckets_24h": error_buckets,
         "slow_query_count_24h": slow_query_count,
         "slow_query_threshold_ms": slow_query_threshold,
+        "endpoint_stats": endpoint_stats,
         "last_db_error": _last_db_error,
         "last_etl_at": etl_state.get("last_etl_at"),
         "last_etl_inserted": etl_state.get("inserted"),
