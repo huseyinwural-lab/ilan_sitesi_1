@@ -422,6 +422,45 @@ const ListingCategorySelect = () => {
         </div>
       </div>
 
+      {(recentLoading || recentCategory) && (
+        <div className="rounded-xl border bg-white p-4" data-testid="ilan-ver-recent-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-slate-900" data-testid="ilan-ver-recent-title">Son Seçiminiz</div>
+              <div className="text-xs text-slate-500" data-testid="ilan-ver-recent-subtitle">Tek tıkla devam edebilirsiniz.</div>
+            </div>
+            {recentModuleLabel && (
+              <span className="text-xs font-semibold text-blue-600" data-testid="ilan-ver-recent-module">{recentModuleLabel}</span>
+            )}
+          </div>
+
+          {recentLoading ? (
+            <div className="mt-3 text-xs text-slate-500" data-testid="ilan-ver-recent-loading">Yükleniyor...</div>
+          ) : (
+            <div className="mt-3 space-y-2">
+              <div className="text-sm font-semibold text-slate-900" data-testid="ilan-ver-recent-category">
+                {recentCategory?.category?.name}
+              </div>
+              <div className="text-xs text-slate-500" data-testid="ilan-ver-recent-path">
+                {recentBreadcrumb}
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs text-slate-500" data-testid="ilan-ver-recent-meta">
+                <span data-testid="ilan-ver-recent-country">Ülke: {recentCategory?.country}</span>
+                <span data-testid="ilan-ver-recent-module-pill">Modül: {recentModuleLabel}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleRecentContinue}
+                className="mt-2 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white"
+                data-testid="ilan-ver-recent-continue"
+              >
+                Devam Et
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="rounded-xl border bg-white p-4" data-testid="ilan-ver-breadcrumb-panel">
         <div className="text-xs uppercase tracking-[0.2em] text-slate-400" data-testid="ilan-ver-breadcrumb-label">Seçim yolu</div>
         <div className="mt-2 text-sm font-semibold text-slate-900" data-testid="ilan-ver-breadcrumb">{breadcrumbLabel}</div>
