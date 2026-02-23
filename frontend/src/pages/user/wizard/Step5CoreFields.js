@@ -403,7 +403,7 @@ const CoreFieldsStep = () => {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border space-y-4" data-testid="core-location-section">
+      div className="bg-white p-6 rounded-xl shadow-sm border space-y-4" data-testid="core-location-section">
         <h3 className="text-lg font-semibold">Konum Bilgileri</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <input
@@ -439,6 +439,60 @@ const CoreFieldsStep = () => {
             placeholder="Posta Kodu"
             data-testid="core-address-postal"
           />
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-sm border space-y-4" data-testid="core-contact-section">
+        <h3 className="text-lg font-semibold">İletişim Tercihleri</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input
+            type="text"
+            className="w-full p-2 border rounded-md"
+            value={moduleData.contact?.phone || ''}
+            onChange={(e) => setModuleData((prev) => ({
+              ...prev,
+              contact: { ...prev.contact, phone: e.target.value },
+            }))}
+            placeholder="Telefon"
+            data-testid="core-contact-phone"
+          />
+          <input
+            type="text"
+            className="w-full p-2 border rounded-md"
+            value={moduleData.contact?.email || ''}
+            onChange={(e) => setModuleData((prev) => ({
+              ...prev,
+              contact: { ...prev.contact, email: e.target.value },
+            }))}
+            placeholder="Email"
+            data-testid="core-contact-email"
+          />
+        </div>
+        <div className="flex items-center gap-4 text-sm text-gray-600">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={Boolean(moduleData.contact_option_phone)}
+              onChange={(e) => setModuleData((prev) => ({
+                ...prev,
+                contact_option_phone: e.target.checked,
+              }))}
+              data-testid="core-contact-phone-option"
+            />
+            Telefonla iletişim
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={Boolean(moduleData.contact_option_message)}
+              onChange={(e) => setModuleData((prev) => ({
+                ...prev,
+                contact_option_message: e.target.checked,
+              }))}
+              data-testid="core-contact-message-option"
+            />
+            Mesaj ile iletişim
+          </label>
         </div>
       </div>
 
