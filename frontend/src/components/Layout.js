@@ -217,6 +217,8 @@ export default function Layout({ children }) {
         slowQueryCount: 0,
         slowQueryThreshold: 800,
         endpointStats: [],
+        moderationSlaAvg: '--',
+        moderationSlaPending: 0,
       };
     }
     if (!systemHealthDetail) {
