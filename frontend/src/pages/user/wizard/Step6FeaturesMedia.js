@@ -189,9 +189,11 @@ const FeaturesMediaStep = () => {
   };
 
   const handleComplete = async () => {
-    if (saving) return false;
+    if (saving || saveLockRef.current) return false;
+    saveLockRef.current = true;
     if (!validate()) {
       scrollToFirstError();
+      saveLockRef.current = false;
       return false;
     }
     setSaving(true);
