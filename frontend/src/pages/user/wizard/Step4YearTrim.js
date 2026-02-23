@@ -131,7 +131,7 @@ const YearTrimStep = () => {
     setStep(5);
   };
 
-  const nextDisabled = !year || loading;
+  const nextDisabled = !year || loading || saving;
 
   if (!basicInfo.model_key) {
     return (
