@@ -1209,6 +1209,7 @@ const AdminCategories = () => {
       }
       if (!autosave) {
         setHierarchyError(data?.detail || "Kaydetme sırasında hata oluştu.");
+        restoreSnapshot();
       }
       setAutosaveStatus("idle");
       return { success: false };
