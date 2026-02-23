@@ -34,6 +34,7 @@ export default function Layout({ children }) {
   const [systemHealthDetail, setSystemHealthDetail] = useState(null);
   const [systemHealthDetailStatus, setSystemHealthDetailStatus] = useState('idle');
   const [showHealthPanel, setShowHealthPanel] = useState(false);
+  const [cdnCountry, setCdnCountry] = useState('DE');
   const healthPanelRef = useRef(null);
 
   const checkSession = async () => {
