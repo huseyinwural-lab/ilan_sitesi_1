@@ -148,17 +148,17 @@ if not pymongo_available:
 
 report_lines.extend([
     '## Sample Field Match (50)',
-    '| Listing ID | Status Match | Reason Match | Moderator Match | Mongo Status | SQL Status |',
-    '| --- | --- | --- | --- | --- | --- |',
+    '| Listing ID | Status Match | Reason Match | Moderator Match | Created Match | Updated Match | Mongo Status | SQL Status |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |',
 ])
 
 if not sample_rows:
-    report_lines.append('| - | - | - | - | - | - |')
+    report_lines.append('| - | - | - | - | - | - | - | - |')
     report_lines.append('\n> Not: moderation_queue koleksiyonu bulunamadı veya boş.')
 else:
     for row in sample_rows:
         report_lines.append(
-            f"| {row['listing_id']} | {row['status_match']} | {row['reason_match']} | {row['moderator_match']} | {row['mongo_status']} | {row['sql_status']} |"
+            f"| {row['listing_id']} | {row['status_match']} | {row['reason_match']} | {row['moderator_match']} | {row['created_match']} | {row['updated_match']} | {row['mongo_status']} | {row['sql_status']} |"
         )
 
 Path('/app/memory/MODERATION_PARITY_REPORT.md').write_text('\n'.join(report_lines))
