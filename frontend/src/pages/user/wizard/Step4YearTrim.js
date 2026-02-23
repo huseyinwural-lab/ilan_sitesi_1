@@ -138,6 +138,11 @@ const YearTrimStep = () => {
       module: basicInfo.module || 'vehicle',
       country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
     });
+    setAutosaveStatus((prev) => ({
+      ...prev,
+      status: 'success',
+      lastSuccessAt: new Date().toISOString(),
+    }));
     toast({
       title: 'Kaydedildi',
       duration: 2500,
