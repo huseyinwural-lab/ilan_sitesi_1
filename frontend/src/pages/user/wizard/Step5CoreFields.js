@@ -572,7 +572,7 @@ const CoreFieldsStep = () => {
           <div title={nextDisabled ? 'Önce bu adımı tamamlayın.' : ''} data-testid="core-next-tooltip">
             <button
               type="button"
-              onClick={() => setStep(6)}
+              onClick={handleNext}
               disabled={nextDisabled}
               className="px-4 py-2 border rounded-md text-sm disabled:opacity-50"
               data-testid="core-next"
