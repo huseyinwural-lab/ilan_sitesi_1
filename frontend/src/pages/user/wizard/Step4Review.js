@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useWizard } from './WizardContext';
 
 const ReviewSubmit = () => {
@@ -13,6 +13,9 @@ const ReviewSubmit = () => {
     setStep,
     loading,
     validationErrors,
+    dynamicValues,
+    detailGroups,
+    schema,
   } = useWizard();
 
   const handleDraftSave = async () => {
@@ -38,6 +41,8 @@ const ReviewSubmit = () => {
         body_type: basicInfo.body_type,
         color: basicInfo.color,
         damage_status: basicInfo.damage_status,
+        engine_cc: basicInfo.engine_cc,
+        engine_hp: basicInfo.engine_hp,
         trade_in: basicInfo.trade_in,
       },
       modules: moduleData,
@@ -49,6 +54,35 @@ const ReviewSubmit = () => {
     : `${coreFields.price_display || coreFields.price_amount || '-'} ${coreFields.currency_primary}`;
 
   const coverMedia = media.find((item) => item.is_cover) || media[0];
+  const makeLabel = basicInfo.make_label || basicInfo.make_key || '-';
+  const modelLabel = basicInfo.model_label || basicInfo.model_key || '-';
+  const trimLabel = basicInfo.trim_key || '-';
+
+  const dynamicSummary = useMemo(() => {
+    const fields = schema?.dynamic_fields || [];
+    return fields
+      .map((field) => {
+        const value = dynamicValues?.[field.key];
+        if (value === undefined || value === null || value === '') return null;
+        return { key: field.key, label: field.label || field.key, value };
+      })
+      .filter(Boolean);
+  }, [schema, dynamicValues]);
+
+  const detailSummary = useMemo(() => {
+    const groups = schema?.detail_groups || [];
+    return groups
+      .map((group) => {
+        const selections = detailGroups?.[group.id] || [];
+        if (!selections.length) return null;
+        return {
+          id: group.id,
+          title: group.title || group.id,
+          selections,
+        };
+      })
+      .filter(Boolean);
+  }, [schema, detailGroups]);
 
   return (
     <div className="max-w-2xl mx-auto space-y-8" data-testid="wizard-review">
@@ -80,9 +114,12 @@ const ReviewSubmit = () => {
         <div className="p-6 space-y-4">
           <div>
             <h3 className="text-xl font-bold text-gray-900" data-testid="wizard-review-title-line">
-              {coreFields.title || `${basicInfo.make_key || ''} ${basicInfo.model_key || ''} ${basicInfo.year || ''}`}
+              {coreFields.title || `${makeLabel} ${modelLabel} ${basicInfo.year || ''}`.trim()}
             </h3>
             <p className="text-gray-500 text-sm" data-testid="wizard-review-category">Segment: {category?.name || '-'}</p>
+            <p className="text-sm text-gray-600 mt-1" data-testid="wizard-review-brand-line">
+              {makeLabel} / {modelLabel} / {basicInfo.year || '-'} / {trimLabel}
+            </p>
           </div>
 
           <div className="text-sm text-gray-600" data-testid="wizard-review-description">
@@ -96,9 +133,12 @@ const ReviewSubmit = () => {
               ['Vites', basicInfo.transmission],
               ['Çekiş', basicInfo.drive_type],
               ['Kasa', basicInfo.body_type],
+              ['Motor Hacmi', basicInfo.engine_cc ? `${basicInfo.engine_cc} cc` : '-'],
+              ['Motor Gücü', basicInfo.engine_hp ? `${basicInfo.engine_hp} hp` : '-'],
               ['Renk', basicInfo.color],
               ['Hasar', basicInfo.damage_status],
               ['Takas', basicInfo.trade_in === true ? 'Var' : basicInfo.trade_in === false ? 'Yok' : '-'],
+              ['Fiyat Tipi', coreFields.price_type || 'FIXED'],
             ].map(([key, val]) => (
               <div key={key} data-testid={`wizard-review-spec-${key}`}>
                 <span className="text-gray-500 text-sm">{key}:</span>
@@ -109,6 +149,35 @@ const ReviewSubmit = () => {
 
           <div className="text-sm text-gray-600" data-testid="wizard-review-location">
             Konum: {moduleData.address?.city || '-'} {moduleData.address?.street || ''}
+          </div>
+
+          <div className="space-y-3" data-testid="wizard-review-features">
+            <div className="text-sm font-semibold text-gray-700">Seçilen Özellikler</div>
+            {(dynamicSummary.length === 0 && detailSummary.length === 0) && (
+              <div className="text-sm text-gray-500" data-testid="wizard-review-features-empty">Ek özellik seçilmedi.</div>
+            )}
+            {dynamicSummary.length > 0 && (
+              <div className="space-y-1" data-testid="wizard-review-dynamic-list">
+                {dynamicSummary.map((item) => (
+                  <div key={item.key} className="text-sm" data-testid={`wizard-review-dynamic-${item.key}`}>
+                    <span className="text-gray-500">{item.label}:</span>
+                    <span className="ml-2 font-medium">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {detailSummary.length > 0 && (
+              <div className="space-y-2" data-testid="wizard-review-detail-list">
+                {detailSummary.map((group) => (
+                  <div key={group.id} data-testid={`wizard-review-detail-${group.id}`}>
+                    <div className="text-xs uppercase text-gray-400">{group.title}</div>
+                    <div className="text-sm text-gray-700">
+                      {(group.selections || []).join(', ')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="bg-yellow-50 p-4 rounded-lg text-sm text-yellow-800" data-testid="wizard-review-note">
