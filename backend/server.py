@@ -14792,50 +14792,54 @@ async def admin_update_system_setting(
     payload: SystemSettingUpdatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
-    setting = await db.system_settings.find_one({"id": setting_id}, {"_id": 0})
+    result = await session.execute(select(SystemSetting).where(SystemSetting.id == setting_id))
+    setting = result.scalar_one_or_none()
     if not setting:
         raise HTTPException(status_code=404, detail="Setting not found")
-    if setting.get("is_readonly") and payload.value is not None:
+    if setting.is_readonly and payload.value is not None:
         raise HTTPException(status_code=400, detail="Setting is read-only")
 
-    updates: Dict = {"updated_at": datetime.now(timezone.utc).isoformat()}
     if payload.value is not None:
-        updates["value"] = payload.value
+        setting.value = payload.value
     if payload.country_code is not None:
-        updates["country_code"] = payload.country_code.upper() if payload.country_code else None
+        setting.country_code = payload.country_code.upper() if payload.country_code else None
     if payload.is_readonly is not None:
-        updates["is_readonly"] = payload.is_readonly
+        setting.is_readonly = payload.is_readonly
     if payload.description is not None:
-        updates["description"] = payload.description
+        setting.description = payload.description
 
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": updates["updated_at"],
-        "event_type": "SYSTEM_SETTING_CHANGE",
-        "action": "SYSTEM_SETTING_UPDATE",
-        "setting_id": setting_id,
-        "key": setting.get("key"),
-        "country_code": setting.get("country_code"),
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "system_setting",
-        "resource_id": setting_id,
-        "applied": False,
+    await _write_audit_log_sql(
+        session=session,
+        action="SYSTEM_SETTING_UPDATE",
+        actor=current_user,
+        resource_type="system_setting",
+        resource_id=str(setting.id),
+        metadata={
+            "key": setting.key,
+            "country_code": setting.country_code,
+        },
+        request=request,
+        country_code=setting.country_code,
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "setting": {
+            "id": str(setting.id),
+            "key": setting.key,
+            "value": setting.value,
+            "country_code": setting.country_code,
+            "is_readonly": setting.is_readonly,
+            "description": setting.description,
+            "created_at": setting.created_at.isoformat() if setting.created_at else None,
+            "updated_at": setting.updated_at.isoformat() if setting.updated_at else None,
+        },
     }
-
-    await db.audit_logs.insert_one(audit_doc)
-    await db.system_settings.update_one({"id": setting_id}, {"$set": updates})
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-
-    updated = await db.system_settings.find_one({"id": setting_id}, {"_id": 0})
-    return {"ok": True, "setting": updated}
 
 
 @api_router.get("/system-settings/effective")
