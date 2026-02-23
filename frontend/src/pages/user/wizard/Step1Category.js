@@ -60,6 +60,30 @@ const CategorySelector = () => {
 
   const getIcon = (category) => CATEGORY_ICONS[category.slug] || '🚗';
 
+  const handleComplete = async () => {
+    if (!selectedCategory) {
+      setError('Kategori seçiniz.');
+      return;
+    }
+    const ok = await createDraft(selectedCategory, { autoAdvance: false });
+    if (!ok) {
+      setError('Kategori kaydedilemedi.');
+      return;
+    }
+    setCompletedSteps((prev) => ({
+      ...prev,
+      1: true,
+      2: false,
+      3: false,
+      4: false,
+      5: false,
+      6: false,
+    }));
+    setError('');
+  };
+
+  const nextDisabled = !completedSteps[1];
+
   return (
     <div className="space-y-6" data-testid="listing-category-selector">
       <h2 className="text-2xl font-bold" data-testid="listing-category-title">Kategori Seç</h2>
