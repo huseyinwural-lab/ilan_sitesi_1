@@ -260,6 +260,30 @@ const AdminCategories = () => {
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
   }), []);
 
+  const trackAdminWizardEvent = useCallback(async (eventName, details = {}) => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+    if (!details.category_id || !details.step_id) return;
+    try {
+      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/analytics/events`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          event_name: eventName,
+          category_id: details.category_id,
+          step_id: details.step_id,
+          admin_user_id: user?.id,
+          wizard_state: details.wizard_state,
+        }),
+      });
+    } catch (error) {
+      console.error("Admin analytics error", error);
+    }
+  }, [user?.id]);
+
   const currentStepIndex = WIZARD_STEPS.findIndex((step) => step.id === wizardStep);
   const nextStep = WIZARD_STEPS[currentStepIndex + 1]?.id;
   const prevStep = WIZARD_STEPS[currentStepIndex - 1]?.id;
