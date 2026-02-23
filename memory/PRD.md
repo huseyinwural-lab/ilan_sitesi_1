@@ -226,6 +226,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/SPRINT1_PREVIEW_E2E_EVIDENCE.md
 - /app/docs/SPRINT_PREVIEW_ADMIN_E2E_EVIDENCE.md
 - /app/docs/SPRINT1_CLOSEOUT.md
+- /app/docs/ADMIN_V1_PHASE_A_EVIDENCE.md
 - /app/docs/REGISTER_ANTIBOT_HONEYPOT_SPEC.md
 - /app/docs/REGISTER_ANTIBOT_HONEYPOT_EVIDENCE.md
 - /app/docs/GDPR_EXPORT_NOTIFICATION_SPEC.md
