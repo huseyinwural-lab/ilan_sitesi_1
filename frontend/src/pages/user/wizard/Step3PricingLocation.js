@@ -109,16 +109,25 @@ const PricingLocation = () => {
       }
     }
 
-    if (priceConfig.required && !coreFields.price_amount) {
-      errs.price_amount = priceConfig.messages?.required || 'Fiyat zorunlu';
-    }
-    if (coreFields.price_amount && priceConfig.range) {
-      const value = Number(coreFields.price_amount);
-      if (priceConfig.range.min !== null && value < priceConfig.range.min) {
-        errs.price_amount = priceConfig.messages?.range || 'Fiyat aralık dışında';
+    if (priceType === 'FIXED') {
+      if (priceConfig.required && !coreFields.price_amount) {
+        errs.price_amount = 'Fiyat giriniz.';
       }
-      if (priceConfig.range.max !== null && value > priceConfig.range.max) {
-        errs.price_amount = priceConfig.messages?.range || 'Fiyat aralık dışında';
+      if (coreFields.price_amount && priceConfig.range) {
+        const value = Number(coreFields.price_amount);
+        if (priceConfig.range.min !== null && value < priceConfig.range.min) {
+          errs.price_amount = priceConfig.messages?.range || 'Fiyat aralık dışında';
+        }
+        if (priceConfig.range.max !== null && value > priceConfig.range.max) {
+          errs.price_amount = priceConfig.messages?.range || 'Fiyat aralık dışında';
+        }
+      }
+    } else {
+      if (priceConfig.required && !coreFields.hourly_rate) {
+        errs.hourly_rate = 'Saatlik ücret giriniz.';
+      }
+      if (coreFields.hourly_rate && Number(coreFields.hourly_rate) <= 0) {
+        errs.hourly_rate = 'Saatlik ücret giriniz.';
       }
     }
 
