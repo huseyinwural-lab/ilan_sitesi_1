@@ -170,6 +170,16 @@ export default function Layout({ children }) {
 
   const isCountryMode = adminPreferredMode === 'country';
 
+  const formatSlaSeconds = (value) => {
+    if (value === null || value === undefined) return '--';
+    if (value < 60) return `${Math.round(value)}sn`;
+    const minutes = Math.round(value / 60);
+    if (minutes < 60) return `${minutes}dk`;
+    const hours = Math.floor(minutes / 60);
+    const remaining = minutes % 60;
+    return remaining ? `${hours}sa ${remaining}dk` : `${hours}sa`;
+  };
+
   const healthDisplay = useMemo(() => {
     if (systemHealthStatus === 'error') {
       return { status: 'error', label: 'DB Hata', timeLabel: '--:--', errorLabel: '--/5dk', title: 'Sağlık verisi alınamadı' };
