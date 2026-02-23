@@ -67,23 +67,23 @@ export default function Layout({ children }) {
     }
   };
 
-  const fetchSystemHealth = async () => {
+  const fetchSystemHealthDetail = async () => {
     const token = localStorage.getItem('access_token');
     if (!token) return;
     try {
-      setSystemHealthStatus('loading');
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/system/health-summary`, {
+      setSystemHealthDetailStatus('loading');
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/system/health-detail`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        setSystemHealthStatus('error');
+        setSystemHealthDetailStatus('error');
         return;
       }
       const data = await res.json();
-      setSystemHealth(data);
-      setSystemHealthStatus('ok');
+      setSystemHealthDetail(data);
+      setSystemHealthDetailStatus('ok');
     } catch (error) {
-      setSystemHealthStatus('error');
+      setSystemHealthDetailStatus('error');
     }
   };
 
