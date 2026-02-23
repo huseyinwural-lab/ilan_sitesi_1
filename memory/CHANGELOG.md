@@ -27,7 +27,7 @@
 - user_recent_categories tablosu + upsert + GET endpoint
 - “Son Seçiminiz” kartı (module + ülke + breadcrumb + tek tıkla devam)
 - Dirty CTA (Sıradaki eksik adımı tamamla) + admin analytics eventleri
-- Premium araç wizard akışı: Make/Model/Year gating + E2E publish
+- Premium araç wizard akışı: Make/Model/Year gating + Next auto-save + E2E publish
 
 **Kanıt Referansları**
 - Recent card: `/app/screenshots/recent-card.png`
