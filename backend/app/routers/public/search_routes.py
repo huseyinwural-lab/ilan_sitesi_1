@@ -112,7 +112,7 @@ async def search_real_estate(
     if sort == "price_asc":
         query = query.order_by(price_col.asc())
     elif sort == "price_desc":
-        query = query.order_by(price_colisting.desc())
+        query = query.order_by(price_col.desc())
     else: # newest
         query = query.order_by(desc(premium_col), desc(created_col))
 
