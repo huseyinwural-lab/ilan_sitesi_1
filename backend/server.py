@@ -1662,6 +1662,165 @@ async def record_request_metrics(request: Request, call_next):
     response.headers["X-Response-Time-ms"] = f"{duration_ms:.2f}"
     return response
 
+
+RBAC_ALLOWLIST: Dict[str, list[str]] = {}
+RBAC_MISSING_POLICIES: list[str] = []
+
+
+def _normalize_admin_path(path: str) -> str:
+    if path.startswith("/api/"):
+        return path[4:]
+    return path
+
+
+def _is_admin_path(path: str) -> bool:
+    normalized = _normalize_admin_path(path)
+    return normalized.startswith("/admin") or normalized.startswith("/v1/admin")
+
+
+def _extract_route_roles(route: APIRoute) -> Optional[list[str]]:
+    for dependency in route.dependant.dependencies:
+        call = getattr(dependency, "call", None)
+        roles = getattr(call, "required_roles", None)
+        if roles:
+            return list(roles)
+    return None
+
+
+def _build_rbac_allowlist(target_app: FastAPI) -> tuple[Dict[str, list[str]], list[str]]:
+    allowlist: Dict[str, list[str]] = {}
+    missing: list[str] = []
+    for route in target_app.routes:
+        if not isinstance(route, APIRoute):
+            continue
+        if not _is_admin_path(route.path):
+            continue
+        roles = _extract_route_roles(route)
+        if not roles:
+            missing.append(route.path)
+            continue
+        for method in route.methods or []:
+            if method in {"HEAD", "OPTIONS"}:
+                continue
+            allowlist[f"{method} {route.path}"] = roles
+    return allowlist, sorted(set(missing))
+
+
+def _match_admin_route(request: Request, normalized_path: str) -> Optional[APIRoute]:
+    scope = dict(request.scope)
+    scope["path"] = normalized_path
+    for route in request.app.router.routes:
+        if not isinstance(route, APIRoute):
+            continue
+        if request.method not in route.methods:
+            continue
+        match, _ = route.matches(scope)
+        if match == Match.FULL:
+            return route
+    return None
+
+
+async def _resolve_rbac_user(request: Request) -> Optional[dict]:
+    cached_user = getattr(request.state, "current_user", None)
+    if cached_user:
+        return cached_user
+
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        return None
+    token = auth_header.split(" ", 1)[1].strip()
+    if not token:
+        return None
+
+    payload = decode_token(token)
+    if not payload or payload.get("type") != "access":
+        return None
+    if payload.get("token_version") != TOKEN_VERSION:
+        return None
+
+    user_id = payload.get("sub")
+    if not user_id:
+        return None
+
+    async with AsyncSessionLocal() as session:
+        user = await _get_sql_user(user_id, session)
+    if not user or not user.get("is_active", False):
+        return None
+
+    token_scope = payload.get("portal_scope")
+    if not token_scope:
+        return None
+    expected_scope = _resolve_portal_scope(user.get("role"))
+    if token_scope != expected_scope:
+        return None
+
+    user["portal_scope"] = token_scope
+    request.state.current_user = user
+    return user
+
+
+async def _write_rbac_audit_log(
+    request: Request,
+    actor: Optional[dict],
+    action: str,
+    metadata: Optional[dict],
+):
+    try:
+        async with AsyncSessionLocal() as session:
+            await _write_audit_log_sql(
+                session=session,
+                action=action,
+                actor=actor or {"id": None, "email": None, "country_scope": []},
+                resource_type="rbac_guard",
+                resource_id=request.url.path,
+                metadata=metadata or {},
+                request=request,
+                country_code=None,
+            )
+            await session.commit()
+    except Exception:
+        logger = logging.getLogger("rbac_guard")
+        logger.exception("rbac_audit_log_failed")
+
+
+@app.middleware("http")
+async def rbac_hard_lock(request: Request, call_next):
+    if not _is_admin_path(request.url.path):
+        return await call_next(request)
+
+    normalized_path = _normalize_admin_path(request.url.path)
+    route = _match_admin_route(request, normalized_path)
+    if not route:
+        return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+    allowlist = request.app.state.rbac_allowlist or {}
+    policy_key = f"{request.method} {route.path}"
+    required_roles = allowlist.get(policy_key)
+    if not required_roles:
+        await _write_rbac_audit_log(
+            request,
+            actor=None,
+            action="RBAC_POLICY_MISSING",
+            metadata={"path": route.path, "method": request.method},
+        )
+        return JSONResponse(status_code=403, content={"detail": "RBAC policy missing"})
+
+    user = await _resolve_rbac_user(request)
+    if not user:
+        return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
+
+    if user.get("role") not in required_roles:
+        await _write_rbac_audit_log(
+            request,
+            actor=user,
+            action="RBAC_DENY",
+            metadata={"path": route.path, "method": request.method, "required_roles": required_roles},
+        )
+        return JSONResponse(status_code=403, content={"detail": "Insufficient permissions"})
+
+    return await call_next(request)
+
+
 DB_ERROR_CODES = {
     "pool_timeout": "DB_POOL_TIMEOUT",
     "connection_closed": "DB_CONN_CLOSED",
