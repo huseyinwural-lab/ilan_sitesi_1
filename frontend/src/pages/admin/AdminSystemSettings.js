@@ -230,9 +230,77 @@ export default function AdminSystemSettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCountry]);
 
-  const filteredItems = items.filter((item) =>
-    item.key.toLowerCase().includes(filterKey.toLowerCase())
-  );
+  const canaryStatusRaw = cloudflareConfig.canary_status || 'UNKNOWN';
+  const canaryReason = useMemo(() => {
+    if (canaryStatusRaw === 'CONFIG_MISSING') {
+      return configMissingReason || 'config_missing';
+    }
+    if (canaryStatusRaw === 'SCOPE_ERROR') {
+      return 'scope_error';
+    }
+    if (canaryStatusRaw === 'API_ERROR') {
+      return 'api_error';
+    }
+    return 'none';
+  }, [canaryStatusRaw, configMissingReason]);
+
+  const statusInfo = useMemo(() => {
+    const technical = `CONFIG_ENCRYPTION_KEY=${encryptionKeyPresent ? 'present' : 'missing'} | cf_metrics_enabled=${cfMetricsEnabled ? 'true' : 'false'} | cf_ids_present=${cloudflareConfig.cf_ids_present ? 'true' : 'false'} | cf_ids_source=${cloudflareConfig.cf_ids_source || 'none'} | canary_status=${canaryStatusRaw} | config_missing_reason=${configMissingReason || 'none'}`;
+    if (!encryptionKeyPresent) {
+      return {
+        tone: 'error',
+        title: '🔒 Güvenlik anahtarı tanımlı değil. Bu nedenle Cloudflare bilgileri kaydedilemez. (CONFIG_ENCRYPTION_KEY)',
+        subtitle: 'Lütfen sistem yöneticinizden bu anahtarı ortam değişkeni/secret olarak eklemesini isteyin.',
+        tooltip: technical,
+      };
+    }
+    if (!cfMetricsEnabled) {
+      return {
+        tone: 'warning',
+        title: 'Cloudflare metrikleri şu an kapalı.',
+        subtitle: 'CDN metrikleri görüntülenmeyecek.',
+        tooltip: technical,
+      };
+    }
+    if (!cloudflareConfig.cf_ids_present) {
+      return {
+        tone: 'warning',
+        title: 'Cloudflare bilgileri eksik.',
+        subtitle: 'Account ve Zone ID girilmelidir.',
+        tooltip: technical,
+      };
+    }
+    if (['API_ERROR', 'SCOPE_ERROR'].includes(canaryStatusRaw)) {
+      return {
+        tone: 'error',
+        title: 'Bağlantı testi yapılamadı.',
+        subtitle: 'Lütfen canary testini tekrar deneyin.',
+        tooltip: technical,
+      };
+    }
+    if (cloudflareError) {
+      return {
+        tone: 'error',
+        title: cloudflareError,
+        subtitle: '',
+        tooltip: technical,
+      };
+    }
+    return {
+      tone: 'success',
+      title: 'Cloudflare yapılandırması hazır.',
+      subtitle: '',
+      tooltip: technical,
+    };
+  }, [encryptionKeyPresent, cfMetricsEnabled, cloudflareConfig, canaryStatusRaw, configMissingReason, cloudflareError]);
+
+  const canaryUserText = canaryStatusRaw === 'OK' ? 'Başarılı' : 'Bağlantı testi yapılamadı';
+  const statusToneClass = {
+    error: 'border-rose-200 bg-rose-50 text-rose-700',
+    warning: 'border-amber-200 bg-amber-50 text-amber-700',
+    success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    info: 'border-slate-200 bg-slate-50 text-slate-700',
+  };
 
   return (
     <div className="space-y-6" data-testid="admin-system-settings-page">
