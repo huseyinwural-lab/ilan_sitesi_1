@@ -255,6 +255,8 @@ export default function Layout({ children }) {
         p95: match?.p95_latency_ms ?? '--',
       };
     });
+    const moderationSlaAvg = formatSlaSeconds(systemHealthDetail.moderation_sla_avg_seconds);
+    const moderationSlaPending = systemHealthDetail.moderation_sla_pending_count ?? 0;
     return {
       status: systemHealthDetail.db_status === 'ok' ? 'ok' : 'error',
       errorBuckets: buckets.map((bucket) => ({
