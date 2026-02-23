@@ -228,7 +228,7 @@ async def search_listings(
             }
         
         # P9 Optimization: Parallel Facet Aggregation using asyncio.gather
-        filtered_subq = query.with_only_columns(Listing.id).subquery()
+        filtered_subq = query.with_only_columns(id_col).subquery()
         
         async def fetch_facet(attr):
             if attr.attribute_type in ['select', 'multi_select']:
