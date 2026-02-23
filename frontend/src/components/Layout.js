@@ -318,6 +318,10 @@ export default function Layout({ children }) {
       cdnColdP95,
       cdnAlerts,
       cdnTargets,
+      cdnCountryMetrics,
+      cdnCountrySeries,
+      cdnCanaryStatus,
+      cfIdsPresent,
     };
   }, [systemHealthDetail, systemHealthDetailStatus]);
 
