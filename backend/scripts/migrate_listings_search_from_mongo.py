@@ -151,6 +151,18 @@ def main() -> None:
     engine = create_engine(database_url)
     SessionLocal = sessionmaker(bind=engine)
 
+    if args.truncate and not args.dry_run:
+        with engine.begin() as conn:
+            conn.execute(text("TRUNCATE TABLE listings_search"))
+
+    mongo_total = None
+    try:
+        from pymongo import MongoClient
+        mongo_client = MongoClient(args.mongo_url)
+        mongo_total = mongo_client[args.mongo_db].listings.count_documents({})
+    except Exception:
+        mongo_total = None
+
     inserted = 0
     skipped = 0
     batch = []
