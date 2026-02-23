@@ -63,6 +63,26 @@ export default function Layout({ children }) {
     }
   };
 
+  const fetchSystemHealth = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+    try {
+      setSystemHealthStatus('loading');
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/system/health-summary`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        setSystemHealthStatus('error');
+        return;
+      }
+      const data = await res.json();
+      setSystemHealth(data);
+      setSystemHealthStatus('ok');
+    } catch (error) {
+      setSystemHealthStatus('error');
+    }
+  };
+
   useEffect(() => {
     checkSession();
   }, []);
