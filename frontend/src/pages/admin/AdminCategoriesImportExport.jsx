@@ -139,7 +139,7 @@ export default function AdminCategoriesImportExport() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900" data-testid="categories-import-export-title">Import / Export</h1>
           <p className="text-sm text-slate-700" data-testid="categories-import-export-subtitle">
-            Kategori master verisini JSON/CSV ile yönet.
+            Kategori master verisini CSV/XLSX formatlarıyla içe/dışa aktar.
           </p>
         </div>
       </div>
