@@ -17,6 +17,15 @@
 | listing_views | listing_views | View/engagement metrikleri |
 | listing_media | listing_media | Medya metaları (kapak, sıralama) |
 
+## 1.1) listings_search Denormalized Read Model Stratejisi
+- **Kaynaklar:** listings + category metadata + vehicle master data + attributes
+- **Model:** listings_search tablosu (denormalize), tsvector (tr/de) + faceted alanlar
+- **Güncelleme:**
+  1) İlk bulk load (Mongo → Postgres ETL)
+  2) Sonrasında listing publish/update sırasında SQL update (event/queue) planlanır
+  3) Gerekirse günlük incremental refresh (cron)
+- **Not:** İlk fazda read-side tabloyu ETL ile doldurup search endpointlerini Postgres’e yönlendirme hedeflenir
+
 > Not: Exact schema mevcut SQLAlchemy modelleri ile hizalanacak (listing, media, audit_log).
 
 ---
