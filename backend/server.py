@@ -2905,11 +2905,48 @@ sql_engine = create_async_engine(
     pool_pre_ping=True,
     connect_args=connect_args,
 )
-AsyncSessionLocal = async_sessionmaker(
-    sql_engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
+logging.getLogger("sql_config").info(
+    "Effective DB pool config: pool_size=%s max_overflow=%s pool_timeout=%s pool_recycle=%s pool_pre_ping=%s",
+    DB_POOL_SIZE,
+    DB_MAX_OVERFLOW,
+    DB_POOL_TIMEOUT,
+    DB_POOL_RECYCLE,
+    True,
 )
+
+pool_logger = logging.getLogger("db.pool")
+
+if DB_POOL_DEBUG:
+    pool_logger.setLevel(logging.DEBUG)
+
+
+@event.listens_for(sql_engine.sync_engine, "connect")
+def _log_pool_connect(dbapi_connection, connection_record):
+    if DB_POOL_DEBUG:
+        pool_logger.debug("db_pool_connect")
+
+
+@event.listens_for(sql_engine.sync_engine, "checkout")
+def _log_pool_checkout(dbapi_connection, connection_record, connection_proxy):
+    if DB_POOL_DEBUG:
+        pool_logger.debug("db_pool_checkout")
+
+
+@event.listens_for(sql_engine.sync_engine, "checkin")
+def _log_pool_checkin(dbapi_connection, connection_record):
+    if DB_POOL_DEBUG:
+        pool_logger.debug("db_pool_checkin")
+
+
+@event.listens_for(sql_engine.sync_engine, "close")
+def _log_pool_close(dbapi_connection, connection_record):
+    if DB_POOL_DEBUG:
+        pool_logger.debug("db_pool_close")
+
+
+@event.listens_for(sql_engine.sync_engine, "invalidate")
+def _log_pool_invalidate(dbapi_connection, connection_record, exception):
+    pool_logger.info("db_pool_invalidate", extra={"error": str(exception) if exception else None})
 
 
 async def get_sql_session():
