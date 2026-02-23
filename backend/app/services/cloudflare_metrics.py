@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 CLOUDFLARE_GRAPHQL_ENDPOINT = "https://api.cloudflare.com/client/v4/graphql"
 DEFAULT_CACHE_TTL_SECONDS = 60
+COUNTRY_CODES = ["DE", "AT", "CH", "FR"]
 
 CDN_TARGETS = {
     "hit_ratio_min": 85,
@@ -40,6 +41,7 @@ class CloudflareMetricsAdapter:
             "Authorization": f"Bearer {credentials.api_token}",
             "Content-Type": "application/json",
         }
+        self.error_codes: list[str] = []
 
     async def fetch_cache_metrics(self) -> Optional[Dict[str, Any]]:
         query = self._build_cache_query()
@@ -53,6 +55,18 @@ class CloudflareMetricsAdapter:
         query = self._build_latency_query(cache_state)
         return await self._execute_query(query)
 
+    async def fetch_country_cache_metrics(self) -> Optional[Dict[str, Any]]:
+        query = self._build_country_cache_query()
+        return await self._execute_query(query)
+
+    async def fetch_country_latency_metrics(self, cache_state: Optional[str]) -> Optional[Dict[str, Any]]:
+        query = self._build_country_latency_query(cache_state)
+        return await self._execute_query(query)
+
+    async def fetch_country_timeseries(self) -> Optional[Dict[str, Any]]:
+        query = self._build_country_timeseries_query()
+        return await self._execute_query(query)
+
     async def _execute_query(self, query: str) -> Optional[Dict[str, Any]]:
         payload = {"query": query}
         try:
@@ -63,14 +77,20 @@ class CloudflareMetricsAdapter:
                     headers=self.headers,
                 )
             if response.status_code != 200:
+                if response.status_code in {401, 403}:
+                    self.error_codes.append("scope_error")
+                else:
+                    self.error_codes.append(f"http_{response.status_code}")
                 logger.warning("cloudflare_graphql_error", extra={"status": response.status_code, "body": response.text})
                 return None
             data = response.json()
             if data.get("errors"):
+                self.error_codes.append("graphql_error")
                 logger.warning("cloudflare_graphql_errors", extra={"errors": data.get("errors")})
                 return None
             return data.get("data")
         except httpx.RequestError as exc:
+            self.error_codes.append("request_error")
             logger.warning("cloudflare_request_error", extra={"error": str(exc)})
             return None
 
@@ -118,13 +138,62 @@ class CloudflareMetricsAdapter:
         }}
         """.strip()
 
+    def _build_country_cache_query(self) -> str:
+        since, until = _last_hour_window()
+        return f"""
+        query {{
+          viewer {{
+            zones(filter: {{ zoneTag: "{self.credentials.zone_id}" }}) {{
+              httpRequests1hGroups(limit: 200, filter: {{ datetime_geq: "{since}", datetime_lt: "{until}" }}, groupBy: [clientCountryName]) {{
+                dimensions {{ clientCountryName }}
+                sum {{ requests cachedRequests }}
+              }}
+            }}
+          }}
+        }}
+        """.strip()
+
+    def _build_country_latency_query(self, cache_state: Optional[str]) -> str:
+        since, until = _last_hour_window()
+        cached_filter = f', responseCached: "{cache_state}"' if cache_state else ''
+        return f"""
+        query {{
+          viewer {{
+            zones(filter: {{ zoneTag: "{self.credentials.zone_id}" }}) {{
+              httpRequests1hGroups(limit: 200, filter: {{ datetime_geq: "{since}", datetime_lt: "{until}", contentTypeMap_edgeResponseContentTypeName: "image"{cached_filter} }}, groupBy: [clientCountryName]) {{
+                dimensions {{ clientCountryName }}
+                quantiles {{ edgeTimeToFirstByteMsP95 }}
+              }}
+            }}
+          }}
+        }}
+        """.strip()
+
+    def _build_country_timeseries_query(self) -> str:
+        since, until = _last_24h_window()
+        return f"""
+        query {{
+          viewer {{
+            zones(filter: {{ zoneTag: "{self.credentials.zone_id}" }}) {{
+              httpRequests1hGroups(limit: 500, filter: {{ datetime_geq: "{since}", datetime_lt: "{until}" }}, groupBy: [clientCountryName, datetimeHour]) {{
+                dimensions {{ clientCountryName datetimeHour }}
+                sum {{ requests cachedRequests }}
+              }}
+            }}
+          }}
+        }}
+        """.strip()
+
 
 class CloudflareMetricsService:
     def __init__(self) -> None:
         self._cache: Dict[str, Any] = {"checked_at": 0, "payload": None}
 
     def is_enabled(self) -> bool:
-        return (os.environ.get("CLOUDFLARE_ANALYTICS_ENABLED") or "").lower() == "true"
+        flag = os.environ.get("CF_METRICS_ENABLED")
+        if flag is None:
+            flag = os.environ.get("CLOUDFLARE_ANALYTICS_ENABLED")
+        return (flag or "").lower() == "true"
 
     def _load_credentials(self) -> CloudflareCredentials:
         token = os.environ.get("CLOUDFLARE_API_TOKEN")
@@ -160,6 +229,10 @@ class CloudflareMetricsService:
         origin_payload = await adapter.fetch_origin_fetch_metrics()
         warm_payload = await adapter.fetch_latency_metrics("Cached")
         cold_payload = await adapter.fetch_latency_metrics("Uncached")
+        country_cache_payload = await adapter.fetch_country_cache_metrics()
+        country_warm_payload = await adapter.fetch_country_latency_metrics("Cached")
+        country_cold_payload = await adapter.fetch_country_latency_metrics("Uncached")
+        country_timeseries_payload = await adapter.fetch_country_timeseries()
 
         cache_metrics = _extract_cache_metrics(cache_payload)
         origin_metrics = _extract_origin_metrics(origin_payload)
@@ -179,6 +252,12 @@ class CloudflareMetricsService:
         warm_p95 = warm_metrics.get("p95_ms")
         cold_p95 = cold_metrics.get("p95_ms")
 
+        country_cache = _extract_country_cache_metrics(country_cache_payload)
+        country_warm = _extract_country_latency_metrics(country_warm_payload)
+        country_cold = _extract_country_latency_metrics(country_cold_payload)
+        country_timeseries = _extract_country_timeseries(country_timeseries_payload)
+        country_metrics = _build_country_metrics(country_cache, country_warm, country_cold)
+
         payload = {
             "enabled": True,
             "status": "ok" if any([cache_metrics, origin_metrics, warm_metrics, cold_metrics]) else "degraded",
@@ -193,9 +272,14 @@ class CloudflareMetricsService:
                 "cold": cold_p95,
             },
             "targets": CDN_TARGETS,
+            "country_metrics": country_metrics,
+            "country_timeseries": country_timeseries,
         }
 
         payload["alerts"] = _evaluate_alerts(payload)
+        payload["canary_status"] = _build_canary_status(adapter, total_requests, country_metrics)
+        logger.info("cloudflare_metrics_canary", extra={"status": payload["canary_status"], "errors": adapter.error_codes})
+
         self._cache.update({"checked_at": now_ts, "payload": payload})
         return payload
 
@@ -203,6 +287,12 @@ class CloudflareMetricsService:
 def _last_hour_window() -> tuple[str, str]:
     until = datetime.now(timezone.utc)
     since = until - timedelta(hours=1)
+    return since.isoformat(), until.isoformat()
+
+
+def _last_24h_window() -> tuple[str, str]:
+    until = datetime.now(timezone.utc)
+    since = until - timedelta(hours=24)
     return since.isoformat(), until.isoformat()
 
 
@@ -249,6 +339,112 @@ def _extract_latency_metrics(raw: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         "p95_ms": quantiles.get("edgeTimeToFirstByteMsP95"),
         "avg_ms": avg.get("edgeTimeToFirstByteMs"),
     }
+
+
+def _extract_country_cache_metrics(raw: Optional[Dict[str, Any]]) -> Dict[str, Dict[str, float]]:
+    data: Dict[str, Dict[str, float]] = {}
+    zones = raw.get("viewer", {}).get("zones", []) if raw else []
+    if not zones:
+        return data
+    groups = zones[0].get("httpRequests1hGroups", [])
+    for group in groups:
+        dimensions = group.get("dimensions", {}) or {}
+        country = dimensions.get("clientCountryName")
+        if not country or country not in COUNTRY_CODES:
+            continue
+        summary = group.get("sum", {}) or {}
+        data[country] = {
+            "requests": summary.get("requests", 0),
+            "cached_requests": summary.get("cachedRequests", 0),
+        }
+    return data
+
+
+def _extract_country_latency_metrics(raw: Optional[Dict[str, Any]]) -> Dict[str, Dict[str, float]]:
+    data: Dict[str, Dict[str, float]] = {}
+    zones = raw.get("viewer", {}).get("zones", []) if raw else []
+    if not zones:
+        return data
+    groups = zones[0].get("httpRequests1hGroups", [])
+    for group in groups:
+        dimensions = group.get("dimensions", {}) or {}
+        country = dimensions.get("clientCountryName")
+        if not country or country not in COUNTRY_CODES:
+            continue
+        quantiles = group.get("quantiles", {}) or {}
+        data[country] = {
+            "p95_ms": quantiles.get("edgeTimeToFirstByteMsP95"),
+        }
+    return data
+
+
+def _extract_country_timeseries(raw: Optional[Dict[str, Any]]) -> Dict[str, list[dict]]:
+    data: Dict[str, list[dict]] = {code: [] for code in COUNTRY_CODES}
+    zones = raw.get("viewer", {}).get("zones", []) if raw else []
+    if not zones:
+        return data
+    groups = zones[0].get("httpRequests1hGroups", [])
+    for group in groups:
+        dimensions = group.get("dimensions", {}) or {}
+        country = dimensions.get("clientCountryName")
+        hour = dimensions.get("datetimeHour")
+        if not country or country not in COUNTRY_CODES or not hour:
+            continue
+        summary = group.get("sum", {}) or {}
+        total = summary.get("requests", 0) or 0
+        cached = summary.get("cachedRequests", 0) or 0
+        hit_ratio = round((cached / total) * 100, 2) if total else 0
+        data[country].append({"hour": hour, "hit_ratio": hit_ratio})
+    for country in data:
+        data[country] = sorted(data[country], key=lambda item: item["hour"])
+    return data
+
+
+def _build_country_metrics(
+    cache_data: Dict[str, Dict[str, float]],
+    warm_data: Dict[str, Dict[str, float]],
+    cold_data: Dict[str, Dict[str, float]],
+) -> Dict[str, Dict[str, Any]]:
+    metrics: Dict[str, Dict[str, Any]] = {}
+    for country in COUNTRY_CODES:
+        cache = cache_data.get(country, {})
+        total = cache.get("requests") or 0
+        cached = cache.get("cached_requests") or 0
+        hit_ratio = round((cached / total) * 100, 2) if total else None
+        warm_p95 = warm_data.get(country, {}).get("p95_ms")
+        cold_p95 = cold_data.get(country, {}).get("p95_ms")
+        targets = CDN_TARGETS
+        hit_ok = hit_ratio is None or hit_ratio >= targets.get("hit_ratio_min", 85)
+        warm_target = targets.get("warm_p95_ms", {}).get(country)
+        cold_target = targets.get("cold_p95_ms", {}).get(country)
+        warm_ok = warm_p95 is None or (warm_target is None or warm_p95 <= warm_target)
+        cold_ok = cold_p95 is None or (cold_target is None or cold_p95 <= cold_target)
+        metrics[country] = {
+            "hit_ratio": hit_ratio,
+            "requests": total,
+            "cached_requests": cached,
+            "warm_p95": warm_p95,
+            "cold_p95": cold_p95,
+            "status": "ok" if hit_ok and warm_ok and cold_ok else "alert",
+            "targets": {
+                "hit_ratio_min": targets.get("hit_ratio_min", 85),
+                "warm_p95": warm_target,
+                "cold_p95": cold_target,
+            },
+        }
+    return metrics
+
+
+def _build_canary_status(adapter: CloudflareMetricsAdapter, total_requests: int, country_metrics: Dict[str, Dict[str, Any]]) -> str:
+    if total_requests and total_requests > 0:
+        return "analytics_read_ok"
+    if any(metric.get("requests") for metric in country_metrics.values()):
+        return "analytics_read_ok"
+    if adapter.error_codes:
+        if "scope_error" in adapter.error_codes:
+            return "scope_error"
+        return "analytics_read_error"
+    return "no_data"
 
 
 def _evaluate_alerts(payload: Dict[str, Any]) -> Dict[str, Any]:
