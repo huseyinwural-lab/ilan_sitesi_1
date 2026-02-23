@@ -14,7 +14,10 @@ const ModelStep = () => {
     completedSteps,
     setCompletedSteps,
     loading,
+    trackWizardEvent,
   } = useWizard();
+
+  const [saving, setSaving] = useState(false);
 
   const [models, setModels] = useState([]);
   const [search, setSearch] = useState('');
