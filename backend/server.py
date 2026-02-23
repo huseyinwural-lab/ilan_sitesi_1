@@ -1613,7 +1613,7 @@ async def lifespan(app: FastAPI):
         DB_MAX_OVERFLOW,
     )
     encryption_key_present = bool(os.environ.get("CONFIG_ENCRYPTION_KEY"))
-    logging.getLogger("config").info(
+    logging.getLogger("runtime").warning(
         "CONFIG_ENCRYPTION_KEY loaded=%s",
         "true" if encryption_key_present else "false",
     )
