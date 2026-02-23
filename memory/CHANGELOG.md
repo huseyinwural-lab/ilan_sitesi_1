@@ -13,7 +13,20 @@
 **Not**
 - Stabilizasyon başarı kriterleri sağlandı.
 
-## 2026-02-23 — P0 Edit Mode State Sync Closeout
+## 2026-02-23 — P1 Search Migration Execution (Preview)
+
+**Kapsam**
+- Alembic p36 migration uygulandı (listings_search + full-text/faceted index seti)
+- Mongo → SQL ETL çalıştırıldı (preview: 0 kayıt)
+- Parity raporu: `/app/memory/SEARCH_PARITY_REPORT.md`
+- Benchmark raporu: `/app/memory/SEARCH_BENCHMARK_REPORT.md`
+- EXPLAIN ANALYZE ham çıktı: `/app/memory/SEARCH_EXPLAIN_ANALYZE_RAW.md`
+- Feature flag: SEARCH_SQL_ROLLOUT (0.1 → 0.5 → 1.0)
+
+**Performans Notu**
+- Cold p50/p95: ~292.82 / 308.19 ms
+- Warm p50/p95: ~145.49 / 147.9 ms
+
 
 **Kapsam**
 - Admin Category Wizard “Edit Mode” state senkronizasyonu (backend wizard_progress tek kaynak)
