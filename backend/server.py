@@ -1633,13 +1633,34 @@ def _classify_db_error(exc: Exception) -> str:
     return DB_ERROR_CODES["unknown"]
 
 
-def _log_db_exception(exc: Exception, code: str):
-    logging.getLogger("db.error").info(
+def _sanitize_db_error_message(message: str) -> str:
+    sanitized = re.sub(r"postgresql://[^@]+@", "postgresql://***:***@", str(message))
+    sanitized = sanitized.replace("@localhost", "@***")
+    sanitized = sanitized.replace("@127.0.0.1", "@***")
+    return sanitized[:500]
+
+
+def _get_request_id(request: Optional[Request] = None) -> Optional[str]:
+    req_id = None
+    if correlation_id:
+        try:
+            req_id = correlation_id.get()
+        except Exception:
+            req_id = None
+    if not req_id and request:
+        req_id = request.headers.get("x-request-id") or request.headers.get("x-correlation-id")
+    return req_id
+
+
+def _log_db_exception(exc: Exception, code: str, request: Optional[Request] = None):
+    request_id = _get_request_id(request)
+    db_error_logger.info(
         "db_error",
         extra={
             "error_code": code,
-            "error": str(exc),
+            "error": _sanitize_db_error_message(str(exc)),
             "type": exc.__class__.__name__,
+            "request_id": request_id,
         },
     )
 
