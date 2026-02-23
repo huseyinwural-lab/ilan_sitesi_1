@@ -206,8 +206,10 @@ export const WizardProvider = ({ children, editListingId = null }) => {
   };
 
   const getFirstIncompleteStep = (completion) => {
-    for (let i = 1; i <= 6; i += 1) {
-      if (!completion[i]) return i;
+    const requiredSteps = moduleKey === 'vehicle' ? [1, 2, 3, 4, 5, 6] : [1, 5, 6];
+    for (let i = 0; i < requiredSteps.length; i += 1) {
+      const stepId = requiredSteps[i];
+      if (!completion[stepId]) return stepId;
     }
     return 7;
   };
