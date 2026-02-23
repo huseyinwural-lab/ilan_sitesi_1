@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2026-02-23 — Phase B Kickoff (RBAC Hard Lock)
+
+**Kapsam**
+- Deny-by-default RBAC middleware + allowlist
+- Admin endpoint policy haritası (RBAC_ENDPOINT_MAP.md)
+- RBAC matrisi ve negatif test listesi (RBAC_MATRIX.md / RBAC_NEGATIVE_TESTS.md)
+- Admin UI route guard (AdminLayout + shared adminRbac)
+
 ## 2026-02-23 — Admin V1 Phase A Closeout (Cloudflare Ops Inject)
 
 **Kapsam**
