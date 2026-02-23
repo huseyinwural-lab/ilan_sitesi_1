@@ -31,6 +31,10 @@ export default function Layout({ children }) {
   const [sessionError, setSessionError] = useState('');
   const [systemHealth, setSystemHealth] = useState(null);
   const [systemHealthStatus, setSystemHealthStatus] = useState('idle');
+  const [systemHealthDetail, setSystemHealthDetail] = useState(null);
+  const [systemHealthDetailStatus, setSystemHealthDetailStatus] = useState('idle');
+  const [showHealthPanel, setShowHealthPanel] = useState(false);
+  const healthPanelRef = useRef(null);
 
   const checkSession = async () => {
     const token = localStorage.getItem('access_token');
