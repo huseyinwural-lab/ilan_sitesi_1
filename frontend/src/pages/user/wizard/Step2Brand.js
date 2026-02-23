@@ -19,6 +19,7 @@ const BrandStep = () => {
   } = useWizard();
 
   const [saving, setSaving] = useState(false);
+  const saveLockRef = useRef(false);
 
   const [makes, setMakes] = useState([]);
   const [search, setSearch] = useState('');
