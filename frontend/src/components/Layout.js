@@ -231,6 +231,16 @@ export default function Layout({ children }) {
       : '--';
     const slowQueryCount = systemHealthDetail.slow_query_count_24h ?? 0;
     const slowQueryThreshold = systemHealthDetail.slow_query_threshold_ms ?? 800;
+    const endpointOrder = ['/api/search', '/api/listings', '/api/admin/*'];
+    const endpointStatsRaw = systemHealthDetail.endpoint_stats || [];
+    const endpointStats = endpointOrder.map((endpoint) => {
+      const match = endpointStatsRaw.find((item) => item.endpoint === endpoint);
+      return {
+        endpoint,
+        slowCount: match?.slow_query_count ?? 0,
+        p95: match?.p95_latency_ms ?? '--',
+      };
+    });
     return {
       status: systemHealthDetail.db_status === 'ok' ? 'ok' : 'error',
       errorBuckets: buckets.map((bucket) => ({
@@ -243,6 +253,7 @@ export default function Layout({ children }) {
       errorLabel: `${systemHealthDetail.error_count_5m ?? 0}/5dk`,
       slowQueryCount,
       slowQueryThreshold,
+      endpointStats,
     };
   }, [systemHealthDetail, systemHealthDetailStatus]);
 
