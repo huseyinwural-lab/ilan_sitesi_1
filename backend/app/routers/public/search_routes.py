@@ -100,7 +100,7 @@ async def search_real_estate(
 
     # Filters
     if city:
-        query = query.where(city_colisting.ilike(f"%{city}%"))
+        query = query.where(city_col.ilike(f"%{city}%"))
     if price_min:
         query = query.where(price_col >= price_min)
     if price_max:
