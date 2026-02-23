@@ -78,7 +78,93 @@ const WizardContent = () => {
 
 const WizardContainer = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const editListingId = searchParams.get('edit');
+  const [preselectStatus, setPreselectStatus] = useState('checking');
+
+  const trackEvent = useCallback(async (eventName, metadata = {}) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/analytics/events`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_name: eventName,
+          metadata,
+        }),
+      });
+    } catch (err) {
+      console.error('Analytics event error', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    const validatePreselect = async () => {
+      if (editListingId) {
+        setPreselectStatus('ok');
+        return;
+      }
+      const storedCategory = localStorage.getItem('ilan_ver_category');
+      const moduleKey = localStorage.getItem('ilan_ver_module');
+      const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
+      if (!storedCategory || !moduleKey) {
+        await trackEvent('wizard_preselect_invalid', { reason: 'missing', country });
+        navigate('/ilan-ver/kategori-secimi', { replace: true });
+        setPreselectStatus('redirect');
+        return;
+      }
+      let parsed = null;
+      try {
+        parsed = JSON.parse(storedCategory);
+      } catch (err) {
+        parsed = null;
+      }
+      if (!parsed?.id) {
+        await trackEvent('wizard_preselect_invalid', { reason: 'invalid_payload', country, module: moduleKey });
+        localStorage.removeItem('ilan_ver_category');
+        localStorage.removeItem('ilan_ver_category_path');
+        localStorage.removeItem('ilan_ver_module');
+        localStorage.removeItem('ilan_ver_module_label');
+        navigate('/ilan-ver/kategori-secimi', { replace: true });
+        setPreselectStatus('redirect');
+        return;
+      }
+      try {
+        const params = new URLSearchParams({ category_id: parsed.id, country, module: moduleKey });
+        const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/categories/validate?${params.toString()}`);
+        if (!res.ok) {
+          await trackEvent('wizard_preselect_invalid', { reason: 'validation_failed', country, module: moduleKey, category_id: parsed.id });
+          localStorage.removeItem('ilan_ver_category');
+          localStorage.removeItem('ilan_ver_category_path');
+          localStorage.removeItem('ilan_ver_module');
+          localStorage.removeItem('ilan_ver_module_label');
+          navigate('/ilan-ver/kategori-secimi', { replace: true });
+          setPreselectStatus('redirect');
+          return;
+        }
+        await trackEvent('wizard_preselect_valid', { country, module: moduleKey, category_id: parsed.id });
+        setPreselectStatus('ok');
+      } catch (err) {
+        await trackEvent('wizard_preselect_invalid', { reason: 'error', country, module: moduleKey, category_id: parsed?.id });
+        navigate('/ilan-ver/kategori-secimi', { replace: true });
+        setPreselectStatus('redirect');
+      }
+    };
+
+    validatePreselect();
+  }, [editListingId, navigate, trackEvent]);
+
+  if (preselectStatus === 'checking') {
+    return (
+      <div className="max-w-4xl mx-auto py-12 px-4 text-sm text-slate-500" data-testid="wizard-preselect-loading">
+        Kategori doğrulanıyor...
+      </div>
+    );
+  }
 
   return (
     <WizardProvider editListingId={editListingId}>
