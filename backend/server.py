@@ -2917,6 +2917,24 @@ def _sanitize_database_url(value: str) -> str:
         return value
 
 
+def _ensure_logger(name: str, level: int) -> logging.Logger:
+    logger = logging.getLogger(name)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setLevel(level)
+        formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.propagate = False
+    logger.setLevel(level)
+    return logger
+
+
+sql_logger = _ensure_logger("sql_config", logging.INFO)
+db_error_logger = _ensure_logger("db.error", logging.INFO)
+pool_logger = _ensure_logger("db.pool", logging.DEBUG if DB_POOL_DEBUG else logging.INFO)
+
+
 if APP_ENV in {"preview", "prod"}:
     if not RAW_DATABASE_URL:
         raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
