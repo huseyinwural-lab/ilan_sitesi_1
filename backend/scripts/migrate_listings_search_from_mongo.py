@@ -166,6 +166,33 @@ def main() -> None:
     inserted = 0
     skipped = 0
     batch = []
+    listing_batch = []
+
+    insert_listing_sql = text(
+        """
+        INSERT INTO listings (
+            id, title, description, module, category_id, country, city,
+            price_type, price, hourly_rate, currency,
+            user_id, dealer_id, is_dealer_listing,
+            images, image_count, view_count, attributes,
+            make_id, model_id,
+            contact_option_phone, contact_option_message,
+            status, is_premium, premium_until,
+            is_showcase, showcase_expires_at,
+            created_at, updated_at, published_at, expires_at
+        ) VALUES (
+            :id, :title, :description, :module, :category_id, :country, :city,
+            :price_type, :price, :hourly_rate, :currency,
+            :user_id, :dealer_id, :is_dealer_listing,
+            :images, :image_count, :view_count, :attributes,
+            :make_id, :model_id,
+            :contact_option_phone, :contact_option_message,
+            :status, :is_premium, :premium_until,
+            :is_showcase, :showcase_expires_at,
+            :created_at, :updated_at, :published_at, :expires_at
+        ) ON CONFLICT (id) DO NOTHING
+        """
+    )
 
     for doc in _iter_mongo_listings(args.mongo_url, args.mongo_db, args.limit):
         row = _build_listing_search(doc)
