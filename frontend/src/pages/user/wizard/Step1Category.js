@@ -211,7 +211,7 @@ const CategorySelector = () => {
         <div title={nextDisabled ? 'Önce bu adımı tamamlayın.' : ''} data-testid="category-next-tooltip">
           <button
             type="button"
-            onClick={() => setStep(2)}
+            onClick={() => setStep(moduleKey === 'vehicle' ? 2 : 5)}
             disabled={nextDisabled}
             className="px-4 py-2 border rounded-md text-sm disabled:opacity-50"
             data-testid="category-next"
