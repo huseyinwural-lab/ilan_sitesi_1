@@ -20,14 +20,20 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     category_key: null,
     category_id: null,
     make_key: null,
+    make_id: null,
     model_key: null,
+    model_id: null,
     year: null,
+    trim_key: null,
     mileage_km: null,
-    price_eur: null,
     fuel_type: null,
     transmission: null,
-    condition: null,
-    trim_key: null,
+    drive_type: null,
+    body_type: null,
+    color: null,
+    damage_status: null,
+    trade_in: null,
+    price_eur: null,
   });
   const [attributes, setAttributes] = useState({});
   const [schema, setSchema] = useState(null);
