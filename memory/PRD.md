@@ -183,6 +183,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/PREVIEW_UNBLOCK_TRACKER.md
 - /app/docs/LOCAL_PREVIEW_SIMULATION_EVIDENCE.md
 - /app/docs/PREVIEW_ACTIVATION_RUNBOOK.md
+- /app/memory/MONGO_TO_POSTGRES_MIGRATION_PLAN.md
 
 ## Blokajlar / Riskler
 - Stripe API key geçersiz (idempotency testi BLOCKED)
