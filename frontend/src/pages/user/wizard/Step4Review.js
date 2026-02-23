@@ -140,12 +140,15 @@ const ReviewSubmit = () => {
               ['Hasar', basicInfo.damage_status],
               ['Takas', basicInfo.trade_in === true ? 'Var' : basicInfo.trade_in === false ? 'Yok' : '-'],
               ['Fiyat Tipi', priceTypeLabel],
-            ].map(([key, val]) => (
-              <div key={key} data-testid={`wizard-review-spec-${key}`}>
-                <span className="text-gray-500 text-sm">{key}:</span>
-                <span className="ml-2 font-medium">{val?.toString() || '-'}</span>
-              </div>
-            ))}
+            ].map(([key, val]) => {
+              const testId = String(key).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+              return (
+                <div key={key} data-testid={`wizard-review-spec-${testId}`}>
+                  <span className="text-gray-500 text-sm">{key}:</span>
+                  <span className="ml-2 font-medium">{val?.toString() || '-'}</span>
+                </div>
+              );
+            })}
           </div>
 
           <div className="text-sm text-gray-600" data-testid="wizard-review-location">
