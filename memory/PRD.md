@@ -230,6 +230,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 
 ## Blokajlar / Riskler
 - Stripe API key geçersiz (idempotency testi BLOCKED)
+- Moderation Mongo koleksiyonu bulunamadı; ops ile doğrulama gerekli (parity 0/0)
 
 ## Öncelikli Backlog
 ### P0 (Hemen)
