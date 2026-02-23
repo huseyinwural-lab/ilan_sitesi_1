@@ -18407,6 +18407,15 @@ async def submit_vehicle_listing(
     listing.status = "pending_moderation"
     if not listing.expires_at:
         listing.expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+
+    await _upsert_moderation_item(
+        session=session,
+        listing=listing,
+        status="PENDING",
+        reason=None,
+        moderator_id=None,
+        audit_ref=None,
+    )
     await session.commit()
 
     return {
