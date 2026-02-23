@@ -2998,7 +2998,7 @@ sql_engine = create_async_engine(
     pool_pre_ping=True,
     connect_args=connect_args,
 )
-logging.getLogger("sql_config").info(
+sql_logger.info(
     "Effective DB pool config: pool_size=%s max_overflow=%s pool_timeout=%s pool_recycle=%s pool_pre_ping=%s",
     DB_POOL_SIZE,
     DB_MAX_OVERFLOW,
