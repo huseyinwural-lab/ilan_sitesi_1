@@ -7665,6 +7665,44 @@ async def track_listing_flow_event(
     return {"status": "ok"}
 
 
+class AdminWizardAnalyticsPayload(BaseModel):
+    event_name: str
+    category_id: str
+    step_id: str
+    admin_user_id: Optional[str] = None
+    wizard_state: Optional[str] = None
+
+
+@api_router.post("/admin/analytics/events")
+async def track_admin_wizard_event(
+    payload: AdminWizardAnalyticsPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    admin_id = current_user.get("id")
+    metadata = {
+        "event_name": payload.event_name,
+        "category_id": payload.category_id,
+        "step_id": payload.step_id,
+        "admin_user_id": admin_id,
+        "wizard_state": payload.wizard_state,
+    }
+
+    await _write_audit_log_sql(
+        session,
+        payload.event_name,
+        current_user,
+        "admin_category_wizard",
+        payload.category_id,
+        metadata,
+        request,
+    )
+    await session.commit()
+
+    return {"status": "ok"}
+
+
 class RecentCategoryPayload(BaseModel):
     category_id: str
     module: str
