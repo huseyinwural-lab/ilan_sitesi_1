@@ -302,6 +302,10 @@ export default function AdminSystemSettingsPage() {
     info: 'border-slate-200 bg-slate-50 text-slate-700',
   };
 
+  const filteredItems = items.filter((item) =>
+    item.key.toLowerCase().includes(filterKey.toLowerCase())
+  );
+
   return (
     <div className="space-y-6" data-testid="admin-system-settings-page">
       <div className="flex items-center justify-between flex-wrap gap-3">
