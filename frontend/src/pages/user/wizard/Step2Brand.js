@@ -136,6 +136,7 @@ const BrandStep = () => {
       return true;
     } finally {
       setSaving(false);
+      saveLockRef.current = false;
     }
   };
 
