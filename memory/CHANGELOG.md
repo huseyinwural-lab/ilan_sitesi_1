@@ -40,6 +40,7 @@
 - Search UI API prefix düzeltmesi (SearchPage /api/api/ → /api/)
 - Rollback hazır, kullanılmadı
 - 24h monitoring owner: Ops/Owner
+- 24h monitoring raporu: `/app/memory/SEARCH_24H_MONITORING_REPORT.md`
 
 ## 2026-02-23 — Admin System Health Detail Panel
 
