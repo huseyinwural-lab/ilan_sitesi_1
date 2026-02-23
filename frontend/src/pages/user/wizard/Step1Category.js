@@ -16,6 +16,9 @@ const CategorySelector = () => {
   const [activeParentId, setActiveParentId] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [error, setError] = useState('');
+  const [preselectedCategory, setPreselectedCategory] = useState(null);
+  const [preselectApplied, setPreselectApplied] = useState(false);
+  const [moduleKey] = useState(() => localStorage.getItem('ilan_ver_module') || 'vehicle');
 
   useEffect(() => {
     const fetchCategories = async () => {
