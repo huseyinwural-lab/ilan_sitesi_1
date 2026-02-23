@@ -218,3 +218,77 @@ graph LR
 - (+) Kullanıcı kaybı azalır
 - (-) Admin operasyonuna bağımlılık görünür olur
 
+---
+
+## ADR-SEC-CF-003 — Cloudflare kimlik bilgileri paylaşımı
+
+**Karar:** Account/Zone ID ve token dahil tüm Cloudflare değerleri Secret Manager üzerinden sağlanır; chat üzerinden paylaşım yok.
+
+**Gerekçe:** Güvenlik ve sızıntı riski.
+
+**Etkileri / trade-off:**
+- (+) Güvenli operasyon
+- (-) Ops aksiyonu gerektirir
+
+---
+
+## ADR-CONFIG-001 — Feature flag konfigürasyonu
+
+**Karar:** CF_METRICS_ENABLED config olarak .env üzerinden yönetilir; secret manager sadece gizli değerler içindir.
+
+**Gerekçe:** Flag secret değil; ortam bazlı hızlı kontrol gerekir.
+
+**Etkileri / trade-off:**
+- (+) Kolay aç/kapa
+- (-) Yanlışlıkla prod’da açılabilir → default false + ops prosedürüyle önlenir
+
+---
+
+## ADR-OBS-CDN-002 — Ülke bazlı CDN kırılımı zorunlu
+
+**Karar:** Health panelde CDN metrikleri DE/AT/CH/FR kırılımıyla gösterilecek.
+
+**Gerekçe:** Avrupa hedefi ülke bazlı performans denetimi gerektirir.
+
+**Etkileri / trade-off:**
+- (+) Gerçek operasyonel görünürlük
+- (-) Analytics sorgu karmaşıklığı artar
+
+**Risk & Önlem:** Country geo verisi eksik olabilir → fallback global metrik göster.
+
+---
+
+## ADR-RE-ACCEPT-002 — Emlak PASS zorunlu
+
+**Karar:** Referans akış “Emlak modülü” için PASS olmadan ilan verme akışı tamamlanmış sayılmaz.
+
+**Gerekçe:** Emlak en kompleks modül; burada çalışan akış diğer modüller için referans olur.
+
+**Etkileri / trade-off:**
+- (+) Kalite standardı yükselir
+- (-) Seed/veri operasyonuna bağımlılık
+
+---
+
+## ADR-UX-ROADMAP-002 — Tema uygulaması çekirdek mimariyi etkilemez
+
+**Karar:** Theme değişimi yalnız UI katmanında uygulanır; wizard/state/backend etkilenmez.
+
+**Gerekçe:** Stabil core korunmalı.
+
+**Etkileri / trade-off:**
+- (+) Düşük riskli görsel dönüşüm
+- (-) Component override disiplinine ihtiyaç
+
+---
+
+## ADR-CAT-OPS-004 — Emlak kategori giriş yöntemi
+
+**Karar:** Emlak hiyerarşisi manuel admin UI ile girilir; otomatik bulk doldurma yapılmaz.
+
+**Gerekçe:** “Manuel girişli olacak, eski yapı korunacak” hedefi.
+
+**Etkileri / trade-off:**
+- (+) Operasyonel kontrol, şema disiplini
+- (-) Zaman alır
+
