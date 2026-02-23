@@ -94,7 +94,7 @@ const BrandStep = () => {
       if (!selectedMake) {
         setError('Lütfen marka seçin.');
         scrollToError();
-        return false;
+        return { ok: false };
       }
 
       const makeLabel = selectedMake.label || selectedMake.name || selectedMake.key;
