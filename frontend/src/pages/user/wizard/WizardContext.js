@@ -197,9 +197,9 @@ export const WizardProvider = ({ children, editListingId = null }) => {
 
     return {
       1: Boolean(data.category_id || data.category_key),
-      2: Boolean(makeKey),
-      3: Boolean(modelKey),
-      4: Boolean(yearValue),
+      2: step2Complete,
+      3: step3Complete,
+      4: step4Complete,
       5: Boolean(coreComplete),
       6: Boolean(featuresComplete),
     };
