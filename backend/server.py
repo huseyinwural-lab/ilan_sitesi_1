@@ -2949,6 +2949,13 @@ def _log_pool_invalidate(dbapi_connection, connection_record, exception):
     pool_logger.info("db_pool_invalidate", extra={"error": str(exception) if exception else None})
 
 
+AsyncSessionLocal = async_sessionmaker(
+    sql_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+
 async def get_sql_session():
     async with AsyncSessionLocal() as session:
         try:
