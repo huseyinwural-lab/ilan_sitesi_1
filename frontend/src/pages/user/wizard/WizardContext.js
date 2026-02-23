@@ -572,6 +572,8 @@ export const WizardProvider = ({ children, editListingId = null }) => {
       setMedia,
       loading,
       editLoading,
+      autosaveStatus,
+      setAutosaveStatus,
       validationErrors,
       publishedDetailUrl,
       createDraft,
