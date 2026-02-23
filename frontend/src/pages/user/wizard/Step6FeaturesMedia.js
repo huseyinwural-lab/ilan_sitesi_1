@@ -245,16 +245,48 @@ const FeaturesMediaStep = () => {
         {dynamicFields.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="dynamic-fields">
             {dynamicFields.map((field) => (
-              <div key={field.key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}{field.required ? ' *' : ''}</label>
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded-md"
-                  value={dynamicValues[field.key] || ''}
-                  onChange={(e) => handleDynamicChange(field.key, e.target.value)}
-                  data-testid={`dynamic-field-${field.key}`}
-                />
-                {errors[field.key] && <div className="text-xs text-red-600 mt-1" data-testid={`dynamic-error-${field.key}`}>{errors[field.key]}</div>}
+              <div key={field.id || field.key}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {field.label || field.key} {field.required ? '*' : ''}
+                </label>
+                {field.type === 'select' && (
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={dynamicValues[field.key] || ''}
+                    onChange={(e) => handleDynamicChange(field.key, e.target.value)}
+                    data-testid={`dynamic-select-${field.key}`}
+                  >
+                    <option value="">Seç...</option>
+                    {(field.options || []).map((opt) => (
+                      <option key={opt.id || opt} value={opt.id || opt}>
+                        {opt.label || opt}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {(!field.type || field.type === 'text') && (
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded-md"
+                    value={dynamicValues[field.key] || ''}
+                    onChange={(e) => handleDynamicChange(field.key, e.target.value)}
+                    data-testid={`dynamic-text-${field.key}`}
+                  />
+                )}
+                {field.type === 'number' && (
+                  <input
+                    type="number"
+                    className="w-full p-2 border rounded-md"
+                    value={dynamicValues[field.key] || ''}
+                    onChange={(e) => handleDynamicChange(field.key, e.target.value)}
+                    data-testid={`dynamic-number-${field.key}`}
+                  />
+                )}
+                {errors[field.key] && (
+                  <div className="text-xs text-red-600 mt-1" data-testid={`dynamic-error-${field.key}`}>
+                    {errors[field.key]}
+                  </div>
+                )}
               </div>
             ))}
           </div>
