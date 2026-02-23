@@ -175,6 +175,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - p36 migration preview ortamında uygulandı
   - ETL çalıştırıldı (0 kayıt, preview datası yok)
   - Parity raporu: /app/memory/SEARCH_PARITY_REPORT.md
+  - Parity raw ID karşılaştırma: /app/memory/SEARCH_PARITY_RAW.md
   - Benchmark raporu: /app/memory/SEARCH_BENCHMARK_REPORT.md
   - EXPLAIN ANALYZE raw: /app/memory/SEARCH_EXPLAIN_ANALYZE_RAW.md
   - Cutover plan: /app/memory/SEARCH_CUTOVER_PLAN.md
