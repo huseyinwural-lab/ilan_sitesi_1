@@ -77,7 +77,7 @@ export default function BackofficePortalApp() {
       <Route path="/country-compare" element={<AdminLayout><AdminCountryComparePage /></AdminLayout>} />
       <Route path="/countries" element={
         <AdminLayout>
-          <AdminRouteGuard roles={["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"]}>
+          <AdminRouteGuard roles={["super_admin", "country_admin"]}>
             <AdminCountriesPage />
           </AdminRouteGuard>
         </AdminLayout>
