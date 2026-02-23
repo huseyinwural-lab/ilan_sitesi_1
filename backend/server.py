@@ -4691,10 +4691,11 @@ async def update_admin_user(
 
     await _assert_super_admin_invariant_sql(session, target, payload.role, payload.is_active, current_user)
 
-    role_changed = payload.role and payload.role != target.role
+    prev_role = target.role
+    role_changed = payload.role and payload.role != prev_role
     deactivated = payload.is_active is False and target.is_active
 
-    if payload.role and payload.role != target.role:
+    if payload.role and payload.role != prev_role:
         target.role = payload.role
     if payload.country_scope is not None or payload.role:
         target.country_scope = next_scope
