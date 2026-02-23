@@ -162,6 +162,13 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Load test: Faz‑1 1000 sequential login+me, Faz‑2 10 paralel toplam 1000 istek → 0 adet 520 (p95 ~2924ms / 5074ms)
   - /app/load_test.py eklendi
   - P1 smoke: Auth + Vehicle wizard + Admin categories edit modal PASS
+- **System Health Mini-Badge (2026-02-23):**
+  - /api/admin/system/health-summary endpointi + 60sn cache
+  - Admin header badge (DB status, last check, 5dk error rate)
+- **Search Migration Kickoff (2026-02-23):**
+  - listings_search SQL schema + indexes (migration p36)
+  - Mongo → SQL transform script: /app/backend/scripts/migrate_listings_search_from_mongo.py
+  - Parity checklist + benchmark raporu şablonları
 
 ## Kanıtlar
 - /app/docs/LOCAL_DB_READY_EVIDENCE.md
