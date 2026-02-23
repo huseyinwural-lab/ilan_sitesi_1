@@ -132,7 +132,11 @@ const CategorySelector = () => {
                   disabled={loading}
                   onClick={() => handleCategorySelect(cat)}
                   data-testid={`category-select-${cat.id}`}
-                  className="p-6 border rounded-xl hover:border-blue-600 hover:bg-blue-50 transition flex flex-col items-center gap-2 text-center"
+                  className={`p-6 border rounded-xl transition flex flex-col items-center gap-2 text-center ${
+                    selectedCategory?.id === cat.id
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-border hover:border-blue-600 hover:bg-blue-50'
+                  }`}
                 >
                   <span className="text-4xl">{getIcon(cat)}</span>
                   <span className="font-medium text-lg">{cat.name}</span>
