@@ -3403,6 +3403,7 @@ async def admin_system_health_summary(
 
 @api_router.get("/admin/system/health-detail")
 async def admin_system_health_detail(
+    request: Request,
     current_user=Depends(check_permissions(list(ADMIN_ROLE_OPTIONS))),
 ):
     now_ts = time.time()
