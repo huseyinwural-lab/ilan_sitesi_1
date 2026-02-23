@@ -438,7 +438,7 @@ const AdminCategories = () => {
     if (progressState) {
       payload.wizard_progress = {
         state: progressState,
-        dirty_steps: options.dirtySteps || dirtySteps,
+        dirty_steps: options.dirtySteps ?? dirtySteps,
       };
     }
     if (options.wizardEditEvent) {
