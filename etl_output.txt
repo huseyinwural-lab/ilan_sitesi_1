@@ -1,0 +1,64 @@
+Traceback (most recent call last):
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2125, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.DeadlockDetected: deadlock detected
+LINE 1: INSERT INTO listings_search (listing_id, title, description,...
+                    ^
+DETAIL:  Process 78428 waits for RowExclusiveLock on relation 18043 of database 5; blocked by process 78656.
+Process 78656 waits for AccessExclusiveLock on relation 16658 of database 5; blocked by process 78428.
+HINT:  See server log for query details.
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/backend/scripts/migrate_listings_search_from_mongo.py", line 281, in <module>
+    main()
+  File "/app/backend/scripts/migrate_listings_search_from_mongo.py", line 246, in main
+    session.bulk_save_objects(batch)
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4564, in bulk_save_objects
+    self._bulk_save_mappings(
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4741, in _bulk_save_mappings
+    with util.safe_reraise():
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4730, in _bulk_save_mappings
+    bulk_persistence._bulk_insert(
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py", line 222, in _bulk_insert
+    result = persistence._emit_insert_statements(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 1048, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+    return meth(
+           ^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1844, in _execute_context
+    return self._exec_insertmany_context(dialect, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2133, in _exec_insertmany_context
+    self._handle_dbapi_exception(
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2125, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/root/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (psycopg2.errors.DeadlockDetected) deadlock detected
+LINE 1: INSERT INTO listings_search (listing_id, title, description,...
+                    ^
+DETAIL:  Process 78428 waits for RowExclusiveLock on relation 18043 of database 5; blocked by process 78656.
+Process 78656 waits for AccessExclusiveLock on relation 16658 of database 5; blocked by process 78428.
+HINT:  See server log for query details.
+
+[SQL: INSERT INTO listings_search (listing_id, title, description, module, category_id, country_code, city, price_amount, price_type, currency, status, is_premium, is_showcase, seller_type, attributes, images, published_at, created_at, updated_at) VALUES ( ... 1393 characters truncated ... ibutes__3)s::JSONB, %(images__3)s::JSONB, %(published_at__3)s, %(created_at__3)s, %(updated_at__3)s)]
+[parameters: {'listing_id__0': UUID('2ae98678-80e9-4146-b960-c07d173393e7'), 'currency__0': 'EUR', 'attributes__0': '{}', 'title__0': 'Uygun Services #2500', 'created_at__0': datetime.datetime(2025, 6, 22, 21, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'images__0': '["https://picsum.photos/seed/2500/800/600"]', 'seller_type__0': 'individual', 'status__0': 'active', 'module__0': 'services', 'description__0': 'uygun ilan aciklamasi. ev detayli bilgi.', 'country_code__0': 'DE', 'is_showcase__0': False, 'price_type__0': 'FIXED', 'updated_at__0': datetime.datetime(2025, 6, 22, 21, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'city__0': 'Bursa', 'is_premium__0': False, 'published_at__0': datetime.datetime(2025, 6, 22, 21, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'price_amount__0': 140851, 'category_id__0': UUID('b1441af8-f8c6-4675-9e2e-d93ba3ae97e3'), 'listing_id__1': UUID('441d911a-6f42-4fc1-adce-a173d12e8f82'), 'currency__1': 'EUR', 'attributes__1': '{"m2_gross": 253, "room_count": 3}', 'title__1': 'Hybrid Real Estate #2501', 'created_at__1': datetime.datetime(2025, 12, 10, 10, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'images__1': '["https://picsum.photos/seed/2501/800/600"]', 'seller_type__1': 'commercial', 'status__1': 'active', 'module__1': 'real_estate', 'description__1': 'hybrid ilan aciklamasi. temiz detayli bilgi.', 'country_code__1': 'DE', 'is_showcase__1': False, 'price_type__1': 'HOURLY', 'updated_at__1': datetime.datetime(2025, 12, 10, 10, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'city__1': 'Dusseldorf', 'is_premium__1': False, 'published_at__1': datetime.datetime(2025, 12, 10, 10, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'price_amount__1': 109549, 'category_id__1': UUID('1922d021-2a55-44be-84d4-a290f738ac7b'), 'listing_id__2': UUID('ec91686e-e463-4588-8a67-5c62914e5944'), 'currency__2': 'EUR', 'attributes__2': '{"m2_gross": 55, "room_count": 3}', 'title__2': 'Temiz Real Estate #2502', 'created_at__2': datetime.datetime(2025, 11, 9, 22, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'images__2': '["https://picsum.photos/seed/2502/800/600"]', 'seller_type__2': 'individual', 'status__2': 'active', 'module__2': 'real_estate', 'description__2': 'temiz ilan aciklamasi. bakimli detayli bilgi.', 'country_code__2': 'DE', 'is_showcase__2': False, 'price_type__2': 'FIXED', 'updated_at__2': datetime.datetime(2025, 11, 9, 22, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'city__2': 'Stuttgart', 'is_premium__2': False, 'published_at__2': datetime.datetime(2025, 11, 9, 22, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'price_amount__2': 51809, 'category_id__2': UUID('2b755bd1-fb24-459e-bd21-93194c99cee6'), 'listing_id__3': UUID('7775bd1b-4f67-417d-86ea-57425c52de4b'), 'currency__3': 'EUR', 'attributes__3': '{}', 'title__3': 'Kiralik Services #2503', 'created_at__3': datetime.datetime(2025, 7, 27, 10, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'images__3': '["https://picsum.photos/seed/2503/800/600"]', 'seller_type__3': 'individual', 'status__3': 'active', 'module__3': 'services', 'description__3': 'kiralik ilan aciklamasi. kiralik detayli bilgi.', 'country_code__3': 'TR', 'is_showcase__3': False, 'price_type__3': 'FIXED', 'updated_at__3': datetime.datetime(2025, 7, 27, 10, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'city__3': 'Stuttgart', 'is_premium__3': False, 'published_at__3': datetime.datetime(2025, 7, 27, 10, 57, 46, 183749, tzinfo=datetime.timezone.utc), 'price_amount__3': 286560, 'category_id__3': UUID('c1e0b7be-53ce-4180-9185-4266eaaff575')}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
