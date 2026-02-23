@@ -256,8 +256,8 @@ const CoreFieldsStep = () => {
       return;
     }
     if (!completedSteps[5]) {
-      const ok = await handleComplete();
-      if (!ok) {
+      const result = await handleComplete();
+      if (!result?.ok) {
         await trackWizardEvent('wizard_step_autosave_error', {
           step_id: 'core',
           category_id: basicInfo.category_id,
@@ -272,6 +272,11 @@ const CoreFieldsStep = () => {
         }));
         return;
       }
+      setAutosaveStatus((prev) => ({
+        ...prev,
+        status: 'success',
+        lastSuccessAt: result?.updatedAt || new Date().toISOString(),
+      }));
     }
     await trackWizardEvent('wizard_step_autosave_success', {
       step_id: 'core',
@@ -279,11 +284,13 @@ const CoreFieldsStep = () => {
       module: basicInfo.module || 'vehicle',
       country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
     });
-    setAutosaveStatus((prev) => ({
-      ...prev,
-      status: 'success',
-      lastSuccessAt: new Date().toISOString(),
-    }));
+    if (completedSteps[5]) {
+      setAutosaveStatus((prev) => ({
+        ...prev,
+        status: 'success',
+        lastSuccessAt: prev.lastSuccessAt || new Date().toISOString(),
+      }));
+    }
     toast({
       title: 'Kaydedildi',
       duration: 2500,
