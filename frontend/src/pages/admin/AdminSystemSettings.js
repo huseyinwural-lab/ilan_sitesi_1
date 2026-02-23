@@ -40,6 +40,9 @@ export default function AdminSystemSettingsPage() {
   const [cloudflareSaving, setCloudflareSaving] = useState(false);
   const [cloudflareError, setCloudflareError] = useState('');
   const [canaryLoading, setCanaryLoading] = useState(false);
+  const [encryptionKeyPresent, setEncryptionKeyPresent] = useState(true);
+  const [cfMetricsEnabled, setCfMetricsEnabled] = useState(false);
+  const [configMissingReason, setConfigMissingReason] = useState('');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
