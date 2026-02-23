@@ -141,6 +141,8 @@ const CoreFieldsStep = () => {
       body_type: bodyType,
       color,
       damage_status: damageStatus,
+      engine_cc: engineCc,
+      engine_hp: engineHp,
       trade_in: tradeIn === 'true',
     };
 
