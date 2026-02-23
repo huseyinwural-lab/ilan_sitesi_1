@@ -175,6 +175,7 @@ function App() {
                     <Route path="privacy" element={<AccountPrivacyCenter />} />
                     <Route path="create" element={<Navigate to="/ilan-ver/kategori-secimi" />} />
                     <Route path="create/vehicle-wizard" element={<WizardContainer />} />
+                    <Route path="create/listing-wizard" element={<CreateListing />} />
                   </Route>
 
                   <Route
