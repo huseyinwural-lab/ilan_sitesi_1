@@ -259,7 +259,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ## Blokajlar / Riskler
 - Stripe API key geçersiz (idempotency testi BLOCKED)
 - Moderation Mongo koleksiyonu bulunamadı; ops ile doğrulama gerekli (parity 0/0)
-- Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (eksikse kaydetme bloklanır)
+- Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
 
 ## Öncelikli Backlog
 ### P0 (Hemen)
