@@ -34,6 +34,9 @@ const NEEDS_REVISION_REASONS_V1 = [
   { value: 'other', label: 'other' },
 ];
 
+const SLA_WARNING_SECONDS = 12 * 60 * 60;
+const SLA_CRITICAL_SECONDS = 24 * 60 * 60;
+
 
 export default function ModerationQueue({
   title = 'Moderation Queue',
