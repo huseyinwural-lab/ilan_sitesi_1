@@ -13,7 +13,9 @@ class ListingSearch(Base):
     __tablename__ = "listings_search"
 
     listing_id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True
+        PGUUID(as_uuid=True),
+        ForeignKey("listings.id", ondelete="CASCADE"),
+        primary_key=True,
     )
 
     title: Mapped[str] = mapped_column(String(255), nullable=False)
