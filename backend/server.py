@@ -13657,6 +13657,7 @@ async def admin_export_categories_csv(
         writer.writerow([
             category.module,
             country_value,
+            CATEGORY_SCHEMA_VERSION,
             slug_value,
             parent_slug or "",
             (translation_map.get("tr") or {}).get("name") or "",
