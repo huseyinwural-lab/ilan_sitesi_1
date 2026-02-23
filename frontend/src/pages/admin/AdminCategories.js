@@ -138,6 +138,15 @@ const STEP_PROGRESS_STATE = {
   preview: "ready_for_preview",
 };
 
+const DIRTY_DEPENDENCIES = {
+  hierarchy: ["core", "dynamic", "detail", "modules", "preview"],
+  core: ["dynamic", "detail", "modules", "preview"],
+  dynamic: ["detail", "modules", "preview"],
+  detail: ["modules", "preview"],
+  modules: ["preview"],
+  preview: [],
+};
+
 const createId = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 const createSubcategoryDraft = () => ({
   name: "",
