@@ -35,43 +35,58 @@ const YearTrimStep = () => {
     return years;
   }, []);
 
-  const handleComplete = async () => {
-    if (!year) {
-      setError('Yıl seçiniz.');
-      return false;
+  const scrollToError = () => {
+    const el = document.querySelector('[data-testid="year-error"]');
+    if (el) {
+      el.scrollIntoView({ behavior: window.innerWidth < 768 ? 'smooth' : 'auto', block: 'center' });
     }
+  };
 
-    const trimmedTrim = trimKey.trim();
-    const ok = await saveDraft({
-      vehicle: {
-        make_key: basicInfo.make_key,
-        make_id: basicInfo.make_id,
-        model_key: basicInfo.model_key,
-        model_id: basicInfo.model_id,
+  const handleComplete = async () => {
+    if (saving) return false;
+    setSaving(true);
+    try {
+      if (!year) {
+        setError('Yıl seçiniz.');
+        scrollToError();
+        return false;
+      }
+
+      const trimmedTrim = trimKey.trim();
+      const ok = await saveDraft({
+        vehicle: {
+          make_key: basicInfo.make_key,
+          make_id: basicInfo.make_id,
+          model_key: basicInfo.model_key,
+          model_id: basicInfo.model_id,
+          year: Number(year),
+          trim_key: trimmedTrim || null,
+        },
+      });
+
+      if (!ok) {
+        setError('Yıl kaydedilemedi.');
+        scrollToError();
+        return false;
+      }
+
+      setBasicInfo((prev) => ({
+        ...prev,
         year: Number(year),
         trim_key: trimmedTrim || null,
-      },
-    });
+      }));
 
-    if (!ok) {
-      setError('Yıl kaydedilemedi.');
-      return false;
+      setCompletedSteps((prev) => ({
+        ...prev,
+        4: true,
+        5: false,
+        6: false,
+      }));
+      setError('');
+      return true;
+    } finally {
+      setSaving(false);
     }
-
-    setBasicInfo((prev) => ({
-      ...prev,
-      year: Number(year),
-      trim_key: trimmedTrim || null,
-    }));
-
-    setCompletedSteps((prev) => ({
-      ...prev,
-      4: true,
-      5: false,
-      6: false,
-    }));
-    setError('');
-    return true;
   };
 
   const handleNext = async () => {
