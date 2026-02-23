@@ -520,6 +520,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
       setAttributes,
       schema,
       schemaLoading,
+      schemaNotice,
       loadCategorySchema,
       coreFields,
       setCoreFields,
