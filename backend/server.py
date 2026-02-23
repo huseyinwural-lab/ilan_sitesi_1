@@ -1695,6 +1695,7 @@ def _extract_route_roles(route: APIRoute) -> Optional[list[str]]:
 def _build_rbac_allowlist(target_app: FastAPI) -> tuple[Dict[str, list[str]], list[str]]:
     allowlist: Dict[str, list[str]] = {}
     missing: list[str] = []
+    public_paths = {key.split(" ", 1)[1] for key in RBAC_PUBLIC_ADMIN_ROUTES.keys()}
     for route in target_app.routes:
         if not isinstance(route, APIRoute):
             continue
@@ -1702,12 +1703,17 @@ def _build_rbac_allowlist(target_app: FastAPI) -> tuple[Dict[str, list[str]], li
             continue
         roles = _extract_route_roles(route)
         if not roles:
-            missing.append(route.path)
+            if route.path not in public_paths:
+                missing.append(route.path)
             continue
         for method in route.methods or []:
             if method in {"HEAD", "OPTIONS"}:
                 continue
             allowlist[f"{method} {route.path}"] = roles
+
+    for key, roles in RBAC_PUBLIC_ADMIN_ROUTES.items():
+        allowlist.setdefault(key, roles)
+
     return allowlist, sorted(set(missing))
 
 
