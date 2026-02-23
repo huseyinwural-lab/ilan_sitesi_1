@@ -180,23 +180,29 @@ const ModelStep = () => {
         {search && (
           <div className="space-y-3" data-testid="model-search-results">
             <div className="text-sm font-semibold text-gray-700">Arama Sonuçları</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="model-search-grid">
-              {filteredModels.map((model) => {
-                const label = model.label || model.name || model.key;
-                const isActive = selectedModel?.key === model.key;
-                return (
-                  <button
-                    key={model.key}
-                    type="button"
-                    onClick={() => handleSelect(model)}
-                    className={`border rounded-lg p-3 text-left transition ${isActive ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-400'}`}
-                    data-testid={`model-search-card-${model.key}`}
-                  >
-                    <div className="text-sm font-semibold">{label}</div>
-                  </button>
-                );
-              })}
-            </div>
+            {loadingModels ? (
+              <div className="text-xs text-gray-500" data-testid="model-search-loading">Yükleniyor...</div>
+            ) : filteredModels.length === 0 ? (
+              <div className="text-xs text-gray-500" data-testid="model-search-empty">Sonuç bulunamadı.</div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="model-search-grid">
+                {filteredModels.map((model) => {
+                  const label = model.label || model.name || model.key;
+                  const isActive = selectedModel?.key === model.key;
+                  return (
+                    <button
+                      key={model.key}
+                      type="button"
+                      onClick={() => handleSelect(model)}
+                      className={`border rounded-lg p-3 text-left transition ${isActive ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-400'}`}
+                      data-testid={`model-search-card-${model.key}`}
+                    >
+                      <div className="text-sm font-semibold">{label}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
