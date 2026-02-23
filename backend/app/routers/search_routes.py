@@ -140,8 +140,10 @@ async def search_listings(
             query = query.where(ListingModel.category_id == current_cat.id)
 
     # 4. Standard Filters
-    if price_min: query = query.where(price_col >= price_min)
-    if price_max: query = query.where(price_col <= price_max)
+    if price_min:
+        query = query.where(price_col >= price_min)
+    if price_max:
+        query = query.where(price_col <= price_max)
     if price_min or price_max:
         query = query.where(or_(price_type_col == "FIXED", price_type_col.is_(None)))
 
