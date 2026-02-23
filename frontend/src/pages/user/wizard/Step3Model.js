@@ -19,6 +19,7 @@ const ModelStep = () => {
   } = useWizard();
 
   const [saving, setSaving] = useState(false);
+  const saveLockRef = useRef(false);
 
   const [models, setModels] = useState([]);
   const [search, setSearch] = useState('');
