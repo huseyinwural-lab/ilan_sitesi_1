@@ -1899,9 +1899,10 @@ const AdminCategories = () => {
             items.map((item, itemIndex) => {
               const path = [...getParentPathForLevel(levelIndex), itemIndex];
               const isSelected = selectedIndex === itemIndex;
-              const errorKey = `level-${levelIndex}-${itemIndex}`;
+              const errorKey = `level-${path.join("-")}`;
               const nameError = hierarchyFieldErrors[`${errorKey}-name`];
               const slugError = hierarchyFieldErrors[`${errorKey}-slug`];
+              const transactionError = hierarchyFieldErrors[`${errorKey}-transaction`];
               const itemInputsDisabled = item.is_complete || isHierarchyLocked;
               return (
                 <div
