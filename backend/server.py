@@ -3462,8 +3462,21 @@ async def admin_system_health_detail(
         cf_ids_source = "db"
         cf_ids_present = False
 
+    encryption_key_present = bool(os.environ.get("CONFIG_ENCRYPTION_KEY"))
+    cf_metrics_enabled = cloudflare_metrics_service.is_enabled()
+    config_missing_reason = None
+    if not cf_metrics_enabled:
+        config_missing_reason = "cf_metrics_disabled"
+    elif not cf_ids_present:
+        if not encryption_key_present:
+            config_missing_reason = "encryption_key_missing"
+        elif not account_id:
+            config_missing_reason = "account_id_missing"
+        elif not zone_id:
+            config_missing_reason = "zone_id_missing"
+
     cdn_metrics = None
-    if cloudflare_metrics_service.is_enabled():
+    if cf_metrics_enabled:
         if cf_ids_present and os.environ.get("CLOUDFLARE_API_TOKEN"):
             try:
                 credentials = CloudflareCredentials(
