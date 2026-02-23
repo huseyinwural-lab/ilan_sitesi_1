@@ -73,9 +73,7 @@ export default function AdminCategoriesImportExport() {
     if (!validateFile(file)) return;
     setLoading(true);
     setDryRunResult(null);
-    setCommitResult(null);
-    setPublishResult(null);
-    setUpdatePage(1);
+    setApplyResult(null);
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -84,14 +82,11 @@ export default function AdminCategoriesImportExport() {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const detail = await res.json();
-        throw new Error(detail?.detail || 'Dry-run başarısız');
+        throw new Error(data?.detail || 'Dry-run başarısız');
       }
-      const data = await res.json();
       setDryRunResult(data);
-      setShowOnlyChanged(true);
-      setExpandedSlug(null);
       setActiveTab('preview');
     } catch (err) {
       setError(err?.message || 'Dry-run başarısız');
