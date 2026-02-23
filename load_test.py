@@ -151,8 +151,7 @@ async def main():
     print(f"Phase 1 p95 latency: {p95_seq * 1000:.2f} ms" if p95_seq else "Phase 1 p95 latency: n/a")
     _summarize_errors(seq_errors, "Phase 1")
 
-    print("
-Phase 2: 10 parallel users, total 1000 login+me")
+    print("\nPhase 2: 10 parallel users, total 1000 login+me")
     par_latencies, par_errors = await run_parallel(1000, 10)
     p95_par = _percentile(par_latencies, 95)
     print(f"Phase 2 p95 latency: {p95_par * 1000:.2f} ms" if p95_par else "Phase 2 p95 latency: n/a")
