@@ -93,26 +93,26 @@ async def search_real_estate(
     premium_col = ListingSearch.is_premium if use_listings_search else Listing.is_premium
 
     query = select(ListingModel).where(
-        ListingModel.status == 'active',
+        ListingModelisting.status == 'active',
         country_col == country.upper(),
         module_col == 'real_estate' # or 'residential', need to align with Category seed
     )
 
     # Filters
     if city:
-        query = query.where(city_col.ilike(f"%{city}%"))
+        query = query.where(city_colisting.ilike(f"%{city}%"))
     if price_min:
         query = query.where(price_col >= price_min)
     if price_max:
         query = query.where(price_col <= price_max)
     if price_min or price_max:
-        query = query.where(or_(price_type_col == "FIXED", price_type_col.is_(None)))
+        query = query.where(or_(price_type_col == "FIXED", price_type_colisting.is_(None)))
 
     # Sorting
     if sort == "price_asc":
-        query = query.order_by(price_col.asc())
+        query = query.order_by(price_colisting.asc())
     elif sort == "price_desc":
-        query = query.order_by(price_col.desc())
+        query = query.order_by(price_colisting.desc())
     else: # newest
         query = query.order_by(desc(premium_col), desc(created_col))
 
@@ -128,39 +128,39 @@ async def search_real_estate(
     for listing in listings:
         # Extract m2 and rooms from attributes if available
         specs = {}
-        attributes = l.attributes or {}
+        attributes = listing.attributes or {}
         if "m2_gross" in attributes:
             specs["m2"] = attributes["m2_gross"]
         if "room_count" in attributes:
             specs["rooms"] = attributes["room_count"]
 
         badges = []
-        if l.is_premium:
+        if listing.is_premium:
             badges.append("premium")
         if use_listings_search:
-            if (l.seller_type or "") == "commercial":
+            if (listing.seller_type or "") == "commercial":
                 badges.append("commercial")
         else:
-            if l.user_type_snapshot == "commercial":
+            if listing.user_type_snapshot == "commercial":
                 badges.append("commercial")
 
-        price_value = l.price_amount if use_listings_search else l.price
-        currency_value = l.currency or "EUR"
-        price_type_value = l.price_type or "FIXED"
-        location_country = l.country_code if use_listings_search else l.country
-        published_at = l.published_at if use_listings_search else l.created_at
+        price_value = listing.price_amount if use_listings_search else listing.price
+        currency_value = listing.currency or "EUR"
+        price_type_value = listing.price_type or "FIXED"
+        location_country = listing.country_code if use_listings_search else listing.country
+        published_at = listing.published_at if use_listings_search else listing.created_at
 
         data.append(SearchResult(
-            id=str(l.listing_id if use_listings_search else l.id),
-            title=l.title,
+            id=str(listing.listing_id if use_listings_search else listing.id),
+            title=listing.title,
             price=float(price_value) if price_value is not None else None,
             price_type=price_type_value,
             price_amount=float(price_value) if price_value is not None else None,
-            hourly_rate=float(l.hourly_rate) if l.hourly_rate is not None else None,
+            hourly_rate=float(listing.hourly_rate) if listing.hourly_rate is not None else None,
             currency=currency_value,
-            location={"city": l.city, "country": location_country},
+            location={"city": listing.city, "country": location_country},
             specs=specs,
-            image_url=l.images[0] if l.images else None,
+            image_url=listing.images[0] if listing.images else None,
             published_at=published_at.isoformat() if published_at else "",
             badges=badges
         ))
