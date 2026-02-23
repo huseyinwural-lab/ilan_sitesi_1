@@ -319,7 +319,8 @@ const ListingCategorySelect = () => {
     } else {
       setSelectionComplete(true);
       setActiveCategory(category);
-      autoAdvanceRef.current = true;
+      autoAdvanceRef.current = false;
+      handleContinue(category, nextPath, { auto: true });
     }
   };
 
