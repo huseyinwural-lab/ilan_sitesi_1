@@ -296,18 +296,6 @@ async def search_listings(
         }
     }
 
-    duration_ms = (time.perf_counter() - start_ts) * 1000
-    record_slow_query(
-        duration_ms,
-        "search:v2",
-        {
-            "backend": backend_label,
-            "q": q,
-            "category": category_slug,
-            "sort": sort,
-        },
-    )
-    
     # Store in Cache (Background task usually, but here await is fine for now)
     await cache_service.set(cache_key, response, ttl=60)
     
