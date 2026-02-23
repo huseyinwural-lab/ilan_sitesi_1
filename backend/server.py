@@ -14843,19 +14843,51 @@ async def admin_update_system_setting(
 
 
 @api_router.get("/system-settings/effective")
-async def system_settings_effective(request: Request, country: Optional[str] = None):
-    db = request.app.state.db
+async def system_settings_effective(
+    request: Request,
+    country: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
     country_code = country.upper() if country else None
-    global_settings = await db.system_settings.find({"$or": [{"country_code": None}, {"country_code": ""}]}, {"_id": 0}).to_list(length=1000)
+
+    global_query = select(SystemSetting).where(
+        or_(SystemSetting.country_code.is_(None), SystemSetting.country_code == "")
+    )
+    result = await session.execute(global_query)
+    global_settings = result.scalars().all()
+
     country_settings = []
     if country_code:
-        country_settings = await db.system_settings.find({"country_code": country_code}, {"_id": 0}).to_list(length=1000)
+        result = await session.execute(
+            select(SystemSetting).where(SystemSetting.country_code == country_code)
+        )
+        country_settings = result.scalars().all()
 
     merged: Dict[str, dict] = {}
     for item in global_settings:
-        merged[item["key"]] = {**item, "source": "global"}
+        merged[item.key] = {
+            "id": str(item.id),
+            "key": item.key,
+            "value": item.value,
+            "country_code": item.country_code,
+            "is_readonly": item.is_readonly,
+            "description": item.description,
+            "created_at": item.created_at.isoformat() if item.created_at else None,
+            "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+            "source": "global",
+        }
     for item in country_settings:
-        merged[item["key"]] = {**item, "source": "country"}
+        merged[item.key] = {
+            "id": str(item.id),
+            "key": item.key,
+            "value": item.value,
+            "country_code": item.country_code,
+            "is_readonly": item.is_readonly,
+            "description": item.description,
+            "created_at": item.created_at.isoformat() if item.created_at else None,
+            "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+            "source": "country",
+        }
 
     items = sorted(merged.values(), key=lambda x: x.get("key"))
     return {"country_code": country_code, "items": items}
