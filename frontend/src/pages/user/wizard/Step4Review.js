@@ -57,6 +57,7 @@ const ReviewSubmit = () => {
   const makeLabel = basicInfo.make_label || basicInfo.make_key || '-';
   const modelLabel = basicInfo.model_label || basicInfo.model_key || '-';
   const trimLabel = basicInfo.trim_key || '-';
+  const priceTypeLabel = coreFields.price_type === 'HOURLY' ? 'Saatlik Ücret' : 'Fiyat';
 
   const dynamicSummary = useMemo(() => {
     const fields = schema?.dynamic_fields || [];
