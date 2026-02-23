@@ -17268,7 +17268,7 @@ def _empty_dashboard_summary(start_perf: float, can_view_finance: bool, trend_wi
         "activity_24h": {"new_listings": 0, "new_users": 0, "deleted_content": 0},
         "health": {
             "api_status": "ok",
-            "db_status": "mongo_disabled",
+            "db_status": "postgres",
             "api_latency_ms": api_latency_ms,
             "db_latency_ms": None,
             "deployed_at": os.environ.get("DEPLOYED_AT") or "unknown",
