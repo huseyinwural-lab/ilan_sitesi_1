@@ -193,6 +193,7 @@ const ListingCategorySelect = () => {
       setColumns([]);
       setSelectionComplete(false);
       setActiveCategory(null);
+      setLoadingColumn(null);
       autoAdvanceRef.current = false;
       setAutoAdvanceActive(false);
       return;
@@ -202,6 +203,7 @@ const ListingCategorySelect = () => {
     }
     autoAdvanceRef.current = false;
     setAutoAdvanceActive(false);
+    setLoadingColumn(null);
     setSelectedModule(moduleParam);
     setSelectionComplete(false);
     setActiveCategory(null);
