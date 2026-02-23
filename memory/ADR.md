@@ -529,3 +529,35 @@ graph LR
 - (+) Rol karmaşıklığı sınırlı kalır
 - (-) Legacy roller için eşleme yönetimi gerekir
 
+---
+
+## ADR-DATALAYER-001 — SQL Tek Kaynak (Mongo Tasfiye)
+
+**Karar:** Mongo tamamen tasfiye; tüm okuma/yazma SQL üzerinden yapılacak.
+
+**Gerekçe:** 520 kök sebebi Mongo bağımlılığı; operasyonel güvenilirlik için tek veri katmanı.
+
+**Etkileri / trade-off:**
+- (+) Deterministik davranış, bakım maliyeti düşer
+- (-) İlk yatırım maliyeti (şema + migrasyon + refactor)
+
+---
+
+## ADR-DATALAYER-002 — Keskin Cutover (Dual-run yok)
+
+**Karar:** Mongo→SQL geçişte dual-read/write yapılmayacak.
+
+**Gerekçe:** Tutarlılık hatası ve debug maliyeti yüksek.
+
+**Etkileri / trade-off:**
+- (+) Basit ve net sorumluluk
+- (-) Cutover anında dikkat gerektirir
+
+---
+
+## ADR-DATALAYER-003 — P0 Öncelik: Admin 520 Zinciri
+
+**Karar:** İlk dalga: admin system-settings + invite akışları ve bağımlılıkları.
+
+**Gerekçe:** Admin panel stabilizasyonu RBAC/Audit için ön şart.
+
