@@ -20,3 +20,5 @@ Generated at: 2026-02-23T12:27:07.463930Z
 | B08 | 306.34 | 145.15 |
 | B09 | 292.88 | 145.93 |
 | B10 | 291.25 | 145.61 |
+
+> Not: Preview ortamında listing datası olmadığı için ölçümler boş data üzerinde yapıldı.
