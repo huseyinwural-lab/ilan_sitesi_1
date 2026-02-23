@@ -3525,6 +3525,7 @@ async def admin_system_health_detail(
         "last_etl_total": etl_state.get("total"),
         "cdn_metrics": cdn_metrics,
         "cf_ids_present": cf_ids_present,
+        "cf_ids_source": cf_ids_source,
     }
     _system_health_detail_cache.update({"checked_at": now_ts, "data": payload})
     return payload
