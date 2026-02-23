@@ -393,6 +393,19 @@ const AdminCategories = () => {
   };
 
 
+  const fetchItems = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories?country=${selectedCountry}`, {
+        headers: authHeader,
+      });
+      const data = await res.json();
+      setItems(data.items || []);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchVersions = async () => {
     if (!editing?.id) return;
     setVersionsLoading(true);
