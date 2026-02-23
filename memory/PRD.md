@@ -133,7 +133,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - schema_version = v1 kolonlu şablon + root/child örnek satır
 - **Genel “İlan Ver” drill-down (P1 başlangıcı, 2026-02-23):**
   - Modül seçimi + L1..Ln kategori drill-down + arama
-  - Seçilen kategori ile /account/create/listing-wizard başlatma
+  - Son Seçiminiz kartı (breadcrumb + module + ülke)
+  - Vehicle modülü → /account/create/vehicle-wizard, diğerleri → /account/create/listing-wizard
   - Analytics event’leri: step_select_module, step_select_category_Ln
   - /api/analytics/events endpointi audit log ile kayıt
 - Preview/Prod DB fail-fast: CONFIG_MISSING hatası + localhost yasak + DB_SSL_MODE=require
