@@ -10,7 +10,8 @@ import Step6FeaturesMedia from './Step6FeaturesMedia';
 import Step7Review from './Step4Review';
 
 const WizardContent = () => {
-  const { step, loading, editLoading } = useWizard();
+  const { step, loading, editLoading, autosaveStatus, trackWizardEvent } = useWizard();
+  const badgeEventRef = useRef("");
 
   const moduleKey = useMemo(() => localStorage.getItem('ilan_ver_module') || 'vehicle', []);
   const isVehicleModule = moduleKey === 'vehicle';
