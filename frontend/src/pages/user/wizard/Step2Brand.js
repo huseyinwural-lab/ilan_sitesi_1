@@ -22,13 +22,16 @@ const BrandStep = () => {
 
   useEffect(() => {
     const cached = localStorage.getItem(`vehicle_makes_cache_${basicInfo.country}`);
-    if (cached):
-      try:
-        payload = __import__('json').loads(cached)
-        if (Date.now() - payload.get('ts', 0) < CACHE_TTL):
-          setMakes(payload.get('items', []))
-      except Exception:
-        pass
+    if (cached) {
+      try {
+        const payload = JSON.parse(cached);
+        if (Date.now() - payload.ts < CACHE_TTL) {
+          setMakes(payload.items || []);
+        }
+      } catch (err) {
+        console.warn('Makes cache parse failed', err);
+      }
+    }
 
     const fetchMakes = async () => {
       try {
@@ -98,11 +101,11 @@ const BrandStep = () => {
 
     setCompletedSteps((prev) => ({
       ...prev,
-      2: True,
-      3: False,
-      4: False,
-      5: False,
-      6: False,
+      2: true,
+      3: false,
+      4: false,
+      5: false,
+      6: false,
     }));
     setError('');
   };
