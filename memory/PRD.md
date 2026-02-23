@@ -92,7 +92,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **Çekirdek Alanlar fiyat tipi (2026-02-23):**
   - price_type (FIXED/HOURLY) + hourly_rate desteği (backend + frontend)
   - Fiyat/Saatlik Ücret toggle + tek input swap + doğrulama mesajları
-  - Public detay  aramada “{amount} {currency}” / “{rate} {currency} / saat”
+  - Public detay ve aramada “{amount} {currency}” / “{rate} {currency} / saat”
   - Fiyat filtresi yalnız FIXED ilanlara uygulanıyor
 - **Listing wizard altyapı stabilizasyonu (2026-02-23):**
   - /api/catalog/schema draft schema erişimi açıldı (wizard blokları kalktı)
