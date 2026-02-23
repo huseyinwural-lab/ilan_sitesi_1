@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-02-23 — Moderation ETL + Mongo Runtime Cleanup
+
+**Kapsam**
+- Moderation ETL çalıştırıldı (preview); parity raporu güncellendi, Mongo moderation_queue bulunamadı (0/0)
+- Geçici ETL endpointi kaldırıldı; runtime tek DB (Postgres) teyidi
+- Single DB Architecture Confirmed
+
 ## 2026-02-23 — P0 DB 520 Stabilizasyonu Closeout
 
 **Kapsam**
