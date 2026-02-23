@@ -11882,7 +11882,7 @@ async def admin_bulk_approve_listings(
 @api_router.post("/admin/moderation/bulk-reject")
 async def admin_bulk_reject_listings(
     payload: BulkModerationPayload,
-    current_user=Depends(get_current_user),
+    current_user=Depends(check_permissions(list(ALLOWED_MODERATION_ROLES))),
     session: AsyncSession = Depends(get_sql_session),
 ):
     _ensure_moderation_rbac(current_user)
