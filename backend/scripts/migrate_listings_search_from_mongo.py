@@ -180,6 +180,20 @@ def main() -> None:
                 session.commit()
             inserted += len(batch)
 
+    total = inserted + skipped
+    state_payload = {
+        "last_etl_at": datetime.now(timezone.utc).isoformat(),
+        "inserted": inserted,
+        "skipped": skipped,
+        "total": total,
+        "dry_run": args.dry_run,
+    }
+    etl_state_path = Path("/app/memory/SEARCH_ETL_STATE.json")
+    try:
+        etl_state_path.write_text(json.dumps(state_payload, indent=2))
+    except Exception:
+        pass
+
     print(f'Inserted: {inserted}, Skipped: {skipped}, DryRun: {args.dry_run}')
 
 
