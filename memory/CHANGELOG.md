@@ -4,7 +4,8 @@
 
 **Kapsam**
 - Cloudflare Metrics Adapter (feature-flag) + Health panel CDN göstergeleri
-- CDN country breakdown + sparkline + canary status + cf_ids_present
+- CDN country breakdown + sparkline + canary status + cf_ids_present/source
+- Admin System Settings: Cloudflare config kartı + masked input + canary
 - Admin kategori CRUD: modül seçimi + alt tip metadata + parent validation
 - İlan ver kategori fallback mesajı + güvenli CTA
 - UX & Theme Phase prep dokümanları (envanter + risk listesi)
