@@ -3339,9 +3339,13 @@ async def admin_system_health_summary(
 
     last_check_at = datetime.now(timezone.utc)
     db_status = "ok"
+    latency_ms = None
     try:
+        start_ts = time.perf_counter()
         async with sql_engine.connect() as conn:
             await conn.execute(select(1))
+        latency_ms = (time.perf_counter() - start_ts) * 1000
+        _record_db_latency(latency_ms)
         _set_last_db_error(None)
     except Exception as exc:
         db_status = "unreachable"
@@ -3351,6 +3355,7 @@ async def admin_system_health_summary(
     payload = {
         "db_status": db_status,
         "last_check_at": last_check_at.isoformat(),
+        "latency_ms": round(latency_ms, 2) if latency_ms is not None else None,
         "error_count_5m": error_count,
         "error_rate_per_min_5m": error_rate,
         "last_db_error": _last_db_error,
