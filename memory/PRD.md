@@ -184,6 +184,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - p38 migration uygulandı
   - ETL: scripts/migrate_moderation_items_from_mongo.py (reason sanitize + status normalize + UTC)
   - Parity raporu: /app/memory/MODERATION_PARITY_REPORT.md (sample 50)
+  - ETL (admin ops) çalıştırıldı; Mongo moderation_queue bulunamadı (count=0)
   - Admin moderation queue/count SQL artık moderation_items üzerinden
   - Listing submit/request-publish sırasında moderation_item upsert
   - Cutover plan: /app/memory/MODERATION_CUTOVER_PLAN.md
