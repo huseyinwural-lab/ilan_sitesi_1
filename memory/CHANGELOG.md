@@ -39,6 +39,18 @@
 **Not**
 - E2E script trade_in dropdown — test script issue (uygulama bug değil)
 
+## 2026-02-23 — P1.1 Wizard UX Mini İyileştirme
+
+**Kapsam**
+- Autosave toast (Kaydedildi, 2–3 sn)
+- Step mount scroll-to-top (review hariç)
+- Inline error + first invalid scroll
+- Autosave status badge (Kaydedildi • HH:MM / Kaydedilemedi)
+- Analytics: wizard_step_autosave_success / wizard_step_autosave_error / wizard_autosave_badge_rendered
+
+**Test Durumu (Pending)**
+- Playwright blocked due to 520 DB issue (pending re-run)
+
 ## 2026-02-23 — Kategori Import/Export P0 Closeout
 
 **Kapsam**
