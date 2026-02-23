@@ -1228,6 +1228,7 @@ const AdminCategories = () => {
   const canAccessStep = (stepId) => {
     if (stepId === "hierarchy") return true;
     if (stepId === wizardStep) return true;
+    if (isStepDirty(stepId)) return true;
     return isStepCompleted(stepId);
   };
 
