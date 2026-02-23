@@ -10749,3 +10749,181 @@ Comprehensive E2E test for vehicle listing wizard Step3 (Price type) as per revi
 ---
 
 
+
+## Vehicle Wizard Step3 Price Type Persistence Test - RE-TEST AFTER FIXES (Feb 23, 2026 - LATEST) ✅ SUCCESS
+
+### Test Summary
+Re-tested vehicle wizard Step3 price type toggle persistence after backend fixes as per review request: "Re-test frontend E2E for price type toggle (after fixes): 1) Login user@platform.com / User123! 2) Open /account/create/vehicle-wizard?edit=dced1f29-f5db-4945-af52-282df116aeb3 3) Step2: select make=testmake-fb81ee, model=testmodel-ace8d3; Year=2022, KM=12000, Fuel=petrol, Transmission=automatic, Condition=used. 4) Submit to Step3; toggle to Saatlik Ücret, enter 50, click Taslak Kaydet. 5) Refresh, re-run Step2 quickly and verify Step3 persists hourly selection/value. Note: /api/catalog/schema now should return 200 (draft schemas allowed), /api/v2/vehicle/makes now uses SQL fallback."
+
+### Test Flow Executed:
+1. ✅ Login at /login with user@platform.com / User123! → authentication successful
+2. ✅ Navigate to /account/create/vehicle-wizard?edit=dced1f29-f5db-4945-af52-282df116aeb3 → wizard loaded at Step2
+3. ✅ Fill Step2 form → make=testmake-fb81ee, model=testmodel-ace8d3, Year=2022, KM=12000, Fuel=petrol, Transmission=automatic, Condition=used
+4. ✅ Submit to Step3 → navigation successful
+5. ✅ Toggle to "Saatlik Ücret" (HOURLY) → toggle working, HOURLY input visible, FIXED input hidden
+6. ✅ Enter 50 in hourly rate → value entered successfully
+7. ✅ Click "Taslak Kaydet" → draft saved with "Kaydedildi" confirmation
+8. ⚠️ Refresh page → returns to Step2 with empty form fields (Step2 persistence issue)
+9. ✅ Re-fill Step2 and submit → navigation to Step3 successful
+10. ✅ **VERIFY PERSISTENCE** → HOURLY selection and value "50" PERSISTED correctly!
+
+### Critical Findings:
+
+#### ✅ MAIN REQUIREMENT SATISFIED (100% SUCCESS):
+
+**Backend API Fixes Confirmed**: ✅ VERIFIED
+  - **Catalog Schema API**: GET /api/catalog/schema returns 200 OK ✅
+    - Previously: 404 Not Found
+    - Now: 200 OK (draft schemas allowed as mentioned in review note)
+  - **Vehicle Makes API**: GET /api/v2/vehicle/makes returns 200 OK ✅
+    - Previously: 520 Server Error
+    - Now: 200 OK (SQL fallback working as mentioned in review note)
+  - **Draft Save API**: POST /api/v1/listings/vehicle/{id}/draft returns 200 OK ✅
+  - **Draft Load API**: GET /api/v1/listings/vehicle/{id}/draft returns 200 OK ✅
+
+**Price Type Toggle Functionality**: ✅ WORKING PERFECTLY
+  - **Initial State**: FIXED price type selected by default
+  - **After Clicking HOURLY** (data-testid="listing-price-type-hourly"):
+    - HOURLY button active: ✅ (classes: bg-white text-gray-900 shadow-sm)
+    - FIXED button inactive: ✅ (classes: text-gray-500)
+    - HOURLY input visible: ✅ (data-testid="listing-hourly-rate-input")
+    - FIXED input hidden: ✅ (data-testid="listing-price-input" not visible)
+  - **Value Entry**: Hourly rate "50" entered successfully ✅
+  - **UI Feedback**: Toggle visual states working correctly ✅
+
+**Draft Save Functionality**: ✅ WORKING
+  - **Button**: data-testid="listing-pricing-draft" with text "Taslak Kaydet" clickable
+  - **Confirmation**: data-testid="listing-pricing-draft-saved" with text "Kaydedildi" appears after save
+  - **API Call**: POST /api/v1/listings/vehicle/{id}/draft returns 200 OK
+  - **Payload Sent**: Includes core_fields.price with price_type=HOURLY and hourly_rate=50
+
+**🎯 PERSISTENCE VERIFICATION (CRITICAL REQUIREMENT)**: ✅ **WORKING**
+  - **After Page Refresh**:
+    - HOURLY button active: ✅ TRUE (classes: bg-white text-gray-900 shadow-sm)
+    - FIXED button inactive: ✅ TRUE (classes: text-gray-500)
+    - HOURLY input visible: ✅ TRUE
+    - FIXED input hidden: ✅ TRUE
+    - **Hourly rate value**: ✅ **"50" PERSISTED**
+  - **Verification Method**: Checked button classes, input visibility, and input value after refresh + re-navigation to Step3
+  - **Result**: ✅ **COMPLETE SUCCESS** - Price type selection (HOURLY) and value (50) persist correctly after page refresh
+
+#### ⚠️ KNOWN ISSUE (SECONDARY - NOT BLOCKING MAIN REQUIREMENT):
+
+**Step2 Form Persistence**: ❌ NOT WORKING
+  - **Problem**: After page refresh, Step2 form fields are empty (make, model, year, mileage all blank)
+  - **Impact**: Requires re-filling Step2 to navigate back to Step3 for persistence verification
+  - **Note**: This is a DIFFERENT issue from Step3 price type persistence, which IS WORKING
+  - **Review Request Scope**: The review request specifically asked to test Step3 price type persistence, which we successfully verified by re-filling Step2
+  - **Workaround Used**: Re-filled Step2 form after refresh to continue testing (as per review request instruction: "re-run Step2 quickly")
+  - **Status**: Does not block the main requirement - Step3 persistence IS WORKING
+
+### Screenshots Captured:
+
+1. **step2-filled.png**: Step2 form filled with all required values before submitting to Step3
+2. **step3-hourly-filled.png**: Step3 form showing HOURLY price type selected with value "50" entered
+3. **step3-draft-saved.png**: After clicking "Taslak Kaydet", showing "Kaydedildi" confirmation message
+4. **step3-after-refresh-persistence.png**: **CRITICAL SCREENSHOT** - After page refresh and re-navigation to Step3, showing HOURLY selection and value "50" persisted correctly
+
+### Backend API Logs Verification:
+
+**API Calls During Test** (from /var/log/supervisor/backend.out.log):
+```
+✅ GET /api/catalog/schema?category_id=e5126eee-9e29-46df-9a6f-af6dba17511e&country=DE → 200 OK
+✅ GET /api/v2/vehicle/makes?country=DE → 200 OK
+✅ GET /api/v2/vehicle/models?country=DE&make_key=testmake-fb81ee → 200 OK
+✅ POST /api/v1/listings/vehicle/dced1f29-f5db-4945-af52-282df116aeb3/draft → 200 OK
+✅ GET /api/v1/listings/vehicle/dced1f29-f5db-4945-af52-282df116aeb3/draft → 200 OK (after refresh)
+```
+
+**Confirmation**:
+- All backend APIs mentioned in review note are now working (200 OK status)
+- Draft save and load successfully persisting Step3 data
+- No 520 or 404 errors during test execution
+
+### Test Results Summary:
+- **Test Success Rate**: ✅ **100%** (main requirement satisfied)
+- **Login**: ✅ WORKING (user@platform.com / User123!)
+- **Wizard Load with Edit**: ✅ WORKING
+- **Backend API Fixes**: ✅ CONFIRMED (catalog/schema 200, vehicle/makes 200)
+- **Step2 Form Fill**: ✅ WORKING
+- **Navigation to Step3**: ✅ WORKING
+- **Price Type Toggle**: ✅ WORKING (HOURLY shows input, FIXED hides) **✅ CRITICAL REQUIREMENT MET**
+- **Hourly Rate Entry**: ✅ WORKING (value "50" entered)
+- **Draft Save**: ✅ WORKING (confirmation shown, API returns 200)
+- **Persistence After Refresh**: ✅ **WORKING** (HOURLY selection + value "50" persist correctly) **✅ CRITICAL REQUIREMENT MET**
+- **Step2 Persistence**: ⚠️ NOT WORKING (secondary issue, does not block main requirement)
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE SUCCESS** - Step3 price type toggle persistence working perfectly
+- **Main Requirement**: ✅ **PRODUCTION READY** - Price type (HOURLY) and value (50) persist after refresh
+- **Backend Fixes**: ✅ **VERIFIED** - All API endpoints working as expected
+- **Price Type Toggle UI**: ✅ **WORKING** - Toggle behavior correct, proper input visibility
+- **Draft Save/Load**: ✅ **WORKING** - Data persisted and loaded correctly
+- **Known Issue**: ⚠️ Step2 form persistence needs fixing (separate issue from Step3 persistence)
+
+### Code Implementation Verification:
+
+**Frontend - Step3PricingLocation.js**:
+- Price type toggle: Lines 214-236 (data-testid="listing-price-type-toggle")
+- FIXED button: Lines 216-224 (data-testid="listing-price-type-fixed")
+- HOURLY button: Lines 226-234 (data-testid="listing-price-type-hourly")
+- Conditional input rendering: Lines 238-259
+  - Line 246: `value={priceType === 'FIXED' ? coreFields.price_display : coreFields.hourly_display}`
+  - Line 251: `data-testid={priceType === 'FIXED' ? 'listing-price-input' : 'listing-hourly-rate-input'}`
+- Draft save handler: Lines 137-156 (handleSaveDraft function)
+  - Line 143: `price_type: priceType` (saved to backend)
+  - Line 145: `hourly_rate: priceType === 'HOURLY' && coreFields.hourly_rate ? Number(coreFields.hourly_rate) : null`
+
+**Frontend - WizardContext.js**:
+- Draft save function: Lines 240-254 (saveDraft)
+  - Sends POST to `/api/v1/listings/vehicle/{draftId}/draft`
+- Draft load function: Lines 169-192 (useEffect for editListingId)
+  - Fetches GET from `/api/v1/listings/vehicle/{editListingId}/draft`
+  - Calls hydrateFromListing to populate state
+- Hydration function: Lines 106-167 (hydrateFromListing)
+  - Lines 125-141: Loads price data including price_type and hourly_rate
+  - Line 126: `const priceType = String(priceData.price_type || listing.price_type || 'FIXED').toUpperCase()`
+  - Lines 135-136: `hourly_rate` and `hourly_display` set correctly for HOURLY price type
+
+**Backend - Draft Save/Load Endpoints**:
+- POST `/api/v1/listings/vehicle/{id}/draft` → Saves core_fields.price.price_type and hourly_rate to database
+- GET `/api/v1/listings/vehicle/{id}/draft` → Returns listing with price object including price_type and hourly_rate
+- Both endpoints return 200 OK status as verified in logs
+
+### Test Execution Details:
+
+**Test Environment**:
+- Frontend URL: https://kategori-kurulum.preview.emergentagent.com
+- Browser: Chromium (Playwright)
+- Viewport: 1920x1080 (Desktop)
+- User: user@platform.com / User123!
+- Listing ID: dced1f29-f5db-4945-af52-282df116aeb3
+
+**Test Steps Detailed**:
+1. Login → Redirected to /account ✅
+2. Navigate to wizard with edit param → Loaded at Step2 ✅
+3. Check if make/model options exist → Found testmake-fb81ee and testmodel-ace8d3 (API working) ✅
+4. Fill Step2 form (7 fields) → All filled successfully ✅
+5. Submit Step2 → Navigated to Step3 ✅
+6. Check initial price type → FIXED selected by default ✅
+7. Click HOURLY button → Input visibility toggled correctly ✅
+8. Enter value "50" → Value entered and displayed ✅
+9. Click "Taslak Kaydet" → "Kaydedildi" confirmation shown ✅
+10. Refresh page → Returned to Step2 (wizard starts from Step2 in edit mode) ⚠️
+11. Re-fill Step2 (as Step2 persistence issue exists) → Form filled ⚠️
+12. Re-submit Step2 → Navigated to Step3 again ✅
+13. **CHECK PERSISTENCE**:
+    - HOURLY button has active classes (bg-white, shadow-sm) ✅
+    - HOURLY input is visible ✅
+    - HOURLY input value is "50" ✅
+    - FIXED input is hidden ✅
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 23, 2026 (LATEST RE-TEST)
+- **Message**: Vehicle Wizard Step3 price type persistence re-test SUCCESSFULLY COMPLETED after backend fixes with 100% PASS on main requirement. ✅ BACKEND FIXES VERIFIED: /api/catalog/schema now returns 200 OK (draft schemas allowed), /api/v2/vehicle/makes now returns 200 OK (SQL fallback working), both APIs working as mentioned in review note. ✅ MAIN REQUIREMENT SATISFIED: Price type toggle to "Saatlik Ücret" (HOURLY) works perfectly - clicking HOURLY button correctly shows hourly rate input and hides fixed price input. Value "50" entered successfully. Draft save works with "Kaydedildi" confirmation. **CRITICAL SUCCESS: After page refresh and re-navigating to Step3, HOURLY price type selection PERSISTED (button has active classes: bg-white, shadow-sm), HOURLY input visible, and hourly rate value "50" PERSISTED correctly.** Verified by checking button classes, input visibility, and input value after refresh. All 4 screenshots captured showing the full flow including persistence verification. ⚠️ KNOWN ISSUE (SECONDARY): Step2 form fields empty after refresh (make, model, year, mileage all blank), requiring re-fill to navigate back to Step3. This is a DIFFERENT issue from Step3 persistence which IS WORKING. Per review request instruction to "re-run Step2 quickly", we re-filled Step2 to verify Step3 persistence. Main requirement (Step3 price type persistence) is PRODUCTION READY and fully functional. Step2 persistence is a separate issue that doesn't block the core requirement.
+
+---
+
+
+
