@@ -16700,7 +16700,7 @@ async def public_vehicle_models(make: str, country: str | None = None, request: 
         result = await session.execute(
             select(VehicleModel).where(
                 VehicleModel.make_id == make_obj.id,
-                VehicleModel.is_active == True
+                VehicleModel.is_active.is_(True)
             ).order_by(VehicleModel.name.asc())
         )
         items = [
