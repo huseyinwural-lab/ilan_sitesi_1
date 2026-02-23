@@ -104,31 +104,19 @@ class CloudflareMetricsAdapter:
 
     def _build_latency_query(self, cache_state: Optional[str]) -> str:
         since, until = _last_hour_window()
-        cached_filter = f", responseCached: "{cache_state}"" if cache_state else ""
-        return (
-            "query {
-"
-            "  viewer {
-"
-            f"    zones(filter: {{ zoneTag: "{self.credentials.zone_id}" }}) {{
-"
-            "      httpRequests1hGroups(limit: 1, filter: {"
-            f"datetime_geq: "{since}", datetime_lt: "{until}", "
-            "contentTypeMap_edgeResponseContentTypeName: "image"" + cached_filter + "}) {
-"
-            "        quantiles { edgeTimeToFirstByteMsP95 }
-"
-            "        avg { edgeTimeToFirstByteMs }
-"
-            "      }
-"
-            "    }
-"
-            "  }
-"
-            "}
-"
-        )
+        cached_filter = f', responseCached: "{cache_state}"' if cache_state else ''
+        return f"""
+        query {{
+          viewer {{
+            zones(filter: {{ zoneTag: "{self.credentials.zone_id}" }}) {{
+              httpRequests1hGroups(limit: 1, filter: {{ datetime_geq: "{since}", datetime_lt: "{until}", contentTypeMap_edgeResponseContentTypeName: "image"{cached_filter} }}) {{
+                quantiles {{ edgeTimeToFirstByteMsP95 }}
+                avg {{ edgeTimeToFirstByteMs }}
+              }}
+            }}
+          }}
+        }}
+        """.strip()
 
 
 class CloudflareMetricsService:
