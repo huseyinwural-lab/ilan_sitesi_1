@@ -241,10 +241,12 @@ def main() -> None:
                 batch = []
                 continue
             with SessionLocal() as session:
+                session.execute(insert_listing_sql, listing_batch)
                 session.bulk_save_objects(batch)
                 session.commit()
             inserted += len(batch)
             batch = []
+            listing_batch = []
 
     if batch:
         if args.dry_run:
