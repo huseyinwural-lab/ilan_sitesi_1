@@ -122,6 +122,8 @@ load_dotenv(ROOT_DIR / ".env")
 load_dotenv(ROOT_DIR / ".env.local", override=False)
 
 SUPPORTED_COUNTRIES = {"DE", "CH", "FR", "AT"}
+CATEGORY_MODULE_OPTIONS = {"vehicle", "real_estate", "machinery", "services", "jobs"}
+TRANSACTION_TYPE_OPTIONS = {"satilik", "kiralik", "gunluk"}
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 CATEGORY_IMPORT_MAX_BYTES = 10 * 1024 * 1024
 ATTRIBUTE_KEY_PATTERN = re.compile(r"^[a-z0-9_]+$")
