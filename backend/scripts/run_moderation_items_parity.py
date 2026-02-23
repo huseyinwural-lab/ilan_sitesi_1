@@ -40,6 +40,36 @@ def _sanitize_reason(value: Optional[str]) -> Optional[str]:
     return cleaned or None
 
 
+def _parse_datetime(value: Any) -> Optional[datetime]:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    if isinstance(value, (int, float)):
+        return datetime.fromtimestamp(value, tz=timezone.utc)
+    if isinstance(value, dict) and "$date" in value:
+        return _parse_datetime(value.get("$date"))
+    if isinstance(value, str):
+        cleaned = value.strip()
+        if not cleaned:
+            return None
+        try:
+            cleaned = cleaned.replace("Z", "+00:00")
+            parsed = datetime.fromisoformat(cleaned)
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    return None
+
+
+def _normalize_dt(value: Any) -> Optional[str]:
+    parsed = _parse_datetime(value)
+    if not parsed:
+        return None
+    normalized = parsed.astimezone(timezone.utc).replace(microsecond=0)
+    return normalized.isoformat()
+
+
 if not DATABASE_URL:
     raise RuntimeError('DATABASE_URL missing for moderation parity')
 
