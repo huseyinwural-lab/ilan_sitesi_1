@@ -3429,6 +3429,24 @@ async def admin_system_health_detail(
         moderation_sla_pending = 0
 
     endpoint_stats = get_endpoint_stats()
+    cdn_metrics = None
+    try:
+        cdn_metrics = await cloudflare_metrics_service.get_metrics()
+    except CloudflareMetricsError as exc:
+        cdn_metrics = {
+            "enabled": True,
+            "status": "error",
+            "error_code": exc.code,
+            "message": str(exc),
+        }
+    except Exception as exc:
+        cdn_metrics = {
+            "enabled": True,
+            "status": "error",
+            "error_code": "cloudflare_runtime_error",
+            "message": str(exc),
+        }
+
     payload = {
         "db_status": db_status,
         "last_check_at": last_check_at.isoformat(),
@@ -3448,6 +3466,7 @@ async def admin_system_health_detail(
         "last_etl_inserted": etl_state.get("inserted"),
         "last_etl_skipped": etl_state.get("skipped"),
         "last_etl_total": etl_state.get("total"),
+        "cdn_metrics": cdn_metrics,
     }
     _system_health_detail_cache.update({"checked_at": now_ts, "data": payload})
     return payload
