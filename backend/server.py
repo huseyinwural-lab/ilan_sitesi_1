@@ -45,6 +45,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy import select, func, String, Text, DateTime, ForeignKey, desc, and_, or_, update, text, cast, event
 from sqlalchemy.orm import Mapped, mapped_column, selectinload
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.dialects.postgresql.asyncpg import AsyncAdapt_asyncpg_dbapi
 import html
 
 from app.core.config import settings
