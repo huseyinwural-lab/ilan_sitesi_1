@@ -335,6 +335,17 @@ export default function AdminSystemSettingsPage() {
           </div>
         </div>
 
+        <div
+          className={`rounded-md border px-3 py-2 text-xs ${statusToneClass[statusInfo.tone]}`}
+          data-testid="system-settings-cloudflare-status"
+          title={statusInfo.tooltip}
+        >
+          <div className="font-semibold" data-testid="system-settings-cloudflare-status-title">Durum: {statusInfo.title}</div>
+          {statusInfo.subtitle && (
+            <div className="text-[11px]" data-testid="system-settings-cloudflare-status-subtitle">{statusInfo.subtitle}</div>
+          )}
+        </div>
+
         {cloudflareLoading ? (
           <div className="text-xs text-muted-foreground" data-testid="system-settings-cloudflare-loading">Yükleniyor…</div>
         ) : (
