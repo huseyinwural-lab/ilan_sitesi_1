@@ -1603,6 +1603,7 @@ const AdminCategories = () => {
             name,
             slug,
             country_code: country,
+            module: moduleValue,
             active_flag: form.active_flag,
             sort_order: Number(form.sort_order || 0),
             hierarchy_complete: true,
