@@ -396,7 +396,8 @@ export default function AdminSystemSettingsPage() {
               <button
                 onClick={handleCloudflareCanary}
                 className="h-9 px-3 rounded-md border text-sm"
-                disabled={!isSuperAdmin || canaryLoading}
+                disabled={!isSuperAdmin || canaryLoading || !encryptionKeyPresent}
+                title={!encryptionKeyPresent ? 'Önce güvenlik anahtarı tanımlanmalı.' : undefined}
                 data-testid="system-settings-cloudflare-canary"
               >
                 {canaryLoading ? 'Test Ediliyor…' : 'Test Connection (Canary)'}
