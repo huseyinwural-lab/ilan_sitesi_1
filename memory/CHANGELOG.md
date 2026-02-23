@@ -39,20 +39,6 @@
 **Not**
 - E2E script trade_in dropdown — test script issue (uygulama bug değil)
 
-
-**Kapsam**
-- user_recent_categories tablosu + upsert + GET endpoint
-- “Son Seçiminiz” kartı (module + ülke + breadcrumb + tek tıkla devam)
-- Dirty CTA (Sıradaki eksik adımı tamamla) + admin analytics eventleri
-- Premium araç wizard akışı: Make/Model/Year gating + Next auto-save + E2E publish
-
-**Kanıt Referansları**
-- Recent card: `/app/screenshots/recent-card.png`
-- Dirty CTA: `/app/screenshots/admin-dirty-cta.png`
-- Vehicle wizard review/publish:
-  - `/app/screenshots/vehicle-wizard-review.png`
-  - `/app/screenshots/vehicle-wizard-published.png`
-
 ## 2026-02-23 — Kategori Import/Export P0 Closeout
 
 **Kapsam**
