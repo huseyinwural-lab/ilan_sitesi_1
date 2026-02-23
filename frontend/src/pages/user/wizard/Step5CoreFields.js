@@ -176,7 +176,7 @@ const CoreFieldsStep = () => {
       ...vehicleAttributes,
     };
 
-    const ok = await saveDraft({
+    const result = await saveDraft({
       core_fields: {
         title: title.trim(),
         description: description.trim(),
@@ -194,12 +194,12 @@ const CoreFieldsStep = () => {
       modules: moduleData,
     });
 
-    if (!ok) {
+    if (!result?.ok) {
       setErrors((prev) => ({ ...prev, submit: 'Kaydetme başarısız.' }));
       scrollToFirstError();
       setSaving(false);
       saveLockRef.current = false;
-      return false;
+      return { ok: false };
     }
 
     setCoreFields((prev) => ({
