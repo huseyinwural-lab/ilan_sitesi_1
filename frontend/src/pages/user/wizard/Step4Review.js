@@ -94,7 +94,11 @@ const ReviewSubmit = () => {
               ['KM', basicInfo.mileage_km],
               ['Yakıt', basicInfo.fuel_type],
               ['Vites', basicInfo.transmission],
-              ['Kondisyon', basicInfo.condition],
+              ['Çekiş', basicInfo.drive_type],
+              ['Kasa', basicInfo.body_type],
+              ['Renk', basicInfo.color],
+              ['Hasar', basicInfo.damage_status],
+              ['Takas', basicInfo.trade_in === true ? 'Var' : basicInfo.trade_in === false ? 'Yok' : '-'],
             ].map(([key, val]) => (
               <div key={key} data-testid={`wizard-review-spec-${key}`}>
                 <span className="text-gray-500 text-sm">{key}:</span>
