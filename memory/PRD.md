@@ -115,6 +115,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Yıl dropdown (2010–2026) + opsiyonel Versiyon/Donanım metin alanı
   - Make/Model/Year Next autosave + “Kaydedildi” toast + step değişiminde scroll-to-top (preview hariç)
   - Autosave analytics eventleri: wizard_step_autosave_success / wizard_step_autosave_error
+  - Yıl adımı model seçilmeden kilitli + state sync
   - Oto çekirdek alanları: km, yakıt, vites, çekiş, kasa, motor cc/hp, hasar, takas, konum + fiyat tipi entegrasyonu
   - Özellikler/Medya: min 3 foto + kapak + sıralama, review’da galeri özeti
   - Önizleme: marka/model/yıl, fiyat tipi, motor, konum, özellik özetleri
