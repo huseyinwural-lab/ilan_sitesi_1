@@ -95,14 +95,15 @@ export default function AdminCategoriesImportExport() {
     }
   };
 
-  const runCommit = async () => {
+  const runApply = async () => {
     setError('');
     if (!dryRunResult?.dry_run_hash) {
-      setError('Commit için önce dry-run çalıştırılmalı.');
+      setError('Önce dry-run çalıştırın.');
       return;
     }
     if (!validateFile(file)) return;
     setLoading(true);
+    setApplyResult(null);
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -114,15 +115,13 @@ export default function AdminCategoriesImportExport() {
           body: formData,
         }
       );
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const detail = await res.json();
-        throw new Error(detail?.detail || 'Commit başarısız');
+        throw new Error(data?.detail || 'Import başarısız');
       }
-      const data = await res.json();
-      setCommitResult(data);
-      setActiveTab('publish');
+      setApplyResult(data);
     } catch (err) {
-      setError(err?.message || 'Commit başarısız');
+      setError(err?.message || 'Import başarısız');
     } finally {
       setLoading(false);
     }
