@@ -14373,6 +14373,12 @@ async def admin_update_cloudflare_config(
 
     await update_canary_status(session, canary_status, current_user.get("id"))
 
+    logger = logging.getLogger("cloudflare_config")
+    logger.info(
+        "cloudflare_canary_result",
+        extra={"status": canary_status, "reason": canary_reason, "admin_id": current_user.get("id"), "request_id": _get_request_id(request)},
+    )
+
     return {
         "ok": True,
         "canary_status": canary_status,
