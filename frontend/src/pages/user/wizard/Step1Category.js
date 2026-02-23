@@ -153,6 +153,10 @@ const CategorySelector = () => {
         <div className="text-sm text-red-600" data-testid="category-error">{error}</div>
       )}
 
+      {schemaNotice && (
+        <div className="text-sm text-amber-600" data-testid="category-schema-notice">{schemaNotice}</div>
+      )}
+
       <div className="flex items-center justify-end gap-3" data-testid="category-actions">
         <div title={nextDisabled ? 'Önce bu adımı tamamlayın.' : ''} data-testid="category-next-tooltip">
           <button
