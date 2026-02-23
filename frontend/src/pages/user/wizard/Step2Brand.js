@@ -135,14 +135,44 @@ const BrandStep = () => {
   };
 
   const handleNext = async () => {
+    if (saving) return;
     if (!selectedMake) {
       setError('Lütfen marka seçin.');
+      scrollToError();
+      await trackWizardEvent('wizard_step_autosave_error', {
+        step_id: 'brand',
+        category_id: basicInfo.category_id,
+        module: basicInfo.module || 'vehicle',
+        country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
+        reason: 'missing_make',
+      });
       return;
     }
     if (!completedSteps[2]) {
       const ok = await handleComplete();
-      if (!ok) return;
+      if (!ok) {
+        await trackWizardEvent('wizard_step_autosave_error', {
+          step_id: 'brand',
+          category_id: basicInfo.category_id,
+          module: basicInfo.module || 'vehicle',
+          country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
+          reason: 'save_failed',
+        });
+        return;
+      }
     }
+    await trackWizardEvent('wizard_step_autosave_success', {
+      step_id: 'brand',
+      category_id: basicInfo.category_id,
+      module: basicInfo.module || 'vehicle',
+      country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
+    });
+    toast({
+      title: 'Kaydedildi',
+      duration: 2500,
+      dismissible: false,
+      'data-testid': 'wizard-autosave-toast',
+    });
     setStep(3);
   };
 
