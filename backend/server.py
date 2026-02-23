@@ -14188,6 +14188,25 @@ async def admin_update_category(
                 if translation.language in {"tr", "en", "de"}:
                     translation.name = updates["name"]
 
+    if payload.wizard_edit_event:
+        role = current_user.get("role")
+        if role not in {"super_admin", "country_admin"}:
+            raise HTTPException(status_code=403, detail="Edit unlock yetkisi yok")
+        event_meta = dict(payload.wizard_edit_event or {})
+        event_meta["category_id"] = str(category.id)
+        event_type = "categories.wizard.unlock"
+        if event_meta.get("action") == "save":
+            event_type = "categories.wizard.edit"
+        await _write_audit_log_sql(
+            session,
+            event_type,
+            current_user,
+            "category_wizard",
+            str(category.id),
+            event_meta,
+            request,
+        )
+
     await session.commit()
 
     if schema:
