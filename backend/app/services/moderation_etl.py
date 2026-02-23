@@ -348,9 +348,7 @@ def generate_moderation_parity_report(
         lines.append("> Not: moderation_queue koleksiyonu boş.")
 
     report_path = Path("/app/memory/MODERATION_PARITY_REPORT.md")
-    report_path.write_text("
-".join(lines) + "
-")
+    report_path.write_text("\n".join(lines) + "\n")
 
     return {
         "mongo_count": mongo_count,
