@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const MODULE_OPTIONS = [
   { key: 'vehicle', label: 'Vasıta' },
@@ -12,6 +12,7 @@ const MODULE_OPTIONS = [
 
 const ListingCategorySelect = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [columns, setColumns] = useState([]);
   const [selectedPath, setSelectedPath] = useState([]);
   const [loadingColumn, setLoadingColumn] = useState(null);
@@ -26,6 +27,8 @@ const ListingCategorySelect = () => {
   const [recentCategory, setRecentCategory] = useState(null);
   const [recentLoading, setRecentLoading] = useState(true);
   const [recentError, setRecentError] = useState('');
+  const [autoAdvanceActive, setAutoAdvanceActive] = useState(false);
+  const autoAdvanceRef = useRef(false);
 
   const country = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
@@ -102,6 +105,13 @@ const ListingCategorySelect = () => {
     }
   }, [country]);
 
+  const updateUrlState = useCallback((moduleKey, pathIds = []) => {
+    const params = new URLSearchParams();
+    if (moduleKey) params.set('module', moduleKey);
+    if (pathIds.length) params.set('path', pathIds.join(','));
+    setSearchParams(params);
+  }, [setSearchParams]);
+
   const fetchChildren = useCallback(async (parentId, moduleKey) => {
     if (!moduleKey) return [];
     const params = new URLSearchParams({ country, module: moduleKey });
@@ -112,8 +122,8 @@ const ListingCategorySelect = () => {
     return data || [];
   }, [country]);
 
-  const loadRootCategories = useCallback(async () => {
-    if (!selectedModule) {
+  const loadRootCategories = useCallback(async (moduleKey) => {
+    if (!moduleKey) {
       setColumns([]);
       setPageLoading(false);
       return;
@@ -121,18 +131,83 @@ const ListingCategorySelect = () => {
     setPageLoading(true);
     setError('');
     try {
-      const roots = await fetchChildren(null, selectedModule);
+      const roots = await fetchChildren(null, moduleKey);
       setColumns([{ parentId: null, items: roots, selectedId: null }]);
     } catch (err) {
       setError('Kategoriler yüklenemedi.');
     } finally {
       setPageLoading(false);
     }
-  }, [fetchChildren, selectedModule]);
+  }, [fetchChildren]);
+
+  const hydratePathFromIds = useCallback(async (pathIds, moduleKey) => {
+    if (!moduleKey || pathIds.length === 0) return;
+    setPageLoading(true);
+    setError('');
+    try {
+      const nextColumns = [];
+      const nextPath = [];
+      let parentId = null;
+      for (let index = 0; index < pathIds.length; index += 1) {
+        const items = await fetchChildren(parentId, moduleKey);
+        if (!items.length) break;
+        const match = items.find((item) => item.id === pathIds[index]);
+        if (!match) break;
+        nextColumns.push({ parentId, items, selectedId: match.id });
+        nextPath.push(match);
+        parentId = match.id;
+      }
+      if (nextPath.length === 0) {
+        await loadRootCategories(moduleKey);
+        return;
+      }
+      const children = await fetchChildren(parentId, moduleKey);
+      if (children.length > 0) {
+        nextColumns.push({ parentId, items: children, selectedId: null });
+      }
+      setColumns(nextColumns);
+      setSelectedPath(nextPath);
+      setSelectionComplete(children.length === 0);
+      setActiveCategory(children.length === 0 ? nextPath[nextPath.length - 1] : null);
+    } catch (err) {
+      setError('Kategori yolu yüklenemedi.');
+    } finally {
+      setPageLoading(false);
+    }
+  }, [fetchChildren, loadRootCategories]);
 
   useEffect(() => {
-    loadRootCategories();
-  }, [loadRootCategories]);
+    const moduleParam = searchParams.get('module') || '';
+    const pathParam = searchParams.get('path') || '';
+    const pathIds = pathParam ? pathParam.split(',').filter(Boolean) : [];
+    const selectedPathKey = selectedPath.map((item) => item.id).join(',');
+    if (!moduleParam) {
+      setSelectedModule('');
+      setSelectedPath([]);
+      setColumns([]);
+      setSelectionComplete(false);
+      setActiveCategory(null);
+      autoAdvanceRef.current = false;
+      setAutoAdvanceActive(false);
+      return;
+    }
+    if (moduleParam === selectedModule && selectedPathKey === pathParam) {
+      return;
+    }
+    autoAdvanceRef.current = false;
+    setAutoAdvanceActive(false);
+    setSelectedModule(moduleParam);
+    setSelectionComplete(false);
+    setActiveCategory(null);
+    setSearchTerm('');
+    setSearchResults([]);
+    if (pathIds.length > 0) {
+      hydratePathFromIds(pathIds, moduleParam);
+    } else {
+      setSelectedPath([]);
+      loadRootCategories(moduleParam);
+    }
+  }, [hydratePathFromIds, loadRootCategories, searchParams, selectedModule, selectedPath]);
 
   const fetchRecentCategory = useCallback(async () => {
     setRecentLoading(true);
@@ -191,6 +266,8 @@ const ListingCategorySelect = () => {
   }, [moduleLabelByKey, recentCategory]);
 
   const handleSelectModule = (moduleKey) => {
+    autoAdvanceRef.current = false;
+    setAutoAdvanceActive(false);
     setSelectedModule(moduleKey);
     setColumns([]);
     setSelectedPath([]);
@@ -198,11 +275,14 @@ const ListingCategorySelect = () => {
     setActiveCategory(null);
     setSearchTerm('');
     setSearchResults([]);
+    updateUrlState(moduleKey, []);
     trackEvent('step_select_module', { module: moduleKey });
   };
 
   const handleSelectCategory = async (columnIndex, category) => {
     setError('');
+    autoAdvanceRef.current = false;
+    setAutoAdvanceActive(false);
     const nextPath = [...selectedPath.slice(0, columnIndex), category];
     const trimmedColumns = columns.slice(0, columnIndex + 1).map((col, idx) => ({
       ...col,
@@ -212,6 +292,9 @@ const ListingCategorySelect = () => {
     setSelectionComplete(false);
     setActiveCategory(null);
     setColumns(trimmedColumns);
+
+    const nextPathIds = nextPath.map((item) => item.id);
+    updateUrlState(selectedModule, nextPathIds);
 
     trackEvent(`step_select_category_L${columnIndex + 1}`, {
       module: selectedModule,
@@ -230,26 +313,16 @@ const ListingCategorySelect = () => {
     } else {
       setSelectionComplete(true);
       setActiveCategory(category);
+      autoAdvanceRef.current = true;
     }
   };
 
   const hydratePathFromSearch = async (path) => {
     if (!path || path.length === 0) return;
-    const nextColumns = [];
-    let parentId = null;
-    for (let index = 0; index < path.length; index += 1) {
-      const items = await fetchChildren(parentId, selectedModule);
-      nextColumns.push({ parentId, items, selectedId: path[index].id });
-      parentId = path[index].id;
-    }
-    const children = await fetchChildren(parentId, selectedModule);
-    if (children.length > 0) {
-      nextColumns.push({ parentId, items: children, selectedId: null });
-    }
-    setColumns(nextColumns);
-    setSelectedPath(path);
-    setSelectionComplete(children.length === 0);
-    setActiveCategory(children.length === 0 ? path[path.length - 1] : null);
+    const pathIds = path.map((entry) => entry.id).filter(Boolean);
+    updateUrlState(selectedModule, pathIds);
+    await hydratePathFromIds(pathIds, selectedModule);
+    autoAdvanceRef.current = true;
   };
 
   useEffect(() => {
@@ -353,32 +426,56 @@ const ListingCategorySelect = () => {
     }
   }, [country, persistRecentToStorage]);
 
-  const handleContinue = async () => {
-    if (!activeCategory || !selectedModule) return;
-    const nextPath = selectedPath.length ? selectedPath : [activeCategory];
+  const handleContinue = useCallback(async (categoryOverride, pathOverride, options = {}) => {
+    const { auto = false } = options;
+    const category = categoryOverride || activeCategory;
+    const path = pathOverride && pathOverride.length ? pathOverride : selectedPath.length ? selectedPath : [category].filter(Boolean);
+    if (!category || !selectedModule) return;
+    if (auto) {
+      setAutoAdvanceActive(true);
+    }
     const localRecent = {
-      category: activeCategory,
+      category,
       module: selectedModule,
       country,
-      path: nextPath,
+      path,
     };
     persistRecentToStorage(localRecent);
-    persistWizardSelection(activeCategory, nextPath, selectedModule, selectedModuleLabel || selectedModule);
-    await saveRecentCategory(activeCategory, nextPath, selectedModule);
+    persistWizardSelection(category, path, selectedModule, selectedModuleLabel || selectedModule);
+    localStorage.setItem('ilan_ver_force_core_step', 'true');
+    await saveRecentCategory(category, path, selectedModule);
     const targetRoute = selectedModule === 'vehicle' ? '/account/create/vehicle-wizard' : '/account/create/listing-wizard';
     navigate(targetRoute);
-  };
+  }, [activeCategory, country, navigate, persistRecentToStorage, persistWizardSelection, saveRecentCategory, selectedModule, selectedModuleLabel, selectedPath]);
+
+  useEffect(() => {
+    if (selectionComplete && activeCategory && autoAdvanceRef.current) {
+      autoAdvanceRef.current = false;
+      handleContinue(activeCategory, selectedPath, { auto: true });
+    }
+    if (!selectionComplete) {
+      setAutoAdvanceActive(false);
+    }
+  }, [activeCategory, handleContinue, selectedPath, selectionComplete]);
 
   const handleRecentContinue = () => {
     if (!recentCategory?.category?.id) return;
     const moduleKey = recentCategory.module;
     const path = recentCategory.path || [];
     persistWizardSelection(recentCategory.category, path, moduleKey, moduleLabelByKey(moduleKey));
+    localStorage.setItem('ilan_ver_force_core_step', 'true');
     if (recentCategory.country) {
       localStorage.setItem('selected_country', recentCategory.country);
     }
     const targetRoute = moduleKey === 'vehicle' ? '/account/create/vehicle-wizard' : '/account/create/listing-wizard';
     navigate(targetRoute);
+  };
+
+  const columnTitle = (columnIndex) => {
+    if (columnIndex === 0) return 'Kategori 1 (L1)';
+    if (columnIndex === 1) return 'Kategori 2 (L2)';
+    if (columnIndex === 2) return 'Kategori 3 (L3)';
+    return 'Alt Tip Seçimi';
   };
 
   return (
@@ -387,7 +484,7 @@ const ListingCategorySelect = () => {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900" data-testid="ilan-ver-title">Adım Adım Kategori Seç</h1>
           <p className="text-sm text-slate-600" data-testid="ilan-ver-subtitle">
-            Önce modül seçin, ardından kategoriyi adım adım seçin.
+            Modül → L1 → L2/L3 → Alt tip sırasıyla ilerleyin.
           </p>
         </div>
         <div className="rounded-full bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700" data-testid="ilan-ver-step-label">
@@ -478,8 +575,8 @@ const ListingCategorySelect = () => {
       <div className="rounded-xl border bg-white p-4" data-testid="ilan-ver-columns-wrapper">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-semibold text-slate-900">Kategori Sütunları</div>
-            <div className="text-xs text-slate-500">Seçtikçe yeni sütunlar sağa açılır.</div>
+            <div className="text-sm font-semibold text-slate-900" data-testid="ilan-ver-columns-title">Kategori Sütunları</div>
+            <div className="text-xs text-slate-500" data-testid="ilan-ver-columns-subtitle">Her adım URL’de saklanır, geri tuşu state kaybetmez.</div>
           </div>
           {pageLoading && (
             <div className="text-xs text-slate-500" data-testid="ilan-ver-columns-loading">Yükleniyor...</div>
@@ -501,7 +598,7 @@ const ListingCategorySelect = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-semibold text-slate-800" data-testid={`ilan-ver-column-title-${columnIndex}`}>
-                      Kategori {columnIndex + 1}
+                      {columnTitle(columnIndex)}
                     </div>
                     {loadingColumn === columnIndex && (
                       <span className="text-xs text-slate-500" data-testid={`ilan-ver-column-loading-${columnIndex}`}>Yükleniyor...</span>
@@ -541,18 +638,28 @@ const ListingCategorySelect = () => {
           >
             <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700" data-testid="ilan-ver-complete-message">
               <CheckCircle2 size={18} />
-              Kategori seçimi tamamlanmıştır: {activeCategory.name}
+              Kategori seçimi tamamlandı: {activeCategory.name}
             </div>
-            <button
-              type="button"
-              onClick={handleContinue}
-              className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
-              data-testid="ilan-ver-continue"
-            >
-              Devam
-            </button>
+            {autoAdvanceActive && (
+              <div className="text-xs text-emerald-700" data-testid="ilan-ver-complete-auto">Çekirdek alanlara yönlendiriliyor...</div>
+            )}
           </div>
         )}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-4" data-testid="ilan-ver-action-bar">
+        <div className="text-xs text-slate-500" data-testid="ilan-ver-action-hint">
+          Alt tip seçimi tamamlanmadan ileri butonu aktifleşmez.
+        </div>
+        <button
+          type="button"
+          onClick={() => handleContinue(activeCategory, selectedPath, { auto: false })}
+          disabled={!selectionComplete}
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          data-testid="ilan-ver-continue-button"
+        >
+          Devam
+        </button>
       </div>
 
       <div className="rounded-xl border bg-white p-4" data-testid="ilan-ver-search-panel">
