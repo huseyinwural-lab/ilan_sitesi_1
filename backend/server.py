@@ -14405,7 +14405,7 @@ async def admin_update_cloudflare_config(
     except Exception as exc:
         await session.rollback()
         logger.exception(
-            "cloudflare_config_save_failed",
+            f"cloudflare_config_save_failed reason=db_write_failed request_id={request_id}",
             extra={"reason": "db_write_failed", "admin_id": current_user.get("id"), "request_id": request_id},
         )
         raise HTTPException(status_code=500, detail="Cloudflare config save failed") from exc
