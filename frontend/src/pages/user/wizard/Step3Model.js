@@ -18,6 +18,7 @@ const ModelStep = () => {
   const [models, setModels] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedModel, setSelectedModel] = useState(null);
+  const [loadingModels, setLoadingModels] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
