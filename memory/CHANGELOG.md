@@ -37,6 +37,7 @@
 - Parity raporu güncellendi: `/app/memory/SEARCH_PARITY_REPORT.md`
 - Benchmark raporu güncellendi (p50/p95/max): `/app/memory/SEARCH_BENCHMARK_REPORT.md`
 - Slow query listesi: `/app/memory/SEARCH_SLOW_QUERIES.md`
+- Search UI API prefix düzeltmesi (SearchPage /api/api/ → /api/)
 - 24h monitoring owner: Ops/Owner
 
 ## 2026-02-23 — Admin System Health Detail Panel
