@@ -66,7 +66,7 @@ export default function SearchPage() {
     const fetchCategories = async () => {
       try {
         const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
-        const res = await fetch(`${API}/api/categories?module=vehicle&country=${country}`);
+        const res = await fetch(`${API}/categories?module=vehicle&country=${country}`);
         if (res.ok) {
           const json = await res.json();
           setCategories(json);
