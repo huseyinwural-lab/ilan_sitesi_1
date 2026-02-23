@@ -176,7 +176,7 @@ const BrandStep = () => {
     setStep(3);
   };
 
-  const nextDisabled = !selectedMake || loading;
+  const nextDisabled = !selectedMake || loading || saving;
 
   return (
     <div className="space-y-6" data-testid="wizard-brand-step">
