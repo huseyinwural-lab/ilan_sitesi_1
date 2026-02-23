@@ -205,6 +205,7 @@ export default function AdminSystemSettingsPage() {
 
   useEffect(() => {
     fetchSettings();
+    fetchCloudflareConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCountry]);
 
