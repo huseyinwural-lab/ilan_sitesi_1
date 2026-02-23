@@ -11814,7 +11814,7 @@ async def admin_reject_listing(
     listing_id: str,
     payload: ModerationReasonPayload,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(check_permissions(list(ALLOWED_MODERATION_ROLES))),
     session: AsyncSession = Depends(get_sql_session),
 ):
     if not payload.reason:
