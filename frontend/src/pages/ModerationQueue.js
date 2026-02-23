@@ -355,103 +355,124 @@ export default function ModerationQueue({
             <p className="text-sm">No listings pending moderation</p>
           </div>
         ) : (
-          listings.map((listing) => (
-            <div 
-              key={listing.id} 
-              className="bg-card rounded-md border p-4 hover:shadow-md transition-shadow"
-              data-testid={`moderation-item-${listing.id}`}
-            >
-              <div className="flex items-start gap-4">
-                {/* Thumbnail placeholder */}
-                <div className="w-24 h-24 rounded-md bg-muted flex items-center justify-center shrink-0">
-                  {listing.image_count > 0 ? (
-                    <Image size={24} className="text-muted-foreground" />
-                  ) : (
-                    <AlertTriangle size={24} className="text-amber-500" />
-                  )}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="font-medium truncate">{listing.title}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-muted capitalize">{listing.module.replace('_', ' ')}</span>
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-muted">{listing.country}</span>
-                        {listing.city && <span className="text-xs text-muted-foreground">{listing.city}</span>}
-                      </div>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${statusColors[listing.status]}`}>
-                      {listing.status}
-                    </span>
+          listings.map((listing) => {
+            const slaMeta = getSlaMeta(listing.moderation_created_at || listing.created_at);
+            const isSelected = selectedIds.includes(listing.id);
+            return (
+              <div 
+                key={listing.id} 
+                className="bg-card rounded-md border p-4 hover:shadow-md transition-shadow"
+                data-testid={`moderation-item-${listing.id}`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="pt-1">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(listing.id)}
+                      className="h-4 w-4"
+                      data-testid={`moderation-select-${listing.id}`}
+                    />
+                  </div>
+                  {/* Thumbnail placeholder */}
+                  <div className="w-24 h-24 rounded-md bg-muted flex items-center justify-center shrink-0">
+                    {listing.image_count > 0 ? (
+                      <Image size={24} className="text-muted-foreground" />
+                    ) : (
+                      <AlertTriangle size={24} className="text-amber-500" />
+                    )}
                   </div>
                   
-                  <div className="flex items-center gap-4 mt-3 text-sm">
-                    {listing.price && (
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-medium truncate">{listing.title}</h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted capitalize">{listing.module.replace('_', ' ')}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted">{listing.country}</span>
+                          {listing.city && <span className="text-xs text-muted-foreground">{listing.city}</span>}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${statusColors[listing.status]}`}>
+                          {listing.status}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs font-semibold ${slaMeta.badgeClass}`}
+                          data-testid={`moderation-sla-${listing.id}`}
+                        >
+                          {slaMeta.label}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 mt-3 text-sm">
+                      {listing.price && (
+                        <span className="flex items-center gap-1">
+                          <DollarSign size={14} className="text-muted-foreground" />
+                          {listing.price.toLocaleString()} {listing.currency}
+                        </span>
+                      )}
                       <span className="flex items-center gap-1">
-                        <DollarSign size={14} className="text-muted-foreground" />
-                        {listing.price.toLocaleString()} {listing.currency}
+                        <Image size={14} className="text-muted-foreground" />
+                        {listing.image_count} images
                       </span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      <Image size={14} className="text-muted-foreground" />
-                      {listing.image_count} images
-                    </span>
-                    {listing.is_dealer_listing && (
-                      <span className="flex items-center gap-1 text-blue-600">
-                        <Building2 size={14} />
-                        Dealer
+                      {listing.is_dealer_listing && (
+                        <span className="flex items-center gap-1 text-blue-600">
+                          <Building2 size={14} />
+                          Dealer
+                        </span>
+                      )}
+                      {listing.is_premium && (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-medium">
+                          Premium
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <Clock size={14} className="text-muted-foreground" />
+                        {new Date(listing.created_at).toLocaleDateString()}
                       </span>
-                    )}
-                    {listing.is_premium && (
-                      <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-medium">
-                        Premium
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1 text-muted-foreground">
-                      <Clock size={14} />
-                      {new Date(listing.created_at).toLocaleDateString()}
-                    </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button
+                      onClick={() => viewListingDetail(listing.id)}
+                      className="p-2 rounded-md border hover:bg-muted"
+                      title="View Details"
+                      data-testid={`moderation-view-${listing.id}`}
+                    >
+                      <Eye size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleAction(listing.id, 'approve')}
+                      className="p-2 rounded-md border text-emerald-600 hover:bg-emerald-50"
+                      title="Approve"
+                      data-testid={`moderation-approve-${listing.id}`}
+                    >
+                      <CheckCircle size={16} />
+                    </button>
+                    <button
+                      onClick={() => openActionDialog(listing.id, 'reject')}
+                      className="p-2 rounded-md border text-rose-600 hover:bg-rose-50"
+                      title="Reject"
+                      data-testid={`moderation-reject-${listing.id}`}
+                    >
+                      <XCircle size={16} />
+                    </button>
+                    <button
+                      onClick={() => openActionDialog(listing.id, 'needs_revision')}
+                      className="p-2 rounded-md border text-amber-600 hover:bg-amber-50"
+                      title="Needs Revision"
+                      data-testid={`moderation-needs-revision-${listing.id}`}
+                    >
+                      <AlertTriangle size={16} />
+                    </button>
                   </div>
                 </div>
-                
-                <div className="flex flex-col gap-1 shrink-0">
-                  <button
-                    onClick={() => viewListingDetail(listing.id)}
-                    className="p-2 rounded-md border hover:bg-muted"
-                    title="View Details"
-                    data-testid={`moderation-view-${listing.id}`}
-                  >
-                    <Eye size={16} />
-                  </button>
-                  <button
-                    onClick={() => handleAction(listing.id, 'approve')}
-                    className="p-2 rounded-md border text-emerald-600 hover:bg-emerald-50"
-                    title="Approve"
-                    data-testid={`moderation-approve-${listing.id}`}
-                  >
-                    <CheckCircle size={16} />
-                  </button>
-                  <button
-                    onClick={() => openActionDialog(listing.id, 'reject')}
-                    className="p-2 rounded-md border text-rose-600 hover:bg-rose-50"
-                    title="Reject"
-                    data-testid={`moderation-reject-${listing.id}`}
-                  >
-                    <XCircle size={16} />
-                  </button>
-                  <button
-                    onClick={() => openActionDialog(listing.id, 'needs_revision')}
-                    className="p-2 rounded-md border text-amber-600 hover:bg-amber-50"
-                    title="Needs Revision"
-                    data-testid={`moderation-needs-revision-${listing.id}`}
-                  >
-                    <AlertTriangle size={16} />
-                  </button>
-                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
