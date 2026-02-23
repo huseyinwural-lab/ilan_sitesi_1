@@ -2127,9 +2127,21 @@ const AdminCategories = () => {
                 </div>
               )}
 
-              {isStepDirty(wizardStep) && (
-                <div className="p-3 rounded border border-amber-200 bg-amber-50 text-amber-700 text-sm" data-testid="categories-step-dirty-warning">
-                  Bu adım yeniden tamamlanmalı. Değişiklikler downstream adımları da etkiledi.
+              {editModeActive && dirtySteps.length > 0 && (
+                <div className="p-3 rounded border border-amber-200 bg-amber-50 text-amber-700 text-sm flex flex-wrap items-center justify-between gap-3" data-testid="categories-step-dirty-warning">
+                  <span data-testid="categories-step-dirty-message">
+                    Bu adım yeniden tamamlanmalı. Değişiklikler downstream adımları da etkiledi.
+                  </span>
+                  {firstDirtyStep && (
+                    <button
+                      type="button"
+                      onClick={handleDirtyCta}
+                      className="text-xs font-semibold text-amber-800 border border-amber-300 rounded px-3 py-1 bg-amber-100"
+                      data-testid="categories-step-dirty-cta"
+                    >
+                      Sıradaki eksik adımı tamamla
+                    </button>
+                  )}
                 </div>
               )}
 
