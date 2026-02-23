@@ -66,9 +66,9 @@ const WizardContent = () => {
       )}
 
       {step === 1 && <Step1Category />}
-      {step === 2 && <Step2Brand />}
-      {step === 3 && <Step3Model />}
-      {step === 4 && <Step4YearTrim />}
+      {isVehicleModule && step === 2 && <Step2Brand />}
+      {isVehicleModule && step === 3 && <Step3Model />}
+      {isVehicleModule && step === 4 && <Step4YearTrim />}
       {step === 5 && <Step5CoreFields />}
       {step === 6 && <Step6FeaturesMedia />}
       {step === 7 && <Step7Review />}
