@@ -1873,7 +1873,9 @@ const AdminCategories = () => {
 
   const renderLevelColumn = (levelIndex) => {
     const items = getLevelItems(levelIndex);
-    const levelComplete = items.length > 0 && items.every((item) => item.name?.trim() && item.slug?.trim());
+    const levelComplete = items.length > 0 && items.every((item) => (
+      item.name?.trim() && item.slug?.trim() && (levelIndex < 3 || item.transaction_type)
+    ));
     const selectedIndex = levelSelections[levelIndex];
     const isLevelLocked = Boolean(levelCompletion[levelIndex]);
 
