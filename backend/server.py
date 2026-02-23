@@ -4750,9 +4750,9 @@ async def bulk_deactivate_admins(
     request: Request,
     payload: BulkDeactivatePayload,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     user_ids = list(dict.fromkeys(payload.user_ids or []))
     if not user_ids:
@@ -4760,32 +4760,39 @@ async def bulk_deactivate_admins(
     if len(user_ids) > 20:
         raise HTTPException(status_code=400, detail="Bulk deactivate limit is 20")
 
-    users = await db.users.find({"id": {"$in": user_ids}}, {"_id": 0}).to_list(length=200)
+    try:
+        uuid_list = [uuid.UUID(item) for item in user_ids]
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id.in_(uuid_list)))
+    users = result.scalars().all()
     if not users:
         return {"ok": True, "count": 0}
 
     for user in users:
-        await _assert_super_admin_invariant(db, user, None, False, current_user)
-        if user.get("id") == current_user.get("id"):
+        await _assert_super_admin_invariant_sql(session, user, None, False, current_user)
+        if str(user.id) == current_user.get("id"):
             raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    await db.users.update_many({"id": {"$in": user_ids}}, {"$set": {"is_active": False, "updated_at": now_iso}})
+    for user in users:
+        user.is_active = False
 
     for user in users:
-        audit_deactivate = await build_audit_entry(
-            event_type="admin_deactivated",
+        await _write_audit_log_sql(
+            session=session,
+            action="ADMIN_DEACTIVATED",
             actor=current_user,
-            target_id=user.get("id"),
-            target_type="admin_user",
-            country_code=None,
-            details={"email": user.get("email")},
+            resource_type="admin_user",
+            resource_id=str(user.id),
+            metadata={"email": user.email},
             request=request,
+            country_code=None,
         )
-        audit_deactivate["action"] = "admin_deactivated"
-        await db.audit_logs.insert_one(audit_deactivate)
 
-    return {"ok": True, "count": len(user_ids)}
+    await session.commit()
+
+    return {"ok": True, "count": len(users)}
 
 
 @api_router.get("/admin/invite/preview")
