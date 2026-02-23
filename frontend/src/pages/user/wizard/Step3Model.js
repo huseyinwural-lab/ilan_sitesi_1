@@ -109,7 +109,7 @@ const ModelStep = () => {
   };
 
   const handleComplete = async () => {
-    if (saving || saveLockRef.current) return false;
+    if (saving || saveLockRef.current) return { ok: false };
     saveLockRef.current = true;
     setSaving(true);
     try {
