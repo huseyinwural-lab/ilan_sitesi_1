@@ -83,6 +83,69 @@ export default function AdminSystemSettingsPage() {
     }
   };
 
+  const fetchCloudflareConfig = async () => {
+    setCloudflareLoading(true);
+    setCloudflareError('');
+    try {
+      const res = await axios.get(`${API}/admin/system-settings/cloudflare`, { headers: authHeader });
+      setCloudflareConfig(res.data || {});
+    } catch (e) {
+      setCloudflareError('Cloudflare konfigürasyonu alınamadı');
+    } finally {
+      setCloudflareLoading(false);
+    }
+  };
+
+  const handleSaveCloudflare = async () => {
+    if (!cloudflareForm.account_id || !cloudflareForm.zone_id) {
+      setCloudflareError('Account ID ve Zone ID zorunludur');
+      return;
+    }
+    setCloudflareSaving(true);
+    setCloudflareError('');
+    try {
+      const res = await axios.post(
+        `${API}/admin/system-settings/cloudflare`,
+        {
+          account_id: cloudflareForm.account_id,
+          zone_id: cloudflareForm.zone_id,
+        },
+        { headers: authHeader }
+      );
+      toast({
+        title: 'Cloudflare IDs Saved',
+        description: `Canary: ${res.data?.canary_status || 'UNKNOWN'}`,
+      });
+      setCloudflareForm({ account_id: '', zone_id: '' });
+      fetchCloudflareConfig();
+    } catch (e) {
+      const detail = e.response?.data?.detail || 'Kaydedilemedi';
+      setCloudflareError(detail);
+      toast({ title: 'Cloudflare IDs Save Failed', description: detail, variant: 'destructive' });
+    } finally {
+      setCloudflareSaving(false);
+    }
+  };
+
+  const handleCloudflareCanary = async () => {
+    setCanaryLoading(true);
+    setCloudflareError('');
+    try {
+      const res = await axios.post(`${API}/admin/system-settings/cloudflare/canary`, {}, { headers: authHeader });
+      toast({
+        title: 'Canary Test Completed',
+        description: `Status: ${res.data?.status || 'UNKNOWN'}`,
+      });
+      fetchCloudflareConfig();
+    } catch (e) {
+      const detail = e.response?.data?.detail || 'Canary başarısız';
+      setCloudflareError(detail);
+      toast({ title: 'Canary Failed', description: detail, variant: 'destructive' });
+    } finally {
+      setCanaryLoading(false);
+    }
+  };
+
   const openCreate = () => {
     setEditing(null);
     setForm({ key: '', value: '', country_code: '', is_readonly: false, description: '' });
