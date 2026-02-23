@@ -165,3 +165,6 @@ yarl==1.22.0
 zipp==3.23.0
 zope.event==6.1
 zope.interface==8.2
+
+# relaxed to avoid resolver conflicts
+google-api-core>=2.28.1,<2.31.0
