@@ -114,6 +114,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
       return data.schema;
     } catch (error) {
       console.error(error);
+      setSchemaNotice(error?.message || 'Schema yüklenemedi');
       return null;
     } finally {
       setSchemaLoading(false);
