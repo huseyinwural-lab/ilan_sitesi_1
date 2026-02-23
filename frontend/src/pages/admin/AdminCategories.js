@@ -204,7 +204,8 @@ const AdminCategories = () => {
   });
   const [schema, setSchema] = useState(createDefaultSchema());
   const [wizardStep, setWizardStep] = useState("hierarchy");
-  const [wizardProgress, setWizardProgress] = useState({ state: "draft" });
+  const [wizardProgress, setWizardProgress] = useState({ state: "draft", dirty_steps: [] });
+  const [editModeStep, setEditModeStep] = useState(null);
   const [hierarchyComplete, setHierarchyComplete] = useState(false);
   const [hierarchyError, setHierarchyError] = useState("");
   const [hierarchyFieldErrors, setHierarchyFieldErrors] = useState({});
