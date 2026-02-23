@@ -14401,9 +14401,10 @@ async def admin_cloudflare_canary(
         zone_id = None
     api_token = os.environ.get("CLOUDFLARE_API_TOKEN")
     canary_status = CANARY_CONFIG_MISSING
+    canary_reason = None
     if account_id and zone_id and api_token:
         credentials = CloudflareCredentials(api_token=api_token, account_id=account_id, zone_id=zone_id)
-        canary_status = await cloudflare_metrics_service.run_canary(credentials)
+        canary_status, canary_reason = await cloudflare_metrics_service.run_canary(credentials)
 
     await update_canary_status(session, canary_status, current_user.get("id"))
 
