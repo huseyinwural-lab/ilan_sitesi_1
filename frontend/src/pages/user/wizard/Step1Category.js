@@ -60,10 +60,10 @@ const CategorySelector = () => {
   );
 
   useEffect(() => {
-    if (!activeParentId && rootCategories.length > 0) {
+    if (!activeParentId && rootCategories.length > 0 && !preselectedCategory) {
       setActiveParentId(rootCategories[0].id);
     }
-  }, [activeParentId, rootCategories]);
+  }, [activeParentId, rootCategories, preselectedCategory]);
 
   const handleParentSelect = (category) => {
     setActiveParentId(category.id);
