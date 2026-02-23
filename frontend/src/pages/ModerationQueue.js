@@ -306,6 +306,42 @@ export default function ModerationQueue({
         </select>
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border bg-card p-3" data-testid="moderation-bulk-bar">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm" data-testid="moderation-select-all-label">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleSelectAll}
+              className="h-4 w-4"
+              data-testid="moderation-select-all"
+            />
+            Tümünü seç
+          </label>
+          <span className="text-sm text-muted-foreground" data-testid="moderation-selected-count">Seçilen: {selectedCount}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => openBulkDialog('approve')}
+            disabled={!selectedCount}
+            className="h-9 px-3 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
+            data-testid="moderation-bulk-approve"
+          >
+            Toplu Onayla
+          </button>
+          <button
+            type="button"
+            onClick={() => openBulkDialog('reject')}
+            disabled={!selectedCount}
+            className="h-9 px-3 rounded-md bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50"
+            data-testid="moderation-bulk-reject"
+          >
+            Toplu Reddet
+          </button>
+        </div>
+      </div>
+
       {/* Queue List */}
       <div className="space-y-3">
         {loading ? (
