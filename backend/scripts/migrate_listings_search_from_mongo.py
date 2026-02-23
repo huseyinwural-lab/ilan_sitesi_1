@@ -154,6 +154,7 @@ def main() -> None:
     if args.truncate and not args.dry_run:
         with engine.begin() as conn:
             conn.execute(text("TRUNCATE TABLE listings_search"))
+            conn.execute(text("TRUNCATE TABLE listings CASCADE"))
 
     mongo_total = None
     try:
