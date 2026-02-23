@@ -34,7 +34,7 @@ const YearTrimStep = () => {
   const handleComplete = async () => {
     if (!year) {
       setError('Yıl seçiniz.');
-      return;
+      return false;
     }
 
     const trimmedTrim = trimKey.trim();
@@ -51,7 +51,7 @@ const YearTrimStep = () => {
 
     if (!ok) {
       setError('Yıl kaydedilemedi.');
-      return;
+      return false;
     }
 
     setBasicInfo((prev) => ({
@@ -67,9 +67,22 @@ const YearTrimStep = () => {
       6: false,
     }));
     setError('');
+    return true;
   };
 
-  const nextDisabled = !completedSteps[4];
+  const handleNext = async () => {
+    if (!year) {
+      setError('Yıl seçiniz.');
+      return;
+    }
+    if (!completedSteps[4]) {
+      const ok = await handleComplete();
+      if (!ok) return;
+    }
+    setStep(5);
+  };
+
+  const nextDisabled = !year || loading;
 
   if (!basicInfo.model_key) {
     return (
