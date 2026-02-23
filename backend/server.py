@@ -14371,7 +14371,7 @@ async def admin_update_cloudflare_config(
     except CloudflareConfigError as exc:
         reason = "encryption_key_missing" if exc.code in {"config_key_missing", "config_key_invalid", "config_key_mismatch"} else "validation_failed"
         logger.warning(
-            "cloudflare_config_save_failed",
+            f"cloudflare_config_save_failed reason={reason} request_id={request_id}",
             extra={"reason": reason, "admin_id": current_user.get("id"), "request_id": request_id},
         )
         status_code = 400 if reason == "encryption_key_missing" else 500
