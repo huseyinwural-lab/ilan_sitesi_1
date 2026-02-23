@@ -204,6 +204,8 @@ export default function Layout({ children }) {
         latencyP95: '--',
         lastEtl: '--',
         errorLabel: 'Veri alınamadı',
+        slowQueryCount: 0,
+        slowQueryThreshold: 800,
       };
     }
     if (!systemHealthDetail) {
@@ -214,6 +216,8 @@ export default function Layout({ children }) {
         latencyP95: '--',
         lastEtl: '--',
         errorLabel: 'Bekleniyor',
+        slowQueryCount: 0,
+        slowQueryThreshold: 800,
       };
     }
     const buckets = systemHealthDetail.error_buckets_24h || [];
