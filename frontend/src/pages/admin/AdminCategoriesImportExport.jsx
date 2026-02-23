@@ -238,15 +238,15 @@ export default function AdminCategoriesImportExport() {
               <button
                 type="button"
                 className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm"
-                onClick={runCommit}
+                onClick={runApply}
                 disabled={loading || !dryRunResult?.dry_run_hash}
-                data-testid="categories-import-commit"
+                data-testid="categories-import-apply"
               >
-                Commit Et
+                Uygula
               </button>
               {!dryRunResult?.dry_run_hash && (
-                <p className="text-xs text-slate-500" data-testid="categories-import-commit-hint">
-                  Commit için önce başarılı bir dry-run çalıştırmalısınız.
+                <p className="text-xs text-slate-500" data-testid="categories-import-apply-hint">
+                  Uygulamak için önce başarılı bir dry-run çalıştırmalısınız.
                 </p>
               )}
             </div>
