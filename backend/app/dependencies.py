@@ -126,6 +126,10 @@ async def get_current_user_optional(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional),
     sql_session: AsyncSession = Depends(get_db),
 ):
+    cached_user = getattr(request.state, "current_user", None)
+    if cached_user:
+        return cached_user
+
     if not credentials:
         return None
 
