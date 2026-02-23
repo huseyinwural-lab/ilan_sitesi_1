@@ -213,7 +213,7 @@ const FeaturesMediaStep = () => {
       const reordered = await reorderMedia(order, coverId);
       const updatedMedia = (reordered.media || []).map((item) => ({
         media_id: item.media_id,
-        url: item.url || `/media/listings/${draftId}/${item.file}`,
+        url: item.url || item.preview_url || `/media/listings/${draftId}/${item.file}`,
         is_cover: item.is_cover,
         file: item.file,
       }));
