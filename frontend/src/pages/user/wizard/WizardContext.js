@@ -342,9 +342,9 @@ export const WizardProvider = ({ children, editListingId = null }) => {
   };
 
   const saveDraft = async (payload) => {
-    if (!draftId) return;
+    if (!draftId) return false;
     try {
-      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle/${draftId}/draft`, {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle/${draftId}/draft`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -352,8 +352,11 @@ export const WizardProvider = ({ children, editListingId = null }) => {
         },
         body: JSON.stringify(payload || {}),
       });
+      if (!res.ok) return false;
+      return true;
     } catch (error) {
       console.error(error);
+      return false;
     }
   };
 
