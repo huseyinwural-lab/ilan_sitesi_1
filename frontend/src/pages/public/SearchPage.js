@@ -379,7 +379,7 @@ export default function SearchPage() {
                              </div>
                           )}
                           <Badge className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 backdrop-blur-sm border-none">
-                            {formatPrice(item.price, item.currency)}
+                            {formatPrice(item.price_amount ?? item.price, item.currency, item.price_type, item.hourly_rate)}
                           </Badge>
                         </div>
                         <CardHeader className="p-4 pb-2">
