@@ -43,12 +43,15 @@ def _sanitize_reason(value: Optional[str]) -> Optional[str]:
 if not DATABASE_URL:
     raise RuntimeError('DATABASE_URL missing for moderation parity')
 
+pymongo_available = True
 try:
     from pymongo import MongoClient
-except Exception as exc:
-    raise RuntimeError('pymongo required for moderation parity') from exc
+except Exception:
+    pymongo_available = False
+    MongoClient = None
+    print('pymongo not available; skipping Mongo parity')
 
-mongo_client = MongoClient(MONGO_URL) if MONGO_URL and DB_NAME else None
+mongo_client = MongoClient(MONGO_URL) if pymongo_available and MONGO_URL and DB_NAME else None
 mongo_db = mongo_client[DB_NAME] if mongo_client and DB_NAME else None
 
 queue_collection = None
