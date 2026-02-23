@@ -1,5 +1,5 @@
-import React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { WizardProvider, useWizard } from './WizardContext';
 import Step1Category from './Step1Category';
 import Step2Brand from './Step2Brand';
