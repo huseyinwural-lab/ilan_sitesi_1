@@ -9831,6 +9831,11 @@ class SystemSettingUpdatePayload(BaseModel):
     description: Optional[str] = None
 
 
+class CloudflareConfigPayload(BaseModel):
+    account_id: Optional[str] = None
+    zone_id: Optional[str] = None
+
+
 class CategoryCreatePayload(BaseModel):
     name: str
     slug: str
