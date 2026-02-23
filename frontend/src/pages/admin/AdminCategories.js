@@ -326,7 +326,7 @@ const AdminCategories = () => {
       errors.push("Önizleme adımı tamamlanmalı.");
     }
     return { canPublish: errors.length === 0, errors };
-  }, [effectiveHierarchyComplete, schema, previewComplete]);
+  }, [effectiveHierarchyComplete, schema, previewComplete, dirtySteps]);
   const isPaymentEnabled = Boolean(schema.modules?.payment?.enabled);
   const isPhotosEnabled = Boolean(schema.modules?.photos?.enabled);
   const autosaveEnabled = Boolean(modalOpen && editing && schema.status === "draft" && effectiveHierarchyComplete);
