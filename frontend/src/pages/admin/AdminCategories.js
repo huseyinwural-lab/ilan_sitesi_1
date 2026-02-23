@@ -2043,25 +2043,41 @@ const AdminCategories = () => {
                     const active = wizardStep === step.id;
                     const disabled = !canAccessStep(step.id);
                     const tooltip = disabled ? "Önce bu adımı tamamlayın." : "";
+                    const dirty = isStepDirty(step.id);
+                    const completed = isStepCompleted(step.id);
                     return (
-                      <button
-                        key={step.id}
-                        type="button"
-                        onClick={() => {
-                          if (disabled) {
-                            setHierarchyError("Önce bu adımı tamamlayın.");
-                            return;
-                          }
-                          setHierarchyError("");
-                          setWizardStep(step.id);
-                        }}
-                        aria-disabled={disabled}
-                        className={`px-3 py-1 rounded text-xs border ${active ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        title={tooltip}
-                        data-testid={`category-step-${step.id}`}
-                      >
-                        {step.label}
-                      </button>
+                      <div key={step.id} className="flex items-center gap-1" data-testid={`category-step-wrap-${step.id}`}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (disabled) {
+                              setHierarchyError("Önce bu adımı tamamlayın.");
+                              return;
+                            }
+                            setHierarchyError("");
+                            setWizardStep(step.id);
+                          }}
+                          aria-disabled={disabled}
+                          className={`px-3 py-1 rounded text-xs border ${active ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          title={dirty ? "Bu adım yeniden tamamlanmalı." : tooltip}
+                          data-testid={`category-step-${step.id}`}
+                        >
+                          {step.label}
+                          {dirty && (
+                            <span className="ml-1 text-rose-300" data-testid={`category-step-dirty-${step.id}`}>●</span>
+                          )}
+                        </button>
+                        {canEditUnlock && editing && completed && !dirty && (
+                          <button
+                            type="button"
+                            className="px-2 py-1 text-[11px] border rounded text-slate-600"
+                            onClick={() => handleUnlockStep(step.id)}
+                            data-testid={`category-step-edit-${step.id}`}
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
