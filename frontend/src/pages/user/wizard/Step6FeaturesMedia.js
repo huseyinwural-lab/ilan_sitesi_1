@@ -270,6 +270,11 @@ const FeaturesMediaStep = () => {
         country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
         reason: 'validation_failed',
       });
+      setAutosaveStatus((prev) => ({
+        ...prev,
+        status: 'error',
+        lastErrorAt: new Date().toISOString(),
+      }));
       return;
     }
     if (!completedSteps[6]) {
