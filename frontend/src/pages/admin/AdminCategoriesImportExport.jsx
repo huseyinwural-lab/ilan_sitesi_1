@@ -4,13 +4,13 @@ import { useCountry } from '../../contexts/CountryContext';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const MAX_FILE_MB = 10;
-const UPDATE_PAGE_SIZE = 6;
+
+const MODULE_OPTIONS = ['vehicle', 'real_estate', 'machinery', 'services', 'jobs'];
 
 const TABS = [
   { id: 'export', label: 'Export' },
   { id: 'import', label: 'Import' },
-  { id: 'preview', label: 'Dry-run Preview' },
-  { id: 'publish', label: 'Publish' },
+  { id: 'preview', label: 'Dry-run Sonucu' },
 ];
 
 export default function AdminCategoriesImportExport() {
