@@ -1217,6 +1217,7 @@ const AdminCategories = () => {
     if (!data?.category) {
       if (!autosave) {
         setHierarchyError("Sunucu yanıtı eksik. Lütfen tekrar deneyin.");
+        restoreSnapshot();
       }
       setAutosaveStatus("idle");
       return { success: false };
