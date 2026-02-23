@@ -34,6 +34,51 @@ const ListingCategorySelect = () => {
     return match ? match.label : '';
   }, [selectedModule]);
 
+  const recentStorageKey = 'ilan_ver_recent_category';
+  const recentPathKey = 'ilan_ver_recent_path';
+
+  const moduleLabelByKey = useCallback((moduleKey) => {
+    const match = MODULE_OPTIONS.find((item) => item.key === moduleKey);
+    return match ? match.label : moduleKey;
+  }, []);
+
+  const persistRecentToStorage = useCallback((recent) => {
+    if (!recent?.category?.id) return;
+    localStorage.setItem(recentStorageKey, JSON.stringify({
+      category: recent.category,
+      module: recent.module,
+      country: recent.country,
+      updated_at: recent.updated_at || null,
+    }));
+    localStorage.setItem(recentPathKey, JSON.stringify(recent.path || []));
+  }, []);
+
+  const readRecentFromStorage = useCallback(() => {
+    const stored = localStorage.getItem(recentStorageKey);
+    if (!stored) return null;
+    try {
+      const parsed = JSON.parse(stored);
+      const storedPath = localStorage.getItem(recentPathKey);
+      let parsedPath = [];
+      if (storedPath) {
+        try {
+          parsedPath = JSON.parse(storedPath) || [];
+        } catch (err) {
+          parsedPath = [];
+        }
+      }
+      return {
+        category: parsed.category,
+        module: parsed.module,
+        country: parsed.country,
+        updated_at: parsed.updated_at,
+        path: parsedPath,
+      };
+    } catch (err) {
+      return null;
+    }
+  }, []);
+
   const trackEvent = useCallback(async (eventName, metadata = {}) => {
     try {
       const token = localStorage.getItem('access_token');
