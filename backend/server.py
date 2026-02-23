@@ -1818,10 +1818,7 @@ def _set_last_db_error(message: Optional[str]) -> None:
     if not message:
         _last_db_error = None
         return
-    sanitized = re.sub(r"postgresql://[^@]+@", "postgresql://***:***@", str(message))
-    sanitized = sanitized.replace("@localhost", "@***")
-    sanitized = sanitized.replace("@127.0.0.1", "@***")
-    _last_db_error = sanitized[:500]
+    _last_db_error = _sanitize_db_error_message(str(message))
 
 
 def _sanitize_text(value: str) -> str:
