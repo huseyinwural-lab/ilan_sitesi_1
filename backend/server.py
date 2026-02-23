@@ -2707,6 +2707,38 @@ async def _assert_super_admin_invariant(db, target_user: dict, payload_role: Opt
             raise HTTPException(status_code=400, detail="At least one super_admin must remain active")
 
 
+async def _assert_super_admin_invariant_sql(
+    session: AsyncSession,
+    target_user: SqlUser,
+    payload_role: Optional[str],
+    payload_active: Optional[bool],
+    actor: dict,
+) -> None:
+    if not target_user:
+        return
+
+    target_role = target_user.role
+    target_id = str(target_user.id)
+    actor_id = actor.get("id")
+
+    if payload_role and target_id == actor_id and payload_role != target_role:
+        raise HTTPException(status_code=400, detail="Self role change is not allowed")
+    if payload_active is not None and target_id == actor_id and payload_active is False:
+        raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
+
+    demoting = payload_role and target_role == "super_admin" and payload_role != "super_admin"
+    deactivating = payload_active is False and target_role == "super_admin"
+    if demoting or deactivating:
+        result = await session.execute(
+            select(func.count())
+            .select_from(SqlUser)
+            .where(SqlUser.role == "super_admin", SqlUser.is_active.is_(True))
+        )
+        super_admin_count = result.scalar_one()
+        if super_admin_count <= 1:
+            raise HTTPException(status_code=400, detail="At least one super_admin must remain active")
+
+
 def _parse_country_codes(value: Optional[str]) -> Optional[List[str]]:
     if not value:
         return None
