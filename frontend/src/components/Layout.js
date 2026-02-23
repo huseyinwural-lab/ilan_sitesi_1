@@ -825,6 +825,28 @@ export default function Layout({ children }) {
                         <div className="font-semibold text-slate-900" data-testid="admin-system-health-moderation-sla-value">{healthDetailDisplay.moderationSlaAvg}</div>
                         <div className="text-[11px] text-slate-500" data-testid="admin-system-health-moderation-sla-pending">Pending: {healthDetailDisplay.moderationSlaPending}</div>
                       </div>
+                      <div className="rounded-lg border border-slate-100 bg-slate-50 p-2" data-testid="admin-system-health-cdn-section">
+                        <div className="flex items-center justify-between">
+                          <div className="text-slate-500">CDN (Cloudflare)</div>
+                          {healthDetailDisplay.cdnStatus === 'disabled' ? (
+                            <span className="text-[11px] font-semibold text-slate-500" data-testid="admin-system-health-cdn-disabled">Kapalı</span>
+                          ) : healthDetailDisplay.cdnAlerts.has_alert ? (
+                            <span className="text-[11px] font-semibold text-rose-600" data-testid="admin-system-health-cdn-alert">Uyarı</span>
+                          ) : (
+                            <span className="text-[11px] font-semibold text-emerald-600" data-testid="admin-system-health-cdn-ok">OK</span>
+                          )}
+                        </div>
+                        <div className="mt-2 space-y-1 text-[11px] text-slate-600" data-testid="admin-system-health-cdn-metrics">
+                          <div data-testid="admin-system-health-cdn-hit">Hit Ratio: {healthDetailDisplay.cdnHitRatio}%</div>
+                          <div data-testid="admin-system-health-cdn-origin">Origin Fetch: {healthDetailDisplay.cdnOriginFetch}</div>
+                          <div data-testid="admin-system-health-cdn-origin-ratio">Origin Ratio: {healthDetailDisplay.cdnOriginRatio}%</div>
+                          <div data-testid="admin-system-health-cdn-warm">Warm p95: {healthDetailDisplay.cdnWarmP95} ms</div>
+                          <div data-testid="admin-system-health-cdn-cold">Cold p95: {healthDetailDisplay.cdnColdP95} ms</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-[11px] text-slate-500" data-testid="admin-system-health-cdn-targets">
+                      Hedefler: Hit ≥ {healthDetailDisplay.cdnTargets.hit_ratio_min ?? 85}% · Cold ≤ {healthDetailDisplay.cdnTargets.origin_fetch_ratio_max ?? 15}% · Warm/Cold p95 ADR-MEDIA-002
                     </div>
                     <div className="mt-3" data-testid="admin-system-health-endpoint-section">
                       <div className="text-xs text-slate-500" data-testid="admin-system-health-endpoint-title">Endpoint Slow Query</div>
