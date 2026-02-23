@@ -177,6 +177,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Parity raporu: /app/memory/SEARCH_PARITY_REPORT.md
   - Benchmark raporu: /app/memory/SEARCH_BENCHMARK_REPORT.md
   - EXPLAIN ANALYZE raw: /app/memory/SEARCH_EXPLAIN_ANALYZE_RAW.md
+  - Cutover plan: /app/memory/SEARCH_CUTOVER_PLAN.md
   - Feature flag: SEARCH_SQL_ROLLOUT (0.1 → 0.5 → 1.0)
 - **Search Migration Kickoff (2026-02-23):**
   - listings_search SQL schema + indexes (migration p36)
