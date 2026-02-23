@@ -87,6 +87,27 @@ class Listing(Base):
         Index('ix_listings_model_id', 'model_id'),
     )
 
+class ModerationItem(Base):
+    """Moderation Item (SQL)"""
+    __tablename__ = "moderation_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    listing_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("listings.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    moderator_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), nullable=True, index=True)
+    audit_ref: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        Index('ix_moderation_items_status_created', 'status', 'created_at'),
+        Index('ix_moderation_items_listing', 'listing_id'),
+    )
+
+
 class ModerationQueue(Base):
     """Mongo moderation_queue karşılığı (SQL)"""
     __tablename__ = "moderation_queue"
