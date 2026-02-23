@@ -1665,6 +1665,10 @@ async def record_request_metrics(request: Request, call_next):
 
 RBAC_ALLOWLIST: Dict[str, list[str]] = {}
 RBAC_MISSING_POLICIES: list[str] = []
+RBAC_PUBLIC_ADMIN_ROUTES: Dict[str, list[str]] = {
+    "GET /api/admin/invite/preview": ["public"],
+    "POST /api/admin/invite/accept": ["public"],
+}
 
 
 def _normalize_admin_path(path: str) -> str:
