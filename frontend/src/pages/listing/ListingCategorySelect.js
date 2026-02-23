@@ -456,6 +456,9 @@ const ListingCategorySelect = () => {
               >
                 Devam Et
               </button>
+              {recentError && (
+                <div className="text-xs text-amber-600" data-testid="ilan-ver-recent-error">{recentError}</div>
+              )}
             </div>
           )}
         </div>
