@@ -14691,8 +14691,18 @@ async def admin_create_category(
             raise HTTPException(status_code=400, detail="parent_id not found")
 
     country_code = payload.country_code.upper() if payload.country_code else None
+    module_input = payload.module or (parent.module if parent else None)
+    module_value = _normalize_category_module(module_input)
     if country_code:
         _assert_country_scope(country_code, current_user)
+    if parent and parent.country_code and not country_code:
+        country_code = parent.country_code
+    _assert_category_parent_compatible(
+        category=None,
+        parent=parent,
+        module_value=module_value,
+        country_code=country_code,
+    )
 
     slug_query = await session.execute(
         select(Category).where(Category.is_deleted.is_(False))
