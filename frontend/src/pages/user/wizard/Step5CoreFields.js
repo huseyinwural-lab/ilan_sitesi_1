@@ -49,6 +49,8 @@ const CoreFieldsStep = () => {
   const [bodyType, setBodyType] = useState(basicInfo.body_type || '');
   const [color, setColor] = useState(basicInfo.color || '');
   const [damageStatus, setDamageStatus] = useState(basicInfo.damage_status || '');
+  const [engineCc, setEngineCc] = useState(basicInfo.engine_cc || '');
+  const [engineHp, setEngineHp] = useState(basicInfo.engine_hp || '');
   const [tradeIn, setTradeIn] = useState(
     basicInfo.trade_in === true ? 'true' : basicInfo.trade_in === false ? 'false' : ''
   );
