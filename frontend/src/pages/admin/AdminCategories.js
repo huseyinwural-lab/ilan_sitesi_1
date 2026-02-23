@@ -1246,13 +1246,15 @@ const AdminCategories = () => {
       return;
     }
 
+    const nextDirtySteps = dirtySteps.filter((step) => step !== wizardStep);
+
     setStepSaving(true);
     try {
       if (wizardStep === "hierarchy") {
-        const result = await handleHierarchyComplete(progressState);
+        const result = await handleHierarchyComplete(progressState, nextDirtySteps);
         if (!result?.success) return;
       } else {
-        const result = await handleSave("draft", null, false, { progressState });
+        const result = await handleSave("draft", null, false, { progressState, dirtySteps: nextDirtySteps });
         if (!result?.success) return;
       }
     } finally {
