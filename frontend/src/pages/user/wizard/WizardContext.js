@@ -362,7 +362,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     if (!draftId) return false;
     try {
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/listings/vehicle/${draftId}/draft`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
