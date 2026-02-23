@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useWizard } from './WizardContext';
 
 const formatNumberInput = (value, decimals) => {
