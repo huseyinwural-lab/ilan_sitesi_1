@@ -1816,6 +1816,9 @@ async def rbac_hard_lock(request: Request, call_next):
         )
         return JSONResponse(status_code=403, content={"detail": "RBAC policy missing"})
 
+    if "public" in required_roles:
+        return await call_next(request)
+
     user = await _resolve_rbac_user(request)
     if not user:
         return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
