@@ -124,6 +124,11 @@ const YearTrimStep = () => {
           country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
           reason: 'save_failed',
         });
+        setAutosaveStatus((prev) => ({
+          ...prev,
+          status: 'error',
+          lastErrorAt: new Date().toISOString(),
+        }));
         return;
       }
     }
