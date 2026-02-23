@@ -22,5 +22,6 @@ POST /api/admin/system-settings/cloudflare/canary
 ```
 
 ## Admin UI Evidence
-- Screenshot: `/app/screenshots/cloudflare-phase-a.png`
+- Screenshot: `/app/screenshots/cloudflare-card-final-state.jpeg` (success state)
+- Ek: `/app/screenshots/cloudflare-phase-a.jpeg` (ilk doğrulama)
 - Görünenler: Durum satırı, maskelenmiş ID’ler, “Test Connection (Canary)” sonucu, Details alanı
