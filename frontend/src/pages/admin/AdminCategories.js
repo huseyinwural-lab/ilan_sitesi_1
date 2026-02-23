@@ -1549,10 +1549,17 @@ const AdminCategories = () => {
           slug: child.slug,
           parent_id: parentId,
           country_code: country,
+          module: moduleValue,
           active_flag: child.active_flag,
           sort_order: Number(child.sort_order || 0),
           hierarchy_complete: true,
         };
+        if (child.transaction_type) {
+          payload.form_schema = {
+            status: "draft",
+            category_meta: { transaction_type: child.transaction_type },
+          };
+        }
         const url = child.id
           ? `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${child.id}`
           : `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`;
