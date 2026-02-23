@@ -90,14 +90,44 @@ const YearTrimStep = () => {
   };
 
   const handleNext = async () => {
+    if (saving) return;
     if (!year) {
       setError('Yıl seçiniz.');
+      scrollToError();
+      await trackWizardEvent('wizard_step_autosave_error', {
+        step_id: 'year',
+        category_id: basicInfo.category_id,
+        module: basicInfo.module || 'vehicle',
+        country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
+        reason: 'missing_year',
+      });
       return;
     }
     if (!completedSteps[4]) {
       const ok = await handleComplete();
-      if (!ok) return;
+      if (!ok) {
+        await trackWizardEvent('wizard_step_autosave_error', {
+          step_id: 'year',
+          category_id: basicInfo.category_id,
+          module: basicInfo.module || 'vehicle',
+          country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
+          reason: 'save_failed',
+        });
+        return;
+      }
     }
+    await trackWizardEvent('wizard_step_autosave_success', {
+      step_id: 'year',
+      category_id: basicInfo.category_id,
+      module: basicInfo.module || 'vehicle',
+      country: basicInfo.country || (localStorage.getItem('selected_country') || 'DE'),
+    });
+    toast({
+      title: 'Kaydedildi',
+      duration: 2500,
+      dismissible: false,
+      'data-testid': 'wizard-autosave-toast',
+    });
     setStep(5);
   };
 
