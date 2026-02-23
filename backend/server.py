@@ -3470,12 +3470,12 @@ async def admin_system_health_detail(
     encryption_key_present = bool(os.environ.get("CONFIG_ENCRYPTION_KEY"))
     cf_metrics_enabled = cloudflare_metrics_service.is_enabled()
     config_missing_reason = None
-    if not cf_metrics_enabled:
+    if not encryption_key_present:
+        config_missing_reason = "encryption_key_missing"
+    elif not cf_metrics_enabled:
         config_missing_reason = "cf_metrics_disabled"
     elif not cf_ids_present:
-        if not encryption_key_present:
-            config_missing_reason = "encryption_key_missing"
-        elif not account_id:
+        if not account_id:
             config_missing_reason = "account_id_missing"
         elif not zone_id:
             config_missing_reason = "zone_id_missing"
