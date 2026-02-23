@@ -2044,10 +2044,11 @@ const AdminCategories = () => {
       </div>
 
       <div className="bg-white border rounded-lg text-slate-900">
-        <div className="grid grid-cols-6 text-xs font-semibold uppercase px-4 py-2 border-b bg-gray-50 text-slate-800">
+        <div className="grid grid-cols-7 text-xs font-semibold uppercase px-4 py-2 border-b bg-gray-50 text-slate-800">
           <div>Ad</div>
           <div>Slug</div>
           <div>Ülke</div>
+          <div>Modül</div>
           <div>Sıra</div>
           <div>Durum</div>
           <div className="text-right">Aksiyon</div>
