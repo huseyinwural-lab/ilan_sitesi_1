@@ -192,6 +192,7 @@ def main() -> None:
         "queue_skipped": skipped,
         "queue_errors": errors,
         "queue_collection_exists": queue_collection is not None,
+        "pymongo_available": pymongo_available,
     }
     Path("/app/memory/MODERATION_ETL_STATE.json").write_text(json.dumps(state_payload, indent=2))
     print(json.dumps(state_payload, indent=2))
