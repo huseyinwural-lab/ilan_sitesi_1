@@ -58,7 +58,7 @@ const YearTrimStep = () => {
       }
 
       const trimmedTrim = trimKey.trim();
-      const ok = await saveDraft({
+      const result = await saveDraft({
         vehicle: {
           make_key: basicInfo.make_key,
           make_id: basicInfo.make_id,
@@ -69,10 +69,10 @@ const YearTrimStep = () => {
         },
       });
 
-      if (!ok) {
+      if (!result?.ok) {
         setError('Yıl kaydedilemedi.');
         scrollToError();
-        return false;
+        return { ok: false };
       }
 
       setBasicInfo((prev) => ({
