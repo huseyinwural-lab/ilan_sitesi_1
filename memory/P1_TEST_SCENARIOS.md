@@ -29,5 +29,8 @@
    - Üst adım açılınca downstream adımlar dirty olur
    - Dirty adım yeniden tamamlanmadan “Tamamlandı” statüsüne dönemez
 
-3. **Audit log**
-   - Edit açan kullanıcı, değişen alanlar, dirty olan adımlar loglanır
+
+## Kanıtlar (P1 başlangıcı)
+- UI screenshot paketi: `automation_output/20260223_063229` (ilan-ver-module.png, ilan-ver-columns.png)
+- Admin Import/Export UI paketi: `automation_output/20260223_063203`
+- auto_frontend_testing_agent: “User Category Selection Drill-Down 6 Sample Download UI Test — PASS” (2026-02-23)
