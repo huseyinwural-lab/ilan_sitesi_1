@@ -110,4 +110,6 @@ Postgres listings_search count: 0
 | Q49 | 0 | 0 | 0.0 |
 | Q50 | 0 | 0 | 0.0 |
 
+Ham ID karşılaştırması: `/app/memory/SEARCH_PARITY_RAW.md`
+
 > Not: Preview ortamında listing datası bulunmadığı için tüm sonuçlar 0 döndü.
