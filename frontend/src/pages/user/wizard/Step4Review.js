@@ -162,12 +162,15 @@ const ReviewSubmit = () => {
             )}
             {dynamicSummary.length > 0 && (
               <div className="space-y-1" data-testid="wizard-review-dynamic-list">
-                {dynamicSummary.map((item) => (
-                  <div key={item.key} className="text-sm" data-testid={`wizard-review-dynamic-${item.key}`}>
-                    <span className="text-gray-500">{item.label}:</span>
-                    <span className="ml-2 font-medium">{item.value}</span>
-                  </div>
-                ))}
+                {dynamicSummary.map((item) => {
+                  const safeKey = String(item.key).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                  return (
+                    <div key={item.key} className="text-sm" data-testid={`wizard-review-dynamic-${safeKey}`}>
+                      <span className="text-gray-500">{item.label}:</span>
+                      <span className="ml-2 font-medium">{item.value}</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
             {detailSummary.length > 0 && (
