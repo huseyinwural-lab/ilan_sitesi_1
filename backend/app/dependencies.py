@@ -176,6 +176,9 @@ def check_permissions(required_roles: list[str]):
             )
         return current_user
 
+    permission_checker.required_roles = required_roles
+    permission_checker.required_scope = required_scope
+
     return permission_checker
 
 
