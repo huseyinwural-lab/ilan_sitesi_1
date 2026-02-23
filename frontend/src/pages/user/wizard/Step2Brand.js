@@ -14,7 +14,10 @@ const BrandStep = () => {
     completedSteps,
     setCompletedSteps,
     loading,
+    trackWizardEvent,
   } = useWizard();
+
+  const [saving, setSaving] = useState(false);
 
   const [makes, setMakes] = useState([]);
   const [search, setSearch] = useState('');
