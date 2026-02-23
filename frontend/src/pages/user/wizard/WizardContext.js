@@ -75,7 +75,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     }
   }, [selectedCountry]);
 
-  const loadCategorySchema = async (categoryId) => {
+  const loadCategorySchema = useCallback(async (categoryId) => {
     if (!categoryId) return null;
     try {
       setSchemaLoading(true);
@@ -120,7 +120,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     } finally {
       setSchemaLoading(false);
     }
-  };
+  }, [selectedCountry]);
 
   const formatDisplay = (amount, decimals = 0) => {
     if (amount === null || amount === undefined || amount === '') return '';
