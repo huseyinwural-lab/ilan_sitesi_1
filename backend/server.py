@@ -14836,6 +14836,19 @@ async def admin_update_category(
             raise HTTPException(status_code=409, detail="Category slug already exists")
         updates["slug"] = slug
 
+    if payload.module is not None:
+        module_value = _normalize_category_module(payload.module)
+        if module_value != category.module:
+            child_count = await session.execute(
+                select(func.count()).select_from(Category).where(
+                    Category.parent_id == category.id,
+                    Category.is_deleted.is_(False),
+                )
+            )
+            if (child_count.scalar_one() or 0) > 0:
+                raise HTTPException(status_code=409, detail="Kategori çocukları varken module değiştirilemez")
+        updates["module"] = module_value
+
     if payload.parent_id is not None:
         parent_id_value = payload.parent_id or None
         parent = None
