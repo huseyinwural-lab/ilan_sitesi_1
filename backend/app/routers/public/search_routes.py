@@ -82,34 +82,44 @@ async def search_real_estate(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
-    query = select(Listing).where(
-        Listing.status == 'active',
-        Listing.country == country.upper(),
-        Listing.module == 'real_estate' # or 'residential', need to align with Category seed
+    use_listings_search = _use_listings_search(request)
+    ListingModel = ListingSearch if use_listings_search else Listing
+    price_col = ListingSearch.price_amount if use_listings_search else Listing.price
+    price_type_col = ListingSearch.price_type if use_listings_search else Listing.price_type
+    country_col = ListingSearch.country_code if use_listings_search else Listing.country
+    module_col = ListingSearch.module if use_listings_search else Listing.module
+    city_col = ListingSearch.city if use_listings_search else Listing.city
+    created_col = ListingSearch.published_at if use_listings_search else Listing.created_at
+    premium_col = ListingSearch.is_premium if use_listings_search else Listing.is_premium
+
+    query = select(ListingModel).where(
+        ListingModel.status == 'active',
+        country_col == country.upper(),
+        module_col == 'real_estate' # or 'residential', need to align with Category seed
     )
-    
+
     # Filters
     if city:
-        query = query.where(Listing.city.ilike(f"%{city}%"))
+        query = query.where(city_col.ilike(f"%{city}%"))
     if price_min:
-        query = query.where(Listing.price >= price_min)
+        query = query.where(price_col >= price_min)
     if price_max:
-        query = query.where(Listing.price <= price_max)
+        query = query.where(price_col <= price_max)
     if price_min or price_max:
-        query = query.where(or_(Listing.price_type == "FIXED", Listing.price_type.is_(None)))
-        
+        query = query.where(or_(price_type_col == "FIXED", price_type_col.is_(None)))
+
     # Sorting
     if sort == "price_asc":
-        query = query.order_by(Listing.price.asc())
+        query = query.order_by(price_col.asc())
     elif sort == "price_desc":
-        query = query.order_by(Listing.price.desc())
+        query = query.order_by(price_col.desc())
     else: # newest
-        query = query.order_by(desc(Listing.is_premium), desc(Listing.created_at))
-        
+        query = query.order_by(desc(premium_col), desc(created_col))
+
     # Pagination
     offset = (page - 1) * limit
     query = query.offset(offset).limit(limit)
-    
+
     result = await db.execute(query)
     listings = result.scalars().all()
     
