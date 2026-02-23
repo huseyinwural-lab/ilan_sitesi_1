@@ -3007,7 +3007,6 @@ sql_logger.info(
     True,
 )
 
-pool_logger = logging.getLogger("db.pool")
 
 if DB_POOL_DEBUG:
     pool_logger.setLevel(logging.DEBUG)
