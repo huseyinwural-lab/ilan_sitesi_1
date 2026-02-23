@@ -121,7 +121,7 @@ const ModelStep = () => {
 
       const modelLabel = selectedModel.label || selectedModel.name || selectedModel.key;
 
-      const ok = await saveDraft({
+      const result = await saveDraft({
         vehicle: {
           make_key: basicInfo.make_key,
           make_id: basicInfo.make_id,
@@ -130,10 +130,10 @@ const ModelStep = () => {
         },
       });
 
-      if (!ok) {
+      if (!result?.ok) {
         setError('Model kaydedilemedi.');
         scrollToError();
-        return false;
+        return { ok: false };
       }
 
       setBasicInfo((prev) => ({
