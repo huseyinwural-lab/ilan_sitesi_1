@@ -858,8 +858,7 @@ const AdminCategories = () => {
 
   const handleLevelEditColumn = async (levelIndex, items) => {
     if (!items || items.length === 0) return;
-    const canProceed = await resetWizardProgress();
-    if (!canProceed) return;
+    await handleUnlockStep("hierarchy");
     const resetItems = items.map((item) => ({
       ...item,
       is_complete: false,
