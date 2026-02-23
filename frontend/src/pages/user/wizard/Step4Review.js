@@ -151,6 +151,25 @@ const ReviewSubmit = () => {
             })}
           </div>
 
+          <div className="space-y-2" data-testid="wizard-review-gallery">
+            <div className="text-sm font-semibold text-gray-700">Galeri</div>
+            {media.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {media.map((item, idx) => (
+                  <img
+                    key={item.media_id || item.url || idx}
+                    src={item.url}
+                    alt="gallery"
+                    className="h-16 w-24 rounded-md object-cover"
+                    data-testid={`wizard-review-gallery-image-${idx}`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500" data-testid="wizard-review-gallery-empty">Fotoğraf yok.</div>
+            )}
+          </div>
+
           <div className="text-sm text-gray-600" data-testid="wizard-review-location">
             Konum: {moduleData.address?.city || '-'} {moduleData.address?.street || ''}
           </div>
