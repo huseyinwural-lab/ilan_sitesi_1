@@ -273,6 +273,15 @@ export default function Layout({ children }) {
     });
     const moderationSlaAvg = formatSlaSeconds(systemHealthDetail.moderation_sla_avg_seconds);
     const moderationSlaPending = systemHealthDetail.moderation_sla_pending_count ?? 0;
+    const cdnMetrics = systemHealthDetail.cdn_metrics || {};
+    const cdnStatus = cdnMetrics.status || (cdnMetrics.enabled === false ? 'disabled' : 'ok');
+    const cdnHitRatio = cdnMetrics.cache_hit_ratio ?? '--';
+    const cdnOriginFetch = cdnMetrics.origin_fetch_count ?? '--';
+    const cdnOriginRatio = cdnMetrics.origin_fetch_ratio ?? '--';
+    const cdnWarmP95 = cdnMetrics.image_latency_p95_ms?.warm ?? '--';
+    const cdnColdP95 = cdnMetrics.image_latency_p95_ms?.cold ?? '--';
+    const cdnAlerts = cdnMetrics.alerts || {};
+    const cdnTargets = cdnMetrics.targets || {};
     return {
       status: systemHealthDetail.db_status === 'ok' ? 'ok' : 'error',
       errorBuckets: buckets.map((bucket) => ({
@@ -288,6 +297,14 @@ export default function Layout({ children }) {
       endpointStats,
       moderationSlaAvg,
       moderationSlaPending,
+      cdnStatus,
+      cdnHitRatio,
+      cdnOriginFetch,
+      cdnOriginRatio,
+      cdnWarmP95,
+      cdnColdP95,
+      cdnAlerts,
+      cdnTargets,
     };
   }, [systemHealthDetail, systemHealthDetailStatus]);
 
