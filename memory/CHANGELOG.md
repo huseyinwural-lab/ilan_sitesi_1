@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-02-23 — Data Layer Cutover Kickoff (Mongo Tasfiye)
+
+**Kapsam**
+- Mongo envanteri + dönüşüm haritası + şema gap raporu
+- P0 admin chain SQL: system-settings + admin invites (520 → 0)
+- Dokümanlar: MONGO_INVENTORY, MONGO_TO_SQL_MAP, SQL_SCHEMA_GAP_REPORT, SQL_SCHEMA_COMPLETION_PACKAGE, MONGO_SQL_MIGRATION_PLAN, MONGO_SQL_MIGRATION_EVIDENCE
+
 ## 2026-02-23 — Phase B Kickoff (RBAC Hard Lock)
 
 **Kapsam**
