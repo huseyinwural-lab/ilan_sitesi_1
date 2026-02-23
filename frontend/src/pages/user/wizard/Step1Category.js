@@ -24,7 +24,7 @@ const CategorySelector = () => {
     const fetchCategories = async () => {
       try {
         const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
-        const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/categories?module=vehicle&country=${country}`);
+        const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/categories?module=${moduleKey}&country=${country}`);
         if (res.ok) {
           const data = await res.json();
           setCategories(data || []);
@@ -34,6 +34,19 @@ const CategorySelector = () => {
       }
     };
     fetchCategories();
+  }, [moduleKey]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('ilan_ver_category');
+    if (!stored) return;
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed) {
+        setPreselectedCategory(parsed);
+      }
+    } catch (err) {
+      console.error('Preselected category parse error', err);
+    }
   }, []);
 
   const rootCategories = useMemo(
