@@ -968,8 +968,8 @@ export default function Layout({ children }) {
                           )}
                         </div>
                       </div>
-                      <div className="mt-2 text-[11px] text-slate-500" data-testid="admin-system-health-cdn-canary">
-                        Canary: {healthDetailDisplay.cdnCanaryStatus} · cf_ids_present: {healthDetailDisplay.cfIdsPresent ? 'true' : 'false'}
+                      <div className="mt-2 text-[11px] text-slate-500" data-testid="admin-system-health-cdn-canary" title={canaryTooltip}>
+                        Canary: {canaryLabel} · cf_ids_present: {healthDetailDisplay.cfIdsPresent ? 'true' : 'false'} · source: {healthDetailDisplay.cfIdsSource || '-'}
                       </div>
                     </div>
                     <div className="mt-2 text-[11px] text-slate-500" data-testid="admin-system-health-cdn-targets">
