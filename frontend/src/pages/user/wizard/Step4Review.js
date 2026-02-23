@@ -48,9 +48,9 @@ const ReviewSubmit = () => {
     ? `${coreFields.hourly_display || coreFields.hourly_rate || '-'} ${coreFields.currency_primary} / saat`
     : `${coreFields.price_display || coreFields.price_amount || '-'} ${coreFields.currency_primary}`;
 
-      const coverMedia = media.find((item) = item.is_cover) || media[0];
+  const coverMedia = media.find((item) => item.is_cover) || media[0];
 
-      return (
+  return (
     <div className="max-w-2xl mx-auto space-y-8" data-testid="wizard-review">
       <h2 className="text-2xl font-bold" data-testid="wizard-review-title">Önizleme & Yayınla</h2>
 
