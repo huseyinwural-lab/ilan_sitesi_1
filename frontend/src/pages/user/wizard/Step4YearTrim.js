@@ -11,7 +11,10 @@ const YearTrimStep = () => {
     completedSteps,
     setCompletedSteps,
     loading,
+    trackWizardEvent,
   } = useWizard();
+
+  const [saving, setSaving] = useState(false);
 
   const [year, setYear] = useState(basicInfo.year || '');
   const [trimKey, setTrimKey] = useState(basicInfo.trim_key || '');
