@@ -1599,7 +1599,7 @@ const AdminCategories = () => {
             "Content-Type": "application/json",
             ...authHeader,
           },
-          body: JSON.stringify({ hierarchy_complete: true, wizard_progress: { state: progressState } }),
+          body: JSON.stringify({ hierarchy_complete: true, wizard_progress: { state: progressState, dirty_steps: dirtyStepsOverride } }),
         });
         const patchData = await patchRes.json().catch(() => ({}));
         if (!patchRes.ok) {
