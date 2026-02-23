@@ -9,6 +9,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
   const { selectedCountry } = useCountry();
   const [draftId, setDraftId] = useState(null);
   const [step, setStep] = useState(1);
+  const [completedSteps, setCompletedSteps] = useState({});
   const [loading, setLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
 
