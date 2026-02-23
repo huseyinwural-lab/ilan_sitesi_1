@@ -168,6 +168,18 @@ async def search_real_estate(
             badges=badges
         ))
         
+    duration_ms = (time.perf_counter() - start_ts) * 1000
+    record_slow_query(
+        duration_ms,
+        "public:real-estate",
+        {
+            "q": query,
+            "country": country,
+            "city": city,
+            "sort": sort,
+        },
+    )
+
     return {
         "data": data,
         "meta": {
