@@ -14815,6 +14815,9 @@ async def admin_update_category(
             raise HTTPException(status_code=409, detail="Category updated in another session")
 
     updates: Dict[str, Any] = {}
+    module_value = category.module
+    parent_candidate = None
+    country_value = category.country_code
     schema = None
     schema_status = None
 
