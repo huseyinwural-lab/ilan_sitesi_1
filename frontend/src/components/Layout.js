@@ -291,6 +291,10 @@ export default function Layout({ children }) {
     const cdnColdP95 = cdnMetrics.image_latency_p95_ms?.cold ?? '--';
     const cdnAlerts = cdnMetrics.alerts || {};
     const cdnTargets = cdnMetrics.targets || {};
+    const cdnCountryMetrics = cdnMetrics.country_metrics || {};
+    const cdnCountrySeries = cdnMetrics.country_timeseries || {};
+    const cdnCanaryStatus = cdnMetrics.canary_status || 'unknown';
+    const cfIdsPresent = systemHealthDetail.cf_ids_present ?? false;
     return {
       status: systemHealthDetail.db_status === 'ok' ? 'ok' : 'error',
       errorBuckets: buckets.map((bucket) => ({
