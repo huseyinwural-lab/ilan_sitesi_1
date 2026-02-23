@@ -82,10 +82,12 @@ async def search_listings(
     """
     Search API v2: Typed Attribute Filtering & Faceting
     """
+    use_listings_search = _use_listings_search(request)
+    backend_label = "sql" if use_listings_search else "legacy"
     # 0. Check Cache
     cache_key = build_cache_key("search:v2", 
         q=q, category_slug=category_slug, sort=sort, page=page, limit=limit,
-        price_min=price_min, price_max=price_max, attrs=attrs
+        price_min=price_min, price_max=price_max, attrs=attrs, backend=backend_label
     )
     
     cached = await cache_service.get(cache_key)
