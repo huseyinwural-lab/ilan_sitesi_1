@@ -104,6 +104,20 @@ const WizardContent = () => {
             </div>
           ))}
         </div>
+        {showAutosaveBadge && (
+          <div className="mt-3 flex justify-end">
+            <span
+              className={`text-xs font-semibold rounded-full px-3 py-1 ${
+                autosaveStatus.status === 'error'
+                  ? 'bg-rose-100 text-rose-700'
+                  : 'bg-emerald-100 text-emerald-700'
+              }`}
+              data-testid="wizard-autosave-badge"
+            >
+              {autosaveBadgeLabel}
+            </span>
+          </div>
+        )}
       </div>
 
       {(loading || editLoading) && (
