@@ -329,6 +329,7 @@ export default function Layout({ children }) {
       cdnCanaryStatus,
       cfIdsPresent,
       cfIdsSource,
+      cfMetricsEnabled,
     };
   }, [systemHealthDetail, systemHealthDetailStatus]);
 
