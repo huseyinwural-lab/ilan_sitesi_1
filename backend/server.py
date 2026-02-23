@@ -16864,6 +16864,8 @@ def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
         merged_attrs.update(dynamic_fields)
     if isinstance(extra_attrs, dict):
         merged_attrs.update(extra_attrs)
+    if price_payload:
+        merged_attrs["price_eur"] = listing.price if listing.price_type == "FIXED" else None
     attrs["attributes"] = merged_attrs
 
     vehicle_payload = payload.get("vehicle") or {}
