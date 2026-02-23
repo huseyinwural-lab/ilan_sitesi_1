@@ -34,6 +34,9 @@ const CoreFieldsStep = () => {
     loading,
   } = useWizard();
 
+  const moduleKey = useMemo(() => localStorage.getItem('ilan_ver_module') || 'vehicle', []);
+  const isVehicleModule = moduleKey === 'vehicle';
+
   const priceConfig = schema?.core_fields?.price || {};
   const titleConfig = schema?.core_fields?.title || {};
   const descriptionConfig = schema?.core_fields?.description || {};
