@@ -825,6 +825,13 @@ const AdminCategories = () => {
       setHierarchyError(`Kategori ${levelIndex + 1} için ad ve slug zorunludur.`);
       return;
     }
+    if (levelIndex >= 3) {
+      const missingTransaction = items.find((item) => !item.transaction_type);
+      if (missingTransaction) {
+        setHierarchyError(`Kategori ${levelIndex + 1} için alt tip seçimi zorunludur.`);
+        return;
+      }
+    }
 
     const normalizedItems = items.map((item) => ({
       ...item,
