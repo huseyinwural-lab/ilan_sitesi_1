@@ -87,6 +87,13 @@ export default function Layout({ children }) {
     checkSession();
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+    fetchSystemHealth();
+    const interval = setInterval(fetchSystemHealth, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
+
 
   const prevUrlCountryRef = useRef(urlCountry);
 
