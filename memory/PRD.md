@@ -89,6 +89,14 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **İlan ver sihirbazı (create listing):**
   - Başlıklar/boş durumlar/section alanları için data-testid eklendi
   - Dropzone + cover etiketleri test-id ile tamamlandı
+- **Çekirdek Alanlar fiyat tipi (2026-02-23):**
+  - price_type (FIXED/HOURLY) + hourly_rate desteği (backend + frontend)
+  - Fiyat/Saatlik Ücret toggle + tek input swap + doğrulama mesajları
+  - Public detay  aramada “{amount} {currency}” / “{rate} {currency} / saat”
+  - Fiyat filtresi yalnız FIXED ilanlara uygulanıyor
+- **Listing wizard altyapı stabilizasyonu (2026-02-23):**
+  - /api/catalog/schema draft schema erişimi açıldı (wizard blokları kalktı)
+  - /api/v2/vehicle/makes + models SQL fallback eklendi
 - Preview/Prod DB fail-fast: CONFIG_MISSING hatası + localhost yasak + DB_SSL_MODE=require
 - .env override kapatıldı (server.py, core/config.py, app/database.py)
 - **P0 Sertleştirmeler:**
