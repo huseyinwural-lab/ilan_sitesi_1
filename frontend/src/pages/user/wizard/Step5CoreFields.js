@@ -235,7 +235,7 @@ const CoreFieldsStep = () => {
     }));
     setSaving(false);
     saveLockRef.current = false;
-    return true;
+    return { ok: true, updatedAt: result?.updatedAt || null };
   };
 
   const handleNext = async () => {
