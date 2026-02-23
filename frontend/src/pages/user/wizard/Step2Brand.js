@@ -99,17 +99,17 @@ const BrandStep = () => {
 
       const makeLabel = selectedMake.label || selectedMake.name || selectedMake.key;
 
-      const ok = await saveDraft({
+      const result = await saveDraft({
         vehicle: {
           make_key: selectedMake.key,
           make_id: selectedMake.id,
         },
       });
 
-      if (!ok) {
+      if (!result?.ok) {
         setError('Marka kaydedilemedi.');
         scrollToError();
-        return false;
+        return { ok: false };
       }
 
       setBasicInfo((prev) => ({
