@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 2026-02-23 — P0 Edit Mode State Sync Closeout
+
+**Kapsam**
+- Admin Category Wizard “Edit Mode” state senkronizasyonu (backend wizard_progress tek kaynak)
+- Save sonrası downstream dirty adımların UI’da görünmesi
+- Başarısız save/unlock için UI rollback
+
+**Kanıt Referansları**
+- Repro/analiz notu: `/app/memory/EDIT_MODE_SYNC_NOTES.md`
+- Playwright senaryosu: admin login → kategori edit → save → dirty görünür
+- Screenshot seti:
+  - `/app/screenshots/edit-mode-modal.png`
+  - `/app/screenshots/edit-mode-dirty.png`
+
+**Regression Checklist**
+- [x] Save rollback (Playwright: edit save hata senaryosu + restoreSnapshot)
+- [x] Multi-save ardışık deneme (Manual: aynı oturumda iki kez Tamam → dirty görünür)
+- [x] Dirty zinciri görünürlüğü (Playwright: dirty indikatorleri göründü)
+
 ## 2026-02-23 — Kategori Import/Export P0 Closeout
 
 **Kapsam**
