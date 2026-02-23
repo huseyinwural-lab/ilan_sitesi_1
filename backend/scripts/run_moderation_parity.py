@@ -76,14 +76,12 @@ report_lines = [
 
 if not sample_rows:
     report_lines.append('| - | - | - |')
-    report_lines.append('
-> Not: moderation_audit koleksiyonu bulunamadı veya boş.')
+    report_lines.append('\n> Not: moderation_audit koleksiyonu bulunamadı veya boş.')
 else:
     for row in sample_rows:
         report_lines.append(f"| {row['listing_id']} | {row['action_type']} | {row['match']} |")
 
-Path('/app/memory/MODERATION_PARITY_REPORT.md').write_text('
-'.join(report_lines))
+Path('/app/memory/MODERATION_PARITY_REPORT.md').write_text('\n'.join(report_lines))
 print('MODERATION_PARITY_REPORT.md written')
 
 cur.close()
