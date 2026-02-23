@@ -770,6 +770,22 @@ export default function Layout({ children }) {
                         <div className="font-semibold text-slate-900">{healthDetailDisplay.errorLabel}</div>
                       </div>
                     </div>
+                    <div className="mt-3" data-testid="admin-system-health-endpoint-section">
+                      <div className="text-xs text-slate-500" data-testid="admin-system-health-endpoint-title">Endpoint Slow Query</div>
+                      <div className="mt-2 space-y-2" data-testid="admin-system-health-endpoint-table">
+                        {healthDetailDisplay.endpointStats.map((row) => (
+                          <div
+                            key={row.endpoint}
+                            className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-2 py-1 text-[11px]"
+                            data-testid={`admin-system-health-endpoint-row-${row.endpoint.replace(/\W/g, '-')}`}
+                          >
+                            <span className="font-medium text-slate-700">{row.endpoint}</span>
+                            <span className="text-slate-500">Slow: {row.slowCount}</span>
+                            <span className="text-slate-500">p95: {row.p95} ms</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
