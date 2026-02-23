@@ -96,6 +96,8 @@ async def search_listings(
     if cached:
         return cached
 
+    start_ts = time.perf_counter()
+
     # Guardrail: Check Filter Count
     if attrs:
         try:
