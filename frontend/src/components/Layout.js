@@ -705,6 +705,7 @@ export default function Layout({ children }) {
                         <span
                           className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600"
                           data-testid="admin-system-health-slow-query-badge"
+                          title={`Threshold > ${healthDetailDisplay.slowQueryThreshold}ms`}
                         >
                           Slow Queries (24s): {healthDetailDisplay.slowQueryCount}
                         </span>
