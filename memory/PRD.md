@@ -97,6 +97,16 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **Listing wizard altyapı stabilizasyonu (2026-02-23):**
   - /api/catalog/schema draft schema erişimi açıldı (wizard blokları kalktı)
   - /api/v2/vehicle/makes + models SQL fallback eklendi
+- **Premium otomobil ilan sihirbazı P0 (2026-02-23):**
+  - Model grid + arama + seçim (geri/ileri persist)
+  - Yıl dropdown (2010–2026) + opsiyonel Versiyon/Donanım metin alanı
+  - Oto çekirdek alanları: km, yakıt, vites, çekiş, kasa, motor cc/hp, hasar, takas, konum + fiyat tipi entegrasyonu
+  - Özellikler/Medya: min 3 foto + kapak + sıralama, review’da galeri özeti
+  - Önizleme: marka/model/yıl, fiyat tipi, motor, konum, özellik özetleri
+  - Draft save PATCH + create draft make/model opsiyonel
+  - Şema yükleme 409 notice + kullanıcıya bilgi mesajı
+  - DB client_encoding UTF8 (TR karakterler)
+  - App.js VehicleSegmentPage import fix
 - Preview/Prod DB fail-fast: CONFIG_MISSING hatası + localhost yasak + DB_SSL_MODE=require
 - .env override kapatıldı (server.py, core/config.py, app/database.py)
 - **P0 Sertleştirmeler:**
