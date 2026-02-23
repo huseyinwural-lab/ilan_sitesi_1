@@ -7,6 +7,7 @@ from app.models.moderation import Listing
 from app.models.listing_search import ListingSearch
 from app.models.attribute import ListingAttribute, Attribute, AttributeOption, CategoryAttributeMap
 from app.models.category import Category
+from app.utils.monitoring import record_slow_query
 from app.core.redis_rate_limit import RedisRateLimiter
 from typing import Optional, List, Dict
 import json
