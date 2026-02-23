@@ -3275,6 +3275,38 @@ async def health_db():
         )
 
 
+@api_router.get("/admin/system/health-summary")
+async def admin_system_health_summary(
+    current_user=Depends(check_permissions(list(ADMIN_ROLE_OPTIONS))),
+):
+    now_ts = time.time()
+    cached_at = _system_health_cache.get("checked_at") or 0
+    cached_payload = _system_health_cache.get("data")
+    if cached_payload and cached_at and (now_ts - cached_at) < SYSTEM_HEALTH_CACHE_TTL_SECONDS:
+        return cached_payload
+
+    last_check_at = datetime.now(timezone.utc)
+    db_status = "ok"
+    try:
+        async with sql_engine.connect() as conn:
+            await conn.execute(select(1))
+        _set_last_db_error(None)
+    except Exception as exc:
+        db_status = "unreachable"
+        _set_last_db_error(str(exc))
+
+    error_count, error_rate = _get_db_error_rate()
+    payload = {
+        "db_status": db_status,
+        "last_check_at": last_check_at.isoformat(),
+        "error_count_5m": error_count,
+        "error_rate_per_min_5m": error_rate,
+        "last_db_error": _last_db_error,
+    }
+    _system_health_cache.update({"checked_at": now_ts, "data": payload})
+    return payload
+
+
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(
     credentials: UserLogin,
