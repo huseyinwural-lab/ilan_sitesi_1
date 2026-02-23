@@ -132,6 +132,12 @@ const ListingCategorySelect = () => {
     setError('');
     try {
       const roots = await fetchChildren(null, moduleKey);
+      if (!roots.length) {
+        setColumns([]);
+        setSelectionComplete(false);
+        setActiveCategory(null);
+        return;
+      }
       setColumns([{ parentId: null, items: roots, selectedId: null }]);
     } catch (err) {
       setError('Kategoriler yüklenemedi.');
