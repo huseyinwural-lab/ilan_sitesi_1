@@ -191,7 +191,7 @@ const ListingCategorySelect = () => {
       setAutoAdvanceActive(false);
       return;
     }
-    if (moduleParam === selectedModule && selectedPathKey === pathParam) {
+    if (moduleParam === selectedModule && selectedPathKey === pathParam && columns.length > 0) {
       return;
     }
     autoAdvanceRef.current = false;
