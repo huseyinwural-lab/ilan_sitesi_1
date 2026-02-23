@@ -99,12 +99,34 @@
 
 ---
 
-## 7) Migration Adımları (Özet)
+## 8) Migration Task Breakdown (Uygulama)
 
-1. Snapshot
-2. Transform
-3. Load
-4. Integrity check
-5. Switch read source
-6. Monitor
-7. Rollback window (Mongo read fallback)
+1. **Schema Create**
+   - listings_search, moderation_queue, moderation_actions, listing_reports, listing_media
+2. **Data Migrate**
+   - Snapshot al → ETL pipeline
+3. **Index Build**
+   - GIN tsvector + composite facets + geo
+4. **Verify**
+   - Row count + sample hash + referential integrity
+5. **Freeze Window Cutover**
+   - Read switch + monitor
+
+## 9) Search Performance Benchmark (Mongo vs Postgres)
+
+- Senaryolar:
+  - Tam metin arama (başlık/description)
+  - Facet filtre (kategori + fiyat + lokasyon)
+  - Sıralama (price, published_at)
+- Metikler:
+  - p50/p95 latency
+  - sonuç sayısı doğruluğu
+  - CPU/memory
+
+## 10) Moderation Workflow Parity Test
+
+- Kuyruğa düşen ilan sayısı eşleşmesi
+- Durum geçişleri: pending → approved/rejected
+- SLA/priority hesapları
+- Audit log tutarlılığı
+
