@@ -7673,6 +7673,69 @@ class RecentCategoryPayload(BaseModel):
     category_name: Optional[str] = None
 
 
+async def _load_category_with_translations(session: AsyncSession, category_id: uuid.UUID) -> Optional[Category]:
+    result = await session.execute(
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.id == category_id, Category.is_deleted.is_(False))
+    )
+    return result.scalar_one_or_none()
+
+
+async def _build_category_path(session: AsyncSession, category: Category) -> list[Category]:
+    path_nodes: list[Category] = []
+    current = category
+    visited = set()
+    while current and current.id not in visited:
+        visited.add(current.id)
+        path_nodes.append(current)
+        if not current.parent_id:
+            break
+        current = await _load_category_with_translations(session, current.parent_id)
+    return list(reversed(path_nodes))
+
+
+async def _build_recent_category_response(session: AsyncSession, recent: UserRecentCategory | None) -> Optional[dict]:
+    if not recent:
+        return None
+
+    try:
+        category_uuid = uuid.UUID(str(recent.category_id))
+    except ValueError:
+        return None
+
+    category = await _load_category_with_translations(session, category_uuid)
+    if not category or not category.is_enabled:
+        return None
+
+    if recent.module and category.module and category.module != recent.module:
+        return None
+
+    code = (recent.country or "").upper() or "DE"
+    if category.country_code and category.country_code != code:
+        return None
+    allowed = category.allowed_countries or []
+    if allowed and code not in allowed:
+        return None
+
+    path_nodes = await _build_category_path(session, category)
+
+    return {
+        "category": _serialize_category_sql(category, include_schema=False, include_translations=True),
+        "path": [
+            {
+                "id": str(node.id),
+                "name": _pick_category_name(list(node.translations or []), _pick_category_slug(node.slug)),
+                "slug": _pick_category_slug(node.slug),
+            }
+            for node in path_nodes
+        ],
+        "module": recent.module,
+        "country": code,
+        "updated_at": recent.updated_at.isoformat() if recent.updated_at else None,
+    }
+
+
 @api_router.post("/account/recent-category")
 async def set_recent_category(
     payload: RecentCategoryPayload,
@@ -7680,6 +7743,48 @@ async def set_recent_category(
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    try:
+        user_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    try:
+        category_uuid = uuid.UUID(payload.category_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="category_id invalid") from exc
+
+    module_value = payload.module or "vehicle"
+    country_value = (payload.country or current_user.get("country_code") or "DE").upper()
+
+    category = await _load_category_with_translations(session, category_uuid)
+    if not category or not category.is_enabled:
+        raise HTTPException(status_code=404, detail="Kategori bulunamadı")
+    if category.module and category.module != module_value:
+        raise HTTPException(status_code=409, detail="Module uyuşmazlığı")
+    if category.country_code and category.country_code != country_value:
+        raise HTTPException(status_code=403, detail="Kategori ülke kapsamı dışında")
+    allowed = category.allowed_countries or []
+    if allowed and country_value not in allowed:
+        raise HTTPException(status_code=403, detail="Kategori ülke kapsamı dışında")
+
+    result = await session.execute(
+        select(UserRecentCategory).where(UserRecentCategory.user_id == user_uuid)
+    )
+    recent = result.scalar_one_or_none()
+    if recent:
+        recent.category_id = category_uuid
+        recent.module = module_value
+        recent.country = country_value
+        recent.updated_at = datetime.now(timezone.utc)
+    else:
+        recent = UserRecentCategory(
+            user_id=user_uuid,
+            category_id=category_uuid,
+            module=module_value,
+            country=country_value,
+        )
+        session.add(recent)
+
     await _write_audit_log_sql(
         session,
         "listing_recent_category",
@@ -7687,14 +7792,38 @@ async def set_recent_category(
         "listing_category_flow",
         payload.category_id,
         {
-            "module": payload.module,
+            "module": module_value,
+            "country": country_value,
             "path": payload.path or [],
             "category_name": payload.category_name,
         },
         request,
+        country_code=country_value,
     )
+
     await session.commit()
-    return {"status": "ok"}
+    await session.refresh(recent)
+
+    recent_payload = await _build_recent_category_response(session, recent)
+    return {"status": "ok", "recent": recent_payload}
+
+
+@api_router.get("/account/recent-category")
+async def get_recent_category(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        user_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(
+        select(UserRecentCategory).where(UserRecentCategory.user_id == user_uuid)
+    )
+    recent = result.scalar_one_or_none()
+    recent_payload = await _build_recent_category_response(session, recent)
+    return {"recent": recent_payload}
 
 
 async def get_catalog_schema(
