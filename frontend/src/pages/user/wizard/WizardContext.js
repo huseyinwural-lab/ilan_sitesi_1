@@ -35,6 +35,8 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     body_type: null,
     color: null,
     damage_status: null,
+    engine_cc: null,
+    engine_hp: null,
     trade_in: null,
     price_eur: null,
   });
