@@ -14777,6 +14777,7 @@ async def admin_import_categories_commit(
     }
 
 
+@api_router.get("/admin/menu-items")
 async def admin_list_menu_items(
     request: Request,
     country: Optional[str] = None,
