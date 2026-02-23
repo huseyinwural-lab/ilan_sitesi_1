@@ -289,6 +289,12 @@ const AdminCategories = () => {
   const schemaStatusLabel = schema.status === "published" ? "Yayında" : "Taslak";
   const publishValidation = useMemo(() => {
     const errors = [];
+    const dirtyLabels = dirtySteps
+      .map((stepId) => WIZARD_STEPS.find((step) => step.id === stepId)?.label)
+      .filter(Boolean);
+    if (dirtyLabels.length > 0) {
+      errors.push(`Dirty adımlar tamamlanmalı: ${dirtyLabels.join(", ")}.`);
+    }
     if (!effectiveHierarchyComplete) {
       errors.push("Kategori tamamlanmalı.");
     }
