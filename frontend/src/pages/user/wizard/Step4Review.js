@@ -34,6 +34,10 @@ const ReviewSubmit = () => {
     });
   };
 
+  const priceLabel = coreFields.price_type === 'HOURLY'
+    ? `${coreFields.hourly_display || coreFields.hourly_rate || '-'} ${coreFields.currency_primary} / saat`
+    : `${coreFields.price_display || coreFields.price_amount || '-'} ${coreFields.currency_primary}`;
+
   return (
     <div className="max-w-2xl mx-auto space-y-8" data-testid="wizard-review">
       <h2 className="text-2xl font-bold" data-testid="wizard-review-title">Önizleme & Yayınla</h2>
