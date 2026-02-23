@@ -7593,6 +7593,38 @@ async def search_categories(
     items.sort(key=lambda item: (len(item.get("path") or []), item["category"].get("name") or ""))
     return {"items": items}
 
+
+class ListingFlowEventPayload(BaseModel):
+    event_name: str
+    metadata: Optional[dict] = None
+
+
+@api_router.post("/analytics/events")
+async def track_listing_flow_event(
+    payload: ListingFlowEventPayload,
+    request: Request,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    metadata = payload.metadata or {}
+    metadata["event_name"] = payload.event_name
+    resource_id = metadata.get("category_id") or None
+
+    await _write_audit_log_sql(
+        session,
+        "listing_flow_event",
+        current_user,
+        "listing_category_flow",
+        resource_id,
+        metadata,
+        request,
+        country_code=metadata.get("country"),
+    )
+    await session.commit()
+
+    return {"status": "ok"}
+
+
 async def get_catalog_schema(
     category_id: str,
     request: Request,
