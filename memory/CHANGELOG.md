@@ -5,7 +5,7 @@
 **Kapsam**
 - Env/secret inject + backend restart doğrulandı
 - /api/admin/system/health-detail canary_status=OK
-- Admin UI canary OK (screenshot: `/app/screenshots/cloudflare-phase-a.png`)
+- Admin UI canary OK (screenshot: `/app/screenshots/cloudflare-card-final-state.jpeg`)
 - Kanıt: `/app/docs/ADMIN_V1_PHASE_A_EVIDENCE.md`
 
 ## 2026-02-23 — CDN Metrics + Admin Kategori Manuel Yönetimi
