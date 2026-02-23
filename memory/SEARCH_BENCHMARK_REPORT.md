@@ -1,36 +1,22 @@
-# Search Benchmark Report (Mongo vs Postgres)
+# Search Benchmark Report (Postgres listings_search)
+Generated at: 2026-02-23T12:27:07.463930Z
 
-**Amaç:** Search latency ve query plan karşılaştırması
+## Summary
+- Cold cache p50: 292.82 ms
+- Cold cache p95: 308.19 ms
+- Warm cache p50: 145.49 ms
+- Warm cache p95: 147.9 ms
 
-## Env
-- Dataset boyutu: ________
-- Mongo versiyon: ________
-- Postgres versiyon: ________
-
-## Senaryolar
-1) Text search (title/description)
-2) Facet (category + price)
-3) Multi-filter (category + city + price)
-4) Sorting (price_desc, date_desc)
-
-## Sonuç Tablosu
-| Scenario | Mongo p50 | Mongo p95 | Postgres p50 | Postgres p95 | Notes |
-| --- | --- | --- | --- | --- | --- |
-| Text search | TBD | TBD | TBD | TBD | |
-| Facet (category+price) | TBD | TBD | TBD | TBD | |
-| Multi-filter | TBD | TBD | TBD | TBD | |
-| Sorting | TBD | TBD | TBD | TBD | |
-
-## EXPLAIN ANALYZE (Postgres)
-- Query 1:
-```
-TBD
-```
-- Query 2:
-```
-TBD
-```
-
-## Notlar
-- Index kullanım oranı
-- p95 high latency root cause (if any)
+## Query Latencies
+| Query | Cold (ms) | Warm (ms) |
+| --- | --- | --- |
+| B01 | 347.47 | 304.02 |
+| B02 | 291.61 | 147.9 |
+| B03 | 303.91 | 146.22 |
+| B04 | 292.82 | 145.49 |
+| B05 | 289.1 | 144.89 |
+| B06 | 308.19 | 145.1 |
+| B07 | 292.06 | 145.25 |
+| B08 | 306.34 | 145.15 |
+| B09 | 292.88 | 145.93 |
+| B10 | 291.25 | 145.61 |
