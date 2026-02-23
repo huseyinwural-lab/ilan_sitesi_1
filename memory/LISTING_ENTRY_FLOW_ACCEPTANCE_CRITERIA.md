@@ -67,3 +67,9 @@ Bu doküman `/ilan-ver/kategori-secimi` akışı için kabul kriterlerini kilitl
 - Bu durumda referans akış testi **FAIL değil, SKIP** olarak işaretlenir.
 - Kullanıcıya “Modül seçimine dön” CTA’sı sunulur.
 
+---
+
+## Emlak PASS Durumu
+- **Status:** PENDING (manuel kategori girişi bekleniyor)
+- **Kanıt:** Emlak akışı PASS alındığında bu bölüm güncellenecek.
+
