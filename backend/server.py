@@ -14601,7 +14601,7 @@ async def admin_import_categories_dry_run_pdf(
 async def admin_import_categories_commit(
     request: Request,
     file: UploadFile = File(...),
-    format: str = "json",
+    format: str = "csv",
     dry_run_hash: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
@@ -14610,50 +14610,69 @@ async def admin_import_categories_commit(
     file_hash = hashlib.sha256(content).hexdigest()
     if not dry_run_hash or dry_run_hash != file_hash:
         raise HTTPException(status_code=409, detail="Dry-run doğrulaması gerekli")
-    items = _parse_import_payload(content, format.lower())
 
+    rows = _parse_category_import_rows(content, format.lower())
     result = await session.execute(select(Category).options(selectinload(Category.translations)))
     existing_categories = result.scalars().all()
-    _diff_categories(items, existing_categories)
-    existing_by_slug = {(_pick_category_slug(cat.slug) or "").lower(): cat for cat in existing_categories}
+    validation = _validate_category_import_rows(rows, existing_categories, current_user)
 
-    items_by_slug = {item["slug_tr"]: item for item in items}
+    if validation.get("errors"):
+        return Response(
+            status_code=400,
+            media_type="application/json",
+            content=json.dumps({
+                "detail": "Validation failed",
+                "errors": validation.get("errors"),
+                "summary": validation.get("summary"),
+            }),
+        )
+
+    parent_map = validation.get("parent_map", {})
+    existing_by_slug: Dict[str, Category] = validation.get("existing_map", {})
+    rows_to_apply = validation.get("rows", [])
+
+    depth_cache: Dict[str, int] = {}
+
+    def compute_depth(slug: str) -> int:
+        if slug in depth_cache:
+            return depth_cache[slug]
+        parent = parent_map.get(slug)
+        if not parent or parent == slug:
+            depth_cache[slug] = 0
+            return 0
+        depth_cache[slug] = compute_depth(parent) + 1
+        return depth_cache[slug]
+
+    ordered_rows = sorted(rows_to_apply, key=lambda row: (compute_depth(row["slug"]), row["sort_order"]))
+
     created = 0
     updated = 0
-    deleted = 0
-    schema_versions = []
 
     try:
         created_map: Dict[str, Category] = {}
-        ordered_items = sorted(items, key=lambda x: (len((x.get("path") or "").split(".")), x.get("sort_order", 0)))
-        for item in ordered_items:
-            slug_key = item["slug_tr"]
+        for row in ordered_rows:
+            slug_key = row["slug"]
             category = existing_by_slug.get(slug_key)
-            parent_slug = item.get("parent_slug")
+            parent_slug = row.get("parent_slug")
             parent = None
             if parent_slug:
-                parent = existing_by_slug.get(parent_slug) or created_map.get(parent_slug)
-                if not parent:
-                    raise HTTPException(status_code=400, detail=f"Parent slug not found: {parent_slug}")
+                parent = created_map.get(parent_slug) or existing_by_slug.get(parent_slug)
 
-            allowed_countries = item.get("allowed_countries") or []
-            country_code = (item.get("country_code") or None)
-            if not allowed_countries:
-                allowed_countries = [country_code] if country_code else sorted(SUPPORTED_COUNTRIES)
+            allowed_countries = [row["country"]] if row.get("country") else []
 
             if not category:
-                slug_map = item.get("slug")
+                slug_map = {"tr": slug_key, "de": slug_key, "fr": slug_key}
                 category = Category(
                     id=uuid.uuid4(),
                     parent_id=parent.id if parent else None,
-                    path=item.get("path") or (f"{parent.path}.{slug_key}" if parent else slug_key),
+                    path=f"{parent.path}.{slug_key}" if parent and parent.path else slug_key,
                     depth=(parent.depth + 1) if parent else 0,
-                    sort_order=item.get("sort_order") or 0,
-                    module=item.get("module") or "vehicle",
+                    sort_order=row.get("sort_order") or 0,
+                    module=row.get("module") or "vehicle",
                     slug=slug_map,
                     icon=None,
                     image_url=None,
-                    is_enabled=_coerce_bool(item.get("active_flag"), True),
+                    is_enabled=row.get("is_active") if row.get("is_active") is not None else True,
                     is_visible_on_home=False if parent else True,
                     is_deleted=False,
                     inherit_enabled=True,
@@ -14662,9 +14681,10 @@ async def admin_import_categories_commit(
                     override_countries=None,
                     allowed_countries=allowed_countries,
                     listing_count=0,
-                    country_code=country_code,
-                    hierarchy_complete=_coerce_bool(item.get("hierarchy_complete"), True),
+                    country_code=row.get("country") or None,
+                    hierarchy_complete=True,
                     form_schema=None,
+                    wizard_progress=row.get("wizard_progress"),
                     created_at=datetime.now(timezone.utc),
                     updated_at=datetime.now(timezone.utc),
                 )
@@ -14674,12 +14694,12 @@ async def admin_import_categories_commit(
                 created_map[slug_key] = category
                 created += 1
 
-                for lang in ("tr", "en", "de"):
+                for lang, value in (("tr", row.get("name_tr")), ("de", row.get("name_de")), ("fr", row.get("name_fr"))):
                     session.add(
                         CategoryTranslation(
                             category_id=category.id,
                             language=lang,
-                            name=(item.get("name") or {}).get(lang) or slug_key,
+                            name=value or slug_key,
                             description=None,
                             meta_title=None,
                             meta_description=None,
@@ -14687,98 +14707,57 @@ async def admin_import_categories_commit(
                     )
             else:
                 changed = False
-                if parent and category.parent_id != parent.id:
-                    category.parent_id = parent.id
-                    category.depth = parent.depth + 1
-                    category.path = f"{parent.path}.{slug_key}" if parent.path else slug_key
+                if await _update_category_paths(session, category, parent):
                     changed = True
-                if category.country_code != country_code:
-                    category.country_code = country_code
+                if category.sort_order != row.get("sort_order"):
+                    category.sort_order = row.get("sort_order")
+                    changed = True
+                if category.is_enabled != row.get("is_active"):
+                    category.is_enabled = row.get("is_active")
+                    changed = True
+                if category.country_code != row.get("country"):
+                    category.country_code = row.get("country") or None
                     changed = True
                 if category.allowed_countries != allowed_countries:
                     category.allowed_countries = allowed_countries
                     changed = True
-                if category.sort_order != item.get("sort_order"):
-                    category.sort_order = item.get("sort_order")
+                if category.is_deleted:
+                    category.is_deleted = False
                     changed = True
-                is_enabled = _coerce_bool(item.get("active_flag"), True)
-                if category.is_enabled != is_enabled:
-                    category.is_enabled = is_enabled
+                if category.wizard_progress != row.get("wizard_progress"):
+                    category.wizard_progress = row.get("wizard_progress")
                     changed = True
 
-                name_payload = item.get("name") or {}
-                if name_payload:
-                    translations = {t.language: t for t in (category.translations or [])}
-                    for lang in ("tr", "en", "de"):
-                        desired = name_payload.get(lang)
-                        if not desired:
-                            continue
-                        if lang in translations:
-                            if translations[lang].name != desired:
-                                translations[lang].name = desired
-                                changed = True
-                        else:
-                            session.add(
-                                CategoryTranslation(
-                                    category_id=category.id,
-                                    language=lang,
-                                    name=desired,
-                                    description=None,
-                                    meta_title=None,
-                                    meta_description=None,
-                                )
-                            )
+                translations = {t.language: t for t in (category.translations or [])}
+                for lang, value in (("tr", row.get("name_tr")), ("de", row.get("name_de")), ("fr", row.get("name_fr"))):
+                    if lang in translations:
+                        if translations[lang].name != value:
+                            translations[lang].name = value
                             changed = True
+                    else:
+                        session.add(
+                            CategoryTranslation(
+                                category_id=category.id,
+                                language=lang,
+                                name=value or slug_key,
+                                description=None,
+                                meta_title=None,
+                                meta_description=None,
+                            )
+                        )
+                        changed = True
 
                 if changed:
                     category.updated_at = datetime.now(timezone.utc)
                     updated += 1
 
-            if item.get("form_schema") is not None:
-                schema = _normalize_category_schema(item.get("form_schema"))
-                schema["status"] = "draft"
-                existing_schema = _normalize_category_schema(category.form_schema) if category.form_schema else None
-                if json.dumps(existing_schema, sort_keys=True) != json.dumps(schema, sort_keys=True):
-                    category.form_schema = schema
-                    max_version_result = await session.execute(
-                        select(func.max(CategorySchemaVersion.version))
-                        .where(CategorySchemaVersion.category_id == category.id)
-                    )
-                    max_version = max_version_result.scalar_one_or_none() or 0
-                    version = CategorySchemaVersion(
-                        id=uuid.uuid4(),
-                        category_id=category.id,
-                        version=max_version + 1,
-                        status="draft",
-                        schema_snapshot=schema,
-                        created_at=datetime.now(timezone.utc),
-                        created_by=_safe_uuid(current_user.get("id")),
-                        created_by_role=current_user.get("role"),
-                        created_by_email=current_user.get("email"),
-                        published_at=None,
-                        published_by=None,
-                    )
-                    session.add(version)
-                    schema_versions.append({
-                        "category_id": str(category.id),
-                        "version_id": str(version.id),
-                        "version": version.version,
-                    })
-
-        for slug_key, category in existing_by_slug.items():
-            if slug_key and slug_key not in items_by_slug and not category.is_deleted:
-                category.is_enabled = False
-                category.is_deleted = True
-                category.updated_at = datetime.now(timezone.utc)
-                deleted += 1
-
     except Exception:
         await session.rollback()
         raise
 
-    audit_entry = await _write_audit_log_sql(
+    await _write_audit_log_sql(
         session,
-        "categories.import.commit",
+        "categories.import.apply",
         current_user,
         "category_import",
         None,
@@ -14787,84 +14766,17 @@ async def admin_import_categories_commit(
             "filename": file.filename,
             "created": created,
             "updated": updated,
-            "deleted": deleted,
-            "schema_versions": schema_versions,
             "hash": file_hash,
         },
         request,
     )
     await session.commit()
+
     return {
-        "batch_id": str(audit_entry.id),
-        "summary": {"created": created, "updated": updated, "deleted": deleted},
-        "schema_versions": schema_versions,
+        "summary": {"created": created, "updated": updated},
     }
 
 
-class CategoryImportPublishPayload(BaseModel):
-    batch_id: str
-
-
-@api_router.post("/admin/categories/import-export/publish")
-async def admin_publish_category_import_batch(
-    payload: CategoryImportPublishPayload,
-    request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
-    session: AsyncSession = Depends(get_sql_session),
-):
-    try:
-        batch_uuid = uuid.UUID(payload.batch_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid batch_id") from exc
-
-    result = await session.execute(select(AuditLog).where(AuditLog.id == batch_uuid))
-    audit_entry = result.scalar_one_or_none()
-    if not audit_entry:
-        raise HTTPException(status_code=404, detail="Batch not found")
-
-    schema_versions = (audit_entry.metadata_info or {}).get("schema_versions") or []
-    if not schema_versions:
-        raise HTTPException(status_code=409, detail="No draft schemas in batch")
-
-    published = 0
-    for version_info in schema_versions:
-        version_id = version_info.get("version_id")
-        if not version_id:
-            continue
-        try:
-            version_uuid = uuid.UUID(version_id)
-        except ValueError:
-            continue
-
-        version_result = await session.execute(
-            select(CategorySchemaVersion).where(CategorySchemaVersion.id == version_uuid)
-        )
-        version = version_result.scalar_one_or_none()
-        if not version:
-            continue
-        version.status = "published"
-        version.published_at = datetime.now(timezone.utc)
-        version.published_by = _safe_uuid(current_user.get("id"))
-        published += 1
-
-        category = await session.get(Category, version.category_id)
-        if category and isinstance(category.form_schema, dict):
-            updated_schema = dict(category.form_schema)
-            updated_schema["status"] = "published"
-            category.form_schema = updated_schema
-
-    await _write_audit_log_sql(
-        session,
-        "categories.schema.publish",
-        current_user,
-        "category_import",
-        payload.batch_id,
-        {"published": published},
-        request,
-    )
-    await session.commit()
-
-    return {"batch_id": payload.batch_id, "published": published}
 async def admin_list_menu_items(
     request: Request,
     country: Optional[str] = None,
