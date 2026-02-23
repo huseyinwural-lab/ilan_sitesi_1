@@ -50,6 +50,14 @@
 - Slow queries (24s) rozeti + threshold >800ms
 - Endpoint bazlı slow query kırılımı (/api/search, /api/listings, /api/admin/*)
 
+## 2026-02-23 — Moderation Migration Kickoff
+
+**Kapsam**
+- moderation_queue schema + p37 migration
+- ETL script + parity raporu: `/app/memory/MODERATION_PARITY_REPORT.md`
+- Cutover plan: `/app/memory/MODERATION_CUTOVER_PLAN.md`
+- Not: Mongo moderation koleksiyonları bulunamadı (0/0 parity)
+
 ## 2026-02-23 — P0 Edit Mode State Sync Closeout
 
 **Kapsam**
