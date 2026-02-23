@@ -19,6 +19,7 @@ const CategorySelector = () => {
   const [preselectedCategory, setPreselectedCategory] = useState(null);
   const [preselectApplied, setPreselectApplied] = useState(false);
   const [moduleKey] = useState(() => localStorage.getItem('ilan_ver_module') || 'vehicle');
+  const forceCoreStep = useMemo(() => localStorage.getItem('ilan_ver_force_core_step') === 'true', []);
 
   useEffect(() => {
     const fetchCategories = async () => {
