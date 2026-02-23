@@ -14448,6 +14448,7 @@ def _validate_category_import_rows(rows: list[dict], existing: list[Category], c
             "row_number": row_number,
             "module": module_raw,
             "country": country_raw,
+            "schema_version": schema_version,
             "slug": slug_raw,
             "parent_slug": parent_slug_raw,
             "name_tr": name_tr,
