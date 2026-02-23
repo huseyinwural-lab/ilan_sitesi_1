@@ -787,6 +787,11 @@ export default function Layout({ children }) {
                         <div className="text-slate-500">Hata (5dk)</div>
                         <div className="font-semibold text-slate-900">{healthDetailDisplay.errorLabel}</div>
                       </div>
+                      <div className="rounded-lg border border-slate-100 bg-slate-50 p-2" data-testid="admin-system-health-moderation-sla">
+                        <div className="text-slate-500">Moderation SLA Ort.</div>
+                        <div className="font-semibold text-slate-900" data-testid="admin-system-health-moderation-sla-value">{healthDetailDisplay.moderationSlaAvg}</div>
+                        <div className="text-[11px] text-slate-500" data-testid="admin-system-health-moderation-sla-pending">Pending: {healthDetailDisplay.moderationSlaPending}</div>
+                      </div>
                     </div>
                     <div className="mt-3" data-testid="admin-system-health-endpoint-section">
                       <div className="text-xs text-slate-500" data-testid="admin-system-health-endpoint-title">Endpoint Slow Query</div>
