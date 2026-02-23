@@ -14350,7 +14350,11 @@ async def admin_update_cloudflare_config(
         actor=current_user,
         resource_type="cloudflare_config",
         resource_id=str(config.id),
-        metadata={"account_last4": account_last4, "zone_last4": zone_last4},
+        metadata={
+            "account_last4": account_last4,
+            "zone_last4": zone_last4,
+            "message": f"Cloudflare config updated by {current_user.get('id')}",
+        },
         request=request,
         country_code=None,
     )
