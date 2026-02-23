@@ -350,19 +350,15 @@ export default function Layout({ children }) {
 
   const canaryLabels = {
     OK: 'OK',
-    AUTH_ERROR: 'Auth Error',
-    SCOPE_ERROR: 'Scope Error',
-    NO_DATA: 'No Data',
-    RATE_LIMIT: 'Rate Limit',
     CONFIG_MISSING: 'Config Missing',
+    SCOPE_ERROR: 'Scope Error',
+    API_ERROR: 'API Error',
   };
   const canaryTooltips = {
     OK: 'Analytics okundu ve veri alındı.',
-    AUTH_ERROR: 'Token doğrulanamadı (401).',
-    SCOPE_ERROR: 'Token scope yetersiz (403).',
-    NO_DATA: 'Veri yok (son 1 saatte trafik yok).',
-    RATE_LIMIT: 'Rate limit aşıldı (429).',
     CONFIG_MISSING: 'Account/Zone ID veya token eksik.',
+    SCOPE_ERROR: 'Token scope yetersiz (403).',
+    API_ERROR: 'API çağrısı başarısız veya veri yok.',
   };
   const canaryRaw = healthDetailDisplay.cdnCanaryStatus || 'UNKNOWN';
   const canaryLabel = canaryLabels[canaryRaw] || canaryRaw;
