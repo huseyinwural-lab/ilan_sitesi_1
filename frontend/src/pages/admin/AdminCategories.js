@@ -731,6 +731,7 @@ const AdminCategories = () => {
       slug: child.slug || "",
       active_flag: child.active_flag ?? true,
       sort_order: child.sort_order || 0,
+      transaction_type: child.form_schema?.category_meta?.transaction_type || "",
       is_complete: true,
       children: buildSubcategoryTree(child.id),
     }));
