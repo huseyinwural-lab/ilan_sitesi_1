@@ -14135,6 +14135,12 @@ async def admin_update_category(
         if not hierarchy_complete:
             raise HTTPException(status_code=409, detail="Kategori hiyerarşisi tamamlanmadan kaydedilemez")
         if schema_status != "draft":
+            dirty_steps = []
+            wizard_progress_payload = payload.wizard_progress or category.wizard_progress or {}
+            if isinstance(wizard_progress_payload, dict):
+                dirty_steps = wizard_progress_payload.get("dirty_steps") or []
+            if dirty_steps:
+                raise HTTPException(status_code=409, detail="Dirty adımlar tamamlanmadan yayınlanamaz")
             _validate_category_schema(schema)
         updates["form_schema"] = schema
 
