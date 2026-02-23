@@ -81,6 +81,10 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     sql_session: AsyncSession = Depends(get_db),
 ):
+    cached_user = getattr(request.state, "current_user", None)
+    if cached_user:
+        return cached_user
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
