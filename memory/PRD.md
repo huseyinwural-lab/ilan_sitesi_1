@@ -179,6 +179,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Endpoint bazlı slow query kırılımı (/api/search, /api/listings, /api/admin/*)
 - **CDN Metrics Adapter (Cloudflare) (2026-02-23):**
   - Health panel CDN hit ratio, origin fetch, warm/cold p95 (feature-flag)
+  - Country breakdown + sparkline + canary status + cf_ids_present/source
+- **Cloudflare Config Admin UI (2026-02-23):**
+  - System Settings kartı + masked inputs + canary test
 - **Admin Kategori Manuel Yönetimi (2026-02-23):**
   - Modül seçimi + parent validation + alt tip metadata
 - **İlan Ver Kategori Fallback (2026-02-23):**
