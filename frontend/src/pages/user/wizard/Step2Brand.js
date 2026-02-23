@@ -15,6 +15,7 @@ const BrandStep = () => {
     setCompletedSteps,
     loading,
     trackWizardEvent,
+    setAutosaveStatus,
   } = useWizard();
 
   const [saving, setSaving] = useState(false);
