@@ -1394,7 +1394,10 @@ const AdminCategories = () => {
     setSubcategories((prev) => removeNodeByPath(prev, path));
   };
 
-  const handleHierarchyComplete = async (progressState = STEP_PROGRESS_STATE.hierarchy) => {
+  const handleHierarchyComplete = async (
+    progressState = STEP_PROGRESS_STATE.hierarchy,
+    dirtyStepsOverride = dirtySteps
+  ) => {
     setHierarchyError("");
     setHierarchyFieldErrors({});
 
