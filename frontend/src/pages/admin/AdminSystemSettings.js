@@ -409,14 +409,15 @@ export default function AdminSystemSettingsPage() {
               )}
             </div>
 
-            <div className="text-xs text-slate-600" data-testid="system-settings-cloudflare-canary-status" title={canaryDescriptions[cloudflareConfig.canary_status] || canaryDescriptions.UNKNOWN}>
-              Son Canary: {cloudflareConfig.canary_status || 'UNKNOWN'}
+            <div className="text-xs text-slate-600" data-testid="system-settings-cloudflare-canary-status">
+              Bağlantı testi: <span className={canaryStatusRaw === 'OK' ? 'text-emerald-600' : 'text-rose-600'}>{canaryUserText}</span>
             </div>
-            {configMissingReason && (
-              <div className="text-[11px] text-amber-600" data-testid="system-settings-cloudflare-config-missing">
-                Config Missing Reason: {configMissingReason}
-              </div>
-            )}
+            <details className="text-[11px] text-slate-500" data-testid="system-settings-cloudflare-canary-details">
+              <summary className="cursor-pointer">Detaylar</summary>
+              <div className="mt-1">canary_status: {canaryStatusRaw}</div>
+              <div>reason: {canaryReason}</div>
+              <div>cf_ids_source: {cloudflareConfig.cf_ids_source || '-'}</div>
+            </details>
           </>
         )}
 
