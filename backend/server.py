@@ -3532,6 +3532,9 @@ async def admin_system_health_detail(
         "cdn_metrics": cdn_metrics,
         "cf_ids_present": cf_ids_present,
         "cf_ids_source": cf_ids_source,
+        "encryption_key_present": encryption_key_present,
+        "cf_metrics_enabled": cf_metrics_enabled,
+        "config_missing_reason": config_missing_reason,
     }
     _system_health_detail_cache.update({"checked_at": now_ts, "data": payload})
     return payload
