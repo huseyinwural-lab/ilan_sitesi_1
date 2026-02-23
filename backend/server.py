@@ -2799,6 +2799,9 @@ TOKEN_VERSION = os.environ.get("TOKEN_VERSION", "v2")
 
 DB_POOL_SIZE_RAW = os.environ.get("DB_POOL_SIZE")
 DB_MAX_OVERFLOW_RAW = os.environ.get("DB_MAX_OVERFLOW")
+DB_POOL_TIMEOUT_RAW = os.environ.get("DB_POOL_TIMEOUT")
+DB_POOL_RECYCLE_RAW = os.environ.get("DB_POOL_RECYCLE")
+DB_POOL_DEBUG = os.environ.get("DB_POOL_DEBUG", "").lower() in {"1", "true", "yes"}
 DB_SSL_MODE = (os.environ.get("DB_SSL_MODE") or ("require" if APP_ENV in {"prod", "preview"} else "disable")).lower()
 
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
