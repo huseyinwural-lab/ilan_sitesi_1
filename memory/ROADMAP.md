@@ -6,7 +6,8 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 
 ## Admin V1 Operational Freeze
 - Phase A: Cloudflare & System Health — **CLOSED** (canary OK + evidence)
-- Phase B: RBAC Final Freeze — **IN PROGRESS** (deny-by-default allowlist + UI guard + docs)
+- Data Layer Cutover (Mongo Tasfiye) — **IN PROGRESS** (envanter + P0 admin chain SQL)
+- Phase B: RBAC Final Freeze — **PAUSED** (cutover tamamlanınca devam)
 - Phase C: Audit Log %100 kapsama — BACKLOG
 - Phase D: Moderation Pipeline Final — BACKLOG
 - Phase E: Monetizasyon Admin Görünürlük — BACKLOG
