@@ -31,7 +31,10 @@ export default function AdminCategoriesImportExport() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(`${API}/admin/categories/import-export/export/${type}`, {
+      const params = new URLSearchParams();
+      if (moduleFilter) params.set('module', moduleFilter);
+      if (countryFilter) params.set('country', countryFilter);
+      const res = await fetch(`${API}/admin/categories/import-export/export/${type}?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
@@ -41,7 +44,7 @@ export default function AdminCategoriesImportExport() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = type === 'json' ? 'categories-export.json' : 'categories-export.csv';
+      link.download = type === 'xlsx' ? 'categories-export.xlsx' : 'categories-export.csv';
       document.body.appendChild(link);
       link.click();
       link.remove();
