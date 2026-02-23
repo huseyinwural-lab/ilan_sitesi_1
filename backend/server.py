@@ -17188,6 +17188,62 @@ async def upload_vehicle_media(
     return {"id": listing_id, "status": listing.status, "media": resp_media}
 
 
+@api_router.patch("/v1/listings/vehicle/{listing_id}/media/order")
+async def reorder_vehicle_media(
+    listing_id: str,
+    payload: dict = Body(default={}),
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    media_meta = _listing_media_meta(listing)
+    if not media_meta:
+        return {"id": listing_id, "status": listing.status, "media": []}
+
+    order = payload.get("order") or []
+    cover_media_id = payload.get("cover_media_id")
+
+    media_by_id = {m.get("media_id"): m for m in media_meta if m.get("media_id")}
+    next_media = []
+    seen = set()
+    for media_id in order:
+        if media_id in media_by_id and media_id not in seen:
+            next_media.append(media_by_id[media_id])
+            seen.add(media_id)
+    for media in media_meta:
+        media_id = media.get("media_id")
+        if media_id and media_id not in seen:
+            next_media.append(media)
+            seen.add(media_id)
+
+    if cover_media_id and cover_media_id in media_by_id:
+        for media in next_media:
+            media["is_cover"] = media.get("media_id") == cover_media_id
+    else:
+        has_cover = any(m.get("is_cover") for m in next_media)
+        if not has_cover and next_media:
+            next_media[0]["is_cover"] = True
+
+    listing.attributes = {**(listing.attributes or {}), "media": next_media}
+    listing.images = [f"/media/listings/{listing_id}/{m['file']}" for m in next_media]
+    listing.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+
+    resp_media = [
+        {
+            "media_id": m.get("media_id"),
+            "file": m.get("file"),
+            "width": m.get("width"),
+            "height": m.get("height"),
+            "is_cover": m.get("is_cover", False),
+            "preview_url": f"/api/v1/listings/vehicle/{listing_id}/media/{m.get('media_id')}/preview",
+        }
+        for m in next_media
+    ]
+
+    return {"id": listing_id, "status": listing.status, "media": resp_media}
+
+
 @api_router.get("/v1/listings/vehicle/{listing_id}/media/{media_id}/preview")
 async def preview_vehicle_media(listing_id: str, media_id: str, current_user=Depends(require_portal_scope("account")), session: AsyncSession = Depends(get_sql_session)):
     listing = await _get_owned_listing(session, listing_id, current_user)
