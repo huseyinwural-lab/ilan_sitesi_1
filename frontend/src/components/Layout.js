@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import { Switch } from '@/components/ui/switch';
+import { ADMIN_ROLE_GROUPS } from '@/shared/adminRbac';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 
