@@ -248,7 +248,7 @@ const FeaturesMediaStep = () => {
       })));
 
       setCompletedSteps((prev) => ({ ...prev, 6: true }));
-      return true;
+      return { ok: true, updatedAt: result?.updatedAt || null };
     } catch (err) {
       console.error(err);
       setErrors((prev) => ({ ...prev, submit: 'Medya kaydedilemedi.' }));
