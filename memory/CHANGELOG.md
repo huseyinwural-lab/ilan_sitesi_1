@@ -21,7 +21,24 @@
 - [x] Multi-save ardışık deneme (Playwright: `/app/screenshots/admin-multi-save.png`)
 - [x] Dirty zinciri görünürlüğü (Playwright: `/app/screenshots/admin-dirty-cta.png`)
 
-## 2026-02-23 — P1 Recent Category + Dirty CTA + Vehicle Wizard
+## 2026-02-23 — P1 Closeout
+
+**Kapsam**
+- Recent category (user_recent_categories + upsert + GET)
+- “Son Seçiminiz” kartı (breadcrumb + module + ülke)
+- Dirty CTA + admin analytics
+- Vehicle wizard Make/Model/Year + core + features/media + preview/publish
+
+**Kanıt Referansları**
+- Recent card: `/app/screenshots/recent-card.png`
+- Dirty CTA: `/app/screenshots/admin-dirty-cta.png`
+- Vehicle wizard review/publish:
+  - `/app/screenshots/vehicle-wizard-review.png`
+  - `/app/screenshots/vehicle-wizard-published.png`
+
+**Not**
+- E2E script trade_in dropdown — test script issue (uygulama bug değil)
+
 
 **Kapsam**
 - user_recent_categories tablosu + upsert + GET endpoint
