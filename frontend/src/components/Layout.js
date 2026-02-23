@@ -568,6 +568,31 @@ export default function Layout({ children }) {
 
           {/* Right - Theme, Language, User */}
           <div className="flex items-center gap-2">
+            <div
+              className={`hidden md:flex items-center gap-2 px-3 py-1 rounded-full border text-xs ${
+                healthDisplay.status === 'ok'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : healthDisplay.status === 'error'
+                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                    : 'border-slate-200 bg-slate-50 text-slate-600'
+              }`}
+              data-testid="admin-system-health-badge"
+              title={healthDisplay.title}
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  healthDisplay.status === 'ok'
+                    ? 'bg-emerald-500'
+                    : healthDisplay.status === 'error'
+                      ? 'bg-rose-500'
+                      : 'bg-slate-400'
+                }`}
+                data-testid="admin-system-health-indicator"
+              />
+              <span data-testid="admin-system-health-status">{healthDisplay.label}</span>
+              <span className="text-muted-foreground" data-testid="admin-system-health-time">{healthDisplay.timeLabel}</span>
+              <span className="text-muted-foreground" data-testid="admin-system-health-error-rate">{healthDisplay.errorLabel}</span>
+            </div>
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
