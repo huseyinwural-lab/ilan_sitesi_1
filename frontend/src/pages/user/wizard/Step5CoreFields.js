@@ -134,9 +134,20 @@ const CoreFieldsStep = () => {
     return Object.keys(nextErrors).length === 0;
   };
 
+  const scrollToFirstError = () => {
+    const container = document.querySelector('[data-testid="wizard-core-step"]');
+    const target = container?.querySelector('[data-testid$="-error"]');
+    if (target) {
+      target.scrollIntoView({ behavior: window.innerWidth < 768 ? 'smooth' : 'auto', block: 'center' });
+    }
+  };
+
   const handleComplete = async () => {
     if (saving) return false;
-    if (!validate()) return false;
+    if (!validate()) {
+      scrollToFirstError();
+      return false;
+    }
     setSaving(true);
 
     const vehicleAttributes = isVehicleModule
