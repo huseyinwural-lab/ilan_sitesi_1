@@ -17262,6 +17262,11 @@ async def create_vehicle_draft(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="category_id invalid") from exc
 
+    category = await session.get(Category, category_uuid)
+    if not category:
+        raise HTTPException(status_code=404, detail="category not found")
+    module_value = category.module or "vehicle"
+
     vehicle_payload = payload.get("vehicle") or {}
     vehicle_payload = dict(vehicle_payload)
     make_value = payload.get("make_id") or vehicle_payload.get("make_id")
