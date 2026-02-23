@@ -120,13 +120,9 @@ def _percentile(values, pct):
 
 def _append_section(path: Path, section: str) -> None:
     if path.exists():
-        content = path.read_text().rstrip() + "
-
-" + section.strip() + "
-"
+        content = path.read_text().rstrip() + "\n\n" + section.strip() + "\n"
     else:
-        content = section.strip() + "
-"
+        content = section.strip() + "\n"
     path.write_text(content)
 
 
@@ -162,8 +158,7 @@ def run_parity(stage_label: str, queries):
             f"- {row['id']}: q={row['q'] or '-'} | category={row['category_id'] or '-'} | city={row['city'] or '-'} | price={row['price_min']}-{row['price_max']} | sort={row['sort']}"
         )
 
-    lines.append("
-### Parity Results")
+    lines.append("\n### Parity Results")
     lines.append("| Query | Mongo Count | SQL Count | Top20 Overlap % |")
     lines.append("| --- | --- | --- | --- |")
     for row in report_rows:
@@ -171,8 +166,7 @@ def run_parity(stage_label: str, queries):
             f"| {row['id']} | {row['mongo_count']} | {row['sql_count']} | {row['top20_overlap_pct']} |"
         )
 
-    _append_section(Path('/app/memory/SEARCH_PARITY_REPORT.md'), "
-".join(lines))
+    _append_section(Path('/app/memory/SEARCH_PARITY_REPORT.md'), "\n".join(lines))
 
     raw_lines = [
         f"## Stage {stage_label}",
@@ -186,8 +180,7 @@ def run_parity(stage_label: str, queries):
         raw_lines.append(f"- SQL IDs (top20): {', '.join(row['sql_ids']) if row['sql_ids'] else '[]'}")
         raw_lines.append("")
 
-    _append_section(Path('/app/memory/SEARCH_PARITY_RAW.md'), "
-".join(raw_lines))
+    _append_section(Path('/app/memory/SEARCH_PARITY_RAW.md'), "\n".join(raw_lines))
 
 
 def run_benchmark(stage_label: str, queries):
@@ -267,8 +260,7 @@ def run_benchmark(stage_label: str, queries):
             f"| {query['id']} | {round(cold_latencies[idx], 2)} | {round(warm_latencies[idx], 2)} |"
         )
 
-    _append_section(Path('/app/memory/SEARCH_BENCHMARK_REPORT.md'), "
-".join(lines))
+    _append_section(Path('/app/memory/SEARCH_BENCHMARK_REPORT.md'), "\n".join(lines))
 
     slow_lines = [
         f"## Stage {stage_label}",
@@ -286,23 +278,20 @@ def run_benchmark(stage_label: str, queries):
     if not slow_found:
         slow_lines.append("- Slow query bulunmadı.")
 
-    _append_section(Path('/app/memory/SEARCH_SLOW_QUERIES.md'), "
-".join(slow_lines))
+    _append_section(Path('/app/memory/SEARCH_SLOW_QUERIES.md'), "\n".join(slow_lines))
 
     explain_lines = [f"## Stage {stage_label}", f"Generated at: {datetime.utcnow().isoformat()}Z"]
     conn = psycopg2.connect(DATABASE_URL)
     for query in queries[:3]:
         sql, params = build_sql(query)
-        explain_lines.append(f"
-### {query['id']}")
+        explain_lines.append(f"\n### {query['id']}")
         with conn.cursor() as cur:
             cur.execute("EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) " + sql, params)
             rows = cur.fetchall()
         explain_lines.extend([row[0] for row in rows])
     conn.close()
 
-    _append_section(Path('/app/memory/SEARCH_EXPLAIN_ANALYZE_RAW.md'), "
-".join(explain_lines))
+    _append_section(Path('/app/memory/SEARCH_EXPLAIN_ANALYZE_RAW.md'), "\n".join(explain_lines))
 
 
 def main():
