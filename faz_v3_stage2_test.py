@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class FAZV3Stage2Tester:
-    def __init__(self, base_url="https://admin-edit-mode.preview.emergentagent.com"):
+    def __init__(self, base_url="https://classifieds-db-fix.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None

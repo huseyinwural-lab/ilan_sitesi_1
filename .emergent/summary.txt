@@ -1,101 +1,79 @@
 <analysis>**original_problem_statement:**
-The user's project is a classifieds platform. The initial goal was to create a Premium Automobile Ad Posting wizard. However, priorities shifted significantly during the session.
+The user's project is a classifieds platform. The initial session focused on fixing a critical state-synchronization bug in the Admin Category Wizard Edit Mode. After successfully resolving that, the agent completed a series of P1 features as dictated by the user:
 
-The current set of requirements, as dictated by the user through a series of detailed task lists and Architecture Decision Records (ADRs), are:
+1.  **Son Seçiminiz (Last Selected Category) Card:** A shortcut on the category selection page for users to quickly re-select their last-used category. This involved creating a new  table and associated backend/frontend logic.
+2.  **Admin Dirty CTA Enhancement:** A Complete the next missing step button within the admin wizard to guide administrators directly to the first incomplete (dirty) step after an edit.
+3.  **Premium Automobile Ad Posting Wizard:** Resumed and completed the paused multi-step wizard, finalizing all steps from model selection to preview and submission.
+4.  **Wizard UX Improvements:** Implemented several UX enhancements like an auto-save Kaydedildi (Saved) toast notification and automatic scroll-to-top behavior upon step changes.
 
-1.  **Automobile Ad Posting Wizard (PAUSED):** A multi-step, premium UX for posting car ads. This was the initial P0 task but was deprioritized by the user. Key steps included Brand, Model, Year/Version, Core Fields, Media, and Preview.
-2.  **Category Import/Export (COMPLETED):** A P0 feature for admins to bulk-manage the category hierarchy.
-    *   **PRODUCT REQUIREMENTS (ADR-CAT-IMP-*):**
-        *   Support both CSV and XLSX formats.
-        *   Export should include the full hierarchy, translations, and  data.
-        *   Import must update existing categories by matching on a unique .
-        *   Implement a mandatory  mode before applying changes to the database.
-        *   Provide row-level error reporting for failed imports.
-        *   Include an enhancement to allow downloading a sample template file.
-3.  **General Post Ad Page (COMPLETED):** A user-facing drill-down UI where selecting a category in one column dynamically loads its sub-categories in the next, allowing users to select a category before starting the ad creation wizard.
-4.  **Admin Wizard Edit Mode (CURRENT P0):** A feature for authorized admins to unlock and edit a completed category configuration.
-    *   **PRODUCT REQUIREMENTS (ADR-EDIT-*):**
-        *   Editing an upstream step (e.g., Core Fields) must automatically invalidate all downstream dependent steps (e.g., Parameter Fields), marking them as dirty.
-        *   Dirty steps must be re-completed by the admin before the category can be published again.
-        *   Access should be restricted to  and  roles.
-        *   All edit actions must be recorded in an audit log.
+The next major planned task was the migration of the Public Search and Moderation Flow features from MongoDB to PostgreSQL. However, a severe, blocking **520 Database Connection Error** emerged, preventing all testing and further development. The current and only priority is to stabilize the database connection.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application is a full-stack platform with a React frontend and a FastAPI backend using PostgreSQL.
-- **Category Import/Export:** A fully functional admin page at  allows admins to export categories to CSV/XLSX, download sample templates, and import data using a safe  +  workflow.
-- **Post Ad Category Selection:** A functional user-facing page at  provides a multi-column drill-down interface for selecting a category. Upon selection, it navigates to the appropriate ad creation wizard.
-- **Admin Wizard Edit Mode:** The backend logic and frontend UI for this feature are partially implemented. The API supports locking/unlocking and dirtying dependent steps. The UI shows an Edit Mode toggle and is supposed to reflect the dirty state of wizard tabs, but this part is currently buggy.
-- **Automobile Ad Wizard:** This feature is partially built but was paused. The backend data models (, ) and APIs exist. The frontend has components for the initial steps (Brand, Model, Year).
+The application is a full-stack platform (React + FastAPI + PostgreSQL).
+- **Admin Edit Mode:** The state synchronization bug is fixed and the feature is functional. It includes a new Dirty CTA enhancement.
+- **Post Ad Flow:** The category selection page includes a Last Selected Category card. The entire Premium Automobile ad posting wizard is now functionally complete. UX improvements like auto-save toasts and scroll-to-top are implemented.
+- **Database Connection:** The backend is currently unstable. A 520 error, likely caused by database connection pool issues, is blocking authentication and all other database-dependent operations. The agent has implemented connection pool parameter changes and added extensive logging to debug this.
+- **Mongo-to-Postgres Migration:** A detailed migration plan exists at , but implementation has not started due to the DB connection blocker.
 
 **Last working item**:
--   **Last item agent was working:** Debugging the state management for the Edit Mode in the Admin Category Wizard. The agent was trying to fix a bug where the frontend UI in  was not correctly updating to show that downstream tabs are dirty after an upstream tab is edited and saved. The goal was to force the admin to re-complete the invalidated steps.
+-   **Last item agent was working:** Debugging a critical 520 database connection error that blocks the authentication flow and all testing. The agent was attempting to apply and verify new SQLAlchemy connection pool settings (, , ) in  and was using a custom script () to stress-test the  endpoint to reproduce and diagnose the failure.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both
+-   **Which testing method agent to use?** The agent should first use the existing  script and  commands to verify the DB connection stability. Once the 520 error is resolved, it must use the frontend testing agent to run a full regression test on the auth flow and wizard functionalities.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Admin Edit Mode State Synchronization (P0)**
-    -   **Description:** When an admin edits and saves a step in the category wizard, the backend correctly identifies and marks dependent downstream steps as . However, the frontend state in  does not properly refresh to reflect this change. The UI fails to visually indicate that the downstream tabs are now invalid and require re-completion.
-    -   **Attempted fixes:** The agent tried various approaches using  and passing state between  and , but the synchronization between the backend response and the UI state remains broken.
+-   **Issue 1: Critical DB Connection Instability (520 Error) (P0 - BLOCKER)**
+    -   **Description:** The application is experiencing frequent  errors, traced back to . This prevents users from logging in and blocks all automated testing, halting all development. The issue is likely related to the SQLAlchemy connection pool timing out or being misconfigured for the environment.
+    -   **Attempted fixes:** The agent modified  to include , , , , and . It also added extensive logging to trace the connection lifecycle and created a  script. These changes did not resolve the issue.
     -   **Next debug checklist:**
-        1.  In , inside the  function for each tab, verify that the API response containing the updated category data (with the new  and dirty flags) is correctly received.
-        2.  Ensure the  prop function is called with the *complete and fresh* category object from the API response.
-        3.  In the parent , ensure the state holding the list of categories is correctly updated with the new object, forcing a re-render of .
-        4.  Verify the props passed to  contain the updated dirty flags.
-    -   **Why fix this issue and what will be achieved with the fix?** This is the core logic of the Edit Mode feature. Fixing it will ensure data integrity by preventing admins from publishing a category with inconsistent configurations.
+        1.  Verify that the  setting is respected and effectively prevents idle connection closure by the database or an intermediary proxy.
+        2.  Analyze the  for patterns around the connection closed errors, correlating them with the load test script's output.
+        3.  Ensure the FastAPI dependency injection for the DB session ( in ) correctly handles the session lifecycle per request without prematurely closing connections.
+        4.  Run the  script again, focusing on the output of both the sequential and parallel test phases to see if concurrency is the trigger.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a critical blocker. Fixing it will restore basic application functionality, unblock all testing, and allow development to resume on planned tasks.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on other issue:** No
+    -   **Blocked on other issue:** No, this issue blocks all others.
 
--   **Issue 2: Preview Environment DB Connection (P2, Recurring)**
+-   **Issue 2: Preview Environment DB Secret Injection (P2, Recurring)**
     -   **Description:** A persistent platform issue prevents the  secret from being injected into the preview environment. The established workaround is to use the external DB credentials stored in .
     -   **Status:** BLOCKED (Workaround in place)
     -   **Is recurring issue?** Y
 
 **In progress Task List**:
--   **Task 1: Complete Admin Category Wizard Edit Mode (P0)**
-    -   **Where to resume:** Resume debugging the state synchronization issue in  and .
-    -   **What will be achieved with this?** A fully functional and safe editing experience for category administrators, which was the user's last P1 request.
-    -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** The bug described in Issue 1.
+There are no in-progress feature tasks, as all work is blocked by the P0 database connection issue.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **P1: Implement Last Selected Category Shortcut:** Add a Son Seçiminiz (Your Last Selection) card to the  page to speed up recurring ad postings for users (ADR-DRILL-RECENT-001).
-  - **P1: Complete Premium Automobile Ad Posting Wizard:** Resume and complete the work on the multi-step wizard for posting car ads, which was paused. This includes finalizing the , , , and  steps.
+  - **P0: Stabilize DB Connection:** Resolve the 520 error. (This is the current 
+wtmp begins Mon Feb 23 07:17:08 2026).
+  - **P1: Run Full Regression Tests:** Once the DB is stable, execute all Playwright tests to confirm that the recently completed features (Wizard UX, Auth) are working as expected.
+  - **P1: Begin Public Search & Moderation Mongo→PostgreSQL Migration:** Start the implementation based on the plan in .
+  - **P2: Implement Autosave Status Badge:** Add a small badge in the wizard step header indicating the last saved time (e.g., Kaydedildi • 14:32) as requested by the user.
 - **Future Tasks:**
-  - **P2: Flesh out Parametre Alanları Wizard Tab:** Implement the UI and backend for the Parameter Fields tab in the admin category wizard.
-  - **P2: Complete Mongo to PostgreSQL Migration:** Migrate the remaining Public Search and Moderation Flow features.
+  - **P2: Flesh out Parametre Alanları Wizard Tab:** Implement the UI and backend for this step.
   - **P2: VIES API Integration:** Integrate for server-side VAT ID validation.
   - **P2: GDPR Data Export:** Implement CSV format for data export.
   - **P2: Moderation Reject Flow:** Implement a Reject flow for the admin panel.
   - **P2: Scheduled Token Cleanup:** Create a daily job to clean up expired tokens.
 
 **Completed work in this session**
--   **Category Import/Export Feature (DONE):**
-    -   Created backend endpoints (, ) and services in .
-    -   Created frontend UI at .
-    -   Implemented support for both CSV and XLSX, including  and  logic.
--   **Download Sample File Enhancement (DONE):**
-    -   Added backend endpoint .
-    -   Added buttons to the UI in .
--   **Post Ad Category Drill-Down Page (DONE):**
-    -   Created frontend component .
-    -   Implemented multi-column dynamic category loading and selection.
--   **Premium Automobile Ad Posting Wizard (PARTIALLY COMPLETED):**
-    -   Significant progress was made before the user pivoted. Steps for Brand, Model, and Year selection are mostly complete.
+- **Admin Edit Mode State Synchronization Fix (DONE):** Resolved the P0 bug where the frontend failed to update the dirty status of wizard tabs after an edit.
+- **Son Seçiminiz (Last Selected Category) Feature (DONE):**
+    - Created  model, schema, and service on the backend.
+    - Implemented UI card in .
+- **Admin Dirty CTA Enhancement (DONE):** Added a button in  to jump to the first dirty wizard step.
+- **Premium Automobile Ad Posting Wizard (DONE):** Completed all remaining steps (, , , , ) and integrated them into a cohesive flow.
+- **Wizard UX Improvements (DONE):** Implemented auto-save toast notifications and scroll-to-top behavior across the wizard components.
+- **Mongo to PostgreSQL Migration Plan (DONE):** Created a comprehensive migration plan document.
 
 **Earlier issues found/mentioned but not fixed**
 -   **Issue 1: Mongo to PostgreSQL Migration for Search/Moderation**
-    -   **Debug checklist:** Identify all code paths in  still using  or . Create equivalent PostgreSQL tables/models and rewrite the data access layer to use SQLAlchemy.
-    -   **Why to solve this issue and what will be achieved with this?** To fully deprecate MongoDB and consolidate on a single database technology for consistency and maintainability.
-    -   **Should Test frontend/backend/both after fix:** backend
-    -   **Is recurring issue?** Y (Carried over from previous forks).
+    - This is no longer just a backlog item; it has been promoted to the next P1 task once the DB is stable. A full plan exists.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: The preview environment's failure to inject the  secret has been a persistent blocker across multiple forks.
@@ -106,53 +84,60 @@ The application is a full-stack platform with a React frontend and a FastAPI bac
 
 
 **Key Technical Concepts**
--   **Bulk Data Operations:** Implemented a robust import/export system with a  validation phase to prevent data corruption. Uses  and  libraries on the backend.
--   **Drill-Down UI:** A multi-column navigation pattern where user selections in one list dynamically populate the next, used for category selection.
--   **Conditional State Machine (Dirty Flag):** The Admin Edit Mode introduces a state machine where changing an upstream configuration () invalidates dependent downstream configurations () by setting a  flag, enforcing a specific re-validation workflow.
--   **Dependency-Aware Backend:** The backend maintains a dependency map to programmatically determine which parts of a category's configuration become dirty when another part changes.
+-   **DB Connection Pooling:** The current focus is on correctly configuring the SQLAlchemy Engine's connection pool (, , ) to maintain stable connections in a containerized environment.
+-   **State Management (React):** Complex state synchronization was fixed by adopting a backend as single source of truth model, where parent components re-fetch and pass down fresh state after mutations.
+-   **Multi-Step Wizard:** A complex, multi-step form with conditional logic, state persistence across steps, and dynamic progression.
+-   **Database Migration Planning:** Formalized process for migrating data from MongoDB to PostgreSQL, including schema mapping, index strategy, and a cutover plan.
 
 **key DB schema**
 -   **categories:** 
+-   **user_recent_categories:**  (NEW)
 -   **audit_logs:** 
 -   **vehicle_brands:** 
 -   **vehicle_models:** 
 
 **changes in tech stack**
--   **Backend:** Added  and  for file operations.
+-   No new libraries were added in the last phase. The focus was on configuring the existing  and  stack.
 
 **All files of reference**
--   **Current Task (Admin Edit Mode):**
-    -    (Primary file with the bug)
-    -    (Parent component managing state)
-    -    (Endpoints for  and category updates)
-    -    (DB model with  field)
--   **Recently Completed:**
-    -   
-    -   
-    -   
+-   **Current Blocker (520 Error):**
+    -    (Location of connection pool settings)
+    -    (DB session dependency injection)
+    -    (The script used to reproduce the error)
+    -    and  (Essential for debugging)
+-   **Completed Features:**
+    -    (Son Seçiminiz)
+    -    (Dirty CTA)
+    -    (All files for the completed wizard)
+    -    (UX improvements)
 -   **Documents:**
-    -    (Contains close-out notes for Import/Export feature)
+    -   
+    -   
 
 **Critical Info for New Agent**
--   **User dictates priorities and architecture:** The user frequently provides very detailed, multi-page task lists and ADRs in Turkish. You **MUST** read and follow these directives exactly. The user will pivot priorities abruptly; adapt the plan accordingly.
--   **Focus on the Edit Mode bug:** The highest priority (P0) is to fix the state synchronization bug in the Admin Category Wizard's Edit Mode. Do not move to other tasks until this is resolved and verified.
--   **Automobile Wizard is Paused:** Do not resume work on the automobile ad wizard unless the user explicitly re-prioritizes it.
--   **DB Workaround is Still Active:** The preview environment requires database credentials to be in . Do not attempt to fix the platform-level secret injection issue.
+-   **P0 BLOCKER:** The 520 database connection error is the only priority. Do not attempt any other task until the login flow is stable and  passes consistently. All other work is blocked.
+-   **Follow User's Lead:** The user directs the project with extremely detailed task lists and architectural decisions (ADRs) in Turkish. Adhere to these strictly. The current priority sequence after the 520 fix is: Regression Testing -> Mongo/Postgres Migration -> New Enhancements.
+-   **Use Existing Test Script:** Start debugging by running . Do not reinvent the wheel. The error is reproducible with this script.
 
 **documents and test reports created in this job**
-- /app/memory/CHANGELOG.md
+-   /app/memory/MONGO_TO_POSTGRES_MIGRATION_PLAN.md
+-   /app/memory/CHANGELOG.md
+-   /app/load_test.py
 
 **Last 10 User Messages and any pending HUMAN messages**
-The last several user messages have been detailed, multi-point task lists and architecture decision records (ADRs) in Turkish, dictating the project's direction.
--   **#638:** Provided a task list to implement the Admin Edit lock/unlock feature (P1) and an enhancement for a recently selected category shortcut. This is the current active task list.
--   **#465 & #462:** Provided a task list to close out the Category Import/Export P0, implement the Download Sample File enhancement (P0.1), and begin the P1 tasks (Drill-down page and Admin Edit design).
--   **#257:** Provided a comprehensive task list and ADRs for the Category Import/Export feature, pivoting the project's focus.
--   **#254:** User message: katagori import / export u tamamlayalım (Let's complete the category import/export). This was the pivot point.
--   **#7:** Provided the original, detailed task list and ADRs for the Premium Automobile Ad Posting Wizard.
+-   **#752:** User approved the specific DB pool settings and the two-phase load testing plan to debug the 520 error. (IN PROGRESS)
+-   **#749:** User defined the P1 hotfix task to stabilize the DB connection, pausing all other work. (IN PROGRESS)
+-   **#488:** User approved the plan to create a formal migration document for the Mongo-to-Postgres task and to proceed with it after the wizard UX mini-task. (BLOCKED by 520 error)
+-   **#485:** User confirmed completion of P1 tasks and introduced two new items: a mini P1.1 for wizard UX improvements and the major P1 task of migrating Search/Moderation from Mongo to Postgres. (BLOCKED by 520 error)
+-   **#132:** User approved the full P1 plan: close out P0, then implement Son Seçiminiz, then the Dirty CTA, then the vehicle wizard. (COMPLETED)
+-   **#129:** User provided detailed architectural decisions for the P1 tasks, including the new  table. (COMPLETED)
+-   **#126:** User provided the task list to begin P1 work after the successful P0 bug fix. (COMPLETED)
+-   **#5:** User provided the detailed task list to focus exclusively on fixing the P0 Admin Edit Mode state-sync bug. (COMPLETED)
 
 **Project Health Check:**
 -   **Broken:**
-    -   Admin Category Wizard Edit Mode is non-functional due to the state synchronization bug.
+    -   **Authentication Flow:** The  endpoint is unstable and frequently returns 520 errors, making the application inaccessible for testing.
+    -   **All DB-dependent functionalities:** Any part of the application that requires a database connection is currently unreliable.
 -   **Mocked:**
     -   None.
 
@@ -161,20 +146,20 @@ The last several user messages have been detailed, multi-point task lists and ar
 -   React
 -   PostgreSQL (, , )
 -   Stripe (Configured, but not used in any active feature)
--    (newly added for Excel file handling)
+-   
 
 **Testing status**
--   **Testing agent used after significant changes:** NO
+-   **Testing agent used after significant changes:** NO (blocked by DB error)
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
--   **Known regressions:** None.
+-   **Known regressions:** The entire authentication flow is a regression due to the DB instability.
 
 **Credentials to test flow:**
--   Credentials for the external PostgreSQL database are in .
+-   Database credentials are in .
 -   **Admin:**  / 
 -   **Dealer:**  / 
 -   **User:**  / 
+    *(Note: These credentials will not work until the 520 error is resolved).*
 
 **What agent forgot to execute**
--   The Premium Automobile Ad Posting Wizard task was intentionally paused based on user request, not forgotten.
--   The Mongo to PostgreSQL Migration task remains on the backlog as a P2 item and has not been addressed, following the user's prioritization of feature development.</analysis>
+-   The Autosave status badge enhancement was requested by the user but was not started, as the critical 520 DB error took precedence. It is correctly listed in the upcoming tasks. No other tasks were forgotten; priorities were shifted based on user direction and critical bugs.</analysis>
