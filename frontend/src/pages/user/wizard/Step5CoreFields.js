@@ -147,12 +147,12 @@ const CoreFieldsStep = () => {
   };
 
   const handleComplete = async () => {
-    if (saving || saveLockRef.current) return false;
+    if (saving || saveLockRef.current) return { ok: false };
     saveLockRef.current = true;
     if (!validate()) {
       scrollToFirstError();
       saveLockRef.current = false;
-      return false;
+      return { ok: false };
     }
     setSaving(true);
 
