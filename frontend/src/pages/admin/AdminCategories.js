@@ -351,7 +351,7 @@ const AdminCategories = () => {
     setTimeout(() => autosaveToastRef.current?.dismiss(), delay);
   };
 
-  const buildSavePayload = (status, activeEditing, progressState) => {
+  const buildSavePayload = (status, activeEditing, progressState, options = {}) => {
     const payload = {
       ...form,
       sort_order: Number(form.sort_order || 0),
@@ -362,7 +362,13 @@ const AdminCategories = () => {
       payload.form_schema = sanitizeSchemaStrings({ ...schema, status });
     }
     if (progressState) {
-      payload.wizard_progress = { state: progressState };
+      payload.wizard_progress = {
+        state: progressState,
+        dirty_steps: options.dirtySteps || dirtySteps,
+      };
+    }
+    if (options.wizardEditEvent) {
+      payload.wizard_edit_event = options.wizardEditEvent;
     }
     return payload;
   };
