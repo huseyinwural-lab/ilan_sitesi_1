@@ -3456,20 +3456,29 @@ async def admin_system_health_detail(
     cf_ids_source = None
     cf_ids_present = False
     canary_status = None
-    try:
-        account_id, zone_id, cf_ids_source = await resolve_cloudflare_config(db)
-        cf_ids_present = bool(account_id and zone_id)
-    except CloudflareConfigError:
-        cf_ids_source = "db"
-        cf_ids_present = False
 
-    canary_doc = await load_canary_status(db)
-    if canary_doc:
-        value = canary_doc.get("value")
-        if isinstance(value, dict):
-            canary_status = value.get("status")
-        elif isinstance(value, str):
-            canary_status = value
+    if db is None:
+        env_account, env_zone = resolve_env_fallback()
+        if env_account and env_zone:
+            account_id = env_account
+            zone_id = env_zone
+            cf_ids_source = resolve_env_source(env_account, env_zone)
+            cf_ids_present = True
+    else:
+        try:
+            account_id, zone_id, cf_ids_source = await resolve_cloudflare_config(db)
+            cf_ids_present = bool(account_id and zone_id)
+        except CloudflareConfigError:
+            cf_ids_source = "db"
+            cf_ids_present = False
+
+        canary_doc = await load_canary_status(db)
+        if canary_doc:
+            value = canary_doc.get("value")
+            if isinstance(value, dict):
+                canary_status = value.get("status")
+            elif isinstance(value, str):
+                canary_status = value
 
     cdn_metrics = None
     if cloudflare_metrics_service.is_enabled():
