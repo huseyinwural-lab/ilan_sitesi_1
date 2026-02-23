@@ -206,8 +206,8 @@ export default function AdminCategoriesImportExport() {
                   className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
                   data-testid="categories-import-format"
                 >
-                  <option value="json">JSON</option>
                   <option value="csv">CSV</option>
+                  <option value="xlsx">XLSX</option>
                 </select>
               </div>
               <div>
