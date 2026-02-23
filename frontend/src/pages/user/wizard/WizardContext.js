@@ -205,6 +205,8 @@ export const WizardProvider = ({ children, editListingId = null }) => {
       'body_type',
       'color',
       'damage_status',
+      'engine_cc',
+      'engine_hp',
       'trade_in',
       'price_eur',
     ]);
