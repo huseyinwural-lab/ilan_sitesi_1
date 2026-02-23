@@ -182,6 +182,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Country breakdown + sparkline + canary status + cf_ids_present/source
 - **Cloudflare Config Admin UI (2026-02-23):**
   - System Settings kartı + masked inputs + canary test
+  - CONFIG_ENCRYPTION_KEY health flag + save guard + failure reason logs
 - **Admin Kategori Manuel Yönetimi (2026-02-23):**
   - Modül seçimi + parent validation + alt tip metadata
 - **İlan Ver Kategori Fallback (2026-02-23):**
