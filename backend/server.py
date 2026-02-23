@@ -16692,7 +16692,7 @@ async def public_vehicle_makes(country: str | None = None, request: Request = No
 @api_router.get("/v1/vehicle/models")
 async def public_vehicle_models(make: str, country: str | None = None, request: Request = None, session: AsyncSession = Depends(get_sql_session)):
     db = request.app.state.db if request else None
-    if not db:
+    if not db or not hasattr(db, "vehicle_makes"):
         make_row = await session.execute(select(VehicleMake).where(VehicleMake.slug == make))
         make_obj = make_row.scalars().first()
         if not make_obj:
