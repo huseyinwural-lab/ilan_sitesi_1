@@ -150,15 +150,15 @@ export default function AdminSystemSettingsPage() {
     setCloudflareError('');
     try {
       const res = await axios.post(`${API}/admin/system-settings/cloudflare/canary`, {}, { headers: authHeader });
-      toast({
-        title: 'Canary Test Completed',
-        description: `Status: ${res.data?.status || 'UNKNOWN'}`,
-      });
-      fetchCloudflareConfig();
+      const status = res.data?.status || 'UNKNOWN';
+      setCloudflareConfig((prev) => ({
+        ...prev,
+        canary_status: status,
+        canary_checked_at: new Date().toISOString(),
+      }));
     } catch (e) {
       const detail = e.response?.data?.detail || 'Canary başarısız';
       setCloudflareError(detail);
-      toast({ title: 'Canary Failed', description: detail, variant: 'destructive' });
     } finally {
       setCanaryLoading(false);
     }
