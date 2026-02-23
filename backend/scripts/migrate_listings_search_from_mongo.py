@@ -135,6 +135,7 @@ def main() -> None:
     parser.add_argument('--mongo-db', default=os.environ.get('DB_NAME'))
     parser.add_argument('--limit', type=int, default=None)
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--truncate', action='store_true')
     parser.add_argument('--batch-size', type=int, default=500)
     args = parser.parse_args()
 
