@@ -106,22 +106,29 @@ if queue_collection is not None:
         mongo_status = _normalize_status(doc.get('status'))
         mongo_reason = _sanitize_reason(doc.get('reason') or doc.get('reason_detail') or doc.get('reason_note'))
         mongo_moderator = str(doc.get('moderator_id') or doc.get('moderatorId') or '')
+        mongo_created = _normalize_dt(doc.get('created_at') or doc.get('createdAt'))
+        mongo_updated = _normalize_dt(doc.get('updated_at') or doc.get('updatedAt'))
 
         cur.execute(
-            'SELECT status, reason, moderator_id FROM moderation_items WHERE listing_id::text=%s',
+            'SELECT status, reason, moderator_id, created_at, updated_at FROM moderation_items WHERE listing_id::text=%s',
             (listing_id,),
         )
         row = cur.fetchone()
         if row:
-            sql_status, sql_reason, sql_moderator = row
+            sql_status, sql_reason, sql_moderator, sql_created, sql_updated = row
         else:
-            sql_status, sql_reason, sql_moderator = None, None, None
+            sql_status, sql_reason, sql_moderator, sql_created, sql_updated = None, None, None, None, None
+
+        sql_created_norm = _normalize_dt(sql_created)
+        sql_updated_norm = _normalize_dt(sql_updated)
 
         sample_rows.append({
             'listing_id': listing_id,
             'status_match': (sql_status or '').upper() == mongo_status,
             'reason_match': (sql_reason or None) == mongo_reason,
             'moderator_match': (str(sql_moderator) if sql_moderator else '') == mongo_moderator,
+            'created_match': sql_created_norm == mongo_created,
+            'updated_match': sql_updated_norm == mongo_updated,
             'mongo_status': mongo_status,
             'sql_status': sql_status,
         })
