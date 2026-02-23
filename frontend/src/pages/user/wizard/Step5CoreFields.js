@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { useWizard } from './WizardContext';
 
