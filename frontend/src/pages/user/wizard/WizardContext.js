@@ -177,17 +177,28 @@ export const WizardProvider = ({ children, editListingId = null }) => {
   const hydrateFromListing = async (listing) => {
     if (!listing) return;
     const categoryId = listing.category_id || listing.category_key;
-    setCategory({ id: categoryId, name: listing.category_key || 'Kategori' });
-    await loadCategorySchema(categoryId);
+    setCategory({ id: categoryId, name: listing.category_key || 'Kategori', slug: listing.category_slug || null });
+    const loadedSchema = await loadCategorySchema(categoryId);
 
     setDraftId(listing.id);
     window.__WIZARD_DRAFT_ID__ = listing.id;
 
     const attrs = listing.attributes || {};
-    setAttributes(attrs);
-    const reserved = new Set(['mileage_km', 'fuel_type', 'transmission', 'condition', 'price_eur']);
+    const attributeValues = attrs.attributes || {};
+    setAttributes(attributeValues);
+    const reserved = new Set([
+      'mileage_km',
+      'fuel_type',
+      'transmission',
+      'drive_type',
+      'body_type',
+      'color',
+      'damage_status',
+      'trade_in',
+      'price_eur',
+    ]);
     const dynamic = {};
-    Object.entries(attrs).forEach(([key, value]) => {
+    Object.entries(attributeValues).forEach(([key, value]) => {
       if (!reserved.has(key)) {
         dynamic[key] = value;
       }
@@ -211,30 +222,46 @@ export const WizardProvider = ({ children, editListingId = null }) => {
       secondary_display: priceData.secondary_amount ? formatDisplay(priceData.secondary_amount, prev.decimal_places) : '',
     }));
 
+    const vehicleInfo = listing.vehicle || attrs.vehicle || {};
     setBasicInfo((prev) => ({
       ...prev,
       country: listing.country || prev.country,
       category_key: listing.category_key,
       category_id: listing.category_id,
-      make_key: listing.vehicle?.make_key || null,
-      model_key: listing.vehicle?.model_key || null,
-      year: listing.vehicle?.year || null,
-      trim_key: listing.vehicle?.trim_key || null,
-      mileage_km: attrs.mileage_km || null,
-      fuel_type: attrs.fuel_type || null,
-      transmission: attrs.transmission || null,
-      condition: attrs.condition || null,
+      make_key: vehicleInfo.make_key || null,
+      make_id: vehicleInfo.make_id || null,
+      model_key: vehicleInfo.model_key || null,
+      model_id: vehicleInfo.model_id || null,
+      year: vehicleInfo.year || null,
+      trim_key: vehicleInfo.trim_key || null,
+      mileage_km: attributeValues.mileage_km || null,
+      fuel_type: attributeValues.fuel_type || null,
+      transmission: attributeValues.transmission || null,
+      drive_type: attributeValues.drive_type || null,
+      body_type: attributeValues.body_type || null,
+      color: attributeValues.color || null,
+      damage_status: attributeValues.damage_status || null,
+      trade_in: attributeValues.trade_in ?? null,
     }));
 
     setDynamicValues(dynamic);
-    setDetailGroups(listing.detail_groups || {});
+    setDetailGroups(listing.detail_groups || attrs.detail_groups || {});
     setModuleData((prev) => ({
       ...prev,
-      ...(listing.modules || {}),
+      ...(listing.modules || attrs.modules || {}),
     }));
 
-    const mediaUrls = (listing.media || []).map((m) => `/media/listings/${listing.id}/${m.file}`);
-    setMedia(mediaUrls);
+    const mediaItems = (listing.media || []).map((m) => ({
+      media_id: m.media_id,
+      file: m.file,
+      url: m.url || `/media/listings/${listing.id}/${m.file}`,
+      is_cover: Boolean(m.is_cover),
+    }));
+    setMedia(mediaItems);
+
+    const completion = computeCompletionFromData(listing, loadedSchema);
+    setCompletedSteps(completion);
+    setStep(getFirstIncompleteStep(completion));
   };
 
   useEffect(() => {
