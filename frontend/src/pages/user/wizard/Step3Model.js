@@ -197,7 +197,7 @@ const ModelStep = () => {
     setStep(4);
   };
 
-  const nextDisabled = !selectedModel || loading;
+  const nextDisabled = !selectedModel || loading || saving;
 
   if (!basicInfo.make_key) {
     return (
