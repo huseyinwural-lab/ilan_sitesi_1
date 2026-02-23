@@ -1,6 +1,7 @@
 # ADMIN_V1_PHASE_A_EVIDENCE
 
 **Tarih:** 2026-02-23 22:54:14 UTC
+**Commit Ref:** ea92c257
 **Durum:** PASS
 
 ## Ops Inject + Restart
