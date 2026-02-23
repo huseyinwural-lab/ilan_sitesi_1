@@ -228,6 +228,10 @@ export default function Layout({ children }) {
         cdnColdP95: '--',
         cdnAlerts: {},
         cdnTargets: {},
+        cdnCountryMetrics: {},
+        cdnCountrySeries: {},
+        cdnCanaryStatus: 'unknown',
+        cfIdsPresent: false,
       };
     }
     if (!systemHealthDetail) {
