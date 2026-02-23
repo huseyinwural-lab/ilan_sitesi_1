@@ -1,21 +1,14 @@
 # Moderation Parity Report (Mongo vs Postgres)
-Generated at: 2026-02-23T14:31:26.303407Z
+Generated at: 2026-02-23T15:15:41.847589Z
 
 Mongo moderation_queue count: 0
-SQL moderation_queue count: 0
-Mongo moderation_audit count: 0
-SQL moderation_actions count: 0
+SQL moderation_items count: 0
 
-## Sample Audit Match (50)
-| Listing ID | Action | Match |
-| --- | --- | --- |
-| - | - | - |
+> Not: pymongo yok; Mongo parity kontrolleri atlandı.
 
-> Not: moderation_audit koleksiyonu bulunamadı veya boş.
+## Sample Field Match (50)
+| Listing ID | Status Match | Reason Match | Moderator Match | Mongo Status | SQL Status |
+| --- | --- | --- | --- | --- | --- |
+| - | - | - | - | - | - |
 
-## Approve/Reject Test (SQL)
-- approve: ✅
-- reject: ✅
-
-> Not: moderation_queue ve moderation_audit koleksiyonları bulunamadı; parity 0/0.
-
+> Not: moderation_queue koleksiyonu bulunamadı veya boş.
