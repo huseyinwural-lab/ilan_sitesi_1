@@ -28,7 +28,7 @@
 - Warm p50/p95: ~145.49 / 147.9 ms
 
 
-## 2026-02-23 — Search Postgres Cutover Complete
+## 2026-02-23 — Search Postgres Cutover (Pending Ops 24h Monitoring)
 
 **Kapsam**
 - SEARCH_SQL_ROLLOUT %50 → %100 (preview)
