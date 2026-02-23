@@ -297,16 +297,18 @@ const FeaturesMediaStep = () => {
             <div className="font-medium text-sm">{group.title}{group.required ? ' *' : ''}</div>
             <div className="flex flex-wrap gap-2">
               {(group.options || []).map((option) => {
-                const selected = (detailGroups[group.id] || []).includes(option.id);
+                const optionId = option.id || option;
+                const optionLabel = option.label || option;
+                const selected = (detailGroups[group.id] || []).includes(optionId);
                 return (
                   <button
-                    key={option.id}
+                    key={optionId}
                     type="button"
-                    onClick={() => handleDetailToggle(group.id, option.id)}
+                    onClick={() => handleDetailToggle(group.id, optionId)}
                     className={`px-3 py-1 rounded-full border text-sm ${selected ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-gray-200 text-gray-600'}`}
-                    data-testid={`detail-option-${group.id}-${option.id}`}
+                    data-testid={`detail-option-${group.id}-${optionId}`}
                   >
-                    {option.label}
+                    {optionLabel}
                   </button>
                 );
               })}
