@@ -30,6 +30,7 @@ const CoreFieldsStep = () => {
     schema,
     saveDraft,
     trackWizardEvent,
+    setAutosaveStatus,
     setStep,
     completedSteps,
     setCompletedSteps,
