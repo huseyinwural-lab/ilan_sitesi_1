@@ -11796,7 +11796,7 @@ async def _moderation_transition_sql(
 async def admin_approve_listing(
     listing_id: str,
     request: Request,
-    current_user=Depends(get_current_user),
+    current_user=Depends(check_permissions(list(ALLOWED_MODERATION_ROLES))),
     session: AsyncSession = Depends(get_sql_session),
 ):
     updated = await _moderation_transition_sql(
