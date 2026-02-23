@@ -459,9 +459,9 @@ def _build_canary_status(adapter: CloudflareMetricsAdapter, cache_metrics: Dict[
     if adapter.error_codes:
         return CANARY_API_ERROR, adapter.error_codes[0]
     total_requests = cache_metrics.get("total_requests") or 0
-    if total_requests > 0:
-        return CANARY_OK, None
-    return CANARY_API_ERROR, "no_data"
+    if total_requests == 0:
+        return CANARY_OK, "no_data"
+    return CANARY_OK, None
 
 
 
