@@ -44,6 +44,7 @@ const FeaturesMediaStep = () => {
     draftId,
     saveDraft,
     trackWizardEvent,
+    setAutosaveStatus,
     setStep,
     completedSteps,
     setCompletedSteps,
