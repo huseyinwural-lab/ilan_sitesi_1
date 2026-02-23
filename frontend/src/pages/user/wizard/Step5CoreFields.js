@@ -198,6 +198,7 @@ const CoreFieldsStep = () => {
       setErrors((prev) => ({ ...prev, submit: 'Kaydetme başarısız.' }));
       scrollToFirstError();
       setSaving(false);
+      saveLockRef.current = false;
       return false;
     }
 
