@@ -1,7 +1,7 @@
 ## FAZ-7 Admin Login Kapanış Kontrolleri — Closeout Raporu
 
 **Tarih:** 2026-02-19
-**Ortam:** https://classifieds-db-fix.preview.emergentagent.com
+**Ortam:** https://infallible-lewin-2.preview.emergentagent.com
 **Kullanıcı:** admin@platform.com / Admin123!
 
 ---
