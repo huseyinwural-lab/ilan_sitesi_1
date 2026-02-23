@@ -35,6 +35,17 @@ const WizardContent = () => {
     ];
   }, [isVehicleModule]);
 
+  const prevStepRef = useRef(step);
+
+  useEffect(() => {
+    if (prevStepRef.current === step) return;
+    if (step !== 7) {
+      const isMobile = window.innerWidth < 768;
+      window.scrollTo({ top: 0, behavior: isMobile ? 'smooth' : 'auto' });
+    }
+    prevStepRef.current = step;
+  }, [step]);
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <div className="bg-white rounded-xl shadow-sm border p-6 mb-6" data-testid="wizard-progress">
