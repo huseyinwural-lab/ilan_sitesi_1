@@ -12,3 +12,10 @@ SQL moderation_actions count: 0
 | - | - | - |
 
 > Not: moderation_audit koleksiyonu bulunamadı veya boş.
+
+## Approve/Reject Test (SQL)
+- approve: ✅
+- reject: ✅
+
+> Not: moderation_queue ve moderation_audit koleksiyonları bulunamadı; parity 0/0.
+
