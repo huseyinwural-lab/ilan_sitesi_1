@@ -199,14 +199,14 @@ const FeaturesMediaStep = () => {
     setSaving(true);
 
     try {
-      const saved = await saveDraft({
+      const result = await saveDraft({
         dynamic_fields: dynamicValues,
         detail_groups: detailGroups,
       });
-      if (!saved) {
+      if (!result?.ok) {
         setErrors((prev) => ({ ...prev, submit: 'Özellikler kaydedilemedi.' }));
         scrollToFirstError();
-        return false;
+        return { ok: false };
       }
 
       const existingIds = new Set(files.filter((item) => item.media_id).map((item) => item.media_id));
