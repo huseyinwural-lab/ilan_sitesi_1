@@ -1415,6 +1415,10 @@ const AdminCategories = () => {
       setHierarchyError(`${label} için ad ve slug zorunludur.`);
       return;
     }
+    if (path.length === 3 && !target.transaction_type) {
+      setHierarchyError(`${label} için alt tip seçimi zorunludur.`);
+      return;
+    }
     const incompleteChild = (target.children || []).find((child) => !child.is_complete);
     if (incompleteChild) {
       setHierarchyError(`${label} içindeki alt kategoriler tamamlanmadan devam edilemez.`);
