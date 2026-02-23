@@ -4723,7 +4723,7 @@ async def update_admin_user(
             actor=current_user,
             resource_type="admin_user",
             resource_id=str(target.id),
-            metadata={"from": target.role, "to": payload.role},
+            metadata={"from": prev_role, "to": payload.role},
             request=request,
             country_code=None,
         )
