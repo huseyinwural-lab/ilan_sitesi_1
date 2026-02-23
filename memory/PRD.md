@@ -186,6 +186,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Parity raporu: /app/memory/MODERATION_PARITY_REPORT.md (sample 50)
   - Admin moderation queue/count SQL artık moderation_items üzerinden
   - Listing submit/request-publish sırasında moderation_item upsert
+  - Cutover plan: /app/memory/MODERATION_CUTOVER_PLAN.md
 
 ## Kanıtlar
 - /app/docs/LOCAL_DB_READY_EVIDENCE.md
