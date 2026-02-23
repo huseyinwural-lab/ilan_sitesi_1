@@ -155,6 +155,12 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **Preview E2E:**
   - Admin login + Moderation Queue PASS
   - Consumer/Dealer login + profil endpointleri PASS
+- **DB 520 Stabilizasyonu (2026-02-23):**
+  - SQLAlchemy pool konfigürasyonu için runtime “effective config” logu + pool lifecycle logları (INFO + debug flag)
+  - get_db / get_sql_session: rollback + deterministic close
+  - CorrelationIdMiddleware aktif + DB error loglarında request_id
+  - Load test: Faz‑1 1000 sequential login+me, Faz‑2 10 paralel toplam 1000 istek → 0 adet 520 (p95 ~2924ms / 5074ms)
+  - /app/load_test.py eklendi
 
 ## Kanıtlar
 - /app/docs/LOCAL_DB_READY_EVIDENCE.md
