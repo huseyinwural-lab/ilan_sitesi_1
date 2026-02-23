@@ -65,6 +65,40 @@ const CategorySelector = () => {
     }
   }, [activeParentId, rootCategories, preselectedCategory]);
 
+  useEffect(() => {
+    if (!preselectedCategory || preselectApplied || categories.length === 0) return;
+    const match = categories.find((cat) => cat.id === preselectedCategory.id) || preselectedCategory;
+    setSelectedCategory(match);
+    if (match.parent_id) {
+      setActiveParentId(match.parent_id);
+    } else if (match.id) {
+      setActiveParentId(match.id);
+    }
+
+    const applyPreselect = async () => {
+      const ok = await createDraft(match, { autoAdvance: true });
+      if (!ok) {
+        setError('Kategori kaydedilemedi.');
+        setPreselectApplied(true);
+        return;
+      }
+      setCompletedSteps((prev) => ({
+        ...prev,
+        1: true,
+        2: false,
+        3: false,
+        4: false,
+        5: false,
+        6: false,
+      }));
+      setError('');
+      setPreselectApplied(true);
+      setStep(2);
+    };
+
+    applyPreselect();
+  }, [preselectedCategory, preselectApplied, categories, createDraft, setCompletedSteps, setStep]);
+
   const handleParentSelect = (category) => {
     setActiveParentId(category.id);
   };
