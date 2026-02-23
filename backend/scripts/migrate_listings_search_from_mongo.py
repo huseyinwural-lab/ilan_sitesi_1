@@ -199,6 +199,7 @@ def main() -> None:
         "inserted": inserted,
         "skipped": skipped,
         "total": total,
+        "mongo_total": mongo_total,
         "dry_run": args.dry_run,
     }
     etl_state_path = Path("/app/memory/SEARCH_ETL_STATE.json")
