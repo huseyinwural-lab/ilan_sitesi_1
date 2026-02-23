@@ -1606,6 +1606,69 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+DB_ERROR_CODES = {
+    "pool_timeout": "DB_POOL_TIMEOUT",
+    "connection_closed": "DB_CONN_CLOSED",
+    "connection_lost": "DB_CONN_LOST",
+    "pool_exhausted": "DB_POOL_EXHAUSTED",
+    "unknown": "DB_ERROR",
+}
+
+
+def _classify_db_error(exc: Exception) -> str:
+    message = str(exc).lower()
+    if isinstance(exc, SATimeoutError):
+        return DB_ERROR_CODES["pool_timeout"]
+    if "too many connections" in message:
+        return DB_ERROR_CODES["pool_exhausted"]
+    if "connection was closed" in message:
+        return DB_ERROR_CODES["connection_closed"]
+    if "connection reset" in message or "connection lost" in message:
+        return DB_ERROR_CODES["connection_lost"]
+    return DB_ERROR_CODES["unknown"]
+
+
+def _log_db_exception(exc: Exception, code: str):
+    logging.getLogger("db.error").info(
+        "db_error",
+        extra={
+            "error_code": code,
+            "error": str(exc),
+            "type": exc.__class__.__name__,
+        },
+    )
+
+
+@app.exception_handler(SATimeoutError)
+async def db_timeout_handler(request: Request, exc: SATimeoutError):
+    code = _classify_db_error(exc)
+    _log_db_exception(exc, code)
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database connection timeout", "error_code": code},
+    )
+
+
+@app.exception_handler(DBAPIError)
+async def db_api_handler(request: Request, exc: DBAPIError):
+    code = _classify_db_error(exc)
+    _log_db_exception(exc, code)
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database connection error", "error_code": code},
+    )
+
+
+@app.exception_handler(OperationalError)
+async def db_operational_handler(request: Request, exc: OperationalError):
+    code = _classify_db_error(exc)
+    _log_db_exception(exc, code)
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database operational error", "error_code": code},
+    )
+
+
 cors_origins = os.environ.get("CORS_ORIGINS", "*")
 origins = ["*"] if cors_origins == "*" else [o.strip() for o in cors_origins.split(",") if o.strip()]
 app.add_middleware(
