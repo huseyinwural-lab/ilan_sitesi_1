@@ -219,6 +219,14 @@ export default function Layout({ children }) {
         endpointStats: [],
         moderationSlaAvg: '--',
         moderationSlaPending: 0,
+        cdnStatus: 'error',
+        cdnHitRatio: '--',
+        cdnOriginFetch: '--',
+        cdnOriginRatio: '--',
+        cdnWarmP95: '--',
+        cdnColdP95: '--',
+        cdnAlerts: {},
+        cdnTargets: {},
       };
     }
     if (!systemHealthDetail) {
