@@ -225,7 +225,7 @@ const CoreFieldsStep = () => {
     setStep(6);
   };
 
-  const nextDisabled = saving || Object.keys(errors).length > 0;
+  const nextDisabled = saving;
 
   return (
     <form className="space-y-8" data-testid="wizard-core-step" onSubmit={(e) => e.preventDefault()}>
