@@ -417,6 +417,7 @@ const AdminCategories = () => {
       slug: category.slug || form.slug,
       parent_id: category.parent_id || form.parent_id,
       country_code: category.country_code || form.country_code,
+      module: category.module || form.module,
       active_flag: category.active_flag ?? form.active_flag,
       sort_order: category.sort_order ?? form.sort_order,
     };
