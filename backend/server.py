@@ -14515,7 +14515,7 @@ def _validate_category_import_rows(rows: list[dict], existing: list[Category], c
     }
 
 
-def _update_category_paths(session: AsyncSession, category: Category, new_parent: Optional[Category]) -> bool:
+async def _update_category_paths(session: AsyncSession, category: Category, new_parent: Optional[Category]) -> bool:
     slug_value = _pick_category_slug(category.slug) or ""
     new_depth = new_parent.depth + 1 if new_parent else 0
     new_path = f"{new_parent.path}.{slug_value}" if new_parent and new_parent.path else slug_value
