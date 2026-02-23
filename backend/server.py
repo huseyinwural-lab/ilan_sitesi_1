@@ -2900,6 +2900,8 @@ sql_engine = create_async_engine(
     future=True,
     pool_size=DB_POOL_SIZE,
     max_overflow=DB_MAX_OVERFLOW,
+    pool_timeout=DB_POOL_TIMEOUT,
+    pool_recycle=DB_POOL_RECYCLE,
     pool_pre_ping=True,
     connect_args=connect_args,
 )
