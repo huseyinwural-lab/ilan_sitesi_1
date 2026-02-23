@@ -312,7 +312,7 @@ const ModelStep = () => {
           <button
             type="button"
             onClick={handleComplete}
-            disabled={loading}
+            disabled={loading || saving}
             className="px-5 py-2 bg-blue-600 text-white rounded-md disabled:opacity-60"
             data-testid="model-complete"
           >
