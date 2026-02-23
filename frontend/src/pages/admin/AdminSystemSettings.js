@@ -99,7 +99,22 @@ export default function AdminSystemSettingsPage() {
     }
   };
 
+  const fetchHealthDetail = async () => {
+    try {
+      const res = await axios.get(`${API}/admin/system/health-detail`, { headers: authHeader });
+      setEncryptionKeyPresent(Boolean(res.data?.encryption_key_present));
+      setCfMetricsEnabled(Boolean(res.data?.cf_metrics_enabled));
+      setConfigMissingReason(res.data?.config_missing_reason || '');
+    } catch (e) {
+      setEncryptionKeyPresent(false);
+    }
+  };
+
   const handleSaveCloudflare = async () => {
+    if (!encryptionKeyPresent) {
+      setCloudflareError('CONFIG_ENCRYPTION_KEY tanımlı değil. Config kaydedilemez.');
+      return;
+    }
     if (!cloudflareForm.account_id || !cloudflareForm.zone_id) {
       setCloudflareError('Account ID ve Zone ID zorunludur');
       return;
