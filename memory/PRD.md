@@ -232,6 +232,12 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/SPRINT_PREVIEW_ADMIN_E2E_EVIDENCE.md
 - /app/docs/SPRINT1_CLOSEOUT.md
 - /app/docs/ADMIN_V1_PHASE_A_EVIDENCE.md
+- /app/docs/MONGO_INVENTORY.md
+- /app/docs/MONGO_TO_SQL_MAP.md
+- /app/docs/SQL_SCHEMA_GAP_REPORT.md
+- /app/docs/SQL_SCHEMA_COMPLETION_PACKAGE.md
+- /app/docs/MONGO_SQL_MIGRATION_PLAN.md
+- /app/docs/MONGO_SQL_MIGRATION_EVIDENCE.md
 - /app/docs/RBAC_MATRIX.md
 - /app/docs/RBAC_ENDPOINT_MAP.md
 - /app/docs/RBAC_NEGATIVE_TESTS.md
