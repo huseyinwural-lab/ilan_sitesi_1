@@ -894,6 +894,22 @@ const AdminCategories = () => {
     }
   };
 
+  const handleDirtyCta = async () => {
+    if (!firstDirtyStep || !editing?.id) return;
+    await trackAdminWizardEvent("admin_dirty_cta_clicked", {
+      category_id: editing.id,
+      step_id: firstDirtyStep,
+      wizard_state: wizardProgressState,
+    });
+    setHierarchyError("");
+    setWizardStep(firstDirtyStep);
+    await trackAdminWizardEvent("admin_dirty_first_step_opened", {
+      category_id: editing.id,
+      step_id: firstDirtyStep,
+      wizard_state: wizardProgressState,
+    });
+  };
+
   const handleHierarchyEdit = async () => {
     if (!editing) return;
     await handleUnlockStep("hierarchy");
