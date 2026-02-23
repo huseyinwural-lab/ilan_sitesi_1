@@ -12,15 +12,28 @@ import Step7Review from './Step4Review';
 const WizardContent = () => {
   const { step, loading, editLoading } = useWizard();
 
-  const steps = [
-    { step: 1, label: 'Kategori/Segment' },
-    { step: 2, label: 'Marka' },
-    { step: 3, label: 'Model' },
-    { step: 4, label: 'Yıl/Versiyon' },
-    { step: 5, label: 'Çekirdek Alanlar' },
-    { step: 6, label: 'Özellikler + Medya' },
-    { step: 7, label: 'Önizleme' },
-  ];
+  const moduleKey = useMemo(() => localStorage.getItem('ilan_ver_module') || 'vehicle', []);
+  const isVehicleModule = moduleKey === 'vehicle';
+
+  const steps = useMemo(() => {
+    if (isVehicleModule) {
+      return [
+        { step: 1, label: 'Kategori/Segment', display: 1 },
+        { step: 2, label: 'Marka', display: 2 },
+        { step: 3, label: 'Model', display: 3 },
+        { step: 4, label: 'Yıl/Versiyon', display: 4 },
+        { step: 5, label: 'Çekirdek Alanlar', display: 5 },
+        { step: 6, label: 'Özellikler + Medya', display: 6 },
+        { step: 7, label: 'Önizleme', display: 7 },
+      ];
+    }
+    return [
+      { step: 1, label: 'Kategori/Segment', display: 1 },
+      { step: 5, label: 'Çekirdek Alanlar', display: 2 },
+      { step: 6, label: 'Özellikler + Medya', display: 3 },
+      { step: 7, label: 'Önizleme', display: 4 },
+    ];
+  }, [isVehicleModule]);
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
