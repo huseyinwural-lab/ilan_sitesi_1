@@ -14353,14 +14353,14 @@ async def admin_update_cloudflare_config(
 
     if not payload.account_id or not payload.zone_id:
         logger.warning(
-            "cloudflare_config_save_failed",
+            f"cloudflare_config_save_failed reason=validation_failed request_id={request_id}",
             extra={"reason": "validation_failed", "admin_id": current_user.get("id"), "request_id": request_id},
         )
         raise HTTPException(status_code=400, detail="Cloudflare IDs required")
 
     if not os.environ.get("CONFIG_ENCRYPTION_KEY"):
         logger.warning(
-            "cloudflare_config_save_failed",
+            f"cloudflare_config_save_failed reason=encryption_key_missing request_id={request_id}",
             extra={"reason": "encryption_key_missing", "admin_id": current_user.get("id"), "request_id": request_id},
         )
         raise HTTPException(status_code=400, detail="CONFIG_ENCRYPTION_KEY missing")
