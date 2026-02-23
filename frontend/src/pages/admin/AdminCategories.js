@@ -1030,6 +1030,7 @@ const AdminCategories = () => {
       slug: item.slug || "",
       parent_id: item.parent_id || "",
       country_code: item.country_code || "",
+      module: item.module || "",
       active_flag: item.active_flag ?? true,
       sort_order: item.sort_order || 0,
     });
