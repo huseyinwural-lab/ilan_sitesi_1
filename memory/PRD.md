@@ -230,7 +230,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - GDPR export sonrası notification severity=warning UI doğrulaması
 
 ### P1 (Aktif)
-- Public Search → PostgreSQL migration (listings_search ETL + parity + benchmark)
+- Public Search Postgres cutover: 24h monitoring (Ops/Owner)
 - Moderation migration (search parity sonrası): parity testleri + freeze window + rollback
 
 ### P1 (Sprint‑1 closeout)
