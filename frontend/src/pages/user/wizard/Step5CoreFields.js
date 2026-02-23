@@ -137,18 +137,24 @@ const CoreFieldsStep = () => {
     if (!validate()) return;
     setSaving(true);
 
+    const vehicleAttributes = isVehicleModule
+      ? {
+        mileage_km: mileageKm,
+        fuel_type: fuelType,
+        transmission,
+        drive_type: driveType,
+        body_type: bodyType,
+        color,
+        damage_status: damageStatus,
+        engine_cc: engineCc,
+        engine_hp: engineHp,
+        trade_in: tradeIn === 'true',
+      }
+      : {};
+
     const nextAttributes = {
       ...attributes,
-      mileage_km: mileageKm,
-      fuel_type: fuelType,
-      transmission,
-      drive_type: driveType,
-      body_type: bodyType,
-      color,
-      damage_status: damageStatus,
-      engine_cc: engineCc,
-      engine_hp: engineHp,
-      trade_in: tradeIn === 'true',
+      ...vehicleAttributes,
     };
 
     const ok = await saveDraft({
