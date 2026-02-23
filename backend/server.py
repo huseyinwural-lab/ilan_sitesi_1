@@ -112,6 +112,8 @@ from app.models.messaging import Conversation, Message
 from app.models.favorite import Favorite
 from app.models.notification import Notification
 from app.models.cloudflare_config import CloudflareConfig
+from app.models.system_setting import SystemSetting
+from app.models.admin_invite import AdminInvite
 from app.models.support_message import SupportMessage
 from app.services.cloudflare_metrics import (
     CloudflareCredentials,
