@@ -297,6 +297,7 @@ export default function Layout({ children }) {
     const cdnCountrySeries = cdnMetrics.country_timeseries || {};
     const cdnCanaryStatus = cdnMetrics.canary_status || 'unknown';
     const cfIdsPresent = systemHealthDetail.cf_ids_present ?? false;
+    const cfIdsSource = systemHealthDetail.cf_ids_source ?? 'unknown';
     return {
       status: systemHealthDetail.db_status === 'ok' ? 'ok' : 'error',
       errorBuckets: buckets.map((bucket) => ({
