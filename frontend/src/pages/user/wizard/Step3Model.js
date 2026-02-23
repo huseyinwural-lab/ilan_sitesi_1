@@ -88,6 +88,8 @@ const ModelStep = () => {
       return;
     }
 
+    const modelLabel = selectedModel.label || selectedModel.name || selectedModel.key;
+
     const ok = await saveDraft({
       vehicle: {
         make_key: basicInfo.make_key,
@@ -106,6 +108,7 @@ const ModelStep = () => {
       ...prev,
       model_key: selectedModel.key,
       model_id: selectedModel.id,
+      model_label: modelLabel,
       year: null,
       trim_key: null,
     }));
