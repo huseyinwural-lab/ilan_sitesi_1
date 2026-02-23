@@ -14361,6 +14361,7 @@ async def admin_update_cloudflare_config(
     await session.commit()
 
     canary_status = CANARY_CONFIG_MISSING
+    canary_reason = None
     api_token = os.environ.get("CLOUDFLARE_API_TOKEN")
     if api_token:
         credentials = CloudflareCredentials(
@@ -14368,7 +14369,7 @@ async def admin_update_cloudflare_config(
             account_id=payload.account_id,
             zone_id=payload.zone_id,
         )
-        canary_status = await cloudflare_metrics_service.run_canary(credentials)
+        canary_status, canary_reason = await cloudflare_metrics_service.run_canary(credentials)
 
     await update_canary_status(session, canary_status, current_user.get("id"))
 
