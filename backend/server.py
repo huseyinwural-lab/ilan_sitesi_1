@@ -7620,7 +7620,7 @@ async def get_catalog_schema(
         raise HTTPException(status_code=409, detail="Kategori şeması oluşturulmadı")
     schema = _normalize_category_schema(raw_schema)
     if schema.get("status") == "draft":
-        raise HTTPException(status_code=409, detail="Kategori şeması taslak durumda")
+        schema = {**schema, "status": "draft"}
     return {"category": _serialize_category_sql(category, include_schema=False), "schema": schema}
 
 
