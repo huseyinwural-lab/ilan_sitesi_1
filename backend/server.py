@@ -7625,6 +7625,7 @@ async def track_listing_flow_event(
     return {"status": "ok"}
 
 
+@api_router.get("/catalog/schema")
 async def get_catalog_schema(
     category_id: str,
     request: Request,
