@@ -36,6 +36,7 @@
   - `/app/screenshots/vehicle-wizard-review.png`
   - `/app/screenshots/vehicle-wizard-published.png`
 
+## 2026-02-23 — Kategori Import/Export P0 Closeout
 
 **Kapsam**
 - CSV + XLSX export (module + country filtreli)
