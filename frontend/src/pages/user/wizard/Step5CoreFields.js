@@ -448,17 +448,22 @@ const CoreFieldsStep = () => {
             placeholder="Sokak"
             data-testid="core-address-street"
           />
-          <input
-            type="text"
-            className="w-full p-2 border rounded-md"
-            value={moduleData.address?.city || ''}
-            onChange={(e) => setModuleData((prev) => ({
-              ...prev,
-              address: { ...prev.address, city: e.target.value },
-            }))}
-            placeholder="Şehir"
-            data-testid="core-address-city"
-          />
+          <div>
+            <input
+              type="text"
+              className="w-full p-2 border rounded-md"
+              value={moduleData.address?.city || ''}
+              onChange={(e) => setModuleData((prev) => ({
+                ...prev,
+                address: { ...prev.address, city: e.target.value },
+              }))}
+              placeholder="Şehir"
+              data-testid="core-address-city"
+            />
+            {errors.address_city && (
+              <div className="text-xs text-red-600 mt-1" data-testid="core-address-city-error">{errors.address_city}</div>
+            )}
+          </div>
           <input
             type="text"
             className="w-full p-2 border rounded-md"
