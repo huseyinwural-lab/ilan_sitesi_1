@@ -125,7 +125,7 @@ async def search_real_estate(
     
     # Map Response
     data = []
-    for l in listings:
+    for listing in listings:
         # Extract m2 and rooms from attributes if available
         specs = {}
         attributes = l.attributes or {}
