@@ -344,6 +344,74 @@ const AdminCategories = () => {
     return date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   };
 
+  const normalizeWizardProgress = (progress) => ({
+    state: progress?.state || "draft",
+    dirty_steps: Array.isArray(progress?.dirty_steps) ? progress.dirty_steps : [],
+  });
+
+  const persistSnapshot = (override = {}) => {
+    const snapshot = {
+      form: override.form ?? form,
+      schema: override.schema ?? schema,
+      hierarchy_complete: override.hierarchy_complete ?? effectiveHierarchyComplete,
+      wizard_progress: override.wizard_progress ?? wizardProgress,
+    };
+    lastSavedSnapshotRef.current = JSON.stringify(snapshot);
+  };
+
+  const restoreSnapshot = () => {
+    if (!lastSavedSnapshotRef.current) return;
+    try {
+      const snapshot = JSON.parse(lastSavedSnapshotRef.current);
+      if (snapshot.form) {
+        setForm(snapshot.form);
+      }
+      if (snapshot.schema) {
+        setSchema(snapshot.schema);
+      }
+      if (typeof snapshot.hierarchy_complete === "boolean") {
+        setHierarchyComplete(snapshot.hierarchy_complete);
+      }
+      if (snapshot.wizard_progress) {
+        setWizardProgress(normalizeWizardProgress(snapshot.wizard_progress));
+      }
+    } catch (error) {
+      // ignore
+    }
+  };
+
+  const applyCategoryFromServer = (category, options = {}) => {
+    if (!category) return;
+    const nextForm = {
+      name: category.name || form.name,
+      slug: category.slug || form.slug,
+      parent_id: category.parent_id || form.parent_id,
+      country_code: category.country_code || form.country_code,
+      active_flag: category.active_flag ?? form.active_flag,
+      sort_order: category.sort_order ?? form.sort_order,
+    };
+    const nextSchema = category.form_schema ? applySchemaDefaults(category.form_schema) : schema;
+    const nextWizardProgress = normalizeWizardProgress(category.wizard_progress);
+
+    setEditing(category);
+    setForm(nextForm);
+    if (category.form_schema) {
+      setSchema(nextSchema);
+    }
+    setWizardProgress(nextWizardProgress);
+    setHierarchyComplete(Boolean(category.hierarchy_complete));
+    setLastSavedAt(formatTime(category.updated_at || new Date()));
+    persistSnapshot({
+      form: nextForm,
+      schema: nextSchema,
+      hierarchy_complete: Boolean(category.hierarchy_complete),
+      wizard_progress: nextWizardProgress,
+    });
+    if (options.clearEditMode) {
+      setEditModeStep(null);
+    }
+  };
+
   const showDraftToast = (payload) => {
     if (autosaveToastRef.current?.update) {
       autosaveToastRef.current.update(payload);
