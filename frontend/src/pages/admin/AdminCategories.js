@@ -289,6 +289,11 @@ const AdminCategories = () => {
   const prevStep = WIZARD_STEPS[currentStepIndex - 1]?.id;
   const wizardProgressState = wizardProgress?.state || "draft";
   const dirtySteps = Array.isArray(wizardProgress?.dirty_steps) ? wizardProgress.dirty_steps : [];
+  const editModeActive = Boolean(editModeStep || dirtySteps.length > 0);
+  const firstDirtyStep = useMemo(
+    () => WIZARD_STEPS.find((step) => dirtySteps.includes(step.id))?.id || null,
+    [dirtySteps]
+  );
   const canEditUnlock = useMemo(() => hasPermission?.(["super_admin", "country_admin"]) ?? false, [hasPermission]);
   const getProgressIndex = (state) => {
     const idx = WIZARD_PROGRESS_ORDER.indexOf(state || "draft");
