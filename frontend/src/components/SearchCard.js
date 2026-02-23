@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const SearchCard = ({ listing }) => {
-  const { id, title, price, currency, location, specs, image_url, badges, published_at } = listing;
+  const { id, title, price, price_type, price_amount, hourly_rate, currency, location, specs, image_url, badges, published_at } = listing;
 
   const formatPrice = (p, c) => {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: c }).format(p);
