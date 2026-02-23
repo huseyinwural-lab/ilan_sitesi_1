@@ -47,6 +47,30 @@ const PricingLocation = () => {
     }));
   };
 
+  const handleHourlyChange = (value) => {
+    const decimals = priceConfig.decimal_places ?? 0;
+    const formatted = formatNumberInput(value, decimals);
+    setCoreFields((prev) => ({
+      ...prev,
+      hourly_display: formatted.display,
+      hourly_rate: formatted.numeric === '' ? '' : formatted.numeric.toString(),
+    }));
+  };
+
+  const handlePriceTypeChange = (nextType) => {
+    setCoreFields((prev) => ({
+      ...prev,
+      price_type: nextType,
+      price_amount: nextType === 'FIXED' ? prev.price_amount : '',
+      price_display: nextType === 'FIXED' ? prev.price_display : '',
+      hourly_rate: nextType === 'HOURLY' ? prev.hourly_rate : '',
+      hourly_display: nextType === 'HOURLY' ? prev.hourly_display : '',
+      secondary_amount: nextType === 'FIXED' ? prev.secondary_amount : '',
+      secondary_display: nextType === 'FIXED' ? prev.secondary_display : '',
+    }));
+    setErrors((prev) => ({ ...prev, price_amount: undefined, hourly_rate: undefined }));
+  };
+
   const handleSecondaryPriceChange = (value) => {
     const decimals = priceConfig.decimal_places ?? 0;
     const formatted = formatNumberInput(value, decimals);
