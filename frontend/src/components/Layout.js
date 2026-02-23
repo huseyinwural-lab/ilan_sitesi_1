@@ -112,11 +112,22 @@ export default function Layout({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    fetchSystemHealth();
-    const interval = setInterval(fetchSystemHealth, 60000);
+    if (!user || !showHealthPanel) return;
+    fetchSystemHealthDetail();
+    const interval = setInterval(fetchSystemHealthDetail, 60000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, showHealthPanel]);
+
+  useEffect(() => {
+    if (!showHealthPanel) return;
+    const handleClickOutside = (event) => {
+      if (healthPanelRef.current && !healthPanelRef.current.contains(event.target)) {
+        setShowHealthPanel(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showHealthPanel]);
 
 
   const prevUrlCountryRef = useRef(urlCountry);
