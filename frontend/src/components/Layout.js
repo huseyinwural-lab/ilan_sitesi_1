@@ -890,6 +890,8 @@ export default function Layout({ children }) {
                           <div className="text-slate-500">CDN (Cloudflare)</div>
                           {healthDetailDisplay.cdnStatus === 'disabled' ? (
                             <span className="text-[11px] font-semibold text-slate-500" data-testid="admin-system-health-cdn-disabled">Kapalı</span>
+                          ) : healthDetailDisplay.cdnStatus === 'config_missing' ? (
+                            <span className="text-[11px] font-semibold text-amber-600" data-testid="admin-system-health-cdn-config-missing">Configuration Missing</span>
                           ) : healthDetailDisplay.cdnAlerts.has_alert ? (
                             <span className="text-[11px] font-semibold text-rose-600" data-testid="admin-system-health-cdn-alert">Uyarı</span>
                           ) : (
