@@ -14,15 +14,14 @@ const TABS = [
 ];
 
 export default function AdminCategoriesImportExport() {
+  const { selectedCountry } = useCountry();
   const [activeTab, setActiveTab] = useState('export');
-  const [format, setFormat] = useState('json');
+  const [format, setFormat] = useState('csv');
   const [file, setFile] = useState(null);
   const [dryRunResult, setDryRunResult] = useState(null);
-  const [commitResult, setCommitResult] = useState(null);
-  const [publishResult, setPublishResult] = useState(null);
-  const [showOnlyChanged, setShowOnlyChanged] = useState(true);
-  const [expandedSlug, setExpandedSlug] = useState(null);
-  const [updatePage, setUpdatePage] = useState(1);
+  const [applyResult, setApplyResult] = useState(null);
+  const [moduleFilter, setModuleFilter] = useState('vehicle');
+  const [countryFilter, setCountryFilter] = useState(selectedCountry || 'DE');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
