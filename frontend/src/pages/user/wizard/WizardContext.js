@@ -334,7 +334,7 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     fetchDraft();
   }, [editListingId]);
 
-  const createDraft = async (selectedCategory, options = {}) => {
+  const createDraft = useCallback(async (selectedCategory, options = {}) => {
     const { autoAdvance = false } = options;
     setLoading(true);
     setValidationErrors([]);
@@ -385,7 +385,8 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [loadCategorySchema, selectedCountry]);
+
 
   const saveDraft = async (payload) => {
     if (!draftId) return false;
