@@ -1676,6 +1676,55 @@ def _get_db_error_rate(window_seconds: int = 300) -> tuple[int, float]:
     return count, rate_per_min
 
 
+def _record_db_latency(latency_ms: float) -> None:
+    _db_latency_events.append((time.time(), latency_ms))
+
+
+def _get_db_latency_stats(window_seconds: int = 86400) -> tuple[Optional[float], Optional[float]]:
+    now_ts = time.time()
+    while _db_latency_events and (now_ts - _db_latency_events[0][0]) > window_seconds:
+        _db_latency_events.popleft()
+    values = [lat for _, lat in _db_latency_events]
+    if not values:
+        return None, None
+    values_sorted = sorted(values)
+    avg = sum(values_sorted) / len(values_sorted)
+    idx = int(0.95 * (len(values_sorted) - 1))
+    p95 = values_sorted[idx]
+    return round(avg, 2), round(p95, 2)
+
+
+def _build_error_buckets(window_seconds: int = 86400, bucket_seconds: int = 300) -> list[dict]:
+    now_ts = time.time()
+    start_ts = now_ts - window_seconds
+    bucket_count = int(window_seconds / bucket_seconds)
+    buckets = [0 for _ in range(bucket_count)]
+    for ts in _db_error_events:
+        if ts < start_ts:
+            continue
+        index = int((ts - start_ts) // bucket_seconds)
+        if 0 <= index < bucket_count:
+            buckets[index] += 1
+    results = []
+    for i, count in enumerate(buckets):
+        bucket_start = start_ts + (i * bucket_seconds)
+        results.append({
+            "bucket_start": datetime.fromtimestamp(bucket_start, tz=timezone.utc).isoformat(),
+            "count": count,
+        })
+    return results
+
+
+def _read_search_etl_state() -> dict:
+    path = Path("/app/memory/SEARCH_ETL_STATE.json")
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return {}
+
+
 @app.exception_handler(SATimeoutError)
 async def db_timeout_handler(request: Request, exc: SATimeoutError):
     code = _classify_db_error(exc)
