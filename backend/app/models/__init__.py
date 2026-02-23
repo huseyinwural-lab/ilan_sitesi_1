@@ -8,7 +8,7 @@ from app.models.menu import TopMenuItem, TopMenuSection, TopMenuLink
 from app.models.home import HomeLayoutSettings, HomeShowcaseItem, HomeSpecialListing, AdSlot
 from app.models.dealer import DealerApplication, Dealer, DealerUser
 from app.models.premium import PremiumProduct, ListingPromotion, PremiumRankingRule
-from app.models.moderation import Listing, ModerationAction, ModerationQueue, ModerationRule
+from app.models.moderation import Listing, ModerationAction, ModerationItem, ModerationQueue, ModerationRule
 from app.models.listing_search import ListingSearch
 # Use P11 Billing Models
 from app.models.billing import Invoice, InvoiceItem, VatRate, StripeEvent
