@@ -14395,6 +14395,11 @@ def _validate_category_import_rows(rows: list[dict], existing: list[Category], c
         if not country_raw:
             errors.append({"row_number": row_number, "error_code": "REQUIRED_FIELD", "message": "country zorunlu."})
 
+        if not schema_version:
+            errors.append({"row_number": row_number, "error_code": "REQUIRED_FIELD", "message": "schema_version zorunlu."})
+        elif schema_version != CATEGORY_SCHEMA_VERSION:
+            errors.append({"row_number": row_number, "error_code": "SCHEMA_VERSION_MISMATCH", "message": "schema_version v1 olmalı."})
+
         if not slug_raw:
             errors.append({"row_number": row_number, "error_code": "REQUIRED_FIELD", "message": "slug zorunlu."})
         elif not SLUG_PATTERN.match(slug_raw):
