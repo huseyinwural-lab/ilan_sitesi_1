@@ -62,6 +62,7 @@ const CoreFieldsStep = () => {
   );
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const saveLockRef = useRef(false);
 
   const handlePriceChange = (value) => {
     const decimals = priceConfig.decimal_places ?? 0;
