@@ -14546,17 +14546,17 @@ def _update_category_paths(session: AsyncSession, category: Category, new_parent
 async def admin_import_categories_dry_run(
     request: Request,
     file: UploadFile = File(...),
-    format: str = "json",
+    format: str = "csv",
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     content = _read_import_file(file)
     file_hash = hashlib.sha256(content).hexdigest()
-    items = _parse_import_payload(content, format.lower())
+    rows = _parse_category_import_rows(content, format.lower())
 
     result = await session.execute(select(Category).options(selectinload(Category.translations)))
     existing = result.scalars().all()
-    diff = _diff_categories(items, existing)
+    validation = _validate_category_import_rows(rows, existing, current_user)
 
     await _write_audit_log_sql(
         session,
@@ -14567,14 +14567,22 @@ async def admin_import_categories_dry_run(
         {
             "format": format,
             "filename": file.filename,
-            "summary": diff.get("summary"),
+            "summary": validation.get("summary"),
             "hash": file_hash,
         },
         request,
     )
     await session.commit()
-    diff["dry_run_hash"] = file_hash
-    return diff
+
+    summary = validation.get("summary") or {}
+    response = {
+        "dry_run_hash": file_hash,
+        "summary": summary,
+        "errors": validation.get("errors", []),
+        "creates": [row["slug"] for row in validation.get("rows", []) if row["slug"] not in validation.get("existing_map", {})],
+        "updates": [row["slug"] for row in validation.get("rows", []) if row["slug"] in validation.get("existing_map", {})],
+    }
+    return response
 
 
 @api_router.post("/admin/categories/import-export/import/dry-run/pdf")
