@@ -12314,70 +12314,82 @@ async def admin_report_detail(
     report_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
-    report = await db.reports.find_one({"id": report_id}, {"_id": 0})
+    try:
+        report_uuid = uuid.UUID(report_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid report id") from exc
+
+    report = await session.get(Report, report_uuid)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        if report.get("country_code") != ctx.country:
+        if report.country_code != ctx.country:
             raise HTTPException(status_code=403, detail="Country scope forbidden")
     elif current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
-        if "*" not in scope and report.get("country_code") not in scope:
+        if "*" not in scope and report.country_code not in scope:
             raise HTTPException(status_code=403, detail="Country scope forbidden")
 
-    listing = await db.vehicle_listings.find_one({"id": report.get("listing_id")}, {"_id": 0})
+    listing = await session.get(Listing, report.listing_id)
     seller = None
-    if listing and listing.get("created_by"):
-        seller = await db.users.find_one({"id": listing.get("created_by")}, {"_id": 0, "id": 1, "email": 1, "role": 1, "dealer_status": 1, "country_code": 1})
+    if listing and listing.user_id:
+        seller = await session.get(SqlUser, listing.user_id)
 
     reporter = None
-    if report.get("reporter_user_id"):
-        reporter = await db.users.find_one({"id": report.get("reporter_user_id")}, {"_id": 0, "id": 1, "email": 1, "role": 1})
+    if report.reporter_user_id:
+        reporter = await session.get(SqlUser, report.reporter_user_id)
 
     listing_snapshot = None
     if listing:
-        attrs = listing.get("attributes") or {}
         listing_snapshot = {
-            "id": listing.get("id"),
-            "title": _resolve_listing_title(listing),
-            "status": listing.get("status"),
-            "country": listing.get("country"),
-            "category_key": listing.get("category_key"),
-            "price": attrs.get("price_eur"),
-            "currency": "EUR",
-            "created_at": listing.get("created_at"),
+            "id": str(listing.id),
+            "title": listing.title,
+            "status": listing.status,
+            "country": listing.country,
+            "category_key": listing.category_key,
+            "price": listing.price,
+            "currency": listing.currency or "EUR",
+            "created_at": listing.created_at.isoformat() if listing.created_at else None,
         }
 
     seller_summary = None
     if seller:
         seller_summary = {
-            "id": seller.get("id"),
-            "email": seller.get("email"),
-            "role": seller.get("role"),
-            "dealer_status": seller.get("dealer_status"),
-            "country_code": seller.get("country_code"),
+            "id": str(seller.id),
+            "email": seller.email,
+            "role": seller.role,
+            "dealer_status": None,
+            "country_code": seller.country_code,
         }
 
     reporter_summary = None
     if reporter:
         reporter_summary = {
-            "id": reporter.get("id"),
-            "email": reporter.get("email"),
-            "role": reporter.get("role"),
+            "id": str(reporter.id),
+            "email": reporter.email,
+            "role": reporter.role,
         }
 
     return {
-        **report,
+        "id": str(report.id),
+        "listing_id": str(report.listing_id),
+        "reason": report.reason,
+        "reason_note": report.reason_note,
+        "status": report.status,
+        "country_code": report.country_code,
+        "created_at": report.created_at.isoformat() if report.created_at else None,
+        "updated_at": report.updated_at.isoformat() if report.updated_at else None,
+        "handled_by_admin_id": str(report.handled_by_admin_id) if report.handled_by_admin_id else None,
+        "status_note": report.status_note,
         "listing_snapshot": listing_snapshot,
         "seller_summary": seller_summary,
         "reporter_summary": reporter_summary,
     }
-
 
 @api_router.post("/admin/reports/{report_id}/status")
 async def admin_report_status_change(
