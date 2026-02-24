@@ -11,6 +11,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   rbac-coverage:
     runs-on: ubuntu-latest
