@@ -10321,7 +10321,7 @@ def _parse_bool_flag(value: Optional[str | bool]) -> Optional[bool]:
 
 async def _admin_listing_action(
     *,
-    db,
+    session: AsyncSession,
     listing_id: str,
     current_user: dict,
     event_type: str,
@@ -10329,68 +10329,48 @@ async def _admin_listing_action(
     reason: Optional[str] = None,
     reason_note: Optional[str] = None,
 ) -> dict:
-    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    try:
+        listing_uuid = uuid.UUID(str(listing_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid listing id") from exc
+
+    listing = await session.get(Listing, listing_uuid)
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
 
     if current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
-        if "*" not in scope and listing.get("country") not in scope:
+        if "*" not in scope and listing.country not in scope:
             raise HTTPException(status_code=403, detail="Country scope forbidden")
 
-    prev_status = listing.get("status")
+    prev_status = listing.status
     if prev_status == new_status:
         raise HTTPException(status_code=400, detail="Listing already in target status")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": event_type,
-        "action": event_type,
-        "listing_id": listing_id,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "country_code": listing.get("country"),
-        "country_scope": current_user.get("country_scope") or [],
-        "reason": reason,
-        "reason_note": reason_note,
-        "previous_status": prev_status,
-        "new_status": new_status,
-        "resource_type": "listing",
-        "resource_id": listing_id,
-        "applied": False,
-    }
-
-    await db.audit_logs.insert_one(audit_doc)
-
-    update_payload = {
-        "status": new_status,
-        "updated_at": now_iso,
-        "admin_last_action": event_type,
-        "admin_last_action_at": now_iso,
-    }
+    now = datetime.now(timezone.utc)
+    listing.status = new_status
+    listing.updated_at = now
     if event_type == "LISTING_SOFT_DELETE":
-        update_payload["archived_at"] = now_iso
-        update_payload["archived_by"] = current_user.get("id")
+        listing.deleted_at = now
     if event_type == "LISTING_FORCE_UNPUBLISH":
-        update_payload["unpublished_at"] = now_iso
-        update_payload["unpublished_by"] = current_user.get("id")
+        listing.published_at = None
 
-    res = await db.vehicle_listings.update_one(
-        {"id": listing_id, "status": prev_status},
-        {"$set": update_payload},
+    await session.commit()
+
+    await log_action(
+        db=session,
+        action=event_type,
+        resource_type="listing",
+        resource_id=str(listing.id),
+        user_id=_safe_uuid(current_user.get("id")),
+        user_email=current_user.get("email"),
+        old_values={"status": prev_status},
+        new_values={"status": new_status},
+        metadata={"reason": reason, "reason_note": reason_note},
+        country_scope=",".join(current_user.get("country_scope") or []),
     )
-    if res.matched_count == 0:
-        raise HTTPException(status_code=409, detail="Listing changed concurrently")
 
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-
-    updated = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
-    return updated
+    return {"id": str(listing.id), "status": listing.status}
 
 
 def _check_report_rate_limit(request: Request, listing_id: str, reporter_user_id: Optional[str]) -> None:
