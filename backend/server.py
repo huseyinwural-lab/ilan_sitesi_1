@@ -11741,68 +11741,55 @@ async def _build_vehicle_master_from_db(session: AsyncSession, country_code: str
 
 async def _report_transition(
     *,
-    db,
+    session: AsyncSession,
     report_id: str,
     current_user: dict,
     target_status: str,
     note: str,
-) -> dict:
-    report = await db.reports.find_one({"id": report_id}, {"_id": 0})
+) -> Report:
+    try:
+        report_uuid = uuid.UUID(report_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid report id") from exc
+
+    report = await session.get(Report, report_uuid)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
     if current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
-        if "*" not in scope and report.get("country_code") not in scope:
+        if "*" not in scope and report.country_code not in scope:
             raise HTTPException(status_code=403, detail="Country scope forbidden")
 
-    prev_status = report.get("status")
+    prev_status = report.status
     allowed = REPORT_STATUS_TRANSITIONS.get(prev_status, set())
     if target_status not in allowed:
         raise HTTPException(status_code=400, detail="Invalid status transition")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "REPORT_STATUS_CHANGE",
-        "action": "REPORT_STATUS_CHANGE",
-        "report_id": report_id,
-        "listing_id": report.get("listing_id"),
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "country_code": report.get("country_code"),
-        "country_scope": current_user.get("country_scope") or [],
-        "note": note,
-        "previous_status": prev_status,
-        "new_status": target_status,
-        "resource_type": "report",
-        "resource_id": report_id,
-        "applied": False,
-    }
+    now_dt = datetime.now(timezone.utc)
+    report.status = target_status
+    report.updated_at = now_dt
+    report.handled_by_admin_id = _safe_uuid(current_user.get("id"))
+    report.status_note = note
 
-    await db.audit_logs.insert_one(audit_doc)
-
-    res = await db.reports.update_one(
-        {"id": report_id, "status": prev_status},
-        {
-            "$set": {
-                "status": target_status,
-                "updated_at": now_iso,
-                "handled_by_admin_id": current_user.get("id"),
-                "status_note": note,
-            }
+    await _write_audit_log_sql(
+        session=session,
+        action="REPORT_STATUS_CHANGE",
+        actor=current_user,
+        resource_type="report",
+        resource_id=str(report.id),
+        metadata={
+            "previous_status": prev_status,
+            "new_status": target_status,
+            "note": note,
+            "listing_id": str(report.listing_id),
         },
+        request=None,
+        country_code=report.country_code,
     )
-    if res.matched_count == 0:
-        raise HTTPException(status_code=409, detail="Report status changed concurrently")
 
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-    updated = await db.reports.find_one({"id": report_id}, {"_id": 0})
-    return updated
+    await session.commit()
+    return report
 
 
 async def _moderation_transition_sql(
