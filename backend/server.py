@@ -10534,6 +10534,23 @@ def _normalize_country_doc(doc: dict) -> dict:
     }
 
 
+def _normalize_country_sql(country: Country) -> dict:
+    name = country.name
+    if isinstance(name, dict):
+        name_value = name.get("tr") or name.get("en") or name.get("de") or name.get("fr") or next(iter(name.values()), None)
+    else:
+        name_value = name
+    return {
+        "country_code": (country.code or "").upper(),
+        "name": name_value,
+        "active_flag": country.is_enabled,
+        "default_currency": country.default_currency,
+        "default_language": country.default_language,
+        "updated_at": country.updated_at.isoformat() if country.updated_at else None,
+        "created_at": country.created_at.isoformat() if country.created_at else None,
+    }
+
+
 def _pick_label(value) -> Optional[str]:
     if isinstance(value, dict):
         return value.get("tr") or value.get("en") or value.get("de") or value.get("fr") or next(iter(value.values()), None)
