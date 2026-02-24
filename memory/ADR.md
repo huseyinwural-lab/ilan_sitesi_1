@@ -886,3 +886,34 @@ graph LR
 **Etkileri / trade-off:**
 - (+) Etkileşim artar
 - (-) Dashboard karmaşıklığı artabilir
+
+
+---
+
+## ADR-AF-DEPENDENCY-FIRST — Dependency analizi önce
+
+**Karar:** Sprint 1 başlamadan önce dependency map + gap list + implementation order hazırlanır.
+
+**Gerekçe:** Guard/permission/audit bağımlılıkları erken görünür.
+
+**Etkileri / trade-off:**
+- (+) Blokajlar sprint başında görünür
+- (-) Ticket’lara başlama gecikir
+
+---
+
+## ADR-AF-QUICK-PREVIEW-ACTIONS — Quick Preview aksiyonları
+
+**Karar:** Quick Preview’a yalnızca “Düzenle” + “Yayından Kaldır” eklenir.
+
+**Gerekçe:** Minimal ama fonksiyonel; dashboard sade kalır.
+
+**Guard:** Ownership + status=published, unpublish confirmation modal.
+
+---
+
+## ADR-AF-ADMIN-FINAL-SCOPE — Admin Final Sprint 1
+
+**Karar:** Sprint 1 sadece monetization/risk/verification/moderation/finance kapsar.
+
+**Gerekçe:** Operasyonel kilitleme öncelikli.
