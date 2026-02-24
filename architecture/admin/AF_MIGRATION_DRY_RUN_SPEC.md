@@ -11,6 +11,7 @@ python scripts/migration_dry_run.py
 **Varsayımlar**
 - `DATABASE_URL` env ile sağlanır.
 - Script read-only çalışır (DDL/DML yok).
+- Opsiyonel audit log için: `MIGRATION_DRY_RUN_AUDIT=1` (DML yazar).
 
 ## Kontrol Matrisi
 
