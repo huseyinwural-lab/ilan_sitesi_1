@@ -11615,7 +11615,17 @@ def _serialize_attribute_sql(attribute: Attribute, category_id: Optional[str] = 
     }
 
 
-def _normalize_vehicle_make_doc(doc: dict) -> dict:
+def _normalize_vehicle_make_doc(doc) -> dict:
+    if isinstance(doc, VehicleMake):
+        return {
+            "id": str(doc.id),
+            "name": doc.name,
+            "slug": doc.slug,
+            "country_code": None,
+            "active_flag": bool(doc.is_active),
+            "created_at": doc.created_at.isoformat() if doc.created_at else None,
+            "updated_at": doc.updated_at.isoformat() if doc.updated_at else None,
+        }
     return {
         "id": doc.get("id"),
         "name": doc.get("name"),
@@ -11627,7 +11637,20 @@ def _normalize_vehicle_make_doc(doc: dict) -> dict:
     }
 
 
-def _normalize_vehicle_model_doc(doc: dict) -> dict:
+def _normalize_vehicle_model_doc(doc) -> dict:
+    if isinstance(doc, VehicleModel):
+        vehicle_type = (doc.vehicle_type or "car").strip().lower()
+        return {
+            "id": str(doc.id),
+            "make_id": str(doc.make_id),
+            "name": doc.name,
+            "slug": doc.slug,
+            "vehicle_type": vehicle_type,
+            "country_code": None,
+            "active_flag": bool(doc.is_active),
+            "created_at": doc.created_at.isoformat() if doc.created_at else None,
+            "updated_at": None,
+        }
     vehicle_type = (doc.get("vehicle_type") or "car").strip().lower()
     return {
         "id": doc.get("id"),
