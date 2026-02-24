@@ -120,6 +120,7 @@ from app.models.menu_item import MenuItem
 from app.models.report import Report
 from app.models.menu import TopMenuItem
 from app.models.support_message import SupportMessage
+from app.services.audit import log_action
 from app.services.cloudflare_metrics import (
     CloudflareCredentials,
     CloudflareMetricsService,
