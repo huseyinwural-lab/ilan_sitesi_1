@@ -17439,10 +17439,10 @@ async def admin_vehicle_import_apply(
     payload: VehicleImportPayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    prepared = await _prepare_vehicle_import_payload(db, payload)
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    prepared = await _prepare_vehicle_import_payload(session, payload)
     report = prepared["report"]
     if not report.get("can_apply"):
         raise HTTPException(status_code=400, detail=report)
@@ -17450,6 +17450,85 @@ async def admin_vehicle_import_apply(
     normalized_makes = prepared["normalized_makes"]
     normalized_models = prepared["normalized_models"]
     existing_make_map = prepared["existing_make_map"]
+
+    make_id_by_slug: Dict[str, uuid.UUID] = {}
+    for slug, make in existing_make_map.items():
+        make_id_by_slug[slug] = make.id
+
+    make_inserts = 0
+    make_updates = 0
+    model_inserts = 0
+    model_updates = 0
+
+    async with session.begin():
+        for make in normalized_makes:
+            existing = await session.execute(select(VehicleMake).where(VehicleMake.slug == make["slug"]))
+            existing_make = existing.scalar_one_or_none()
+            if existing_make:
+                existing_make.name = make["name"]
+                existing_make.is_active = bool(make["active_flag"])
+                make_updates += 1
+                make_id_by_slug[make["slug"]] = existing_make.id
+            else:
+                new_make = VehicleMake(
+                    name=make["name"],
+                    slug=make["slug"],
+                    is_active=bool(make["active_flag"]),
+                )
+                session.add(new_make)
+                await session.flush()
+                make_inserts += 1
+                make_id_by_slug[make["slug"]] = new_make.id
+
+        for model in normalized_models:
+            make_id = make_id_by_slug.get(model["make_slug"])
+            if not make_id:
+                raise HTTPException(status_code=400, detail=f"make_slug not found: {model['make_slug']}")
+
+            existing_model = await session.execute(
+                select(VehicleModel).where(VehicleModel.make_id == make_id, VehicleModel.slug == model["slug"])
+            )
+            model_row = existing_model.scalar_one_or_none()
+            if model_row:
+                model_row.name = model["name"]
+                model_row.vehicle_type = model["vehicle_type"]
+                model_row.is_active = bool(model["active_flag"])
+                model_updates += 1
+            else:
+                new_model = VehicleModel(
+                    make_id=make_id,
+                    name=model["name"],
+                    slug=model["slug"],
+                    vehicle_type=model["vehicle_type"],
+                    is_active=bool(model["active_flag"]),
+                )
+                session.add(new_model)
+                model_inserts += 1
+
+        await _write_audit_log_sql(
+            session=session,
+            action="VEHICLE_MASTER_DATA_IMPORT",
+            actor=current_user,
+            resource_type="vehicle_master_data",
+            resource_id="vehicle_import",
+            metadata={
+                "make_inserts": make_inserts,
+                "make_updates": make_updates,
+                "model_inserts": model_inserts,
+                "model_updates": model_updates,
+            },
+            request=request,
+            country_code=None,
+        )
+
+    return {
+        "summary": {
+            "make_inserts": make_inserts,
+            "make_updates": make_updates,
+            "model_inserts": model_inserts,
+            "model_updates": model_updates,
+        }
+    }
 
     make_id_by_slug: Dict[str, str] = {}
     make_country_by_slug: Dict[str, Optional[str]] = {}
