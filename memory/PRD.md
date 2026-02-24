@@ -291,8 +291,6 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - RBAC CI PR comment workflow güncellendi + karar dokümante edildi.
 
 ## Blokajlar / Riskler
-- Public search true 24h monitoring koşusu henüz tamamlanmadı (PENDING).
-- 2FA backup code tek kullanımlık testi henüz çalıştırılmadı.
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
 
 ## Öncelikli Backlog
