@@ -7,7 +7,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision: str = 'p40_user_fields_push_subscriptions'
+revision: str = 'p40_users_push_subs'
 down_revision: Union[str, Sequence[str], None] = 'p39_users_listings_cutover'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
