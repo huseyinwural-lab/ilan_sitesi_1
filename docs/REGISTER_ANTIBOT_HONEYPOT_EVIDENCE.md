@@ -1,21 +1,21 @@
 # REGISTER_ANTIBOT_HONEYPOT_EVIDENCE
 
-**Tarih:** 2026-02-22
-**Durum:** BLOCKED (Preview DB erişimi yok)
+**Tarih:** 2026-02-24 11:24:45 UTC
+**Durum:** CLOSED
 
-## Beklenen Kanıt
+## Kanıt
 - `company_website` dolu gönderildiğinde 400
-- `register_honeypot_hit` audit log kaydı
+- Audit log: `register_honeypot_hit` (user_email=honeypot@platform.com)
 
-## Örnek (beklenen)
+## Örnek (gerçek)
 ```
 POST /api/auth/register/consumer
 {
-  "full_name": "Bot",
-  "email": "bot@example.com",
-  "password": "Secret123!",
+  "full_name": "Honeypot Test",
+  "email": "honeypot@platform.com",
+  "password": "User123!",
   "country_code": "DE",
-  "company_website": "https://spam.example"
+  "company_website": "http://bot.example"
 }
 ```
 Beklenen: 400 + audit log.
