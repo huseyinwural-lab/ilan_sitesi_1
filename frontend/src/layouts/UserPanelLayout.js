@@ -95,7 +95,7 @@ const UserPanelLayout = () => {
       },
       {
         key: 'account',
-        title: 'Hesap > Güvenlik',
+        title: 'Hesap & Güvenlik',
         testId: 'account-side-group-account',
         items: [
           { path: '/account/security', label: 'Güvenlik', testId: 'account-side-security' },
