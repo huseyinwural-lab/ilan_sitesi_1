@@ -28,3 +28,38 @@ class Advertisement(Base):
         Index("ix_ads_placement_active", "placement", "is_active"),
         Index("ix_ads_placement_priority", "placement", "priority"),
     )
+
+
+class AdImpression(Base):
+    __tablename__ = "ad_impressions"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    ad_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("advertisements.id", ondelete="CASCADE"), nullable=False)
+    placement: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    ip_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    user_agent_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        Index("ix_ad_impressions_ad_time", "ad_id", "created_at"),
+        Index("ix_ad_impressions_placement_time", "placement", "created_at"),
+        Index("ix_ad_impressions_dedup", "ad_id", "ip_hash", "user_agent_hash", "created_at"),
+    )
+
+
+class AdClick(Base):
+    __tablename__ = "ad_clicks"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    ad_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("advertisements.id", ondelete="CASCADE"), nullable=False)
+    placement: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    ip_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    user_agent_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        Index("ix_ad_clicks_ad_time", "ad_id", "created_at"),
+        Index("ix_ad_clicks_placement_time", "placement", "created_at"),
+    )
