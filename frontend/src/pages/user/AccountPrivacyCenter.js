@@ -94,6 +94,7 @@ export default function AccountPrivacyCenter() {
       link.remove();
       window.URL.revokeObjectURL(url);
       setExportSuccess('Veri dışa aktarma tamamlandı. Dosya indiriliyor.');
+      await fetchExportHistory();
     } catch (err) {
       setExportError('Export indirilemedi');
     } finally {
