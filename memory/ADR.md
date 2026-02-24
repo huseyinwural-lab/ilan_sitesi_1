@@ -970,3 +970,16 @@ graph LR
 **Karar:** Risk timeline widget Sprint 2’ye taşındı.
 
 **Gerekçe:** Sprint 1 guard/constraint önceliği.
+
+
+---
+
+## ADR-AF-DRY-RUN-AUDIT-LOG — Dry-run audit kaydı
+
+**Karar:** Dry-run sonucu opsiyonel olarak audit_logs tablosuna yazılır (`MIGRATION_DRY_RUN`).
+
+**Gerekçe:** Deployment kontrolünün merkezi olarak izlenebilmesi.
+
+**Etkileri / trade-off:**
+- (+) Operasyonel izlenebilirlik artar
+- (-) Dry-run artık DML yazabilir (opsiyonel)
