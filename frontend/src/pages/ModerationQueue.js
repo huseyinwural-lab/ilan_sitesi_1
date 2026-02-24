@@ -565,7 +565,7 @@ export default function ModerationQueue({
               >
                 Moderation Freeze aktif – yalnızca görüntüleme yapılabilir.
               </div>
-            )
+            )}
 
             <div className="p-4 space-y-4">
               <div className="flex items-start justify-between">
