@@ -300,6 +300,18 @@ export default function ModerationQueue({
     }
   };
 
+  const renderFreezeTooltip = (testId) => {
+    if (!freezeActive) return null;
+    return (
+      <span
+        className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[11px] text-white opacity-0 shadow transition group-hover:opacity-100"
+        data-testid={testId}
+      >
+        {FREEZE_TOOLTIP_TEXT}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6" data-testid={pageTestId}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
