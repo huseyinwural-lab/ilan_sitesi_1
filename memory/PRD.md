@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-24 17:30:00 UTC (FAZ-ADMIN-FINAL Sprint1 dependencies)
+**Son güncelleme:** 2026-02-24 17:50:00 UTC (AF Sprint1 migration impact)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
