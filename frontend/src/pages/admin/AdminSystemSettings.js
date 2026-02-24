@@ -57,6 +57,9 @@ export default function AdminSystemSettingsPage() {
   const [cfMetricsEnabled, setCfMetricsEnabled] = useState(false);
   const [configMissingReason, setConfigMissingReason] = useState('');
   const [items, setItems] = useState([]);
+  const [freezeSetting, setFreezeSetting] = useState(null);
+  const [freezeActive, setFreezeActive] = useState(false);
+  const [freezeSaving, setFreezeSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
