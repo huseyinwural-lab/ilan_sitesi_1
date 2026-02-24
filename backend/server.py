@@ -7954,6 +7954,8 @@ def _build_dealer_summary(
         "phone_e164": _resolve_user_phone_e164(doc),
         "country_code": doc.get("country_code"),
         "status": status,
+        "risk_level": doc.get("risk_level") or "low",
+        "ban_reason": doc.get("ban_reason"),
         "is_active": bool(doc.get("is_active", True)),
         "deleted_at": doc.get("deleted_at"),
         "email_verified": email_verified,
