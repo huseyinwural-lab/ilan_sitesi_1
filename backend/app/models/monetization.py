@@ -21,6 +21,7 @@ class SubscriptionPlan(Base):
     
     price: Mapped[Numeric] = mapped_column(Numeric(10, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False) # TRY, EUR
+    discount_percent: Mapped[Numeric] = mapped_column(Numeric(5, 2), nullable=False, default=0)
     
     duration_days: Mapped[int] = mapped_column(Integer, nullable=False) # 30
     limits: Mapped[dict] = mapped_column(JSON, nullable=False) # {"listing": 50, "showcase": 5}
