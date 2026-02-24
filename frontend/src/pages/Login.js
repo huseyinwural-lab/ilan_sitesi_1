@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { toast } from '@/components/ui/use-toast';
 import { Lock, Mail, Eye, EyeOff, AlertCircle, Sun, Moon, Globe } from 'lucide-react';
 import { PORTALS, ROLE_TO_PORTAL, portalFromScope, defaultHomeForRole } from '@/shared/types/portals';
 
