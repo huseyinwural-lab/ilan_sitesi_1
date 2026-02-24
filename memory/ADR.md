@@ -938,3 +938,18 @@ graph LR
 **Karar:** Her migration için down script zorunlu; rollback’siz deploy yasak.
 
 **Gerekçe:** Operasyonel güvenlik.
+
+
+---
+
+## ADR-MIGRATION-DRY-RUN-MANDATORY — Dry-run zorunlu release gate
+
+**Karar:** Her production migration öncesi dry-run PASS zorunlu.
+
+**Gerekçe:** Veri bütünlüğü riski sıfırlanmalı; rollback ihtiyacı azalmalı.
+
+**Etkileri / trade-off:**
+- (+) Production güvenliği artar
+- (-) Deploy süresi uzar
+
+**Risk / Önlem:** Script outdated → impact analizi ile senkron zorunlu.
