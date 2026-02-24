@@ -4991,6 +4991,57 @@ async def activate_user(
     return {"ok": True}
 
 
+@api_router.patch("/admin/users/{user_id}/risk-level")
+async def admin_update_risk_level(
+    user_id: str,
+    payload: RiskLevelUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
+
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user = result.scalar_one_or_none()
+    if not user or user.deleted_at:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.role in ADMIN_ROLE_OPTIONS:
+        raise HTTPException(status_code=400, detail="Admin accounts must be managed in Admin Users")
+
+    _assert_country_scope(user.country_code, current_user)
+
+    new_level = _normalize_risk_level(payload.risk_level)
+    before_level = getattr(user, "risk_level", "low") or "low"
+    if new_level == before_level:
+        return {"ok": True, "risk_level": new_level}
+
+    user.risk_level = new_level
+
+    await _write_audit_log_sql(
+        session=session,
+        action="RISK_LEVEL_UPDATED",
+        actor=current_user,
+        resource_type="user",
+        resource_id=str(user.id),
+        metadata={
+            "before": before_level,
+            "after": new_level,
+            "reason": (payload.reason or "").strip() or None,
+        },
+        request=request,
+        country_code=user.country_code,
+    )
+    await session.commit()
+
+    return {"ok": True, "risk_level": new_level}
+
+
 @api_router.delete("/admin/users/{user_id}")
 async def delete_user(
     user_id: str,
