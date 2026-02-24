@@ -5666,14 +5666,27 @@ async def export_user_data_v1(
         country_code=user_row.country_code,
     )
 
+    payload_text = json.dumps(export_payload, ensure_ascii=False, indent=2)
+    os.makedirs(GDPR_EXPORT_DIR, exist_ok=True)
+    export_filename = f"gdpr-export-{user_row.id}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.json"
+    export_path = os.path.join(GDPR_EXPORT_DIR, export_filename)
+    with open(export_path, "w", encoding="utf-8") as export_file:
+        export_file.write(payload_text)
+
+    export_entry = GDPRExport(
+        user_id=user_row.id,
+        file_path=export_filename,
+        status="ready",
+        expires_at=datetime.now(timezone.utc) + timedelta(days=GDPR_EXPORT_RETENTION_DAYS),
+    )
+    session.add(export_entry)
+
     await session.commit()
 
-    payload_text = json.dumps(export_payload, ensure_ascii=False, indent=2)
-    filename = f"gdpr-export-{user_row.id}.json"
     return Response(
         content=payload_text,
         media_type="application/json",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
+        headers={"Content-Disposition": f"attachment; filename={export_filename}"},
     )
 
 
@@ -6200,14 +6213,27 @@ async def export_user_data(
         country_code=user_row.country_code,
     )
 
+    payload_text = json.dumps(export_payload, ensure_ascii=False, indent=2)
+    os.makedirs(GDPR_EXPORT_DIR, exist_ok=True)
+    export_filename = f"gdpr-export-{user_row.id}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.json"
+    export_path = os.path.join(GDPR_EXPORT_DIR, export_filename)
+    with open(export_path, "w", encoding="utf-8") as export_file:
+        export_file.write(payload_text)
+
+    export_entry = GDPRExport(
+        user_id=user_row.id,
+        file_path=export_filename,
+        status="ready",
+        expires_at=datetime.now(timezone.utc) + timedelta(days=GDPR_EXPORT_RETENTION_DAYS),
+    )
+    session.add(export_entry)
+
     await session.commit()
 
-    payload_text = json.dumps(export_payload, ensure_ascii=False, indent=2)
-    filename = f"gdpr-export-{user_row.id}.json"
     return Response(
         content=payload_text,
         media_type="application/json",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
+        headers={"Content-Disposition": f"attachment; filename={export_filename}"},
     )
 
 
