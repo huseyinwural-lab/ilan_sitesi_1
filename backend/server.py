@@ -797,6 +797,7 @@ async def _auto_reactivate_if_expired(user: SqlUser, session: AsyncSession, requ
                     "status": user.status,
                     "is_active": user.is_active,
                     "suspension_until": None,
+                    "ban_reason": None,
                 },
             },
             request=request,
