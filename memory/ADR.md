@@ -953,3 +953,20 @@ graph LR
 - (-) Deploy süresi uzar
 
 **Risk / Önlem:** Script outdated → impact analizi ile senkron zorunlu.
+
+
+---
+
+## ADR-AF-BULK-AUDIT-ITEM — Bulk moderation audit item-bazlı
+
+**Karar:** Bulk moderation aksiyonlarında audit kayıtları her listing için ayrı yazılır.
+
+**Gerekçe:** Legal traceability ve işlem bazlı izlenebilirlik.
+
+---
+
+## ADR-AF-RISK-TIMELINE-SPRINT2 — Risk timeline widget Sprint 2
+
+**Karar:** Risk timeline widget Sprint 2’ye taşındı.
+
+**Gerekçe:** Sprint 1 guard/constraint önceliği.
