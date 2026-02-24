@@ -377,24 +377,30 @@ export default function ModerationQueue({
           <span className="text-sm text-muted-foreground" data-testid="moderation-selected-count">Seçilen: {selectedCount}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => openBulkDialog('approve')}
-            disabled={freezeActive || !selectedCount}
-            className="h-9 px-3 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
-            data-testid="moderation-bulk-approve"
-          >
-            Toplu Onayla
-          </button>
-          <button
-            type="button"
-            onClick={() => openBulkDialog('reject')}
-            disabled={freezeActive || !selectedCount}
-            className="h-9 px-3 rounded-md bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50"
-            data-testid="moderation-bulk-reject"
-          >
-            Toplu Reddet
-          </button>
+          <div className="relative group">
+            <button
+              type="button"
+              onClick={() => openBulkDialog('approve')}
+              disabled={freezeActive || !selectedCount}
+              className="h-9 px-3 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
+              data-testid="moderation-bulk-approve"
+            >
+              Toplu Onayla
+            </button>
+            {renderFreezeTooltip('moderation-bulk-approve-tooltip')}
+          </div>
+          <div className="relative group">
+            <button
+              type="button"
+              onClick={() => openBulkDialog('reject')}
+              disabled={freezeActive || !selectedCount}
+              className="h-9 px-3 rounded-md bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50"
+              data-testid="moderation-bulk-reject"
+            >
+              Toplu Reddet
+            </button>
+            {renderFreezeTooltip('moderation-bulk-reject-tooltip')}
+          </div>
         </div>
       </div>
 
