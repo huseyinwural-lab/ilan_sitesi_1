@@ -300,6 +300,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - FAZ-UH1 dokümantasyonu tamamlandı: /architecture/ui/* (purpose, data sources, IA v2, wireframe, backlog, tokens).
 - Consumer Dashboard V1 aksiyon odaklı yeniden kuruldu (KPI row, primary CTA, listing snapshot, favoriler/saved search, status banner).
 - /account/security route eklendi + sol menü IA V2 güncellendi.
+- UH1 closeout + regression checklist + Quick Preview spec + P2 dependency dokümanları yayınlandı.
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
