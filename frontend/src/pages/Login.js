@@ -9,6 +9,7 @@ import { PORTALS, ROLE_TO_PORTAL, portalFromScope, defaultHomeForRole } from '@/
 export default function Login({ portalContext = 'account' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [totpCode, setTotpCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null); // { code, retry_after_seconds, expected, actual }
   const [loading, setLoading] = useState(false);
