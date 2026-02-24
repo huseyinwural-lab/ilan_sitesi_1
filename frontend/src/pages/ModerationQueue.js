@@ -706,7 +706,8 @@ export default function ModerationQueue({
               </button>
               <button
                 onClick={submitActionDialog}
-                className="h-9 px-3 rounded-md bg-primary text-primary-foreground hover:opacity-90 text-sm"
+                disabled={freezeActive}
+                className="h-9 px-3 rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 text-sm"
                 data-testid="moderation-action-submit"
               >
                 Submit
