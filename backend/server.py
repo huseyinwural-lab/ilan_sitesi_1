@@ -13691,6 +13691,12 @@ async def create_checkout_session(
     session.add(transaction)
     await session.commit()
 
+    logging.getLogger("stripe_idempotency").info(
+        "stripe_checkout_session_created invoice_id=%s session_id=%s",
+        invoice.id,
+        checkout_session.session_id,
+    )
+
     return {
         "checkout_url": checkout_session.url,
         "session_id": checkout_session.session_id,
