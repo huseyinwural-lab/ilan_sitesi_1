@@ -190,6 +190,7 @@ def _write_audit_log(engine, status: str, blocking: List[str], warnings: List[st
                 "resource_type": "migration",
                 "resource_id": "af-sprint1",
                 "metadata_info": json.dumps(metadata),
+                "is_pii_scrubbed": False,
                 "created_at": created_at,
             },
         )
