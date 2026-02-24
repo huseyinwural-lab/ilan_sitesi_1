@@ -65,8 +65,6 @@ export default function AdSlot({ placement, className = '' }) {
       <a
         href={clickUrl}
         className="block"
-        target="_blank"
-        rel="noreferrer"
         data-testid={`ad-slot-click-${placement}`}
       >
         {assetUrl ? (
