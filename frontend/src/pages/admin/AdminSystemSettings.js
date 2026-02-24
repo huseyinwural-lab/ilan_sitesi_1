@@ -237,6 +237,7 @@ export default function AdminSystemSettingsPage() {
   const toggleModerationFreeze = async () => {
     if (!isSuperAdmin || freezeSaving) return;
     const nextValue = !freezeActive;
+    const reasonPayload = freezeReason.trim() ? freezeReason.trim() : null;
     setFreezeSaving(true);
     setError('');
     try {
