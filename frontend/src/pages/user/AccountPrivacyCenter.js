@@ -123,6 +123,9 @@ export default function AccountPrivacyCenter() {
         {exportError && (
           <div className="text-xs text-rose-600 mt-2" data-testid="privacy-export-error">{exportError}</div>
         )}
+        {exportSuccess && (
+          <div className="text-xs text-emerald-600 mt-2" data-testid="privacy-export-success">{exportSuccess}</div>
+        )}
         <button
           type="button"
           onClick={handleExport}
