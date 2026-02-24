@@ -704,15 +704,15 @@ def _extract_moderation_reason(payload: Optional["AdminUserActionPayload"]) -> t
     return (reason_code or None), (reason_detail or None)
 
 
-def _parse_suspension_until(value: Optional[str]) -> Optional[str]:
+def _parse_suspension_until(value: Optional[str]) -> Optional[datetime]:
     if not value:
         return None
     try:
-        iso_value = value.replace("Z", "+00:00")
+        iso_value = str(value).replace("Z", "+00:00")
         parsed = datetime.fromisoformat(iso_value)
         if parsed.tzinfo is None:
             parsed = parsed.replace(tzinfo=timezone.utc)
-        return parsed.astimezone(timezone.utc).isoformat()
+        return parsed.astimezone(timezone.utc)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid suspension_until") from exc
 
