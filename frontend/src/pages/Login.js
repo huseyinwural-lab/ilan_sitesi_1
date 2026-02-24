@@ -190,6 +190,11 @@ export default function Login({ portalContext = 'account' }) {
                   <AlertCircle size={16} />
                   <div className="font-medium" data-testid="login-error-message">
                     {error.code === 'INVALID_CREDENTIALS' && 'E-posta veya şifre hatalı'}
+                    {error.code === 'INVALID_TOTP' && 'Doğrulama kodu hatalı'}
+                    {error.code === 'TOTP_REQUIRED' && '2FA doğrulama kodu gerekli'}
+                    {error.code === 'TOTP_SETUP_INCOMPLETE' && '2FA kurulumu tamamlanmamış'}
+                    {error.code === 'ACCOUNT_DELETED' && 'Hesap silinmiş'}
+                    {error.code === 'ACCOUNT_SUSPENDED' && 'Hesap askıya alınmış'}
                     {error.code === 'RATE_LIMITED' && 'Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin.'}
                     {error.code === 'PORTAL_MISMATCH' && renderPortalMismatchMessage()}
                     {error.code === 'EMAIL_NOT_VERIFIED' && 'Hesabınızı doğrulamanız gerekiyor.'}
