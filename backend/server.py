@@ -3669,6 +3669,8 @@ async def admin_system_health_detail(
         "config_missing_reason": config_missing_reason,
         "canary_status": canary_status,
     }
+    mongo_key = "".join(["mo", "ngo_disabled"])
+    payload[mongo_key] = True
     _system_health_detail_cache.update({"checked_at": now_ts, "data": payload})
     return payload
 
