@@ -52,6 +52,12 @@ export default function AccountPrivacyCenter() {
     fetchExportHistory();
   }, []);
 
+  useEffect(() => {
+    if (exportTab === 'history') {
+      fetchExportHistory();
+    }
+  }, [exportTab]);
+
   const handleConsentToggle = async () => {
     setLoading(true);
     try {
