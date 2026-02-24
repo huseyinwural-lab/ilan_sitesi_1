@@ -9418,47 +9418,52 @@ async def list_countries(
  
 
 @api_router.patch("/countries/{country_id}")
-async def update_country(country_id: str, data: dict, request: Request, current_user=Depends(check_permissions(["super_admin", "country_admin"]))):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+async def update_country(
+    country_id: str,
+    data: dict,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
     allowed = {"is_enabled", "default_currency", "default_language", "support_email"}
     payload = {k: v for k, v in data.items() if k in allowed}
     if not payload:
         return {"ok": True}
 
-    payload["updated_at"] = datetime.now(timezone.utc).isoformat()
-    res = await db.countries.update_one({"id": country_id}, {"$set": payload})
-    if res.matched_count == 0:
+    country = None
+    try:
+        country_uuid = uuid.UUID(country_id)
+        country = await session.get(Country, country_uuid)
+    except ValueError:
+        country = None
+
+    if not country:
+        result = await session.execute(select(Country).where(Country.code == country_id.upper()))
+        country = result.scalar_one_or_none()
+
+    if not country:
         raise HTTPException(status_code=404, detail="Country not found")
 
+    for key, value in payload.items():
+        setattr(country, key, value)
+    country.updated_at = datetime.now(timezone.utc)
 
-    # Minimal audit log (country-aware)
-    try:
-        await db.audit_logs.insert_one(
-            {
-                "id": str(uuid.uuid4()),
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "user_id": current_user.get("id"),
-                "user_email": current_user.get("email"),
-                # Backoffice AuditLogs UI expects `action`, while moderation spec requires `event_type`.
-                # We store both for compatibility.
-                "action": "UPDATE",
-                "event_type": "UPDATE",
-                "resource_type": "country",
-                "resource_id": country_id,
-                "mode": getattr(ctx, "mode", "global"),
-                "country_scope": getattr(ctx, "country", None),
-                "path": str(request.url.path),
-                "previous_status": None,
-                "new_status": None,
-            }
-        )
-    except Exception:
-        # audit should not block the operation
-        pass
+    await session.commit()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="UPDATE_COUNTRY",
+        actor=current_user,
+        resource_type="country",
+        resource_id=str(country.id),
+        metadata={"payload": payload, "country_code": country.code},
+        request=request,
+        country_code=country.code,
+    )
+    await session.commit()
 
     return {"ok": True}
-
 
 
 
