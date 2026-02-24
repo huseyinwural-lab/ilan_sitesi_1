@@ -1,6 +1,6 @@
 # RBAC_NEGATIVE_TESTS
 
-**Son güncelleme:** 2026-02-23 23:13:08 UTC
+**Son güncelleme:** 2026-02-24 11:21:40 UTC
 
 ## Amaç
 Deny-by-default ve allowlist doğrulaması için negatif test seti.
