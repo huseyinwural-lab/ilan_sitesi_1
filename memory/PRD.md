@@ -153,6 +153,10 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - Moderation queue/count/detail SQL’e taşındı
   - Approve/Reject/Needs‑revision SQL akışı + ModerationAction + audit log
   - Geçici ETL endpointi kaldırıldı (Mongo runtime cleanup başlangıcı)
+- **Moderation Freeze UI (2026-02-24):**
+  - Admin System Settings toggle kartı metinleri + açıklama notu güncellendi
+  - Moderation Queue + detay + aksiyon diyaloglarında banner gösterimi
+  - Approve/Reject/Needs Revision aksiyonları disable + tooltip
 - **Local Infra:**
   - PostgreSQL kuruldu, app_local DB oluşturuldu
   - Alembic upgrade heads PASS
