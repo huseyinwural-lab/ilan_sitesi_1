@@ -12516,6 +12516,8 @@ async def admin_bulk_reject_listings(
         raise HTTPException(status_code=400, detail="listing_ids is required")
     unique_ids = list(dict.fromkeys(listing_ids))
 
+    await _ensure_bulk_listings_pending(session, unique_ids)
+
     await _assert_moderation_not_frozen(
         session=session,
         request=request,
