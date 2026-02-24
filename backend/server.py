@@ -9774,11 +9774,12 @@ async def admin_audit_actions(
 async def admin_audit_resources(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    resources = await db.audit_logs.distinct("resource_type")
-    return {"resource_types": sorted([r for r in resources if r])}
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
+    rows = await session.execute(select(distinct(AuditLog.resource_type)))
+    resources = sorted([row[0] for row in rows if row[0]])
+    return {"resource_types": resources}
 
 
 @api_router.get("/admin/audit-logs/{log_id}")
