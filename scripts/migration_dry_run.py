@@ -406,6 +406,14 @@ def main() -> int:
         return 2
 
     status = "PASS" if not blocking else "FAIL"
+
+    if MIGRATION_DRY_RUN_AUDIT:
+        try:
+            _write_audit_log(engine, status, blocking, warnings, timestamp)
+        except Exception as exc:
+            blocking.append(f"Audit log write failed: {exc}")
+            status = "FAIL"
+
     print(f"[MIGRATION-DRY-RUN] RESULT: {status}")
     print(f"Timestamp: {timestamp}")
     print(f"Blocking Issues: {len(blocking)}")
