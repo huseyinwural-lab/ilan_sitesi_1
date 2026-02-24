@@ -1,6 +1,6 @@
 # GDPR_EXPORT_SOFT_DELETE_E2E
 
-**Tarih:** 2026-02-24 11:24:50 UTC
+**Tarih:** 2026-02-24 12:51:30 UTC
 **Ortam URL:** https://mongo-tasfiye.preview.emergentagent.com
 
 ## Scope
@@ -11,7 +11,8 @@
 ## Kanıt
 - Export endpoint: `/api/v1/users/me/data-export` → 200
 - Soft delete endpoint: `/api/v1/users/me/account` → 200 (status=scheduled)
-- Soft delete sonrası login: `/api/auth/login` → 403
+- Soft delete sonrası login: `/api/auth/login` → 403 (User account suspended)
+- UI kanıtı: `/root/.emergent/automation_output/20260224_125145/gdpr-soft-delete-login.jpeg`
 - Audit log:
   - `gdpr_export_requested`
   - `gdpr_delete_requested`
