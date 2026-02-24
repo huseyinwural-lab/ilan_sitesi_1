@@ -1567,7 +1567,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Admin Panel API (Mongo)",
+    title="Admin Panel API",
     version="1.0.0",
     lifespan=lifespan,
 )
