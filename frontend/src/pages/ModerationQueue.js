@@ -367,7 +367,7 @@ export default function ModerationQueue({
           <button
             type="button"
             onClick={() => openBulkDialog('approve')}
-            disabled={!selectedCount}
+            disabled={freezeActive || !selectedCount}
             className="h-9 px-3 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
             data-testid="moderation-bulk-approve"
           >
@@ -376,7 +376,7 @@ export default function ModerationQueue({
           <button
             type="button"
             onClick={() => openBulkDialog('reject')}
-            disabled={!selectedCount}
+            disabled={freezeActive || !selectedCount}
             className="h-9 px-3 rounded-md bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50"
             data-testid="moderation-bulk-reject"
           >
