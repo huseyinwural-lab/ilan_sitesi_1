@@ -29,7 +29,10 @@ class Listing(Base):
     # Location
     country: Mapped[str] = mapped_column(String(5), nullable=False, index=True)
     city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    
+    zip_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)
+    latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    location_accuracy: Mapped[str] = mapped_column(String(20), default="approximate")
     # Pricing
     price_type: Mapped[str] = mapped_column(PRICE_TYPE_ENUM, nullable=False, server_default="FIXED")
     price: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
