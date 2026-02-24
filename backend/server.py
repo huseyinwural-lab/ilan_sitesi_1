@@ -8636,69 +8636,136 @@ async def admin_list_dealers(
     limit: int = 25,
     include_filters: bool = False,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
     if country:
         country_code = country.upper()
 
-    query = _build_dealer_query(search, country_code, status, plan_id)
+    filters = [SqlUser.role == "dealer"]
+    if country_code:
+        filters.append(SqlUser.country_code == country_code)
+
+    status_key = (status or "").lower().strip()
+    if status_key == "deleted":
+        filters.append(SqlUser.deleted_at.is_not(None))
+    else:
+        filters.append(SqlUser.deleted_at.is_(None))
+        if status_key == "suspended":
+            filters.append(or_(SqlUser.status == "suspended", SqlUser.is_active.is_(False)))
+        elif status_key == "active":
+            filters.append(SqlUser.status != "suspended")
+            filters.append(SqlUser.is_active.is_(True))
+
+    plan_uuid = None
+    if plan_id:
+        try:
+            plan_uuid = uuid.UUID(plan_id)
+            filters.append(SqlUser.plan_id == plan_uuid)
+        except ValueError:
+            pass
+
+    result = await session.execute(select(SqlUser).where(*filters))
+    users = result.scalars().all()
+
+    user_ids = [user.id for user in users]
+    dealer_map: Dict[uuid.UUID, Dealer] = {}
+    if user_ids:
+        dealer_users = await session.execute(select(DealerUser).where(DealerUser.user_id.in_(user_ids)))
+        dealer_links = dealer_users.scalars().all()
+        dealer_ids = list({link.dealer_id for link in dealer_links})
+        if dealer_ids:
+            dealers = await session.execute(select(Dealer).where(Dealer.id.in_(dealer_ids)))
+            dealer_map = {dealer.id: dealer for dealer in dealers.scalars().all()}
+        dealer_link_map = {link.user_id: link.dealer_id for link in dealer_links}
+    else:
+        dealer_link_map = {}
+
+    def _search_match(user: SqlUser) -> bool:
+        if not search:
+            return True
+        needle = search.lower().strip()
+        dealer_id = dealer_link_map.get(user.id)
+        company_name = dealer_map.get(dealer_id).company_name if dealer_id and dealer_map.get(dealer_id) else ""
+        fields = [
+            company_name or "",
+            user.full_name or "",
+            user.first_name or "",
+            user.last_name or "",
+            user.email or "",
+            user.phone_e164 or "",
+        ]
+        return any(needle in field.lower() for field in fields if field)
+
+    filtered_users = [user for user in users if _search_match(user)]
+
+    sort_key = (sort_by or "company_name").lower()
+    direction = (sort_dir or "asc").lower()
+
+    def _sort_value(user: SqlUser):
+        dealer_id = dealer_link_map.get(user.id)
+        company_name = dealer_map.get(dealer_id).company_name if dealer_id and dealer_map.get(dealer_id) else ""
+        if sort_key == "email":
+            return user.email or ""
+        if sort_key == "created_at":
+            return user.created_at or datetime.min.replace(tzinfo=timezone.utc)
+        if sort_key == "last_login":
+            return user.last_login or datetime.min.replace(tzinfo=timezone.utc)
+        return company_name or user.email or ""
+
+    filtered_users.sort(key=_sort_value, reverse=(direction == "desc"))
 
     safe_page = max(page, 1)
     safe_limit = min(max(limit, 1), 200)
-    skip = (safe_page - 1) * safe_limit
+    start = (safe_page - 1) * safe_limit
+    end = start + safe_limit
+    page_users = filtered_users[start:end]
 
-    total_count = await db.users.count_documents(query)
-
-    sort_spec, sort_company_expr, sort_direction = _build_dealer_sort(sort_by, sort_dir)
-
-    pipeline = [
-        {"$match": query},
-        {"$addFields": {"sort_company": sort_company_expr}},
-        {"$sort": sort_spec},
-        {"$skip": skip},
-        {"$limit": safe_limit},
-    ]
-
-    docs = await db.users.aggregate(pipeline).to_list(length=safe_limit)
-
-    user_ids = [doc.get("id") for doc in docs if doc.get("id")]
     listing_stats_map: Dict[str, Dict[str, Any]] = {}
-    if user_ids:
-        pipeline_stats = [
-            {"$match": {"created_by": {"$in": user_ids}}},
-            {
-                "$group": {
-                    "_id": "$created_by",
-                    "total": {"$sum": 1},
-                    "active": {
-                        "$sum": {
-                            "$cond": [
-                                {"$eq": ["$status", "published"]},
-                                1,
-                                0,
-                            ]
-                        }
-                    },
-                }
-            },
-        ]
-        listing_stats = await db.vehicle_listings.aggregate(pipeline_stats).to_list(length=5000)
-        listing_stats_map = {
-            stat.get("_id"): {"total": stat.get("total", 0), "active": stat.get("active", 0)}
-            for stat in listing_stats
-        }
+    if page_users:
+        stats_result = await session.execute(
+            select(
+                Listing.user_id,
+                func.count(Listing.id).label("total"),
+                func.sum(case((Listing.status == "published", 1), else_=0)).label("active"),
+            )
+            .where(Listing.user_id.in_([user.id for user in page_users]))
+            .group_by(Listing.user_id)
+        )
+        for row in stats_result.all():
+            listing_stats_map[str(row.user_id)] = {"total": int(row.total or 0), "active": int(row.active or 0)}
 
-    plan_ids = [doc.get("plan_id") for doc in docs if doc.get("plan_id")]
+    plan_ids = [user.plan_id for user in page_users if user.plan_id]
     plan_map: Dict[str, Any] = {}
     if plan_ids:
-        plan_docs = await db.plans.find({"id": {"$in": plan_ids}}, {"_id": 0}).to_list(length=200)
-        plan_map = {doc.get("id"): doc for doc in plan_docs}
+        plans = await session.execute(select(Plan).where(Plan.id.in_(plan_ids)))
+        plan_map = {str(plan.id): {"id": str(plan.id), "name": plan.name} for plan in plans.scalars().all()}
 
-    items = [_build_dealer_summary(doc, listing_stats_map.get(doc.get("id"), {}), plan_map) for doc in docs]
+    items = []
+    for user in page_users:
+        dealer_id = dealer_link_map.get(user.id)
+        dealer = dealer_map.get(dealer_id)
+        doc = {
+            "id": str(user.id),
+            "company_name": dealer.company_name if dealer else None,
+            "contact_name": user.full_name,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "phone_e164": user.phone_e164,
+            "country_code": user.country_code,
+            "status": user.status,
+            "is_active": user.is_active,
+            "deleted_at": user.deleted_at.isoformat() if user.deleted_at else None,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "last_login": user.last_login.isoformat() if user.last_login else None,
+            "plan_id": str(user.plan_id) if user.plan_id else None,
+        }
+        items.append(_build_dealer_summary(doc, listing_stats_map.get(str(user.id), {}), plan_map))
 
+    total_count = len(filtered_users)
     total_pages = max(1, (total_count + safe_limit - 1) // safe_limit)
 
     response: Dict[str, Any] = {
@@ -8711,28 +8778,28 @@ async def admin_list_dealers(
 
     if include_filters:
         plan_filters: List[Dict[str, Any]] = []
-        plan_query: Dict[str, Any] = {}
+        plan_query = []
         if country_code:
-            plan_query["country_code"] = country_code
+            plan_query.append(Plan.country_code == country_code)
         elif current_user.get("role") == "country_admin":
             scope = current_user.get("country_scope") or []
             if "*" not in scope:
-                plan_query["country_code"] = {"$in": scope}
+                plan_query.append(Plan.country_code.in_(scope))
         if plan_query or current_user.get("role") in {"super_admin", "moderator", "country_admin"}:
-            plan_docs = await db.plans.find(plan_query, {"_id": 0, "id": 1, "name": 1, "country_code": 1}).to_list(length=500)
+            plans = await session.execute(select(Plan).where(*plan_query))
             plan_filters = [
-                {"id": doc.get("id"), "name": doc.get("name"), "country_code": doc.get("country_code")}
-                for doc in plan_docs
+                {"id": str(plan.id), "name": plan.name, "country_code": plan.country_code}
+                for plan in plans.scalars().all()
             ]
 
         country_filters: List[Dict[str, Any]] = []
-        countries_query: Dict[str, Any] = {}
+        countries_query = []
         if current_user.get("role") == "country_admin":
             scope = current_user.get("country_scope") or []
             if "*" not in scope:
-                countries_query["$or"] = [{"country_code": {"$in": scope}}, {"code": {"$in": scope}}]
-        country_docs = await db.countries.find(countries_query, {"_id": 0}).sort("code", 1).to_list(length=500)
-        country_filters = [_normalize_country_doc(doc) for doc in country_docs]
+                countries_query.append(Country.code.in_(scope))
+        countries = await session.execute(select(Country).where(*countries_query).order_by(Country.code.asc()))
+        country_filters = [_normalize_country_sql(country) for country in countries.scalars().all()]
 
         response["filters"] = {"plans": plan_filters, "countries": country_filters}
 
