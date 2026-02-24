@@ -16650,23 +16650,35 @@ async def admin_delete_menu_item(
 
 
 @api_router.get("/attributes")
-async def public_attributes(category_id: str, country: Optional[str] = None, request: Request = None):
-    db = request.app.state.db
-    query: Dict = {"category_id": category_id}
-    filters = [{"$or": [{"active_flag": True}, {"active_flag": {"$exists": False}}]}]
-    if country:
-        code = country.upper()
-        filters.append({
-            "$or": [
-                {"country_code": None},
-                {"country_code": ""},
-                {"country_code": code},
-            ]
-        })
-    if filters:
-        query["$and"] = filters
-    docs = await db.attributes.find(query, {"_id": 0}).sort("name", 1).to_list(length=500)
-    return {"items": [_normalize_attribute_doc(doc) for doc in docs]}
+async def public_attributes(
+    category_id: str,
+    country: Optional[str] = None,
+    request: Request = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        category_uuid = uuid.UUID(category_id)
+    except ValueError:
+        return {"items": []}
+
+    query = (
+        select(Attribute, CategoryAttributeMap)
+        .join(CategoryAttributeMap, CategoryAttributeMap.attribute_id == Attribute.id)
+        .where(
+            CategoryAttributeMap.category_id == category_uuid,
+            CategoryAttributeMap.is_active.is_(True),
+            Attribute.is_active.is_(True),
+        )
+        .options(selectinload(Attribute.options))
+        .order_by(Attribute.key.asc())
+    )
+
+    result = await session.execute(query)
+    items = []
+    for attribute, mapping in result.all():
+        items.append(_serialize_attribute_sql(attribute, str(mapping.category_id)))
+
+    return {"items": items}
 
 
 @api_router.get("/admin/attributes")
