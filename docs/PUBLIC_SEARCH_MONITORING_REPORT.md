@@ -1,6 +1,6 @@
 # PUBLIC_SEARCH_MONITORING_REPORT — Log-based 24h window (operational)
 
-**Tarih:** 2026-02-24 13:10:00 UTC
+**Tarih:** 2026-02-24 13:47:41 UTC
 **Ortam URL:** https://mongo-tasfiye.preview.emergentagent.com
 **Durum:** CLOSED
 
