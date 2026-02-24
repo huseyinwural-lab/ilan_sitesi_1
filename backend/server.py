@@ -14720,14 +14720,14 @@ async def admin_update_plan(
         updates["price_amount"] = payload.price_amount
 
     if payload.listing_quota is not None:
-        if payload.listing_quota < 0:
-            raise HTTPException(status_code=400, detail="listing_quota must be >= 0")
         updates["listing_quota"] = payload.listing_quota
 
     if payload.showcase_quota is not None:
-        if payload.showcase_quota < 0:
-            raise HTTPException(status_code=400, detail="showcase_quota must be >= 0")
         updates["showcase_quota"] = payload.showcase_quota
+
+    listing_quota_value = payload.listing_quota if payload.listing_quota is not None else plan.listing_quota
+    showcase_quota_value = payload.showcase_quota if payload.showcase_quota is not None else plan.showcase_quota
+    _assert_plan_quota_limits(listing_quota_value, showcase_quota_value)
 
     if payload.active_flag is not None:
         updates["active_flag"] = payload.active_flag
