@@ -284,6 +284,7 @@ export default function AdminSystemSettingsPage() {
     const setting = items.find((item) => item.key === MODERATION_FREEZE_KEY && !item.country_code);
     setFreezeSetting(setting || null);
     setFreezeActive(resolveFreezeValue(setting));
+    setFreezeReason(setting?.moderation_freeze_reason || '');
   }, [items]);
 
   const canaryStatusRaw = cloudflareConfig.canary_status || 'UNKNOWN';
