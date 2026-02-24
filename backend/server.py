@@ -13615,7 +13615,7 @@ async def create_checkout_session(
             await session.execute(
                 select(PaymentTransaction).where(
                     PaymentTransaction.invoice_id == invoice.id,
-                    PaymentTransaction.metadata_json.contains({"idempotency_key": idempotency_key}),
+                    cast(PaymentTransaction.metadata_json, JSONB).contains({"idempotency_key": idempotency_key}),
                 )
             )
         ).scalar_one_or_none()
