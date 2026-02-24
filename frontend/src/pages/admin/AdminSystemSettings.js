@@ -233,6 +233,42 @@ export default function AdminSystemSettingsPage() {
     }
   };
 
+  const toggleModerationFreeze = async () => {
+    if (!isSuperAdmin || freezeSaving) return;
+    const nextValue = !freezeActive;
+    setFreezeSaving(true);
+    setError('');
+    try {
+      if (freezeSetting) {
+        await axios.patch(
+          `${API}/admin/system-settings/${freezeSetting.id}`,
+          {
+            value: { enabled: nextValue },
+            description: freezeSetting.description || 'Moderation freeze flag',
+          },
+          { headers: authHeader }
+        );
+      } else {
+        await axios.post(
+          `${API}/admin/system-settings`,
+          {
+            key: MODERATION_FREEZE_KEY,
+            value: { enabled: nextValue },
+            country_code: null,
+            is_readonly: false,
+            description: 'Moderation freeze flag',
+          },
+          { headers: authHeader }
+        );
+      }
+      await fetchSettings();
+    } catch (e) {
+      setError(e.response?.data?.detail || 'Moderation freeze güncellenemedi');
+    } finally {
+      setFreezeSaving(false);
+    }
+  };
+
   useEffect(() => {
     fetchSettings();
     fetchCloudflareConfig();
