@@ -8006,56 +8006,86 @@ async def admin_individual_users_export_csv(
     sort_by: Optional[str] = "last_name",
     sort_dir: Optional[str] = "asc",
     current_user=Depends(check_permissions(["super_admin", "marketing"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
     _enforce_export_rate_limit(request, current_user.get("id"))
 
     country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
     if country:
         country_code = country.upper()
 
-    query = _build_individual_users_query(search, country_code, status)
-    sort_spec, sort_name_expr, sort_first_expr, _ = _build_individual_users_sort(sort_by, sort_dir)
+    filters = [~SqlUser.role.in_(list(ADMIN_ROLE_OPTIONS) + ["dealer"])]
+    if country_code:
+        filters.append(SqlUser.country_code == country_code)
 
-    pipeline = [
-        {"$match": query},
-        {"$addFields": {"sort_name": sort_name_expr, "sort_first": sort_first_expr}},
-        {"$sort": sort_spec},
-    ]
+    status_key = (status or "").lower().strip()
+    if status_key == "deleted":
+        filters.append(SqlUser.deleted_at.is_not(None))
+    else:
+        filters.append(SqlUser.deleted_at.is_(None))
+        if status_key == "suspended":
+            filters.append(or_(SqlUser.status == "suspended", SqlUser.is_active.is_(False)))
+        elif status_key == "active":
+            filters.append(SqlUser.status != "suspended")
+            filters.append(SqlUser.is_active.is_(True))
 
-    docs = await db.users.aggregate(pipeline).to_list(length=10000)
+    if search:
+        search_value = f"%{search}%"
+        filters.append(
+            or_(
+                SqlUser.first_name.ilike(search_value),
+                SqlUser.last_name.ilike(search_value),
+                SqlUser.email.ilike(search_value),
+                SqlUser.full_name.ilike(search_value),
+                SqlUser.phone_e164.ilike(search_value),
+            )
+        )
+
+    sort_field_map = {
+        "email": SqlUser.email,
+        "created_at": SqlUser.created_at,
+        "last_login": SqlUser.last_login,
+        "first_name": SqlUser.first_name,
+        "last_name": SqlUser.last_name,
+    }
+    sort_field = sort_field_map.get(sort_by or "", SqlUser.last_name)
+    direction = (sort_dir or "asc").lower()
+    order_by = sort_field.asc() if direction == "asc" else sort_field.desc()
+
+    result = await session.execute(select(SqlUser).where(*filters).order_by(order_by).limit(10000))
+    users = result.scalars().all()
 
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(["Email", "Name", "Country", "Type"])
 
-    for doc in docs:
-        full_name = doc.get("full_name")
+    for user in users:
+        full_name = user.full_name
         if not full_name:
-            first = doc.get("first_name") or ""
-            last = doc.get("last_name") or ""
-            full_name = " ".join(part for part in [first, last] if part).strip() or doc.get("email")
+            first = user.first_name or ""
+            last = user.last_name or ""
+            full_name = " ".join(part for part in [first, last] if part).strip() or user.email
         writer.writerow([
-            doc.get("email"),
+            user.email,
             full_name,
-            doc.get("country_code"),
-            _determine_user_type(doc.get("role", "individual")),
+            user.country_code,
+            _determine_user_type(user.role or "individual"),
         ])
 
     csv_content = buffer.getvalue().encode("utf-8")
     buffer.close()
 
-    total_count = len(docs)
+    total_count = len(users)
     filename = f"individual-users-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.csv"
 
-    audit_doc = await build_audit_entry(
-        event_type="individual_users_export_csv",
+    await _write_audit_log_sql(
+        session=session,
+        action="individual_users_export_csv",
         actor=current_user,
-        target_id="individual_users",
-        target_type="individual_users",
-        country_code=country_code,
-        details={
+        resource_type="individual_users",
+        resource_id="individual_users",
+        metadata={
             "search": search,
             "country": country_code,
             "status": status,
@@ -8064,10 +8094,9 @@ async def admin_individual_users_export_csv(
             "total_count": total_count,
         },
         request=request,
+        country_code=country_code,
     )
-    audit_doc["action"] = "individual_users_export_csv"
-    audit_doc["user_agent"] = request.headers.get("user-agent")
-    await db.audit_logs.insert_one(audit_doc)
+    await session.commit()
 
     return Response(
         content=csv_content,
