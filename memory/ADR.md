@@ -697,3 +697,70 @@ graph LR
 
 **Gerekçe:** Admin panel stabilizasyonu RBAC/Audit için ön şart.
 
+
+---
+
+## ADR-MODERATION-FREEZE-REASON — Freeze için reason alanı
+
+**Karar:** Freeze için opsiyonel `moderation_freeze_reason` alanı tutulur ve audit log’a yazılır.
+
+**Gerekçe:** Operasyonel şeffaflık ve izlenebilirlik.
+
+**Etkileri / trade-off:**
+- (+) Incident sonrası analiz kolaylaşır
+- (+) Banner bilgilendirici olur
+- (-) UI karmaşıklığı minimal artar
+
+**Risk & Önlem:** Hassas bilgi yazılmamalı → kısa serbest metin uyarısı eklenir.
+
+---
+
+## ADR-MODERATION-ENFORCEMENT-DOUBLE-GUARD — UI + backend çift koruma
+
+**Karar:** Moderation Freeze, UI disable + backend 423 Locked birlikte çalışır.
+
+**Gerekçe:** Defense-in-depth, istemci manipülasyonu riskini azaltır.
+
+**Etkileri / trade-off:**
+- (+) Manipülasyon riski düşer
+- (-) Ek test gerektirir
+
+---
+
+## ADR-PENDING-LISTING-GENERATION — Pending listing üretimi
+
+**Karar:** Pending listing üretimi test kullanıcı publish akışı ile yapılır.
+
+**Gerekçe:** Sistem uçtan uca doğrulanır; queue’ya düşme garantilenir; seed/manüel create sapmaları önlenir.
+
+**Etkileri / trade-off:**
+- (+) Gerçek üretim akışı kanıtlanır
+- (+) Moderation pipeline parity doğrulanır
+- (-) Test kullanıcı kredisi/erişimi gerektirir
+
+**Risk & Önlem:** Hesap yoksa fallback: admin panelde create (evidence’de “fallback” etiketiyle).
+
+---
+
+## ADR-EVIDENCE-NAMING — Evidence dosya adı standardı
+
+**Karar:** Evidence dosya adı `/app/memory/MODERATION_FREEZE_EVIDENCE.md`.
+
+**Gerekçe:** Memory/evidence konvansiyonu ile uyumlu, araması kolay.
+
+**Etkileri / trade-off:**
+- (+) Denetim/closeout izlenebilirliği artar
+- (-) Yok
+
+---
+
+## ADR-EXPORT-HISTORY-FIELDS — Export History alanları
+
+**Karar:** Export history tabloda minimum alanlar `requested_at`, `status`, `download_link`, `expires_at` gösterilecek.
+
+**Gerekçe:** 30 gün retention ile kullanıcıya net son tarih göstermeden UX eksik kalır.
+
+**Etkileri / trade-off:**
+- (+) Kullanıcı beklentisi yönetilir
+- (+) Destek talepleri azalır
+- (-) Ek kolon + test güncellemesi
