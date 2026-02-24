@@ -1388,47 +1388,15 @@ async def _ensure_individual_fixtures(session: AsyncSession):
         )
 
 
-async def _ensure_country_admin_user(db):
-    now_iso = datetime.now(timezone.utc).isoformat()
-    admin_email = "countryadmin@platform.com"
-    admin_password = "Country123!"
-
-    existing = await db.users.find_one({"email": admin_email}, {"_id": 0})
-    hashed = get_password_hash(admin_password)
-
-    if existing:
-        await db.users.update_one(
-            {"email": admin_email},
-            {
-                "$set": {
-                    "hashed_password": hashed,
-                    "status": "active",
-                    "is_active": True,
-                    "role": "country_admin",
-                    "country_scope": existing.get("country_scope") or ["DE"],
-                    "country_code": existing.get("country_code") or "DE",
-                    "updated_at": now_iso,
-                }
-            },
-        )
-        return
-
-    await db.users.insert_one(
-        {
-            "id": str(uuid.uuid4()),
-            "email": admin_email,
-            "hashed_password": hashed,
-            "full_name": "Country Admin",
-            "role": "country_admin",
-            "status": "active",
-            "is_active": True,
-            "is_verified": True,
-            "country_scope": ["DE"],
-            "country_code": "DE",
-            "preferred_language": "tr",
-            "created_at": now_iso,
-            "last_login": None,
-        }
+async def _ensure_country_admin_user(session: AsyncSession):
+    await _upsert_seed_user(
+        session,
+        email="countryadmin@platform.com",
+        password="Country123!",
+        role="country_admin",
+        full_name="Country Admin",
+        country_code="DE",
+        country_scope=["DE"],
     )
 
 
