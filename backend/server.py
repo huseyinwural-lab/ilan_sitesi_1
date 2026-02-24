@@ -19674,16 +19674,7 @@ async def vehicle_master_rollback_endpoint(payload: dict, request: Request, curr
 
     return {"ok": True, "current": current}
 
-app.include_router(api_router)
 
-RBAC_ALLOWLIST, RBAC_MISSING_POLICIES = _build_rbac_allowlist(app)
-app.state.rbac_allowlist = RBAC_ALLOWLIST
-app.state.rbac_missing_policies = RBAC_MISSING_POLICIES
-if RBAC_MISSING_POLICIES:
-    logging.getLogger("rbac_guard").warning(
-        "rbac_policy_missing",
-        extra={"missing_routes": RBAC_MISSING_POLICIES},
-    )
 
 
 # --- Admin Site Design / Ads / Doping / Footer / Info Pages ---
