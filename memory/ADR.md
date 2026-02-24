@@ -917,3 +917,24 @@ graph LR
 **Karar:** Sprint 1 sadece monetization/risk/verification/moderation/finance kapsar.
 
 **Gerekçe:** Operasyonel kilitleme öncelikli.
+
+
+---
+
+## ADR-AF-MIGRATION-IMPACT-FIRST — Migration impact analizi zorunlu
+
+**Karar:** AF Sprint 1 implementasyonundan önce migration impact analizi hazırlanır.
+
+**Gerekçe:** Constraint eklemek canlı veride risklidir; rollback güvenliği gerekir.
+
+**Etkileri / trade-off:**
+- (+) Veri bütünlüğü korunur
+- (-) Sprint başlangıcı gecikebilir
+
+---
+
+## ADR-AF-ROLLBACK-MANDATORY — Rollback zorunlu
+
+**Karar:** Her migration için down script zorunlu; rollback’siz deploy yasak.
+
+**Gerekçe:** Operasyonel güvenlik.
