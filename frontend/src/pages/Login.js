@@ -26,6 +26,7 @@ export default function Login({ portalContext = 'account' }) {
   const showPortalSelector = !isAdminLogin;
   const registerPath = portalSelection === 'dealer' ? '/dealer/register' : '/register';
   const verifyPath = portalSelection === 'dealer' ? '/dealer/verify-email' : '/verify-email';
+  const showTotpInput = ['TOTP_REQUIRED', 'INVALID_TOTP', 'TOTP_SETUP_INCOMPLETE'].includes(error?.code);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
