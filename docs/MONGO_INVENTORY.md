@@ -33,8 +33,6 @@
 - individual_applications
 - plans
 - push_subscriptions
-- users
-- vehicle_listings
 
 ## Mongo Env Değişkenleri
 - MONGO_URL (backend/.env) **(platform kısıtı nedeniyle anahtar silinmedi)**
