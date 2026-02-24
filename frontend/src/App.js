@@ -171,7 +171,8 @@ function App() {
                     <Route path="messages" element={<AccountMessages />} />
                     <Route path="support" element={<AccountSupportList />} />
                     <Route path="support/:id" element={<AccountSupportDetail />} />
-                    <Route path="profile" element={<AccountProfile />} />
+                    <Route path="profile" element={<Navigate to="/account/security" replace />} />
+                    <Route path="security" element={<AccountProfile />} />
                     <Route path="privacy" element={<AccountPrivacyCenter />} />
                     <Route path="create" element={<Navigate to="/ilan-ver/kategori-secimi" />} />
                     <Route path="create/vehicle-wizard" element={<WizardContainer />} />
