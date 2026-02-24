@@ -85,6 +85,7 @@ from app.models.user import User as SqlUser
 from app.models.application import Application
 from app.models.campaign import Campaign
 from app.models.plan import Plan
+from app.models.billing import VatRate
 from app.models.monetization import UserSubscription
 from app.models.admin_invoice import AdminInvoice
 from app.models.payment import Payment, PaymentTransaction
