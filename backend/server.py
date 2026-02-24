@@ -28,7 +28,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Preformatted
 from openpyxl import Workbook, load_workbook
 
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, Request, Body, Response, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, Request, Body, Response, Query, WebSocket, WebSocketDisconnect, Header
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Match
