@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import PublicLayout from '@/layouts/PublicLayout';
+import AdSlot from '@/components/public/AdSlot';
 import { Loader2, AlertCircle, ShoppingCart, Home, Car, Search, ChevronRight } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
