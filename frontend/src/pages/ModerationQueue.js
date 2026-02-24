@@ -653,8 +653,8 @@ export default function ModerationQueue({
               )}
               
               {selectedListing.status === 'pending_moderation' && (
-                <div className="flex flex-wrap gap-2 pt-4 border-t">
-                  <div className="relative group flex-1 min-w-[160px]">
+                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                  <div className="relative group flex-1 min-w-[160px]">
                     <button
                       onClick={() => handleAction(selectedListing.id, 'approve')}
                       disabled={freezeActive}
