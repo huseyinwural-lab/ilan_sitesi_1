@@ -42,6 +42,7 @@
 
 11. **AF1-2:** Dealer plan override audit parity
     - AC: audit log + UI confirmation
+    - AC: Dry-run PASS log attached
 
 ## AF5 — Finance Widgets
 12. **AF5-1:** Admin dashboard widgets UI
