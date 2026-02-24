@@ -3,6 +3,7 @@
 ## AF2 — Risk/Ban
 1. **AF2-1:** Add `users.risk_level` enum (low/medium/high)
    - AC: migration + model + API payload returned
+   - AC: Dry-run PASS log attached
    - Evidence: migration + curl get/update
 
 2. **AF2-2:** Admin risk level update endpoint + audit
