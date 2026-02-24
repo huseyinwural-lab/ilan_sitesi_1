@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-24 23:18:00 UTC (P44 migration dry-run + upgrade)
+**Son güncelleme:** 2026-02-24 23:35:00 UTC (P0 evidence + P1 route contract + login toast + placements/doping state)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
