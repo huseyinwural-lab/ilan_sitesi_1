@@ -20446,7 +20446,6 @@ async def get_doping_placements(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _expire_doping(session)
-    now = datetime.now(timezone.utc)
     query = select(DopingRequest, Listing).join(Listing, Listing.id == DopingRequest.listing_id)
     query = query.where(DopingRequest.status == "published")
     if placement == "homepage":
