@@ -5,6 +5,19 @@ import { useToast } from '@/components/ui/toaster';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const MODERATION_FREEZE_KEY = 'moderation.freeze.active';
+
+const resolveFreezeValue = (setting) => {
+  const value = setting?.value;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') return value.toLowerCase() === 'true';
+  if (value && typeof value === 'object') {
+    const candidate = value.enabled ?? value.active ?? value.value;
+    if (typeof candidate === 'boolean') return candidate;
+    if (typeof candidate === 'string') return candidate.toLowerCase() === 'true';
+  }
+  return false;
+};
 
 const parseValue = (raw) => {
   if (raw === '') return '';
