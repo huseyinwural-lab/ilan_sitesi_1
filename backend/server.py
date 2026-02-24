@@ -12246,6 +12246,7 @@ async def admin_bulk_approve_listings(
 @api_router.post("/admin/moderation/bulk-reject")
 async def admin_bulk_reject_listings(
     payload: BulkModerationPayload,
+    request: Request,
     current_user=Depends(check_permissions(list(ALLOWED_MODERATION_ROLES))),
     session: AsyncSession = Depends(get_sql_session),
 ):
@@ -12257,6 +12258,14 @@ async def admin_bulk_reject_listings(
         raise HTTPException(status_code=400, detail="listing_ids is required")
     unique_ids = list(dict.fromkeys(listing_ids))
 
+    await _assert_moderation_not_frozen(
+        session=session,
+        request=request,
+        current_user=current_user,
+        action_type="bulk_reject",
+        listing_ids=unique_ids,
+    )
+
     async with session.begin():
         for listing_id in unique_ids:
             await _moderation_transition_sql(
@@ -12267,6 +12276,7 @@ async def admin_bulk_reject_listings(
                 action_type="reject",
                 reason=payload.reason,
                 reason_note=payload.reason_note,
+                request=request,
                 commit=False,
             )
 
