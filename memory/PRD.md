@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-24 18:25:00 UTC (AF Migration Dry-Run)
+**Son güncelleme:** 2026-02-24 19:10:00 UTC (AF-G1/G2/G3 apply)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
