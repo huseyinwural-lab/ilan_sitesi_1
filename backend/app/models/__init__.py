@@ -34,6 +34,7 @@ from app.models.auth import Role, UserRole, UserCredential, RefreshToken, EmailV
 from app.models.favorite import Favorite
 from app.models.support_message import SupportMessage
 from app.models.notification import Notification, UserDevice
+from app.models.gdpr_export import GDPRExport
 from app.models.webhook_event_log import WebhookEventLog
 from app.models.system_setting import SystemSetting
 from app.models.admin_invite import AdminInvite
