@@ -138,10 +138,12 @@ async def get_current_user_optional(
     token_scope = payload.get("portal_scope")
     if not token_scope:
         return None
-    expected_scope = _resolve_portal_scope(user.get("role"))
+    expected_scope = _resolve_portal_scope(user.role)
     if token_scope != expected_scope:
         return None
-    user["portal_scope"] = token_scope
+    user.portal_scope = token_scope
+    if user.country_scope is None:
+        user.country_scope = []
     request.state.current_user = user
 
     return user
