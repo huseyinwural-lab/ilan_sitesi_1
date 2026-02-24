@@ -717,48 +717,32 @@ def _parse_suspension_until(value: Optional[str]) -> Optional[str]:
         raise HTTPException(status_code=400, detail="Invalid suspension_until") from exc
 
 
-async def _auto_reactivate_if_expired(user: dict, db, request: Optional[Request]) -> dict:
-    if not user or user.get("deleted_at"):
+async def _auto_reactivate_if_expired(user: SqlUser, session: AsyncSession, request: Optional[Request]) -> SqlUser:
+    if not user or user.deleted_at:
         return user
-    if user.get("status") != "suspended":
+    if user.status != "suspended":
         return user
-    suspension_until = user.get("suspension_until")
+    suspension_until = user.suspension_until
     if not suspension_until:
         return user
 
-    try:
-        parsed = datetime.fromisoformat(str(suspension_until).replace("Z", "+00:00"))
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=timezone.utc)
-    except ValueError:
+    if suspension_until > datetime.now(timezone.utc):
         return user
 
-    if parsed > datetime.now(timezone.utc):
-        return user
-
-    now_iso = datetime.now(timezone.utc).isoformat()
     before_state = {
-        "status": user.get("status"),
-        "is_active": user.get("is_active", True),
-        "suspension_until": user.get("suspension_until"),
-        "deleted_at": user.get("deleted_at"),
+        "status": user.status,
+        "is_active": user.is_active,
+        "suspension_until": user.suspension_until.isoformat() if user.suspension_until else None,
+        "deleted_at": user.deleted_at.isoformat() if user.deleted_at else None,
     }
 
-    update_ops: Dict[str, Any] = {
-        "$set": {
-            "status": "active",
-            "is_active": True,
-            "updated_at": now_iso,
-        },
-        "$unset": {"suspension_until": ""},
-    }
+    user.status = "active"
+    user.is_active = True
+    user.suspension_until = None
+    if user.role == "dealer":
+        user.dealer_status = "active"
 
-    if user.get("role") == "dealer":
-        update_ops["$set"]["dealer_status"] = "active"
-
-    await db.users.update_one({"id": user.get("id")}, update_ops)
-
-    user.update({"status": "active", "is_active": True, "suspension_until": None})
+    await session.commit()
 
     if request:
         actor = {
@@ -767,27 +751,27 @@ async def _auto_reactivate_if_expired(user: dict, db, request: Optional[Request]
             "role": "system",
             "country_scope": [],
         }
-        event_type = "dealer_reactivated" if user.get("role") == "dealer" else "user_reactivated"
-        audit_entry = await build_audit_entry(
-            event_type=event_type,
+        event_type = "dealer_reactivated" if user.role == "dealer" else "user_reactivated"
+        await _write_audit_log_sql(
+            session=session,
+            action=event_type,
             actor=actor,
-            target_id=user.get("id"),
-            target_type="user",
-            country_code=user.get("country_code"),
-            details={
+            resource_type="user",
+            resource_id=str(user.id),
+            metadata={
                 "reason_code": "suspension_expired",
                 "before": before_state,
                 "after": {
                     **before_state,
-                    "status": "active",
-                    "is_active": True,
+                    "status": user.status,
+                    "is_active": user.is_active,
                     "suspension_until": None,
                 },
             },
             request=request,
+            country_code=user.country_code,
         )
-        audit_entry["action"] = event_type
-        await db.audit_logs.insert_one(audit_entry)
+        await session.commit()
 
     return user
 
