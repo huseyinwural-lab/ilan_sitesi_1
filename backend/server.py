@@ -11705,23 +11705,27 @@ def _build_vehicle_type_summary(types: set[str]) -> str:
     return "mixed"
 
 
-async def _get_required_attribute_keys(db, category_id: str, country_code: Optional[str]) -> list[str]:
+async def _get_required_attribute_keys(session: AsyncSession, category_id: str, country_code: Optional[str]) -> list[str]:
     if not category_id:
         return []
-    query = {
-        "category_id": category_id,
-        "required_flag": True,
-        "active_flag": True,
-    }
-    if country_code:
-        query["$or"] = [
-            {"country_code": None},
-            {"country_code": ""},
-            {"country_code": country_code},
-        ]
-    docs = await db.attributes.find(query, {"_id": 0, "key": 1}).to_list(length=500)
-    return [doc.get("key") for doc in docs if doc.get("key")]
+    try:
+        category_uuid = uuid.UUID(category_id)
+    except ValueError:
+        return []
 
+    query = (
+        select(Attribute.key)
+        .join(CategoryAttributeMap, CategoryAttributeMap.attribute_id == Attribute.id)
+        .where(
+            CategoryAttributeMap.category_id == category_uuid,
+            CategoryAttributeMap.is_active.is_(True),
+            Attribute.is_active.is_(True),
+            Attribute.is_required.is_(True),
+        )
+    )
+
+    result = await session.execute(query)
+    return [row[0] for row in result.all() if row[0]]
 
 async def _build_vehicle_master_from_db(db, country_code: str) -> dict:
     if not country_code:
