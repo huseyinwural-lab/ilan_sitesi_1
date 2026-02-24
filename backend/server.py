@@ -2612,25 +2612,6 @@ def _normalize_scope(role: str, scope: Optional[List[str]], active_countries: Li
     return normalized
 
 
-async def _assert_super_admin_invariant(db, target_user: dict, payload_role: Optional[str], payload_active: Optional[bool], actor: dict) -> None:
-    if not target_user:
-        return
-    target_role = target_user.get("role")
-    target_id = target_user.get("id")
-    actor_id = actor.get("id")
-
-    if payload_role and target_id == actor_id and payload_role != target_role:
-        raise HTTPException(status_code=400, detail="Self role change is not allowed")
-    if payload_active is not None and target_id == actor_id and payload_active is False:
-        raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
-
-    demoting = payload_role and target_role == "super_admin" and payload_role != "super_admin"
-    deactivating = payload_active is False and target_role == "super_admin"
-    if demoting or deactivating:
-        super_admin_count = await db.users.count_documents({"role": "super_admin", "is_active": True})
-        if super_admin_count <= 1:
-            raise HTTPException(status_code=400, detail="At least one super_admin must remain active")
-
 
 async def _assert_super_admin_invariant_sql(
     session: AsyncSession,
