@@ -19681,3 +19681,650 @@ if RBAC_MISSING_POLICIES:
         "rbac_policy_missing",
         extra={"missing_routes": RBAC_MISSING_POLICIES},
     )
+
+
+# --- Admin Site Design / Ads / Doping / Footer / Info Pages ---
+AD_PLACEMENTS = {
+    "homepage_top_banner": "Homepage Üst Banner",
+    "category_right_vertical": "Kategori Sağ Dikey",
+    "category_top_banner": "Kategori Üst Banner",
+    "search_top_banner": "Arama Üst Banner",
+    "listing_inline": "Liste İçi Reklam",
+    "listing_detail_right": "İlan Detay Sağ",
+}
+
+DOPING_STATUSES = {"requested", "paid", "admin_approved", "published", "expired"}
+
+
+class HeaderUpdatePayload(BaseModel):
+    logo_url: Optional[str] = None
+
+
+class AdCreatePayload(BaseModel):
+    placement: str
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    is_active: Optional[bool] = True
+    priority: Optional[int] = 0
+    target_url: Optional[str] = None
+
+
+class AdUpdatePayload(BaseModel):
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    is_active: Optional[bool] = None
+    priority: Optional[int] = None
+    target_url: Optional[str] = None
+
+
+class DopingRequestPayload(BaseModel):
+    listing_id: str
+    placement_home: Optional[bool] = False
+    placement_category: Optional[bool] = False
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    priority: Optional[int] = 0
+
+
+class DopingApprovalPayload(BaseModel):
+    placement_home: Optional[bool] = False
+    placement_category: Optional[bool] = False
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    priority: Optional[int] = 0
+
+
+class FooterLayoutPayload(BaseModel):
+    layout: dict
+    status: Optional[str] = "draft"
+
+
+class InfoPagePayload(BaseModel):
+    slug: str
+    title_tr: str
+    title_de: str
+    title_fr: str
+    content_tr: str
+    content_de: str
+    content_fr: str
+    is_published: Optional[bool] = False
+
+
+class InfoPageUpdatePayload(BaseModel):
+    title_tr: Optional[str] = None
+    title_de: Optional[str] = None
+    title_fr: Optional[str] = None
+    content_tr: Optional[str] = None
+    content_de: Optional[str] = None
+    content_fr: Optional[str] = None
+    is_published: Optional[bool] = None
+
+
+def _normalize_ad_dates(start_at: Optional[datetime], end_at: Optional[datetime]) -> Tuple[Optional[datetime], Optional[datetime]]:
+    if start_at and end_at and end_at < start_at:
+        raise HTTPException(status_code=400, detail="end_at must be after start_at")
+    return start_at, end_at
+
+
+def _is_active_window(start_at: Optional[datetime], end_at: Optional[datetime]) -> bool:
+    now = datetime.now(timezone.utc)
+    if start_at and start_at > now:
+        return False
+    if end_at and end_at < now:
+        return False
+    return True
+
+
+async def _expire_ads(session: AsyncSession) -> None:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(Advertisement).where(Advertisement.is_active.is_(True), Advertisement.end_at.isnot(None), Advertisement.end_at < now)
+    )
+    expired = result.scalars().all()
+    for item in expired:
+        item.is_active = False
+        item.updated_at = now
+    if expired:
+        await session.commit()
+
+
+async def _expire_doping(session: AsyncSession) -> None:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(DopingRequest).where(
+            DopingRequest.status.in_(["admin_approved", "published"]),
+            DopingRequest.end_at.isnot(None),
+            DopingRequest.end_at < now,
+        )
+    )
+    expired = result.scalars().all()
+    for item in expired:
+        item.status = "expired"
+        item.expired_at = now
+        item.updated_at = now
+    if expired:
+        await session.commit()
+
+
+@api_router.get("/site/header")
+async def get_site_header(session: AsyncSession = Depends(get_sql_session)):
+    result = await session.execute(select(SiteHeaderSetting).order_by(desc(SiteHeaderSetting.updated_at)).limit(1))
+    setting = result.scalar_one_or_none()
+    return {
+        "logo_url": setting.logo_url if setting else None,
+    }
+
+
+@api_router.get("/admin/site/header")
+async def admin_get_site_header(
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(select(SiteHeaderSetting).order_by(desc(SiteHeaderSetting.updated_at)).limit(1))
+    setting = result.scalar_one_or_none()
+    return {
+        "id": str(setting.id) if setting else None,
+        "logo_url": setting.logo_url if setting else None,
+    }
+
+
+@api_router.post("/admin/site/header/logo")
+async def upload_site_header_logo(
+    file: UploadFile = File(...),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if not file:
+        raise HTTPException(status_code=400, detail="File is required")
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty file")
+    try:
+        asset_key, _ = store_site_asset(data, file.filename, folder="header", allow_svg=True)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    result = await session.execute(select(SiteHeaderSetting).order_by(desc(SiteHeaderSetting.updated_at)).limit(1))
+    setting = result.scalar_one_or_none()
+    if not setting:
+        setting = SiteHeaderSetting(logo_url=f"/api/site/assets/{asset_key}")
+        session.add(setting)
+    else:
+        setting.logo_url = f"/api/site/assets/{asset_key}"
+    await session.commit()
+
+    return {"ok": True, "logo_url": setting.logo_url}
+
+
+@api_router.get("/site/assets/{asset_key:path}")
+async def get_site_asset(asset_key: str):
+    base_dir = os.path.join(os.path.dirname(__file__), "static", "site_assets")
+    path = os.path.normpath(os.path.join(base_dir, asset_key))
+    if not path.startswith(base_dir):
+        raise HTTPException(status_code=400, detail="Invalid asset path")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Asset not found")
+    return FileResponse(path)
+
+
+@api_router.get("/ads")
+async def list_ads_public(
+    placement: str = Query(...),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if placement not in AD_PLACEMENTS:
+        raise HTTPException(status_code=400, detail="Invalid placement")
+    await _expire_ads(session)
+    result = await session.execute(
+        select(Advertisement)
+        .where(Advertisement.placement == placement, Advertisement.is_active.is_(True))
+        .order_by(desc(Advertisement.priority), desc(Advertisement.updated_at))
+    )
+    items = []
+    for ad in result.scalars().all():
+        if not _is_active_window(ad.start_at, ad.end_at):
+            continue
+        items.append(
+            {
+                "id": str(ad.id),
+                "asset_url": ad.asset_url,
+                "target_url": ad.target_url,
+                "start_at": ad.start_at.isoformat() if ad.start_at else None,
+                "end_at": ad.end_at.isoformat() if ad.end_at else None,
+                "priority": ad.priority,
+            }
+        )
+    return {"items": items}
+
+
+@api_router.get("/admin/ads")
+async def list_ads_admin(
+    placement: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _expire_ads(session)
+    query = select(Advertisement)
+    if placement:
+        query = query.where(Advertisement.placement == placement)
+    query = query.order_by(desc(Advertisement.updated_at))
+    result = await session.execute(query)
+    items = []
+    for ad in result.scalars().all():
+        items.append(
+            {
+                "id": str(ad.id),
+                "placement": ad.placement,
+                "asset_url": ad.asset_url,
+                "target_url": ad.target_url,
+                "start_at": ad.start_at.isoformat() if ad.start_at else None,
+                "end_at": ad.end_at.isoformat() if ad.end_at else None,
+                "priority": ad.priority,
+                "is_active": ad.is_active,
+                "created_at": ad.created_at.isoformat() if ad.created_at else None,
+            }
+        )
+    return {"items": items, "placements": AD_PLACEMENTS}
+
+
+@api_router.post("/admin/ads")
+async def create_ad(
+    payload: AdCreatePayload,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if payload.placement not in AD_PLACEMENTS:
+        raise HTTPException(status_code=400, detail="Invalid placement")
+    start_at, end_at = _normalize_ad_dates(payload.start_at, payload.end_at)
+
+    ad = Advertisement(
+        placement=payload.placement,
+        start_at=start_at,
+        end_at=end_at,
+        is_active=bool(payload.is_active),
+        priority=payload.priority or 0,
+        target_url=payload.target_url,
+    )
+    session.add(ad)
+    await session.commit()
+    await session.refresh(ad)
+    return {"ok": True, "id": str(ad.id)}
+
+
+@api_router.patch("/admin/ads/{ad_id}")
+async def update_ad(
+    ad_id: str,
+    payload: AdUpdatePayload,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        ad_uuid = uuid.UUID(ad_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid ad id") from exc
+
+    ad = await session.get(Advertisement, ad_uuid)
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+
+    start_at = payload.start_at if payload.start_at is not None else ad.start_at
+    end_at = payload.end_at if payload.end_at is not None else ad.end_at
+    start_at, end_at = _normalize_ad_dates(start_at, end_at)
+
+    if payload.start_at is not None:
+        ad.start_at = start_at
+    if payload.end_at is not None:
+        ad.end_at = end_at
+    if payload.is_active is not None:
+        ad.is_active = payload.is_active
+    if payload.priority is not None:
+        ad.priority = payload.priority
+    if payload.target_url is not None:
+        ad.target_url = payload.target_url
+
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.post("/admin/ads/{ad_id}/upload")
+async def upload_ad_asset(
+    ad_id: str,
+    file: UploadFile = File(...),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        ad_uuid = uuid.UUID(ad_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid ad id") from exc
+
+    ad = await session.get(Advertisement, ad_uuid)
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    try:
+        asset_key, _ = store_site_asset(data, file.filename, folder="ads", allow_svg=False)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    ad.asset_url = f"/api/site/assets/{asset_key}"
+    await session.commit()
+    return {"ok": True, "asset_url": ad.asset_url}
+
+
+@api_router.post("/v1/doping/requests")
+async def create_doping_request(
+    payload: DopingRequestPayload,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        listing_uuid = uuid.UUID(payload.listing_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid listing id") from exc
+
+    listing = await session.get(Listing, listing_uuid)
+    if not listing or listing.user_id != current_user.get("id"):
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    start_at, end_at = _normalize_ad_dates(payload.start_at, payload.end_at)
+
+    req = DopingRequest(
+        listing_id=listing_uuid,
+        user_id=uuid.UUID(current_user.get("id")),
+        status="paid",
+        placement_home=bool(payload.placement_home),
+        placement_category=bool(payload.placement_category),
+        start_at=start_at,
+        end_at=end_at,
+        priority=payload.priority or 0,
+    )
+    session.add(req)
+    await session.commit()
+    await session.refresh(req)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DOPING_REQUEST_PAID",
+        actor=current_user,
+        resource_type="doping",
+        resource_id=str(req.id),
+        metadata={"listing_id": str(listing_uuid)},
+        request=None,
+        country_code=current_user.get("country_code"),
+    )
+
+    return {"ok": True, "id": str(req.id)}
+
+
+@api_router.get("/admin/doping/requests")
+async def list_doping_requests(
+    status: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _expire_doping(session)
+    query = select(DopingRequest).order_by(desc(DopingRequest.updated_at))
+    if status:
+        query = query.where(DopingRequest.status == status)
+    result = await session.execute(query)
+    items = []
+    for item in result.scalars().all():
+        items.append(
+            {
+                "id": str(item.id),
+                "listing_id": str(item.listing_id),
+                "user_id": str(item.user_id),
+                "status": item.status,
+                "placement_home": item.placement_home,
+                "placement_category": item.placement_category,
+                "start_at": item.start_at.isoformat() if item.start_at else None,
+                "end_at": item.end_at.isoformat() if item.end_at else None,
+                "priority": item.priority,
+                "approved_by": str(item.approved_by) if item.approved_by else None,
+                "approved_at": item.approved_at.isoformat() if item.approved_at else None,
+                "published_at": item.published_at.isoformat() if item.published_at else None,
+                "expired_at": item.expired_at.isoformat() if item.expired_at else None,
+            }
+        )
+    return {"items": items}
+
+
+@api_router.post("/admin/doping/requests/{request_id}/approve")
+async def approve_doping_request(
+    request_id: str,
+    payload: DopingApprovalPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        req_uuid = uuid.UUID(request_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid request id") from exc
+
+    req = await session.get(DopingRequest, req_uuid)
+    if not req:
+        raise HTTPException(status_code=404, detail="Doping request not found")
+
+    start_at, end_at = _normalize_ad_dates(payload.start_at or req.start_at, payload.end_at or req.end_at)
+
+    req.placement_home = bool(payload.placement_home)
+    req.placement_category = bool(payload.placement_category)
+    req.start_at = start_at
+    req.end_at = end_at
+    req.priority = payload.priority or 0
+
+    req.status = "published"
+    now = datetime.now(timezone.utc)
+    req.approved_by = uuid.UUID(current_user.get("id")) if current_user.get("id") else None
+    req.approved_at = now
+    req.published_at = now
+    req.updated_at = now
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DOPING_APPROVED",
+        actor=current_user,
+        resource_type="doping",
+        resource_id=str(req.id),
+        metadata={"listing_id": str(req.listing_id)},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.get("/doping/placements")
+async def get_doping_placements(
+    placement: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _expire_doping(session)
+    now = datetime.now(timezone.utc)
+    query = select(DopingRequest, Listing).join(Listing, Listing.id == DopingRequest.listing_id)
+    query = query.where(DopingRequest.status == "published")
+    if placement == "homepage":
+        query = query.where(DopingRequest.placement_home.is_(True))
+    if placement == "category":
+        query = query.where(DopingRequest.placement_category.is_(True))
+    query = query.order_by(desc(DopingRequest.priority), desc(DopingRequest.updated_at))
+
+    result = await session.execute(query)
+    items = []
+    for doping, listing in result.all():
+        if not _is_active_window(doping.start_at, doping.end_at):
+            continue
+        items.append(
+            {
+                "doping_id": str(doping.id),
+                "listing_id": str(listing.id),
+                "title": listing.title,
+                "status": listing.status,
+                "price": listing.price,
+                "currency": listing.currency or "EUR",
+                "priority": doping.priority,
+            }
+        )
+    return {"items": items}
+
+
+@api_router.get("/site/footer")
+async def get_footer_layout(session: AsyncSession = Depends(get_sql_session)):
+    result = await session.execute(
+        select(FooterLayout)
+        .where(FooterLayout.status == "published")
+        .order_by(desc(FooterLayout.updated_at))
+        .limit(1)
+    )
+    layout = result.scalar_one_or_none()
+    return {
+        "layout": layout.layout if layout else None,
+        "version": layout.version if layout else None,
+    }
+
+
+@api_router.get("/admin/footer/layout")
+async def get_footer_layout_admin(
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(select(FooterLayout).order_by(desc(FooterLayout.updated_at)).limit(1))
+    layout = result.scalar_one_or_none()
+    return {
+        "id": str(layout.id) if layout else None,
+        "layout": layout.layout if layout else None,
+        "status": layout.status if layout else None,
+        "version": layout.version if layout else None,
+    }
+
+
+@api_router.put("/admin/footer/layout")
+async def save_footer_layout(
+    payload: FooterLayoutPayload,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(select(FooterLayout).order_by(desc(FooterLayout.updated_at)).limit(1))
+    layout = result.scalar_one_or_none()
+    if not layout:
+        layout = FooterLayout(layout=payload.layout, status=payload.status or "draft", version=1)
+        session.add(layout)
+    else:
+        layout.layout = payload.layout
+        layout.status = payload.status or layout.status
+        layout.version = (layout.version or 1) + 1
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.post("/admin/footer/layout/publish")
+async def publish_footer_layout(
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(select(FooterLayout).order_by(desc(FooterLayout.updated_at)).limit(1))
+    layout = result.scalar_one_or_none()
+    if not layout:
+        raise HTTPException(status_code=404, detail="Footer layout not found")
+    layout.status = "published"
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.get("/admin/info-pages")
+async def list_info_pages(
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(select(InfoPage).order_by(desc(InfoPage.updated_at)))
+    items = []
+    for page in result.scalars().all():
+        items.append(
+            {
+                "id": str(page.id),
+                "slug": page.slug,
+                "title_tr": page.title_tr,
+                "title_de": page.title_de,
+                "title_fr": page.title_fr,
+                "is_published": page.is_published,
+                "updated_at": page.updated_at.isoformat() if page.updated_at else None,
+            }
+        )
+    return {"items": items}
+
+
+@api_router.post("/admin/info-pages")
+async def create_info_page(
+    payload: InfoPagePayload,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    slug_value = payload.slug.strip().lower()
+    if not slug_value:
+        raise HTTPException(status_code=400, detail="Slug is required")
+
+    existing = await session.execute(select(InfoPage).where(InfoPage.slug == slug_value))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Slug already exists")
+
+    page = InfoPage(
+        slug=slug_value,
+        title_tr=payload.title_tr,
+        title_de=payload.title_de,
+        title_fr=payload.title_fr,
+        content_tr=payload.content_tr,
+        content_de=payload.content_de,
+        content_fr=payload.content_fr,
+        is_published=bool(payload.is_published),
+    )
+    session.add(page)
+    await session.commit()
+    return {"ok": True, "id": str(page.id)}
+
+
+@api_router.patch("/admin/info-pages/{page_id}")
+async def update_info_page(
+    page_id: str,
+    payload: InfoPageUpdatePayload,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        page_uuid = uuid.UUID(page_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid page id") from exc
+
+    page = await session.get(InfoPage, page_uuid)
+    if not page:
+        raise HTTPException(status_code=404, detail="Info page not found")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(page, field, value)
+
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.get("/info/{slug}")
+async def get_info_page(slug: str, session: AsyncSession = Depends(get_sql_session)):
+    slug_value = slug.strip().lower()
+    result = await session.execute(select(InfoPage).where(InfoPage.slug == slug_value, InfoPage.is_published.is_(True)))
+    page = result.scalar_one_or_none()
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    return {
+        "slug": page.slug,
+        "title_tr": page.title_tr,
+        "title_de": page.title_de,
+        "title_fr": page.title_fr,
+        "content_tr": page.content_tr,
+        "content_de": page.content_de,
+        "content_fr": page.content_fr,
+    }
