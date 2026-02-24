@@ -91,16 +91,18 @@ async def get_current_user(
 
     user = await _get_sql_user(user_id, sql_session)
 
-    if not user or not user.get("is_active", False):
+    if not user or not user.is_active:
         raise credentials_exception
 
     token_scope = payload.get("portal_scope")
     if not token_scope:
         raise credentials_exception
-    expected_scope = _resolve_portal_scope(user.get("role"))
+    expected_scope = _resolve_portal_scope(user.role)
     if token_scope != expected_scope:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Portal scope mismatch")
-    user["portal_scope"] = token_scope
+    user.portal_scope = token_scope
+    if user.country_scope is None:
+        user.country_scope = []
     request.state.current_user = user
 
     return user
