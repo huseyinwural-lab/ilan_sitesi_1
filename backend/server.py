@@ -12156,6 +12156,7 @@ async def admin_approve_listing(
         current_user=current_user,
         new_status="published",
         action_type="approve",
+        request=request,
     )
     return {"ok": True, "listing": {"id": str(updated.id), "status": updated.status}}
 
