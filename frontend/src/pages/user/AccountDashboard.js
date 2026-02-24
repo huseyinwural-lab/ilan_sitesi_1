@@ -154,7 +154,10 @@ export default function AccountDashboard() {
 
   const statusItems = useMemo(() => {
     const items = [];
-    if (!statusChecks.emailVerified) {
+    const hasEmailIssue = !statusChecks.emailVerified;
+    const hasTwoFaIssue = !statusChecks.twoFactorEnabled;
+
+    if (hasEmailIssue) {
       items.push({
         key: 'email',
         icon: Mail,
@@ -162,7 +165,7 @@ export default function AccountDashboard() {
         testId: 'account-status-email',
       });
     }
-    if (!statusChecks.twoFactorEnabled) {
+    if (hasTwoFaIssue) {
       items.push({
         key: '2fa',
         icon: ShieldAlert,
@@ -170,15 +173,18 @@ export default function AccountDashboard() {
         testId: 'account-status-2fa',
       });
     }
+
     const showQuotaWarning = quotaInfo.ready ? quotaInfo.remaining <= 1 : false;
-    if (showQuotaWarning) {
+    const includeQuota = hasEmailIssue || hasTwoFaIssue || showQuotaWarning;
+    if (includeQuota) {
       items.push({
         key: 'quota',
         icon: AlertTriangle,
-        text: `Kalan ücretsiz ilan: ${quotaLabel}`,
+        text: `Kalan ücretsiz ilan: ${quotaLabel}${quotaInfo.ready ? '' : ' (Veri hazırlanıyor)'}`,
         testId: 'account-status-quota',
       });
     }
+
     return items;
   }, [quotaInfo.ready, quotaInfo.remaining, quotaLabel, statusChecks.emailVerified, statusChecks.twoFactorEnabled]);
 
