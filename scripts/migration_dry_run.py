@@ -88,6 +88,7 @@ RISK_LEVEL_ALLOWED = {"low", "medium", "high"}
 
 MIGRATION_QUOTA_MIN = int(os.environ.get("MIGRATION_QUOTA_MIN", "0"))
 MIGRATION_QUOTA_MAX = int(os.environ.get("MIGRATION_QUOTA_MAX", "10000"))
+MIGRATION_DRY_RUN_AUDIT = os.environ.get("MIGRATION_DRY_RUN_AUDIT", "0") == "1"
 
 SNAPSHOT_PATH = os.environ.get("MIGRATION_DRY_RUN_SNAPSHOT", "/tmp/migration_dry_run_snapshot.json")
 
