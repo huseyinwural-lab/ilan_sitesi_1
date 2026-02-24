@@ -173,7 +173,10 @@ def check_permissions(required_roles: list[str]):
 
 def require_portal_scope(scope: str):
     async def portal_checker(current_user=Depends(get_current_user)):
-        if current_user.get("portal_scope") != scope:
+        allowed_scopes = {scope}
+        if scope == "account":
+            allowed_scopes.add("dealer")
+        if current_user.get("portal_scope") not in allowed_scopes:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Portal scope mismatch",
