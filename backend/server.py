@@ -4887,6 +4887,7 @@ async def suspend_user(
         "status": user.status,
         "is_active": user.is_active,
         "suspension_until": user.suspension_until.isoformat() if user.suspension_until else None,
+        "ban_reason": user.ban_reason,
     }
 
     event_type = "dealer_suspended" if user.role == "dealer" else "user_suspended"
