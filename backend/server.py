@@ -9470,7 +9470,7 @@ async def update_country(
 
 
 # =====================
-# Audit Logs (Mongo) - Backoffice
+# Audit Logs (Legacy) - Backoffice
 # =====================
 
 @api_router.get("/audit-logs")
