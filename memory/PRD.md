@@ -249,7 +249,6 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/MONGO_SQL_MIGRATION_EVIDENCE.md
 - /app/docs/FINAL_520_ZERO_REPORT.md
 - /app/docs/DATA_LAYER_CUTOVER_CLOSED.md
-- /app/docs/ADMIN_INVITE_PREVIEW_SPEC.md
 - /app/memory/MONGO_INVENTORY.md
 - /app/docs/RBAC_MATRIX.md
 - /app/docs/RBAC_ENDPOINT_MAP.md
