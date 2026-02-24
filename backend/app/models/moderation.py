@@ -62,6 +62,14 @@ class Listing(Base):
 
     # Status: pending, active, rejected, suspended, expired
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False, index=True)
+    current_step: Mapped[int] = mapped_column(Integer, default=1)
+    completion_percentage: Mapped[int] = mapped_column(Integer, default=0)
+    user_type_snapshot: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    last_edited_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    moderated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    moderated_by: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), nullable=True)
+    rejected_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Premium
     is_premium: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
