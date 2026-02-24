@@ -3693,6 +3693,10 @@ async def login(
     blocked_until = _failed_login_blocked_until.get(rl_key)
     if blocked_until and now < blocked_until:
         retry_after_seconds = int(blocked_until - now)
+        logging.getLogger("auth_rate_limit").warning(
+            "login_rate_limited",
+            extra={"email": email, "ip": ip_address, "retry_after_seconds": retry_after_seconds},
+        )
         raise HTTPException(
             status_code=429,
             detail={"code": "RATE_LIMITED", "retry_after_seconds": retry_after_seconds},
@@ -3706,10 +3710,24 @@ async def login(
         attempts.append(now)
         _failed_login_attempts[rl_key] = attempts
 
-        # Start block when threshold is exceeded (3 fails allowed, 4th attempt blocked)
-        if len(attempts) > FAILED_LOGIN_MAX_ATTEMPTS:
+        # Start block when threshold is reached (5th attempt blocked)
+        if len(attempts) >= FAILED_LOGIN_MAX_ATTEMPTS:
             _failed_login_blocked_until[rl_key] = now + FAILED_LOGIN_BLOCK_SECONDS
             _failed_login_block_audited[rl_key] = False
+            retry_after_seconds = int(FAILED_LOGIN_BLOCK_SECONDS)
+            logging.getLogger("auth_rate_limit").warning(
+                "login_rate_limit_triggered",
+                extra={
+                    "email": email,
+                    "ip": ip_address,
+                    "attempts": len(attempts),
+                    "retry_after_seconds": retry_after_seconds,
+                },
+            )
+            raise HTTPException(
+                status_code=429,
+                detail={"code": "RATE_LIMITED", "retry_after_seconds": retry_after_seconds},
+            )
 
         raise HTTPException(status_code=401, detail={"code": "INVALID_CREDENTIALS"})
 
