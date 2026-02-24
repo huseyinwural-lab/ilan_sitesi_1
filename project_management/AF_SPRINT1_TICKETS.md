@@ -38,6 +38,7 @@
 ## AF1 — Monetization
 10. **AF1-1:** Plan validation guards (quota min/max, discount 0–100)
     - AC: server validation + UI parity
+    - AC: Dry-run PASS log attached
 
 11. **AF1-2:** Dealer plan override audit parity
     - AC: audit log + UI confirmation
