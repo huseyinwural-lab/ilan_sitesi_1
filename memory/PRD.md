@@ -289,6 +289,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Public search log-based 24h window CLOSED olarak raporlandı.
 - Moderation freeze window planı kilitlendi.
 - RBAC CI PR comment workflow güncellendi + karar dokümante edildi.
+- Moderation Freeze UI: Admin System Settings toggle metni güncellendi + Moderation Queue banner/tooltip/disable davranışı tamamlandı.
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
