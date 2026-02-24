@@ -321,6 +321,109 @@ export default function AdminAdsManagement() {
           ))}
         </div>
       </div>
+        </>
+      )}
+
+      {activeTab === 'performance' && (
+        <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="admin-ads-performance">
+          <div className="flex flex-wrap items-end gap-3" data-testid="admin-ads-analytics-filters">
+            <div>
+              <label className="text-xs">Zaman Aralığı</label>
+              <select
+                className="mt-1 h-9 w-full rounded-md border px-2"
+                value={range}
+                onChange={(e) => setRange(e.target.value)}
+                data-testid="admin-ads-analytics-range"
+              >
+                <option value="30d">Son 30 Gün</option>
+                <option value="7d">Son 7 Gün</option>
+                <option value="custom">Özel Aralık</option>
+              </select>
+            </div>
+
+            {range === 'custom' && (
+              <>
+                <div>
+                  <label className="text-xs">Başlangıç</label>
+                  <input
+                    type="date"
+                    className="mt-1 h-9 w-full rounded-md border px-2"
+                    value={customStart}
+                    onChange={(e) => setCustomStart(e.target.value)}
+                    data-testid="admin-ads-analytics-start"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs">Bitiş</label>
+                  <input
+                    type="date"
+                    className="mt-1 h-9 w-full rounded-md border px-2"
+                    value={customEnd}
+                    onChange={(e) => setCustomEnd(e.target.value)}
+                    data-testid="admin-ads-analytics-end"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fetchAnalytics('custom')}
+                  className="h-9 px-4 rounded-md border text-sm"
+                  data-testid="admin-ads-analytics-apply"
+                >
+                  Uygula
+                </button>
+              </>
+            )}
+          </div>
+
+          {analyticsStatus === 'loading' && (
+            <div className="text-sm text-muted-foreground" data-testid="admin-ads-analytics-loading">Yükleniyor...</div>
+          )}
+          {analyticsStatus === 'error' && (
+            <div className="text-sm text-rose-600" data-testid="admin-ads-analytics-error">Performans verileri alınamadı.</div>
+          )}
+          {analyticsStatus === 'ok' && (
+            <div className="space-y-4" data-testid="admin-ads-analytics-content">
+              <div className="grid gap-3 md:grid-cols-3" data-testid="admin-ads-analytics-totals">
+                <div className="rounded-md border p-3" data-testid="admin-ads-analytics-total-impressions">
+                  <div className="text-xs text-muted-foreground">Toplam Gösterim</div>
+                  <div className="text-lg font-semibold">{totals.impressions}</div>
+                </div>
+                <div className="rounded-md border p-3" data-testid="admin-ads-analytics-total-clicks">
+                  <div className="text-xs text-muted-foreground">Toplam Tıklama</div>
+                  <div className="text-lg font-semibold">{totals.clicks}</div>
+                </div>
+                <div className="rounded-md border p-3" data-testid="admin-ads-analytics-total-ctr">
+                  <div className="text-xs text-muted-foreground">CTR (%)</div>
+                  <div className="text-lg font-semibold">{totals.ctr}</div>
+                </div>
+              </div>
+
+              <div className="rounded-md border" data-testid="admin-ads-analytics-breakdown">
+                <div className="px-4 py-3 border-b text-sm font-semibold">Placement Kırılımı</div>
+                <div className="divide-y">
+                  {placementStats.map((item) => (
+                    <div
+                      key={item.placement}
+                      className="grid grid-cols-4 gap-2 px-4 py-2 text-sm"
+                      data-testid={`admin-ads-analytics-row-${item.placement}`}
+                    >
+                      <div data-testid={`admin-ads-analytics-label-${item.placement}`}>{item.label || item.placement}</div>
+                      <div data-testid={`admin-ads-analytics-impressions-${item.placement}`}>{item.impressions}</div>
+                      <div data-testid={`admin-ads-analytics-clicks-${item.placement}`}>{item.clicks}</div>
+                      <div data-testid={`admin-ads-analytics-ctr-${item.placement}`}>{item.ctr}</div>
+                    </div>
+                  ))}
+                  {placementStats.length === 0 && (
+                    <div className="px-4 py-3 text-sm text-muted-foreground" data-testid="admin-ads-analytics-empty">
+                      Veri bulunamadı.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
