@@ -8881,18 +8881,26 @@ async def admin_get_dealer_audit_logs(
     request: Request,
     limit: int = 5,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    query: Dict = {"id": dealer_id, "role": "dealer"}
-    if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        query["country_code"] = ctx.country
+    try:
+        dealer_uuid = uuid.UUID(dealer_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid dealer id") from exc
 
-    dealer = await db.users.find_one(query, {"_id": 0})
+    result = await session.execute(
+        select(SqlUser).where(SqlUser.id == dealer_uuid, SqlUser.role == "dealer")
+    )
+    dealer = result.scalar_one_or_none()
     if not dealer:
         raise HTTPException(status_code=404, detail="Dealer not found")
-    _assert_country_scope(dealer.get("country_code"), current_user)
+
+    if getattr(ctx, "mode", "global") == "country" and ctx.country and dealer.country_code != ctx.country:
+        raise HTTPException(status_code=403, detail="Country scope forbidden")
+
+    _assert_country_scope(dealer.country_code, current_user)
 
     limit = min(max(int(limit), 1), 20)
     event_types = [
@@ -8903,12 +8911,16 @@ async def admin_get_dealer_audit_logs(
         "user_reactivated",
         "user_deleted",
     ]
-    logs = await db.audit_logs.find(
-        {"resource_id": dealer_id, "event_type": {"$in": event_types}},
-        {"_id": 0},
-    ).sort("created_at", -1).limit(limit).to_list(length=limit)
+    logs = (
+        await session.execute(
+            select(AuditLog)
+            .where(AuditLog.resource_id == dealer_id, AuditLog.action.in_(event_types))
+            .order_by(desc(AuditLog.created_at))
+            .limit(limit)
+        )
+    ).scalars().all()
 
-    return {"items": logs}
+    return {"items": [_audit_log_sql_to_dict(log) for log in logs]}
 
 
 class DealerStatusPayload(BaseModel):
