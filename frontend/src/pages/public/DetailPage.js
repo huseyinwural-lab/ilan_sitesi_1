@@ -115,8 +115,8 @@ const DetailPage = () => {
 
   useEffect(() => {
     // Extract UUID id from /ilan/vasita/{id}-{slug} or /ilan/{id}
-    const match = id.match(/^([a-f0-9\-]{36})/i);
-    const realId = match ? match[1] : id;
+    const match = id.match(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i);
+    const realId = match ? match[0] : id;
     const query = new URLSearchParams(search);
     const preview = query.get('preview') === '1';
     const previewParam = preview ? '?preview=1' : '';
