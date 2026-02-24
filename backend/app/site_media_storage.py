@@ -36,4 +36,5 @@ def store_site_asset(data: bytes, filename: str, folder: str, allow_svg: bool = 
         image = image.convert("RGBA") if image.mode not in ("RGB", "RGBA") else image
         image.save(path)
 
-    return asset_id, path
+    asset_key = f"{folder}/{asset_id}"
+    return asset_key, path
