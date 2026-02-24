@@ -126,6 +126,28 @@ export default function AdminAdsManagement() {
         </p>
       </div>
 
+      <div className="flex flex-wrap gap-2" data-testid="admin-ads-tabs">
+        <button
+          type="button"
+          onClick={() => setActiveTab('manage')}
+          className={`h-9 px-4 rounded-md text-sm border ${activeTab === 'manage' ? 'bg-primary text-primary-foreground' : 'bg-white'}`}
+          data-testid="admin-ads-tab-manage"
+        >
+          Reklam Yönetimi
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('performance')}
+          className={`h-9 px-4 rounded-md text-sm border ${activeTab === 'performance' ? 'bg-primary text-primary-foreground' : 'bg-white'}`}
+          data-testid="admin-ads-tab-performance"
+        >
+          Reklam Performans
+        </button>
+      </div>
+
+      {activeTab === 'manage' && (
+        <>
+
       <div className="rounded-lg border bg-white p-4 space-y-3" data-testid="admin-ads-create">
         <div className="text-sm font-semibold">Yeni Reklam</div>
         <div className="grid gap-3 md:grid-cols-2">
