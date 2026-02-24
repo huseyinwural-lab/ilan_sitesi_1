@@ -86,7 +86,7 @@ async def update_user(
         raise HTTPException(status_code=404, detail="User not found")
     
     old_values = {
-        "role": user.role.value,
+        "role": user.role,
         "is_active": user.is_active,
         "country_scope": user.country_scope
     }
@@ -133,7 +133,7 @@ async def delete_user(
         resource_id=str(user_id),
         user_id=current_user.id,
         user_email=current_user.email,
-        old_values={"email": user.email, "role": user.role.value}
+        old_values={"email": user.email, "role": user.role}
     )
     
     await db.delete(user)
