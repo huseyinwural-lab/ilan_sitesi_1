@@ -31,7 +31,8 @@ async def get_listing_phone(
         raise HTTPException(status_code=403, detail="Phone contact is disabled for this listing")
         
     owner = await db.get(User, listing.user_id)
-    if not owner or not owner.phone_number:
+    owner_phone = getattr(owner, "phone_number", None) if owner else None
+    if not owner or not owner_phone:
         raise HTTPException(status_code=404, detail="No phone number available")
 
     # 2. Analytics (P21 Integration)
@@ -50,4 +51,4 @@ async def get_listing_phone(
         meta_data={"type": "phone_reveal", "ip": request.client.host}
     )
     
-    return {"phone_number": owner.phone_number}
+    return {"phone_number": owner_phone}
