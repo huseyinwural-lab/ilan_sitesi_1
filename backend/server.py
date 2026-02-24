@@ -17176,59 +17176,61 @@ async def admin_update_vehicle_model(
     payload: VehicleModelUpdatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    # Permission check already handled by dependency
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    model = await db.vehicle_models.find_one({"id": model_id}, {"_id": 0})
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    try:
+        model_uuid = uuid.UUID(model_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid model id") from exc
+
+    model = await session.get(VehicleModel, model_uuid)
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-    updates: Dict = {}
+
     if payload.name is not None:
-        updates["name"] = payload.name.strip()
+        model.name = payload.name.strip()
     if payload.slug is not None:
         slug = payload.slug.strip().lower()
         if not SLUG_PATTERN.match(slug):
             raise HTTPException(status_code=400, detail="slug format invalid")
-        updates["slug"] = slug
+        if slug != model.slug:
+            existing = await session.execute(
+                select(VehicleModel).where(VehicleModel.make_id == model.make_id, VehicleModel.slug == slug)
+            )
+            if existing.scalar_one_or_none():
+                raise HTTPException(status_code=409, detail="Model slug already exists")
+        model.slug = slug
     if payload.make_id is not None:
-        make = await db.vehicle_makes.find_one({"id": payload.make_id}, {"_id": 0, "country_code": 1})
+        try:
+            make_uuid = uuid.UUID(payload.make_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid make id") from exc
+        make = await session.get(VehicleMake, make_uuid)
         if not make:
             raise HTTPException(status_code=400, detail="make_id not found")
-        updates["make_id"] = payload.make_id
-        updates["country_code"] = make.get("country_code")
+        model.make_id = make_uuid
     if payload.vehicle_type is not None:
         vehicle_type = _normalize_vehicle_type(payload.vehicle_type)
         if not vehicle_type or vehicle_type not in VEHICLE_TYPE_SET:
             raise HTTPException(status_code=400, detail="vehicle_type invalid")
-        updates["vehicle_type"] = vehicle_type
+        model.vehicle_type = vehicle_type
     if payload.active_flag is not None:
-        updates["active_flag"] = payload.active_flag
-    if not updates:
-        return {"model": _normalize_vehicle_model_doc(model)}
-    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
-    make_lookup_id = updates.get("make_id", model.get("make_id"))
-    make_doc = await db.vehicle_makes.find_one({"id": make_lookup_id}, {"_id": 0, "country_code": 1})
-    audit_doc = {
-        "id": str(uuid.uuid4()),
-        "event_type": "VEHICLE_MASTER_DATA_CHANGE",
-        "actor_id": current_user["id"],
-        "actor_role": current_user.get("role"),
-        "country_code": make_doc.get("country_code") if make_doc else None,
-        "subject_type": "vehicle_model",
-        "subject_id": model_id,
-        "action": "update",
-        "created_at": updates["updated_at"],
-        "metadata": updates,
-    }
-    await db.audit_logs.insert_one(audit_doc)
-    try:
-        await db.vehicle_models.update_one({"id": model_id}, {"$set": updates})
-    except Exception as e:
-        if "E11000" in str(e):
-            raise HTTPException(status_code=409, detail="Model slug already exists")
-        raise
-    model.update(updates)
+        model.is_active = bool(payload.active_flag)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="VEHICLE_MODEL_UPDATE",
+        actor=current_user,
+        resource_type="vehicle_model",
+        resource_id=str(model.id),
+        metadata={"slug": model.slug, "name": model.name},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
     return {"model": _normalize_vehicle_model_doc(model)}
 
 
