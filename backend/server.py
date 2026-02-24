@@ -11727,40 +11727,40 @@ async def _get_required_attribute_keys(session: AsyncSession, category_id: str, 
     result = await session.execute(query)
     return [row[0] for row in result.all() if row[0]]
 
-async def _build_vehicle_master_from_db(db, country_code: str) -> dict:
+async def _build_vehicle_master_from_db(session: AsyncSession, country_code: str) -> dict:
     if not country_code:
         return {"makes": {}, "models": {}}
-    make_docs = await db.vehicle_makes.find(
-        {"country_code": country_code, "active_flag": True},
-        {"_id": 0, "id": 1, "slug": 1, "name": 1},
-    ).to_list(length=500)
+    result = await session.execute(
+        select(VehicleMake).where(VehicleMake.is_active.is_(True)).order_by(VehicleMake.name.asc())
+    )
+    make_rows = result.scalars().all()
     makes = [
         {
-            "make_key": doc.get("slug"),
-            "name": doc.get("name"),
-            "is_active": doc.get("active_flag", True),
+            "make_key": make.slug,
+            "name": make.name,
+            "is_active": make.is_active,
         }
-        for doc in make_docs
-        if doc.get("slug")
+        for make in make_rows
+        if make.slug
     ]
-    make_ids = [doc["id"] for doc in make_docs if doc.get("id")]
+    make_ids = [make.id for make in make_rows if make.id]
     if not make_ids:
         return {"makes": makes, "models_by_make": {}}
-    model_docs = await db.vehicle_models.find(
-        {"make_id": {"$in": make_ids}, "active_flag": True},
-        {"_id": 0, "make_id": 1, "slug": 1},
-    ).to_list(length=1000)
+    model_result = await session.execute(
+        select(VehicleModel.make_id, VehicleModel.slug, VehicleModel.name)
+        .where(VehicleModel.make_id.in_(make_ids), VehicleModel.is_active.is_(True))
+    )
     models_by_make: dict = {}
-    make_slug_by_id = {doc["id"]: doc["slug"] for doc in make_docs if doc.get("id")}
-    for model in model_docs:
-        make_slug = make_slug_by_id.get(model.get("make_id"))
-        if not make_slug or not model.get("slug"):
+    make_slug_by_id = {str(make.id): make.slug for make in make_rows if make.id and make.slug}
+    for make_id, slug, name in model_result.all():
+        make_slug = make_slug_by_id.get(str(make_id))
+        if not make_slug or not slug:
             continue
         models_by_make.setdefault(make_slug, []).append(
             {
-                "model_key": model.get("slug"),
-                "name": model.get("name"),
-                "is_active": model.get("active_flag", True),
+                "model_key": slug,
+                "name": name,
+                "is_active": True,
             }
         )
     return {"makes": makes, "models_by_make": models_by_make}
