@@ -70,6 +70,34 @@ export default function ModerationQueue({
     setSelectedIds((prev) => prev.filter((id) => listings.some((listing) => listing.id === id)));
   }, [listings]);
 
+  const resolveFreezeValue = (setting) => {
+    const value = setting?.value;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') return value.toLowerCase() === 'true';
+    if (value && typeof value === 'object') {
+      const candidate = value.enabled ?? value.active ?? value.value;
+      if (typeof candidate === 'boolean') return candidate;
+      if (typeof candidate === 'string') return candidate.toLowerCase() === 'true';
+    }
+    return false;
+  };
+
+  const fetchFreezeStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/system-settings/effective`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      const setting = (response.data?.items || []).find((item) => item.key === 'moderation.freeze.active');
+      setFreezeActive(resolveFreezeValue(setting));
+    } catch (error) {
+      console.error('Failed to fetch moderation freeze status:', error);
+    } finally {
+      setFreezeLoaded(true);
+    }
+  };
+
   const fetchQueue = async () => {
     try {
       const params = new URLSearchParams();
