@@ -34,7 +34,32 @@ async def run_retention_policy():
         cutoff_int = now - timedelta(days=365)
         res = await db.execute(delete(UserInteraction).where(UserInteraction.created_at < cutoff_int))
         print(f"Deleted {res.rowcount} old User Interactions.")
-        
+
+        # 4. GDPR Exports (30 Days)
+        export_result = await db.execute(
+            select(GDPRExport).where(
+                GDPRExport.expires_at.isnot(None),
+                GDPRExport.expires_at < now,
+                GDPRExport.status != "expired",
+            )
+        )
+        exports = export_result.scalars().all()
+        export_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "exports")
+        expired_count = 0
+        for export in exports:
+            export.status = "expired"
+            export.updated_at = now
+            expired_count += 1
+            if export.file_path:
+                path = os.path.join(export_dir, export.file_path)
+                try:
+                    os.remove(path)
+                except FileNotFoundError:
+                    pass
+                except Exception:
+                    pass
+        print(f"Expired {expired_count} GDPR exports.")
+
         await db.commit()
         print("✅ Cleanup Complete.")
 
