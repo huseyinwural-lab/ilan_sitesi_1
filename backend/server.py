@@ -16718,10 +16718,19 @@ async def admin_create_attribute(
     payload: AttributeCreatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    # Permission check already handled by dependency
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    try:
+        category_uuid = uuid.UUID(payload.category_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid category id") from exc
+
+    result = await session.execute(select(Category).where(Category.id == category_uuid))
+    category = result.scalar_one_or_none()
+    if not category:
+        raise HTTPException(status_code=400, detail="category_id not found")
 
     key = payload.key.strip().lower()
     if not ATTRIBUTE_KEY_PATTERN.match(key):
@@ -16731,50 +16740,58 @@ async def admin_create_attribute(
     if payload.type == "select" and not payload.options:
         raise HTTPException(status_code=400, detail="options required for select")
 
-    category = await db.categories.find_one({"id": payload.category_id}, {"_id": 0, "id": 1})
-    if not category:
-        raise HTTPException(status_code=400, detail="category_id not found")
+    existing = await session.execute(select(Attribute).where(Attribute.key == key))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Attribute key already exists")
 
-    country_code = payload.country_code.upper() if payload.country_code else None
-    if country_code:
-        _assert_country_scope(country_code, current_user)
+    attribute = Attribute(
+        key=key,
+        name={"tr": payload.name.strip()},
+        attribute_type=payload.type,
+        is_required=bool(payload.required_flag),
+        is_filterable=bool(payload.filterable_flag),
+        is_active=payload.active_flag if payload.active_flag is not None else True,
+    )
+    session.add(attribute)
+    await session.flush()
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    attr_id = str(uuid.uuid4())
-    doc = {
-        "id": attr_id,
-        "category_id": payload.category_id,
-        "name": payload.name.strip(),
-        "key": key,
-        "type": payload.type,
-        "required_flag": bool(payload.required_flag),
-        "filterable_flag": bool(payload.filterable_flag),
-        "options": payload.options,
-        "country_code": country_code,
-        "active_flag": payload.active_flag if payload.active_flag is not None else True,
-        "created_at": now_iso,
-        "updated_at": now_iso,
-    }
-    audit_doc = {
-        "id": str(uuid.uuid4()),
-        "event_type": "ATTRIBUTE_CHANGE",
-        "actor_id": current_user["id"],
-        "actor_role": current_user.get("role"),
-        "country_code": country_code,
-        "subject_type": "attribute",
-        "subject_id": attr_id,
-        "action": "create",
-        "created_at": now_iso,
-        "metadata": {"key": doc["key"], "category_id": doc["category_id"]},
-    }
-    await db.audit_logs.insert_one(audit_doc)
-    try:
-        await db.attributes.insert_one(doc)
-    except Exception as e:
-        if "E11000" in str(e):
-            raise HTTPException(status_code=409, detail="Attribute key already exists")
-        raise
-    return {"attribute": _normalize_attribute_doc(doc)}
+    mapping = CategoryAttributeMap(
+        category_id=category_uuid,
+        attribute_id=attribute.id,
+        is_required_override=bool(payload.required_flag),
+        inherit_to_children=True,
+        is_active=True,
+    )
+    session.add(mapping)
+
+    if payload.options:
+        for option in payload.options:
+            label = option.strip()
+            if not label:
+                continue
+            session.add(
+                AttributeOption(
+                    attribute_id=attribute.id,
+                    value=label.lower().replace(" ", "_"),
+                    label={"tr": label},
+                    is_active=True,
+                )
+            )
+
+    await _write_audit_log_sql(
+        session=session,
+        action="ATTRIBUTE_CREATE",
+        actor=current_user,
+        resource_type="attribute",
+        resource_id=str(attribute.id),
+        metadata={"key": attribute.key, "category_id": payload.category_id},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    await session.refresh(attribute)
+    return {"attribute": _serialize_attribute_sql(attribute, payload.category_id)}
 
 
 @api_router.patch("/admin/attributes/{attribute_id}")
