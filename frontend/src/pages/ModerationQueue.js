@@ -36,6 +36,7 @@ const NEEDS_REVISION_REASONS_V1 = [
 
 const SLA_WARNING_SECONDS = 12 * 60 * 60;
 const SLA_CRITICAL_SECONDS = 24 * 60 * 60;
+const FREEZE_TOOLTIP_TEXT = 'Moderation Freeze aktif. İşlem yapılamaz.';
 
 
 export default function ModerationQueue({
