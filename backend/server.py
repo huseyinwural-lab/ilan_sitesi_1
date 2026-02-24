@@ -9405,13 +9405,15 @@ async def admin_reject_individual_application(
 
 
 @api_router.get("/countries")
-async def list_countries(request: Request, current_user=Depends(get_current_user)):
-    db = request.app.state.db
-    # Countries list is global; still resolve context for uniform audit/error handling
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    docs = await db.countries.find({}, {"_id": 0}).to_list(length=200)
-    docs.sort(key=lambda x: x.get("code", ""))
-    return docs
+async def list_countries(
+    request: Request,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
+    result = await session.execute(select(Country).order_by(Country.code.asc()))
+    countries = result.scalars().all()
+    return [_normalize_country_sql(country) for country in countries]
 
  
 
