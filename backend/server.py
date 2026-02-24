@@ -12111,12 +12111,15 @@ async def admin_force_unpublish_listing(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0, "status": 1})
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
+    try:
+        listing_uuid = uuid.UUID(listing_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid listing id") from exc
+    listing = await session.get(Listing, listing_uuid)
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
-    if listing.get("status") != "published":
+    if listing.status != "published":
         raise HTTPException(status_code=400, detail="Only published listings can be force-unpublished")
 
     updated = await _admin_listing_action(
