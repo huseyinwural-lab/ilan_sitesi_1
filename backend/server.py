@@ -15186,7 +15186,7 @@ async def admin_create_system_setting(
         country_code=country_code,
         is_readonly=bool(payload.is_readonly),
         description=payload.description,
-        moderation_freeze_reason=payload.moderation_freeze_reason,
+        moderation_freeze_reason=normalized_reason,
     )
     session.add(setting)
     await session.flush()
