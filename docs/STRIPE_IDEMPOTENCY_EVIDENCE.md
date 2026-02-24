@@ -34,8 +34,8 @@ curl -X POST {BASE}/api/payments/create-checkout-session \
 ```
 
 ## Response Özetleri
-- 1. çağrı: `idempotency_reused=false`, `session_id=cs_test_a1kIR5L...`
-- 2. çağrı: `idempotency_reused=true`, `session_id=cs_test_a1kIR5L...`
+- 1. çağrı: `idempotency_reused=false`, `session_id=cs_test_a19IYb...`
+- 2. çağrı: `idempotency_reused=true`, `session_id=cs_test_a19IYb...`
 
 ## DB Kayıt Kontrolü
 ```
