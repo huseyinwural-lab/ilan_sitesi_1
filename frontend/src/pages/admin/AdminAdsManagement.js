@@ -71,6 +71,9 @@ export default function AdminAdsManagement() {
     fetchAnalytics();
   }, [activeTab, range, customStart, customEnd]);
 
+  const totals = analytics?.totals || { impressions: 0, clicks: 0, ctr: 0 };
+  const placementStats = Array.isArray(analytics?.placements) ? analytics.placements : [];
+
   const handleCreate = async () => {
     setStatus('');
     const payload = {
