@@ -9578,7 +9578,7 @@ async def update_country(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     allowed = {"is_enabled", "default_currency", "default_language", "support_email"}
     payload = {k: v for k, v in data.items() if k in allowed}
     if not payload:
