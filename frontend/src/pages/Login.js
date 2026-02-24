@@ -34,7 +34,7 @@ export default function Login({ portalContext = 'account' }) {
     setLoading(true);
 
     try {
-      const u = await login(email, password);
+      const u = await login(email, password, totpCode || undefined);
 
       if (showPortalSelector) {
         const userPortal = portalFromScope(u?.portal_scope) || ROLE_TO_PORTAL[u?.role] || PORTALS.PUBLIC;
