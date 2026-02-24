@@ -17660,59 +17660,6 @@ async def _dashboard_invoice_totals(conditions: List[Any]) -> tuple[float, Dict[
     return round(total_amount, 2), {k: round(v, 2) for k, v in totals.items()}
 
 
-async def _dashboard_kpis(db, effective_countries: Optional[List[str]], include_revenue: bool) -> Dict[str, Any]:
-    now = datetime.now(timezone.utc)
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    week_start = now - timedelta(days=DASHBOARD_KPI_DAYS)
-
-    listing_query: Dict[str, Any] = {"created_at": {"$gte": today_start.isoformat()}}
-    listing_week_query: Dict[str, Any] = {"created_at": {"$gte": week_start.isoformat()}}
-    user_query: Dict[str, Any] = {"created_at": {"$gte": today_start.isoformat()}}
-    user_week_query: Dict[str, Any] = {"created_at": {"$gte": week_start.isoformat()}}
-
-    if effective_countries:
-        listing_query["country"] = {"$in": effective_countries}
-        listing_week_query["country"] = {"$in": effective_countries}
-        user_query["country_code"] = {"$in": effective_countries}
-        user_week_query["country_code"] = {"$in": effective_countries}
-
-    today_listings = await db.vehicle_listings.count_documents(listing_query)
-    week_listings = await db.vehicle_listings.count_documents(listing_week_query)
-    today_users = await db.users.count_documents(user_query)
-    week_users = await db.users.count_documents(user_week_query)
-
-    today_revenue_total = None
-    today_revenue_totals = None
-    week_revenue_total = None
-    week_revenue_totals = None
-
-    if include_revenue:
-        conditions_base: List[Any] = [AdminInvoice.status == "paid"]
-        if effective_countries:
-            conditions_base.append(AdminInvoice.country_code.in_(effective_countries))
-
-        today_revenue_total, today_revenue_totals = await _dashboard_invoice_totals(
-            [*conditions_base, AdminInvoice.paid_at >= today_start]
-        )
-        week_revenue_total, week_revenue_totals = await _dashboard_invoice_totals(
-            [*conditions_base, AdminInvoice.paid_at >= week_start]
-        )
-
-    return {
-        "today": {
-            "new_listings": today_listings,
-            "new_users": today_users,
-            "revenue_total": today_revenue_total,
-            "revenue_currency_totals": today_revenue_totals,
-        },
-        "last_7_days": {
-            "new_listings": week_listings,
-            "new_users": week_users,
-            "revenue_total": week_revenue_total,
-            "revenue_currency_totals": week_revenue_totals,
-        },
-    }
-
 
 async def _dashboard_trends(
     db, effective_countries: Optional[List[str]], include_revenue: bool, window_days: int
