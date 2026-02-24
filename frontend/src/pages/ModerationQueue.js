@@ -768,7 +768,8 @@ export default function ModerationQueue({
               </button>
               <button
                 onClick={submitBulkDialog}
-                className={`h-9 px-3 rounded-md text-white text-sm ${
+                disabled={freezeActive}
+                className={`h-9 px-3 rounded-md text-white text-sm disabled:opacity-50 ${
                   bulkDialog.actionType === 'approve'
                     ? 'bg-emerald-600 hover:bg-emerald-700'
                     : 'bg-rose-600 hover:bg-rose-700'
