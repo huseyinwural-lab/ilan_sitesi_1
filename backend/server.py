@@ -9954,6 +9954,17 @@ def _extract_setting_bool(value: Any) -> bool:
     return False
 
 
+def _normalize_freeze_reason(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    trimmed = value.strip()
+    if not trimmed:
+        return None
+    if len(trimmed) > MODERATION_FREEZE_REASON_MAX_LEN:
+        return trimmed[:MODERATION_FREEZE_REASON_MAX_LEN]
+    return trimmed
+
+
 async def _get_system_setting_by_key(
     session: AsyncSession, key: str, country_code: Optional[str] = None
 ) -> Optional[SystemSetting]:
