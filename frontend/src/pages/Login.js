@@ -284,6 +284,22 @@ export default function Login({ portalContext = 'account' }) {
               </div>
             </div>
 
+            {showTotpInput && (
+              <div className="space-y-2" data-testid="login-totp-field">
+                <label className="text-sm font-medium" htmlFor="totp">2FA Kodu</label>
+                <input
+                  id="totp"
+                  type="text"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value)}
+                  className="w-full h-11 px-4 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  placeholder="6 haneli doğrulama kodu"
+                  data-testid="login-totp-code"
+                />
+                <p className="text-xs text-muted-foreground" data-testid="login-totp-help">Authenticator uygulamanızdaki kodu girin.</p>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-700" data-testid="login-helper-row">
               <label className="flex items-center gap-2" data-testid="login-remember-me">
                 <input
