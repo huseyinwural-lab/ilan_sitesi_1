@@ -19058,7 +19058,24 @@ async def list_my_listings(
         await session.execute(select(func.count()).select_from(Listing).where(Listing.user_id == user_uuid))
     ).scalar_one()
 
-    items = [_listing_to_dict(row) for row in rows]
+    listing_ids = [row.id for row in rows]
+    moderation_reason_map: Dict[uuid.UUID, Optional[str]] = {}
+    if listing_ids:
+        moderation_rows = await session.execute(
+            select(ModerationItem)
+            .where(ModerationItem.listing_id.in_(listing_ids))
+            .order_by(ModerationItem.listing_id, desc(ModerationItem.updated_at))
+        )
+        for item in moderation_rows.scalars().all():
+            if item.listing_id not in moderation_reason_map and item.reason:
+                moderation_reason_map[item.listing_id] = item.reason
+
+    items = []
+    for row in rows:
+        payload = _listing_to_dict(row)
+        payload["moderation_reason"] = moderation_reason_map.get(row.id)
+        items.append(payload)
+
     return {"items": items, "pagination": {"total": int(total or 0), "page": safe_page, "limit": safe_limit}}
 
 
