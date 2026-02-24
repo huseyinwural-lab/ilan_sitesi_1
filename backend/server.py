@@ -2526,17 +2526,22 @@ def _send_support_received_email(to_email: str, application_id: str, subject_tex
         raise HTTPException(status_code=502, detail="Failed to send support email")
 
 
-async def _send_message_notification_email(db, recipient_id: str, thread: dict, message: dict) -> None:
+async def _send_message_notification_email(session: AsyncSession, recipient_id: str, thread: dict, message: dict) -> None:
     sendgrid_key = os.environ.get("SENDGRID_API_KEY")
     sender_email = os.environ.get("SENDER_EMAIL")
-    if not sendgrid_key or not sender_email or db is None:
+    if not sendgrid_key or not sender_email or session is None:
         return
 
-    recipient = await db.users.find_one({"id": recipient_id}, {"_id": 0})
-    if not recipient or not recipient.get("email"):
+    try:
+        recipient_uuid = uuid.UUID(str(recipient_id))
+    except ValueError:
         return
 
-    prefs = recipient.get("notification_prefs") or {}
+    recipient = await session.get(SqlUser, recipient_uuid)
+    if not recipient or not recipient.email:
+        return
+
+    prefs = getattr(recipient, "notification_prefs", None) or {}
     if not prefs.get("email_enabled", True):
         return
 
