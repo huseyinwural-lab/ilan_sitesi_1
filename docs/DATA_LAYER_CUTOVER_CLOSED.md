@@ -1,7 +1,15 @@
 # DATA_LAYER_CUTOVER_CLOSED
 
-**Tarih:** 2026-02-24
+**Tarih:** 2026-02-24 11:21:40 UTC
+**Ortam URL:** https://mongo-tasfiye.preview.emergentagent.com
+**Commit Ref:** 33a58b0d
+**Durum:** CLOSED
 **P0 Kapsam Notu:** P0 = Mongo runtime 0-iz + 520=0 + Dealer/Consumer E2E
+
+## P0 Kapanış Maddeleri (CLOSED)
+- Mongo runtime 0-iz: **CLOSED**
+- 520=0: **CLOSED**
+- Dealer + Consumer E2E: **CLOSED**
 
 ## Scope
 - Mongo runtime izlerinin tamamen kaldırılması
