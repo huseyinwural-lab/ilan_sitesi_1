@@ -575,7 +575,8 @@ export default function ModerationQueue({
                 className="mx-4 mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800"
                 data-testid="moderation-freeze-detail-banner"
               >
-                Moderation Freeze aktif – yalnızca görüntüleme yapılabilir.
+                <div data-testid="moderation-freeze-detail-banner-text">Moderation Freeze aktif – yalnızca görüntüleme yapılabilir.</div>
+                {renderFreezeReason('moderation-freeze-detail-banner-reason')}
               </div>
             )}
 
