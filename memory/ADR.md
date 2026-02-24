@@ -849,3 +849,40 @@ graph LR
 **Karar:** Kalan ücretsiz ilan hakkı dashboard’da gösterilir.
 
 **Gerekçe:** Monetization şeffaflığı.
+
+
+---
+
+## ADR-UH1-CLOSEOUT-EVIDENCE — Evidence Matrix standardı
+
+**Karar:** UH1 closeout için screenshot + curl log + route doğrulama zorunlu.
+
+**Gerekçe:** UI fazları görsel kanıt olmadan kapatılmayacak.
+
+**Etkileri / trade-off:**
+- (+) Audit izlenebilirliği
+- (-) Dokümantasyon süresi artar
+
+---
+
+## ADR-ADMIN-FINAL-NEXT — Sonraki faz Admin Operasyonel Finalizasyon
+
+**Karar:** Public tasarım öncesi Admin operasyonel finalizasyon başlatılır.
+
+**Gerekçe:** Gelir, risk ve moderation merkezi Admin’dir.
+
+**Etkileri / trade-off:**
+- (+) Sistem kontrolü artar
+- (-) Public dönüşüm gecikir
+
+---
+
+## ADR-UH1-QUICK-PREVIEW-P1 — Quick Preview modal P1
+
+**Karar:** Quick Preview modal P1 enhancement olarak planlanır.
+
+**Gerekçe:** Değer üretir ama core değil.
+
+**Etkileri / trade-off:**
+- (+) Etkileşim artar
+- (-) Dashboard karmaşıklığı artabilir
