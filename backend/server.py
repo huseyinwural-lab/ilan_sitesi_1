@@ -4327,71 +4327,72 @@ async def update_user(
     payload: UpdateUserPayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    target = await db.users.find_one({"id": user_id}, {"_id": 0})
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    target = result.scalar_one_or_none()
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Enforce country scope for country_admin
     if current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
-        target_country = target.get("country_code")
+        target_country = target.country_code
         if "*" not in scope and target_country and target_country not in scope:
-            # Audit unauthorized attempt
-            await db.audit_logs.insert_one(
-                {
-                    "id": str(uuid.uuid4()),
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                    "event_type": "UNAUTHORIZED_ROLE_CHANGE_ATTEMPT",
-                    "action": "UNAUTHORIZED_ROLE_CHANGE_ATTEMPT",
-                    "resource_type": "user",
-                    "resource_id": user_id,
-                    "target_user_id": user_id,
-                    "changed_by_admin_id": current_user.get("id"),
-                    "previous_role": target.get("role"),
+            await _write_audit_log_sql(
+                session=session,
+                action="UNAUTHORIZED_ROLE_CHANGE_ATTEMPT",
+                actor={"id": current_user.get("id"), "email": current_user.get("email")},
+                resource_type="user",
+                resource_id=str(target.id),
+                metadata={
+                    "previous_role": target.role,
                     "new_role": payload.role,
                     "country_scope": current_user.get("country_scope") or [],
                     "mode": getattr(ctx, "mode", "global"),
                     "country_code": target_country,
-                }
+                },
+                request=request,
+                country_code=target_country,
             )
+            await session.commit()
             raise HTTPException(status_code=403, detail="Country scope forbidden")
 
     if payload.role is None:
         return {"ok": True}
 
-    prev_role = target.get("role")
+    prev_role = target.role
     new_role = payload.role
+    if prev_role == new_role:
+        return {"ok": True}
 
-    # Role update + audit: "audit yoksa update yok" garantisi
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "event_type": "ADMIN_ROLE_CHANGE",
-        "action": "ADMIN_ROLE_CHANGE",
-        "resource_type": "user",
-        "resource_id": user_id,
-        "target_user_id": user_id,
-        "changed_by_admin_id": current_user.get("id"),
-        "previous_role": prev_role,
-        "new_role": new_role,
-        "country_scope": current_user.get("country_scope") or [],
-        "mode": getattr(ctx, "mode", "global"),
-        "country_code": target.get("country_code"),
-        "applied": False,
-    }
+    target.role = new_role
+    target.updated_at = datetime.now(timezone.utc)
+    await session.commit()
 
-    await db.audit_logs.insert_one(audit_doc)
-
-    res = await db.users.update_one({"id": user_id, "role": prev_role}, {"$set": {"role": new_role, "updated_at": datetime.now(timezone.utc).isoformat()}})
-    if res.matched_count == 0:
-        raise HTTPException(status_code=409, detail="Role changed concurrently")
-
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    await _write_audit_log_sql(
+        session=session,
+        action="ADMIN_ROLE_CHANGE",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="user",
+        resource_id=str(target.id),
+        metadata={
+            "previous_role": prev_role,
+            "new_role": new_role,
+            "country_scope": current_user.get("country_scope") or [],
+            "mode": getattr(ctx, "mode", "global"),
+            "country_code": target.country_code,
+        },
+        request=request,
+        country_code=target.country_code,
+    )
+    await session.commit()
 
     return {"ok": True}
 
