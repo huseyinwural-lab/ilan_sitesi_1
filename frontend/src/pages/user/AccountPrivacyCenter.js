@@ -143,6 +143,13 @@ export default function AccountPrivacyCenter() {
     }
   };
 
+  const formatDate = (value) => {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '-';
+    return parsed.toLocaleString();
+  };
+
   const handleDeleteAccount = async () => {
     setDeleteStatus('');
     try {
