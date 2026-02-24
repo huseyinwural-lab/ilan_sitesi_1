@@ -20142,6 +20142,101 @@ async def upload_ad_asset(
     return {"ok": True, "asset_url": ad.asset_url}
 
 
+def _parse_analytics_datetime(value: str, is_end: bool = False) -> datetime:
+    dt = datetime.fromisoformat(value)
+    if len(value) == 10:
+        if is_end:
+            dt = datetime.combine(dt.date(), datetime.max.time())
+        else:
+            dt = datetime.combine(dt.date(), datetime.min.time())
+    if not dt.tzinfo:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def _resolve_analytics_window(range_key: str, start_at: Optional[str], end_at: Optional[str]) -> tuple[datetime, datetime]:
+    now = datetime.now(timezone.utc)
+    if start_at and end_at:
+        return _parse_analytics_datetime(start_at), _parse_analytics_datetime(end_at, is_end=True)
+    if range_key not in {"7d", "30d"}:
+        raise HTTPException(status_code=400, detail="Invalid range")
+    days = 7 if range_key == "7d" else 30
+    return now - timedelta(days=days), now
+
+
+@api_router.get("/admin/ads/analytics")
+async def get_ads_analytics(
+    range: str = "30d",
+    start_at: Optional[str] = None,
+    end_at: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    start_dt, end_dt = _resolve_analytics_window(range, start_at, end_at)
+
+    impression_stmt = select(func.count()).select_from(AdImpression).where(
+        AdImpression.created_at >= start_dt,
+        AdImpression.created_at <= end_dt,
+    )
+    click_stmt = select(func.count()).select_from(AdClick).where(
+        AdClick.created_at >= start_dt,
+        AdClick.created_at <= end_dt,
+    )
+
+    impressions_total = int((await session.execute(impression_stmt)).scalar() or 0)
+    clicks_total = int((await session.execute(click_stmt)).scalar() or 0)
+    ctr_total = round((clicks_total / impressions_total) * 100, 2) if impressions_total else 0.0
+
+    impressions_by = dict(
+        (row[0], int(row[1]))
+        for row in (
+            await session.execute(
+                select(AdImpression.placement, func.count())
+                .where(AdImpression.created_at >= start_dt, AdImpression.created_at <= end_dt)
+                .group_by(AdImpression.placement)
+            )
+        ).all()
+    )
+    clicks_by = dict(
+        (row[0], int(row[1]))
+        for row in (
+            await session.execute(
+                select(AdClick.placement, func.count())
+                .where(AdClick.created_at >= start_dt, AdClick.created_at <= end_dt)
+                .group_by(AdClick.placement)
+            )
+        ).all()
+    )
+
+    placements_payload = []
+    for placement_key, label in AD_PLACEMENTS.items():
+        imp = impressions_by.get(placement_key, 0)
+        clk = clicks_by.get(placement_key, 0)
+        ctr = round((clk / imp) * 100, 2) if imp else 0.0
+        placements_payload.append(
+            {
+                "placement": placement_key,
+                "label": label,
+                "impressions": imp,
+                "clicks": clk,
+                "ctr": ctr,
+            }
+        )
+
+    return {
+        "range": {
+            "start_at": start_dt.isoformat(),
+            "end_at": end_dt.isoformat(),
+        },
+        "totals": {
+            "impressions": impressions_total,
+            "clicks": clicks_total,
+            "ctr": ctr_total,
+        },
+        "placements": placements_payload,
+    }
+
+
 @api_router.post("/v1/doping/requests")
 async def create_doping_request(
     payload: DopingRequestPayload,
