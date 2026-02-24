@@ -10251,7 +10251,7 @@ def _ensure_moderation_rbac(current_user: dict):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
 
-def _ensure_bulk_listings_pending(session: AsyncSession, listing_ids: List[str]) -> None:
+async def _ensure_bulk_listings_pending(session: AsyncSession, listing_ids: List[str]) -> None:
     if not listing_ids:
         raise HTTPException(status_code=400, detail="listing_ids is required")
 
