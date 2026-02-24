@@ -14976,6 +14976,7 @@ async def admin_list_system_settings(
                 "country_code": item.country_code,
                 "is_readonly": item.is_readonly,
                 "description": item.description,
+                "moderation_freeze_reason": item.moderation_freeze_reason,
                 "created_at": item.created_at.isoformat() if item.created_at else None,
                 "updated_at": item.updated_at.isoformat() if item.updated_at else None,
             }
