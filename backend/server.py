@@ -17118,10 +17118,9 @@ async def admin_create_vehicle_model(
     payload: VehicleModelCreatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    # Permission check already handled by dependency
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     slug = payload.slug.strip().lower()
     if not SLUG_PATTERN.match(slug):
@@ -17131,43 +17130,44 @@ async def admin_create_vehicle_model(
     if not vehicle_type or vehicle_type not in VEHICLE_TYPE_SET:
         raise HTTPException(status_code=400, detail="vehicle_type invalid")
 
-    make = await db.vehicle_makes.find_one({"id": payload.make_id}, {"_id": 0, "id": 1, "country_code": 1})
-    if not make:
-        raise HTTPException(status_code=400, detail="make_id not found")
-
-    now_iso = datetime.now(timezone.utc).isoformat()
-    model_id = str(uuid.uuid4())
-    doc = {
-        "id": model_id,
-        "make_id": payload.make_id,
-        "name": payload.name.strip(),
-        "slug": slug,
-        "vehicle_type": vehicle_type,
-        "country_code": make.get("country_code"),
-        "active_flag": payload.active_flag if payload.active_flag is not None else True,
-        "created_at": now_iso,
-        "updated_at": now_iso,
-    }
-    audit_doc = {
-        "id": str(uuid.uuid4()),
-        "event_type": "VEHICLE_MASTER_DATA_CHANGE",
-        "actor_id": current_user["id"],
-        "actor_role": current_user.get("role"),
-        "country_code": make.get("country_code"),
-        "subject_type": "vehicle_model",
-        "subject_id": model_id,
-        "action": "create",
-        "created_at": now_iso,
-        "metadata": {"slug": doc["slug"], "name": doc["name"], "make_id": payload.make_id, "vehicle_type": vehicle_type},
-    }
-    await db.audit_logs.insert_one(audit_doc)
     try:
-        await db.vehicle_models.insert_one(doc)
-    except Exception as e:
-        if "E11000" in str(e):
-            raise HTTPException(status_code=409, detail="Model slug already exists")
-        raise
-    return {"model": _normalize_vehicle_model_doc(doc)}
+        make_uuid = uuid.UUID(payload.make_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid make id") from exc
+
+    make = await session.get(VehicleMake, make_uuid)
+    if not make:
+        raise HTTPException(status_code=404, detail="Make not found")
+
+    existing = await session.execute(
+        select(VehicleModel).where(VehicleModel.make_id == make_uuid, VehicleModel.slug == slug)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Model slug already exists")
+
+    model = VehicleModel(
+        make_id=make_uuid,
+        name=payload.name.strip(),
+        slug=slug,
+        vehicle_type=vehicle_type,
+        is_active=payload.active_flag if payload.active_flag is not None else True,
+    )
+    session.add(model)
+    await session.flush()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="VEHICLE_MODEL_CREATE",
+        actor=current_user,
+        resource_type="vehicle_model",
+        resource_id=str(model.id),
+        metadata={"slug": model.slug, "name": model.name, "make_id": payload.make_id},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    return {"model": _normalize_vehicle_model_doc(model)}
 
 
 @api_router.patch("/admin/vehicle-models/{model_id}")
