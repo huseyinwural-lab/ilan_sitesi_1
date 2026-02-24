@@ -291,7 +291,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - ✅ Admin V1 Phase B (RBAC Final Freeze): MATRIX/ENDPOINT MAP FREEZE v1 + negatif test kanıtları + portal guard doğrulaması
 - ✅ Preview GDPR export + soft delete E2E kanıtları + audit doğrulaması
 - ✅ Honeypot 400 + register_honeypot_hit audit doğrulaması (preview)
-- Stripe idempotency testi (geçerli test API key sağlanınca)
+- ✅ Stripe idempotency testi (Checkout flow)
 
 ### P0.1 (Güvenlik Doğrulama)
 - Login rate limit tetikleme testi (preview)
