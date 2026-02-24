@@ -334,6 +334,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 
 ### P2
 - Kayıtlı Arama/Alert (P2 backlog, P1 kapsamına girmez)
+- P2 Saved Search Integration → /architecture/ui/P2_SAVED_SEARCH_INTEGRATION.md
+- P2 Quota API Binding → /architecture/ui/P2_QUOTA_API_BINDING.md
 - VIES VAT doğrulama (API)
 - GDPR CSV export
 - Public search + admin listings Mongo bağımlılıklarının SQL’e taşınması
