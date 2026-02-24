@@ -33,3 +33,11 @@
 | moderation_reason payload | curl | `GET /api/v1/listings/my?limit=1` JSON örneği | PASS |
 | /account route 200 | route check | `/account` | PASS |
 | /account/security route 200 | route check | `/account/security` | PASS |
+
+
+## Curl Evidence
+```
+GET /api/v1/listings/my?limit=1
+{'id': 'd91de127-7397-4c6d-b1ed-e7556713591c', 'status': 'published', 'moderation_reason': None}
+```
+(Full response: `/tmp/uh1_listings_my.json`)
