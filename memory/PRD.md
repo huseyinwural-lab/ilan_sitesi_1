@@ -56,6 +56,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P44 Site Content Migration (2026-02-24):** migration_dry_run PASS; p44 migration idempotent guard; alembic upgrade heads ile şema başa taşındı.
 - EU panel dokümantasyon paketi (/app/docs/CONSUMER_IA_V1.md, DEALER_IA_V1.md, PRIVACY_CENTER_EU.md, DATA_MODEL_SPEC_EU_PROFILES_V1.md)
 - ConsumerProfile ve DealerProfile modelleri
 - DealerProfile için gdpr_deleted_at alanı (model + migration: p34_dealer_gdpr_deleted_at)
