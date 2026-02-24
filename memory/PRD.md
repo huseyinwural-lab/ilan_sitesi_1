@@ -294,6 +294,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Moderation freeze window planı kilitlendi.
 - RBAC CI PR comment workflow güncellendi + karar dokümante edildi.
 - Moderation Freeze UI: Admin System Settings toggle metni güncellendi + Moderation Queue banner/tooltip/disable davranışı tamamlandı.
+- Moderation Freeze reason alanı + audit event (ENABLED/DISABLED) + banner reason gösterimi eklendi.
+- Moderation Freeze evidence + closeout: MODERATION_FREEZE_EVIDENCE.md, MODERATION_FREEZE_CLOSED.md.
+- Privacy Center Export History (gdpr_exports tablosu + 30 gün retention + /account/privacy Export Geçmişi tabı) tamamlandı.
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
