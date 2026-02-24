@@ -12166,54 +12166,49 @@ async def create_report(
     payload: ReportCreatePayload,
     request: Request,
     current_user=Depends(get_current_user_optional),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
     listing_id = payload.listing_id
-    listing = await db.vehicle_listings.find_one({"id": listing_id}, {"_id": 0})
+    try:
+        listing_uuid = uuid.UUID(listing_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid listing id") from exc
+
+    result = await session.execute(select(Listing).where(Listing.id == listing_uuid))
+    listing = result.scalar_one_or_none()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
-    if listing.get("status") != "published":
+    if listing.status not in {"published", "active"}:
         raise HTTPException(status_code=400, detail="Only published listings can be reported")
 
     reason, reason_note = _validate_report_reason(payload.reason, payload.reason_note)
     reporter_user_id = current_user.get("id") if current_user else None
     _check_report_rate_limit(request, listing_id, reporter_user_id)
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    report_id = str(uuid.uuid4())
-    report_doc = {
-        "id": report_id,
-        "listing_id": listing_id,
-        "reporter_user_id": reporter_user_id,
-        "reason": reason,
-        "reason_note": reason_note,
-        "status": "open",
-        "country_code": listing.get("country"),
-        "created_at": now_iso,
-        "updated_at": None,
-        "handled_by_admin_id": None,
-    }
-
-    await db.reports.insert_one(report_doc)
-
-    await db.audit_logs.insert_one(
-        {
-            "id": str(uuid.uuid4()),
-            "created_at": now_iso,
-            "event_type": "REPORT_CREATED",
-            "action": "REPORT_CREATED",
-            "report_id": report_id,
-            "listing_id": listing_id,
-            "user_id": reporter_user_id,
-            "user_email": current_user.get("email") if current_user else None,
-            "country_code": listing.get("country"),
-            "reason": reason,
-            "resource_type": "report",
-            "resource_id": report_id,
-        }
+    report = Report(
+        listing_id=listing.id,
+        reporter_user_id=_safe_uuid(reporter_user_id) if reporter_user_id else None,
+        reason=reason,
+        reason_note=reason_note,
+        status="open",
+        country_code=listing.country,
     )
+    session.add(report)
+    await session.flush()
 
-    return {"ok": True, "report_id": report_id, "status": "open"}
+    await _write_audit_log_sql(
+        session=session,
+        action="REPORT_CREATED",
+        actor=current_user or {"id": None, "email": None, "role": None},
+        resource_type="report",
+        resource_id=str(report.id),
+        metadata={"listing_id": listing_id, "reason": reason},
+        request=request,
+        country_code=listing.country,
+    )
+    await session.commit()
+
+    return {"ok": True, "report_id": str(report.id), "status": "open"}
 
 
 @api_router.get("/admin/reports")
