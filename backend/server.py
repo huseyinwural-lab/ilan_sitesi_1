@@ -2991,6 +2991,7 @@ REPORT_REASONS_V1 = {
 
 REPORT_STATUS_SET = {"open", "in_review", "resolved", "dismissed"}
 KEY_NAMESPACE_REGEX = re.compile(r"^[a-z0-9]+(\.[a-z0-9_]+)+$")
+MODERATION_FREEZE_SETTING_KEY = "moderation.freeze.active"
 
 REPORT_STATUS_TRANSITIONS = {
     "open": {"in_review"},
