@@ -95,6 +95,7 @@ from app.models.category_schema_version import CategorySchemaVersion
 from app.models.core import AuditLog, Country
 from app.models.attribute import Attribute, AttributeOption, CategoryAttributeMap
 from app.models.dealer_profile import DealerProfile
+from app.models.dealer import DealerApplication, Dealer, DealerUser
 from app.models.consumer_profile import ConsumerProfile
 from app.models.auth import UserCredential, EmailVerificationToken
 from app.utils.slug import slugify
