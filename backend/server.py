@@ -5006,55 +5006,75 @@ async def admin_user_detail(
     user_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    listing_stats_map: Dict[str, Dict[str, Any]] = {}
-    listing_stats = await db.vehicle_listings.aggregate([
-        {"$match": {"created_by": user_id}},
-        {
-            "$group": {
-                "_id": "$created_by",
-                "total": {"$sum": 1},
-                "active": {
-                    "$sum": {
-                        "$cond": [
-                            {"$eq": ["$status", "published"]},
-                            1,
-                            0,
-                        ]
-                    }
-                },
-            }
-        },
-    ]).to_list(length=10)
-    if listing_stats:
-        listing_stats_map = {
-            listing_stats[0].get("_id"): {
-                "total": listing_stats[0].get("total", 0),
-                "active": listing_stats[0].get("active", 0),
-            }
+    stats_result = await session.execute(
+        select(
+            func.count(Listing.id).label("total"),
+            func.sum(case((Listing.status == "published", 1), else_=0)).label("active"),
+        ).where(Listing.user_id == user.id)
+    )
+    stats_row = stats_result.one()
+    listing_stats_map = {
+        str(user.id): {
+            "total": int(stats_row.total or 0),
+            "active": int(stats_row.active or 0),
         }
+    }
 
     plan_map: Dict[str, Any] = {}
-    if user.get("plan_id"):
-        plan = await db.plans.find_one({"id": user.get("plan_id")}, {"_id": 0})
+    if user.plan_id:
+        plan = await session.get(Plan, user.plan_id)
         if plan:
-            plan_map = {plan.get("id"): plan}
+            plan_map[str(plan.id)] = {
+                "id": str(plan.id),
+                "name": plan.name,
+            }
 
-    audit_logs = await db.audit_logs.find(
-        {"$or": [{"actor_id": user_id}, {"target_id": user_id}]},
-        {"_id": 0, "event_type": 1, "created_at": 1, "action": 1},
-    ).sort("created_at", -1).limit(10).to_list(length=10)
+    audit_rows = (
+        await session.execute(
+            select(AuditLog)
+            .where(or_(AuditLog.user_id == user.id, AuditLog.resource_id == str(user.id)))
+            .order_by(desc(AuditLog.created_at))
+            .limit(10)
+        )
+    ).scalars().all()
+
+    user_doc = {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "role": user.role,
+        "country_code": user.country_code,
+        "country_scope": user.country_scope or [],
+        "status": user.status,
+        "is_active": user.is_active,
+        "deleted_at": user.deleted_at.isoformat() if user.deleted_at else None,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "last_login": user.last_login.isoformat() if user.last_login else None,
+        "is_verified": user.is_verified,
+        "phone_e164": user.phone_e164,
+        "plan_id": str(user.plan_id) if user.plan_id else None,
+        "plan_expires_at": user.plan_expires_at.isoformat() if user.plan_expires_at else None,
+    }
 
     return {
-        "user": _build_user_summary(user, listing_stats_map.get(user_id, {}), plan_map),
-        "audit_logs": audit_logs,
+        "user": _build_user_summary(user_doc, listing_stats_map.get(str(user.id), {}), plan_map),
+        "audit_logs": [_audit_log_sql_to_dict(row) for row in audit_rows],
         "listings_link": f"/admin/listings?owner_id={user_id}",
     }
 
