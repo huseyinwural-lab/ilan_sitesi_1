@@ -25,6 +25,37 @@ jobs:
           python -m pip install --upgrade pip
           pip install sqlalchemy psycopg2-binary
 
+      - name: Verify DB secrets
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DB_SSL_MODE: ${{ secrets.DB_SSL_MODE }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL secret missing";
+            exit 1;
+          fi
+          if [ -z "$DB_SSL_MODE" ]; then
+            echo "DB_SSL_MODE secret missing";
+            exit 1;
+          fi
+
+      - name: DB health check
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DB_SSL_MODE: ${{ secrets.DB_SSL_MODE }}
+        run: |
+          python - <<'PY'
+          import os
+          from sqlalchemy import create_engine, text
+
+          db_url = os.environ.get('DATABASE_URL')
+          ssl_mode = os.environ.get('DB_SSL_MODE')
+          engine = create_engine(db_url, connect_args={'sslmode': ssl_mode})
+          with engine.connect() as conn:
+              conn.execute(text('SELECT 1'))
+          print('DB health check OK')
+          PY
+
       - name: Run migration dry-run
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
