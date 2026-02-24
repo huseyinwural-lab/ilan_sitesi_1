@@ -12090,7 +12090,7 @@ async def admin_soft_delete_listing(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     updated = await _admin_listing_action(
         session=session,
         listing_id=listing_id,
