@@ -48,6 +48,28 @@ class User(Base):
     is_affiliate: Mapped[bool] = mapped_column(Boolean, default=False)
     referred_by_affiliate_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("affiliates.id"), nullable=True)
 
+    def get(self, key, default=None):
+        return getattr(self, key, default)
+
+    @property
+    def email_verified(self) -> bool:
+        return self.is_verified
+
+    @email_verified.setter
+    def email_verified(self, value: bool) -> None:
+        self.is_verified = value
+
+    @property
+    def default_country(self) -> str:
+        return self.country_code
+
+    @default_country.setter
+    def default_country(self, value: str) -> None:
+        if value is None:
+            self.country_code = value
+        else:
+            self.country_code = value.upper()
+
 class SignupAllowlist(Base):
     """Soft Launch Invite List"""
     __tablename__ = "signup_allowlist"
