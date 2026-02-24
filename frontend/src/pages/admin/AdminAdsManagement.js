@@ -166,7 +166,7 @@ export default function AdminAdsManagement() {
             />
           </div>
         </div>
-        {status e ' ' && (
+        {status && (
           <div className="text-xs text-emerald-600" data-testid="admin-ads-status">{status}</div>
         )}
         <button
