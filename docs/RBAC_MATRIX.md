@@ -1,7 +1,8 @@
 # RBAC_MATRIX
 
-**Son güncelleme:** 2026-02-23 23:12:45 UTC
+**Son güncelleme:** 2026-02-24 11:21:40 UTC
 **Phase:** B — RBAC Final Freeze (Source of Truth)
+**Durum:** FREEZE v1 (değişiklikler PR diff-onay zorunlu)
 
 ## İlke
 - **Deny-by-default** (allowlist yoksa erişim yok)
