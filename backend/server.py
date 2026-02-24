@@ -10406,6 +10406,7 @@ class SystemSettingCreatePayload(BaseModel):
     country_code: Optional[str] = None
     is_readonly: Optional[bool] = False
     description: Optional[str] = None
+    moderation_freeze_reason: Optional[str] = None
 
 
 class SystemSettingUpdatePayload(BaseModel):
@@ -10413,6 +10414,7 @@ class SystemSettingUpdatePayload(BaseModel):
     country_code: Optional[str] = None
     is_readonly: Optional[bool] = None
     description: Optional[str] = None
+    moderation_freeze_reason: Optional[str] = None
 
 
 class CloudflareConfigPayload(BaseModel):
