@@ -302,6 +302,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /account/security route eklendi + sol menü IA V2 güncellendi.
 - UH1 closeout + regression checklist + Quick Preview spec + P2 dependency dokümanları yayınlandı.
 - FAZ-ADMIN-FINAL Sprint1 dependency map + gap list + implementation order + ticket taslağı oluşturuldu.
+- AF Sprint1 migration impact analizi tamamlandı (/architecture/admin/AF_SPRINT1_MIGRATION_IMPACT.md).
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
