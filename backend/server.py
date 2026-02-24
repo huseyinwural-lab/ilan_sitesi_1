@@ -19688,15 +19688,16 @@ if RBAC_MISSING_POLICIES:
 
 # --- Admin Site Design / Ads / Doping / Footer / Info Pages ---
 AD_PLACEMENTS = {
-    "homepage_top_banner": "Homepage Üst Banner",
-    "category_right_vertical": "Kategori Sağ Dikey",
-    "category_top_banner": "Kategori Üst Banner",
-    "search_top_banner": "Arama Üst Banner",
-    "listing_inline": "Liste İçi Reklam",
-    "listing_detail_right": "İlan Detay Sağ",
+    "AD_HOME_TOP": "Anasayfa Üst Banner",
+    "AD_CATEGORY_RIGHT": "Kategori Sağ",
+    "AD_SEARCH_TOP": "Arama Üst Banner",
+    "AD_IN_FEED": "Akış İçi",
+    "AD_LISTING_RIGHT": "İlan Detay Sağ",
+    "AD_LOGIN_1": "Login Slot 1",
+    "AD_LOGIN_2": "Login Slot 2",
 }
 
-DOPING_STATUSES = {"requested", "paid", "admin_approved", "published", "expired"}
+DOPING_STATUSES = {"requested", "paid", "approved", "published", "expired"}
 
 
 class HeaderUpdatePayload(BaseModel):
