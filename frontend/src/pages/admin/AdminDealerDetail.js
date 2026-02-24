@@ -161,7 +161,9 @@ export default function AdminDealerDetailPage() {
             ))}
           </SelectContent>
         </Select>
-        {assignError 
+        {assignError && (
+          <div className="text-xs text-destructive" data-testid="dealer-plan-error">{assignError}</div>
+        )}
         {assignSuccess && (
           <div className="text-xs text-green-600" data-testid="dealer-plan-success">{assignSuccess}</div>
         )}
