@@ -12118,7 +12118,7 @@ async def _moderation_transition_sql(
             "reason": reason,
             "reason_note": reason_note,
         },
-        request=None,
+        request=request,
         country_code=listing.country,
     )
 
