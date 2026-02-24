@@ -19770,6 +19770,43 @@ def _is_active_window(start_at: Optional[datetime], end_at: Optional[datetime]) 
     return True
 
 
+AD_IMPRESSION_DEDUP_MINUTES = 30
+AD_BOT_KEYWORDS = ("bot", "spider", "crawl", "scanner")
+
+
+def _is_bot_user_agent(user_agent: str) -> bool:
+    ua = (user_agent or "").lower()
+    return any(keyword in ua for keyword in AD_BOT_KEYWORDS)
+
+
+def _hash_analytics_value(raw: str) -> str:
+    secret = os.environ.get("SECRET_KEY")
+    if not secret:
+        raise HTTPException(status_code=500, detail="Config missing")
+    return hashlib.sha256(f"{secret}:{raw}".encode("utf-8")).hexdigest()
+
+
+def _build_ad_hashes(request: Request) -> tuple[str, str]:
+    ip_raw = _get_client_ip(request) or "unknown"
+    ua_raw = request.headers.get("user-agent") or "unknown"
+    return _hash_analytics_value(ip_raw), _hash_analytics_value(ua_raw)
+
+
+async def _should_dedup_impression(session: AsyncSession, ad_id: uuid.UUID, ip_hash: str, ua_hash: str) -> bool:
+    window_start = datetime.now(timezone.utc) - timedelta(minutes=AD_IMPRESSION_DEDUP_MINUTES)
+    result = await session.execute(
+        select(AdImpression.id)
+        .where(
+            AdImpression.ad_id == ad_id,
+            AdImpression.ip_hash == ip_hash,
+            AdImpression.user_agent_hash == ua_hash,
+            AdImpression.created_at >= window_start,
+        )
+        .limit(1)
+    )
+    return result.scalar_one_or_none() is not None
+
+
 async def _expire_ads(session: AsyncSession) -> None:
     now = datetime.now(timezone.utc)
     result = await session.execute(
