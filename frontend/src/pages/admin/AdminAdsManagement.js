@@ -19,6 +19,12 @@ export default function AdminAdsManagement() {
   const [form, setForm] = useState(emptyForm);
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState('');
+  const [activeTab, setActiveTab] = useState('manage');
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsStatus, setAnalyticsStatus] = useState('idle');
+  const [range, setRange] = useState('30d');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
 
   const authHeader = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
 
