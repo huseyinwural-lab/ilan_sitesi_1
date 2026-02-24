@@ -324,7 +324,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Sprint‑1 E2E kanıt paketi
 
 ### P1.5 / P2 (Enhancement)
-- Privacy Center export geçmişi (gdpr_exports tablosu + UI) → /app/docs/PRIVACY_EXPORT_HISTORY_SPEC.md
+- ✅ Privacy Center export geçmişi (gdpr_exports tablosu + UI) → /app/docs/PRIVACY_EXPORT_HISTORY_SPEC.md
 
 ### P2
 - Kayıtlı Arama/Alert (P2 backlog, P1 kapsamına girmez)
