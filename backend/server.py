@@ -4313,6 +4313,11 @@ class AdminUserActionPayload(BaseModel):
     suspension_until: Optional[str] = None
 
 
+class RiskLevelUpdatePayload(BaseModel):
+    risk_level: str
+    reason: Optional[str] = None
+
+
 class SupportAttachmentPayload(BaseModel):
     name: str
     url: str
