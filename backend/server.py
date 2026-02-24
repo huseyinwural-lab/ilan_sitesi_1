@@ -12006,92 +12006,80 @@ async def admin_listings(
     category_id: Optional[str] = None,
     owner_id: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    query: Dict = {}
+    filters = []
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        query["country"] = ctx.country
+        filters.append(Listing.country == ctx.country)
     if status:
-        query["status"] = status
+        filters.append(Listing.status == status)
 
     if q:
-        query["$or"] = [
-            {"title": {"$regex": q, "$options": "i"}},
-            {"id": {"$regex": q, "$options": "i"}},
-            {"vehicle.make_key": {"$regex": q, "$options": "i"}},
-            {"vehicle.model_key": {"$regex": q, "$options": "i"}},
-        ]
+        search_value = f"%{q}%"
+        filters.append(or_(Listing.title.ilike(search_value), cast(Listing.id, String).ilike(search_value)))
 
     if category_id:
-        keys = [category_id]
-        cat = await db.categories.find_one(
-            {
-                "$or": [
-                    {"slug": category_id},
-                    {"id": category_id},
-                ],
-            },
-            {"_id": 0, "id": 1, "slug": 1},
-        )
-        if cat:
-            if cat.get("id"):
-                keys.append(cat["id"])
-            slug_value = _pick_label(cat.get("slug"))
-            if slug_value:
-                keys.append(slug_value)
-        query["category_key"] = {"$in": list(set(keys))}
+        try:
+            category_uuid = uuid.UUID(category_id)
+            filters.append(Listing.category_id == category_uuid)
+        except ValueError:
+            pass
 
     if owner_id:
-        query["created_by"] = owner_id
+        try:
+            owner_uuid = uuid.UUID(owner_id)
+            filters.append(Listing.user_id == owner_uuid)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid owner_id") from exc
 
     dealer_only_flag = _parse_bool_flag(dealer_only)
     if dealer_only_flag and not owner_id:
-        dealer_query: Dict = {"role": "dealer"}
-        if getattr(ctx, "mode", "global") == "country" and ctx.country:
-            dealer_query["country_code"] = ctx.country
-        dealer_users = await db.users.find(dealer_query, {"_id": 0, "id": 1}).to_list(length=5000)
-        dealer_ids = [u.get("id") for u in dealer_users if u.get("id")]
-        if not dealer_ids:
-            return {"items": [], "pagination": {"total": 0, "skip": int(skip), "limit": min(100, max(1, int(limit)))}}
-        query["created_by"] = {"$in": dealer_ids}
+        filters.append(Listing.is_dealer_listing.is_(True))
 
     limit = min(100, max(1, int(limit)))
-    cursor = db.vehicle_listings.find(query, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(limit)
-    docs = await cursor.to_list(length=limit)
 
-    owner_ids = [d.get("created_by") for d in docs if d.get("created_by")]
-    user_map: Dict[str, dict] = {}
+    query = (
+        select(Listing)
+        .where(*filters)
+        .order_by(Listing.created_at.desc())
+        .offset(int(skip))
+        .limit(limit)
+    )
+    result = await session.execute(query)
+    listings = result.scalars().all()
+
+    total = await session.scalar(select(func.count(Listing.id)).where(*filters)) or 0
+
+    owner_ids = [listing.user_id for listing in listings if listing.user_id]
+    user_map: Dict[uuid.UUID, SqlUser] = {}
     if owner_ids:
-        users = await db.users.find({"id": {"$in": owner_ids}}, {"_id": 0, "id": 1, "email": 1, "role": 1}).to_list(length=len(owner_ids))
-        user_map = {u.get("id"): u for u in users}
+        users = await session.execute(select(SqlUser).where(SqlUser.id.in_(owner_ids)))
+        user_map = {u.id: u for u in users.scalars().all()}
 
     items = []
-    for d in docs:
-        attrs = d.get("attributes") or {}
-        media = d.get("media") or []
-        owner = user_map.get(d.get("created_by"), {})
+    for listing in listings:
+        owner = user_map.get(listing.user_id)
         items.append(
             {
-                "id": d.get("id"),
-                "title": _resolve_listing_title(d),
-                "status": d.get("status"),
-                "country": d.get("country"),
-                "category_key": d.get("category_key"),
-                "price": attrs.get("price_eur"),
-                "currency": "EUR",
-                "image_count": len(media),
-                "created_at": d.get("created_at"),
-                "owner_id": d.get("created_by"),
-                "owner_email": owner.get("email"),
-                "owner_role": owner.get("role"),
-                "is_dealer_listing": owner.get("role") == "dealer",
+                "id": str(listing.id),
+                "title": listing.title,
+                "status": listing.status,
+                "country": listing.country,
+                "category_key": str(listing.category_id) if listing.category_id else None,
+                "price": listing.price or listing.hourly_rate,
+                "currency": listing.currency,
+                "image_count": len(listing.images or []),
+                "created_at": listing.created_at.isoformat() if listing.created_at else None,
+                "owner_id": str(listing.user_id) if listing.user_id else None,
+                "owner_email": owner.email if owner else None,
+                "owner_role": owner.role if owner else None,
+                "is_dealer_listing": listing.is_dealer_listing or (owner and owner.role == "dealer"),
             }
         )
 
-    total = await db.vehicle_listings.count_documents(query)
-    return {"items": items, "pagination": {"total": total, "skip": int(skip), "limit": limit}}
+    return {"items": items, "pagination": {"total": int(total), "skip": int(skip), "limit": limit}}
 
 
 @api_router.post("/admin/listings/{listing_id}/soft-delete")
