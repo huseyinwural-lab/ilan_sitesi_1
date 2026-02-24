@@ -20115,6 +20115,9 @@ async def approve_doping_request(
     if not req:
         raise HTTPException(status_code=404, detail="Doping request not found")
 
+    if req.status != "paid":
+        raise HTTPException(status_code=400, detail="Doping request must be paid before approval")
+
     start_at, end_at = _normalize_ad_dates(payload.start_at or req.start_at, payload.end_at or req.end_at)
 
     req.placement_home = bool(payload.placement_home)
@@ -20123,11 +20126,10 @@ async def approve_doping_request(
     req.end_at = end_at
     req.priority = payload.priority or 0
 
-    req.status = "published"
+    req.status = "approved"
     now = datetime.now(timezone.utc)
     req.approved_by = uuid.UUID(current_user.get("id")) if current_user.get("id") else None
     req.approved_at = now
-    req.published_at = now
     req.updated_at = now
 
     await _write_audit_log_sql(
