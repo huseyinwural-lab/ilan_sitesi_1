@@ -2,7 +2,7 @@
 
 **Status:** CLOSED ✅
 **Commit:** c906a8ec
-**Environment:** https://moderation-lock.preview.emergentagent.com
+**Environment:** https://public-site-build.preview.emergentagent.com
 **Evidence File:** /app/memory/MODERATION_FREEZE_EVIDENCE.md
 
 ## Verification Summary

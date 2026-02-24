@@ -1,7 +1,7 @@
 # TWOFA_BACKUP_CODE_EVIDENCE
 
 **Tarih:** 2026-02-24 13:47:41 UTC
-**Ortam URL:** https://moderation-lock.preview.emergentagent.com
+**Ortam URL:** https://public-site-build.preview.emergentagent.com
 **Test Kullanıcı:** user2@platform.com
 
 ## Curl Kanıtı (Tek Kullanım)

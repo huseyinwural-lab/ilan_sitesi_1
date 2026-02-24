@@ -1,13 +1,13 @@
 # PROFILE_ENDPOINT_FIX_EVIDENCE
 
 **Tarih:** 2026-02-21
-**Base URL:** https://moderation-lock.preview.emergentagent.com
+**Base URL:** https://public-site-build.preview.emergentagent.com
 
 ## CURL Denemeleri
 
 ### 1) Login (consumer)
 ```
-curl -X POST https://moderation-lock.preview.emergentagent.com/api/auth/login \
+curl -X POST https://public-site-build.preview.emergentagent.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@platform.com","password":"User123!"}'
 ```
@@ -15,7 +15,7 @@ curl -X POST https://moderation-lock.preview.emergentagent.com/api/auth/login \
 
 ### 2) Login (dealer)
 ```
-curl -X POST https://moderation-lock.preview.emergentagent.com/api/auth/login \
+curl -X POST https://public-site-build.preview.emergentagent.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"dealer@platform.com","password":"Dealer123!"}'
 ```
