@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-23 (Mongo Cutover Kickoff)
+**Son güncelleme:** 2026-02-24 (P0 Close + RBAC Freeze v1)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
