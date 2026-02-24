@@ -14940,6 +14940,22 @@ async def admin_assign_dealer_plan(
         request=request,
         country_code=dealer.country_code,
     )
+
+    if (prev_plan_id or None) != (dealer.plan_id or None):
+        await _write_audit_log_sql(
+            session=session,
+            action="DEALER_PLAN_OVERRIDE",
+            actor=current_user,
+            resource_type="dealer",
+            resource_id=str(dealer.id),
+            metadata={
+                "previous_plan_id": str(prev_plan_id) if prev_plan_id else None,
+                "new_plan_id": str(plan.id) if plan else None,
+            },
+            request=request,
+            country_code=dealer.country_code,
+        )
+
     await session.commit()
 
     return {"ok": True, "plan_id": str(plan.id) if plan else None}
