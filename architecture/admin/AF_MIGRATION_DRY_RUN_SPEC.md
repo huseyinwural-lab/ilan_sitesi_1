@@ -42,4 +42,5 @@ Warnings: 2
 
 ## Artifact
 - Snapshot: `/tmp/migration_dry_run_snapshot.json` (varsayılan)
+- Opsiyonel audit log: `action=MIGRATION_DRY_RUN` (env: `MIGRATION_DRY_RUN_AUDIT=1`)
 - Opsiyonel JSON output (P2)
