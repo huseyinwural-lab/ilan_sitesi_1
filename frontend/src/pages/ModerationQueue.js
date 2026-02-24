@@ -786,6 +786,15 @@ export default function ModerationQueue({
               </p>
             </div>
 
+            {freezeActive && (
+              <div
+                className="mx-4 mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800"
+                data-testid="moderation-freeze-bulk-banner"
+              >
+                Moderation Freeze aktif – işlem yapılamaz.
+              </div>
+            )}
+
             {bulkDialog.actionType === 'reject' && (
               <div className="p-4 space-y-4">
                 <div>
