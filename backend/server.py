@@ -13609,6 +13609,26 @@ async def create_checkout_session(
     if not origin:
         raise HTTPException(status_code=400, detail="origin_url required")
 
+    idempotency_key = (idempotency_key or "").strip() or None
+    if idempotency_key:
+        existing_txn = (
+            await session.execute(
+                select(PaymentTransaction).where(
+                    PaymentTransaction.invoice_id == invoice.id,
+                    PaymentTransaction.metadata_json["idempotency_key"].astext == idempotency_key,
+                )
+            )
+        ).scalar_one_or_none()
+        if existing_txn:
+            existing_meta = existing_txn.metadata_json or {}
+            checkout_url = existing_meta.get("checkout_url")
+            if checkout_url:
+                return {
+                    "checkout_url": checkout_url,
+                    "session_id": existing_txn.session_id,
+                    "idempotency_reused": True,
+                }
+
     webhook_url = f"{origin}/api/webhook/stripe"
     stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
 
