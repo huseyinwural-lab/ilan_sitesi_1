@@ -42,6 +42,35 @@ export default function AdminAdsManagement() {
     fetchAds();
   }, []);
 
+  const fetchAnalytics = async (overrideRange) => {
+    setAnalyticsStatus('loading');
+    try {
+      const selectedRange = overrideRange || range;
+      const params = {};
+      if (selectedRange === 'custom') {
+        if (!customStart || !customEnd) {
+          setAnalyticsStatus('error');
+          return;
+        }
+        params.start_at = customStart;
+        params.end_at = customEnd;
+      } else {
+        params.range = selectedRange;
+      }
+      const res = await axios.get(`${API}/admin/ads/analytics`, { params, headers: authHeader });
+      setAnalytics(res.data);
+      setAnalyticsStatus('ok');
+    } catch (err) {
+      setAnalyticsStatus('error');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab !== 'performance') return;
+    if (range === 'custom' && (!customStart || !customEnd)) return;
+    fetchAnalytics();
+  }, [activeTab, range, customStart, customEnd]);
+
   const handleCreate = async () => {
     setStatus('');
     const payload = {
