@@ -1,6 +1,7 @@
 # MONGO_INVENTORY
 
-**Son güncelleme:** 2026-02-24 00:36:08 UTC
+**Son güncelleme:** 2026-02-24 10:43:01 UTC
+**Durum:** CLOSED (Mongo runtime 0-iz)
 
 ## Koleksiyon Envanteri
 | Koleksiyon | Status | Kullanım (satır) | Endpointler |
