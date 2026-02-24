@@ -20040,7 +20040,7 @@ async def create_doping_request(
     req = DopingRequest(
         listing_id=listing_uuid,
         user_id=uuid.UUID(current_user.get("id")),
-        status="paid",
+        status="requested",
         placement_home=bool(payload.placement_home),
         placement_category=bool(payload.placement_category),
         start_at=start_at,
