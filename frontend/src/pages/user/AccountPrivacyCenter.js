@@ -27,8 +27,28 @@ export default function AccountPrivacyCenter() {
     }
   };
 
+  const fetchExportHistory = async () => {
+    setExportHistoryLoading(true);
+    setExportHistoryError('');
+    try {
+      const res = await fetch(`${API}/v1/users/me/gdpr-exports`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+      });
+      if (!res.ok) {
+        throw new Error('History fetch failed');
+      }
+      const data = await res.json();
+      setExportHistory(data.items || []);
+    } catch (err) {
+      setExportHistoryError('Geçmiş yüklenemedi');
+    } finally {
+      setExportHistoryLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
+    fetchExportHistory();
   }, []);
 
   const handleConsentToggle = async () => {
