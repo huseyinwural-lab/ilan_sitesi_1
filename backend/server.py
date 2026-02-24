@@ -8107,33 +8107,58 @@ async def admin_individual_users_export_csv(
 
 
 @api_router.get("/menu/top-items")
-async def get_top_menu_items(request: Request):
-    db = request.app.state.db
-    if db is None:
-        return []
-    items = await db.menu_top_items.find({"is_enabled": True}, {"_id": 0}).to_list(length=50)
-    items.sort(key=lambda x: x.get("sort_order", 0))
+async def get_top_menu_items(
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(
+        select(TopMenuItem)
+        .where(TopMenuItem.is_enabled.is_(True))
+        .order_by(TopMenuItem.sort_order.asc())
+    )
+    items = []
+    for item in result.scalars().all():
+        items.append(
+            {
+                "id": str(item.id),
+                "key": item.key,
+                "name": item.name,
+                "icon": item.icon,
+                "badge": item.badge,
+                "sort_order": item.sort_order,
+                "required_module": item.required_module,
+                "allowed_countries": item.allowed_countries,
+                "is_enabled": item.is_enabled,
+            }
+        )
     return items
 
 
 @api_router.patch("/menu/top-items/{item_id}")
-async def toggle_menu_item(item_id: str, data: dict, request: Request, current_user=Depends(check_permissions(["super_admin"]))):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Menu storage unavailable")
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    is_enabled = data.get("is_enabled")
-    payload = {}
-    if is_enabled is not None:
-        payload["is_enabled"] = bool(is_enabled)
-    if not payload:
-        return {"ok": True}
-    payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+async def toggle_menu_item(
+    item_id: str,
+    data: dict,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
-    res = await db.menu_top_items.update_one({"id": item_id}, {"$set": payload})
-    if res.matched_count == 0:
+    is_enabled = data.get("is_enabled")
+    if is_enabled is None:
+        return {"ok": True}
+
+    try:
+        item_uuid = uuid.UUID(item_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid menu item id") from exc
+
+    item = await session.get(TopMenuItem, item_uuid)
+    if not item:
         raise HTTPException(status_code=404, detail="Menu item not found")
 
+    item.is_enabled = bool(is_enabled)
+    await session.commit()
     return {"ok": True}
 
 
