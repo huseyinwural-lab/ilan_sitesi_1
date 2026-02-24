@@ -1304,55 +1304,18 @@ async def _ensure_dealer_user(session: AsyncSession):
     )
 
 
-async def _ensure_test_user(db):
-    now_iso = datetime.now(timezone.utc).isoformat()
-    user_email = "user@platform.com"
-    user_password = "User123!"
-
-    existing = await db.users.find_one({"email": user_email}, {"_id": 0})
-    hashed = get_password_hash(user_password)
-
-    if existing:
-        await db.users.update_one(
-            {"email": user_email},
-            {
-                "$set": {
-                    "hashed_password": hashed,
-                    "status": "active",
-                    "is_active": True,
-                    "role": "individual",
-                    "full_name": "Test User",
-                    "first_name": "Test",
-                    "last_name": "User",
-                    "phone_e164": "+491701112233",
-                    "country_scope": existing.get("country_scope") or ["DE"],
-                    "country_code": existing.get("country_code") or "DE",
-                    "updated_at": now_iso,
-                },
-                "$unset": {"deleted_at": ""},
-            },
-        )
-        return
-
-    await db.users.insert_one(
-        {
-            "id": str(uuid.uuid4()),
-            "email": user_email,
-            "hashed_password": hashed,
-            "full_name": "Test User",
-            "first_name": "Test",
-            "last_name": "User",
-            "phone_e164": "+491701112233",
-            "role": "individual",
-            "status": "active",
-            "is_active": True,
-            "is_verified": True,
-            "country_scope": ["DE"],
-            "country_code": "DE",
-            "preferred_language": "tr",
-            "created_at": now_iso,
-            "last_login": None,
-        }
+async def _ensure_test_user(session: AsyncSession):
+    await _upsert_seed_user(
+        session,
+        email="user@platform.com",
+        password="User123!",
+        role="individual",
+        full_name="Test User",
+        first_name="Test",
+        last_name="User",
+        phone_e164="+491701112233",
+        country_code="DE",
+        country_scope=["DE"],
     )
 
 
