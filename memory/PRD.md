@@ -28,6 +28,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Public Search & Moderation Mongo→PostgreSQL
 
 ### P2 (Plan)
+- Kayıtlı Arama/Alert (P2 backlog)
 - Parametre Alanları tabı
 - VIES VAT doğrulama
 - GDPR CSV export
