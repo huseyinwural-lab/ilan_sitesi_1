@@ -120,7 +120,7 @@ class ModerationItem(Base):
 
 
 class ModerationQueue(Base):
-    """Mongo moderation_queue karşılığı (SQL)"""
+    """Legacy moderation_queue karşılığı (SQL)"""
     __tablename__ = "moderation_queue"
 
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
