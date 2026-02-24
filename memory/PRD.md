@@ -301,8 +301,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - 2FA backup code tek kullanımlık testi (preview)
 
 ### P1 (Aktif)
-- Public Search Postgres cutover: 24h monitoring (Ops/Owner)
-- Moderation migration (search parity sonrası): parity testleri + freeze window + rollback
+- Public Search 24h monitoring: log özeti tamamlandı; true 24h window PENDING
+- Moderation migration: SQL parity report tamamlandı; freeze window planlama
 
 ### P1 (Sprint‑1 closeout)
 - Sprint‑1 E2E kanıt paketi
