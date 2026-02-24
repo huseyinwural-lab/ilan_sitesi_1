@@ -22,4 +22,29 @@ jobs:
         with:
           python-version: "3.11"
       - name: RBAC map coverage
-        run: python backend/scripts/check_rbac_coverage.py
+        id: rbac
+        run: |
+          set +e
+          python backend/scripts/check_rbac_coverage.py > rbac_output.txt 2>&1
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          cat rbac_output.txt
+      - name: Comment PR with coverage summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('rbac_output.txt', 'utf8');
+            const exitCode = '${{ steps.rbac.outputs.exit_code }}';
+            const header = exitCode === '0' ? '✅ RBAC coverage OK' : '❌ RBAC coverage failed';
+            const body = `${header}\n\n\`\`\`\n${output}\n\`\`\``;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body,
+            });
+      - name: Fail if coverage fails
+        if: steps.rbac.outputs.exit_code != '0'
+        run: exit 1
