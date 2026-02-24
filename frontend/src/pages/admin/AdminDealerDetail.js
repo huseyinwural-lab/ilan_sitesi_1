@@ -78,6 +78,25 @@ export default function AdminDealerDetailPage() {
     }
   };
 
+  const updateRiskLevel = async () => {
+    setRiskError(null);
+    setRiskSuccess(null);
+    setRiskSaving(true);
+    try {
+      await axios.patch(
+        `${API}/admin/users/${dealerId}/risk-level`,
+        { risk_level: riskLevel },
+        { headers: authHeader }
+      );
+      setRiskSuccess('Risk seviyesi güncellendi');
+      fetchDetail();
+    } catch (e) {
+      setRiskError(e.response?.data?.detail || 'Risk seviyesi güncellenemedi');
+    } finally {
+      setRiskSaving(false);
+    }
+  };
+
   useEffect(() => {
     fetchDetail();
     fetchPlans();
