@@ -302,9 +302,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### P0.1 (Güvenlik Doğrulama)
 - ✅ Login rate limit tetikleme testi (preview)
 - ✅ 2FA challenge (enable → wrong OTP → success) kanıtı (preview)
+- ✅ 2FA backup code tek kullanımlık testi (preview)
 - ✅ Soft delete → login blocked testi (preview)
 - ✅ GDPR export sonrası notification banner UI doğrulaması
-- 2FA backup code tek kullanımlık testi (preview)
 
 ### P1 (Aktif)
 - Public Search 24h monitoring: log özeti tamamlandı; true 24h window PENDING
