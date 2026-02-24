@@ -1,5 +1,6 @@
 import os
 import uuid
+import io
 from PIL import Image
 from typing import Tuple
 
