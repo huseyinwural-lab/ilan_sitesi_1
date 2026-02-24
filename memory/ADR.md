@@ -207,6 +207,10 @@ graph LR
 
 **Risk & Önlem:** Yeni endpoint eklenip map’e yazılmazsa erişim bozulur → “map coverage” kontrolü eklenir.
 
+---
+
+## ADR-CAT-UI-003 — Manuel kategori yönetimi UI yaklaşımı
+
 **Karar:** “Manuel ekleme” için mevcut Admin Kategoriler UI genişletilecek; yeni modal açılmayacak.
 
 **Gerekçe:** En düşük riskli yol; kullanıcı alışkanlığı korunur.
