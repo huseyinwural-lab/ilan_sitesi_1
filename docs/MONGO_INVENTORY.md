@@ -21,7 +21,7 @@
 | system_settings | DONE | - | - |
 | tax_rates | DONE | - | - |
 | users | DONE | 625, 725, 1208, 1213, 1228, 1253 | DELETE /admin/users/{user_id}, GET /admin/dealers, GET /admin/dealers/{dealer_id}, GET /admin/dealers/{dealer_id}/audit-logs, GET /admin/individual-users, GET /admin/individual-users/export/csv, GET /admin/listings, GET /admin/users/{user_id}/detail, GET /dashboard/stats, GET /users, PATCH /users/{user_id}, POST /admin/dealer-applications/{app_id}/approve, POST /admin/dealers/{dealer_id}/plan, POST /admin/dealers/{dealer_id}/status, POST /admin/individual-applications/{app_id}/approve, POST /admin/users/{user_id}/activate, POST /admin/users/{user_id}/suspend |
-| vehicle_listings | TODO | 5161, 7734, 8022, 8709, 9790, 9849 | GET /admin/dealers, GET /admin/individual-users, GET /admin/listings, GET /admin/users/{user_id}/detail, POST /admin/listings/{listing_id}/force-unpublish |
+| vehicle_listings | DONE | 5161, 7734, 8022, 8709, 9790, 9849 | GET /admin/dealers, GET /admin/individual-users, GET /admin/listings, GET /admin/users/{user_id}/detail, POST /admin/listings/{listing_id}/force-unpublish |
 | vehicle_makes | DONE | - | - |
 | vehicle_models | DONE | - | - |
 
