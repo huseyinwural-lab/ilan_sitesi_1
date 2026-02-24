@@ -18,15 +18,8 @@ const topNavItems = [
     key: 'listings',
     path: '/account',
     labelKey: 'nav_listings',
-    match: ['/account'],
+    match: ['/account', '/account/listings'],
     testId: 'account-top-nav-listings',
-  },
-  {
-    key: 'favorites',
-    path: '/account/favorites',
-    labelKey: 'nav_favorites',
-    match: ['/account/favorites'],
-    testId: 'account-top-nav-favorites',
   },
   {
     key: 'messages',
@@ -34,6 +27,13 @@ const topNavItems = [
     labelKey: 'nav_messages',
     match: ['/account/messages'],
     testId: 'account-top-nav-messages',
+  },
+  {
+    key: 'favorites',
+    path: '/account/favorites',
+    labelKey: 'nav_favorites',
+    match: ['/account/favorites'],
+    testId: 'account-top-nav-favorites',
   },
   {
     key: 'services',
@@ -44,61 +44,71 @@ const topNavItems = [
   },
   {
     key: 'account',
-    path: '/account/profile',
+    path: '/account/security',
     labelKey: 'nav_account',
-    match: ['/account/profile', '/account/privacy'],
+    match: ['/account/security', '/account/privacy'],
     testId: 'account-top-nav-account',
   },
 ];
 
-const UserPanelLayout = () => {
+const UserPanelLayout = () =e {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const [counts, setCounts] = useState({ favorites: 0, messages: 0 });
 
-  const activeTopKey = useMemo(() => {
-    const routeMap = [
-      { key: 'favorites', prefixes: ['/account/favorites'] },
-      { key: 'messages', prefixes: ['/account/messages'] },
-      { key: 'services', prefixes: ['/account/support'] },
-      { key: 'account', prefixes: ['/account/profile', '/account/privacy'] },
-      { key: 'listings', prefixes: ['/account'] },
-    ];
-    const matched = routeMap.find((item) =>
-      item.prefixes.some((prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`))
-    );
-    return matched?.key || 'listings';
-  }, [location.pathname]);
-
   const sideMenuGroups = useMemo(
-    () => ({
-      listings: [
-        { path: '/account', labelKey: 'nav_dashboard', testId: 'account-side-overview' },
-        { path: '/account/listings', labelKey: 'nav_my_listings', testId: 'account-side-listings' },
-        { path: '/ilan-ver/kategori-secimi', labelKey: 'nav_create_listing', testId: 'account-side-create' },
-      ],
-      favorites: [
-        { path: '/account/favorites', labelKey: 'nav_favorite_listings', testId: 'account-side-favorites' },
-      ],
-      messages: [
-        { path: '/account/messages', labelKey: 'nav_messages', testId: 'account-side-messages' },
-      ],
-      services: [
-        { path: '/account/support', labelKey: 'nav_support', testId: 'account-side-support' },
-      ],
-      account: [
-        { path: '/account/profile', labelKey: 'nav_profile', testId: 'account-side-profile' },
-        { path: '/account/privacy', labelKey: 'nav_privacy_center', testId: 'account-side-privacy' },
-      ],
-    }),
+    () =e [
+      {
+        key: 'listings',
+        title: 'İlan Yönetimi',
+        testId: 'account-side-group-listings',
+        items: [
+          { path: '/account', labelKey: 'nav_dashboard', testId: 'account-side-dashboard' },
+          { path: '/account/listings', labelKey: 'nav_my_listings', testId: 'account-side-listings' },
+        ],
+      },
+      {
+        key: 'messages',
+        title: 'Mesajlar',
+        testId: 'account-side-group-messages',
+        items: [
+          { path: '/account/messages', labelKey: 'nav_messages', testId: 'account-side-messages' },
+        ],
+      },
+      {
+        key: 'favorites',
+        title: 'Favoriler',
+        testId: 'account-side-group-favorites',
+        items: [
+          { path: '/account/favorites', labelKey: 'nav_favorite_listings', testId: 'account-side-favorites' },
+        ],
+      },
+      {
+        key: 'services',
+        title: 'Servisler',
+        testId: 'account-side-group-services',
+        items: [
+          { path: '/account/support', labelKey: 'nav_support', testId: 'account-side-support' },
+        ],
+      },
+      {
+        key: 'account',
+        title: 'Hesap e Güvenlik',
+        testId: 'account-side-group-account',
+        items: [
+          { path: '/account/security', label: 'Güvenlik', testId: 'account-side-security' },
+          { path: '/account/privacy', labelKey: 'nav_privacy_center', testId: 'account-side-privacy' },
+        ],
+      },
+    ],
     []
   );
 
-  useEffect(() => {
+  useEffect(() =e {
     let active = true;
-    const fetchCounts = async () => {
+    const fetchCounts = async () =e {
       try {
         const headers = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
         const [favRes, msgRes] = await Promise.all([
@@ -117,21 +127,21 @@ const UserPanelLayout = () => {
       }
     };
     fetchCounts();
-    return () => {
+    return () =e {
       active = false;
     };
   }, [location.pathname]);
 
-  const handleLogout = () => {
+  const handleLogout = () =e {
     logout();
     navigate('/login');
   };
 
-  const renderBadge = (value, testId) => {
+  const renderBadge = (value, testId) =e {
     if (!value) return null;
     return (
       <span
-        className="ml-auto inline-flex min-w-[22px] items-center justify-center rounded-full bg-[#2f3854] px-2 py-0.5 text-[11px] text-white"
+        className="ml-auto inline-flex min-w-[22px] items-center justify-center rounded-full bg-[#1B263B] px-2 py-0.5 text-[11px] text-white"
         data-testid={testId}
       >
         {value}
@@ -139,13 +149,18 @@ const UserPanelLayout = () => {
     );
   };
 
+  const resolveLabel = (item) =e {
+    if (item.label) return item.label;
+    return t(item.labelKey);
+  };
+
   return (
-    <div className="min-h-screen bg-[#f6c27a] account-theme" data-testid="account-layout">
-      <header className="bg-[#2f3854] text-white" data-testid="account-topbar">
+    <div className="min-h-screen bg-[#F8F9FA] account-theme" data-testid="account-layout">
+      <header className="bg-[#1B263B] text-white" data-testid="account-topbar">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-4" data-testid="account-topbar-left">
             <div
-              className="flex h-10 w-28 items-center justify-center rounded bg-yellow-400 text-sm font-bold text-slate-900"
+              className="flex h-10 w-28 items-center justify-center rounded bg-[#F57C00] text-sm font-bold text-white"
               data-testid="account-logo"
             >
               ANNONCIA
@@ -162,7 +177,7 @@ const UserPanelLayout = () => {
                   type="button"
                   onClick={() => setLanguage(option.key)}
                   className={`rounded-full px-2 py-1 text-xs font-semibold transition ${
-                    language === option.key ? 'bg-white text-[#2f3854]' : 'text-white/70 hover:text-white'
+                    language === option.key ? 'bg-white text-[#1B263B]' : 'text-white/70 hover:text-white'
                   }`}
                   data-testid={`account-language-${option.key}`}
                 >
@@ -185,7 +200,7 @@ const UserPanelLayout = () => {
         </div>
       </header>
 
-      <nav className="border-b bg-white/95" data-testid="account-top-nav">
+      <nav className="border-b bg-white" data-testid="account-top-nav">
         <div className="mx-auto max-w-6xl px-6">
           <div className="flex gap-6 overflow-x-auto py-3 text-sm font-semibold">
             {topNavItems.map((item) => (
@@ -195,8 +210,8 @@ const UserPanelLayout = () => {
                 className={({ isActive }) =>
                   `border-b-2 pb-2 transition ${
                     isActive
-                      ? 'border-[#2f3854] text-[#2f3854]'
-                      : 'border-transparent text-slate-500 hover:text-[#2f3854]'
+                      ? 'border-[#F57C00] text-[#1B263B]'
+                      : 'border-transparent text-[#415A77] hover:text-[#1B263B]'
                   }`
                 }
                 data-testid={item.testId}
@@ -209,31 +224,40 @@ const UserPanelLayout = () => {
       </nav>
 
       <main className="mx-auto max-w-6xl px-6 py-8" data-testid="account-main">
-        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
           <aside className="rounded-2xl bg-white p-4 shadow-sm" data-testid="account-side-nav">
-            <div className="text-xs uppercase tracking-[0.2em] text-slate-400" data-testid="account-side-title">
+            <div className="text-xs uppercase tracking-[0.2em] text-[#415A77]" data-testid="account-side-title">
               {t('nav_section')}
             </div>
-            <div className="mt-4 space-y-1" data-testid="account-side-items">
-              {sideMenuGroups[activeTopKey]?.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
-                      isActive
-                        ? 'bg-[#f6c27a]/30 text-[#2f3854]'
-                        : 'text-slate-500 hover:bg-slate-100'
-                    }`
-                  }
-                  data-testid={item.testId}
-                >
-                  <span>{t(item.labelKey)}</span>
-                  {item.path === '/account/favorites' &&
-                    renderBadge(counts.favorites, 'account-side-favorites-badge')}
-                  {item.path === '/account/messages' &&
-                    renderBadge(counts.messages, 'account-side-messages-badge')}
-                </NavLink>
+            <div className="mt-4 space-y-4" data-testid="account-side-items">
+              {sideMenuGroups.map((group) => (
+                <div key={group.key} data-testid={group.testId}>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                    {group.title}
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {group.items.map((item) => (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) =>
+                          `flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                            isActive
+                              ? 'bg-[#F57C00]/10 text-[#1B263B]'
+                              : 'text-[#415A77] hover:bg-slate-100'
+                          }`
+                        }
+                        data-testid={item.testId}
+                      >
+                        <span>{resolveLabel(item)}</span>
+                        {item.path === '/account/favorites' &&
+                          renderBadge(counts.favorites, 'account-side-favorites-badge')}
+                        {item.path === '/account/messages' &&
+                          renderBadge(counts.messages, 'account-side-messages-badge')}
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </aside>
