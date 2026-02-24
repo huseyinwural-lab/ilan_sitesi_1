@@ -19796,7 +19796,7 @@ async def _expire_doping(session: AsyncSession) -> None:
     now = datetime.now(timezone.utc)
     result = await session.execute(
         select(DopingRequest).where(
-            DopingRequest.status.in_(["admin_approved", "published"]),
+            DopingRequest.status.in_(["approved", "published"]),
             DopingRequest.end_at.isnot(None),
             DopingRequest.end_at < now,
         )
