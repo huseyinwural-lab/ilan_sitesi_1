@@ -12202,6 +12202,7 @@ async def admin_needs_revision_listing(
         action_type="needs_revision",
         reason=payload.reason,
         reason_note=payload.reason_note,
+        request=request,
     )
     return {"ok": True, "listing": {"id": str(updated.id), "status": updated.status}}
 
