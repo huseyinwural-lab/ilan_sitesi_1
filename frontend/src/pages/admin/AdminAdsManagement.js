@@ -1,0 +1,266 @@
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const emptyForm = {
+  placement: '',
+  start_at: '',
+  end_at: '',
+  priority: 0,
+  is_active: true,
+  target_url: '',
+};
+
+export default function AdminAdsManagement() {
+  const [ads, setAds] = useState([]);
+  const [placements, setPlacements] = useState({});
+  const [form, setForm] = useState(emptyForm);
+  const [file, setFile] = useState(null);
+  const [status, setStatus] = useState('');
+
+  const authHeader = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
+
+  const fetchAds = async () => {
+    const res = await axios.get(`${API}/admin/ads`, { headers: authHeader });
+    setAds(res.data?.items || []);
+    setPlacements(res.data?.placements || {});
+    if (!form.placement && res.data?.placements) {
+      const first = Object.keys(res.data.placements)[0];
+      setForm((prev) => ({ ...prev, placement: first || '' }));
+    }
+  };
+
+  useEffect(() => {
+    fetchAds();
+  }, []);
+
+  const handleCreate = async () => {
+    setStatus('');
+    const payload = {
+      placement: form.placement,
+      start_at: form.start_at || null,
+      end_at: form.end_at || null,
+      priority: Number(form.priority) || 0,
+      is_active: Boolean(form.is_active),
+      target_url: form.target_url || null,
+    };
+    const res = await axios.post(`${API}/admin/ads`, payload, { headers: authHeader });
+    const adId = res.data?.id;
+    if (file && adId) {
+      const fd = new FormData();
+      fd.append('file', file);
+      await axios.post(`${API}/admin/ads/${adId}/upload`, fd, { headers: authHeader });
+    }
+    setStatus('Reklam oluşturuldu');
+    setForm(emptyForm);
+    setFile(null);
+    fetchAds();
+  };
+
+  const handleUpdate = async (item) => {
+    await axios.patch(
+      `${API}/admin/ads/${item.id}`,
+      {
+        start_at: item.start_at || null,
+        end_at: item.end_at || null,
+        priority: Number(item.priority) || 0,
+        is_active: Boolean(item.is_active),
+        target_url: item.target_url || null,
+      },
+      { headers: authHeader }
+    );
+    fetchAds();
+  };
+
+  const handleUpload = async (itemId, uploadFile) => {
+    if (!uploadFile) return;
+    const fd = new FormData();
+    fd.append('file', uploadFile);
+    await axios.post(`${API}/admin/ads/${itemId}/upload`, fd, { headers: authHeader });
+    fetchAds();
+  };
+
+  return (
+    <div className="space-y-6" data-testid="admin-ads-management">
+      <div>
+        <h1 className="text-2xl font-semibold" data-testid="admin-ads-title">Reklam Yönetimi</h1>
+        <p className="text-sm text-muted-foreground" data-testid="admin-ads-subtitle">
+          Placement bazlı reklam slotlarını yönetin.
+        </p>
+      </div>
+
+      <div className="rounded-lg border bg-white p-4 space-y-3" data-testid="admin-ads-create">
+        <div className="text-sm font-semibold">Yeni Reklam</div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <div>
+            <label className="text-xs">Placement</label>
+            <select
+              className="mt-1 h-9 w-full rounded-md border px-2"
+              value={form.placement}
+              onChange={(e) => setForm((prev) => ({ ...prev, placement: e.target.value }))}
+              data-testid="admin-ads-placement"
+            >
+              {Object.entries(placements).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs">Priority</label>
+            <input
+              type="number"
+              className="mt-1 h-9 w-full rounded-md border px-2"
+              value={form.priority}
+              onChange={(e) => setForm((prev) => ({ ...prev, priority: e.target.value }))}
+              data-testid="admin-ads-priority"
+            />
+          </div>
+          <div>
+            <label className="text-xs">Start</label>
+            <input
+              type="datetime-local"
+              className="mt-1 h-9 w-full rounded-md border px-2"
+              value={form.start_at}
+              onChange={(e) => setForm((prev) => ({ ...prev, start_at: e.target.value }))}
+              data-testid="admin-ads-start"
+            />
+          </div>
+          <div>
+            <label className="text-xs">End</label>
+            <input
+              type="datetime-local"
+              className="mt-1 h-9 w-full rounded-md border px-2"
+              value={form.end_at}
+              onChange={(e) => setForm((prev) => ({ ...prev, end_at: e.target.value }))}
+              data-testid="admin-ads-end"
+            />
+          </div>
+          <div>
+            <label className="text-xs">Target URL</label>
+            <input
+              className="mt-1 h-9 w-full rounded-md border px-2"
+              value={form.target_url}
+              onChange={(e) => setForm((prev) => ({ ...prev, target_url: e.target.value }))}
+              data-testid="admin-ads-target"
+            />
+          </div>
+          <div className="flex items-center gap-2 mt-5">
+            <input
+              type="checkbox"
+              checked={form.is_active}
+              onChange={(e) => setForm((prev) => ({ ...prev, is_active: e.target.checked }))}
+              data-testid="admin-ads-active"
+            />
+            <span className="text-xs">Aktif</span>
+          </div>
+          <div>
+            <label className="text-xs">Dosya</label>
+            <input
+              type="file"
+              accept=".png,.jpg,.jpeg,.webp"
+              className="mt-1 block w-full"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              data-testid="admin-ads-file"
+            />
+          </div>
+        </div>
+        {status e ' ' && (
+          <div className="text-xs text-emerald-600" data-testid="admin-ads-status">{status}</div>
+        )}
+        <button
+          type="button"
+          onClick={handleCreate}
+          className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm"
+          data-testid="admin-ads-create-button"
+        >
+          Reklam Oluştur
+        </button>
+      </div>
+
+      <div className="rounded-lg border bg-white p-4" data-testid="admin-ads-list">
+        <div className="text-sm font-semibold mb-3">Mevcut Reklamlar</div>
+        <div className="space-y-4">
+          {ads.map((ad) => (
+            <div key={ad.id} className="border rounded-md p-3 space-y-2" data-testid={`admin-ads-item-${ad.id}`}>
+              <div className="text-xs text-muted-foreground">{placements[ad.placement] || ad.placement}</div>
+              {ad.asset_url e ' ' && (
+                <img src={ad.asset_url} alt="ad" className="h-20 object-cover" data-testid={`admin-ads-image-${ad.id}`} />
+              )}
+              <div className="grid gap-2 md:grid-cols-2">
+                <input
+                  type="datetime-local"
+                  className="h-9 rounded-md border px-2"
+                  value={ad.start_at ? ad.start_at.slice(0, 16) : ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAds((prev) => prev.map((item) => (item.id === ad.id ? { ...item, start_at: value } : item)));
+                  }}
+                  data-testid={`admin-ads-item-start-${ad.id}`}
+                />
+                <input
+                  type="datetime-local"
+                  className="h-9 rounded-md border px-2"
+                  value={ad.end_at ? ad.end_at.slice(0, 16) : ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAds((prev) => prev.map((item) => (item.id === ad.id ? { ...item, end_at: value } : item)));
+                  }}
+                  data-testid={`admin-ads-item-end-${ad.id}`}
+                />
+                <input
+                  className="h-9 rounded-md border px-2"
+                  value={ad.target_url || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAds((prev) => prev.map((item) => (item.id === ad.id ? { ...item, target_url: value } : item)));
+                  }}
+                  data-testid={`admin-ads-item-target-${ad.id}`}
+                />
+                <input
+                  type="number"
+                  className="h-9 rounded-md border px-2"
+                  value={ad.priority}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAds((prev) => prev.map((item) => (item.id === ad.id ? { ...item, priority: value } : item)));
+                  }}
+                  data-testid={`admin-ads-item-priority-${ad.id}`}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={ad.is_active}
+                  onChange={(e) => {
+                    const value = e.target.checked;
+                    setAds((prev) => prev.map((item) => (item.id === ad.id ? { ...item, is_active: value } : item)));
+                  }}
+                  data-testid={`admin-ads-item-active-${ad.id}`}
+                />
+                <span className="text-xs">Aktif</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <input
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.webp"
+                  onChange={(e) => handleUpload(ad.id, e.target.files?.[0])}
+                  data-testid={`admin-ads-item-file-${ad.id}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleUpdate(ad)}
+                  className="h-9 px-3 rounded-md border text-sm"
+                  data-testid={`admin-ads-item-save-${ad.id}`}
+                >
+                  Kaydet
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
