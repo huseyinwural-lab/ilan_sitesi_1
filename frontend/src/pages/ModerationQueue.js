@@ -758,14 +758,17 @@ export default function ModerationQueue({
               >
                 Cancel
               </button>
-              <button
-                onClick={submitActionDialog}
-                disabled={freezeActive}
-                className="h-9 px-3 rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 text-sm"
-                data-testid="moderation-action-submit"
-              >
-                Submit
-              </button>
+              <div className="relative group">
+                <button
+                  onClick={submitActionDialog}
+                  disabled={freezeActive}
+                  className="h-9 px-3 rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 text-sm"
+                  data-testid="moderation-action-submit"
+                >
+                  Submit
+                </button>
+                {renderFreezeTooltip('moderation-action-submit-tooltip')}
+              </div>
             </div>
           </div>
         </div>
