@@ -4777,18 +4777,24 @@ async def suspend_user(
     request: Request,
     payload: Optional[AdminUserActionPayload] = None,
     current_user=Depends(check_permissions(["super_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     if user_id == current_user.get("id"):
         raise HTTPException(status_code=400, detail="Cannot suspend yourself")
 
-    user = await db.users.find_one({"id": user_id}, {"_id": 0})
-    if not user or user.get("deleted_at"):
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user = result.scalar_one_or_none()
+    if not user or user.deleted_at:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user.get("role") in ADMIN_ROLE_OPTIONS:
+    if user.role in ADMIN_ROLE_OPTIONS:
         raise HTTPException(status_code=400, detail="Admin accounts must be managed in Admin Users")
 
     reason_code, reason_detail = _extract_moderation_reason(payload)
@@ -4797,58 +4803,48 @@ async def suspend_user(
 
     suspension_until = _parse_suspension_until(payload.suspension_until if payload else None)
 
-    await _assert_super_admin_invariant(db, user, None, False, current_user)
+    await _assert_super_admin_invariant_sql(session, user, None, False, current_user)
 
-    now_iso = datetime.now(timezone.utc).isoformat()
     before_state = {
-        "status": user.get("status"),
-        "is_active": user.get("is_active", True),
-        "suspension_until": user.get("suspension_until"),
-        "deleted_at": user.get("deleted_at"),
+        "status": user.status,
+        "is_active": user.is_active,
+        "suspension_until": user.suspension_until.isoformat() if user.suspension_until else None,
+        "deleted_at": user.deleted_at.isoformat() if user.deleted_at else None,
     }
 
-    update_ops: Dict[str, Any] = {
-        "$set": {
-            "status": "suspended",
-            "is_active": False,
-            "updated_at": now_iso,
-        }
-    }
-    if suspension_until:
-        update_ops["$set"]["suspension_until"] = suspension_until
-    else:
-        update_ops["$unset"] = {"suspension_until": ""}
+    user.status = "suspended"
+    user.is_active = False
+    user.suspension_until = suspension_until
+    if user.role == "dealer":
+        user.dealer_status = "suspended"
 
-    if user.get("role") == "dealer":
-        update_ops["$set"]["dealer_status"] = "suspended"
-
-    await db.users.update_one({"id": user_id}, update_ops)
+    await session.commit()
 
     after_state = {
         **before_state,
-        "status": "suspended",
-        "is_active": False,
-        "suspension_until": suspension_until,
+        "status": user.status,
+        "is_active": user.is_active,
+        "suspension_until": user.suspension_until.isoformat() if user.suspension_until else None,
     }
 
-    event_type = "dealer_suspended" if user.get("role") == "dealer" else "user_suspended"
-    audit_entry = await build_audit_entry(
-        event_type=event_type,
+    event_type = "dealer_suspended" if user.role == "dealer" else "user_suspended"
+    await _write_audit_log_sql(
+        session=session,
+        action=event_type,
         actor=current_user,
-        target_id=user_id,
-        target_type="user",
-        country_code=user.get("country_code"),
-        details={
+        resource_type="user",
+        resource_id=str(user.id),
+        metadata={
             "reason_code": reason_code,
             "reason_detail": reason_detail,
-            "suspension_until": suspension_until,
+            "suspension_until": after_state.get("suspension_until"),
             "before": before_state,
             "after": after_state,
         },
         request=request,
+        country_code=user.country_code,
     )
-    audit_entry["action"] = event_type
-    await db.audit_logs.insert_one(audit_entry)
+    await session.commit()
 
     return {"ok": True}
 
@@ -4859,67 +4855,66 @@ async def activate_user(
     request: Request,
     payload: Optional[AdminUserActionPayload] = None,
     current_user=Depends(check_permissions(["super_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    user = await db.users.find_one({"id": user_id}, {"_id": 0})
-    if not user or user.get("deleted_at"):
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user = result.scalar_one_or_none()
+    if not user or user.deleted_at:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user.get("role") in ADMIN_ROLE_OPTIONS:
+    if user.role in ADMIN_ROLE_OPTIONS:
         raise HTTPException(status_code=400, detail="Admin accounts must be managed in Admin Users")
 
     reason_code, reason_detail = _extract_moderation_reason(payload)
     if not reason_code:
         raise HTTPException(status_code=400, detail="Reason is required")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
     before_state = {
-        "status": user.get("status"),
-        "is_active": user.get("is_active", True),
-        "suspension_until": user.get("suspension_until"),
-        "deleted_at": user.get("deleted_at"),
+        "status": user.status,
+        "is_active": user.is_active,
+        "suspension_until": user.suspension_until.isoformat() if user.suspension_until else None,
+        "deleted_at": user.deleted_at.isoformat() if user.deleted_at else None,
     }
 
-    update_ops: Dict[str, Any] = {
-        "$set": {
-            "status": "active",
-            "is_active": True,
-            "updated_at": now_iso,
-        },
-        "$unset": {"suspension_until": ""},
-    }
+    user.status = "active"
+    user.is_active = True
+    user.suspension_until = None
+    if user.role == "dealer":
+        user.dealer_status = "active"
 
-    if user.get("role") == "dealer":
-        update_ops["$set"]["dealer_status"] = "active"
-
-    await db.users.update_one({"id": user_id}, update_ops)
+    await session.commit()
 
     after_state = {
         **before_state,
-        "status": "active",
-        "is_active": True,
+        "status": user.status,
+        "is_active": user.is_active,
         "suspension_until": None,
     }
 
-    event_type = "dealer_reactivated" if user.get("role") == "dealer" else "user_reactivated"
-    audit_entry = await build_audit_entry(
-        event_type=event_type,
+    event_type = "dealer_reactivated" if user.role == "dealer" else "user_reactivated"
+    await _write_audit_log_sql(
+        session=session,
+        action=event_type,
         actor=current_user,
-        target_id=user_id,
-        target_type="user",
-        country_code=user.get("country_code"),
-        details={
+        resource_type="user",
+        resource_id=str(user.id),
+        metadata={
             "reason_code": reason_code,
             "reason_detail": reason_detail,
             "before": before_state,
             "after": after_state,
         },
         request=request,
+        country_code=user.country_code,
     )
-    audit_entry["action"] = event_type
-    await db.audit_logs.insert_one(audit_entry)
+    await session.commit()
 
     return {"ok": True}
 
@@ -4930,99 +4925,78 @@ async def delete_user(
     request: Request,
     payload: Optional[AdminUserActionPayload] = None,
     current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     if user_id == current_user.get("id"):
         raise HTTPException(status_code=400, detail="Cannot delete yourself")
 
-    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
+    user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    is_admin_target = user.get("role") in ADMIN_ROLE_OPTIONS
+    is_admin_target = user.role in ADMIN_ROLE_OPTIONS
 
-    if user.get("deleted_at"):
+    if user.deleted_at:
         return {"ok": True}
 
     reason_code, reason_detail = _extract_moderation_reason(payload)
     if not is_admin_target and not reason_code:
         raise HTTPException(status_code=400, detail="Reason is required")
 
-    await _assert_super_admin_invariant(db, user, None, False, current_user)
+    await _assert_super_admin_invariant_sql(session, user, None, False, current_user)
 
     before_state = {
-        "status": user.get("status"),
-        "is_active": user.get("is_active", True),
-        "role": user.get("role"),
-        "country_scope": user.get("country_scope") or [],
-        "deleted_at": user.get("deleted_at"),
-        "suspension_until": user.get("suspension_until"),
+        "status": user.status,
+        "is_active": user.is_active,
+        "role": user.role,
+        "country_scope": user.country_scope or [],
+        "deleted_at": user.deleted_at.isoformat() if user.deleted_at else None,
+        "suspension_until": user.suspension_until.isoformat() if user.suspension_until else None,
     }
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    update_ops: Dict[str, Any] = {
-        "$set": {
-            "status": "deleted",
-            "is_active": False,
-            "deleted_at": now_iso,
-            "updated_at": now_iso,
-        },
-        "$unset": {"suspension_until": ""},
-    }
+    now_dt = datetime.now(timezone.utc)
+    user.status = "deleted"
+    user.is_active = False
+    user.deleted_at = now_dt
+    user.suspension_until = None
+    if user.role == "dealer":
+        user.dealer_status = "deleted"
 
-    if user.get("role") == "dealer":
-        update_ops["$set"]["dealer_status"] = "deleted"
-
-    await db.users.update_one(
-        {"id": user_id},
-        update_ops,
-    )
+    await session.commit()
 
     after_state = {
         **before_state,
-        "status": "deleted",
-        "is_active": False,
-        "deleted_at": now_iso,
+        "status": user.status,
+        "is_active": user.is_active,
+        "deleted_at": user.deleted_at.isoformat() if user.deleted_at else None,
         "suspension_until": None,
     }
 
-    if is_admin_target:
-        audit_entry = await build_audit_entry(
-            event_type="admin_deleted",
-            actor=current_user,
-            target_id=user_id,
-            target_type="admin_user",
-            country_code=user.get("country_code"),
-            details={
-                "reason_code": reason_code,
-                "reason_detail": reason_detail,
-                "before": before_state,
-                "after": after_state,
-            },
-            request=request,
-        )
-        audit_entry["action"] = "admin_deleted"
-    else:
-        event_type = "dealer_deleted" if user.get("role") == "dealer" else "user_deleted"
-        audit_entry = await build_audit_entry(
-            event_type=event_type,
-            actor=current_user,
-            target_id=user_id,
-            target_type="user",
-            country_code=user.get("country_code"),
-            details={
-                "reason_code": reason_code,
-                "reason_detail": reason_detail,
-                "before": before_state,
-                "after": after_state,
-            },
-            request=request,
-        )
-        audit_entry["action"] = event_type
-
-    await db.audit_logs.insert_one(audit_entry)
+    event_type = "admin_deleted" if is_admin_target else ("dealer_deleted" if user.role == "dealer" else "user_deleted")
+    await _write_audit_log_sql(
+        session=session,
+        action=event_type,
+        actor=current_user,
+        resource_type="admin_user" if is_admin_target else "user",
+        resource_id=str(user.id),
+        metadata={
+            "reason_code": reason_code,
+            "reason_detail": reason_detail,
+            "before": before_state,
+            "after": after_state,
+        },
+        request=request,
+        country_code=user.country_code,
+    )
+    await session.commit()
 
     return {"ok": True}
 
