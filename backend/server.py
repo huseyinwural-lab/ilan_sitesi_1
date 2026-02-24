@@ -18686,80 +18686,38 @@ async def public_search_v2(
 # =====================
 
 @api_router.get("/v1/vehicle/makes")
-async def public_vehicle_makes(country: str | None = None, request: Request = None, session: AsyncSession = Depends(get_sql_session)):
+async def public_vehicle_makes(country: str | None = None, session: AsyncSession = Depends(get_sql_session)):
     if not country:
         raise HTTPException(status_code=400, detail="country is required")
-    code = country.upper()
-    db = request.app.state.db if request else None
-    if not db or not hasattr(db, "vehicle_makes"):
-        result = await session.execute(select(VehicleMake).where(VehicleMake.is_active.is_(True)))
-        items = [
-            {"id": str(make.id), "key": make.slug, "label": make.name}
-            for make in result.scalars().all()
-            if make.slug
-        ]
-        return {"version": "sql", "items": items}
-
-    docs = await db.vehicle_makes.find(
-        {
-            "country_code": code,
-            "$or": [{"active_flag": True}, {"active_flag": {"$exists": False}}],
-        },
-        {"_id": 0, "id": 1, "slug": 1, "name": 1},
-    ).sort("name", 1).to_list(length=500)
+    result = await session.execute(
+        select(VehicleMake).where(VehicleMake.is_active.is_(True)).order_by(VehicleMake.name.asc())
+    )
     items = [
-        {"id": doc.get("id"), "key": doc.get("slug"), "label": doc.get("name")}
-        for doc in docs
-        if doc.get("slug")
+        {"id": str(make.id), "key": make.slug, "label": make.name}
+        for make in result.scalars().all()
+        if make.slug
     ]
-    return {"version": "db", "items": items}
+    return {"version": "sql", "items": items}
 
 
 @api_router.get("/v1/vehicle/models")
-async def public_vehicle_models(make: str, country: str | None = None, request: Request = None, session: AsyncSession = Depends(get_sql_session)):
-    db = request.app.state.db if request else None
-    if not db or not hasattr(db, "vehicle_makes"):
-        make_row = await session.execute(select(VehicleMake).where(VehicleMake.slug == make))
-        make_obj = make_row.scalars().first()
-        if not make_obj:
-            raise HTTPException(status_code=404, detail="Make not found")
-        result = await session.execute(
-            select(VehicleModel).where(
-                VehicleModel.make_id == make_obj.id,
-                VehicleModel.is_active.is_(True)
-            ).order_by(VehicleModel.name.asc())
-        )
-        items = [
-            {"id": str(model.id), "key": model.slug, "label": model.name}
-            for model in result.scalars().all()
-            if model.slug
-        ]
-        return {"version": "sql", "make": make, "items": items}
-
-    make_doc = await db.vehicle_makes.find_one(
-        {
-            "slug": make,
-            "$or": [{"active_flag": True}, {"active_flag": {"$exists": False}}],
-        },
-        {"_id": 0, "id": 1, "slug": 1, "country_code": 1},
+async def public_vehicle_models(make: str, country: str | None = None, session: AsyncSession = Depends(get_sql_session)):
+    make_row = await session.execute(select(VehicleMake).where(VehicleMake.slug == make))
+    make_obj = make_row.scalars().first()
+    if not make_obj:
+        raise HTTPException(status_code=404, detail="Make not found")
+    result = await session.execute(
+        select(VehicleModel).where(
+            VehicleModel.make_id == make_obj.id,
+            VehicleModel.is_active.is_(True),
+        ).order_by(VehicleModel.name.asc())
     )
-    if not make_doc:
-        raise HTTPException(status_code=404, detail="Make not found")
-    if country and make_doc.get("country_code") != country.upper():
-        raise HTTPException(status_code=404, detail="Make not found")
-    models = await db.vehicle_models.find(
-        {
-            "make_id": make_doc.get("id"),
-            "$or": [{"active_flag": True}, {"active_flag": {"$exists": False}}],
-        },
-        {"_id": 0, "id": 1, "slug": 1, "name": 1},
-    ).sort("name", 1).to_list(length=1000)
     items = [
-        {"id": doc.get("id"), "key": doc.get("slug"), "label": doc.get("name")}
-        for doc in models
-        if doc.get("slug")
+        {"id": str(model.id), "key": model.slug, "label": model.name}
+        for model in result.scalars().all()
+        if model.slug
     ]
-    return {"version": "db", "make": make, "items": items}
+    return {"version": "sql", "make": make, "items": items}
 
 
 @api_router.get("/v2/vehicle/makes")
