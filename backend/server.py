@@ -4857,6 +4857,9 @@ async def suspend_user(
     reason_code, reason_detail = _extract_moderation_reason(payload)
     if not reason_code:
         raise HTTPException(status_code=400, detail="Reason is required")
+    ban_reason = (reason_detail or reason_code).strip()
+    if not ban_reason:
+        raise HTTPException(status_code=400, detail="Ban reason is required")
 
     suspension_until = _parse_suspension_until(payload.suspension_until if payload else None)
 
