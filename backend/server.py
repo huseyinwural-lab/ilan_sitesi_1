@@ -13650,6 +13650,12 @@ async def create_checkout_session(
     checkout_session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(session_request)
 
     now = datetime.now(timezone.utc)
+    payment_meta = {"checkout_session_id": checkout_session.session_id}
+    transaction_meta = {"checkout_url": checkout_session.url}
+    if idempotency_key:
+        payment_meta["idempotency_key"] = idempotency_key
+        transaction_meta["idempotency_key"] = idempotency_key
+
     payment = Payment(
         invoice_id=invoice.id,
         user_id=invoice.user_id,
@@ -13658,7 +13664,7 @@ async def create_checkout_session(
         status="requires_payment_method",
         amount_total=invoice.amount_total,
         currency=invoice.currency,
-        meta_json={"checkout_session_id": checkout_session.session_id},
+        meta_json=payment_meta,
         created_at=now,
         updated_at=now,
     )
@@ -13672,7 +13678,7 @@ async def create_checkout_session(
         currency=invoice.currency,
         status="requires_payment_method",
         payment_status="requires_payment_method",
-        metadata_json={"checkout_url": checkout_session.url},
+        metadata_json=transaction_meta,
         created_at=now,
         updated_at=now,
     )
@@ -13680,7 +13686,11 @@ async def create_checkout_session(
     session.add(transaction)
     await session.commit()
 
-    return {"checkout_url": checkout_session.url, "session_id": checkout_session.session_id}
+    return {
+        "checkout_url": checkout_session.url,
+        "session_id": checkout_session.session_id,
+        "idempotency_reused": False,
+    }
 
 
 @api_router.get("/payments/checkout/status/{session_id}")
