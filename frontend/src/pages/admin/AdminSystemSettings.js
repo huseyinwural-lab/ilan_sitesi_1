@@ -518,6 +518,23 @@ export default function AdminSystemSettingsPage() {
             </span>
           )}
         </div>
+
+        <div className="space-y-2" data-testid="system-settings-moderation-freeze-reason">
+          <label className="text-xs font-medium text-slate-700" data-testid="system-settings-moderation-freeze-reason-label">
+            Freeze Reason (opsiyonel)
+          </label>
+          <input
+            value={freezeReason}
+            onChange={(e) => setFreezeReason(e.target.value)}
+            placeholder="Örn: Planlı bakım / veri doğrulama"
+            className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+            disabled={!isSuperAdmin || freezeSaving}
+            data-testid="system-settings-moderation-freeze-reason-input"
+          />
+          <div className="text-[11px] text-slate-500" data-testid="system-settings-moderation-freeze-reason-hint">
+            Hassas bilgi yazmayın. Kısa ve açıklayıcı bir not yeterlidir.
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3" data-testid="system-settings-filters">
