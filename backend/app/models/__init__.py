@@ -37,3 +37,5 @@ from app.models.notification import Notification, UserDevice
 from app.models.webhook_event_log import WebhookEventLog
 from app.models.system_setting import SystemSetting
 from app.models.admin_invite import AdminInvite
+from app.models.menu_item import MenuItem
+from app.models.report import Report
