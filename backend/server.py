@@ -7059,9 +7059,31 @@ async def websocket_messages(websocket: WebSocket):
         await websocket.close(code=1011)
 
 
+@api_router.get("/admin/applications/assignees")
+async def list_support_application_assignees(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
+    result = await session.execute(
+        select(SqlUser)
+        .where(SqlUser.role.in_(list(ADMIN_ROLE_OPTIONS)), SqlUser.deleted_at.is_(None))
+        .order_by(SqlUser.full_name.asc())
+    )
+    users = result.scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(user.id),
+                "name": user.full_name or user.email,
+                "email": user.email,
+            }
+            for user in users
+        ]
+    }
 
 
-@api_router.patch("/admin/applications/{application_id}/assign")
 async def assign_support_application(
     application_id: str,
     payload: SupportApplicationAssignPayload,
