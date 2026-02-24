@@ -21,6 +21,10 @@ export default function AdminDealerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState('');
+  const [riskLevel, setRiskLevel] = useState('low');
+  const [riskSaving, setRiskSaving] = useState(false);
+  const [riskError, setRiskError] = useState(null);
+  const [riskSuccess, setRiskSuccess] = useState(null);
   const [assignError, setAssignError] = useState(null);
   const [assignSuccess, setAssignSuccess] = useState(null);
 
