@@ -267,11 +267,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/UX_THEME_PHASE_PREP.md
 
 ## Son Değişiklikler (2026-02-24)
-- Users & Listings SQL alanları eklendi (p39), /api/users ve /api/dashboard/stats SQL’e taşındı.
-- /api/admin/listings + soft-delete/force-unpublish SQL’e taşındı; audit log SQL’e yazılıyor.
-- Testler (curl): /api/auth/me, /api/users, /api/dashboard/stats, /api/admin/listings, /api/admin/moderation/listings/{id}.
-- pymongo kaldırıldı; legacy Mongo scriptleri /app/legacy/mongo_archive altına arşivlendi.
-- Not: server.py içinde kalan db.users/db.vehicle_listings kullanımının tasfiyesi P0 kapsamında devam ediyor.
+- Mongo runtime 0-iz tamamlandı: pymongo + motor kaldırıldı; MONGO_INVENTORY CLOSED.
+- 520 tarama paketi çalıştırıldı: 520=0; v2 vehicle makes/models wrapper hatası giderildi.
+- E2E kanıtı üretildi: Dealer/Consumer login → ilan oluşturma (Mongo Zero Vehicle Listing) → arama → detay.
+- Detail slug-id parsing düzeltildi (search → detay linkleri sağlıklı).
+- Raporlar oluşturuldu: /app/docs/FINAL_520_ZERO_REPORT.md, /app/docs/DATA_LAYER_CUTOVER_CLOSED.md
 
 ## Blokajlar / Riskler
 - Stripe API key geçersiz (idempotency testi BLOCKED)
