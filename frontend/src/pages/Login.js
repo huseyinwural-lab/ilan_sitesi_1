@@ -36,6 +36,25 @@ export default function Login({ portalContext = 'account' }) {
     try {
       const u = await login(email, password, totpCode || undefined);
 
+      if (isAdminLogin) {
+        toast({
+          title: 'Oturum doğrulandı',
+          duration: 1200,
+          'data-testid': 'admin-login-toast-verified',
+        });
+        setTimeout(() => {
+          toast({
+            title: 'Admin paneli yükleniyor...',
+            duration: 1400,
+            'data-testid': 'admin-login-toast-loading',
+          });
+        }, 300);
+        setTimeout(() => {
+          navigate(defaultHomeForRole(u?.role));
+        }, 700);
+        return;
+      }
+
       if (showPortalSelector) {
         const userPortal = portalFromScope(u?.portal_scope) || ROLE_TO_PORTAL[u?.role] || PORTALS.PUBLIC;
         const expectedPortal = portalSelection === 'dealer' ? PORTALS.DEALER : PORTALS.INDIVIDUAL;
