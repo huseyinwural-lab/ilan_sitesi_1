@@ -240,6 +240,12 @@ export default function AdminSystemSettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCountry]);
 
+  useEffect(() => {
+    const setting = items.find((item) => item.key === MODERATION_FREEZE_KEY && !item.country_code);
+    setFreezeSetting(setting || null);
+    setFreezeActive(resolveFreezeValue(setting));
+  }, [items]);
+
   const canaryStatusRaw = cloudflareConfig.canary_status || 'UNKNOWN';
   const canaryReason = useMemo(() => {
     if (canaryStatusRaw === 'CONFIG_MISSING') {
