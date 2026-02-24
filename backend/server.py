@@ -14507,7 +14507,11 @@ async def admin_assign_dealer_plan(
     plan_id = payload.plan_id
     plan = None
     if plan_id:
-        plan = await session.get(Plan, plan_id)
+        try:
+            plan_uuid = uuid.UUID(str(plan_id))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid plan id") from exc
+        plan = await session.get(Plan, plan_uuid)
         if not plan:
             raise HTTPException(status_code=404, detail="Plan not found")
         if plan.country_scope == "country" and plan.country_code != dealer.country_code:
