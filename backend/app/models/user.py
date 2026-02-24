@@ -48,11 +48,21 @@ class User(Base):
     is_affiliate: Mapped[bool] = mapped_column(Boolean, default=False)
     referred_by_affiliate_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("affiliates.id"), nullable=True)
 
+    def _coerce_value(self, value):
+        if isinstance(value, uuid.UUID):
+            return str(value)
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return value
+
     def get(self, key, default=None):
-        return getattr(self, key, default)
+        value = getattr(self, key, default)
+        return self._coerce_value(value)
 
     def __getitem__(self, key):
-        return getattr(self, key)
+        if not hasattr(self, key):
+            raise KeyError(key)
+        return self._coerce_value(getattr(self, key))
 
     @property
     def email_verified(self) -> bool:
