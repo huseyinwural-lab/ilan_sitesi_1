@@ -5690,6 +5690,87 @@ async def export_user_data_v1(
     )
 
 
+@api_router.get("/v1/users/me/gdpr-exports")
+async def list_gdpr_exports(
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_row = await _get_user_row_from_current(session, current_user)
+    result = await session.execute(
+        select(GDPRExport)
+        .where(GDPRExport.user_id == user_row.id)
+        .order_by(desc(GDPRExport.created_at))
+    )
+    exports = result.scalars().all()
+
+    now = datetime.now(timezone.utc)
+    updated = False
+    for export in exports:
+        if export.expires_at and export.expires_at <= now and export.status != "expired":
+            export.status = "expired"
+            export.updated_at = now
+            updated = True
+
+    if updated:
+        await session.commit()
+
+    return {
+        "items": [
+            {
+                "id": str(item.id),
+                "status": item.status,
+                "file_path": item.file_path,
+                "requested_at": item.created_at.isoformat() if item.created_at else None,
+                "expires_at": item.expires_at.isoformat() if item.expires_at else None,
+            }
+            for item in exports
+        ]
+    }
+
+
+@api_router.get("/v1/users/me/gdpr-exports/{export_id}/download")
+async def download_gdpr_export(
+    export_id: str,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_row = await _get_user_row_from_current(session, current_user)
+    try:
+        export_uuid = uuid.UUID(export_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid export id") from exc
+
+    result = await session.execute(
+        select(GDPRExport).where(
+            GDPRExport.id == export_uuid,
+            GDPRExport.user_id == user_row.id,
+        )
+    )
+    export_item = result.scalar_one_or_none()
+    if not export_item:
+        raise HTTPException(status_code=404, detail="Export not found")
+
+    now = datetime.now(timezone.utc)
+    if export_item.expires_at and export_item.expires_at <= now:
+        if export_item.status != "expired":
+            export_item.status = "expired"
+            export_item.updated_at = now
+            await session.commit()
+        raise HTTPException(status_code=410, detail="Export expired")
+
+    if export_item.status != "ready":
+        raise HTTPException(status_code=409, detail="Export not ready")
+
+    if not export_item.file_path:
+        raise HTTPException(status_code=404, detail="Export file missing")
+
+    file_path = os.path.join(GDPR_EXPORT_DIR, export_item.file_path)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Export file missing")
+
+    return FileResponse(file_path, media_type="application/json", filename=export_item.file_path)
+
+
 @api_router.get("/users/me")
 async def get_user_profile(
     current_user=Depends(require_portal_scope("account")),
