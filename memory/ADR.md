@@ -261,6 +261,59 @@ graph LR
 
 ---
 
+## ADR-24H-LOG-BASED-CLOSE — Log-based 24h monitoring kapanışı
+
+**Karar:** Health-detail log bucket “last 24h” verisi kullanılarak rapor CLOSED yapılır.
+
+**Gerekçe:** Operasyonel gerçekliği temsil ediyor; gerçek 24h beklemek gereksiz gecikme yaratır.
+
+**Etkileri / trade-off:**
+- (+) Faz kapanışı hızlanır
+- (-) Canlı trafik varyasyonunu birebir ölçmeyebilir
+
+**Risk:** Eksik veri → timestamp aralığı rapora açıkça yazılır.
+
+---
+
+## ADR-2FA-BACKUP-ENFORCE — Backup code tek kullanım
+
+**Karar:** Backup code tek-kullanım enforce edilir ve kanıtlanır.
+
+**Gerekçe:** Hesap ele geçirme riskini azaltır; compliance açısından net.
+
+**Etkileri:**
+- (+) Güvenlik artar
+- (-) Kullanıcı destek talepleri artabilir
+
+---
+
+## ADR-RBAC-CI-VISIBILITY — PR comment görünürlüğü
+
+**Karar:** RBAC coverage sonucu PR yorumuna otomatik eklenir.
+
+**Gerekçe:** Reviewer görünürlüğü ve governance hızlanır.
+
+**Etkileri:**
+- (+) Operasyonel şeffaflık
+- (-) PR yorum yoğunluğu (summary + failure detay ile sınırlanır)
+
+---
+
+## ADR-P0.1-CLOSEOUT-GATE — P0.1 kapanış kapısı
+
+**Karar:** P0.1 kapanışı için zorunlu 3 kanıt: 
+(a) Stripe idempotency evidence, 
+(b) 2FA backup code tek-kullanım evidence, 
+(c) Log-based 24h monitoring report CLOSED.
+
+**Gerekçe:** Güvenlik + ödeme + operasyonel stabilite aynı kapıda kilitlenmeli.
+
+**Etkileri / trade-off:**
+- (+) Go-live/regresyon riski düşer
+- (-) 24h koşusu bitmeden kapanış gecikir
+
+---
+
 ## ADR-CAT-UI-003 — Manuel kategori yönetimi UI yaklaşımı
 
 **Karar:** “Manuel ekleme” için mevcut Admin Kategoriler UI genişletilecek; yeni modal açılmayacak.
