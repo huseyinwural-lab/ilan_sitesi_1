@@ -187,8 +187,10 @@ export default function AdminPlans() {
     if (!form.period) return 'Period zorunlu';
     if (form.scope === 'country' && !form.country_code) return 'Country zorunlu';
     if (Number(form.price_amount) < 0) return 'Price 0 veya daha büyük olmalı';
-    if (Number(form.listing_quota) < 0) return 'Listing quota 0 veya daha büyük olmalı';
-    if (Number(form.showcase_quota) < 0) return 'Showcase quota 0 veya daha büyük olmalı';
+    if (Number(form.listing_quota) < PLAN_QUOTA_MIN) return `Listing quota ${PLAN_QUOTA_MIN} veya daha büyük olmalı`;
+    if (Number(form.listing_quota) > PLAN_QUOTA_MAX) return `Listing quota ${PLAN_QUOTA_MAX} değerini aşamaz`;
+    if (Number(form.showcase_quota) < PLAN_QUOTA_MIN) return `Showcase quota ${PLAN_QUOTA_MIN} veya daha büyük olmalı`;
+    if (Number(form.showcase_quota) > PLAN_QUOTA_MAX) return `Showcase quota ${PLAN_QUOTA_MAX} değerini aşamaz`;
     return '';
   };
 
