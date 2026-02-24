@@ -13867,21 +13867,33 @@ async def admin_list_tax_rates(
     request: Request,
     country: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
-    q: Dict = {}
+    query = select(VatRate)
     if country:
         country_code = country.upper()
         _assert_country_scope(country_code, current_user)
-        q["country_code"] = country_code
+        query = query.where(VatRate.country == country_code)
     elif current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
         if "*" not in scope:
-            q["country_code"] = {"$in": scope}
+            query = query.where(VatRate.country.in_(scope))
 
-    items = await db.tax_rates.find(q, {"_id": 0}).sort("effective_date", -1).to_list(length=500)
+    result = await session.execute(query.order_by(VatRate.valid_from.desc()))
+    items = []
+    for row in result.scalars().all():
+        items.append(
+            {
+                "id": str(row.id),
+                "country_code": row.country,
+                "rate": float(row.rate) if row.rate is not None else None,
+                "effective_date": row.valid_from.isoformat() if row.valid_from else None,
+                "active_flag": row.is_active,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+            }
+        )
     return {"items": items}
 
 
