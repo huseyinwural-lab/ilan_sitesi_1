@@ -11584,6 +11584,37 @@ def _normalize_attribute_doc(doc: dict) -> dict:
     }
 
 
+def _serialize_attribute_sql(attribute: Attribute, category_id: Optional[str] = None) -> dict:
+    name_value = None
+    if isinstance(attribute.name, dict):
+        name_value = attribute.name.get("tr") or next(iter(attribute.name.values()), None)
+    else:
+        name_value = attribute.name
+
+    options = []
+    if attribute.options:
+        for opt in attribute.options:
+            label_value = None
+            if isinstance(opt.label, dict):
+                label_value = opt.label.get("tr") or next(iter(opt.label.values()), None)
+            options.append(label_value or opt.value)
+
+    return {
+        "id": str(attribute.id),
+        "category_id": category_id,
+        "name": name_value,
+        "key": attribute.key,
+        "type": attribute.attribute_type,
+        "required_flag": bool(attribute.is_required),
+        "filterable_flag": bool(attribute.is_filterable),
+        "options": options or None,
+        "country_code": None,
+        "active_flag": bool(attribute.is_active),
+        "created_at": attribute.created_at.isoformat() if attribute.created_at else None,
+        "updated_at": attribute.updated_at.isoformat() if attribute.updated_at else None,
+    }
+
+
 def _normalize_vehicle_make_doc(doc: dict) -> dict:
     return {
         "id": doc.get("id"),
