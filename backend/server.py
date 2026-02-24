@@ -9939,6 +9939,85 @@ async def admin_export_audit_logs(
 # Moderation (SQL) - Backoffice
 # =====================
 
+
+def _extract_setting_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        return value.strip().lower() in {"true", "1", "yes", "on"}
+    if isinstance(value, dict):
+        for key in ("enabled", "active", "value"):
+            if key in value:
+                return _extract_setting_bool(value[key])
+    return False
+
+
+async def _get_system_setting_by_key(
+    session: AsyncSession, key: str, country_code: Optional[str] = None
+) -> Optional[SystemSetting]:
+    if country_code:
+        result = await session.execute(
+            select(SystemSetting).where(
+                SystemSetting.key == key,
+                SystemSetting.country_code == country_code,
+            )
+        )
+        setting = result.scalar_one_or_none()
+        if setting:
+            return setting
+    result = await session.execute(
+        select(SystemSetting).where(
+            SystemSetting.key == key,
+            or_(SystemSetting.country_code.is_(None), SystemSetting.country_code == ""),
+        )
+    )
+    return result.scalar_one_or_none()
+
+
+async def _is_moderation_freeze_active(
+    session: AsyncSession, country_code: Optional[str]
+) -> bool:
+    setting = await _get_system_setting_by_key(session, MODERATION_FREEZE_SETTING_KEY, country_code)
+    if not setting:
+        return False
+    return _extract_setting_bool(setting.value)
+
+
+async def _assert_moderation_not_frozen(
+    *,
+    session: AsyncSession,
+    request: Optional[Request],
+    current_user: dict,
+    listing_id: Optional[str] = None,
+    listing_country: Optional[str] = None,
+    action_type: Optional[str] = None,
+    listing_ids: Optional[List[str]] = None,
+) -> None:
+    if not await _is_moderation_freeze_active(session, listing_country):
+        return
+
+    await _write_audit_log_sql(
+        session=session,
+        action="moderation_freeze_blocked",
+        actor={"id": current_user.get("id"), "email": current_user.get("email")},
+        resource_type="moderation",
+        resource_id=listing_id or "bulk",
+        metadata={
+            "action_type": action_type,
+            "listing_id": listing_id,
+            "listing_ids": listing_ids,
+            "country_code": listing_country,
+            "role": current_user.get("role"),
+        },
+        request=request,
+        country_code=listing_country,
+    )
+    await session.commit()
+    raise HTTPException(status_code=423, detail="Moderation freeze active")
+
+
 def _ensure_moderation_rbac(current_user: dict):
     role = current_user.get("role")
     if role not in ALLOWED_MODERATION_ROLES:
