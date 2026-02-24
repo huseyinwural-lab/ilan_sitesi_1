@@ -161,9 +161,7 @@ export default function AdminDealerDetailPage() {
             ))}
           </SelectContent>
         </Select>
-        {assignError && (
-          <div className="text-xs text-destructive" data-testid="dealer-plan-error">{assignError}</div>
-        )}
+        {assignError 
         {assignSuccess && (
           <div className="text-xs text-green-600" data-testid="dealer-plan-success">{assignSuccess}</div>
         )}
@@ -173,6 +171,34 @@ export default function AdminDealerDetailPage() {
           data-testid="dealer-plan-assign-button"
         >
           Plan Ata
+        </button>
+      </div>
+
+      <div className="border rounded-md p-4 space-y-3" data-testid="dealer-risk-level">
+        <div className="text-sm font-semibold">Risk Level</div>
+        <Select value={riskLevel} onValueChange={setRiskLevel}>
+          <SelectTrigger className="h-9" data-testid="dealer-risk-select">
+            <SelectValue placeholder="Risk seviyesi" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="low" data-testid="dealer-risk-low">low</SelectItem>
+            <SelectItem value="medium" data-testid="dealer-risk-medium">medium</SelectItem>
+            <SelectItem value="high" data-testid="dealer-risk-high">high</SelectItem>
+          </SelectContent>
+        </Select>
+        {riskError && (
+          <div className="text-xs text-destructive" data-testid="dealer-risk-error">{riskError}</div>
+        )}
+        {riskSuccess && (
+          <div className="text-xs text-green-600" data-testid="dealer-risk-success">{riskSuccess}</div>
+        )}
+        <button
+          onClick={updateRiskLevel}
+          className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm disabled:opacity-50"
+          data-testid="dealer-risk-save"
+          disabled={riskSaving}
+        >
+          {riskSaving ? 'Kaydediliyor…' : 'Risk Güncelle'}
         </button>
       </div>
     </div>
