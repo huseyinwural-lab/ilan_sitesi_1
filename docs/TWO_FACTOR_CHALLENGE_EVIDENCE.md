@@ -27,6 +27,9 @@
 - Success: `/root/.emergent/automation_output/20260224_124602/2fa-login-success.jpeg`
 - 2FA Enabled status: `/root/.emergent/automation_output/20260224_124602/2fa-enabled-status.jpeg`
 
+## Audit Kanıtı
+- /api/admin/audit-logs?action=2fa_enabled → user2@platform.com
+
 ## Not
 - Test kullanıcı: user2@platform.com
 - Login UI, TOTP_REQUIRED durumunda 2FA alanını gösterir.
