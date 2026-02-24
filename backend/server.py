@@ -149,7 +149,7 @@ from app.services.cloudflare_config import (
 
 
 from fastapi import UploadFile, File
-from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse, RedirectResponse
 
 from app.vehicle_publish_guard import validate_publish, validate_listing_schema
 from app.vehicle_media_storage import store_image, resolve_public_media_path
