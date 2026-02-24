@@ -620,7 +620,8 @@ export default function ModerationQueue({
                 <div className="flex flex-wrap gap-2 pt-4 border-t">
                   <button
                     onClick={() => handleAction(selectedListing.id, 'approve')}
-                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md bg-emerald-600 text-white font-medium hover:bg-emerald-700 flex items-center justify-center gap-2"
+                    disabled={freezeActive}
+                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
                     data-testid="moderation-detail-approve"
                   >
                     <CheckCircle size={18} />
