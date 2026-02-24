@@ -9762,11 +9762,12 @@ async def admin_audit_event_types(
 async def admin_audit_actions(
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    actions = await db.audit_logs.distinct("action")
-    return {"actions": sorted([a for a in actions if a])}
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
+    rows = await session.execute(select(distinct(AuditLog.action)))
+    actions = sorted([row[0] for row in rows if row[0]])
+    return {"actions": actions}
 
 
 @api_router.get("/admin/audit-logs/resources")
