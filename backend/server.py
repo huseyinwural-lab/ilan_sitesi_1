@@ -17427,10 +17427,10 @@ async def admin_vehicle_import_dry_run(
     payload: VehicleImportPayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    prepared = await _prepare_vehicle_import_payload(db, payload)
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    prepared = await _prepare_vehicle_import_payload(session, payload)
     return prepared["report"]
 
 
