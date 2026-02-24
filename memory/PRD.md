@@ -56,6 +56,12 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P0 Kanıt Paketi (2026-02-24):** /app/docs/P0_EVIDENCE.md (login + migration + health + frontend PASS)
+- **P1 Route Map + API Contract (2026-02-24):** /app/architecture/ui/P1_PUBLIC_SITE_CONSOLE_V1.md
+- **Admin Login UX (2026-02-24):** giriş sonrası “Oturum doğrulandı” → “Admin paneli yükleniyor...” toast akışı
+- **Placement Enum Standardizasyonu (2026-02-24):** AD_HOME_TOP, AD_CATEGORY_RIGHT, AD_SEARCH_TOP, AD_IN_FEED, AD_LISTING_RIGHT, AD_LOGIN_1, AD_LOGIN_2
+- **Doping State Machine (2026-02-24):** requested → paid → approved → published → expired (paid zorunlu)
+- **Router Binding Fix (2026-02-24):** api_router + RBAC allowlist tüm route’ları kapsayacak şekilde dosya sonuna taşındı
 - **P44 Site Content Migration (2026-02-24):** migration_dry_run PASS; p44 migration idempotent guard; alembic upgrade heads ile şema başa taşındı.
 - EU panel dokümantasyon paketi (/app/docs/CONSUMER_IA_V1.md, DEALER_IA_V1.md, PRIVACY_CENTER_EU.md, DATA_MODEL_SPEC_EU_PROFILES_V1.md)
 - ConsumerProfile ve DealerProfile modelleri
