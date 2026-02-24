@@ -1,7 +1,8 @@
 # RBAC_ENDPOINT_MAP
 
-**Son güncelleme:** 2026-02-23 23:12:58 UTC
+**Son güncelleme:** 2026-02-24 11:21:40 UTC
 **Kaynak:** server.py RBAC allowlist (deny-by-default)
+**Durum:** FREEZE v1 (değişiklikler PR diff-onay zorunlu)
 
 ## Format
 - METHOD PATH → allowed roles (runtime)
