@@ -306,6 +306,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Migration dry-run katmanı eklendi (scripts/migration_dry_run.py + spec + runbook gate + PR checkbox + CI job).
 - AF-G1/2/3 uygulandı: risk_level + ban_reason + suspension guard, plan quota max + discount constraint, bulk moderation transactional precheck.
 - Admin UI: Dealer risk level kontrolü + Plan quota max doğrulaması.
+- Dry-run audit log opsiyonu eklendi (MIGRATION_DRY_RUN).
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
