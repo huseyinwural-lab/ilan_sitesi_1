@@ -1218,6 +1218,67 @@ async def _write_audit_log_sql(
     return entry
 
 
+async def _upsert_seed_user(
+    session: AsyncSession,
+    *,
+    email: str,
+    password: str,
+    role: str,
+    full_name: str,
+    country_code: str,
+    country_scope: list[str],
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
+    phone_e164: Optional[str] = None,
+) -> SqlUser:
+    now_dt = datetime.now(timezone.utc)
+    hashed = get_password_hash(password)
+    result = await session.execute(select(SqlUser).where(SqlUser.email == email))
+    user = result.scalar_one_or_none()
+    if user:
+        user.hashed_password = hashed
+        user.role = role
+        user.full_name = full_name
+        user.first_name = first_name
+        user.last_name = last_name
+        user.phone_e164 = phone_e164
+        user.status = "active"
+        user.is_active = True
+        user.is_verified = True
+        user.country_scope = country_scope
+        user.country_code = country_code
+        user.preferred_language = user.preferred_language or "tr"
+        user.updated_at = now_dt
+        if role == "dealer":
+            user.dealer_status = "active"
+        if user.deleted_at:
+            user.deleted_at = None
+    else:
+        user = SqlUser(
+            id=uuid.uuid4(),
+            email=email,
+            hashed_password=hashed,
+            full_name=full_name,
+            first_name=first_name,
+            last_name=last_name,
+            phone_e164=phone_e164,
+            role=role,
+            status="active",
+            is_active=True,
+            is_verified=True,
+            country_scope=country_scope,
+            country_code=country_code,
+            preferred_language="tr",
+            created_at=now_dt,
+            updated_at=now_dt,
+            last_login=None,
+            dealer_status="active" if role == "dealer" else None,
+        )
+        session.add(user)
+    await session.commit()
+    return user
+
+
 async def _ensure_admin_user(db):
     now_iso = datetime.now(timezone.utc).isoformat()
     admin_email = "admin@platform.com"
