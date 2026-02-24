@@ -11266,13 +11266,7 @@ async def _get_schema_version_for_export_sql(session: AsyncSession, category_id:
 
 
 async def _get_schema_version_for_export(db, category_id: str) -> int:
-    latest_docs = await db.categories_versions.find(
-        {"category_id": category_id},
-        {"_id": 0, "version": 1},
-    ).sort("version", -1).to_list(length=1)
-    if not latest_docs:
-        return 0
-    return int(latest_docs[0].get("version") or 0)
+    raise RuntimeError("Mongo category versions disabled; use SQL variant")
 
 
 def _schema_to_csv_rows(schema: Dict[str, Any]) -> list[list[str]]:
