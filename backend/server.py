@@ -15274,6 +15274,25 @@ async def admin_update_system_setting(
         request=request,
         country_code=setting.country_code,
     )
+
+    if setting.key == MODERATION_FREEZE_SETTING_KEY:
+        new_freeze_active = _extract_setting_bool(setting.value)
+        if old_freeze_active is not None and new_freeze_active != old_freeze_active:
+            reason_payload = normalized_reason if payload.moderation_freeze_reason is not None else setting.moderation_freeze_reason
+            metadata = {}
+            if reason_payload:
+                metadata["reason"] = reason_payload
+            await _write_audit_log_sql(
+                session=session,
+                action="MODERATION_FREEZE_ENABLED" if new_freeze_active else "MODERATION_FREEZE_DISABLED",
+                actor=current_user,
+                resource_type="moderation_freeze",
+                resource_id=str(setting.id),
+                metadata=metadata,
+                request=request,
+                country_code=setting.country_code,
+            )
+
     await session.commit()
 
     return {
