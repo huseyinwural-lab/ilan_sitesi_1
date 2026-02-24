@@ -314,6 +314,15 @@ export default function ModerationQueue({
     );
   };
 
+  const renderFreezeReason = (testId) => {
+    if (!freezeReason) return null;
+    return (
+      <div className="mt-1 text-[11px] font-normal text-amber-700" data-testid={testId}>
+        Neden: {freezeReason}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6" data-testid={pageTestId}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
