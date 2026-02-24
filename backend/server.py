@@ -576,36 +576,63 @@ async def _get_message_thread_or_404(session: AsyncSession, thread_id: str, curr
 
 
 
-async def _get_active_push_subscriptions(db, user_id: str) -> List[dict]:
-    if db is None:
+def _subscription_field(subscription: Any, field: str) -> Optional[str]:
+    if isinstance(subscription, PushSubscription):
+        return getattr(subscription, field, None)
+    if isinstance(subscription, dict):
+        return subscription.get(field)
+    return None
+
+
+async def _get_active_push_subscriptions(session: AsyncSession, user_id: str) -> List[PushSubscription]:
+    if session is None:
         return []
-    cursor = db.push_subscriptions.find(
-        {"user_id": user_id, "is_active": True},
-        {"_id": 0},
+    try:
+        user_uuid = uuid.UUID(str(user_id))
+    except ValueError:
+        return []
+    result = await session.execute(
+        select(PushSubscription).where(
+            PushSubscription.user_id == user_uuid,
+            PushSubscription.is_active.is_(True),
+        )
     )
-    return await cursor.to_list(length=50)
+    return result.scalars().all()
 
 
-async def _deactivate_push_subscription(db, subscription_id: str, reason: str) -> None:
-    if db is None or not subscription_id:
+async def _deactivate_push_subscription(session: AsyncSession, subscription_id: str, reason: str) -> None:
+    if session is None or not subscription_id:
         return
-    await db.push_subscriptions.update_one(
-        {"id": subscription_id},
-        {"$set": {"is_active": False, "revoked_at": datetime.now(timezone.utc).isoformat(), "revoked_reason": reason}},
-    )
+    try:
+        sub_uuid = uuid.UUID(str(subscription_id))
+    except ValueError:
+        return
+    subscription = await session.get(PushSubscription, sub_uuid)
+    if not subscription:
+        return
+    subscription.is_active = False
+    subscription.revoked_at = datetime.now(timezone.utc)
+    subscription.revoked_reason = reason
+    await session.commit()
 
 
-async def _send_web_push_notification(subscription: dict, payload: dict) -> dict:
+async def _send_web_push_notification(subscription: Any, payload: dict) -> dict:
     if not PUSH_ENABLED:
+        return {"ok": False, "revoke": False}
+
+    endpoint = _subscription_field(subscription, "endpoint")
+    p256dh = _subscription_field(subscription, "p256dh")
+    auth = _subscription_field(subscription, "auth")
+    if not endpoint or not p256dh or not auth:
         return {"ok": False, "revoke": False}
 
     try:
         webpush(
             subscription_info={
-                "endpoint": subscription.get("endpoint"),
+                "endpoint": endpoint,
                 "keys": {
-                    "p256dh": subscription.get("p256dh"),
-                    "auth": subscription.get("auth"),
+                    "p256dh": p256dh,
+                    "auth": auth,
                 },
             },
             data=json.dumps(payload, ensure_ascii=False),
@@ -620,19 +647,24 @@ async def _send_web_push_notification(subscription: dict, payload: dict) -> dict
         return {"ok": False, "revoke": False}
 
 
-async def _send_message_push_notification(db, recipient_id: str, thread: dict, message: dict) -> bool:
-    if not PUSH_ENABLED or db is None:
+async def _send_message_push_notification(session: AsyncSession, recipient_id: str, thread: dict, message: dict) -> bool:
+    if not PUSH_ENABLED or session is None:
         return False
 
-    recipient = await db.users.find_one({"id": recipient_id}, {"_id": 0})
+    try:
+        recipient_uuid = uuid.UUID(str(recipient_id))
+    except ValueError:
+        return False
+
+    recipient = await session.get(SqlUser, recipient_uuid)
     if not recipient:
         return False
 
-    prefs = recipient.get("notification_prefs") or {}
+    prefs = getattr(recipient, "notification_prefs", None) or {}
     if not prefs.get("push_enabled", True):
         return False
 
-    subscriptions = await _get_active_push_subscriptions(db, recipient_id)
+    subscriptions = await _get_active_push_subscriptions(session, recipient_id)
     if not subscriptions:
         return False
 
@@ -650,7 +682,7 @@ async def _send_message_push_notification(db, recipient_id: str, thread: dict, m
         if result.get("ok"):
             success = True
         elif result.get("revoke"):
-            await _deactivate_push_subscription(db, subscription.get("id"), "push_failed")
+            await _deactivate_push_subscription(session, str(subscription.id), "push_failed")
     return success
 
 
