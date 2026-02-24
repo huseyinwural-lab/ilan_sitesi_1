@@ -124,7 +124,13 @@ export default function AdminDealerDetailPage() {
         <div className="border rounded-md p-4 space-y-2" data-testid="dealer-detail-card">
           <div className="text-sm font-semibold">Dealer</div>
           <div className="text-xs text-muted-foreground" data-testid="dealer-detail-email">{dealer.email}</div>
-          <div className="text-xs text-muted-foreground">Status: {dealer.dealer_status}</div>
+          <div className="text-xs text-muted-foreground" data-testid="dealer-detail-status">Status: {dealer.dealer_status}</div>
+          <div className="text-xs text-muted-foreground" data-testid="dealer-detail-risk-level">Risk: {dealer.risk_level || 'low'}</div>
+          {dealer.ban_reason && (
+            <div className="text-xs text-muted-foreground" data-testid="dealer-detail-ban-reason">
+              Ban reason: {dealer.ban_reason}
+            </div>
+          )}
           <div className="text-xs text-muted-foreground">Country: {dealer.country_code}</div>
         </div>
         <div className="border rounded-md p-4 space-y-2" data-testid="dealer-plan-card">
