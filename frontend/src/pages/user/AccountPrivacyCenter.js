@@ -8,6 +8,9 @@ export default function AccountPrivacyCenter() {
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState('');
   const [exportSuccess, setExportSuccess] = useState('');
+  const [exportHistory, setExportHistory] = useState([]);
+  const [exportHistoryLoading, setExportHistoryLoading] = useState(false);
+  const [exportHistoryError, setExportHistoryError] = useState('');
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteStatus, setDeleteStatus] = useState('');
 
