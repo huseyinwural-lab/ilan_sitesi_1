@@ -48,7 +48,7 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         action="CREATE", 
         resource_type="user", 
         resource_id=str(user.id),
-        new_values={"email": user.email, "role": user.role.value}
+        new_values={"email": user.email, "role": user.role}
     )
     
     return user
@@ -78,8 +78,8 @@ async def login(credentials: UserLogin, request: Request, db: AsyncSession = Dep
     token_data = {
         "sub": str(user.id),
         "email": user.email,
-        "role": user.role.value,
-        "portal_scope": _resolve_portal_scope(user.role.value),
+        "role": user.role,
+        "portal_scope": _resolve_portal_scope(user.role),
         "token_version": TOKEN_VERSION,
     }
     access_token = create_access_token(token_data)
@@ -95,7 +95,7 @@ async def login(credentials: UserLogin, request: Request, db: AsyncSession = Dep
         ip_address=request.client.host if request.client else None
     )
     
-    user_payload = UserResponse.model_validate(user).model_copy(update={"portal_scope": _resolve_portal_scope(user.role.value)})
+    user_payload = UserResponse.model_validate(user).model_copy(update={"portal_scope": _resolve_portal_scope(user.role)})
 
     return TokenResponse(
         access_token=access_token,
@@ -132,14 +132,14 @@ async def refresh_token(data: RefreshTokenRequest, db: AsyncSession = Depends(ge
     token_data = {
         "sub": str(user.id),
         "email": user.email,
-        "role": user.role.value,
-        "portal_scope": _resolve_portal_scope(user.role.value),
+        "role": user.role,
+        "portal_scope": _resolve_portal_scope(user.role),
         "token_version": TOKEN_VERSION,
     }
     new_access_token = create_access_token(token_data)
     new_refresh_token = create_refresh_token(token_data)
     
-    user_payload = UserResponse.model_validate(user).model_copy(update={"portal_scope": _resolve_portal_scope(user.role.value)})
+    user_payload = UserResponse.model_validate(user).model_copy(update={"portal_scope": _resolve_portal_scope(user.role)})
 
     return TokenResponse(
         access_token=new_access_token,
