@@ -115,7 +115,13 @@ from app.models.messaging import Conversation, Message
 from app.models.favorite import Favorite
 from app.models.notification import Notification
 from app.models.gdpr_export import GDPRExport
+from app.models.site_header import SiteHeaderSetting
+from app.models.advertisement import Advertisement
+from app.models.doping_request import DopingRequest
+from app.models.footer_layout import FooterLayout
+from app.models.info_page import InfoPage
 from app.models.push_subscription import PushSubscription
+from app.site_media_storage import store_site_asset
 from app.models.cloudflare_config import CloudflareConfig
 from app.models.system_setting import SystemSetting
 from app.models.admin_invite import AdminInvite
