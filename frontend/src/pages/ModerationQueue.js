@@ -638,7 +638,8 @@ export default function ModerationQueue({
                   </button>
                   <button
                     onClick={() => openActionDialog(selectedListing.id, 'needs_revision')}
-                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md border text-amber-700 hover:bg-amber-50 flex items-center justify-center gap-2"
+                    disabled={freezeActive}
+                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md border text-amber-700 hover:bg-amber-50 disabled:opacity-50 flex items-center justify-center gap-2"
                     data-testid="moderation-detail-needs-revision"
                   >
                     <AlertTriangle size={18} />
