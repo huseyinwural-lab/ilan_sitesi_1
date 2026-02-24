@@ -11,6 +11,9 @@ const COUNTRY_OPTIONS = [
   { code: 'CH', label: 'CH', currency: 'CHF' },
 ];
 
+const PLAN_QUOTA_MIN = 0;
+const PLAN_QUOTA_MAX = 10000;
+
 const resolveCurrency = (scope, countryCode) => {
   if (scope === 'global') return 'EUR';
   const match = COUNTRY_OPTIONS.find((item) => item.code === countryCode);
