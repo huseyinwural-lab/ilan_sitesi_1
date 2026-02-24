@@ -39,7 +39,7 @@
 - DB_NAME (backend/.env) **(platform kısıtı nedeniyle anahtar silinmedi)**
 
 ## Mongo Bağımlılıkları
-- pymongo (kaldırılacak)
+- pymongo (kaldırıldı)
 
 ## Mongo Dokümantasyon/Notlar
 - /app/docs/notifications-mongo.md
