@@ -17,6 +17,11 @@
 - `alembic upgrade head`
 - `\d dealer_profiles` → `gdpr_deleted_at` kolonu
 
+## 3.5) Migration Dry-Run (Release Gate)
+- **Release öncesi zorunlu adım.** Dry-run PASS olmadan deploy yapılmaz.
+- Komut: `python scripts/migration_dry_run.py`
+- Beklenen: `RESULT: PASS` + exit code `0`
+
 ## 4) Auth Login
 - Consumer: /login
 - Dealer: /dealer/login
