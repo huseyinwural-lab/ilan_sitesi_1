@@ -9039,27 +9039,39 @@ async def admin_list_dealer_applications(
     status: Optional[str] = None,
     search: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    query: Dict = {}
+    filters = []
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        query["country_code"] = ctx.country
+        filters.append(DealerApplication.country == ctx.country)
     if status:
-        query["status"] = status
+        filters.append(DealerApplication.status == status)
     if search:
-        query["$or"] = [
-            {"email": {"$regex": search, "$options": "i"}},
-            {"company_name": {"$regex": search, "$options": "i"}},
-        ]
+        search_value = f"%{search}%"
+        filters.append(
+            or_(
+                DealerApplication.contact_email.ilike(search_value),
+                DealerApplication.company_name.ilike(search_value),
+            )
+        )
 
     limit = min(100, max(1, int(limit)))
-    cursor = db.dealer_applications.find(query, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(limit)
-    docs = await cursor.to_list(length=limit)
+    query = (
+        select(DealerApplication)
+        .where(*filters)
+        .order_by(DealerApplication.created_at.desc())
+        .offset(int(skip))
+        .limit(limit)
+    )
+    apps = (await session.execute(query)).scalars().all()
 
-    total = await db.dealer_applications.count_documents(query)
-    return {"items": docs, "pagination": {"total": total, "skip": int(skip), "limit": limit}}
+    total = await session.scalar(select(func.count(DealerApplication.id)).where(*filters)) or 0
+    return {
+        "items": [_dealer_application_to_dict(app) for app in apps],
+        "pagination": {"total": int(total), "skip": int(skip), "limit": limit},
+    }
 
 
 @api_router.get("/admin/individual-applications")
