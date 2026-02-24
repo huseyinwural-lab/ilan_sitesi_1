@@ -178,9 +178,9 @@ def _write_audit_log(engine, status: str, blocking: List[str], warnings: List[st
             text(
                 """
                 INSERT INTO audit_logs
-                (id, user_email, action, resource_type, resource_id, metadata_info, created_at)
+                (id, user_email, action, resource_type, resource_id, metadata_info, is_pii_scrubbed, created_at)
                 VALUES
-                (:id, :user_email, :action, :resource_type, :resource_id, CAST(:metadata_info AS JSONB), :created_at)
+                (:id, :user_email, :action, :resource_type, :resource_id, CAST(:metadata_info AS JSONB), :is_pii_scrubbed, :created_at)
                 """
             ),
             {
