@@ -11250,7 +11250,7 @@ async def _record_category_version(
     status: str,
     max_versions: int = 20,
 ) -> dict:
-    raise RuntimeError("Mongo category versions disabled; use SQL variants")
+    raise RuntimeError("Legacy category versions disabled; use SQL variants")
 
 
 async def _mark_latest_category_version_published(
@@ -11260,7 +11260,7 @@ async def _mark_latest_category_version_published(
     actor: dict,
     max_versions: int = 20,
 ) -> dict:
-    raise RuntimeError("Mongo category versions disabled; use SQL variants")
+    raise RuntimeError("Legacy category versions disabled; use SQL variants")
 
 
 def _serialize_category_version(doc: dict, include_snapshot: bool = False) -> dict:
