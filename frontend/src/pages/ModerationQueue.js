@@ -67,6 +67,10 @@ export default function ModerationQueue({
   }, [countryFilter, moduleFilter, dealerOnly]);
 
   useEffect(() => {
+    fetchFreezeStatus();
+  }, []);
+
+  useEffect(() => {
     setSelectedIds((prev) => prev.filter((id) => listings.some((listing) => listing.id === id)));
   }, [listings]);
 
