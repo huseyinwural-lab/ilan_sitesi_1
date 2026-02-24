@@ -15242,6 +15242,14 @@ async def admin_update_system_setting(
     if setting.is_readonly and payload.value is not None:
         raise HTTPException(status_code=400, detail="Setting is read-only")
 
+    old_freeze_active = None
+    if setting.key == MODERATION_FREEZE_SETTING_KEY:
+        old_freeze_active = _extract_setting_bool(setting.value)
+
+    normalized_reason = None
+    if payload.moderation_freeze_reason is not None:
+        normalized_reason = _normalize_freeze_reason(payload.moderation_freeze_reason)
+
     if payload.value is not None:
         setting.value = payload.value
     if payload.country_code is not None:
@@ -15250,6 +15258,8 @@ async def admin_update_system_setting(
         setting.is_readonly = payload.is_readonly
     if payload.description is not None:
         setting.description = payload.description
+    if payload.moderation_freeze_reason is not None:
+        setting.moderation_freeze_reason = normalized_reason
 
     await _write_audit_log_sql(
         session=session,
