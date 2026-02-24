@@ -7864,6 +7864,49 @@ def _build_support_application_summary(doc: dict) -> Dict[str, Any]:
     }
 
 
+def _dealer_application_to_dict(app: DealerApplication) -> Dict[str, Any]:
+    return {
+        "id": str(app.id),
+        "country": app.country,
+        "dealer_type": app.dealer_type,
+        "company_name": app.company_name,
+        "vat_tax_no": app.vat_tax_no,
+        "address": app.address,
+        "city": app.city,
+        "postal_code": app.postal_code,
+        "website": app.website,
+        "logo_url": app.logo_url,
+        "contact_name": app.contact_name,
+        "contact_email": app.contact_email,
+        "contact_phone": app.contact_phone,
+        "status": app.status,
+        "reject_reason": app.reject_reason,
+        "reviewed_at": app.reviewed_at.isoformat() if app.reviewed_at else None,
+        "reviewed_by": str(app.reviewed_by_id) if app.reviewed_by_id else None,
+        "created_at": app.created_at.isoformat() if app.created_at else None,
+        "updated_at": app.updated_at.isoformat() if app.updated_at else None,
+    }
+
+
+def _individual_application_to_dict(app: Application) -> Dict[str, Any]:
+    return {
+        "id": str(app.id),
+        "application_id": app.application_id,
+        "application_type": app.application_type,
+        "category": app.category,
+        "subject": app.subject,
+        "description": app.description,
+        "status": app.status,
+        "priority": app.priority,
+        "decision_reason": app.decision_reason,
+        "created_at": app.created_at.isoformat() if app.created_at else None,
+        "updated_at": app.updated_at.isoformat() if app.updated_at else None,
+        "applicant_email": (app.extra_data or {}).get("email"),
+        "applicant_name": (app.extra_data or {}).get("full_name"),
+        "applicant_country": (app.extra_data or {}).get("country_code"),
+    }
+
+
 @api_router.get("/admin/individual-users")
 async def list_individual_users(
     request: Request,
