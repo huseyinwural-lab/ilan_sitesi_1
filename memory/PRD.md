@@ -297,6 +297,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Moderation Freeze reason alanı + audit event (ENABLED/DISABLED) + banner reason gösterimi eklendi.
 - Moderation Freeze evidence + closeout: MODERATION_FREEZE_EVIDENCE.md, MODERATION_FREEZE_CLOSED.md.
 - Privacy Center Export History (gdpr_exports tablosu + 30 gün retention + /account/privacy Export Geçmişi tabı) tamamlandı.
+- FAZ-UH1 dokümantasyonu tamamlandı: /architecture/ui/* (purpose, data sources, IA v2, wireframe, backlog, tokens).
+- Consumer Dashboard V1 aksiyon odaklı yeniden kuruldu (KPI row, primary CTA, listing snapshot, favoriler/saved search, status banner).
+- /account/security route eklendi + sol menü IA V2 güncellendi.
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
