@@ -114,6 +114,7 @@ from app.models.analytics import ListingView
 from app.models.messaging import Conversation, Message
 from app.models.favorite import Favorite
 from app.models.notification import Notification
+from app.models.gdpr_export import GDPRExport
 from app.models.push_subscription import PushSubscription
 from app.models.cloudflare_config import CloudflareConfig
 from app.models.system_setting import SystemSetting
