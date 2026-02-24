@@ -13578,6 +13578,7 @@ async def create_checkout_session_stub(
 async def create_checkout_session(
     payload: PaymentCheckoutPayload,
     request: Request,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     current_user=Depends(check_permissions(["dealer"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
