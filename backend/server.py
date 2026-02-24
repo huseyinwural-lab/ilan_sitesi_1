@@ -3005,6 +3005,8 @@ _report_submit_attempts: Dict[str, List[float]] = {}
 
 EXPORT_RATE_LIMIT_WINDOW_SECONDS = 60
 EXPORT_RATE_LIMIT_MAX_ATTEMPTS = 10
+GDPR_EXPORT_RETENTION_DAYS = 30
+GDPR_EXPORT_DIR = os.path.join(os.path.dirname(__file__), "static", "exports")
 _export_attempts: Dict[str, List[float]] = {}
 
 VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY")
