@@ -166,7 +166,7 @@ export default function AdminAdsManagement() {
             />
           </div>
         </div>
-        {status e ' ' && (
+        {status e ' ' && (
           <div className="text-xs text-emerald-600" data-testid="admin-ads-status">{status}</div>
         )}
         <button
@@ -185,7 +185,7 @@ export default function AdminAdsManagement() {
           {ads.map((ad) => (
             <div key={ad.id} className="border rounded-md p-3 space-y-2" data-testid={`admin-ads-item-${ad.id}`}>
               <div className="text-xs text-muted-foreground">{placements[ad.placement] || ad.placement}</div>
-              {ad.asset_url e ' ' && (
+              {ad.asset_url e ' ' && (
                 <img src={ad.asset_url} alt="ad" className="h-20 object-cover" data-testid={`admin-ads-image-${ad.id}`} />
               )}
               <div className="grid gap-2 md:grid-cols-2">
