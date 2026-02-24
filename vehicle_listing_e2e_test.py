@@ -20,7 +20,7 @@ import sys
 from datetime import datetime
 
 class VehicleListingE2ETester:
-    def __init__(self, base_url="https://health-panel-freeze.preview.emergentagent.com"):
+    def __init__(self, base_url="https://admin-v1-refactor.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None

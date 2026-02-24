@@ -12,9 +12,9 @@ try:
                 base_url = line.split('=', 1)[1].strip()
                 break
         else:
-            base_url = "https://health-panel-freeze.preview.emergentagent.com"
+            base_url = "https://admin-v1-refactor.preview.emergentagent.com"
 except FileNotFoundError:
-    base_url = "https://health-panel-freeze.preview.emergentagent.com"
+    base_url = "https://admin-v1-refactor.preview.emergentagent.com"
 
 api_url = f"{base_url}/api"
 

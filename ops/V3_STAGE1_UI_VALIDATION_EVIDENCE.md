@@ -37,7 +37,7 @@ Aşağıdaki klasör, agent otomasyon çıktılarının **statik** kanıtların�
 ## C) API Response Kanıtı (örnek payload)
 
 Base URL:
-- `https://health-panel-freeze.preview.emergentagent.com`
+- `https://admin-v1-refactor.preview.emergentagent.com`
 
 ### 1) GET /api/menu/top-items
 Örnek response (kısaltılmış):
