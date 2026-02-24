@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-24 11:21:40 UTC (P0 Close + RBAC Freeze v1)
+**Son güncelleme:** 2026-02-24 12:55:00 UTC (P0.1 Security Hardening + Stripe Idempotency)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
