@@ -8813,62 +8813,63 @@ async def admin_get_dealer_detail(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    query: Dict = {"id": dealer_id, "role": "dealer"}
-    if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        query["country_code"] = ctx.country
-
-    dealer = await db.users.find_one(query, {"_id": 0})
-    if not dealer:
-        raise HTTPException(status_code=404, detail="Dealer not found")
-    _assert_country_scope(dealer.get("country_code"), current_user)
-
-    # Basic finance linkage (V1 SQL)
-    last_invoice = None
-    unpaid_count = 0
     try:
         dealer_uuid = uuid.UUID(dealer_id)
-    except ValueError:
-        dealer_uuid = None
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid dealer id") from exc
 
-    if dealer_uuid:
-        last_invoice = (
-            await session.execute(
-                select(AdminInvoice)
-                .where(AdminInvoice.user_id == dealer_uuid)
-                .order_by(desc(AdminInvoice.issued_at), desc(AdminInvoice.created_at))
-                .limit(1)
-            )
-        ).scalars().first()
-        unpaid_count = (
-            await session.execute(
-                select(func.count())
-                .select_from(AdminInvoice)
-                .where(AdminInvoice.user_id == dealer_uuid, AdminInvoice.status == "issued")
-            )
-        ).scalar() or 0
+    result = await session.execute(
+        select(SqlUser).where(SqlUser.id == dealer_uuid, SqlUser.role == "dealer")
+    )
+    dealer_user = result.scalar_one_or_none()
+    if not dealer_user:
+        raise HTTPException(status_code=404, detail="Dealer not found")
+
+    if getattr(ctx, "mode", "global") == "country" and ctx.country and dealer_user.country_code != ctx.country:
+        raise HTTPException(status_code=403, detail="Country scope forbidden")
+
+    _assert_country_scope(dealer_user.country_code, current_user)
+
+    last_invoice = (
+        await session.execute(
+            select(AdminInvoice)
+            .where(AdminInvoice.user_id == dealer_uuid)
+            .order_by(desc(AdminInvoice.issued_at), desc(AdminInvoice.created_at))
+            .limit(1)
+        )
+    ).scalars().first()
+    unpaid_count = (
+        await session.execute(
+            select(func.count())
+            .select_from(AdminInvoice)
+            .where(AdminInvoice.user_id == dealer_uuid, AdminInvoice.status == "issued")
+        )
+    ).scalar() or 0
 
     last_invoice_payload = _admin_invoice_to_dict(last_invoice) if last_invoice else None
+
     active_plan = None
-    if dealer.get("plan_id"):
-        active_plan = await db.plans.find_one({"id": dealer.get("plan_id")}, {"_id": 0})
+    if dealer_user.plan_id:
+        plan = await session.get(Plan, dealer_user.plan_id)
+        if plan:
+            active_plan = {"id": str(plan.id), "name": plan.name, "country_code": plan.country_code}
 
     return {
         "dealer": {
-            "id": dealer.get("id"),
-            "email": dealer.get("email"),
-            "dealer_status": dealer.get("dealer_status", "active"),
-            "country_code": dealer.get("country_code"),
-            "plan_id": dealer.get("plan_id"),
-            "created_at": dealer.get("created_at"),
+            "id": str(dealer_user.id),
+            "email": dealer_user.email,
+            "dealer_status": dealer_user.dealer_status or "active",
+            "country_code": dealer_user.country_code,
+            "plan_id": str(dealer_user.plan_id) if dealer_user.plan_id else None,
+            "created_at": dealer_user.created_at.isoformat() if dealer_user.created_at else None,
         },
         "active_plan": active_plan,
         "last_invoice": last_invoice_payload,
         "unpaid_count": int(unpaid_count or 0),
         "package": {
-            "plan_id": dealer.get("plan_id"),
+            "plan_id": str(dealer_user.plan_id) if dealer_user.plan_id else None,
             "last_invoice": last_invoice_payload,
         },
     }
