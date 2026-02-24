@@ -17086,34 +17086,31 @@ async def admin_list_vehicle_models(
     country: Optional[str] = None,
     vehicle_type: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None)
-    query: Dict = {}
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    query = select(VehicleModel)
     if make_id:
-        make_doc = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0, "country_code": 1})
-        if make_doc:
-            _assert_country_scope(make_doc.get("country_code"), current_user)
-        query["make_id"] = make_id
+        try:
+            make_uuid = uuid.UUID(make_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid make id") from exc
+        query = query.where(VehicleModel.make_id == make_uuid)
     elif country:
-        country_code = country.upper()
-        _assert_country_scope(country_code, current_user)
-        make_ids = await db.vehicle_makes.find(
-            {"country_code": country_code}, {"_id": 0, "id": 1}
-        ).to_list(length=500)
-        query["make_id"] = {"$in": [m["id"] for m in make_ids]}
+        _assert_country_scope(country.upper(), current_user)
 
     vehicle_type_filter = _normalize_vehicle_type(vehicle_type)
     if vehicle_type_filter:
         if vehicle_type_filter not in VEHICLE_TYPE_SET:
             raise HTTPException(status_code=400, detail="vehicle_type invalid")
         if vehicle_type_filter == "car":
-            query["$or"] = [{"vehicle_type": "car"}, {"vehicle_type": {"$exists": False}}]
+            query = query.where(or_(VehicleModel.vehicle_type == "car", VehicleModel.vehicle_type.is_(None)))
         else:
-            query["vehicle_type"] = vehicle_type_filter
+            query = query.where(VehicleModel.vehicle_type == vehicle_type_filter)
 
-    docs = await db.vehicle_models.find(query, {"_id": 0}).sort("name", 1).to_list(length=1000)
-    return {"items": [_normalize_vehicle_model_doc(doc) for doc in docs]}
+    result = await session.execute(query.order_by(VehicleModel.name.asc()))
+    return {"items": [_normalize_vehicle_model_doc(doc) for doc in result.scalars().all()]}
 
 
 @api_router.post("/admin/vehicle-models", status_code=201)
