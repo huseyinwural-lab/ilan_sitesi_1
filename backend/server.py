@@ -1780,17 +1780,17 @@ async def _resolve_rbac_user(request: Request) -> Optional[dict]:
 
     async with AsyncSessionLocal() as session:
         user = await _get_sql_user(user_id, session)
-    if not user or not user.get("is_active", False):
+    if not user or not user.is_active:
         return None
 
     token_scope = payload.get("portal_scope")
     if not token_scope:
         return None
-    expected_scope = _resolve_portal_scope(user.get("role"))
+    expected_scope = _resolve_portal_scope(user.role)
     if token_scope != expected_scope:
         return None
 
-    user["portal_scope"] = token_scope
+    user.portal_scope = token_scope
     request.state.current_user = user
     return user
 
