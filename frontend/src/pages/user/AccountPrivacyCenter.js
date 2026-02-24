@@ -102,6 +102,33 @@ export default function AccountPrivacyCenter() {
     }
   };
 
+  const handleDownloadExport = async (exportItem) => {
+    setExportHistoryError('');
+    try {
+      const res = await fetch(`${API}/v1/users/me/gdpr-exports/${exportItem.id}/download`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+      });
+      if (res.status === 410) {
+        setExportHistoryError('Dosya süresi dolmuş.');
+        return;
+      }
+      if (!res.ok) {
+        throw new Error('Download failed');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = exportItem.file_path || 'gdpr-export.json';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportHistoryError('Dosya indirilemedi');
+    }
+  };
+
   const handleDeleteAccount = async () => {
     setDeleteStatus('');
     try {
