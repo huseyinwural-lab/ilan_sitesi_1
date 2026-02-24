@@ -8933,49 +8933,54 @@ async def admin_set_dealer_status(
     payload: DealerStatusPayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     new_status = (payload.dealer_status or "").strip().lower()
     if new_status not in ["active", "suspended"]:
         raise HTTPException(status_code=400, detail="Invalid dealer_status")
 
-    query: Dict = {"id": dealer_id, "role": "dealer"}
-    if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        query["country_code"] = ctx.country
+    try:
+        dealer_uuid = uuid.UUID(dealer_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid dealer id") from exc
 
-    dealer = await db.users.find_one(query, {"_id": 0})
+    result = await session.execute(
+        select(SqlUser).where(SqlUser.id == dealer_uuid, SqlUser.role == "dealer")
+    )
+    dealer = result.scalar_one_or_none()
     if not dealer:
         raise HTTPException(status_code=404, detail="Dealer not found")
 
-    prev_status = dealer.get("dealer_status", "active")
+    if getattr(ctx, "mode", "global") == "country" and ctx.country and dealer.country_code != ctx.country:
+        raise HTTPException(status_code=403, detail="Country scope forbidden")
 
-    # Normalize missing field
-    if "dealer_status" not in dealer:
-        await db.users.update_one({"id": dealer_id}, {"$set": {"dealer_status": prev_status}})
+    prev_status = dealer.dealer_status or "active"
 
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "event_type": "DEALER_STATUS_CHANGE",
-        "action": "DEALER_STATUS_CHANGE",
-        "resource_type": "user",
-        "resource_id": dealer_id,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "country_code": dealer.get("country_code"),
-        "country_scope": current_user.get("country_scope") or [],
-        "previous_status": prev_status,
-        "new_status": new_status,
-        "applied": False,
-    }
+    dealer.dealer_status = new_status
+    if new_status == "suspended":
+        dealer.status = "suspended"
+        dealer.is_active = False
+    else:
+        dealer.status = "active"
+        dealer.is_active = True
 
-    # audit-first
-    await db.audit_logs.insert_one(audit_doc)
+    await session.commit()
 
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_STATUS_CHANGE",
+        actor=current_user,
+        resource_type="user",
+        resource_id=str(dealer.id),
+        metadata={"previous_status": prev_status, "new_status": new_status},
+        request=request,
+        country_code=dealer.country_code,
+    )
+    await session.commit()
+
+    return {"ok": True}
 
 
 # =====================
