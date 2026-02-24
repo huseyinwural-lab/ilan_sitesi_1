@@ -476,6 +476,42 @@ export default function AdminSystemSettingsPage() {
 
       </div>
 
+      <div className="rounded-lg border bg-white p-4 space-y-3" data-testid="system-settings-moderation-freeze-card">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold" data-testid="system-settings-moderation-freeze-title">Moderation Freeze</h2>
+            <div className="text-xs text-muted-foreground" data-testid="system-settings-moderation-freeze-subtitle">
+              Moderation approve/reject işlemleri kilitlenir.
+            </div>
+          </div>
+          <div
+            className={`text-xs font-semibold px-2 py-1 rounded-full ${freezeActive ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}
+            data-testid="system-settings-moderation-freeze-status"
+          >
+            {freezeActive ? 'Freeze Aktif' : 'Freeze Kapalı'}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={toggleModerationFreeze}
+            disabled={!isSuperAdmin || freezeSaving}
+            className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm disabled:opacity-50"
+            data-testid="system-settings-moderation-freeze-toggle"
+          >
+            {freezeSaving ? 'Kaydediliyor…' : freezeActive ? 'Freeze Kapat' : 'Freeze Aç'}
+          </button>
+          <div className="text-xs text-muted-foreground" data-testid="system-settings-moderation-freeze-key">
+            Key: {MODERATION_FREEZE_KEY}
+          </div>
+          {!isSuperAdmin && (
+            <span className="text-xs text-amber-600" data-testid="system-settings-moderation-freeze-permission">
+              Sadece super_admin düzenleyebilir.
+            </span>
+          )}
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center gap-3" data-testid="system-settings-filters">
         <input
           value={filterKey}
