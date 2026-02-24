@@ -27,15 +27,7 @@
 | vehicle_models | DONE | - | - |
 
 ## TODO (Kanonik Backlog)
-- audit_logs
-- categories
-- countries
-- dealer_applications
-- individual_applications
-- plans
-- push_subscriptions
-- users
-- vehicle_listings
+- Yok
 
 ## Mongo Env Değişkenleri
 - MONGO_URL (backend/.env) **(platform kısıtı nedeniyle anahtar silinmedi)**
