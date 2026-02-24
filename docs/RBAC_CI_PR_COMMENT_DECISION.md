@@ -1,6 +1,6 @@
 # RBAC_CI_PR_COMMENT_DECISION
 
-**Tarih:** 2026-02-24 13:46:00 UTC
+**Tarih:** 2026-02-24 13:47:41 UTC
 **Karar:** Eklenecek ✅
 
 ## Yaklaşım (Minimal)
