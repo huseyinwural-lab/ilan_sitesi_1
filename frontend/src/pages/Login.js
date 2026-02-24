@@ -419,6 +419,13 @@ export default function Login({ portalContext = 'account' }) {
             )}
           </form>
         </div>
+
+        {!isAdminLogin && (
+          <div className="grid gap-4 md:grid-cols-2" data-testid="login-ad-slots">
+            <AdSlot placement="AD_LOGIN_1" className="w-full" />
+            <AdSlot placement="AD_LOGIN_2" className="w-full" />
+          </div>
+        )}
       </div>
     </div>
   );
