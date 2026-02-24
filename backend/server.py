@@ -9486,36 +9486,43 @@ async def list_audit_logs(
     end: Optional[str] = None,
     country_scope: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    q: Dict = {}
+    filters = []
     if action:
-        q["action"] = action
+        filters.append(AuditLog.action == action)
     if event_type:
-        q["event_type"] = event_type
+        filters.append(AuditLog.action == event_type)
     if resource_type:
-        q["resource_type"] = resource_type
+        filters.append(AuditLog.resource_type == resource_type)
     if user_id:
-        q["user_id"] = user_id
+        filters.append(AuditLog.user_id == _safe_uuid(user_id))
     if admin_user_id:
-        q["admin_user_id"] = admin_user_id
+        filters.append(AuditLog.user_id == _safe_uuid(admin_user_id))
     if country:
-        q["country_code"] = country.strip().upper()
-    if start or end:
-        created_at_q: Dict = {}
-        if start:
-            created_at_q["$gte"] = start
-        if end:
-            created_at_q["$lte"] = end
-        q["created_at"] = created_at_q
+        filters.append(AuditLog.country_code == country.strip().upper())
     if country_scope:
-        q["country_scope"] = country_scope
+        filters.append(AuditLog.country_scope == country_scope)
 
-    cursor = db.audit_logs.find(q, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(int(limit))
-    docs = await cursor.to_list(length=int(limit))
-    return docs
+    start_dt = _parse_audit_date(start, is_end=False)
+    end_dt = _parse_audit_date(end, is_end=True)
+    if start_dt:
+        filters.append(AuditLog.created_at >= start_dt)
+    if end_dt:
+        filters.append(AuditLog.created_at <= end_dt)
+
+    limit = min(max(int(limit), 1), 200)
+    query = (
+        select(AuditLog)
+        .where(*filters)
+        .order_by(desc(AuditLog.created_at))
+        .offset(int(skip))
+        .limit(limit)
+    )
+    rows = (await session.execute(query)).scalars().all()
+    return [_audit_log_sql_to_dict(row) for row in rows]
 
 
 def _parse_audit_date(value: Optional[str], is_end: bool = False) -> Optional[str]:
