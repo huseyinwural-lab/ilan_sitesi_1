@@ -51,7 +51,7 @@ const topNavItems = [
   },
 ];
 
-const UserPanelLayout = () =e {
+const UserPanelLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -59,7 +59,7 @@ const UserPanelLayout = () =e {
   const [counts, setCounts] = useState({ favorites: 0, messages: 0 });
 
   const sideMenuGroups = useMemo(
-    () =e [
+    () => [
       {
         key: 'listings',
         title: 'İlan Yönetimi',
@@ -95,7 +95,7 @@ const UserPanelLayout = () =e {
       },
       {
         key: 'account',
-        title: 'Hesap e Güvenlik',
+        title: 'Hesap > Güvenlik',
         testId: 'account-side-group-account',
         items: [
           { path: '/account/security', label: 'Güvenlik', testId: 'account-side-security' },
@@ -106,9 +106,9 @@ const UserPanelLayout = () =e {
     []
   );
 
-  useEffect(() =e {
+  useEffect(() => {
     let active = true;
-    const fetchCounts = async () =e {
+    const fetchCounts = async () => {
       try {
         const headers = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
         const [favRes, msgRes] = await Promise.all([
@@ -127,17 +127,17 @@ const UserPanelLayout = () =e {
       }
     };
     fetchCounts();
-    return () =e {
+    return () => {
       active = false;
     };
   }, [location.pathname]);
 
-  const handleLogout = () =e {
+  const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const renderBadge = (value, testId) =e {
+  const renderBadge = (value, testId) => {
     if (!value) return null;
     return (
       <span
@@ -149,7 +149,7 @@ const UserPanelLayout = () =e {
     );
   };
 
-  const resolveLabel = (item) =e {
+  const resolveLabel = (item) => {
     if (item.label) return item.label;
     return t(item.labelKey);
   };
