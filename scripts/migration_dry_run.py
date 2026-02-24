@@ -197,7 +197,8 @@ def _write_audit_log(engine, status: str, blocking: List[str], warnings: List[st
 
 
 def main() -> int:
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp_dt = datetime.now(timezone.utc)
+    timestamp = timestamp_dt.isoformat()
     blocking: List[str] = []
     warnings: List[str] = []
 
