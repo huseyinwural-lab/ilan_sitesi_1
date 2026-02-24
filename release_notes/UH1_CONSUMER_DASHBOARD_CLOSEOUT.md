@@ -30,7 +30,7 @@
 | --- | --- | --- | --- |
 | Dashboard ana görünüm (bloklar) | Playwright screenshot | `/tmp/account-dashboard-uh1.jpg` | PASS |
 | /account/security route | Playwright screenshot | `/tmp/account-security-uh1.jpg` | PASS |
-| moderation_reason payload | curl | `GET /api/v1/listings/my?limit=1` JSON örneği | PASS |
+| moderation_reason payload | curl | `/tmp/uh1_listings_my.json` | PASS |
 | /account route 200 | route check | `/account` | PASS |
 | /account/security route 200 | route check | `/account/security` | PASS |
 
