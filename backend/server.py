@@ -16687,22 +16687,30 @@ async def admin_list_attributes(
     category_id: Optional[str] = None,
     country: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    query: Dict = {}
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
     if category_id:
-        query["category_id"] = category_id
-    if country:
-        code = country.upper()
-        _assert_country_scope(code, current_user)
-        query["$or"] = [
-            {"country_code": None},
-            {"country_code": ""},
-            {"country_code": code},
-        ]
-    docs = await db.attributes.find(query, {"_id": 0}).sort("name", 1).to_list(length=1000)
-    return {"items": [_normalize_attribute_doc(doc) for doc in docs]}
+        try:
+            category_uuid = uuid.UUID(category_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid category id") from exc
+
+        query = (
+            select(Attribute, CategoryAttributeMap)
+            .join(CategoryAttributeMap, CategoryAttributeMap.attribute_id == Attribute.id)
+            .where(CategoryAttributeMap.category_id == category_uuid)
+            .options(selectinload(Attribute.options))
+            .order_by(Attribute.key.asc())
+        )
+        result = await session.execute(query)
+        items = [_serialize_attribute_sql(attr, str(mapping.category_id)) for attr, mapping in result.all()]
+        return {"items": items}
+
+    result = await session.execute(select(Attribute).options(selectinload(Attribute.options)).order_by(Attribute.key.asc()))
+    items = [_serialize_attribute_sql(attr, None) for attr in result.scalars().all()]
+    return {"items": items}
 
 
 @api_router.post("/admin/attributes", status_code=201)
