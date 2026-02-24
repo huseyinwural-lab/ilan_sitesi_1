@@ -114,6 +114,9 @@ from app.models.notification import Notification
 from app.models.cloudflare_config import CloudflareConfig
 from app.models.system_setting import SystemSetting
 from app.models.admin_invite import AdminInvite
+from app.models.menu_item import MenuItem
+from app.models.report import Report
+from app.models.menu import TopMenuItem
 from app.models.support_message import SupportMessage
 from app.services.cloudflare_metrics import (
     CloudflareCredentials,
