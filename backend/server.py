@@ -92,6 +92,7 @@ from app.models.webhook_event_log import WebhookEventLog
 from app.models.category import Category, CategoryTranslation
 from app.models.category_schema_version import CategorySchemaVersion
 from app.models.core import AuditLog, Country
+from app.models.attribute import Attribute, AttributeOption, CategoryAttributeMap
 from app.models.dealer_profile import DealerProfile
 from app.models.consumer_profile import ConsumerProfile
 from app.models.auth import UserCredential, EmailVerificationToken
