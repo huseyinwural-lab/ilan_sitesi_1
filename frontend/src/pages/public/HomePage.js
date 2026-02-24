@@ -9,6 +9,9 @@ export default function HomePage() {
 
   return (
     <PublicLayout>
+      <div className="mb-6" data-testid="home-ad-slot">
+        <AdSlot placement="AD_HOME_TOP" />
+      </div>
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6">
         <h1 className="text-4xl font-bold text-center">Hoş Geldiniz</h1>
         <p className="text-muted-foreground text-center">İlanlarınızı arayın ve keşfedin.</p>
