@@ -170,14 +170,17 @@ export default function AccountDashboard() {
         testId: 'account-status-2fa',
       });
     }
-    items.push({
-      key: 'quota',
-      icon: AlertTriangle,
-      text: `Kalan ücretsiz ilan: ${quotaLabel}${quotaInfo.ready ? '' : ' (Veri hazırlanıyor)'}`,
-      testId: 'account-status-quota',
-    });
+    const showQuotaWarning = quotaInfo.ready ? quotaInfo.remaining <= 1 : false;
+    if (showQuotaWarning) {
+      items.push({
+        key: 'quota',
+        icon: AlertTriangle,
+        text: `Kalan ücretsiz ilan: ${quotaLabel}`,
+        testId: 'account-status-quota',
+      });
+    }
     return items;
-  }, [quotaInfo.ready, quotaLabel, statusChecks.emailVerified, statusChecks.twoFactorEnabled]);
+  }, [quotaInfo.ready, quotaInfo.remaining, quotaLabel, statusChecks.emailVerified, statusChecks.twoFactorEnabled]);
 
   const kpiCards = useMemo(
     () => [
