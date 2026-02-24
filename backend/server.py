@@ -11394,7 +11394,7 @@ async def _get_schema_version_for_export_sql(session: AsyncSession, category_id:
 
 
 async def _get_schema_version_for_export(db, category_id: str) -> int:
-    raise RuntimeError("Mongo category versions disabled; use SQL variant")
+    raise RuntimeError("Legacy category versions disabled; use SQL variant")
 
 
 def _schema_to_csv_rows(schema: Dict[str, Any]) -> list[list[str]]:
