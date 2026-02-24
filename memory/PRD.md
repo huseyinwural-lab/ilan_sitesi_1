@@ -308,6 +308,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Privacy Center export geçmişi (gdpr_exports tablosu + UI) → /app/docs/PRIVACY_EXPORT_HISTORY_SPEC.md
 
 ### P2
+- Kayıtlı Arama/Alert (P2 backlog, P1 kapsamına girmez)
 - VIES VAT doğrulama (API)
 - GDPR CSV export
 - Public search + admin listings Mongo bağımlılıklarının SQL’e taşınması
