@@ -59,6 +59,7 @@ export default function AdminSystemSettingsPage() {
   const [items, setItems] = useState([]);
   const [freezeSetting, setFreezeSetting] = useState(null);
   const [freezeActive, setFreezeActive] = useState(false);
+  const [freezeReason, setFreezeReason] = useState('');
   const [freezeSaving, setFreezeSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
