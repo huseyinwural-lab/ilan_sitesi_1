@@ -16800,67 +16800,67 @@ async def admin_update_attribute(
     payload: AttributeUpdatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    # Permission check already handled by dependency
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    attr = await db.attributes.find_one({"id": attribute_id}, {"_id": 0})
-    if not attr:
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    try:
+        attribute_uuid = uuid.UUID(attribute_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid attribute id") from exc
+
+    result = await session.execute(select(Attribute).where(Attribute.id == attribute_uuid).options(selectinload(Attribute.options)))
+    attribute = result.scalar_one_or_none()
+    if not attribute:
         raise HTTPException(status_code=404, detail="Attribute not found")
 
-    updates: Dict = {}
     if payload.name is not None:
-        updates["name"] = payload.name.strip()
+        attribute.name = {"tr": payload.name.strip()}
     if payload.key is not None:
         key = payload.key.strip().lower()
         if not ATTRIBUTE_KEY_PATTERN.match(key):
             raise HTTPException(status_code=400, detail="key format invalid")
-        updates["key"] = key
+        attribute.key = key
     if payload.type is not None:
         if payload.type not in {"text", "number", "select", "boolean"}:
             raise HTTPException(status_code=400, detail="type invalid")
-        updates["type"] = payload.type
+        attribute.attribute_type = payload.type
     if payload.options is not None:
-        updates["options"] = payload.options
+        for opt in list(attribute.options):
+            await session.delete(opt)
+        for option in payload.options:
+            label = option.strip()
+            if not label:
+                continue
+            session.add(
+                AttributeOption(
+                    attribute_id=attribute.id,
+                    value=label.lower().replace(" ", "_"),
+                    label={"tr": label},
+                    is_active=True,
+                )
+            )
     if payload.required_flag is not None:
-        updates["required_flag"] = payload.required_flag
+        attribute.is_required = bool(payload.required_flag)
     if payload.filterable_flag is not None:
-        updates["filterable_flag"] = payload.filterable_flag
-    if payload.country_code is not None:
-        code = payload.country_code.upper() if payload.country_code else None
-        if code:
-            _assert_country_scope(code, current_user)
-        updates["country_code"] = code
+        attribute.is_filterable = bool(payload.filterable_flag)
     if payload.active_flag is not None:
-        updates["active_flag"] = payload.active_flag
-    if not updates:
-        return {"attribute": _normalize_attribute_doc(attr)}
+        attribute.is_active = bool(payload.active_flag)
 
-    if updates.get("type") == "select" and not (updates.get("options") or attr.get("options")):
-        raise HTTPException(status_code=400, detail="options required for select")
+    await _write_audit_log_sql(
+        session=session,
+        action="ATTRIBUTE_UPDATE",
+        actor=current_user,
+        resource_type="attribute",
+        resource_id=str(attribute.id),
+        metadata={"key": attribute.key},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
 
-    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
-    audit_doc = {
-        "id": str(uuid.uuid4()),
-        "event_type": "ATTRIBUTE_CHANGE",
-        "actor_id": current_user["id"],
-        "actor_role": current_user.get("role"),
-        "country_code": updates.get("country_code", attr.get("country_code")),
-        "subject_type": "attribute",
-        "subject_id": attribute_id,
-        "action": "update",
-        "created_at": updates["updated_at"],
-        "metadata": updates,
-    }
-    await db.audit_logs.insert_one(audit_doc)
-    try:
-        await db.attributes.update_one({"id": attribute_id}, {"$set": updates})
-    except Exception as e:
-        if "E11000" in str(e):
-            raise HTTPException(status_code=409, detail="Attribute key already exists")
-        raise
-    attr.update(updates)
-    return {"attribute": _normalize_attribute_doc(attr)}
+    await session.refresh(attribute)
+    return {"attribute": _serialize_attribute_sql(attribute, None)}
 
 
 @api_router.delete("/admin/attributes/{attribute_id}")
