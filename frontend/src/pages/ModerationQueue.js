@@ -57,6 +57,8 @@ export default function ModerationQueue({
   const [bulkDialog, setBulkDialog] = useState(null); // { actionType }
   const [bulkReason, setBulkReason] = useState('');
   const [bulkReasonNote, setBulkReasonNote] = useState('');
+  const [freezeActive, setFreezeActive] = useState(false);
+  const [freezeLoaded, setFreezeLoaded] = useState(false);
   const { t, getTranslated, language } = useLanguage();
 
   useEffect(() => {
