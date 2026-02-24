@@ -20147,6 +20147,82 @@ async def approve_doping_request(
     return {"ok": True}
 
 
+@api_router.post("/admin/doping/requests/{request_id}/mark-paid")
+async def mark_doping_paid(
+    request_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        req_uuid = uuid.UUID(request_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid request id") from exc
+
+    req = await session.get(DopingRequest, req_uuid)
+    if not req:
+        raise HTTPException(status_code=404, detail="Doping request not found")
+
+    if req.status != "requested":
+        raise HTTPException(status_code=400, detail="Only requested doping can be marked as paid")
+
+    req.status = "paid"
+    req.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DOPING_PAID",
+        actor=current_user,
+        resource_type="doping",
+        resource_id=str(req.id),
+        metadata={"listing_id": str(req.listing_id)},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.post("/admin/doping/requests/{request_id}/publish")
+async def publish_doping_request(
+    request_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        req_uuid = uuid.UUID(request_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid request id") from exc
+
+    req = await session.get(DopingRequest, req_uuid)
+    if not req:
+        raise HTTPException(status_code=404, detail="Doping request not found")
+
+    if req.status != "approved":
+        raise HTTPException(status_code=400, detail="Doping request must be approved before publishing")
+
+    now = datetime.now(timezone.utc)
+    req.status = "published"
+    req.published_at = now
+    req.updated_at = now
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DOPING_PUBLISHED",
+        actor=current_user,
+        resource_type="doping",
+        resource_id=str(req.id),
+        metadata={"listing_id": str(req.listing_id)},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    return {"ok": True}
+
+
 @api_router.get("/doping/placements")
 async def get_doping_placements(
     placement: Optional[str] = None,
