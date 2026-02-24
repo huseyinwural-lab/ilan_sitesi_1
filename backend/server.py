@@ -828,6 +828,8 @@ def _build_user_summary(doc: dict, listing_stats: Optional[Dict[str, Any]] = Non
         "country_code": doc.get("country_code"),
         "country_scope": doc.get("country_scope") or [],
         "status": status,
+        "risk_level": doc.get("risk_level") or "low",
+        "ban_reason": doc.get("ban_reason"),
         "is_active": bool(doc.get("is_active", True)),
         "deleted_at": doc.get("deleted_at"),
         "created_at": doc.get("created_at"),
