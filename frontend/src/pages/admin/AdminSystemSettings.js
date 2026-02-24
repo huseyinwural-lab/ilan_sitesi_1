@@ -260,6 +260,7 @@ export default function AdminSystemSettingsPage() {
             country_code: null,
             is_readonly: false,
             description: 'Moderation freeze flag',
+            moderation_freeze_reason: reasonPayload,
           },
           { headers: authHeader }
         );
