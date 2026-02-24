@@ -35,6 +35,7 @@
 
 ## Mongo Bağımlılıkları
 - pymongo (kaldırıldı)
+- motor (kaldırıldı)
 
 ## Mongo Dokümantasyon/Notlar
 - /app/legacy/mongo_archive (read-only arşiv)
