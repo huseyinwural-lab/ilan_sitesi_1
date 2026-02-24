@@ -10558,6 +10558,11 @@ class DealerPlanAssignmentPayload(BaseModel):
     plan_id: Optional[str] = None
 
 
+class RiskLevelUpdatePayload(BaseModel):
+    risk_level: str
+    reason: Optional[str] = None
+
+
 class CountryCreatePayload(BaseModel):
     country_code: str
     name: str
