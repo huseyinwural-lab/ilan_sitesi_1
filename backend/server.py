@@ -17002,51 +17002,45 @@ async def admin_update_vehicle_make(
     payload: VehicleMakeUpdatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    # Permission check already handled by dependency
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    make = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0})
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    try:
+        make_uuid = uuid.UUID(make_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid make id") from exc
+
+    make = await session.get(VehicleMake, make_uuid)
     if not make:
         raise HTTPException(status_code=404, detail="Make not found")
-    updates: Dict = {}
+
     if payload.name is not None:
-        updates["name"] = payload.name.strip()
+        make.name = payload.name.strip()
     if payload.slug is not None:
         slug = payload.slug.strip().lower()
         if not SLUG_PATTERN.match(slug):
             raise HTTPException(status_code=400, detail="slug format invalid")
-        updates["slug"] = slug
-    if payload.country_code is not None:
-        code = payload.country_code.upper() if payload.country_code else None
-        if code:
-            _assert_country_scope(code, current_user)
-        updates["country_code"] = code
+        if slug != make.slug:
+            existing = await session.execute(select(VehicleMake).where(VehicleMake.slug == slug))
+            if existing.scalar_one_or_none():
+                raise HTTPException(status_code=409, detail="Make slug already exists")
+        make.slug = slug
     if payload.active_flag is not None:
-        updates["active_flag"] = payload.active_flag
-    if not updates:
-        return {"make": _normalize_vehicle_make_doc(make)}
-    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
-    audit_doc = {
-        "id": str(uuid.uuid4()),
-        "event_type": "VEHICLE_MASTER_DATA_CHANGE",
-        "actor_id": current_user["id"],
-        "actor_role": current_user.get("role"),
-        "country_code": updates.get("country_code", make.get("country_code")),
-        "subject_type": "vehicle_make",
-        "subject_id": make_id,
-        "action": "update",
-        "created_at": updates["updated_at"],
-        "metadata": updates,
-    }
-    await db.audit_logs.insert_one(audit_doc)
-    try:
-        await db.vehicle_makes.update_one({"id": make_id}, {"$set": updates})
-    except Exception as e:
-        if "E11000" in str(e):
-            raise HTTPException(status_code=409, detail="Make slug already exists")
-        raise
-    make.update(updates)
+        make.is_active = bool(payload.active_flag)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="VEHICLE_MAKE_UPDATE",
+        actor=current_user,
+        resource_type="vehicle_make",
+        resource_id=str(make.id),
+        metadata={"slug": make.slug, "name": make.name},
+        request=request,
+        country_code=payload.country_code.upper() if payload.country_code else None,
+    )
+    await session.commit()
+
     return {"make": _normalize_vehicle_make_doc(make)}
 
 
