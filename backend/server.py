@@ -13954,48 +13954,51 @@ async def admin_update_tax_rate(
     payload: TaxRateUpdatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
-    tax_rate = await db.tax_rates.find_one({"id": tax_id}, {"_id": 0})
+    try:
+        tax_uuid = uuid.UUID(tax_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid tax id") from exc
+
+    tax_rate = await session.get(VatRate, tax_uuid)
     if not tax_rate:
         raise HTTPException(status_code=404, detail="Tax rate not found")
-    _assert_country_scope(tax_rate.get("country_code"), current_user)
+    _assert_country_scope(tax_rate.country, current_user)
 
-    updates: Dict = {"updated_at": datetime.now(timezone.utc).isoformat()}
     if payload.rate is not None:
         if not (0 <= payload.rate <= 100):
             raise HTTPException(status_code=400, detail="rate must be between 0 and 100")
-        updates["rate"] = payload.rate
+        tax_rate.rate = payload.rate
     if payload.effective_date is not None:
-        updates["effective_date"] = payload.effective_date
+        tax_rate.valid_from = _parse_iso_datetime(payload.effective_date, "effective_date")
     if payload.active_flag is not None:
-        updates["active_flag"] = payload.active_flag
+        tax_rate.is_active = payload.active_flag
 
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": updates["updated_at"],
-        "event_type": "TAX_RATE_CHANGE",
-        "action": "TAX_RATE_UPDATE",
-        "tax_rate_id": tax_id,
-        "country_code": tax_rate.get("country_code"),
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "tax_rate",
-        "resource_id": tax_id,
-        "applied": False,
+    await _write_audit_log_sql(
+        session=session,
+        action="TAX_RATE_UPDATE",
+        actor=current_user,
+        resource_type="tax_rate",
+        resource_id=str(tax_rate.id),
+        metadata={"country_code": tax_rate.country},
+        request=request,
+        country_code=tax_rate.country,
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "tax_rate": {
+            "id": str(tax_rate.id),
+            "country_code": tax_rate.country,
+            "rate": float(tax_rate.rate) if tax_rate.rate is not None else None,
+            "effective_date": tax_rate.valid_from.isoformat() if tax_rate.valid_from else None,
+            "active_flag": tax_rate.is_active,
+        },
     }
-
-    await db.audit_logs.insert_one(audit_doc)
-    await db.tax_rates.update_one({"id": tax_id}, {"$set": updates})
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-
-    updated = await db.tax_rates.find_one({"id": tax_id}, {"_id": 0})
-    return {"ok": True, "tax_rate": updated}
 
 
 @api_router.delete("/admin/tax-rates/{tax_id}")
