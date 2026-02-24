@@ -9687,33 +9687,62 @@ async def admin_list_audit_logs(
             "pagination": {"total": int(total), "page": page, "page_size": page_size},
         }
 
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     page_size = min(200, max(1, int(page_size)))
     page = max(0, int(page))
     skip = page * page_size
 
-    query = _build_audit_query(
-        q=q,
-        action=action,
-        event_type=event_type,
-        resource_type=resource_type,
-        country_code=country_code.strip().upper() if country_code else None,
-        admin_user_query=admin_user_id,
-        date_from=from_date,
-        date_to=to_date,
-    )
+    filters = []
+    if action:
+        filters.append(AuditLog.action == action)
+    if event_type:
+        filters.append(AuditLog.action == event_type)
+    if resource_type:
+        filters.append(AuditLog.resource_type == resource_type)
+    if country_code:
+        filters.append(AuditLog.country_code == country_code.strip().upper())
 
-    sort_order = -1 if sort != "timestamp_asc" else 1
+    if admin_user_id:
+        admin_uuid = _safe_uuid(admin_user_id)
+        if admin_uuid:
+            filters.append(AuditLog.user_id == admin_uuid)
+        else:
+            filters.append(AuditLog.user_email.ilike(f"%{admin_user_id}%"))
 
-    cursor = db.audit_logs.find(query, {"_id": 0}).sort("created_at", sort_order).skip(skip).limit(page_size)
-    docs = await cursor.to_list(length=page_size)
-    total = await db.audit_logs.count_documents(query)
+    if q:
+        search_value = f"%{q}%"
+        filters.append(
+            or_(
+                AuditLog.action.ilike(search_value),
+                AuditLog.resource_type.ilike(search_value),
+                AuditLog.resource_id.ilike(search_value),
+                AuditLog.user_email.ilike(search_value),
+                AuditLog.country_code.ilike(search_value),
+            )
+        )
+
+    date_from = _parse_audit_date(from_date, is_end=False)
+    date_to = _parse_audit_date(to_date, is_end=True)
+    if date_from:
+        filters.append(AuditLog.created_at >= date_from)
+    if date_to:
+        filters.append(AuditLog.created_at <= date_to)
+
+    query_stmt = select(AuditLog).where(and_(*filters)) if filters else select(AuditLog)
+    total_stmt = select(func.count()).select_from(AuditLog).where(and_(*filters)) if filters else select(func.count()).select_from(AuditLog)
+
+    if sort == "timestamp_asc":
+        query_stmt = query_stmt.order_by(AuditLog.created_at.asc())
+    else:
+        query_stmt = query_stmt.order_by(desc(AuditLog.created_at))
+
+    rows = (await session.execute(query_stmt.offset(skip).limit(page_size))).scalars().all()
+    total = (await session.execute(total_stmt)).scalar_one() or 0
 
     return {
-        "items": docs,
-        "pagination": {"total": total, "page": page, "page_size": page_size},
+        "items": [_audit_log_sql_to_dict(row) for row in rows],
+        "pagination": {"total": int(total), "page": page, "page_size": page_size},
     }
 
 
