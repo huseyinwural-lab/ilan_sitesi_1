@@ -17661,13 +17661,6 @@ async def _dashboard_invoice_totals(conditions: List[Any]) -> tuple[float, Dict[
 
 
 
-async def _dashboard_trends(
-    db, effective_countries: Optional[List[str]], include_revenue: bool, window_days: int
-) -> Dict[str, Any]:
-    now = datetime.now(timezone.utc)
-    listings_trend: List[Dict[str, Any]] = []
-    revenue_trend: List[Dict[str, Any]] = []
-
     invoice_base: List[Any] = [AdminInvoice.status == "paid"]
     if effective_countries:
         invoice_base.append(AdminInvoice.country_code.in_(effective_countries))
@@ -17700,9 +17693,6 @@ async def _dashboard_trends(
         "revenue": revenue_trend if include_revenue else None,
     }
 
-
-async def _dashboard_risk_panel(db, effective_countries: Optional[List[str]], include_finance: bool) -> Dict[str, Any]:
-    now = datetime.now(timezone.utc)
 
     login_since_iso = (now - timedelta(hours=DASHBOARD_MULTI_IP_WINDOW_HOURS)).isoformat()
     login_query: Dict[str, Any] = {
@@ -17816,16 +17806,6 @@ async def _dashboard_risk_panel(db, effective_countries: Optional[List[str]], in
         "finance_visible": include_finance,
     }
 
-
-async def _dashboard_db_health(db) -> tuple[str, int]:
-    start = time.perf_counter()
-    status = "ok"
-    try:
-        await db.command("ping")
-    except Exception:
-        status = "error"
-    latency_ms = int((time.perf_counter() - start) * 1000)
-    return status, latency_ms
 
 
 def _build_dashboard_pdf(summary: Dict[str, Any], trend_window: int) -> bytes:
