@@ -498,7 +498,8 @@ export default function ModerationQueue({
                     </button>
                     <button
                       onClick={() => openActionDialog(listing.id, 'reject')}
-                      className="p-2 rounded-md border text-rose-600 hover:bg-rose-50"
+                      disabled={freezeActive}
+                      className="p-2 rounded-md border text-rose-600 hover:bg-rose-50 disabled:opacity-50"
                       title="Reject"
                       data-testid={`moderation-reject-${listing.id}`}
                     >
