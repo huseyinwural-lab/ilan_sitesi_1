@@ -17049,30 +17049,33 @@ async def admin_delete_vehicle_make(
     make_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    # Permission check already handled by dependency
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    make = await db.vehicle_makes.find_one({"id": make_id}, {"_id": 0})
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    try:
+        make_uuid = uuid.UUID(make_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid make id") from exc
+
+    make = await session.get(VehicleMake, make_uuid)
     if not make:
         raise HTTPException(status_code=404, detail="Make not found")
-    now_iso = datetime.now(timezone.utc).isoformat()
-    audit_doc = {
-        "id": str(uuid.uuid4()),
-        "event_type": "VEHICLE_MASTER_DATA_CHANGE",
-        "actor_id": current_user["id"],
-        "actor_role": current_user.get("role"),
-        "country_code": make.get("country_code"),
-        "subject_type": "vehicle_make",
-        "subject_id": make_id,
-        "action": "delete",
-        "created_at": now_iso,
-        "metadata": {"active_flag": False},
-    }
-    await db.audit_logs.insert_one(audit_doc)
-    await db.vehicle_makes.update_one({"id": make_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
-    make["active_flag"] = False
-    make["updated_at"] = now_iso
+
+    make.is_active = False
+
+    await _write_audit_log_sql(
+        session=session,
+        action="VEHICLE_MAKE_DELETE",
+        actor=current_user,
+        resource_type="vehicle_make",
+        resource_id=str(make.id),
+        metadata={"active_flag": False},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
     return {"make": _normalize_vehicle_make_doc(make)}
 
 
