@@ -1,6 +1,6 @@
 # PREVIEW_ACTIVATION_RUNBOOK
 
-**Tarih:** 2026-02-22 00:54:38 UTC
+**Tarih:** 2026-02-24 11:21:40 UTC
 
 ## 1) Secret Check
 - `DATABASE_URL_PREVIEW` secret injection (sslmode=require, localhost yok)
