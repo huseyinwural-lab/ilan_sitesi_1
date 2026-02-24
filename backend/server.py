@@ -714,9 +714,36 @@ def _parse_suspension_until(value: Optional[str]) -> Optional[datetime]:
         parsed = datetime.fromisoformat(iso_value)
         if parsed.tzinfo is None:
             parsed = parsed.replace(tzinfo=timezone.utc)
-        return parsed.astimezone(timezone.utc)
+        parsed = parsed.astimezone(timezone.utc)
+        if parsed <= datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="suspension_until must be in the future")
+        return parsed
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid suspension_until") from exc
+
+
+def _normalize_risk_level(value: Optional[str]) -> str:
+    if not value:
+        return "low"
+    normalized = str(value).lower().strip()
+    if normalized not in RISK_LEVEL_ALLOWED:
+        raise HTTPException(status_code=400, detail="Invalid risk_level")
+    return normalized
+
+
+def _assert_plan_quota_limits(listing_quota: Optional[int], showcase_quota: Optional[int]) -> None:
+    if listing_quota is not None:
+        if listing_quota < PLAN_QUOTA_MIN or listing_quota > PLAN_QUOTA_MAX:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Listing quota must be between {PLAN_QUOTA_MIN} and {PLAN_QUOTA_MAX}",
+            )
+    if showcase_quota is not None:
+        if showcase_quota < PLAN_QUOTA_MIN or showcase_quota > PLAN_QUOTA_MAX:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Showcase quota must be between {PLAN_QUOTA_MIN} and {PLAN_QUOTA_MAX}",
+            )
 
 
 async def _auto_reactivate_if_expired(user: SqlUser, session: AsyncSession, request: Optional[Request]) -> SqlUser:
