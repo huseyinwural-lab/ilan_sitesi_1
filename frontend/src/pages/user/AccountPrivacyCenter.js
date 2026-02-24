@@ -129,6 +129,19 @@ export default function AccountPrivacyCenter() {
     }
   };
 
+  const exportStatusLabel = (status) => {
+    switch ((status || '').toLowerCase()) {
+      case 'ready':
+        return { label: 'Hazır', tone: 'text-emerald-600 bg-emerald-50' };
+      case 'pending':
+        return { label: 'Hazırlanıyor', tone: 'text-amber-600 bg-amber-50' };
+      case 'expired':
+        return { label: 'Süresi Doldu', tone: 'text-slate-500 bg-slate-100' };
+      default:
+        return { label: status || 'Bilinmiyor', tone: 'text-slate-600 bg-slate-100' };
+    }
+  };
+
   const handleDeleteAccount = async () => {
     setDeleteStatus('');
     try {
