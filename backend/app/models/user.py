@@ -20,6 +20,8 @@ class User(Base):
     user_type: Mapped[str] = mapped_column(String(20), default="individual", nullable=False, index=True)
     kyc_status: Mapped[str] = mapped_column(String(20), default="none", nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
+    risk_level: Mapped[str] = mapped_column(Enum("low", "medium", "high", name="risk_level"), default="low", nullable=False)
+    ban_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     dealer_status: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
