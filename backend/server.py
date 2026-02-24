@@ -14006,36 +14006,33 @@ async def admin_delete_tax_rate(
     tax_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
-    tax_rate = await db.tax_rates.find_one({"id": tax_id}, {"_id": 0})
+    try:
+        tax_uuid = uuid.UUID(tax_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid tax id") from exc
+
+    tax_rate = await session.get(VatRate, tax_uuid)
     if not tax_rate:
         raise HTTPException(status_code=404, detail="Tax rate not found")
-    _assert_country_scope(tax_rate.get("country_code"), current_user)
+    _assert_country_scope(tax_rate.country, current_user)
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "TAX_RATE_CHANGE",
-        "action": "TAX_RATE_DELETE",
-        "tax_rate_id": tax_id,
-        "country_code": tax_rate.get("country_code"),
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "tax_rate",
-        "resource_id": tax_id,
-        "applied": False,
-    }
+    tax_rate.is_active = False
 
-    await db.audit_logs.insert_one(audit_doc)
-    await db.tax_rates.update_one({"id": tax_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    await _write_audit_log_sql(
+        session=session,
+        action="TAX_RATE_DELETE",
+        actor=current_user,
+        resource_type="tax_rate",
+        resource_id=str(tax_rate.id),
+        metadata={"active_flag": False},
+        request=request,
+        country_code=tax_rate.country,
+    )
+    await session.commit()
     return {"ok": True}
 
 
