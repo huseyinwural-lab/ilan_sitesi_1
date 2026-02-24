@@ -7056,23 +7056,6 @@ async def websocket_messages(websocket: WebSocket):
         await websocket.close(code=1011)
 
 
-async def list_support_application_assignees(
-    request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
-):
-    db = request.app.state.db
-    query = {"role": {"$in": list(ADMIN_ROLE_OPTIONS)}, "deleted_at": {"$exists": False}}
-    users = await db.users.find(query, {"_id": 0}).sort("full_name", 1).to_list(length=200)
-    return {
-        "items": [
-            {
-                "id": user.get("id"),
-                "name": user.get("full_name") or user.get("email"),
-                "email": user.get("email"),
-            }
-            for user in users
-        ]
-    }
 
 
 @api_router.patch("/admin/applications/{application_id}/assign")
