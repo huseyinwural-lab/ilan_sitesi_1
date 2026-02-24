@@ -209,6 +209,58 @@ graph LR
 
 ---
 
+## ADR-STRIPE-IDEMPOTENCY-NOW — Stripe idempotency testi hemen
+
+**Karar:** Test key mevcutsa Stripe idempotency testi hemen çalıştırılır.
+
+**Gerekçe:** Monetizasyon tarafında regresyon riski yüksek; kapı kapatılmadan kanıt gerekir.
+
+**Etkileri / trade-off:**
+- (+) Finansal çift çekim riski minimize
+- (-) Test key yoksa blocker kalır
+
+**Varsayım:** Pod/env içinde geçerli Stripe test key sağlanır.
+
+**Risk & Önlem:** Key yok/yanlış → test “BLOCKED” işaretlenir; diğer P0.1 akışları devam eder.
+
+---
+
+## ADR-2FA-TEST-USER — 2FA test kullanıcısı
+
+**Karar:** 2FA açık kullanıcı yoksa user2@platform.com üzerinde 2FA etkinleştirilerek test yapılır.
+
+**Gerekçe:** Mevcut kullanıcı beklemek yerine kontrollü test hesabı ile kanıt üretmek.
+
+**Etkileri / trade-off:**
+- (+) Tekrarlanabilir test
+- (-) Test hesabı yönetimi gerekir
+
+---
+
+## ADR-RBAC-CI-HARD-GATE — RBAC coverage CI zorunlu
+
+**Karar:** RBAC endpoint coverage CI’da zorunlu kontrol olur; map dışı endpoint release edilemez.
+
+**Gerekçe:** “Map dışı endpoint” güvenlik açığı üretir; release kapısı olmalı.
+
+**Etkileri / trade-off:**
+- (+) Güvenlik regresyonu engellenir
+- (-) Geliştirici akışında ek disiplin gerekir
+
+---
+
+## ADR-P0.1-SECURITY-HARDEN — Güvenlik sertleştirme kapısı
+
+**Karar:** Stripe idempotency + rate limit + 2FA doğrulaması P1’e geçmeden tamamlanmalı.
+
+**Gerekçe:** Monetizasyon ve auth katmanı güvenlik açısından kritik.
+
+**Etkileri / trade-off:**
+- (+) Finansal risk azalır
+- (-) Kısa vadeli geliştirme yavaşlar
+
+---
+
 ## ADR-CAT-UI-003 — Manuel kategori yönetimi UI yaklaşımı
 
 **Karar:** “Manuel ekleme” için mevcut Admin Kategoriler UI genişletilecek; yeni modal açılmayacak.
