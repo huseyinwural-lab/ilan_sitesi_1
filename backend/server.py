@@ -9812,48 +9812,79 @@ async def admin_export_audit_logs(
     to_date: Optional[str] = None,
     sort: Optional[str] = "timestamp_desc",
     current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    query = _build_audit_query(
-        q=q,
-        action=action,
-        event_type=event_type,
-        resource_type=resource_type,
-        country_code=country_code.strip().upper() if country_code else None,
-        admin_user_query=admin_user_id,
-        date_from=from_date,
-        date_to=to_date,
-    )
+    filters = []
+    if action:
+        filters.append(AuditLog.action == action)
+    if event_type:
+        filters.append(AuditLog.action == event_type)
+    if resource_type:
+        filters.append(AuditLog.resource_type == resource_type)
+    if country_code:
+        filters.append(AuditLog.country_code == country_code.strip().upper())
 
-    sort_order = -1 if sort != "timestamp_asc" else 1
+    if admin_user_id:
+        admin_uuid = _safe_uuid(admin_user_id)
+        if admin_uuid:
+            filters.append(AuditLog.user_id == admin_uuid)
+        else:
+            filters.append(AuditLog.user_email.ilike(f"%{admin_user_id}%"))
 
-    docs = await db.audit_logs.find(query, {"_id": 0}).sort("created_at", sort_order).to_list(length=10000)
+    if q:
+        search_value = f"%{q}%"
+        filters.append(
+            or_(
+                AuditLog.action.ilike(search_value),
+                AuditLog.resource_type.ilike(search_value),
+                AuditLog.resource_id.ilike(search_value),
+                AuditLog.user_email.ilike(search_value),
+                AuditLog.country_code.ilike(search_value),
+            )
+        )
+
+    date_from = _parse_audit_date(from_date, is_end=False)
+    date_to = _parse_audit_date(to_date, is_end=True)
+    if date_from:
+        filters.append(AuditLog.created_at >= date_from)
+    if date_to:
+        filters.append(AuditLog.created_at <= date_to)
+
+    query_stmt = select(AuditLog).where(and_(*filters)) if filters else select(AuditLog)
+    if sort == "timestamp_asc":
+        query_stmt = query_stmt.order_by(AuditLog.created_at.asc())
+    else:
+        query_stmt = query_stmt.order_by(desc(AuditLog.created_at))
+
+    rows = (await session.execute(query_stmt.limit(10000))).scalars().all()
 
     output = io.StringIO()
     writer = csv.writer(output)
     headers = [
         "id",
         "created_at",
-        "event_type",
         "action",
         "resource_type",
         "resource_id",
-        "admin_user_id",
-        "admin_user_email",
         "user_id",
         "user_email",
         "country_code",
-        "ip_address",
-        "user_agent",
-        "request_id",
-        "trace_id",
     ]
     writer.writerow(headers)
 
-    for doc in docs:
-        writer.writerow([doc.get(h, "") for h in headers])
+    for row in rows:
+        writer.writerow([
+            str(row.id),
+            row.created_at.isoformat() if row.created_at else "",
+            row.action,
+            row.resource_type,
+            row.resource_id,
+            str(row.user_id) if row.user_id else "",
+            row.user_email or "",
+            row.country_code or "",
+        ])
 
     filename = datetime.now(timezone.utc).strftime("audit-logs-%Y%m%d-%H%M.csv")
     response = StreamingResponse(iter([output.getvalue()]), media_type="text/csv")
