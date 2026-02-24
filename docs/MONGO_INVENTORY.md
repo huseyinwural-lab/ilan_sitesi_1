@@ -42,5 +42,6 @@
 - pymongo (kaldırıldı)
 
 ## Mongo Dokümantasyon/Notlar
+- /app/legacy/mongo_archive (read-only arşiv)
 - /app/docs/notifications-mongo.md
 - /app/memory/MONGO_DEPENDENCY_REPORT.md
