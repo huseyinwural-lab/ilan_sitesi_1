@@ -267,8 +267,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/UX_THEME_PHASE_PREP.md
 
 ## Son Değişiklikler (2026-02-24)
-- Users  26 Listings SQL alanları eklendi (p39), /api/users ve /api/dashboard/stats SQL’e taşındı.
+- Users & Listings SQL alanları eklendi (p39), /api/users ve /api/dashboard/stats SQL’e taşındı.
 - /api/admin/listings + soft-delete/force-unpublish SQL’e taşındı; audit log SQL’e yazılıyor.
+- Testler (curl): /api/auth/me, /api/users, /api/dashboard/stats, /api/admin/listings, /api/admin/moderation/listings/{id}.
 - pymongo kaldırıldı; legacy Mongo scriptleri /app/legacy/mongo_archive altına arşivlendi.
 - Not: server.py içinde kalan db.users/db.vehicle_listings kullanımının tasfiyesi P0 kapsamında devam ediyor.
 
