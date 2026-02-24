@@ -13,6 +13,7 @@
 | POST | /api/admin/analytics/events | super_admin, country_admin |
 | PATCH | /api/admin/applications/{application_id}/assign | super_admin, country_admin, support |
 | PATCH | /api/admin/applications/{application_id}/status | super_admin, country_admin, support, moderator |
+| GET | /api/admin/applications/assignees | super_admin, country_admin, support, moderator |
 | GET | /api/admin/attributes | super_admin, country_admin, moderator |
 | POST | /api/admin/attributes | super_admin, country_admin, moderator |
 | DELETE | /api/admin/attributes/{attribute_id} | super_admin, country_admin, moderator |
