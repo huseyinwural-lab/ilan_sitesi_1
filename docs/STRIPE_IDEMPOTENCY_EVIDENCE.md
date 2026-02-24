@@ -39,13 +39,15 @@ curl -X POST {BASE}/api/payments/create-checkout-session \
 
 ## DB Kayıt Kontrolü
 ```
-PaymentTransaction (invoice_id=826c754f-6954-485f-b987-fe68997927c1)
+PaymentTransaction (invoice_id=0259a06f-876e-48ab-aaa0-5c664b1e97ae)
 - count = 1
-- session_id = cs_test_a1kIR5LJoZCPYmCmILHnZhtb2l7ToMFaSIVK8U0KWrqnHwlehYkLNGorBN
+- session_id = cs_test_a19IYb91lvhUdJkMgIzX4oYwHkdhAGsQsm7csc9BoXGedRZsiLiQ14CLNK
 
 Payment
 - count = 1
 ```
 
-## Not
-- Akış seçim önceliği: Checkout → Subscription → PaymentIntent. Sistem aktif akış: **Checkout Session**.
+## Log Kanıtı
+- backend.err.log:
+  - `stripe_checkout_session_created invoice_id=0259a06f-876e-48ab-aaa0-5c664b1e97ae ...`
+  - `stripe_idempotency_reused invoice_id=0259a06f-876e-48ab-aaa0-5c664b1e97ae ...`
