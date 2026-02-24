@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-02-24 13:47:41 UTC
 **Ortam URL:** https://mongo-tasfiye.preview.emergentagent.com
-**Commit Ref:** 5a0c7c2d
+**Commit Ref:** cf717b52
 **Durum:** CLOSED
 
 ## Kapsam (CLOSED)
