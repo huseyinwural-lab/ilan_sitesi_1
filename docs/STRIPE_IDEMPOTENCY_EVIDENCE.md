@@ -1,7 +1,7 @@
 # STRIPE_IDEMPOTENCY_EVIDENCE
 
 **Tarih:** 2026-02-24 13:03:30 UTC
-**Ortam URL:** https://mongo-tasfiye.preview.emergentagent.com
+**Ortam URL:** https://moderation-lock.preview.emergentagent.com
 **Commit Ref:** d05848ad
 **Seçilen Akış (Aktif):** Checkout Session (`POST /api/payments/create-checkout-session`)
 **Idempotency Header:** `Idempotency-Key`
@@ -39,7 +39,7 @@ curl -X POST {BASE}/api/payments/create-checkout-session \
 
 ## DB Kayıt Kontrolü
 ```
-PaymentTransaction (invoice_id=0259a06f-876e-48ab-aaa0-5c664b1e97ae)
+PaymentTransaction (invoice_id=moderation-lock)
 - count = 1
 - session_id = cs_test_a19IYb91lvhUdJkMgIzX4oYwHkdhAGsQsm7csc9BoXGedRZsiLiQ14CLNK
 
@@ -49,8 +49,8 @@ Payment
 
 ## Log Kanıtı
 - backend.err.log:
-  - `stripe_checkout_session_created invoice_id=0259a06f-876e-48ab-aaa0-5c664b1e97ae ...`
-  - `stripe_idempotency_reused invoice_id=0259a06f-876e-48ab-aaa0-5c664b1e97ae ...`
+  - `stripe_checkout_session_created invoice_id=moderation-lock ...`
+  - `stripe_idempotency_reused invoice_id=moderation-lock ...`
 
 ## Not
 - Akış seçim önceliği: Checkout → Subscription → PaymentIntent. Sistem aktif akış: **Checkout Session**.
