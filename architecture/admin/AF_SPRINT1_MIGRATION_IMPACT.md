@@ -99,3 +99,16 @@ Rollback sonrası stabilite:
 3. **Admin UI deploy** (form validations + audit feedback)
 
 **Not:** Rollback olmadan production deploy yapılmayacak.
+
+
+---
+
+## Dry-Run Checklist Mapping
+Bu analizdeki kontroller `scripts/migration_dry_run.py` ile eşleştirilmiştir.
+
+- Tablo varlık kontrolü → REQUIRED_TABLES
+- Kolon tip uyumu → EXPECTED_COLUMNS
+- FK integrity → user_subscriptions user/plan
+- Null/enum kontrolü → risk_level / ban_reason
+- Quota aralık kontrolü → plans + subscription_plans.limits
+- Row count delta → snapshot diff
