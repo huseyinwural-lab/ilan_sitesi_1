@@ -19929,6 +19929,100 @@ async def list_ads_public(
     return {"items": items}
 
 
+@api_router.post("/ads/{ad_id}/impression")
+async def record_ad_impression(
+    ad_id: str,
+    request: Request,
+    current_user=Depends(get_current_user_optional),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        ad_uuid = uuid.UUID(ad_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid ad id") from exc
+
+    await _expire_ads(session)
+    ad = await session.get(Advertisement, ad_uuid)
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+
+    if not ad.is_active or not _is_active_window(ad.start_at, ad.end_at):
+        return {"ok": False, "skipped": "inactive"}
+
+    user_agent = request.headers.get("user-agent") or ""
+    if _is_bot_user_agent(user_agent):
+        return {"ok": False, "skipped": "bot"}
+
+    ip_hash, ua_hash = _build_ad_hashes(request)
+    if await _should_dedup_impression(session, ad_uuid, ip_hash, ua_hash):
+        return {"ok": True, "deduped": True}
+
+    user_id = None
+    if current_user and current_user.get("id"):
+        try:
+            user_id = uuid.UUID(str(current_user.get("id")))
+        except ValueError:
+            user_id = None
+
+    impression = AdImpression(
+        ad_id=ad_uuid,
+        placement=ad.placement,
+        user_id=user_id,
+        ip_hash=ip_hash,
+        user_agent_hash=ua_hash,
+    )
+    session.add(impression)
+    await session.commit()
+    return {"ok": True, "deduped": False}
+
+
+@api_router.get("/ads/{ad_id}/click")
+async def record_ad_click(
+    ad_id: str,
+    request: Request,
+    current_user=Depends(get_current_user_optional),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        ad_uuid = uuid.UUID(ad_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid ad id") from exc
+
+    await _expire_ads(session)
+    ad = await session.get(Advertisement, ad_uuid)
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+
+    if not ad.is_active or not _is_active_window(ad.start_at, ad.end_at):
+        raise HTTPException(status_code=404, detail="Ad not active")
+
+    if not ad.target_url:
+        raise HTTPException(status_code=400, detail="Target URL missing")
+
+    user_agent = request.headers.get("user-agent") or ""
+    if _is_bot_user_agent(user_agent):
+        raise HTTPException(status_code=404, detail="Ad not active")
+
+    ip_hash, ua_hash = _build_ad_hashes(request)
+    user_id = None
+    if current_user and current_user.get("id"):
+        try:
+            user_id = uuid.UUID(str(current_user.get("id")))
+        except ValueError:
+            user_id = None
+
+    click = AdClick(
+        ad_id=ad_uuid,
+        placement=ad.placement,
+        user_id=user_id,
+        ip_hash=ip_hash,
+        user_agent_hash=ua_hash,
+    )
+    session.add(click)
+    await session.commit()
+    return RedirectResponse(url=ad.target_url)
+
+
 @api_router.get("/admin/ads")
 async def list_ads_admin(
     placement: Optional[str] = None,
