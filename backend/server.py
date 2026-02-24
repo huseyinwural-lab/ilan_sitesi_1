@@ -6467,47 +6467,60 @@ async def subscribe_push_notifications(
     payload: PushSubscriptionPayload,
     request: Request,
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
     if not PUSH_ENABLED:
         raise HTTPException(status_code=503, detail="Push not configured")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    subscription_id = str(uuid.uuid4())
-    update_payload = {
-        "user_id": current_user.get("id"),
-        "endpoint": payload.endpoint,
-        "p256dh": payload.keys.p256dh,
-        "auth": payload.keys.auth,
-        "user_agent": request.headers.get("user-agent"),
-        "is_active": True,
-        "updated_at": now_iso,
-    }
-
-    await db.push_subscriptions.update_one(
-        {"user_id": current_user.get("id"), "endpoint": payload.endpoint},
-        {"$set": update_payload, "$setOnInsert": {"id": subscription_id, "created_at": now_iso}},
-        upsert=True,
+    user_id = uuid.UUID(current_user.get("id"))
+    result = await session.execute(
+        select(PushSubscription).where(
+            PushSubscription.user_id == user_id,
+            PushSubscription.endpoint == payload.endpoint,
+        )
     )
+    subscription = result.scalar_one_or_none()
+    now_dt = datetime.now(timezone.utc)
+    if subscription:
+        subscription.p256dh = payload.keys.p256dh
+        subscription.auth = payload.keys.auth
+        subscription.is_active = True
+        subscription.updated_at = now_dt
+    else:
+        subscription = PushSubscription(
+            user_id=user_id,
+            endpoint=payload.endpoint,
+            p256dh=payload.keys.p256dh,
+            auth=payload.keys.auth,
+            is_active=True,
+            created_at=now_dt,
+            updated_at=now_dt,
+        )
+        session.add(subscription)
+    await session.commit()
     return {"ok": True}
 
 
 @api_router.post("/v1/push/unsubscribe")
 async def unsubscribe_push_notifications(
     payload: PushUnsubscribePayload,
-    request: Request,
     current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-
-    await db.push_subscriptions.update_one(
-        {"user_id": current_user.get("id"), "endpoint": payload.endpoint},
-        {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc).isoformat()}},
+    user_id = uuid.UUID(current_user.get("id"))
+    result = await session.execute(
+        select(PushSubscription).where(
+            PushSubscription.user_id == user_id,
+            PushSubscription.endpoint == payload.endpoint,
+        )
     )
+    subscription = result.scalar_one_or_none()
+    if subscription:
+        subscription.is_active = False
+        subscription.revoked_at = datetime.now(timezone.utc)
+        subscription.revoked_reason = "user_unsubscribe"
+        subscription.updated_at = datetime.now(timezone.utc)
+        await session.commit()
     return {"ok": True}
 
 
