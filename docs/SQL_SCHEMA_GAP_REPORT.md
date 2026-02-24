@@ -1,10 +1,9 @@
 # SQL_SCHEMA_GAP_REPORT
 
-**Son güncelleme:** 2026-02-23 23:45:24 UTC
+**Son güncelleme:** 2026-02-24 00:24:53 UTC
 
 ## Eksik Tablo/Şema
 - Eksik tablo bulunmadı.
 
 ## Notlar
-- system_settings + admin_invites tabloları model olarak eklendi; create_all ile oluşacak.
-- reports için support_messages yeterli değilse yeni tablo gerekir.
+- system_settings + admin_invites + menu_items + reports modelleri eklendi; create_all ile oluşacak.
