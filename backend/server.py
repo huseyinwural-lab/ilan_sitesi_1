@@ -20053,7 +20053,7 @@ async def create_doping_request(
 
     await _write_audit_log_sql(
         session=session,
-        action="DOPING_REQUEST_PAID",
+        action="DOPING_REQUESTED",
         actor=current_user,
         resource_type="doping",
         resource_id=str(req.id),
