@@ -15170,6 +15170,9 @@ async def admin_create_system_setting(
     if not KEY_NAMESPACE_REGEX.match(key):
         raise HTTPException(status_code=400, detail="Invalid key namespace")
     country_code = payload.country_code.upper() if payload.country_code else None
+    normalized_reason = None
+    if payload.moderation_freeze_reason is not None:
+        normalized_reason = _normalize_freeze_reason(payload.moderation_freeze_reason)
 
     result = await session.execute(
         select(SystemSetting).where(SystemSetting.key == key, SystemSetting.country_code == country_code)
