@@ -14605,8 +14605,7 @@ async def admin_create_plan(
 
     if payload.price_amount < 0:
         raise HTTPException(status_code=400, detail="price_amount must be >= 0")
-    if payload.listing_quota < 0 or payload.showcase_quota < 0:
-        raise HTTPException(status_code=400, detail="quota must be >= 0")
+    _assert_plan_quota_limits(payload.listing_quota, payload.showcase_quota)
 
     slug_value = _slugify_value(payload.slug or name)
     if not slug_value or not SLUG_PATTERN.match(slug_value):
