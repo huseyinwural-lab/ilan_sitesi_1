@@ -178,7 +178,34 @@ graph LR
 
 ---
 
-## ADR-CAT-UI-003 — Manuel kategori yönetimi UI yaklaşımı
+## ADR-P0-CLOSE — P0 resmi kapanış ve 520-scan regresyon kilidi
+
+**Karar:** P0 “CLOSED” kabul edilir; 520 tarama paketi release kapısıdır.
+
+**Gerekçe:** Mongo 0-iz ve 520=0 sürdürülebilir olmalı; regresyon en büyük operasyonel risk.
+
+**Etkileri / trade-off:**
+- (+) Üretim stabilitesi artar
+- (+) Sonraki fazlarda debug maliyeti düşer
+- (-) Release süresine zorunlu kontrol adımı eklenir
+
+**Varsayımlar:** CI/ops pipeline’a 520-scan komut seti eklenebilir.
+
+**Risk & Önlem:** Tarama paketi eksik endpoint kapsayabilir → endpoint listesi RBAC_ENDPOINT_MAP ile senkron tutulur.
+
+---
+
+## ADR-RBAC-FREEZE-V1 — RBAC değişiklikleri kontrollü
+
+**Karar:** RBAC allowlist/matrix “FREEZE v1” ile kilitlenir; değişiklikler diff + onay gerektirir.
+
+**Gerekçe:** Yetki regresyonu güvenlik açığıdır; kontrollü değişim şart.
+
+**Etkileri / trade-off:**
+- (+) Deny-by-default garantisi
+- (-) Yetki değişikliği hızı düşer
+
+**Risk & Önlem:** Yeni endpoint eklenip map’e yazılmazsa erişim bozulur → “map coverage” kontrolü eklenir.
 
 **Karar:** “Manuel ekleme” için mevcut Admin Kategoriler UI genişletilecek; yeni modal açılmayacak.
 
