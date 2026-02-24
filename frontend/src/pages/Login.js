@@ -64,12 +64,22 @@ export default function Login({ portalContext = 'account' }) {
 
       if (status === 401 && detail?.code === 'INVALID_CREDENTIALS') {
         setError({ code: 'INVALID_CREDENTIALS' });
+      } else if (status === 401 && detail?.code === 'INVALID_TOTP') {
+        setError({ code: 'INVALID_TOTP' });
       } else if (status === 429 && detail?.code === 'RATE_LIMITED') {
         setError({ code: 'RATE_LIMITED', retry_after_seconds: detail?.retry_after_seconds });
       } else if (status === 403 && detail?.code === 'EMAIL_NOT_VERIFIED') {
         sessionStorage.setItem('pending_email', email);
         sessionStorage.setItem('pending_portal', portalSelection);
         setError({ code: 'EMAIL_NOT_VERIFIED' });
+      } else if (status === 403 && detail?.code === 'TOTP_REQUIRED') {
+        setError({ code: 'TOTP_REQUIRED' });
+      } else if (status === 403 && detail?.code === 'TOTP_SETUP_INCOMPLETE') {
+        setError({ code: 'TOTP_SETUP_INCOMPLETE' });
+      } else if (status === 403 && detail === 'User account deleted') {
+        setError({ code: 'ACCOUNT_DELETED' });
+      } else if (status === 403 && detail === 'User account suspended') {
+        setError({ code: 'ACCOUNT_SUSPENDED' });
       } else {
         setError({ code: 'UNKNOWN' });
       }
