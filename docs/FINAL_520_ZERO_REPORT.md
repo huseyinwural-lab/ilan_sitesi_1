@@ -11,6 +11,8 @@
 - 520=0: **CLOSED**
 - Dealer + Consumer E2E: **CLOSED**
 
+**Signed-off:** 33a58b0d @ 2026-02-24 11:21:40 UTC
+
 ## Scope
 - 520 taraması: auth, users, listings, admin, vehicle master data (v2) endpointleri
 - P0 hedefi: 520=0 doğrulaması
