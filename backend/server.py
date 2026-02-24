@@ -18466,16 +18466,16 @@ async def public_vehicle_models(make: str, country: str | None = None, session: 
 
 
 @api_router.get("/v2/vehicle/makes")
-async def public_vehicle_makes_v2(country: str | None = None, request: Request = None, session: AsyncSession = Depends(get_sql_session)):
-    return await public_vehicle_makes(country, request, session)
+async def public_vehicle_makes_v2(country: str | None = None, session: AsyncSession = Depends(get_sql_session)):
+    return await public_vehicle_makes(country, session)
 
 
 @api_router.get("/v2/vehicle/models")
-async def public_vehicle_models_v2(make_key: str | None = None, make: str | None = None, country: str | None = None, request: Request = None, session: AsyncSession = Depends(get_sql_session)):
+async def public_vehicle_models_v2(make_key: str | None = None, make: str | None = None, country: str | None = None, session: AsyncSession = Depends(get_sql_session)):
     key = make_key or make
     if not key:
         raise HTTPException(status_code=400, detail="make_key is required")
-    return await public_vehicle_models(key, country, request, session)
+    return await public_vehicle_models(key, country, session)
 
 
 @api_router.get("/v1/admin/vehicle-master/status")
