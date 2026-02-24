@@ -27,6 +27,7 @@
 ## AF4 — Moderation Bulk + Filters
 7. **AF4-1:** Bulk approve/reject UI polish + audit confirm
    - AC: multi-select + reason required
+   - AC: Dry-run PASS log attached
 
 8. **AF4-2:** Moderation filters (status/category/date range)
    - AC: backend supports filters + UI fields
