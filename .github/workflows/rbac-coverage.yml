@@ -1,0 +1,25 @@
+name: RBAC Map Coverage Gate
+
+on:
+  pull_request:
+    paths:
+      - "backend/server.py"
+      - "docs/RBAC_ENDPOINT_MAP.md"
+      - "backend/scripts/check_rbac_coverage.py"
+      - ".github/workflows/rbac-coverage.yml"
+  push:
+    branches:
+      - main
+
+jobs:
+  rbac-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: RBAC map coverage
+        run: python backend/scripts/check_rbac_coverage.py
