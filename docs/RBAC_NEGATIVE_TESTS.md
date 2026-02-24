@@ -33,3 +33,21 @@ Deny-by-default ve allowlist doğrulaması için negatif test seti.
 
 ## Not
 - Public allowlist: `/api/admin/invite/preview` ve `/api/admin/invite/accept` sadece token doğrulama üzerinden erişebilir (RBAC guard **public** istisnası).
+
+## Sonuçlar (2026-02-24)
+**Curl doğrulamaları (beklenen 403/401):**
+- SUPPORT → `/api/admin/system-settings/cloudflare` = 403
+- SUPPORT → `/api/admin/invoices` = 403
+- MODERATOR → `/api/admin/countries` = 403
+- MODERATOR → `/api/admin/users` = 403
+- FINANCE → `/api/admin/moderation/queue` = 403
+- DEALER → `/api/admin/system/health-detail` = 403
+- CONSUMER → `/api/admin/system/health-detail` = 403
+- PUBLIC (no token) → `/api/admin/system/health-detail` = 401
+
+**Portal guard (UI) kanıtı:**
+- Consumer /admin erişimi → `/account` redirect: `/root/.emergent/automation_output/20260224_112334/rbac-consumer-admin-redirect.jpeg`
+- Dealer /admin erişimi → `/dealer` redirect: `/root/.emergent/automation_output/20260224_112359/rbac-dealer-admin-redirect.jpeg`
+- Admin menüsü olmayan kullanıcı ekranları:
+  - Consumer dashboard: `/root/.emergent/automation_output/20260224_112334/rbac-consumer-dashboard.jpeg`
+  - Dealer dashboard: `/root/.emergent/automation_output/20260224_112359/rbac-dealer-dashboard.jpeg`
