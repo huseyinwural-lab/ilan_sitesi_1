@@ -17043,7 +17043,7 @@ async def admin_update_menu_item(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
     try:
         menu_uuid = uuid.UUID(menu_id)
     except ValueError as exc:
