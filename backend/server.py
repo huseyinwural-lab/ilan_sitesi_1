@@ -9134,19 +9134,23 @@ async def admin_reject_dealer_application(
     payload: DealerApplicationRejectPayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    app = await db.dealer_applications.find_one({"id": app_id}, {"_id": 0})
+    try:
+        app_uuid = uuid.UUID(app_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid application id") from exc
+
+    app = await session.get(DealerApplication, app_uuid)
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
 
-    # country-scope enforcement
-    if getattr(ctx, "mode", "global") == "country" and ctx.country and app.get("country_code") != ctx.country:
+    if getattr(ctx, "mode", "global") == "country" and ctx.country and app.country != ctx.country:
         raise HTTPException(status_code=403, detail="Country scope forbidden")
 
-    if app.get("status") != "pending":
+    if app.status != "pending":
         raise HTTPException(status_code=400, detail="Application already reviewed")
 
     reason = (payload.reason or "").strip()
@@ -9157,49 +9161,29 @@ async def admin_reject_dealer_application(
     if reason == "other" and not reason_note:
         raise HTTPException(status_code=400, detail="reason_note is required when reason=other")
 
-    prev_status = app.get("status")
-    now_iso = datetime.now(timezone.utc).isoformat()
+    app.status = "rejected"
+    app.reject_reason = reason_note or reason
+    app.reviewed_by_id = _safe_uuid(current_user.get("id"))
+    app.reviewed_at = datetime.now(timezone.utc)
 
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "DEALER_APPLICATION_REJECTED",
-        "action": "DEALER_APPLICATION_REJECTED",
-        "resource_type": "dealer_application",
-        "resource_id": app_id,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "country_code": app.get("country_code"),
-        "country_scope": current_user.get("country_scope") or [],
-        "previous_status": prev_status,
-        "new_status": "rejected",
-        "reason": reason,
-        "reason_note": reason_note,
-        "applied": False,
-    }
+    await session.commit()
 
-    # audit-first
-    await db.audit_logs.insert_one(audit_doc)
-
-    res = await db.dealer_applications.update_one(
-        {"id": app_id, "status": "pending"},
-        {
-            "$set": {
-                "status": "rejected",
-                "reason": reason,
-                "reason_note": reason_note,
-                "reviewed_at": now_iso,
-                "reviewed_by": current_user.get("id"),
-                "updated_at": now_iso,
-            }
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_APPLICATION_REJECTED",
+        actor=current_user,
+        resource_type="dealer_application",
+        resource_id=str(app.id),
+        metadata={
+            "previous_status": "pending",
+            "new_status": "rejected",
+            "reason": reason,
+            "reason_note": reason_note,
         },
+        request=request,
+        country_code=app.country,
     )
-    if res.matched_count == 0:
-        raise HTTPException(status_code=409, detail="Application changed concurrently")
-
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    await session.commit()
 
     return {"ok": True}
 
