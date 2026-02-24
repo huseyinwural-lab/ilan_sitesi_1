@@ -16868,31 +16868,40 @@ async def admin_delete_attribute(
     attribute_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    # Permission check already handled by dependency
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    attr = await db.attributes.find_one({"id": attribute_id}, {"_id": 0})
-    if not attr:
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    try:
+        attribute_uuid = uuid.UUID(attribute_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid attribute id") from exc
+
+    result = await session.execute(select(Attribute).where(Attribute.id == attribute_uuid))
+    attribute = result.scalar_one_or_none()
+    if not attribute:
         raise HTTPException(status_code=404, detail="Attribute not found")
-    now_iso = datetime.now(timezone.utc).isoformat()
-    audit_doc = {
-        "id": str(uuid.uuid4()),
-        "event_type": "ATTRIBUTE_CHANGE",
-        "actor_id": current_user["id"],
-        "actor_role": current_user.get("role"),
-        "country_code": attr.get("country_code"),
-        "subject_type": "attribute",
-        "subject_id": attribute_id,
-        "action": "delete",
-        "created_at": now_iso,
-        "metadata": {"active_flag": False},
-    }
-    await db.audit_logs.insert_one(audit_doc)
-    await db.attributes.update_one({"id": attribute_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
-    attr["active_flag"] = False
-    attr["updated_at"] = now_iso
-    return {"attribute": _normalize_attribute_doc(attr)}
+
+    attribute.is_active = False
+    result = await session.execute(
+        select(CategoryAttributeMap).where(CategoryAttributeMap.attribute_id == attribute_uuid)
+    )
+    for mapping in result.scalars().all():
+        mapping.is_active = False
+
+    await _write_audit_log_sql(
+        session=session,
+        action="ATTRIBUTE_DELETE",
+        actor=current_user,
+        resource_type="attribute",
+        resource_id=str(attribute.id),
+        metadata={"key": attribute.key},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    return {"attribute": _serialize_attribute_sql(attribute, None)}
 
 
 @api_router.get("/admin/vehicle-makes")
