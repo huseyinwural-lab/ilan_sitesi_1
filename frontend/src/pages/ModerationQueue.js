@@ -653,34 +653,43 @@ export default function ModerationQueue({
               )}
               
               {selectedListing.status === 'pending_moderation' && (
-                <div className="flex flex-wrap gap-2 pt-4 border-t">
-                  <button
-                    onClick={() => handleAction(selectedListing.id, 'approve')}
-                    disabled={freezeActive}
-                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                    data-testid="moderation-detail-approve"
-                  >
-                    <CheckCircle size={18} />
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => openActionDialog(selectedListing.id, 'reject')}
-                    disabled={freezeActive}
-                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md bg-rose-600 text-white font-medium hover:bg-rose-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                    data-testid="moderation-detail-reject"
-                  >
-                    <XCircle size={18} />
-                    Reject
-                  </button>
-                  <button
-                    onClick={() => openActionDialog(selectedListing.id, 'needs_revision')}
-                    disabled={freezeActive}
-                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md border text-amber-700 hover:bg-amber-50 disabled:opacity-50 flex items-center justify-center gap-2"
-                    data-testid="moderation-detail-needs-revision"
-                  >
-                    <AlertTriangle size={18} />
-                    Needs Revision
-                  </button>
+                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                  <div className="relative group flex-1 min-w-[160px]">
+                    <button
+                      onClick={() => handleAction(selectedListing.id, 'approve')}
+                      disabled={freezeActive}
+                      className="w-full px-4 py-2 rounded-md bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                      data-testid="moderation-detail-approve"
+                    >
+                      <CheckCircle size={18} />
+                      Approve
+                    </button>
+                    {renderFreezeTooltip('moderation-detail-approve-tooltip')}
+                  </div>
+                  <div className="relative group flex-1 min-w-[160px]">
+                    <button
+                      onClick={() => openActionDialog(selectedListing.id, 'reject')}
+                      disabled={freezeActive}
+                      className="w-full px-4 py-2 rounded-md bg-rose-600 text-white font-medium hover:bg-rose-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                      data-testid="moderation-detail-reject"
+                    >
+                      <XCircle size={18} />
+                      Reject
+                    </button>
+                    {renderFreezeTooltip('moderation-detail-reject-tooltip')}
+                  </div>
+                  <div className="relative group flex-1 min-w-[160px]">
+                    <button
+                      onClick={() => openActionDialog(selectedListing.id, 'needs_revision')}
+                      disabled={freezeActive}
+                      className="w-full px-4 py-2 rounded-md border text-amber-700 hover:bg-amber-50 disabled:opacity-50 flex items-center justify-center gap-2"
+                      data-testid="moderation-detail-needs-revision"
+                    >
+                      <AlertTriangle size={18} />
+                      Needs Revision
+                    </button>
+                    {renderFreezeTooltip('moderation-detail-needs-revision-tooltip')}
+                  </div>
                 </div>
               )}
             </div>
