@@ -507,7 +507,8 @@ export default function ModerationQueue({
                     </button>
                     <button
                       onClick={() => openActionDialog(listing.id, 'needs_revision')}
-                      className="p-2 rounded-md border text-amber-600 hover:bg-amber-50"
+                      disabled={freezeActive}
+                      className="p-2 rounded-md border text-amber-600 hover:bg-amber-50 disabled:opacity-50"
                       title="Needs Revision"
                       data-testid={`moderation-needs-revision-${listing.id}`}
                     >
