@@ -1549,6 +1549,17 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logging.getLogger("sql_config").warning("SQL init skipped: %s", exc)
 
+    try:
+        async with AsyncSessionLocal() as session:
+            await _ensure_admin_user(session)
+            await _ensure_dealer_user(session)
+            await _ensure_test_user(session)
+            await _ensure_test_user_two(session)
+            await _ensure_individual_fixtures(session)
+            await _ensure_country_admin_user(session)
+    except Exception as exc:
+        logging.getLogger("runtime").warning("Seed users skipped: %s", exc)
+
     app.state.db = None
 
     yield
