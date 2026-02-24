@@ -99,8 +99,19 @@ AD_LOGIN_2
 - `GET /api/ads?placement=AD_HOME_TOP`
   - **Response:** `{ items: [{ id, asset_url, target_url, start_at, end_at, priority }] }`
 
+- `POST /api/ads/{id}/impression`
+  - **Body:** `{ placement }`
+  - **Rule:** IP+UA dedup (30 dk)
+  - **Response:** `{ ok: true, deduped: boolean }`
+
+- `GET /api/ads/{id}/click`
+  - **Behavior:** click log → target_url redirect
+
 - `GET /api/admin/ads`
   - **Response:** `{ items: [...], placements: { AD_HOME_TOP: "Anasayfa Üst Banner", ... } }`
+
+- `GET /api/admin/ads/analytics?range=30d`
+  - **Response:** `{ range, totals: { impressions, clicks, ctr }, placements: [...] }`
 
 - `POST /api/admin/ads`
   - **Body:** `{ placement, start_at?, end_at?, priority?, is_active?, target_url? }`
