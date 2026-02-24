@@ -97,6 +97,7 @@ export default function ModerationQueue({
       });
       const setting = (response.data?.items || []).find((item) => item.key === 'moderation.freeze.active');
       setFreezeActive(resolveFreezeValue(setting));
+      setFreezeReason(setting?.moderation_freeze_reason || '');
     } catch (error) {
       console.error('Failed to fetch moderation freeze status:', error);
     } finally {
