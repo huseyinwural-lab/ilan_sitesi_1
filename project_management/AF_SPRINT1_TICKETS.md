@@ -15,6 +15,7 @@
 
 4. **AF2-4:** Ban/suspend guard + reason enforced (verify)
    - AC: suspend requires reason, login blocked for suspended user
+   - AC: Dry-run PASS log attached
 
 ## AF3 — Dealer Verification
 5. **AF3-1:** Admin verification toggle endpoint + audit
