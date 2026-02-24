@@ -33,3 +33,23 @@
 
 ## 8) Admin Panel
 - `/admin` ana sayfa yükleniyor
+
+## 9) 520-scan Gate (Release zorunlu)
+- **Release öncesi zorunlu adım.** 520=0 olmadan deploy yapılmaz.
+- Komut seti (curl):
+  - `curl {BASE}/api/health`
+  - `curl {BASE}/api/health/db`
+  - `curl -X POST {BASE}/api/auth/login`
+  - `curl {BASE}/api/auth/me`
+  - `curl {BASE}/api/v1/users/me/profile`
+  - `curl {BASE}/api/v1/users/me/dealer-profile`
+  - `curl {BASE}/api/v1/listings/my`
+  - `curl {BASE}/api/admin/system-settings`
+  - `curl {BASE}/api/admin/invite/preview`
+  - `curl {BASE}/api/admin/listings`
+  - `curl {BASE}/api/admin/users`
+  - `curl {BASE}/api/admin/moderation/queue`
+  - `curl {BASE}/api/admin/moderation/queue/count`
+  - `curl {BASE}/api/v2/vehicle/makes?country=DE`
+  - `curl {BASE}/api/v2/vehicle/models?make_key=<make_key>`
+- Beklenen: 200/401/403/422 (422 sadece invite token eksikliği); **520=0**
