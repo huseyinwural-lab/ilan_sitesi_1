@@ -1509,11 +1509,21 @@ async def _ensure_country_admin_user(db):
     )
 
 
-async def _ensure_fixture_category_schema(db):
-    now_iso = datetime.now(timezone.utc).isoformat()
+async def _ensure_fixture_category_schema(session: AsyncSession):
     slug = "e2e-fixture-category"
     name = "E2E Fixture Category"
     country_code = "DE"
+
+    slug_json = {"tr": slug, "en": slug, "de": slug}
+    now_dt = datetime.now(timezone.utc)
+
+    result = await session.execute(
+        select(Category).where(
+            Category.country_code == country_code,
+            Category.slug["tr"].astext == slug,
+        )
+    )
+    existing = result.scalar_one_or_none()
 
     schema = {
         "status": "published",
@@ -1581,31 +1591,40 @@ async def _ensure_fixture_category_schema(db):
         "payment_options": {"package": False, "doping": False},
     }
 
-    existing = await db.categories.find_one({"slug": slug, "country_code": country_code}, {"_id": 0})
-    payload = {
-        "name": name,
-        "slug": slug,
-        "module": "vehicle",
-        "country_code": country_code,
-        "active_flag": True,
-        "sort_order": 0,
-        "parent_id": None,
-        "hierarchy_complete": True,
-        "form_schema": schema,
-        "updated_at": now_iso,
-    }
-
     if existing:
-        await db.categories.update_one({"id": existing["id"]}, {"$set": payload})
+        existing.form_schema = schema
+        existing.updated_at = now_dt
+        await session.commit()
         return
 
-    payload.update(
-        {
-            "id": str(uuid.uuid4()),
-            "created_at": now_iso,
-        }
+    category = Category(
+        name=name,
+        slug=slug_json,
+        path=slug,
+        module="vehicle",
+        country_code=country_code,
+        is_active=True,
+        sort_order=0,
+        parent_id=None,
+        hierarchy_complete=True,
+        form_schema=schema,
+        created_at=now_dt,
+        updated_at=now_dt,
     )
-    await db.categories.insert_one(payload)
+    session.add(category)
+    await session.flush()
+    for lang in ("tr", "en", "de"):
+        session.add(
+            CategoryTranslation(
+                category_id=category.id,
+                language=lang,
+                name=name,
+                description=None,
+                meta_title=None,
+                meta_description=None,
+            )
+        )
+    await session.commit()
 
 
 
