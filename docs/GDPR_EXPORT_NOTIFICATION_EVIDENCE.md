@@ -1,17 +1,18 @@
 # GDPR_EXPORT_NOTIFICATION_EVIDENCE
 
-**Tarih:** 2026-02-22
-**Durum:** BLOCKED (Preview DB erişimi yok)
+**Tarih:** 2026-02-24 11:24:40 UTC
+**Durum:** CLOSED
 
-## Beklenen Kanıt
-1) `/api/v1/users/me/data-export` çağrısı sonrası audit log:
-   - `gdpr_export_requested`
-   - `gdpr_export_completed`
-2) In-app notification:
-   - message: "Veri dışa aktarma tamamlandı. Hesabınızdan bir veri erişimi gerçekleşti."
-   - payload_json.severity = warning
-3) Audit log:
-   - `gdpr_export_notification_sent`
+## Kanıt
+- `/api/v1/users/me/data-export` çağrısı: 200
+- Audit log:
+  - `gdpr_export_requested`
+  - `gdpr_export_completed`
+  - `gdpr_export_notification_sent`
+- In-app notification payload:
+  - message: "Veri dışa aktarma tamamlandı. Hesabınızdan bir veri erişimi gerçekleşti."
+  - payload_json.severity = warning
 
-## Not
-DB erişimi açıldığında gerçek çıktılar eklenecek.
+## Test Notları
+- Test kullanıcı: user2@platform.com
+- Admin audit doğrulaması: /api/admin/audit-logs?action=gdpr_export_completed, gdpr_export_notification_sent
