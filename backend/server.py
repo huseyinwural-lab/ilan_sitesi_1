@@ -6431,15 +6431,35 @@ async def get_vapid_public_key(current_user=Depends(require_portal_scope("accoun
 
 
 @api_router.get("/v1/push/subscriptions")
-async def list_push_subscriptions(request: Request, current_user=Depends(require_portal_scope("account"))):
-    db = request.app.state.db
-    if db is None:
-        raise HTTPException(status_code=503, detail="Mongo disabled")
-    subscriptions = await db.push_subscriptions.find(
-        {"user_id": current_user.get("id"), "is_active": True},
-        {"_id": 0},
-    ).to_list(length=50)
-    return {"items": subscriptions}
+async def list_push_subscriptions(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_id = uuid.UUID(current_user.get("id"))
+    result = await session.execute(
+        select(PushSubscription)
+        .where(
+            PushSubscription.user_id == user_id,
+            PushSubscription.is_active.is_(True),
+        )
+        .order_by(desc(PushSubscription.created_at))
+    )
+    subscriptions = result.scalars().all()
+    items = [
+        {
+            "id": str(sub.id),
+            "endpoint": sub.endpoint,
+            "p256dh": sub.p256dh,
+            "auth": sub.auth,
+            "is_active": sub.is_active,
+            "revoked_at": sub.revoked_at.isoformat() if sub.revoked_at else None,
+            "revoked_reason": sub.revoked_reason,
+            "created_at": sub.created_at.isoformat() if sub.created_at else None,
+            "updated_at": sub.updated_at.isoformat() if sub.updated_at else None,
+        }
+        for sub in subscriptions
+    ]
+    return {"items": items}
 
 
 @api_router.post("/v1/push/subscribe")
