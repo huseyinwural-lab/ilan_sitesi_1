@@ -247,6 +247,7 @@ export default function AdminSystemSettingsPage() {
           {
             value: { enabled: nextValue },
             description: freezeSetting.description || 'Moderation freeze flag',
+            moderation_freeze_reason: reasonPayload,
           },
           { headers: authHeader }
         );
