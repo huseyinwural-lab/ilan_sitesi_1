@@ -286,10 +286,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ## Öncelikli Backlog
 ### P0 (Hemen)
 - ✅ Data Layer Cutover (Mongo Tasfiye): Mongo 0-iz + 520=0 + Dealer/Consumer E2E tamamlandı
-- Admin V1 Phase B (RBAC Final Freeze): allowlist doğrulama + negatif testlerin çalıştırılması + rol eşleme netleştirme
-- Preview GDPR export + soft delete E2E kanıtları (/api/v1/users/me/data-export, /api/v1/users/me/account)
-- Honeypot 400 + register_honeypot_hit audit doğrulaması (preview)
-- GDPR export completion notification + audit doğrulaması (preview)
+- ✅ Admin V1 Phase B (RBAC Final Freeze): MATRIX/ENDPOINT MAP FREEZE v1 + negatif test kanıtları + portal guard doğrulaması
+- ✅ Preview GDPR export + soft delete E2E kanıtları + audit doğrulaması
+- ✅ Honeypot 400 + register_honeypot_hit audit doğrulaması (preview)
 - Stripe idempotency testi (geçerli test API key sağlanınca)
 
 ### P0.1 (Güvenlik Doğrulama)
