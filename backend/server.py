@@ -4962,6 +4962,7 @@ async def activate_user(
         "status": user.status,
         "is_active": user.is_active,
         "suspension_until": None,
+        "ban_reason": None,
     }
 
     event_type = "dealer_reactivated" if user.role == "dealer" else "user_reactivated"
