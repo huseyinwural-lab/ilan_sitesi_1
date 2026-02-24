@@ -1279,47 +1279,15 @@ async def _upsert_seed_user(
     return user
 
 
-async def _ensure_admin_user(db):
-    now_iso = datetime.now(timezone.utc).isoformat()
-    admin_email = "admin@platform.com"
-    admin_password = "Admin123!"
-
-    existing = await db.users.find_one({"email": admin_email}, {"_id": 0})
-    hashed = get_password_hash(admin_password)
-
-    if existing:
-        # Force reset for reliability in preview environments
-        await db.users.update_one(
-            {"email": admin_email},
-            {
-                "$set": {
-                    "hashed_password": hashed,
-                    "status": "active",
-                    "is_active": True,
-                    "role": existing.get("role") or "super_admin",
-                    "country_code": existing.get("country_code") or "TR",
-                    "updated_at": now_iso,
-                }
-            },
-        )
-        return
-
-    await db.users.insert_one(
-        {
-            "id": str(uuid.uuid4()),
-            "email": admin_email,
-            "hashed_password": hashed,
-            "full_name": "System Administrator",
-            "role": "super_admin",
-            "status": "active",
-            "is_active": True,
-            "is_verified": True,
-            "country_scope": ["*"],
-            "country_code": "TR",
-            "preferred_language": "tr",
-            "created_at": now_iso,
-            "last_login": None,
-        }
+async def _ensure_admin_user(session: AsyncSession):
+    await _upsert_seed_user(
+        session,
+        email="admin@platform.com",
+        password="Admin123!",
+        role="super_admin",
+        full_name="System Administrator",
+        country_code="TR",
+        country_scope=["*"],
     )
 
 
