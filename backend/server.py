@@ -14467,14 +14467,18 @@ async def admin_assign_dealer_plan(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
     await _ensure_plans_db_ready(session)
 
-    dealer = await db.users.find_one({"id": dealer_id, "role": "dealer"}, {"_id": 0})
-    if not dealer:
+    try:
+        dealer_uuid = uuid.UUID(dealer_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid dealer id") from exc
+
+    dealer = await session.get(SqlUser, dealer_uuid)
+    if not dealer or dealer.role != "dealer":
         raise HTTPException(status_code=404, detail="Dealer not found")
-    _assert_country_scope(dealer.get("country_code"), current_user)
+    _assert_country_scope(dealer.country_code, current_user)
 
     plan_id = payload.plan_id
     plan = None
@@ -14482,34 +14486,30 @@ async def admin_assign_dealer_plan(
         plan = await session.get(Plan, plan_id)
         if not plan:
             raise HTTPException(status_code=404, detail="Plan not found")
-        if plan.country_scope == "country" and plan.country_code != dealer.get("country_code"):
+        if plan.country_scope == "country" and plan.country_code != dealer.country_code:
             raise HTTPException(status_code=400, detail="Plan country mismatch")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "ADMIN_PLAN_ASSIGNMENT",
-        "action": "ADMIN_PLAN_ASSIGNMENT",
-        "dealer_user_id": dealer_id,
-        "country_code": dealer.get("country_code"),
-        "previous_plan_id": dealer.get("plan_id"),
-        "new_plan_id": plan_id,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "dealer",
-        "resource_id": dealer_id,
-        "applied": False,
-    }
+    prev_plan_id = dealer.plan_id
+    dealer.plan_id = plan.id if plan else None
+    dealer.updated_at = datetime.now(timezone.utc)
+    await session.commit()
 
-    await db.audit_logs.insert_one(audit_doc)
-    await db.users.update_one({"id": dealer_id}, {"$set": {"plan_id": plan_id, "updated_at": now_iso}})
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
+    await _write_audit_log_sql(
+        session=session,
+        action="ADMIN_PLAN_ASSIGNMENT",
+        actor=current_user,
+        resource_type="dealer",
+        resource_id=str(dealer.id),
+        metadata={
+            "previous_plan_id": str(prev_plan_id) if prev_plan_id else None,
+            "new_plan_id": str(plan.id) if plan else None,
+        },
+        request=request,
+        country_code=dealer.country_code,
+    )
+    await session.commit()
 
-    return {"ok": True, "plan_id": plan_id}
+    return {"ok": True, "plan_id": str(plan.id) if plan else None}
 
 
 # =====================
