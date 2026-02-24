@@ -503,6 +503,7 @@ export default function Layout({ children }) {
       '/admin/corporate-listing-applications',
       '/admin/individual-campaigns',
       '/admin/corporate-campaigns',
+      '/admin/ads',
       '/admin/dashboard',
       '/admin/country-compare',
       '/admin/countries',
