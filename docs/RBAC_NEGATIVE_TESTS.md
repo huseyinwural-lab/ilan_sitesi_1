@@ -35,6 +35,13 @@ Deny-by-default ve allowlist doğrulaması için negatif test seti.
 - Public allowlist: `/api/admin/invite/preview` ve `/api/admin/invite/accept` sadece token doğrulama üzerinden erişebilir (RBAC guard **public** istisnası).
 
 ## Sonuçlar (2026-02-24)
+**Test kullanıcıları:**
+- support@platform.com / Support123!
+- moderator@platform.com / Moderator123!
+- finance@platform.com / Finance123!
+- dealer@platform.com / Dealer123!
+- user@platform.com / User123!
+
 **Curl doğrulamaları (beklenen 403/401):**
 - SUPPORT → `/api/admin/system-settings/cloudflare` = 403
 - SUPPORT → `/api/admin/invoices` = 403
