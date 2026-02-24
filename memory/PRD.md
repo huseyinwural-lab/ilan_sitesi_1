@@ -323,6 +323,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### P1 (Aktif)
 - ✅ Public Search 24h monitoring: log-based 24h CLOSED
 - ✅ Moderation migration: SQL parity report + freeze window plan kilitlendi
+- 🔵 Admin Operasyonel Finalizasyon (FAZ-ADMIN-FINAL) başlatıldı
 
 ### P1 (Sprint‑1 closeout)
 - Sprint‑1 E2E kanıt paketi
