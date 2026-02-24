@@ -15205,6 +15205,23 @@ async def admin_create_system_setting(
         request=request,
         country_code=country_code,
     )
+
+    if key == MODERATION_FREEZE_SETTING_KEY:
+        freeze_active = _extract_setting_bool(setting.value)
+        metadata = {}
+        if normalized_reason:
+            metadata["reason"] = normalized_reason
+        await _write_audit_log_sql(
+            session=session,
+            action="MODERATION_FREEZE_ENABLED" if freeze_active else "MODERATION_FREEZE_DISABLED",
+            actor=current_user,
+            resource_type="moderation_freeze",
+            resource_id=str(setting.id),
+            metadata=metadata,
+            request=request,
+            country_code=country_code,
+        )
+
     await session.commit()
 
     return {
