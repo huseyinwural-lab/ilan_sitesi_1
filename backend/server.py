@@ -9525,7 +9525,7 @@ async def list_audit_logs(
     return [_audit_log_sql_to_dict(row) for row in rows]
 
 
-def _parse_audit_date(value: Optional[str], is_end: bool = False) -> Optional[str]:
+def _parse_audit_date(value: Optional[str], is_end: bool = False) -> Optional[datetime]:
     if not value:
         return None
     try:
@@ -9533,14 +9533,16 @@ def _parse_audit_date(value: Optional[str], is_end: bool = False) -> Optional[st
     except ValueError:
         try:
             parsed = datetime.strptime(value, "%Y-%m-%d")
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid date format")
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid date format") from exc
     if len(value) <= 10:
         if is_end:
             parsed = parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
         else:
             parsed = parsed.replace(hour=0, minute=0, second=0, microsecond=0)
-    return parsed.isoformat()
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 def _build_audit_query(
