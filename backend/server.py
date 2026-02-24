@@ -12220,75 +12220,94 @@ async def admin_reports(
     skip: int = 0,
     limit: int = 50,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
-    q: Dict = {}
+    conditions = []
     if status:
         if status not in REPORT_STATUS_SET:
             raise HTTPException(status_code=400, detail="Invalid status")
-        q["status"] = status
+        conditions.append(Report.status == status)
     if reason:
         _validate_reason(reason, REPORT_REASONS_V1)
-        q["reason"] = reason
+        conditions.append(Report.reason == reason)
     if listing_id:
-        q["listing_id"] = listing_id
+        try:
+            listing_uuid = uuid.UUID(listing_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid listing id") from exc
+        conditions.append(Report.listing_id == listing_uuid)
 
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        q["country_code"] = ctx.country
+        conditions.append(Report.country_code == ctx.country)
     elif current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
         if "*" not in scope:
-            q["country_code"] = {"$in": scope}
+            conditions.append(Report.country_code.in_(scope))
 
-    limit = min(100, max(1, int(limit)))
-    cursor = db.reports.find(q, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(limit)
-    docs = await cursor.to_list(length=limit)
+    query = select(Report)
+    if conditions:
+        for cond in conditions:
+            query = query.where(cond)
 
-    listing_ids = [d.get("listing_id") for d in docs if d.get("listing_id")]
-    listing_map: Dict[str, dict] = {}
+    count_query = select(func.count()).select_from(Report)
+    if conditions:
+        for cond in conditions:
+            count_query = count_query.where(cond)
+
+    total = (await session.execute(count_query)).scalar_one()
+    result = await session.execute(
+        query.order_by(Report.created_at.desc()).offset(int(skip)).limit(int(limit))
+    )
+    reports = result.scalars().all()
+
+    listing_ids = [report.listing_id for report in reports if report.listing_id]
+    reporter_ids = [report.reporter_user_id for report in reports if report.reporter_user_id]
+
+    listing_map = {}
     if listing_ids:
-        listings = await db.vehicle_listings.find({"id": {"$in": listing_ids}}, {"_id": 0}).to_list(length=len(listing_ids))
-        listing_map = {listing_doc.get("id"): listing_doc for listing_doc in listings}
+        listing_result = await session.execute(select(Listing).where(Listing.id.in_(listing_ids)))
+        listing_map = {str(row.id): row for row in listing_result.scalars().all()}
 
-    reporter_ids = [d.get("reporter_user_id") for d in docs if d.get("reporter_user_id")]
-    seller_ids = [listing_doc.get("created_by") for listing_doc in listing_map.values() if listing_doc.get("created_by")]
-    user_ids = list({*reporter_ids, *seller_ids})
-    user_map: Dict[str, dict] = {}
+    user_ids = set(reporter_ids)
+    for listing in listing_map.values():
+        if listing.user_id:
+            user_ids.add(listing.user_id)
+
+    user_map = {}
     if user_ids:
-        users = await db.users.find({"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "email": 1, "role": 1, "dealer_status": 1}).to_list(length=len(user_ids))
-        user_map = {u.get("id"): u for u in users}
+        user_result = await session.execute(select(SqlUser).where(SqlUser.id.in_(list(user_ids))))
+        user_map = {str(user.id): user for user in user_result.scalars().all()}
 
     items = []
-    for d in docs:
-        listing = listing_map.get(d.get("listing_id"), {})
-        seller = user_map.get(listing.get("created_by"), {})
-        reporter = user_map.get(d.get("reporter_user_id"), {})
+    for report in reports:
+        listing = listing_map.get(str(report.listing_id))
+        seller = user_map.get(str(listing.user_id)) if listing and listing.user_id else None
+        reporter = user_map.get(str(report.reporter_user_id)) if report.reporter_user_id else None
+
         items.append(
             {
-                "id": d.get("id"),
-                "listing_id": d.get("listing_id"),
-                "reason": d.get("reason"),
-                "reason_note": d.get("reason_note"),
-                "status": d.get("status"),
-                "country_code": d.get("country_code"),
-                "created_at": d.get("created_at"),
-                "updated_at": d.get("updated_at"),
-                "reporter_user_id": d.get("reporter_user_id"),
-                "reporter_email": reporter.get("email"),
-                "listing_title": _resolve_listing_title(listing) if listing else None,
-                "listing_status": listing.get("status"),
-                "seller_id": listing.get("created_by"),
-                "seller_email": seller.get("email"),
-                "seller_role": seller.get("role"),
-                "seller_dealer_status": seller.get("dealer_status"),
+                "id": str(report.id),
+                "listing_id": str(report.listing_id),
+                "reason": report.reason,
+                "reason_note": report.reason_note,
+                "status": report.status,
+                "country_code": report.country_code,
+                "created_at": report.created_at.isoformat() if report.created_at else None,
+                "updated_at": report.updated_at.isoformat() if report.updated_at else None,
+                "reporter_user_id": str(report.reporter_user_id) if report.reporter_user_id else None,
+                "reporter_email": reporter.email if reporter else None,
+                "listing_title": listing.title if listing else None,
+                "listing_status": listing.status if listing else None,
+                "seller_id": str(listing.user_id) if listing and listing.user_id else None,
+                "seller_email": seller.email if seller else None,
+                "seller_role": seller.role if seller else None,
+                "seller_dealer_status": None,
             }
         )
 
-    total = await db.reports.count_documents(q)
-    return {"items": items, "pagination": {"total": total, "skip": int(skip), "limit": limit}}
-
+    return {"items": items, "pagination": {"total": int(total), "skip": int(skip), "limit": limit}}
 
 @api_router.get("/admin/reports/{report_id}")
 async def admin_report_detail(
