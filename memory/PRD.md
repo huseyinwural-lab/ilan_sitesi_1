@@ -266,6 +266,12 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/CDN_24H_REPORT.md
 - /app/memory/UX_THEME_PHASE_PREP.md
 
+## Son Değişiklikler (2026-02-24)
+- Users  26 Listings SQL alanları eklendi (p39), /api/users ve /api/dashboard/stats SQL’e taşındı.
+- /api/admin/listings + soft-delete/force-unpublish SQL’e taşındı; audit log SQL’e yazılıyor.
+- pymongo kaldırıldı; legacy Mongo scriptleri /app/legacy/mongo_archive altına arşivlendi.
+- Not: server.py içinde kalan db.users/db.vehicle_listings kullanımının tasfiyesi P0 kapsamında devam ediyor.
+
 ## Blokajlar / Riskler
 - Stripe API key geçersiz (idempotency testi BLOCKED)
 - Moderation Mongo koleksiyonu bulunamadı; ops ile doğrulama gerekli (parity 0/0)
