@@ -7875,66 +7875,111 @@ async def list_individual_users(
     page: int = 1,
     limit: int = 50,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
     country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
     if country:
         country_code = country.upper()
 
-    query = _build_individual_users_query(search, country_code, status)
+    filters = [~SqlUser.role.in_(list(ADMIN_ROLE_OPTIONS) + ["dealer"])]
+
+    if country_code:
+        filters.append(SqlUser.country_code == country_code)
+
+    status_key = (status or "").lower().strip()
+    if status_key == "deleted":
+        filters.append(SqlUser.deleted_at.is_not(None))
+    else:
+        filters.append(SqlUser.deleted_at.is_(None))
+        if status_key == "suspended":
+            filters.append(or_(SqlUser.status == "suspended", SqlUser.is_active.is_(False)))
+        elif status_key == "active":
+            filters.append(SqlUser.status != "suspended")
+            filters.append(SqlUser.is_active.is_(True))
+
+    if search:
+        search_value = f"%{search}%"
+        filters.append(
+            or_(
+                SqlUser.first_name.ilike(search_value),
+                SqlUser.last_name.ilike(search_value),
+                SqlUser.email.ilike(search_value),
+                SqlUser.full_name.ilike(search_value),
+                SqlUser.phone_e164.ilike(search_value),
+            )
+        )
 
     safe_page = max(page, 1)
     safe_limit = min(max(limit, 1), 200)
     skip = (safe_page - 1) * safe_limit
 
-    total_count = await db.users.count_documents(query)
+    total_count = await session.scalar(select(func.count(SqlUser.id)).where(*filters)) or 0
 
-    sort_spec, sort_name_expr, sort_first_expr, sort_direction = _build_individual_users_sort(sort_by, sort_dir)
+    sort_field_map = {
+        "email": SqlUser.email,
+        "created_at": SqlUser.created_at,
+        "last_login": SqlUser.last_login,
+        "first_name": SqlUser.first_name,
+        "last_name": SqlUser.last_name,
+    }
+    sort_field = sort_field_map.get(sort_by or "", SqlUser.last_name)
+    direction = (sort_dir or "asc").lower()
+    order_by = sort_field.asc() if direction == "asc" else sort_field.desc()
 
-    pipeline = [
-        {"$match": query},
-        {"$addFields": {"sort_name": sort_name_expr, "sort_first": sort_first_expr}},
-        {"$sort": sort_spec},
-        {"$skip": skip},
-        {"$limit": safe_limit},
-    ]
+    result = await session.execute(
+        select(SqlUser)
+        .where(*filters)
+        .order_by(order_by)
+        .offset(skip)
+        .limit(safe_limit)
+    )
+    users = result.scalars().all()
 
-    docs = await db.users.aggregate(pipeline).to_list(length=safe_limit)
-
-    user_ids = [doc.get("id") for doc in docs if doc.get("id")]
+    user_ids = [user.id for user in users]
     listing_stats_map: Dict[str, Dict[str, Any]] = {}
     if user_ids:
-        pipeline_stats = [
-            {"$match": {"created_by": {"$in": user_ids}}},
-            {
-                "$group": {
-                    "_id": "$created_by",
-                    "total": {"$sum": 1},
-                    "active": {
-                        "$sum": {
-                            "$cond": [
-                                {"$eq": ["$status", "published"]},
-                                1,
-                                0,
-                            ]
-                        }
-                    },
-                }
-            },
-        ]
-        listing_stats = await db.vehicle_listings.aggregate(pipeline_stats).to_list(length=5000)
-        listing_stats_map = {
-            stat.get("_id"): {"total": stat.get("total", 0), "active": stat.get("active", 0)}
-            for stat in listing_stats
-        }
+        stats_result = await session.execute(
+            select(
+                Listing.user_id,
+                func.count(Listing.id).label("total"),
+                func.sum(case((Listing.status == "published", 1), else_=0)).label("active"),
+            )
+            .where(Listing.user_id.in_(user_ids))
+            .group_by(Listing.user_id)
+        )
+        for row in stats_result.all():
+            listing_stats_map[str(row.user_id)] = {"total": int(row.total or 0), "active": int(row.active or 0)}
 
-    plan_ids = [doc.get("plan_id") for doc in docs if doc.get("plan_id")]
+    plan_ids = [user.plan_id for user in users if user.plan_id]
     plan_map: Dict[str, Any] = {}
     if plan_ids:
-        plan_docs = await db.plans.find({"id": {"$in": plan_ids}}, {"_id": 0}).to_list(length=200)
-        plan_map = {doc.get("id"): doc for doc in plan_docs}
+        plans = await session.execute(select(Plan).where(Plan.id.in_(plan_ids)))
+        plan_map = {str(plan.id): {"id": str(plan.id), "name": plan.name} for plan in plans.scalars().all()}
+
+    docs = [
+        {
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": user.role,
+            "country_code": user.country_code,
+            "country_scope": user.country_scope or [],
+            "status": user.status,
+            "is_active": user.is_active,
+            "is_verified": user.is_verified,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "last_login": user.last_login.isoformat() if user.last_login else None,
+            "deleted_at": user.deleted_at.isoformat() if user.deleted_at else None,
+            "phone_e164": user.phone_e164,
+            "plan_id": str(user.plan_id) if user.plan_id else None,
+            "plan_expires_at": user.plan_expires_at.isoformat() if user.plan_expires_at else None,
+        }
+        for user in users
+    ]
 
     items = [
         _build_user_summary(doc, listing_stats_map.get(doc.get("id"), {}), plan_map)
@@ -7945,7 +7990,7 @@ async def list_individual_users(
 
     return {
         "items": items,
-        "total_count": total_count,
+        "total_count": int(total_count),
         "page": safe_page,
         "limit": safe_limit,
         "total_pages": total_pages,
