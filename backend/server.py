@@ -9787,13 +9787,16 @@ async def admin_audit_log_detail(
     log_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    doc = await db.audit_logs.find_one({"id": log_id}, {"_id": 0})
-    if not doc:
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
+    log_uuid = _safe_uuid(log_id)
+    if not log_uuid:
+        raise HTTPException(status_code=400, detail="Invalid audit log id")
+    log = await session.get(AuditLog, log_uuid)
+    if not log:
         raise HTTPException(status_code=404, detail="Audit log not found")
-    return {"log": doc}
+    return {"log": _audit_log_sql_to_dict(log)}
 
 
 @api_router.get("/admin/audit-logs/export")
