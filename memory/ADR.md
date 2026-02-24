@@ -764,3 +764,88 @@ graph LR
 - (+) Kullanıcı beklentisi yönetilir
 - (+) Destek talepleri azalır
 - (-) Ek kolon + test güncellemesi
+
+
+---
+
+## ADR-UH1-EXECUTION-MODE — Doc-first + aynı sprint implementasyon
+
+**Karar:** UH1 yürütme modu doc-first, aynı sprintte UI implementasyonu.
+
+**Gerekçe:** Altyapı stabil; hızlı kullanıcı çıktısı + disiplinli dokümantasyon.
+
+**Etkileri / trade-off:**
+- (+) Hızlı çıktı
+- (-) Doküman disiplini bozulursa kalite düşer
+
+**Risk & Önlem:** Scope creep → UH1 backlog dışı iş alınmaz.
+
+---
+
+## ADR-UH1-DATA-SOURCE — KPI gerçek API + deterministic fallback
+
+**Karar:** KPI verileri mevcut API’lerden; API yoksa 0 + “Veri hazırlanıyor”.
+
+**Gerekçe:** Prod davranışı erken görünür.
+
+**Etkileri / trade-off:**
+- (+) Sürpriz azalır
+- (-) API eksikleri görünür
+
+---
+
+## ADR-UH1-REASON-SOURCE — Moderation reason listing payload
+
+**Karar:** Moderation reason tek kaynak listing payload içindeki `moderation_reason`.
+
+**Gerekçe:** Ek çağrı yok, performans/karmaşıklık azalır.
+
+**Etkileri / trade-off:**
+- (+) Daha hızlı sayfa
+- (-) Moderation detayları sınırlı
+
+---
+
+## ADR-UH1-ROUTE — Consumer dashboard route
+
+**Karar:** Consumer dashboard `/account` olarak sabitlenir. Güvenlik `/account/security`.
+
+**Gerekçe:** Basit, tutarlı navigasyon.
+
+**Etkileri / trade-off:**
+- (+) Net yönlendirme
+- (-) Legacy linkler redirect ister
+
+---
+
+## ADR-UH1-COLOR-TOKENS — Color tokens v1
+
+**Karar:** CTA #F57C00, header #1B263B, text #415A77, bg #F8F9FA + semantic tokens.
+
+**Gerekçe:** Aksiyon vurgusu + kurumsal stabilite.
+
+**Risk & Önlem:** Kontrast → WCAG AA kontrolü.
+
+---
+
+## ADR-UH1-SCROLLABLE-REMOVAL — Nested scroll kaldırma
+
+**Karar:** Dashboard’da nested scroll yok; tek ana sayfa scroll.
+
+**Gerekçe:** UX karmaşasını azaltır.
+
+---
+
+## ADR-UH1-STATUS-TRANSPARENCY — Status görünürlüğü
+
+**Karar:** Listing status + moderation reason her zaman görünür.
+
+**Gerekçe:** Destek yükü azalır.
+
+---
+
+## ADR-UH1-QUOTA-VISIBILITY — Quota bilgisi gizlenmez
+
+**Karar:** Kalan ücretsiz ilan hakkı dashboard’da gösterilir.
+
+**Gerekçe:** Monetization şeffaflığı.
