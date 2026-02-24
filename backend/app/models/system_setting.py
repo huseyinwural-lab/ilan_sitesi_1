@@ -16,6 +16,7 @@ class SystemSetting(Base):
     country_code: Mapped[str | None] = mapped_column(String(5), nullable=True, index=True)
     is_readonly: Mapped[bool] = mapped_column(Boolean, default=False)
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    moderation_freeze_reason: Mapped[str | None] = mapped_column(String(280), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
