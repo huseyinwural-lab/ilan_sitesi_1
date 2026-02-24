@@ -9296,56 +9296,63 @@ async def admin_approve_individual_application(
     app_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
-    app = await db.individual_applications.find_one({"id": app_id})
-    if not app:
+    try:
+        app_uuid = uuid.UUID(app_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid application id") from exc
+
+    app = await session.get(Application, app_uuid)
+    if not app or app.application_type != "individual":
         raise HTTPException(status_code=404, detail="Application not found")
-    if getattr(ctx, "mode", "global") == "country" and app.get("country_code") != ctx.country:
+
+    country_code = (app.extra_data or {}).get("country_code")
+    if getattr(ctx, "mode", "global") == "country" and country_code and country_code != ctx.country:
         raise HTTPException(status_code=403, detail="Country scope violation")
-    if app.get("status") != "pending":
+    if app.status != "pending":
         raise HTTPException(status_code=400, detail="Application not pending")
 
-    existing_user = await db.users.find_one({"email": app.get("email")})
-    if not existing_user:
-        await db.users.insert_one(
-            {
-                "id": str(uuid.uuid4()),
-                "email": app.get("email"),
-                "name": app.get("full_name") or app.get("email"),
-                "password": get_password_hash("User123!"),
-                "role": "user",
-                "country_code": app.get("country_code"),
-                "is_active": True,
-                "created_at": datetime.utcnow().isoformat(),
-                "updated_at": datetime.utcnow().isoformat(),
-            }
-        )
+    applicant_email = (app.extra_data or {}).get("email")
+    applicant_name = (app.extra_data or {}).get("full_name") or applicant_email
 
-    res = await db.individual_applications.update_one(
-        {"id": app_id, "status": "pending"},
-        {"$set": {
-            "status": "approved",
-            "reviewed_at": datetime.utcnow().isoformat(),
-            "reviewed_by": current_user.get("id"),
-            "updated_at": datetime.utcnow().isoformat(),
-        }},
-    )
-    if res.matched_count == 0:
-        raise HTTPException(status_code=409, detail="Application changed concurrently")
+    if applicant_email:
+        existing_user = await session.execute(select(SqlUser).where(SqlUser.email == applicant_email))
+        if not existing_user.scalar_one_or_none():
+            user = SqlUser(
+                id=uuid.uuid4(),
+                email=applicant_email,
+                hashed_password=get_password_hash("User123!"),
+                full_name=applicant_name or applicant_email,
+                role="individual",
+                status="active",
+                is_active=True,
+                is_verified=False,
+                country_code=country_code,
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
+            )
+            session.add(user)
 
-    audit_entry = await build_audit_entry(
-        event_type="INDIVIDUAL_APPLICATION_APPROVED",
+    app.status = "approved"
+    app.updated_at = datetime.now(timezone.utc)
+
+    await session.commit()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="INDIVIDUAL_APPLICATION_APPROVED",
         actor=current_user,
-        target_id=app.get("id"),
-        target_type="individual_application",
-        country_code=app.get("country_code"),
-        details={"email": app.get("email")},
+        resource_type="individual_application",
+        resource_id=str(app.id),
+        metadata={"email": applicant_email},
         request=request,
+        country_code=country_code,
     )
-    await db.audit_logs.insert_one(audit_entry)
+    await session.commit()
+
     return {"ok": True}
 
 
