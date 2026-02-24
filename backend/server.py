@@ -7674,7 +7674,7 @@ async def list_users(
         elif user_type_key == "dealer":
             filters.append(SqlUser.role == "dealer")
         elif user_type_key == "individual":
-            filters.append(SqlUser.role.not_in(list(ADMIN_ROLE_OPTIONS) + ["dealer"]))
+            filters.append(~SqlUser.role.in_(list(ADMIN_ROLE_OPTIONS) + ["dealer"]))
 
     if role:
         filters.append(SqlUser.role == role)
