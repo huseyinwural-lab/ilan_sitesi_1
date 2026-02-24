@@ -629,7 +629,8 @@ export default function ModerationQueue({
                   </button>
                   <button
                     onClick={() => openActionDialog(selectedListing.id, 'reject')}
-                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md bg-rose-600 text-white font-medium hover:bg-rose-700 flex items-center justify-center gap-2"
+                    disabled={freezeActive}
+                    className="flex-1 min-w-[160px] px-4 py-2 rounded-md bg-rose-600 text-white font-medium hover:bg-rose-700 disabled:opacity-50 flex items-center justify-center gap-2"
                     data-testid="moderation-detail-reject"
                   >
                     <XCircle size={18} />
