@@ -53,3 +53,8 @@
   - `curl {BASE}/api/v2/vehicle/makes?country=DE`
   - `curl {BASE}/api/v2/vehicle/models?make_key=<make_key>`
 - Beklenen: 200/401/403/422 (422 sadece invite token eksikliği); **520=0**
+
+## 10) RBAC Coverage Gate (CI zorunlu)
+- CI adımı: `RBAC map coverage` (fail-fast)
+- Script: `backend/scripts/check_rbac_coverage.py`
+- Detay: `/app/docs/RBAC_COVERAGE_GATE.md`
