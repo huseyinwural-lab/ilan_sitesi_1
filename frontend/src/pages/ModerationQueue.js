@@ -558,8 +558,8 @@ export default function ModerationQueue({
               <h2 className="text-lg font-semibold">Listing Review</h2>
               <button onClick={() => setSelectedListing(null)} className="p-1 rounded hover:bg-muted" data-testid="moderation-detail-close">×</button>
             </div>
-            reezeActive && (
-              	<div
+            {freezeActive && (
+              <div
                 className="mx-4 mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800"
                 data-testid="moderation-freeze-detail-banner"
               >
