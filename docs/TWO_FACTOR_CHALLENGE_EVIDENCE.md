@@ -29,4 +29,4 @@
 
 ## Not
 - Test kullanıcı: user2@platform.com
-- Login UI artık `Idempotency` gerektirmeden TOTP alanını gösterir.
+- Login UI, TOTP_REQUIRED durumunda 2FA alanını gösterir.
