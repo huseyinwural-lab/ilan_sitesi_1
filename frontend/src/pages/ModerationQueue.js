@@ -489,7 +489,8 @@ export default function ModerationQueue({
                     </button>
                     <button
                       onClick={() => handleAction(listing.id, 'approve')}
-                      className="p-2 rounded-md border text-emerald-600 hover:bg-emerald-50"
+                      disabled={freezeActive}
+                      className="p-2 rounded-md border text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
                       title="Approve"
                       data-testid={`moderation-approve-${listing.id}`}
                     >
