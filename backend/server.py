@@ -10246,6 +10246,29 @@ def _ensure_moderation_rbac(current_user: dict):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
 
+def _ensure_bulk_listings_pending(session: AsyncSession, listing_ids: List[str]) -> None:
+    if not listing_ids:
+        raise HTTPException(status_code=400, detail="listing_ids is required")
+
+    uuids = []
+    for listing_id in listing_ids:
+        try:
+            uuids.append(uuid.UUID(str(listing_id)))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid listing id") from exc
+
+    result = await session.execute(
+        select(Listing.id, Listing.status).where(Listing.id.in_(uuids))
+    )
+    rows = result.all()
+    if len(rows) != len(uuids):
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    invalid = [str(row[0]) for row in rows if row[1] != "pending_moderation"]
+    if invalid:
+        raise HTTPException(status_code=400, detail="All listings must be pending_moderation")
+
+
 def _validate_reason(reason: str, allowed: set[str]) -> str:
     r = (reason or "").strip()
     if not r:
