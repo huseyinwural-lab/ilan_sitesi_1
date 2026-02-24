@@ -12399,7 +12399,7 @@ async def admin_report_status_change(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     target_status = (payload.target_status or "").strip()
     if target_status not in REPORT_STATUS_SET:
@@ -12415,7 +12415,7 @@ async def admin_report_status_change(
         target_status=target_status,
         note=note,
     )
-    return {"ok": True, "report": {"id": updated["id"], "status": updated.get("status")}}
+    return {"ok": True, "report": {"id": str(updated.id), "status": updated.status}}
 
 
 # =====================
