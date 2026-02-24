@@ -9193,88 +9193,102 @@ async def admin_approve_dealer_application(
     app_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    app = await db.dealer_applications.find_one({"id": app_id}, {"_id": 0})
+    try:
+        app_uuid = uuid.UUID(app_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid application id") from exc
+
+    app = await session.get(DealerApplication, app_uuid)
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
 
-    # country-scope enforcement
-    if getattr(ctx, "mode", "global") == "country" and ctx.country and app.get("country_code") != ctx.country:
+    if getattr(ctx, "mode", "global") == "country" and ctx.country and app.country != ctx.country:
         raise HTTPException(status_code=403, detail="Country scope forbidden")
 
-    if app.get("status") != "pending":
+    if app.status != "pending":
         raise HTTPException(status_code=400, detail="Application already reviewed")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-
-    # Create dealer user (audit-first protects us from partial state)
-    existing = await db.users.find_one({"email": app.get("email")}, {"_id": 0})
-    if existing:
+    existing = await session.execute(select(SqlUser).where(SqlUser.email == app.contact_email))
+    if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="User already exists")
 
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "DEALER_APPLICATION_APPROVED",
-        "action": "DEALER_APPLICATION_APPROVED",
-        "resource_type": "dealer_application",
-        "resource_id": app_id,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "country_code": app.get("country_code"),
-        "country_scope": current_user.get("country_scope") or [],
-        "previous_status": "pending",
-        "new_status": "approved",
-        "applied": False,
-    }
-
-    # audit-first
-    await db.audit_logs.insert_one(audit_doc)
-
-    # Create dealer user
-    new_user_id = str(uuid.uuid4())
-    raw_password = str(uuid.uuid4())[:12] + "!"  # MVP: temporary password
+    now_dt = datetime.now(timezone.utc)
+    raw_password = str(uuid.uuid4())[:12] + "!"
     hashed = get_password_hash(raw_password)
 
-    await db.users.insert_one(
-        {
-            "id": new_user_id,
-            "email": app.get("email"),
-            "hashed_password": hashed,
-            "role": "dealer",
-            "dealer_status": "active",
-            "country_code": app.get("country_code"),
-            "plan_id": None,
-            "is_active": True,
-            "created_at": now_iso,
-            "updated_at": now_iso,
-        }
+    dealer_user = SqlUser(
+        id=uuid.uuid4(),
+        email=app.contact_email,
+        hashed_password=hashed,
+        full_name=app.contact_name or app.company_name,
+        role="dealer",
+        status="active",
+        is_active=True,
+        is_verified=False,
+        country_code=app.country,
+        dealer_status="active",
+        created_at=now_dt,
+        updated_at=now_dt,
     )
+    session.add(dealer_user)
 
-    # Update application
-    res = await db.dealer_applications.update_one(
-        {"id": app_id, "status": "pending"},
-        {
-            "$set": {
-                "status": "approved",
-                "reviewed_at": now_iso,
-                "reviewed_by": current_user.get("id"),
-                "updated_at": now_iso,
-            }
+    dealer = Dealer(
+        application_id=app.id,
+        country=app.country,
+        dealer_type=app.dealer_type,
+        company_name=app.company_name,
+        vat_tax_no=app.vat_tax_no,
+        logo_url=app.logo_url,
+        is_active=True,
+        can_publish=True,
+        listing_limit=50,
+        premium_limit=10,
+        created_at=now_dt,
+        updated_at=now_dt,
+    )
+    session.add(dealer)
+    await session.flush()
+
+    dealer_link = DealerUser(
+        dealer_id=dealer.id,
+        user_id=dealer_user.id,
+        role="owner",
+        created_at=now_dt,
+        updated_at=now_dt,
+    )
+    session.add(dealer_link)
+
+    app.status = "approved"
+    app.reviewed_by_id = _safe_uuid(current_user.get("id"))
+    app.reviewed_at = now_dt
+    app.updated_at = now_dt
+
+    await session.commit()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_APPLICATION_APPROVED",
+        actor=current_user,
+        resource_type="dealer_application",
+        resource_id=str(app.id),
+        metadata={"previous_status": "pending", "new_status": "approved"},
+        request=request,
+        country_code=app.country,
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "dealer_user": {
+            "id": str(dealer_user.id),
+            "email": dealer_user.email,
+            "temp_password": raw_password,
         },
-    )
-    if res.matched_count == 0:
-        raise HTTPException(status_code=409, detail="Application changed concurrently")
-
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-
-    # Return temp password for MVP testing (in real prod, send email)
-    return {"ok": True, "dealer_user": {"id": new_user_id, "email": app.get("email"), "temp_password": raw_password}}
+    }
 
 
 @api_router.post("/admin/individual-applications/{app_id}/approve")
