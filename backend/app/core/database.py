@@ -68,7 +68,7 @@ def _ensure_logger(name: str, level: int) -> logging.Logger:
 
 
 sql_logger = _ensure_logger("sql_config", logging.INFO)
-pool_logger = _ensure_logger("db.pool", logging.DEBUG if DB_POOL_DEBUG else logging.INFO)
+pool_logger = _ensure_logger("database.pool", logging.DEBUG if DB_POOL_DEBUG else logging.INFO)
 
 try:
     DB_POOL_SIZE = int(DB_POOL_SIZE_RAW) if DB_POOL_SIZE_RAW else 5
