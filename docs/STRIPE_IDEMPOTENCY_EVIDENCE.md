@@ -12,9 +12,9 @@
 - DB kontrolü: ilgili invoice için **tek** PaymentTransaction kaydı bulundu.
 
 ## Test Parametreleri
-- Invoice ID: `826c754f-6954-485f-b987-fe68997927c1`
-- Idempotency Key: `idem-1771936912`
-- Session ID: `cs_test_a1kIR5LJoZCPYmCmILHnZhtb2l7ToMFaSIVK8U0KWrqnHwlehYkLNGorBN`
+- Invoice ID: `0259a06f-876e-48ab-aaa0-5c664b1e97ae`
+- Idempotency Key: `idem-1771938207`
+- Session ID: `cs_test_a19IYb91lvhUdJkMgIzX4oYwHkdhAGsQsm7csc9BoXGedRZsiLiQ14CLNK`
 
 ## Curl Kanıtı
 ```
