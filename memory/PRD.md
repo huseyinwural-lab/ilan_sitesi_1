@@ -270,11 +270,13 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/UX_THEME_PHASE_PREP.md
 
 ## Son Değişiklikler (2026-02-24)
-- Mongo runtime 0-iz tamamlandı: pymongo + motor kaldırıldı; MONGO_INVENTORY CLOSED.
-- 520 tarama paketi çalıştırıldı: 520=0; v2 vehicle makes/models wrapper hatası giderildi.
-- E2E kanıtı üretildi: Dealer/Consumer login → ilan oluşturma (Mongo Zero Vehicle Listing) → arama → detay.
+- P0 kapanışı resmileştirildi: FINAL_520_ZERO_REPORT.md + DATA_LAYER_CUTOVER_CLOSED.md **CLOSED** (commit ref + ortam URL).
+- 520-scan regresyon kilidi PREVIEW_ACTIVATION_RUNBOOK’a eklendi (release öncesi zorunlu adım).
+- /api/admin/invite/preview davranışı dokümante edildi + test edildi (422/404/200).
+- RBAC MATRIX + ENDPOINT MAP **FREEZE v1** etiketlendi; negatif erişim curl + UI guard kanıtları üretildi.
+- GDPR export + soft delete E2E çalıştırıldı; audit log doğrulandı (gdpr_export_requested + gdpr_delete_requested).
+- Honeypot tetik senaryosu çalıştırıldı; register_honeypot_hit audit kanıtı alındı.
 - Detail slug-id parsing düzeltildi (search → detay linkleri sağlıklı).
-- Raporlar oluşturuldu: /app/docs/FINAL_520_ZERO_REPORT.md, /app/docs/DATA_LAYER_CUTOVER_CLOSED.md
 
 ## Blokajlar / Riskler
 - Stripe API key geçersiz (idempotency testi BLOCKED)
