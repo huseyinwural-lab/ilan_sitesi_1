@@ -13902,50 +13902,50 @@ async def admin_create_tax_rate(
     payload: TaxRateCreatePayload,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     country_code = payload.country_code.upper()
     _assert_country_scope(country_code, current_user)
     if not (0 <= payload.rate <= 100):
         raise HTTPException(status_code=400, detail="rate must be between 0 and 100")
 
-    now_iso = datetime.now(timezone.utc).isoformat()
-    tax_id = str(uuid.uuid4())
-    tax_doc = {
-        "id": tax_id,
-        "country_code": country_code,
-        "rate": payload.rate,
-        "effective_date": payload.effective_date,
-        "active_flag": True if payload.active_flag is None else payload.active_flag,
-        "created_at": now_iso,
-        "updated_at": None,
+    effective_dt = _parse_iso_datetime(payload.effective_date, "effective_date")
+
+    tax_rate = VatRate(
+        country=country_code,
+        rate=payload.rate,
+        tax_type="VAT",
+        is_active=True if payload.active_flag is None else payload.active_flag,
+        valid_from=effective_dt,
+    )
+    session.add(tax_rate)
+    await session.flush()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="TAX_RATE_CREATE",
+        actor=current_user,
+        resource_type="tax_rate",
+        resource_id=str(tax_rate.id),
+        metadata={"country_code": country_code, "rate": payload.rate},
+        request=request,
+        country_code=country_code,
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "tax_rate": {
+            "id": str(tax_rate.id),
+            "country_code": tax_rate.country,
+            "rate": float(tax_rate.rate) if tax_rate.rate is not None else None,
+            "effective_date": tax_rate.valid_from.isoformat() if tax_rate.valid_from else None,
+            "active_flag": tax_rate.is_active,
+            "created_at": tax_rate.created_at.isoformat() if tax_rate.created_at else None,
+        },
     }
-
-    audit_id = str(uuid.uuid4())
-    audit_doc = {
-        "id": audit_id,
-        "created_at": now_iso,
-        "event_type": "TAX_RATE_CHANGE",
-        "action": "TAX_RATE_CREATE",
-        "tax_rate_id": tax_id,
-        "country_code": country_code,
-        "admin_user_id": current_user.get("id"),
-        "user_id": current_user.get("id"),
-        "user_email": current_user.get("email"),
-        "role": current_user.get("role"),
-        "resource_type": "tax_rate",
-        "resource_id": tax_id,
-        "applied": False,
-    }
-
-    await db.audit_logs.insert_one(audit_doc)
-    await db.tax_rates.insert_one(tax_doc)
-    await db.audit_logs.update_one({"id": audit_id}, {"$set": {"applied": True}})
-
-    tax_doc.pop("_id", None)
-    return {"ok": True, "tax_rate": tax_doc}
 
 
 @api_router.patch("/admin/tax-rates/{tax_id}")
