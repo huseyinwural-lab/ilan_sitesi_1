@@ -832,18 +832,21 @@ export default function ModerationQueue({
               >
                 Cancel
               </button>
-              <button
-                onClick={submitBulkDialog}
-                disabled={freezeActive}
-                className={`h-9 px-3 rounded-md text-white text-sm disabled:opacity-50 ${
-                  bulkDialog.actionType === 'approve'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-rose-600 hover:bg-rose-700'
-                }`}
-                data-testid="moderation-bulk-submit"
-              >
-                Onayla
-              </button>
+              <div className="relative group">
+                <button
+                  onClick={submitBulkDialog}
+                  disabled={freezeActive}
+                  className={`h-9 px-3 rounded-md text-white text-sm disabled:opacity-50 ${
+                    bulkDialog.actionType === 'approve'
+                      ? 'bg-emerald-600 hover:bg-emerald-700'
+                      : 'bg-rose-600 hover:bg-rose-700'
+                  }`}
+                  data-testid="moderation-bulk-submit"
+                >
+                  Onayla
+                </button>
+                {renderFreezeTooltip('moderation-bulk-submit-tooltip')}
+              </div>
             </div>
           </div>
         </div>
