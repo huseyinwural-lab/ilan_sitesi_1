@@ -250,6 +250,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/REGISTER_ANTIBOT_HONEYPOT_EVIDENCE.md
 - /app/docs/GDPR_EXPORT_NOTIFICATION_SPEC.md
 - /app/docs/GDPR_EXPORT_NOTIFICATION_EVIDENCE.md
+- /app/docs/GDPR_EXPORT_SOFT_DELETE_E2E.md
 - /app/docs/OPS_ESCALATION_TICKET.md
 - /app/docs/PREVIEW_UNBLOCK_TRACKER.md
 - /app/docs/LOCAL_PREVIEW_SIMULATION_EVIDENCE.md
