@@ -22,15 +22,15 @@
 curl -X POST {BASE}/api/payments/create-checkout-session \
   -H "Authorization: Bearer <DEALER_TOKEN>" \
   -H "Content-Type: application/json" \
-  -H "Idempotency-Key: idem-1771936912" \
-  -d '{"invoice_id":"826c754f-6954-485f-b987-fe68997927c1","origin_url":"{BASE}"}'
+  -H "Idempotency-Key: idem-1771938207" \
+  -d '{"invoice_id":"0259a06f-876e-48ab-aaa0-5c664b1e97ae","origin_url":"{BASE}"}'
 
 # 2. çağrı (aynı key)
 curl -X POST {BASE}/api/payments/create-checkout-session \
   -H "Authorization: Bearer <DEALER_TOKEN>" \
   -H "Content-Type: application/json" \
-  -H "Idempotency-Key: idem-1771936912" \
-  -d '{"invoice_id":"826c754f-6954-485f-b987-fe68997927c1","origin_url":"{BASE}"}'
+  -H "Idempotency-Key: idem-1771938207" \
+  -d '{"invoice_id":"0259a06f-876e-48ab-aaa0-5c664b1e97ae","origin_url":"{BASE}"}'
 ```
 
 ## Response Özetleri
