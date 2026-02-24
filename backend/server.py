@@ -1334,8 +1334,7 @@ async def _ensure_test_user_two(session: AsyncSession):
     )
 
 
-async def _ensure_individual_fixtures(db):
-    now = datetime.now(timezone.utc)
+async def _ensure_individual_fixtures(session: AsyncSession):
     fixtures = [
         {
             "email": "ayse.kaya@platform.com",
@@ -1374,37 +1373,19 @@ async def _ensure_individual_fixtures(db):
         },
     ]
 
-    for idx, fixture in enumerate(fixtures):
-        now_iso = (now - timedelta(days=idx + 1)).isoformat()
-        email = fixture["email"]
-        existing = await db.users.find_one({"email": email}, {"_id": 0})
-        user_id = existing.get("id") if existing else str(uuid.uuid4())
-        hashed = get_password_hash("User123!")
-
-        payload = {
-            "id": user_id,
-            "email": email,
-            "hashed_password": hashed,
-            "full_name": f"{fixture['first_name']} {fixture['last_name']}",
-            "first_name": fixture["first_name"],
-            "last_name": fixture["last_name"],
-            "phone_e164": fixture["phone_e164"],
-            "role": "individual",
-            "status": "active",
-            "is_active": True,
-            "is_verified": True,
-            "country_scope": [fixture["country_code"]],
-            "country_code": fixture["country_code"],
-            "preferred_language": "tr",
-            "created_at": now_iso,
-            "last_login": None,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
-
-        if existing:
-            await db.users.update_one({"email": email}, {"$set": payload, "$unset": {"deleted_at": ""}})
-        else:
-            await db.users.insert_one(payload)
+    for fixture in fixtures:
+        await _upsert_seed_user(
+            session,
+            email=fixture["email"],
+            password="User123!",
+            role="individual",
+            full_name=f"{fixture['first_name']} {fixture['last_name']}",
+            first_name=fixture["first_name"],
+            last_name=fixture["last_name"],
+            phone_e164=fixture["phone_e164"],
+            country_code=fixture["country_code"],
+            country_scope=[fixture["country_code"]],
+        )
 
 
 async def _ensure_country_admin_user(db):
