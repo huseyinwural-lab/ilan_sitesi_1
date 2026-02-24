@@ -17269,7 +17269,7 @@ async def admin_delete_vehicle_model(
     return {"model": _normalize_vehicle_model_doc(model)}
 
 
-async def _prepare_vehicle_import_payload(db, payload: VehicleImportPayload) -> dict:
+async def _prepare_vehicle_import_payload(session: AsyncSession, payload: VehicleImportPayload) -> dict:
     makes = payload.makes or []
     models = payload.models or []
 
@@ -17307,16 +17307,11 @@ async def _prepare_vehicle_import_payload(db, payload: VehicleImportPayload) -> 
 
     existing_make_docs = []
     if make_slug_lookup:
-        existing_make_docs = await db.vehicle_makes.find(
-            {"slug": {"$in": list(make_slug_lookup)}},
-            {"_id": 0, "id": 1, "slug": 1, "country_code": 1, "name": 1},
-        ).to_list(length=1000)
+        result = await session.execute(select(VehicleMake).where(VehicleMake.slug.in_(list(make_slug_lookup))))
+        existing_make_docs = result.scalars().all()
 
-    existing_make_map: Dict[str, list] = {}
-    for doc in existing_make_docs:
-        existing_make_map.setdefault(doc.get("slug"), []).append(doc)
-
-    ambiguous_make_slugs = sorted([slug for slug, docs in existing_make_map.items() if len(docs) > 1])
+    existing_make_map: Dict[str, VehicleMake] = {make.slug: make for make in existing_make_docs}
+    ambiguous_make_slugs: list[str] = []
 
     for idx, make in enumerate(makes):
         errors = []
@@ -17334,13 +17329,6 @@ async def _prepare_vehicle_import_payload(db, payload: VehicleImportPayload) -> 
             errors.append("country_code missing")
         if slug in duplicate_make_slugs:
             errors.append("duplicate slug in payload")
-        if slug in ambiguous_make_slugs:
-            errors.append("make_slug ambiguous in db")
-        if slug in existing_make_map:
-            for doc in existing_make_map[slug]:
-                if doc.get("country_code") and doc.get("country_code") != country_code:
-                    errors.append("slug already exists for different country")
-                    break
 
         if errors:
             invalid_makes.append({"index": idx, "slug": slug or None, "reason": "; ".join(errors)})
@@ -17349,7 +17337,6 @@ async def _prepare_vehicle_import_payload(db, payload: VehicleImportPayload) -> 
         normalized_makes.append({
             "name": name,
             "slug": slug,
-            "country_code": country_code,
             "active_flag": make.active if make.active is not None else True,
         })
 
@@ -17379,14 +17366,10 @@ async def _prepare_vehicle_import_payload(db, payload: VehicleImportPayload) -> 
 
         if make_slug in duplicate_make_slugs:
             errors.append("make_slug duplicated in payload")
-        if make_slug in ambiguous_make_slugs:
-            errors.append("make_slug ambiguous in db")
         if make_slug in invalid_make_slugs:
             errors.append("make_slug invalid")
         if make_slug not in valid_make_slugs and make_slug not in existing_make_map:
             errors.append("make_slug not found")
-        if make_slug in existing_make_map and len(existing_make_map.get(make_slug, [])) > 1:
-            errors.append("make_slug ambiguous in db")
 
         key = f"{make_slug}:{slug}" if make_slug and slug else None
         if key and model_slug_counts.get(key, 0) > 1:
