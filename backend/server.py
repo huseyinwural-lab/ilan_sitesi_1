@@ -13623,6 +13623,11 @@ async def create_checkout_session(
             existing_meta = existing_txn.metadata_json or {}
             checkout_url = existing_meta.get("checkout_url")
             if checkout_url:
+                logging.getLogger("stripe_idempotency").info(
+                    "stripe_idempotency_reused invoice_id=%s session_id=%s",
+                    invoice.id,
+                    existing_txn.session_id,
+                )
                 return {
                     "checkout_url": checkout_url,
                     "session_id": existing_txn.session_id,
