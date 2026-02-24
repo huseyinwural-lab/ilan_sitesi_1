@@ -294,10 +294,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - ✅ Stripe idempotency testi (Checkout flow)
 
 ### P0.1 (Güvenlik Doğrulama)
-- Login rate limit tetikleme testi (preview)
-- 2FA challenge + backup code tek kullanımlık testi (preview)
+- ✅ Login rate limit tetikleme testi (preview)
+- ✅ 2FA challenge (enable → wrong OTP → success) kanıtı (preview)
 - ✅ Soft delete → login blocked testi (preview)
-- GDPR export sonrası notification severity=warning UI doğrulaması
+- ✅ GDPR export sonrası notification banner UI doğrulaması
+- 2FA backup code tek kullanımlık testi (preview)
 
 ### P1 (Aktif)
 - Public Search Postgres cutover: 24h monitoring (Ops/Owner)
