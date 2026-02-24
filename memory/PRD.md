@@ -281,8 +281,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Moderation parity report SQL approve/reject geçişleri ile güncellendi.
 
 ## Blokajlar / Riskler
-- Stripe API key geçersiz (idempotency testi BLOCKED)
-- Moderation Mongo koleksiyonu bulunamadı; ops ile doğrulama gerekli (parity 0/0)
+- Public search true 24h monitoring koşusu henüz tamamlanmadı (PENDING).
+- 2FA backup code tek kullanımlık testi henüz çalıştırılmadı.
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
 
 ## Öncelikli Backlog
