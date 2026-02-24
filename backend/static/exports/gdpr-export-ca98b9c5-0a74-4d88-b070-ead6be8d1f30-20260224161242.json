@@ -1,0 +1,33 @@
+{
+  "exported_at": "2026-02-24T16:12:42.199515+00:00",
+  "user": {
+    "id": "ca98b9c5-0a74-4d88-b070-ead6be8d1f30",
+    "email": "freeze_user_20260224@platform.com",
+    "full_name": "Freeze Test User",
+    "preferred_language": "tr",
+    "country_code": "DE"
+  },
+  "consumer_profile": {
+    "language": "tr",
+    "country_code": "DE",
+    "display_name_mode": "full_name",
+    "marketing_consent": false,
+    "gdpr_deleted_at": null
+  },
+  "listings": [
+    {
+      "id": "d91de127-7397-4c6d-b1ed-e7556713591c",
+      "title": "Moderation Freeze Evidence Listing",
+      "status": "published",
+      "created_at": "2026-02-24T16:07:08.260732+00:00"
+    },
+    {
+      "id": "e3d81110-ecdd-4111-beaa-1f2ae2394e4d",
+      "title": "Moderation Freeze Test Listing",
+      "status": "published",
+      "created_at": "2026-02-24T16:00:36.593563+00:00"
+    }
+  ],
+  "favorites": [],
+  "messages": []
+}
