@@ -53,6 +53,7 @@ export default function AccountPrivacyCenter() {
   const handleExport = async () => {
     setExportLoading(true);
     setExportError('');
+    setExportSuccess('');
     try {
       const res = await fetch(`${API}/v1/users/me/data-export`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
@@ -69,6 +70,7 @@ export default function AccountPrivacyCenter() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      setExportSuccess('Veri dışa aktarma tamamlandı. Dosya indiriliyor.');
     } catch (err) {
       setExportError('Export indirilemedi');
     } finally {
