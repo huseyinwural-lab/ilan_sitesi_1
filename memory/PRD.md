@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-24 16:10:00 UTC (Moderation Freeze CLOSED + Privacy Export History)
+**Son güncelleme:** 2026-02-24 17:10:00 UTC (FAZ-UH1 Dashboard V1)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
