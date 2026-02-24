@@ -307,8 +307,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - ✅ GDPR export sonrası notification banner UI doğrulaması
 
 ### P1 (Aktif)
-- Public Search 24h monitoring: log özeti tamamlandı; true 24h window PENDING
-- Moderation migration: SQL parity report tamamlandı; freeze window planlama
+- ✅ Public Search 24h monitoring: log-based 24h CLOSED
+- ✅ Moderation migration: SQL parity report + freeze window plan kilitlendi
 
 ### P1 (Sprint‑1 closeout)
 - Sprint‑1 E2E kanıt paketi
