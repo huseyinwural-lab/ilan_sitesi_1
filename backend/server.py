@@ -18878,6 +18878,7 @@ def _listing_to_dict(listing: Listing) -> dict:
     media_meta = _listing_media_meta(listing)
     return {
         "id": str(listing.id),
+        "module": listing.module,
         "status": listing.status,
         "country": listing.country,
         "category_id": listing.category_id,
