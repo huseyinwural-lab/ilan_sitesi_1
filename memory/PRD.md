@@ -330,6 +330,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 
 ### P1.5 / P2 (Enhancement)
 - ✅ Privacy Center export geçmişi (gdpr_exports tablosu + UI) → /app/docs/PRIVACY_EXPORT_HISTORY_SPEC.md
+- 🔵 Quick Preview Modal (UH1-E1) — /architecture/ui/LISTING_QUICK_PREVIEW_SPEC.md
 
 ### P2
 - Kayıtlı Arama/Alert (P2 backlog, P1 kapsamına girmez)
