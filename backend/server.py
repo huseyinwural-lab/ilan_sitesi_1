@@ -17239,31 +17239,33 @@ async def admin_delete_vehicle_model(
     model_id: str,
     request: Request,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    # Permission check already handled by dependency
-    db = request.app.state.db
-    await resolve_admin_country_context(request, current_user=current_user, session=None, )
-    model = await db.vehicle_models.find_one({"id": model_id}, {"_id": 0})
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    try:
+        model_uuid = uuid.UUID(model_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid model id") from exc
+
+    model = await session.get(VehicleModel, model_uuid)
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-    now_iso = datetime.now(timezone.utc).isoformat()
-    make_doc = await db.vehicle_makes.find_one({"id": model.get("make_id")}, {"_id": 0, "country_code": 1})
-    audit_doc = {
-        "id": str(uuid.uuid4()),
-        "event_type": "VEHICLE_MASTER_DATA_CHANGE",
-        "actor_id": current_user["id"],
-        "actor_role": current_user.get("role"),
-        "country_code": make_doc.get("country_code") if make_doc else None,
-        "subject_type": "vehicle_model",
-        "subject_id": model_id,
-        "action": "delete",
-        "created_at": now_iso,
-        "metadata": {"active_flag": False},
-    }
-    await db.audit_logs.insert_one(audit_doc)
-    await db.vehicle_models.update_one({"id": model_id}, {"$set": {"active_flag": False, "updated_at": now_iso}})
-    model["active_flag"] = False
-    model["updated_at"] = now_iso
+
+    model.is_active = False
+
+    await _write_audit_log_sql(
+        session=session,
+        action="VEHICLE_MODEL_DELETE",
+        actor=current_user,
+        resource_type="vehicle_model",
+        resource_id=str(model.id),
+        metadata={"active_flag": False},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
     return {"model": _normalize_vehicle_model_doc(model)}
 
 
