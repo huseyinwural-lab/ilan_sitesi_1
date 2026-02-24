@@ -42,6 +42,7 @@ export default function AdminDealerDetailPage() {
       });
       setData(res.data);
       setSelectedPlan(res.data?.dealer?.plan_id || '');
+      setRiskLevel(res.data?.dealer?.risk_level || 'low');
     } catch (e) {
       console.error('Failed to fetch dealer detail', e);
     } finally {
