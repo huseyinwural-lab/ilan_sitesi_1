@@ -4900,6 +4900,7 @@ async def suspend_user(
         metadata={
             "reason_code": reason_code,
             "reason_detail": reason_detail,
+            "ban_reason": ban_reason,
             "suspension_until": after_state.get("suspension_until"),
             "before": before_state,
             "after": after_state,
