@@ -164,9 +164,9 @@ ATTRIBUTE_KEY_PATTERN = re.compile(r"^[a-z0-9_]+$")
 VAT_ID_PATTERN = re.compile(r"^[A-Z]{2}[A-Z0-9]{6,12}$")
 
 
-# P1 Failed-login rate limit (in-process)
+# P0.1 Failed-login rate limit (in-process)
 FAILED_LOGIN_WINDOW_SECONDS = 10 * 60  # 10 min sliding window
-FAILED_LOGIN_MAX_ATTEMPTS = 3
+FAILED_LOGIN_MAX_ATTEMPTS = 5
 FAILED_LOGIN_BLOCK_SECONDS = 15 * 60  # 15 min block
 
 EMAIL_VERIFICATION_TTL_MINUTES = 15
