@@ -12062,6 +12062,15 @@ async def _moderation_transition_sql(
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
 
+    await _assert_moderation_not_frozen(
+        session=session,
+        request=request,
+        current_user=current_user,
+        listing_id=listing_id,
+        listing_country=listing.country,
+        action_type=action_type,
+    )
+
     prev_status = listing.status
     if prev_status != "pending_moderation":
         raise HTTPException(status_code=400, detail="Listing not pending_moderation")
