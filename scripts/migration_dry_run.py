@@ -164,6 +164,38 @@ def _count(conn, query: str, params: Dict[str, object] | None = None) -> int:
     return int(result.scalar() or 0)
 
 
+def _write_audit_log(engine, status: str, blocking: List[str], warnings: List[str], timestamp: str) -> None:
+    metadata = {
+        "status": status,
+        "blocking_count": len(blocking),
+        "warnings_count": len(warnings),
+        "snapshot_path": SNAPSHOT_PATH,
+        "blocking": blocking,
+        "warnings": warnings,
+    }
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                INSERT INTO audit_logs
+                (id, user_email, action, resource_type, resource_id, metadata_info, created_at)
+                VALUES
+                (:id, :user_email, :action, :resource_type, :resource_id, CAST(:metadata_info AS JSONB), :created_at)
+                """
+            ),
+            {
+                "id": str(uuid.uuid4()),
+                "user_email": "system@platform.com",
+                "action": "MIGRATION_DRY_RUN",
+                "resource_type": "migration",
+                "resource_id": "af-sprint1",
+                "metadata_info": json.dumps(metadata),
+                "created_at": timestamp,
+            },
+        )
+
+
+
 def main() -> int:
     timestamp = datetime.now(timezone.utc).isoformat()
     blocking: List[str] = []
