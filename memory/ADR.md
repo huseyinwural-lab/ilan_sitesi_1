@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR)
 
-**Son güncelleme:** 2026-02-23
+**Son güncelleme:** 2026-02-24
 
 Bu doküman tüm mimari kararların tek kaynağıdır. PRD.md yalnızca ADR referansı içerir.
 
