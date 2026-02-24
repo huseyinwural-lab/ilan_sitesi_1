@@ -51,3 +51,6 @@ Payment
 - backend.err.log:
   - `stripe_checkout_session_created invoice_id=0259a06f-876e-48ab-aaa0-5c664b1e97ae ...`
   - `stripe_idempotency_reused invoice_id=0259a06f-876e-48ab-aaa0-5c664b1e97ae ...`
+
+## Not
+- Akış seçim önceliği: Checkout → Subscription → PaymentIntent. Sistem aktif akış: **Checkout Session**.
