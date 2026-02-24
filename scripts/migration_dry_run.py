@@ -410,7 +410,7 @@ def main() -> int:
 
     if MIGRATION_DRY_RUN_AUDIT:
         try:
-            _write_audit_log(engine, status, blocking, warnings, timestamp)
+            _write_audit_log(engine, status, blocking, warnings, timestamp_dt)
         except Exception as exc:
             blocking.append(f"Audit log write failed: {exc}")
             status = "FAIL"
