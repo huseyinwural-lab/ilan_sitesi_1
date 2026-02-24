@@ -273,13 +273,12 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/UX_THEME_PHASE_PREP.md
 
 ## Son Değişiklikler (2026-02-24)
-- P0 kapanışı resmileştirildi: FINAL_520_ZERO_REPORT.md + DATA_LAYER_CUTOVER_CLOSED.md **CLOSED** (commit ref + ortam URL).
-- 520-scan regresyon kilidi PREVIEW_ACTIVATION_RUNBOOK’a eklendi (release öncesi zorunlu adım).
-- /api/admin/invite/preview davranışı dokümante edildi + test edildi (422/404/200).
-- RBAC MATRIX + ENDPOINT MAP **FREEZE v1** etiketlendi; negatif erişim curl + UI guard kanıtları üretildi.
-- GDPR export + soft delete E2E çalıştırıldı; audit log doğrulandı (gdpr_export_requested + gdpr_delete_requested).
-- Honeypot tetik senaryosu çalıştırıldı; register_honeypot_hit audit kanıtı alındı.
-- Detail slug-id parsing düzeltildi (search → detay linkleri sağlıklı).
+- Stripe idempotency testi tamamlandı: Checkout akışı + idempotency header + DB tek kayıt doğrulaması.
+- Login rate limit (5. deneme 429) ve 2FA challenge E2E kanıtları üretildi.
+- GDPR export banner UI kanıtı + soft delete login davranışı doğrulandı.
+- RBAC CI coverage gate script + workflow eklendi; RBAC_ENDPOINT_MAP güncellendi.
+- Public search 24h log özeti raporlandı; true 24h window PENDING.
+- Moderation parity report SQL approve/reject geçişleri ile güncellendi.
 
 ## Blokajlar / Riskler
 - Stripe API key geçersiz (idempotency testi BLOCKED)
