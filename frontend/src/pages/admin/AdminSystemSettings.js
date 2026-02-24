@@ -479,9 +479,12 @@ export default function AdminSystemSettingsPage() {
       <div className="rounded-lg border bg-white p-4 space-y-3" data-testid="system-settings-moderation-freeze-card">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold" data-testid="system-settings-moderation-freeze-title">Moderation Freeze</h2>
+            <h2 className="text-lg font-semibold" data-testid="system-settings-moderation-freeze-title">Moderation Freeze Modu</h2>
             <div className="text-xs text-muted-foreground" data-testid="system-settings-moderation-freeze-subtitle">
-              Moderation approve/reject işlemleri kilitlenir.
+              Bu mod aktifken moderasyon işlemleri (onay/red) kilitlenir. Yalnızca görüntüleme yapılabilir.
+            </div>
+            <div className="text-[11px] text-slate-500 mt-1" data-testid="system-settings-moderation-freeze-note">
+              Planlı bakım veya veri dondurma süreçlerinde kullanılır.
             </div>
           </div>
           <div
