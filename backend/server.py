@@ -7607,28 +7607,36 @@ async def archive_campaign_action(
 
 
 @api_router.get("/dashboard/stats")
-async def get_dashboard_stats(request: Request, current_user=Depends(get_current_user)):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+async def get_dashboard_stats(
+    request: Request,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    users_query = {}
+    filters = []
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        users_query = {"country_code": ctx.country}
+        filters.append(SqlUser.country_code == ctx.country)
 
-    users_total = await db.users.count_documents(users_query)
-    users_active = await db.users.count_documents({**users_query, "is_active": True})
+    users_total = await session.scalar(select(func.count(SqlUser.id)).where(*filters)) or 0
+    users_active = await session.scalar(
+        select(func.count(SqlUser.id)).where(*filters, SqlUser.is_active.is_(True))
+    ) or 0
+
+    async def _role_count(role: str) -> int:
+        return await session.scalar(select(func.count(SqlUser.id)).where(*filters, SqlUser.role == role)) or 0
 
     # Minimal response compatible with Dashboard.js usage
     return {
-        "users": {"total": users_total, "active": users_active},
+        "users": {"total": int(users_total), "active": int(users_active)},
         "countries": {"enabled": len(SUPPORTED_COUNTRIES)},
         "feature_flags": {"enabled": 0, "total": 0},
         "users_by_role": {
-            "super_admin": await db.users.count_documents({**users_query, "role": "super_admin"}),
-            "country_admin": await db.users.count_documents({**users_query, "role": "country_admin"}),
-            "moderator": await db.users.count_documents({**users_query, "role": "moderator"}),
-            "support": await db.users.count_documents({**users_query, "role": "support"}),
-            "finance": await db.users.count_documents({**users_query, "role": "finance"}),
+            "super_admin": await _role_count("super_admin"),
+            "country_admin": await _role_count("country_admin"),
+            "moderator": await _role_count("moderator"),
+            "support": await _role_count("support"),
+            "finance": await _role_count("finance"),
         },
         "recent_activity": [],
     }
@@ -7647,101 +7655,100 @@ async def list_users(
     limit: int = 100,
     skip: int = 0,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "support"])),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    db = request.app.state.db
-    ctx = await resolve_admin_country_context(request, current_user=current_user, session=None, )
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    query: Dict[str, Any] = {}
+    filters = []
 
     country_code = ctx.country if ctx and getattr(ctx, "country", None) else None
     if country:
         country_code = country.upper()
     if country_code:
-        query["country_code"] = country_code
+        filters.append(SqlUser.country_code == country_code)
 
     if user_type:
         user_type_key = user_type.lower()
         if user_type_key == "admin":
-            query["role"] = {"$in": list(ADMIN_ROLE_OPTIONS)}
+            filters.append(SqlUser.role.in_(list(ADMIN_ROLE_OPTIONS)))
         elif user_type_key == "dealer":
-            query["role"] = "dealer"
+            filters.append(SqlUser.role == "dealer")
         elif user_type_key == "individual":
-            query["role"] = {"$nin": list(ADMIN_ROLE_OPTIONS) + ["dealer"]}
+            filters.append(SqlUser.role.not_in(list(ADMIN_ROLE_OPTIONS) + ["dealer"]))
 
     if role:
-        query["role"] = role
+        filters.append(SqlUser.role == role)
 
     if status:
         status_key = status.lower()
-        if status_key == "deleted":
-            query["deleted_at"] = {"$exists": True}
-        else:
-            query["deleted_at"] = {"$exists": False}
-            if status_key == "inactive":
-                query["$or"] = [{"status": "suspended"}, {"is_active": False}]
-            elif status_key == "active":
-                query["status"] = {"$ne": "suspended"}
-                query["is_active"] = {"$ne": False}
-    else:
-        query["deleted_at"] = {"$exists": False}
+        if status_key == "inactive":
+            filters.append(SqlUser.is_active.is_(False))
+        elif status_key == "active":
+            filters.append(SqlUser.is_active.is_(True))
 
     if search:
-        query["$or"] = [
-            {"email": {"$regex": search, "$options": "i"}},
-            {"full_name": {"$regex": search, "$options": "i"}},
-        ]
+        search_value = f"%{search}%"
+        filters.append(
+            or_(
+                SqlUser.email.ilike(search_value),
+                SqlUser.full_name.ilike(search_value),
+            )
+        )
 
     sort_field_map = {
-        "email": "email",
-        "full_name": "full_name",
-        "role": "role",
-        "created_at": "created_at",
-        "last_login": "last_login",
-        "status": "status",
+        "email": SqlUser.email,
+        "full_name": SqlUser.full_name,
+        "role": SqlUser.role,
+        "created_at": SqlUser.created_at,
+        "last_login": SqlUser.last_login,
+        "status": SqlUser.is_active,
     }
-    sort_field = sort_field_map.get(sort_by or "", "created_at")
-    sort_direction = -1 if (sort_dir or "desc").lower() == "desc" else 1
+    sort_field = sort_field_map.get(sort_by or "", SqlUser.created_at)
+    sort_direction = sort_dir or "desc"
+    order_by = sort_field.desc() if sort_direction.lower() == "desc" else sort_field.asc()
 
-    cursor = (
-        db.users.find(query, {"_id": 0})
-        .sort(sort_field, sort_direction)
-        .skip(max(skip, 0))
-        .limit(min(limit, 300))
-    )
-    docs = await cursor.to_list(length=limit)
+    query = select(SqlUser).where(*filters).order_by(order_by).offset(max(skip, 0)).limit(min(limit, 300))
+    result = await session.execute(query)
+    users = result.scalars().all()
 
-    user_ids = [doc.get("id") for doc in docs if doc.get("id")]
+    user_ids = [user.id for user in users]
     listing_stats_map: Dict[str, Dict[str, Any]] = {}
     if user_ids:
-        pipeline = [
-            {"$match": {"created_by": {"$in": user_ids}}},
-            {
-                "$group": {
-                    "_id": "$created_by",
-                    "total": {"$sum": 1},
-                    "active": {
-                        "$sum": {
-                            "$cond": [
-                                {"$eq": ["$status", "published"]},
-                                1,
-                                0,
-                            ]
-                        }
-                    },
-                }
-            },
-        ]
-        listing_stats = await db.vehicle_listings.aggregate(pipeline).to_list(length=5000)
-        listing_stats_map = {
-            stat.get("_id"): {"total": stat.get("total", 0), "active": stat.get("active", 0)}
-            for stat in listing_stats
-        }
+        stats_result = await session.execute(
+            select(
+                Listing.user_id,
+                func.count(Listing.id).label("total"),
+                func.sum(
+                    case(
+                        (Listing.status.in_(["active", "published"]), 1),
+                        else_=0,
+                    )
+                ).label("active"),
+            )
+            .where(Listing.user_id.in_(user_ids))
+            .group_by(Listing.user_id)
+        )
+        for row in stats_result.all():
+            listing_stats_map[str(row.user_id)] = {"total": int(row.total or 0), "active": int(row.active or 0)}
 
-    plan_ids = [doc.get("plan_id") for doc in docs if doc.get("plan_id")]
     plan_map: Dict[str, Any] = {}
-    if plan_ids:
-        plan_docs = await db.plans.find({"id": {"$in": plan_ids}}, {"_id": 0}).to_list(length=200)
-        plan_map = {doc.get("id"): doc for doc in plan_docs}
+
+    docs = [
+        {
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
+            "country_code": user.country_code,
+            "country_scope": user.country_scope or [],
+            "is_active": user.is_active,
+            "is_verified": user.is_verified,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "last_login": user.last_login.isoformat() if user.last_login else None,
+            "deleted_at": None,
+        }
+        for user in users
+    ]
 
     items = [
         _build_user_summary(doc, listing_stats_map.get(doc.get("id"), {}), plan_map)
