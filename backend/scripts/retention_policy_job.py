@@ -12,6 +12,7 @@ from app.database import AsyncSessionLocal
 from app.models.analytics import UserInteraction
 from app.models.experimentation import ExperimentLog
 from app.models.ml import MLPredictionLog
+from app.models.gdpr_export import GDPRExport
 
 async def run_retention_policy():
     print("🧹 Starting Retention Policy Job...")
