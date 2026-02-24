@@ -32,28 +32,13 @@ ADMIN_ROLES = {
 DEALER_ROLES = {"dealer"}
 
 
-async def _get_sql_user(user_id: str, session: AsyncSession) -> Optional[dict]:
+async def _get_sql_user(user_id: str, session: AsyncSession) -> Optional[SqlUser]:
     try:
         user_uuid = uuid.UUID(str(user_id))
     except ValueError:
         return None
     result = await session.execute(select(SqlUser).where(SqlUser.id == user_uuid))
-    user = result.scalar_one_or_none()
-    if not user:
-        return None
-    return {
-        "id": str(user.id),
-        "email": user.email,
-        "full_name": user.full_name,
-        "role": user.role,
-        "is_active": user.is_active,
-        "is_verified": user.is_verified,
-        "country_scope": user.country_scope or [],
-        "country_code": user.country_code,
-        "preferred_language": user.preferred_language,
-        "created_at": user.created_at.isoformat() if user.created_at else None,
-        "last_login": user.last_login.isoformat() if user.last_login else None,
-    }
+    return result.scalar_one_or_none()
 
 
 def _resolve_portal_scope(role: Optional[str]) -> str:
