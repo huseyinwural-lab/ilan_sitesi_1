@@ -280,12 +280,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/UX_THEME_PHASE_PREP.md
 
 ## Son Değişiklikler (2026-02-24)
-- Stripe idempotency testi tamamlandı: Checkout akışı + idempotency header + DB tek kayıt doğrulaması.
-- Login rate limit (5. deneme 429) ve 2FA challenge E2E kanıtları üretildi.
-- GDPR export banner UI kanıtı + soft delete login davranışı doğrulandı.
-- RBAC CI coverage gate script + workflow eklendi; RBAC_ENDPOINT_MAP güncellendi.
-- Public search 24h log özeti raporlandı; true 24h window PENDING.
-- Moderation parity report SQL approve/reject geçişleri ile güncellendi.
+- P0.1 kapanış paketleri hazırlandı: P0_1_SECURITY_HARDENING_CLOSED.md + backup code + log-based 24h raporu.
+- 2FA backup code tek-kullanım kanıtlandı (curl + UI).
+- Public search log-based 24h window CLOSED olarak raporlandı.
+- Moderation freeze window planı kilitlendi.
+- RBAC CI PR comment workflow güncellendi + karar dokümante edildi.
 
 ## Blokajlar / Riskler
 - Public search true 24h monitoring koşusu henüz tamamlanmadı (PENDING).
