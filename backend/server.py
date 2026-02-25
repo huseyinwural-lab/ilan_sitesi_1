@@ -19938,6 +19938,213 @@ class InfoPageUpdatePayload(BaseModel):
     is_published: Optional[bool] = None
 
 
+THEME_REQUIRED_KEYS = [
+    "primary",
+    "primary-hover",
+    "secondary",
+    "accent",
+    "success",
+    "warning",
+    "danger",
+    "background",
+    "background-alt",
+    "surface",
+    "surface-2",
+    "modal-background",
+    "text-primary",
+    "text-secondary",
+    "text-muted",
+    "text-inverse",
+    "border",
+    "border-strong",
+    "divider",
+    "button-primary-bg",
+    "button-primary-text",
+    "button-secondary-bg",
+    "button-secondary-text",
+    "header-bg",
+    "header-text",
+    "footer-bg",
+    "footer-text",
+    "link",
+    "link-hover",
+]
+
+THEME_CONTRAST_PAIRS = [
+    ("text-primary", "background", "Metin / Arka Plan"),
+    ("text-secondary", "background", "İkincil Metin / Arka Plan"),
+    ("text-muted", "background", "Muted Metin / Arka Plan"),
+    ("text-inverse", "primary", "Ters Metin / Primary"),
+    ("button-primary-text", "button-primary-bg", "Buton Primary"),
+    ("button-secondary-text", "button-secondary-bg", "Buton Secondary"),
+    ("header-text", "header-bg", "Header"),
+    ("footer-text", "footer-bg", "Footer"),
+    ("link", "background", "Link"),
+    ("link-hover", "background", "Link Hover"),
+]
+
+THEME_CACHE_SECONDS = 300
+THEME_CONTRAST_THRESHOLD = 4.5
+
+THEME_DEFAULTS = {
+    "light": {
+        "primary": "#ff7000",
+        "primary-hover": "#e65a00",
+        "secondary": "#007bff",
+        "accent": "#00a0b0",
+        "success": "#22c55e",
+        "warning": "#f59e0b",
+        "danger": "#ef4444",
+        "background": "#f8f9fa",
+        "background-alt": "#fff7ef",
+        "surface": "#ffffff",
+        "surface-2": "#f8f9fa",
+        "modal-background": "#ffffff",
+        "text-primary": "#1b263b",
+        "text-secondary": "#415a77",
+        "text-muted": "#6b7280",
+        "text-inverse": "#ffffff",
+        "border": "#e2e8f0",
+        "border-strong": "#cbd5e1",
+        "divider": "#e2e8f0",
+        "button-primary-bg": "#ff7000",
+        "button-primary-text": "#ffffff",
+        "button-secondary-bg": "#f1f5f9",
+        "button-secondary-text": "#1b263b",
+        "header-bg": "#ffffff",
+        "header-text": "#1b263b",
+        "footer-bg": "#ffffff",
+        "footer-text": "#415a77",
+        "link": "#007bff",
+        "link-hover": "#0056d2",
+    },
+    "dark": {
+        "primary": "#ff7000",
+        "primary-hover": "#e65a00",
+        "secondary": "#60a5fa",
+        "accent": "#22d3ee",
+        "success": "#22c55e",
+        "warning": "#f59e0b",
+        "danger": "#ef4444",
+        "background": "#0f172a",
+        "background-alt": "#1f2937",
+        "surface": "#111827",
+        "surface-2": "#1f2937",
+        "modal-background": "#111827",
+        "text-primary": "#f8fafc",
+        "text-secondary": "#94a3b8",
+        "text-muted": "#64748b",
+        "text-inverse": "#0f172a",
+        "border": "#273449",
+        "border-strong": "#3b4a63",
+        "divider": "#273449",
+        "button-primary-bg": "#ff7000",
+        "button-primary-text": "#0f172a",
+        "button-secondary-bg": "#1f2937",
+        "button-secondary-text": "#f8fafc",
+        "header-bg": "#111827",
+        "header-text": "#f8fafc",
+        "footer-bg": "#111827",
+        "footer-text": "#94a3b8",
+        "link": "#60a5fa",
+        "link-hover": "#93c5fd",
+    },
+}
+
+
+def _clone_theme_defaults() -> dict:
+    return json.loads(json.dumps(THEME_DEFAULTS))
+
+
+def _is_hex_color(value: Optional[str]) -> bool:
+    if not isinstance(value, str):
+        return False
+    return bool(re.match(r"^#([0-9a-fA-F]{6})$", value.strip()))
+
+
+def _normalize_theme_config(config: Optional[dict]) -> dict:
+    normalized = _clone_theme_defaults()
+    if not isinstance(config, dict):
+        return normalized
+    for mode in ("light", "dark"):
+        palette = config.get(mode)
+        if not isinstance(palette, dict):
+            continue
+        for key in THEME_REQUIRED_KEYS:
+            value = palette.get(key)
+            if isinstance(value, str) and value.strip():
+                normalized[mode][key] = value.strip()
+    return normalized
+
+
+def _validate_theme_config(config: Optional[dict]) -> List[dict]:
+    errors: List[dict] = []
+    if not isinstance(config, dict):
+        return [{"mode": "all", "field": "config", "message": "Config missing"}]
+    for mode in ("light", "dark"):
+        palette = config.get(mode)
+        if not isinstance(palette, dict):
+            errors.append({"mode": mode, "field": "config", "message": "Theme palette missing"})
+            continue
+        for key in THEME_REQUIRED_KEYS:
+            value = palette.get(key)
+            if not _is_hex_color(value):
+                errors.append({"mode": mode, "field": key, "message": "Invalid hex color"})
+    return errors
+
+
+def _hex_to_rgb(value: str) -> tuple[float, float, float]:
+    raw = value.lstrip("#")
+    r = int(raw[0:2], 16) / 255
+    g = int(raw[2:4], 16) / 255
+    b = int(raw[4:6], 16) / 255
+    return r, g, b
+
+
+def _relative_luminance(value: str) -> float:
+    r, g, b = _hex_to_rgb(value)
+
+    def _linearize(channel: float) -> float:
+        return channel / 12.92 if channel <= 0.03928 else ((channel + 0.055) / 1.055) ** 2.4
+
+    r_lin = _linearize(r)
+    g_lin = _linearize(g)
+    b_lin = _linearize(b)
+    return 0.2126 * r_lin + 0.7152 * g_lin + 0.0722 * b_lin
+
+
+def _contrast_ratio(color_a: str, color_b: str) -> float:
+    lum_a = _relative_luminance(color_a)
+    lum_b = _relative_luminance(color_b)
+    lighter = max(lum_a, lum_b)
+    darker = min(lum_a, lum_b)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def _build_theme_validation_report(config: dict) -> List[dict]:
+    report: List[dict] = []
+    for mode in ("light", "dark"):
+        palette = config.get(mode, {})
+        for fg_key, bg_key, label in THEME_CONTRAST_PAIRS:
+            fg = palette.get(fg_key)
+            bg = palette.get(bg_key)
+            if not (_is_hex_color(fg) and _is_hex_color(bg)):
+                continue
+            ratio = round(_contrast_ratio(fg, bg), 2)
+            report.append(
+                {
+                    "mode": mode,
+                    "label": label,
+                    "pair": f"{fg_key} / {bg_key}",
+                    "ratio": ratio,
+                    "threshold": THEME_CONTRAST_THRESHOLD,
+                    "pass": ratio >= THEME_CONTRAST_THRESHOLD,
+                }
+            )
+    return report
+
+
+
 def _normalize_ad_dates(start_at: Optional[datetime], end_at: Optional[datetime]) -> Tuple[Optional[datetime], Optional[datetime]]:
     if start_at and end_at and end_at < start_at:
         raise HTTPException(status_code=400, detail="end_at must be after start_at")
