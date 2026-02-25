@@ -20762,6 +20762,26 @@ def _normalize_currency_code(value: Optional[str]) -> str:
     return code
 
 
+def _validate_campaign_item_fields(
+    scope: str,
+    listing_quota: Optional[int],
+    price_amount: Optional[float],
+    publish_days: Optional[int],
+    start_at: Optional[datetime],
+    end_at: Optional[datetime],
+) -> None:
+    if scope not in PRICING_CAMPAIGN_ITEM_SCOPES:
+        raise HTTPException(status_code=400, detail="Invalid scope")
+    if listing_quota is not None and listing_quota <= 0:
+        raise HTTPException(status_code=400, detail="listing_quota must be > 0")
+    if price_amount is not None and price_amount < 0:
+        raise HTTPException(status_code=400, detail="price_amount must be >= 0")
+    if publish_days is not None and publish_days <= 0:
+        raise HTTPException(status_code=400, detail="publish_days must be > 0")
+    if start_at and end_at and end_at < start_at:
+        raise HTTPException(status_code=400, detail="end_at must be after start_at")
+
+
 async def _ensure_pricing_defaults(session: AsyncSession) -> None:
     result = await session.execute(select(PricingCampaignItem))
     items = result.scalars().all()
