@@ -78,7 +78,8 @@ from app.dependencies import (
     _get_sql_user,
 )
 from app.countries_seed import default_countries
-from app.menu_seed import default_top_menufrom app.categories_seed import vehicle_category_tree
+from app.menu_seed import default_top_menu
+from app.categories_seed import vehicle_category_tree
 from app.master_data_seed import default_vehicle_makes, default_vehicle_models
 from app.models.base import Base
 from app.models.user import User as SqlUser
