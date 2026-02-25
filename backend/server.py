@@ -22998,7 +22998,20 @@ async def update_info_page(
     if not page:
         raise HTTPException(status_code=404, detail="Info page not found")
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    payload_data = payload.model_dump(exclude_unset=True)
+    if "slug" in payload_data:
+        slug_value = payload_data["slug"].strip().lower()
+        if not slug_value:
+            raise HTTPException(status_code=400, detail="Slug is required")
+        existing = await session.execute(
+            select(InfoPage).where(InfoPage.slug == slug_value, InfoPage.id != page.id)
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="Slug already exists")
+        page.slug = slug_value
+        payload_data.pop("slug", None)
+
+    for field, value in payload_data.items():
         setattr(page, field, value)
 
     await session.commit()
