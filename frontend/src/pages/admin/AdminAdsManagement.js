@@ -22,6 +22,9 @@ export default function AdminAdsManagement() {
   const [form, setForm] = useState(emptyForm);
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const [activeTab, setActiveTab] = useState('manage');
   const [groupBy, setGroupBy] = useState('ad');
   const [analytics, setAnalytics] = useState(null);
