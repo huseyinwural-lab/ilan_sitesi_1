@@ -21838,17 +21838,27 @@ async def update_pricing_campaign_item(
     if not item or item.is_deleted:
         raise HTTPException(status_code=404, detail="Campaign item not found")
 
+    start_at = _ensure_aware_datetime(payload.start_at) if payload.start_at is not None else item.start_at
+    end_at = _ensure_aware_datetime(payload.end_at) if payload.end_at is not None else item.end_at
+
     _validate_campaign_item_fields(
         item.scope,
         payload.listing_quota,
         payload.price_amount,
         payload.publish_days,
-        payload.start_at,
-        payload.end_at,
+        start_at,
+        end_at,
+        require_dates=True,
     )
 
-    if payload.is_active is True:
-        await _assert_single_active_campaign_item(session, item.scope, exclude_id=item.id)
+    if payload.start_at is not None and start_at is not None:
+        now = datetime.now(timezone.utc)
+        if start_at < now and item.start_at != start_at:
+            raise HTTPException(status_code=400, detail="start_at must be in the future")
+
+    target_active = payload.is_active if payload.is_active is not None else item.is_active
+    if target_active:
+        await _assert_no_overlap_active_campaign_item(session, item.scope, start_at, end_at, exclude_id=item.id)
 
     if payload.name is not None:
         item.name = payload.name
