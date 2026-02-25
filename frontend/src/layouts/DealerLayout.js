@@ -117,7 +117,7 @@ export default function DealerLayout() {
                   type="button"
                   onClick={() => setLanguage(option.key)}
                   className={`rounded-full px-2 py-1 text-xs font-semibold transition ${
-                    language === option.key ? 'bg-white text-[var(--brand-navy)]' : 'text-white/70 hover:text-white'
+                    language === option.key ? 'bg-[var(--bg-surface)] text-[var(--text-primary)]' : 'text-[var(--text-inverse)]/70 hover:text-[var(--text-inverse)]'
                   }`}
                   data-testid={`dealer-language-${option.key}`}
                 >
