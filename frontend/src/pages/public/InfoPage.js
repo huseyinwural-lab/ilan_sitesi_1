@@ -35,24 +35,22 @@ export default function InfoPage() {
   const content = page ? page[`content_${language}`] || page.content_tr : '';
 
   return (
-    <PublicLayout>
-      <div className="space-y-6" data-testid="info-page">
-        {error && (
-          <div className="text-sm text-rose-600" data-testid="info-page-error">
-            {error}
+    <div className="space-y-6" data-testid="info-page">
+      {error && (
+        <div className="text-sm text-rose-600" data-testid="info-page-error">
+          {error}
+        </div>
+      )}
+      {page && (
+        <>
+          <h1 className="text-2xl font-semibold text-[#1B263B]" data-testid="info-page-title">
+            {title}
+          </h1>
+          <div className="text-sm text-[#415A77] whitespace-pre-line" data-testid="info-page-content">
+            {content}
           </div>
-        )}
-        {page && (
-          <>
-            <h1 className="text-2xl font-semibold text-[#1B263B]" data-testid="info-page-title">
-              {title}
-            </h1>
-            <div className="text-sm text-[#415A77] whitespace-pre-line" data-testid="info-page-content">
-              {content}
-            </div>
-          </>
-        )}
-      </div>
-    </PublicLayout>
+        </>
+      )}
+    </div>
   );
 }
