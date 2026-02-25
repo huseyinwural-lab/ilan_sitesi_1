@@ -60,7 +60,7 @@ export default function SiteHeader({ mode, refreshToken }) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-white" data-testid="site-header">
+    <header className="sticky top-0 z-40 border-b bg-[var(--bg-surface)]" data-testid="site-header">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3" data-testid="site-header-container">
         <Link to="/" className="flex items-center gap-2" data-testid="site-header-logo">
           {logoUrl ? (
