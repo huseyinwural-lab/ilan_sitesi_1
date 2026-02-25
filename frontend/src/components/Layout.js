@@ -6,7 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { 
   LayoutDashboard, Users, Globe, Flag, Clock, Settings,
   LogOut, Menu, X, Sun, Moon, ChevronDown, FolderTree, Settings2, MenuSquare,
-  Building, Star, ShieldCheck, FileText, Percent, Car, TrendingUp, Activity
+  Building, Star, ShieldCheck, FileText, Percent, Car, TrendingUp, Activity, Sparkles, Layers, Package
 } from 'lucide-react';
 import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import { Switch } from '@/components/ui/switch';
