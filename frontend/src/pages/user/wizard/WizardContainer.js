@@ -229,9 +229,11 @@ const WizardContainer = () => {
   }
 
   return (
-    <WizardProvider editListingId={editListingId}>
-      <WizardContent />
-    </WizardProvider>
+    <ErrorBoundary>
+      <WizardProvider editListingId={editListingId}>
+        <WizardContent />
+      </WizardProvider>
+    </ErrorBoundary>
   );
 };
 
