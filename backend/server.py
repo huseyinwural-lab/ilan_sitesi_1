@@ -20109,8 +20109,21 @@ HEADER_CACHE_SECONDS = 600
 ASSET_CACHE_SECONDS = 900
 
 
+def _header_logo_exists(logo_path: Optional[str]) -> bool:
+    if not logo_path:
+        return False
+    if logo_path.startswith("/api/site/assets/"):
+        asset_key = logo_path.split("/api/site/assets/", 1)[-1]
+        base_dir = os.path.join(os.path.dirname(__file__), "static", "site_assets")
+        path = os.path.normpath(os.path.join(base_dir, asset_key))
+        return path.startswith(base_dir) and os.path.exists(path)
+    return True
+
+
 def _build_header_logo_url(config: SiteHeaderConfig | None) -> Optional[str]:
     if not config or not config.logo_path:
+        return None
+    if not _header_logo_exists(config.logo_path):
         return None
     separator = "&" if "?" in config.logo_path else "?"
     version = config.version or 1
