@@ -78,6 +78,7 @@ from app.dependencies import (
     _get_sql_user,
 )
 from app.countries_seed import default_countries
+from app.menu_seed import default_top_menu
 from app.domains.pricing_engine import (
     get_pricing_campaign_policy,
     update_pricing_campaign_policy,
