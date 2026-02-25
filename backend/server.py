@@ -19769,6 +19769,19 @@ class AdCampaignUpdatePayload(BaseModel):
     status: Optional[str] = None
 
 
+class PricingCampaignPolicyPayload(BaseModel):
+    is_active: bool
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    scope: str = "both"
+
+
+class PricingQuotePayload(BaseModel):
+    user_type: str
+    listing_count_year: Optional[int] = None
+    listing_type: Optional[str] = None
+
+
 class DopingRequestPayload(BaseModel):
     listing_id: str
     placement_home: Optional[bool] = False
