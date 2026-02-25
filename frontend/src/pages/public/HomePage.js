@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import PublicLayout from '@/layouts/PublicLayout';
 import AdSlot from '@/components/public/AdSlot';
 import { useNavigate } from 'react-router-dom';
 
