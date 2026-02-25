@@ -37,6 +37,7 @@ import CorporateCampaignsPage from '@/pages/admin/CorporateCampaigns';
 import MenuManagementPage from '@/pages/admin/MenuManagement';
 import BillingPlaceholderPage from '@/pages/admin/BillingPlaceholder';
 import AdminAdsManagement from '@/pages/admin/AdminAdsManagement';
+import AdminAdsCampaigns from '@/pages/admin/AdminAdsCampaigns';
 
 export default function BackofficePortalApp() {
   return (
