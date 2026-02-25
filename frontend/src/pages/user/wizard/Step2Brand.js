@@ -103,6 +103,19 @@ const BrandStep = () => {
         vehicle: {
           make_key: selectedMake.key,
           make_id: selectedMake.id,
+          model_key: null,
+          model_id: null,
+          year: null,
+          trim_key: null,
+          vehicle_trim_id: null,
+          vehicle_trim_label: null,
+          manual_trim_flag: false,
+          manual_trim_text: null,
+          fuel_type: null,
+          body: null,
+          transmission: null,
+          drive: null,
+          engine_type: null,
         },
       });
 
@@ -122,6 +135,15 @@ const BrandStep = () => {
         model_label: null,
         year: null,
         trim_key: null,
+        vehicle_trim_id: null,
+        vehicle_trim_label: null,
+        manual_trim_flag: false,
+        manual_trim_text: null,
+        trim_filter_fuel: null,
+        trim_filter_body: null,
+        trim_filter_transmission: null,
+        trim_filter_drive: null,
+        trim_filter_engine_type: null,
       }));
 
       setCompletedSteps((prev) => ({
