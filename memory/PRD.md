@@ -395,6 +395,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **ADS-103 — Dry-run raporu:** new/updated/skipped + distinct counts + validation errors + estimated süre.
 - **ADS-104 — RBAC rolü:** masterdata_manager rolü sadece import ekranı ve job endpointlerine erişir.
 - **ADS-105 — Job altyapısı:** DB job tablosu + BackgroundTasks (MVP), 30dk timeout.
+- **ADS-VEH-01 — Vehicle Selector ayrı domain:** Vasıta detay seçimi kategori değil selector engine ile yapılır.
+- **ADS-IMP-01 — JSON validasyon 3 katman:** parse → schema → business ayrımı.
+- **ADS-CAT-01 — Kategori sıra otomatik:** parent scope unique + reindex.
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
