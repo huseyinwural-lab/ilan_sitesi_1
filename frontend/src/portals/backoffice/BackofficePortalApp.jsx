@@ -41,6 +41,7 @@ import AdminAdsCampaigns from '@/pages/admin/AdminAdsCampaigns';
 import AdminPricingCampaign from '@/pages/admin/AdminPricingCampaign';
 import AdminPricingTiers from '@/pages/admin/AdminPricingTiers';
 import AdminPricingPackages from '@/pages/admin/AdminPricingPackages';
+import AdminHeaderManagement from '@/pages/admin/AdminHeaderManagement';
 import AdminFooterManagement from '@/pages/admin/AdminFooterManagement';
 import AdminInfoPages from '@/pages/admin/AdminInfoPages';
 
