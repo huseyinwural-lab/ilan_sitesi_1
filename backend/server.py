@@ -19680,13 +19680,35 @@ async def vehicle_master_rollback_endpoint(payload: dict, request: Request, curr
 # --- Admin Site Design / Ads / Doping / Footer / Info Pages ---
 AD_PLACEMENTS = {
     "AD_HOME_TOP": "Anasayfa Üst Banner",
+    "AD_CATEGORY_TOP": "Kategori Üst Banner",
     "AD_CATEGORY_RIGHT": "Kategori Sağ",
+    "AD_CATEGORY_BOTTOM": "Kategori Alt Banner",
     "AD_SEARCH_TOP": "Arama Üst Banner",
     "AD_IN_FEED": "Akış İçi",
     "AD_LISTING_RIGHT": "İlan Detay Sağ",
     "AD_LOGIN_1": "Login Slot 1",
     "AD_LOGIN_2": "Login Slot 2",
 }
+
+AD_FORMAT_LABELS = {
+    "horizontal": "Yatay",
+    "vertical": "Dikey",
+    "square": "Kare",
+}
+
+AD_FORMAT_RULES = {
+    "AD_HOME_TOP": ["horizontal"],
+    "AD_CATEGORY_TOP": ["horizontal"],
+    "AD_CATEGORY_RIGHT": ["vertical"],
+    "AD_CATEGORY_BOTTOM": ["horizontal"],
+    "AD_SEARCH_TOP": ["horizontal"],
+    "AD_IN_FEED": ["square"],
+    "AD_LISTING_RIGHT": ["vertical"],
+    "AD_LOGIN_1": ["horizontal"],
+    "AD_LOGIN_2": ["horizontal"],
+}
+
+ADS_MANAGER_ROLES = ["super_admin", "country_admin", "ads_manager"]
 
 CAMPAIGN_STATUSES = {"draft", "active", "paused", "expired"}
 
