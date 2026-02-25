@@ -1,5 +1,7 @@
 import React from 'react';
 
+import ServerErrorPage from '@/pages/public/ServerErrorPage';
+
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
