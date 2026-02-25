@@ -20313,7 +20313,7 @@ async def update_ad(
 async def upload_ad_asset(
     ad_id: str,
     file: UploadFile = File(...),
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     try:
