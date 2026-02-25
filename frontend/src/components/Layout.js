@@ -537,6 +537,7 @@ export default function Layout({ children }) {
       '/admin/attributes',
       '/admin/vehicle-makes',
       '/admin/vehicle-models',
+      '/admin/vehicle-master-import',
       '/admin/audit',
       '/admin/plans',
       '/admin/payments',
