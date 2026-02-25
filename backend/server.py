@@ -16065,11 +16065,15 @@ async def admin_create_category(
     )
 
     slug_query = await session.execute(
-        select(Category).where(Category.is_deleted.is_(False))
+        select(Category)
+        .where(
+            Category.is_deleted.is_(False),
+            Category.parent_id == (parent.id if parent else None),
+        )
     )
     existing_categories = slug_query.scalars().all()
     if any(_pick_category_slug(cat.slug) == slug for cat in existing_categories):
-        raise HTTPException(status_code=409, detail="Category slug already exists")
+        raise HTTPException(status_code=409, detail="Category slug already exists for parent")
 
     now = datetime.now(timezone.utc)
     hierarchy_complete = payload.hierarchy_complete if payload.hierarchy_complete is not None else True
