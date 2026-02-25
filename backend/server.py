@@ -22448,12 +22448,17 @@ async def create_pricing_checkout_session(
 
 @api_router.get("/pricing/packages")
 async def list_pricing_packages_endpoint(session: AsyncSession = Depends(get_sql_session)):
+    now = datetime.now(timezone.utc)
     result = await session.execute(
         select(PricingCampaignItem)
         .where(
             PricingCampaignItem.scope == "corporate",
             PricingCampaignItem.is_deleted.is_(False),
             PricingCampaignItem.is_active.is_(True),
+            PricingCampaignItem.start_at.isnot(None),
+            PricingCampaignItem.end_at.isnot(None),
+            PricingCampaignItem.start_at <= now,
+            PricingCampaignItem.end_at >= now,
         )
         .order_by(PricingCampaignItem.listing_quota)
     )
