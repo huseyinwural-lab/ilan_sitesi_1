@@ -177,7 +177,7 @@ const UserPanelLayout = () => {
                   type="button"
                   onClick={() => setLanguage(option.key)}
                   className={`rounded-full px-2 py-1 text-xs font-semibold transition ${
-                    language === option.key ? 'bg-white text-[#1B263B]' : 'text-white/70 hover:text-white'
+                    language === option.key ? 'bg-white text-[var(--text-primary)]' : 'text-white/70 hover:text-white'
                   }`}
                   data-testid={`account-language-${option.key}`}
                 >
@@ -210,8 +210,8 @@ const UserPanelLayout = () => {
                 className={({ isActive }) =>
                   `border-b-2 pb-2 transition ${
                     isActive
-                      ? 'border-[#F57C00] text-[#1B263B]'
-                      : 'border-transparent text-[#415A77] hover:text-[#1B263B]'
+                      ? 'border-[#F57C00] text-[var(--text-primary)]'
+                      : 'border-transparent text-[#415A77] hover:text-[var(--text-primary)]'
                   }`
                 }
                 data-testid={item.testId}
@@ -243,7 +243,7 @@ const UserPanelLayout = () => {
                         className={({ isActive }) =>
                           `flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
                             isActive
-                              ? 'bg-[#F57C00]/10 text-[#1B263B]'
+                              ? 'bg-[#F57C00]/10 text-[var(--text-primary)]'
                               : 'text-[#415A77] hover:bg-slate-100'
                           }`
                         }
