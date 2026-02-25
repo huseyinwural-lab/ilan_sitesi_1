@@ -456,7 +456,7 @@ const ListingCategorySelect = () => {
     persistWizardSelection(category, path, selectedModule, selectedModuleLabel || selectedModule);
     localStorage.setItem('ilan_ver_force_core_step', 'true');
     await saveRecentCategory(category, path, selectedModule);
-    const targetRoute = selectedModule === 'vehicle' ? '/account/create/vehicle-wizard' : '/account/create/listing-wizard';
+    const targetRoute = selectedModule === 'vehicle' ? '/ilan-ver/arac-sec' : '/ilan-ver/detaylar';
     navigate(targetRoute);
   }, [activeCategory, country, navigate, persistRecentToStorage, persistWizardSelection, saveRecentCategory, selectedModule, selectedModuleLabel, selectedPath]);
 
