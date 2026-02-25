@@ -32,8 +32,6 @@ export const ADMIN_ROUTE_RULES = [
   { pattern: /^\/admin\/listings$/, roles: ADMIN_ROLE_GROUPS.moderation },
   { pattern: /^\/admin\/individual-listing-applications$/, roles: ADMIN_ROLE_GROUPS.moderation },
   { pattern: /^\/admin\/corporate-listing-applications$/, roles: ADMIN_ROLE_GROUPS.moderation },
-  { pattern: /^\/admin\/individual-campaigns$/, roles: ADMIN_ROLE_GROUPS.moderation },
-  { pattern: /^\/admin\/corporate-campaigns$/, roles: ADMIN_ROLE_GROUPS.moderation },
   { pattern: /^\/admin\/ads$/, roles: ADMIN_ROLE_GROUPS.adsManager },
   { pattern: /^\/admin\/ads\/campaigns$/, roles: ADMIN_ROLE_GROUPS.adsManager },
   { pattern: /^\/admin\/ads\/campaigns\/.+$/, roles: ADMIN_ROLE_GROUPS.adsManager },
