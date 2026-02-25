@@ -18963,6 +18963,755 @@ async def public_search_v2(
 
 
 # =====================
+# Vehicle Master Data Import (Jobs)
+# =====================
+
+VEHICLE_IMPORT_ALLOWED_CONTENT_TYPES = {
+    "application/json",
+    "text/json",
+    "application/octet-stream",
+    "text/plain",
+}
+
+class VehicleImportApiPayload(BaseModel):
+    body: Optional[str] = None
+    doors: Optional[int] = None
+    drive: Optional[str] = None
+    engine_position: Optional[str] = None
+    engine_type: Optional[str] = None
+    fuel_type: Optional[str] = None
+    full_results: Optional[int] = 1
+    keyword: Optional[str] = None
+    make: Optional[str] = None
+    model: Optional[str] = None
+    min_cylinders: Optional[int] = None
+    max_cylinders: Optional[int] = None
+    min_lkm_hwy: Optional[float] = None
+    max_lkm_hwy: Optional[float] = None
+    min_power: Optional[float] = None
+    max_power: Optional[float] = None
+    min_top_speed: Optional[float] = None
+    max_top_speed: Optional[float] = None
+    min_torque: Optional[float] = None
+    max_torque: Optional[float] = None
+    min_weight: Optional[float] = None
+    max_weight: Optional[float] = None
+    min_year: Optional[int] = None
+    max_year: Optional[int] = None
+    seats: Optional[int] = None
+    sold_in_us: Optional[bool] = None
+    year: Optional[int] = None
+    dry_run: Optional[bool] = False
+
+
+def _vehicle_import_log_entry(level: str, message: str, details: Optional[dict] = None) -> dict:
+    return {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "level": level,
+        "message": message,
+        "details": details or {},
+    }
+
+
+def _append_vehicle_import_log(job: VehicleImportJob, level: str, message: str, details: Optional[dict] = None) -> None:
+    entries = list(job.log_entries or [])
+    entries.append(_vehicle_import_log_entry(level, message, details))
+    job.log_entries = entries[-200:]
+
+
+def _serialize_vehicle_import_job(job: VehicleImportJob) -> dict:
+    total = job.total_records or 0
+    processed = job.processed_records or 0
+    progress = int((processed / total) * 100) if total else 0
+    return {
+        "id": str(job.id),
+        "status": job.status,
+        "source": job.source,
+        "dry_run": bool(job.dry_run),
+        "total_records": total,
+        "processed_records": processed,
+        "progress": progress,
+        "summary": job.summary or {},
+        "error_log": job.error_log or {},
+        "error_message": job.error_message,
+        "log_entries": job.log_entries or [],
+        "created_by": str(job.created_by) if job.created_by else None,
+        "created_by_email": job.created_by_email,
+        "started_at": job.started_at.isoformat() if job.started_at else None,
+        "finished_at": job.finished_at.isoformat() if job.finished_at else None,
+        "created_at": job.created_at.isoformat() if job.created_at else None,
+        "updated_at": job.updated_at.isoformat() if job.updated_at else None,
+    }
+
+
+def _build_vehicle_import_params(payload: VehicleImportApiPayload) -> dict:
+    raw = payload.dict(exclude={"dry_run"}, exclude_none=True)
+    params = {}
+    for key, value in raw.items():
+        if value in (None, ""):
+            continue
+        if isinstance(value, bool):
+            params[key] = "1" if value else "0"
+        else:
+            params[key] = value
+    return params
+
+
+def _resolve_vehicle_import_headers() -> dict:
+    base_headers = {
+        "Accept": "application/json",
+    }
+    api_key = os.environ.get("VEHICLE_TRIMS_API_KEY")
+    if api_key:
+        base_headers["Authorization"] = f"Bearer {api_key}"
+    extra_json = os.environ.get("VEHICLE_TRIMS_API_HEADERS_JSON")
+    if extra_json:
+        try:
+            extra_headers = json.loads(extra_json)
+            if isinstance(extra_headers, dict):
+                base_headers.update(extra_headers)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="VEHICLE_TRIMS_API_HEADERS_JSON invalid")
+    return base_headers
+
+
+def _fetch_vehicle_import_records(params: dict) -> list[dict]:
+    base_url = os.environ.get("VEHICLE_TRIMS_API_BASE_URL")
+    if not base_url:
+        raise HTTPException(status_code=400, detail="VEHICLE_TRIMS_API_BASE_URL missing")
+    if not os.environ.get("VEHICLE_TRIMS_API_KEY"):
+        raise HTTPException(status_code=400, detail="VEHICLE_TRIMS_API_KEY missing")
+
+    query = urllib.parse.urlencode(params) if params else ""
+    url = f"{base_url}?{query}" if query else base_url
+    headers = _resolve_vehicle_import_headers()
+    request_obj = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(request_obj, timeout=30) as response:
+            raw = response.read()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Provider request failed: {exc}") from exc
+
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="Provider response invalid JSON") from exc
+
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict):
+        for key in ("items", "data", "results", "records"):
+            if isinstance(payload.get(key), list):
+                return payload.get(key)
+    raise HTTPException(status_code=400, detail="Provider response missing record array")
+
+
+def _get_vehicle_import_temp_dir() -> Path:
+    return Path("/tmp/vehicle_master_import")
+
+
+async def _store_vehicle_import_upload(file: UploadFile, dest: Path) -> int:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    size = 0
+    with dest.open("wb") as handle:
+        while True:
+            chunk = await file.read(1024 * 1024)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > VEHICLE_IMPORT_MAX_BYTES:
+                raise HTTPException(status_code=413, detail="File exceeds 50MB limit")
+            handle.write(chunk)
+    if size == 0:
+        raise HTTPException(status_code=400, detail="File is empty")
+    return size
+
+
+def _load_vehicle_import_json(path: Path) -> list[dict]:
+    raw = path.read_bytes()
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="JSON parse failed") from exc
+    if not isinstance(payload, list):
+        raise HTTPException(status_code=400, detail="JSON must be an array of records")
+    if len(payload) > VEHICLE_IMPORT_MAX_RECORDS:
+        raise HTTPException(status_code=413, detail="JSON record limit exceeded")
+    return payload
+
+
+def _extract_vehicle_field(record: dict, keys: list[str]) -> Optional[Any]:
+    for key in keys:
+        if key in record and record.get(key) not in (None, ""):
+            return record.get(key)
+    return None
+
+
+def _extract_named_value(raw: Any) -> Optional[str]:
+    if isinstance(raw, dict):
+        value = raw.get("name") or raw.get("label") or raw.get("title") or raw.get("value")
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+        return None
+    if isinstance(raw, str) and raw.strip():
+        return raw.strip()
+    return None
+
+
+def _extract_reference_value(raw: Any) -> Optional[str]:
+    if isinstance(raw, dict):
+        value = raw.get("id") or raw.get("ref") or raw.get("code")
+        if value is None:
+            return None
+        return str(value).strip() or None
+    if raw is None:
+        return None
+    return str(raw).strip() or None
+
+
+def _cast_int(value: Any) -> Optional[int]:
+    if value in (None, ""):
+        return None
+    try:
+        return int(float(value))
+    except (ValueError, TypeError):
+        return None
+
+
+def _cast_float(value: Any) -> Optional[float]:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
+
+def _cast_bool(value: Any) -> Optional[bool]:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    text = str(value).strip().lower()
+    if text in {"1", "true", "yes", "y"}:
+        return True
+    if text in {"0", "false", "no", "n"}:
+        return False
+    return None
+
+
+VEHICLE_IMPORT_ATTR_KEYS = [
+    "body",
+    "doors",
+    "drive",
+    "engine_position",
+    "engine_type",
+    "fuel_type",
+    "cylinders",
+    "lkm_hwy",
+    "power",
+    "top_speed",
+    "torque",
+    "weight",
+    "seats",
+    "sold_in_us",
+]
+
+
+def _normalize_vehicle_import_record(record: dict) -> tuple[Optional[dict], Optional[str]]:
+    if not isinstance(record, dict):
+        return None, "Record is not an object"
+
+    raw_make = _extract_vehicle_field(record, ["make", "make_name", "makeName", "make_title"])
+    raw_make = raw_make or record.get("make")
+    make_name = _extract_named_value(raw_make) or _extract_named_value(record.get("make_name"))
+    make_ref = _extract_reference_value(record.get("make_id") or record.get("makeId") or record.get("makeID"))
+
+    raw_model = _extract_vehicle_field(record, ["model", "model_name", "modelName", "model_title"]) or record.get("model")
+    model_name = _extract_named_value(raw_model) or _extract_named_value(record.get("model_name"))
+
+    raw_trim = _extract_vehicle_field(record, ["trim", "trim_name", "trimName", "trim_title"]) or record.get("trim")
+    trim_name = _extract_named_value(raw_trim) or _extract_named_value(record.get("trim_name"))
+    trim_ref = _extract_reference_value(record.get("trim_id") or record.get("trimId") or record.get("id"))
+
+    year = _cast_int(record.get("year") or record.get("model_year") or record.get("year_start"))
+
+    if not make_name:
+        return None, "Missing make"
+    if not model_name:
+        return None, "Missing model"
+    if not trim_name:
+        return None, "Missing trim"
+    if year is None:
+        return None, "Missing year"
+
+    attributes: dict[str, Any] = {}
+    for key in VEHICLE_IMPORT_ATTR_KEYS:
+        value = record.get(key)
+        if value in (None, ""):
+            continue
+        if key in {"doors", "cylinders", "seats"}:
+            parsed = _cast_int(value)
+            if parsed is not None:
+                attributes[key] = parsed
+            continue
+        if key in {"lkm_hwy", "power", "top_speed", "torque", "weight"}:
+            parsed = _cast_float(value)
+            if parsed is not None:
+                attributes[key] = parsed
+            continue
+        if key == "sold_in_us":
+            parsed = _cast_bool(value)
+            if parsed is not None:
+                attributes[key] = parsed
+            continue
+        attributes[key] = value
+
+    return {
+        "make_name": make_name,
+        "make_ref": make_ref,
+        "model_name": model_name,
+        "trim_name": trim_name,
+        "trim_ref": trim_ref,
+        "year": year,
+        "attributes": attributes,
+    }, None
+
+
+def _build_vehicle_import_summary(*, total: int, new: int, updated: int, skipped: int, distinct_makes: int, distinct_models: int, distinct_trims: int, validation_error_count: int, validation_errors: list[dict], duration_seconds: Optional[float], estimated_duration: float) -> dict:
+    return {
+        "total_records": total,
+        "new": new,
+        "updated": updated,
+        "skipped": skipped,
+        "distinct_makes": distinct_makes,
+        "distinct_models": distinct_models,
+        "distinct_trims": distinct_trims,
+        "validation_error_count": validation_error_count,
+        "validation_errors": validation_errors,
+        "duration_seconds": duration_seconds,
+        "estimated_duration_seconds": estimated_duration,
+    }
+
+
+async def _process_vehicle_import_records(
+    *,
+    session: AsyncSession,
+    job: VehicleImportJob,
+    records: list[dict],
+    source_label: str,
+) -> dict:
+    total = len(records)
+    job.total_records = total
+    job.processed_records = 0
+
+    seen_keys: set[str] = set()
+    distinct_makes: set[str] = set()
+    distinct_models: set[str] = set()
+    distinct_trims: set[str] = set()
+
+    new_count = 0
+    updated_count = 0
+    skipped_count = 0
+    validation_errors: list[dict] = []
+    validation_error_count = 0
+
+    make_cache: dict[str, VehicleMake] = {}
+    model_cache: dict[tuple[str, str], VehicleModel] = {}
+    trim_cache_ref: dict[str, VehicleTrim] = {}
+    trim_cache_key: dict[tuple[str, str, int, str], VehicleTrim] = {}
+
+    start_ts = time.time()
+
+    def _log_progress(note: str, processed: int) -> None:
+        _append_vehicle_import_log(job, "info", note, {"processed": processed, "total": total})
+
+    _log_progress("Import started", 0)
+
+    for index, record in enumerate(records, start=1):
+        if time.time() - start_ts > VEHICLE_IMPORT_JOB_TIMEOUT_SECONDS:
+            raise TimeoutError("Import job timeout")
+
+        normalized, error = _normalize_vehicle_import_record(record)
+        if error:
+            validation_error_count += 1
+            skipped_count += 1
+            if len(validation_errors) < VEHICLE_IMPORT_MAX_ERRORS:
+                validation_errors.append({"row": index, "error": error})
+            continue
+
+        make_name = normalized["make_name"]
+        model_name = normalized["model_name"]
+        trim_name = normalized["trim_name"]
+        year = normalized["year"]
+        trim_ref = normalized["trim_ref"]
+        attributes = normalized["attributes"]
+
+        make_slug = _slugify_value(make_name)
+        model_slug = _slugify_value(model_name)
+        trim_slug = _slugify_value(trim_name)
+        if not make_slug or not model_slug or not trim_slug:
+            validation_error_count += 1
+            skipped_count += 1
+            if len(validation_errors) < VEHICLE_IMPORT_MAX_ERRORS:
+                validation_errors.append({"row": index, "error": "Invalid slug"})
+            continue
+
+        unique_key = f"ref:{trim_ref}" if trim_ref else f"key:{year}:{make_slug}:{model_slug}:{trim_slug}"
+        if unique_key in seen_keys:
+            skipped_count += 1
+            if len(validation_errors) < VEHICLE_IMPORT_MAX_ERRORS:
+                validation_errors.append({"row": index, "error": "Duplicate record in payload"})
+            continue
+        seen_keys.add(unique_key)
+
+        distinct_makes.add(make_slug)
+        distinct_models.add(f"{make_slug}:{model_slug}")
+        distinct_trims.add(f"{make_slug}:{model_slug}:{year}:{trim_slug}")
+
+        make = make_cache.get(make_slug)
+        if make is None:
+            result = await session.execute(select(VehicleMake).where(VehicleMake.slug == make_slug))
+            make = result.scalar_one_or_none()
+            if not make and not job.dry_run:
+                make = VehicleMake(name=make_name, slug=make_slug, is_active=True, source=source_label, source_ref=normalized.get("make_ref"))
+                session.add(make)
+                await session.flush()
+            make_cache[make_slug] = make
+
+        if not make:
+            skipped_count += 1
+            validation_error_count += 1
+            if len(validation_errors) < VEHICLE_IMPORT_MAX_ERRORS:
+                validation_errors.append({"row": index, "error": "Make resolve failed"})
+            continue
+
+        model_key = (str(make.id), model_slug)
+        model = model_cache.get(model_key)
+        if model is None:
+            result = await session.execute(
+                select(VehicleModel).where(VehicleModel.make_id == make.id, VehicleModel.slug == model_slug)
+            )
+            model = result.scalar_one_or_none()
+            if not model and not job.dry_run:
+                model = VehicleModel(
+                    make_id=make.id,
+                    name=model_name,
+                    slug=model_slug,
+                    vehicle_type="car",
+                    is_active=True,
+                    year_from=None,
+                    year_to=None,
+                )
+                session.add(model)
+                await session.flush()
+            model_cache[model_key] = model
+
+        if not model:
+            skipped_count += 1
+            validation_error_count += 1
+            if len(validation_errors) < VEHICLE_IMPORT_MAX_ERRORS:
+                validation_errors.append({"row": index, "error": "Model resolve failed"})
+            continue
+
+        trim = None
+        if trim_ref:
+            trim = trim_cache_ref.get(trim_ref)
+            if trim is None:
+                result = await session.execute(select(VehicleTrim).where(VehicleTrim.source_ref == trim_ref))
+                trim = result.scalar_one_or_none()
+                trim_cache_ref[trim_ref] = trim
+
+        if trim is None:
+            trim_key = (str(make.id), str(model.id), year, trim_slug)
+            trim = trim_cache_key.get(trim_key)
+            if trim is None:
+                result = await session.execute(
+                    select(VehicleTrim).where(
+                        VehicleTrim.make_id == make.id,
+                        VehicleTrim.model_id == model.id,
+                        VehicleTrim.year == year,
+                        VehicleTrim.slug == trim_slug,
+                    )
+                )
+                trim = result.scalar_one_or_none()
+                trim_cache_key[trim_key] = trim
+
+        if job.dry_run:
+            if not trim:
+                new_count += 1
+            else:
+                existing_attributes = trim.attributes or {}
+                has_changes = (
+                    trim.name != trim_name
+                    or trim.year != year
+                    or (trim.source_ref or None) != (trim_ref or None)
+                    or existing_attributes != attributes
+                )
+                if has_changes:
+                    updated_count += 1
+                else:
+                    skipped_count += 1
+        else:
+            if not trim:
+                new_count += 1
+                trim = VehicleTrim(
+                    make_id=make.id,
+                    model_id=model.id,
+                    year=year,
+                    name=trim_name,
+                    slug=trim_slug,
+                    source=source_label,
+                    source_ref=trim_ref,
+                    attributes=attributes,
+                )
+                session.add(trim)
+                if trim_ref:
+                    trim_cache_ref[trim_ref] = trim
+                trim_cache_key[(str(make.id), str(model.id), year, trim_slug)] = trim
+            else:
+                existing_attributes = trim.attributes or {}
+                has_changes = (
+                    trim.name != trim_name
+                    or trim.year != year
+                    or (trim.source_ref or None) != (trim_ref or None)
+                    or existing_attributes != attributes
+                )
+                if has_changes:
+                    updated_count += 1
+                    trim.name = trim_name
+                    trim.year = year
+                    trim.slug = trim_slug
+                    trim.source = source_label
+                    trim.source_ref = trim_ref
+                    trim.attributes = attributes
+                else:
+                    skipped_count += 1
+
+        job.processed_records = index
+        if index % VEHICLE_IMPORT_BATCH_SIZE == 0:
+            _log_progress("Batch processed", index)
+            await session.commit()
+
+    await session.commit()
+
+    estimated_duration = min(total * VEHICLE_IMPORT_SECONDS_PER_RECORD, VEHICLE_IMPORT_JOB_TIMEOUT_SECONDS)
+    duration = round(time.time() - start_ts, 2)
+
+    summary = _build_vehicle_import_summary(
+        total=total,
+        new=new_count,
+        updated=updated_count,
+        skipped=skipped_count,
+        distinct_makes=len(distinct_makes),
+        distinct_models=len(distinct_models),
+        distinct_trims=len(distinct_trims),
+        validation_error_count=validation_error_count,
+        validation_errors=validation_errors,
+        duration_seconds=None if job.dry_run else duration,
+        estimated_duration=estimated_duration,
+    )
+
+    job.error_log = {
+        "validation_error_count": validation_error_count,
+        "validation_errors": validation_errors,
+    }
+
+    _append_vehicle_import_log(job, "info", "Import completed", summary)
+    await session.commit()
+
+    return summary
+
+
+async def _run_vehicle_import_job(job_id: str) -> None:
+    async with AsyncSessionLocal() as session:
+        try:
+            job_uuid = uuid.UUID(job_id)
+        except ValueError:
+            return
+
+        job = await session.get(VehicleImportJob, job_uuid)
+        if not job:
+            return
+
+        job.status = "running"
+        job.started_at = datetime.now(timezone.utc)
+        _append_vehicle_import_log(job, "info", "Job started")
+        await session.commit()
+
+        try:
+            await _write_audit_log_sql(
+                session=session,
+                action="VEHICLE_IMPORT_STARTED",
+                actor={"id": job.created_by, "email": job.created_by_email},
+                resource_type="vehicle_import_job",
+                resource_id=str(job.id),
+                metadata={"source": job.source, "dry_run": job.dry_run},
+                request=None,
+                country_code=None,
+            )
+            await session.commit()
+
+            if job.source == "api":
+                params = job.request_payload.get("params") or {}
+                records = _fetch_vehicle_import_records(params)
+            else:
+                file_path = job.request_payload.get("file_path")
+                if not file_path:
+                    raise RuntimeError("File path missing")
+                records = _load_vehicle_import_json(Path(file_path))
+
+            summary = await _process_vehicle_import_records(
+                session=session,
+                job=job,
+                records=records,
+                source_label=job.source,
+            )
+
+            job.summary = summary
+            job.status = "succeeded"
+            job.finished_at = datetime.now(timezone.utc)
+            await _write_audit_log_sql(
+                session=session,
+                action="VEHICLE_IMPORT_COMPLETED",
+                actor={"id": job.created_by, "email": job.created_by_email},
+                resource_type="vehicle_import_job",
+                resource_id=str(job.id),
+                metadata=summary,
+                request=None,
+                country_code=None,
+            )
+        except Exception as exc:
+            job.status = "failed"
+            job.error_message = str(exc)
+            job.finished_at = datetime.now(timezone.utc)
+            _append_vehicle_import_log(job, "error", "Job failed", {"error": str(exc)})
+            await _write_audit_log_sql(
+                session=session,
+                action="VEHICLE_IMPORT_FAILED",
+                actor={"id": job.created_by, "email": job.created_by_email},
+                resource_type="vehicle_import_job",
+                resource_id=str(job.id),
+                metadata={"error": str(exc)},
+                request=None,
+                country_code=None,
+            )
+        finally:
+            await session.commit()
+
+
+@api_router.post("/admin/vehicle-master-import/jobs/api")
+async def create_vehicle_import_job_from_api(
+    payload: VehicleImportApiPayload,
+    background_tasks: BackgroundTasks,
+    current_user=Depends(check_permissions(["super_admin", "masterdata_manager"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    params = _build_vehicle_import_params(payload)
+    job = VehicleImportJob(
+        status="queued",
+        source="api",
+        dry_run=bool(payload.dry_run),
+        request_payload={"params": params},
+        created_by=_safe_uuid(current_user.get("id")),
+        created_by_email=current_user.get("email"),
+        log_entries=[_vehicle_import_log_entry("info", "Job queued")],
+    )
+    session.add(job)
+    await session.commit()
+
+    background_tasks.add_task(_run_vehicle_import_job, str(job.id))
+    return {"job": _serialize_vehicle_import_job(job)}
+
+
+@api_router.post("/admin/vehicle-master-import/jobs/upload")
+async def create_vehicle_import_job_from_upload(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    dry_run: bool = Form(False),
+    current_user=Depends(check_permissions(["super_admin", "masterdata_manager"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if file.content_type and file.content_type not in VEHICLE_IMPORT_ALLOWED_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid file type")
+
+    job_id = uuid.uuid4()
+    temp_dir = _get_vehicle_import_temp_dir()
+    file_path = temp_dir / f"{job_id}.json"
+    await _store_vehicle_import_upload(file, file_path)
+    records = _load_vehicle_import_json(file_path)
+
+    validation_errors = []
+    for index, record in enumerate(records, start=1):
+        _, error = _normalize_vehicle_import_record(record)
+        if error:
+            if len(validation_errors) < VEHICLE_IMPORT_MAX_ERRORS:
+                validation_errors.append({"row": index, "error": error})
+        if len(validation_errors) >= VEHICLE_IMPORT_MAX_ERRORS:
+            break
+
+    if validation_errors:
+        file_path.unlink(missing_ok=True)
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "JSON validation failed",
+                "validation_error_count": len(validation_errors),
+                "validation_errors": validation_errors,
+            },
+        )
+
+    job = VehicleImportJob(
+        id=job_id,
+        status="queued",
+        source="upload",
+        dry_run=bool(dry_run),
+        request_payload={
+            "file_path": str(file_path),
+            "file_name": file.filename,
+            "record_count": len(records),
+        },
+        created_by=_safe_uuid(current_user.get("id")),
+        created_by_email=current_user.get("email"),
+        log_entries=[_vehicle_import_log_entry("info", "Job queued")],
+    )
+    session.add(job)
+    await session.commit()
+
+    background_tasks.add_task(_run_vehicle_import_job, str(job.id))
+    return {"job": _serialize_vehicle_import_job(job)}
+
+
+@api_router.get("/admin/vehicle-master-import/jobs")
+async def list_vehicle_import_jobs(
+    current_user=Depends(check_permissions(["super_admin", "masterdata_manager"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(
+        select(VehicleImportJob).order_by(VehicleImportJob.created_at.desc()).limit(25)
+    )
+    items = [_serialize_vehicle_import_job(job) for job in result.scalars().all()]
+    return {"items": items}
+
+
+@api_router.get("/admin/vehicle-master-import/jobs/{job_id}")
+async def get_vehicle_import_job(
+    job_id: str,
+    current_user=Depends(check_permissions(["super_admin", "masterdata_manager"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        job_uuid = uuid.UUID(job_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid job id") from exc
+
+    job = await session.get(VehicleImportJob, job_uuid)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return {"job": _serialize_vehicle_import_job(job)}
+
+
+# =====================
 # Vehicle Master Data (DB)
 # =====================
 
