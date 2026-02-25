@@ -20859,50 +20859,138 @@ def _resolve_pricing_user_type(current_user: dict) -> str:
     return "individual"
 
 
-async def _build_individual_quote(session: AsyncSession, user_id: uuid.UUID) -> Dict[str, Any]:
-    rules = await _get_active_tier_rules(session)
-    rule = _pick_tier_rule(rules, 1)
-    if not rule:
-        return {
-            "type": "tier",
-            "reason": "no_tier_rules",
-            "requires_payment": False,
-            "amount": 0,
-            "currency": "EUR",
-            "duration_days": 90,
-            "warning": "no_tier_rules",
-        }
-    listing_count = await _count_user_listings_current_year(session, user_id)
-    next_listing_no = listing_count + 1
-    rule = _pick_tier_rule(rules, next_listing_no)
-    if not rule:
-        return {
-            "type": "tier",
-            "reason": "no_tier_rules",
-            "requires_payment": False,
-            "amount": 0,
-            "currency": "EUR",
-            "duration_days": 90,
-            "warning": "no_tier_rules",
-            "listing_no": next_listing_no,
-        }
-    amount = float(rule.price_amount or 0)
+def _campaign_item_is_available(item: PricingCampaignItem, now: datetime) -> bool:
+    if item.is_deleted:
+        return False
+    if not item.is_active:
+        return False
+    if item.start_at and item.start_at > now:
+        return False
+    if item.end_at and item.end_at < now:
+        return False
+    return True
+
+
+def _serialize_campaign_item_for_quote(item: PricingCampaignItem) -> Dict[str, Any]:
     return {
-        "type": "tier",
-        "reason": "tier_rule",
-        "tier_no": rule.tier_no,
-        "rule_id": str(rule.id),
-        "listing_no": next_listing_no,
-        "listing_count_year": listing_count,
-        "amount": amount,
-        "currency": rule.currency,
-        "duration_days": rule.publish_days,
-        "requires_payment": amount > 0,
-        "quota_used": False,
+        "id": str(item.id),
+        "name": item.name,
+        "listing_quota": item.listing_quota,
+        "price_amount": float(item.price_amount or 0),
+        "currency": item.currency,
+        "publish_days": item.publish_days,
+        "start_at": item.start_at.isoformat() if item.start_at else None,
+        "end_at": item.end_at.isoformat() if item.end_at else None,
+        "is_active": item.is_active,
     }
 
 
-async def _build_corporate_quote(session: AsyncSession, user_id: uuid.UUID) -> Dict[str, Any]:
+async def _resolve_campaign_item_from_payload(
+    session: AsyncSession,
+    scope: str,
+    payload: Optional[PricingQuotePayload],
+) -> Optional[PricingCampaignItem]:
+    if not payload:
+        return None
+
+    now = datetime.now(timezone.utc)
+    if payload.campaign_item_id:
+        try:
+            item_uuid = uuid.UUID(payload.campaign_item_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="campaign_item_id invalid") from exc
+        item = await session.get(PricingCampaignItem, item_uuid)
+        if not item or item.scope != scope or item.is_deleted:
+            raise HTTPException(status_code=404, detail="Campaign item not found")
+        if not _campaign_item_is_available(item, now):
+            raise HTTPException(status_code=409, detail="Campaign item is not active")
+        return item
+
+    if payload.listing_quota:
+        result = await session.execute(
+            select(PricingCampaignItem).where(
+                PricingCampaignItem.scope == scope,
+                PricingCampaignItem.listing_quota == payload.listing_quota,
+                PricingCampaignItem.is_deleted.is_(False),
+            )
+        )
+        for item in result.scalars().all():
+            if _campaign_item_is_available(item, now):
+                return item
+
+    return None
+
+
+async def _get_active_pricing_campaign_items(
+    session: AsyncSession, scope: str
+) -> list[PricingCampaignItem]:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(PricingCampaignItem)
+        .where(
+            PricingCampaignItem.scope == scope,
+            PricingCampaignItem.is_deleted.is_(False),
+            PricingCampaignItem.is_active.is_(True),
+            or_(PricingCampaignItem.start_at.is_(None), PricingCampaignItem.start_at <= now),
+            or_(PricingCampaignItem.end_at.is_(None), PricingCampaignItem.end_at >= now),
+        )
+        .order_by(PricingCampaignItem.listing_quota)
+    )
+    return result.scalars().all()
+
+
+async def _build_campaign_item_quote(
+    session: AsyncSession,
+    scope: str,
+    payload: Optional[PricingQuotePayload],
+) -> Dict[str, Any]:
+    items = await _get_active_pricing_campaign_items(session, scope)
+    selected = await _resolve_campaign_item_from_payload(session, scope, payload)
+
+    if not selected:
+        if len(items) == 1:
+            selected = items[0]
+        elif len(items) == 0:
+            return {
+                "type": "campaign_none",
+                "reason": "no_active_campaign",
+                "requires_payment": False,
+                "amount": 0,
+                "currency": "EUR",
+                "publish_days": 90,
+                "listing_quota": 1,
+                "scope": scope,
+            }
+        else:
+            return {
+                "type": "campaign_selection",
+                "reason": "campaign_selection_required",
+                "requires_payment": True,
+                "items": [_serialize_campaign_item_for_quote(item) for item in items],
+                "scope": scope,
+            }
+
+    amount = float(selected.price_amount or 0)
+    return {
+        "type": "campaign_item",
+        "reason": "campaign_item",
+        "campaign_item_id": str(selected.id),
+        "name": selected.name,
+        "listing_quota": selected.listing_quota,
+        "amount": amount,
+        "currency": selected.currency,
+        "publish_days": selected.publish_days,
+        "requires_payment": amount > 0,
+        "quota_used": False,
+        "scope": scope,
+    }
+
+
+async def _build_individual_quote(session: AsyncSession, user_id: uuid.UUID, payload: Optional[PricingQuotePayload]) -> Dict[str, Any]:
+    return await _build_campaign_item_quote(session, "individual", payload)
+
+
+async def _build_corporate_quote(session: AsyncSession, user_id: uuid.UUID, payload: Optional[PricingQuotePayload]) -> Dict[str, Any]:
     subscription, package = await _get_active_subscription(session, user_id)
     if subscription and package:
         return {
