@@ -2384,7 +2384,7 @@ const AdminCategories = () => {
                         <div className="font-medium">{form.active_flag ? 'Aktif' : 'Pasif'}</div>
                       </div>
                     </div>
-                    <div className="mt-2 text-xs text-slate-700">Sıra: {form.sort_order || 0}</div>
+                    <div className="mt-2 text-xs text-slate-700">Sıra: Otomatik</div>
                   </div>
 
               {wizardStep === "core" && (
