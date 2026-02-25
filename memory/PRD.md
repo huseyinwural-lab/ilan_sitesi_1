@@ -305,6 +305,13 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/CDN_24H_REPORT.md
 - /app/memory/UX_THEME_PHASE_PREP.md
 
+## Son Değişiklikler (2026-02-25)
+- Pricing Campaign Items modeli + migration (pricing_campaign_items) ve snapshot alanları (campaign_item_id, listing_quota, publish_days, campaign_override_active).
+- Quote engine kampanya item’larına geçirildi; checkout snapshot kampanya item referansı ile kilitleniyor.
+- Admin UI: Bireysel/Kurumsal Kampanyalar CRUD + modal.
+- Expiry job: campaign item end_at sonrası otomatik pasif.
+- Test kullanıcı seed script + ops doküman + P1_PRICING_CAMPAIGN_CRUD_EVIDENCE.md.
+
 ## Son Değişiklikler (2026-02-24)
 - P0.1 kapanış paketleri hazırlandı: P0_1_SECURITY_HARDENING_CLOSED.md + backup code + log-based 24h raporu.
 - 2FA backup code tek-kullanım kanıtlandı (curl + UI).
