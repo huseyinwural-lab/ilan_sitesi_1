@@ -485,7 +485,7 @@ export default function Layout({ children }) {
     { path: '/admin/attributes', icon: Settings2, label: 'Özellikler', roles: roles.catalogAdmin, testId: 'catalog-attributes' },
     { path: '/admin/menu-management', icon: MenuSquare, label: 'Menü Yönetimi', roles: roles.adminOnly, comingSoon: true, testId: 'catalog-menu-management' },
 
-    { divider: true, label: 'Araç Verisi', roles: roles.vehicleAdmin },
+    { divider: true, label: 'Araç Verisi', roles: [...roles.vehicleAdmin, ...roles.masterdataManager] },
     { path: '/admin/vehicle-makes', icon: Car, label: 'Araç Markaları', roles: roles.vehicleAdmin, testId: 'vehicle-makes' },
     { path: '/admin/vehicle-models', icon: Car, label: 'Araç Modelleri', roles: roles.vehicleAdmin, testId: 'vehicle-models' },
     { path: '/admin/vehicle-master-import', icon: UploadCloud, label: 'Araç Master Data Import', roles: roles.masterdataManager, testId: 'vehicle-master-import' },
