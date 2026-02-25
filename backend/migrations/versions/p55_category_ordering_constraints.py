@@ -37,22 +37,10 @@ def upgrade() -> None:
         )
         counter += 1
 
-    op.create_index(
-        "uq_categories_parent_sort",
-        "categories",
-        [sa.text("coalesce(parent_id, '00000000-0000-0000-0000-000000000000')"), "sort_order"],
-        unique=True,
-        postgresql_where=sa.text("is_deleted = false"),
-    )
-    op.create_index(
-        "uq_categories_parent_slug",
-        "categories",
-        [sa.text("coalesce(parent_id, '00000000-0000-0000-0000-000000000000')"), sa.text("(slug->>'tr')")],
-        unique=True,
-        postgresql_where=sa.text("is_deleted = false"),
-    )
+    op.execute("CREATE UNIQUE INDEX uq_categories_parent_sort ON categories (coalesce(parent_id, '00000000-0000-0000-0000-000000000000'), sort_order) WHERE is_deleted = false")
+    op.execute("CREATE UNIQUE INDEX uq_categories_parent_slug ON categories (coalesce(parent_id, '00000000-0000-0000-0000-000000000000'), (slug->>'tr')) WHERE is_deleted = false")
 
 
 def downgrade() -> None:
-    op.drop_index("uq_categories_parent_slug", table_name="categories")
-    op.drop_index("uq_categories_parent_sort", table_name="categories")
+    op.execute("DROP INDEX IF EXISTS uq_categories_parent_slug")
+    op.execute("DROP INDEX IF EXISTS uq_categories_parent_sort")
