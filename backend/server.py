@@ -21870,7 +21870,6 @@ async def get_pricing_quote_endpoint(
 @api_router.post("/pricing/checkout-session")
 async def create_pricing_checkout_session(
     payload: PricingCheckoutPayload,
-    request: Request,
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
