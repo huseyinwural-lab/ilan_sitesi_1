@@ -20794,7 +20794,7 @@ def _validate_campaign_item_fields(
         raise HTTPException(status_code=400, detail="end_at must be after start_at")
     if enforce_start_future and start_at:
         now = datetime.now(timezone.utc)
-        if start_at < now:
+        if start_at < now - timedelta(minutes=1):
             raise HTTPException(status_code=400, detail="start_at must be in the future")
 
 
@@ -21857,7 +21857,7 @@ async def update_pricing_campaign_item(
 
     if payload.start_at is not None and start_at is not None:
         now = datetime.now(timezone.utc)
-        if start_at < now and item.start_at != start_at:
+        if start_at < now - timedelta(minutes=1) and item.start_at != start_at:
             raise HTTPException(status_code=400, detail="start_at must be in the future")
 
     target_active = payload.is_active if payload.is_active is not None else item.is_active
