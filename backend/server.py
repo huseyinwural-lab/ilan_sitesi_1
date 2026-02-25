@@ -20849,6 +20849,7 @@ async def _build_individual_quote(session: AsyncSession, user_id: uuid.UUID) -> 
     if not rule:
         return {
             "type": "tier",
+            "reason": "no_tier_rules",
             "requires_payment": False,
             "amount": 0,
             "currency": "EUR",
