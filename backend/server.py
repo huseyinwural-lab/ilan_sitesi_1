@@ -21726,6 +21726,218 @@ async def unlink_ad_from_campaign(
     return {"ok": True}
 
 
+@api_router.get("/admin/pricing/campaign-items")
+async def list_pricing_campaign_items(
+    scope: str,
+    include_deleted: bool = False,
+    current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    _validate_campaign_item_fields(scope, None, None, None, None, None)
+    await _expire_pricing_campaign_items(session, actor=current_user)
+    query = select(PricingCampaignItem).where(PricingCampaignItem.scope == scope)
+    if not include_deleted:
+        query = query.where(PricingCampaignItem.is_deleted.is_(False))
+    query = query.order_by(desc(PricingCampaignItem.updated_at))
+    result = await session.execute(query)
+    items = [_serialize_pricing_campaign_item(item) for item in result.scalars().all()]
+    return {"items": items}
+
+
+@api_router.post("/admin/pricing/campaign-items")
+async def create_pricing_campaign_item(
+    payload: PricingCampaignItemCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    _validate_campaign_item_fields(
+        payload.scope,
+        payload.listing_quota,
+        payload.price_amount,
+        payload.publish_days,
+        payload.start_at,
+        payload.end_at,
+    )
+    currency = _normalize_currency_code(payload.currency)
+    if payload.is_active:
+        await _assert_single_active_campaign_item(session, payload.scope)
+
+    item = PricingCampaignItem(
+        scope=payload.scope,
+        name=payload.name,
+        listing_quota=payload.listing_quota,
+        price_amount=payload.price_amount,
+        currency=currency,
+        publish_days=payload.publish_days,
+        is_active=bool(payload.is_active),
+        start_at=_ensure_aware_datetime(payload.start_at),
+        end_at=_ensure_aware_datetime(payload.end_at),
+        created_by=_safe_uuid(current_user.get("id")),
+        updated_by=_safe_uuid(current_user.get("id")),
+        is_deleted=False,
+    )
+    session.add(item)
+    await session.flush()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PRICING_CAMPAIGN_ITEM_CREATED",
+        actor=current_user,
+        resource_type="pricing_campaign_item",
+        resource_id=str(item.id),
+        metadata={"scope": item.scope, "listing_quota": item.listing_quota},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    await session.refresh(item)
+    return {"item": _serialize_pricing_campaign_item(item)}
+
+
+@api_router.put("/admin/pricing/campaign-items/{item_id}")
+async def update_pricing_campaign_item(
+    item_id: str,
+    payload: PricingCampaignItemUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        item_uuid = uuid.UUID(item_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid item id") from exc
+
+    item = await session.get(PricingCampaignItem, item_uuid)
+    if not item or item.is_deleted:
+        raise HTTPException(status_code=404, detail="Campaign item not found")
+
+    _validate_campaign_item_fields(
+        item.scope,
+        payload.listing_quota,
+        payload.price_amount,
+        payload.publish_days,
+        payload.start_at,
+        payload.end_at,
+    )
+
+    if payload.is_active is True:
+        await _assert_single_active_campaign_item(session, item.scope, exclude_id=item.id)
+
+    if payload.name is not None:
+        item.name = payload.name
+    if payload.listing_quota is not None:
+        item.listing_quota = payload.listing_quota
+    if payload.price_amount is not None:
+        item.price_amount = payload.price_amount
+    if payload.currency is not None:
+        item.currency = _normalize_currency_code(payload.currency)
+    if payload.publish_days is not None:
+        item.publish_days = payload.publish_days
+    if payload.start_at is not None:
+        item.start_at = _ensure_aware_datetime(payload.start_at)
+    if payload.end_at is not None:
+        item.end_at = _ensure_aware_datetime(payload.end_at)
+    if payload.is_active is not None:
+        item.is_active = payload.is_active
+
+    item.updated_at = datetime.now(timezone.utc)
+    item.updated_by = _safe_uuid(current_user.get("id"))
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PRICING_CAMPAIGN_ITEM_UPDATED",
+        actor=current_user,
+        resource_type="pricing_campaign_item",
+        resource_id=str(item.id),
+        metadata={"scope": item.scope},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    await session.refresh(item)
+    return {"item": _serialize_pricing_campaign_item(item)}
+
+
+@api_router.patch("/admin/pricing/campaign-items/{item_id}/status")
+async def update_pricing_campaign_item_status(
+    item_id: str,
+    payload: PricingCampaignItemStatusPayload,
+    request: Request,
+    current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        item_uuid = uuid.UUID(item_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid item id") from exc
+
+    item = await session.get(PricingCampaignItem, item_uuid)
+    if not item or item.is_deleted:
+        raise HTTPException(status_code=404, detail="Campaign item not found")
+
+    if payload.is_active:
+        await _assert_single_active_campaign_item(session, item.scope, exclude_id=item.id)
+
+    item.is_active = payload.is_active
+    item.updated_at = datetime.now(timezone.utc)
+    item.updated_by = _safe_uuid(current_user.get("id"))
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PRICING_CAMPAIGN_ITEM_ACTIVATED" if payload.is_active else "PRICING_CAMPAIGN_ITEM_DEACTIVATED",
+        actor=current_user,
+        resource_type="pricing_campaign_item",
+        resource_id=str(item.id),
+        metadata={"scope": item.scope, "is_active": payload.is_active},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    await session.refresh(item)
+    return {"item": _serialize_pricing_campaign_item(item)}
+
+
+@api_router.delete("/admin/pricing/campaign-items/{item_id}")
+async def delete_pricing_campaign_item(
+    item_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        item_uuid = uuid.UUID(item_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid item id") from exc
+
+    item = await session.get(PricingCampaignItem, item_uuid)
+    if not item or item.is_deleted:
+        raise HTTPException(status_code=404, detail="Campaign item not found")
+
+    item.is_deleted = True
+    item.deleted_at = datetime.now(timezone.utc)
+    item.is_active = False
+    item.updated_at = datetime.now(timezone.utc)
+    item.updated_by = _safe_uuid(current_user.get("id"))
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PRICING_CAMPAIGN_ITEM_DELETED",
+        actor=current_user,
+        resource_type="pricing_campaign_item",
+        resource_id=str(item.id),
+        metadata={"scope": item.scope},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    return {"ok": True}
+
+
 @api_router.get("/admin/pricing/tiers")
 async def list_pricing_tiers(
     current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
