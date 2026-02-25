@@ -20918,6 +20918,25 @@ def _serialize_campaign_item_for_quote(item: PricingCampaignItem) -> Dict[str, A
     }
 
 
+def _serialize_pricing_campaign_item(item: PricingCampaignItem) -> Dict[str, Any]:
+    return {
+        "id": str(item.id),
+        "scope": item.scope,
+        "name": item.name,
+        "listing_quota": item.listing_quota,
+        "price_amount": float(item.price_amount or 0),
+        "currency": item.currency,
+        "publish_days": item.publish_days,
+        "is_active": item.is_active,
+        "start_at": item.start_at.isoformat() if item.start_at else None,
+        "end_at": item.end_at.isoformat() if item.end_at else None,
+        "is_deleted": item.is_deleted,
+        "deleted_at": item.deleted_at.isoformat() if item.deleted_at else None,
+        "created_at": item.created_at.isoformat() if item.created_at else None,
+        "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+    }
+
+
 async def _resolve_campaign_item_from_payload(
     session: AsyncSession,
     scope: str,
