@@ -21439,6 +21439,192 @@ async def unlink_ad_from_campaign(
     return {"ok": True}
 
 
+@api_router.get("/admin/pricing/tiers")
+async def list_pricing_tiers(
+    current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_pricing_defaults(session)
+    await _expire_tier_rules(session)
+    result = await session.execute(
+        select(PricingTierRule)
+        .where(PricingTierRule.scope == "individual")
+        .order_by(PricingTierRule.tier_no)
+    )
+    items = []
+    for rule in result.scalars().all():
+        items.append(
+            {
+                "id": str(rule.id),
+                "tier_no": rule.tier_no,
+                "listing_from": rule.listing_from,
+                "listing_to": rule.listing_to,
+                "price_amount": float(rule.price_amount or 0),
+                "currency": rule.currency,
+                "publish_days": rule.publish_days,
+                "is_active": rule.is_active,
+                "effective_start_at": rule.effective_start_at.isoformat() if rule.effective_start_at else None,
+                "effective_end_at": rule.effective_end_at.isoformat() if rule.effective_end_at else None,
+            }
+        )
+    return {"items": items}
+
+
+@api_router.put("/admin/pricing/tiers")
+async def update_pricing_tiers(
+    payload: PricingTierUpdatePayload,
+    current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_pricing_defaults(session)
+    now = datetime.now(timezone.utc)
+    updates = []
+
+    rules_by_tier = {item.tier_no: item for item in payload.rules}
+    for tier_no in [1, 2, 3]:
+        rule_payload = rules_by_tier.get(tier_no)
+        if not rule_payload:
+            continue
+        if tier_no not in {1, 2, 3}:
+            raise HTTPException(status_code=400, detail="Invalid tier_no")
+        if rule_payload.price_amount < 0:
+            raise HTTPException(status_code=400, detail="price_amount must be e= 0")
+        currency = _normalize_currency_code(rule_payload.currency)
+        price_amount = 0 if tier_no == 1 else rule_payload.price_amount
+
+        result = await session.execute(
+            select(PricingTierRule).where(
+                PricingTierRule.scope == "individual",
+                PricingTierRule.tier_no == tier_no,
+            )
+        )
+        rule = result.scalar_one_or_none()
+        listing_from = tier_no
+        listing_to = tier_no if tier_no < 3 else None
+        if not rule:
+            rule = PricingTierRule(
+                scope="individual",
+                year_window="calendar_year",
+                tier_no=tier_no,
+                listing_from=listing_from,
+                listing_to=listing_to,
+                price_amount=price_amount,
+                currency=currency,
+                publish_days=90,
+                is_active=True,
+            )
+            session.add(rule)
+        else:
+            rule.listing_from = listing_from
+            rule.listing_to = listing_to
+            rule.price_amount = price_amount
+            rule.currency = currency
+            rule.is_active = True if rule_payload.is_active is None else rule_payload.is_active
+            rule.updated_at = now
+        updates.append({"tier_no": tier_no, "price_amount": float(price_amount), "currency": currency})
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PRICING_TIER_UPDATED",
+        actor=current_user,
+        resource_type="pricing_tier_rule",
+        resource_id="pricing_tier_rules",
+        metadata={"updates": updates},
+        request=None,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.get("/admin/pricing/packages")
+async def list_pricing_packages_admin(
+    current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_pricing_defaults(session)
+    result = await session.execute(
+        select(PricingPackage)
+        .where(PricingPackage.scope == "corporate")
+        .order_by(PricingPackage.listing_quota)
+    )
+    items = []
+    for item in result.scalars().all():
+        items.append(
+            {
+                "id": str(item.id),
+                "name": item.name,
+                "listing_quota": item.listing_quota,
+                "package_price_amount": float(item.package_price_amount or 0),
+                "currency": item.currency,
+                "publish_days": item.publish_days,
+                "package_duration_days": item.package_duration_days,
+                "is_active": item.is_active,
+            }
+        )
+    return {"items": items}
+
+
+@api_router.put("/admin/pricing/packages")
+async def update_pricing_packages(
+    payload: PricingPackageUpdatePayload,
+    current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_pricing_defaults(session)
+    updates = []
+    for package_payload in payload.packages:
+        if package_payload.package_price_amount < 0:
+            raise HTTPException(status_code=400, detail="package_price_amount must be >= 0")
+        if package_payload.listing_quota <= 0:
+            raise HTTPException(status_code=400, detail="listing_quota must be > 0")
+        if package_payload.package_duration_days <= 0:
+            raise HTTPException(status_code=400, detail="package_duration_days must be > 0")
+        currency = _normalize_currency_code(package_payload.currency)
+
+        result = await session.execute(
+            select(PricingPackage).where(
+                PricingPackage.scope == "corporate",
+                PricingPackage.name == package_payload.name,
+            )
+        )
+        package = result.scalar_one_or_none()
+        if not package:
+            package = PricingPackage(
+                scope="corporate",
+                name=package_payload.name,
+                listing_quota=package_payload.listing_quota,
+                package_price_amount=package_payload.package_price_amount,
+                currency=currency,
+                publish_days=90,
+                package_duration_days=package_payload.package_duration_days,
+                is_active=package_payload.is_active if package_payload.is_active is not None else True,
+            )
+            session.add(package)
+        else:
+            package.listing_quota = package_payload.listing_quota
+            package.package_price_amount = package_payload.package_price_amount
+            package.currency = currency
+            package.package_duration_days = package_payload.package_duration_days
+            if package_payload.is_active is not None:
+                package.is_active = package_payload.is_active
+            package.updated_at = datetime.now(timezone.utc)
+        updates.append({"name": package_payload.name, "price": float(package_payload.package_price_amount), "currency": currency})
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PRICING_PACKAGE_UPDATED",
+        actor=current_user,
+        resource_type="pricing_package",
+        resource_id="pricing_packages",
+        metadata={"updates": updates},
+        request=None,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True}
+
+
 @api_router.get("/admin/pricing/campaign")
 async def get_pricing_campaign(
     current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
