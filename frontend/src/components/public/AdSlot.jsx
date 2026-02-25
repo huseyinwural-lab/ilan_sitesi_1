@@ -55,7 +55,18 @@ export default function AdSlot({ placement, className = '' }) {
     setImpressionLogged(true);
   }, [ad?.id, impressionLogged, placement]);
 
-  if (!ad) return null;
+  if (!ad) {
+    return (
+      <div className={className} data-testid={`ad-slot-${placement}`}>
+        <div
+          className="rounded-lg border bg-white px-4 py-6 text-sm text-muted-foreground"
+          data-testid={`ad-slot-empty-${placement}`}
+        >
+          Reklam alanı
+        </div>
+      </div>
+    );
+  }
 
   const assetUrl = resolveAssetUrl(ad.asset_url);
   const clickUrl = `${API}/ads/${ad.id}/click`;
