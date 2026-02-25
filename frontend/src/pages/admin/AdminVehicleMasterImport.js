@@ -411,7 +411,23 @@ export default function AdminVehicleMasterImport() {
               {uploadStatus}
             </div>
           )}
-          {uploadError && (
+          {uploadErrorInfo && (
+            <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs" data-testid="vehicle-import-upload-error-box">
+              <div className="font-semibold text-rose-700" data-testid="vehicle-import-upload-error-summary">
+                {uploadErrorInfo.error_code} · {uploadErrorInfo.message} ({uploadFieldErrors.length} hata)
+              </div>
+              {uploadFieldErrors.length > 0 && (
+                <div className="mt-2 space-y-1" data-testid="vehicle-import-upload-error-list">
+                  {uploadFieldErrors.map((err, idx) => (
+                    <div key={`${err.path}-${idx}`} className="text-rose-700" data-testid={`vehicle-import-upload-error-${idx}`}>
+                      {err.path} — beklenen: {err.expected} · gelen: {String(err.got)} · {err.hint}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {uploadError && !uploadErrorInfo && (
             <div className="text-xs text-rose-600" data-testid="vehicle-import-upload-error">
               {uploadError}
             </div>
