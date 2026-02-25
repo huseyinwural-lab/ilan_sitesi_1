@@ -20104,13 +20104,57 @@ async def _expire_doping(session: AsyncSession) -> None:
         await session.commit()
 
 
+HEADER_LOGO_MAX_BYTES = 2 * 1024 * 1024
+HEADER_CACHE_SECONDS = 600
+ASSET_CACHE_SECONDS = 900
+
+
+def _build_header_logo_url(config: SiteHeaderConfig | None) -> Optional[str]:
+    if not config or not config.logo_path:
+        return None
+    separator = "&" if "?" in config.logo_path else "?"
+    version = config.version or 1
+    return f"{config.logo_path}{separator}v={version}"
+
+
+async def _get_active_header_config(
+    session: AsyncSession, create_from_legacy: bool = False
+) -> Optional[SiteHeaderConfig]:
+    result = await session.execute(
+        select(SiteHeaderConfig)
+        .where(SiteHeaderConfig.is_active.is_(True))
+        .order_by(desc(SiteHeaderConfig.updated_at))
+        .limit(1)
+    )
+    config = result.scalar_one_or_none()
+    if config:
+        return config
+
+    if not create_from_legacy:
+        return None
+
+    legacy = (
+        await session.execute(select(SiteHeaderSetting).order_by(desc(SiteHeaderSetting.updated_at)).limit(1))
+    ).scalar_one_or_none()
+    if not legacy:
+        return None
+
+    config = SiteHeaderConfig(logo_path=legacy.logo_url, version=1, is_active=True)
+    session.add(config)
+    await session.commit()
+    await session.refresh(config)
+    return config
+
+
 @api_router.get("/site/header")
 async def get_site_header(session: AsyncSession = Depends(get_sql_session)):
-    result = await session.execute(select(SiteHeaderSetting).order_by(desc(SiteHeaderSetting.updated_at)).limit(1))
-    setting = result.scalar_one_or_none()
-    return {
-        "logo_url": setting.logo_url if setting else None,
+    config = await _get_active_header_config(session, create_from_legacy=True)
+    content = {
+        "logo_url": _build_header_logo_url(config),
+        "version": config.version if config else None,
+        "updated_at": config.updated_at.isoformat() if config else None,
     }
+    return JSONResponse(content=content, headers={"Cache-Control": f"public, max-age={HEADER_CACHE_SECONDS}"})
 
 
 @api_router.get("/admin/site/header")
@@ -20118,11 +20162,12 @@ async def admin_get_site_header(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    result = await session.execute(select(SiteHeaderSetting).order_by(desc(SiteHeaderSetting.updated_at)).limit(1))
-    setting = result.scalar_one_or_none()
+    config = await _get_active_header_config(session, create_from_legacy=True)
     return {
-        "id": str(setting.id) if setting else None,
-        "logo_url": setting.logo_url if setting else None,
+        "id": str(config.id) if config else None,
+        "logo_url": _build_header_logo_url(config),
+        "version": config.version if config else None,
+        "updated_at": config.updated_at.isoformat() if config else None,
     }
 
 
@@ -20137,21 +20182,27 @@ async def upload_site_header_logo(
     data = await file.read()
     if not data:
         raise HTTPException(status_code=400, detail="Empty file")
+    if len(data) > HEADER_LOGO_MAX_BYTES:
+        raise HTTPException(status_code=400, detail="File too large")
     try:
         asset_key, _ = store_site_asset(data, file.filename, folder="header", allow_svg=True)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    result = await session.execute(select(SiteHeaderSetting).order_by(desc(SiteHeaderSetting.updated_at)).limit(1))
-    setting = result.scalar_one_or_none()
-    if not setting:
-        setting = SiteHeaderSetting(logo_url=f"/api/site/assets/{asset_key}")
-        session.add(setting)
-    else:
-        setting.logo_url = f"/api/site/assets/{asset_key}"
-    await session.commit()
+    config = await _get_active_header_config(session, create_from_legacy=True)
+    if not config:
+        config = SiteHeaderConfig(logo_path=None, version=0, is_active=True)
+        session.add(config)
+        await session.flush()
 
-    return {"ok": True, "logo_url": setting.logo_url}
+    config.logo_path = f"/api/site/assets/{asset_key}"
+    config.version = (config.version or 0) + 1
+    config.updated_at = datetime.now(timezone.utc)
+    config.is_active = True
+    await session.commit()
+    await session.refresh(config)
+
+    return {"ok": True, "logo_url": _build_header_logo_url(config), "version": config.version}
 
 
 @api_router.get("/site/assets/{asset_key:path}")
@@ -20162,7 +20213,7 @@ async def get_site_asset(asset_key: str):
         raise HTTPException(status_code=400, detail="Invalid asset path")
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Asset not found")
-    return FileResponse(path)
+    return FileResponse(path, headers={"Cache-Control": f"public, max-age={ASSET_CACHE_SECONDS}"})
 
 
 @api_router.get("/ads")
