@@ -329,6 +329,19 @@ export default function AdminAdsManagement() {
                   }}
                   data-testid={`admin-ads-item-end-${ad.id}`}
                 />
+                <select
+                  className="h-9 rounded-md border px-2"
+                  value={ad.format || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAds((prev) => prev.map((item) => (item.id === ad.id ? { ...item, format: value } : item)));
+                  }}
+                  data-testid={`admin-ads-item-format-${ad.id}`}
+                >
+                  {allowedFormats.map((fmt) => (
+                    <option key={fmt} value={fmt}>{formatLabel(fmt)}</option>
+                  ))}
+                </select>
                 <input
                   className="h-9 rounded-md border px-2"
                   value={ad.target_url || ''}
