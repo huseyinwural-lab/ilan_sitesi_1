@@ -194,7 +194,7 @@ export default function DealerCompanyProfile() {
         <div className="md:col-span-2 flex items-center gap-3" data-testid="dealer-company-actions">
           <button
             type="submit"
-            className="rounded-md bg-[#2f3854] px-4 py-2 text-sm text-white"
+            className="rounded-md bg-[var(--brand-navy)] px-4 py-2 text-sm text-white"
             disabled={saving}
             data-testid="dealer-company-save"
           >
