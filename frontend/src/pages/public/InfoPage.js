@@ -46,7 +46,7 @@ export default function InfoPage() {
           <h1 className="text-2xl font-semibold text-[var(--text-primary)]" data-testid="info-page-title">
             {title}
           </h1>
-          <div className="text-sm text-[#415A77] whitespace-pre-line" data-testid="info-page-content">
+          <div className="text-sm text-[var(--text-secondary)] whitespace-pre-line" data-testid="info-page-content">
             {content}
           </div>
         </>
