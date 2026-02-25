@@ -122,6 +122,7 @@ from app.models.doping_request import DopingRequest
 from app.models.footer_layout import FooterLayout
 from app.models.info_page import InfoPage
 from app.models.pricing_campaign import PricingCampaign
+from app.models.pricing_campaign_item import PricingCampaignItem
 from app.models.pricing_tier_rule import PricingTierRule
 from app.models.pricing_package import PricingPackage, UserPackageSubscription
 from app.models.pricing_snapshot import PricingPriceSnapshot
