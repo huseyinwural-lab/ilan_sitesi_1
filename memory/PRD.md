@@ -56,6 +56,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **Pricing Part 1 Scaffold (2026-02-25):** domains/ads_engine + domains/pricing_engine, /api/admin/pricing/campaign + /api/pricing/quote + /api/pricing/packages iskeletleri, Admin “Fiyatlandırma” menüsü ve placeholder sayfalar, pricing_manager role + RBAC.
 - **Campaign Uyarı MVP (2026-02-25):** end_at 3 gün uyarısı + trafik artışı %200 uyarısı + budget info (aktif kampanya); eşikler .env (END_WARNING_DAYS/TRAFFIC_SPIKE_THRESHOLD).
 - **Campaign CRUD (2026-02-25):** /admin/ads/campaigns ekranı, kampanya create/edit/pause, bağlı reklamlar tabı + link/unlink; ads_manager rolü ve RBAC yetkileri.
 - **Tek Aktif Reklam Kuralı (2026-02-25):** placement başına tek aktif reklam, format matrisi (horizontal/vertical/square), UI çakışma uyarısı + DB partial unique index (uq_ads_active_placement).
