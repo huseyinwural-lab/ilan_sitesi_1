@@ -314,6 +314,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Quote engine kampanya item’larına geçirildi; checkout snapshot kampanya item referansı ile kilitleniyor.
 - Admin UI: Bireysel/Kurumsal Kampanyalar CRUD + modal.
 - Start/end datetime zorunluluğu + overlap kontrolü (scope bazlı) + status kolonları; quote sadece aktif aralıkta.
+- RBAC: pricing_manager ve ads_manager erişim ayrımı + menü filtreleme + endpoint 403 doğrulaması (P1_RBAC_VALIDATION_EVIDENCE.md).
 - Expiry job: campaign item end_at sonrası otomatik pasif.
 - Test kullanıcı seed script + ops doküman + P1_PRICING_CAMPAIGN_CRUD_EVIDENCE.md.
 
