@@ -114,7 +114,7 @@ export const DEFAULT_THEME_CONFIG = {
     'text-primary': '#1b263b',
     'text-secondary': '#415a77',
     'text-muted': '#6b7280',
-    'text-inverse': '#ffffff',
+    'text-inverse': '#0f172a',
     border: '#e2e8f0',
     'border-strong': '#cbd5e1',
     divider: '#e2e8f0',
