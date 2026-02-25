@@ -211,7 +211,7 @@ export default function SearchPage() {
   };
 
   return (
-    <PublicLayout>
+    <div>
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6" data-testid="search-ad-slot">
           <AdSlot placement="AD_SEARCH_TOP" />
