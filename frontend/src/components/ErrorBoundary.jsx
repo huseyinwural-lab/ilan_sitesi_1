@@ -24,7 +24,7 @@ export default class ErrorBoundary extends React.Component {
   };
 
   render() {
-    const { hasError, error } = this.state;
+    const { hasError } = this.state;
     if (hasError) {
       return (
         <ServerErrorPage onRetry={this.handleReset} />
