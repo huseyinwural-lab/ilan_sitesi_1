@@ -19642,21 +19642,21 @@ async def create_vehicle_import_job_from_upload(
     records = _load_vehicle_import_json(file_path)
 
     validation_errors = []
+    validation_error_count = 0
     for index, record in enumerate(records, start=1):
         _, error = _normalize_vehicle_import_record(record)
         if error:
+            validation_error_count += 1
             if len(validation_errors) < VEHICLE_IMPORT_MAX_ERRORS:
                 validation_errors.append({"row": index, "error": error})
-        if len(validation_errors) >= VEHICLE_IMPORT_MAX_ERRORS:
-            break
 
-    if validation_errors:
+    if validation_error_count:
         file_path.unlink(missing_ok=True)
         raise HTTPException(
             status_code=400,
             detail={
                 "message": "JSON validation failed",
-                "validation_error_count": len(validation_errors),
+                "validation_error_count": validation_error_count,
                 "validation_errors": validation_errors,
             },
         )
