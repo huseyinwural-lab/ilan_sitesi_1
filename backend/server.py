@@ -19810,33 +19810,91 @@ async def create_vehicle_import_job_from_upload(
     session: AsyncSession = Depends(get_sql_session),
 ):
     if file.content_type and file.content_type not in VEHICLE_IMPORT_ALLOWED_CONTENT_TYPES:
-        raise HTTPException(status_code=400, detail="Invalid file type")
+        return _vehicle_import_error_response(
+            "JSON_SCHEMA_ERROR",
+            "Invalid file type",
+            [
+                _vehicle_import_field_error(
+                    path="$.file",
+                    expected="application/json",
+                    got=file.content_type,
+                    hint="JSON dosyası yükleyin",
+                )
+            ],
+        )
 
     job_id = uuid.uuid4()
     temp_dir = _get_vehicle_import_temp_dir()
     file_path = temp_dir / f"{job_id}.json"
     await _store_vehicle_import_upload(file, file_path)
-    records = _load_vehicle_import_json(file_path)
+    raw_bytes = file_path.read_bytes()
 
-    validation_errors = []
-    validation_error_count = 0
-    for index, record in enumerate(records, start=1):
-        _, error = _normalize_vehicle_import_record(record)
-        if error:
-            validation_error_count += 1
-            if len(validation_errors) < VEHICLE_IMPORT_MAX_ERRORS:
-                validation_errors.append({"row": index, "error": error})
-
-    if validation_error_count:
+    try:
+        payload = json.loads(raw_bytes.decode("utf-8"))
+    except json.JSONDecodeError as exc:
         file_path.unlink(missing_ok=True)
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "message": "JSON validation failed",
-                "validation_error_count": validation_error_count,
-                "validation_errors": validation_errors,
-            },
+        return _vehicle_import_error_response(
+            "JSON_PARSE_ERROR",
+            "JSON parse failed",
+            [
+                _vehicle_import_field_error(
+                    path="$",
+                    expected="valid JSON array",
+                    got=str(exc),
+                    hint="JSON formatını ve encoding'i kontrol edin",
+                )
+            ],
         )
+
+    if not isinstance(payload, list):
+        file_path.unlink(missing_ok=True)
+        return _vehicle_import_error_response(
+            "JSON_SCHEMA_ERROR",
+            "JSON must be an array of records",
+            [
+                _vehicle_import_field_error(
+                    path="$",
+                    expected="array",
+                    got=type(payload).__name__,
+                    hint="Root array formatı kullanın",
+                )
+            ],
+        )
+
+    if len(payload) > VEHICLE_IMPORT_MAX_RECORDS:
+        file_path.unlink(missing_ok=True)
+        return _vehicle_import_error_response(
+            "JSON_SCHEMA_ERROR",
+            "JSON record limit exceeded",
+            [
+                _vehicle_import_field_error(
+                    path="$",
+                    expected=f"max {VEHICLE_IMPORT_MAX_RECORDS} records",
+                    got=len(payload),
+                    hint="Kayıt sayısını düşürün",
+                )
+            ],
+        )
+
+    schema_errors, parsed = _validate_vehicle_import_schema(payload)
+    if schema_errors:
+        file_path.unlink(missing_ok=True)
+        return _vehicle_import_error_response(
+            "JSON_SCHEMA_ERROR",
+            "JSON schema validation failed",
+            schema_errors,
+        )
+
+    business_errors = _validate_vehicle_import_business(parsed)
+    if business_errors:
+        file_path.unlink(missing_ok=True)
+        return _vehicle_import_error_response(
+            "BUSINESS_VALIDATION_ERROR",
+            "Business validation failed",
+            business_errors,
+        )
+
+    records = payload
 
     job = VehicleImportJob(
         id=job_id,
