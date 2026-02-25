@@ -525,6 +525,7 @@ export default function Layout({ children }) {
       '/admin/pricing/packages',
       '/admin/site-design/header',
       '/admin/site-design/footer',
+      '/admin/site-design/theme',
       '/admin/info-pages',
       '/admin/dashboard',
       '/admin/country-compare',
