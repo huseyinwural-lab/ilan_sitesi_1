@@ -69,6 +69,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
                             <li key={linkIndex}>
                               <Link
                                 to={`/bilgi/${link.target}`}
+                                className="text-[var(--link)] hover:text-[var(--link-hover)]"
                                 data-testid={`site-footer-link-${rowIndex}-${colIndex}-${linkIndex}`}
                               >
                                 {link.label}
