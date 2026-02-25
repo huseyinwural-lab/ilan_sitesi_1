@@ -20822,6 +20822,9 @@ async def link_ad_to_campaign(
     if not ad:
         raise HTTPException(status_code=404, detail="Ad not found")
 
+    if ad.campaign_id and ad.campaign_id != campaign.id:
+        raise HTTPException(status_code=409, detail="Ad already linked to another campaign")
+
     ad.campaign_id = campaign.id
 
     await _write_audit_log_sql(
