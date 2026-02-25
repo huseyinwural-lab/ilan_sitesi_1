@@ -38,11 +38,24 @@ export default function AdminAdsManagement() {
 
   const fetchAds = async () => {
     const res = await axios.get(`${API}/admin/ads`, { headers: authHeader });
-    setAds(res.data?.items || []);
+    const items = res.data?.items || [];
+    const rules = res.data?.format_rules || {};
+    const labels = res.data?.format_labels || {};
+    const normalizedItems = items.map((item) => {
+      const allowed = rules[item.placement] || [];
+      return {
+        ...item,
+        format: item.format || allowed[0] || '',
+      };
+    });
+    setAds(normalizedItems);
     setPlacements(res.data?.placements || {});
+    setFormatRules(rules);
+    setFormatLabels(labels);
     if (!form.placement && res.data?.placements) {
       const first = Object.keys(res.data.placements)[0];
-      setForm((prev) => ({ ...prev, placement: first || '' }));
+      const defaultFormat = rules[first]?.[0] || '';
+      setForm((prev) => ({ ...prev, placement: first || '', format: defaultFormat }));
     }
   };
 
