@@ -21976,7 +21976,7 @@ async def get_pricing_quote_endpoint(
     current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    response, _, _, _ = await _compute_pricing_quote(session, current_user)
+    response, _, _, _ = await _compute_pricing_quote(session, current_user, payload)
     return response
 
 
