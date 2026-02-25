@@ -19697,6 +19697,7 @@ class HeaderUpdatePayload(BaseModel):
 
 class AdCreatePayload(BaseModel):
     placement: str
+    campaign_id: Optional[str] = None
     start_at: Optional[datetime] = None
     end_at: Optional[datetime] = None
     is_active: Optional[bool] = True
@@ -19705,6 +19706,7 @@ class AdCreatePayload(BaseModel):
 
 
 class AdUpdatePayload(BaseModel):
+    campaign_id: Optional[str] = None
     start_at: Optional[datetime] = None
     end_at: Optional[datetime] = None
     is_active: Optional[bool] = None
