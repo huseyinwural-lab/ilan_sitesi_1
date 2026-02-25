@@ -362,6 +362,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Reklam soft delete: endpoint + UI confirm modal + AD_DELETED audit.
 - Tema altyapısı: CSS hex hard-code temizliği, ThemeContext + index.html pre-load config.
 - Araç Master Data Import modülü: job tabanlı API/JSON upload, dry-run, upsert make/model/trim, log/summary, RBAC masterdata_manager, 50MB limit.
+- Kanıt: /app/docs/P1_VEHICLE_MASTERDATA_IMPORT_EVIDENCE.md
 
 ## Mimari Kararlar (ADS)
 - **ADS-57 — Pricing Campaign Item CRUD:** Sabit paket/tier yerine pricing_campaign_items ile bireysel/kurumsal kampanya item’ları yönetilir.
