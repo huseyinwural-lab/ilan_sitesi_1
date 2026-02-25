@@ -19797,6 +19797,24 @@ def _normalize_ad_dates(start_at: Optional[datetime], end_at: Optional[datetime]
     return start_at, end_at
 
 
+def _normalize_campaign_fields(
+    start_at: Optional[datetime],
+    end_at: Optional[datetime],
+    budget: Optional[float],
+    currency: Optional[str],
+) -> Tuple[Optional[datetime], Optional[datetime], Optional[float], Optional[str]]:
+    if start_at and end_at and end_at < start_at:
+        raise HTTPException(status_code=400, detail="end_at must be after start_at")
+    if budget is not None and budget < 0:
+        raise HTTPException(status_code=400, detail="budget must be >= 0")
+    normalized_currency = currency
+    if currency:
+        normalized_currency = currency.upper()
+        if len(normalized_currency) != 3 or not normalized_currency.isalpha():
+            raise HTTPException(status_code=400, detail="Invalid currency")
+    return start_at, end_at, budget, normalized_currency
+
+
 def _is_active_window(start_at: Optional[datetime], end_at: Optional[datetime]) -> bool:
     now = datetime.now(timezone.utc)
     if start_at and start_at > now:
