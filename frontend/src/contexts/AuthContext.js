@@ -60,6 +60,7 @@ export function AuthProvider({ children }) {
 
     localStorage.setItem('access_token', access_token);
     localStorage.setItem('refresh_token', refresh_token);
+    localStorage.setItem('token', access_token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
 
     setToken(access_token);
