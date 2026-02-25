@@ -20613,26 +20613,289 @@ async def _expire_pricing_campaigns(session: AsyncSession, actor: Optional[dict]
     return len(expired)
 
 
-def _build_pricing_quote_response(payload: dict, override_active: bool) -> Dict[str, Any]:
-    if override_active:
+DEFAULT_PRICING_TIER_RULES = [
+    {"tier_no": 1, "listing_from": 1, "listing_to": 1, "price_amount": 0},
+    {"tier_no": 2, "listing_from": 2, "listing_to": 2, "price_amount": 0},
+    {"tier_no": 3, "listing_from": 3, "listing_to": None, "price_amount": 0},
+]
+
+DEFAULT_PRICING_PACKAGES = [
+    {"name": "Lansman Paketi", "listing_quota": 10, "package_duration_days": 30},
+    {"name": "Vantage 20", "listing_quota": 20, "package_duration_days": 90},
+    {"name": "Vantage 30", "listing_quota": 30, "package_duration_days": 90},
+]
+
+
+def _normalize_currency_code(value: Optional[str]) -> str:
+    code = (value or "EUR").upper()
+    if len(code) != 3 or not code.isalpha():
+        raise HTTPException(status_code=400, detail="Invalid currency")
+    return code
+
+
+async def _ensure_pricing_defaults(session: AsyncSession) -> None:
+    tier_result = await session.execute(
+        select(PricingTierRule).where(PricingTierRule.scope == "individual")
+    )
+    tier_rules = tier_result.scalars().all()
+    if not tier_rules:
+        for rule in DEFAULT_PRICING_TIER_RULES:
+            session.add(
+                PricingTierRule(
+                    scope="individual",
+                    year_window="calendar_year",
+                    tier_no=rule["tier_no"],
+                    listing_from=rule["listing_from"],
+                    listing_to=rule["listing_to"],
+                    price_amount=rule["price_amount"],
+                    currency="EUR",
+                    publish_days=90,
+                    is_active=True,
+                )
+            )
+
+    package_result = await session.execute(select(PricingPackage))
+    packages = {item.name: item for item in package_result.scalars().all()}
+    for package in DEFAULT_PRICING_PACKAGES:
+        if package["name"] in packages:
+            continue
+        session.add(
+            PricingPackage(
+                scope="corporate",
+                name=package["name"],
+                listing_quota=package["listing_quota"],
+                package_price_amount=0,
+                currency="EUR",
+                publish_days=90,
+                package_duration_days=package["package_duration_days"],
+                is_active=True,
+            )
+        )
+
+    if not tier_rules or len(packages) < len(DEFAULT_PRICING_PACKAGES):
+        await session.commit()
+
+
+async def _expire_tier_rules(session: AsyncSession) -> None:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(PricingTierRule).where(
+            PricingTierRule.is_active.is_(True),
+            PricingTierRule.effective_end_at.isnot(None),
+            PricingTierRule.effective_end_at < now,
+        )
+    )
+    expired = result.scalars().all()
+    if not expired:
+        return
+    for rule in expired:
+        rule.is_active = False
+        rule.updated_at = now
+    await session.commit()
+
+
+async def _expire_package_subscriptions(session: AsyncSession, actor: Optional[dict] = None) -> None:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(UserPackageSubscription).where(
+            UserPackageSubscription.status == "active",
+            UserPackageSubscription.ends_at.isnot(None),
+            UserPackageSubscription.ends_at < now,
+        )
+    )
+    expired = result.scalars().all()
+    if not expired:
+        return
+    system_actor = actor or {"id": None, "email": "system@internal"}
+    for sub in expired:
+        sub.status = "expired"
+        sub.remaining_quota = 0
+        sub.updated_at = now
+        await _write_audit_log_sql(
+            session=session,
+            action="PRICING_PACKAGE_EXPIRED",
+            actor=system_actor,
+            resource_type="pricing_package",
+            resource_id=str(sub.package_id),
+            metadata={"subscription_id": str(sub.id)},
+            request=None,
+            country_code=None,
+        )
+    await session.commit()
+
+
+def _pricing_year_bounds(now: datetime) -> tuple[datetime, datetime]:
+    start = datetime(now.year, 1, 1, tzinfo=timezone.utc)
+    end = datetime(now.year + 1, 1, 1, tzinfo=timezone.utc)
+    return start, end
+
+
+async def _count_user_listings_current_year(session: AsyncSession, user_id: uuid.UUID) -> int:
+    now = datetime.now(timezone.utc)
+    start, end = _pricing_year_bounds(now)
+    result = await session.execute(
+        select(func.count())
+        .select_from(Listing)
+        .where(
+            Listing.user_id == user_id,
+            Listing.created_at >= start,
+            Listing.created_at < end,
+            Listing.deleted_at.is_(None),
+            Listing.status != "draft",
+        )
+    )
+    return int(result.scalar() or 0)
+
+
+async def _get_active_tier_rules(session: AsyncSession) -> list[PricingTierRule]:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(PricingTierRule)
+        .where(
+            PricingTierRule.scope == "individual",
+            PricingTierRule.is_active.is_(True),
+            or_(PricingTierRule.effective_start_at.is_(None), PricingTierRule.effective_start_at <= now),
+            or_(PricingTierRule.effective_end_at.is_(None), PricingTierRule.effective_end_at >= now),
+        )
+        .order_by(PricingTierRule.tier_no)
+    )
+    return result.scalars().all()
+
+
+def _pick_tier_rule(rules: list[PricingTierRule], listing_no: int) -> Optional[PricingTierRule]:
+    for rule in rules:
+        if rule.listing_from <= listing_no and (rule.listing_to is None or listing_no <= rule.listing_to):
+            return rule
+    return rules[-1] if rules else None
+
+
+async def _get_active_subscription(
+    session: AsyncSession, user_id: uuid.UUID
+) -> tuple[Optional[UserPackageSubscription], Optional[PricingPackage]]:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(UserPackageSubscription, PricingPackage)
+        .join(PricingPackage, PricingPackage.id == UserPackageSubscription.package_id)
+        .where(
+            UserPackageSubscription.user_id == user_id,
+            UserPackageSubscription.status == "active",
+            UserPackageSubscription.remaining_quota > 0,
+            or_(UserPackageSubscription.ends_at.is_(None), UserPackageSubscription.ends_at > now),
+            PricingPackage.is_active.is_(True),
+        )
+        .order_by(desc(UserPackageSubscription.starts_at))
+        .limit(1)
+    )
+    row = result.first()
+    if not row:
+        return None, None
+    return row[0], row[1]
+
+
+def _resolve_pricing_user_type(current_user: dict) -> str:
+    role = current_user.get("role") or ""
+    raw_type = _determine_user_type(role)
+    if raw_type == "dealer" or current_user.get("user_type") == "corporate":
+        return "corporate"
+    return "individual"
+
+
+async def _build_individual_quote(session: AsyncSession, user_id: uuid.UUID) -> Dict[str, Any]:
+    rules = await _get_active_tier_rules(session)
+    rule = _pick_tier_rule(rules, 1)
+    if not rule:
         return {
-            "pricing_mode": "campaign",
-            "override_active": True,
-            "warning": "override_active_no_rules",
-            "fallback": "default_pricing",
-            "quote": {
-                "status": "not_implemented",
-                "message": "Campaign override active; default pricing fallback",
-            },
+            "type": "tier",
+            "requires_payment": False,
+            "amount": 0,
+            "currency": "EUR",
+            "duration_days": 90,
+            "warning": "no_tier_rules",
         }
+    listing_count = await _count_user_listings_current_year(session, user_id)
+    next_listing_no = listing_count + 1
+    rule = _pick_tier_rule(rules, next_listing_no)
+    if not rule:
+        return {
+            "type": "tier",
+            "requires_payment": False,
+            "amount": 0,
+            "currency": "EUR",
+            "duration_days": 90,
+            "warning": "no_tier_rules",
+            "listing_no": next_listing_no,
+        }
+    amount = float(rule.price_amount or 0)
     return {
-        "pricing_mode": "default",
-        "override_active": False,
-        "quote": {
-            "status": "not_implemented",
-            "message": "Default pricing scaffold",
-        },
+        "type": "tier",
+        "rule_id": str(rule.id),
+        "listing_no": next_listing_no,
+        "listing_count_year": listing_count,
+        "amount": amount,
+        "currency": rule.currency,
+        "duration_days": rule.publish_days,
+        "requires_payment": amount > 0,
+        "quota_used": False,
     }
+
+
+async def _build_corporate_quote(session: AsyncSession, user_id: uuid.UUID) -> Dict[str, Any]:
+    subscription, package = await _get_active_subscription(session, user_id)
+    if subscription and package:
+        return {
+            "type": "quota",
+            "subscription_id": str(subscription.id),
+            "package_id": str(package.id),
+            "amount": 0,
+            "currency": package.currency,
+            "duration_days": package.publish_days,
+            "requires_payment": False,
+            "quota_used": True,
+            "remaining_quota": subscription.remaining_quota,
+        }
+
+    packages_result = await session.execute(
+        select(PricingPackage)
+        .where(PricingPackage.scope == "corporate", PricingPackage.is_active.is_(True))
+        .order_by(PricingPackage.listing_quota)
+    )
+    packages = []
+    for item in packages_result.scalars().all():
+        packages.append(
+            {
+                "id": str(item.id),
+                "name": item.name,
+                "listing_quota": item.listing_quota,
+                "price_amount": float(item.package_price_amount or 0),
+                "currency": item.currency,
+                "publish_days": item.publish_days,
+                "duration_days": item.package_duration_days,
+            }
+        )
+
+    return {
+        "type": "package",
+        "requires_payment": True,
+        "packages": packages,
+        "quota_used": False,
+    }
+
+
+def _build_pricing_quote_response(
+    quote: Dict[str, Any],
+    override_active: bool,
+    policy: Optional[PricingCampaign],
+) -> Dict[str, Any]:
+    response = {
+        "pricing_mode": "campaign" if override_active else "default",
+        "override_active": override_active,
+        "quote": quote,
+    }
+    if override_active and quote.get("warning"):
+        response["warning"] = quote.get("warning")
+    if policy:
+        response["campaign"] = _pricing_campaign_to_dict(policy)
+    return response
 
 
 @api_router.get("/admin/ads/analytics")
