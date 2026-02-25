@@ -482,6 +482,12 @@ const ListingCategorySelect = () => {
     const path = recentCategory.path || [];
     persistWizardSelection(recentCategory.category, path, moduleKey, moduleLabelByKey(moduleKey));
     localStorage.setItem('ilan_ver_force_core_step', 'true');
+    if (moduleKey === 'vehicle') {
+      localStorage.removeItem('ilan_ver_vehicle_selection');
+      localStorage.removeItem('ilan_ver_vehicle_trim_id');
+      localStorage.removeItem('ilan_ver_manual_trim_flag');
+      localStorage.removeItem('ilan_ver_manual_trim');
+    }
     if (recentCategory.country) {
       localStorage.setItem('selected_country', recentCategory.country);
     }
