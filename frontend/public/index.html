@@ -7,6 +7,163 @@
         <meta name="description" content="A product of emergent.sh" />
         <script>
             (function () {
+                function hexToHsl(hex) {
+                    if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) {
+                        return null;
+                    }
+                    var raw = hex.replace('#', '');
+                    var r = parseInt(raw.slice(0, 2), 16) / 255;
+                    var g = parseInt(raw.slice(2, 4), 16) / 255;
+                    var b = parseInt(raw.slice(4, 6), 16) / 255;
+                    var max = Math.max(r, g, b);
+                    var min = Math.min(r, g, b);
+                    var h = 0;
+                    var s = 0;
+                    var l = (max + min) / 2;
+                    if (max !== min) {
+                        var d = max - min;
+                        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                        switch (max) {
+                            case r:
+                                h = (g - b) / d + (g < b ? 6 : 0);
+                                break;
+                            case g:
+                                h = (b - r) / d + 2;
+                                break;
+                            default:
+                                h = (r - g) / d + 4;
+                        }
+                        h = h / 6;
+                    }
+                    return Math.round(h * 360) + ' ' + Math.round(s * 100) + '% ' + Math.round(l * 100) + '%';
+                }
+
+                var themeKeys = [
+                    'primary',
+                    'primary-hover',
+                    'secondary',
+                    'accent',
+                    'success',
+                    'warning',
+                    'danger',
+                    'background',
+                    'background-alt',
+                    'surface',
+                    'surface-2',
+                    'modal-background',
+                    'text-primary',
+                    'text-secondary',
+                    'text-muted',
+                    'text-inverse',
+                    'border',
+                    'border-strong',
+                    'divider',
+                    'button-primary-bg',
+                    'button-primary-text',
+                    'button-secondary-bg',
+                    'button-secondary-text',
+                    'header-bg',
+                    'header-text',
+                    'footer-bg',
+                    'footer-text',
+                    'link',
+                    'link-hover',
+                ];
+
+                var defaultConfig = {
+                    light: {
+                        primary: '#ff7000',
+                        'primary-hover': '#e65a00',
+                        secondary: '#007bff',
+                        accent: '#00a0b0',
+                        success: '#22c55e',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        background: '#f8f9fa',
+                        'background-alt': '#fff7ef',
+                        surface: '#ffffff',
+                        'surface-2': '#f8f9fa',
+                        'modal-background': '#ffffff',
+                        'text-primary': '#1b263b',
+                        'text-secondary': '#415a77',
+                        'text-muted': '#6b7280',
+                        'text-inverse': '#ffffff',
+                        border: '#e2e8f0',
+                        'border-strong': '#cbd5e1',
+                        divider: '#e2e8f0',
+                        'button-primary-bg': '#ff7000',
+                        'button-primary-text': '#ffffff',
+                        'button-secondary-bg': '#f1f5f9',
+                        'button-secondary-text': '#1b263b',
+                        'header-bg': '#ffffff',
+                        'header-text': '#1b263b',
+                        'footer-bg': '#ffffff',
+                        'footer-text': '#415a77',
+                        link: '#007bff',
+                        'link-hover': '#0056d2',
+                    },
+                    dark: {
+                        primary: '#ff7000',
+                        'primary-hover': '#e65a00',
+                        secondary: '#60a5fa',
+                        accent: '#22d3ee',
+                        success: '#22c55e',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        background: '#0f172a',
+                        'background-alt': '#1f2937',
+                        surface: '#111827',
+                        'surface-2': '#1f2937',
+                        'modal-background': '#111827',
+                        'text-primary': '#f8fafc',
+                        'text-secondary': '#94a3b8',
+                        'text-muted': '#64748b',
+                        'text-inverse': '#0f172a',
+                        border: '#273449',
+                        'border-strong': '#3b4a63',
+                        divider: '#273449',
+                        'button-primary-bg': '#ff7000',
+                        'button-primary-text': '#0f172a',
+                        'button-secondary-bg': '#1f2937',
+                        'button-secondary-text': '#f8fafc',
+                        'header-bg': '#111827',
+                        'header-text': '#f8fafc',
+                        'footer-bg': '#111827',
+                        'footer-text': '#94a3b8',
+                        link: '#60a5fa',
+                        'link-hover': '#93c5fd',
+                    },
+                };
+
+                function applyThemeConfig(config) {
+                    if (!config) return;
+                    ['light', 'dark'].forEach(function (mode) {
+                        var palette = config[mode] || {};
+                        themeKeys.forEach(function (key) {
+                            var value = palette[key];
+                            if (value) {
+                                document.documentElement.style.setProperty('--theme-' + mode + '-' + key, value);
+                                var hsl = hexToHsl(value);
+                                if (hsl) {
+                                    document.documentElement.style.setProperty('--theme-' + mode + '-' + key + '-hsl', hsl);
+                                }
+                            }
+                        });
+                    });
+                }
+
+                try {
+                    var storedConfig = localStorage.getItem('site_theme_config');
+                    var activeConfig = defaultConfig;
+                    if (storedConfig) {
+                        var parsed = JSON.parse(storedConfig);
+                        activeConfig = parsed && parsed.config ? parsed.config : parsed;
+                    }
+                    applyThemeConfig(activeConfig || defaultConfig);
+                } catch (e) {
+                    applyThemeConfig(defaultConfig);
+                }
+
                 try {
                     var stored = localStorage.getItem('theme');
                     var systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
