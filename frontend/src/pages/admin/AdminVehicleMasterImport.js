@@ -382,7 +382,7 @@ export default function AdminVehicleMasterImport() {
                 Örnek JSON indir
               </button>
               <span className="text-xs text-muted-foreground" data-testid="vehicle-import-upload-format">
-                Beklenen format: Array zorunlu alanlar: year, make, model, trim
+                Beklenen format: Array; zorunlu alanlar: year, make, model, trim
               </span>
             </div>
             <label className="flex items-center gap-2 text-xs" data-testid="vehicle-import-upload-dry-run-toggle">
