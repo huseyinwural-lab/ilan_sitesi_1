@@ -309,6 +309,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/P1_PRICING_CAMPAIGN_CRUD_EVIDENCE.md
 - /app/docs/PRICING_TEST_USER_SEED.md
 - /app/docs/P1_RBAC_VALIDATION_EVIDENCE.md
+- /app/docs/P1_HEADER_EVIDENCE.md
 
 ## Son Değişiklikler (2026-02-25)
 - Pricing Campaign Items modeli + migration (pricing_campaign_items) ve snapshot alanları (campaign_item_id, listing_quota, publish_days, campaign_override_active).
