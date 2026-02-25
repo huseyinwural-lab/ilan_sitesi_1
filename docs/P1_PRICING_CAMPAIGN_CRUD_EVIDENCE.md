@@ -76,6 +76,12 @@ Snapshot doğrulama (DB):
 - `admin-pricing-individual-page.png`
 - `admin-pricing-individual-modal.png`
 - `admin-pricing-corporate-page.png`
+- `admin-pricing-tiers-page.png`
+- `admin-pricing-individual-modal-fields.png`
+- `admin-pricing-individual-validation-error.png`
+- `admin-pricing-packages-page.png`
+- `admin-pricing-corporate-modal-fields.png`
+- `admin-pricing-corporate-validation-error.png`
 - **Auto frontend testing:** PASS (minor hydration warnings only)
 
 
