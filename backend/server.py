@@ -20215,6 +20215,7 @@ async def _find_active_ad_conflict(
     query = select(Advertisement).where(
         Advertisement.placement == placement,
         Advertisement.is_active.is_(True),
+        Advertisement.is_deleted.is_(False),
     )
     if exclude_id:
         query = query.where(Advertisement.id != exclude_id)
