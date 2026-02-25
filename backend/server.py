@@ -19455,18 +19455,19 @@ async def _process_vehicle_import_records(
                 trim = result.scalar_one_or_none()
                 trim_cache_key[trim_key] = trim
 
+        record_changed = make_changed or model_changed
         if job.dry_run:
             if not trim:
                 new_count += 1
             else:
                 existing_attributes = trim.attributes or {}
-                has_changes = (
+                has_trim_changes = (
                     trim.name != trim_name
                     or trim.year != year
                     or (trim.source_ref or None) != (trim_ref or None)
                     or existing_attributes != attributes
                 )
-                if has_changes:
+                if has_trim_changes or record_changed:
                     updated_count += 1
                 else:
                     skipped_count += 1
@@ -19489,20 +19490,22 @@ async def _process_vehicle_import_records(
                 trim_cache_key[(str(make.id), str(model.id), year, trim_slug)] = trim
             else:
                 existing_attributes = trim.attributes or {}
-                has_changes = (
+                has_trim_changes = (
                     trim.name != trim_name
                     or trim.year != year
                     or (trim.source_ref or None) != (trim_ref or None)
                     or existing_attributes != attributes
                 )
-                if has_changes:
+                record_has_changes = has_trim_changes or record_changed
+                if record_has_changes:
                     updated_count += 1
-                    trim.name = trim_name
-                    trim.year = year
-                    trim.slug = trim_slug
-                    trim.source = source_label
-                    trim.source_ref = trim_ref
-                    trim.attributes = attributes
+                    if has_trim_changes:
+                        trim.name = trim_name
+                        trim.year = year
+                        trim.slug = trim_slug
+                        trim.source = source_label
+                        trim.source_ref = trim_ref
+                        trim.attributes = attributes
                 else:
                     skipped_count += 1
 
