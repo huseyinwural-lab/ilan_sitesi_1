@@ -55,6 +55,20 @@ const ListingDetails = () => {
         </div>
       </div>
 
+      {selectedVehicle && (
+        <div className="rounded-xl border bg-white p-4" data-testid="ilan-ver-details-vehicle">
+          <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Araç Seçimi</div>
+          <div className="mt-2 text-lg font-semibold text-slate-900" data-testid="ilan-ver-details-vehicle-label">
+            {vehicleLabel || 'Araç seçimi yapılmadı'}
+          </div>
+          {selectedVehicle.manual_trim_flag && (
+            <div className="mt-1 text-xs text-amber-600" data-testid="ilan-ver-details-manual-trim">
+              Manuel trim işaretlendi
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="rounded-xl border border-dashed bg-white p-6 text-sm text-slate-600" data-testid="ilan-ver-details-placeholder">
         Altıncı madde adımının detay formu bu sayfada uygulanacak.
       </div>
