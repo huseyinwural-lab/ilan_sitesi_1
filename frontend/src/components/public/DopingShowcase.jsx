@@ -29,7 +29,7 @@ export default function DopingShowcase({ placement }) {
 
   return (
     <div className="space-y-3" data-testid={`doping-showcase-${placement}`}>
-      <div className="text-sm font-semibold text-[#1B263B]">Öne Çıkan İlanlar</div>
+      <div className="text-sm font-semibold text-[var(--text-primary)]">Öne Çıkan İlanlar</div>
       <div className="grid gap-3 md:grid-cols-2">
         {items.map((item) => (
           <div key={item.doping_id} className="rounded-lg border bg-white p-3" data-testid={`doping-card-${item.doping_id}`}>
