@@ -315,6 +315,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/P1_FOOTER_EVIDENCE.md
 - /app/docs/UI_STYLE_GUIDE.md
 - /app/docs/P1_THEME_EVIDENCE.md
+- /app/docs/P1_CROSS_BROWSER_EVIDENCE.md
+- /app/docs/P1_PERFORMANCE_REPORT.md
+- /app/docs/P1_SECURITY_UI_CHECKLIST.md
 
 ## Son Değişiklikler (2026-02-25)
 - Tema yönetimi: CSS değişkenleri + FOUC script + ErrorBoundary; hex renkler semantik değişkenlere taşındı.
