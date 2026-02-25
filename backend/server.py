@@ -22407,11 +22407,14 @@ async def create_pricing_checkout_session(
 
 @api_router.get("/pricing/packages")
 async def list_pricing_packages_endpoint(session: AsyncSession = Depends(get_sql_session)):
-    await _ensure_pricing_defaults(session)
     result = await session.execute(
-        select(PricingPackage)
-        .where(PricingPackage.scope == "corporate", PricingPackage.is_active.is_(True))
-        .order_by(PricingPackage.listing_quota)
+        select(PricingCampaignItem)
+        .where(
+            PricingCampaignItem.scope == "corporate",
+            PricingCampaignItem.is_deleted.is_(False),
+            PricingCampaignItem.is_active.is_(True),
+        )
+        .order_by(PricingCampaignItem.listing_quota)
     )
     items = []
     for item in result.scalars().all():
@@ -22420,10 +22423,9 @@ async def list_pricing_packages_endpoint(session: AsyncSession = Depends(get_sql
                 "id": str(item.id),
                 "name": item.name,
                 "listing_quota": item.listing_quota,
-                "price_amount": float(item.package_price_amount or 0),
+                "price_amount": float(item.price_amount or 0),
                 "currency": item.currency,
                 "publish_days": item.publish_days,
-                "duration_days": item.package_duration_days,
             }
         )
     return {"packages": items}
