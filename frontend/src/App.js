@@ -120,18 +120,20 @@ function App() {
               <BrowserRouter>
                 <Routes>
                   {/* Public Routes */}
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/search" element={<SearchPage />} />
-                  <Route path="/ilan/:id" element={<DetailPage />} /> {/* P8: Detail Route (captures slug-id) */}
-                  <Route path="/vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />
-                  <Route path="/:country/vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />
-                  <Route path="/ilan-olustur" element={<Navigate to="/ilan-ver/kategori-secimi" />} />
+                  <Route element={<MainLayout />}>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/search" element={<SearchPage />} />
+                    <Route path="/ilan/:id" element={<DetailPage />} />
+                    <Route path="/vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />
+                    <Route path="/:country/vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />
+                    <Route path="/ilan-olustur" element={<Navigate to="/ilan-ver/kategori-secimi" />} />
 
-                  {/* Vehicle (country-aware) */}
-                  <Route path="/:country/vasita" element={<VehicleLandingPage />} />
-                  <Route path="/:country/vasita/:segment" element={<VehicleSegmentPage />} />
-                  {/* Convenience redirect */}
-                  <Route path="/vasita" element={<RedirectToCountry to="/{country}/vasita" />} />
+                    {/* Vehicle (country-aware) */}
+                    <Route path="/:country/vasita" element={<VehicleLandingPage />} />
+                    <Route path="/:country/vasita/:segment" element={<VehicleSegmentPage />} />
+                    <Route path="/vasita" element={<RedirectToCountry to="/{country}/vasita" />} />
+                    <Route path="/info/:slug" element={<InfoPage />} />
+                  </Route>
 
                   {/* Portal login surfaces */}
                   <Route path="/login" element={<PublicLogin />} />
