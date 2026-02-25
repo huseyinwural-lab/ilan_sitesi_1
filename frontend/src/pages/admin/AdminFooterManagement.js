@@ -237,7 +237,7 @@ export default function AdminFooterManagement() {
                     data-testid={`admin-footer-row-columns-${rowIndex}`}
                   >
                     {[1, 2, 3, 4, 5].map((count) => (
-                      <option key={count} value={count} label={`${count}`} />
+                      <option key={count} value={count}>{count}</option>
                     ))}
                   </select>
                   <button
