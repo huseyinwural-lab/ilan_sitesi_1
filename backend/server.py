@@ -20654,7 +20654,7 @@ DEFAULT_PRICING_TIER_RULES = [
 ]
 
 DEFAULT_PRICING_PACKAGES = [
-    {"name": "Lansman Paketi", "listing_quota": 10, "package_duration_days": 30},
+    {"name": "Lansman", "listing_quota": 10, "package_duration_days": 30},
     {"name": "Vantage 20", "listing_quota": 20, "package_duration_days": 90},
     {"name": "Vantage 30", "listing_quota": 30, "package_duration_days": 90},
 ]
