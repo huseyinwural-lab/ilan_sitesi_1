@@ -92,7 +92,7 @@ export default function DealerPrivacyCenter() {
         </p>
         <button
           type="button"
-          className="mt-3 rounded-md bg-[#2f3854] px-4 py-2 text-sm text-white"
+          className="mt-3 rounded-md bg-[var(--brand-navy)] px-4 py-2 text-sm text-white"
           onClick={handleExport}
           disabled={exporting}
           data-testid="dealer-privacy-export-button"
