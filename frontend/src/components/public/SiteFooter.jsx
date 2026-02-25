@@ -108,6 +108,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
                             href={link.target}
                             target="_blank"
                             rel="noreferrer"
+                            className="text-[var(--link)] hover:text-[var(--link-hover)]"
                             data-testid={`site-footer-social-${rowIndex}-${colIndex}-${linkIndex}`}
                           >
                             {link.label}
