@@ -243,7 +243,7 @@ const UserPanelLayout = () => {
                         className={({ isActive }) =>
                           `flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
                             isActive
-                              ? 'bg-[#F57C00]/10 text-[var(--text-primary)]'
+                              ? 'bg-[var(--color-primary-soft)] text-[var(--text-primary)]'
                               : 'text-[#415A77] hover:bg-slate-100'
                           }`
                         }
