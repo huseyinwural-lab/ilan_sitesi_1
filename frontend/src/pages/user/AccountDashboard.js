@@ -237,7 +237,7 @@ export default function AccountDashboard() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)]" data-testid="account-dashboard-title">
             Hoş geldiniz
           </h1>
-          <p className="text-sm text-[#415A77]" data-testid="account-dashboard-subtitle">
+          <p className="text-sm text-[var(--text-secondary)]" data-testid="account-dashboard-subtitle">
             Bugün hangi işlemi yapmak istersiniz?
           </p>
         </div>
@@ -257,7 +257,7 @@ export default function AccountDashboard() {
               return (
                 <div
                   key={item.key}
-                  className="flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs text-[#415A77]"
+                  className="flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs text-[var(--text-secondary)]"
                   data-testid={item.testId}
                 >
                   <Icon size={14} />
@@ -280,10 +280,10 @@ export default function AccountDashboard() {
               data-testid={card.testId}
             >
               <div className="flex items-center justify-between" data-testid={`${card.testId}-header`}>
-                <div className="text-xs uppercase tracking-[0.2em] text-[#415A77]" data-testid={`${card.testId}-label`}>
+                <div className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]" data-testid={`${card.testId}-label`}>
                   {card.label}
                 </div>
-                <Icon size={18} className="text-[#415A77]" data-testid={`${card.testId}-icon`} />
+                <Icon size={18} className="text-[var(--text-secondary)]" data-testid={`${card.testId}-icon`} />
               </div>
               <div
                 className={`mt-3 text-3xl font-semibold ${isPassive ? 'text-slate-300' : 'text-[var(--text-primary)]'}`}
@@ -307,10 +307,10 @@ export default function AccountDashboard() {
             <div className="text-xl font-semibold text-[var(--text-primary)]" data-testid="account-cta-title">
               Hemen İlan Ver
             </div>
-            <p className="mt-2 text-sm text-[#415A77]" data-testid="account-cta-description">
+            <p className="mt-2 text-sm text-[var(--text-secondary)]" data-testid="account-cta-description">
               İlan oluşturma sihirbazıyla birkaç dakikada yayına çıkın.
             </p>
-            <div className="mt-3 text-xs text-[#415A77]" data-testid="account-cta-quota">
+            <div className="mt-3 text-xs text-[var(--text-secondary)]" data-testid="account-cta-quota">
               Kalan ücretsiz ilan hakkı: {quotaLabel}
               {!quotaInfo.ready && <span data-testid="account-cta-quota-loading"> • Veri hazırlanıyor</span>}
             </div>
@@ -339,7 +339,7 @@ export default function AccountDashboard() {
             <div className="text-lg font-semibold text-[var(--text-primary)]" data-testid="account-listing-snapshot-title">
               Son İlanlarım
             </div>
-            <p className="text-xs text-[#415A77]" data-testid="account-listing-snapshot-subtitle">
+            <p className="text-xs text-[var(--text-secondary)]" data-testid="account-listing-snapshot-subtitle">
               Son 5 ilanınızın durumunu hızlıca görüntüleyin.
             </p>
           </div>
@@ -380,7 +380,7 @@ export default function AccountDashboard() {
                     <div className="text-sm font-semibold text-[var(--text-primary)]">
                       {listing.title || 'Başlıksız ilan'}
                     </div>
-                    <div className="text-xs text-[#415A77]" data-testid={`account-listing-status-${listing.id}`}>
+                    <div className="text-xs text-[var(--text-secondary)]" data-testid={`account-listing-status-${listing.id}`}>
                       Durum: {meta.label}
                     </div>
                   </div>
@@ -392,7 +392,7 @@ export default function AccountDashboard() {
                       {meta.label}
                     </span>
                     <div
-                      className="relative group inline-flex items-center gap-1 text-xs text-[#415A77]"
+                      className="relative group inline-flex items-center gap-1 text-xs text-[var(--text-secondary)]"
                       data-testid={`account-listing-reason-${listing.id}`}
                     >
                       <Info size={14} data-testid={`account-listing-reason-icon-${listing.id}`} />
@@ -423,7 +423,7 @@ export default function AccountDashboard() {
         <div className="rounded-2xl border bg-white p-5 shadow-sm" data-testid="account-favorites-card">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-xs uppercase tracking-[0.2em] text-[#415A77]" data-testid="account-favorites-label">
+              <div className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]" data-testid="account-favorites-label">
                 Favoriler
               </div>
               <div
@@ -451,7 +451,7 @@ export default function AccountDashboard() {
         <div className="rounded-2xl border bg-white p-5 shadow-sm" data-testid="account-saved-searches-card">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-xs uppercase tracking-[0.2em] text-[#415A77]" data-testid="account-saved-searches-label">
+              <div className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]" data-testid="account-saved-searches-label">
                 Kayıtlı Aramalar
               </div>
               <div
