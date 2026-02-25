@@ -48,6 +48,7 @@
     --bg-page: #f8f9fa;
     --bg-surface: #ffffff;
     --bg-surface-muted: #f8f9fa;
+    --bg-surface-soft: rgba(255, 255, 255, 0.1);
     --bg-soft: #fff7ef;
     --bg-warm: #f7c27a;
 
