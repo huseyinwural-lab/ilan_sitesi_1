@@ -20953,9 +20953,11 @@ def _campaign_item_is_available(item: PricingCampaignItem, now: datetime) -> boo
         return False
     if not item.is_active:
         return False
-    if item.start_at and item.start_at > now:
+    if not item.start_at or not item.end_at:
         return False
-    if item.end_at and item.end_at < now:
+    if item.start_at > now:
+        return False
+    if item.end_at < now:
         return False
     return True
 
