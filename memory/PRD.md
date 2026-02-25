@@ -441,3 +441,42 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - GDPR CSV export
 - Public search + admin listings Mongo bağımlılıklarının SQL’e taşınması
 - Verification token cleanup job
+
+---
+
+## 2026-02-25 — P0 Vehicle Selector Stabilizasyon Güncellemesi
+
+### Tamamlananlar (P0)
+- `ListingWizard` araç akışında zincir seçim stabilizasyonu tamamlandı:
+  - Year değişiminde Make/Model/Trim ve bağlı filtre state’leri temizleniyor.
+  - Make değişiminde Model/Trim ve bağlı filtre state’leri temizleniyor.
+  - Model/filtre değişiminde trim listesi yeniden yükleniyor (race-condition guard ile).
+- `year >= 2000` için trim zorunluluğu hem UI hem backend tarafında enforce edildi.
+- `year < 2000` için manuel trim override akışı eklendi ve backend doğrulaması aktif edildi.
+- Wizard merkezi state’e aşağıdaki alanlar eklendi ve persist edildi:
+  - `vehicle_trim_id`, `vehicle_trim_label`, `manual_trim_flag`, `manual_trim_text`
+  - `trim_filter_fuel`, `trim_filter_body`, `trim_filter_transmission`, `trim_filter_drive`, `trim_filter_engine_type`
+- Category değişiminde vehicle state reset kuralı eklendi (ghost-state engeli).
+- Kanıt dokümanı oluşturuldu: `/app/docs/P0_VEHICLE_SELECTOR_FIX_EVIDENCE.md`
+
+### Teknik Dosyalar
+- Frontend:
+  - `frontend/src/pages/user/wizard/Step2Brand.js`
+  - `frontend/src/pages/user/wizard/Step3Model.js`
+  - `frontend/src/pages/user/wizard/Step4YearTrim.js`
+  - `frontend/src/pages/user/wizard/Step4Review.js`
+  - `frontend/src/pages/user/wizard/WizardContext.js`
+- Backend:
+  - `backend/server.py`
+
+### Test Durumu
+- Testing agent raporu: `/app/test_reports/iteration_12.json` (core P0 senaryolar PASS)
+- Ek self-test (curl):
+  - `/api/vehicle/years|makes|models|options|trims` → 200
+  - `year>=2000` + trimsiz payload → 422
+  - `year<2000` + manualsız payload → 422
+  - geçerli modern/manual payload → 200
+
+### Kalan Backlog
+- **P1 (beklemede):** country_code genişletmesi, import job CSV/retry, admin module type iyileştirmesi
+- **P2:** kampanya timeline, doping sistemi, public campaign UI
