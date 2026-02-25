@@ -316,6 +316,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/UI_STYLE_GUIDE.md
 
 ## Son Değişiklikler (2026-02-25)
+- Tema yönetimi: CSS değişkenleri + FOUC script + ErrorBoundary; hex renkler semantik değişkenlere taşındı.
 - Footer domain: grid builder + draft/publish + preview + version rollback; Bilgi Sayfaları CRUD + /bilgi/:slug.
 - Header domain: MainLayout + site_header_config modeli + logo upload/cache invalidation; Admin Header Yönetimi ekranı + guest/auth header state.
 - Pricing Campaign Items modeli + migration (pricing_campaign_items) ve snapshot alanları (campaign_item_id, listing_quota, publish_days, campaign_override_active).
