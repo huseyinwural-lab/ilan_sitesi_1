@@ -128,7 +128,7 @@ export default function Login({ portalContext = 'account' }) {
       className={`min-h-screen flex items-center justify-center p-4 ${
         isAdminLogin
           ? 'bg-gradient-to-br from-background via-background to-muted/30'
-          : 'bg-[#f7c27a]'
+          : 'bg-[var(--bg-warm)]'
       }`}
       data-testid="login-page"
     >
