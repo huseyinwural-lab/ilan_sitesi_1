@@ -18052,3 +18052,154 @@ const value = textObj[language] || textObj.tr || textObj.de || textObj.fr || '';
 - **Date**: Feb 25, 2026 (LATEST)
 - **Message**: Footer Admin Builder test FAILED with CRITICAL BLOCKING ERROR. FLOW VERIFICATION: 1) Admin login works perfectly (admin@platform.com / Admin123!) ✅. 2) Navigation to /admin/site-design/footer successful, page loads with data-testid="admin-footer-management" visible ✅. 3) "Satır Ekle" (Add Row) button (data-testid="admin-footer-add-row") found and clicked successfully ✅. 4) CRITICAL FAILURE: After clicking "Satır Ekle", a React runtime error occurs with red error screen: "Objects are not valid as a React child (found: object with keys {tr, de, fr})". 5) Row card elements CANNOT be verified because error prevents rendering: admin-footer-row-0 NOT VISIBLE, admin-footer-row-columns-0 NOT VISIBLE, admin-footer-col-type-0-0 NOT VISIBLE ❌. 6) Link group selection and link add button visibility CANNOT BE TESTED due to blocking error ❌. 7) Console errors detected: 3 errors including hydration warnings about span/option/select elements, plus the critical React child rendering error ❌. ROOT CAUSE: SiteFooter.jsx line 126 has problematic fallback logic where `col.text?.[language] || col.text?.tr || col.text?.de || col.text?.fr || col.text` evaluates to the entire text object `{ tr: '', de: '', fr: '' }` when all language values are empty strings. This object is then rendered as a React child, causing the crash. The type check on line 127 should prevent this but fails in practice. FIX REQUIRED: Update SiteFooter.jsx lines 124-129 to ensure empty string fallback works correctly. Suggested fix: `const value = (col.text?.[language] || col.text?.tr || col.text?.de || col.text?.fr) ?? '';` or more robust null handling. Footer builder is completely broken and blocks admin workflow. IMMEDIATE FIX REQUIRED.
 
+---
+
+
+## SEO/404/500 UI Verification Test (Feb 25, 2026 - LATEST) ⚠️ PARTIAL PASS
+
+### Test Summary
+SEO/404/500 UI verification test as per review request: "SEO/404/500 UI doğrulama: 1) /bilgi/hakkimizda sayfasını aç, başlık ve içerik görünüyor mu? data-testid: info-page-title, info-page-content. 2) /bilgi/olmayan bir slug ile 404 sayfası geliyor mu? data-testid: not-found-page, not-found-cta. 3) /500 sayfasını aç, metin ve Yenile butonu görünüyor mu? data-testid: server-error-page, server-error-cta. Konsol hatalarını raporla ve ekran görüntüsü al."
+
+### Test Flow Executed:
+1. ✅ Navigate to /bilgi/hakkimizda → info page loads with title and content
+2. ❌ Navigate to /bilgi/olmayan-sayfa → shows error message but NOT NotFoundPage component
+3. ✅ Navigate to /500 → server error page loads with all elements
+
+### Critical Findings:
+
+#### ✅ TEST 1: Info Page (/bilgi/hakkimizda) - PASS
+**Status**: ✅ **WORKING PERFECTLY**
+- **URL**: https://monetize-listings.preview.emergentagent.com/bilgi/hakkimizda
+- **Page Load**: ✅ SUCCESS - InfoPage component rendered
+- **Container Element**: data-testid="info-page" ✅ VISIBLE
+- **Title Element**: data-testid="info-page-title" ✅ VISIBLE
+  - Text: "Hakkımızda"
+- **Content Element**: data-testid="info-page-content" ✅ VISIBLE
+  - Text: "İçerik TR"
+- **Screenshot**: ✅ Captured (info-page-hakkimizda.png)
+- **CRITICAL**: All required data-testids present and working correctly
+
+#### ❌ TEST 2: 404 Page for Non-Existent Info Slug - FAIL
+**Status**: ❌ **FAIL - Wrong Component Rendered**
+- **URL**: https://monetize-listings.preview.emergentagent.com/bilgi/olmayan-sayfa
+- **Expected Behavior**: NotFoundPage component with data-testid="not-found-page" and data-testid="not-found-cta"
+- **Actual Behavior**: InfoPage component renders with inline error message
+- **Error Message**: "Sayfa bulunamadı" (shown via data-testid="info-page-error")
+- **Missing Elements**:
+  - ❌ data-testid="not-found-page" NOT FOUND
+  - ❌ data-testid="not-found-cta" NOT FOUND
+- **Screenshot**: ✅ Captured (404-page.png) showing error in InfoPage
+- **Root Cause**: 
+  - React Router matches /bilgi/:slug route before catch-all 404 route
+  - InfoPage component renders for ANY slug value
+  - Component fetches from API, gets 404, shows inline error
+  - NotFoundPage component never triggered
+- **CRITICAL ISSUE**: User sees error message instead of proper 404 page with navigation CTA
+
+#### ✅ TEST 3: Server Error Page (/500) - PASS
+**Status**: ✅ **WORKING PERFECTLY**
+- **URL**: https://monetize-listings.preview.emergentagent.com/500
+- **Page Load**: ✅ SUCCESS - ServerErrorPage component rendered
+- **Container Element**: data-testid="server-error-page" ✅ VISIBLE
+- **Title Element**: data-testid="server-error-title" ✅ VISIBLE
+  - Text: "Bir hata oluştu"
+- **Description Element**: data-testid="server-error-description" ✅ VISIBLE
+  - Text: "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
+- **CTA Button**: data-testid="server-error-cta" ✅ VISIBLE
+  - Text: "Yenile"
+  - State: Visible and Enabled ✅
+- **Screenshot**: ✅ Captured (500-server-error.png)
+- **CRITICAL**: All required data-testids present and working correctly
+
+### Console Errors Report:
+
+#### Console Errors Detected:
+- ✅ **JavaScript Errors**: NONE (0 errors)
+- ⚠️ **Resource Loading Errors**: 2 errors (expected 404s during testing)
+  1. Failed to load resource: 404 (when fetching /api/info/olmayan-sayfa)
+  2. Failed to load resource: 404 (related resource)
+- ✅ **No Runtime Errors**: No React errors or crashes
+- ✅ **Overall Console Health**: CLEAN (errors are expected API 404s)
+
+### Screenshots Captured:
+1. **info-page-hakkimizda.png**: InfoPage showing title "Hakkımızda" and content "İçerik TR"
+2. **404-page.png**: InfoPage showing inline error "Sayfa bulunamadı" (wrong component)
+3. **500-server-error.png**: ServerErrorPage showing error message and "Yenile" button
+
+### Test Results Summary:
+- **Test Success Rate**: 66% (2/3 tests passed fully)
+- **Info Page (/bilgi/hakkimizda)**: ✅ PASS - All data-testids present
+- **404 Page for Non-Existent Slug**: ❌ FAIL - Wrong component shown
+- **Server Error Page (/500)**: ✅ PASS - All data-testids present
+- **Console Errors**: ✅ CLEAN (only expected API 404s)
+- **Screenshots**: ✅ All captured successfully
+
+### Implementation Analysis:
+
+**Current Routes** (App.js):
+```javascript
+// Lines 138-141
+<Route path="/info/:slug" element={<InfoPage />} />
+<Route path="/bilgi/:slug" element={<InfoPage />} />
+<Route path="/500" element={<ServerErrorPage />} />
+<Route path="*" element={<NotFoundPage />} />
+```
+
+**Problem**: 
+- Route `/bilgi/:slug` matches ANY slug value (including "olmayan-sayfa")
+- InfoPage component renders and handles 404 internally
+- Catch-all `*` route never reached for invalid info page slugs
+
+**InfoPage Component Behavior** (InfoPage.js lines 53-71):
+```javascript
+fetch(`${API}/info/${slug}`)
+  .then((res) => {
+    if (!res.ok) throw new Error('Not found');
+    return res.json();
+  })
+  .catch(() => {
+    setError('Sayfa bulunamadı'); // Shows inline error
+  });
+```
+
+**Issue**: When API returns 404, InfoPage shows inline error instead of using NotFoundPage component
+
+### Required Fix:
+
+**Option 1: Navigate to NotFoundPage on API 404 (Recommended)**
+Update InfoPage.js to redirect to NotFoundPage when API returns 404:
+```javascript
+// In InfoPage.js catch block (line 64-67)
+.catch(() => {
+  if (!active) return;
+  navigate('/404'); // Redirect to NotFoundPage
+});
+```
+Add route for /404:
+```javascript
+<Route path="/404" element={<NotFoundPage />} />
+```
+
+**Option 2: Render NotFoundPage directly in InfoPage**
+```javascript
+if (error) {
+  return <NotFoundPage />;
+}
+```
+
+**Option 3: Make InfoPage show NotFoundPage UI when slug not found**
+Keep current behavior but ensure InfoPage uses NotFoundPage data-testids when showing error.
+
+### Final Status:
+- **Overall Result**: ⚠️ **PARTIAL PASS** - 2/3 requirements satisfied
+- **Info Page**: ✅ PRODUCTION-READY (title and content visible)
+- **404 Handling**: ❌ NOT PRODUCTION-READY (wrong component, missing data-testids)
+- **Server Error Page**: ✅ PRODUCTION-READY (all elements visible)
+- **Console**: ✅ CLEAN (no critical errors)
+- **Next Steps**: Fix 404 handling for info page slugs
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 25, 2026 (LATEST)
+- **Message**: SEO/404/500 UI Verification test COMPLETED with PARTIAL PASS (66% success rate). FLOW VERIFICATION: 1) PASS ✅: /bilgi/hakkimizda page loads successfully with data-testid="info-page-title" showing "Hakkımızda" and data-testid="info-page-content" showing "İçerik TR". All required elements visible and working. 2) FAIL ❌: /bilgi/olmayan-sayfa does NOT show NotFoundPage component. Instead, InfoPage component renders with inline error message "Sayfa bulunamadı" (data-testid="info-page-error"). Required data-testids NOT FOUND: "not-found-page" and "not-found-cta" are missing. ROOT CAUSE: React Router matches /bilgi/:slug for ANY slug value, so InfoPage renders and shows inline error instead of triggering NotFoundPage. FIX REQUIRED: InfoPage should navigate to NotFoundPage or render NotFoundPage component when API returns 404. 3) PASS ✅: /500 page loads successfully with all required elements: data-testid="server-error-page" ✅, data-testid="server-error-title" showing "Bir hata oluştu" ✅, data-testid="server-error-description" showing "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin." ✅, data-testid="server-error-cta" button "Yenile" visible and enabled ✅. Console health: CLEAN with only expected API 404 resource errors (2 errors for non-existent info page fetch). No JavaScript runtime errors. All 3 screenshots captured successfully. Critical issue: 404 handling for info page slugs needs fix to show proper NotFoundPage component with navigation CTA.
+
