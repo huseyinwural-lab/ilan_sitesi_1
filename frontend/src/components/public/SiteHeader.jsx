@@ -118,7 +118,7 @@ export default function SiteHeader({ mode, refreshToken }) {
             <div className="flex items-center gap-2" data-testid="site-header-guest">
               <Link
                 to="/login"
-                className="text-sm font-semibold text-[#415A77]"
+                className="text-sm font-semibold text-[var(--text-secondary)]"
                 data-testid="site-header-login"
               >
                 Giriş Yap
