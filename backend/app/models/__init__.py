@@ -44,4 +44,4 @@ from app.models.site_header import SiteHeaderSetting
 from app.models.advertisement import Advertisement
 from app.models.doping_request import DopingRequest
 from app.models.footer_layout import FooterLayout
-from app.models.info_page import InfoPage
+from app.models.pricing_campaign import PricingCampaign
