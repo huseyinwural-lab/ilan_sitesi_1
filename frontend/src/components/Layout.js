@@ -470,6 +470,9 @@ export default function Layout({ children }) {
   { path: '/admin/pricing/tiers', icon: Layers, label: 'Bireysel Kampanyalar', roles: roles.pricingManager, testId: 'pricing-individual-campaigns' },
   { path: '/admin/pricing/packages', icon: Package, label: 'Kurumsal Kampanyalar', roles: roles.pricingManager, testId: 'pricing-corporate-campaigns' },
 
+    { divider: true, label: 'Site İç Tasarımı', roles: roles.adminOnly },
+    { path: '/admin/site-design/header', icon: PanelTop, label: 'Header Yönetimi', roles: roles.adminOnly, testId: 'site-design-header-management' },
+
     { divider: true, label: 'Katalog & İçerik', roles: roles.catalogView },
     { path: '/admin/categories', icon: FolderTree, label: 'Kategoriler', roles: roles.catalogView, testId: 'catalog-categories' },
     { path: '/admin/categories/import-export', icon: FileText, label: 'Kategori Import/Export', roles: roles.catalogAdmin, testId: 'catalog-categories-import-export' },
