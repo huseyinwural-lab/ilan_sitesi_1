@@ -20938,6 +20938,7 @@ def _build_pricing_quote_response(
     response = {
         "pricing_mode": "campaign" if override_active else "default",
         "override_active": override_active,
+        "campaign_active": override_active,
         "quote": quote,
     }
     if override_active and quote.get("warning"):
