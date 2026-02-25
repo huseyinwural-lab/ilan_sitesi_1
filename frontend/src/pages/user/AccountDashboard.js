@@ -245,7 +245,7 @@ export default function AccountDashboard() {
 
       {statusItems.length > 0 && (
         <div
-          className="rounded-2xl border border-[var(--border-warm)] bg-[#fff7ef] px-4 py-3"
+          className="rounded-2xl border border-[var(--border-warm)] bg-[var(--bg-soft)] px-4 py-3"
           data-testid="account-status-banner"
         >
           <div className="text-xs font-semibold text-[var(--text-primary)]" data-testid="account-status-title">
