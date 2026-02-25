@@ -20873,6 +20873,8 @@ async def _build_individual_quote(session: AsyncSession, user_id: uuid.UUID) -> 
     amount = float(rule.price_amount or 0)
     return {
         "type": "tier",
+        "reason": "tier_rule",
+        "tier_no": rule.tier_no,
         "rule_id": str(rule.id),
         "listing_no": next_listing_no,
         "listing_count_year": listing_count,
