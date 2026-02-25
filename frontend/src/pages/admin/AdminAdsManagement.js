@@ -73,8 +73,9 @@ export default function AdminAdsManagement() {
     fetchAnalytics();
   }, [activeTab, range, customStart, customEnd, groupBy]);
 
-  const totals = analytics?.totals || { impressions: 0, clicks: 0, ctr: 0 };
-  const placementStats = Array.isArray(analytics?.placements) ? analytics.placements : [];
+  const totals = analytics?.totals || { impressions: 0, clicks: 0, ctr: 0, active_ads: 0 };
+  const breakdownRows = Array.isArray(analytics?.groups) ? analytics.groups : [];
+  const breakdownTitle = groupBy === 'campaign' ? 'Kampanya Kırılımı' : 'Reklam Kırılımı';
 
   const handleCreate = async () => {
     setStatus('');
