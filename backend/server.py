@@ -20368,7 +20368,7 @@ async def get_ads_analytics(
     end_at: Optional[str] = None,
     group_by: str = "ad",
     campaign_id: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     start_dt, end_dt = _resolve_analytics_window(range, start_at, end_at)
