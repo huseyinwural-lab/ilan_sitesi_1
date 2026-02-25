@@ -19775,9 +19775,33 @@ class PricingCampaignPolicyPayload(BaseModel):
 
 
 class PricingQuotePayload(BaseModel):
-    user_type: str
+    user_type: Optional[str] = None
     listing_count_year: Optional[int] = None
     listing_type: Optional[str] = None
+
+
+class PricingTierRuleInput(BaseModel):
+    tier_no: int
+    price_amount: float
+    currency: str
+    is_active: Optional[bool] = True
+
+
+class PricingTierUpdatePayload(BaseModel):
+    rules: List[PricingTierRuleInput]
+
+
+class PricingPackageInput(BaseModel):
+    name: str
+    listing_quota: int
+    package_duration_days: int
+    package_price_amount: float
+    currency: str
+    is_active: Optional[bool] = True
+
+
+class PricingPackageUpdatePayload(BaseModel):
+    packages: List[PricingPackageInput]
 
 
 class DopingRequestPayload(BaseModel):
