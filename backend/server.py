@@ -20715,55 +20715,24 @@ def _normalize_currency_code(value: Optional[str]) -> str:
 
 
 async def _ensure_pricing_defaults(session: AsyncSession) -> None:
-    tier_result = await session.execute(
-        select(PricingTierRule).where(PricingTierRule.scope == "individual")
-    )
-    tier_rules = tier_result.scalars().all()
-    if not tier_rules:
-        for rule in DEFAULT_PRICING_TIER_RULES:
-            session.add(
-                PricingTierRule(
-                    scope="individual",
-                    year_window="calendar_year",
-                    tier_no=rule["tier_no"],
-                    listing_from=rule["listing_from"],
-                    listing_to=rule["listing_to"],
-                    price_amount=rule["price_amount"],
-                    currency="EUR",
-                    publish_days=90,
-                    is_active=True,
-                )
-            )
+    result = await session.execute(select(PricingCampaignItem))
+    items = result.scalars().all()
+    if items:
+        return
 
-    package_result = await session.execute(select(PricingPackage))
-    packages = {item.name: item for item in package_result.scalars().all()}
-    packages_changed = False
-    if "Lansman" not in packages and "Lansman Paketi" in packages:
-        legacy = packages["Lansman Paketi"]
-        legacy.name = "Lansman"
-        legacy.updated_at = datetime.now(timezone.utc)
-        packages["Lansman"] = legacy
-        packages.pop("Lansman Paketi", None)
-        packages_changed = True
-    for package in DEFAULT_PRICING_PACKAGES:
-        if package["name"] in packages:
-            continue
+    for sample in DEFAULT_PRICING_CAMPAIGN_ITEMS:
         session.add(
-            PricingPackage(
-                scope="corporate",
-                name=package["name"],
-                listing_quota=package["listing_quota"],
-                package_price_amount=0,
+            PricingCampaignItem(
+                scope=sample["scope"],
+                name=sample.get("name"),
+                listing_quota=sample["listing_quota"],
+                price_amount=sample["price_amount"],
                 currency="EUR",
-                publish_days=90,
-                package_duration_days=package["package_duration_days"],
-                is_active=True,
+                publish_days=sample["publish_days"],
+                is_active=sample.get("is_active", False),
             )
         )
-        packages_changed = True
-
-    if not tier_rules or packages_changed:
-        await session.commit()
+    await session.commit()
 
 
 async def _expire_tier_rules(session: AsyncSession) -> None:
