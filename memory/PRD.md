@@ -56,6 +56,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **Pricing Campaign Time Range (2026-02-25):** start_at/end_at zorunlu, overlap kontrolü (409), planlı/aktif/süresi doldu statüsü, quote sadece zaman aralığında.
 - **Pricing Campaign CRUD (2026-02-25):** pricing_campaign_items modeli + migration; admin bireysel/kurumsal kampanya CRUD; quote engine kampanya item’larına geçirildi; checkout snapshot kampanya item referansıyla kilitlendi; expiry job campaign item end_at sonrası pasif.
 - **Pricing Part 2 (2026-02-25):** pricing_campaign policy modeli + override hook + expire job + audit; Admin Kampanya Modu gerçek yönetim ekranı.
 - **Pricing Part 1 Scaffold (2026-02-25):** domains/ads_engine + domains/pricing_engine, /api/admin/pricing/campaign + /api/pricing/quote + /api/pricing/packages iskeletleri, Admin “Fiyatlandırma” menüsü ve placeholder sayfalar, pricing_manager role + RBAC.
