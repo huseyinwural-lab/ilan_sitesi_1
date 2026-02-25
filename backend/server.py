@@ -19764,10 +19764,10 @@ class AdCampaignUpdatePayload(BaseModel):
 
 
 class PricingCampaignPolicyPayload(BaseModel):
-    is_active: bool
+    is_enabled: bool
     start_at: Optional[datetime] = None
     end_at: Optional[datetime] = None
-    scope: str = "both"
+    scope: str = "all"
 
 
 class PricingQuotePayload(BaseModel):
