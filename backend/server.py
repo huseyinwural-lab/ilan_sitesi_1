@@ -20507,7 +20507,7 @@ async def record_ad_impression(
 
     await _expire_ads(session)
     ad = await session.get(Advertisement, ad_uuid)
-    if not ad:
+    if not ad or ad.is_deleted:
         raise HTTPException(status_code=404, detail="Ad not found")
 
     campaign = None
