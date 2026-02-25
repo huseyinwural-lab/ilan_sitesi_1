@@ -294,6 +294,38 @@ export default function AdminAdsCampaigns() {
                 </button>
               </div>
 
+              <div className="rounded-md border bg-amber-50 p-3 space-y-2" data-testid="admin-campaigns-warnings">
+                <div className="text-sm font-semibold">Kampanya Uyarıları</div>
+                {warnings.length === 0 ? (
+                  <div className="text-xs text-muted-foreground" data-testid="admin-campaigns-warnings-empty">
+                    Uyarı bulunamadı.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {warnings.map((warning, index) => (
+                      <div
+                        key={`${warning.type}-${index}`}
+                        className="flex items-start gap-2 text-xs"
+                        data-testid={`admin-campaigns-warning-row-${warning.type}`}
+                      >
+                        <span
+                          className={`rounded-full px-2 py-0.5 ${warning.severity === 'info' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}
+                          data-testid={`admin-campaigns-warning-badge-${warning.type}`}
+                        >
+                          {warning.severity === 'info' ? 'Bilgi' : 'Uyarı'}
+                        </span>
+                        <div>
+                          <div data-testid={`admin-campaigns-warning-message-${warning.type}`}>{warning.message}</div>
+                          <div className="text-muted-foreground" data-testid={`admin-campaigns-warning-recommendation-${warning.type}`}>
+                            {warning.recommendation}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {detailTab === 'detail' && detailForm && (
                 <div className="space-y-3" data-testid="admin-campaigns-detail-form">
                   <div className="grid gap-3 md:grid-cols-2">
