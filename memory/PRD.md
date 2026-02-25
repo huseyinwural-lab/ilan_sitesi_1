@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-25 14:10:00 UTC (Theme Stabilization)
+**Son güncelleme:** 2026-02-25 15:40:00 UTC (Public UI Hardening)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
