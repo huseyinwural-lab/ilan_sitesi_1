@@ -312,6 +312,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Pricing Campaign Items modeli + migration (pricing_campaign_items) ve snapshot alanları (campaign_item_id, listing_quota, publish_days, campaign_override_active).
 - Quote engine kampanya item’larına geçirildi; checkout snapshot kampanya item referansı ile kilitleniyor.
 - Admin UI: Bireysel/Kurumsal Kampanyalar CRUD + modal.
+- Start/end datetime zorunluluğu + overlap kontrolü (scope bazlı) + status kolonları; quote sadece aktif aralıkta.
 - Expiry job: campaign item end_at sonrası otomatik pasif.
 - Test kullanıcı seed script + ops doküman + P1_PRICING_CAMPAIGN_CRUD_EVIDENCE.md.
 
