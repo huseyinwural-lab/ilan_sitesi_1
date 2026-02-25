@@ -160,7 +160,7 @@ const UserPanelLayout = () => {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-4" data-testid="account-topbar-left">
             <div
-              className="flex h-10 w-28 items-center justify-center rounded bg-[#F57C00] text-sm font-bold text-white"
+              className="flex h-10 w-28 items-center justify-center rounded bg-[var(--color-primary)] text-sm font-bold text-[var(--text-inverse)]"
               data-testid="account-logo"
             >
               ANNONCIA
