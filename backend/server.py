@@ -20529,15 +20529,25 @@ def _pricing_campaign_to_dict(policy: PricingCampaign) -> Dict[str, Any]:
     }
 
 
+def _ensure_aware_datetime(value: Optional[datetime]) -> Optional[datetime]:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
+
+
 def _is_pricing_campaign_active(policy: PricingCampaign, user_type: str) -> bool:
     if not policy.is_enabled:
         return False
-    if policy.start_at is None:
+    start_at = _ensure_aware_datetime(policy.start_at)
+    if start_at is None:
         return False
+    end_at = _ensure_aware_datetime(policy.end_at)
     now = datetime.now(timezone.utc)
-    if policy.start_at and policy.start_at > now:
+    if start_at and start_at > now:
         return False
-    if policy.end_at and policy.end_at < now:
+    if end_at and end_at < now:
         return False
     if policy.scope == "all":
         return True
