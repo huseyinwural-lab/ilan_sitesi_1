@@ -19609,7 +19609,7 @@ async def submit_vehicle_listing(
 
     listing.status = "pending_moderation"
     if not listing.expires_at:
-        duration_days = snapshot.duration_days if snapshot else 30
+        duration_days = (snapshot.publish_days or snapshot.duration_days) if snapshot else 30
         listing.expires_at = datetime.now(timezone.utc) + timedelta(days=duration_days)
 
     await _upsert_moderation_item(
