@@ -19586,6 +19586,8 @@ async def submit_vehicle_listing(
         subscription = await session.get(UserPackageSubscription, uuid.UUID(quote["subscription_id"]))
         if subscription and subscription.remaining_quota >= 0:
             subscription.remaining_quota = max(0, subscription.remaining_quota - 1)
+            if subscription.remaining_quota == 0:
+                subscription.status = "expired"
             subscription.updated_at = datetime.now(timezone.utc)
 
     if quote.get("requires_payment"):
