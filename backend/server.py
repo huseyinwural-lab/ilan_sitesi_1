@@ -19688,6 +19688,8 @@ AD_PLACEMENTS = {
     "AD_LOGIN_2": "Login Slot 2",
 }
 
+CAMPAIGN_STATUSES = {"draft", "active", "paused", "expired"}
+
 DOPING_STATUSES = {"requested", "paid", "approved", "published", "expired"}
 
 
