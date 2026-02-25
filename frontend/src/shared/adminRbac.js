@@ -47,6 +47,7 @@ export const ADMIN_ROUTE_RULES = [
   { pattern: /^\/admin\/attributes$/, roles: ADMIN_ROLE_GROUPS.catalogAdmin },
   { pattern: /^\/admin\/vehicle-makes$/, roles: ADMIN_ROLE_GROUPS.vehicleAdmin },
   { pattern: /^\/admin\/vehicle-models$/, roles: ADMIN_ROLE_GROUPS.vehicleAdmin },
+  { pattern: /^\/admin\/vehicle-master-import$/, roles: ADMIN_ROLE_GROUPS.masterdataManager },
   { pattern: /^\/admin\/invoices$/, roles: ADMIN_ROLE_GROUPS.finance },
   { pattern: /^\/admin\/payments$/, roles: ADMIN_ROLE_GROUPS.finance },
   { pattern: /^\/admin\/tax-rates$/, roles: ADMIN_ROLE_GROUPS.finance },
