@@ -156,6 +156,10 @@ export const WizardProvider = ({ children, editListingId = null }) => {
     const makeKey = vehicleInfo.make_key || null;
     const modelKey = vehicleInfo.model_key || null;
     const yearValue = vehicleInfo.year || null;
+    const normalizedYear = yearValue ? Number(yearValue) : null;
+    const trimId = vehicleInfo.vehicle_trim_id || vehicleInfo.trim_id || null;
+    const manualTrimFlag = Boolean(vehicleInfo.manual_trim_flag);
+    const manualTrimText = (vehicleInfo.manual_trim_text || '').toString().trim();
 
     const pricePayload = data.price || {};
     const priceType = String(pricePayload.price_type || data.price_type || 'FIXED').toUpperCase();
@@ -190,7 +194,15 @@ export const WizardProvider = ({ children, editListingId = null }) => {
 
     const step2Complete = isVehicleModule ? Boolean(makeKey) : true;
     const step3Complete = isVehicleModule ? Boolean(modelKey) : true;
-    const step4Complete = isVehicleModule ? Boolean(yearValue) : true;
+    const step4Complete = isVehicleModule
+      ? Boolean(
+        normalizedYear
+        && (
+          (normalizedYear >= 2000 && trimId)
+          || (normalizedYear < 2000 && manualTrimFlag && manualTrimText.length > 1)
+        )
+      )
+      : true;
     const dynamicFields = schemaData?.dynamic_fields || [];
     const detailGroups = schemaData?.detail_groups || [];
 
