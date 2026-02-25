@@ -77,3 +77,39 @@ Snapshot doğrulama (DB):
 - `admin-pricing-individual-modal.png`
 - `admin-pricing-corporate-page.png`
 - **Auto frontend testing:** PASS (minor hydration warnings only)
+
+
+## Kampanya Tarih/Saat Zorunluluğu (2026-02-25)
+
+### UI Screenshot
+- **Modal date-time alanları:** admin pricing modal ekranında Başlangıç/Bitiş alanları + timezone etiketi.
+
+### API Validasyonları (curl)
+**Geçmiş başlangıç (400):**
+```bash
+curl -X POST "$API/admin/pricing/campaign-items" -H "Authorization: Bearer $ADMIN"   -H "Content-Type: application/json"   -d '{"scope":"individual","listing_quota":5,"price_amount":120,"currency":"EUR","publish_days":90,"start_at":"2026-02-25T09:50:32Z","end_at":"2026-03-07T11:50:32Z","is_active":true}'
+```
+Response (örnek):
+```json
+{"detail":"start_at must be in the future"}
+```
+
+**Overlap (409):**
+```bash
+curl -X POST "$API/admin/pricing/campaign-items" -H "Authorization: Bearer $ADMIN"   -H "Content-Type: application/json"   -d '{"scope":"individual","listing_quota":6,"price_amount":140,"currency":"EUR","publish_days":90,"start_at":"2026-03-02T11:50:32Z","end_at":"2026-03-12T11:50:32Z","is_active":true}'
+```
+Response (örnek):
+```json
+{"detail":"Active campaign overlaps with existing time range"}
+```
+
+### Quote Zaman Aralığı Kontrolü
+**Şimdi aralığında:** (Bireysel kampanya aktif)
+```json
+{"quote":{"type":"campaign_item","campaign_item_id":"7ba817be-4218-4b02-9472-8ce2587a372f","listing_quota":5,"amount":120.0}}
+```
+
+**Aralık dışında (Planlı kampanya):** (Kurumsal sadece gelecekte)
+```json
+{"quote":{"type":"campaign_none","reason":"no_active_campaign"}}
+```
