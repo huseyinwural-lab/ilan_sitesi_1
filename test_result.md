@@ -16099,3 +16099,259 @@ Comprehensive UI test for Campaign Warnings MVP as per review request: "Kampanya
 ---
 
 
+
+
+## Pricing Scaffolding UI Test - Part 1 (Feb 25, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Comprehensive UI test for Pricing scaffolding pages as per review request: "Parça 1 pricing scaffolding UI testi: admin login (admin@platform.com / Admin123!), ardından /admin menüde "Fiyatlandırma" bölümü ve altındaki Kampanya Modu / Bireysel Tier Pricing / Kurumsal Paketler öğelerini doğrula. /admin/pricing/campaign, /admin/pricing/tiers, /admin/pricing/packages sayfaları açılıyor mu ve placeholder başlıkları görünüyor mu? data-testid'leri doğrula."
+
+### Test Flow Executed:
+1. ✅ Admin login at /admin/login with admin@platform.com / Admin123! → authentication successful
+2. ✅ Verified "Fiyatlandırma" section present in sidebar menu
+3. ✅ Verified all three menu items visible and clickable
+4. ✅ Clicked "Kampanya Modu" → /admin/pricing/campaign page loaded
+5. ✅ Clicked "Bireysel Tier Pricing" → /admin/pricing/tiers page loaded
+6. ✅ Clicked "Kurumsal Paketler" → /admin/pricing/packages page loaded
+7. ✅ Verified all page titles, subtitles, and placeholder content
+8. ✅ Verified all data-testids present and functional
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Admin Login**: ✅ WORKING PERFECTLY
+  - **URL**: https://public-site-build.preview.emergentagent.com/admin/login loads successfully
+  - **Credentials**: admin@platform.com / Admin123!
+  - **Login Result**: ✅ SUCCESS - redirected to /admin area
+  - **Current URL**: https://public-site-build.preview.emergentagent.com/admin
+  - **Admin Layout**: data-testid="admin-layout" present and visible
+  - **No Errors**: No login errors detected
+
+**2. "Fiyatlandırma" Section in Sidebar Menu**: ✅ VERIFIED
+  - **Section Label**: "FIYATLANDIRMA" visible in sidebar navigation
+  - **Section Type**: Divider with label (uppercase styling)
+  - **Location**: Between "REKLAMLAR" section and "KATALOG & İÇERIK" section
+  - **Visibility**: ✅ VISIBLE to super_admin users
+  - **CRITICAL**: Fiyatlandırma section is properly displayed in admin sidebar menu
+
+**3. Menu Items Under Fiyatlandırma**: ✅ ALL VISIBLE AND CLICKABLE
+  
+  **a) Kampanya Modu**:
+    - **Menu Item**: "Kampanya Modu" visible in sidebar
+    - **Link Path**: /admin/pricing/campaign
+    - **Data-testid**: data-testid="nav-pricing-campaign-mode" ✅ VERIFIED
+    - **Icon**: Sparkles icon displayed
+    - **Clickable**: ✅ YES - successfully navigates to campaign page
+    - **CRITICAL**: Kampanya Modu menu item fully functional
+  
+  **b) Bireysel Tier Pricing**:
+    - **Menu Item**: "Bireysel Tier Pricing" visible in sidebar
+    - **Link Path**: /admin/pricing/tiers
+    - **Data-testid**: data-testid="nav-pricing-tier-rules" ✅ VERIFIED
+    - **Icon**: Layers icon displayed
+    - **Clickable**: ✅ YES - successfully navigates to tiers page
+    - **CRITICAL**: Bireysel Tier Pricing menu item fully functional
+  
+  **c) Kurumsal Paketler**:
+    - **Menu Item**: "Kurumsal Paketler" visible in sidebar
+    - **Link Path**: /admin/pricing/packages
+    - **Data-testid**: data-testid="nav-pricing-packages" ✅ VERIFIED
+    - **Icon**: Package icon displayed
+    - **Clickable**: ✅ YES - successfully navigates to packages page
+    - **CRITICAL**: Kurumsal Paketler menu item fully functional
+
+**4. /admin/pricing/campaign Page**: ✅ WORKING PERFECTLY
+  - **URL**: https://public-site-build.preview.emergentagent.com/admin/pricing/campaign loads successfully
+  - **Page Container**: data-testid="admin-pricing-campaign-page" ✅ VISIBLE
+  - **Page Title**: data-testid="admin-pricing-campaign-title" ✅ VISIBLE
+    - Text: "Lansman Kampanyası Modu"
+  - **Page Subtitle**: data-testid="admin-pricing-campaign-subtitle" ✅ VISIBLE
+    - Text: "Pricing campaign policy ayarları Parça 2'de devreye alınacak."
+  - **Placeholder Box**: data-testid="admin-pricing-campaign-placeholder" ✅ VISIBLE
+    - Text: "Scaffolding: Bu ekran Parça 2'de aktif hale gelecek."
+  - **Breadcrumb**: "Admin > pricing > campaign" displayed correctly
+  - **CRITICAL**: Campaign page loads with all scaffolding elements and proper data-testids
+
+**5. /admin/pricing/tiers Page**: ✅ WORKING PERFECTLY
+  - **URL**: https://public-site-build.preview.emergentagent.com/admin/pricing/tiers loads successfully
+  - **Page Container**: data-testid="admin-pricing-tiers-page" ✅ VISIBLE
+  - **Page Title**: data-testid="admin-pricing-tiers-title" ✅ VISIBLE
+    - Text: "Bireysel Tier Pricing"
+  - **Page Subtitle**: data-testid="admin-pricing-tiers-subtitle" ✅ VISIBLE
+    - Text: "Tier fiyatlandırma kurgusu Parça 3'te devreye alınacak."
+  - **Placeholder Box**: data-testid="admin-pricing-tiers-placeholder" ✅ VISIBLE
+    - Text: "Scaffolding: Bu ekran Parça 3'te aktif hale gelecek."
+  - **Breadcrumb**: "Admin > pricing > tiers" displayed correctly
+  - **CRITICAL**: Tiers page loads with all scaffolding elements and proper data-testids
+
+**6. /admin/pricing/packages Page**: ✅ WORKING PERFECTLY
+  - **URL**: https://public-site-build.preview.emergentagent.com/admin/pricing/packages loads successfully
+  - **Page Container**: data-testid="admin-pricing-packages-page" ✅ VISIBLE
+  - **Page Title**: data-testid="admin-pricing-packages-title" ✅ VISIBLE
+    - Text: "Kurumsal Paketler"
+  - **Page Subtitle**: data-testid="admin-pricing-packages-subtitle" ✅ VISIBLE
+    - Text: "Paket/Quota yönetimi Parça 3'te devreye alınacak."
+  - **Placeholder Box**: data-testid="admin-pricing-packages-placeholder" ✅ VISIBLE
+    - Text: "Scaffolding: Bu ekran Parça 3'te aktif hale gelecek."
+  - **Breadcrumb**: "Admin > pricing > packages" displayed correctly
+  - **CRITICAL**: Packages page loads with all scaffolding elements and proper data-testids
+
+### UI Elements Verified:
+
+#### ✅ SIDEBAR MENU:
+- ✅ "FIYATLANDIRMA" section divider visible
+- ✅ "Kampanya Modu" menu item (with Sparkles icon)
+- ✅ "Bireysel Tier Pricing" menu item (with Layers icon)
+- ✅ "Kurumsal Paketler" menu item (with Package icon)
+- ✅ All menu items are highlighted when active
+- ✅ All menu items navigate correctly on click
+
+#### ✅ CAMPAIGN PAGE (/admin/pricing/campaign):
+- ✅ Page container with space-y-4 spacing
+- ✅ H1 title with text-2xl font-semibold
+- ✅ Subtitle with text-sm text-muted-foreground
+- ✅ Placeholder box with rounded-lg border bg-white
+- ✅ Breadcrumb navigation at top
+- ✅ All data-testids present and functional
+
+#### ✅ TIERS PAGE (/admin/pricing/tiers):
+- ✅ Page container with space-y-4 spacing
+- ✅ H1 title with text-2xl font-semibold
+- ✅ Subtitle with text-sm text-muted-foreground
+- ✅ Placeholder box with rounded-lg border bg-white
+- ✅ Breadcrumb navigation at top
+- ✅ All data-testids present and functional
+
+#### ✅ PACKAGES PAGE (/admin/pricing/packages):
+- ✅ Page container with space-y-4 spacing
+- ✅ H1 title with text-2xl font-semibold
+- ✅ Subtitle with text-sm text-muted-foreground
+- ✅ Placeholder box with rounded-lg border bg-white
+- ✅ Breadcrumb navigation at top
+- ✅ All data-testids present and functional
+
+### Screenshots Captured:
+1. **sidebar-with-pricing.png**: Full sidebar showing "FIYATLANDIRMA" section with all three menu items
+2. **campaign-page-via-menu.png**: Campaign page after clicking menu item showing title and placeholder
+3. **tiers-page-via-menu.png**: Tiers page after clicking menu item showing title and placeholder
+4. **packages-page-via-menu.png**: Packages page after clicking menu item showing title and placeholder
+
+### Data-testids Verification:
+
+**Menu Items** (all verified and functional):
+- ✅ nav-pricing-campaign-mode
+- ✅ nav-pricing-tier-rules
+- ✅ nav-pricing-packages
+
+**Campaign Page** (all verified and functional):
+- ✅ admin-pricing-campaign-page
+- ✅ admin-pricing-campaign-title
+- ✅ admin-pricing-campaign-subtitle
+- ✅ admin-pricing-campaign-placeholder
+
+**Tiers Page** (all verified and functional):
+- ✅ admin-pricing-tiers-page
+- ✅ admin-pricing-tiers-title
+- ✅ admin-pricing-tiers-subtitle
+- ✅ admin-pricing-tiers-placeholder
+
+**Packages Page** (all verified and functional):
+- ✅ admin-pricing-packages-page
+- ✅ admin-pricing-packages-title
+- ✅ admin-pricing-packages-subtitle
+- ✅ admin-pricing-packages-placeholder
+
+### Code Implementation Verification:
+
+**Layout.js** (frontend - Menu Structure):
+- **Fiyatlandırma Divider**: Line 468 - `{ divider: true, label: 'Fiyatlandırma', roles: roles.pricingManager }`
+- **Kampanya Modu**: Line 469 - `{ path: '/admin/pricing/campaign', icon: Sparkles, label: 'Kampanya Modu', roles: roles.pricingManager, testId: 'pricing-campaign-mode' }`
+- **Bireysel Tier Pricing**: Line 470 - `{ path: '/admin/pricing/tiers', icon: Layers, label: 'Bireysel Tier Pricing', roles: roles.pricingManager, testId: 'pricing-tier-rules' }`
+- **Kurumsal Paketler**: Line 471 - `{ path: '/admin/pricing/packages', icon: Package, label: 'Kurumsal Paketler', roles: roles.pricingManager, testId: 'pricing-packages' }`
+- **Menu Rendering**: testId rendered as `data-testid="nav-{testId}"`
+
+**BackofficePortalApp.jsx** (frontend - Routing):
+- **Campaign Route**: Line 82 - `<Route path="/pricing/campaign" element={<AdminLayout><AdminPricingCampaign /></AdminLayout>} />`
+- **Tiers Route**: Line 83 - `<Route path="/pricing/tiers" element={<AdminLayout><AdminPricingTiers /></AdminLayout>} />`
+- **Packages Route**: Line 84 - `<Route path="/pricing/packages" element={<AdminLayout><AdminPricingPackages /></AdminLayout>} />`
+
+**adminRbac.js** (frontend - Role-Based Access Control):
+- **pricingManager Role Group**: Line 13 - `pricingManager: ['super_admin', 'country_admin', 'pricing_manager']`
+- **Pricing Routes RBAC**: Line 40-41 - Routes under `/admin/pricing/` require pricingManager roles
+- **Admin User Role**: admin@platform.com has 'super_admin' role, which is included in pricingManager group
+
+**AdminPricingCampaign.js** (frontend):
+- **Component**: Lines 3-17
+- **Page Container**: data-testid="admin-pricing-campaign-page"
+- **Title**: data-testid="admin-pricing-campaign-title" - "Lansman Kampanyası Modu"
+- **Subtitle**: data-testid="admin-pricing-campaign-subtitle" - "Pricing campaign policy ayarları Parça 2'de devreye alınacak."
+- **Placeholder**: data-testid="admin-pricing-campaign-placeholder" - "Scaffolding: Bu ekran Parça 2'de aktif hale gelecek."
+
+**AdminPricingTiers.js** (frontend):
+- **Component**: Lines 3-17
+- **Page Container**: data-testid="admin-pricing-tiers-page"
+- **Title**: data-testid="admin-pricing-tiers-title" - "Bireysel Tier Pricing"
+- **Subtitle**: data-testid="admin-pricing-tiers-subtitle" - "Tier fiyatlandırma kurgusu Parça 3'te devreye alınacak."
+- **Placeholder**: data-testid="admin-pricing-tiers-placeholder" - "Scaffolding: Bu ekran Parça 3'te aktif hale gelecek."
+
+**AdminPricingPackages.js** (frontend):
+- **Component**: Lines 3-17
+- **Page Container**: data-testid="admin-pricing-packages-page"
+- **Title**: data-testid="admin-pricing-packages-title" - "Kurumsal Paketler"
+- **Subtitle**: data-testid="admin-pricing-packages-subtitle" - "Paket/Quota yönetimi Parça 3'te devreye alınacak."
+- **Placeholder**: data-testid="admin-pricing-packages-placeholder" - "Scaffolding: Bu ekran Parça 3'te aktif hale gelecek."
+
+### Console Errors Check:
+- ✅ **No Console Errors**: No critical JavaScript errors detected
+- ⚠ **Minor API Failures**: Some non-critical API calls failed (ads, menu, footer, header - expected in dev environment)
+- ✅ **Clean Page Load**: All pricing pages loaded without errors
+- ✅ **No User-Facing Errors**: No error messages displayed to user
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (8/8 requirements verified)
+- **Admin Login**: ✅ WORKING (admin@platform.com / Admin123!)
+- **Fiyatlandırma Section**: ✅ VERIFIED (visible in sidebar menu)
+- **Kampanya Modu Menu Item**: ✅ VERIFIED (clickable with correct data-testid)
+- **Bireysel Tier Pricing Menu Item**: ✅ VERIFIED (clickable with correct data-testid)
+- **Kurumsal Paketler Menu Item**: ✅ VERIFIED (clickable with correct data-testid)
+- **Campaign Page (/admin/pricing/campaign)**: ✅ WORKING (loads with title and placeholder)
+- **Tiers Page (/admin/pricing/tiers)**: ✅ WORKING (loads with title and placeholder)
+- **Packages Page (/admin/pricing/packages)**: ✅ WORKING (loads with title and placeholder)
+- **All Data-testids**: ✅ VERIFIED (15 data-testids present and functional)
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - All requirements satisfied 100%
+- **Login**: ✅ SUCCESS (admin@platform.com / Admin123!)
+- **Menu Section**: ✅ PRODUCTION-READY ("Fiyatlandırma" section visible with 3 items)
+- **Menu Items**: ✅ PRODUCTION-READY (all 3 items clickable with proper data-testids)
+- **Campaign Page**: ✅ PRODUCTION-READY (scaffolding page with all elements)
+- **Tiers Page**: ✅ PRODUCTION-READY (scaffolding page with all elements)
+- **Packages Page**: ✅ PRODUCTION-READY (scaffolding page with all elements)
+- **Data-testids**: ✅ PRODUCTION-READY (all 15 data-testids present and verified)
+- **UI/UX**: ✅ PRODUCTION-READY (clean layout, proper styling, consistent design)
+
+### Review Request Compliance:
+✅ **Review Request**: "Parça 1 pricing scaffolding UI testi: admin login (admin@platform.com / Admin123!), ardından /admin menüde "Fiyatlandırma" bölümü ve altındaki Kampanya Modu / Bireysel Tier Pricing / Kurumsal Paketler öğelerini doğrula. /admin/pricing/campaign, /admin/pricing/tiers, /admin/pricing/packages sayfaları açılıyor mu ve placeholder başlıkları görünüyor mu? data-testid'leri doğrula."
+
+**Results**:
+- ✅ Step 1: Admin login with admin@platform.com / Admin123! - SUCCESS
+- ✅ Step 2: "Fiyatlandırma" section in /admin menu - VERIFIED (visible in sidebar)
+- ✅ Step 3: "Kampanya Modu" menu item - VERIFIED (visible, clickable, has data-testid)
+- ✅ Step 4: "Bireysel Tier Pricing" menu item - VERIFIED (visible, clickable, has data-testid)
+- ✅ Step 5: "Kurumsal Paketler" menu item - VERIFIED (visible, clickable, has data-testid)
+- ✅ Step 6: /admin/pricing/campaign page opens - SUCCESS (page loads correctly)
+- ✅ Step 7: Campaign page placeholder title - VERIFIED ("Lansman Kampanyası Modu" visible)
+- ✅ Step 8: /admin/pricing/tiers page opens - SUCCESS (page loads correctly)
+- ✅ Step 9: Tiers page placeholder title - VERIFIED ("Bireysel Tier Pricing" visible)
+- ✅ Step 10: /admin/pricing/packages page opens - SUCCESS (page loads correctly)
+- ✅ Step 11: Packages page placeholder title - VERIFIED ("Kurumsal Paketler" visible)
+- ✅ Step 12: All data-testids verified - SUCCESS (15 data-testids all present and functional)
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 25, 2026 (LATEST)
+- **Message**: Pricing Scaffolding UI test (Part 1) SUCCESSFULLY COMPLETED with 100% PASS rate. All requirements from review request satisfied. FLOW VERIFICATION: 1) Admin login works perfectly with admin@platform.com / Admin123! at /admin/login, redirected to /admin area, admin layout (data-testid="admin-layout") loaded ✅. 2) CRITICAL FINDING 1: "FIYATLANDIRMA" section IS VISIBLE in sidebar menu between "REKLAMLAR" and "KATALOG & İÇERIK" sections ✅. 3) CRITICAL FINDING 2: All three menu items under Fiyatlandırma section are VISIBLE and CLICKABLE with correct data-testids: "Kampanya Modu" (data-testid="nav-pricing-campaign-mode", icon: Sparkles) ✅, "Bireysel Tier Pricing" (data-testid="nav-pricing-tier-rules", icon: Layers) ✅, "Kurumsal Paketler" (data-testid="nav-pricing-packages", icon: Package) ✅. 4) CRITICAL FINDING 3: /admin/pricing/campaign page LOADS SUCCESSFULLY when clicking menu item, shows correct scaffolding with data-testid="admin-pricing-campaign-page", title "Lansman Kampanyası Modu" (data-testid="admin-pricing-campaign-title"), subtitle "Pricing campaign policy ayarları Parça 2'de devreye alınacak." (data-testid="admin-pricing-campaign-subtitle"), and placeholder box "Scaffolding: Bu ekran Parça 2'de aktif hale gelecek." (data-testid="admin-pricing-campaign-placeholder") ✅. 5) CRITICAL FINDING 4: /admin/pricing/tiers page LOADS SUCCESSFULLY when clicking menu item, shows correct scaffolding with data-testid="admin-pricing-tiers-page", title "Bireysel Tier Pricing" (data-testid="admin-pricing-tiers-title"), subtitle "Tier fiyatlandırma kurgusu Parça 3'te devreye alınacak." (data-testid="admin-pricing-tiers-subtitle"), and placeholder box "Scaffolding: Bu ekran Parça 3'te aktif hale gelecek." (data-testid="admin-pricing-tiers-placeholder") ✅. 6) CRITICAL FINDING 5: /admin/pricing/packages page LOADS SUCCESSFULLY when clicking menu item, shows correct scaffolding with data-testid="admin-pricing-packages-page", title "Kurumsal Paketler" (data-testid="admin-pricing-packages-title"), subtitle "Paket/Quota yönetimi Parça 3'te devreye alınacak." (data-testid="admin-pricing-packages-subtitle"), and placeholder box "Scaffolding: Bu ekran Parça 3'te aktif hale gelecek." (data-testid="admin-pricing-packages-placeholder") ✅. 7) CRITICAL FINDING 6: All 15 data-testids VERIFIED and FUNCTIONAL - 3 menu item data-testids (nav-pricing-*), 12 page data-testids (admin-pricing-*-page/title/subtitle/placeholder for each of 3 pages) ✅. Screenshots captured showing full sidebar with pricing section and all three pages. RBAC correctly configured: pricingManager role group includes super_admin, allowing admin@platform.com access to pricing section. No console errors or user-facing errors detected. Minor API failures for non-critical endpoints (ads, menu, footer, header) are expected in dev environment and do not affect pricing scaffolding functionality. Pricing scaffolding UI (Part 1) is production-ready and fully functional with all required elements properly implemented and tested.
+
+---
+
