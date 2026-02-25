@@ -559,6 +559,39 @@ export default function AdminAdsManagement() {
           )}
         </div>
       )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" data-testid="admin-ads-delete-modal">
+          <div className="w-full max-w-md rounded-lg bg-white p-5 space-y-4" data-testid="admin-ads-delete-card">
+            <div className="text-sm font-semibold" data-testid="admin-ads-delete-title">Reklamı Sil</div>
+            <p className="text-sm text-muted-foreground" data-testid="admin-ads-delete-description">
+              {adLabel(deleteTarget)} reklamını silmek üzeresiniz. Bu işlem geri alınamaz.
+            </p>
+            {deleteError && (
+              <div className="text-xs text-rose-600" data-testid="admin-ads-delete-error">{deleteError}</div>
+            )}
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="h-9 px-3 rounded-md border text-sm"
+                data-testid="admin-ads-delete-cancel"
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleteLoading}
+                className="h-9 px-4 rounded-md bg-rose-600 text-white text-sm disabled:opacity-60"
+                data-testid="admin-ads-delete-confirm"
+              >
+                {deleteLoading ? 'Siliniyor...' : 'Sil'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
