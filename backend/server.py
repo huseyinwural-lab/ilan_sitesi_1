@@ -20741,8 +20741,22 @@ async def list_ad_campaigns(
     query = query.order_by(desc(AdCampaign.updated_at))
 
     result = await session.execute(query)
+    rows = result.all()
+    campaign_ids = [row[0].id for row in rows]
+    stats_map = await _campaign_traffic_stats(session, campaign_ids)
+
     items = []
-    for campaign, total_ads, active_ads in result.all():
+    for campaign, total_ads, active_ads in rows:
+        stats = stats_map.get(
+            campaign.id,
+            {
+                "current_impressions": 0,
+                "previous_impressions": 0,
+                "current_clicks": 0,
+                "previous_clicks": 0,
+            },
+        )
+        warnings = _build_campaign_warnings(campaign, stats)
         items.append(
             {
                 "id": str(campaign.id),
@@ -20755,6 +20769,8 @@ async def list_ad_campaigns(
                 "status": campaign.status,
                 "total_ads": int(total_ads or 0),
                 "active_ads": int(active_ads or 0),
+                "warnings_count": len(warnings),
+                "has_warning": len(warnings) > 0,
             }
         )
     return {"items": items}
