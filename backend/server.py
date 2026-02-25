@@ -19730,17 +19730,25 @@ class AdCreatePayload(BaseModel):
     target_url: Optional[str] = None
 
 
-class AdUpdatePayload(BaseModel):
-    campaign_id: Optional[str] = None
-    format: Optional[str] = None
+class AdCampaignCreatePayload(BaseModel):
+    name: str
+    advertiser: Optional[str] = None
+    budget: Optional[float] = None
+    currency: Optional[str] = "EUR"
     start_at: Optional[datetime] = None
     end_at: Optional[datetime] = None
-    is_active: Optional[bool] = None
-    priority: Optional[int] = None
-    target_url: Optional[str] = None
+    status: Optional[str] = "draft"
 
 
-class DopingRequestPayload(BaseModel):
+class AdCampaignUpdatePayload(BaseModel):
+    name: Optional[str] = None
+    advertiser: Optional[str] = None
+    budget: Optional[float] = None
+    currency: Optional[str] = None
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    status: Optional[str] = None
+
     listing_id: str
     placement_home: Optional[bool] = False
     placement_category: Optional[bool] = False
