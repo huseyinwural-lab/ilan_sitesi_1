@@ -210,7 +210,7 @@ const UserPanelLayout = () => {
                 className={({ isActive }) =>
                   `border-b-2 pb-2 transition ${
                     isActive
-                      ? 'border-[#F57C00] text-[var(--text-primary)]'
+                      ? 'border-[var(--color-primary)] text-[var(--text-primary)]'
                       : 'border-transparent text-[#415A77] hover:text-[var(--text-primary)]'
                   }`
                 }
