@@ -43,11 +43,12 @@ export default function AdminAdsManagement() {
     fetchAds();
   }, []);
 
-  const fetchAnalytics = async (overrideRange) => {
+  const fetchAnalytics = async (overrideRange, overrideGroup) => {
     setAnalyticsStatus('loading');
     try {
       const selectedRange = overrideRange || range;
-      const params = {};
+      const selectedGroup = overrideGroup || groupBy;
+      const params = { group_by: selectedGroup };
       if (selectedRange === 'custom') {
         if (!customStart || !customEnd) {
           setAnalyticsStatus('error');
@@ -70,7 +71,7 @@ export default function AdminAdsManagement() {
     if (activeTab !== 'performance') return;
     if (range === 'custom' && (!customStart || !customEnd)) return;
     fetchAnalytics();
-  }, [activeTab, range, customStart, customEnd]);
+  }, [activeTab, range, customStart, customEnd, groupBy]);
 
   const totals = analytics?.totals || { impressions: 0, clicks: 0, ctr: 0 };
   const placementStats = Array.isArray(analytics?.placements) ? analytics.placements : [];
