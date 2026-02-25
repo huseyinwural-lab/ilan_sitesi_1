@@ -20298,7 +20298,11 @@ async def _expire_ads(session: AsyncSession) -> None:
         expire_clauses.append(Advertisement.campaign_id.in_(expired_campaign_ids))
 
     result = await session.execute(
-        select(Advertisement).where(Advertisement.is_active.is_(True), or_(*expire_clauses))
+        select(Advertisement).where(
+            Advertisement.is_active.is_(True),
+            Advertisement.is_deleted.is_(False),
+            or_(*expire_clauses),
+        )
     )
     expired_ads = result.scalars().all()
     for item in expired_ads:
