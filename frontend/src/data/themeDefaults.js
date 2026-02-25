@@ -119,7 +119,7 @@ export const DEFAULT_THEME_CONFIG = {
     'border-strong': '#cbd5e1',
     divider: '#e2e8f0',
     'button-primary-bg': '#ff7000',
-    'button-primary-text': '#ffffff',
+    'button-primary-text': '#0f172a',
     'button-secondary-bg': '#f1f5f9',
     'button-secondary-text': '#1b263b',
     'header-bg': '#ffffff',
