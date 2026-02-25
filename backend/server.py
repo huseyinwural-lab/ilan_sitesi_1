@@ -19815,12 +19815,15 @@ class PricingQuotePayload(BaseModel):
     user_type: Optional[str] = None
     listing_count_year: Optional[int] = None
     listing_type: Optional[str] = None
+    campaign_item_id: Optional[str] = None
+    listing_quota: Optional[int] = None
 
 
 class PricingCheckoutPayload(BaseModel):
     listing_id: str
     origin_url: str
-    package_id: Optional[str] = None
+    campaign_item_id: Optional[str] = None
+    listing_quota: Optional[int] = None
 
 
 class PricingTierRuleInput(BaseModel):
