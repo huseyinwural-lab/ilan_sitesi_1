@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const setMetaTag = (key, value, isProperty = False) => {
+const setMetaTag = (key, value, isProperty = false) => {
   if (!value) return;
   const selector = isProperty ? `meta[property="${key}"]` : `meta[name="${key}"]`;
   let tag = document.querySelector(selector);
