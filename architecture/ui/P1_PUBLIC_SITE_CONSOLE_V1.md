@@ -88,13 +88,20 @@
 **Placement Enum (tek kaynak):**
 ```
 AD_HOME_TOP
+AD_CATEGORY_TOP
 AD_CATEGORY_RIGHT
+AD_CATEGORY_BOTTOM
 AD_SEARCH_TOP
 AD_IN_FEED
 AD_LISTING_RIGHT
 AD_LOGIN_1
 AD_LOGIN_2
 ```
+
+**Format Matrix:**
+- TOP/BOTTOM/LOGIN/SEARCH = horizontal
+- RIGHT = vertical
+- IN_FEED = square
 
 **Campaign Status:** `draft | active | paused | expired`
 
