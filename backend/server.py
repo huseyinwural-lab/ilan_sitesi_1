@@ -20252,10 +20252,21 @@ async def get_ads_analytics(
     range: str = "30d",
     start_at: Optional[str] = None,
     end_at: Optional[str] = None,
+    group_by: str = "ad",
+    campaign_id: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     start_dt, end_dt = _resolve_analytics_window(range, start_at, end_at)
+    if group_by not in {"ad", "campaign", "placement"}:
+        raise HTTPException(status_code=400, detail="Invalid group_by")
+
+    campaign_uuid: Optional[uuid.UUID] = None
+    if campaign_id:
+        try:
+            campaign_uuid = uuid.UUID(campaign_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid campaign id") from exc
 
     impression_stmt = select(func.count()).select_from(AdImpression).where(
         AdImpression.created_at >= start_dt,
@@ -20265,46 +20276,168 @@ async def get_ads_analytics(
         AdClick.created_at >= start_dt,
         AdClick.created_at <= end_dt,
     )
+    if campaign_uuid:
+        impression_stmt = impression_stmt.join(Advertisement, Advertisement.id == AdImpression.ad_id).where(
+            Advertisement.campaign_id == campaign_uuid
+        )
+        click_stmt = click_stmt.join(Advertisement, Advertisement.id == AdClick.ad_id).where(
+            Advertisement.campaign_id == campaign_uuid
+        )
 
     impressions_total = int((await session.execute(impression_stmt)).scalar() or 0)
     clicks_total = int((await session.execute(click_stmt)).scalar() or 0)
     ctr_total = round((clicks_total / impressions_total) * 100, 2) if impressions_total else 0.0
 
-    impressions_by = dict(
-        (row[0], int(row[1]))
-        for row in (
-            await session.execute(
-                select(AdImpression.placement, func.count())
-                .where(AdImpression.created_at >= start_dt, AdImpression.created_at <= end_dt)
-                .group_by(AdImpression.placement)
-            )
-        ).all()
-    )
-    clicks_by = dict(
-        (row[0], int(row[1]))
-        for row in (
-            await session.execute(
-                select(AdClick.placement, func.count())
-                .where(AdClick.created_at >= start_dt, AdClick.created_at <= end_dt)
-                .group_by(AdClick.placement)
-            )
-        ).all()
-    )
-
-    placements_payload = []
-    for placement_key, label in AD_PLACEMENTS.items():
-        imp = impressions_by.get(placement_key, 0)
-        clk = clicks_by.get(placement_key, 0)
-        ctr = round((clk / imp) * 100, 2) if imp else 0.0
-        placements_payload.append(
-            {
-                "placement": placement_key,
-                "label": label,
-                "impressions": imp,
-                "clicks": clk,
-                "ctr": ctr,
-            }
+    now = datetime.now(timezone.utc)
+    active_ads_stmt = (
+        select(func.count())
+        .select_from(Advertisement)
+        .outerjoin(AdCampaign, AdCampaign.id == Advertisement.campaign_id)
+        .where(
+            Advertisement.is_active.is_(True),
+            or_(Advertisement.start_at.is_(None), Advertisement.start_at <= now),
+            or_(Advertisement.end_at.is_(None), Advertisement.end_at >= now),
+            or_(
+                AdCampaign.id.is_(None),
+                and_(
+                    AdCampaign.status == "active",
+                    or_(AdCampaign.start_at.is_(None), AdCampaign.start_at <= now),
+                    or_(AdCampaign.end_at.is_(None), AdCampaign.end_at >= now),
+                ),
+            ),
         )
+    )
+    if campaign_uuid:
+        active_ads_stmt = active_ads_stmt.where(Advertisement.campaign_id == campaign_uuid)
+    active_ads = int((await session.execute(active_ads_stmt)).scalar() or 0)
+
+    groups_payload = []
+
+    if group_by == "placement":
+        impression_rows_stmt = select(AdImpression.placement, func.count()).where(
+            AdImpression.created_at >= start_dt,
+            AdImpression.created_at <= end_dt,
+        )
+        click_rows_stmt = select(AdClick.placement, func.count()).where(
+            AdClick.created_at >= start_dt,
+            AdClick.created_at <= end_dt,
+        )
+        if campaign_uuid:
+            impression_rows_stmt = impression_rows_stmt.join(Advertisement, Advertisement.id == AdImpression.ad_id).where(
+                Advertisement.campaign_id == campaign_uuid
+            )
+            click_rows_stmt = click_rows_stmt.join(Advertisement, Advertisement.id == AdClick.ad_id).where(
+                Advertisement.campaign_id == campaign_uuid
+            )
+        impressions_by = dict(
+            (row[0], int(row[1])) for row in (await session.execute(impression_rows_stmt.group_by(AdImpression.placement))).all()
+        )
+        clicks_by = dict(
+            (row[0], int(row[1])) for row in (await session.execute(click_rows_stmt.group_by(AdClick.placement))).all()
+        )
+        for placement_key, label in AD_PLACEMENTS.items():
+            imp = impressions_by.get(placement_key, 0)
+            clk = clicks_by.get(placement_key, 0)
+            ctr = round((clk / imp) * 100, 2) if imp else 0.0
+            groups_payload.append(
+                {
+                    "key": placement_key,
+                    "label": label,
+                    "impressions": imp,
+                    "clicks": clk,
+                    "ctr": ctr,
+                }
+            )
+
+    if group_by == "campaign":
+        impression_rows_stmt = (
+            select(Advertisement.campaign_id, func.count())
+            .select_from(AdImpression)
+            .join(Advertisement, Advertisement.id == AdImpression.ad_id)
+            .where(AdImpression.created_at >= start_dt, AdImpression.created_at <= end_dt)
+            .group_by(Advertisement.campaign_id)
+        )
+        click_rows_stmt = (
+            select(Advertisement.campaign_id, func.count())
+            .select_from(AdClick)
+            .join(Advertisement, Advertisement.id == AdClick.ad_id)
+            .where(AdClick.created_at >= start_dt, AdClick.created_at <= end_dt)
+            .group_by(Advertisement.campaign_id)
+        )
+        if campaign_uuid:
+            impression_rows_stmt = impression_rows_stmt.where(Advertisement.campaign_id == campaign_uuid)
+            click_rows_stmt = click_rows_stmt.where(Advertisement.campaign_id == campaign_uuid)
+
+        impressions_by = dict((row[0], int(row[1])) for row in (await session.execute(impression_rows_stmt)).all())
+        clicks_by = dict((row[0], int(row[1])) for row in (await session.execute(click_rows_stmt)).all())
+
+        campaign_ids = {cid for cid in impressions_by.keys() if cid} | {cid for cid in clicks_by.keys() if cid}
+        campaigns = {}
+        if campaign_ids:
+            result = await session.execute(select(AdCampaign).where(AdCampaign.id.in_(campaign_ids)))
+            campaigns = {item.id: item for item in result.scalars().all()}
+
+        all_keys = set(impressions_by.keys()) | set(clicks_by.keys())
+        for camp_id in all_keys:
+            imp = impressions_by.get(camp_id, 0)
+            clk = clicks_by.get(camp_id, 0)
+            ctr = round((clk / imp) * 100, 2) if imp else 0.0
+            campaign = campaigns.get(camp_id)
+            label = campaign.name if campaign else "Standalone"
+            groups_payload.append(
+                {
+                    "key": str(camp_id) if camp_id else "standalone",
+                    "label": label,
+                    "impressions": imp,
+                    "clicks": clk,
+                    "ctr": ctr,
+                }
+            )
+
+    if group_by == "ad":
+        impression_rows_stmt = select(AdImpression.ad_id, func.count()).where(
+            AdImpression.created_at >= start_dt,
+            AdImpression.created_at <= end_dt,
+        )
+        click_rows_stmt = select(AdClick.ad_id, func.count()).where(
+            AdClick.created_at >= start_dt,
+            AdClick.created_at <= end_dt,
+        )
+        if campaign_uuid:
+            impression_rows_stmt = impression_rows_stmt.join(Advertisement, Advertisement.id == AdImpression.ad_id).where(
+                Advertisement.campaign_id == campaign_uuid
+            )
+            click_rows_stmt = click_rows_stmt.join(Advertisement, Advertisement.id == AdClick.ad_id).where(
+                Advertisement.campaign_id == campaign_uuid
+            )
+        impressions_by = dict((row[0], int(row[1])) for row in (await session.execute(impression_rows_stmt.group_by(AdImpression.ad_id))).all())
+        clicks_by = dict((row[0], int(row[1])) for row in (await session.execute(click_rows_stmt.group_by(AdClick.ad_id))).all())
+
+        ad_ids = set(impressions_by.keys()) | set(clicks_by.keys())
+        ads = {}
+        if ad_ids:
+            result = await session.execute(select(Advertisement).where(Advertisement.id.in_(ad_ids)))
+            ads = {item.id: item for item in result.scalars().all()}
+
+        for ad_id in ad_ids:
+            imp = impressions_by.get(ad_id, 0)
+            clk = clicks_by.get(ad_id, 0)
+            ctr = round((clk / imp) * 100, 2) if imp else 0.0
+            ad = ads.get(ad_id)
+            label = None
+            if ad:
+                label = ad.target_url or ad.asset_url
+            if not label:
+                label = f"Reklam {str(ad_id)[:8]}"
+            groups_payload.append(
+                {
+                    "key": str(ad_id),
+                    "label": label,
+                    "impressions": imp,
+                    "clicks": clk,
+                    "ctr": ctr,
+                }
+            )
 
     return {
         "range": {
@@ -20315,8 +20448,10 @@ async def get_ads_analytics(
             "impressions": impressions_total,
             "clicks": clicks_total,
             "ctr": ctr_total,
+            "active_ads": active_ads,
         },
-        "placements": placements_payload,
+        "group_by": group_by,
+        "groups": groups_payload,
     }
 
 
