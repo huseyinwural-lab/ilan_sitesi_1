@@ -20687,16 +20687,23 @@ async def _expire_pricing_campaigns(session: AsyncSession, actor: Optional[dict]
     return len(expired)
 
 
-DEFAULT_PRICING_TIER_RULES = [
-    {"tier_no": 1, "listing_from": 1, "listing_to": 1, "price_amount": 0},
-    {"tier_no": 2, "listing_from": 2, "listing_to": 2, "price_amount": 0},
-    {"tier_no": 3, "listing_from": 3, "listing_to": None, "price_amount": 0},
-]
-
-DEFAULT_PRICING_PACKAGES = [
-    {"name": "Lansman", "listing_quota": 10, "package_duration_days": 30},
-    {"name": "Vantage 20", "listing_quota": 20, "package_duration_days": 90},
-    {"name": "Vantage 30", "listing_quota": 30, "package_duration_days": 90},
+DEFAULT_PRICING_CAMPAIGN_ITEMS = [
+    {
+        "scope": "individual",
+        "name": "Örnek Bireysel Kampanya",
+        "listing_quota": 1,
+        "price_amount": 0,
+        "publish_days": 90,
+        "is_active": False,
+    },
+    {
+        "scope": "corporate",
+        "name": "Örnek Kurumsal Kampanya",
+        "listing_quota": 10,
+        "price_amount": 0,
+        "publish_days": 90,
+        "is_active": False,
+    },
 ]
 
 
