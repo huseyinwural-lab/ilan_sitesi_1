@@ -262,9 +262,9 @@ export default function AdminFooterManagement() {
                         className="h-8 rounded-md border px-2 text-xs"
                         data-testid={`admin-footer-col-type-${rowIndex}-${colIndex}`}
                       >
-                        <option value="text" label="Metin" />
-                        <option value="link_group" label="Link Group" />
-                        <option value="social" label="Sosyal Link" />
+                        <option value="text">Metin</option>
+                        <option value="link_group">Link Group</option>
+                        <option value="social">Sosyal Link</option>
                       </select>
                     </div>
 
