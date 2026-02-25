@@ -19352,7 +19352,12 @@ async def request_publish_vehicle_listing(
 
     listing.status = "pending_moderation"
     if not listing.expires_at:
-        listing.expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+        snapshot_result = await session.execute(
+            select(PricingPriceSnapshot).where(PricingPriceSnapshot.listing_id == listing.id)
+        )
+        snapshot = snapshot_result.scalar_one_or_none()
+        duration_days = snapshot.duration_days if snapshot else 30
+        listing.expires_at = datetime.now(timezone.utc) + timedelta(days=duration_days)
     listing.updated_at = datetime.now(timezone.utc)
 
     await _upsert_moderation_item(
