@@ -19,6 +19,7 @@ export const ROLE_TO_PORTAL = {
   support: PORTALS.BACKOFFICE,
   ads_manager: PORTALS.BACKOFFICE,
   pricing_manager: PORTALS.BACKOFFICE,
+  masterdata_manager: PORTALS.BACKOFFICE,
   ROLE_AUDIT_VIEWER: PORTALS.BACKOFFICE,
   dealer: PORTALS.DEALER,
   individual: PORTALS.INDIVIDUAL,
