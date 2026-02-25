@@ -20,6 +20,9 @@ Date: 2026-02-25
   - `message`: `JSON must be an array of records`
   - `field_errors[0].path`: `$`
 
+## API — Business Validation Error
+- Duplicate trim key → `error_code`: `BUSINESS_VALIDATION_ERROR`
+
 ## API — Schema Docs
 - `/app/docs/VEHICLE_MASTER_SCHEMA.md` (required/optional alanlar + örnek)
 
