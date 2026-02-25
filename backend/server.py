@@ -19858,8 +19858,8 @@ class PricingCampaignItemCreatePayload(BaseModel):
     price_amount: float
     currency: str = "EUR"
     publish_days: int
-    start_at: Optional[datetime] = None
-    end_at: Optional[datetime] = None
+    start_at: datetime
+    end_at: datetime
     is_active: Optional[bool] = True
 
 
