@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-25 11:55:00 UTC (Pricing Campaign Time Range)
+**Son güncelleme:** 2026-02-25 12:20:00 UTC (RBAC Validation)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
