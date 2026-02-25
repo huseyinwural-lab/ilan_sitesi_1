@@ -20063,16 +20063,18 @@ def _serialize_vehicle_trim(trim: VehicleTrim) -> dict:
     }
 
 
-def _get_vehicle_base_query(year: int, make: str, model: str, session: AsyncSession) -> tuple[VehicleMake, VehicleModel, list[VehicleTrim]]:
-    make_row = session.execute(select(VehicleMake).where(VehicleMake.slug == make))
-    make_obj = make_row.scalar_one_or_none() if hasattr(make_row, "scalar_one_or_none") else None
+async def _get_vehicle_base_query(year: int, make: str, model: str, session: AsyncSession) -> tuple[VehicleMake, VehicleModel, list[VehicleTrim]]:
+    make_row = await session.execute(select(VehicleMake).where(VehicleMake.slug == make))
+    make_obj = make_row.scalar_one_or_none()
     if make_obj is None:
         raise HTTPException(status_code=404, detail="Make not found")
-    model_row = session.execute(select(VehicleModel).where(VehicleModel.make_id == make_obj.id, VehicleModel.slug == model))
-    model_obj = model_row.scalar_one_or_none() if hasattr(model_row, "scalar_one_or_none") else None
+    model_row = await session.execute(
+        select(VehicleModel).where(VehicleModel.make_id == make_obj.id, VehicleModel.slug == model)
+    )
+    model_obj = model_row.scalar_one_or_none()
     if model_obj is None:
         raise HTTPException(status_code=404, detail="Model not found")
-    trim_rows = session.execute(
+    trim_rows = await session.execute(
         select(VehicleTrim)
         .where(
             VehicleTrim.make_id == make_obj.id,
