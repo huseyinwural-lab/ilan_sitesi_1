@@ -6,6 +6,7 @@ const API = `${BACKEND_URL}/api`;
 
 const emptyForm = {
   placement: '',
+  format: '',
   start_at: '',
   end_at: '',
   priority: 0,
