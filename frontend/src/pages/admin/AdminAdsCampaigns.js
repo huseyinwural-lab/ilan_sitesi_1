@@ -145,6 +145,7 @@ export default function AdminAdsCampaigns() {
     () => adsOptions.filter((ad) => !linkedAdIds.has(ad.id) && !ad.campaign_id),
     [adsOptions, linkedAdIds]
   );
+  const warnings = detail?.warnings || [];
 
   return (
     <div className="space-y-6" data-testid="admin-ads-campaigns">
