@@ -21054,6 +21054,37 @@ async def unlink_ad_from_campaign(
     return {"ok": True}
 
 
+@api_router.get("/admin/pricing/campaign")
+async def get_pricing_campaign(
+    current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+):
+    return get_pricing_campaign_policy()
+
+
+@api_router.put("/admin/pricing/campaign")
+async def update_pricing_campaign(
+    payload: PricingCampaignPolicyPayload,
+    current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+):
+    if payload.scope not in PRICING_CAMPAIGN_SCOPES:
+        raise HTTPException(status_code=400, detail="Invalid scope")
+    if payload.start_at and payload.end_at and payload.end_at < payload.start_at:
+        raise HTTPException(status_code=400, detail="end_at must be after start_at")
+    return update_pricing_campaign_policy(payload.dict())
+
+
+@api_router.post("/pricing/quote")
+async def get_pricing_quote_endpoint(payload: PricingQuotePayload):
+    if payload.user_type not in {"individual", "corporate"}:
+        raise HTTPException(status_code=400, detail="Invalid user_type")
+    return get_pricing_quote(payload.dict())
+
+
+@api_router.get("/pricing/packages")
+async def list_pricing_packages_endpoint():
+    return list_pricing_packages()
+
+
 @api_router.post("/v1/doping/requests")
 async def create_doping_request(
     payload: DopingRequestPayload,
