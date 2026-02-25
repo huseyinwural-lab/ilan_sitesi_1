@@ -19750,8 +19750,8 @@ AD_FORMAT_RULES = {
     "AD_LOGIN_2": ["horizontal"],
 }
 
-ADS_MANAGER_ROLES = ["super_admin", "country_admin", "ads_manager"]
-PRICING_MANAGER_ROLES = ["super_admin", "country_admin", "pricing_manager"]
+ADS_MANAGER_ROLES = ["super_admin", "ads_manager"]
+PRICING_MANAGER_ROLES = ["super_admin", "pricing_manager"]
 
 CAMPAIGN_STATUSES = {"draft", "active", "paused", "expired"}
 PRICING_CAMPAIGN_SCOPES = {"individual", "corporate", "all"}
