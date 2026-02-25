@@ -507,6 +507,7 @@ export default function Layout({ children }) {
       '/admin/individual-campaigns',
       '/admin/corporate-campaigns',
       '/admin/ads',
+      '/admin/ads/campaigns',
       '/admin/dashboard',
       '/admin/country-compare',
       '/admin/countries',
