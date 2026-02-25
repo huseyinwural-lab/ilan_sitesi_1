@@ -20720,6 +20720,21 @@ async def _expire_pricing_campaign_items(session: AsyncSession, actor: Optional[
     return len(expired)
 
 
+async def _assert_single_active_campaign_item(
+    session: AsyncSession, scope: str, exclude_id: Optional[uuid.UUID] = None
+) -> None:
+    query = select(PricingCampaignItem).where(
+        PricingCampaignItem.scope == scope,
+        PricingCampaignItem.is_active.is_(True),
+        PricingCampaignItem.is_deleted.is_(False),
+    )
+    if exclude_id:
+        query = query.where(PricingCampaignItem.id != exclude_id)
+    existing = (await session.execute(query.limit(1))).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=409, detail="Another active campaign item exists for this scope")
+
+
 DEFAULT_PRICING_CAMPAIGN_ITEMS = [
     {
         "scope": "individual",
