@@ -19426,6 +19426,12 @@ async def _process_vehicle_import_records(
                 validation_errors.append({"row": index, "error": "Model resolve failed"})
             continue
 
+        model_changed = False
+        if model.name != model_name:
+            model_changed = True
+            if not job.dry_run:
+                model.name = model_name
+
         trim = None
         if trim_ref:
             trim = trim_cache_ref.get(trim_ref)
