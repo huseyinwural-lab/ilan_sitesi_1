@@ -20891,6 +20891,7 @@ async def _build_corporate_quote(session: AsyncSession, user_id: uuid.UUID) -> D
     if subscription and package:
         return {
             "type": "quota",
+            "reason": "quota_subscription",
             "subscription_id": str(subscription.id),
             "package_id": str(package.id),
             "amount": 0,
