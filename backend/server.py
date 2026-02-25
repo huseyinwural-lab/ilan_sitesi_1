@@ -22003,11 +22003,23 @@ async def create_pricing_checkout_session(
     if listing.status not in {"draft", "needs_revision"}:
         raise HTTPException(status_code=400, detail="Listing not eligible for payment")
 
-    pricing_response, quote, policy, user_type = await _compute_pricing_quote(session, current_user)
+    pricing_response, quote, policy, user_type = await _compute_pricing_quote(session, current_user, payload)
     override_active = pricing_response.get("override_active", False)
+
+    if quote.get("type") == "campaign_selection":
+        return JSONResponse(
+            status_code=409,
+            content={
+                "selection_required": True,
+                "quote": pricing_response,
+            },
+        )
 
     if not quote.get("requires_payment"):
         return {"payment_required": False, "quote": pricing_response}
+
+    if quote.get("type") != "campaign_item":
+        raise HTTPException(status_code=400, detail="Campaign item required for checkout")
 
     origin = payload.origin_url.strip().rstrip("/")
     if not origin:
@@ -22019,37 +22031,12 @@ async def create_pricing_checkout_session(
 
     amount = float(quote.get("amount") or 0)
     currency = quote.get("currency") or "EUR"
-    duration_days = quote.get("duration_days") or 90
-    snapshot_quote = quote
-
-    if user_type == "corporate" and quote.get("type") == "package":
-        if not payload.package_id:
-            raise HTTPException(status_code=400, detail="package_id is required")
-        try:
-            package_uuid = uuid.UUID(payload.package_id)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail="package_id invalid") from exc
-        package = await session.get(PricingPackage, package_uuid)
-        if not package or not package.is_active:
-            raise HTTPException(status_code=404, detail="Package not found")
-        amount = float(package.package_price_amount or 0)
-        currency = package.currency
-        duration_days = package.publish_days
-        snapshot_quote = {
-            "type": "package",
-            "reason": "package_purchase",
-            "package_id": str(package.id),
-            "amount": amount,
-            "currency": currency,
-            "duration_days": duration_days,
-            "requires_payment": amount > 0,
-            "quota_used": False,
-        }
+    publish_days = quote.get("publish_days") or 90
 
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Payment not required for this listing")
 
-    snapshot = await _create_pricing_snapshot(session, listing, current_user, snapshot_quote, policy, override_active)
+    snapshot = await _create_pricing_snapshot(session, listing, current_user, quote, policy, override_active)
     if not snapshot:
         raise HTTPException(status_code=400, detail="Pricing snapshot could not be created")
     await session.flush()
@@ -22073,7 +22060,9 @@ async def create_pricing_checkout_session(
             "pricing_snapshot_id": str(snapshot.id),
             "pricing_mode": pricing_response.get("pricing_mode"),
             "pricing_user_type": user_type,
-            "pricing_duration_days": duration_days,
+            "pricing_publish_days": publish_days,
+            "pricing_campaign_item_id": quote.get("campaign_item_id"),
+            "pricing_listing_quota": quote.get("listing_quota"),
         },
         scope="country" if country_code else "global",
         country_code=country_code,
@@ -22100,6 +22089,7 @@ async def create_pricing_checkout_session(
             "invoice_id": str(invoice.id),
             "listing_id": str(listing.id),
             "pricing_snapshot_id": str(snapshot.id),
+            "pricing_campaign_item_id": quote.get("campaign_item_id"),
         },
     )
 
@@ -22130,6 +22120,7 @@ async def create_pricing_checkout_session(
         metadata_json={
             "checkout_url": checkout_session.url,
             "pricing_snapshot_id": str(snapshot.id),
+            "pricing_campaign_item_id": quote.get("campaign_item_id"),
         },
         created_at=now,
         updated_at=now,
