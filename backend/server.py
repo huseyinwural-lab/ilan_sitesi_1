@@ -20195,12 +20195,24 @@ async def list_ads_admin(
 @api_router.post("/admin/ads")
 async def create_ad(
     payload: AdCreatePayload,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     if payload.placement not in AD_PLACEMENTS:
         raise HTTPException(status_code=400, detail="Invalid placement")
     start_at, end_at = _normalize_ad_dates(payload.start_at, payload.end_at)
+    format_value = _resolve_ad_format(payload.placement, payload.format)
+
+    if payload.is_active:
+        conflict = await _find_active_ad_conflict(session, payload.placement)
+        if conflict:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "message": "Active ad already exists for placement",
+                    "existing_id": str(conflict.id),
+                },
+            )
 
     campaign_id = None
     if payload.campaign_id:
@@ -20216,6 +20228,7 @@ async def create_ad(
     ad = Advertisement(
         placement=payload.placement,
         campaign_id=campaign_id,
+        format=format_value,
         start_at=start_at,
         end_at=end_at,
         is_active=bool(payload.is_active),
@@ -20223,7 +20236,11 @@ async def create_ad(
         target_url=payload.target_url,
     )
     session.add(ad)
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="Active ad already exists for placement")
     await session.refresh(ad)
     return {"ok": True, "id": str(ad.id)}
 
