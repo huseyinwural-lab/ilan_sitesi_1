@@ -311,6 +311,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/PRICING_TEST_USER_SEED.md
 - /app/docs/P1_RBAC_VALIDATION_EVIDENCE.md
 - /app/docs/P1_HEADER_EVIDENCE.md
+- /app/docs/P1_FOOTER_EVIDENCE.md
 
 ## Son Değişiklikler (2026-02-25)
 - Footer domain: grid builder + draft/publish + preview + version rollback; Bilgi Sayfaları CRUD + /bilgi/:slug.
