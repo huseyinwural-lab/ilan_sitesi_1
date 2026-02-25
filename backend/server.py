@@ -20015,6 +20015,172 @@ async def public_vehicle_models_v2(make_key: str | None = None, make: str | None
     return await public_vehicle_models(key, country, session)
 
 
+
+# =====================
+# Vehicle Selector Engine
+# =====================
+
+def _normalize_trim_option(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(v).strip() for v in value if str(v).strip()]
+    return [str(value).strip()] if str(value).strip() else []
+
+
+def _trim_attribute_matches(value: Any, expected: Optional[str]) -> bool:
+    if expected in (None, ""):
+        return True
+    options = _normalize_trim_option(value)
+    return any(opt.lower() == str(expected).strip().lower() for opt in options)
+
+
+def _trim_attribute_values(trims: list[VehicleTrim], key: str) -> list[str]:
+    values: set[str] = set()
+    for trim in trims:
+        attrs = trim.attributes or {}
+        for option in _normalize_trim_option(attrs.get(key)):
+            if option:
+                values.add(option)
+    return sorted(values)
+
+
+def _serialize_vehicle_make(make: VehicleMake) -> dict:
+    return {"id": str(make.id), "key": make.slug, "label": make.name}
+
+
+def _serialize_vehicle_model(model: VehicleModel) -> dict:
+    return {"id": str(model.id), "key": model.slug, "label": model.name}
+
+
+def _serialize_vehicle_trim(trim: VehicleTrim) -> dict:
+    return {
+        "id": str(trim.id),
+        "key": trim.slug,
+        "label": trim.name,
+        "year": trim.year,
+        "source_ref": trim.source_ref,
+    }
+
+
+def _get_vehicle_base_query(year: int, make: str, model: str, session: AsyncSession) -> tuple[VehicleMake, VehicleModel, list[VehicleTrim]]:
+    make_row = session.execute(select(VehicleMake).where(VehicleMake.slug == make))
+    make_obj = make_row.scalar_one_or_none() if hasattr(make_row, "scalar_one_or_none") else None
+    if make_obj is None:
+        raise HTTPException(status_code=404, detail="Make not found")
+    model_row = session.execute(select(VehicleModel).where(VehicleModel.make_id == make_obj.id, VehicleModel.slug == model))
+    model_obj = model_row.scalar_one_or_none() if hasattr(model_row, "scalar_one_or_none") else None
+    if model_obj is None:
+        raise HTTPException(status_code=404, detail="Model not found")
+    trim_rows = session.execute(
+        select(VehicleTrim)
+        .where(
+            VehicleTrim.make_id == make_obj.id,
+            VehicleTrim.model_id == model_obj.id,
+            VehicleTrim.year == year,
+        )
+        .order_by(VehicleTrim.name.asc())
+    )
+    trims = trim_rows.scalars().all()
+    return make_obj, model_obj, trims
+
+
+@api_router.get("/vehicle/years")
+async def vehicle_selector_years(country: Optional[str] = None, session: AsyncSession = Depends(get_sql_session)):
+    result = await session.execute(select(VehicleTrim.year).distinct().order_by(VehicleTrim.year.desc()))
+    years = [row[0] for row in result.all() if row[0]]
+    return {"items": years}
+
+
+@api_router.get("/vehicle/makes")
+async def vehicle_selector_makes(year: int, country: Optional[str] = None, session: AsyncSession = Depends(get_sql_session)):
+    result = await session.execute(
+        select(VehicleMake)
+        .join(VehicleTrim, VehicleTrim.make_id == VehicleMake.id)
+        .where(VehicleTrim.year == year)
+        .distinct()
+        .order_by(VehicleMake.name.asc())
+    )
+    items = [_serialize_vehicle_make(make) for make in result.scalars().all() if make.slug]
+    return {"year": year, "items": items}
+
+
+@api_router.get("/vehicle/models")
+async def vehicle_selector_models(year: int, make: str, country: Optional[str] = None, session: AsyncSession = Depends(get_sql_session)):
+    make_row = await session.execute(select(VehicleMake).where(VehicleMake.slug == make))
+    make_obj = make_row.scalar_one_or_none()
+    if not make_obj:
+        raise HTTPException(status_code=404, detail="Make not found")
+    result = await session.execute(
+        select(VehicleModel)
+        .join(VehicleTrim, VehicleTrim.model_id == VehicleModel.id)
+        .where(VehicleTrim.year == year, VehicleTrim.make_id == make_obj.id)
+        .distinct()
+        .order_by(VehicleModel.name.asc())
+    )
+    items = [_serialize_vehicle_model(model) for model in result.scalars().all() if model.slug]
+    return {"year": year, "make": make, "items": items}
+
+
+@api_router.get("/vehicle/options")
+async def vehicle_selector_options(
+    year: int,
+    make: str,
+    model: str,
+    country: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    make_obj, model_obj, trims = _get_vehicle_base_query(year, make, model, session)
+    return {
+        "year": year,
+        "make": make_obj.slug,
+        "model": model_obj.slug,
+        "options": {
+            "fuel_types": _trim_attribute_values(trims, "fuel_type"),
+            "bodies": _trim_attribute_values(trims, "body"),
+            "transmissions": _trim_attribute_values(trims, "transmission"),
+            "drives": _trim_attribute_values(trims, "drive"),
+            "engine_types": _trim_attribute_values(trims, "engine_type"),
+        },
+    }
+
+
+@api_router.get("/vehicle/trims")
+async def vehicle_selector_trims(
+    year: int,
+    make: str,
+    model: str,
+    fuel_type: Optional[str] = None,
+    body: Optional[str] = None,
+    transmission: Optional[str] = None,
+    drive: Optional[str] = None,
+    engine_type: Optional[str] = None,
+    country: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    make_obj, model_obj, trims = _get_vehicle_base_query(year, make, model, session)
+    filtered: list[VehicleTrim] = []
+    for trim in trims:
+        attrs = trim.attributes or {}
+        if not _trim_attribute_matches(attrs.get("fuel_type"), fuel_type):
+            continue
+        if not _trim_attribute_matches(attrs.get("body"), body):
+            continue
+        if not _trim_attribute_matches(attrs.get("transmission"), transmission):
+            continue
+        if not _trim_attribute_matches(attrs.get("drive"), drive):
+            continue
+        if not _trim_attribute_matches(attrs.get("engine_type"), engine_type):
+            continue
+        filtered.append(trim)
+
+    return {
+        "year": year,
+        "make": make_obj.slug,
+        "model": model_obj.slug,
+        "items": [_serialize_vehicle_trim(trim) for trim in filtered],
+    }
+
 @api_router.get("/v1/admin/vehicle-master/status")
 async def vehicle_master_status_endpoint(current_user=Depends(check_permissions(["super_admin", "country_admin"]))):
     return vehicle_master_status()
