@@ -20923,6 +20923,7 @@ async def _build_corporate_quote(session: AsyncSession, user_id: uuid.UUID) -> D
 
     return {
         "type": "package",
+        "reason": "package_required",
         "requires_payment": True,
         "packages": packages,
         "quota_used": False,
