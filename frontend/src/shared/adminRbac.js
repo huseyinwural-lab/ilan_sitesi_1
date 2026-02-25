@@ -9,7 +9,7 @@ export const ADMIN_ROLE_GROUPS = {
   catalogAdmin: ['super_admin', 'country_admin'],
   vehicleAdmin: ['super_admin', 'country_admin'],
   finance: ['super_admin', 'finance'],
-  system: ['super_admin', 'country_admin'],
+  adsManager: ['super_admin', 'country_admin', 'ads_manager'],
 };
 
 export const ADMIN_ROUTE_RULES = [
