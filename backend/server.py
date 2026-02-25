@@ -23033,6 +23033,8 @@ async def get_info_page(slug: str, session: AsyncSession = Depends(get_sql_sessi
         "content_tr": page.content_tr,
         "content_de": page.content_de,
         "content_fr": page.content_fr,
+        "created_at": page.created_at.isoformat() if page.created_at else None,
+        "updated_at": page.updated_at.isoformat() if page.updated_at else None,
     }
 
 # --- Router binding + RBAC allowlist (must be after all route definitions) ---
