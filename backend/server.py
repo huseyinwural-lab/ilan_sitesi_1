@@ -20690,6 +20690,14 @@ async def _ensure_pricing_defaults(session: AsyncSession) -> None:
 
     package_result = await session.execute(select(PricingPackage))
     packages = {item.name: item for item in package_result.scalars().all()}
+    packages_changed = False
+    if "Lansman" not in packages and "Lansman Paketi" in packages:
+        legacy = packages["Lansman Paketi"]
+        legacy.name = "Lansman"
+        legacy.updated_at = datetime.now(timezone.utc)
+        packages["Lansman"] = legacy
+        packages.pop("Lansman Paketi", None)
+        packages_changed = True
     for package in DEFAULT_PRICING_PACKAGES:
         if package["name"] in packages:
             continue
@@ -20705,8 +20713,9 @@ async def _ensure_pricing_defaults(session: AsyncSession) -> None:
                 is_active=True,
             )
         )
+        packages_changed = True
 
-    if not tier_rules or len(packages) < len(DEFAULT_PRICING_PACKAGES):
+    if not tier_rules or packages_changed:
         await session.commit()
 
 
