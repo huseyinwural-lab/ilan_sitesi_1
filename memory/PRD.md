@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-24 23:35:00 UTC (P0 evidence + P1 route contract + login toast + placements/doping state)
+**Son güncelleme:** 2026-02-24 23:59:00 UTC (Ad Analytics + P45 migration)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
