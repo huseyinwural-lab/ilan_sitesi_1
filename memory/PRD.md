@@ -356,6 +356,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **ADS-69 — Header Global Layout:** Public header tek MainLayout üzerinden çalışır.
 - **ADS-70 — Tek aktif header config:** site_header_config üzerinde is_active unique.
 - **ADS-71 — Auth state layout-level:** Header auth kontrolü layout seviyesinde yapılır.
+- **ADS-74 — Header chip önerileri:** arama chip’leri P2 backlog.
+- **ADS-75 — Logo fallback 404:** logo yoksa asset request atılmaz, sadece fallback text.
+- **ADS-76 — Footer ana faz:** Footer (grid builder + bilgi sayfaları) bir sonraki ana teslim.
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
