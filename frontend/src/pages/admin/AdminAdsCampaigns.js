@@ -142,7 +142,7 @@ export default function AdminAdsCampaigns() {
   const linkedAds = detail?.ads || [];
   const linkedAdIds = new Set(linkedAds.map((ad) => ad.id));
   const availableAds = useMemo(
-    () => adsOptions.filter((ad) => !linkedAdIds.has(ad.id)),
+    () => adsOptions.filter((ad) => !linkedAdIds.has(ad.id) && !ad.campaign_id),
     [adsOptions, linkedAdIds]
   );
 
