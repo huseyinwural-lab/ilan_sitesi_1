@@ -19535,7 +19535,7 @@ async def _process_vehicle_import_records(
         distinct_trims=len(distinct_trims),
         validation_error_count=validation_error_count,
         validation_errors=validation_errors,
-        duration_seconds=None if job.dry_run else duration,
+        duration_seconds=duration,
         estimated_duration=estimated_duration,
     )
 
