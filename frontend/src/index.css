@@ -6,126 +6,153 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 24 94% 50%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --background: var(--theme-light-background-hsl);
+    --foreground: var(--theme-light-text-primary-hsl);
+    --card: var(--theme-light-surface-hsl);
+    --card-foreground: var(--theme-light-text-primary-hsl);
+    --popover: var(--theme-light-surface-hsl);
+    --popover-foreground: var(--theme-light-text-primary-hsl);
+    --primary: var(--theme-light-primary-hsl);
+    --primary-foreground: var(--theme-light-button-primary-text-hsl);
+    --secondary: var(--theme-light-secondary-hsl);
+    --secondary-foreground: var(--theme-light-button-secondary-text-hsl);
+    --muted: var(--theme-light-surface-2-hsl);
+    --muted-foreground: var(--theme-light-text-muted-hsl);
+    --accent: var(--theme-light-accent-hsl);
+    --accent-foreground: var(--theme-light-text-inverse-hsl);
+    --destructive: var(--theme-light-danger-hsl);
+    --destructive-foreground: var(--theme-light-text-inverse-hsl);
+    --border: var(--theme-light-border-hsl);
+    --input: var(--theme-light-border-hsl);
+    --ring: var(--theme-light-primary-hsl);
     --radius: 0.5rem;
-    --chart-1: 221 83% 53%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 24 94% 50%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-1: var(--theme-light-primary-hsl);
+    --chart-2: var(--theme-light-success-hsl);
+    --chart-3: var(--theme-light-accent-hsl);
+    --chart-4: var(--theme-light-secondary-hsl);
+    --chart-5: var(--theme-light-warning-hsl);
 
-    --color-primary: #ff7000;
-    --color-primary-dark: #e65a00;
-    --color-primary-soft: rgba(255, 112, 0, 0.1);
-    --color-secondary: #007bff;
-    --color-secondary-dark: #0056d2;
-    --color-accent: #00a0b0;
-    --color-info: #61dafb;
-    --color-app-bg: #0f0f10;
+    --color-primary: var(--theme-light-primary);
+    --color-primary-hover: var(--theme-light-primary-hover);
+    --color-primary-dark: var(--theme-light-primary-hover);
+    --color-primary-soft: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    --color-secondary: var(--theme-light-secondary);
+    --color-secondary-dark: var(--theme-light-link-hover);
+    --color-accent: var(--theme-light-accent);
+    --color-success: var(--theme-light-success);
+    --color-warning: var(--theme-light-warning);
+    --color-danger: var(--theme-light-danger);
+    --color-info: var(--theme-light-accent);
+    --color-app-bg: var(--theme-light-background);
 
-    --text-primary: #1b263b;
-    --text-secondary: #415a77;
-    --text-inverse: #ffffff;
+    --text-primary: var(--theme-light-text-primary);
+    --text-secondary: var(--theme-light-text-secondary);
+    --text-muted: var(--theme-light-text-muted);
+    --text-inverse: var(--theme-light-text-inverse);
 
-    --bg-page: #f8f9fa;
-    --bg-surface: #ffffff;
-    --bg-surface-muted: #f8f9fa;
-    --bg-surface-soft: rgba(255, 255, 255, 0.1);
-    --bg-soft: #fff7ef;
-    --bg-warm: #f7c27a;
-    --bg-warm-soft: rgba(247, 194, 122, 0.3);
+    --bg-page: var(--theme-light-background);
+    --bg-page-alt: var(--theme-light-background-alt);
+    --bg-surface: var(--theme-light-surface);
+    --bg-surface-muted: var(--theme-light-surface-2);
+    --bg-modal: var(--theme-light-modal-background);
+    --bg-surface-soft: color-mix(in srgb, var(--bg-surface) 85%, transparent);
+    --bg-soft: var(--theme-light-background-alt);
+    --bg-warm: var(--theme-light-background-alt);
+    --bg-warm-soft: color-mix(in srgb, var(--bg-warm) 70%, transparent);
 
-    --border-subtle: #e2e8f0;
-    --border-warm: #f0cda8;
+    --border-subtle: var(--theme-light-border);
+    --border-warm: var(--theme-light-border-strong);
 
-    --brand-navy: #2f3854;
-    --brand-navy-deep: #1f2a44;
+    --brand-navy: var(--theme-light-header-bg);
+    --brand-navy-deep: color-mix(in srgb, var(--theme-light-header-bg) 80%, black);
+
+    --button-primary-bg: var(--theme-light-button-primary-bg);
+    --button-primary-text: var(--theme-light-button-primary-text);
+    --button-secondary-bg: var(--theme-light-button-secondary-bg);
+    --button-secondary-text: var(--theme-light-button-secondary-text);
+
+    --header-bg: var(--theme-light-header-bg);
+    --header-text: var(--theme-light-header-text);
+    --footer-bg: var(--theme-light-footer-bg);
+    --footer-text: var(--theme-light-footer-text);
+    --link: var(--theme-light-link);
+    --link-hover: var(--theme-light-link-hover);
     color-scheme: light;
   }
 
-  .account-theme {
-    --background: 24 100% 97%;
-    --primary: 24 94% 50%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 24 100% 94%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 24 100% 95%;
-    --ring: 24 94% 50%;
-  }
-
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 24 94% 50%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 25%;
-    --input: 217 33% 25%;
-    --ring: 217 91% 60%;
-    --chart-1: 217 91% 60%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 24 94% 50%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: var(--theme-dark-background-hsl);
+    --foreground: var(--theme-dark-text-primary-hsl);
+    --card: var(--theme-dark-surface-hsl);
+    --card-foreground: var(--theme-dark-text-primary-hsl);
+    --popover: var(--theme-dark-surface-hsl);
+    --popover-foreground: var(--theme-dark-text-primary-hsl);
+    --primary: var(--theme-dark-primary-hsl);
+    --primary-foreground: var(--theme-dark-button-primary-text-hsl);
+    --secondary: var(--theme-dark-secondary-hsl);
+    --secondary-foreground: var(--theme-dark-button-secondary-text-hsl);
+    --muted: var(--theme-dark-surface-2-hsl);
+    --muted-foreground: var(--theme-dark-text-muted-hsl);
+    --accent: var(--theme-dark-accent-hsl);
+    --accent-foreground: var(--theme-dark-text-inverse-hsl);
+    --destructive: var(--theme-dark-danger-hsl);
+    --destructive-foreground: var(--theme-dark-text-inverse-hsl);
+    --border: var(--theme-dark-border-hsl);
+    --input: var(--theme-dark-border-hsl);
+    --ring: var(--theme-dark-primary-hsl);
+    --chart-1: var(--theme-dark-primary-hsl);
+    --chart-2: var(--theme-dark-success-hsl);
+    --chart-3: var(--theme-dark-accent-hsl);
+    --chart-4: var(--theme-dark-secondary-hsl);
+    --chart-5: var(--theme-dark-warning-hsl);
 
-    --color-primary: #ff7000;
-    --color-primary-dark: #e65a00;
-    --color-primary-soft: rgba(255, 112, 0, 0.15);
-    --color-secondary: #007bff;
-    --color-secondary-dark: #0056d2;
-    --color-accent: #00a0b0;
-    --color-info: #61dafb;
-    --color-app-bg: #0f0f10;
+    --color-primary: var(--theme-dark-primary);
+    --color-primary-hover: var(--theme-dark-primary-hover);
+    --color-primary-dark: var(--theme-dark-primary-hover);
+    --color-primary-soft: color-mix(in srgb, var(--color-primary) 15%, transparent);
+    --color-secondary: var(--theme-dark-secondary);
+    --color-secondary-dark: var(--theme-dark-link-hover);
+    --color-accent: var(--theme-dark-accent);
+    --color-success: var(--theme-dark-success);
+    --color-warning: var(--theme-dark-warning);
+    --color-danger: var(--theme-dark-danger);
+    --color-info: var(--theme-dark-accent);
+    --color-app-bg: var(--theme-dark-background);
 
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --text-inverse: #0f172a;
+    --text-primary: var(--theme-dark-text-primary);
+    --text-secondary: var(--theme-dark-text-secondary);
+    --text-muted: var(--theme-dark-text-muted);
+    --text-inverse: var(--theme-dark-text-inverse);
 
-    --bg-page: #0f172a;
-    --bg-surface: #111827;
-    --bg-surface-muted: #1f2937;
-    --bg-surface-soft: rgba(17, 24, 39, 0.6);
-    --bg-soft: #1f2937;
-    --bg-warm: #2b3342;
-    --bg-warm-soft: rgba(43, 51, 66, 0.4);
+    --bg-page: var(--theme-dark-background);
+    --bg-page-alt: var(--theme-dark-background-alt);
+    --bg-surface: var(--theme-dark-surface);
+    --bg-surface-muted: var(--theme-dark-surface-2);
+    --bg-modal: var(--theme-dark-modal-background);
+    --bg-surface-soft: color-mix(in srgb, var(--bg-surface) 70%, transparent);
+    --bg-soft: var(--theme-dark-background-alt);
+    --bg-warm: var(--theme-dark-background-alt);
+    --bg-warm-soft: color-mix(in srgb, var(--bg-warm) 60%, transparent);
 
-    --border-subtle: #273449;
-    --border-warm: #3b4a63;
+    --border-subtle: var(--theme-dark-border);
+    --border-warm: var(--theme-dark-border-strong);
 
-    --brand-navy: #111827;
-    --brand-navy-deep: #0b1220;
+    --brand-navy: var(--theme-dark-header-bg);
+    --brand-navy-deep: color-mix(in srgb, var(--theme-dark-header-bg) 75%, black);
+
+    --button-primary-bg: var(--theme-dark-button-primary-bg);
+    --button-primary-text: var(--theme-dark-button-primary-text);
+    --button-secondary-bg: var(--theme-dark-button-secondary-bg);
+    --button-secondary-text: var(--theme-dark-button-secondary-text);
+
+    --header-bg: var(--theme-dark-header-bg);
+    --header-text: var(--theme-dark-header-text);
+    --footer-bg: var(--theme-dark-footer-bg);
+    --footer-text: var(--theme-dark-footer-text);
+    --link: var(--theme-dark-link);
+    --link-hover: var(--theme-dark-link-hover);
     color-scheme: dark;
   }
-
 }
 
 @layer base {
@@ -145,6 +172,14 @@
 
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
+  }
+
+  a {
+    color: var(--link);
+  }
+
+  a:hover {
+    color: var(--link-hover);
   }
 }
 
