@@ -91,9 +91,10 @@ async def run_expiry_job():
 
             if total_updates > 0:
                 logger.info(
-                    "Expired: dealer_subs=%s campaigns=%s tier_rules=%s package_subs=%s",
+                    "Expired: dealer_subs=%s campaigns=%s campaign_items=%s tier_rules=%s package_subs=%s",
                     len(expired_subs),
                     len(expired_campaigns),
+                    len(expired_campaign_items),
                     len(expired_tiers),
                     len(expired_package_subs),
                 )
