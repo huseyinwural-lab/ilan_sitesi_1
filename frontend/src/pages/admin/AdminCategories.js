@@ -2338,23 +2338,29 @@ const AdminCategories = () => {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border p-4 space-y-3" data-testid="categories-subcategory-section">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-md font-semibold">Alt Kategoriler</h3>
-                        <p className="text-xs text-slate-600" data-testid="categories-subcategory-hint">
-                          Her seviye içinde birden fazla kategori ekleyin, ardından Tamam ile bir sonraki seviyeyi açın.
-                        </p>
-                      </div>
+                  {form.module === 'vehicle' ? (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700" data-testid="categories-vehicle-subcategory-lock">
+                      Vasıta modülünde alt kategori kullanılmaz. Detay araç seçimi ilan verme akışında yapılır.
                     </div>
-                    {subcategories.length === 0 ? (
-                      <div className="text-sm text-slate-700" data-testid="categories-subcategory-empty">Henüz alt kategori başlatılmadı.</div>
-                    ) : (
-                      <div className="flex gap-4 overflow-x-auto pb-2" data-testid="categories-subcategory-levels">
-                        {renderLevelColumns()}
+                  ) : (
+                    <div className="rounded-lg border p-4 space-y-3" data-testid="categories-subcategory-section">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-md font-semibold">Alt Kategoriler</h3>
+                          <p className="text-xs text-slate-600" data-testid="categories-subcategory-hint">
+                            Her seviye içinde birden fazla kategori ekleyin, ardından Tamam ile bir sonraki seviyeyi açın.
+                          </p>
+                        </div>
                       </div>
-                    )}
-                  </div>
+                      {subcategories.length === 0 ? (
+                        <div className="text-sm text-slate-700" data-testid="categories-subcategory-empty">Henüz alt kategori başlatılmadı.</div>
+                      ) : (
+                        <div className="flex gap-4 overflow-x-auto pb-2" data-testid="categories-subcategory-levels">
+                          {renderLevelColumns()}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {editing && (
                     <div className="rounded-lg border border-dashed p-4 text-sm text-slate-700" data-testid="categories-hierarchy-locked">
