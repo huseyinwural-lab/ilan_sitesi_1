@@ -349,6 +349,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **ADS-65 — Overlap kuralı:** Aynı scope’ta zaman aralığı kesişen aktif kampanya oluşturulamaz.
 - **ADS-67 — RBAC P1 kapanış:** pricing/ads domainleri kesin ayrılır, endpoint decorator zorunlu.
 - **ADS-68 — Kampanya Timeline UI P2:** Gantt/timeline görünümü P2 backlog.
+- **ADS-69 — Header Global Layout:** Public header tek MainLayout üzerinden çalışır.
+- **ADS-70 — Tek aktif header config:** site_header_config üzerinde is_active unique.
+- **ADS-71 — Auth state layout-level:** Header auth kontrolü layout seviyesinde yapılır.
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
