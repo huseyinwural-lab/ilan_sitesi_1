@@ -6,6 +6,10 @@
 - `theme-light-footer-builder.png` (textarea + dropdown kontrast)
 - `theme-dark-footer-builder.png` (textarea + dropdown kontrast)
 
+## Admin Theme Toggle Test
+- Theme toggle (topbar) ile dark mode geçişi doğrulandı.
+- Refresh sonrası tema tercihi korunuyor.
+
 ## Persistence & FOUC
 - `public/index.html` içinde theme-init script ile localStorage okuması yapılıyor.
 - Theme seçimi `localStorage.theme` ile kalıcı.
