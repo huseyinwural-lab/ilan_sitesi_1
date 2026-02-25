@@ -433,6 +433,6 @@ export default function SearchPage() {
 
         </div>
       </div>
-    </PublicLayout>
+    </div>
   );
 }
