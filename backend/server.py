@@ -19332,6 +19332,8 @@ async def _process_vehicle_import_records(
         if time.time() - start_ts > VEHICLE_IMPORT_JOB_TIMEOUT_SECONDS:
             raise TimeoutError("Import job timeout")
 
+        job.processed_records = index
+
         normalized, error = _normalize_vehicle_import_record(record)
         if error:
             validation_error_count += 1
