@@ -22827,6 +22827,29 @@ async def list_footer_layouts(
     return {"items": items}
 
 
+@api_router.get("/admin/footer/layout/{layout_id}")
+async def get_footer_layout_version(
+    layout_id: str,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        layout_uuid = uuid.UUID(layout_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid layout id") from exc
+
+    layout = await session.get(FooterLayout, layout_uuid)
+    if not layout:
+        raise HTTPException(status_code=404, detail="Footer layout not found")
+    return {
+        "id": str(layout.id),
+        "layout": layout.layout,
+        "status": layout.status,
+        "version": layout.version,
+        "updated_at": layout.updated_at.isoformat() if layout.updated_at else None,
+    }
+
+
 @api_router.put("/admin/footer/layout")
 async def save_footer_layout(
     payload: FooterLayoutPayload,
