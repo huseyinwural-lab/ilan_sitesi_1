@@ -455,6 +455,12 @@ const ListingCategorySelect = () => {
     persistRecentToStorage(localRecent);
     persistWizardSelection(category, path, selectedModule, selectedModuleLabel || selectedModule);
     localStorage.setItem('ilan_ver_force_core_step', 'true');
+    if (selectedModule === 'vehicle') {
+      localStorage.removeItem('ilan_ver_vehicle_selection');
+      localStorage.removeItem('ilan_ver_vehicle_trim_id');
+      localStorage.removeItem('ilan_ver_manual_trim_flag');
+      localStorage.removeItem('ilan_ver_manual_trim');
+    }
     await saveRecentCategory(category, path, selectedModule);
     const targetRoute = selectedModule === 'vehicle' ? '/ilan-ver/arac-sec' : '/ilan-ver/detaylar';
     navigate(targetRoute);
