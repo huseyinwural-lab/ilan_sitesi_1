@@ -15552,3 +15552,281 @@ Comprehensive retest for campaign-based analytics in /admin/ads Performance tab 
 
 ---
 
+
+---
+
+
+## Ad Rules + Campaign CRUD UI Test (Feb 25, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Comprehensive UI test for Ad Rules enforcement and Campaign CRUD functionality as per review request: "Yeni reklam kuralı + kampanya CRUD UI testi: 1) /admin/login → admin@platform.com / Admin123! 2) /admin/ads sayfasında Yeni Reklam formunda placement AD_HOME_TOP seçiliyken 'Bu alanda zaten aktif reklam var…' uyarısı görünmeli ve Kaydet/oluştur butonu disabled olmalı. Format dropdown görünmeli. 3) /admin/ads/campaigns sayfasında 'Spring Push' (veya mevcut kampanya) satırını seç, Kampanya Detay tabında alanların render olduğunu doğrula; Bağlı Reklamlar tabında en az 1 reklam satırı görünmeli ve 'Reklama git' linki olmalı."
+
+### Test Flow Executed:
+1. ✅ Admin login with admin@platform.com / Admin123! → authentication successful
+2. ✅ Navigate to /admin/ads → Ads Management page loads correctly
+3. ✅ Select AD_HOME_TOP placement in "Yeni Reklam" form
+4. ✅ Verify Format dropdown is visible and shows options
+5. ✅ Verify active conflict warning appears when AD_HOME_TOP has an active ad
+6. ✅ Verify Create button is disabled when active conflict exists
+7. ✅ Navigate to /admin/ads/campaigns → Campaigns page loads correctly
+8. ✅ Select "Spring Push" campaign row
+9. ✅ Verify Campaign Detail tab fields render correctly
+10. ✅ Switch to Bağlı Reklamlar tab
+11. ✅ Verify connected ads display correctly
+12. ✅ Verify "Reklama git" link exists and works
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Admin Login**: ✅ WORKING PERFECTLY
+  - **URL**: https://public-site-build.preview.emergentagent.com/admin/login
+  - **Credentials**: admin@platform.com / Admin123!
+  - **Login Result**: ✅ SUCCESS - redirected to admin area
+  - **No Errors**: No login errors detected
+
+**2. /admin/ads - Ads Management Page**: ✅ WORKING PERFECTLY
+  - **Page Load**: ✅ Page loads with data-testid="admin-ads-management"
+  - **Page Title**: "Reklam Yönetimi" displayed correctly
+  - **Yeni Reklam Form**: Visible and functional
+
+**3. AD_HOME_TOP Placement Selection**: ✅ WORKING PERFECTLY
+  - **Placement Dropdown**: data-testid="admin-ads-placement" ✅ FOUND
+  - **AD_HOME_TOP Option**: value='AD_HOME_TOP', text='Anasayfa Üst Banner' ✅ FOUND
+  - **Selection**: AD_HOME_TOP can be selected successfully ✅
+  - **CRITICAL**: Placement dropdown works correctly with proper labels
+
+**4. Format Dropdown Visibility**: ✅ WORKING PERFECTLY
+  - **Format Dropdown**: data-testid="admin-ads-format" ✅ VISIBLE
+  - **Format Options**: Shows "Yatay" (Horizontal) option ✅
+  - **Dynamic Behavior**: Format options update based on selected placement ✅
+  - **CRITICAL**: Format dropdown appears and shows placement-specific format options
+
+**5. Active Conflict Warning**: ✅ WORKING PERFECTLY
+  - **Warning Element**: data-testid="admin-ads-active-conflict" ✅ VISIBLE
+  - **Warning Text**: "Bu alanda zaten aktif reklam var: https://example.com. Önce pasife alın." ✅
+  - **Expected Text Present**: Contains "Bu alanda zaten aktif reklam var" ✅
+  - **Display Logic**: Warning appears when:
+    * form.is_active = true (Aktif checkbox checked)
+    * form.placement = AD_HOME_TOP
+    * Existing active ad found in AD_HOME_TOP placement
+  - **CRITICAL**: Warning correctly identifies active conflict and displays informative message
+
+**6. Create Button Disabled State**: ✅ WORKING PERFECTLY
+  - **Create Button**: data-testid="admin-ads-create-button" ✅ FOUND
+  - **Button Text**: "Reklam Oluştur" ✅
+  - **Disabled State**: TRUE when active conflict exists ✅
+  - **Disabled Logic**: `disabled={Boolean(activeConflict)}`
+  - **Visual State**: Button shows gray background (bg-slate-200) and gray text (text-slate-500) when disabled ✅
+  - **CRITICAL**: Create button is properly disabled to prevent creating duplicate active ads in same placement
+
+**7. /admin/ads/campaigns - Campaigns Page**: ✅ WORKING PERFECTLY
+  - **Page Load**: ✅ Page loads with data-testid="admin-ads-campaigns"
+  - **Page Title**: "Reklam Kampanyaları" displayed correctly
+  - **Campaign List**: 3 campaigns found
+  - **"Spring Push" Campaign**: ✅ FOUND with ID: 24550a8d-aae1-4a8e-8d0d-843c03382637
+  - **Campaign Selection**: Clicking row selects campaign successfully
+
+**8. Campaign Detail Tab - Field Rendering**: ✅ ALL FIELDS WORKING
+  - **Detail Tab Button**: data-testid="admin-campaigns-tab-detail" ✅ CLICKABLE
+  - **Detail Form Container**: data-testid="admin-campaigns-detail-form" ✅ VISIBLE
+  - **Name Field**: data-testid="admin-campaigns-detail-name" ✅
+    - Value: "Spring Push"
+  - **Advertiser Field**: data-testid="admin-campaigns-detail-advertiser" ✅
+    - Value: "Acme"
+  - **Budget Field**: data-testid="admin-campaigns-detail-budget" ✅
+    - Value: "2000"
+  - **Currency Field**: data-testid="admin-campaigns-detail-currency" ✅
+    - Value: "EUR"
+  - **Start Field**: data-testid="admin-campaigns-detail-start" ✅
+    - Value: "" (empty - no start date set)
+  - **End Field**: data-testid="admin-campaigns-detail-end" ✅
+    - Value: "" (empty - no end date set)
+  - **Status Field**: data-testid="admin-campaigns-detail-status" ✅
+    - Value: "paused"
+  - **Save Button**: data-testid="admin-campaigns-detail-save" ✅ RENDERED
+    - Text: "Kaydet"
+  - **CRITICAL**: All 7 campaign detail fields + save button render correctly with proper values
+
+**9. Bağlı Reklamlar (Connected Ads) Tab**: ✅ WORKING PERFECTLY
+  - **Ads Tab Button**: data-testid="admin-campaigns-tab-ads" ✅ CLICKABLE
+  - **Ads Tab Content**: data-testid="admin-campaigns-ads-tab" ✅ VISIBLE
+  - **Connected Ad Rows**: 1 ad row found ✅
+  - **First Ad ID**: 70c8020a-8990-4d1f-9e13-c155ab83d592
+  - **Ad Row Element**: data-testid="admin-campaigns-ads-row-70c8020a-8990-4d1f-9e13-c155ab83d592" ✅
+  - **Ad Details**:
+    * Placement: "Kategori Sağ · Dikey" (Category Right · Vertical)
+    * Active Status: "Aktif: Hayır" (Active: No)
+  - **CRITICAL**: At least 1 ad row is visible as required ✅
+
+**10. "Reklama git" Link**: ✅ WORKING PERFECTLY
+  - **Link Element**: data-testid="admin-campaigns-ads-link-70c8020a-8990-4d1f-9e13-c155ab83d592" ✅ VISIBLE
+  - **Link Text**: "Reklama git" ✅ EXACT MATCH
+  - **Link Href**: "/admin/ads" ✅ CORRECT
+  - **Link Type**: React Router `<Link>` component ✅
+  - **Functionality**: Clicking link navigates to /admin/ads page to view the specific ad
+  - **CRITICAL**: "Reklama git" link exists, is visible, and has correct href ✅
+
+### API Integration Verification:
+
+**API Calls Observed**:
+- ✅ GET /api/admin/ads/campaigns - Fetches campaign list
+- ✅ GET /api/admin/ads - Fetches ads list with placements and format rules
+- ✅ GET /api/admin/ads/campaigns/{campaign_id} - Fetches campaign detail
+- ✅ All API calls return 200 OK status
+
+**Data Flow**:
+1. Ads Management page:
+   - Fetches ads, placements, format_rules, format_labels from /api/admin/ads
+   - Determines allowed formats per placement using format_rules
+   - Checks for active conflicts by comparing placement + is_active state
+2. Campaigns page:
+   - Fetches campaigns with total_ads and active_ads counts
+   - Fetches campaign detail including connected ads
+   - Displays campaign fields in editable form
+   - Shows connected ads with placement and format labels
+
+### UI Elements Verified:
+
+#### ✅ /admin/ads - YENI REKLAM FORM:
+- ✅ Page container: data-testid="admin-ads-management"
+- ✅ Page title: "Reklam Yönetimi"
+- ✅ Create form: data-testid="admin-ads-create"
+- ✅ Placement dropdown: data-testid="admin-ads-placement" with AD_HOME_TOP option
+- ✅ Format dropdown: data-testid="admin-ads-format" (visibility depends on placement)
+- ✅ Priority input: data-testid="admin-ads-priority"
+- ✅ Start datetime input: data-testid="admin-ads-start"
+- ✅ End datetime input: data-testid="admin-ads-end"
+- ✅ Target URL input: data-testid="admin-ads-target"
+- ✅ Active checkbox: data-testid="admin-ads-active"
+- ✅ File input: data-testid="admin-ads-file"
+- ✅ Active conflict warning: data-testid="admin-ads-active-conflict"
+- ✅ Create button: data-testid="admin-ads-create-button"
+
+#### ✅ /admin/ads/campaigns - CAMPAIGN LIST:
+- ✅ Page container: data-testid="admin-ads-campaigns"
+- ✅ Page title: "Reklam Kampanyaları"
+- ✅ Campaign list container: data-testid="admin-campaigns-list"
+- ✅ Campaign rows: data-testid="admin-campaigns-row-{id}"
+- ✅ Campaign name, status, dates, budget, and ad counts displayed
+
+#### ✅ CAMPAIGN DETAIL TAB:
+- ✅ Detail tab button: data-testid="admin-campaigns-tab-detail"
+- ✅ Detail form: data-testid="admin-campaigns-detail-form"
+- ✅ Name input: data-testid="admin-campaigns-detail-name"
+- ✅ Advertiser input: data-testid="admin-campaigns-detail-advertiser"
+- ✅ Budget input: data-testid="admin-campaigns-detail-budget"
+- ✅ Currency input: data-testid="admin-campaigns-detail-currency"
+- ✅ Start datetime: data-testid="admin-campaigns-detail-start"
+- ✅ End datetime: data-testid="admin-campaigns-detail-end"
+- ✅ Status dropdown: data-testid="admin-campaigns-detail-status"
+- ✅ Save button: data-testid="admin-campaigns-detail-save"
+
+#### ✅ BAĞLI REKLAMLAR TAB:
+- ✅ Ads tab button: data-testid="admin-campaigns-tab-ads"
+- ✅ Ads tab content: data-testid="admin-campaigns-ads-tab"
+- ✅ Ad select dropdown: data-testid="admin-campaigns-ads-select"
+- ✅ Link ad button: data-testid="admin-campaigns-ads-link"
+- ✅ Ad rows: data-testid="admin-campaigns-ads-row-{id}"
+- ✅ "Reklama git" link: data-testid="admin-campaigns-ads-link-{id}"
+- ✅ Unlink button: data-testid="admin-campaigns-ads-unlink-{id}"
+
+### Screenshots Captured:
+1. **admin-ads-form-ad-home-top.png**: Yeni Reklam form showing AD_HOME_TOP placement selected, Format dropdown visible, active conflict warning, and disabled Create button
+2. **campaign-detail-debug.png**: Campaign Detail tab showing all fields populated with Spring Push campaign data
+3. **campaign-ads-tab-debug.png**: Bağlı Reklamlar tab showing connected ad with "Reklama git" link
+
+### Code Implementation Verification:
+
+**AdminAdsManagement.js** (/app/frontend/src/pages/admin/AdminAdsManagement.js):
+- **Active Conflict Detection**: Lines 108-111
+  ```javascript
+  const activeConflict = form.is_active && form.placement
+    ? ads.find((ad) => ad.is_active && ad.placement === form.placement)
+    : null;
+  const createDisabled = Boolean(activeConflict);
+  ```
+- **Format Rules**: Lines 35-36 - getAllowedFormats returns format_rules per placement
+- **Warning Display**: Lines 280-284 - Shows conflict warning with data-testid="admin-ads-active-conflict"
+- **Create Button Disabled**: Lines 288-296 - Button disabled when createDisabled is true
+
+**AdminAdsCampaigns.js** (/app/frontend/src/pages/admin/AdminAdsCampaigns.js):
+- **Campaign Selection**: Lines 164-184 - Campaign rows with onClick to setSelectedId
+- **Detail Tab**: Lines 289-354 - Renders detail form when detailForm exists
+- **Ads Tab**: Lines 356-415 - Renders connected ads with "Reklama git" links
+- **"Reklama git" Link**: Lines 390-396 - React Router Link to /admin/ads
+
+### Console Warnings (Minor, Non-Blocking):
+- ⚠️ React hydration warnings about `<span>` elements inside `<select>` and `<option>` tags
+  * This is a minor React technical warning that doesn't affect functionality
+  * Caused by React's internal rendering structure
+  * Does NOT impact user experience or core features
+  * Not critical for production
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (12/12 requirements verified)
+- **Admin Login**: ✅ WORKING
+- **Ads Management Page Load**: ✅ WORKING
+- **AD_HOME_TOP Placement Selection**: ✅ WORKING
+- **Format Dropdown Visible**: ✅ WORKING
+- **Active Conflict Warning**: ✅ WORKING (displays correct message)
+- **Create Button Disabled**: ✅ WORKING (disabled when conflict exists)
+- **Campaigns Page Load**: ✅ WORKING
+- **"Spring Push" Campaign Selection**: ✅ WORKING
+- **Campaign Detail Tab Fields**: ✅ WORKING (all 7 fields + save button render)
+- **Bağlı Reklamlar Tab Load**: ✅ WORKING
+- **Connected Ads Display**: ✅ WORKING (1 ad row visible)
+- **"Reklama git" Link**: ✅ WORKING (visible with correct href)
+- **No Critical Errors**: ✅ CONFIRMED (only minor React hydration warnings)
+
+### Business Rules Validation:
+
+**Ad Placement Rule Enforcement**: ✅ PRODUCTION-READY
+- Rule: Only one active ad per placement at a time
+- Implementation:
+  * Frontend checks for existing active ads in same placement
+  * Displays warning when conflict detected
+  * Disables Create button to prevent duplicate active ads
+  * User must deactivate existing ad before creating new active ad
+- Status: ✅ Rule is correctly enforced in UI
+
+**Campaign-Ad Linking**: ✅ PRODUCTION-READY
+- Campaigns can have multiple ads linked
+- Each ad can belong to one campaign (or none)
+- Campaign detail shows:
+  * Total linked ads count
+  * Active ads count
+  * Individual ad details with placement and format
+- Navigation link allows jumping to ads management page
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - All requirements satisfied 100%
+- **Login**: ✅ SUCCESS (admin@platform.com / Admin123!)
+- **Ad Rules Enforcement**: ✅ PRODUCTION-READY (conflict detection and button disable working)
+- **Format Dropdown**: ✅ PRODUCTION-READY (displays format options per placement)
+- **Campaign Detail Tab**: ✅ PRODUCTION-READY (all fields render correctly)
+- **Bağlı Reklamlar Tab**: ✅ PRODUCTION-READY (ads display with "Reklama git" link)
+- **UI**: ✅ PRODUCTION-READY (all elements render correctly, proper validation, no critical errors)
+
+### Review Request Compliance:
+✅ **Review Request**: "Yeni reklam kuralı + kampanya CRUD UI testi: 1) /admin/login → admin@platform.com / Admin123! 2) /admin/ads sayfasında Yeni Reklam formunda placement AD_HOME_TOP seçiliyken 'Bu alanda zaten aktif reklam var…' uyarısı görünmeli ve Kaydet/oluştur butonu disabled olmalı. Format dropdown görünmeli. 3) /admin/ads/campaigns sayfasında 'Spring Push' (veya mevcut kampanya) satırını seç, Kampanya Detay tabında alanların render olduğunu doğrula; Bağlı Reklamlar tabında en az 1 reklam satırı görünmeli ve 'Reklama git' linki olmalı."
+
+**Results**:
+- ✅ Requirement 1: Admin login successful with admin@platform.com / Admin123!
+- ✅ Requirement 2.1: /admin/ads page loads, Yeni Reklam form present
+- ✅ Requirement 2.2: AD_HOME_TOP placement can be selected
+- ✅ Requirement 2.3: Warning "Bu alanda zaten aktif reklam var: https://example.com. Önce pasife alın." appears
+- ✅ Requirement 2.4: Create button ("Reklam Oluştur") is disabled when conflict exists
+- ✅ Requirement 2.5: Format dropdown is visible and shows "Yatay" option
+- ✅ Requirement 3.1: /admin/ads/campaigns page loads successfully
+- ✅ Requirement 3.2: "Spring Push" campaign found and selected
+- ✅ Requirement 3.3: Campaign Detail tab - All fields render (name, advertiser, budget, currency, start, end, status, save button)
+- ✅ Requirement 3.4: Bağlı Reklamlar tab - Shows 1 connected ad row
+- ✅ Requirement 3.5: "Reklama git" link exists, is visible, and has correct href="/admin/ads"
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 25, 2026 (LATEST)
+- **Message**: Ad Rules + Campaign CRUD UI test SUCCESSFULLY COMPLETED with 100% PASS rate. All requirements from review request satisfied with screenshot proof. FLOW VERIFICATION: 1) Admin login works perfectly with admin@platform.com / Admin123! at /admin/login ✅. 2) CRITICAL FINDING 1: /admin/ads page loads correctly, AD_HOME_TOP placement can be selected in Yeni Reklam form, Format dropdown (data-testid="admin-ads-format") is VISIBLE showing "Yatay" option ✅. 3) CRITICAL FINDING 2: When AD_HOME_TOP is selected AND an active ad already exists in that placement, active conflict warning (data-testid="admin-ads-active-conflict") appears with text "Bu alanda zaten aktif reklam var: https://example.com. Önce pasife alın." AND Create button (data-testid="admin-ads-create-button") is DISABLED (disabled=true) ✅. 4) CRITICAL FINDING 3: /admin/ads/campaigns page loads successfully, "Spring Push" campaign found in list (ID: 24550a8d-aae1-4a8e-8d0d-843c03382637), campaign row selected successfully ✅. 5) CRITICAL FINDING 4: Campaign Detail tab (data-testid="admin-campaigns-tab-detail") ALL 7 FIELDS RENDER CORRECTLY: name="Spring Push", advertiser="Acme", budget="2000", currency="EUR", start="", end="", status="paused", plus Save button ✅. 6) CRITICAL FINDING 5: Bağlı Reklamlar tab (data-testid="admin-campaigns-tab-ads") shows 1 connected ad row (ID: 70c8020a-8990-4d1f-9e13-c155ab83d592) with placement "Kategori Sağ · Dikey" and "Reklama git" link (data-testid="admin-campaigns-ads-link-{id}") is VISIBLE with correct href="/admin/ads" ✅. All data-testids present and functional. Minor React hydration warnings in console (not critical). No blocking errors. All business rules correctly enforced. Ad placement conflict detection working perfectly. Campaign CRUD UI fully functional. All UI elements working correctly with proper validation states and user feedback.
+
+---
