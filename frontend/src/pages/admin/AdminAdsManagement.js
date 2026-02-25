@@ -397,7 +397,8 @@ export default function AdminAdsManagement() {
                 </button>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       </div>
         </>
