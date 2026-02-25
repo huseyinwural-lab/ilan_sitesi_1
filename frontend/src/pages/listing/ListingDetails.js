@@ -3,13 +3,23 @@ import { useNavigate } from 'react-router-dom';
 
 const ListingDetails = () => {
   const navigate = useNavigate();
-  const selectedCategory = useMemo(() => {
+  const selectedVehicle = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem('ilan_ver_category') || 'null');
+      return JSON.parse(localStorage.getItem('ilan_ver_vehicle_selection') || 'null');
     } catch (e) {
       return null;
     }
   }, []);
+
+  const vehicleLabel = useMemo(() => {
+    if (!selectedVehicle) return null;
+    const makeLabel = selectedVehicle?.make?.label || selectedVehicle?.make?.key || '';
+    const modelLabel = selectedVehicle?.model?.label || selectedVehicle?.model?.key || '';
+    const trimLabel = selectedVehicle?.manual_trim_flag
+      ? `Manuel Trim: ${selectedVehicle?.manual_trim || ''}`
+      : selectedVehicle?.trim_label || '';
+    return [selectedVehicle.year, makeLabel, modelLabel, trimLabel].filter(Boolean).join(' / ');
+  }, [selectedVehicle]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6" data-testid="ilan-ver-details-page">
