@@ -1972,11 +1972,14 @@ const AdminCategories = () => {
                       min={0}
                       className={inputClassName}
                       placeholder="Sıra"
-                      value={item.sort_order}
-                      disabled={itemInputsDisabled}
-                      onChange={(e) => updateLevelItem(levelIndex, itemIndex, { sort_order: e.target.value })}
+                      value={item.sort_order || ''}
+                      disabled
+                      readOnly
                       data-testid={`categories-level-item-sort-${levelIndex}-${itemIndex}`}
                     />
+                    <span className="text-[11px] rounded-full bg-slate-100 px-2 py-1 text-slate-600" data-testid={`categories-level-item-sort-auto-${levelIndex}-${itemIndex}`}>
+                      Otomatik
+                    </span>
                     {levelIndex >= 3 && (
                       <div className="space-y-1" data-testid={`categories-level-item-transaction-${levelIndex}-${itemIndex}`}>
                         <select
