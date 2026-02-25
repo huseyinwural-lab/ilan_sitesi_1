@@ -199,6 +199,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/ilan-ver/arac-sec"
+                    element={
+                      <ProtectedRoute portalScope="account">
+                        <VehicleSelector />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/ilan-ver/detaylar"
                     element={
                       <ProtectedRoute portalScope="account">
