@@ -207,6 +207,31 @@ export default function AdminVehicleMasterImport() {
   const summary = selectedJob?.summary || {};
   const errorLog = selectedJob?.error_log || {};
   const validationErrors = errorLog?.validation_errors || summary?.validation_errors || [];
+  const uploadFieldErrors = uploadErrorInfo?.field_errors || [];
+
+  const handleDownloadExample = () => {
+    const sample = [
+      {
+        make: "Audi",
+        model: "A4",
+        trim: "S Line",
+        year: 2022,
+        fuel_type: "gasoline",
+        body: "sedan",
+        transmission: "automatic",
+        power: 150,
+      },
+    ];
+    const blob = new Blob([JSON.stringify(sample, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'vehicle_master_sample.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6" data-testid="vehicle-master-import-page">
