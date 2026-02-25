@@ -122,6 +122,9 @@ from app.models.doping_request import DopingRequest
 from app.models.footer_layout import FooterLayout
 from app.models.info_page import InfoPage
 from app.models.pricing_campaign import PricingCampaign
+from app.models.pricing_tier_rule import PricingTierRule
+from app.models.pricing_package import PricingPackage, UserPackageSubscription
+from app.models.pricing_snapshot import PricingPriceSnapshot
 from app.models.push_subscription import PushSubscription
 from app.site_media_storage import store_site_asset
 from app.models.cloudflare_config import CloudflareConfig
