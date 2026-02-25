@@ -356,6 +356,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - 🔵 Quick Preview Modal (UH1-E1) — /architecture/ui/LISTING_QUICK_PREVIEW_SPEC.md
 
 ### P2
+- Pricing Konfigürasyon ekranı (eşik/parametre yönetimi)
 - Kayıtlı Arama/Alert (P2 backlog, P1 kapsamına girmez)
 - P2 Saved Search Integration → /architecture/ui/P2_SAVED_SEARCH_INTEGRATION.md
 - P2 Quota API Binding → /architecture/ui/P2_QUOTA_API_BINDING.md
