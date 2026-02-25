@@ -48,6 +48,7 @@ import Register from '@/pages/Register';
 import VerifyEmail from '@/pages/VerifyEmail';
 import ListingCategorySelect from '@/pages/listing/ListingCategorySelect';
 import VehicleSelector from '@/pages/listing/VehicleSelector';
+import ListingDetails from '@/pages/listing/ListingDetails';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
