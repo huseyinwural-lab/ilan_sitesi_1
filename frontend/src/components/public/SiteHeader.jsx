@@ -96,7 +96,7 @@ export default function SiteHeader({ mode, refreshToken }) {
             <button
               type="button"
               onClick={() => navigate('/ilan-ver/kategori-secimi')}
-              className="hidden sm:inline-flex h-9 items-center rounded-full bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--text-inverse)] hover:bg-[var(--color-primary-dark)]"
+              className="inline-flex h-9 items-center rounded-full bg-[var(--button-primary-bg)] px-3 text-xs font-semibold text-[var(--button-primary-text)] hover:bg-[var(--color-primary-hover)] sm:px-4 sm:text-sm"
               data-testid="site-header-create-listing"
             >
               İlan Ver
