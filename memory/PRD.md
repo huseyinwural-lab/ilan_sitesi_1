@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-25 07:10:00 UTC (Pricing scaffolding Part 1)
+**Son güncelleme:** 2026-02-25 07:40:00 UTC (Pricing Part 2)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
