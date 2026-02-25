@@ -37,7 +37,7 @@ Aşağıdaki klasör, agent otomasyon çıktılarının **statik** kanıtların�
 ## C) API Response Kanıtı (örnek payload)
 
 Base URL:
-- `https://corporate-campaigns.preview.emergentagent.com`
+- `https://ad-creation-flow-1.preview.emergentagent.com`
 
 ### 1) GET /api/menu/top-items
 Örnek response (kısaltılmış):

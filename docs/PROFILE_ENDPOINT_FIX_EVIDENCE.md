@@ -1,13 +1,13 @@
 # PROFILE_ENDPOINT_FIX_EVIDENCE
 
 **Tarih:** 2026-02-21
-**Base URL:** https://corporate-campaigns.preview.emergentagent.com
+**Base URL:** https://ad-creation-flow-1.preview.emergentagent.com
 
 ## CURL Denemeleri
 
 ### 1) Login (consumer)
 ```
-curl -X POST https://corporate-campaigns.preview.emergentagent.com/api/auth/login \
+curl -X POST https://ad-creation-flow-1.preview.emergentagent.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@platform.com","password":"User123!"}'
 ```
@@ -15,7 +15,7 @@ curl -X POST https://corporate-campaigns.preview.emergentagent.com/api/auth/logi
 
 ### 2) Login (dealer)
 ```
-curl -X POST https://corporate-campaigns.preview.emergentagent.com/api/auth/login \
+curl -X POST https://ad-creation-flow-1.preview.emergentagent.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"dealer@platform.com","password":"Dealer123!"}'
 ```

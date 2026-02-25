@@ -1,7 +1,7 @@
 # GDPR_EXPORT_SOFT_DELETE_E2E
 
 **Tarih:** 2026-02-24 12:51:30 UTC
-**Ortam URL:** https://corporate-campaigns.preview.emergentagent.com
+**Ortam URL:** https://ad-creation-flow-1.preview.emergentagent.com
 
 ## Scope
 - Kullanıcı veri exportu oluşturma
