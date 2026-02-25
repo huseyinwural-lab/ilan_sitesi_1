@@ -20115,7 +20115,7 @@ def _header_logo_exists(logo_path: Optional[str]) -> bool:
         return False
     if logo_path.startswith("/api/site/assets/"):
         asset_key = logo_path.split("/api/site/assets/", 1)[-1]
-        base_dir = os.path.join(os.path.dirname(__file__), "static", "site_assets")
+        base_dir = os.path.join(os.path.dirname(__file__), "app", "static", "site_assets")
         path = os.path.normpath(os.path.join(base_dir, asset_key))
         return path.startswith(base_dir) and os.path.exists(path)
     return True
