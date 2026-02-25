@@ -328,13 +328,16 @@ export default function AdminAdsCampaigns() {
                       onChange={(e) => setDetailForm((prev) => ({ ...prev, end_at: e.target.value }))}
                       data-testid="admin-campaigns-detail-end"
                     />
-                    <select
+                      <select
                       className="h-9 rounded-md border px-2"
                       value={detailForm.status}
                       onChange={(e) => setDetailForm((prev) => ({ ...prev, status: e.target.value }))}
                       disabled={detail?.campaign?.status === 'expired'}
                       data-testid="admin-campaigns-detail-status"
                     >
+                      {detail?.campaign?.status === 'draft' && (
+                        <option value="draft">Taslak</option>
+                      )}
                       <option value="active">Aktif</option>
                       <option value="paused">Duraklatıldı</option>
                     </select>
