@@ -16238,9 +16238,6 @@ async def admin_update_category(
     if payload.active_flag is not None:
         updates["is_enabled"] = payload.active_flag
 
-    if payload.sort_order is not None:
-        updates["sort_order"] = payload.sort_order
-
     if payload.hierarchy_complete is not None:
         updates["hierarchy_complete"] = payload.hierarchy_complete
 
