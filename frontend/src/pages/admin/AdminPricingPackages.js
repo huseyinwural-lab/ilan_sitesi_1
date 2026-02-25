@@ -207,7 +207,7 @@ export default function AdminPricingPackages() {
   };
 
   const startMin = startLocked ? form.start_at : toInputValue(now);
-  const endMin = startDate ? toInputValue(addDays(startDate, 0)) : toInputValue(now);
+  const endMin = startDate ? toInputValue(new Date(startDate.getTime() + 60 * 1000)) : toInputValue(now);
 
   return (
     <div className="space-y-5" data-testid="admin-pricing-corporate-page">
