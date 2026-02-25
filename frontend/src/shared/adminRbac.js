@@ -39,6 +39,7 @@ export const ADMIN_ROUTE_RULES = [
   { pattern: /^\/admin\/ads\/campaigns\/.+$/, roles: ADMIN_ROLE_GROUPS.adsManager },
   { pattern: /^\/admin\/pricing\/.+$/, roles: ADMIN_ROLE_GROUPS.pricingManager },
   { pattern: /^\/admin\/pricing$/, roles: ADMIN_ROLE_GROUPS.pricingManager },
+  { pattern: /^\/admin\/site-design\/header$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/campaigns$/, roles: ADMIN_ROLE_GROUPS.moderation },
   { pattern: /^\/admin\/categories$/, roles: ADMIN_ROLE_GROUPS.catalogView },
   { pattern: /^\/admin\/categories\/import-export$/, roles: ADMIN_ROLE_GROUPS.catalogAdmin },
