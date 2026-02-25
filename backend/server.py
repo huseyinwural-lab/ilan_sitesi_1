@@ -20507,6 +20507,96 @@ def _build_campaign_warnings(
     return warnings
 
 
+async def _get_latest_pricing_campaign(session: AsyncSession) -> Optional[PricingCampaign]:
+    result = await session.execute(
+        select(PricingCampaign).order_by(desc(PricingCampaign.updated_at)).limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+def _pricing_campaign_to_dict(policy: PricingCampaign) -> Dict[str, Any]:
+    return {
+        "id": str(policy.id),
+        "is_enabled": policy.is_enabled,
+        "start_at": policy.start_at.isoformat() if policy.start_at else None,
+        "end_at": policy.end_at.isoformat() if policy.end_at else None,
+        "scope": policy.scope,
+        "published_at": policy.published_at.isoformat() if policy.published_at else None,
+        "version": policy.version,
+        "created_by": str(policy.created_by) if policy.created_by else None,
+        "updated_by": str(policy.updated_by) if policy.updated_by else None,
+    }
+
+
+def _is_pricing_campaign_active(policy: PricingCampaign, user_type: str) -> bool:
+    if not policy.is_enabled:
+        return False
+    if policy.start_at is None:
+        return False
+    now = datetime.now(timezone.utc)
+    if policy.start_at and policy.start_at > now:
+        return False
+    if policy.end_at and policy.end_at < now:
+        return False
+    if policy.scope == "all":
+        return True
+    return policy.scope == user_type
+
+
+async def _expire_pricing_campaigns(session: AsyncSession, actor: Optional[dict] = None) -> int:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(PricingCampaign).where(
+            PricingCampaign.is_enabled.is_(True),
+            PricingCampaign.end_at.isnot(None),
+            PricingCampaign.end_at < now,
+        )
+    )
+    expired = result.scalars().all()
+    if not expired:
+        return 0
+
+    system_actor = actor or {"id": None, "email": "system@internal"}
+    for policy in expired:
+        policy.is_enabled = False
+        policy.updated_at = now
+        policy.updated_by = _safe_uuid(system_actor.get("id"))
+        await _write_audit_log_sql(
+            session=session,
+            action="PRICING_CAMPAIGN_EXPIRED",
+            actor=system_actor,
+            resource_type="pricing_campaign",
+            resource_id=str(policy.id),
+            metadata={"end_at": policy.end_at.isoformat() if policy.end_at else None},
+            request=None,
+            country_code=None,
+        )
+    await session.commit()
+    return len(expired)
+
+
+def _build_pricing_quote_response(payload: dict, override_active: bool) -> Dict[str, Any]:
+    if override_active:
+        return {
+            "pricing_mode": "campaign",
+            "override_active": True,
+            "warning": "override_active_no_rules",
+            "fallback": "default_pricing",
+            "quote": {
+                "status": "not_implemented",
+                "message": "Campaign override active; default pricing fallback",
+            },
+        }
+    return {
+        "pricing_mode": "default",
+        "override_active": False,
+        "quote": {
+            "status": "not_implemented",
+            "message": "Default pricing scaffold",
+        },
+    }
+
+
 @api_router.get("/admin/ads/analytics")
 async def get_ads_analytics(
     range: str = "30d",
