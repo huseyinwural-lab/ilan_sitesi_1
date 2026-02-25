@@ -92,7 +92,7 @@ export default function BackofficePortalApp() {
           </AdminLayout>
         }
       />
-      cRoute
+      <Route
         path="/site-design/footer"
         element={
           <AdminLayout>
