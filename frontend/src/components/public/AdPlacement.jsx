@@ -30,7 +30,7 @@ export default function AdPlacement({ placement, title }) {
 
   return (
     <div className="rounded-lg border bg-white p-3" data-testid={`ad-placement-${placement}`}>
-      {title && <div className="text-xs text-[#415A77]" data-testid={`ad-placement-title-${placement}`}>{title}</div>}
+      {title && <div className="text-xs text-[var(--text-secondary)]" data-testid={`ad-placement-title-${placement}`}>{title}</div>}
       <a href={ad.target_url || '#'} target="_blank" rel="noreferrer">
         <img src={ad.asset_url} alt="Advertisement" className="mt-2 w-full rounded" />
       </a>
