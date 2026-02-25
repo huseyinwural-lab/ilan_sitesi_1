@@ -405,7 +405,7 @@ export default function AdminAdsManagement() {
           )}
           {analyticsStatus === 'ok' && (
             <div className="space-y-4" data-testid="admin-ads-analytics-content">
-              <div className="grid gap-3 md:grid-cols-3" data-testid="admin-ads-analytics-totals">
+              <div className="grid gap-3 md:grid-cols-4" data-testid="admin-ads-analytics-totals">
                 <div className="rounded-md border p-3" data-testid="admin-ads-analytics-total-impressions">
                   <div className="text-xs text-muted-foreground">Toplam Gösterim</div>
                   <div className="text-lg font-semibold">{totals.impressions}</div>
@@ -417,6 +417,10 @@ export default function AdminAdsManagement() {
                 <div className="rounded-md border p-3" data-testid="admin-ads-analytics-total-ctr">
                   <div className="text-xs text-muted-foreground">CTR (%)</div>
                   <div className="text-lg font-semibold">{totals.ctr}</div>
+                </div>
+                <div className="rounded-md border p-3" data-testid="admin-ads-analytics-total-active">
+                  <div className="text-xs text-muted-foreground">Aktif Reklam Sayısı</div>
+                  <div className="text-lg font-semibold">{totals.active_ads}</div>
                 </div>
               </div>
 
