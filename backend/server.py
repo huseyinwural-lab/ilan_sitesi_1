@@ -20569,6 +20569,305 @@ async def get_ads_analytics(
     }
 
 
+@api_router.get("/admin/ads/campaigns")
+async def list_ad_campaigns(
+    status: Optional[str] = None,
+    q: Optional[str] = None,
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _expire_ads(session)
+    now = datetime.now(timezone.utc)
+
+    total_ads_subq = (
+        select(func.count())
+        .select_from(Advertisement)
+        .where(Advertisement.campaign_id == AdCampaign.id)
+        .correlate(AdCampaign)
+        .scalar_subquery()
+    )
+    active_ads_subq = (
+        select(func.count())
+        .select_from(Advertisement)
+        .where(
+            Advertisement.campaign_id == AdCampaign.id,
+            Advertisement.is_active.is_(True),
+            or_(Advertisement.start_at.is_(None), Advertisement.start_at <= now),
+            or_(Advertisement.end_at.is_(None), Advertisement.end_at >= now),
+            AdCampaign.status == "active",
+            or_(AdCampaign.start_at.is_(None), AdCampaign.start_at <= now),
+            or_(AdCampaign.end_at.is_(None), AdCampaign.end_at >= now),
+        )
+        .correlate(AdCampaign)
+        .scalar_subquery()
+    )
+
+    query = select(AdCampaign, total_ads_subq.label("total_ads"), active_ads_subq.label("active_ads"))
+    if status:
+        query = query.where(AdCampaign.status == status)
+    if q:
+        query = query.where(or_(AdCampaign.name.ilike(f"%{q}%"), AdCampaign.advertiser.ilike(f"%{q}%")))
+    query = query.order_by(desc(AdCampaign.updated_at))
+
+    result = await session.execute(query)
+    items = []
+    for campaign, total_ads, active_ads in result.all():
+        items.append(
+            {
+                "id": str(campaign.id),
+                "name": campaign.name,
+                "advertiser": campaign.advertiser,
+                "budget": float(campaign.budget) if campaign.budget is not None else None,
+                "currency": campaign.currency,
+                "start_at": campaign.start_at.isoformat() if campaign.start_at else None,
+                "end_at": campaign.end_at.isoformat() if campaign.end_at else None,
+                "status": campaign.status,
+                "total_ads": int(total_ads or 0),
+                "active_ads": int(active_ads or 0),
+            }
+        )
+    return {"items": items}
+
+
+@api_router.post("/admin/ads/campaigns")
+async def create_ad_campaign(
+    payload: AdCampaignCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    status_value = payload.status or "draft"
+    if status_value not in CAMPAIGN_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    if status_value == "expired":
+        raise HTTPException(status_code=400, detail="Expired status is automatic")
+
+    start_at, end_at, budget, currency = _normalize_campaign_fields(
+        payload.start_at, payload.end_at, payload.budget, payload.currency
+    )
+
+    campaign = AdCampaign(
+        name=payload.name,
+        advertiser=payload.advertiser,
+        budget=budget,
+        currency=currency or "EUR",
+        start_at=start_at,
+        end_at=end_at,
+        status=status_value,
+    )
+    session.add(campaign)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="CAMPAIGN_CREATED",
+        actor=current_user,
+        resource_type="ad_campaign",
+        resource_id=str(campaign.id),
+        metadata={"name": payload.name},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    await session.refresh(campaign)
+    return {"ok": True, "id": str(campaign.id)}
+
+
+@api_router.get("/admin/ads/campaigns/{campaign_id}")
+async def get_ad_campaign(
+    campaign_id: str,
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        campaign_uuid = uuid.UUID(campaign_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid campaign id") from exc
+
+    campaign = await session.get(AdCampaign, campaign_uuid)
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    ads_result = await session.execute(
+        select(Advertisement)
+        .where(Advertisement.campaign_id == campaign.id)
+        .order_by(desc(Advertisement.updated_at))
+    )
+    ads_payload = []
+    for ad in ads_result.scalars().all():
+        ads_payload.append(
+            {
+                "id": str(ad.id),
+                "placement": ad.placement,
+                "format": ad.format,
+                "is_active": ad.is_active,
+                "target_url": ad.target_url,
+                "start_at": ad.start_at.isoformat() if ad.start_at else None,
+                "end_at": ad.end_at.isoformat() if ad.end_at else None,
+            }
+        )
+
+    return {
+        "campaign": {
+            "id": str(campaign.id),
+            "name": campaign.name,
+            "advertiser": campaign.advertiser,
+            "budget": float(campaign.budget) if campaign.budget is not None else None,
+            "currency": campaign.currency,
+            "start_at": campaign.start_at.isoformat() if campaign.start_at else None,
+            "end_at": campaign.end_at.isoformat() if campaign.end_at else None,
+            "status": campaign.status,
+        },
+        "ads": ads_payload,
+    }
+
+
+@api_router.patch("/admin/ads/campaigns/{campaign_id}")
+async def update_ad_campaign(
+    campaign_id: str,
+    payload: AdCampaignUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        campaign_uuid = uuid.UUID(campaign_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid campaign id") from exc
+
+    campaign = await session.get(AdCampaign, campaign_uuid)
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    if payload.status:
+        if payload.status == "expired":
+            raise HTTPException(status_code=400, detail="Expired status is automatic")
+        if payload.status not in {"active", "paused"}:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        if campaign.status == "expired":
+            raise HTTPException(status_code=400, detail="Expired campaign cannot be reactivated")
+
+    start_at = payload.start_at if payload.start_at is not None else campaign.start_at
+    end_at = payload.end_at if payload.end_at is not None else campaign.end_at
+    budget = payload.budget if payload.budget is not None else campaign.budget
+    currency = payload.currency if payload.currency is not None else campaign.currency
+    start_at, end_at, budget, currency = _normalize_campaign_fields(start_at, end_at, budget, currency)
+
+    if payload.name is not None:
+        campaign.name = payload.name
+    if payload.advertiser is not None:
+        campaign.advertiser = payload.advertiser
+    if payload.budget is not None:
+        campaign.budget = budget
+    if payload.currency is not None:
+        campaign.currency = currency or campaign.currency
+    if payload.start_at is not None:
+        campaign.start_at = start_at
+    if payload.end_at is not None:
+        campaign.end_at = end_at
+
+    status_changed = False
+    if payload.status is not None and payload.status != campaign.status:
+        campaign.status = payload.status
+        status_changed = True
+
+    action = "CAMPAIGN_STATUS_CHANGED" if status_changed else "CAMPAIGN_UPDATED"
+    await _write_audit_log_sql(
+        session=session,
+        action=action,
+        actor=current_user,
+        resource_type="ad_campaign",
+        resource_id=str(campaign.id),
+        metadata={"status": campaign.status},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.post("/admin/ads/campaigns/{campaign_id}/ads/{ad_id}")
+async def link_ad_to_campaign(
+    campaign_id: str,
+    ad_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        campaign_uuid = uuid.UUID(campaign_id)
+        ad_uuid = uuid.UUID(ad_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid id") from exc
+
+    campaign = await session.get(AdCampaign, campaign_uuid)
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    ad = await session.get(Advertisement, ad_uuid)
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+
+    ad.campaign_id = campaign.id
+
+    await _write_audit_log_sql(
+        session=session,
+        action="CAMPAIGN_AD_LINKED",
+        actor=current_user,
+        resource_type="ad_campaign",
+        resource_id=str(campaign.id),
+        metadata={"ad_id": str(ad.id)},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.delete("/admin/ads/campaigns/{campaign_id}/ads/{ad_id}")
+async def unlink_ad_from_campaign(
+    campaign_id: str,
+    ad_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        campaign_uuid = uuid.UUID(campaign_id)
+        ad_uuid = uuid.UUID(ad_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid id") from exc
+
+    campaign = await session.get(AdCampaign, campaign_uuid)
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    ad = await session.get(Advertisement, ad_uuid)
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+
+    if ad.campaign_id != campaign.id:
+        raise HTTPException(status_code=400, detail="Ad not linked to campaign")
+
+    ad.campaign_id = None
+
+    await _write_audit_log_sql(
+        session=session,
+        action="CAMPAIGN_AD_UNLINKED",
+        actor=current_user,
+        resource_type="ad_campaign",
+        resource_id=str(campaign.id),
+        metadata={"ad_id": str(ad.id)},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+
+    await session.commit()
+    return {"ok": True}
+
+
 @api_router.post("/v1/doping/requests")
 async def create_doping_request(
     payload: DopingRequestPayload,
