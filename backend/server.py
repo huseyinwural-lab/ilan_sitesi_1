@@ -1632,6 +1632,14 @@ async def record_request_metrics(request: Request, call_next):
     if endpoint_group:
         record_request_latency(endpoint_group, duration_ms)
     response.headers["X-Response-Time-ms"] = f"{duration_ms:.2f}"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "img-src 'self' data:; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'"
+    )
     return response
 
 
