@@ -425,21 +425,21 @@ export default function AdminAdsManagement() {
               </div>
 
               <div className="rounded-md border" data-testid="admin-ads-analytics-breakdown">
-                <div className="px-4 py-3 border-b text-sm font-semibold">Placement Kırılımı</div>
+                <div className="px-4 py-3 border-b text-sm font-semibold" data-testid="admin-ads-analytics-breakdown-title">{breakdownTitle}</div>
                 <div className="divide-y">
-                  {placementStats.map((item) => (
+                  {breakdownRows.map((item) => (
                     <div
-                      key={item.placement}
+                      key={item.key}
                       className="grid grid-cols-4 gap-2 px-4 py-2 text-sm"
-                      data-testid={`admin-ads-analytics-row-${item.placement}`}
+                      data-testid={`admin-ads-analytics-row-${item.key}`}
                     >
-                      <div data-testid={`admin-ads-analytics-label-${item.placement}`}>{item.label || item.placement}</div>
-                      <div data-testid={`admin-ads-analytics-impressions-${item.placement}`}>{item.impressions}</div>
-                      <div data-testid={`admin-ads-analytics-clicks-${item.placement}`}>{item.clicks}</div>
-                      <div data-testid={`admin-ads-analytics-ctr-${item.placement}`}>{item.ctr}</div>
+                      <div data-testid={`admin-ads-analytics-label-${item.key}`}>{item.label || item.key}</div>
+                      <div data-testid={`admin-ads-analytics-impressions-${item.key}`}>{item.impressions}</div>
+                      <div data-testid={`admin-ads-analytics-clicks-${item.key}`}>{item.clicks}</div>
+                      <div data-testid={`admin-ads-analytics-ctr-${item.key}`}>{item.ctr}</div>
                     </div>
                   ))}
-                  {placementStats.length === 0 && (
+                  {breakdownRows.length === 0 && (
                     <div className="px-4 py-3 text-sm text-muted-foreground" data-testid="admin-ads-analytics-empty">
                       Veri bulunamadı.
                     </div>
