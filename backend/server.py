@@ -19955,13 +19955,14 @@ async def list_ads_public(
         raise HTTPException(status_code=400, detail="Invalid placement")
     await _expire_ads(session)
     result = await session.execute(
-        select(Advertisement)
+        select(Advertisement, AdCampaign)
+        .outerjoin(AdCampaign, AdCampaign.id == Advertisement.campaign_id)
         .where(Advertisement.placement == placement, Advertisement.is_active.is_(True))
         .order_by(desc(Advertisement.priority), desc(Advertisement.updated_at))
     )
     items = []
-    for ad in result.scalars().all():
-        if not _is_active_window(ad.start_at, ad.end_at):
+    for ad, campaign in result.all():
+        if not _is_ad_active(ad, campaign):
             continue
         items.append(
             {
