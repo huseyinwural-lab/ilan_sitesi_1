@@ -419,6 +419,14 @@ export default function AdminAdsManagement() {
                 >
                   Kaydet
                 </button>
+                <button
+                  type="button"
+                  onClick={() => openDeleteConfirm(ad)}
+                  className="h-9 px-3 rounded-md border border-rose-200 text-sm text-rose-600 hover:bg-rose-50"
+                  data-testid={`admin-ads-item-delete-${ad.id}`}
+                >
+                  Sil
+                </button>
               </div>
             </div>
           );
