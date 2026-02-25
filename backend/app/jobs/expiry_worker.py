@@ -87,7 +87,7 @@ async def run_expiry_job():
             package_result = await session.execute(package_stmt)
             expired_package_subs = package_result.all()
 
-            total_updates = len(expired_subs) + len(expired_campaigns) + len(expired_tiers) + len(expired_package_subs)
+            total_updates = len(expired_subs) + len(expired_campaigns) + len(expired_campaign_items) + len(expired_tiers) + len(expired_package_subs)
 
             if total_updates > 0:
                 logger.info(
