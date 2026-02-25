@@ -11,10 +11,10 @@
 {
   "status": "not_implemented",
   "pricing_campaign_mode": {
-    "is_active": false,
+    "is_enabled": false,
     "start_at": null,
     "end_at": null,
-    "scope": "both"
+    "scope": "all"
   }
 }
 ```
@@ -23,18 +23,26 @@
 **Body:**
 ```json
 {
-  "is_active": true,
+  "is_enabled": true,
   "start_at": "2026-03-01T00:00:00Z",
   "end_at": "2026-03-31T00:00:00Z",
-  "scope": "individual"
+  "scope": "all"
 }
 ```
-**Response (placeholder):**
+**Response:**
 ```json
 {
-  "status": "not_implemented",
-  "message": "Pricing campaign policy scaffold",
-  "payload": { "...": "..." }
+  "ok": true,
+  "policy": {
+    "id": "...",
+    "is_enabled": true,
+    "start_at": "...",
+    "end_at": "...",
+    "scope": "all",
+    "published_at": "...",
+    "version": 2
+  },
+  "active": true
 }
 ```
 
@@ -49,12 +57,17 @@
   "listing_type": "listing"
 }
 ```
-**Response (placeholder):**
+**Response (Part 2):**
 ```json
 {
-  "status": "not_implemented",
-  "message": "Pricing quote scaffold",
-  "payload": { "...": "..." }
+  "pricing_mode": "campaign",
+  "override_active": true,
+  "warning": "override_active_no_rules",
+  "fallback": "default_pricing",
+  "quote": {
+    "status": "not_implemented",
+    "message": "Campaign override active; default pricing fallback"
+  }
 }
 ```
 
@@ -68,7 +81,7 @@
 ```
 
 ## Parametreler
-- **scope:** `individual | corporate | both`
+- **scope:** `individual | corporate | all`
 - **user_type:** `individual | corporate`
 
 Contract freeze: Parça 2/3'te bu şema korunacaktır.
