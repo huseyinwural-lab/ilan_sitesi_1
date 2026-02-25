@@ -1,18 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Heart, Mail, Search, User, ChevronDown } from 'lucide-react';
+import { Bell, Heart, Mail, Search, User, ChevronDown, Menu } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-export default function SiteHeader({ mode }) {
+export default function SiteHeader({ mode, refreshToken }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [logoUrl, setLogoUrl] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const isAuthenticated = mode ? mode === 'auth' : Boolean(user);
   const displayName = useMemo(() => {
@@ -37,13 +38,14 @@ export default function SiteHeader({ mode }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [refreshToken]);
 
   const handleSearch = (evt) => {
     evt.preventDefault();
     const target = query.trim();
     if (!target) return;
     navigate(`/search?q=${encodeURIComponent(target)}`);
+    setSearchOpen(false);
   };
 
   const handleLogout = () => {
@@ -54,7 +56,7 @@ export default function SiteHeader({ mode }) {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-white" data-testid="site-header">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+      <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3" data-testid="site-header-container">
         <Link to="/" className="flex items-center gap-2" data-testid="site-header-logo">
           {logoUrl ? (
             <img src={logoUrl} alt="Logo" className="h-8 object-contain" data-testid="site-header-logo-image" />
@@ -84,7 +86,7 @@ export default function SiteHeader({ mode }) {
           </button>
         </form>
 
-        <div className="flex items-center gap-3" data-testid="site-header-actions">
+        <div className="flex items-center gap-2" data-testid="site-header-controls">
           <button
             type="button"
             className="md:hidden rounded-full border p-2"
@@ -93,7 +95,20 @@ export default function SiteHeader({ mode }) {
           >
             <Search size={18} />
           </button>
+          <button
+            type="button"
+            className="md:hidden rounded-full border p-2"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            data-testid="site-header-menu-toggle"
+          >
+            <Menu size={18} />
+          </button>
+        </div>
 
+        <div
+          className={`items-center gap-3 ${menuOpen ? 'flex' : 'hidden'} md:flex`}
+          data-testid="site-header-actions"
+        >
           {!isAuthenticated && (
             <div className="flex items-center gap-2" data-testid="site-header-guest">
               <Link
