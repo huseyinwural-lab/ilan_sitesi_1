@@ -19579,7 +19579,7 @@ async def submit_vehicle_listing(
             },
         )
 
-    pricing_response, quote, policy, _ = await _compute_pricing_quote(session, current_user)
+    pricing_response, quote, policy, _ = await _compute_pricing_quote(session, current_user, None)
     override_active = pricing_response.get("override_active", False)
     snapshot = None
     if not quote.get("requires_payment"):
