@@ -321,6 +321,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/P1_SECURITY_UI_CHECKLIST.md
 
 ## Son Değişiklikler (2026-02-25)
+- Public UI hardening: SEO meta + OG + schema; CSP header; 404/500 sayfaları; cross-browser/perf/security dokümanları.
 - Tema yönetimi: CSS değişkenleri + FOUC script + ErrorBoundary; hex renkler semantik değişkenlere taşındı.
 - Footer domain: grid builder + draft/publish + preview + version rollback; Bilgi Sayfaları CRUD + /bilgi/:slug.
 - Header domain: MainLayout + site_header_config modeli + logo upload/cache invalidation; Admin Header Yönetimi ekranı + guest/auth header state.
