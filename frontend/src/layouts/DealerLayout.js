@@ -96,7 +96,7 @@ export default function DealerLayout() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-warm)]" data-testid="dealer-layout">
-      <header className="bg-[#2f3854] text-white" data-testid="dealer-topbar">
+      <header className="bg-[var(--brand-navy)] text-white" data-testid="dealer-topbar">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-4" data-testid="dealer-topbar-left">
             <div
