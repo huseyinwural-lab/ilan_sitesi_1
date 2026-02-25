@@ -26,6 +26,8 @@ import VehicleMakeModelPage from '@/pages/public/VehicleMakeModelPage';
 import VehicleSegmentPage from '@/pages/public/VehicleSegmentPage';
 import RedirectToCountry from '@/pages/public/RedirectToCountry';
 import InfoPage from '@/pages/public/InfoPage';
+import NotFoundPage from '@/pages/public/NotFoundPage';
+import ServerErrorPage from '@/pages/public/ServerErrorPage';
 // Login moved under portal-specific paths
 
 // Admin/Dealer Portal (lazy)
