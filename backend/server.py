@@ -20187,6 +20187,8 @@ def _is_campaign_active(campaign: Optional[AdCampaign]) -> bool:
 
 
 def _is_ad_active(ad: Advertisement, campaign: Optional[AdCampaign]) -> bool:
+    if ad.is_deleted:
+        return False
     if not ad.is_active:
         return False
     if not _is_active_window(ad.start_at, ad.end_at):
