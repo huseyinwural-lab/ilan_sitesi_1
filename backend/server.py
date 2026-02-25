@@ -20469,7 +20469,11 @@ async def list_ads_public(
     result = await session.execute(
         select(Advertisement, AdCampaign)
         .outerjoin(AdCampaign, AdCampaign.id == Advertisement.campaign_id)
-        .where(Advertisement.placement == placement, Advertisement.is_active.is_(True))
+        .where(
+            Advertisement.placement == placement,
+            Advertisement.is_active.is_(True),
+            Advertisement.is_deleted.is_(False),
+        )
         .order_by(desc(Advertisement.priority), desc(Advertisement.updated_at))
     )
     items = []
