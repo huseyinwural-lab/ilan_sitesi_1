@@ -206,6 +206,19 @@ export default function AdminAdsManagement() {
             </select>
           </div>
           <div>
+            <label className="text-xs">Format</label>
+            <select
+              className="mt-1 h-9 w-full rounded-md border px-2"
+              value={form.format}
+              onChange={(e) => setForm((prev) => ({ ...prev, format: e.target.value }))}
+              data-testid="admin-ads-format"
+            >
+              {getAllowedFormats(form.placement).map((fmt) => (
+                <option key={fmt} value={fmt}>{formatLabel(fmt)}</option>
+              ))}
+            </select>
+          </div>
+          <div>
             <label className="text-xs">Priority</label>
             <input
               type="number"
