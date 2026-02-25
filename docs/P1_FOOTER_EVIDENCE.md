@@ -51,3 +51,4 @@ curl -X GET "$API/info/hakkimizda"
 - Admin footer builder row/column/link ekleme doğrulandı.
 - Draft/publish + version listesi çalışıyor.
 - Bilgi sayfaları draft/publish + preview çalışıyor.
+- Auto frontend testing agent: PASS.
