@@ -84,7 +84,7 @@ export default function SiteHeader({ mode, refreshToken }) {
           />
           <button
             type="submit"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--header-text)]/70"
             data-testid="site-header-search-submit"
           >
             <Search size={18} />
@@ -128,7 +128,7 @@ export default function SiteHeader({ mode, refreshToken }) {
             <div className="flex items-center gap-2" data-testid="site-header-guest">
               <Link
                 to="/login"
-                className="text-sm font-semibold text-[var(--text-secondary)]"
+                className="text-sm font-semibold text-[var(--header-text)]/70"
                 data-testid="site-header-login"
               >
                 Giriş Yap
