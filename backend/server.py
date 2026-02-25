@@ -8668,6 +8668,8 @@ async def validate_category_selection(
 
     if module and category.module != module:
         raise HTTPException(status_code=409, detail="Module mismatch")
+    if module == "vehicle" and category.parent_id:
+        raise HTTPException(status_code=409, detail="Vehicle category must be top-level")
 
     if country:
         code = country.upper()
