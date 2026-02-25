@@ -45,11 +45,14 @@ export default function Layout({ children }) {
       setSessionError('Oturum bulunamadı. Lütfen tekrar giriş yapın.');
       return;
     }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     try {
       setSessionStatus('loading');
       setSessionError('');
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/session/health`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
       if (res.status === 401 || res.status === 403) {
         setSessionStatus('error');
@@ -66,6 +69,8 @@ export default function Layout({ children }) {
     } catch (error) {
       setSessionStatus('error');
       setSessionError('Sunucuya ulaşılamadı. Lütfen tekrar deneyin.');
+    } finally {
+      clearTimeout(timeout);
     }
   };
 
