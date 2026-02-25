@@ -5,7 +5,7 @@
 ## 1) Enable/Disable + Validation (Admin)
 **Enable (start_at required):**
 ```bash
-curl -i -X PUT "https://monetize-listings.preview.emergentagent.com/api/admin/pricing/campaign" \
+curl -i -X PUT "https://corporate-campaigns.preview.emergentagent.com/api/admin/pricing/campaign" \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"is_enabled":true,"scope":"all"}'
@@ -14,7 +14,7 @@ curl -i -X PUT "https://monetize-listings.preview.emergentagent.com/api/admin/pr
 
 **Enable (valid):**
 ```bash
-curl -X PUT "https://monetize-listings.preview.emergentagent.com/api/admin/pricing/campaign" \
+curl -X PUT "https://corporate-campaigns.preview.emergentagent.com/api/admin/pricing/campaign" \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"is_enabled":true,"scope":"all","start_at":"2026-02-25T07:27:51Z"}'
@@ -26,7 +26,7 @@ curl -X PUT "https://monetize-listings.preview.emergentagent.com/api/admin/prici
 
 **Invalid Dates:**
 ```bash
-curl -i -X PUT "https://monetize-listings.preview.emergentagent.com/api/admin/pricing/campaign" \
+curl -i -X PUT "https://corporate-campaigns.preview.emergentagent.com/api/admin/pricing/campaign" \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"is_enabled":false,"scope":"all","start_at":"2026-03-10T00:00:00Z","end_at":"2026-03-01T00:00:00Z"}'
@@ -35,7 +35,7 @@ curl -i -X PUT "https://monetize-listings.preview.emergentagent.com/api/admin/pr
 
 ## 2) Quote Override Hook
 ```bash
-curl -s -X POST "https://monetize-listings.preview.emergentagent.com/api/pricing/quote" \
+curl -s -X POST "https://corporate-campaigns.preview.emergentagent.com/api/pricing/quote" \
   -H "Content-Type: application/json" \
   -d '{"user_type":"individual"}'
 ```
