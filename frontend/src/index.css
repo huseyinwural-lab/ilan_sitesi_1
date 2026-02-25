@@ -92,6 +92,30 @@
     --chart-3: 24 94% 50%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    --color-primary: #ff7000;
+    --color-primary-dark: #e65a00;
+    --color-secondary: #007bff;
+    --color-secondary-dark: #0056d2;
+    --color-accent: #00a0b0;
+    --color-info: #61dafb;
+    --color-app-bg: #0f0f10;
+
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-inverse: #0f172a;
+
+    --bg-page: #0f172a;
+    --bg-surface: #111827;
+    --bg-surface-muted: #1f2937;
+    --bg-soft: #1f2937;
+    --bg-warm: #2b3342;
+
+    --border-subtle: #273449;
+    --border-warm: #3b4a63;
+
+    --brand-navy: #111827;
+    --brand-navy-deep: #0b1220;
   }
 }
 
