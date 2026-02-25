@@ -34,6 +34,8 @@ export function portalFromScope(scope) {
 
 export function defaultHomeForRole(role) {
   if (!role) return '/';
+  if (role === 'pricing_manager') return '/admin/pricing/tiers';
+  if (role === 'ads_manager') return '/admin/ads';
   const p = ROLE_TO_PORTAL[role];
   if (p === PORTALS.BACKOFFICE) return '/admin';
   if (p === PORTALS.DEALER) return '/dealer';
