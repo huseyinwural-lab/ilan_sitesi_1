@@ -125,6 +125,17 @@ async def run_expiry_job():
                             ip_address="127.0.0.1",
                         )
                     )
+                if expired_campaign_items:
+                    session.add(
+                        AuditLog(
+                            action="SYSTEM_EXPIRE",
+                            resource_type="pricing_campaign_item",
+                            user_id=sys_user_id,
+                            user_email="system@platform.com",
+                            new_values={"count": len(expired_campaign_items), "ids": [str(c.id) for c in expired_campaign_items]},
+                            ip_address="127.0.0.1",
+                        )
+                    )
                 if expired_tiers:
                     session.add(
                         AuditLog(
