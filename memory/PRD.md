@@ -392,6 +392,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - 🔵 Quick Preview Modal (UH1-E1) — /architecture/ui/LISTING_QUICK_PREVIEW_SPEC.md
 
 ### P2
+- Header arama chip önerileri (P2)
 - Kampanya timeline/gantt görünümü + overlap uyarısı (pricing)
 - Pricing Konfigürasyon ekranı (eşik/parametre yönetimi)
 - Kayıtlı Arama/Alert (P2 backlog, P1 kapsamına girmez)
