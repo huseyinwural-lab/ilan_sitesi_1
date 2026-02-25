@@ -61,3 +61,8 @@ curl -X GET "$API/admin/ads/campaigns" -H "Authorization: Bearer $ADMIN_TOKEN"
 - pricing_manager: sadece Fiyatlandırma menüsü
 - ads_manager: sadece Reklam & Kampanya menüsü
 - super_admin: tüm modüller
+
+UI screenshot:
+- `rbac-pricing-manager.png`
+- `rbac-ads-manager.png`
+- `rbac-admin.png`
