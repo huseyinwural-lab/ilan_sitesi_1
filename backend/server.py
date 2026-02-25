@@ -22808,23 +22808,38 @@ async def get_footer_layout_admin(
     }
 
 
+@api_router.get("/admin/footer/layouts")
+async def list_footer_layouts(
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(select(FooterLayout).order_by(desc(FooterLayout.version)))
+    items = []
+    for layout in result.scalars().all():
+        items.append(
+            {
+                "id": str(layout.id),
+                "status": layout.status,
+                "version": layout.version,
+                "updated_at": layout.updated_at.isoformat() if layout.updated_at else None,
+            }
+        )
+    return {"items": items}
+
+
 @api_router.put("/admin/footer/layout")
 async def save_footer_layout(
     payload: FooterLayoutPayload,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    result = await session.execute(select(FooterLayout).order_by(desc(FooterLayout.updated_at)).limit(1))
-    layout = result.scalar_one_or_none()
-    if not layout:
-        layout = FooterLayout(layout=payload.layout, status=payload.status or "draft", version=1)
-        session.add(layout)
-    else:
-        layout.layout = payload.layout
-        layout.status = payload.status or layout.status
-        layout.version = (layout.version or 1) + 1
+    result = await session.execute(select(FooterLayout).order_by(desc(FooterLayout.version)).limit(1))
+    latest = result.scalar_one_or_none()
+    next_version = (latest.version if latest else 0) + 1
+    layout = FooterLayout(layout=payload.layout, status=payload.status or "draft", version=next_version)
+    session.add(layout)
     await session.commit()
-    return {"ok": True}
+    return {"ok": True, "id": str(layout.id), "version": layout.version}
 
 
 @api_router.post("/admin/footer/layout/publish")
@@ -22832,13 +22847,35 @@ async def publish_footer_layout(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    result = await session.execute(select(FooterLayout).order_by(desc(FooterLayout.updated_at)).limit(1))
+    result = await session.execute(select(FooterLayout).order_by(desc(FooterLayout.version)).limit(1))
     layout = result.scalar_one_or_none()
     if not layout:
         raise HTTPException(status_code=404, detail="Footer layout not found")
+    await session.execute(update(FooterLayout).values(status="draft"))
     layout.status = "published"
     await session.commit()
-    return {"ok": True}
+    return {"ok": True, "id": str(layout.id), "version": layout.version}
+
+
+@api_router.post("/admin/footer/layout/{layout_id}/publish")
+async def publish_footer_layout_version(
+    layout_id: str,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        layout_uuid = uuid.UUID(layout_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid layout id") from exc
+
+    layout = await session.get(FooterLayout, layout_uuid)
+    if not layout:
+        raise HTTPException(status_code=404, detail="Footer layout not found")
+
+    await session.execute(update(FooterLayout).values(status="draft"))
+    layout.status = "published"
+    await session.commit()
+    return {"ok": True, "id": str(layout.id), "version": layout.version}
 
 
 @api_router.get("/admin/info-pages")
