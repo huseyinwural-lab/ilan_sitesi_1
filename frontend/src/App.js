@@ -16,6 +16,7 @@ import AccountPrivacyCenter from './pages/user/AccountPrivacyCenter';
 import { HelmetProvider } from 'react-helmet-async';
 
 // Public Pages
+import ErrorBoundary from '@/components/ErrorBoundary';
 import MainLayout from '@/layouts/MainLayout';
 import HomePage from '@/pages/public/HomePage';
 import SearchPage from '@/pages/public/SearchPage';
