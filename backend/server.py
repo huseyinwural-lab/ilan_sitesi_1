@@ -20285,6 +20285,47 @@ def _listing_to_dict(listing: Listing) -> dict:
     }
 
 
+def _validate_vehicle_selector_payload(vehicle: dict) -> dict:
+    normalized = dict(vehicle or {})
+    year_value = _cast_int(normalized.get("year"))
+    if year_value is None:
+        normalized["year"] = None
+        return normalized
+
+    normalized["year"] = year_value
+    manual_trim_text_raw = normalized.get("manual_trim_text")
+    manual_trim_text = str(manual_trim_text_raw).strip() if manual_trim_text_raw is not None else ""
+    manual_trim_flag = _cast_bool(normalized.get("manual_trim_flag"))
+    trim_id_raw = normalized.get("vehicle_trim_id") or normalized.get("trim_id")
+    trim_id_value = None
+
+    if trim_id_raw not in (None, ""):
+        try:
+            trim_id_value = str(uuid.UUID(str(trim_id_raw)))
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail="vehicle_trim_id invalid") from exc
+
+    if year_value >= 2000:
+        if not trim_id_value:
+            raise HTTPException(status_code=422, detail="year >= 2000 için vehicle_trim_id zorunludur")
+        normalized["vehicle_trim_id"] = trim_id_value
+        normalized["trim_id"] = trim_id_value
+        normalized["manual_trim_flag"] = False
+        normalized["manual_trim_text"] = None
+        return normalized
+
+    if manual_trim_flag is not True:
+        raise HTTPException(status_code=422, detail="year < 2000 için manual_trim_flag=true zorunludur")
+    if len(manual_trim_text) < 2:
+        raise HTTPException(status_code=422, detail="year < 2000 için manual_trim_text zorunludur")
+
+    normalized["vehicle_trim_id"] = None
+    normalized["trim_id"] = None
+    normalized["manual_trim_flag"] = True
+    normalized["manual_trim_text"] = manual_trim_text
+    return normalized
+
+
 def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
     if not payload:
         return
@@ -20369,7 +20410,8 @@ def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
     vehicle_payload = payload.get("vehicle") or {}
     if vehicle_payload:
         vehicle = dict(attrs.get("vehicle") or {})
-        vehicle.update({k: v for k, v in vehicle_payload.items() if v is not None})
+        for key, value in vehicle_payload.items():
+            vehicle[key] = value
         attrs["vehicle"] = vehicle
 
     if make_value is None and isinstance(vehicle_payload, dict):
@@ -20377,16 +20419,29 @@ def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
     if model_value is None and isinstance(vehicle_payload, dict):
         model_value = vehicle_payload.get("model_id")
 
-    if make_value is not None:
-        try:
-            listing.make_id = uuid.UUID(str(make_value))
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail="make_id invalid") from exc
-    if model_value is not None:
-        try:
-            listing.model_id = uuid.UUID(str(model_value))
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail="model_id invalid") from exc
+    has_make_value = ("make_id" in payload) or (isinstance(vehicle_payload, dict) and "make_id" in vehicle_payload)
+    has_model_value = ("model_id" in payload) or (isinstance(vehicle_payload, dict) and "model_id" in vehicle_payload)
+
+    if has_make_value:
+        if make_value in (None, ""):
+            listing.make_id = None
+        else:
+            try:
+                listing.make_id = uuid.UUID(str(make_value))
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail="make_id invalid") from exc
+
+    if has_model_value:
+        if model_value in (None, ""):
+            listing.model_id = None
+        else:
+            try:
+                listing.model_id = uuid.UUID(str(model_value))
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail="model_id invalid") from exc
+
+    if listing.module == "vehicle" and isinstance(attrs.get("vehicle"), dict):
+        attrs["vehicle"] = _validate_vehicle_selector_payload(attrs.get("vehicle") or {})
 
     if payload.get("detail_groups") is not None:
         attrs["detail_groups"] = payload.get("detail_groups")
