@@ -117,6 +117,7 @@ from app.models.favorite import Favorite
 from app.models.notification import Notification
 from app.models.gdpr_export import GDPRExport
 from app.models.site_header import SiteHeaderSetting
+from app.models.site_header_config import SiteHeaderConfig
 from app.models.advertisement import Advertisement, AdImpression, AdClick, AdCampaign
 from app.models.doping_request import DopingRequest
 from app.models.footer_layout import FooterLayout
