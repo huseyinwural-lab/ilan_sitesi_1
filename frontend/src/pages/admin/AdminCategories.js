@@ -1472,9 +1472,6 @@ const AdminCategories = () => {
     if (!moduleValue) {
       fieldErrors.main_module = "Modül zorunludur.";
     }
-    if (form.sort_order === "" || form.sort_order === null || Number.isNaN(Number(form.sort_order))) {
-      fieldErrors.main_sort = "Sıra zorunludur.";
-    }
 
     if (Object.keys(fieldErrors).length > 0) {
       setHierarchyFieldErrors(fieldErrors);
