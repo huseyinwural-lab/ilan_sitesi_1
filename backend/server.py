@@ -19580,7 +19580,9 @@ async def submit_vehicle_listing(
 
     pricing_response, quote, policy, _ = await _compute_pricing_quote(session, current_user)
     override_active = pricing_response.get("override_active", False)
-    snapshot = await _create_pricing_snapshot(session, listing, current_user, quote, policy, override_active)
+    snapshot = None
+    if not quote.get("requires_payment"):
+        snapshot = await _create_pricing_snapshot(session, listing, current_user, quote, policy, override_active)
 
     if quote.get("quota_used") and quote.get("subscription_id"):
         subscription = await session.get(UserPackageSubscription, uuid.UUID(quote["subscription_id"]))
