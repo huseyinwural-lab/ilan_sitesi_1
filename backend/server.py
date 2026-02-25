@@ -20249,7 +20249,7 @@ async def create_ad(
 async def update_ad(
     ad_id: str,
     payload: AdUpdatePayload,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     try:
@@ -20265,6 +20265,17 @@ async def update_ad(
     end_at = payload.end_at if payload.end_at is not None else ad.end_at
     start_at, end_at = _normalize_ad_dates(start_at, end_at)
 
+    if payload.is_active is True:
+        conflict = await _find_active_ad_conflict(session, ad.placement, exclude_id=ad.id)
+        if conflict:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "message": "Active ad already exists for placement",
+                    "existing_id": str(conflict.id),
+                },
+            )
+
     if payload.start_at is not None:
         ad.start_at = start_at
     if payload.end_at is not None:
@@ -20275,6 +20286,8 @@ async def update_ad(
         ad.priority = payload.priority
     if payload.target_url is not None:
         ad.target_url = payload.target_url
+    if payload.format is not None:
+        ad.format = _resolve_ad_format(ad.placement, payload.format)
     if payload.campaign_id is not None:
         if payload.campaign_id == "" or payload.campaign_id.lower() == "null":
             ad.campaign_id = None
@@ -20288,7 +20301,11 @@ async def update_ad(
                 raise HTTPException(status_code=404, detail="Campaign not found")
             ad.campaign_id = campaign.id
 
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="Active ad already exists for placement")
     return {"ok": True}
 
 
