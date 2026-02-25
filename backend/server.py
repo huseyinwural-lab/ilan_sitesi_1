@@ -19774,6 +19774,24 @@ def _is_active_window(start_at: Optional[datetime], end_at: Optional[datetime]) 
     return True
 
 
+def _is_campaign_active(campaign: Optional[AdCampaign]) -> bool:
+    if not campaign:
+        return True
+    if campaign.status != "active":
+        return False
+    return _is_active_window(campaign.start_at, campaign.end_at)
+
+
+def _is_ad_active(ad: Advertisement, campaign: Optional[AdCampaign]) -> bool:
+    if not ad.is_active:
+        return False
+    if not _is_active_window(ad.start_at, ad.end_at):
+        return False
+    if campaign and not _is_campaign_active(campaign):
+        return False
+    return True
+
+
 AD_IMPRESSION_DEDUP_MINUTES = 30
 AD_BOT_KEYWORDS = ("bot", "spider", "crawl", "scanner")
 
