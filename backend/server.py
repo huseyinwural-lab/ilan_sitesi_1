@@ -20752,6 +20752,48 @@ async def update_ad(
     return {"ok": True}
 
 
+@api_router.delete("/admin/ads/{ad_id}")
+async def delete_ad(
+    ad_id: str,
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        ad_uuid = uuid.UUID(ad_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid ad id") from exc
+
+    ad = await session.get(Advertisement, ad_uuid)
+    if not ad or ad.is_deleted:
+        raise HTTPException(status_code=404, detail="Ad not found")
+
+    old_values = {
+        "placement": ad.placement,
+        "campaign_id": str(ad.campaign_id) if ad.campaign_id else None,
+        "is_active": ad.is_active,
+        "target_url": ad.target_url,
+    }
+
+    ad.is_deleted = True
+    ad.is_active = False
+    ad.deleted_at = datetime.now(timezone.utc)
+    ad.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+
+    await log_action(
+        session,
+        action="AD_DELETED",
+        resource_type="advertisement",
+        resource_id=str(ad.id),
+        user_id=current_user.get("id"),
+        user_email=current_user.get("email"),
+        old_values=old_values,
+        new_values={"is_deleted": True},
+    )
+
+    return {"ok": True}
+
+
 @api_router.post("/admin/ads/{ad_id}/upload")
 async def upload_ad_asset(
     ad_id: str,
