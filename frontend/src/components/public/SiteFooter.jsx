@@ -35,7 +35,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
 
   if (!layout) {
     return (
-      <footer className="border-t bg-[var(--bg-surface)]" data-testid="site-footer">
+      <footer className="border-t bg-[var(--footer-bg)] text-[var(--footer-text)]" data-testid="site-footer">
         <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-[var(--text-secondary)]">
           © 2026 Annoncia
         </div>
