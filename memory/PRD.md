@@ -362,7 +362,12 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Reklam soft delete: endpoint + UI confirm modal + AD_DELETED audit.
 - Tema altyapısı: CSS hex hard-code temizliği, ThemeContext + index.html pre-load config.
 - Araç Master Data Import modülü: job tabanlı API/JSON upload, dry-run, upsert make/model/trim, log/summary, RBAC masterdata_manager, 50MB limit.
+- JSON validation iyileştirmeleri: parse/schema/business ayrımı + field_errors + örnek JSON indirme + schema dokümantasyonu.
+- Vehicle Selector Engine: /api/vehicle/* endpointleri + /ilan-ver araç seç adımı (trim zorunluluk kuralı).
+- Kategori sıra revizyonu: otomatik sıra, parent scope unique index, reindex migrasyonu, admin UI read-only.
 - Kanıt: /app/docs/P1_VEHICLE_MASTERDATA_IMPORT_EVIDENCE.md
+- Kanıt: /app/docs/P1_VEHICLE_SELECTOR_EVIDENCE.md
+- Kanıt: /app/docs/P1_CATEGORY_ORDER_EVIDENCE.md
 
 ## Mimari Kararlar (ADS)
 - **ADS-57 — Pricing Campaign Item CRUD:** Sabit paket/tier yerine pricing_campaign_items ile bireysel/kurumsal kampanya item’ları yönetilir.
