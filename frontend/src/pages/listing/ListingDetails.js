@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 
 const ListingDetails = () => {
   const navigate = useNavigate();
+  const selectedCategory = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('ilan_ver_category') || 'null');
+    } catch (e) {
+      return null;
+    }
+  }, []);
+
   const selectedVehicle = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('ilan_ver_vehicle_selection') || 'null');
