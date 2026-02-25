@@ -20453,6 +20453,25 @@ def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
     listing.attributes = attrs
 
 
+async def _validate_listing_vehicle_foreign_keys(session: AsyncSession, listing: Listing) -> None:
+    if listing.make_id:
+        make = await session.get(VehicleMake, listing.make_id)
+        if not make:
+            raise HTTPException(status_code=422, detail="make_id not found")
+    else:
+        make = None
+
+    if listing.model_id:
+        model = await session.get(VehicleModel, listing.model_id)
+        if not model:
+            raise HTTPException(status_code=422, detail="model_id not found")
+    else:
+        model = None
+
+    if make and model and str(model.make_id) != str(make.id):
+        raise HTTPException(status_code=422, detail="model_id does not belong to make_id")
+
+
 @api_router.get("/v1/listings/my")
 async def list_my_listings(
     status: Optional[str] = None,
@@ -20572,6 +20591,7 @@ async def create_vehicle_draft(
         images=[],
     )
     _apply_listing_payload_sql(listing, payload)
+    await _validate_listing_vehicle_foreign_keys(session, listing)
     session.add(listing)
     await session.commit()
     await session.refresh(listing)
@@ -20592,6 +20612,7 @@ async def save_vehicle_draft(
         raise HTTPException(status_code=400, detail="Listing not editable")
 
     _apply_listing_payload_sql(listing, payload)
+    await _validate_listing_vehicle_foreign_keys(session, listing)
     listing.updated_at = datetime.now(timezone.utc)
     await session.commit()
 
@@ -20821,6 +20842,7 @@ async def submit_vehicle_listing(
         raise HTTPException(status_code=400, detail="Listing not draft/needs_revision")
 
     _apply_listing_payload_sql(listing, payload)
+    await _validate_listing_vehicle_foreign_keys(session, listing)
     listing.updated_at = datetime.now(timezone.utc)
 
     media_meta = _listing_media_meta(listing)
