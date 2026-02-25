@@ -20045,7 +20045,11 @@ async def record_ad_click(
     if not ad:
         raise HTTPException(status_code=404, detail="Ad not found")
 
-    if not ad.is_active or not _is_active_window(ad.start_at, ad.end_at):
+    campaign = None
+    if ad.campaign_id:
+        campaign = await session.get(AdCampaign, ad.campaign_id)
+
+    if not _is_ad_active(ad, campaign):
         raise HTTPException(status_code=404, detail="Ad not active")
 
     if not ad.target_url:
