@@ -105,16 +105,16 @@ export default function AdminPricingPackages() {
       return 'Başlangıç ve bitiş zorunludur.';
     }
     if (startDate && startDate < now && !startLocked) {
-      return 'Başlangıç tarihi şimdi'den önce olamaz.';
+      return "Başlangıç tarihi şimdi'den önce olamaz.";
     }
     if (startDate && endDate && endDate <= startDate) {
       return 'Bitiş tarihi başlangıçtan sonra olmalıdır.';
     }
     if (Number(form.listing_quota) <= 0) {
-      return 'İlan adedi 0'dan büyük olmalıdır.';
+      return "İlan adedi 0'dan büyük olmalıdır.";
     }
     if (Number(form.publish_days) <= 0) {
-      return 'İlan süresi 0'dan büyük olmalıdır.';
+      return "İlan süresi 0'dan büyük olmalıdır.";
     }
     if (Number(form.price_amount) < 0) {
       return 'Fiyat 0 veya daha büyük olmalıdır.';
