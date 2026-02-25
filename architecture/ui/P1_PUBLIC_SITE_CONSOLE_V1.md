@@ -84,7 +84,7 @@
 - `POST /api/admin/site/header/logo` (multipart)
   - **Response:** `{ ok: true, logo_url: string }`
 
-### 2) Ads (Placement Engine)
+### 2) Ads (Placement Engine + Analytics)
 **Placement Enum (tek kaynak):**
 ```
 AD_HOME_TOP
@@ -95,6 +95,8 @@ AD_LISTING_RIGHT
 AD_LOGIN_1
 AD_LOGIN_2
 ```
+
+**Campaign Status:** `draft | active | paused | expired`
 
 - `GET /api/ads?placement=AD_HOME_TOP`
   - **Response:** `{ items: [{ id, asset_url, target_url, start_at, end_at, priority }] }`
@@ -110,8 +112,8 @@ AD_LOGIN_2
 - `GET /api/admin/ads`
   - **Response:** `{ items: [...], placements: { AD_HOME_TOP: "Anasayfa Üst Banner", ... } }`
 
-- `GET /api/admin/ads/analytics?range=30d`
-  - **Response:** `{ range, totals: { impressions, clicks, ctr }, placements: [...] }`
+- `GET /api/admin/ads/analytics?group_by=ad|campaign|placement&range=30d`
+  - **Response:** `{ range, totals: { impressions, clicks, ctr, active_ads }, group_by, groups: [...] }`
 
 - `POST /api/admin/ads`
   - **Body:** `{ placement, start_at?, end_at?, priority?, is_active?, target_url? }`
