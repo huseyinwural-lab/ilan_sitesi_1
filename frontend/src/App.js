@@ -17,12 +17,14 @@ import { HelmetProvider } from 'react-helmet-async';
 
 // Public Pages
 import MainLayout from '@/layouts/MainLayout';
+import HomePage from '@/pages/public/HomePage';
 import SearchPage from '@/pages/public/SearchPage';
 import DetailPage from '@/pages/public/DetailPage';
 import VehicleLandingPage from '@/pages/public/VehicleLandingPage';
 import VehicleMakeModelPage from '@/pages/public/VehicleMakeModelPage';
 import VehicleSegmentPage from '@/pages/public/VehicleSegmentPage';
 import RedirectToCountry from '@/pages/public/RedirectToCountry';
+import InfoPage from '@/pages/public/InfoPage';
 // Login moved under portal-specific paths
 
 // Admin/Dealer Portal (lazy)
