@@ -518,8 +518,6 @@ export default function Layout({ children }) {
       '/admin/individual-applications',
       '/admin/individual-listing-applications',
       '/admin/corporate-listing-applications',
-      '/admin/individual-campaigns',
-      '/admin/corporate-campaigns',
       '/admin/ads',
       '/admin/ads/campaigns',
       '/admin/pricing/campaign',
