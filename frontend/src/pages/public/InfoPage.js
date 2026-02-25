@@ -83,10 +83,10 @@ export default function InfoPage() {
     setMetaTag('description', summary);
     setCanonical(canonicalUrl);
 
-    setMetaTag('og:title', page.title_tr || '', True);
-    setMetaTag('og:description', summary, True);
-    setMetaTag('og:type', 'article', True);
-    setMetaTag('og:url', canonicalUrl, True);
+    setMetaTag('og:title', page.title_tr || '', true);
+    setMetaTag('og:description', summary, true);
+    setMetaTag('og:type', 'article', true);
+    setMetaTag('og:url', canonicalUrl, true);
 
     setStructuredData({
       '@context': 'https://schema.org',
