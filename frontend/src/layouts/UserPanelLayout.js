@@ -155,7 +155,7 @@ const UserPanelLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] account-theme" data-testid="account-layout">
+    <div className="min-h-screen bg-[var(--bg-page)] account-theme" data-testid="account-layout">
       <header className="bg-[var(--brand-navy)] text-white" data-testid="account-topbar">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-4" data-testid="account-topbar-left">
