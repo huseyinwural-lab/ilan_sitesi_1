@@ -20156,7 +20156,7 @@ async def record_ad_click(
 @api_router.get("/admin/ads")
 async def list_ads_admin(
     placement: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _expire_ads(session)
@@ -20174,6 +20174,7 @@ async def list_ads_admin(
                 "campaign_id": str(ad.campaign_id) if ad.campaign_id else None,
                 "campaign_name": campaign.name if campaign else "Standalone",
                 "campaign_status": campaign.status if campaign else None,
+                "format": ad.format,
                 "asset_url": ad.asset_url,
                 "target_url": ad.target_url,
                 "start_at": ad.start_at.isoformat() if ad.start_at else None,
@@ -20183,7 +20184,12 @@ async def list_ads_admin(
                 "created_at": ad.created_at.isoformat() if ad.created_at else None,
             }
         )
-    return {"items": items, "placements": AD_PLACEMENTS}
+    return {
+        "items": items,
+        "placements": AD_PLACEMENTS,
+        "format_rules": AD_FORMAT_RULES,
+        "format_labels": AD_FORMAT_LABELS,
+    }
 
 
 @api_router.post("/admin/ads")
