@@ -71,6 +71,13 @@ export function ThemeProvider({ children }) {
     refreshThemeConfig();
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshThemeConfig();
+    }, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
