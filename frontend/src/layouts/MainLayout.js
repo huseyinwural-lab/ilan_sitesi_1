@@ -30,7 +30,7 @@ export default function MainLayout() {
   }, [location.pathname]);
 
   useEffect(() => {
-    let mounted = True
+    let mounted = true;
     axios
       .get(`${API}/menu/top-items`)
       .then((res) => {
