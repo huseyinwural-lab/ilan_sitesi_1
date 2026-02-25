@@ -2016,7 +2016,7 @@ const AdminCategories = () => {
                     {!item.is_complete ? (
                       <button
                         type="button"
-                        className="text-xs text-white bg-[#1f2a44] rounded px-3 py-1 disabled:opacity-60"
+                        className="text-xs text-white bg-[var(--brand-navy-deep)] rounded px-3 py-1 disabled:opacity-60"
                         onClick={() => completeSubcategory(path)}
                         disabled={isHierarchyLocked}
                         data-testid={`categories-level-item-complete-${levelIndex}-${itemIndex}`}
