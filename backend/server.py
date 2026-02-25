@@ -19357,7 +19357,7 @@ async def request_publish_vehicle_listing(
             select(PricingPriceSnapshot).where(PricingPriceSnapshot.listing_id == listing.id)
         )
         snapshot = snapshot_result.scalar_one_or_none()
-        duration_days = snapshot.duration_days if snapshot else 30
+        duration_days = (snapshot.publish_days or snapshot.duration_days) if snapshot else 30
         listing.expires_at = datetime.now(timezone.utc) + timedelta(days=duration_days)
     listing.updated_at = datetime.now(timezone.utc)
 
