@@ -177,15 +177,18 @@ export default function AdminVehicleMasterImport() {
   const handleUploadSubmit = async () => {
     if (!uploadFile) {
       setUploadError('JSON dosyası seçin.');
+      setUploadErrorInfo({ error_code: 'JSON_SCHEMA_ERROR', message: 'JSON dosyası seçin.', field_errors: [] });
       return;
     }
     if (uploadFile.size > 50 * 1024 * 1024) {
       setUploadError('Dosya 50MB limitini aşıyor.');
+      setUploadErrorInfo({ error_code: 'JSON_SCHEMA_ERROR', message: 'Dosya 50MB limitini aşıyor.', field_errors: [] });
       return;
     }
     setUploadLoading(true);
     setUploadError('');
     setUploadStatus('');
+    setUploadErrorInfo(null);
     try {
       const formData = new FormData();
       formData.append('file', uploadFile);
@@ -197,8 +200,15 @@ export default function AdminVehicleMasterImport() {
       setSelectedJob(res.data?.job || null);
       fetchJobs();
     } catch (error) {
-      const detail = error?.response?.data?.detail;
-      setUploadError(detail?.message || detail || 'Upload başarısız.');
+      const detail = error?.response?.data;
+      if (detail?.error_code) {
+        setUploadErrorInfo(detail);
+        setUploadError(detail.message || 'Upload başarısız.');
+      } else {
+        const message = detail?.message || detail || 'Upload başarısız.';
+        setUploadErrorInfo({ error_code: 'UPLOAD_ERROR', message, field_errors: detail?.field_errors || [] });
+        setUploadError(message);
+      }
     } finally {
       setUploadLoading(false);
     }
