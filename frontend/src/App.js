@@ -133,6 +133,7 @@ function App() {
                     <Route path="/:country/vasita/:segment" element={<VehicleSegmentPage />} />
                     <Route path="/vasita" element={<RedirectToCountry to="/{country}/vasita" />} />
                     <Route path="/info/:slug" element={<InfoPage />} />
+                    <Route path="/bilgi/:slug" element={<InfoPage />} />
                   </Route>
 
                   {/* Portal login surfaces */}
