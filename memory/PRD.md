@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-25 12:20:00 UTC (RBAC Validation)
+**Son güncelleme:** 2026-02-25 12:55:00 UTC (Header Domain)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
