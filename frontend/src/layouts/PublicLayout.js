@@ -66,7 +66,7 @@ export default function PublicLayout({ children }) {
   }));
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA]">
+    <div className="min-h-screen bg-[var(--bg-page)]">
       <SiteHeader />
 
       <nav className="border-b bg-white" data-testid="public-category-nav">
