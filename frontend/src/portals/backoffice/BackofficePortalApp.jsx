@@ -79,6 +79,9 @@ export default function BackofficePortalApp() {
       <Route path="/corporate-campaigns" element={<AdminLayout><CorporateCampaignsPage /></AdminLayout>} />
       <Route path="/ads" element={<AdminLayout><AdminAdsManagement /></AdminLayout>} />
       <Route path="/ads/campaigns" element={<AdminLayout><AdminAdsCampaigns /></AdminLayout>} />
+      <Route path="/pricing/campaign" element={<AdminLayout><AdminPricingCampaign /></AdminLayout>} />
+      <Route path="/pricing/tiers" element={<AdminLayout><AdminPricingTiers /></AdminLayout>} />
+      <Route path="/pricing/packages" element={<AdminLayout><AdminPricingPackages /></AdminLayout>} />
       <Route path="/campaigns" element={<Navigate to="/admin/individual-campaigns" replace />} />
       <Route path="/dashboard" element={<AdminLayout><AdminDashboardPage /></AdminLayout>} />
       <Route path="/country-compare" element={<AdminLayout><AdminCountryComparePage /></AdminLayout>} />
