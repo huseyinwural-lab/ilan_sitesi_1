@@ -15043,3 +15043,305 @@ Comprehensive UX toast verification test for admin login flow as per review requ
 
 ---
 
+
+
+## Ad Analytics UI Verification Test (Feb 24, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Comprehensive UI verification test for Ad Analytics and Ad Slots as per review request: "Yeni Ad Analytics UI kontrolü: https://public-site-build.preview.emergentagent.com/admin/login üzerinden admin@platform.com / Admin123! ile giriş yap, /admin/ads ekranına git, "Reklam Performans" sekmesini aç, 30g varsayılan metrikleri (Toplam Gösterim/Tıklama/CTR) ve placement kırılım listesinin render edildiğini doğrula. Ayrıca public / ve /search sayfalarında AD_HOME_TOP ve AD_SEARCH_TOP slotlarının (placeholder olsa bile) göründüğünü kontrol et."
+
+### Test Flow Executed:
+1. ✅ Admin login with admin@platform.com / Admin123! → authentication successful
+2. ✅ Navigate to /admin/ads → Ads Management page loaded
+3. ✅ Click "Reklam Performans" tab → Performance section opened
+4. ✅ Verify 30-day default metrics displayed (Toplam Gösterim, Tıklama, CTR)
+5. ✅ Verify placement breakdown list rendered with 7 placements
+6. ✅ Navigate to public homepage (/) → AD_HOME_TOP slot visible
+7. ✅ Navigate to /search page → AD_SEARCH_TOP slot visible
+8. ✅ No console errors detected
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Admin Login**: ✅ WORKING PERFECTLY
+  - **URL**: https://public-site-build.preview.emergentagent.com/admin/login loads successfully
+  - **Credentials**: admin@platform.com / Admin123!
+  - **Login Result**: ✅ SUCCESS - redirected to /admin area
+  - **No Errors**: No login errors detected
+
+**2. Ads Management Page Navigation**: ✅ WORKING
+  - **URL**: https://public-site-build.preview.emergentagent.com/admin/ads loads successfully
+  - **Page Container**: data-testid="admin-ads-management" present and visible
+  - **Page Title**: "Reklam Yönetimi" (Ads Management) displayed correctly
+  - **Tabs Present**: "Reklam Yönetimi" and "Reklam Performans" tabs visible
+
+**3. Reklam Performans Tab Opening**: ✅ VERIFIED
+  - **Tab Element**: data-testid="admin-ads-tab-performance"
+  - **Click Action**: ✅ SUCCESSFUL - tab clicked and content loaded
+  - **Performance Section**: data-testid="admin-ads-performance" visible
+  - **CRITICAL**: Performance tab opens and displays analytics content
+
+**4. 30-Day Default Metrics Display**: ✅ VERIFIED
+  - **Time Range**: Default set to "30d" (Son 30 Gün) ✅
+  - **Analytics Status**: Content loaded successfully (not loading, no errors)
+  - **Metrics Cards**:
+    - **Toplam Gösterim** (Total Impressions): data-testid="admin-ads-analytics-total-impressions"
+      - Value displayed: 1
+      - ✅ VISIBLE with proper styling
+    - **Toplam Tıklama** (Total Clicks): data-testid="admin-ads-analytics-total-clicks"
+      - Value displayed: 1
+      - ✅ VISIBLE with proper styling
+    - **CTR (%)**: data-testid="admin-ads-analytics-total-ctr"
+      - Value displayed: 100
+      - ✅ VISIBLE with proper styling
+  - **CRITICAL**: All three metric cards render correctly with 30-day default data
+
+**5. Placement Breakdown List**: ✅ VERIFIED
+  - **Breakdown Section**: data-testid="admin-ads-analytics-breakdown"
+  - **Section Title**: "Placement Kırılımı" displayed
+  - **Total Rows**: 7 placement rows rendered
+  - **Sample Placements**:
+    1. "Anasayfa Üst Banner" (AD_HOME_TOP) - 1 impression, 1 click, 100 CTR
+    2. "Kategori Sağ" - 0, 0, 0
+    3. "Arama Üst Banner" (AD_SEARCH_TOP) - 0, 0, 0
+    4. "Akış İçi" - 0, 0, 0
+    5. "İlan Detay Sağ" - 0, 0, 0
+    6. "Login Slot 1" - 0, 0, 0
+    7. "Login Slot 2" - 0, 0, 0
+  - **Data Structure**: Each row shows placement label, impressions, clicks, CTR
+  - **CRITICAL**: Placement breakdown table renders correctly with all placement data
+
+**6. AD_HOME_TOP Slot on Public Homepage**: ✅ VERIFIED
+  - **URL**: https://public-site-build.preview.emergentagent.com/
+  - **Slot Container**: data-testid="home-ad-slot" ✅ VISIBLE
+  - **Ad Slot Element**: data-testid="ad-slot-AD_HOME_TOP" present
+  - **Ad Content**: 
+    - Empty state shows: "Reklam alanı" placeholder
+    - data-testid="ad-slot-empty-AD_HOME_TOP" visible
+  - **Placement**: Located at top of homepage, above main content
+  - **CRITICAL**: AD_HOME_TOP slot is visible on homepage (with placeholder)
+
+**7. AD_SEARCH_TOP Slot on Search Page**: ✅ VERIFIED
+  - **URL**: https://public-site-build.preview.emergentagent.com/search
+  - **Slot Container**: data-testid="search-ad-slot" ✅ VISIBLE
+  - **Ad Slot Element**: data-testid="ad-slot-AD_SEARCH_TOP" present
+  - **Placement**: Located at top of search page, above search results
+  - **CRITICAL**: AD_SEARCH_TOP slot is visible on search page
+
+**8. No Console Errors**: ✅ VERIFIED
+  - No JavaScript errors detected
+  - No error messages displayed on pages
+  - Clean execution of all interactions
+
+### UI Elements Verified:
+
+#### ✅ ADMIN ADS MANAGEMENT PAGE (/admin/ads):
+- ✅ Page container with data-testid="admin-ads-management"
+- ✅ Page title: "Reklam Yönetimi"
+- ✅ Page subtitle: "Placement bazlı reklam slotlarını yönetin."
+- ✅ Two tabs: "Reklam Yönetimi" and "Reklam Performans"
+- ✅ Active tab highlighting (blue background)
+
+#### ✅ REKLAM PERFORMANS TAB:
+- ✅ Performance section container (data-testid="admin-ads-performance")
+- ✅ Time range filter dropdown (default: "Son 30 Gün")
+  - Options: Son 30 Gün, Son 7 Gün, Özel Aralık
+  - data-testid="admin-ads-analytics-range"
+- ✅ Analytics content section (data-testid="admin-ads-analytics-content")
+- ✅ Three metric cards in grid layout:
+  - Toplam Gösterim card with value
+  - Toplam Tıklama card with value
+  - CTR (%) card with value
+- ✅ Placement breakdown table with:
+  - Table header: "Placement Kırılımı"
+  - 4-column grid: Placement name, Impressions, Clicks, CTR
+  - Multiple placement rows with data
+- ✅ Loading state support (data-testid="admin-ads-analytics-loading")
+- ✅ Error state support (data-testid="admin-ads-analytics-error")
+- ✅ Empty state support (data-testid="admin-ads-analytics-empty")
+
+#### ✅ PUBLIC HOMEPAGE AD SLOT:
+- ✅ Ad slot container at top of page
+- ✅ AdSlot component with placement="AD_HOME_TOP"
+- ✅ Placeholder text when no ad: "Reklam alanı"
+- ✅ Proper styling with border and padding
+
+#### ✅ SEARCH PAGE AD SLOT:
+- ✅ Ad slot container at top of search results
+- ✅ AdSlot component with placement="AD_SEARCH_TOP"
+- ✅ Positioned above search results grid
+- ✅ Proper styling consistent with design
+
+### Screenshots Captured:
+1. **admin-ads-performance-tab.png**: Performance tab with loading state and range selector
+2. **admin-ads-analytics-metrics.png**: Full analytics view showing:
+   - Toplam Gösterim: 1
+   - Toplam Tıklama: 1
+   - CTR (%): 100
+   - Placement breakdown table with 7 rows
+3. **homepage-ad-slot.png**: Homepage showing AD_HOME_TOP slot with "Reklam alanı" placeholder
+4. **search-page-ad-slot.png**: Search page with AD_SEARCH_TOP slot and search results
+
+### Data-testids Verification:
+
+**All Required Data-testids Present and Functional**:
+- ✅ admin-ads-management (page container)
+- ✅ admin-ads-title (page title)
+- ✅ admin-ads-subtitle (page subtitle)
+- ✅ admin-ads-tabs (tabs container)
+- ✅ admin-ads-tab-manage (Reklam Yönetimi tab)
+- ✅ admin-ads-tab-performance (Reklam Performans tab) **REQUIRED**
+- ✅ admin-ads-performance (performance section container)
+- ✅ admin-ads-analytics-range (time range select) **REQUIRED**
+- ✅ admin-ads-analytics-filters (filters container)
+- ✅ admin-ads-analytics-loading (loading state)
+- ✅ admin-ads-analytics-error (error state)
+- ✅ admin-ads-analytics-content (analytics content container)
+- ✅ admin-ads-analytics-totals (metrics cards container)
+- ✅ admin-ads-analytics-total-impressions (Total Impressions card) **REQUIRED**
+- ✅ admin-ads-analytics-total-clicks (Total Clicks card) **REQUIRED**
+- ✅ admin-ads-analytics-total-ctr (CTR card) **REQUIRED**
+- ✅ admin-ads-analytics-breakdown (placement breakdown table) **REQUIRED**
+- ✅ admin-ads-analytics-row-{placement} (placement rows)
+- ✅ admin-ads-analytics-label-{placement} (placement labels)
+- ✅ admin-ads-analytics-impressions-{placement} (impression values)
+- ✅ admin-ads-analytics-clicks-{placement} (click values)
+- ✅ admin-ads-analytics-ctr-{placement} (CTR values)
+- ✅ home-ad-slot (homepage ad container) **REQUIRED**
+- ✅ ad-slot-AD_HOME_TOP (AD_HOME_TOP slot) **REQUIRED**
+- ✅ ad-slot-empty-AD_HOME_TOP (AD_HOME_TOP placeholder)
+- ✅ search-ad-slot (search page ad container) **REQUIRED**
+- ✅ ad-slot-AD_SEARCH_TOP (AD_SEARCH_TOP slot) **REQUIRED**
+
+### Code Implementation Verification:
+
+**AdminAdsManagement.js** (frontend):
+- **Component Location**: /app/frontend/src/pages/admin/AdminAdsManagement.js
+- **State Management**: Lines 16-27
+  - activeTab state for tab switching (default: 'manage')
+  - analytics state for analytics data
+  - range state for time range (default: '30d')
+- **Analytics Fetching**: Lines 45-66
+  - fetchAnalytics function with range parameter
+  - Supports 30d, 7d, and custom ranges
+  - GET /api/admin/ads/analytics endpoint
+- **useEffect Hook**: Lines 68-72
+  - Auto-fetches analytics when activeTab === 'performance'
+  - Refetches when range changes
+- **Metrics Display**: Lines 74-75
+  - totals: { impressions, clicks, ctr }
+  - placementStats: array of placement objects
+- **Performance Tab**: Lines 327-426
+  - Tab button: data-testid="admin-ads-tab-performance" (line 145)
+  - Performance section: data-testid="admin-ads-performance" (line 328)
+  - Range selector: data-testid="admin-ads-analytics-range" (line 336)
+  - Metric cards: Lines 386-399
+    - Total Impressions: line 387
+    - Total Clicks: line 391
+    - Total CTR: line 395
+  - Placement breakdown: Lines 401-422
+    - Table with placement rows
+    - Each row shows label, impressions, clicks, CTR
+
+**AdSlot.jsx** (frontend):
+- **Component Location**: /app/frontend/src/components/public/AdSlot.jsx
+- **Props**: placement prop for slot identification
+- **Ad Fetching**: Lines 16-34
+  - GET /api/ads?placement={placement}
+  - Auto-fetches on mount and placement change
+- **Impression Logging**: Lines 36-56
+  - Logs impression via sendBeacon or fetch
+  - POST /api/ads/{adId}/impression
+- **Rendering**: Lines 58-88
+  - Shows ad image if available
+  - Shows "Reklam alanı" placeholder if no ad
+  - data-testid="ad-slot-{placement}"
+
+**HomePage.js** (frontend):
+- **Component Location**: /app/frontend/src/pages/public/HomePage.js
+- **AD_HOME_TOP Slot**: Lines 12-14
+  - Container: data-testid="home-ad-slot"
+  - AdSlot component with placement="AD_HOME_TOP"
+
+**SearchPage.js** (frontend):
+- **Component Location**: /app/frontend/src/pages/public/SearchPage.js
+- **AD_SEARCH_TOP Slot**: Lines 217-219
+  - Container: data-testid="search-ad-slot"
+  - AdSlot component with placement="AD_SEARCH_TOP"
+
+### Backend API Endpoints:
+- **GET** /api/admin/ads/analytics - Fetch analytics data with range parameter ✅
+  - Query params: range (30d, 7d) or start_at/end_at for custom
+  - Response: { totals: { impressions, clicks, ctr }, placements: [...] }
+- **GET** /api/admin/ads - List all ads with placements ✅
+- **GET** /api/ads?placement={placement} - Get ad for specific placement (public) ✅
+- **POST** /api/ads/{adId}/impression - Log ad impression ✅
+- **POST** /api/ads/{adId}/click - Log ad click ✅
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (8/8 requirements verified)
+- **Admin Login**: ✅ WORKING
+- **Page Navigation**: ✅ WORKING (/admin/ads loads correctly)
+- **Reklam Performans Tab**: ✅ OPENS (tab click works)
+- **30-Day Default Metrics**: ✅ DISPLAYED (Toplam Gösterim: 1, Tıklama: 1, CTR: 100)
+- **Placement Breakdown**: ✅ RENDERED (7 placement rows with data)
+- **AD_HOME_TOP Slot**: ✅ VISIBLE (on homepage with placeholder)
+- **AD_SEARCH_TOP Slot**: ✅ VISIBLE (on search page)
+- **No Console Errors**: ✅ CONFIRMED
+
+### Analytics Data Verification:
+
+**Current Analytics State** (30-day default):
+- **Total Impressions**: 1
+- **Total Clicks**: 1
+- **Total CTR**: 100% (1 click / 1 impression * 100)
+
+**Placement Breakdown** (7 placements tracked):
+1. **Anasayfa Üst Banner** (AD_HOME_TOP): 1 impression, 1 click, 100% CTR
+2. **Kategori Sağ**: 0 impressions, 0 clicks, 0% CTR
+3. **Arama Üst Banner** (AD_SEARCH_TOP): 0 impressions, 0 clicks, 0% CTR
+4. **Akış İçi**: 0 impressions, 0 clicks, 0% CTR
+5. **İlan Detay Sağ**: 0 impressions, 0 clicks, 0% CTR
+6. **Login Slot 1**: 0 impressions, 0 clicks, 0% CTR
+7. **Login Slot 2**: 0 impressions, 0 clicks, 0% CTR
+
+**Data Consistency**: ✅ Analytics totals match sum of placement data
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - All requirements satisfied 100%
+- **Admin Login**: ✅ PRODUCTION-READY
+- **Ads Management Page**: ✅ PRODUCTION-READY
+- **Reklam Performans Tab**: ✅ PRODUCTION-READY
+- **30-Day Default Metrics**: ✅ PRODUCTION-READY (all three metrics display correctly)
+- **Placement Breakdown List**: ✅ PRODUCTION-READY (renders 7 placements with data)
+- **AD_HOME_TOP Slot**: ✅ PRODUCTION-READY (visible on homepage)
+- **AD_SEARCH_TOP Slot**: ✅ PRODUCTION-READY (visible on search page)
+- **UI Rendering**: ✅ PRODUCTION-READY (all elements render correctly, no errors)
+
+### Review Request Compliance:
+✅ **Review Request**: "Yeni Ad Analytics UI kontrolü: https://public-site-build.preview.emergentagent.com/admin/login üzerinden admin@platform.com / Admin123! ile giriş yap, /admin/ads ekranına git, "Reklam Performans" sekmesini aç, 30g varsayılan metrikleri (Toplam Gösterim/Tıklama/CTR) ve placement kırılım listesinin render edildiğini doğrula. Ayrıca public / ve /search sayfalarında AD_HOME_TOP ve AD_SEARCH_TOP slotlarının (placeholder olsa bile) göründüğünü kontrol et."
+
+**Results**:
+- ✅ Admin login successful: admin@platform.com / Admin123! → /admin area
+- ✅ Navigated to /admin/ads → Ads Management page loaded
+- ✅ "Reklam Performans" tab opened → Performance section visible
+- ✅ 30-day default metrics verified:
+  - Toplam Gösterim (Total Impressions): 1 ✅
+  - Toplam Tıklama (Total Clicks): 1 ✅
+  - CTR (%): 100 ✅
+- ✅ Placement breakdown list rendered with 7 placements showing:
+  - Placement name/label
+  - Impressions count
+  - Clicks count
+  - CTR percentage
+- ✅ AD_HOME_TOP slot visible on public homepage (/) with "Reklam alanı" placeholder
+- ✅ AD_SEARCH_TOP slot visible on public /search page (rendered but no ad data yet)
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 24, 2026 (LATEST)
+- **Message**: Ad Analytics UI Verification test SUCCESSFULLY COMPLETED with 100% PASS rate. All requirements from review request satisfied. FLOW VERIFICATION: 1) Admin login works perfectly with admin@platform.com / Admin123! at /admin/login, redirected to /admin area ✅. 2) Navigation to /admin/ads successful, page loaded with data-testid="admin-ads-management", page title "Reklam Yönetimi" displayed ✅. 3) CRITICAL FINDING 1: "Reklam Performans" tab (data-testid="admin-ads-tab-performance") clicked successfully, performance section (data-testid="admin-ads-performance") visible ✅. 4) CRITICAL FINDING 2: 30-day default metrics displayed correctly - Range selector shows "Son 30 Gün" (30d) by default, analytics content loaded with three metric cards: Toplam Gösterim (Total Impressions): 1, Toplam Tıklama (Total Clicks): 1, CTR (%): 100 ✅. 5) CRITICAL FINDING 3: Placement breakdown list (data-testid="admin-ads-analytics-breakdown") rendered successfully with 7 placement rows showing placement labels, impressions, clicks, and CTR values. Sample placements: Anasayfa Üst Banner (1, 1, 100), Kategori Sağ (0, 0, 0), Arama Üst Banner (0, 0, 0), etc. ✅. 6) CRITICAL FINDING 4: AD_HOME_TOP slot (data-testid="ad-slot-AD_HOME_TOP") is VISIBLE on public homepage (/) with placeholder text "Reklam alanı" shown when no ad is active ✅. 7) CRITICAL FINDING 5: AD_SEARCH_TOP slot (data-testid="ad-slot-AD_SEARCH_TOP") is VISIBLE on public /search page, positioned at top above search results ✅. All data-testids present and functional. No console errors detected. All UI elements working correctly with proper data display and user feedback. Ad Analytics feature is production-ready and fully functional. Screenshots captured: admin-ads-performance-tab.png, admin-ads-analytics-metrics.png, homepage-ad-slot.png, search-page-ad-slot.png.
+
+---
+
