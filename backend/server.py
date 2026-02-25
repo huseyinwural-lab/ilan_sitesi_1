@@ -21914,7 +21914,9 @@ async def update_pricing_campaign_item_status(
         raise HTTPException(status_code=404, detail="Campaign item not found")
 
     if payload.is_active:
-        await _assert_single_active_campaign_item(session, item.scope, exclude_id=item.id)
+        if item.start_at is None or item.end_at is None:
+            raise HTTPException(status_code=400, detail="start_at and end_at required")
+        await _assert_no_overlap_active_campaign_item(session, item.scope, item.start_at, item.end_at, exclude_id=item.id)
 
     item.is_active = payload.is_active
     item.updated_at = datetime.now(timezone.utc)
