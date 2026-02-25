@@ -472,6 +472,10 @@ export default function Layout({ children }) {
 
     { divider: true, label: 'Site İç Tasarımı', roles: roles.adminOnly },
     { path: '/admin/site-design/header', icon: PanelTop, label: 'Header Yönetimi', roles: roles.adminOnly, testId: 'site-design-header-management' },
+    { path: '/admin/site-design/footer', icon: PanelTop, label: 'Footer Yönetimi', roles: roles.adminOnly, testId: 'site-design-footer-management' },
+
+    { divider: true, label: 'İçerik Yönetimi', roles: roles.adminOnly },
+    { path: '/admin/info-pages', icon: FileText, label: 'Bilgi Sayfaları', roles: roles.adminOnly, testId: 'content-info-pages' },
 
     { divider: true, label: 'Katalog & İçerik', roles: roles.catalogView },
     { path: '/admin/categories', icon: FolderTree, label: 'Kategoriler', roles: roles.catalogView, testId: 'catalog-categories' },
