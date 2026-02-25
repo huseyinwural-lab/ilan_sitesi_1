@@ -56,6 +56,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **Campaign CRUD (2026-02-25):** /admin/ads/campaigns ekranı, kampanya create/edit/pause, bağlı reklamlar tabı + link/unlink; ads_manager rolü ve RBAC yetkileri.
+- **Tek Aktif Reklam Kuralı (2026-02-25):** placement başına tek aktif reklam, format matrisi (horizontal/vertical/square), UI çakışma uyarısı + DB partial unique index (uq_ads_active_placement).
+- **P47 Ads Format + Unique Migration (2026-02-25):** ads.format kolonu + aktif reklam dedup + unique index.
 - **Campaign Analytics (2026-02-25):** ad_campaigns tablosu + ads.campaign_id; analytics group_by=ad|campaign|placement; KPI aktif reklam sayısı; kampanya süresi bitince bağlı reklamlar pasife düşer.
 - **Ad Analytics (2026-02-24):** ad_impressions/ad_clicks tabloları, impression dedup (30dk), /api/ads/{id}/impression ve /api/ads/{id}/click, /api/admin/ads/analytics, Admin Ads Performans sekmesi, public AdSlot (Home/Search/Login).
 - **P46 Ad Campaigns Migration (2026-02-25):** ad_campaigns + ads.campaign_id idempotent migration + alembic upgrade heads.
