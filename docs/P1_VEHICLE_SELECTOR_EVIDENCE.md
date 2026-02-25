@@ -11,4 +11,4 @@ Date: 2026-02-25
 
 ## UI
 - Araç seçim ekranı: `/app/screenshots/vehicle-selector.png`
-- Trim zorunluluğu: yıl  2000 için trim seçimi required (UI disabled state)
+- Trim zorunluluğu: yıl >= 2000 için trim seçimi required (UI disabled state)
