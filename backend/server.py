@@ -158,7 +158,7 @@ from app.services.cloudflare_config import (
 )
 
 
-from fastapi import UploadFile, File
+from fastapi import UploadFile, File, BackgroundTasks
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse, RedirectResponse
 
 from app.vehicle_publish_guard import validate_publish, validate_listing_schema
