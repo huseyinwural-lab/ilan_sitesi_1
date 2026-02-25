@@ -20221,7 +20221,7 @@ async def upload_site_header_logo(
 
 @api_router.get("/site/assets/{asset_key:path}")
 async def get_site_asset(asset_key: str):
-    base_dir = os.path.join(os.path.dirname(__file__), "static", "site_assets")
+    base_dir = os.path.join(os.path.dirname(__file__), "app", "static", "site_assets")
     path = os.path.normpath(os.path.join(base_dir, asset_key))
     if not path.startswith(base_dir):
         raise HTTPException(status_code=400, detail="Invalid asset path")
