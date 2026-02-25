@@ -21782,7 +21782,7 @@ async def create_pricing_campaign_item(
     )
     currency = _normalize_currency_code(payload.currency)
     if payload.is_active:
-        await _assert_single_active_campaign_item(session, payload.scope)
+        await _assert_no_overlap_active_campaign_item(session, payload.scope, start_at, end_at)
 
     item = PricingCampaignItem(
         scope=payload.scope,
