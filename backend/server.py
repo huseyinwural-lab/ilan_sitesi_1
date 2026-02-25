@@ -22923,6 +22923,35 @@ async def list_info_pages(
     return {"items": items}
 
 
+@api_router.get("/admin/info-pages/{page_id}")
+async def get_info_page_admin(
+    page_id: str,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        page_uuid = uuid.UUID(page_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid page id") from exc
+
+    page = await session.get(InfoPage, page_uuid)
+    if not page:
+        raise HTTPException(status_code=404, detail="Info page not found")
+
+    return {
+        "id": str(page.id),
+        "slug": page.slug,
+        "title_tr": page.title_tr,
+        "title_de": page.title_de,
+        "title_fr": page.title_fr,
+        "content_tr": page.content_tr,
+        "content_de": page.content_de,
+        "content_fr": page.content_fr,
+        "is_published": page.is_published,
+        "updated_at": page.updated_at.isoformat() if page.updated_at else None,
+    }
+
+
 @api_router.post("/admin/info-pages")
 async def create_info_page(
     payload: InfoPagePayload,
