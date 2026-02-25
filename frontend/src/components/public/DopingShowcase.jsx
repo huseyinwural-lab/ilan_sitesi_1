@@ -32,14 +32,14 @@ export default function DopingShowcase({ placement }) {
       <div className="text-sm font-semibold text-[var(--text-primary)]">Öne Çıkan İlanlar</div>
       <div className="grid gap-3 md:grid-cols-2">
         {items.map((item) => (
-          <div key={item.doping_id} className="rounded-lg border bg-white p-3" data-testid={`doping-card-${item.doping_id}`}>
+          <div key={item.doping_id} className="rounded-lg border bg-[var(--bg-surface)] p-3" data-testid={`doping-card-${item.doping_id}`}>
             <div className="text-sm font-semibold" data-testid={`doping-title-${item.doping_id}`}>{item.title}</div>
-            <div className="text-xs text-[#415A77]" data-testid={`doping-price-${item.doping_id}`}>
+            <div className="text-xs text-[var(--text-secondary)]" data-testid={`doping-price-${item.doping_id}`}>
               {item.price ? `${item.price} ${item.currency}` : 'Fiyat yok'}
             </div>
             <Link
               to={`/listing/${item.listing_id}`}
-              className="mt-2 inline-flex text-xs font-semibold text-[#F57C00]"
+              className="mt-2 inline-flex text-xs font-semibold text-[var(--color-primary)]"
               data-testid={`doping-link-${item.doping_id}`}
             >
               İlana Git
