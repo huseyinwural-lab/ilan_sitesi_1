@@ -126,8 +126,8 @@ export const DEFAULT_THEME_CONFIG = {
     'header-text': '#1b263b',
     'footer-bg': '#ffffff',
     'footer-text': '#415a77',
-    link: '#007bff',
-    'link-hover': '#0056d2',
+    link: '#0056d2',
+    'link-hover': '#003ea3',
   },
   dark: {
     primary: '#ff7000',
