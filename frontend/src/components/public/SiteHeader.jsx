@@ -25,18 +25,23 @@ export default function SiteHeader({ mode, refreshToken }) {
 
   useEffect(() => {
     let active = true;
-    fetch(`${API}/site/header`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!active) return;
-        setLogoUrl(data?.logo_url || null);
-      })
-      .catch(() => {
-        if (!active) return;
-        setLogoUrl(null);
-      });
+    const loadHeader = () => {
+      fetch(`${API}/site/header`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!active) return;
+          setLogoUrl(data?.logo_url || null);
+        })
+        .catch(() => {
+          if (!active) return;
+          setLogoUrl(null);
+        });
+    };
+    loadHeader();
+    const interval = setInterval(loadHeader, 10 * 60 * 1000);
     return () => {
       active = false;
+      clearInterval(interval);
     };
   }, [refreshToken]);
 
