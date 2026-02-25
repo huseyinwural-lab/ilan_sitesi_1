@@ -234,7 +234,7 @@ export default function AccountDashboard() {
     <div className="space-y-8" data-testid="account-dashboard">
       <div className="flex flex-wrap items-center justify-between gap-4" data-testid="account-dashboard-header">
         <div>
-          <h1 className="text-2xl font-bold text-[#1B263B]" data-testid="account-dashboard-title">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]" data-testid="account-dashboard-title">
             Hoş geldiniz
           </h1>
           <p className="text-sm text-[#415A77]" data-testid="account-dashboard-subtitle">
@@ -248,7 +248,7 @@ export default function AccountDashboard() {
           className="rounded-2xl border border-[#f0cda8] bg-[#fff7ef] px-4 py-3"
           data-testid="account-status-banner"
         >
-          <div className="text-xs font-semibold text-[#1B263B]" data-testid="account-status-title">
+          <div className="text-xs font-semibold text-[var(--text-primary)]" data-testid="account-status-title">
             Hesap Durumu
           </div>
           <div className="mt-2 flex flex-wrap gap-3" data-testid="account-status-items">
@@ -286,7 +286,7 @@ export default function AccountDashboard() {
                 <Icon size={18} className="text-[#415A77]" data-testid={`${card.testId}-icon`} />
               </div>
               <div
-                className={`mt-3 text-3xl font-semibold ${isPassive ? 'text-slate-300' : 'text-[#1B263B]'}`}
+                className={`mt-3 text-3xl font-semibold ${isPassive ? 'text-slate-300' : 'text-[var(--text-primary)]'}`}
                 data-testid={`${card.testId}-value`}
               >
                 {card.metric.value}
@@ -304,7 +304,7 @@ export default function AccountDashboard() {
       <div className="rounded-2xl border bg-white p-6 shadow-sm" data-testid="account-primary-cta">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="text-xl font-semibold text-[#1B263B]" data-testid="account-cta-title">
+            <div className="text-xl font-semibold text-[var(--text-primary)]" data-testid="account-cta-title">
               Hemen İlan Ver
             </div>
             <p className="mt-2 text-sm text-[#415A77]" data-testid="account-cta-description">
@@ -336,7 +336,7 @@ export default function AccountDashboard() {
       <div className="rounded-2xl border bg-white p-6 shadow-sm" data-testid="account-listing-snapshot">
         <div className="flex flex-wrap items-center justify-between gap-3" data-testid="account-listing-snapshot-header">
           <div>
-            <div className="text-lg font-semibold text-[#1B263B]" data-testid="account-listing-snapshot-title">
+            <div className="text-lg font-semibold text-[var(--text-primary)]" data-testid="account-listing-snapshot-title">
               Son İlanlarım
             </div>
             <p className="text-xs text-[#415A77]" data-testid="account-listing-snapshot-subtitle">
@@ -377,7 +377,7 @@ export default function AccountDashboard() {
                   data-testid={`account-listing-row-${listing.id}`}
                 >
                   <div data-testid={`account-listing-title-${listing.id}`}>
-                    <div className="text-sm font-semibold text-[#1B263B]">
+                    <div className="text-sm font-semibold text-[var(--text-primary)]">
                       {listing.title || 'Başlıksız ilan'}
                     </div>
                     <div className="text-xs text-[#415A77]" data-testid={`account-listing-status-${listing.id}`}>
@@ -406,7 +406,7 @@ export default function AccountDashboard() {
                     </div>
                     <Link
                       to={`/account/create/vehicle-wizard?edit=${listing.id}`}
-                      className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold text-[#1B263B]"
+                      className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold text-[var(--text-primary)]"
                       data-testid={`account-listing-edit-${listing.id}`}
                     >
                       <Pencil size={14} /> Hızlı Düzenle
@@ -427,7 +427,7 @@ export default function AccountDashboard() {
                 Favoriler
               </div>
               <div
-                className={`mt-2 text-3xl font-semibold ${metrics.favorites.value === 0 ? 'text-slate-300' : 'text-[#1B263B]'}`}
+                className={`mt-2 text-3xl font-semibold ${metrics.favorites.value === 0 ? 'text-slate-300' : 'text-[var(--text-primary)]'}`}
                 data-testid="account-favorites-count"
               >
                 {metrics.favorites.value}
@@ -455,7 +455,7 @@ export default function AccountDashboard() {
                 Kayıtlı Aramalar
               </div>
               <div
-                className={`mt-2 text-3xl font-semibold ${metrics.savedSearches.value === 0 ? 'text-slate-300' : 'text-[#1B263B]'}`}
+                className={`mt-2 text-3xl font-semibold ${metrics.savedSearches.value === 0 ? 'text-slate-300' : 'text-[var(--text-primary)]'}`}
                 data-testid="account-saved-searches-count"
               >
                 {metrics.savedSearches.value}
