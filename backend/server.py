@@ -20921,6 +20921,45 @@ async def _compute_pricing_quote(
     return response, quote, policy, user_type
 
 
+async def _create_pricing_snapshot(
+    session: AsyncSession,
+    listing: Listing,
+    current_user: dict,
+    quote: Dict[str, Any],
+    policy: Optional[PricingCampaign],
+    override_active: bool,
+) -> Optional[PricingPriceSnapshot]:
+    if quote.get("type") not in {"tier", "quota"}:
+        return None
+
+    existing = await session.execute(
+        select(PricingPriceSnapshot).where(PricingPriceSnapshot.listing_id == listing.id)
+    )
+    snapshot = existing.scalar_one_or_none()
+    if snapshot:
+        return snapshot
+
+    snapshot = PricingPriceSnapshot(
+        listing_id=listing.id,
+        user_id=listing.user_id,
+        rule_id=_safe_uuid(quote.get("rule_id")),
+        package_id=_safe_uuid(quote.get("package_id")),
+        campaign_id=policy.id if policy and override_active else None,
+        currency=quote.get("currency") or "EUR",
+        amount=quote.get("amount") or 0,
+        duration_days=quote.get("duration_days") or 90,
+        snapshot_type=quote.get("type") or "tier",
+        metadata={
+            "listing_no": quote.get("listing_no"),
+            "listing_count_year": quote.get("listing_count_year"),
+            "quota_used": quote.get("quota_used"),
+            "requires_payment": quote.get("requires_payment"),
+        },
+    )
+    session.add(snapshot)
+    return snapshot
+
+
 @api_router.get("/admin/ads/analytics")
 async def get_ads_analytics(
     range: str = "30d",
