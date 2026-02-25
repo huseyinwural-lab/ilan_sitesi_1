@@ -19386,6 +19386,18 @@ async def _process_vehicle_import_records(
                 validation_errors.append({"row": index, "error": "Make resolve failed"})
             continue
 
+        make_changed = False
+        if make.name != make_name:
+            make_changed = True
+            if not job.dry_run:
+                make.name = make_name
+        if normalized.get("make_ref") and make.source_ref != normalized.get("make_ref"):
+            make_changed = True
+            if not job.dry_run:
+                make.source_ref = normalized.get("make_ref")
+        if not job.dry_run and source_label and make.source != source_label:
+            make.source = source_label
+
         model_key = (str(make.id), model_slug)
         model = model_cache.get(model_key)
         if model is None:
