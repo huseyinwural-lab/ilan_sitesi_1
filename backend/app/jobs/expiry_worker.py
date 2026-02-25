@@ -8,6 +8,9 @@ from app.database import AsyncSessionLocal
 from app.models.commercial import DealerSubscription
 from app.models.core import AuditLog
 from app.models.user import User
+from app.models.pricing_campaign import PricingCampaign
+from app.models.pricing_tier_rule import PricingTierRule
+from app.models.pricing_package import UserPackageSubscription
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("expiry_worker")
