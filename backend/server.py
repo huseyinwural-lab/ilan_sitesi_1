@@ -19599,6 +19599,8 @@ async def _run_vehicle_import_job(job_id: str) -> None:
                 country_code=None,
             )
         finally:
+            if file_path_obj:
+                file_path_obj.unlink(missing_ok=True)
             await session.commit()
 
 
