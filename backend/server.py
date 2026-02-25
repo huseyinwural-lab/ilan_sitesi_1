@@ -20769,6 +20769,8 @@ def _validate_campaign_item_fields(
     publish_days: Optional[int],
     start_at: Optional[datetime],
     end_at: Optional[datetime],
+    require_dates: bool = False,
+    enforce_start_future: bool = False,
 ) -> None:
     if scope not in PRICING_CAMPAIGN_ITEM_SCOPES:
         raise HTTPException(status_code=400, detail="Invalid scope")
@@ -20778,8 +20780,14 @@ def _validate_campaign_item_fields(
         raise HTTPException(status_code=400, detail="price_amount must be >= 0")
     if publish_days is not None and publish_days <= 0:
         raise HTTPException(status_code=400, detail="publish_days must be > 0")
-    if start_at and end_at and end_at < start_at:
+    if require_dates and (start_at is None or end_at is None):
+        raise HTTPException(status_code=400, detail="start_at and end_at required")
+    if start_at and end_at and end_at <= start_at:
         raise HTTPException(status_code=400, detail="end_at must be after start_at")
+    if enforce_start_future and start_at:
+        now = datetime.now(timezone.utc)
+        if start_at < now:
+            raise HTTPException(status_code=400, detail="start_at must be in the future")
 
 
 async def _ensure_pricing_defaults(session: AsyncSession) -> None:
