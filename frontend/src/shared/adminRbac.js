@@ -11,6 +11,7 @@ export const ADMIN_ROLE_GROUPS = {
   finance: ['super_admin', 'finance'],
   adsManager: ['super_admin', 'ads_manager'],
   pricingManager: ['super_admin', 'pricing_manager'],
+  masterdataManager: ['super_admin', 'masterdata_manager'],
   system: ['super_admin', 'country_admin'],
 };
 
