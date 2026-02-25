@@ -59,7 +59,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
               if (type === 'link_group') {
                 return (
                   <div key={colIndex} data-testid={`site-footer-col-${rowIndex}-${colIndex}`}>
-                    <div className="text-sm font-semibold text-[#1B263B]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
+                    <div className="text-sm font-semibold text-[var(--text-primary)]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
                       {col.title}
                     </div>
                     <ul className="mt-3 space-y-2 text-sm text-[var(--text-secondary)]">
@@ -96,7 +96,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
               if (type === 'social') {
                 return (
                   <div key={colIndex} data-testid={`site-footer-col-${rowIndex}-${colIndex}`}>
-                    <div className="text-sm font-semibold text-[#1B263B]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
+                    <div className="text-sm font-semibold text-[var(--text-primary)]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
                       {col.title}
                     </div>
                     <ul className="mt-3 space-y-2 text-sm text-[var(--text-secondary)]">
@@ -118,7 +118,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
               }
               return (
                 <div key={colIndex} data-testid={`site-footer-col-${rowIndex}-${colIndex}`}>
-                  <div className="text-sm font-semibold text-[#1B263B]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
+                  <div className="text-sm font-semibold text-[var(--text-primary)]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
                     {col.title}
                   </div>
                   <div className="mt-3 text-sm text-[var(--text-secondary)]" data-testid={`site-footer-col-text-${rowIndex}-${colIndex}`}>
