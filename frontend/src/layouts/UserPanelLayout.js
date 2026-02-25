@@ -141,7 +141,7 @@ const UserPanelLayout = () => {
     if (!value) return null;
     return (
       <span
-        className="ml-auto inline-flex min-w-[22px] items-center justify-center rounded-full bg-[#1B263B] px-2 py-0.5 text-[11px] text-white"
+        className="ml-auto inline-flex min-w-[22px] items-center justify-center rounded-full bg-[var(--brand-navy)] px-2 py-0.5 text-[11px] text-white"
         data-testid={testId}
       >
         {value}
@@ -156,7 +156,7 @@ const UserPanelLayout = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] account-theme" data-testid="account-layout">
-      <header className="bg-[#1B263B] text-white" data-testid="account-topbar">
+      <header className="bg-[var(--brand-navy)] text-white" data-testid="account-topbar">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-4" data-testid="account-topbar-left">
             <div
