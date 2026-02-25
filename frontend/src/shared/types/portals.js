@@ -37,6 +37,7 @@ export function defaultHomeForRole(role) {
   if (!role) return '/';
   if (role === 'pricing_manager') return '/admin/pricing/tiers';
   if (role === 'ads_manager') return '/admin/ads';
+  if (role === 'masterdata_manager') return '/admin/vehicle-master-import';
   const p = ROLE_TO_PORTAL[role];
   if (p === PORTALS.BACKOFFICE) return '/admin';
   if (p === PORTALS.DEALER) return '/dealer';
