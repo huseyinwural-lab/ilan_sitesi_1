@@ -20788,6 +20788,9 @@ async def _ensure_pricing_defaults(session: AsyncSession) -> None:
     if items:
         return
 
+    now = datetime.now(timezone.utc)
+    default_end = now + timedelta(days=30)
+
     for sample in DEFAULT_PRICING_CAMPAIGN_ITEMS:
         session.add(
             PricingCampaignItem(
@@ -20798,6 +20801,8 @@ async def _ensure_pricing_defaults(session: AsyncSession) -> None:
                 currency="EUR",
                 publish_days=sample["publish_days"],
                 is_active=sample.get("is_active", False),
+                start_at=sample.get("start_at") or now,
+                end_at=sample.get("end_at") or default_end,
             )
         )
     await session.commit()
