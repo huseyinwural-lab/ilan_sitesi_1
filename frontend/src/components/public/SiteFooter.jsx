@@ -62,7 +62,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
                     <div className="text-sm font-semibold text-[var(--footer-text)]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
                       {col.title}
                     </div>
-                    <ul className="mt-3 space-y-2 text-sm text-[var(--text-secondary)]">
+                    <ul className="mt-3 space-y-2 text-sm text-[var(--footer-text)]">
                       {(col.links || []).map((link, linkIndex) => {
                         if (link.type === 'info') {
                           return (
@@ -99,7 +99,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
                     <div className="text-sm font-semibold text-[var(--footer-text)]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
                       {col.title}
                     </div>
-                    <ul className="mt-3 space-y-2 text-sm text-[var(--text-secondary)]">
+                    <ul className="mt-3 space-y-2 text-sm text-[var(--footer-text)]">
                       {(col.links || []).map((link, linkIndex) => (
                         <li key={linkIndex}>
                           <a
@@ -121,7 +121,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
                   <div className="text-sm font-semibold text-[var(--footer-text)]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
                     {col.title}
                   </div>
-                  <div className="mt-3 text-sm text-[var(--text-secondary)]" data-testid={`site-footer-col-text-${rowIndex}-${colIndex}`}>
+                  <div className="mt-3 text-sm text-[var(--footer-text)]" data-testid={`site-footer-col-text-${rowIndex}-${colIndex}`}>
                     {(() => {
                       const textObj = col.text && typeof col.text === 'object' ? col.text : {};
                       const value = textObj[language] || textObj.tr || textObj.de || textObj.fr || (typeof col.text === 'string' ? col.text : '');
