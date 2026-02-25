@@ -19560,7 +19560,8 @@ async def _run_vehicle_import_job(job_id: str) -> None:
                 file_path = job.request_payload.get("file_path")
                 if not file_path:
                     raise RuntimeError("File path missing")
-                records = _load_vehicle_import_json(Path(file_path))
+                file_path_obj = Path(file_path)
+                records = _load_vehicle_import_json(file_path_obj)
 
             summary = await _process_vehicle_import_records(
                 session=session,
