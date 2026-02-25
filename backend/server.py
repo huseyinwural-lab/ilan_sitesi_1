@@ -21554,29 +21554,50 @@ async def update_pricing_campaign(
 @api_router.post("/pricing/quote")
 async def get_pricing_quote_endpoint(
     payload: PricingQuotePayload,
+    current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    if payload.user_type not in {"individual", "corporate"}:
-        raise HTTPException(status_code=400, detail="Invalid user_type")
+    await _ensure_pricing_defaults(session)
+    await _expire_pricing_campaigns(session, actor=current_user)
+    await _expire_package_subscriptions(session, actor=current_user)
+    await _expire_tier_rules(session)
 
-    await _expire_pricing_campaigns(session)
+    user_type = _resolve_pricing_user_type(current_user)
     policy = await _get_latest_pricing_campaign(session)
     override_active = False
     if policy:
-        override_active = _is_pricing_campaign_active(policy, payload.user_type)
+        override_active = _is_pricing_campaign_active(policy, user_type)
 
-    response = _build_pricing_quote_response(payload.dict(), override_active)
-    if policy:
-        response["campaign"] = _pricing_campaign_to_dict(policy)
-    return response
+    if user_type == "corporate":
+        quote = await _build_corporate_quote(session, uuid.UUID(current_user.get("id")))
+    else:
+        quote = await _build_individual_quote(session, uuid.UUID(current_user.get("id")))
+
+    return _build_pricing_quote_response(quote, override_active, policy)
 
 
 @api_router.get("/pricing/packages")
-async def list_pricing_packages_endpoint():
-    return {
-        "status": "not_implemented",
-        "packages": [],
-    }
+async def list_pricing_packages_endpoint(session: AsyncSession = Depends(get_sql_session)):
+    await _ensure_pricing_defaults(session)
+    result = await session.execute(
+        select(PricingPackage)
+        .where(PricingPackage.scope == "corporate", PricingPackage.is_active.is_(True))
+        .order_by(PricingPackage.listing_quota)
+    )
+    items = []
+    for item in result.scalars().all():
+        items.append(
+            {
+                "id": str(item.id),
+                "name": item.name,
+                "listing_quota": item.listing_quota,
+                "price_amount": float(item.package_price_amount or 0),
+                "currency": item.currency,
+                "publish_days": item.publish_days,
+                "duration_days": item.package_duration_days,
+            }
+        )
+    return {"packages": items}
 
 
 @api_router.post("/v1/doping/requests")
