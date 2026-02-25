@@ -161,6 +161,27 @@ export default function AdminAdsManagement() {
     fetchAds();
   };
 
+  const openDeleteConfirm = (item) => {
+    setDeleteError('');
+    setDeleteTarget(item);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    setDeleteError('');
+    try {
+      await axios.delete(`${API}/admin/ads/${deleteTarget.id}`, { headers: authHeader });
+      setStatus('Reklam silindi');
+      setDeleteTarget(null);
+      fetchAds();
+    } catch (err) {
+      setDeleteError(err?.response?.data?.detail || 'Silme başarısız');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6" data-testid="admin-ads-management">
       <div>
