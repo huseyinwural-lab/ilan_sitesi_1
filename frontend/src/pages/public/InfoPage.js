@@ -43,7 +43,7 @@ export default function InfoPage() {
       )}
       {page && (
         <>
-          <h1 className="text-2xl font-semibold text-[#1B263B]" data-testid="info-page-title">
+          <h1 className="text-2xl font-semibold text-[var(--text-primary)]" data-testid="info-page-title">
             {title}
           </h1>
           <div className="text-sm text-[#415A77] whitespace-pre-line" data-testid="info-page-content">
