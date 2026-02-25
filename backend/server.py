@@ -20720,19 +20720,27 @@ async def _expire_pricing_campaign_items(session: AsyncSession, actor: Optional[
     return len(expired)
 
 
-async def _assert_single_active_campaign_item(
-    session: AsyncSession, scope: str, exclude_id: Optional[uuid.UUID] = None
+async def _assert_no_overlap_active_campaign_item(
+    session: AsyncSession,
+    scope: str,
+    start_at: datetime,
+    end_at: datetime,
+    exclude_id: Optional[uuid.UUID] = None,
 ) -> None:
     query = select(PricingCampaignItem).where(
         PricingCampaignItem.scope == scope,
         PricingCampaignItem.is_active.is_(True),
         PricingCampaignItem.is_deleted.is_(False),
+        PricingCampaignItem.start_at.isnot(None),
+        PricingCampaignItem.end_at.isnot(None),
+        PricingCampaignItem.start_at < end_at,
+        PricingCampaignItem.end_at > start_at,
     )
     if exclude_id:
         query = query.where(PricingCampaignItem.id != exclude_id)
     existing = (await session.execute(query.limit(1))).scalar_one_or_none()
     if existing:
-        raise HTTPException(status_code=409, detail="Another active campaign item exists for this scope")
+        raise HTTPException(status_code=409, detail="Active campaign overlaps with existing time range")
 
 
 DEFAULT_PRICING_CAMPAIGN_ITEMS = [
