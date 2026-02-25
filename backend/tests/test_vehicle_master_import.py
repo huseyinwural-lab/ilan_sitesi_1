@@ -38,18 +38,19 @@ class TestVehicleMasterImportJobUpload:
 
     def test_upload_dry_run_job_create_valid_json(self, auth_headers):
         """Test dry-run job creation with valid JSON file"""
+        # Required fields: make_name (or make), model_name (or model), trim_name (or trim), year
         valid_records = [
             {
                 "make_name": "TEST_BMW",
                 "model_name": "TEST_X5",
+                "trim_name": "xDrive40i",
                 "year": 2024,
-                "name": "xDrive40i",
             },
             {
                 "make_name": "TEST_Audi",
                 "model_name": "TEST_A4",
+                "trim_name": "Quattro",
                 "year": 2023,
-                "name": "Quattro",
             },
         ]
         json_content = json.dumps(valid_records)
@@ -169,13 +170,13 @@ class TestVehicleMasterImportJobStatus:
 
     def test_get_job_status_valid_id(self, auth_headers):
         """Test getting job status with valid job ID - first create a job, then get status"""
-        # Create a dry-run job first
+        # Create a dry-run job first - Required fields: make_name, model_name, trim_name, year
         valid_records = [
             {
                 "make_name": "TEST_STATUS_BMW",
                 "model_name": "TEST_STATUS_X3",
+                "trim_name": "xDrive30i",
                 "year": 2024,
-                "name": "xDrive30i",
             },
         ]
         json_content = json.dumps(valid_records)
@@ -269,7 +270,7 @@ class TestVehicleMasterImportRBAC:
 
     def test_upload_without_auth_returns_401(self):
         """Test that upload without authentication returns 401"""
-        valid_records = [{"make_name": "Test", "model_name": "Test", "year": 2024, "name": "Test"}]
+        valid_records = [{"make_name": "Test", "model_name": "Test", "trim_name": "Test", "year": 2024}]
         json_content = json.dumps(valid_records)
         files = {
             "file": ("test.json", io.BytesIO(json_content.encode("utf-8")), "application/json")
