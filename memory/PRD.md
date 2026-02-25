@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-24 23:59:00 UTC (Ad Analytics + P45 migration)
+**Son güncelleme:** 2026-02-25 00:20:00 UTC (Campaign analytics + P46 migration)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
