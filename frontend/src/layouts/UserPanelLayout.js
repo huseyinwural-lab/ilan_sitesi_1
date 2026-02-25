@@ -211,7 +211,7 @@ const UserPanelLayout = () => {
                   `border-b-2 pb-2 transition ${
                     isActive
                       ? 'border-[var(--color-primary)] text-[var(--text-primary)]'
-                      : 'border-transparent text-[#415A77] hover:text-[var(--text-primary)]'
+                      : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`
                 }
                 data-testid={item.testId}
@@ -226,7 +226,7 @@ const UserPanelLayout = () => {
       <main className="mx-auto max-w-6xl px-6 py-8" data-testid="account-main">
         <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
           <aside className="rounded-2xl bg-white p-4 shadow-sm" data-testid="account-side-nav">
-            <div className="text-xs uppercase tracking-[0.2em] text-[#415A77]" data-testid="account-side-title">
+            <div className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]" data-testid="account-side-title">
               {t('nav_section')}
             </div>
             <div className="mt-4 space-y-4" data-testid="account-side-items">
@@ -244,7 +244,7 @@ const UserPanelLayout = () => {
                           `flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
                             isActive
                               ? 'bg-[var(--color-primary-soft)] text-[var(--text-primary)]'
-                              : 'text-[#415A77] hover:bg-slate-100'
+                              : 'text-[var(--text-secondary)] hover:bg-slate-100'
                           }`
                         }
                         data-testid={item.testId}
