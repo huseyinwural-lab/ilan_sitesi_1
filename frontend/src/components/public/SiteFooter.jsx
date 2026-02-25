@@ -5,11 +5,18 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-export default function SiteFooter() {
+export default function SiteFooter({ layoutOverride, refreshToken }) {
   const { language } = useLanguage();
   const [layout, setLayout] = useState(null);
 
   useEffect(() => {
+    if (layoutOverride !== undefined) {
+      setLayout(layoutOverride);
+    }
+  }, [layoutOverride]);
+
+  useEffect(() => {
+    if (layoutOverride !== undefined) return;
     let active = true;
     fetch(`${API}/site/footer`)
       .then((res) => res.json())
@@ -24,7 +31,7 @@ export default function SiteFooter() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [layoutOverride, refreshToken]);
 
   if (!layout) {
     return (
