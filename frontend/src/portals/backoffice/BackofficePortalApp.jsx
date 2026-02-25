@@ -32,8 +32,6 @@ import IndividualUsersPage from '@/pages/admin/IndividualUsers';
 import IndividualApplicationsPage from '@/pages/admin/IndividualApplications';
 import IndividualListingApplicationsPage from '@/pages/admin/IndividualListingApplications';
 import CorporateListingApplicationsPage from '@/pages/admin/CorporateListingApplications';
-import IndividualCampaignsPage from '@/pages/admin/IndividualCampaigns';
-import CorporateCampaignsPage from '@/pages/admin/CorporateCampaigns';
 import MenuManagementPage from '@/pages/admin/MenuManagement';
 import BillingPlaceholderPage from '@/pages/admin/BillingPlaceholder';
 import AdminAdsManagement from '@/pages/admin/AdminAdsManagement';
