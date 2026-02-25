@@ -238,9 +238,6 @@ function App() {
                       </PortalGate>
                     }
                   />
-
-                  {/* Fallback */}
-                  <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
                 <Toaster />
               </BrowserRouter>
