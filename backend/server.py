@@ -21141,32 +21141,140 @@ async def unlink_ad_from_campaign(
 @api_router.get("/admin/pricing/campaign")
 async def get_pricing_campaign(
     current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
 ):
-    return get_pricing_campaign_policy()
+    await _expire_pricing_campaigns(session, actor=current_user)
+    policy = await _get_latest_pricing_campaign(session)
+    if not policy:
+        return {
+            "policy": {
+                "id": None,
+                "is_enabled": False,
+                "start_at": None,
+                "end_at": None,
+                "scope": "all",
+                "published_at": None,
+                "version": 0,
+                "created_by": None,
+                "updated_by": None,
+            },
+            "active": False,
+        }
+    return {
+        "policy": _pricing_campaign_to_dict(policy),
+        "active": _is_pricing_campaign_active(policy, "individual") or _is_pricing_campaign_active(policy, "corporate"),
+    }
 
 
 @api_router.put("/admin/pricing/campaign")
 async def update_pricing_campaign(
     payload: PricingCampaignPolicyPayload,
     current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
+    session: AsyncSession = Depends(get_sql_session),
 ):
+    await _expire_pricing_campaigns(session, actor=current_user)
+
     if payload.scope not in PRICING_CAMPAIGN_SCOPES:
         raise HTTPException(status_code=400, detail="Invalid scope")
+    if payload.is_enabled and payload.start_at is None:
+        raise HTTPException(status_code=400, detail="start_at is required when enabling")
     if payload.start_at and payload.end_at and payload.end_at < payload.start_at:
         raise HTTPException(status_code=400, detail="end_at must be after start_at")
-    return update_pricing_campaign_policy(payload.dict())
+
+    policy = await _get_latest_pricing_campaign(session)
+    if not policy:
+        policy = PricingCampaign(
+            is_enabled=False,
+            scope=payload.scope,
+            start_at=payload.start_at,
+            end_at=payload.end_at,
+            created_by=_safe_uuid(current_user.get("id")),
+            updated_by=_safe_uuid(current_user.get("id")),
+            version=1,
+        )
+        session.add(policy)
+        await session.flush()
+
+    if payload.is_enabled:
+        conflict = await session.execute(
+            select(PricingCampaign)
+            .where(PricingCampaign.is_enabled.is_(True), PricingCampaign.id != policy.id)
+            .limit(1)
+        )
+        if conflict.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="Another pricing campaign is already active")
+
+    previous_enabled = policy.is_enabled
+
+    policy.is_enabled = payload.is_enabled
+    policy.start_at = payload.start_at
+    policy.end_at = payload.end_at
+    policy.scope = payload.scope
+    policy.updated_at = datetime.now(timezone.utc)
+    policy.updated_by = _safe_uuid(current_user.get("id"))
+    policy.version = (policy.version or 0) + 1
+    if policy.created_by is None:
+        policy.created_by = _safe_uuid(current_user.get("id"))
+
+    if policy.is_enabled and not policy.published_at:
+        policy.published_at = datetime.now(timezone.utc)
+
+    action = "PRICING_CAMPAIGN_UPDATED"
+    if not previous_enabled and policy.is_enabled:
+        action = "PRICING_CAMPAIGN_ENABLED"
+    elif previous_enabled and not policy.is_enabled:
+        action = "PRICING_CAMPAIGN_DISABLED"
+
+    await _write_audit_log_sql(
+        session=session,
+        action=action,
+        actor=current_user,
+        resource_type="pricing_campaign",
+        resource_id=str(policy.id),
+        metadata={"scope": policy.scope, "is_enabled": policy.is_enabled},
+        request=None,
+        country_code=current_user.get("country_code"),
+    )
+
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="Another pricing campaign is already active")
+
+    return {
+        "ok": True,
+        "policy": _pricing_campaign_to_dict(policy),
+        "active": _is_pricing_campaign_active(policy, "individual") or _is_pricing_campaign_active(policy, "corporate"),
+    }
 
 
 @api_router.post("/pricing/quote")
-async def get_pricing_quote_endpoint(payload: PricingQuotePayload):
+async def get_pricing_quote_endpoint(
+    payload: PricingQuotePayload,
+    session: AsyncSession = Depends(get_sql_session),
+):
     if payload.user_type not in {"individual", "corporate"}:
         raise HTTPException(status_code=400, detail="Invalid user_type")
-    return get_pricing_quote(payload.dict())
+
+    await _expire_pricing_campaigns(session)
+    policy = await _get_latest_pricing_campaign(session)
+    override_active = False
+    if policy:
+        override_active = _is_pricing_campaign_active(policy, payload.user_type)
+
+    response = _build_pricing_quote_response(payload.dict(), override_active)
+    if policy:
+        response["campaign"] = _pricing_campaign_to_dict(policy)
+    return response
 
 
 @api_router.get("/pricing/packages")
 async def list_pricing_packages_endpoint():
-    return list_pricing_packages()
+    return {
+        "status": "not_implemented",
+        "packages": [],
+    }
 
 
 @api_router.post("/v1/doping/requests")
