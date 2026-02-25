@@ -207,7 +207,7 @@ export default function VerifyEmail({ portalContext = 'account' }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f7c27a] p-4" data-testid="verify-page">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-warm)] p-4" data-testid="verify-page">
       <div className="absolute top-4 right-4 flex items-center gap-2">
         <button
           onClick={toggleTheme}
