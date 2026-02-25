@@ -19755,6 +19755,7 @@ PRICING_MANAGER_ROLES = ["super_admin", "country_admin", "pricing_manager"]
 
 CAMPAIGN_STATUSES = {"draft", "active", "paused", "expired"}
 PRICING_CAMPAIGN_SCOPES = {"individual", "corporate", "all"}
+PRICING_CAMPAIGN_ITEM_SCOPES = {"individual", "corporate"}
 
 DOPING_STATUSES = {"requested", "paid", "approved", "published", "expired"}
 
