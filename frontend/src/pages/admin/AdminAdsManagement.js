@@ -105,6 +105,11 @@ export default function AdminAdsManagement() {
   const breakdownRows = Array.isArray(analytics?.groups) ? analytics.groups : [];
   const breakdownTitle = groupBy === 'campaign' ? 'Kampanya Kırılımı' : 'Reklam Kırılımı';
 
+  const activeConflict = form.is_active && form.placement
+    ? ads.find((ad) => ad.is_active && ad.placement === form.placement)
+    : null;
+  const createDisabled = Boolean(activeConflict);
+
   const handleCreate = async () => {
     setStatus('');
     const payload = {
