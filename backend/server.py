@@ -11082,6 +11082,19 @@ async def _next_category_sort_order(session: AsyncSession, parent_id: Optional[u
     return int(max_value) + 1
 
 
+async def _reindex_category_siblings(session: AsyncSession, parent_id: Optional[uuid.UUID]) -> None:
+    query = select(Category).where(Category.is_deleted.is_(False))
+    if parent_id:
+        query = query.where(Category.parent_id == parent_id)
+    else:
+        query = query.where(Category.parent_id.is_(None))
+    result = await session.execute(query.order_by(Category.sort_order.asc(), Category.created_at.asc()))
+    siblings = result.scalars().all()
+    for idx, item in enumerate(siblings, start=1):
+        item.sort_order = idx
+    await session.commit()
+
+
 def _serialize_category_sql(category: Category, include_schema: bool = False, include_translations: bool = True) -> dict:
     translations = list(category.translations or [])
     slug_value = _pick_category_slug(category.slug)
