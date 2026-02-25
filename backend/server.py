@@ -19713,7 +19713,7 @@ ADS_MANAGER_ROLES = ["super_admin", "country_admin", "ads_manager"]
 PRICING_MANAGER_ROLES = ["super_admin", "country_admin", "pricing_manager"]
 
 CAMPAIGN_STATUSES = {"draft", "active", "paused", "expired"}
-PRICING_CAMPAIGN_SCOPES = {"individual", "corporate", "both"}
+PRICING_CAMPAIGN_SCOPES = {"individual", "corporate", "all"}
 
 DOPING_STATUSES = {"requested", "paid", "approved", "published", "expired"}
 
