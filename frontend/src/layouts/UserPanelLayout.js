@@ -170,7 +170,7 @@ const UserPanelLayout = () => {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3" data-testid="account-topbar-right">
-            <div className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-1" data-testid="account-language-toggle">
+            <div className="flex items-center gap-1 rounded-full bg-[var(--bg-surface-soft)] px-2 py-1" data-testid="account-language-toggle">
               {languageOptions.map((option) => (
                 <button
                   key={option.key}
