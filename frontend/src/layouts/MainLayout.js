@@ -70,7 +70,7 @@ export default function MainLayout() {
   const headerMode = loading ? 'guest' : (user ? 'auth' : 'guest');
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA]" data-testid="public-main-layout">
+    <div className="min-h-screen bg-[var(--bg-page)]" data-testid="public-main-layout">
       <SiteHeader mode={headerMode} />
 
       <nav className="border-b bg-white" data-testid="public-category-nav">
