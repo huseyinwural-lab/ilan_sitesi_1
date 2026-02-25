@@ -20178,6 +20178,18 @@ async def update_ad(
         ad.priority = payload.priority
     if payload.target_url is not None:
         ad.target_url = payload.target_url
+    if payload.campaign_id is not None:
+        if payload.campaign_id == "" or payload.campaign_id.lower() == "null":
+            ad.campaign_id = None
+        else:
+            try:
+                campaign_uuid = uuid.UUID(payload.campaign_id)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail="Invalid campaign id") from exc
+            campaign = await session.get(AdCampaign, campaign_uuid)
+            if not campaign:
+                raise HTTPException(status_code=404, detail="Campaign not found")
+            ad.campaign_id = campaign.id
 
     await session.commit()
     return {"ok": True}
