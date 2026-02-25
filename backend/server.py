@@ -20388,6 +20388,110 @@ def _resolve_analytics_window(range_key: str, start_at: Optional[str], end_at: O
     return now - timedelta(days=days), now
 
 
+def _percent_change(current: int, previous: int) -> Optional[float]:
+    if previous = 0:
+        return None
+    return ((current - previous) / previous) * 100
+
+
+async def _campaign_traffic_stats(
+    session: AsyncSession,
+    campaign_ids: list[uuid.UUID],
+) -> Dict[uuid.UUID, Dict[str, int]]:
+    if not campaign_ids:
+        return {}
+
+    now = datetime.now(timezone.utc)
+    current_start = now - timedelta(days=1)
+    previous_start = now - timedelta(days=2)
+    previous_end = current_start
+
+    async def _counts(model, start: datetime, end: datetime) -> Dict[uuid.UUID, int]:
+        stmt = (
+            select(Advertisement.campaign_id, func.count())
+            .select_from(model)
+            .join(Advertisement, Advertisement.id == model.ad_id)
+            .where(
+                model.created_at = start,
+                model.created_at < end,
+                Advertisement.campaign_id.in_(campaign_ids),
+            )
+            .group_by(Advertisement.campaign_id)
+        )
+        rows = (await session.execute(stmt)).all()
+        return {row[0]: int(row[1]) for row in rows if row[0]}
+
+    current_impressions = await _counts(AdImpression, current_start, now)
+    previous_impressions = await _counts(AdImpression, previous_start, previous_end)
+    current_clicks = await _counts(AdClick, current_start, now)
+    previous_clicks = await _counts(AdClick, previous_start, previous_end)
+
+    stats: Dict[uuid.UUID, Dict[str, int]] = {}
+    for cid in campaign_ids:
+        stats[cid] = {
+            "current_impressions": current_impressions.get(cid, 0),
+            "previous_impressions": previous_impressions.get(cid, 0),
+            "current_clicks": current_clicks.get(cid, 0),
+            "previous_clicks": previous_clicks.get(cid, 0),
+        }
+    return stats
+
+
+def _build_campaign_warnings(
+    campaign: AdCampaign,
+    stats: Dict[str, int],
+) -> List[Dict[str, str]]:
+    warnings: List[Dict[str, str]] = []
+    now = datetime.now(timezone.utc)
+
+    if campaign.end_at and campaign.status in {"active", "paused"}:
+        delta_days = (campaign.end_at - now).total_seconds() / 86400
+        if 0 = delta_days = END_WARNING_DAYS:
+            warnings.append(
+                {
+                    "type": "end_at",
+                    "severity": "warning",
+                    "message": f"Kampanya bitişine {math.ceil(delta_days)} gün kaldı.",
+                    "recommendation": "Süreyi uzatın veya yeni kampanya planlayın.",
+                }
+            )
+
+    if campaign.status == "active":
+        impression_change = _percent_change(stats.get("current_impressions", 0), stats.get("previous_impressions", 0))
+        if impression_change is not None and impression_change = TRAFFIC_SPIKE_THRESHOLD:
+            warnings.append(
+                {
+                    "type": "traffic_impressions",
+                    "severity": "warning",
+                    "message": f"Gösterim artışı %{impression_change:.0f} (son 24s vs önceki 24s).",
+                    "recommendation": "Trafik artışını doğrulayın ve slot/creative kontrol edin.",
+                }
+            )
+
+        click_change = _percent_change(stats.get("current_clicks", 0), stats.get("previous_clicks", 0))
+        if click_change is not None and click_change = TRAFFIC_SPIKE_THRESHOLD:
+            warnings.append(
+                {
+                    "type": "traffic_clicks",
+                    "severity": "warning",
+                    "message": f"Tıklama artışı %{click_change:.0f} (son 24s vs önceki 24s).",
+                    "recommendation": "Landing sayfası ve hedef URL performansını kontrol edin.",
+                }
+            )
+
+    if campaign.budget is not None and campaign.status == "active":
+        warnings.append(
+            {
+                "type": "budget_info",
+                "severity": "info",
+                "message": "Budget alanı dolu. CPM/CPC tanımı olmadığı için tüketim hesaplanmıyor.",
+                "recommendation": "CPM/CPC tanımlayın veya manuel takip edin.",
+            }
+        )
+
+    return warnings
+
+
 @api_router.get("/admin/ads/analytics")
 async def get_ads_analytics(
     range: str = "30d",
