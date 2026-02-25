@@ -20132,7 +20132,7 @@ async def vehicle_selector_options(
     country: Optional[str] = None,
     session: AsyncSession = Depends(get_sql_session),
 ):
-    make_obj, model_obj, trims = _get_vehicle_base_query(year, make, model, session)
+    make_obj, model_obj, trims = await _get_vehicle_base_query(year, make, model, session)
     return {
         "year": year,
         "make": make_obj.slug,
@@ -20160,7 +20160,7 @@ async def vehicle_selector_trims(
     country: Optional[str] = None,
     session: AsyncSession = Depends(get_sql_session),
 ):
-    make_obj, model_obj, trims = _get_vehicle_base_query(year, make, model, session)
+    make_obj, model_obj, trims = await _get_vehicle_base_query(year, make, model, session)
     filtered: list[VehicleTrim] = []
     for trim in trims:
         attrs = trim.attributes or {}
