@@ -173,10 +173,10 @@ class TestDraftVehicleValidation:
     
     def _create_draft(self):
         """Create a draft listing for testing"""
-        # Get category first
-        categories_resp = requests.get(f"{BASE_URL}/api/catalog/categories/vehicle/tree?country=DE")
+        # Get category first - use /api/categories endpoint with module=vehicle
+        categories_resp = requests.get(f"{BASE_URL}/api/categories?module=vehicle&country=DE")
         if categories_resp.status_code != 200:
-            pytest.skip("Could not get categories")
+            pytest.skip(f"Could not get categories: {categories_resp.status_code} {categories_resp.text}")
         
         categories = categories_resp.json()
         # Find a leaf category (hierarchy_complete=True)
@@ -184,18 +184,6 @@ class TestDraftVehicleValidation:
         for cat in categories:
             if cat.get("hierarchy_complete"):
                 cat_id = cat.get("id")
-                break
-            for child in cat.get("children", []):
-                if child.get("hierarchy_complete"):
-                    cat_id = child.get("id")
-                    break
-                for leaf in child.get("children", []):
-                    if leaf.get("hierarchy_complete"):
-                        cat_id = leaf.get("id")
-                        break
-                if cat_id:
-                    break
-            if cat_id:
                 break
         
         if not cat_id:
