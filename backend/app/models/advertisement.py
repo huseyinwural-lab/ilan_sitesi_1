@@ -42,7 +42,7 @@ class AdCampaign(Base):
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     advertiser: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    budget: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    budget: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="EUR")
     start_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     end_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
