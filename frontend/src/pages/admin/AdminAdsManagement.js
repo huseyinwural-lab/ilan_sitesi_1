@@ -32,6 +32,10 @@ export default function AdminAdsManagement() {
 
   const authHeader = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
 
+  const getAllowedFormats = (placement) => formatRules?.[placement] || [];
+  const formatLabel = (value) => formatLabels?.[value] || value;
+  const adLabel = (item) => item?.target_url || item?.asset_url || `Reklam ${item?.id?.slice(0, 8)}`;
+
   const fetchAds = async () => {
     const res = await axios.get(`${API}/admin/ads`, { headers: authHeader });
     setAds(res.data?.items || []);
