@@ -120,13 +120,6 @@
     color-scheme: dark;
   }
 
-  :root {
-    color-scheme: light;
-  }
-
-  .dark {
-    color-scheme: dark;
-  }
 }
 
 @layer base {
