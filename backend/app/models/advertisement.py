@@ -16,6 +16,7 @@ class Advertisement(Base):
         ForeignKey("ad_campaigns.id", ondelete="SET NULL"),
         nullable=True,
     )
+    format: Mapped[str | None] = mapped_column(String(20), nullable=True)
     asset_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     target_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     start_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
