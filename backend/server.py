@@ -16077,12 +16077,14 @@ async def admin_create_category(
 
     wizard_progress = payload.wizard_progress or {"state": "draft"}
 
+    sort_order = await _next_category_sort_order(session, parent.id if parent else None)
+
     category = Category(
         id=uuid.uuid4(),
         parent_id=parent.id if parent else None,
         path=path,
         depth=depth,
-        sort_order=payload.sort_order or 0,
+        sort_order=sort_order,
         module=module_value,
         slug=slug_json,
         icon=None,
