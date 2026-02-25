@@ -345,7 +345,7 @@ export default function AccountDashboard() {
           </div>
           <Link
             to="/account/listings"
-            className="text-xs font-semibold text-[#F57C00]"
+            className="text-xs font-semibold text-[var(--color-primary)]"
             data-testid="account-listing-snapshot-viewall"
           >
             Tümünü gör
@@ -440,7 +440,7 @@ export default function AccountDashboard() {
             </div>
             <Link
               to="/account/favorites"
-              className="text-xs font-semibold text-[#F57C00]"
+              className="text-xs font-semibold text-[var(--color-primary)]"
               data-testid="account-favorites-viewall"
             >
               Tümünü gör
