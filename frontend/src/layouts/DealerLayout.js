@@ -95,7 +95,7 @@ export default function DealerLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6c27a]" data-testid="dealer-layout">
+    <div className="min-h-screen bg-[var(--bg-warm)]" data-testid="dealer-layout">
       <header className="bg-[#2f3854] text-white" data-testid="dealer-topbar">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-4" data-testid="dealer-topbar-left">
@@ -177,7 +177,7 @@ export default function DealerLayout() {
                   className={({ isActive }) =>
                     `flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
                       isActive
-                        ? 'bg-[#f6c27a]/30 text-[#2f3854]'
+                        ? 'bg-[var(--bg-warm)]/30 text-[#2f3854]'
                         : 'text-slate-500 hover:bg-slate-100'
                     }`
                   }
