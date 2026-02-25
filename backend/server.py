@@ -20807,7 +20807,7 @@ async def upload_ad_asset(
         raise HTTPException(status_code=400, detail="Invalid ad id") from exc
 
     ad = await session.get(Advertisement, ad_uuid)
-    if not ad:
+    if not ad or ad.is_deleted:
         raise HTTPException(status_code=404, detail="Ad not found")
 
     data = await file.read()
