@@ -1,8 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+const toInputValue = (date) => {
+  const pad = (val) => String(val).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+const addDays = (date, days) => new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 
 const emptyForm = {
   listing_quota: '',
@@ -22,6 +29,7 @@ export default function AdminPricingTiers() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
+  const [originalStartAt, setOriginalStartAt] = useState(null);
 
   const authHeader = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
 
@@ -38,40 +46,103 @@ export default function AdminPricingTiers() {
   }, []);
 
   const openCreate = () => {
-    setForm(emptyForm);
+    const now = new Date();
+    setForm({
+      ...emptyForm,
+      start_at: toInputValue(now),
+      end_at: toInputValue(addDays(now, 30)),
+      is_active: true,
+    });
     setEditingId(null);
+    setOriginalStartAt(null);
     setStatus('');
     setError('');
     setShowModal(true);
   };
 
   const openEdit = (item) => {
+    const startValue = item.start_at ? toInputValue(new Date(item.start_at)) : '';
     setForm({
       listing_quota: item.listing_quota ?? '',
       price_amount: item.price_amount ?? '',
       currency: item.currency || 'EUR',
       publish_days: item.publish_days ?? '90',
-      start_at: item.start_at ? item.start_at.slice(0, 16) : '',
-      end_at: item.end_at ? item.end_at.slice(0, 16) : '',
+      start_at: startValue,
+      end_at: item.end_at ? toInputValue(new Date(item.end_at)) : '',
       is_active: Boolean(item.is_active),
     });
     setEditingId(item.id);
+    setOriginalStartAt(startValue || null);
     setStatus('');
     setError('');
     setShowModal(true);
   };
 
+  const startDate = form.start_at ? new Date(form.start_at) : null;
+  const endDate = form.end_at ? new Date(form.end_at) : null;
+  const now = new Date();
+  const startLocked = Boolean(
+    editingId &&
+      originalStartAt &&
+      form.start_at === originalStartAt &&
+      startDate &&
+      startDate < now
+  );
+
+  const hasOverlap = useMemo(() => {
+    if (!form.is_active || !startDate || !endDate) return false;
+    return items.some((item) => {
+      if (!item.is_active || item.is_deleted || item.id === editingId) return false;
+      if (!item.start_at || !item.end_at) return false;
+      const itemStart = new Date(item.start_at);
+      const itemEnd = new Date(item.end_at);
+      return itemStart < endDate && itemEnd > startDate;
+    });
+  }, [items, form.is_active, startDate, endDate, editingId]);
+
+  const validationError = useMemo(() => {
+    if (!form.start_at || !form.end_at) {
+      return 'Başlangıç ve bitiş zorunludur.';
+    }
+    if (startDate && startDate < now && !startLocked) {
+      return 'Başlangıç tarihi şimdi'den önce olamaz.';
+    }
+    if (startDate && endDate && endDate <= startDate) {
+      return 'Bitiş tarihi başlangıçtan sonra olmalıdır.';
+    }
+    if (Number(form.listing_quota) <= 0) {
+      return 'İlan adedi 0'dan büyük olmalıdır.';
+    }
+    if (Number(form.publish_days) <= 0) {
+      return 'İlan süresi 0'dan büyük olmalıdır.';
+    }
+    if (Number(form.price_amount) < 0) {
+      return 'Fiyat 0 veya daha büyük olmalıdır.';
+    }
+    if (hasOverlap) {
+      return 'Bu zaman aralığında aktif kampanya var.';
+    }
+    return '';
+  }, [form, startDate, endDate, now, startLocked, hasOverlap]);
+
+  const isSaveDisabled = Boolean(validationError);
+
   const handleSave = async () => {
+    if (isSaveDisabled) return;
     setStatus('');
     setError('');
+
+    const startIso = new Date(form.start_at).toISOString();
+    const endIso = new Date(form.end_at).toISOString();
+
     const payload = {
       scope,
       listing_quota: Number(form.listing_quota),
       price_amount: Number(form.price_amount || 0),
       currency: (form.currency || 'EUR').toUpperCase(),
       publish_days: Number(form.publish_days || 90),
-      start_at: form.start_at || null,
-      end_at: form.end_at || null,
+      start_at: startIso,
+      end_at: endIso,
       is_active: Boolean(form.is_active),
     };
 
@@ -120,6 +191,24 @@ export default function AdminPricingTiers() {
     }
   };
 
+  const formatDate = (value) => {
+    if (!value) return '-';
+    return new Date(value).toLocaleString('tr-TR');
+  };
+
+  const resolveStatus = (item) => {
+    if (!item.is_active) return 'Pasif';
+    if (!item.start_at || !item.end_at) return 'Pasif';
+    const start = new Date(item.start_at);
+    const end = new Date(item.end_at);
+    if (now < start) return 'Planlı';
+    if (now > end) return 'Süresi Doldu';
+    return 'Aktif';
+  };
+
+  const startMin = startLocked ? form.start_at : toInputValue(now);
+  const endMin = startDate ? toInputValue(addDays(startDate, 0)) : toInputValue(now);
+
   return (
     <div className="space-y-5" data-testid="admin-pricing-individual-page">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -147,6 +236,8 @@ export default function AdminPricingTiers() {
                 <th className="py-2 pr-3">İlan Adedi</th>
                 <th className="py-2 pr-3">Fiyat</th>
                 <th className="py-2 pr-3">Süre (gün)</th>
+                <th className="py-2 pr-3">Başlangıç</th>
+                <th className="py-2 pr-3">Bitiş</th>
                 <th className="py-2 pr-3">Durum</th>
                 <th className="py-2">Aksiyon</th>
               </tr>
@@ -154,7 +245,7 @@ export default function AdminPricingTiers() {
             <tbody>
               {items.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="py-6 text-center text-xs text-muted-foreground" data-testid="admin-pricing-individual-empty">
+                  <td colSpan="7" className="py-6 text-center text-xs text-muted-foreground" data-testid="admin-pricing-individual-empty">
                     Henüz kampanya yok.
                   </td>
                 </tr>
@@ -170,8 +261,14 @@ export default function AdminPricingTiers() {
                   <td className="py-3 pr-3" data-testid={`admin-pricing-individual-days-${item.id}`}>
                     {item.publish_days}
                   </td>
+                  <td className="py-3 pr-3" data-testid={`admin-pricing-individual-start-${item.id}`}>
+                    {formatDate(item.start_at)}
+                  </td>
+                  <td className="py-3 pr-3" data-testid={`admin-pricing-individual-end-${item.id}`}>
+                    {formatDate(item.end_at)}
+                  </td>
                   <td className="py-3 pr-3" data-testid={`admin-pricing-individual-status-${item.id}`}>
-                    {item.is_active ? 'Aktif' : 'Pasif'}
+                    {resolveStatus(item)}
                   </td>
                   <td className="py-3 flex flex-wrap gap-2">
                     <button
@@ -230,6 +327,10 @@ export default function AdminPricingTiers() {
               </button>
             </div>
 
+            <div className="text-xs text-muted-foreground" data-testid="admin-pricing-individual-modal-timezone">
+              Saat dilimi: Europe/Berlin (UTC+1/2)
+            </div>
+
             <div className="space-y-3">
               <div>
                 <label className="text-xs">İlan Adedi</label>
@@ -272,21 +373,24 @@ export default function AdminPricingTiers() {
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <div>
-                  <label className="text-xs">Başlangıç (opsiyonel)</label>
+                  <label className="text-xs">Başlangıç (Tarih + Saat)</label>
                   <input
                     type="datetime-local"
                     className="mt-1 h-9 w-full rounded-md border px-2"
                     value={form.start_at}
+                    min={startMin}
+                    disabled={startLocked}
                     onChange={(e) => setForm((prev) => ({ ...prev, start_at: e.target.value }))}
                     data-testid="admin-pricing-individual-modal-start"
                   />
                 </div>
                 <div>
-                  <label className="text-xs">Bitiş (opsiyonel)</label>
+                  <label className="text-xs">Bitiş (Tarih + Saat)</label>
                   <input
                     type="datetime-local"
                     className="mt-1 h-9 w-full rounded-md border px-2"
                     value={form.end_at}
+                    min={endMin}
                     onChange={(e) => setForm((prev) => ({ ...prev, end_at: e.target.value }))}
                     data-testid="admin-pricing-individual-modal-end"
                   />
@@ -303,12 +407,21 @@ export default function AdminPricingTiers() {
               </label>
             </div>
 
+            {validationError && (
+              <div className="text-xs text-rose-600" data-testid="admin-pricing-individual-modal-validation">
+                {validationError}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={handleSave}
-                className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm"
+                className={`h-9 px-4 rounded-md text-sm ${
+                  isSaveDisabled ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-primary text-primary-foreground'
+                }`}
                 data-testid="admin-pricing-individual-modal-save"
+                disabled={isSaveDisabled}
               >
                 Kaydet
               </button>
