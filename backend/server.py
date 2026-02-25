@@ -19850,6 +19850,33 @@ class PricingPackageUpdatePayload(BaseModel):
     packages: List[PricingPackageInput]
 
 
+class PricingCampaignItemCreatePayload(BaseModel):
+    scope: str
+    name: Optional[str] = None
+    listing_quota: int
+    price_amount: float
+    currency: str = "EUR"
+    publish_days: int
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    is_active: Optional[bool] = True
+
+
+class PricingCampaignItemUpdatePayload(BaseModel):
+    name: Optional[str] = None
+    listing_quota: Optional[int] = None
+    price_amount: Optional[float] = None
+    currency: Optional[str] = None
+    publish_days: Optional[int] = None
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    is_active: Optional[bool] = None
+
+
+class PricingCampaignItemStatusPayload(BaseModel):
+    is_active: bool
+
+
 class DopingRequestPayload(BaseModel):
     listing_id: str
     placement_home: Optional[bool] = False
