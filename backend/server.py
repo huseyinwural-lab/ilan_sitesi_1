@@ -19880,6 +19880,19 @@ async def _find_active_ad_conflict(
     return result.scalar_one_or_none()
 
 
+def _get_env_int(key: str, default: int) -> int:
+    value = os.environ.get(key)
+    if value is None or value == "":
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+END_WARNING_DAYS = _get_env_int("END_WARNING_DAYS", 3)
+TRAFFIC_SPIKE_THRESHOLD = _get_env_int("TRAFFIC_SPIKE_THRESHOLD", 200)
+
 AD_IMPRESSION_DEDUP_MINUTES = 30
 AD_BOT_KEYWORDS = ("bot", "spider", "crawl", "scanner")
 
