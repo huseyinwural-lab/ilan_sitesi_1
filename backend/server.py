@@ -19539,6 +19539,7 @@ async def _run_vehicle_import_job(job_id: str) -> None:
         _append_vehicle_import_log(job, "info", "Job started")
         await session.commit()
 
+        file_path_obj = None
         try:
             await _write_audit_log_sql(
                 session=session,
