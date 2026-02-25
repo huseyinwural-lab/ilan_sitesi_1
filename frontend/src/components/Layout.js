@@ -462,10 +462,6 @@ export default function Layout({ children }) {
   { path: '/admin/individual-listing-applications', icon: FileText, label: 'Bireysel İlan Başvuruları', roles: roles.moderation, testId: 'listings-individual-applications' },
   { path: '/admin/corporate-listing-applications', icon: FileText, label: 'Kurumsal İlan Başvuruları', roles: roles.moderation, testId: 'listings-corporate-applications' },
 
-    { divider: true, label: 'Kampanyalar', roles: roles.moderation },
-  { path: '/admin/individual-campaigns', icon: Flag, label: 'Bireysel Kampanyalar', roles: roles.moderation, testId: 'campaigns-individual' },
-  { path: '/admin/corporate-campaigns', icon: Flag, label: 'Kurumsal Kampanyalar', roles: roles.moderation, testId: 'campaigns-corporate' },
-
     { divider: true, label: 'Reklamlar', roles: roles.adsManager },
   { path: '/admin/ads', icon: Activity, label: 'Reklam Yönetimi', roles: roles.adsManager, testId: 'ads-management' },
   { path: '/admin/ads/campaigns', icon: Flag, label: 'Kampanyalar', roles: roles.adsManager, testId: 'ads-campaigns' },
