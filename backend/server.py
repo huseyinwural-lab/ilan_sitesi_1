@@ -19423,6 +19423,9 @@ async def _process_vehicle_import_records(
             model_cache[model_key] = model
 
         if not model:
+            if job.dry_run:
+                new_count += 1
+                continue
             skipped_count += 1
             validation_error_count += 1
             if len(validation_errors) < VEHICLE_IMPORT_MAX_ERRORS:
