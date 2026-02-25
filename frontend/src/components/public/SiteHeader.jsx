@@ -92,6 +92,16 @@ export default function SiteHeader({ mode, refreshToken }) {
         </form>
 
         <div className="flex items-center gap-2" data-testid="site-header-controls">
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={() => navigate('/ilan-ver/kategori-secimi')}
+              className="hidden sm:inline-flex h-9 items-center rounded-full bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--text-inverse)] hover:bg-[var(--color-primary-dark)]"
+              data-testid="site-header-create-listing"
+            >
+              İlan Ver
+            </button>
+          )}
           <button
             type="button"
             className="md:hidden rounded-full border p-2"
