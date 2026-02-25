@@ -19573,9 +19573,34 @@ async def submit_vehicle_listing(
             },
         )
 
+    pricing_response, quote, policy, _ = await _compute_pricing_quote(session, current_user)
+    override_active = pricing_response.get("override_active", False)
+    snapshot = await _create_pricing_snapshot(session, listing, current_user, quote, policy, override_active)
+
+    if quote.get("quota_used") and quote.get("subscription_id"):
+        subscription = await session.get(UserPackageSubscription, uuid.UUID(quote["subscription_id"]))
+        if subscription and subscription.remaining_quota >= 0:
+            subscription.remaining_quota = max(0, subscription.remaining_quota - 1)
+            subscription.updated_at = datetime.now(timezone.utc)
+
+    if quote.get("requires_payment"):
+        await session.commit()
+        return JSONResponse(
+            status_code=402,
+            content={
+                "id": listing_id,
+                "status": listing.status,
+                "payment_required": True,
+                "quote": pricing_response,
+                "snapshot_id": str(snapshot.id) if snapshot else None,
+                "next_actions": ["payment_required"],
+            },
+        )
+
     listing.status = "pending_moderation"
     if not listing.expires_at:
-        listing.expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+        duration_days = snapshot.duration_days if snapshot else 30
+        listing.expires_at = datetime.now(timezone.utc) + timedelta(days=duration_days)
 
     await _upsert_moderation_item(
         session=session,
