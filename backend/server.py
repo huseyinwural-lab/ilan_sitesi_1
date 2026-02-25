@@ -20701,7 +20701,7 @@ async def update_ad(
         raise HTTPException(status_code=400, detail="Invalid ad id") from exc
 
     ad = await session.get(Advertisement, ad_uuid)
-    if not ad:
+    if not ad or ad.is_deleted:
         raise HTTPException(status_code=404, detail="Ad not found")
 
     start_at = payload.start_at if payload.start_at is not None else ad.start_at
