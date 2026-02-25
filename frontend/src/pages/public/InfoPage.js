@@ -100,13 +100,12 @@ export default function InfoPage() {
     });
   }, [page]);
 
+  if (error) {
+    return <NotFoundPage />;
+  }
+
   return (
     <div className="space-y-6" data-testid="info-page">
-      {error && (
-        <div className="text-sm text-rose-600" data-testid="info-page-error">
-          {error}
-        </div>
-      )}
       {page && (
         <>
           <h1 className="text-2xl font-semibold text-[var(--text-primary)]" data-testid="info-page-title">
