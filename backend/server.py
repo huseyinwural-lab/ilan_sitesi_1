@@ -19816,6 +19816,12 @@ class PricingQuotePayload(BaseModel):
     listing_type: Optional[str] = None
 
 
+class PricingCheckoutPayload(BaseModel):
+    listing_id: str
+    origin_url: str
+    package_id: Optional[str] = None
+
+
 class PricingTierRuleInput(BaseModel):
     tier_no: int
     price_amount: float
