@@ -21867,6 +21867,175 @@ async def get_pricing_quote_endpoint(
     return response
 
 
+@api_router.post("/pricing/checkout-session")
+async def create_pricing_checkout_session(
+    payload: PricingCheckoutPayload,
+    request: Request,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=503, detail="Stripe not configured")
+
+    try:
+        listing_uuid = uuid.UUID(payload.listing_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="listing_id invalid") from exc
+
+    listing = await session.get(Listing, listing_uuid)
+    if not listing or str(listing.user_id) != current_user.get("id"):
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    if listing.status not in {"draft", "needs_revision"}:
+        raise HTTPException(status_code=400, detail="Listing not eligible for payment")
+
+    pricing_response, quote, policy, user_type = await _compute_pricing_quote(session, current_user)
+    override_active = pricing_response.get("override_active", False)
+
+    if not quote.get("requires_payment"):
+        return {"payment_required": False, "quote": pricing_response}
+
+    origin = payload.origin_url.strip().rstrip("/")
+    if not origin:
+        raise HTTPException(status_code=400, detail="origin_url required")
+
+    country_code = listing.country or current_user.get("country_code")
+    if not _is_payment_enabled_for_country(country_code):
+        raise HTTPException(status_code=403, detail="Payments disabled for this country")
+
+    amount = float(quote.get("amount") or 0)
+    currency = quote.get("currency") or "EUR"
+    duration_days = quote.get("duration_days") or 90
+    snapshot_quote = quote
+
+    if user_type == "corporate" and quote.get("type") == "package":
+        if not payload.package_id:
+            raise HTTPException(status_code=400, detail="package_id is required")
+        try:
+            package_uuid = uuid.UUID(payload.package_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="package_id invalid") from exc
+        package = await session.get(PricingPackage, package_uuid)
+        if not package or not package.is_active:
+            raise HTTPException(status_code=404, detail="Package not found")
+        amount = float(package.package_price_amount or 0)
+        currency = package.currency
+        duration_days = package.publish_days
+        snapshot_quote = {
+            "type": "package",
+            "reason": "package_purchase",
+            "package_id": str(package.id),
+            "amount": amount,
+            "currency": currency,
+            "duration_days": duration_days,
+            "requires_payment": amount > 0,
+            "quota_used": False,
+        }
+
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Payment not required for this listing")
+
+    snapshot = await _create_pricing_snapshot(session, listing, current_user, snapshot_quote, policy, override_active)
+    if not snapshot:
+        raise HTTPException(status_code=400, detail="Pricing snapshot could not be created")
+    await session.flush()
+
+    now = datetime.now(timezone.utc)
+    invoice = AdminInvoice(
+        invoice_no=_generate_invoice_no(),
+        user_id=uuid.UUID(current_user.get("id")),
+        subscription_id=None,
+        plan_id=None,
+        campaign_id=None,
+        amount_total=amount,
+        currency=currency,
+        status="issued",
+        payment_status="requires_payment_method",
+        issued_at=now,
+        due_at=None,
+        provider_customer_id=None,
+        meta_json={
+            "listing_id": str(listing.id),
+            "pricing_snapshot_id": str(snapshot.id),
+            "pricing_mode": pricing_response.get("pricing_mode"),
+            "pricing_user_type": user_type,
+            "pricing_duration_days": duration_days,
+        },
+        scope="country" if country_code else "global",
+        country_code=country_code,
+        payment_method=None,
+        notes=None,
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(invoice)
+    await session.flush()
+
+    webhook_url = f"{origin}/api/webhook/stripe"
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+
+    success_url = f"{origin}/account/payments/success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{origin}/account/payments/cancel"
+
+    session_request = CheckoutSessionRequest(
+        amount=float(amount),
+        currency=currency,
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata={
+            "invoice_id": str(invoice.id),
+            "listing_id": str(listing.id),
+            "pricing_snapshot_id": str(snapshot.id),
+        },
+    )
+
+    checkout_session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(session_request)
+
+    payment = Payment(
+        invoice_id=invoice.id,
+        user_id=invoice.user_id,
+        provider="stripe",
+        provider_ref=checkout_session.session_id,
+        status="requires_payment_method",
+        amount_total=amount,
+        currency=currency,
+        meta_json={"checkout_session_id": checkout_session.session_id},
+        created_at=now,
+        updated_at=now,
+    )
+    transaction = PaymentTransaction(
+        provider="stripe",
+        session_id=checkout_session.session_id,
+        provider_payment_id=None,
+        invoice_id=invoice.id,
+        dealer_id=invoice.user_id,
+        amount=amount,
+        currency=currency,
+        status="requires_payment_method",
+        payment_status="requires_payment_method",
+        metadata_json={
+            "checkout_url": checkout_session.url,
+            "pricing_snapshot_id": str(snapshot.id),
+        },
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(payment)
+    session.add(transaction)
+    await session.commit()
+
+    return {
+        "checkout_url": checkout_session.url,
+        "session_id": checkout_session.session_id,
+        "invoice_id": str(invoice.id),
+        "snapshot_id": str(snapshot.id),
+        "payment_required": True,
+        "quote": pricing_response,
+    }
+
+
 @api_router.get("/pricing/packages")
 async def list_pricing_packages_endpoint(session: AsyncSession = Depends(get_sql_session)):
     await _ensure_pricing_defaults(session)
