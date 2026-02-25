@@ -21,7 +21,7 @@ class PricingPriceSnapshot(Base):
     amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, default=0)
     duration_days: Mapped[int] = mapped_column(Integer, nullable=False, default=90)
     snapshot_type: Mapped[str] = mapped_column(String(20), nullable=False)
-    metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    meta: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
