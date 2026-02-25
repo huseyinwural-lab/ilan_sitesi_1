@@ -20033,7 +20033,7 @@ THEME_DEFAULTS = {
         "modal-background": "#111827",
         "text-primary": "#f8fafc",
         "text-secondary": "#94a3b8",
-        "text-muted": "#64748b",
+        "text-muted": "#94a3b8",
         "text-inverse": "#0f172a",
         "border": "#273449",
         "border-strong": "#3b4a63",
