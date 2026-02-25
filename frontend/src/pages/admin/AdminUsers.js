@@ -14,6 +14,7 @@ const ROLE_OPTIONS = [
   { value: 'moderator', label: 'Moderatör' },
   { value: 'ads_manager', label: 'Reklam Yöneticisi' },
   { value: 'pricing_manager', label: 'Fiyatlandırma Yöneticisi' },
+  { value: 'masterdata_manager', label: 'Master Data Yöneticisi' },
   { value: 'support', label: 'Destek' },
   { value: 'finance', label: 'Finans' },
   { value: 'ROLE_AUDIT_VIEWER', label: 'Audit Viewer' },
