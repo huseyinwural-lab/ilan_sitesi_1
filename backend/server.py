@@ -19911,6 +19911,11 @@ class FooterLayoutPayload(BaseModel):
     status: Optional[str] = "draft"
 
 
+class ThemeConfigPayload(BaseModel):
+    config: dict
+    status: Optional[str] = "draft"
+
+
 class InfoPagePayload(BaseModel):
     slug: str
     title_tr: str
