@@ -38,6 +38,9 @@ import MenuManagementPage from '@/pages/admin/MenuManagement';
 import BillingPlaceholderPage from '@/pages/admin/BillingPlaceholder';
 import AdminAdsManagement from '@/pages/admin/AdminAdsManagement';
 import AdminAdsCampaigns from '@/pages/admin/AdminAdsCampaigns';
+import AdminPricingCampaign from '@/pages/admin/AdminPricingCampaign';
+import AdminPricingTiers from '@/pages/admin/AdminPricingTiers';
+import AdminPricingPackages from '@/pages/admin/AdminPricingPackages';
 
 export default function BackofficePortalApp() {
   return (
