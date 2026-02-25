@@ -465,6 +465,11 @@ export default function Layout({ children }) {
   { path: '/admin/ads', icon: Activity, label: 'Reklam Yönetimi', roles: roles.adsManager, testId: 'ads-management' },
   { path: '/admin/ads/campaigns', icon: Flag, label: 'Kampanyalar', roles: roles.adsManager, testId: 'ads-campaigns' },
 
+    { divider: true, label: 'Fiyatlandırma', roles: roles.pricingManager },
+  { path: '/admin/pricing/campaign', icon: Sparkles, label: 'Kampanya Modu', roles: roles.pricingManager, testId: 'pricing-campaign-mode' },
+  { path: '/admin/pricing/tiers', icon: Layers, label: 'Bireysel Tier Pricing', roles: roles.pricingManager, testId: 'pricing-tier-rules' },
+  { path: '/admin/pricing/packages', icon: Package, label: 'Kurumsal Paketler', roles: roles.pricingManager, testId: 'pricing-packages' },
+
     { divider: true, label: 'Katalog & İçerik', roles: roles.catalogView },
     { path: '/admin/categories', icon: FolderTree, label: 'Kategoriler', roles: roles.catalogView, testId: 'catalog-categories' },
     { path: '/admin/categories/import-export', icon: FileText, label: 'Kategori Import/Export', roles: roles.catalogAdmin, testId: 'catalog-categories-import-export' },
