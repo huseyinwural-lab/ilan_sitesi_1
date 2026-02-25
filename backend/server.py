@@ -19142,6 +19142,148 @@ def _load_vehicle_import_json(path: Path) -> list[dict]:
     return payload
 
 
+
+
+def _vehicle_import_error_response(error_code: str, message: str, field_errors: Optional[list[dict]] = None) -> JSONResponse:
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error_code": error_code,
+            "message": message,
+            "field_errors": field_errors or [],
+        },
+    )
+
+
+def _vehicle_import_field_error(path: str, expected: str, got: Any, hint: str) -> dict:
+    return {
+        "path": path,
+        "expected": expected,
+        "got": got,
+        "hint": hint,
+    }
+
+
+def _resolve_required_vehicle_fields(record: dict, index: int) -> tuple[Optional[dict], list[dict]]:
+    errors: list[dict] = []
+    if not isinstance(record, dict):
+        return None, [
+            _vehicle_import_field_error(
+                path=f"$[{index}]",
+                expected="object",
+                got=type(record).__name__,
+                hint="Record JSON objesi olmalıdır",
+            )
+        ]
+
+    raw_make = _extract_vehicle_field(record, ["make", "make_name", "makeName", "make_title"]) or record.get("make")
+    make_name = _extract_named_value(raw_make)
+    if not make_name:
+        errors.append(
+            _vehicle_import_field_error(
+                path=f"$[{index}].make",
+                expected="string",
+                got=record.get("make"),
+                hint="make veya make_name zorunlu",
+            )
+        )
+
+    raw_model = _extract_vehicle_field(record, ["model", "model_name", "modelName", "model_title"]) or record.get("model")
+    model_name = _extract_named_value(raw_model)
+    if not model_name:
+        errors.append(
+            _vehicle_import_field_error(
+                path=f"$[{index}].model",
+                expected="string",
+                got=record.get("model"),
+                hint="model veya model_name zorunlu",
+            )
+        )
+
+    raw_trim = _extract_vehicle_field(record, ["trim", "trim_name", "trimName", "trim_title"]) or record.get("trim")
+    trim_name = _extract_named_value(raw_trim)
+    if not trim_name:
+        errors.append(
+            _vehicle_import_field_error(
+                path=f"$[{index}].trim",
+                expected="string",
+                got=record.get("trim"),
+                hint="trim veya trim_name zorunlu",
+            )
+        )
+
+    year_raw = record.get("year") or record.get("model_year") or record.get("year_start")
+    year = _cast_int(year_raw)
+    if year is None:
+        errors.append(
+            _vehicle_import_field_error(
+                path=f"$[{index}].year",
+                expected="integer",
+                got=year_raw,
+                hint="year zorunlu",
+            )
+        )
+
+    if errors:
+        return None, errors
+
+    trim_ref = _extract_reference_value(record.get("trim_id") or record.get("trimId") or record.get("id"))
+
+    return {
+        "index": index,
+        "make": make_name,
+        "model": model_name,
+        "trim": trim_name,
+        "year": year,
+        "trim_ref": trim_ref,
+    }, []
+
+
+def _validate_vehicle_import_schema(records: list[dict]) -> tuple[list[dict], list[dict]]:
+    field_errors: list[dict] = []
+    parsed: list[dict] = []
+    for index, record in enumerate(records, start=1):
+        normalized, errors = _resolve_required_vehicle_fields(record, index)
+        if errors:
+            field_errors.extend(errors)
+            if len(field_errors) >= VEHICLE_IMPORT_MAX_ERRORS:
+                break
+            continue
+        if normalized:
+            parsed.append(normalized)
+    return field_errors[:VEHICLE_IMPORT_MAX_ERRORS], parsed
+
+
+def _validate_vehicle_import_business(parsed: list[dict]) -> list[dict]:
+    field_errors: list[dict] = []
+    seen_keys: set[str] = set()
+    for item in parsed:
+        year = item.get("year")
+        if year is not None and (year < VEHICLE_IMPORT_YEAR_MIN or year > VEHICLE_IMPORT_YEAR_MAX):
+            field_errors.append(
+                _vehicle_import_field_error(
+                    path=f"$[{item['index']}].year",
+                    expected=f"{VEHICLE_IMPORT_YEAR_MIN}-{VEHICLE_IMPORT_YEAR_MAX}",
+                    got=year,
+                    hint="year aralığı geçersiz",
+                )
+            )
+        trim_ref = item.get("trim_ref")
+        key = f"ref:{trim_ref}" if trim_ref else f"key:{item['year']}:{item['make'].lower()}:{item['model'].lower()}:{item['trim'].lower()}"
+        if key in seen_keys:
+            field_errors.append(
+                _vehicle_import_field_error(
+                    path=f"$[{item['index']}]",
+                    expected="unique trim key",
+                    got="duplicate",
+                    hint="trim anahtarı payload içinde tekrar ediyor",
+                )
+            )
+        else:
+            seen_keys.add(key)
+        if len(field_errors) >= VEHICLE_IMPORT_MAX_ERRORS:
+            break
+    return field_errors[:VEHICLE_IMPORT_MAX_ERRORS]
 def _extract_vehicle_field(record: dict, keys: list[str]) -> Optional[Any]:
     for key in keys:
         if key in record and record.get(key) not in (None, ""):
