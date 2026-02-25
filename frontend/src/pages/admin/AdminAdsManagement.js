@@ -17,6 +17,8 @@ const emptyForm = {
 export default function AdminAdsManagement() {
   const [ads, setAds] = useState([]);
   const [placements, setPlacements] = useState({});
+  const [formatRules, setFormatRules] = useState({});
+  const [formatLabels, setFormatLabels] = useState({});
   const [form, setForm] = useState(emptyForm);
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState('');
