@@ -11053,6 +11053,8 @@ def _assert_category_parent_compatible(
 ):
     if not parent:
         return
+    if module_value == "vehicle":
+        raise HTTPException(status_code=409, detail="vehicle categories must be top-level")
     if parent.module != module_value:
         raise HTTPException(status_code=409, detail="parent module mismatch")
     if category and parent.id == category.id:
