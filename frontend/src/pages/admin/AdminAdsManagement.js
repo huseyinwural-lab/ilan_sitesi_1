@@ -109,6 +109,7 @@ export default function AdminAdsManagement() {
     setStatus('');
     const payload = {
       placement: form.placement,
+      format: form.format || null,
       start_at: form.start_at || null,
       end_at: form.end_at || null,
       priority: Number(form.priority) || 0,
