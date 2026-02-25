@@ -19831,14 +19831,39 @@ async def _should_dedup_impression(session: AsyncSession, ad_id: uuid.UUID, ip_h
 
 async def _expire_ads(session: AsyncSession) -> None:
     now = datetime.now(timezone.utc)
+    changed = False
+
     result = await session.execute(
-        select(Advertisement).where(Advertisement.is_active.is_(True), Advertisement.end_at.isnot(None), Advertisement.end_at < now)
+        select(AdCampaign).where(
+            AdCampaign.status.in_(["draft", "active", "paused"]),
+            AdCampaign.end_at.isnot(None),
+            AdCampaign.end_at < now,
+        )
     )
-    expired = result.scalars().all()
-    for item in expired:
+    expired_campaigns = result.scalars().all()
+    expired_campaign_ids = []
+    for campaign in expired_campaigns:
+        campaign.status = "expired"
+        campaign.updated_at = now
+        expired_campaign_ids.append(campaign.id)
+    if expired_campaigns:
+        changed = True
+
+    expire_clauses = [and_(Advertisement.end_at.isnot(None), Advertisement.end_at < now)]
+    if expired_campaign_ids:
+        expire_clauses.append(Advertisement.campaign_id.in_(expired_campaign_ids))
+
+    result = await session.execute(
+        select(Advertisement).where(Advertisement.is_active.is_(True), or_(*expire_clauses))
+    )
+    expired_ads = result.scalars().all()
+    for item in expired_ads:
         item.is_active = False
         item.updated_at = now
-    if expired:
+    if expired_ads:
+        changed = True
+
+    if changed:
         await session.commit()
 
 
