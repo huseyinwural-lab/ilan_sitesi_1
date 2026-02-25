@@ -63,6 +63,14 @@ export default function AdminAdsManagement() {
     fetchAds();
   }, []);
 
+  useEffect(() => {
+    const allowed = getAllowedFormats(form.placement);
+    if (!allowed.length) return;
+    if (!form.format || !allowed.includes(form.format)) {
+      setForm((prev) => ({ ...prev, format: allowed[0] }));
+    }
+  }, [form.placement, formatRules]);
+
   const fetchAnalytics = async (overrideRange, overrideGroup) => {
     setAnalyticsStatus('loading');
     try {
