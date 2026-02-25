@@ -354,6 +354,14 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Admin UI: Dealer risk level kontrolü + Plan quota max doğrulaması.
 - Dry-run audit log opsiyonu eklendi (MIGRATION_DRY_RUN).
 
+## Son Güncellemeler (2026-02-25)
+- Tema Yönetimi admin ekranı: Light/Dark edit, live preview, draft/publish, versiyon listesi + rollback.
+- SiteThemeConfig modeli + admin/public API + WCAG AA kontrast validasyonu + cache refresh döngüsü.
+- Header authenticated CTA “İlan Ver” mobil görünür; header/footer renkleri admin değişkenleriyle yönetiliyor.
+- Admin sidebar “Kampanyalar” menüsü kaldırıldı; route + RBAC temizliği yapıldı.
+- Reklam soft delete: endpoint + UI confirm modal + AD_DELETED audit.
+- Tema altyapısı: CSS hex hard-code temizliği, ThemeContext + index.html pre-load config.
+
 ## Mimari Kararlar (ADS)
 - **ADS-57 — Pricing Campaign Item CRUD:** Sabit paket/tier yerine pricing_campaign_items ile bireysel/kurumsal kampanya item’ları yönetilir.
 - **ADS-58 — Deprecate:** pricing_packages ve pricing_tier_rules UI’dan kaldırıldı, DB’de deprecated olarak tutulur.
