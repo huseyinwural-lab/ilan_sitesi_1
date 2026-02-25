@@ -20854,6 +20854,18 @@ async def get_ad_campaign(
             }
         )
 
+    stats_map = await _campaign_traffic_stats(session, [campaign.id])
+    stats = stats_map.get(
+        campaign.id,
+        {
+            "current_impressions": 0,
+            "previous_impressions": 0,
+            "current_clicks": 0,
+            "previous_clicks": 0,
+        },
+    )
+    warnings = _build_campaign_warnings(campaign, stats)
+
     return {
         "campaign": {
             "id": str(campaign.id),
@@ -20866,6 +20878,7 @@ async def get_ad_campaign(
             "status": campaign.status,
         },
         "ads": ads_payload,
+        "warnings": warnings,
     }
 
 
