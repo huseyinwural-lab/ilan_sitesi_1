@@ -19517,7 +19517,6 @@ async def _process_vehicle_import_records(
                 else:
                     skipped_count += 1
 
-        job.processed_records = index
         if index % VEHICLE_IMPORT_BATCH_SIZE == 0:
             _log_progress("Batch processed", index)
             await session.commit()
