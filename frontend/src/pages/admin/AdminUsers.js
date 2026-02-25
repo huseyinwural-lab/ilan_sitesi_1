@@ -12,6 +12,7 @@ const ROLE_OPTIONS = [
   { value: 'super_admin', label: 'Super Admin' },
   { value: 'country_admin', label: 'Ülke Admin' },
   { value: 'moderator', label: 'Moderatör' },
+  { value: 'ads_manager', label: 'Reklam Yöneticisi' },
   { value: 'support', label: 'Destek' },
   { value: 'finance', label: 'Finans' },
   { value: 'ROLE_AUDIT_VIEWER', label: 'Audit Viewer' },
