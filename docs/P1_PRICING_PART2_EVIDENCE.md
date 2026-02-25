@@ -48,5 +48,5 @@ curl -s -X POST "https://public-site-build.preview.emergentagent.com/api/pricing
 - end_at geçmiş kampanya için /api/pricing/quote çağrısı sonrası `is_enabled=false` döner.
 
 ## 4) Admin UI Kanıtı
+- **UI Test PASS:** `auto_frontend_testing_agent` (toggle + scope + Kaydet/Yayınla akışı)
 - **Screenshot:** `/app/test_reports/admin-pricing-campaign-ui-ready.png`
-- **UI Test PASS:** `auto_frontend_testing_agent` (Kampanya Modu form, toggle, tarih, scope, Kaydet/Yayınla)
