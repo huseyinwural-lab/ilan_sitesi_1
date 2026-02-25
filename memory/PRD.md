@@ -342,6 +342,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **ADS-58 — Deprecate:** pricing_packages ve pricing_tier_rules UI’dan kaldırıldı, DB’de deprecated olarak tutulur.
 - **ADS-59 — Tek aktif kural:** Aynı scope içinde aynı anda 1 aktif kampanya item’ı.
 - **ADS-60 — Soft delete:** Kampanya item silme soft-delete (is_deleted/deleted_at).
+- **ADS-64 — Kampanya zamanı:** start_at/end_at zorunlu (datetime) + UTC normalize.
+- **ADS-65 — Overlap kuralı:** Aynı scope’ta zaman aralığı kesişen aktif kampanya oluşturulamaz.
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
