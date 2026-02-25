@@ -346,6 +346,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **ADS-60 — Soft delete:** Kampanya item silme soft-delete (is_deleted/deleted_at).
 - **ADS-64 — Kampanya zamanı:** start_at/end_at zorunlu (datetime) + UTC normalize.
 - **ADS-65 — Overlap kuralı:** Aynı scope’ta zaman aralığı kesişen aktif kampanya oluşturulamaz.
+- **ADS-67 — RBAC P1 kapanış:** pricing/ads domainleri kesin ayrılır, endpoint decorator zorunlu.
+- **ADS-68 — Kampanya Timeline UI P2:** Gantt/timeline görünümü P2 backlog.
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
