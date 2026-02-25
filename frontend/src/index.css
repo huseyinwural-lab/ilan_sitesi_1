@@ -117,6 +117,7 @@
 
     --brand-navy: #111827;
     --brand-navy-deep: #0b1220;
+    color-scheme: dark;
   }
 
   :root {
