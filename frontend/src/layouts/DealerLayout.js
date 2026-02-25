@@ -117,7 +117,7 @@ export default function DealerLayout() {
                   type="button"
                   onClick={() => setLanguage(option.key)}
                   className={`rounded-full px-2 py-1 text-xs font-semibold transition ${
-                    language === option.key ? 'bg-white text-[#2f3854]' : 'text-white/70 hover:text-white'
+                    language === option.key ? 'bg-white text-[var(--brand-navy)]' : 'text-white/70 hover:text-white'
                   }`}
                   data-testid={`dealer-language-${option.key}`}
                 >
@@ -150,8 +150,8 @@ export default function DealerLayout() {
                 className={({ isActive }) =>
                   `border-b-2 pb-2 transition ${
                     isActive
-                      ? 'border-[#2f3854] text-[#2f3854]'
-                      : 'border-transparent text-slate-500 hover:text-[#2f3854]'
+                      ? 'border-[#2f3854] text-[var(--brand-navy)]'
+                      : 'border-transparent text-slate-500 hover:text-[var(--brand-navy)]'
                   }`
                 }
                 data-testid={item.testId}
@@ -177,7 +177,7 @@ export default function DealerLayout() {
                   className={({ isActive }) =>
                     `flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
                       isActive
-                        ? 'bg-[var(--bg-warm)]/30 text-[#2f3854]'
+                        ? 'bg-[var(--bg-warm)]/30 text-[var(--brand-navy)]'
                         : 'text-slate-500 hover:bg-slate-100'
                     }`
                   }
