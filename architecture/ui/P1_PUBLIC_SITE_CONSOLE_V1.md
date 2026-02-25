@@ -117,14 +117,24 @@ AD_LOGIN_2
   - **Behavior:** click log → target_url redirect
 
 - `GET /api/admin/ads`
-  - **Response:** `{ items: [...], placements: { AD_HOME_TOP: "Anasayfa Üst Banner", ... } }`
+  - **Response:** `{ items: [...], placements, format_rules, format_labels }`
 
 - `GET /api/admin/ads/analytics?group_by=ad|campaign|placement&range=30d`
   - **Response:** `{ range, totals: { impressions, clicks, ctr, active_ads }, group_by, groups: [...] }`
 
 - `POST /api/admin/ads`
-  - **Body:** `{ placement, start_at?, end_at?, priority?, is_active?, target_url? }`
+  - **Body:** `{ placement, format?, campaign_id?, start_at?, end_at?, priority?, is_active?, target_url? }`
   - **Response:** `{ ok: true, id }`
+
+- `PATCH /api/admin/ads/{id}`
+  - **Body:** `{ format?, campaign_id?, start_at?, end_at?, priority?, is_active?, target_url? }`
+
+- `GET /api/admin/ads/campaigns`
+- `POST /api/admin/ads/campaigns`
+- `GET /api/admin/ads/campaigns/{id}`
+- `PATCH /api/admin/ads/campaigns/{id}`
+- `POST /api/admin/ads/campaigns/{id}/ads/{ad_id}`
+- `DELETE /api/admin/ads/campaigns/{id}/ads/{ad_id}`
 
 - `PATCH /api/admin/ads/{id}`
   - **Body:** `{ start_at?, end_at?, priority?, is_active?, target_url? }`
