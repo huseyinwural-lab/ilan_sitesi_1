@@ -374,6 +374,11 @@ export default function AdminAdsManagement() {
                 />
                 <span className="text-xs">Aktif</span>
               </div>
+              {conflict && (
+                <div className="text-xs text-rose-600" data-testid={`admin-ads-item-conflict-${ad.id}`}>
+                  Bu alanda zaten aktif reklam var: {adLabel(conflict)}. Önce pasife alın.
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-3">
                 <input
                   type="file"
