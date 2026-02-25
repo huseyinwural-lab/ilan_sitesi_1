@@ -40,6 +40,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      localStorage.removeItem('token');
       setToken(null);
       delete axios.defaults.headers.common['Authorization'];
       return null;
