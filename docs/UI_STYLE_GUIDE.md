@@ -34,6 +34,12 @@ Dark modda renkler `.dark` altında semantik karşılıklarla tanımlanır:
 - `border-[var(--border-subtle)]`
 - `hover:bg-[var(--color-primary-dark)]`
 
-## Tema Stabilitesi
-- Tema değişimi sadece renkleri değiştirir; layout/visibility etkilenmez.
-- Tema seçimi `localStorage.theme` ile kalıcıdır.
+
+## Layout Standartları
+- **Header yükseklik:** 64px (desktop), 56px (mobile)
+- **Footer minimum yükseklik:** 120px
+- **Breakpoints:** xs <640px, sm 640–767, md 768–1023, lg 1024–1279, xl 1280+
+
+## Kontrast (WCAG AA)
+- Light/Dark modda metin-kontrastı AA hedefli.
+- Textarea ve dropdown gibi bileşenlerde `--text-primary` ve `--bg-surface` kullanılır.
