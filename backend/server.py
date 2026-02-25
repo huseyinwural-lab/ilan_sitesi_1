@@ -19914,6 +19914,7 @@ class InfoPagePayload(BaseModel):
 
 
 class InfoPageUpdatePayload(BaseModel):
+    slug: Optional[str] = None
     title_tr: Optional[str] = None
     title_de: Optional[str] = None
     title_fr: Optional[str] = None
