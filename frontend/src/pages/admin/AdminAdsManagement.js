@@ -277,13 +277,19 @@ export default function AdminAdsManagement() {
             />
           </div>
         </div>
+        {activeConflict && (
+          <div className="text-xs text-rose-600" data-testid="admin-ads-active-conflict">
+            Bu alanda zaten aktif reklam var: {adLabel(activeConflict)}. Önce pasife alın.
+          </div>
+        )}
         {status && (
           <div className="text-xs text-emerald-600" data-testid="admin-ads-status">{status}</div>
         )}
         <button
           type="button"
           onClick={handleCreate}
-          className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm"
+          disabled={createDisabled}
+          className={`h-9 px-4 rounded-md text-sm ${createDisabled ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-primary text-primary-foreground'}`}
           data-testid="admin-ads-create-button"
         >
           Reklam Oluştur
