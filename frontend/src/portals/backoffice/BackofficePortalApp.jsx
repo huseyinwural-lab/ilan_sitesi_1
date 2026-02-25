@@ -112,7 +112,6 @@ export default function BackofficePortalApp() {
           </AdminLayout>
         }
       />
-      <Route path="/campaigns" element={<Navigate to="/admin/individual-campaigns" replace />} />
       <Route path="/dashboard" element={<AdminLayout><AdminDashboardPage /></AdminLayout>} />
       <Route path="/country-compare" element={<AdminLayout><AdminCountryComparePage /></AdminLayout>} />
       <Route path="/countries" element={
