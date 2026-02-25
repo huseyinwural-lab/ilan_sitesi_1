@@ -378,6 +378,25 @@ export default function AdminAdsManagement() {
             )}
           </div>
 
+          <div className="flex flex-wrap gap-2" data-testid="admin-ads-analytics-group-tabs">
+            <button
+              type="button"
+              onClick={() => setGroupBy('ad')}
+              className={`h-9 px-4 rounded-md text-sm border ${groupBy === 'ad' ? 'bg-primary text-primary-foreground' : 'bg-white'}`}
+              data-testid="admin-ads-analytics-group-ad"
+            >
+              Reklam Bazlı
+            </button>
+            <button
+              type="button"
+              onClick={() => setGroupBy('campaign')}
+              className={`h-9 px-4 rounded-md text-sm border ${groupBy === 'campaign' ? 'bg-primary text-primary-foreground' : 'bg-white'}`}
+              data-testid="admin-ads-analytics-group-campaign"
+            >
+              Kampanya Bazlı
+            </button>
+          </div>
+
           {analyticsStatus === 'loading' && (
             <div className="text-sm text-muted-foreground" data-testid="admin-ads-analytics-loading">Yükleniyor...</div>
           )}
