@@ -20603,6 +20603,7 @@ async def list_ads_admin(
 ):
     await _expire_ads(session)
     query = select(Advertisement, AdCampaign).outerjoin(AdCampaign, AdCampaign.id == Advertisement.campaign_id)
+    query = query.where(Advertisement.is_deleted.is_(False))
     if placement:
         query = query.where(Advertisement.placement == placement)
     query = query.order_by(desc(Advertisement.updated_at))
