@@ -19204,6 +19204,7 @@ VEHICLE_IMPORT_ATTR_KEYS = [
     "body",
     "doors",
     "drive",
+    "transmission",
     "engine_position",
     "engine_type",
     "fuel_type",
