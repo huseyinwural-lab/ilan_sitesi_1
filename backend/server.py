@@ -127,6 +127,7 @@ from app.models.advertisement import Advertisement, AdImpression, AdClick, AdCam
 from app.models.doping_request import DopingRequest
 from app.models.footer_layout import FooterLayout
 from app.models.info_page import InfoPage
+from app.models.pricing_campaign import PricingCampaign
 from app.models.push_subscription import PushSubscription
 from app.site_media_storage import store_site_asset
 from app.models.cloudflare_config import CloudflareConfig
