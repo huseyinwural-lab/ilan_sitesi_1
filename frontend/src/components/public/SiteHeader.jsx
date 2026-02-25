@@ -125,7 +125,7 @@ export default function SiteHeader({ mode, refreshToken }) {
               </Link>
               <Link
                 to="/register"
-                className="rounded-full bg-[#F57C00] px-4 py-2 text-sm font-semibold text-white"
+                className="rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--text-inverse)] hover:bg-[var(--color-primary-dark)]"
                 data-testid="site-header-register"
               >
                 Üye Ol
