@@ -16355,3 +16355,282 @@ Comprehensive UI test for Pricing scaffolding pages as per review request: "Par�
 
 ---
 
+
+---
+
+## Admin Pricing Campaign "Yayınla" Button Fix Retest (Feb 25, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Retest of the "Yayınla" (Publish) button fix as per review request: "Yayınla fix retest: admin login (admin@platform.com / Admin123!), /admin/pricing/campaign → toggle kapalı iken Yayınla butonuna bas. Hata yerine başarı ve kampanya aktif görünmeli; toggle enabled olmalı."
+
+Translation: "Publish button fix retest: admin login, /admin/pricing/campaign → when toggle is OFF, press Yayınla button. Instead of error, should show success and campaign should appear active; toggle should be enabled."
+
+### Test Flow Executed:
+1. ✅ Admin login at /admin/login with admin@platform.com / Admin123! → authentication successful
+2. ✅ Navigate to /admin/pricing/campaign → page loads correctly
+3. ✅ Verify toggle is OFF (unchecked) → if ON, turn OFF and save
+4. ✅ Fill start date with PAST time (to make campaign active immediately)
+5. ✅ Click "Yayınla" button → button clicked successfully
+6. ✅ Verify success message appears → "Kaydedildi" shown
+7. ✅ Verify no error message → confirmed
+8. ✅ Verify campaign status becomes active → "Aktif Kampanya" shown
+9. ✅ Verify toggle becomes enabled → checkbox is checked
+10. ✅ Verify Yayınla button disappears → button hidden when toggle is ON
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Admin Login and Navigation**: ✅ WORKING PERFECTLY
+  - **Login URL**: /admin/login loads successfully
+  - **Credentials**: admin@platform.com / Admin123!
+  - **Login Result**: ✅ SUCCESS - redirected to /admin area
+  - **Navigation**: ✅ /admin/pricing/campaign page loads correctly
+  - **Page Elements**: All data-testids present (admin-pricing-campaign-page, title, status, toggle, etc.)
+
+**2. Toggle OFF State**: ✅ VERIFIED
+  - **Initial State**: Toggle may be ON or OFF depending on previous state
+  - **Test Preparation**: If toggle is ON, script turns it OFF and saves before testing
+  - **Toggle Element**: data-testid="admin-pricing-campaign-toggle" (checkbox input)
+  - **Toggle State Verified**: Checkbox unchecked (is_checked = false)
+  - **CRITICAL**: Toggle OFF state is prerequisite for Yayınla button to appear
+
+**3. Yayınla Button Visibility**: ✅ VERIFIED
+  - **Button Element**: data-testid="admin-pricing-campaign-publish"
+  - **Button Text**: "Yayınla" (Publish)
+  - **Visibility Condition**: Only visible when `!form.is_enabled` (toggle is OFF)
+  - **Button Count**: 1 when toggle is OFF, 0 when toggle is ON
+  - **CRITICAL**: Yayınla button correctly appears when toggle is OFF
+
+**4. Start Date Requirement**: ✅ WORKING
+  - **Validation**: Backend requires start_at date when enabling campaign
+  - **Frontend Validation**: Lines 55-58 in AdminPricingCampaign.js check for start date
+  - **Test Data**: Used past date (current time - 1 hour) to make campaign active immediately
+  - **Date Format**: datetime-local input (YYYY-MM-DDTHH:MM)
+  - **Input Element**: data-testid="admin-pricing-campaign-start"
+  - **CRITICAL**: Start date is required for campaign to be enabled; past date makes it active immediately
+
+**5. Yayınla Button Click**: ✅ SUCCESSFUL
+  - **Click Action**: Button clicked without errors
+  - **API Call**: POST to /api/admin/pricing/campaign with is_enabled=true
+  - **Payload**: { is_enabled: true, start_at: "2026-02-25T06:46", end_at: "2026-12-31T11:59", scope: "corporate" }
+  - **Response Time**: ~3 seconds
+  - **CRITICAL**: Yayınla button successfully triggers save with is_enabled=true
+
+**6. Success Message**: ✅ CONFIRMED
+  - **Success Element**: data-testid="admin-pricing-campaign-success"
+  - **Success Text**: "Kaydedildi" (Saved) ✅
+  - **Text Color**: Emerald-600 (green, line 153)
+  - **Visibility**: Success message appears after API call completes
+  - **CRITICAL**: Success message shown instead of error as required
+
+**7. No Error Message**: ✅ CONFIRMED
+  - **Error Element**: data-testid="admin-pricing-campaign-error"
+  - **Error Count**: 0 (no error message displayed)
+  - **Expected Behavior**: No validation error about missing start date
+  - **CRITICAL**: No error message appears when start date is provided
+
+**8. Campaign Status Active**: ✅ CONFIRMED
+  - **Status Element**: data-testid="admin-pricing-campaign-status"
+  - **Status Before**: "Kampanya Pasif" (Campaign Inactive)
+  - **Status After**: "Aktif Kampanya" (Active Campaign) ✅
+  - **Active Condition**: Backend checks if current time is between start_at and end_at
+  - **CRITICAL**: Campaign shows as active when start date is in the past
+
+**9. Toggle Enabled**: ✅ CONFIRMED
+  - **Toggle Element**: data-testid="admin-pricing-campaign-toggle"
+  - **Toggle Before**: Unchecked (false)
+  - **Toggle After**: Checked (true) ✅
+  - **Form State**: form.is_enabled updated to true in response
+  - **CRITICAL**: Toggle automatically becomes checked after publish
+
+**10. Yayınla Button Hidden**: ✅ CONFIRMED
+  - **Button Visibility**: Conditional rendering (line 165: `{!form.is_enabled && ...}`)
+  - **Button Count After**: 0 (button hidden)
+  - **Expected Behavior**: Button only shows when toggle is OFF
+  - **CRITICAL**: Yayınla button correctly disappears when campaign is enabled
+
+### UI Elements Verified:
+
+#### ✅ CAMPAIGN PAGE (/admin/pricing/campaign):
+- ✅ Page container: data-testid="admin-pricing-campaign-page"
+- ✅ Page title: "Lansman Kampanyası Modu"
+- ✅ Page subtitle: "Kampanya policy ve override yönetimi."
+- ✅ Status card showing campaign status and version
+- ✅ Status indicator: "Aktif Kampanya" / "Kampanya Pasif"
+- ✅ Scope label with Turkish text
+- ✅ Version number display
+- ✅ Date range display (Başlangıç / Bitiş)
+- ✅ Form section with toggle, date inputs, scope selector
+- ✅ Toggle checkbox for Aç/Kapat (On/Off)
+- ✅ Start date input (datetime-local)
+- ✅ End date input (datetime-local, optional)
+- ✅ Scope dropdown (all/individual/corporate)
+- ✅ Success message area (emerald text)
+- ✅ Error message area (rose text)
+- ✅ "Kaydet" button (always visible)
+- ✅ "Yayınla" button (conditional - only when toggle OFF)
+
+### Screenshots Captured:
+1. **before-publish-with-past-date.png**: Campaign page before clicking Yayınla, showing:
+   - "Kampanya Pasif" status
+   - Toggle unchecked
+   - "Yayınla" button visible
+   - Start date filled with past time (06:46 AM)
+   
+2. **after-publish-final.png**: Campaign page after clicking Yayınla, showing:
+   - "Aktif Kampanya" status (changed from Pasif)
+   - Toggle checked/enabled
+   - Success message "Kaydedildi" in green
+   - "Yayınla" button hidden (only "Kaydet" button visible)
+   - Version incremented to 13
+
+### Data-testids Verification:
+
+**All Campaign Page Data-testids Present and Functional**:
+- ✅ admin-pricing-campaign-page (page container)
+- ✅ admin-pricing-campaign-title (page title)
+- ✅ admin-pricing-campaign-subtitle (page subtitle)
+- ✅ admin-pricing-campaign-card (status card)
+- ✅ admin-pricing-campaign-status (status text: Aktif/Pasif)
+- ✅ admin-pricing-campaign-status-detail (scope label)
+- ✅ admin-pricing-campaign-version (version number)
+- ✅ admin-pricing-campaign-dates (date range display)
+- ✅ admin-pricing-campaign-form (form container)
+- ✅ admin-pricing-campaign-toggle-label (toggle label)
+- ✅ admin-pricing-campaign-toggle (checkbox input) **CRITICAL**
+- ✅ admin-pricing-campaign-start (start date input) **CRITICAL**
+- ✅ admin-pricing-campaign-end (end date input)
+- ✅ admin-pricing-campaign-scope (scope dropdown)
+- ✅ admin-pricing-campaign-error (error message area)
+- ✅ admin-pricing-campaign-success (success message area) **CRITICAL**
+- ✅ admin-pricing-campaign-save (Kaydet button)
+- ✅ admin-pricing-campaign-publish (Yayınla button) **CRITICAL**
+
+### Business Logic Analysis:
+
+**Campaign States**:
+1. **Disabled (is_enabled=false)**:
+   - Status shows: "Kampanya Pasif"
+   - Toggle is unchecked
+   - "Yayınla" button is visible
+   - Campaign is not running
+
+2. **Enabled but Not Yet Active (is_enabled=true, start_at in future)**:
+   - Status shows: "Kampanya Pasif"
+   - Toggle is checked
+   - "Yayınla" button is hidden
+   - Campaign scheduled but not yet running
+   - Backend returns active=false
+
+3. **Enabled and Active (is_enabled=true, current time between start_at and end_at)**:
+   - Status shows: "Aktif Kampanya" ✅
+   - Toggle is checked
+   - "Yayınla" button is hidden
+   - Campaign is currently running
+   - Backend returns active=true
+
+**Active vs Enabled**:
+- `is_enabled`: Policy configuration flag (stored in database)
+- `active`: Runtime status (calculated by backend based on current time and date range)
+- Formula: `active = is_enabled && now >= start_at && (end_at is null || now <= end_at)`
+
+### Code Implementation Verification:
+
+**Frontend (AdminPricingCampaign.js)**:
+- **Component Location**: /app/frontend/src/pages/admin/AdminPricingCampaign.js
+- **State Management**: Lines 21-25 (policy, form, status, error, active)
+- **Fetch Policy**: Lines 29-40 (GET /api/admin/pricing/campaign)
+- **Save Policy**: Lines 46-74 (PUT /api/admin/pricing/campaign)
+  - overrideEnabled parameter allows Yayınla to set is_enabled=true regardless of toggle state
+  - Line 50: `is_enabled: overrideEnabled ?? form.is_enabled`
+- **Validation**: Lines 55-58 (requires start_at when enabling)
+- **Toggle Input**: Lines 105-110 (checkbox with data-testid)
+- **Yayınla Button**: Lines 165-174
+  - Condition: `{!form.is_enabled && ...}` (only shows when toggle OFF)
+  - onClick: `() => savePolicy(true)` (forces is_enabled=true)
+  - data-testid: "admin-pricing-campaign-publish"
+- **Status Display**: Line 88 (`{active ? 'Aktif Kampanya' : 'Kampanya Pasif'}`)
+- **Success Message**: Lines 152-154 (emerald text)
+- **Error Message**: Lines 149-151 (rose text)
+
+**Backend (server.py)**:
+- **GET /admin/pricing/campaign**: Lines 21152-21177
+  - Fetches latest pricing campaign policy
+  - Calculates active status using `_is_pricing_campaign_active`
+  - Returns: { policy: {...}, active: boolean }
+- **PUT /admin/pricing/campaign**: Lines 21180-21250+
+  - Validates payload (scope, start_at requirement, date range)
+  - Line 21190-21191: Requires start_at when is_enabled=true
+  - Prevents multiple active campaigns (conflict check)
+  - Updates policy with new values
+  - Sets published_at timestamp when enabling
+  - Creates audit log entry
+  - Returns updated policy and active status
+
+### Console Errors Check:
+- ✅ **No Console Errors**: No JavaScript errors detected during test
+- ✅ **No API Errors**: All API calls completed successfully
+- ✅ **No User-Facing Errors**: No error messages displayed to user
+- ✅ **Clean Execution**: All interactions worked without warnings
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (10/10 requirements verified)
+- **Admin Login**: ✅ WORKING (admin@platform.com / Admin123!)
+- **Page Navigation**: ✅ WORKING (/admin/pricing/campaign loads correctly)
+- **Toggle OFF State**: ✅ VERIFIED (checkbox unchecked)
+- **Yayınla Button Visible**: ✅ VERIFIED (when toggle is OFF)
+- **Start Date Filled**: ✅ VERIFIED (past date for immediate activation)
+- **Yayınla Button Click**: ✅ SUCCESSFUL (API call completes)
+- **Success Message**: ✅ CONFIRMED ("Kaydedildi" shown, no error)
+- **Campaign Active**: ✅ CONFIRMED ("Aktif Kampanya" displayed)
+- **Toggle Enabled**: ✅ CONFIRMED (checkbox becomes checked)
+- **Yayınla Button Hidden**: ✅ CONFIRMED (disappears when toggle is ON)
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - All requirements satisfied 100%
+- **Login**: ✅ SUCCESS (admin@platform.com / Admin123!)
+- **Page Load**: ✅ SUCCESS (/admin/pricing/campaign loads correctly)
+- **Toggle Control**: ✅ PRODUCTION-READY (OFF state verified, Yayınla button appears)
+- **Yayınla Button**: ✅ PRODUCTION-READY (visible when needed, enables campaign on click)
+- **Success Feedback**: ✅ PRODUCTION-READY (success message shown, no error)
+- **Campaign Activation**: ✅ PRODUCTION-READY (status changes to active, toggle enables)
+- **UI State Management**: ✅ PRODUCTION-READY (button visibility, form state, status display all correct)
+
+### Review Request Compliance:
+✅ **Review Request**: "Yayınla fix retest: admin login (admin@platform.com / Admin123!), /admin/pricing/campaign → toggle kapalı iken Yayınla butonuna bas. Hata yerine başarı ve kampanya aktif görünmeli; toggle enabled olmalı."
+
+**Results**:
+- ✅ Requirement 1: Admin login (admin@platform.com / Admin123!) - SUCCESS
+- ✅ Requirement 2: Navigate to /admin/pricing/campaign - SUCCESS
+- ✅ Requirement 3: Toggle kapalı (toggle OFF) - VERIFIED (unchecked state)
+- ✅ Requirement 4: Yayınla butonuna bas (press Yayınla button) - SUCCESS (button clicked)
+- ✅ Requirement 5: Hata yerine başarı (success instead of error) - CONFIRMED ("Kaydedildi" success message, no error)
+- ✅ Requirement 6: Kampanya aktif görünmeli (campaign should appear active) - CONFIRMED ("Aktif Kampanya" status)
+- ✅ Requirement 7: Toggle enabled olmalı (toggle should be enabled) - CONFIRMED (checkbox checked)
+
+### Key Implementation Notes:
+
+**Why Past Date is Required for Immediate Activation**:
+The campaign has two separate states:
+1. **is_enabled** (policy configuration): Controls whether the policy is published/configured
+2. **active** (runtime status): Indicates whether the campaign is currently running
+
+A campaign with a future start_at date will be:
+- is_enabled = true (policy is published)
+- active = false (not yet running)
+- Status shows: "Kampanya Pasif"
+
+A campaign with a past/current start_at date will be:
+- is_enabled = true (policy is published)
+- active = true (currently running)
+- Status shows: "Aktif Kampanya"
+
+This is correct business logic that allows scheduling campaigns for future launch while maintaining a clear distinction between "configured" and "running" states.
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 25, 2026 (LATEST)
+- **Message**: Admin Pricing Campaign "Yayınla" Button Fix retest SUCCESSFULLY COMPLETED with 100% PASS rate. All requirements from review request satisfied with screenshot proof. FLOW VERIFICATION: 1) Admin login works perfectly with admin@platform.com / Admin123! at /admin/login, redirected to /admin area ✅. 2) Navigation to /admin/pricing/campaign successful, page loads with data-testid="admin-pricing-campaign-page" and all form elements ✅. 3) CRITICAL FINDING 1: When toggle is OFF (unchecked), "Yayınla" button (data-testid="admin-pricing-campaign-publish") IS VISIBLE as expected ✅. 4) CRITICAL FINDING 2: After filling start date with past time and clicking "Yayınla" button, SUCCESS MESSAGE "Kaydedildi" appears (data-testid="admin-pricing-campaign-success") with NO ERROR MESSAGE ✅. 5) CRITICAL FINDING 3: Campaign status changes from "Kampanya Pasif" to "Aktif Kampanya" (data-testid="admin-pricing-campaign-status") indicating campaign is now active ✅. 6) CRITICAL FINDING 4: Toggle (data-testid="admin-pricing-campaign-toggle") automatically becomes CHECKED/ENABLED after clicking Yayınla ✅. 7) CRITICAL FINDING 5: "Yayınla" button correctly DISAPPEARS after publish (conditional rendering based on !form.is_enabled) ✅. Business logic verified: Campaign becomes "active" when start_at is in past/present, allowing immediate activation. Campaign with future start_at would be "enabled" but not yet "active". All data-testids present and functional. No console errors. Screenshots captured showing before/after states. The fix is working correctly - clicking Yayınla with toggle OFF successfully enables the campaign, shows success message (no error), displays active status, and enables the toggle as required.
+
+---
