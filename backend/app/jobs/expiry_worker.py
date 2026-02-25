@@ -47,6 +47,20 @@ async def run_expiry_job():
             campaign_result = await session.execute(campaign_stmt)
             expired_campaigns = campaign_result.all()
 
+            campaign_item_stmt = (
+                update(PricingCampaignItem)
+                .where(and_(
+                    PricingCampaignItem.is_active.is_(True),
+                    PricingCampaignItem.is_deleted.is_(False),
+                    PricingCampaignItem.end_at.isnot(None),
+                    PricingCampaignItem.end_at < now
+                ))
+                .values(is_active=False, updated_at=now)
+                .returning(PricingCampaignItem.id)
+            )
+            campaign_item_result = await session.execute(campaign_item_stmt)
+            expired_campaign_items = campaign_item_result.all()
+
             tier_stmt = (
                 update(PricingTierRule)
                 .where(and_(
