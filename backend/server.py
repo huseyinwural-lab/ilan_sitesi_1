@@ -21488,7 +21488,7 @@ async def update_pricing_tiers(
         if tier_no not in {1, 2, 3}:
             raise HTTPException(status_code=400, detail="Invalid tier_no")
         if rule_payload.price_amount < 0:
-            raise HTTPException(status_code=400, detail="price_amount must be e= 0")
+            raise HTTPException(status_code=400, detail="price_amount must be >= 0")
         currency = _normalize_currency_code(rule_payload.currency)
         price_amount = 0 if tier_no == 1 else rule_payload.price_amount
 
