@@ -16171,6 +16171,8 @@ async def admin_update_category(
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
+    old_parent_id = category.parent_id
+
     if payload.expected_updated_at is not None:
         current_updated_at = category.updated_at.isoformat() if category.updated_at else None
         if current_updated_at and payload.expected_updated_at != current_updated_at:
