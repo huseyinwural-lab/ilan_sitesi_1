@@ -20412,7 +20412,7 @@ async def _campaign_traffic_stats(
             .select_from(model)
             .join(Advertisement, Advertisement.id == model.ad_id)
             .where(
-                model.created_at = start,
+                model.created_at >= start,
                 model.created_at < end,
                 Advertisement.campaign_id.in_(campaign_ids),
             )
@@ -20446,7 +20446,7 @@ def _build_campaign_warnings(
 
     if campaign.end_at and campaign.status in {"active", "paused"}:
         delta_days = (campaign.end_at - now).total_seconds() / 86400
-        if 0 = delta_days = END_WARNING_DAYS:
+        if 0 <= delta_days <= END_WARNING_DAYS:
             warnings.append(
                 {
                     "type": "end_at",
@@ -20458,7 +20458,7 @@ def _build_campaign_warnings(
 
     if campaign.status == "active":
         impression_change = _percent_change(stats.get("current_impressions", 0), stats.get("previous_impressions", 0))
-        if impression_change is not None and impression_change = TRAFFIC_SPIKE_THRESHOLD:
+        if impression_change is not None and impression_change >= TRAFFIC_SPIKE_THRESHOLD:
             warnings.append(
                 {
                     "type": "traffic_impressions",
@@ -20469,7 +20469,7 @@ def _build_campaign_warnings(
             )
 
         click_change = _percent_change(stats.get("current_clicks", 0), stats.get("previous_clicks", 0))
-        if click_change is not None and click_change = TRAFFIC_SPIKE_THRESHOLD:
+        if click_change is not None and click_change >= TRAFFIC_SPIKE_THRESHOLD:
             warnings.append(
                 {
                     "type": "traffic_clicks",
