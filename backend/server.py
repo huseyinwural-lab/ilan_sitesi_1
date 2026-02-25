@@ -16138,10 +16138,6 @@ async def admin_create_category(
 
     await session.commit()
 
-    if "parent_id" in updates and updates["parent_id"] != old_parent_id:
-        await _reindex_category_siblings(session, old_parent_id)
-        await _reindex_category_siblings(session, updates["parent_id"])
-
     if schema:
         if schema_status == "draft":
             await _record_category_version_sql(session, category.id, schema, current_user, "draft")
