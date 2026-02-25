@@ -20998,40 +20998,16 @@ async def _build_corporate_quote(session: AsyncSession, user_id: uuid.UUID, payl
             "reason": "quota_subscription",
             "subscription_id": str(subscription.id),
             "package_id": str(package.id),
+            "listing_quota": package.listing_quota,
             "amount": 0,
             "currency": package.currency,
-            "duration_days": package.publish_days,
+            "publish_days": package.publish_days,
             "requires_payment": False,
             "quota_used": True,
             "remaining_quota": subscription.remaining_quota,
         }
 
-    packages_result = await session.execute(
-        select(PricingPackage)
-        .where(PricingPackage.scope == "corporate", PricingPackage.is_active.is_(True))
-        .order_by(PricingPackage.listing_quota)
-    )
-    packages = []
-    for item in packages_result.scalars().all():
-        packages.append(
-            {
-                "id": str(item.id),
-                "name": item.name,
-                "listing_quota": item.listing_quota,
-                "price_amount": float(item.package_price_amount or 0),
-                "currency": item.currency,
-                "publish_days": item.publish_days,
-                "duration_days": item.package_duration_days,
-            }
-        )
-
-    return {
-        "type": "package",
-        "reason": "package_required",
-        "requires_payment": True,
-        "packages": packages,
-        "quota_used": False,
-    }
+    return await _build_campaign_item_quote(session, "corporate", payload)
 
 
 def _build_pricing_quote_response(
