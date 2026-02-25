@@ -60,6 +60,12 @@ export default function AdminPricingCampaign() {
       const res = await axios.put(`${API}/admin/pricing/campaign`, payload, { headers: authHeader });
       setPolicy(res.data.policy);
       setActive(Boolean(res.data.active));
+      setForm({
+        is_enabled: Boolean(res.data.policy?.is_enabled),
+        start_at: res.data.policy?.start_at ? res.data.policy.start_at.slice(0, 16) : '',
+        end_at: res.data.policy?.end_at ? res.data.policy.end_at.slice(0, 16) : '',
+        scope: res.data.policy?.scope || 'all',
+      });
       setStatus('Kaydedildi');
     } catch (err) {
       const detail = err?.response?.data?.detail;
