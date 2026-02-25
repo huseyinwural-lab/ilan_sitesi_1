@@ -21029,12 +21029,12 @@ def _build_pricing_quote_response(
 
 
 async def _compute_pricing_quote(
-    session: AsyncSession, current_user: dict
+    session: AsyncSession, current_user: dict, payload: Optional[PricingQuotePayload] = None
 ) -> tuple[Dict[str, Any], Dict[str, Any], Optional[PricingCampaign], str]:
     await _ensure_pricing_defaults(session)
     await _expire_pricing_campaigns(session, actor=current_user)
+    await _expire_pricing_campaign_items(session, actor=current_user)
     await _expire_package_subscriptions(session, actor=current_user)
-    await _expire_tier_rules(session)
 
     user_type = _resolve_pricing_user_type(current_user)
     policy = await _get_latest_pricing_campaign(session)
@@ -21043,9 +21043,9 @@ async def _compute_pricing_quote(
         override_active = _is_pricing_campaign_active(policy, user_type)
 
     if user_type == "corporate":
-        quote = await _build_corporate_quote(session, uuid.UUID(current_user.get("id")))
+        quote = await _build_corporate_quote(session, uuid.UUID(current_user.get("id")), payload)
     else:
-        quote = await _build_individual_quote(session, uuid.UUID(current_user.get("id")))
+        quote = await _build_individual_quote(session, uuid.UUID(current_user.get("id")), payload)
 
     response = _build_pricing_quote_response(quote, override_active, policy)
     return response, quote, policy, user_type
