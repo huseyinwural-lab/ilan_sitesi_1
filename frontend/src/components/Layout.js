@@ -519,6 +519,7 @@ export default function Layout({ children }) {
       '/admin/pricing/campaign',
       '/admin/pricing/tiers',
       '/admin/pricing/packages',
+      '/admin/site-design/header',
       '/admin/dashboard',
       '/admin/country-compare',
       '/admin/countries',
