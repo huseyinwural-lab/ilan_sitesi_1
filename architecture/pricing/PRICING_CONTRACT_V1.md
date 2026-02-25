@@ -6,16 +6,19 @@
 ## Admin Routes
 
 ### GET /api/admin/pricing/campaign
-**Response (placeholder):**
+**Response:**
 ```json
 {
-  "status": "not_implemented",
-  "pricing_campaign_mode": {
+  "policy": {
+    "id": "...",
     "is_enabled": false,
     "start_at": null,
     "end_at": null,
-    "scope": "all"
-  }
+    "scope": "all",
+    "published_at": null,
+    "version": 1
+  },
+  "active": false
 }
 ```
 
@@ -46,37 +49,69 @@
 }
 ```
 
+### GET /api/admin/pricing/tiers
+### PUT /api/admin/pricing/tiers
+**Body:**
+```json
+{
+  "rules": [
+    { "tier_no": 1, "price_amount": 0, "currency": "EUR" },
+    { "tier_no": 2, "price_amount": 100, "currency": "EUR" },
+    { "tier_no": 3, "price_amount": 200, "currency": "EUR" }
+  ]
+}
+```
+
+### GET /api/admin/pricing/packages
+### PUT /api/admin/pricing/packages
+**Body:**
+```json
+{
+  "packages": [
+    {
+      "name": "Vantage 20",
+      "listing_quota": 20,
+      "package_duration_days": 90,
+      "package_price_amount": 500,
+      "currency": "EUR",
+      "is_active": true
+    }
+  ]
+}
+```
+
 ## Public Routes
 
 ### POST /api/pricing/quote
 **Body:**
 ```json
 {
-  "user_type": "individual",
-  "listing_count_year": 2,
-  "listing_type": "listing"
+  "user_type": "individual"
 }
 ```
-**Response (Part 2):**
+**Response (Part 3):**
 ```json
 {
   "pricing_mode": "campaign",
   "override_active": true,
-  "warning": "override_active_no_rules",
-  "fallback": "default_pricing",
   "quote": {
-    "status": "not_implemented",
-    "message": "Campaign override active; default pricing fallback"
+    "type": "tier",
+    "amount": 0,
+    "currency": "EUR",
+    "duration_days": 90,
+    "requires_payment": false,
+    "listing_no": 1
   }
 }
 ```
 
 ### GET /api/pricing/packages
-**Response (placeholder):**
+**Response:**
 ```json
 {
-  "status": "not_implemented",
-  "packages": []
+  "packages": [
+    { "id": "...", "name": "Vantage 20", "listing_quota": 20, "price_amount": 500 }
+  ]
 }
 ```
 
