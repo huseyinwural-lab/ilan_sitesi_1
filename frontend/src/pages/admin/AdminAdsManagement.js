@@ -138,6 +138,7 @@ export default function AdminAdsManagement() {
         priority: Number(item.priority) || 0,
         is_active: Boolean(item.is_active),
         target_url: item.target_url || null,
+        format: item.format || null,
       },
       { headers: authHeader }
     );
