@@ -171,7 +171,14 @@ export default function AdminAdsCampaigns() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="font-semibold text-sm">{campaign.name}</div>
-                    <div className="text-xs text-muted-foreground">{STATUS_LABELS[campaign.status] || campaign.status}</div>
+                    <div className="flex items-center gap-2">
+                      {campaign.has_warning && (
+                        <span className="text-xs rounded-full bg-rose-100 text-rose-700 px-2 py-0.5" data-testid={`admin-campaigns-warning-${campaign.id}`}>
+                          Uyarı
+                        </span>
+                      )}
+                      <div className="text-xs text-muted-foreground">{STATUS_LABELS[campaign.status] || campaign.status}</div>
+                    </div>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {campaign.start_at ? campaign.start_at.slice(0, 10) : '—'} → {campaign.end_at ? campaign.end_at.slice(0, 10) : '—'}
