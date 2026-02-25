@@ -177,7 +177,7 @@ export default function DealerLayout() {
                   className={({ isActive }) =>
                     `flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
                       isActive
-                        ? 'bg-[var(--bg-warm)]/30 text-[var(--brand-navy)]'
+                        ? 'bg-[var(--bg-warm-soft)] text-[var(--brand-navy)]'
                         : 'text-slate-500 hover:bg-slate-100'
                     }`
                   }
