@@ -2,7 +2,7 @@
 
 ## Migration Gate
 - `python3 /app/scripts/migration_dry_run.py` → **PASS** (2026-02-25)
-- `alembic upgrade heads` → **OK** (p50_pricing_campaign_items)
+- `alembic upgrade heads` → **OK** (p51_drop_campaign_idx)
 - `/api/health/db` → **ok**
 
 ## Test User Seed (Ops)
