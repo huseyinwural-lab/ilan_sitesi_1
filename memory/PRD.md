@@ -381,6 +381,14 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **ADS-81 — Public Layout Freeze:** Header+Footer+Theme feature-freeze.
 - **ADS-82 — Tema toggle public header’a eklenmez.
 - **ADS-83 — Public UI Production sertifikasyon:** Lighthouse + Cross-browser + Security checklist tamamlanmadan kapatılmaz.
+- **ADS-98 — Import job:** Araç Master Data Import işlemi job olarak yürütülür.
+- **ADS-99 — Upsert + no-delete:** Import sadece insert/update yapar, silme yok.
+- **ADS-100 — Unique key:** trim_id varsa onu, yoksa year+make+model+trim anahtarı kullanılır.
+- **ADS-101 — Provider config env:** VEHICLE_TRIMS_API_* değerleri sadece env/secret ile gelir.
+- **ADS-102 — Upload limit 50MB:** JSON upload max 50MB + parse guard.
+- **ADS-103 — Dry-run raporu:** new/updated/skipped + distinct counts + validation errors + estimated süre.
+- **ADS-104 — RBAC rolü:** masterdata_manager rolü sadece import ekranı ve job endpointlerine erişir.
+- **ADS-105 — Job altyapısı:** DB job tablosu + BackgroundTasks (MVP), 30dk timeout.
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
