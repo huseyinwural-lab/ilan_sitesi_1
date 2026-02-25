@@ -41,6 +41,7 @@ from app.models.admin_invite import AdminInvite
 from app.models.menu_item import MenuItem
 from app.models.report import Report
 from app.models.site_header import SiteHeaderSetting
+from app.models.site_header_config import SiteHeaderConfig
 from app.models.advertisement import Advertisement
 from app.models.doping_request import DopingRequest
 from app.models.footer_layout import FooterLayout
