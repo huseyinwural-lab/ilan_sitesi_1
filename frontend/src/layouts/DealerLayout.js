@@ -150,7 +150,7 @@ export default function DealerLayout() {
                 className={({ isActive }) =>
                   `border-b-2 pb-2 transition ${
                     isActive
-                      ? 'border-[#2f3854] text-[var(--brand-navy)]'
+                      ? 'border-[var(--brand-navy)] text-[var(--brand-navy)]'
                       : 'border-transparent text-slate-500 hover:text-[var(--brand-navy)]'
                   }`
                 }
