@@ -21041,8 +21041,10 @@ async def _get_active_pricing_campaign_items(
             PricingCampaignItem.scope == scope,
             PricingCampaignItem.is_deleted.is_(False),
             PricingCampaignItem.is_active.is_(True),
-            or_(PricingCampaignItem.start_at.is_(None), PricingCampaignItem.start_at <= now),
-            or_(PricingCampaignItem.end_at.is_(None), PricingCampaignItem.end_at >= now),
+            PricingCampaignItem.start_at.isnot(None),
+            PricingCampaignItem.end_at.isnot(None),
+            PricingCampaignItem.start_at <= now,
+            PricingCampaignItem.end_at >= now,
         )
         .order_by(PricingCampaignItem.listing_quota)
     )
