@@ -23054,6 +23054,138 @@ async def get_doping_placements(
     return {"items": items}
 
 
+@api_router.get("/site/theme")
+async def get_site_theme(session: AsyncSession = Depends(get_sql_session)):
+    result = await session.execute(
+        select(SiteThemeConfig)
+        .where(SiteThemeConfig.status == "published")
+        .order_by(desc(SiteThemeConfig.updated_at))
+        .limit(1)
+    )
+    theme = result.scalar_one_or_none()
+    config = _normalize_theme_config(theme.config if theme else None)
+    content = {
+        "config": config,
+        "version": theme.version if theme else 0,
+        "updated_at": theme.updated_at.isoformat() if theme else None,
+    }
+    return JSONResponse(content=content, headers={"Cache-Control": f"public, max-age={THEME_CACHE_SECONDS}"})
+
+
+@api_router.get("/admin/site/theme")
+async def get_site_theme_admin(
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(select(SiteThemeConfig).order_by(desc(SiteThemeConfig.version)).limit(1))
+    theme = result.scalar_one_or_none()
+    return {
+        "id": str(theme.id) if theme else None,
+        "config": _normalize_theme_config(theme.config if theme else None),
+        "status": theme.status if theme else "draft",
+        "version": theme.version if theme else 0,
+        "updated_at": theme.updated_at.isoformat() if theme else None,
+    }
+
+
+@api_router.get("/admin/site/theme/configs")
+async def list_site_theme_configs(
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(select(SiteThemeConfig).order_by(desc(SiteThemeConfig.version)))
+    items = []
+    for theme in result.scalars().all():
+        items.append(
+            {
+                "id": str(theme.id),
+                "status": theme.status,
+                "version": theme.version,
+                "updated_at": theme.updated_at.isoformat() if theme.updated_at else None,
+            }
+        )
+    return {"items": items}
+
+
+@api_router.get("/admin/site/theme/config/{theme_id}")
+async def get_site_theme_config(
+    theme_id: str,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        theme_uuid = uuid.UUID(theme_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid theme id") from exc
+
+    theme = await session.get(SiteThemeConfig, theme_uuid)
+    if not theme:
+        raise HTTPException(status_code=404, detail="Theme config not found")
+    return {
+        "id": str(theme.id),
+        "config": _normalize_theme_config(theme.config),
+        "status": theme.status,
+        "version": theme.version,
+        "updated_at": theme.updated_at.isoformat() if theme.updated_at else None,
+    }
+
+
+@api_router.put("/admin/site/theme/config")
+async def save_site_theme_config(
+    payload: ThemeConfigPayload,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    normalized = _normalize_theme_config(payload.config)
+    errors = _validate_theme_config(normalized)
+    if errors:
+        raise HTTPException(status_code=400, detail={"message": "Theme validation failed", "errors": errors})
+
+    result = await session.execute(select(SiteThemeConfig).order_by(desc(SiteThemeConfig.version)).limit(1))
+    latest = result.scalar_one_or_none()
+    next_version = (latest.version if latest else 0) + 1
+    theme = SiteThemeConfig(config=normalized, status=payload.status or "draft", version=next_version)
+    session.add(theme)
+    await session.commit()
+    return {"ok": True, "id": str(theme.id), "version": theme.version}
+
+
+@api_router.post("/admin/site/theme/config/{theme_id}/publish")
+async def publish_site_theme_config(
+    theme_id: str,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        theme_uuid = uuid.UUID(theme_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid theme id") from exc
+
+    theme = await session.get(SiteThemeConfig, theme_uuid)
+    if not theme:
+        raise HTTPException(status_code=404, detail="Theme config not found")
+
+    normalized = _normalize_theme_config(theme.config)
+    errors = _validate_theme_config(normalized)
+    report = _build_theme_validation_report(normalized)
+    failed = [item for item in report if not item["pass"]]
+    if errors or failed:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "Theme validation failed",
+                "errors": errors,
+                "validation_report": report,
+            },
+        )
+
+    await session.execute(update(SiteThemeConfig).values(status="draft"))
+    theme.status = "published"
+    theme.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+    return {"ok": True, "id": str(theme.id), "version": theme.version, "validation_report": report}
+
+
 @api_router.get("/site/footer")
 async def get_footer_layout(session: AsyncSession = Depends(get_sql_session)):
     result = await session.execute(
