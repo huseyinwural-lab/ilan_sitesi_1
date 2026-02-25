@@ -131,7 +131,7 @@ AD_LOGIN_2
 
 - `GET /api/admin/ads/campaigns`
 - `POST /api/admin/ads/campaigns`
-- `GET /api/admin/ads/campaigns/{id}`
+- `GET /api/admin/ads/campaigns/{id}` → `{ campaign, ads, warnings }`
 - `PATCH /api/admin/ads/campaigns/{id}`
 - `POST /api/admin/ads/campaigns/{id}/ads/{ad_id}`
 - `DELETE /api/admin/ads/campaigns/{id}/ads/{ad_id}`
