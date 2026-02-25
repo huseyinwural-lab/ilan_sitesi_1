@@ -123,8 +123,9 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
                   </div>
                   <div className="mt-3 text-sm text-[#415A77]" data-testid={`site-footer-col-text-${rowIndex}-${colIndex}`}>
                     {(() => {
-                      const value = col.text?.[language] || col.text?.tr || col.text?.de || col.text?.fr || col.text;
-                      return typeof value === 'string' ? value : '';
+                      const textObj = col.text && typeof col.text === 'object' ? col.text : {};
+                      const value = textObj[language] || textObj.tr || textObj.de || textObj.fr || (typeof col.text === 'string' ? col.text : '');
+                      return value || '';
                     })()}
                   </div>
                 </div>
