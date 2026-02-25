@@ -206,43 +206,46 @@ export default function AdminThemeManagement() {
             ))}
           </div>
 
-          {THEME_GROUPS.map((group) => (
-            <div key={group.title} className="rounded-lg border bg-white" data-testid={`admin-theme-group-${group.title}`}>
-              <div className="border-b px-4 py-3 text-sm font-semibold" data-testid={`admin-theme-group-title-${group.title}`}>
-                {group.title}
-              </div>
-              <div className="divide-y">
-                {group.items.map((item) => (
-                  <div key={item.key} className="flex flex-wrap items-center justify-between gap-4 px-4 py-3">
-                    <div>
-                      <div className="text-sm font-medium" data-testid={`admin-theme-label-${activeMode}-${item.key}`}>
-                        {item.label}
+          {THEME_GROUPS.map((group) => {
+            const groupKey = group.title.replace(/\s+/g, '-').toLowerCase();
+            return (
+              <div key={group.title} className="rounded-lg border bg-white" data-testid={`admin-theme-group-${groupKey}`}>
+                <div className="border-b px-4 py-3 text-sm font-semibold" data-testid={`admin-theme-group-title-${groupKey}`}>
+                  {group.title}
+                </div>
+                <div className="divide-y">
+                  {group.items.map((item) => (
+                    <div key={item.key} className="flex flex-wrap items-center justify-between gap-4 px-4 py-3">
+                      <div>
+                        <div className="text-sm font-medium" data-testid={`admin-theme-label-${activeMode}-${item.key}`}>
+                          {item.label}
+                        </div>
+                        <div className="text-xs text-muted-foreground" data-testid={`admin-theme-key-${activeMode}-${item.key}`}>
+                          {item.key}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground" data-testid={`admin-theme-key-${activeMode}-${item.key}`}>
-                        {item.key}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={modePalette[item.key]}
+                          onChange={(e) => updateColor(activeMode, item.key, e.target.value)}
+                          className="h-9 w-12 rounded border"
+                          data-testid={`admin-theme-color-${activeMode}-${item.key}`}
+                        />
+                        <input
+                          type="text"
+                          value={modePalette[item.key]}
+                          onChange={(e) => updateColor(activeMode, item.key, e.target.value)}
+                          className="h-9 w-32 rounded-md border px-2 text-xs"
+                          data-testid={`admin-theme-hex-${activeMode}-${item.key}`}
+                        />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={modePalette[item.key]}
-                        onChange={(e) => updateColor(activeMode, item.key, e.target.value)}
-                        className="h-9 w-12 rounded border"
-                        data-testid={`admin-theme-color-${activeMode}-${item.key}`}
-                      />
-                      <input
-                        type="text"
-                        value={modePalette[item.key]}
-                        onChange={(e) => updateColor(activeMode, item.key, e.target.value)}
-                        className="h-9 w-32 rounded-md border px-2 text-xs"
-                        data-testid={`admin-theme-hex-${activeMode}-${item.key}`}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="space-y-6" data-testid="admin-theme-sidebar">
