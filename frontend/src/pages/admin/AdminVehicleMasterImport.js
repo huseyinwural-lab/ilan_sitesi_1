@@ -102,6 +102,7 @@ export default function AdminVehicleMasterImport() {
   const [uploadDryRun, setUploadDryRun] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [uploadError, setUploadError] = useState('');
+  const [uploadErrorInfo, setUploadErrorInfo] = useState(null);
   const [uploadLoading, setUploadLoading] = useState(false);
 
   const [jobs, setJobs] = useState([]);
