@@ -20687,6 +20687,39 @@ async def _expire_pricing_campaigns(session: AsyncSession, actor: Optional[dict]
     return len(expired)
 
 
+async def _expire_pricing_campaign_items(session: AsyncSession, actor: Optional[dict] = None) -> int:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(PricingCampaignItem).where(
+            PricingCampaignItem.is_active.is_(True),
+            PricingCampaignItem.is_deleted.is_(False),
+            PricingCampaignItem.end_at.isnot(None),
+            PricingCampaignItem.end_at < now,
+        )
+    )
+    expired = result.scalars().all()
+    if not expired:
+        return 0
+
+    system_actor = actor or {"id": None, "email": "system@internal"}
+    for item in expired:
+        item.is_active = False
+        item.updated_at = now
+        item.updated_by = _safe_uuid(system_actor.get("id"))
+        await _write_audit_log_sql(
+            session=session,
+            action="PRICING_CAMPAIGN_ITEM_EXPIRED",
+            actor=system_actor,
+            resource_type="pricing_campaign_item",
+            resource_id=str(item.id),
+            metadata={"end_at": item.end_at.isoformat() if item.end_at else None},
+            request=None,
+            country_code=None,
+        )
+    await session.commit()
+    return len(expired)
+
+
 DEFAULT_PRICING_CAMPAIGN_ITEMS = [
     {
         "scope": "individual",
