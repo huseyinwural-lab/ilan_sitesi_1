@@ -20755,7 +20755,9 @@ async def update_ad_campaign(
     if payload.status:
         if payload.status == "expired":
             raise HTTPException(status_code=400, detail="Expired status is automatic")
-        if payload.status not in {"active", "paused"}:
+        if payload.status == "draft" and campaign.status != "draft":
+            raise HTTPException(status_code=400, detail="Cannot move to draft")
+        if payload.status not in {"active", "paused", "draft"}:
             raise HTTPException(status_code=400, detail="Invalid status")
         if campaign.status == "expired":
             raise HTTPException(status_code=400, detail="Expired campaign cannot be reactivated")
