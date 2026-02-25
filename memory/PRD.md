@@ -333,6 +333,12 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Admin UI: Dealer risk level kontrolü + Plan quota max doğrulaması.
 - Dry-run audit log opsiyonu eklendi (MIGRATION_DRY_RUN).
 
+## Mimari Kararlar (ADS)
+- **ADS-57 — Pricing Campaign Item CRUD:** Sabit paket/tier yerine pricing_campaign_items ile bireysel/kurumsal kampanya item’ları yönetilir.
+- **ADS-58 — Deprecate:** pricing_packages ve pricing_tier_rules UI’dan kaldırıldı, DB’de deprecated olarak tutulur.
+- **ADS-59 — Tek aktif kural:** Aynı scope içinde aynı anda 1 aktif kampanya item’ı.
+- **ADS-60 — Soft delete:** Kampanya item silme soft-delete (is_deleted/deleted_at).
+
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
 
