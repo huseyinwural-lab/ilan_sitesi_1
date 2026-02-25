@@ -4385,7 +4385,7 @@ async def update_user(
     user_id: str,
     payload: UpdateUserPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -8943,7 +8943,7 @@ async def admin_list_dealers(
     page: int = 1,
     limit: int = 25,
     include_filters: bool = False,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -9118,7 +9118,7 @@ async def admin_list_dealers(
 async def admin_get_dealer_detail(
     dealer_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -9192,7 +9192,7 @@ async def admin_get_dealer_audit_logs(
     dealer_id: str,
     request: Request,
     limit: int = 5,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -9244,7 +9244,7 @@ async def admin_set_dealer_status(
     dealer_id: str,
     payload: DealerStatusPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -9306,7 +9306,7 @@ async def admin_list_dealer_applications(
     limit: int = 50,
     status: Optional[str] = None,
     search: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -9349,7 +9349,7 @@ async def admin_list_individual_applications(
     limit: int = 50,
     status: Optional[str] = None,
     search: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -9401,7 +9401,7 @@ async def admin_reject_dealer_application(
     app_id: str,
     payload: DealerApplicationRejectPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -9460,7 +9460,7 @@ async def admin_reject_dealer_application(
 async def admin_approve_dealer_application(
     app_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -9563,7 +9563,7 @@ async def admin_approve_dealer_application(
 async def admin_approve_individual_application(
     app_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -9629,7 +9629,7 @@ async def admin_reject_individual_application(
     app_id: str,
     payload: IndividualApplicationRejectPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -12567,7 +12567,7 @@ async def admin_listings(
     dealer_only: Optional[str] = None,
     category_id: Optional[str] = None,
     owner_id: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -12649,7 +12649,7 @@ async def admin_soft_delete_listing(
     listing_id: str,
     payload: ListingAdminActionPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -12670,7 +12670,7 @@ async def admin_force_unpublish_listing(
     listing_id: str,
     payload: ListingAdminActionPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -12759,7 +12759,7 @@ async def admin_reports(
     listing_id: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -12853,7 +12853,7 @@ async def admin_reports(
 async def admin_report_detail(
     report_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -12936,7 +12936,7 @@ async def admin_report_status_change(
     report_id: str,
     payload: ReportStatusPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -14929,7 +14929,7 @@ async def admin_assign_dealer_plan(
     dealer_id: str,
     payload: DealerPlanAssignmentPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session, )
@@ -15663,7 +15663,7 @@ async def system_settings_effective(
 async def admin_list_categories(
     request: Request,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     if country:
@@ -15977,7 +15977,7 @@ async def admin_export_category_sample_xlsx(
 async def admin_create_category(
     payload: CategoryCreatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     slug = payload.slug.strip().lower()
@@ -16096,7 +16096,7 @@ async def admin_update_category(
     category_id: str,
     payload: CategoryUpdatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     try:
@@ -16298,7 +16298,7 @@ async def admin_update_category(
 async def admin_list_category_versions(
     category_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     try:
@@ -16326,7 +16326,7 @@ async def admin_get_category_version(
     category_id: str,
     version_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     try:
@@ -16361,7 +16361,7 @@ async def admin_get_category_version(
 async def admin_export_category_pdf(
     category_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     _enforce_export_rate_limit(request, current_user.get("id"))
@@ -16420,7 +16420,7 @@ async def admin_export_category_pdf(
 async def admin_export_category_csv(
     category_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     _enforce_export_rate_limit(request, current_user.get("id"))
@@ -16482,7 +16482,7 @@ async def admin_export_category_csv(
 async def admin_delete_category(
     category_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     try:
@@ -17085,7 +17085,7 @@ async def admin_import_categories_commit(
 async def admin_list_menu_items(
     request: Request,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17124,7 +17124,7 @@ async def admin_list_menu_items(
 async def admin_create_menu_item(
     payload: MenuItemCreatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17200,7 +17200,7 @@ async def admin_update_menu_item(
     menu_id: str,
     payload: MenuItemUpdatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17276,7 +17276,7 @@ async def admin_update_menu_item(
 async def admin_delete_menu_item(
     menu_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17344,7 +17344,7 @@ async def admin_list_attributes(
     request: Request,
     category_id: Optional[str] = None,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17375,7 +17375,7 @@ async def admin_list_attributes(
 async def admin_create_attribute(
     payload: AttributeCreatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17457,7 +17457,7 @@ async def admin_update_attribute(
     attribute_id: str,
     payload: AttributeUpdatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17525,7 +17525,7 @@ async def admin_update_attribute(
 async def admin_delete_attribute(
     attribute_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17567,7 +17567,7 @@ async def admin_list_vehicle_makes(
     request: Request,
     country: Optional[str] = None,
     vehicle_type: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17616,7 +17616,7 @@ async def admin_list_vehicle_makes(
 async def admin_create_vehicle_make(
     payload: VehicleMakeCreatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17659,7 +17659,7 @@ async def admin_update_vehicle_make(
     make_id: str,
     payload: VehicleMakeUpdatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17706,7 +17706,7 @@ async def admin_update_vehicle_make(
 async def admin_delete_vehicle_make(
     make_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17743,7 +17743,7 @@ async def admin_list_vehicle_models(
     make_id: Optional[str] = None,
     country: Optional[str] = None,
     vehicle_type: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17775,7 +17775,7 @@ async def admin_list_vehicle_models(
 async def admin_create_vehicle_model(
     payload: VehicleModelCreatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17833,7 +17833,7 @@ async def admin_update_vehicle_model(
     model_id: str,
     payload: VehicleModelUpdatePayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -17896,7 +17896,7 @@ async def admin_update_vehicle_model(
 async def admin_delete_vehicle_model(
     model_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -18084,7 +18084,7 @@ async def _prepare_vehicle_import_payload(session: AsyncSession, payload: Vehicl
 async def admin_vehicle_import_dry_run(
     payload: VehicleImportPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -18096,7 +18096,7 @@ async def admin_vehicle_import_dry_run(
 async def admin_vehicle_import_apply(
     payload: VehicleImportPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -20156,7 +20156,7 @@ async def record_ad_click(
 @api_router.get("/admin/ads")
 async def list_ads_admin(
     placement: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _expire_ads(session)
@@ -20189,7 +20189,7 @@ async def list_ads_admin(
 @api_router.post("/admin/ads")
 async def create_ad(
     payload: AdCreatePayload,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     if payload.placement not in AD_PLACEMENTS:
@@ -20226,7 +20226,7 @@ async def create_ad(
 async def update_ad(
     ad_id: str,
     payload: AdUpdatePayload,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     try:
@@ -20273,7 +20273,7 @@ async def update_ad(
 async def upload_ad_asset(
     ad_id: str,
     file: UploadFile = File(...),
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     try:
@@ -20328,7 +20328,7 @@ async def get_ads_analytics(
     end_at: Optional[str] = None,
     group_by: str = "ad",
     campaign_id: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     start_dt, end_dt = _resolve_analytics_window(range, start_at, end_at)
@@ -20577,7 +20577,7 @@ async def create_doping_request(
 @api_router.get("/admin/doping/requests")
 async def list_doping_requests(
     status: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _expire_doping(session)
@@ -20612,7 +20612,7 @@ async def approve_doping_request(
     request_id: str,
     payload: DopingApprovalPayload,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     try:
@@ -20660,7 +20660,7 @@ async def approve_doping_request(
 async def mark_doping_paid(
     request_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     try:
@@ -20697,7 +20697,7 @@ async def mark_doping_paid(
 async def publish_doping_request(
     request_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    current_user=Depends(check_permissions(ADS_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
     try:
