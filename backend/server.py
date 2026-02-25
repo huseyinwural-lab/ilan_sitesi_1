@@ -8565,6 +8565,8 @@ async def list_category_children(
     )
     if module:
         query = query.where(Category.module == module)
+    if module == "vehicle" and parent_id:
+        return []
     if parent_id:
         try:
             parent_uuid = uuid.UUID(parent_id)
