@@ -137,6 +137,8 @@ function App() {
                     <Route path="/vasita" element={<RedirectToCountry to="/{country}/vasita" />} />
                     <Route path="/info/:slug" element={<InfoPage />} />
                     <Route path="/bilgi/:slug" element={<InfoPage />} />
+                    <Route path="/500" element={<ServerErrorPage />} />
+                    <Route path="*" element={<NotFoundPage />} />
                   </Route>
 
                   {/* Portal login surfaces */}
