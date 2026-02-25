@@ -21092,7 +21092,7 @@ async def _create_pricing_snapshot(
     policy: Optional[PricingCampaign],
     override_active: bool,
 ) -> Optional[PricingPriceSnapshot]:
-    if quote.get("type") not in {"tier", "quota", "package"}:
+    if quote.get("type") not in {"campaign_item", "quota"}:
         return None
 
     existing = await session.execute(
@@ -21102,21 +21102,29 @@ async def _create_pricing_snapshot(
     if snapshot:
         return snapshot
 
+    publish_days = quote.get("publish_days") or quote.get("duration_days") or 90
+
     snapshot = PricingPriceSnapshot(
         listing_id=listing.id,
         user_id=listing.user_id,
         rule_id=_safe_uuid(quote.get("rule_id")),
         package_id=_safe_uuid(quote.get("package_id")),
         campaign_id=policy.id if policy and override_active else None,
+        campaign_item_id=_safe_uuid(quote.get("campaign_item_id")),
+        listing_quota=quote.get("listing_quota"),
         currency=quote.get("currency") or "EUR",
         amount=quote.get("amount") or 0,
-        duration_days=quote.get("duration_days") or 90,
-        snapshot_type=quote.get("type") or "tier",
+        duration_days=publish_days,
+        publish_days=publish_days,
+        campaign_override_active=bool(override_active),
+        snapshot_type=quote.get("type") or "campaign_item",
         metadata={
             "listing_no": quote.get("listing_no"),
             "listing_count_year": quote.get("listing_count_year"),
             "quota_used": quote.get("quota_used"),
             "requires_payment": quote.get("requires_payment"),
+            "campaign_item_id": quote.get("campaign_item_id"),
+            "listing_quota": quote.get("listing_quota"),
         },
     )
     session.add(snapshot)
