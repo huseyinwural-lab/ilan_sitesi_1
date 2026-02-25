@@ -21210,14 +21210,15 @@ async def update_pricing_campaign(
     policy.start_at = payload.start_at
     policy.end_at = payload.end_at
     policy.scope = payload.scope
-    policy.updated_at = datetime.now(timezone.utc)
+    now_ts = datetime.now(timezone.utc)
+    policy.updated_at = now_ts
     policy.updated_by = _safe_uuid(current_user.get("id"))
     policy.version = (policy.version or 0) + 1
     if policy.created_by is None:
         policy.created_by = _safe_uuid(current_user.get("id"))
 
-    if policy.is_enabled and not policy.published_at:
-        policy.published_at = datetime.now(timezone.utc)
+    if not previous_enabled and policy.is_enabled:
+        policy.published_at = now_ts
 
     action = "PRICING_CAMPAIGN_UPDATED"
     if not previous_enabled and policy.is_enabled:
