@@ -372,6 +372,19 @@ export default function AdminVehicleMasterImport() {
               onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
               data-testid="vehicle-import-upload-file"
             />
+            <div className="flex flex-wrap items-center gap-2" data-testid="vehicle-import-upload-sample">
+              <button
+                type="button"
+                className="h-8 rounded-md border px-3 text-xs"
+                onClick={handleDownloadExample}
+                data-testid="vehicle-import-upload-sample-button"
+              >
+                Örnek JSON indir
+              </button>
+              <span className="text-xs text-muted-foreground" data-testid="vehicle-import-upload-format">
+                Beklenen format: Array zorunlu alanlar: year, make, model, trim
+              </span>
+            </div>
             <label className="flex items-center gap-2 text-xs" data-testid="vehicle-import-upload-dry-run-toggle">
               <input
                 type="checkbox"
