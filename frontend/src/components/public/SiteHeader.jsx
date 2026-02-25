@@ -66,7 +66,7 @@ export default function SiteHeader({ mode, refreshToken }) {
           {logoUrl ? (
             <img src={logoUrl} alt="Logo" className="h-8 object-contain" data-testid="site-header-logo-image" />
           ) : (
-            <span className="text-lg font-bold text-[#1B263B]" data-testid="site-header-logo-text">ANNONCIA</span>
+            <span className="text-lg font-bold text-[var(--text-primary)]" data-testid="site-header-logo-text">ANNONCIA</span>
           )}
         </Link>
 
