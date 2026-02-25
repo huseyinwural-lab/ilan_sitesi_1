@@ -479,7 +479,7 @@ const ListingCategorySelect = () => {
     if (recentCategory.country) {
       localStorage.setItem('selected_country', recentCategory.country);
     }
-    const targetRoute = moduleKey === 'vehicle' ? '/account/create/vehicle-wizard' : '/account/create/listing-wizard';
+    const targetRoute = moduleKey === 'vehicle' ? '/ilan-ver/arac-sec' : '/ilan-ver/detaylar';
     navigate(targetRoute);
   };
 
