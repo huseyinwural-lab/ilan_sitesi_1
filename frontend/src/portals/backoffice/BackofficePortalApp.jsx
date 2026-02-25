@@ -92,12 +92,22 @@ export default function BackofficePortalApp() {
           </AdminLayout>
         }
       />
-      <Route
+      cRoute
         path="/site-design/footer"
         element={
           <AdminLayout>
             <AdminRouteGuard roles={["super_admin"]}>
               <AdminFooterManagement />
+            </AdminRouteGuard>
+          </AdminLayout>
+        }
+      />
+      <Route
+        path="/site-design/theme"
+        element={
+          <AdminLayout>
+            <AdminRouteGuard roles={["super_admin"]}>
+              <AdminThemeManagement />
             </AdminRouteGuard>
           </AdminLayout>
         }
