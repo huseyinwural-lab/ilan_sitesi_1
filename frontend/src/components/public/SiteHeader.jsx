@@ -84,7 +84,7 @@ export default function SiteHeader({ mode, refreshToken }) {
           />
           <button
             type="submit"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#415A77]"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
             data-testid="site-header-search-submit"
           >
             <Search size={18} />
