@@ -177,7 +177,7 @@ const UserPanelLayout = () => {
                   type="button"
                   onClick={() => setLanguage(option.key)}
                   className={`rounded-full px-2 py-1 text-xs font-semibold transition ${
-                    language === option.key ? 'bg-white text-[var(--text-primary)]' : 'text-white/70 hover:text-white'
+                    language === option.key ? 'bg-[var(--bg-surface)] text-[var(--text-primary)]' : 'text-white/70 hover:text-white'
                   }`}
                   data-testid={`account-language-${option.key}`}
                 >
