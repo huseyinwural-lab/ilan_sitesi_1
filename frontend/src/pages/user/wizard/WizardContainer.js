@@ -8,6 +8,7 @@ import Step4YearTrim from './Step4YearTrim';
 import Step5CoreFields from './Step5CoreFields';
 import Step6FeaturesMedia from './Step6FeaturesMedia';
 import Step7Review from './Step4Review';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const WizardContent = () => {
   const { step, loading, editLoading, autosaveStatus, trackWizardEvent } = useWizard();
