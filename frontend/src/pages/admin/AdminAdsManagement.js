@@ -20,6 +20,7 @@ export default function AdminAdsManagement() {
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState('');
   const [activeTab, setActiveTab] = useState('manage');
+  const [groupBy, setGroupBy] = useState('ad');
   const [analytics, setAnalytics] = useState(null);
   const [analyticsStatus, setAnalyticsStatus] = useState('idle');
   const [range, setRange] = useState('30d');
