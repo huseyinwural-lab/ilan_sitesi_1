@@ -21875,9 +21875,9 @@ async def update_pricing_campaign_item(
     if payload.publish_days is not None:
         item.publish_days = payload.publish_days
     if payload.start_at is not None:
-        item.start_at = _ensure_aware_datetime(payload.start_at)
+        item.start_at = start_at
     if payload.end_at is not None:
-        item.end_at = _ensure_aware_datetime(payload.end_at)
+        item.end_at = end_at
     if payload.is_active is not None:
         item.is_active = payload.is_active
 
