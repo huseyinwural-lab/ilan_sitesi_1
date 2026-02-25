@@ -79,7 +79,7 @@ export default function SiteHeader({ mode, refreshToken }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Arama yap"
-            className="h-10 w-full rounded-full border bg-[#F8F9FA] px-4 pr-10 text-sm"
+            className="h-10 w-full rounded-full border bg-[var(--bg-surface-muted)] px-4 pr-10 text-sm"
             data-testid="site-header-search-input"
           />
           <button
