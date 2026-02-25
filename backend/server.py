@@ -20979,7 +20979,7 @@ async def _create_pricing_snapshot(
     policy: Optional[PricingCampaign],
     override_active: bool,
 ) -> Optional[PricingPriceSnapshot]:
-    if quote.get("type") not in {"tier", "quota"}:
+    if quote.get("type") not in {"tier", "quota", "package"}:
         return None
 
     existing = await session.execute(
