@@ -16553,7 +16553,9 @@ async def admin_delete_category(
     category.is_enabled = False
     category.is_deleted = True
     category.updated_at = datetime.now(timezone.utc)
+    parent_id = category.parent_id
     await session.commit()
+    await _reindex_category_siblings(session, parent_id)
 
     result = await session.execute(
         select(Category)
