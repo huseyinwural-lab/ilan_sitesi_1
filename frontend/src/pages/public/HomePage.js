@@ -7,7 +7,7 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   return (
-    <PublicLayout>
+    <div>
       <div className="mb-6" data-testid="home-ad-slot">
         <AdSlot placement="AD_HOME_TOP" />
       </div>
@@ -31,6 +31,6 @@ export default function HomePage() {
           </Button>
         </div>
       </div>
-    </PublicLayout>
+    </div>
   );
 }
