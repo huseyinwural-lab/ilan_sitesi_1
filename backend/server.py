@@ -19816,6 +19816,30 @@ def _is_ad_active(ad: Advertisement, campaign: Optional[AdCampaign]) -> bool:
     return True
 
 
+def _resolve_ad_format(placement: str, value: Optional[str]) -> str:
+    allowed = AD_FORMAT_RULES.get(placement)
+    if not allowed:
+        raise HTTPException(status_code=400, detail="Invalid placement")
+    if not value:
+        return allowed[0]
+    if value not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid format for placement")
+    return value
+
+
+async def _find_active_ad_conflict(
+    session: AsyncSession, placement: str, exclude_id: Optional[uuid.UUID] = None
+) -> Optional[Advertisement]:
+    query = select(Advertisement).where(
+        Advertisement.placement == placement,
+        Advertisement.is_active.is_(True),
+    )
+    if exclude_id:
+        query = query.where(Advertisement.id != exclude_id)
+    result = await session.execute(query)
+    return result.scalar_one_or_none()
+
+
 AD_IMPRESSION_DEDUP_MINUTES = 30
 AD_BOT_KEYWORDS = ("bot", "spider", "crawl", "scanner")
 
