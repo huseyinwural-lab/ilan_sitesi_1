@@ -20086,17 +20086,20 @@ async def list_ads_admin(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _expire_ads(session)
-    query = select(Advertisement)
+    query = select(Advertisement, AdCampaign).outerjoin(AdCampaign, AdCampaign.id == Advertisement.campaign_id)
     if placement:
         query = query.where(Advertisement.placement == placement)
     query = query.order_by(desc(Advertisement.updated_at))
     result = await session.execute(query)
     items = []
-    for ad in result.scalars().all():
+    for ad, campaign in result.all():
         items.append(
             {
                 "id": str(ad.id),
                 "placement": ad.placement,
+                "campaign_id": str(ad.campaign_id) if ad.campaign_id else None,
+                "campaign_name": campaign.name if campaign else "Standalone",
+                "campaign_status": campaign.status if campaign else None,
                 "asset_url": ad.asset_url,
                 "target_url": ad.target_url,
                 "start_at": ad.start_at.isoformat() if ad.start_at else None,
