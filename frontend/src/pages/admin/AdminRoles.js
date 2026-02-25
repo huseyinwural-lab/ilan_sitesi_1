@@ -44,10 +44,10 @@ const ROLE_DEFINITIONS = [
     summary: "Consumer portal kullanım",
   },
   {
-    key: "FINANCE",
-    label: "FINANCE (legacy)",
-    runtime: "finance",
-    summary: "Finans (planlar, faturalar, vergi oranları)",
+    key: "MASTERDATA_MANAGER",
+    label: "MASTERDATA_MANAGER",
+    runtime: "masterdata_manager",
+    summary: "Araç Master Data Import modülü",
   },
   {
     key: "AUDIT_VIEWER",
