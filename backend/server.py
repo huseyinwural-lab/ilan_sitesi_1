@@ -19730,6 +19730,16 @@ class AdCreatePayload(BaseModel):
     target_url: Optional[str] = None
 
 
+class AdUpdatePayload(BaseModel):
+    campaign_id: Optional[str] = None
+    format: Optional[str] = None
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    is_active: Optional[bool] = None
+    priority: Optional[int] = None
+    target_url: Optional[str] = None
+
+
 class AdCampaignCreatePayload(BaseModel):
     name: str
     advertiser: Optional[str] = None
@@ -19749,6 +19759,8 @@ class AdCampaignUpdatePayload(BaseModel):
     end_at: Optional[datetime] = None
     status: Optional[str] = None
 
+
+class DopingRequestPayload(BaseModel):
     listing_id: str
     placement_home: Optional[bool] = False
     placement_category: Optional[bool] = False
@@ -19758,6 +19770,7 @@ class AdCampaignUpdatePayload(BaseModel):
 
 
 class DopingApprovalPayload(BaseModel):
+    request_id: str
     placement_home: Optional[bool] = False
     placement_category: Optional[bool] = False
     start_at: Optional[datetime] = None
