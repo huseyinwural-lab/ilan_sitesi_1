@@ -426,9 +426,9 @@ class TestDraftVehicleChainReset:
         # After changing make, we should be able to save with null model/year/trim
         
         # Get categories and create draft
-        categories_resp = requests.get(f"{BASE_URL}/api/catalog/categories/vehicle/tree?country=DE")
+        categories_resp = requests.get(f"{BASE_URL}/api/categories?module=vehicle&country=DE")
         if categories_resp.status_code != 200:
-            pytest.skip("Could not get categories")
+            pytest.skip(f"Could not get categories: {categories_resp.text}")
         
         categories = categories_resp.json()
         cat_id = None
@@ -436,10 +436,6 @@ class TestDraftVehicleChainReset:
             if cat.get("hierarchy_complete"):
                 cat_id = cat.get("id")
                 break
-            for child in cat.get("children", []):
-                if child.get("hierarchy_complete"):
-                    cat_id = child.get("id")
-                    break
         
         if not cat_id:
             pytest.skip("No complete category found")
