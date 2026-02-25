@@ -312,6 +312,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/docs/P1_HEADER_EVIDENCE.md
 
 ## Son Değişiklikler (2026-02-25)
+- Header domain: MainLayout + site_header_config modeli + logo upload/cache invalidation; Admin Header Yönetimi ekranı + guest/auth header state.
 - Pricing Campaign Items modeli + migration (pricing_campaign_items) ve snapshot alanları (campaign_item_id, listing_quota, publish_days, campaign_override_active).
 - Quote engine kampanya item’larına geçirildi; checkout snapshot kampanya item referansı ile kilitleniyor.
 - Admin UI: Bireysel/Kurumsal Kampanyalar CRUD + modal.
