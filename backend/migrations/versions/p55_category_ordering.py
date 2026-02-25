@@ -6,7 +6,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-revision: str = "p55_category_ordering_constraints"
+revision: str = "p55_category_ordering"
 down_revision: Union[str, Sequence[str], None] = "p54_vehicle_master_import_jobs"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
