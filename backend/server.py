@@ -20122,8 +20122,20 @@ async def create_ad(
         raise HTTPException(status_code=400, detail="Invalid placement")
     start_at, end_at = _normalize_ad_dates(payload.start_at, payload.end_at)
 
+    campaign_id = None
+    if payload.campaign_id:
+        try:
+            campaign_uuid = uuid.UUID(payload.campaign_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid campaign id") from exc
+        campaign = await session.get(AdCampaign, campaign_uuid)
+        if not campaign:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        campaign_id = campaign.id
+
     ad = Advertisement(
         placement=payload.placement,
+        campaign_id=campaign_id,
         start_at=start_at,
         end_at=end_at,
         is_active=bool(payload.is_active),
