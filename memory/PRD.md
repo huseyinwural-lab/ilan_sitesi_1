@@ -56,6 +56,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **Ad Analytics (2026-02-24):** ad_impressions/ad_clicks tabloları, impression dedup (30dk), /api/ads/{id}/impression ve /api/ads/{id}/click, /api/admin/ads/analytics, Admin Ads Performans sekmesi, public AdSlot (Home/Search/Login).
+- **P45 Ad Analytics Migration (2026-02-24):** idempotent migration + alembic upgrade heads.
 - **P0 Kanıt Paketi (2026-02-24):** /app/docs/P0_EVIDENCE.md (login + migration + health + frontend PASS)
 - **P1 Route Map + API Contract (2026-02-24):** /app/architecture/ui/P1_PUBLIC_SITE_CONSOLE_V1.md
 - **Admin Login UX (2026-02-24):** giriş sonrası “Oturum doğrulandı” → “Admin paneli yükleniyor...” toast akışı
