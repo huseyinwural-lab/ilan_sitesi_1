@@ -367,6 +367,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - **ADS-74 — Header chip önerileri:** arama chip’leri P2 backlog.
 - **ADS-75 — Logo fallback 404:** logo yoksa asset request atılmaz, sadece fallback text.
 - **ADS-76 — Footer ana faz:** Footer (grid builder + bilgi sayfaları) bir sonraki ana teslim.
+- **ADS-81 — Public Layout Freeze:** Header+Footer+Theme feature-freeze.
+- **ADS-82 — Tema toggle public header’a eklenmez.
+- **ADS-83 — Public UI Production sertifikasyon:** Lighthouse + Cross-browser + Security checklist tamamlanmadan kapatılmaz.
 
 ## Blokajlar / Riskler
 - Cloudflare config kaydı için CONFIG_ENCRYPTION_KEY gerekli (preview env sağlandı; eksikse kaydetme bloklanır)
