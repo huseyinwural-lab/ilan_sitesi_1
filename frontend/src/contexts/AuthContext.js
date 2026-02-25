@@ -24,6 +24,7 @@ export function AuthProvider({ children }) {
     const handleStorage = (event) => {
       if (event.key === 'access_token' && !event.newValue) {
         delete axios.defaults.headers.common['Authorization'];
+        localStorage.removeItem('token');
         setToken(null);
         setUser(null);
       }
