@@ -21772,13 +21772,17 @@ async def create_pricing_campaign_item(
     current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    start_at = _ensure_aware_datetime(payload.start_at)
+    end_at = _ensure_aware_datetime(payload.end_at)
     _validate_campaign_item_fields(
         payload.scope,
         payload.listing_quota,
         payload.price_amount,
         payload.publish_days,
-        payload.start_at,
-        payload.end_at,
+        start_at,
+        end_at,
+        require_dates=True,
+        enforce_start_future=True,
     )
     currency = _normalize_currency_code(payload.currency)
     if payload.is_active:
