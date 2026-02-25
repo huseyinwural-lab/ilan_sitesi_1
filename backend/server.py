@@ -21766,23 +21766,8 @@ async def get_pricing_quote_endpoint(
     current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    await _ensure_pricing_defaults(session)
-    await _expire_pricing_campaigns(session, actor=current_user)
-    await _expire_package_subscriptions(session, actor=current_user)
-    await _expire_tier_rules(session)
-
-    user_type = _resolve_pricing_user_type(current_user)
-    policy = await _get_latest_pricing_campaign(session)
-    override_active = False
-    if policy:
-        override_active = _is_pricing_campaign_active(policy, user_type)
-
-    if user_type == "corporate":
-        quote = await _build_corporate_quote(session, uuid.UUID(current_user.get("id")))
-    else:
-        quote = await _build_individual_quote(session, uuid.UUID(current_user.get("id")))
-
-    return _build_pricing_quote_response(quote, override_active, policy)
+    response, _, _, _ = await _compute_pricing_quote(session, current_user)
+    return response
 
 
 @api_router.get("/pricing/packages")
