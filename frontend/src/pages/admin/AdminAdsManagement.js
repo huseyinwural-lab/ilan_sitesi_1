@@ -299,7 +299,10 @@ export default function AdminAdsManagement() {
       <div className="rounded-lg border bg-white p-4" data-testid="admin-ads-list">
         <div className="text-sm font-semibold mb-3">Mevcut Reklamlar</div>
         <div className="space-y-4">
-          {ads.map((ad) => (
+          {ads.map((ad) => {
+            const conflict = ad.is_active && ads.find((item) => item.id !== ad.id && item.is_active && item.placement === ad.placement);
+            const allowedFormats = getAllowedFormats(ad.placement);
+            return (
             <div key={ad.id} className="border rounded-md p-3 space-y-2" data-testid={`admin-ads-item-${ad.id}`}>
               <div className="text-xs text-muted-foreground">{placements[ad.placement] || ad.placement}</div>
               {ad.asset_url && (
