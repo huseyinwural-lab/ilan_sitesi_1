@@ -36,7 +36,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
   if (!layout) {
     return (
       <footer className="border-t bg-[var(--bg-surface)]" data-testid="site-footer">
-        <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-[#415A77]">
+        <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-[var(--text-secondary)]">
           © 2026 Annoncia
         </div>
       </footer>
@@ -62,7 +62,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
                     <div className="text-sm font-semibold text-[#1B263B]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
                       {col.title}
                     </div>
-                    <ul className="mt-3 space-y-2 text-sm text-[#415A77]">
+                    <ul className="mt-3 space-y-2 text-sm text-[var(--text-secondary)]">
                       {(col.links || []).map((link, linkIndex) => {
                         if (link.type === 'info') {
                           return (
@@ -99,7 +99,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
                     <div className="text-sm font-semibold text-[#1B263B]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
                       {col.title}
                     </div>
-                    <ul className="mt-3 space-y-2 text-sm text-[#415A77]">
+                    <ul className="mt-3 space-y-2 text-sm text-[var(--text-secondary)]">
                       {(col.links || []).map((link, linkIndex) => (
                         <li key={linkIndex}>
                           <a
@@ -121,7 +121,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
                   <div className="text-sm font-semibold text-[#1B263B]" data-testid={`site-footer-col-title-${rowIndex}-${colIndex}`}>
                     {col.title}
                   </div>
-                  <div className="mt-3 text-sm text-[#415A77]" data-testid={`site-footer-col-text-${rowIndex}-${colIndex}`}>
+                  <div className="mt-3 text-sm text-[var(--text-secondary)]" data-testid={`site-footer-col-text-${rowIndex}-${colIndex}`}>
                     {(() => {
                       const textObj = col.text && typeof col.text === 'object' ? col.text : {};
                       const value = textObj[language] || textObj.tr || textObj.de || textObj.fr || (typeof col.text === 'string' ? col.text : '');
