@@ -200,7 +200,7 @@ const UserPanelLayout = () => {
         </div>
       </header>
 
-      <nav className="border-b bg-white" data-testid="account-top-nav">
+      <nav className="border-b bg-[var(--bg-surface)]" data-testid="account-top-nav">
         <div className="mx-auto max-w-6xl px-6">
           <div className="flex gap-6 overflow-x-auto py-3 text-sm font-semibold">
             {topNavItems.map((item) => (
@@ -225,7 +225,7 @@ const UserPanelLayout = () => {
 
       <main className="mx-auto max-w-6xl px-6 py-8" data-testid="account-main">
         <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-          <aside className="rounded-2xl bg-white p-4 shadow-sm" data-testid="account-side-nav">
+          <aside className="rounded-2xl bg-[var(--bg-surface)] p-4 shadow-sm" data-testid="account-side-nav">
             <div className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]" data-testid="account-side-title">
               {t('nav_section')}
             </div>
@@ -261,7 +261,7 @@ const UserPanelLayout = () => {
               ))}
             </div>
           </aside>
-          <section className="rounded-2xl bg-white p-6 shadow-sm" data-testid="account-content">
+          <section className="rounded-2xl bg-[var(--bg-surface)] p-6 shadow-sm" data-testid="account-content">
             <Outlet />
           </section>
         </div>
