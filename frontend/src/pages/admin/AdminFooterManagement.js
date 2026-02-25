@@ -345,8 +345,8 @@ export default function AdminFooterManagement() {
                                   className="h-9 rounded-md border px-2 text-sm"
                                   data-testid={`admin-footer-link-type-${rowIndex}-${colIndex}-${linkIndex}`}
                                 >
-                                  <option value="info" label="Bilgi" />
-                                  <option value="external" label="Harici" />
+                                  <option value="info">Bilgi</option>
+                                  <option value="external">Harici</option>
                                 </select>
                               )}
                               <button
