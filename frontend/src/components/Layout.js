@@ -488,6 +488,7 @@ export default function Layout({ children }) {
     { divider: true, label: 'Araç Verisi', roles: roles.vehicleAdmin },
     { path: '/admin/vehicle-makes', icon: Car, label: 'Araç Markaları', roles: roles.vehicleAdmin, testId: 'vehicle-makes' },
     { path: '/admin/vehicle-models', icon: Car, label: 'Araç Modelleri', roles: roles.vehicleAdmin, testId: 'vehicle-models' },
+    { path: '/admin/vehicle-master-import', icon: UploadCloud, label: 'Araç Master Data Import', roles: roles.masterdataManager, testId: 'vehicle-master-import' },
 
     { divider: true, label: 'Finans', roles: roles.finance },
     { path: '/admin/plans', icon: Star, label: 'Planlar', roles: roles.finance, testId: 'finance-plans' },
