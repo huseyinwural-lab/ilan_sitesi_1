@@ -20389,7 +20389,7 @@ def _resolve_analytics_window(range_key: str, start_at: Optional[str], end_at: O
 
 
 def _percent_change(current: int, previous: int) -> Optional[float]:
-    if previous = 0:
+    if previous <= 0:
         return None
     return ((current - previous) / previous) * 100
 
