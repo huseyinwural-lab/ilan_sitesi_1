@@ -11071,6 +11071,17 @@ def _assert_category_parent_compatible(
             raise HTTPException(status_code=409, detail="parent country mismatch")
 
 
+
+async def _next_category_sort_order(session: AsyncSession, parent_id: Optional[uuid.UUID]) -> int:
+    query = select(func.max(Category.sort_order)).where(Category.is_deleted.is_(False))
+    if parent_id:
+        query = query.where(Category.parent_id == parent_id)
+    else:
+        query = query.where(Category.parent_id.is_(None))
+    max_value = (await session.execute(query)).scalar_one_or_none() or 0
+    return int(max_value) + 1
+
+
 def _serialize_category_sql(category: Category, include_schema: bool = False, include_translations: bool = True) -> dict:
     translations = list(category.translations or [])
     slug_value = _pick_category_slug(category.slug)
