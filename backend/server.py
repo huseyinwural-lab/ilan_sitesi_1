@@ -19716,6 +19716,7 @@ AD_FORMAT_RULES = {
 }
 
 ADS_MANAGER_ROLES = ["super_admin", "country_admin", "ads_manager"]
+PRICING_MANAGER_ROLES = ["super_admin", "country_admin", "pricing_manager"]
 
 CAMPAIGN_STATUSES = {"draft", "active", "paused", "expired"}
 
