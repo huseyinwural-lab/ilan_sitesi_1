@@ -127,6 +127,17 @@ const ModelStep = () => {
           make_id: basicInfo.make_id,
           model_key: selectedModel.key,
           model_id: selectedModel.id,
+          year: null,
+          trim_key: null,
+          vehicle_trim_id: null,
+          vehicle_trim_label: null,
+          manual_trim_flag: false,
+          manual_trim_text: null,
+          fuel_type: null,
+          body: null,
+          transmission: null,
+          drive: null,
+          engine_type: null,
         },
       });
 
@@ -143,6 +154,15 @@ const ModelStep = () => {
         model_label: modelLabel,
         year: null,
         trim_key: null,
+        vehicle_trim_id: null,
+        vehicle_trim_label: null,
+        manual_trim_flag: false,
+        manual_trim_text: null,
+        trim_filter_fuel: null,
+        trim_filter_body: null,
+        trim_filter_transmission: null,
+        trim_filter_drive: null,
+        trim_filter_engine_type: null,
       }));
 
       setCompletedSteps((prev) => ({
