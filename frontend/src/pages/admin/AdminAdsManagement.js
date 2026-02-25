@@ -389,7 +389,8 @@ export default function AdminAdsManagement() {
                 <button
                   type="button"
                   onClick={() => handleUpdate(ad)}
-                  className="h-9 px-3 rounded-md border text-sm"
+                  disabled={Boolean(conflict)}
+                  className={`h-9 px-3 rounded-md border text-sm ${conflict ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-white'}`}
                   data-testid={`admin-ads-item-save-${ad.id}`}
                 >
                   Kaydet
