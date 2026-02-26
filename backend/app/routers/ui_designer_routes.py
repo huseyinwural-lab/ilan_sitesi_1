@@ -959,11 +959,20 @@ async def admin_save_ui_config(
     normalized_scope, normalized_scope_id = _normalize_scope(payload.scope, payload.scope_id)
     normalized_status = _normalize_status(payload.status)
     normalized_config_data = payload.config_data or {}
+    normalized_layout: list[dict[str, Any]] = []
+    normalized_widgets: list[dict[str, Any]] = []
 
     if normalized_type == "header":
         normalized_config_data = _normalize_header_config_data(normalized_config_data, normalized_segment)
         if normalized_segment == "corporate":
             _validate_corporate_header_guardrails(normalized_config_data)
+    elif normalized_type == "dashboard":
+        normalized_layout, normalized_widgets, normalized_config_data = _extract_dashboard_layout_widgets(
+            layout_payload=payload.layout,
+            widgets_payload=payload.widgets,
+            config_data=normalized_config_data,
+        )
+        _validate_dashboard_guardrails(normalized_layout, normalized_widgets)
 
     next_version = await _next_ui_config_version(
         session,
@@ -982,6 +991,8 @@ async def admin_save_ui_config(
         status=normalized_status,
         version=next_version,
         config_data=normalized_config_data,
+        layout=normalized_layout,
+        widgets=normalized_widgets,
         created_by=_safe_uuid(current_user.get("id")),
         created_by_email=current_user.get("email"),
         published_at=now_dt if normalized_status == "published" else None,
@@ -1022,6 +1033,16 @@ async def admin_publish_ui_config(
         row.config_data = _normalize_header_config_data(row.config_data or {}, row.segment)
         if row.segment == "corporate":
             _validate_corporate_header_guardrails(row.config_data)
+    elif row.config_type == "dashboard":
+        normalized_layout, normalized_widgets, next_config_data = _extract_dashboard_layout_widgets(
+            layout_payload=row.layout,
+            widgets_payload=row.widgets,
+            config_data=row.config_data if isinstance(row.config_data, dict) else {},
+        )
+        _validate_dashboard_guardrails(normalized_layout, normalized_widgets)
+        row.layout = normalized_layout
+        row.widgets = normalized_widgets
+        row.config_data = next_config_data
 
     await _set_ui_config_scope_to_draft(
         session,
@@ -1181,6 +1202,8 @@ async def get_effective_ui_config(
         serialized_item["config_data"] = _normalize_header_config_data(serialized_item.get("config_data") or {}, normalized_segment)
 
     effective_config = _effective_config_data(row, normalized_type, normalized_segment)
+    effective_layout = effective_config.get("layout", []) if normalized_type == "dashboard" else []
+    effective_widgets = effective_config.get("widgets", []) if normalized_type == "dashboard" else []
     return {
         "config_type": normalized_type,
         "segment": normalized_segment,
@@ -1188,6 +1211,8 @@ async def get_effective_ui_config(
         "source_scope_id": source_scope_id,
         "item": serialized_item,
         "config_data": effective_config,
+        "layout": effective_layout,
+        "widgets": effective_widgets,
     }
 
 
