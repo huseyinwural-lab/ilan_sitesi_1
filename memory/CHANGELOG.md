@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 2026-02-26 — P61 Dealer Dashboard V2 P0 Backend-Only Stabilization
+
+**Kapsam**
+- Alembic: `p61_ui_dashboard_cfg` migration ile `ui_configs` tablosuna `layout/widgets` JSONB kolonları eklendi.
+- Backend contract güncellemesi: `POST /api/admin/ui/configs/dashboard`, publish akışı ve `GET /api/ui/dashboard` artık layout/widgets alanlarını native taşır.
+- Guardrail enforce (backend): min 1 KPI, max 12 widget, duplicate `widget_id` ve layout-widget eşleşme doğrulaması.
+- Migration güvence testi: upgrade → downgrade (`p60_ui_logo_assets`) → re-upgrade (`heads`) başarılı.
+- Test raporu: `/app/test_reports/iteration_27.json` (PASS, backend 10/10).
+
 ## 2026-02-23 — Data Layer Cutover Kickoff (Mongo Tasfiye)
 
 **Kapsam**
