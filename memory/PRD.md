@@ -480,3 +480,52 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### Kalan Backlog
 - **P1 (beklemede):** country_code genişletmesi, import job CSV/retry, admin module type iyileştirmesi
 - **P2:** kampanya timeline, doping sistemi, public campaign UI
+
+---
+
+## 2026-02-26 — P0 Resmi Kapanış + P1 Meilisearch Config History (Başlangıç)
+
+### Sprint Kararı
+- P0 statüsü resmi olarak **CLOSED**.
+- P1 aktif faza alındı (ilk teslim: Search Config yönetim katmanı).
+
+### Bu tur tamamlananlar (P1.1 temel katman)
+- Admin System Settings içine yeni kart eklendi: **Search / Meilisearch**
+  - `Aktif Konfig` sekmesi
+  - `Geçmiş` sekmesi
+- Backend’de versioned config şeması eklendi:
+  - `meilisearch_configs`
+  - `status`: `active | inactive | revoked`
+  - `meili_master_key_ciphertext` şifreli saklama
+  - `last_tested_at`, `last_test_result (PASS/FAIL + reason_code)`
+- Aktivasyon kapısı eklendi:
+  - Kaydet = yalnızca `inactive`
+  - Aktivasyon = zorunlu test + PASS
+  - FAIL durumda konfig aktifleşmez
+- Geçmişten rollback/reuse akışı eklendi:
+  - Geçmiş satırından tek tık “Bu konfigi tekrar aktif et”
+  - Aktivasyon öncesi otomatik test çalışır
+- RBAC uygulandı:
+  - Sadece `super_admin` bu kartı ve endpointleri görebilir/değiştirebilir
+- Audit log event’leri eklendi:
+  - `MEILI_CONFIG_CREATE`
+  - `MEILI_CONFIG_TEST`
+  - `MEILI_CONFIG_ACTIVATE` / `MEILI_CONFIG_ACTIVATE_REJECTED`
+  - `MEILI_CONFIG_REVOKE`
+
+### Güvenlik Kuralları
+- Master key hiçbir API cevabında plaintext dönmez.
+- History listesinde yalnızca `master_key_masked` gösterilir.
+- UI key alanı her zaman boş/maskeli başlar.
+
+### Doğrulama ve Kanıt
+- Kanıt dosyası: `/app/docs/P1_MEILI_CONFIG_HISTORY_EVIDENCE.md`
+- İçerilen testler:
+  - PASS config aktivasyon (mock meili)
+  - FAIL config aktivasyon (connection_error)
+  - FAIL sonrası önceki aktif konfigin korunması (rollback davranışı)
+  - RBAC 403 doğrulaması
+
+### Bu tur dokunulmadı
+- P1.2 listing→index senkron hooklarının tam kapsamı (partial değil, bir sonraki adımda devam)
+- Facet/autocomplete/search UI (P1.3+)
