@@ -3244,6 +3244,9 @@ SUGGEST_CACHE_TTL_SECONDS = max(5, int((os.environ.get("SEARCH_SUGGEST_CACHE_TTL
 SUGGEST_MAX_ITEMS = min(20, max(3, int((os.environ.get("SEARCH_SUGGEST_MAX_ITEMS") or "8").strip() or "8")))
 MEDIA_PIPELINE_METRICS = deque(maxlen=500)
 _search_suggest_cache: Dict[str, dict] = {}
+DEALER_DASHBOARD_CACHE_TTL_SECONDS = max(10, int((os.environ.get("DEALER_DASHBOARD_CACHE_TTL_SECONDS") or "45").strip() or "45"))
+DEALER_PORTAL_FLAG_SETTING_PREFIX = "feature."
+_dealer_dashboard_summary_cache: Dict[str, dict] = {}
 
 
 def _db_url_is_localhost(value: Optional[str]) -> bool:
