@@ -1669,10 +1669,30 @@ async def admin_upload_header_logo(
         raise HTTPException(status_code=400, detail="Dosya boş")
 
     logo_meta = _validate_logo_constraints(data, file.filename or "")
+    storage_health = _site_assets_storage_health()
+    if not storage_health.get("writable"):
+        raise _logo_upload_http_error(
+            code=LOGO_ERROR_STORAGE_PIPELINE,
+            message="Storage yazma hattı hazır değil",
+            status_code=500,
+            details={"storage_health": storage_health},
+        )
+
     try:
         asset_key, _ = store_site_asset(data, file.filename or "logo.webp", folder="ui/logos", allow_svg=True)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise _logo_upload_http_error(
+            code=LOGO_ERROR_INVALID_FILE_TYPE,
+            message=str(exc),
+            details={"expected": sorted(UI_LOGO_ALLOWED_EXTENSIONS)},
+        ) from exc
+    except Exception as exc:
+        raise _logo_upload_http_error(
+            code=LOGO_ERROR_STORAGE_PIPELINE,
+            message="Logo dosyası storage pipeline üzerinde yazılamadı",
+            status_code=500,
+            details={"storage_health": _site_assets_storage_health()},
+        ) from exc
 
     logo_url = f"{UI_LOGO_URL_PREFIX}{asset_key}"
 
@@ -1743,6 +1763,7 @@ async def admin_upload_header_logo(
         "ok": True,
         "logo_url": logo_url,
         "logo_meta": logo_meta,
+        "storage_health": _site_assets_storage_health(),
         "item": item_payload,
         "cleanup": {"scheduled": True, "retention_days": UI_LOGO_RETENTION_DAYS},
     }
