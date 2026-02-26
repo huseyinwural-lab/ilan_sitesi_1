@@ -58,9 +58,9 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 - P1 hardening paralel: Suggest cache Redis planı, nightly DB↔Meili drift cron, admin health widget (index status)
 
 ### Public/Commercial Phase Durumu
-- Dealer Dashboard + Manuel Kontrol Sistemi v1 — **IN PROGRESS (PAUSED)** 🟡
+- Dealer Dashboard + Manuel Kontrol Sistemi v1 — **IN PROGRESS (RESTARTED)** 🔴
   - Backend foundation hazır (config modelleri + API)
-  - Kategori P0 kapanışı sonrası yeniden başlatılacak
+  - Kategori P0 kapanışı sonrası yeniden başlatıldı
 
 ### Sıradaki Faz — Dealer Dashboard P1 (Restart)
 - **ACTIVE** 🔴
