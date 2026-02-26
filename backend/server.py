@@ -18618,6 +18618,17 @@ async def admin_create_category(
         country_code=country_code,
     )
 
+    vehicle_segment = None
+    vehicle_link_status: Optional[Dict[str, Any]] = None
+    if module_value == "vehicle":
+        segment_input = payload.vehicle_segment
+        if not segment_input and isinstance(payload.form_schema, dict):
+            segment_input = _vehicle_segment_from_schema(payload.form_schema)
+        vehicle_segment = _normalize_vehicle_segment(segment_input)
+        vehicle_link_status = await _get_vehicle_segment_link_status(session, vehicle_segment=vehicle_segment)
+        if not vehicle_link_status.get("linked"):
+            raise HTTPException(status_code=409, detail="Seçilen segment master data ile bağlı değil")
+
     slug_query = await session.execute(
         select(Category)
         .where(
@@ -18641,6 +18652,14 @@ async def admin_create_category(
         if schema_status != "draft":
             _validate_category_schema(schema)
 
+    if module_value == "vehicle" and vehicle_segment:
+        schema = _merge_vehicle_segment_schema(
+            schema,
+            vehicle_segment=vehicle_segment,
+            linked=bool(vehicle_link_status and vehicle_link_status.get("linked")),
+        )
+        schema_status = schema.get("status", schema_status or "draft")
+
     slug_json = {"tr": slug, "en": slug, "de": slug}
     depth = (parent.depth + 1) if parent else 0
     path = f"{parent.path}.{slug}" if parent and parent.path else slug
@@ -18648,7 +18667,17 @@ async def admin_create_category(
 
     wizard_progress = payload.wizard_progress or {"state": "draft"}
 
-    sort_order = await _next_category_sort_order(session, parent.id if parent else None)
+    if payload.sort_order is not None:
+        if int(payload.sort_order) <= 0:
+            raise HTTPException(status_code=400, detail="sort_order 1 veya daha büyük olmalı")
+        sort_order = int(payload.sort_order)
+    else:
+        sort_order = await _next_category_sort_order(
+            session,
+            parent_id=parent.id if parent else None,
+            module_value=module_value,
+            country_code=country_code,
+        )
 
     category = Category(
         id=uuid.uuid4(),
@@ -18690,7 +18719,11 @@ async def admin_create_category(
             )
         )
 
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError as exc:
+        await session.rollback()
+        _raise_category_integrity_error(exc)
 
     if schema:
         if schema_status == "draft":
