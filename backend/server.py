@@ -18417,10 +18417,10 @@ async def admin_category_vehicle_segment_link_status(
 @api_router.get("/admin/categories/order-index/preview")
 async def admin_category_order_index_preview(
     request: Request,
-    country: Optional[str] = None,
     module: str,
-    parent_id: Optional[str] = None,
     sort_order: int,
+    country: Optional[str] = None,
+    parent_id: Optional[str] = None,
     exclude_id: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
