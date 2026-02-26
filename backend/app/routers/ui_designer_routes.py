@@ -886,6 +886,127 @@ async def admin_publish_ui_config(
     return {"ok": True, "item": _serialize_ui_config(row)}
 
 
+@router.post("/admin/ui/configs/header/logo")
+async def admin_upload_header_logo(
+    file: UploadFile = File(...),
+    segment: str = Form(default="corporate"),
+    scope: str = Form(default="system"),
+    scope_id: Optional[str] = Form(default=None),
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+    background_tasks: BackgroundTasks = None,
+):
+    normalized_segment = _normalize_segment(segment)
+    if normalized_segment != "corporate":
+        raise HTTPException(status_code=400, detail="Logo upload bu sprintte sadece corporate segment için açık")
+    normalized_scope, normalized_scope_id = _normalize_scope(scope, scope_id)
+
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Dosya boş")
+
+    logo_meta = _validate_logo_constraints(data, file.filename or "")
+    try:
+        asset_key, _ = store_site_asset(data, file.filename or "logo.webp", folder="ui/logos", allow_svg=True)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    logo_url = f"{UI_LOGO_URL_PREFIX}{asset_key}"
+
+    base_row = await _latest_ui_config(
+        session,
+        config_type="header",
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+        status="draft",
+    )
+    if not base_row:
+        base_row = await _latest_ui_config(
+            session,
+            config_type="header",
+            segment=normalized_segment,
+            scope=normalized_scope,
+            scope_id=normalized_scope_id,
+            status="published",
+        )
+
+    base_config = deepcopy(base_row.config_data) if base_row and isinstance(base_row.config_data, dict) else _default_header_config(normalized_segment)
+    old_logo_url = _extract_header_logo_url(base_config)
+    next_config = _apply_header_logo_to_config(base_config, logo_url, logo_meta)
+    _validate_corporate_header_guardrails(next_config)
+
+    next_version = await _next_ui_config_version(
+        session,
+        config_type="header",
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+    )
+    now_dt = datetime.now(timezone.utc)
+    new_row = UIConfig(
+        config_type="header",
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+        status="draft",
+        version=next_version,
+        config_data=next_config,
+        created_by=_safe_uuid(current_user.get("id")),
+        created_by_email=current_user.get("email"),
+        published_at=None,
+    )
+    session.add(new_row)
+
+    await _upsert_logo_asset_row(
+        session,
+        asset_key=asset_key,
+        asset_url=logo_url,
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+        current_user=current_user,
+    )
+    await _mark_replaced_logo_if_exists(session, old_logo_url=old_logo_url, new_asset_key=asset_key)
+
+    await session.commit()
+    await session.refresh(new_row)
+
+    if background_tasks is not None:
+        background_tasks.add_task(_cleanup_replaced_logo_assets, 100)
+
+    item_payload = _serialize_ui_config(new_row)
+    item_payload["config_data"] = _normalize_header_config_data(item_payload.get("config_data") or {}, normalized_segment)
+    return {
+        "ok": True,
+        "logo_url": logo_url,
+        "logo_meta": logo_meta,
+        "item": item_payload,
+        "cleanup": {"scheduled": True, "retention_days": UI_LOGO_RETENTION_DAYS},
+    }
+
+
+@router.post("/admin/ui/logo-assets/cleanup")
+async def admin_cleanup_logo_assets(
+    limit: int = Query(default=100, ge=1, le=500),
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    result = await _cleanup_replaced_logo_assets(limit)
+    pending_stmt = select(func.count()).select_from(UILogoAsset).where(
+        UILogoAsset.is_replaced.is_(True),
+        UILogoAsset.is_deleted.is_(False),
+    )
+    pending_count = (await session.execute(pending_stmt)).scalar_one() or 0
+    return {
+        "ok": True,
+        "deleted": result.get("deleted", 0),
+        "skipped": result.get("skipped", 0),
+        "pending": int(pending_count),
+        "retention_days": UI_LOGO_RETENTION_DAYS,
+    }
+
+
 @router.get("/ui/{config_type}")
 async def get_effective_ui_config(
     config_type: str,
