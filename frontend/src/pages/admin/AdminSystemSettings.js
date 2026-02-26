@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/toaster';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const MODERATION_FREEZE_KEY = 'moderation.freeze.active';
+const DEFAULT_MEILI_INDEX_NAME = 'listings_index';
 
 const resolveFreezeValue = (setting) => {
   const value = setting?.value;
@@ -38,6 +39,7 @@ export default function AdminSystemSettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const isSuperAdmin = user?.role === 'super_admin';
+  const isSystemAdmin = isSuperAdmin;
   const [cloudflareConfig, setCloudflareConfig] = useState({
     account_id_masked: '',
     zone_id_masked: '',
@@ -74,6 +76,23 @@ export default function AdminSystemSettingsPage() {
   const [filterKey, setFilterKey] = useState('');
   const [filterCountry, setFilterCountry] = useState('');
   const [error, setError] = useState(null);
+  const [meiliTab, setMeiliTab] = useState('active');
+  const [meiliLoading, setMeiliLoading] = useState(true);
+  const [meiliError, setMeiliError] = useState('');
+  const [meiliNotice, setMeiliNotice] = useState('');
+  const [meiliSaving, setMeiliSaving] = useState(false);
+  const [meiliTestingId, setMeiliTestingId] = useState(null);
+  const [meiliActivatingId, setMeiliActivatingId] = useState(null);
+  const [meiliRevokingId, setMeiliRevokingId] = useState(null);
+  const [meiliLatestConfigId, setMeiliLatestConfigId] = useState(null);
+  const [meiliEncryptionKeyPresent, setMeiliEncryptionKeyPresent] = useState(true);
+  const [meiliActiveConfig, setMeiliActiveConfig] = useState(null);
+  const [meiliHistory, setMeiliHistory] = useState([]);
+  const [meiliForm, setMeiliForm] = useState({
+    meili_url: '',
+    meili_index_name: DEFAULT_MEILI_INDEX_NAME,
+    meili_master_key: '',
+  });
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
