@@ -314,7 +314,7 @@ export default function AdminReportsPage() {
 
       <div className="rounded-md border bg-card overflow-hidden" data-testid="reports-table">
         <div className="hidden lg:grid grid-cols-[2fr_1.2fr_0.8fr_0.8fr_1fr] gap-4 bg-muted px-4 py-3 text-sm font-medium">
-          <div>Listing</div>
+          <div>{reportType === 'message' ? 'Message' : 'Listing'}</div>
           <div>Reason</div>
           <div>Durum</div>
           <div>Ülke</div>
@@ -335,13 +335,13 @@ export default function AdminReportsPage() {
                 <div>
                   <div className="text-xs uppercase text-muted-foreground lg:hidden">Listing</div>
                   <div className="font-medium" data-testid={`report-listing-title-${report.id}`}>
-                    {report.listing_title || report.listing_id}
+                    {reportType === 'message' ? (report.message_preview || report.message_id) : (report.listing_title || report.listing_id)}
                   </div>
                   <div className="text-xs text-muted-foreground" data-testid={`report-listing-id-${report.id}`}>
-                    {report.listing_id}
+                    {reportType === 'message' ? report.message_id : report.listing_id}
                   </div>
                   <div className="text-xs text-muted-foreground" data-testid={`report-seller-${report.id}`}>
-                    {report.seller_email || '—'}
+                    {reportType === 'message' ? (report.reporter_email || '—') : (report.seller_email || '—')}
                   </div>
                 </div>
                 <div>
@@ -370,28 +370,32 @@ export default function AdminReportsPage() {
                   <div className="text-xs uppercase text-muted-foreground lg:hidden">Aksiyon</div>
                   <div className="flex flex-wrap gap-2 lg:justify-end">
                     <button
-                      onClick={() => openDetail(report.id)}
+                      onClick={() => openDetail(report.id, report)}
                       className="h-8 px-2.5 rounded-md border text-xs hover:bg-muted"
                       data-testid={`report-detail-${report.id}`}
                     >
                       Detay
                     </button>
-                    <Link
-                      to={urlCountry ? `/admin/moderation?country=${urlCountry}` : '/admin/moderation'}
-                      className="h-8 px-2.5 rounded-md border text-xs hover:bg-muted"
-                      data-testid={`report-moderation-link-${report.id}`}
-                    >
-                      Moderation’a Git
-                    </Link>
-                    <a
-                      href={`/ilan/${report.listing_id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="h-8 px-2.5 rounded-md border text-xs hover:bg-muted"
-                      data-testid={`report-listing-link-${report.id}`}
-                    >
-                      Listing’e Git
-                    </a>
+                    {reportType === 'listing' && (
+                      <>
+                        <Link
+                          to={urlCountry ? `/admin/moderation?country=${urlCountry}` : '/admin/moderation'}
+                          className="h-8 px-2.5 rounded-md border text-xs hover:bg-muted"
+                          data-testid={`report-moderation-link-${report.id}`}
+                        >
+                          Moderation’a Git
+                        </Link>
+                        <a
+                          href={`/ilan/${report.listing_id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="h-8 px-2.5 rounded-md border text-xs hover:bg-muted"
+                          data-testid={`report-listing-link-${report.id}`}
+                        >
+                          Listing’e Git
+                        </a>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
