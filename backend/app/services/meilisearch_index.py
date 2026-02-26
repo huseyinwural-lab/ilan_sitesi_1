@@ -107,11 +107,17 @@ def build_listing_document(listing: Listing) -> Dict[str, Any]:
         "city_id": stable_numeric_id(city_value),
         "attribute_flat_map": attribute_flat_map,
         "price": float(listing.price or listing.hourly_rate or 0),
+        "price_amount": float(listing.price or 0),
+        "hourly_rate": float(listing.hourly_rate or 0),
+        "price_type": listing.price_type or "FIXED",
+        "currency": listing.currency or "EUR",
         "premium_score": premium_score,
         "published_at": listing.published_at.isoformat() if listing.published_at else None,
         "searchable_text": searchable_text,
         "title": listing.title or "",
         "description": listing.description or "",
+        "city": listing.city or "",
+        "image": (listing.images[0] if listing.images else None),
         "status": listing.status,
     }
 
