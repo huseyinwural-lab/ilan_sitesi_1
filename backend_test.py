@@ -166,8 +166,9 @@ class SearchSyncTester:
             listing_data = {
                 "title": "Test Search Sync Listing",
                 "description": "Test listing for search sync functionality testing",
-                "price": {"amount": 15000, "currency": "EUR"},
-                "category_id": "vehicle",
+                "price": 15000,
+                "currency": "EUR",
+                "category_id": "e2e-fixture-category",
                 "country": "DE",
                 "city": "Berlin",
                 "attributes": {
@@ -181,7 +182,7 @@ class SearchSyncTester:
             }
             
             response = requests.post(
-                f"{BASE_URL}/v1/listings/vehicle/draft",
+                f"{BASE_URL}/v1/listings/vehicle",
                 headers=self.get_headers(admin=False),
                 json=listing_data,
                 timeout=10
