@@ -51,6 +51,7 @@ export default function SiteHeader({ mode, refreshToken }) {
     evt.preventDefault();
     const target = query.trim();
     if (!target) return;
+    setSuggestions([]);
     navigate(`/search?q=${encodeURIComponent(target)}`);
     setSearchOpen(false);
   };
