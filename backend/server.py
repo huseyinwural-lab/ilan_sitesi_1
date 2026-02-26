@@ -8790,6 +8790,8 @@ async def validate_category_selection(
 
 class ListingFlowEventPayload(BaseModel):
     event_name: str
+    session_id: Optional[str] = None
+    page: Optional[str] = None
     metadata: Optional[dict] = None
 
 
@@ -8797,26 +8799,53 @@ class ListingFlowEventPayload(BaseModel):
 async def track_listing_flow_event(
     payload: ListingFlowEventPayload,
     request: Request,
-    current_user=Depends(require_portal_scope("account")),
+    current_user=Depends(get_current_user_optional),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    event_name = (payload.event_name or "").strip().lower()
+    if not event_name:
+        raise HTTPException(status_code=400, detail="event_name is required")
+
+    actor = current_user or {"id": None, "email": None, "country_code": None}
     metadata = payload.metadata or {}
-    metadata["event_name"] = payload.event_name
+    metadata["event_name"] = event_name
+    if payload.page:
+        metadata["page"] = payload.page
+    if payload.session_id:
+        metadata["session_id"] = payload.session_id
+
+    listing_uuid = _safe_uuid(metadata.get("listing_id"))
+    category_uuid = _safe_uuid(metadata.get("category_id"))
+    actor_id = _safe_uuid(actor.get("id"))
+    country_code = metadata.get("country") or actor.get("country_code") or "GLOBAL"
+
+    interaction = UserInteraction(
+        user_id=actor_id,
+        session_id=payload.session_id,
+        event_type=event_name,
+        listing_id=listing_uuid,
+        category_id=category_uuid,
+        country_code=str(country_code).upper(),
+        city=metadata.get("city"),
+        meta_data=metadata,
+    )
+    session.add(interaction)
+
     resource_id = metadata.get("category_id") or None
 
     await _write_audit_log_sql(
         session,
-        "listing_flow_event",
-        current_user,
+        "analytics_event",
+        actor,
         "listing_category_flow",
         resource_id,
         metadata,
         request,
-        country_code=metadata.get("country"),
+        country_code=str(country_code).upper(),
     )
     await session.commit()
 
-    return {"status": "ok"}
+    return {"status": "ok", "event_name": event_name}
 
 
 class AdminWizardAnalyticsPayload(BaseModel):
