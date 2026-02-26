@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
+import { trackDealerEvent } from '@/lib/dealerAnalytics';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -18,6 +20,7 @@ const statusLabels = {
 };
 
 export default function DealerListings() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [quota, setQuota] = useState({ limit: 0, used: 0, remaining: 0 });
   const [loading, setLoading] = useState(true);
@@ -60,10 +63,22 @@ export default function DealerListings() {
   }, [statusFilter]);
 
   useEffect(() => {
+    if (searchParams.get('create') === '1') {
+      setCreateOpen(true);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('create');
+        return next;
+      }, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
     setSelectedIds((prev) => prev.filter((id) => items.some((item) => item.id === id)));
   }, [items]);
 
   const handleOpenCreate = () => {
+    trackDealerEvent('dealer_listing_create_start', { source: 'dealer_listings' });
     setForm({ title: '', price: '' });
     setFormError('');
     setCreateOpen(true);
