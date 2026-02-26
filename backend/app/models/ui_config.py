@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import uuid
+from typing import Any
 
 from sqlalchemy import DateTime, Index, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
@@ -20,6 +21,8 @@ class UIConfig(Base):
     scope_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     config_type: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
     config_data: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    layout: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False, default=list)
+    widgets: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False, default=list)
 
     created_by: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
     created_by_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
