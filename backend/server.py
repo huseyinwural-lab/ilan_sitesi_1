@@ -15672,6 +15672,10 @@ class SearchSyncProcessPayload(BaseModel):
     limit: int = 50
 
 
+class SearchSyncRetryDeadPayload(BaseModel):
+    limit: int = 200
+
+
 class SearchReindexPayload(BaseModel):
     chunk_size: int = 200
     max_docs: Optional[int] = None
@@ -15974,6 +15978,46 @@ async def admin_process_search_sync_jobs(
     del current_user
     summary = await _process_search_sync_jobs(session, limit=payload.limit)
     return {"ok": True, **summary}
+
+
+@api_router.post("/admin/search/meili/sync-jobs/retry-dead-letter")
+async def admin_retry_dead_letter_search_sync_jobs(
+    payload: SearchSyncRetryDeadPayload,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    del current_user
+    safe_limit = min(2000, max(1, payload.limit))
+    dead_rows = (
+        (
+            await session.execute(
+                select(SearchSyncJob)
+                .where(SearchSyncJob.status == "dead_letter")
+                .order_by(asc(SearchSyncJob.created_at))
+                .limit(safe_limit)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    now_ts = datetime.now(timezone.utc)
+    for row in dead_rows:
+        row.status = "retry"
+        row.attempts = 0
+        row.last_error = None
+        row.next_retry_at = now_ts
+        row.updated_at = now_ts
+
+    await session.commit()
+    summary = await _process_search_sync_jobs(session, limit=safe_limit)
+    return {
+        "ok": True,
+        "retried": len(dead_rows),
+        "processed": summary.get("processed", 0),
+        "success": summary.get("success", 0),
+        "failed": summary.get("failed", 0),
+        "dead_letter": summary.get("dead_letter", 0),
+    }
 
 
 @api_router.post("/admin/search/meili/reindex")
