@@ -1,14 +1,13 @@
 # CATEGORY ORDER MIGRATION REPORT
 
-- Generated at: 2026-02-26T18:42:56.603827+00:00
-- Scope bazlı düzeltme yapılan kayıt grubu: 0
-- Çakışma sayısı (kayıt bazlı): 0
-- Etkilenen kayıt sayısı: 0
+- Generated at: 2026-02-26T19:12:31.755808+00:00
+- Çakışma sayısı: 0
+- Düzeltme yapılan kayıt sayısı: 0
 
-## Etkilenen Kayıt ID'leri
+## Düzeltme Yapılan ID’ler
 
 - Yok
 
-## Scope Bazlı Düzeltme Detayları
+## Scope Bazlı Önce/Sonra Order Listesi
 
 - Çakışma tespit edilmedi.
