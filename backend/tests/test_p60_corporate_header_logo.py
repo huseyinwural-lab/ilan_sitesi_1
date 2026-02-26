@@ -51,6 +51,14 @@ def create_test_svg(width: int, height: int) -> bytes:
 </svg>'''.encode('utf-8')
 
 
+def get_error_detail(response):
+    payload = response.json()
+    detail = payload.get("detail")
+    if isinstance(detail, dict):
+        return detail
+    return {"code": None, "message": str(detail or "")}
+
+
 @pytest.fixture(scope="module")
 def admin_token():
     """Get admin token for tests"""
@@ -120,7 +128,8 @@ class TestCorporateHeaderGuardrails:
             headers={"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
         )
         assert response.status_code == 400, f"Expected 400, got {response.status_code}: {response.text[:200]}"
-        assert "logo" in response.json().get("detail", "").lower()
+        error_detail = get_error_detail(response)
+        assert "logo" in (error_detail.get("message") or "").lower()
         print("✓ Corporate header correctly rejects row1 without logo block")
     
     def test_corporate_header_valid_config_accepted(self, admin_token):
@@ -241,7 +250,9 @@ class TestLogoUploadValidation:
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 400, f"Expected 400 for invalid ratio, got {response.status_code}"
-        assert "ratio" in response.json().get("detail", "").lower() or "oran" in response.json().get("detail", "").lower()
+        error_detail = get_error_detail(response)
+        assert error_detail.get("code") in {"INVALID_ASPECT_RATIO", None}
+        assert "ratio" in (error_detail.get("message") or "").lower() or "oran" in (error_detail.get("message") or "").lower()
         print("✓ Invalid aspect ratio correctly rejected")
     
     def test_logo_upload_valid_ratio_with_tolerance(self, admin_token):
@@ -275,6 +286,8 @@ class TestLogoUploadValidation:
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 400, f"Expected 400 for invalid format, got {response.status_code}"
+        error_detail = get_error_detail(response)
+        assert error_detail.get("code") in {"INVALID_FILE_TYPE", None}
         print("✓ Invalid format correctly rejected")
     
     def test_logo_upload_exceeds_max_size_rejected(self, admin_token):
@@ -300,6 +313,8 @@ class TestLogoUploadValidation:
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 400, f"Expected 400 for oversized file, got {response.status_code}"
+        error_detail = get_error_detail(response)
+        assert error_detail.get("code") in {"FILE_TOO_LARGE", None}
         print("✓ Oversized file correctly rejected")
     
     def test_logo_upload_webp_format(self, admin_token):
