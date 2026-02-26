@@ -483,7 +483,6 @@ export default function Layout({ children }) {
     { path: '/admin/categories', icon: FolderTree, label: 'Kategoriler', roles: roles.catalogView, testId: 'catalog-categories' },
     { path: '/admin/categories/import-export', icon: FileText, label: 'Kategori Import/Export', roles: roles.catalogAdmin, testId: 'catalog-categories-import-export' },
     { path: '/admin/attributes', icon: Settings2, label: 'Özellikler', roles: roles.catalogAdmin, testId: 'catalog-attributes' },
-    { path: '/admin/menu-management', icon: MenuSquare, label: 'Menü Yönetimi', roles: roles.adminOnly, comingSoon: true, testId: 'catalog-menu-management' },
 
     { divider: true, label: 'Araç Verisi', roles: [...roles.vehicleAdmin, ...roles.masterdataManager] },
     { path: '/admin/vehicle-makes', icon: Car, label: 'Araç Markaları', roles: roles.vehicleAdmin, testId: 'vehicle-makes' },
@@ -533,7 +532,6 @@ export default function Layout({ children }) {
       '/admin/countries',
       '/admin/system-settings',
       '/admin/categories',
-      '/admin/menu-management',
       '/admin/attributes',
       '/admin/vehicle-makes',
       '/admin/vehicle-models',
