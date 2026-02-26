@@ -133,7 +133,6 @@ def upgrade() -> None:
         for order, rows_with_order in sorted(by_order.items(), key=lambda item: item[0]):
             if len(rows_with_order) <= 1:
                 continue
-            keep_row = rows_with_order[0]
             assigned_orders.add(order)
             reassignment_rows.extend(rows_with_order[1:])
 
