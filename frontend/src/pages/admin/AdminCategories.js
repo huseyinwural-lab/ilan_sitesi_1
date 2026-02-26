@@ -225,6 +225,14 @@ const AdminCategories = () => {
     active_flag: true,
     sort_order: 0,
   });
+  const [vehicleSegment, setVehicleSegment] = useState("");
+  const [vehicleLinkStatus, setVehicleLinkStatus] = useState({
+    checking: false,
+    linked: false,
+    make_count: 0,
+    model_count: 0,
+    message: "",
+  });
   const [schema, setSchema] = useState(createDefaultSchema());
   const [wizardStep, setWizardStep] = useState("hierarchy");
   const [wizardProgress, setWizardProgress] = useState({ state: "draft", dirty_steps: [] });
