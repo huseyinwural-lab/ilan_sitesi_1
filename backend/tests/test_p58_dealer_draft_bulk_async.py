@@ -578,7 +578,7 @@ class TestCategoryWizardRegression:
                 "name": f"TEST_P58_Category_{timestamp}",
                 "slug": f"test-p58-cat-{timestamp}",
                 "country_code": "DE",
-                "module": "vehicle",
+                "module": "other",  # Use 'other' to avoid vehicle_segment requirement
                 "active_flag": True,
                 "sort_order": 999,
                 "hierarchy_complete": True,
