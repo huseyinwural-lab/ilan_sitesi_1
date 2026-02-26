@@ -1060,6 +1060,89 @@ async def _set_ui_config_scope_to_draft(
     await session.execute(stmt.values(status="draft", updated_at=datetime.now(timezone.utc)))
 
 
+def _validate_ui_config_before_publish(row: UIConfig) -> None:
+    if row.config_type == "header":
+        row.config_data = _normalize_header_config_data(row.config_data or {}, row.segment)
+        if row.segment == "corporate":
+            _validate_corporate_header_guardrails(row.config_data)
+        return
+
+    if row.config_type == "dashboard":
+        normalized_layout, normalized_widgets, next_config_data = _extract_dashboard_layout_widgets(
+            layout_payload=row.layout,
+            widgets_payload=row.widgets,
+            config_data=row.config_data if isinstance(row.config_data, dict) else {},
+        )
+        _validate_dashboard_guardrails(normalized_layout, normalized_widgets)
+        row.layout = normalized_layout
+        row.widgets = normalized_widgets
+        row.config_data = next_config_data
+
+
+async def _publish_ui_config_row(
+    session: AsyncSession,
+    *,
+    row: UIConfig,
+    current_user: dict[str, Any],
+    reason: Optional[str] = None,
+) -> tuple[UIConfig, dict[str, Any], Optional[dict[str, Any]]]:
+    _validate_ui_config_before_publish(row)
+
+    previous_published = await _latest_ui_config(
+        session,
+        config_type=row.config_type,
+        segment=row.segment,
+        scope=row.scope,
+        scope_id=row.scope_id,
+        status="published",
+    )
+    previous_payload = _serialize_ui_config(previous_published) if previous_published else None
+    next_payload = _serialize_ui_config(row)
+
+    diff_payload = _compute_ui_config_diff(
+        config_type=row.config_type,
+        segment=row.segment,
+        old_payload=previous_payload,
+        new_payload=next_payload,
+    )
+
+    await _set_ui_config_scope_to_draft(
+        session,
+        config_type=row.config_type,
+        segment=row.segment,
+        scope=row.scope,
+        scope_id=row.scope_id,
+    )
+
+    now_dt = datetime.now(timezone.utc)
+    row.status = "published"
+    row.published_at = now_dt
+    row.updated_at = now_dt
+
+    session.add(
+        _create_ui_config_audit_log(
+            action="ui_config_publish",
+            current_user=current_user,
+            config_type=row.config_type,
+            resource_id=str(row.id),
+            old_values=previous_payload,
+            new_values=next_payload,
+            metadata_info={
+                "segment": row.segment,
+                "scope": row.scope,
+                "scope_id": row.scope_id,
+                "version": row.version,
+                "diff": diff_payload,
+                "reason": reason or "manual_publish",
+            },
+        )
+    )
+
+    await session.commit()
+    await session.refresh(row)
+    return row, diff_payload, previous_payload
+
+
 async def _resolve_effective_theme(
     session: AsyncSession,
     *,
@@ -1229,34 +1312,260 @@ async def admin_publish_ui_config(
     if not row or row.config_type != normalized_type:
         raise HTTPException(status_code=404, detail="UI config not found")
 
-    if row.config_type == "header":
-        row.config_data = _normalize_header_config_data(row.config_data or {}, row.segment)
-        if row.segment == "corporate":
-            _validate_corporate_header_guardrails(row.config_data)
-    elif row.config_type == "dashboard":
-        normalized_layout, normalized_widgets, next_config_data = _extract_dashboard_layout_widgets(
-            layout_payload=row.layout,
-            widgets_payload=row.widgets,
-            config_data=row.config_data if isinstance(row.config_data, dict) else {},
+    published_row, diff_payload, previous_payload = await _publish_ui_config_row(
+        session,
+        row=row,
+        current_user=current_user,
+        reason="publish_by_config_id",
+    )
+    return {
+        "ok": True,
+        "item": _serialize_ui_config(published_row),
+        "snapshot": {
+            "published_config_id": str(published_row.id),
+            "published_version": published_row.version,
+        },
+        "diff": diff_payload,
+        "previous": previous_payload,
+    }
+
+
+@router.get("/admin/ui/configs/{config_type}/diff")
+async def admin_ui_config_diff(
+    config_type: str,
+    segment: str = Query(default="individual"),
+    scope: str = Query(default="system"),
+    scope_id: Optional[str] = Query(default=None),
+    from_status: str = Query(default="published"),
+    to_status: str = Query(default="draft"),
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    normalized_type = _normalize_config_type(config_type)
+    normalized_segment = _normalize_segment(segment)
+    normalized_scope, normalized_scope_id = _normalize_scope(scope, scope_id)
+    normalized_from_status = _normalize_status(from_status)
+    normalized_to_status = _normalize_status(to_status)
+
+    from_row = await _latest_ui_config(
+        session,
+        config_type=normalized_type,
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+        status=normalized_from_status,
+    )
+    to_row = await _latest_ui_config(
+        session,
+        config_type=normalized_type,
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+        status=normalized_to_status,
+    )
+
+    from_payload = _serialize_ui_config(from_row) if from_row else None
+    to_payload = _serialize_ui_config(to_row) if to_row else None
+    diff_payload = _compute_ui_config_diff(
+        config_type=normalized_type,
+        segment=normalized_segment,
+        old_payload=from_payload,
+        new_payload=to_payload,
+    )
+
+    return {
+        "config_type": normalized_type,
+        "segment": normalized_segment,
+        "scope": normalized_scope,
+        "scope_id": normalized_scope_id,
+        "from_status": normalized_from_status,
+        "to_status": normalized_to_status,
+        "from_item": from_payload,
+        "to_item": to_payload,
+        "diff": diff_payload,
+    }
+
+
+@router.post("/admin/ui/configs/{config_type}/publish")
+async def admin_publish_latest_ui_config(
+    config_type: str,
+    payload: UIConfigPublishPayload,
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    normalized_type = _normalize_config_type(config_type)
+    normalized_segment = _normalize_segment(payload.segment)
+    normalized_scope, normalized_scope_id = _normalize_scope(payload.scope, payload.scope_id)
+
+    if not payload.require_confirm:
+        raise HTTPException(status_code=400, detail="Publish onayı zorunludur (require_confirm=true)")
+
+    target_row: Optional[UIConfig] = None
+    if payload.config_id:
+        try:
+            config_uuid = uuid.UUID(payload.config_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid config_id") from exc
+
+        row = await session.get(UIConfig, config_uuid)
+        if not row or row.config_type != normalized_type:
+            raise HTTPException(status_code=404, detail="UI config not found")
+        if row.segment != normalized_segment:
+            raise HTTPException(status_code=400, detail="config segment uyuşmuyor")
+        if row.scope != normalized_scope:
+            raise HTTPException(status_code=400, detail="config scope uyuşmuyor")
+        if normalized_scope != "system" and row.scope_id != normalized_scope_id:
+            raise HTTPException(status_code=400, detail="config scope_id uyuşmuyor")
+        if normalized_scope == "system" and (row.scope_id or "") not in {"", None}:
+            raise HTTPException(status_code=400, detail="config system scope ile uyumlu değil")
+        target_row = row
+    else:
+        target_row = await _latest_ui_config(
+            session,
+            config_type=normalized_type,
+            segment=normalized_segment,
+            scope=normalized_scope,
+            scope_id=normalized_scope_id,
+            status="draft",
         )
-        _validate_dashboard_guardrails(normalized_layout, normalized_widgets)
-        row.layout = normalized_layout
-        row.widgets = normalized_widgets
-        row.config_data = next_config_data
+
+    if not target_row:
+        raise HTTPException(status_code=404, detail="Yayınlanacak draft config bulunamadı")
+
+    published_row, diff_payload, previous_payload = await _publish_ui_config_row(
+        session,
+        row=target_row,
+        current_user=current_user,
+        reason="publish_latest_endpoint",
+    )
+    return {
+        "ok": True,
+        "item": _serialize_ui_config(published_row),
+        "snapshot": {
+            "published_config_id": str(published_row.id),
+            "published_version": published_row.version,
+        },
+        "diff": diff_payload,
+        "previous": previous_payload,
+    }
+
+
+@router.post("/admin/ui/configs/{config_type}/rollback")
+async def admin_rollback_ui_config(
+    config_type: str,
+    payload: UIConfigRollbackPayload,
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    normalized_type = _normalize_config_type(config_type)
+    normalized_segment = _normalize_segment(payload.segment)
+    normalized_scope, normalized_scope_id = _normalize_scope(payload.scope, payload.scope_id)
+
+    if not payload.require_confirm:
+        raise HTTPException(status_code=400, detail="Rollback onayı zorunludur (require_confirm=true)")
+
+    current_published = await _latest_ui_config(
+        session,
+        config_type=normalized_type,
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+        status="published",
+    )
+    if not current_published:
+        raise HTTPException(status_code=404, detail="Rollback için aktif published config bulunamadı")
+
+    target_row: Optional[UIConfig] = None
+    if payload.target_config_id:
+        try:
+            target_uuid = uuid.UUID(payload.target_config_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid target_config_id") from exc
+
+        row = await session.get(UIConfig, target_uuid)
+        if not row or row.config_type != normalized_type:
+            raise HTTPException(status_code=404, detail="Rollback target config bulunamadı")
+        if row.id == current_published.id:
+            raise HTTPException(status_code=400, detail="Rollback target mevcut published ile aynı olamaz")
+        if row.segment != normalized_segment or row.scope != normalized_scope:
+            raise HTTPException(status_code=400, detail="Rollback target scope/segment uyumsuz")
+        if normalized_scope != "system" and row.scope_id != normalized_scope_id:
+            raise HTTPException(status_code=400, detail="Rollback target scope_id uyumsuz")
+        if normalized_scope == "system" and (row.scope_id or "") not in {"", None}:
+            raise HTTPException(status_code=400, detail="Rollback target system scope değil")
+        target_row = row
+    else:
+        target_stmt = (
+            select(UIConfig)
+            .where(
+                UIConfig.config_type == normalized_type,
+                UIConfig.segment == normalized_segment,
+                *_scope_clause(normalized_scope, normalized_scope_id),
+                UIConfig.status == "published",
+                UIConfig.id != current_published.id,
+            )
+            .order_by(desc(UIConfig.version), desc(UIConfig.updated_at))
+            .limit(1)
+        )
+        target_row = (await session.execute(target_stmt)).scalar_one_or_none()
+
+    if not target_row:
+        raise HTTPException(status_code=404, detail="Rollback target snapshot bulunamadı")
+
+    _validate_ui_config_before_publish(target_row)
+
+    current_payload = _serialize_ui_config(current_published)
+    target_payload = _serialize_ui_config(target_row)
+    diff_payload = _compute_ui_config_diff(
+        config_type=normalized_type,
+        segment=normalized_segment,
+        old_payload=current_payload,
+        new_payload=target_payload,
+    )
 
     await _set_ui_config_scope_to_draft(
         session,
-        config_type=row.config_type,
-        segment=row.segment,
-        scope=row.scope,
-        scope_id=row.scope_id,
+        config_type=normalized_type,
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
     )
-    row.status = "published"
-    row.published_at = datetime.now(timezone.utc)
-    row.updated_at = datetime.now(timezone.utc)
+
+    now_dt = datetime.now(timezone.utc)
+    target_row.status = "published"
+    target_row.published_at = now_dt
+    target_row.updated_at = now_dt
+
+    session.add(
+        _create_ui_config_audit_log(
+            action="ui_config_rollback",
+            current_user=current_user,
+            config_type=normalized_type,
+            resource_id=str(target_row.id),
+            old_values=current_payload,
+            new_values=target_payload,
+            metadata_info={
+                "segment": normalized_segment,
+                "scope": normalized_scope,
+                "scope_id": normalized_scope_id,
+                "from_config_id": str(current_published.id),
+                "to_config_id": str(target_row.id),
+                "diff": diff_payload,
+            },
+        )
+    )
+
     await session.commit()
-    await session.refresh(row)
-    return {"ok": True, "item": _serialize_ui_config(row)}
+    await session.refresh(target_row)
+
+    return {
+        "ok": True,
+        "item": _serialize_ui_config(target_row),
+        "rolled_back_from": str(current_published.id),
+        "rolled_back_to": str(target_row.id),
+        "diff": diff_payload,
+    }
 
 
 @router.post("/admin/ui/configs/header/logo")
