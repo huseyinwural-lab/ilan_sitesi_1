@@ -13019,6 +13019,61 @@ async def create_report(
     return {"ok": True, "report_id": str(report.id), "status": "open"}
 
 
+@api_router.post("/reports/messages")
+async def create_message_report(
+    payload: MessageReportCreatePayload,
+    request: Request,
+    current_user=Depends(get_current_user_optional),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        message_uuid = uuid.UUID(payload.message_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid message id") from exc
+
+    reason = (payload.reason or "").strip().lower()
+    if reason not in MESSAGE_REPORT_REASONS:
+        raise HTTPException(status_code=400, detail="Invalid reason")
+    reason_note = (payload.reason_note or "").strip() or None
+    if reason == "other" and not reason_note:
+        raise HTTPException(status_code=400, detail="reason_note is required when reason=other")
+
+    message = await session.get(Message, message_uuid)
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    conversation = await session.get(Conversation, message.conversation_id)
+    listing = await session.get(Listing, conversation.listing_id) if conversation and conversation.listing_id else None
+
+    reporter_user_id = _safe_uuid(current_user.get("id")) if current_user and current_user.get("id") else None
+    report = MessageReport(
+        message_id=message.id,
+        conversation_id=conversation.id if conversation else None,
+        listing_id=conversation.listing_id if conversation else None,
+        reporter_user_id=reporter_user_id,
+        reason=reason,
+        reason_note=reason_note,
+        status="open",
+        country_code=listing.country if listing else None,
+    )
+    session.add(report)
+    await session.flush()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="MESSAGE_REPORT_CREATED",
+        actor=current_user or {"id": None, "email": None, "role": None},
+        resource_type="message_report",
+        resource_id=str(report.id),
+        metadata={"message_id": str(message.id), "reason": reason},
+        request=request,
+        country_code=listing.country if listing else None,
+    )
+    await session.commit()
+
+    return {"ok": True, "report_id": str(report.id), "status": report.status}
+
+
 @api_router.get("/admin/reports")
 async def admin_reports(
     request: Request,
@@ -13116,6 +13171,161 @@ async def admin_reports(
         )
 
     return {"items": items, "pagination": {"total": int(total), "skip": int(skip), "limit": limit}}
+
+
+@api_router.get("/admin/reports/messages")
+async def admin_message_reports(
+    request: Request,
+    status: Optional[str] = None,
+    reason: Optional[str] = None,
+    message_id: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    conditions = []
+    if status:
+        normalized = status.strip().lower()
+        if normalized not in MESSAGE_REPORT_STATUS_SET:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        conditions.append(MessageReport.status == normalized)
+    if reason:
+        normalized_reason = reason.strip().lower()
+        if normalized_reason not in MESSAGE_REPORT_REASONS:
+            raise HTTPException(status_code=400, detail="Invalid reason")
+        conditions.append(MessageReport.reason == normalized_reason)
+    if message_id:
+        try:
+            message_uuid = uuid.UUID(message_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid message id") from exc
+        conditions.append(MessageReport.message_id == message_uuid)
+
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        conditions.append(MessageReport.country_code == ctx.country)
+    elif current_user.get("role") == "country_admin":
+        scope = current_user.get("country_scope") or []
+        if "*" not in scope:
+            conditions.append(MessageReport.country_code.in_(scope))
+
+    limit = min(100, max(1, int(limit)))
+    skip = max(0, int(skip))
+
+    query = select(MessageReport)
+    count_query = select(func.count()).select_from(MessageReport)
+    if conditions:
+        query = query.where(*conditions)
+        count_query = count_query.where(*conditions)
+
+    total = (await session.execute(count_query)).scalar_one()
+    rows = (
+        await session.execute(query.order_by(desc(MessageReport.created_at)).offset(skip).limit(limit))
+    ).scalars().all()
+
+    message_ids = [row.message_id for row in rows]
+    reporter_ids = [row.reporter_user_id for row in rows if row.reporter_user_id]
+    handled_ids = [row.handled_by_admin_id for row in rows if row.handled_by_admin_id]
+    conversation_ids = [row.conversation_id for row in rows if row.conversation_id]
+
+    message_map = {}
+    if message_ids:
+        message_map = {
+            item.id: item
+            for item in (await session.execute(select(Message).where(Message.id.in_(message_ids)))).scalars().all()
+        }
+
+    conversation_map = {}
+    if conversation_ids:
+        conversation_map = {
+            item.id: item
+            for item in (await session.execute(select(Conversation).where(Conversation.id.in_(conversation_ids)))).scalars().all()
+        }
+
+    user_ids = set(reporter_ids + handled_ids)
+    user_map = {}
+    if user_ids:
+        user_map = {
+            item.id: item
+            for item in (await session.execute(select(SqlUser).where(SqlUser.id.in_(list(user_ids))))).scalars().all()
+        }
+
+    items = []
+    for row in rows:
+        msg = message_map.get(row.message_id)
+        convo = conversation_map.get(row.conversation_id) if row.conversation_id else None
+        reporter = user_map.get(row.reporter_user_id) if row.reporter_user_id else None
+        handler = user_map.get(row.handled_by_admin_id) if row.handled_by_admin_id else None
+        items.append(
+            {
+                "id": str(row.id),
+                "message_id": str(row.message_id),
+                "conversation_id": str(row.conversation_id) if row.conversation_id else None,
+                "listing_id": str(row.listing_id) if row.listing_id else (str(convo.listing_id) if convo and convo.listing_id else None),
+                "reason": row.reason,
+                "reason_note": row.reason_note,
+                "status": row.status,
+                "status_note": row.status_note,
+                "country_code": row.country_code,
+                "message_preview": (msg.body or "")[:160] if msg else None,
+                "reporter_user_id": str(row.reporter_user_id) if row.reporter_user_id else None,
+                "reporter_email": reporter.email if reporter else None,
+                "handled_by_admin_id": str(row.handled_by_admin_id) if row.handled_by_admin_id else None,
+                "handled_by_admin_email": handler.email if handler else None,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+            }
+        )
+
+    return {"items": items, "pagination": {"total": int(total), "skip": skip, "limit": limit}}
+
+
+@api_router.post("/admin/reports/messages/{report_id}/status")
+async def admin_message_report_status_change(
+    report_id: str,
+    payload: MessageReportStatusPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    try:
+        report_uuid = uuid.UUID(report_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid report id") from exc
+
+    report = await session.get(MessageReport, report_uuid)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    target_status = (payload.target_status or "").strip().lower()
+    if target_status not in MESSAGE_REPORT_STATUS_SET:
+        raise HTTPException(status_code=400, detail="Invalid target_status")
+
+    note = (payload.note or "").strip()
+    if not note:
+        raise HTTPException(status_code=400, detail="note is required")
+
+    report.status = target_status
+    report.status_note = note
+    report.handled_by_admin_id = _resolve_moderation_actor_id(current_user.get("id"))
+    report.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="MESSAGE_REPORT_STATUS_CHANGE",
+        actor=current_user,
+        resource_type="message_report",
+        resource_id=str(report.id),
+        metadata={"target_status": target_status, "note": note},
+        request=request,
+        country_code=report.country_code,
+    )
+    await session.commit()
+
+    return {"ok": True, "report": {"id": str(report.id), "status": report.status}}
 
 @api_router.get("/admin/reports/{report_id}")
 async def admin_report_detail(
