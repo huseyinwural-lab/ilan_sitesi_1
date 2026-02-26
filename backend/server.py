@@ -14662,6 +14662,433 @@ async def dealer_dashboard_metrics(
     }
 
 
+@api_router.get("/dealer/dashboard/summary")
+async def dealer_dashboard_summary(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_id = current_user.get("id")
+    if not dealer_id:
+        return JSONResponse(status_code=400, content={"code": "DEALER_INVALID", "message": "Dealer kimliği bulunamadı"})
+
+    cache_key = _dealer_summary_cache_key(dealer_id)
+    cached = _dealer_summary_get_cached(cache_key)
+    if cached:
+        return {**cached, "cache": {"hit": True, "ttl_seconds": DEALER_DASHBOARD_CACHE_TTL_SECONDS}}
+
+    try:
+        dealer_uuid = uuid.UUID(dealer_id)
+        country_code = (current_user.get("country_code") or "").upper() or None
+        resolved_config = await _resolve_dealer_portal_config(session, role="dealer", country_code=country_code)
+        modules = sorted(resolved_config.get("modules") or [], key=lambda row: row.get("order_index") or 0)
+
+        now_dt = datetime.now(timezone.utc)
+        today_start = now_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_start = now_dt - timedelta(days=7)
+
+        active_listings = (
+            await session.execute(
+                select(func.count()).select_from(DealerListing).where(
+                    DealerListing.dealer_id == dealer_uuid,
+                    DealerListing.status == "active",
+                    DealerListing.deleted_at.is_(None),
+                )
+            )
+        ).scalar_one()
+        total_listings = (
+            await session.execute(
+                select(func.count()).select_from(DealerListing).where(
+                    DealerListing.dealer_id == dealer_uuid,
+                    DealerListing.deleted_at.is_(None),
+                )
+            )
+        ).scalar_one()
+
+        today_messages = (
+            await session.execute(
+                select(func.count())
+                .select_from(Message)
+                .join(Conversation, Message.conversation_id == Conversation.id)
+                .where(
+                    Conversation.seller_id == dealer_uuid,
+                    Message.created_at >= today_start,
+                )
+            )
+        ).scalar_one()
+
+        views_7d = (
+            await session.execute(
+                select(func.count())
+                .select_from(ListingView)
+                .join(Listing, ListingView.listing_id == Listing.id)
+                .where(
+                    Listing.dealer_id == dealer_uuid,
+                    ListingView.created_at >= week_start,
+                )
+            )
+        ).scalar_one()
+
+        lead_clicks_7d = (
+            await session.execute(
+                select(func.count())
+                .select_from(UserInteraction)
+                .join(Listing, UserInteraction.listing_id == Listing.id)
+                .where(
+                    Listing.dealer_id == dealer_uuid,
+                    UserInteraction.created_at >= week_start,
+                    UserInteraction.event_type.in_(["contact_click", "dealer_contact_click"]),
+                )
+            )
+        ).scalar_one()
+
+        quota_limit = DEALER_LISTING_QUOTA_LIMIT
+        quota_used = int(active_listings or 0)
+        quota_remaining = max(0, quota_limit - quota_used)
+
+        latest_invoice = (
+            await session.execute(
+                select(AdminInvoice)
+                .where(AdminInvoice.user_id == dealer_uuid)
+                .order_by(desc(AdminInvoice.created_at))
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        package_status = latest_invoice.status if latest_invoice else "trial"
+
+        widget_map = {
+            "active_listings": {
+                "title": "Aktif İlanlar",
+                "value": int(active_listings or 0),
+                "subtitle": f"Toplam ilan: {int(total_listings or 0)}",
+                "route": "/dealer/listings",
+            },
+            "today_messages": {
+                "title": "Bugün Gelen Mesaj",
+                "value": int(today_messages or 0),
+                "subtitle": "Son 24 saat",
+                "route": "/dealer/messages",
+            },
+            "views_7d": {
+                "title": "Son 7 Gün Görüntülenme",
+                "value": int(views_7d or 0),
+                "subtitle": "Listing view toplamı",
+                "route": "/dealer/reports",
+            },
+            "lead_contact_click": {
+                "title": "Lead/İletişim Tıklaması",
+                "value": int(lead_clicks_7d or 0),
+                "subtitle": "Son 7 gün contact click",
+                "route": "/dealer/customers",
+            },
+            "package_quota": {
+                "title": "Paket Durumu / Kota",
+                "value": f"{quota_remaining} / {quota_limit}",
+                "subtitle": f"Paket: {package_status}",
+                "route": "/dealer/purchase",
+            },
+        }
+
+        widgets = []
+        for module in modules:
+            source_key = module.get("data_source_key")
+            metric = widget_map.get(source_key)
+            if not metric:
+                continue
+            widgets.append(
+                {
+                    "key": module.get("key"),
+                    "title_i18n_key": module.get("title_i18n_key"),
+                    "title": metric["title"],
+                    "value": metric["value"],
+                    "subtitle": metric["subtitle"],
+                    "route": metric["route"],
+                    "order_index": module.get("order_index"),
+                }
+            )
+
+        payload = {
+            "widgets": widgets,
+            "generated_at": now_dt.isoformat(),
+            "cache": {"hit": False, "ttl_seconds": DEALER_DASHBOARD_CACHE_TTL_SECONDS},
+        }
+        _dealer_summary_set_cached(cache_key, payload)
+        return payload
+    except Exception:
+        logging.getLogger("dealer_dashboard").exception("dealer_dashboard_summary_failed")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "code": "DEALER_SUMMARY_ERROR",
+                "message": "Kurumsal dashboard verisi alınamadı",
+            },
+        )
+
+
+@api_router.get("/dealer/messages")
+async def dealer_messages(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    conversations = (
+        await session.execute(
+            select(Conversation)
+            .where(Conversation.seller_id == dealer_uuid)
+            .order_by(desc(Conversation.updated_at))
+            .limit(100)
+        )
+    ).scalars().all()
+    conversation_ids = [row.id for row in conversations]
+    if not conversation_ids:
+        return {"items": []}
+
+    messages = (
+        await session.execute(
+            select(Message)
+            .where(Message.conversation_id.in_(conversation_ids))
+            .order_by(desc(Message.created_at))
+        )
+    ).scalars().all()
+
+    message_count: Dict[uuid.UUID, int] = defaultdict(int)
+    last_message: Dict[uuid.UUID, Message] = {}
+    for msg in messages:
+        message_count[msg.conversation_id] += 1
+        if msg.conversation_id not in last_message:
+            last_message[msg.conversation_id] = msg
+
+    listing_ids = {row.listing_id for row in conversations if row.listing_id}
+    buyer_ids = {row.buyer_id for row in conversations if row.buyer_id}
+
+    listing_map = {}
+    if listing_ids:
+        listing_map = {
+            row.id: row
+            for row in (await session.execute(select(Listing).where(Listing.id.in_(listing_ids)))).scalars().all()
+        }
+    buyer_map = {}
+    if buyer_ids:
+        buyer_map = {
+            row.id: row
+            for row in (await session.execute(select(SqlUser).where(SqlUser.id.in_(buyer_ids)))).scalars().all()
+        }
+
+    items = []
+    for conv in conversations:
+        last = last_message.get(conv.id)
+        listing = listing_map.get(conv.listing_id) if conv.listing_id else None
+        buyer = buyer_map.get(conv.buyer_id) if conv.buyer_id else None
+        items.append(
+            {
+                "conversation_id": str(conv.id),
+                "listing_id": str(conv.listing_id) if conv.listing_id else None,
+                "listing_title": listing.title if listing else None,
+                "buyer_id": str(conv.buyer_id) if conv.buyer_id else None,
+                "buyer_email": buyer.email if buyer else None,
+                "message_count": int(message_count.get(conv.id) or 0),
+                "last_message": (last.body if last else None),
+                "last_message_at": last.created_at.isoformat() if last and last.created_at else None,
+            }
+        )
+    return {"items": items}
+
+
+@api_router.get("/dealer/customers")
+async def dealer_customers(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    conversations = (
+        await session.execute(select(Conversation).where(Conversation.seller_id == dealer_uuid))
+    ).scalars().all()
+    if not conversations:
+        return {"items": []}
+
+    conversation_ids = [row.id for row in conversations]
+    messages = (
+        await session.execute(select(Message).where(Message.conversation_id.in_(conversation_ids)))
+    ).scalars().all()
+
+    by_buyer: Dict[uuid.UUID, Dict[str, Any]] = {}
+    conv_to_buyer = {row.id: row.buyer_id for row in conversations}
+    for conv in conversations:
+        if not conv.buyer_id:
+            continue
+        bucket = by_buyer.setdefault(
+            conv.buyer_id,
+            {
+                "conversation_count": 0,
+                "total_messages": 0,
+                "last_contact_at": None,
+            },
+        )
+        bucket["conversation_count"] += 1
+
+    for msg in messages:
+        buyer_id = conv_to_buyer.get(msg.conversation_id)
+        if not buyer_id or buyer_id not in by_buyer:
+            continue
+        bucket = by_buyer[buyer_id]
+        bucket["total_messages"] += 1
+        if not bucket["last_contact_at"] or (msg.created_at and msg.created_at > bucket["last_contact_at"]):
+            bucket["last_contact_at"] = msg.created_at
+
+    buyer_ids = list(by_buyer.keys())
+    users = (
+        await session.execute(select(SqlUser).where(SqlUser.id.in_(buyer_ids)))
+    ).scalars().all()
+    user_map = {row.id: row for row in users}
+
+    items = []
+    for buyer_id, stats in by_buyer.items():
+        user = user_map.get(buyer_id)
+        items.append(
+            {
+                "customer_id": str(buyer_id),
+                "customer_email": user.email if user else None,
+                "customer_name": user.full_name if user else None,
+                "conversation_count": int(stats["conversation_count"]),
+                "total_messages": int(stats["total_messages"]),
+                "last_contact_at": stats["last_contact_at"].isoformat() if stats["last_contact_at"] else None,
+            }
+        )
+    items.sort(key=lambda item: item.get("last_contact_at") or "", reverse=True)
+    return {"items": items}
+
+
+@api_router.get("/dealer/reports")
+async def dealer_reports(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    now_dt = datetime.now(timezone.utc)
+    week_start = now_dt - timedelta(days=7)
+
+    views_7d = (
+        await session.execute(
+            select(func.count())
+            .select_from(ListingView)
+            .join(Listing, ListingView.listing_id == Listing.id)
+            .where(Listing.dealer_id == dealer_uuid, ListingView.created_at >= week_start)
+        )
+    ).scalar_one()
+
+    contact_clicks_7d = (
+        await session.execute(
+            select(func.count())
+            .select_from(UserInteraction)
+            .join(Listing, UserInteraction.listing_id == Listing.id)
+            .where(
+                Listing.dealer_id == dealer_uuid,
+                UserInteraction.created_at >= week_start,
+                UserInteraction.event_type.in_(["contact_click", "dealer_contact_click"]),
+            )
+        )
+    ).scalar_one()
+
+    return {
+        "kpis": {
+            "views_7d": int(views_7d or 0),
+            "contact_clicks_7d": int(contact_clicks_7d or 0),
+        }
+    }
+
+
+@api_router.get("/dealer/settings/profile")
+async def dealer_settings_profile(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(current_user.get("id"))
+    profile = (
+        await session.execute(select(DealerProfile).where(DealerProfile.user_id == user_uuid))
+    ).scalar_one_or_none()
+    user_obj = await session.get(SqlUser, user_uuid)
+
+    if not profile:
+        return {
+            "profile": {
+                "company_name": user_obj.full_name if user_obj else "",
+                "authorized_person": user_obj.full_name if user_obj else "",
+                "contact_email": user_obj.email if user_obj else "",
+                "contact_phone": user_obj.phone_e164 if user_obj else "",
+                "address_street": "",
+                "address_zip": "",
+                "address_city": "",
+                "address_country": user_obj.country_code if user_obj else "DE",
+                "logo_url": "",
+            }
+        }
+
+    return {
+        "profile": {
+            "company_name": profile.company_name,
+            "authorized_person": profile.authorized_person,
+            "contact_email": profile.contact_email,
+            "contact_phone": profile.contact_phone,
+            "address_street": profile.address_street,
+            "address_zip": profile.address_zip,
+            "address_city": profile.address_city,
+            "address_country": profile.address_country,
+            "logo_url": profile.logo_url,
+        }
+    }
+
+
+@api_router.patch("/dealer/settings/profile")
+async def dealer_settings_profile_update(
+    payload: DealerSettingsUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(current_user.get("id"))
+    user_obj = await session.get(SqlUser, user_uuid)
+    profile = (
+        await session.execute(select(DealerProfile).where(DealerProfile.user_id == user_uuid))
+    ).scalar_one_or_none()
+
+    if not profile:
+        profile = DealerProfile(
+            user_id=user_uuid,
+            company_name=(payload.company_name or user_obj.full_name or "Dealer").strip(),
+            contact_email=payload.contact_email or user_obj.email,
+            contact_phone=payload.contact_phone,
+            address_country=payload.address_country or user_obj.country_code or "DE",
+            authorized_person=payload.authorized_person or user_obj.full_name,
+        )
+        session.add(profile)
+
+    update_data = payload.model_dump(exclude_none=True)
+    for field, value in update_data.items():
+        if isinstance(value, str):
+            value = value.strip()
+        setattr(profile, field, value)
+
+    if not profile.company_name:
+        raise HTTPException(status_code=400, detail="company_name is required")
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_PROFILE_UPDATE",
+        actor=current_user,
+        resource_type="dealer_profile",
+        resource_id=str(profile.user_id),
+        metadata={"fields": list(update_data.keys())},
+        request=request,
+        country_code=(user_obj.country_code if user_obj else None),
+    )
+    await session.commit()
+    return {"ok": True}
+
+
 def _resolve_payment_status(value: Optional[str]) -> str:
     normalized = (value or "").lower()
     if normalized in {"paid", "succeeded"}:
