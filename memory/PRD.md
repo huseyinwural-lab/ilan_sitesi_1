@@ -529,3 +529,51 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### Bu tur dokunulmadı
 - P1.2 listing→index senkron hooklarının tam kapsamı (partial değil, bir sonraki adımda devam)
 - Facet/autocomplete/search UI (P1.3+)
+
+---
+
+## 2026-02-26 — P1.2 Listing → Index Senkronizasyonu (Core) Tamamlandı
+
+### Teslim Edilenler
+- Search projection contract endpoint eklendi:
+  - `GET /api/admin/search/meili/contract`
+- Listing senkron hookları eklendi (event-driven):
+  - create/update/publish/unpublish/archive/soft-delete/moderation transition
+- Retry queue altyapısı eklendi:
+  - `search_sync_jobs` tablosu
+  - `pending|processing|retry|done|dead_letter`
+  - exponential backoff + max retry + dead-letter
+- Queue yönetim endpointleri eklendi:
+  - `GET /api/admin/search/meili/sync-jobs`
+  - `POST /api/admin/search/meili/sync-jobs/process`
+- Bulk reindex endpoint + script eklendi:
+  - `POST /api/admin/search/meili/reindex`
+  - `backend/scripts/reindex_meili_projection.py`
+- Stage doğrulama endpointleri eklendi:
+  - `GET /api/admin/search/meili/health`
+  - `GET /api/admin/search/meili/stage-smoke`
+  - `GET /api/search/meili`
+
+### Teknik Dosyalar
+- Backend:
+  - `backend/server.py`
+  - `backend/app/models/search_sync_job.py`
+  - `backend/app/services/meilisearch_index.py`
+  - `backend/app/services/meilisearch_config.py` (settings güncellemesi)
+  - `backend/scripts/reindex_meili_projection.py`
+- Dokümantasyon:
+  - `/app/docs/P1_2_LISTING_INDEX_SYNC_EVIDENCE.md`
+  - `/app/docs/P1_MEILI_PRODUCTION_RUNBOOK.md`
+
+### Doğrulama
+- Testing agent raporu: `/app/test_reports/iteration_14.json`
+  - backend 21/21 PASS
+  - frontend PASS
+- Ek self-test:
+  - Hook publish→index add, unpublish→index remove
+  - reindex `max_docs=120` ile 100+ doküman testi
+  - stage-smoke ranking sort: `premium_score:desc`, `published_at:desc`
+
+### Bilinen Sınır
+- Gerçek external Meili URL+key ile stage/prod smoke, admin panelde aktif edilen confige bağlıdır.
+- Aktif config yoksa health/reindex/stage-smoke endpointleri fail-fast `ACTIVE_CONFIG_REQUIRED` döner.
