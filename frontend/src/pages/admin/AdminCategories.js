@@ -242,6 +242,15 @@ const AdminCategories = () => {
   const { selectedCountry } = useCountry();
   const { user, hasPermission } = useAuth();
   const [items, setItems] = useState([]);
+  const [listFilters, setListFilters] = useState({
+    module: "all",
+    status: "all",
+  });
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkConfirmValue, setBulkConfirmValue] = useState("");
+  const [pendingBulkAction, setPendingBulkAction] = useState("");
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
