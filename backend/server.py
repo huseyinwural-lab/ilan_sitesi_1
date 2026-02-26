@@ -1,4 +1,5 @@
 import math
+import asyncio
 import os
 import re
 import io
@@ -139,6 +140,8 @@ from app.models.meilisearch_config import MeiliSearchConfig
 from app.models.search_sync_job import SearchSyncJob
 from app.models.system_setting import SystemSetting
 from app.models.dealer_portal_config import DealerNavItem, DealerModule
+from app.models.dealer_config_revision import DealerConfigRevision
+from app.models.category_bulk_job import CategoryBulkJob
 from app.models.admin_invite import AdminInvite
 from app.models.menu_item import MenuItem
 from app.models.report import Report
@@ -207,6 +210,12 @@ VEHICLE_IMPORT_BATCH_SIZE = 200
 VEHICLE_IMPORT_SECONDS_PER_RECORD = 0.015
 VEHICLE_IMPORT_YEAR_MIN = 1900
 VEHICLE_IMPORT_YEAR_MAX = 2100
+CATEGORY_BULK_SYNC_THRESHOLD = 1000
+CATEGORY_BULK_ASYNC_MAX_RECORDS = 10000
+CATEGORY_BULK_JOB_MAX_ATTEMPTS = 5
+CATEGORY_BULK_JOB_CLAIM_TTL_SECONDS = 120
+CATEGORY_BULK_JOB_RETRY_BASE_SECONDS = 30
+CATEGORY_BULK_JOB_WORKER_INTERVAL_SECONDS = 3
 ATTRIBUTE_KEY_PATTERN = re.compile(r"^[a-z0-9_]+$")
 VAT_ID_PATTERN = re.compile(r"^[A-Z]{2}[A-Z0-9]{6,12}$")
 
