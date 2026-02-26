@@ -1477,8 +1477,9 @@ const AdminCategories = () => {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
+      const parsed = parseApiError(data, "Kaydetme sırasında hata oluştu.");
       if (res.status === 409) {
-        if (String(data?.detail || "").toLowerCase().includes("hiyerar")) {
+        if (String(parsed.message || "").toLowerCase().includes("hiyerar")) {
           showDraftToast({
             title: "Kaydetme başarısız",
             description: "Kategori tamamlanmadan kaydedilemez.",
@@ -1500,8 +1501,14 @@ const AdminCategories = () => {
         });
         dismissDraftToast(4000);
       }
+      if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
+        setHierarchyFieldErrors((prev) => ({ ...prev, main_sort_order: parsed.message }));
+      }
+      if (parsed.errorCode === "VEHICLE_SEGMENT_NOT_FOUND" || parsed.errorCode === "VEHICLE_SEGMENT_ALREADY_DEFINED") {
+        setVehicleSegmentError(parsed.message);
+      }
       if (!autosave) {
-        setHierarchyError(data?.detail || "Kaydetme sırasında hata oluştu.");
+        setHierarchyError(parsed.message);
         restoreSnapshot();
       }
       setAutosaveStatus("idle");
