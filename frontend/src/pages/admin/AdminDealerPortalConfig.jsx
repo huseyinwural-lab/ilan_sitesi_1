@@ -147,21 +147,37 @@ export default function AdminDealerPortalConfig() {
   };
 
   const updateNavVisibility = async (item, visible) => {
-    await fetch(`${API}/admin/dealer-portal/nav/${item.id}`, {
-      method: 'PATCH',
-      headers: { ...authHeader, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ visible }),
-    });
-    await fetchAll();
+    try {
+      const res = await fetch(`${API}/admin/dealer-portal/nav/${item.id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visible }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(resolveErrorMessage(data, 'Görünürlük güncellenemedi'));
+      setLastSavedAt(new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      await fetchAll();
+    } catch (err) {
+      setError(err?.message || 'Görünürlük güncellenemedi');
+      toast({ title: 'Güncelleme başarısız', description: err?.message || 'Görünürlük güncellenemedi', variant: 'destructive' });
+    }
   };
 
   const updateModuleVisibility = async (item, visible) => {
-    await fetch(`${API}/admin/dealer-portal/modules/${item.id}`, {
-      method: 'PATCH',
-      headers: { ...authHeader, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ visible }),
-    });
-    await fetchAll();
+    try {
+      const res = await fetch(`${API}/admin/dealer-portal/modules/${item.id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visible }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(resolveErrorMessage(data, 'Modül görünürlüğü güncellenemedi'));
+      setLastSavedAt(new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      await fetchAll();
+    } catch (err) {
+      setError(err?.message || 'Modül görünürlüğü güncellenemedi');
+      toast({ title: 'Güncelleme başarısız', description: err?.message || 'Modül görünürlüğü güncellenemedi', variant: 'destructive' });
+    }
   };
 
   const sidebarItems = navItems.filter((row) => row.location === 'sidebar').sort((a, b) => a.order_index - b.order_index);
