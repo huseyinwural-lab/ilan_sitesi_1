@@ -18728,6 +18728,8 @@ async def admin_create_attribute(
     )
     await session.commit()
 
+    await _sync_meili_filterable_attributes_from_db(session)
+
     await session.refresh(attribute)
     return {"attribute": _serialize_attribute_sql(attribute, payload.category_id)}
 
@@ -18751,6 +18753,37 @@ async def admin_update_attribute(
     attribute = result.scalar_one_or_none()
     if not attribute:
         raise HTTPException(status_code=404, detail="Attribute not found")
+
+    target_category_id: Optional[str] = None
+    if payload.category_id is not None:
+        try:
+            category_uuid = uuid.UUID(payload.category_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid category id") from exc
+        category_exists = (await session.execute(select(Category.id).where(Category.id == category_uuid))).scalar_one_or_none()
+        if not category_exists:
+            raise HTTPException(status_code=400, detail="category_id not found")
+        target_category_id = str(category_uuid)
+
+        mapping_rows = (
+            await session.execute(
+                select(CategoryAttributeMap).where(CategoryAttributeMap.attribute_id == attribute_uuid)
+            )
+        ).scalars().all()
+        selected_mapping = None
+        for mapping in mapping_rows:
+            if mapping.category_id == category_uuid:
+                selected_mapping = mapping
+            mapping.is_active = mapping.category_id == category_uuid
+        if not selected_mapping:
+            selected_mapping = CategoryAttributeMap(
+                category_id=category_uuid,
+                attribute_id=attribute_uuid,
+                is_required_override=bool(payload.required_flag) if payload.required_flag is not None else bool(attribute.is_required),
+                inherit_to_children=True,
+                is_active=True,
+            )
+            session.add(selected_mapping)
 
     if payload.name is not None:
         attribute.name = {"tr": payload.name.strip()}
@@ -18780,6 +18813,14 @@ async def admin_update_attribute(
             )
     if payload.required_flag is not None:
         attribute.is_required = bool(payload.required_flag)
+        mapping_rows = (
+            await session.execute(
+                select(CategoryAttributeMap).where(CategoryAttributeMap.attribute_id == attribute_uuid)
+            )
+        ).scalars().all()
+        for mapping in mapping_rows:
+            if mapping.is_active:
+                mapping.is_required_override = bool(payload.required_flag)
     if payload.filterable_flag is not None:
         attribute.is_filterable = bool(payload.filterable_flag)
     if payload.active_flag is not None:
@@ -18797,8 +18838,19 @@ async def admin_update_attribute(
     )
     await session.commit()
 
+    await _sync_meili_filterable_attributes_from_db(session)
+
     await session.refresh(attribute)
-    return {"attribute": _serialize_attribute_sql(attribute, None)}
+    if not target_category_id:
+        mapping = (
+            await session.execute(
+                select(CategoryAttributeMap)
+                .where(CategoryAttributeMap.attribute_id == attribute_uuid, CategoryAttributeMap.is_active.is_(True))
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        target_category_id = str(mapping.category_id) if mapping else None
+    return {"attribute": _serialize_attribute_sql(attribute, target_category_id)}
 
 
 @api_router.delete("/admin/attributes/{attribute_id}")
@@ -18838,6 +18890,8 @@ async def admin_delete_attribute(
         country_code=None,
     )
     await session.commit()
+
+    await _sync_meili_filterable_attributes_from_db(session)
 
     return {"attribute": _serialize_attribute_sql(attribute, None)}
 
