@@ -11426,10 +11426,11 @@ async def _assert_vehicle_segment_unique_in_country(
     country_code: Optional[str],
     exclude_category_id: Optional[uuid.UUID] = None,
 ) -> None:
+    segment_expr = Category.form_schema.op("->")("category_meta").op("->>")("vehicle_segment")
     query = select(Category).where(
         Category.is_deleted.is_(False),
         Category.module == "vehicle",
-        func.lower(Category.form_schema["category_meta"]["vehicle_segment"].astext) == vehicle_segment,
+        func.lower(segment_expr) == vehicle_segment,
     )
 
     if country_code:
