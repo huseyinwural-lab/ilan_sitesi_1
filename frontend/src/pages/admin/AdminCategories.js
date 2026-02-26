@@ -929,11 +929,17 @@ const AdminCategories = () => {
         return;
       }
     }
+    const invalidSort = items.find((item) => !Number.isFinite(Number(item.sort_order)) || Number(item.sort_order) <= 0);
+    if (invalidSort) {
+      setHierarchyError(`Kategori ${levelIndex + 1} için sıra 1 veya daha büyük olmalıdır.`);
+      return;
+    }
 
     const normalizedItems = items.map((item) => ({
       ...item,
       name: item.name.trim(),
       slug: item.slug.trim().toLowerCase(),
+      sort_order: Number(item.sort_order || 0),
       is_complete: true,
       children: item.children || [],
     }));
