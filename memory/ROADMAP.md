@@ -59,17 +59,19 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 
 ### Public/Commercial Phase Durumu
 - Dealer Dashboard + Manuel Kontrol Sistemi v1 — **IN PROGRESS (RESTARTED)** 🔴
-  - Backend foundation hazır (config modelleri + API)
-  - Kategori P0 kapanışı sonrası yeniden başlatıldı
+  - Backend foundation + P1 core implementasyonu hazır (config render, 3 katman header, dnd persist)
+  - Kategori P0 kapanışı sonrası yeniden başlatıldı ve ilk iterasyon PASS aldı (`/app/test_reports/iteration_23.json`)
 
 ### Sıradaki Faz — Dealer Dashboard P1 (Restart)
 - **ACTIVE** 🔴
-- Başlangıç kapsamı:
-  - Config-driven render finalizasyonu
+- Bu iterasyonda tamamlananlar:
+  - Config-driven render finalizasyonu (header row1/row2/row3 + modules)
   - dnd-kit menü yönetimi kalıcı kaydetme
-  - Header 1. satır sabit + manuel sıralama
+  - Header 1. satır sabit default set + manuel sıralama
   - 2. satır modül bazlı manuel sıralama
   - 3. satır mağaza filtresi + kullanıcı dropdown
+- Sonraki iterasyon:
+  - Undo paneli (değişiklik özeti + son işlem geri al) [kapsam dışı bırakıldı, planlı]
 
 ---
 
