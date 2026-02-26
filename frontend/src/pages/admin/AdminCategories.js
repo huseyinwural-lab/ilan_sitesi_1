@@ -200,6 +200,23 @@ const sanitizeSchemaStrings = (value) => {
   return value;
 };
 
+const parseApiError = (payload, fallbackMessage) => {
+  const detail = payload?.detail;
+  if (typeof detail === "string") {
+    return { errorCode: payload?.error_code || "", message: detail || fallbackMessage };
+  }
+  if (detail && typeof detail === "object") {
+    return {
+      errorCode: detail.error_code || payload?.error_code || "",
+      message: detail.message || payload?.message || fallbackMessage,
+    };
+  }
+  return {
+    errorCode: payload?.error_code || "",
+    message: payload?.message || fallbackMessage,
+  };
+};
+
 const AdminCategories = () => {
   const { selectedCountry } = useCountry();
   const { user, hasPermission } = useAuth();
