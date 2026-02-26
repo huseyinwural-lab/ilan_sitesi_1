@@ -1640,6 +1640,7 @@ const AdminCategories = () => {
         ...node,
         name: node.name ? node.name.trim() : "",
         slug: node.slug ? node.slug.trim().toLowerCase() : "",
+        sort_order: Number(node.sort_order || 0),
         is_complete: true,
         children: normalizeTree(node.children || []),
       }))
@@ -1663,11 +1664,17 @@ const AdminCategories = () => {
         if (nodePath.length === 3 && !node.transaction_type) {
           fieldErrors[`level-${pathKey}-transaction`] = "Alt tip zorunludur.";
         }
+        if (!Number.isFinite(Number(node.sort_order)) || Number(node.sort_order) <= 0) {
+          fieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
+        }
         if (!node.name || !node.slug) {
           return `${label} için ad ve slug zorunludur.`;
         }
         if (nodePath.length === 3 && !node.transaction_type) {
           return `${label} için alt tip zorunludur.`;
+        }
+        if (!Number.isFinite(Number(node.sort_order)) || Number(node.sort_order) <= 0) {
+          return `${label} için sıra 1 veya daha büyük olmalıdır.`;
         }
         if ((node.children || []).length > 0) {
           const childError = validateTree(node.children, nodePath);
@@ -1677,14 +1684,16 @@ const AdminCategories = () => {
       return "";
     };
 
-    const cleanedSubs = normalizeTree(subcategories);
-    const validationError = validateTree(cleanedSubs);
-    if (validationError) {
-      if (Object.keys(fieldErrors).length > 0) {
-        setHierarchyFieldErrors(fieldErrors);
+    const cleanedSubs = isVehicleModule ? [] : normalizeTree(subcategories);
+    if (!isVehicleModule) {
+      const validationError = validateTree(cleanedSubs);
+      if (validationError) {
+        if (Object.keys(fieldErrors).length > 0) {
+          setHierarchyFieldErrors(fieldErrors);
+        }
+        setHierarchyError(validationError);
+        return { success: false };
       }
-      setHierarchyError(validationError);
-      return { success: false };
     }
 
     const persistSubcategories = async (nodes, parentId) => {
