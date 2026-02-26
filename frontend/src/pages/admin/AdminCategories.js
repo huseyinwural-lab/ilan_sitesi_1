@@ -482,6 +482,7 @@ const AdminCategories = () => {
     persistSnapshot({
       form: nextForm,
       schema: nextSchema,
+      vehicle_segment: serverVehicleSegment,
       hierarchy_complete: Boolean(category.hierarchy_complete),
       wizard_progress: nextWizardProgress,
     });
