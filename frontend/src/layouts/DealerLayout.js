@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useDealerPortalConfig } from '@/hooks/useDealerPortalConfig';
+import { useUIHeaderConfig } from '@/hooks/useUIHeaderConfig';
 import { trackDealerEvent } from '@/lib/dealerAnalytics';
 
 const languageOptions = [
@@ -86,8 +87,43 @@ export default function DealerLayout() {
     sidebarItems,
     modules,
   } = useDealerPortalConfig();
+  const { configData: corporateHeaderConfig, logoUrl: corporateLogoUrl } = useUIHeaderConfig({
+    segment: 'corporate',
+    authRequired: true,
+  });
   const [selectedStore, setSelectedStore] = useState('all');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const corporateRowMap = useMemo(() => {
+    const rows = Array.isArray(corporateHeaderConfig?.rows) ? corporateHeaderConfig.rows : [];
+    const map = {};
+    rows.forEach((row) => {
+      const rowId = `${row?.id || ''}`.trim().toLowerCase();
+      if (!rowId) return;
+      const set = new Set();
+      const blocks = Array.isArray(row?.blocks) ? row.blocks : [];
+      blocks.forEach((block) => {
+        const type = `${block?.type || ''}`.trim();
+        if (type) set.add(type);
+      });
+      map[rowId] = set;
+    });
+    return map;
+  }, [corporateHeaderConfig]);
+
+  const hasCorporateBlock = (rowId, type, fallback = true) => {
+    const row = corporateRowMap[rowId];
+    if (!row) return fallback;
+    return row.has(type);
+  };
+
+  const showRow1Logo = hasCorporateBlock('row1', 'logo', true);
+  const showRow1QuickActions = hasCorporateBlock('row1', 'quick_actions', true);
+  const showRow1Language = hasCorporateBlock('row1', 'language_switcher', true);
+  const showRow2FixedBlocks = hasCorporateBlock('row2', 'fixed_blocks', true);
+  const showRow2Modules = hasCorporateBlock('row2', 'modules', true);
+  const showRow3StoreFilter = hasCorporateBlock('row3', 'store_filter', true);
+  const showRow3UserMenu = hasCorporateBlock('row3', 'user_menu', true);
 
   const activePath = useMemo(() => location.pathname, [location.pathname]);
   const row1Actions = useMemo(
@@ -134,161 +170,186 @@ export default function DealerLayout() {
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 lg:px-6" data-testid="dealer-layout-header-rows">
           <div className="flex flex-wrap items-center justify-between gap-3" data-testid="dealer-layout-header-row1">
             <div className="flex items-center gap-3" data-testid="dealer-layout-brand-wrap">
-              <button
-                type="button"
-                onClick={() => navigate('/dealer/overview')}
-                className="flex h-10 w-28 items-center justify-center rounded bg-yellow-400 text-sm font-bold text-slate-900"
-                data-testid="dealer-layout-brand-button"
-              >
-                ANNONCIA
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/dealer/overview')}
-                className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700"
-                data-testid="dealer-layout-main-menu-button"
-              >
-                Ana Menü
-              </button>
+              {showRow1Logo ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/dealer/overview')}
+                  className="flex h-10 min-w-28 items-center justify-center rounded bg-yellow-400 px-2 text-sm font-bold text-slate-900"
+                  data-testid="dealer-layout-brand-button"
+                >
+                  {corporateLogoUrl ? (
+                    <img
+                      src={corporateLogoUrl}
+                      alt="Kurumsal Logo"
+                      className="h-8 w-28 object-contain"
+                      data-testid="dealer-layout-brand-image"
+                    />
+                  ) : (
+                    <span data-testid="dealer-layout-brand-fallback">ANNONCIA</span>
+                  )}
+                </button>
+              ) : null}
+              {showRow1QuickActions ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/dealer/overview')}
+                  className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                  data-testid="dealer-layout-main-menu-button"
+                >
+                  Ana Menü
+                </button>
+              ) : null}
               <span className="text-xs uppercase tracking-[0.2em] text-slate-500" data-testid="dealer-layout-portal-label">
                 Kurumsal Portal
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2" data-testid="dealer-layout-quick-actions">
-              {row1Actions.map((item) => {
-                const Icon = iconMap[item.icon] || LayoutDashboard;
-                return (
-                  <NavLink
-                    key={item.id}
-                    to={item.route}
-                    onClick={() => handleNavClick(item, 'header_row1')}
-                    className={({ isActive }) =>
-                      `inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                        isActive ? 'border-[var(--brand-navy)] text-[var(--brand-navy)]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                      }`
-                    }
-                    data-testid={`dealer-header-row1-action-${item.key}`}
-                  >
-                    <Icon size={14} />
-                    <span>{resolveLabel(item.label_i18n_key, t)}</span>
-                  </NavLink>
-                );
-              })}
+            {(showRow1QuickActions || showRow1Language) ? (
+              <div className="flex flex-wrap items-center gap-2" data-testid="dealer-layout-quick-actions">
+                {showRow1QuickActions ? row1Actions.map((item) => {
+                  const Icon = iconMap[item.icon] || LayoutDashboard;
+                  return (
+                    <NavLink
+                      key={item.id}
+                      to={item.route}
+                      onClick={() => handleNavClick(item, 'header_row1')}
+                      className={({ isActive }) =>
+                        `inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                          isActive ? 'border-[var(--brand-navy)] text-[var(--brand-navy)]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`
+                      }
+                      data-testid={`dealer-header-row1-action-${item.key}`}
+                    >
+                      <Icon size={14} />
+                      <span>{resolveLabel(item.label_i18n_key, t)}</span>
+                    </NavLink>
+                  );
+                }) : null}
 
-              <div className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1" data-testid="dealer-layout-language-toggle">
-                {languageOptions.map((option) => (
-                  <button
-                    key={option.key}
-                    type="button"
-                    onClick={() => setLanguage(option.key)}
-                    className={`rounded-full px-2 py-1 text-xs font-semibold ${language === option.key ? 'bg-white text-slate-900' : 'text-slate-500'}`}
-                    data-testid={`dealer-layout-language-${option.key}`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+                {showRow1Language ? (
+                  <div className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1" data-testid="dealer-layout-language-toggle">
+                    {languageOptions.map((option) => (
+                      <button
+                        key={option.key}
+                        type="button"
+                        onClick={() => setLanguage(option.key)}
+                        className={`rounded-full px-2 py-1 text-xs font-semibold ${language === option.key ? 'bg-white text-slate-900' : 'text-slate-500'}`}
+                        data-testid={`dealer-layout-language-${option.key}`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-            </div>
+            ) : null}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2" data-testid="dealer-layout-header-row2">
-            {(headerRow1FixedBlocks || []).map((block) => (
-              <span
-                key={block.key}
-                className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600"
-                data-testid={`dealer-layout-header-row1-fixed-${block.key}`}
-              >
-                {block.label}
-              </span>
-            ))}
-            {row2Modules.map((module) => {
-              const route = moduleRouteMap[module.data_source_key] || '/dealer/overview';
-              const isActive = activePath === route || activePath.startsWith(`${route}/`);
-              return (
-                <button
-                  type="button"
-                  key={module.id}
-                  onClick={() => {
-                    trackDealerEvent('dealer_header_module_click', {
-                      key: module.key,
-                      route,
-                      location: 'header_row2',
-                    });
-                    navigate(route);
-                  }}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                    isActive ? 'border-[var(--brand-navy)] text-[var(--brand-navy)] bg-[var(--bg-warm-soft)]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                  }`}
-                  data-testid={`dealer-header-row2-module-${module.key}`}
+          {(showRow2FixedBlocks || showRow2Modules) ? (
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2" data-testid="dealer-layout-header-row2">
+              {showRow2FixedBlocks ? (headerRow1FixedBlocks || []).map((block) => (
+                <span
+                  key={block.key}
+                  className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600"
+                  data-testid={`dealer-layout-header-row1-fixed-${block.key}`}
                 >
-                  {resolveModuleLabel(module.title_i18n_key, module.key, t)}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-2" data-testid="dealer-layout-header-row3">
-            <div className="flex items-center gap-2" data-testid="dealer-layout-row3-store-wrap">
-              <label className="text-xs font-semibold text-slate-600" data-testid="dealer-layout-row3-store-label">
-                Mağaza
-              </label>
-              <select
-                value={selectedStore}
-                onChange={(event) => handleStoreChange(event.target.value)}
-                className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm"
-                data-testid="dealer-layout-row3-store-filter"
-                disabled={!headerRow3Controls?.store_filter_enabled}
-              >
-                {row3Stores.map((store) => (
-                  <option key={store.key} value={store.key} data-testid={`dealer-layout-row3-store-option-${store.key}`}>
-                    {store.label}
-                  </option>
-                ))}
-              </select>
+                  {block.label}
+                </span>
+              )) : null}
+              {showRow2Modules ? row2Modules.map((module) => {
+                const route = moduleRouteMap[module.data_source_key] || '/dealer/overview';
+                const isActive = activePath === route || activePath.startsWith(`${route}/`);
+                return (
+                  <button
+                    type="button"
+                    key={module.id}
+                    onClick={() => {
+                      trackDealerEvent('dealer_header_module_click', {
+                        key: module.key,
+                        route,
+                        location: 'header_row2',
+                      });
+                      navigate(route);
+                    }}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      isActive ? 'border-[var(--brand-navy)] text-[var(--brand-navy)] bg-[var(--bg-warm-soft)]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                    }`}
+                    data-testid={`dealer-header-row2-module-${module.key}`}
+                  >
+                    {resolveModuleLabel(module.title_i18n_key, module.key, t)}
+                  </button>
+                );
+              }) : null}
             </div>
+          ) : null}
 
-            <div className="relative" data-testid="dealer-layout-row3-user-menu-wrap">
-              <button
-                type="button"
-                onClick={() => setUserMenuOpen((prev) => !prev)}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-3 py-1.5 text-xs"
-                data-testid="dealer-layout-row3-user-menu-button"
-                disabled={!headerRow3Controls?.user_dropdown_enabled}
-              >
-                <UserRound size={14} />
-                <span data-testid="dealer-layout-user-label">{user?.full_name || user?.email}</span>
-              </button>
-
-              {userMenuOpen && (
-                <div className="absolute right-0 top-11 z-20 min-w-[180px] rounded-xl border bg-white p-2 shadow-lg" data-testid="dealer-layout-row3-user-menu-dropdown">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUserMenuOpen(false);
-                      navigate('/dealer/settings');
-                    }}
-                    className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
-                    data-testid="dealer-layout-row3-user-menu-profile"
+          {(showRow3StoreFilter || showRow3UserMenu) ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-2" data-testid="dealer-layout-header-row3">
+              {showRow3StoreFilter ? (
+                <div className="flex items-center gap-2" data-testid="dealer-layout-row3-store-wrap">
+                  <label className="text-xs font-semibold text-slate-600" data-testid="dealer-layout-row3-store-label">
+                    Mağaza
+                  </label>
+                  <select
+                    value={selectedStore}
+                    onChange={(event) => handleStoreChange(event.target.value)}
+                    className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm"
+                    data-testid="dealer-layout-row3-store-filter"
+                    disabled={!headerRow3Controls?.store_filter_enabled}
                   >
-                    Profil / Ayarlar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUserMenuOpen(false);
-                      handleLogout();
-                    }}
-                    className="mt-1 inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
-                    data-testid="dealer-layout-row3-user-menu-logout"
-                  >
-                    <LogOut size={14} />
-                    {t('logout')}
-                  </button>
+                    {row3Stores.map((store) => (
+                      <option key={store.key} value={store.key} data-testid={`dealer-layout-row3-store-option-${store.key}`}>
+                        {store.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              )}
+              ) : <div data-testid="dealer-layout-row3-store-wrap-empty" />}
+
+              {showRow3UserMenu ? (
+                <div className="relative" data-testid="dealer-layout-row3-user-menu-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setUserMenuOpen((prev) => !prev)}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-3 py-1.5 text-xs"
+                    data-testid="dealer-layout-row3-user-menu-button"
+                    disabled={!headerRow3Controls?.user_dropdown_enabled}
+                  >
+                    <UserRound size={14} />
+                    <span data-testid="dealer-layout-user-label">{user?.full_name || user?.email}</span>
+                  </button>
+
+                  {userMenuOpen && (
+                    <div className="absolute right-0 top-11 z-20 min-w-[180px] rounded-xl border bg-white p-2 shadow-lg" data-testid="dealer-layout-row3-user-menu-dropdown">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          navigate('/dealer/settings');
+                        }}
+                        className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                        data-testid="dealer-layout-row3-user-menu-profile"
+                      >
+                        Profil / Ayarlar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="mt-1 inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
+                        data-testid="dealer-layout-row3-user-menu-logout"
+                      >
+                        <LogOut size={14} />
+                        {t('logout')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : <div data-testid="dealer-layout-row3-user-menu-wrap-empty" />}
             </div>
-          </div>
+          ) : null}
         </div>
       </header>
 
