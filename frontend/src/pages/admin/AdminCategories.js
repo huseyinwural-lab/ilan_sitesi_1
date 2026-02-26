@@ -524,7 +524,7 @@ const AdminCategories = () => {
   const buildSavePayload = (status, activeEditing, progressState, options = {}) => {
     const payload = {
       ...form,
-      sort_order: Number(form.sort_order || 0),
+      sort_order: Number(form.sort_order || 1),
       vehicle_segment: form.module === "vehicle" ? vehicleSegment : undefined,
       hierarchy_complete: effectiveHierarchyComplete,
       expected_updated_at: activeEditing?.updated_at,
