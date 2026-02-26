@@ -2453,20 +2453,20 @@ const AdminCategories = () => {
                       </div>
                       <div className="space-y-1">
                         <label className={labelClassName}>Sıra</label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min={0}
-                            className={inputClassName}
-                            value={form.sort_order || ''}
-                            disabled
-                            readOnly
-                            data-testid="categories-sort-input"
-                          />
-                          <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] text-slate-600" data-testid="categories-sort-auto">
-                            Otomatik
-                          </span>
-                        </div>
+                        <input
+                          type="number"
+                          min={1}
+                          className={inputClassName}
+                          value={form.sort_order || ''}
+                          disabled={isHierarchyLocked}
+                          onChange={(e) => setForm((prev) => ({ ...prev, sort_order: e.target.value }))}
+                          data-testid="categories-sort-input"
+                        />
+                        {hierarchyFieldErrors.main_sort_order && (
+                          <div className="text-xs text-rose-600" data-testid="categories-sort-error">
+                            {hierarchyFieldErrors.main_sort_order}
+                          </div>
+                        )}
                       </div>
                       <label className="flex items-center gap-2 text-sm text-slate-800" data-testid="categories-active-wrapper">
                         <input
