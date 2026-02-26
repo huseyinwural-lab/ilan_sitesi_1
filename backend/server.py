@@ -18419,7 +18419,7 @@ async def admin_category_order_index_preview(
     request: Request,
     country: Optional[str] = None,
     module: str,
-    parent_id: Optional[str],
+    parent_id: Optional[str] = None,
     sort_order: int,
     exclude_id: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
