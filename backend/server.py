@@ -15302,6 +15302,23 @@ def _serialize_meili_config(config: MeiliSearchConfig) -> dict:
     }
 
 
+def _actor_payload(actor: Any) -> dict:
+    if isinstance(actor, dict):
+        actor_id = actor.get("id") or actor.get("sub")
+        return {
+            "id": str(actor_id) if actor_id else None,
+            "email": actor.get("email"),
+            "country_scope": actor.get("country_scope") or [],
+        }
+
+    actor_id = getattr(actor, "id", None) or getattr(actor, "sub", None)
+    return {
+        "id": str(actor_id) if actor_id else None,
+        "email": getattr(actor, "email", None),
+        "country_scope": getattr(actor, "country_scope", None) or [],
+    }
+
+
 async def _load_meili_config_or_404(session: AsyncSession, config_id: str) -> MeiliSearchConfig:
     try:
         config_uuid = uuid.UUID(config_id)
@@ -15382,7 +15399,8 @@ async def admin_create_meilisearch_config(
     except MeiliConfigError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    actor_id = current_user.get("id") or current_user.get("sub")
+    actor = _actor_payload(current_user)
+    actor_id = actor.get("id")
     now_ts = datetime.now(timezone.utc)
     config = MeiliSearchConfig(
         id=uuid.uuid4(),
@@ -15407,10 +15425,7 @@ async def admin_create_meilisearch_config(
     await _write_audit_log_sql(
         session=session,
         action="MEILI_CONFIG_CREATE",
-        actor={
-            **current_user,
-            "id": str(actor_id) if actor_id else None,
-        },
+        actor=actor,
         resource_type="meilisearch_config",
         resource_id=str(config.id),
         metadata={
@@ -15468,7 +15483,7 @@ async def admin_test_meilisearch_config(
     await _write_audit_log_sql(
         session=session,
         action="MEILI_CONFIG_TEST",
-        actor=current_user,
+        actor=_actor_payload(current_user),
         resource_type="meilisearch_config",
         resource_id=str(config.id),
         metadata={
@@ -15536,7 +15551,7 @@ async def admin_activate_meilisearch_config(
     await _write_audit_log_sql(
         session=session,
         action="MEILI_CONFIG_ACTIVATE" if activated else "MEILI_CONFIG_ACTIVATE_REJECTED",
-        actor=current_user,
+        actor=_actor_payload(current_user),
         resource_type="meilisearch_config",
         resource_id=str(config.id),
         metadata={
@@ -15578,7 +15593,7 @@ async def admin_revoke_meilisearch_config(
     await _write_audit_log_sql(
         session=session,
         action="MEILI_CONFIG_REVOKE",
-        actor=current_user,
+        actor=_actor_payload(current_user),
         resource_type="meilisearch_config",
         resource_id=str(config.id),
         metadata={"status": "revoked"},
