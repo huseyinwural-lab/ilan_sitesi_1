@@ -15287,6 +15287,310 @@ async def admin_delete_country(
     return {"message": "Country deleted successfully"}
 
 
+def _serialize_meili_config(config: MeiliSearchConfig) -> dict:
+    return {
+        "id": str(config.id),
+        "created_at": config.created_at.isoformat() if config.created_at else None,
+        "updated_at": config.updated_at.isoformat() if config.updated_at else None,
+        "created_by": config.created_by,
+        "meili_url": config.meili_url,
+        "meili_index_name": config.meili_index_name,
+        "status": config.status,
+        "master_key_masked": "••••",
+        "last_tested_at": config.last_tested_at.isoformat() if config.last_tested_at else None,
+        "last_test_result": config.last_test_result,
+    }
+
+
+async def _load_meili_config_or_404(session: AsyncSession, config_id: str) -> MeiliSearchConfig:
+    try:
+        config_uuid = uuid.UUID(config_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid config id") from exc
+
+    result = await session.execute(select(MeiliSearchConfig).where(MeiliSearchConfig.id == config_uuid))
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="Meilisearch config not found")
+    return config
+
+
+@api_router.get("/admin/system-settings/meilisearch")
+async def admin_get_meilisearch_active_config(
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    active = (
+        (
+            await session.execute(
+                select(MeiliSearchConfig)
+                .where(MeiliSearchConfig.status == "active")
+                .order_by(desc(MeiliSearchConfig.updated_at), desc(MeiliSearchConfig.created_at))
+                .limit(1)
+            )
+        )
+        .scalars()
+        .first()
+    )
+    return {
+        "encryption_key_present": bool(os.environ.get("CONFIG_ENCRYPTION_KEY")),
+        "active_config": _serialize_meili_config(active) if active else None,
+        "default_index_name": "listings_index",
+    }
+
+
+@api_router.get("/admin/system-settings/meilisearch/history")
+async def admin_list_meilisearch_config_history(
+    status: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    query = select(MeiliSearchConfig)
+    if status:
+        normalized_status = status.strip().lower()
+        if normalized_status not in {"active", "inactive", "revoked"}:
+            raise HTTPException(status_code=400, detail="Invalid status filter")
+        query = query.where(MeiliSearchConfig.status == normalized_status)
+    rows = (
+        (
+            await session.execute(
+                query.order_by(desc(MeiliSearchConfig.created_at)).limit(200)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return {
+        "items": [_serialize_meili_config(item) for item in rows],
+    }
+
+
+@api_router.post("/admin/system-settings/meilisearch", status_code=201)
+async def admin_create_meilisearch_config(
+    payload: MeiliSearchConfigCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if not os.environ.get("CONFIG_ENCRYPTION_KEY"):
+        raise HTTPException(status_code=400, detail="CONFIG_ENCRYPTION_KEY missing")
+
+    try:
+        normalized_url = normalize_meili_url(payload.meili_url)
+        index_name = (payload.meili_index_name or "listings_index").strip() or "listings_index"
+        encrypted_master_key = encrypt_meili_master_key(payload.meili_master_key)
+    except MeiliConfigError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    now_ts = datetime.now(timezone.utc)
+    config = MeiliSearchConfig(
+        id=uuid.uuid4(),
+        created_at=now_ts,
+        updated_at=now_ts,
+        created_by=current_user.get("id"),
+        meili_url=normalized_url,
+        meili_index_name=index_name,
+        meili_master_key_ciphertext=encrypted_master_key,
+        status="inactive",
+        last_tested_at=None,
+        last_test_result={
+            "status": "FAIL",
+            "ok": False,
+            "reason_code": "pending_test",
+            "message": "Config saved. Activate için test PASS gerekli.",
+            "checked_at": now_ts.isoformat(),
+        },
+    )
+    session.add(config)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="MEILI_CONFIG_CREATE",
+        actor=current_user,
+        resource_type="meilisearch_config",
+        resource_id=str(config.id),
+        metadata={
+            "status": config.status,
+            "meili_url": config.meili_url,
+            "meili_index_name": config.meili_index_name,
+        },
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+    await session.refresh(config)
+
+    logging.getLogger("meilisearch_config").info(
+        "meili_config_saved config_id=%s status=%s",
+        str(config.id),
+        config.status,
+    )
+
+    return {"ok": True, "config": _serialize_meili_config(config)}
+
+
+@api_router.post("/admin/system-settings/meilisearch/{config_id}/test")
+async def admin_test_meilisearch_config(
+    config_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    config = await _load_meili_config_or_404(session, config_id)
+    if config.status == "revoked":
+        raise HTTPException(status_code=400, detail="Revoked config cannot be tested")
+
+    try:
+        master_key = decrypt_meili_master_key(config.meili_master_key_ciphertext)
+    except MeiliConfigError as exc:
+        result = {
+            "status": "FAIL",
+            "ok": False,
+            "reason_code": exc.code,
+            "message": str(exc),
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+        }
+    else:
+        result = await test_and_prepare_meili_index(
+            meili_url=config.meili_url,
+            master_key=master_key,
+            index_name=config.meili_index_name,
+        )
+
+    config.last_tested_at = datetime.now(timezone.utc)
+    config.last_test_result = result
+    config.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="MEILI_CONFIG_TEST",
+        actor=current_user,
+        resource_type="meilisearch_config",
+        resource_id=str(config.id),
+        metadata={
+            "status": result.get("status"),
+            "reason_code": result.get("reason_code"),
+        },
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    logging.getLogger("meilisearch_config").info(
+        "meili_config_test config_id=%s status=%s reason=%s",
+        str(config.id),
+        result.get("status"),
+        result.get("reason_code"),
+    )
+
+    return {"ok": bool(result.get("ok")), "result": result, "config": _serialize_meili_config(config)}
+
+
+@api_router.post("/admin/system-settings/meilisearch/{config_id}/activate")
+async def admin_activate_meilisearch_config(
+    config_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    config = await _load_meili_config_or_404(session, config_id)
+    if config.status == "revoked":
+        raise HTTPException(status_code=400, detail="Revoked config cannot be activated")
+
+    try:
+        master_key = decrypt_meili_master_key(config.meili_master_key_ciphertext)
+        test_result = await test_and_prepare_meili_index(
+            meili_url=config.meili_url,
+            master_key=master_key,
+            index_name=config.meili_index_name,
+        )
+    except MeiliConfigError as exc:
+        test_result = {
+            "status": "FAIL",
+            "ok": False,
+            "reason_code": exc.code,
+            "message": str(exc),
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    now_ts = datetime.now(timezone.utc)
+    config.last_tested_at = now_ts
+    config.last_test_result = test_result
+    config.updated_at = now_ts
+
+    activated = bool(test_result.get("ok"))
+    if activated:
+        await session.execute(
+            update(MeiliSearchConfig)
+            .where(MeiliSearchConfig.id != config.id, MeiliSearchConfig.status == "active")
+            .values(status="inactive", updated_at=now_ts)
+        )
+        config.status = "active"
+    elif config.status == "active":
+        config.status = "inactive"
+
+    await _write_audit_log_sql(
+        session=session,
+        action="MEILI_CONFIG_ACTIVATE" if activated else "MEILI_CONFIG_ACTIVATE_REJECTED",
+        actor=current_user,
+        resource_type="meilisearch_config",
+        resource_id=str(config.id),
+        metadata={
+            "status": test_result.get("status"),
+            "reason_code": test_result.get("reason_code"),
+            "activated": activated,
+        },
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    logging.getLogger("meilisearch_config").info(
+        "meili_config_activate config_id=%s activated=%s reason=%s",
+        str(config.id),
+        str(activated).lower(),
+        test_result.get("reason_code"),
+    )
+
+    return {
+        "ok": activated,
+        "activated": activated,
+        "result": test_result,
+        "config": _serialize_meili_config(config),
+    }
+
+
+@api_router.post("/admin/system-settings/meilisearch/{config_id}/revoke")
+async def admin_revoke_meilisearch_config(
+    config_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    config = await _load_meili_config_or_404(session, config_id)
+    config.status = "revoked"
+    config.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="MEILI_CONFIG_REVOKE",
+        actor=current_user,
+        resource_type="meilisearch_config",
+        resource_id=str(config.id),
+        metadata={"status": "revoked"},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    logging.getLogger("meilisearch_config").info(
+        "meili_config_revoked config_id=%s",
+        str(config.id),
+    )
+
+    return {"ok": True, "config": _serialize_meili_config(config)}
+
+
 @api_router.get("/admin/system-settings")
 async def admin_list_system_settings(
     request: Request,
