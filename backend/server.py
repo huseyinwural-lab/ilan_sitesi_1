@@ -10918,6 +10918,12 @@ async def _admin_listing_action(
         listing.published_at = None
 
     await session.commit()
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger=event_type.lower(),
+    )
 
     await log_action(
         db=session,
