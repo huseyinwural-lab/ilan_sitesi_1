@@ -1950,7 +1950,8 @@ const AdminCategories = () => {
         });
         const patchData = await patchRes.json().catch(() => ({}));
         if (!patchRes.ok) {
-          setHierarchyError(patchData?.detail || "Kategori güncellenemedi.");
+          const parsed = parseApiError(patchData, "Kategori güncellenemedi.");
+          setHierarchyError(parsed.message);
           return { success: false };
         }
         updatedParent = patchData?.category || updatedParent;
