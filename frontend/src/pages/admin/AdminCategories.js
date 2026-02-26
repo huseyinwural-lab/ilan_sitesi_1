@@ -217,6 +217,27 @@ const parseApiError = (payload, fallbackMessage) => {
   };
 };
 
+const TriStateCheckbox = ({ checked, indeterminate, onChange, disabled, testId }) => {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.indeterminate = Boolean(indeterminate);
+    }
+  }, [indeterminate]);
+
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={Boolean(checked)}
+      disabled={disabled}
+      onChange={onChange}
+      data-testid={testId}
+    />
+  );
+};
+
 const AdminCategories = () => {
   const { selectedCountry } = useCountry();
   const { user, hasPermission } = useAuth();
