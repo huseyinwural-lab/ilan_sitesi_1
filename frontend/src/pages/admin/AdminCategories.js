@@ -1721,7 +1721,7 @@ const AdminCategories = () => {
 
     if (isVehicleModule && !vehicleSegment) {
       setVehicleSegmentError("Vasıta modülü için segment adı zorunludur.");
-      setHierarchyError("Vasıta modülü için segment seçimi zorunludur.");
+      setHierarchyError("Vasıta modülü için segment adı zorunludur.");
       return { success: false };
     }
 
