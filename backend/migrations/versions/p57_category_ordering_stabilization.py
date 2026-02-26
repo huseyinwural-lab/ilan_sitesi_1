@@ -116,28 +116,53 @@ def upgrade() -> None:
     total_conflict_count = 0
 
     for (country_code, module, parent_id), scope_rows in by_scope.items():
-        assigned_orders: set[int] = set()
-        next_candidate = 1
-
         before = [f"{row.id}: {int(row.sort_order or 0)}" for row in scope_rows]
         after: list[str] = []
         scope_affected_ids: list[str] = []
         scope_conflict_count = 0
 
+        by_order = defaultdict(list)
         for row in scope_rows:
             old_order = int(row.sort_order or 0)
-            use_old_order = old_order > 0 and old_order not in assigned_orders
+            if old_order > 0:
+                by_order[old_order].append(row)
 
-            if use_old_order:
-                new_order = old_order
-                assigned_orders.add(new_order)
-            else:
-                while next_candidate in assigned_orders:
-                    next_candidate += 1
-                new_order = next_candidate
-                assigned_orders.add(new_order)
+        assigned_orders: set[int] = {order for order, rows_with_order in by_order.items() if len(rows_with_order) == 1}
+        reassignment_rows = []
+        preserved_ids = set()
+
+        for order, rows_with_order in sorted(by_order.items(), key=lambda item: item[0]):
+            if len(rows_with_order) <= 1:
+                preserved_ids.add(str(rows_with_order[0].id))
+                continue
+            keep_row = rows_with_order[0]
+            preserved_ids.add(str(keep_row.id))
+            assigned_orders.add(order)
+            reassignment_rows.extend(rows_with_order[1:])
+
+        for row in scope_rows:
+            old_order = int(row.sort_order or 0)
+            if old_order <= 0:
+                reassignment_rows.append(row)
+
+        next_candidate = 1
+        reassigned_orders: dict[str, int] = {}
+        for row in reassignment_rows:
+            while next_candidate in assigned_orders:
                 next_candidate += 1
+            reassigned_orders[str(row.id)] = next_candidate
+            assigned_orders.add(next_candidate)
+            next_candidate += 1
+
+        for row in scope_rows:
+            old_order = int(row.sort_order or 0)
+            row_id = str(row.id)
+
+            if row_id in reassigned_orders:
+                new_order = reassigned_orders[row_id]
                 scope_conflict_count += 1
+            else:
+                new_order = old_order
 
             after.append(f"{row.id}: {new_order}")
 
