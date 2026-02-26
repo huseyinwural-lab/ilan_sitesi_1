@@ -169,6 +169,7 @@ from app.services.meilisearch_index import (
     bulk_reindex_search_projection,
     get_active_meili_runtime,
     meili_clear_documents,
+    meili_index_stats,
     meili_search_documents,
     meili_update_filterable_attributes,
     stable_numeric_id,
