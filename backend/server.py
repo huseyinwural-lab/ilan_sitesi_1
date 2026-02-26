@@ -18773,6 +18773,8 @@ async def admin_update_category(
     country_value = category.country_code
     schema = None
     schema_status = None
+    vehicle_segment = None
+    vehicle_link_status: Optional[Dict[str, Any]] = None
 
     if payload.name is not None:
         updates["name"] = payload.name.strip()
