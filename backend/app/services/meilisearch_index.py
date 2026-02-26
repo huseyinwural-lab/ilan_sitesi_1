@@ -1,4 +1,5 @@
 import hashlib
+import asyncio
 import re
 import unicodedata
 import uuid
@@ -230,6 +231,26 @@ async def meili_update_filterable_attributes(runtime: Dict[str, str], filterable
             )
         if response.status_code not in (200, 202):
             raise RuntimeError(f"meili_filterable_update_failed_{response.status_code}")
+        task_uid = None
+        try:
+            payload = response.json()
+            task_uid = payload.get("taskUid") or payload.get("uid")
+        except Exception:
+            task_uid = None
+
+        if task_uid is not None:
+            for _ in range(20):
+                task_resp = await client.get(f"/tasks/{task_uid}")
+                if task_resp.status_code != 200:
+                    await asyncio.sleep(0.25)
+                    continue
+                task_payload = task_resp.json()
+                status = task_payload.get("status")
+                if status == "succeeded":
+                    break
+                if status in {"failed", "canceled"}:
+                    raise RuntimeError(f"meili_filterable_task_{status}")
+                await asyncio.sleep(0.25)
     return {"ok": True}
 
 
