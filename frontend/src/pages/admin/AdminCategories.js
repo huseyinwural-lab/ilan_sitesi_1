@@ -487,6 +487,7 @@ const AdminCategories = () => {
     setHierarchyComplete(Boolean(category.hierarchy_complete));
     setLastSavedAt(formatTime(category.updated_at || new Date()));
     setVehicleSegment(serverVehicleSegment);
+    setVehicleSegmentError("");
     setVehicleLinkStatus((prev) => ({
       ...prev,
       linked: serverVehicleLinked,
@@ -494,6 +495,7 @@ const AdminCategories = () => {
         ? (serverVehicleLinked ? "Master data bağlantısı hazır." : "Master data bağlantısı doğrulanmadı.")
         : "",
     }));
+    setOrderPreview({ checking: false, available: true, message: "", conflict: null });
     persistSnapshot({
       form: nextForm,
       schema: nextSchema,
