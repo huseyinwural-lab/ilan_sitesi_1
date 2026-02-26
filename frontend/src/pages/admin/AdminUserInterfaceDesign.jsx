@@ -34,7 +34,7 @@ function HeaderConfigTab({ segment, testIdPrefix }) {
     setError('');
     try {
       const response = await fetch(
-        `${API}/admin/ui/header?segment=${segment}&scope=${scope}${scopeQuery}&status=draft`,
+        `${API}/admin/ui/configs/header?segment=${segment}&scope=${scope}${scopeQuery}&status=draft`,
         { headers: authHeader },
       );
       const data = await response.json().catch(() => ({}));
@@ -66,7 +66,7 @@ function HeaderConfigTab({ segment, testIdPrefix }) {
         config_data: parseJsonOrThrow(headerJson, 'Header config'),
       };
 
-      const response = await fetch(`${API}/admin/ui/header`, {
+      const response = await fetch(`${API}/admin/ui/configs/header`, {
         method: 'POST',
         headers: {
           ...authHeader,
@@ -96,7 +96,7 @@ function HeaderConfigTab({ segment, testIdPrefix }) {
     setStatus('');
     setError('');
     try {
-      const response = await fetch(`${API}/admin/ui/header/publish/${configId}`, {
+      const response = await fetch(`${API}/admin/ui/configs/header/publish/${configId}`, {
         method: 'POST',
         headers: authHeader,
       });
