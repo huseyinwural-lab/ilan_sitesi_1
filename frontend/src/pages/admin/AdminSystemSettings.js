@@ -138,6 +138,132 @@ export default function AdminSystemSettingsPage() {
     }
   };
 
+  const fetchMeiliActiveConfig = async () => {
+    if (!isSystemAdmin) return;
+    setMeiliLoading(true);
+    setMeiliError('');
+    try {
+      const res = await axios.get(`${API}/admin/system-settings/meilisearch`, { headers: authHeader });
+      setMeiliActiveConfig(res.data?.active_config || null);
+      setMeiliEncryptionKeyPresent(Boolean(res.data?.encryption_key_present));
+      if (!meiliForm.meili_index_name) {
+        setMeiliForm((prev) => ({
+          ...prev,
+          meili_index_name: res.data?.default_index_name || DEFAULT_MEILI_INDEX_NAME,
+        }));
+      }
+    } catch (e) {
+      setMeiliError(e.response?.data?.detail || 'Meilisearch aktif konfig alınamadı');
+    } finally {
+      setMeiliLoading(false);
+    }
+  };
+
+  const fetchMeiliHistory = async () => {
+    if (!isSystemAdmin) return;
+    try {
+      const res = await axios.get(`${API}/admin/system-settings/meilisearch/history`, { headers: authHeader });
+      setMeiliHistory(res.data?.items || []);
+    } catch (e) {
+      setMeiliError(e.response?.data?.detail || 'Meilisearch geçmişi alınamadı');
+    }
+  };
+
+  const handleSaveMeiliConfig = async () => {
+    if (!isSystemAdmin) return;
+    if (!meiliEncryptionKeyPresent) {
+      setMeiliError('Kaydedilemedi: CONFIG_ENCRYPTION_KEY eksik.');
+      return;
+    }
+    if (!meiliForm.meili_url || !meiliForm.meili_master_key) {
+      setMeiliError('Meili URL ve Master Key zorunludur.');
+      return;
+    }
+    setMeiliSaving(true);
+    setMeiliError('');
+    setMeiliNotice('');
+    try {
+      const payload = {
+        meili_url: meiliForm.meili_url,
+        meili_index_name: meiliForm.meili_index_name || DEFAULT_MEILI_INDEX_NAME,
+        meili_master_key: meiliForm.meili_master_key,
+      };
+      const res = await axios.post(`${API}/admin/system-settings/meilisearch`, payload, { headers: authHeader });
+      const savedId = res.data?.config?.id;
+      setMeiliLatestConfigId(savedId || null);
+      setMeiliNotice('Konfig kaydedildi. Aktivasyon için Test PASS gereklidir.');
+      setMeiliForm((prev) => ({
+        ...prev,
+        meili_master_key: '',
+      }));
+      await fetchMeiliActiveConfig();
+      await fetchMeiliHistory();
+    } catch (e) {
+      setMeiliError(e.response?.data?.detail || 'Konfig kaydedilemedi');
+    } finally {
+      setMeiliSaving(false);
+    }
+  };
+
+  const handleTestMeiliConfig = async (configId) => {
+    if (!isSystemAdmin || !configId) return;
+    setMeiliTestingId(configId);
+    setMeiliError('');
+    setMeiliNotice('');
+    try {
+      const res = await axios.post(`${API}/admin/system-settings/meilisearch/${configId}/test`, {}, { headers: authHeader });
+      const testStatus = res.data?.result?.status;
+      const reasonCode = res.data?.result?.reason_code;
+      setMeiliNotice(`Test sonucu: ${testStatus || 'UNKNOWN'} (${reasonCode || 'none'})`);
+      await fetchMeiliActiveConfig();
+      await fetchMeiliHistory();
+    } catch (e) {
+      setMeiliError(e.response?.data?.detail || 'Test başarısız');
+    } finally {
+      setMeiliTestingId(null);
+    }
+  };
+
+  const handleActivateMeiliConfig = async (configId) => {
+    if (!isSystemAdmin || !configId) return;
+    setMeiliActivatingId(configId);
+    setMeiliError('');
+    setMeiliNotice('');
+    try {
+      const res = await axios.post(`${API}/admin/system-settings/meilisearch/${configId}/activate`, {}, { headers: authHeader });
+      const ok = Boolean(res.data?.ok);
+      const reasonCode = res.data?.result?.reason_code;
+      if (ok) {
+        setMeiliNotice('Konfig aktif edildi. Search katmanı bu konfig ile çalışacak.');
+      } else {
+        setMeiliError(`Aktivasyon reddedildi: ${reasonCode || 'test_failed'}`);
+      }
+      await fetchMeiliActiveConfig();
+      await fetchMeiliHistory();
+    } catch (e) {
+      setMeiliError(e.response?.data?.detail || 'Aktivasyon başarısız');
+    } finally {
+      setMeiliActivatingId(null);
+    }
+  };
+
+  const handleRevokeMeiliConfig = async (configId) => {
+    if (!isSystemAdmin || !configId) return;
+    setMeiliRevokingId(configId);
+    setMeiliError('');
+    setMeiliNotice('');
+    try {
+      await axios.post(`${API}/admin/system-settings/meilisearch/${configId}/revoke`, {}, { headers: authHeader });
+      setMeiliNotice('Konfig revoke edildi.');
+      await fetchMeiliActiveConfig();
+      await fetchMeiliHistory();
+    } catch (e) {
+      setMeiliError(e.response?.data?.detail || 'Revoke başarısız');
+    } finally {
+      setMeiliRevokingId(null);
+    }
+  };
+
   const handleSaveCloudflare = async () => {
     if (!encryptionKeyPresent) {
       setCloudflareError('Kaydedilemedi: Güvenlik anahtarı eksik.');
