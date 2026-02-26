@@ -18817,13 +18817,6 @@ async def admin_update_category(
         updates["parent_id"] = parent.id if parent else None
         updates["path"] = f"{parent.path}.{updates.get('slug') or _pick_category_slug(category.slug)}" if parent and parent.path else (updates.get("slug") or _pick_category_slug(category.slug))
         updates["depth"] = (parent.depth + 1) if parent else 0
-        if payload.sort_order is None:
-            updates["sort_order"] = await _next_category_sort_order(
-                session,
-                parent_id=parent.id if parent else None,
-                module_value=module_value,
-                country_code=country_value,
-            )
 
     if payload.sort_order is not None:
         if int(payload.sort_order) <= 0:
@@ -18838,6 +18831,15 @@ async def admin_update_category(
         country_value = code
         if code:
             updates["allowed_countries"] = [code]
+
+    if payload.parent_id is not None and payload.sort_order is None:
+        parent_for_order = parent_candidate if payload.parent_id is not None else None
+        updates["sort_order"] = await _next_category_sort_order(
+            session,
+            parent_id=parent_for_order.id if parent_for_order else None,
+            module_value=module_value,
+            country_code=country_value,
+        )
 
     should_validate_parent = payload.parent_id is not None or payload.module is not None or payload.country_code is not None
     if should_validate_parent:
