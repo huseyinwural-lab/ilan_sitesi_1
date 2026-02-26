@@ -2555,7 +2555,84 @@ const AdminCategories = () => {
       </div>
 
       <div className="bg-white border rounded-lg text-slate-900">
-        <div className="grid grid-cols-7 text-xs font-semibold uppercase px-4 py-2 border-b bg-gray-50 text-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 bg-gray-50" data-testid="categories-list-filters-wrap">
+          <div className="flex flex-wrap items-center gap-2" data-testid="categories-list-filters">
+            <select
+              value={listFilters.module}
+              onChange={(event) => setListFilters((prev) => ({ ...prev, module: event.target.value }))}
+              className="h-9 rounded-md border px-3 text-sm"
+              data-testid="categories-list-filter-module"
+            >
+              <option value="all">Tüm Modüller</option>
+              {CATEGORY_MODULE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+
+            <select
+              value={listFilters.status}
+              onChange={(event) => setListFilters((prev) => ({ ...prev, status: event.target.value }))}
+              className="h-9 rounded-md border px-3 text-sm"
+              data-testid="categories-list-filter-status"
+            >
+              <option value="all">Tüm Durumlar</option>
+              <option value="active">Aktif</option>
+              <option value="passive">Pasif</option>
+            </select>
+          </div>
+
+          <div className="text-xs text-slate-600" data-testid="categories-list-selection-meta">
+            Seçili: <span className="font-semibold" data-testid="categories-list-selection-count">{selectedIds.length}</span>
+          </div>
+        </div>
+
+        {selectedIds.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-4 py-3" data-testid="categories-bulk-actions-bar">
+            <div className="text-sm font-medium text-amber-800" data-testid="categories-bulk-actions-summary">
+              {selectedIds.length} kayıt seçildi (aktif filtre kapsamı)
+            </div>
+            <div className="flex flex-wrap items-center gap-2" data-testid="categories-bulk-actions-buttons">
+              <button
+                type="button"
+                className="rounded border px-3 py-1.5 text-sm"
+                disabled={bulkRunning}
+                onClick={() => executeBulkAction("activate")}
+                data-testid="categories-bulk-activate"
+              >
+                Seçilenleri Aktif Et
+              </button>
+              <button
+                type="button"
+                className="rounded border px-3 py-1.5 text-sm"
+                disabled={bulkRunning}
+                onClick={() => executeBulkAction("deactivate")}
+                data-testid="categories-bulk-deactivate"
+              >
+                Seçilenleri Pasif Et
+              </button>
+              <button
+                type="button"
+                className="rounded border border-rose-300 px-3 py-1.5 text-sm text-rose-700"
+                disabled={bulkRunning}
+                onClick={openBulkDeleteConfirm}
+                data-testid="categories-bulk-delete"
+              >
+                Seçilenleri Sil
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-[40px_1.2fr_1fr_0.7fr_0.8fr_0.6fr_0.7fr_1.5fr] text-xs font-semibold uppercase px-4 py-2 border-b bg-gray-50 text-slate-800">
+          <div>
+            <TriStateCheckbox
+              checked={allVisibleSelected}
+              indeterminate={someVisibleSelected && !allVisibleSelected}
+              onChange={(event) => toggleAllVisibleSelection(event.target.checked)}
+              disabled={visibleItems.length === 0}
+              testId="categories-select-all-checkbox"
+            />
+          </div>
           <div>Ad</div>
           <div>Slug</div>
           <div>Ülke</div>
@@ -2566,34 +2643,45 @@ const AdminCategories = () => {
         </div>
         {loading ? (
           <div className="p-4 text-sm text-slate-800" data-testid="categories-loading">Yükleniyor...</div>
-        ) : items.length === 0 ? (
+        ) : visibleItems.length === 0 ? (
           <div className="p-4 text-sm text-slate-800" data-testid="categories-empty">Kayıt yok.</div>
         ) : (
-          items.map((item) => (
-            <div key={item.id} className="grid grid-cols-7 px-4 py-3 border-b text-sm items-center text-slate-900">
-              <div className="font-semibold text-slate-900">{item.name}</div>
-              <div className="text-slate-800">{item.slug}</div>
-              <div className="text-slate-800">{item.country_code || "global"}</div>
-              <div className="text-slate-800">{item.module || '-'}</div>
-              <div className="text-slate-800">{item.sort_order}</div>
-              <div>
-                <span className={`px-2 py-1 rounded text-xs ${item.active_flag ? "bg-green-100 text-green-700" : "bg-gray-100 text-slate-800"}`}>
-                  {item.active_flag ? "Aktif" : "Pasif"}
-                </span>
+          visibleItems.map((item) => {
+            const rowSelection = getItemSelectionState(item.id);
+            return (
+              <div key={item.id} className="grid grid-cols-[40px_1.2fr_1fr_0.7fr_0.8fr_0.6fr_0.7fr_1.5fr] px-4 py-3 border-b text-sm items-center text-slate-900" data-testid={`categories-row-${item.id}`}>
+                <div>
+                  <TriStateCheckbox
+                    checked={rowSelection.checked}
+                    indeterminate={rowSelection.indeterminate}
+                    onChange={(event) => toggleItemSelection(item, event.target.checked)}
+                    testId={`categories-row-select-${item.id}`}
+                  />
+                </div>
+                <div className="font-semibold text-slate-900" style={{ paddingLeft: `${Math.min(Number(item.depth || 0), 5) * 12}px` }} data-testid={`categories-row-name-${item.id}`}>{item.name}</div>
+                <div className="text-slate-800" data-testid={`categories-row-slug-${item.id}`}>{item.slug}</div>
+                <div className="text-slate-800" data-testid={`categories-row-country-${item.id}`}>{item.country_code || "global"}</div>
+                <div className="text-slate-800" data-testid={`categories-row-module-${item.id}`}>{item.module || '-'}</div>
+                <div className="text-slate-800" data-testid={`categories-row-sort-${item.id}`}>{item.sort_order}</div>
+                <div>
+                  <span className={`px-2 py-1 rounded text-xs ${item.active_flag ? "bg-green-100 text-green-700" : "bg-gray-100 text-slate-800"}`} data-testid={`categories-row-status-${item.id}`}>
+                    {item.active_flag ? "Aktif" : "Pasif"}
+                  </span>
+                </div>
+                <div className="flex justify-end gap-2 text-slate-900" data-testid={`categories-row-actions-${item.id}`}>
+                  <button className="text-sm px-3 py-1 border rounded" onClick={() => handleEdit(item)} data-testid={`categories-edit-${item.id}`}>
+                    Düzenle
+                  </button>
+                  <button className="text-sm px-3 py-1 border rounded" onClick={() => handleToggle(item)} data-testid={`categories-toggle-${item.id}`}>
+                    {item.active_flag ? "Pasif Et" : "Aktif Et"}
+                  </button>
+                  <button className="text-sm px-3 py-1 border rounded" onClick={() => handleDelete(item)} data-testid={`categories-delete-${item.id}`}>
+                    Sil
+                  </button>
+                </div>
               </div>
-              <div className="flex justify-end gap-2 text-slate-900">
-                <button className="text-sm px-3 py-1 border rounded" onClick={() => handleEdit(item)} data-testid={`categories-edit-${item.id}`}>
-                  Düzenle
-                </button>
-                <button className="text-sm px-3 py-1 border rounded" onClick={() => handleToggle(item)} data-testid={`categories-toggle-${item.id}`}>
-                  {item.active_flag ? "Pasif Et" : "Aktif Et"}
-                </button>
-                <button className="text-sm px-3 py-1 border rounded" onClick={() => handleDelete(item)} data-testid={`categories-delete-${item.id}`}>
-                  Sil
-                </button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
