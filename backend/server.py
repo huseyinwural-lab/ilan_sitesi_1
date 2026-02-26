@@ -14332,8 +14332,17 @@ async def dealer_portal_config(
     role = current_user.get("role") or "dealer"
     country_code = (current_user.get("country_code") or "").upper() or None
     resolved = await _resolve_dealer_portal_config(session, role=role, country_code=country_code)
+    row3_controls = await _dealer_header_row3_controls(
+        session,
+        user_id=current_user.get("id"),
+        fallback_label=current_user.get("full_name") or current_user.get("email"),
+    )
     return {
         "header_items": resolved["header_items"],
+        "header_row1_items": resolved["header_row1_items"],
+        "header_row1_fixed_blocks": resolved["header_row1_fixed_blocks"],
+        "header_row2_modules": resolved["header_row2_modules"],
+        "header_row3_controls": row3_controls,
         "sidebar_items": resolved["sidebar_items"],
         "modules": resolved["modules"],
     }
@@ -14363,8 +14372,17 @@ async def admin_dealer_portal_config_preview(
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
     resolved = await _resolve_dealer_portal_config(session, role="dealer", country_code=country_code)
+    row3_controls = await _dealer_header_row3_controls(
+        session,
+        user_id=None,
+        fallback_label="Mağazam",
+    )
     return {
         "header_items": resolved["header_items"],
+        "header_row1_items": resolved["header_row1_items"],
+        "header_row1_fixed_blocks": resolved["header_row1_fixed_blocks"],
+        "header_row2_modules": resolved["header_row2_modules"],
+        "header_row3_controls": row3_controls,
         "sidebar_items": resolved["sidebar_items"],
         "modules": resolved["modules"],
     }
