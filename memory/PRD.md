@@ -677,3 +677,27 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Testing agent final raporu: `/app/test_reports/iteration_19.json` (**PASS**)
 - Evidence dosyası: `/app/docs/DEALER_DASHBOARD_V1_EVIDENCE.md`
 
+---
+
+## 2026-02-26 — P0 Kategori Yönetimi Düzeltmesi (Bloklayıcı)
+
+### Tamamlanan P0 Kapsamı
+- `module` standardizasyonu: `real_estate`, `vehicle`, `other` (+ alias map: `emlak/realestate/vasita/machinery/services/jobs`)
+- Wizard’da `Diğer` seçeneği ve manuel `Sıra` (sort/order_index) düzenleme aktif
+- Vehicle akışı: segment seçimi + master data link doğrulama zorunlu
+- `GET /api/admin/categories/vehicle-segment/link-status` endpointi eklendi
+
+### Veri Bütünlüğü / Migration
+- Yeni migration: `/app/backend/migrations/versions/p56_category_scope_ordering.py`
+- Scope unique index: `uq_categories_scope_sort` on `(country_code, module, parent_id, sort_order)` (soft-delete aware)
+- Eski modül değerleri normalize edildi
+- Migration raporu üretildi: `/app/docs/CATEGORY_ORDER_MIGRATION_REPORT.md`
+
+### Doğrulama
+- Kapsamlı test raporu: `/app/test_reports/iteration_20.json` (**PASS**)
+- Doğrulanan başlıklar:
+  - unique constraint canlı doğrulama
+  - vehicle segment-link edge-case testleri
+  - real_estate/other multi-level regresyonu
+  - wizard validation ve next/complete akışları
+
