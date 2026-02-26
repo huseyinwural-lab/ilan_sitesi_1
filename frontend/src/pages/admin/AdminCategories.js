@@ -173,7 +173,7 @@ const createSubcategoryDraft = () => ({
   name: "",
   slug: "",
   active_flag: true,
-  sort_order: 0,
+  sort_order: 1,
   transaction_type: "",
   is_complete: false,
   children: [],
@@ -223,7 +223,7 @@ const AdminCategories = () => {
     country_code: "",
     module: "",
     active_flag: true,
-    sort_order: 0,
+    sort_order: 1,
   });
   const [vehicleSegment, setVehicleSegment] = useState("");
   const [vehicleLinkStatus, setVehicleLinkStatus] = useState({
@@ -1102,7 +1102,7 @@ const AdminCategories = () => {
       country_code: selectedCountry || "",
       module: "",
       active_flag: true,
-      sort_order: 0,
+      sort_order: 1,
     });
     setSchema(createDefaultSchema());
     setEditing(null);
@@ -1169,7 +1169,7 @@ const AdminCategories = () => {
       country_code: item.country_code || "",
       module: item.module || "",
       active_flag: item.active_flag ?? true,
-      sort_order: item.sort_order || 0,
+      sort_order: item.sort_order || 1,
     });
     setSchema(applySchemaDefaults(item.form_schema));
     setWizardStep("hierarchy");
