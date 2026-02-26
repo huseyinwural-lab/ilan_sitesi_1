@@ -48,6 +48,7 @@ from app.models.site_header import SiteHeaderSetting
 from app.models.site_header_config import SiteHeaderConfig
 from app.models.site_theme_config import SiteThemeConfig
 from app.models.ui_config import UIConfig
+from app.models.ui_logo_asset import UILogoAsset
 from app.models.ui_theme import UITheme
 from app.models.ui_theme_assignment import UIThemeAssignment
 from app.models.advertisement import Advertisement
