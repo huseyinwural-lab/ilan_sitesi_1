@@ -107,6 +107,7 @@ export default function AdminSystemSettingsPage() {
   const [watermarkLogoUrl, setWatermarkLogoUrl] = useState(null);
   const [watermarkPreviewUrl, setWatermarkPreviewUrl] = useState(null);
   const [watermarkPerf, setWatermarkPerf] = useState(null);
+  const [healthDetail, setHealthDetail] = useState(null);
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -144,10 +145,12 @@ export default function AdminSystemSettingsPage() {
   const fetchHealthDetail = async () => {
     try {
       const res = await axios.get(`${API}/admin/system/health-detail`, { headers: authHeader });
+      setHealthDetail(res.data || null);
       setEncryptionKeyPresent(Boolean(res.data?.encryption_key_present));
       setCfMetricsEnabled(Boolean(res.data?.cf_metrics_enabled));
       setConfigMissingReason(res.data?.config_missing_reason || '');
     } catch (e) {
+      setHealthDetail(null);
       setEncryptionKeyPresent(false);
     }
   };
