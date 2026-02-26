@@ -19385,6 +19385,18 @@ async def admin_dashboard_summary(
     cache_key = _dashboard_cache_key(role, effective_countries, trend_window)
     cached = _get_cached_dashboard_summary(cache_key)
     if cached:
+        cached_trends = cached.get("trends") or {}
+        has_new_shape = (
+            isinstance(cached.get("kpis"), dict)
+            and isinstance(cached.get("kpi_links"), dict)
+            and isinstance(cached_trends.get("listings"), list)
+            and isinstance(cached.get("risk_panel"), dict)
+        )
+        if not has_new_shape:
+            _dashboard_summary_cache.pop(cache_key, None)
+            cached = None
+
+    if cached:
         response = {**cached}
         health = dict(response.get("health") or {})
         health["api_latency_ms"] = int((time.perf_counter() - start_perf) * 1000)
