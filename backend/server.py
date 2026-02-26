@@ -1672,6 +1672,7 @@ async def lifespan(app: FastAPI):
             await _ensure_test_user_two(session)
             await _ensure_individual_fixtures(session)
             await _ensure_country_admin_user(session)
+            await _ensure_dealer_portal_config_seed(session)
     except Exception as exc:
         logging.getLogger("runtime").warning("Seed users skipped: %s", exc)
 
