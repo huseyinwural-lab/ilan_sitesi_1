@@ -170,6 +170,8 @@ from app.services.meilisearch_index import (
     get_active_meili_runtime,
     meili_clear_documents,
     meili_search_documents,
+    meili_update_filterable_attributes,
+    stable_numeric_id,
     sync_listing_to_meili,
 )
 
