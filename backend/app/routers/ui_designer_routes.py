@@ -1,17 +1,24 @@
-from datetime import datetime, timezone
+from copy import deepcopy
+from datetime import datetime, timedelta, timezone
+from io import BytesIO
+from pathlib import Path
 from typing import Any, Optional
 import uuid
+import xml.etree.ElementTree as ET
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
+from PIL import Image
 from pydantic import BaseModel, Field
-from sqlalchemy import desc, func, or_, select, update
+from sqlalchemy import and_, desc, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import AsyncSessionLocal, get_db
 from app.dependencies import PERMISSION_ROLE_MAP, check_named_permission
 from app.models.ui_config import UIConfig
+from app.models.ui_logo_asset import UILogoAsset
 from app.models.ui_theme import UITheme
 from app.models.ui_theme_assignment import UIThemeAssignment
+from app.site_media_storage import store_site_asset
 
 
 router = APIRouter(prefix="/api", tags=["ui_designer"])
