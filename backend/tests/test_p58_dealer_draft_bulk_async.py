@@ -571,33 +571,40 @@ class TestCategoryWizardRegression:
         timestamp = int(time.time())
         unique_sort = random.randint(10000, 99999)  # Use high random number to avoid conflicts
         
-        res = requests.post(
-            f"{BASE_URL}/api/admin/categories",
-            headers={
-                "Authorization": f"Bearer {admin_token}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "name": f"TEST_P58_Category_{timestamp}",
-                "slug": f"test-p58-cat-{timestamp}",
-                "country_code": "DE",
-                "module": "other",  # Use 'other' to avoid vehicle_segment requirement
-                "active_flag": True,
-                "sort_order": unique_sort,  # Use unique sort order
-                "hierarchy_complete": True,
-                "form_schema": {
-                    "status": "draft",
-                    "core_fields": {
-                        "title": {"required": True, "min": 10, "max": 120},
-                        "description": {"required": True, "min": 30, "max": 4000},
-                        "price": {"required": True}
-                    },
-                    "dynamic_fields": [],
-                    "detail_groups": [{"id": "test", "title": "Test Group", "options": ["A", "B"]}],
-                    "modules": {"address": {"enabled": True}, "photos": {"enabled": True}}
+        # Retry up to 3 times for transient DB errors
+        for attempt in range(3):
+            res = requests.post(
+                f"{BASE_URL}/api/admin/categories",
+                headers={
+                    "Authorization": f"Bearer {admin_token}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "name": f"TEST_P58_Category_{timestamp}_{unique_sort}",
+                    "slug": f"test-p58-cat-{timestamp}-{unique_sort}",
+                    "country_code": "DE",
+                    "module": "other",  # Use 'other' to avoid vehicle_segment requirement
+                    "active_flag": True,
+                    "sort_order": unique_sort + attempt,  # Use unique sort order
+                    "hierarchy_complete": True,
+                    "form_schema": {
+                        "status": "draft",
+                        "core_fields": {
+                            "title": {"required": True, "min": 10, "max": 120},
+                            "description": {"required": True, "min": 30, "max": 4000},
+                            "price": {"required": True}
+                        },
+                        "dynamic_fields": [],
+                        "detail_groups": [{"id": "test", "title": "Test Group", "options": ["A", "B"]}],
+                        "modules": {"address": {"enabled": True}, "photos": {"enabled": True}}
+                    }
                 }
-            }
-        )
+            )
+            
+            if res.status_code == 503:
+                time.sleep(2)  # Wait for DB to recover
+                continue
+            break
         assert res.status_code in [200, 201], f"Category create failed: {res.text}"
         data = res.json()
         
