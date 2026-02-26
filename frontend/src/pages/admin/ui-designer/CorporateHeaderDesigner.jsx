@@ -1,9 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 const TARGET_RATIO = 3;
 const RATIO_TOLERANCE = 0.1;
+const UPLOAD_ERROR_MESSAGES = {
+  INVALID_FILE_TYPE: 'Dosya formatı desteklenmiyor',
+  FILE_TOO_LARGE: 'Dosya boyutu sınırı aşıldı',
+  INVALID_ASPECT_RATIO: 'Logo oranı 3:1 kuralına uymuyor',
+  INVALID_FILE_CONTENT: 'Dosya içeriği okunamadı',
+  STORAGE_PIPELINE_ERROR: 'Storage hattı hatası',
+  FORBIDDEN: 'Bu işlem için yetkiniz yok',
+};
 
 const defaultCorporateHeaderConfig = {
   rows: [
@@ -126,6 +135,78 @@ const validateRatio = (ratio) => {
   const min = TARGET_RATIO * (1 - RATIO_TOLERANCE);
   const max = TARGET_RATIO * (1 + RATIO_TOLERANCE);
   return ratio >= min && ratio <= max;
+};
+
+const withCacheBust = (url) => {
+  if (!url || typeof url !== 'string' || url.startsWith('blob:')) return url || '';
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}v=${Date.now()}`;
+};
+
+const parseApiError = (payload, fallbackStatus = 0) => {
+  const detail = payload?.detail;
+  const topError = payload?.error;
+
+  if (detail && typeof detail === 'object') {
+    const code = `${detail.code || 'UNKNOWN'}`;
+    return {
+      code,
+      summary: detail.message || UPLOAD_ERROR_MESSAGES[code] || 'Logo yükleme başarısız',
+      details: detail.details || {},
+      status: fallbackStatus,
+    };
+  }
+
+  if (topError && typeof topError === 'object') {
+    const code = `${topError.code || 'UNKNOWN'}`;
+    return {
+      code,
+      summary: topError.message || UPLOAD_ERROR_MESSAGES[code] || 'Logo yükleme başarısız',
+      details: topError.details || {},
+      status: fallbackStatus,
+    };
+  }
+
+  if (typeof detail === 'string') {
+    return {
+      code: fallbackStatus === 403 ? 'FORBIDDEN' : 'UNKNOWN',
+      summary: detail,
+      details: {},
+      status: fallbackStatus,
+    };
+  }
+
+  return {
+    code: fallbackStatus === 403 ? 'FORBIDDEN' : 'UNKNOWN',
+    summary: fallbackStatus >= 500 ? 'Storage veya sunucu hatası' : 'Logo yükleme başarısız',
+    details: {},
+    status: fallbackStatus,
+  };
+};
+
+const buildUploadDetailText = (issue) => {
+  const details = issue?.details || {};
+  if (issue?.code === 'INVALID_FILE_TYPE') {
+    const expected = Array.isArray(details.expected) ? details.expected.join('/') : 'png/svg/webp';
+    const received = details.received || 'unknown';
+    return `Beklenen: ${expected} · Gelen: ${received}`;
+  }
+  if (issue?.code === 'FILE_TOO_LARGE') {
+    const expectedMax = Number(details.expected_max_bytes || MAX_LOGO_BYTES);
+    const received = Number(details.received_bytes || 0);
+    return `Beklenen ≤ ${(expectedMax / (1024 * 1024)).toFixed(2)}MB · Gelen ${(received / (1024 * 1024)).toFixed(2)}MB`;
+  }
+  if (issue?.code === 'INVALID_ASPECT_RATIO') {
+    const receivedRatio = details.received_ratio ?? details.ratio;
+    return `Beklenen: 3:1 ±%10 · Gelen: ${receivedRatio ?? 'unknown'}`;
+  }
+  if (issue?.code === 'FORBIDDEN' || issue?.status === 403) {
+    return 'Bu endpoint sadece admin UI Designer yetkisine açıktır.';
+  }
+  if (issue?.status >= 500) {
+    return 'Storage pipeline/servis loglarını kontrol edin.';
+  }
+  return issue?.summary || 'Detay bilgisi yok';
 };
 
 export const CorporateHeaderDesigner = () => {
