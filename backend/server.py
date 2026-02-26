@@ -18272,6 +18272,29 @@ async def admin_list_categories(
     }
 
 
+@api_router.get("/admin/categories/vehicle-segment/link-status")
+async def admin_category_vehicle_segment_link_status(
+    request: Request,
+    segment: str,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    vehicle_segment = _normalize_vehicle_segment(segment)
+    if country:
+        _assert_country_scope(country.upper(), current_user)
+    status = await _get_vehicle_segment_link_status(session, vehicle_segment=vehicle_segment)
+    return {
+        "segment": status["segment"],
+        "country": (country or "").upper() or None,
+        "linked": status["linked"],
+        "make_count": status["make_count"],
+        "model_count": status["model_count"],
+        "master_data_source": "vehicle_models",
+    }
+
+
 @api_router.get("/admin/categories/import-export/export/json")
 async def admin_export_categories_json(
     request: Request,
