@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-26 22:00:00 UTC (P59 UI Designer Foundation)
+**Son güncelleme:** 2026-02-26 22:25:00 UTC (P60 Corporate Header Logo + Config-driven Render)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -57,6 +57,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 
 ## Uygulanan Özellikler
 - **P59 UI Designer Foundation (2026-02-26):** `ADMIN_UI_DESIGNER` permission-role eşlemesi (super_admin/country_admin), `ui_configs/ui_themes/ui_theme_assignments` modelleri + `p59_ui_designer_foundation` migration, `/api/admin/ui/configs/*`, `/api/ui/*`, theme assignment + effective resolve endpointleri, `/admin/user-interface-design` 3 sekmeli admin iskeleti (gerçek GET/POST roundtrip), test raporu: `/app/test_reports/iteration_25.json` (PASS).
+- **P60 UI Designer Sprint 2 Slice (2026-02-26):** Kurumsal header 3 satır drag&drop editör + Row1 logo upload (png/svg/webp, 2MB, 3:1 ±%10), `ui_logo_assets` lifecycle tablosu + `p60_ui_logo_assets` migration, logo soft-replace (`is_replaced`) + 7 gün retention cleanup endpointi (`/api/admin/ui/logo-assets/cleanup`), token bazlı tema form editörü + backend token validation, config-driven header render entegrasyonu (Dealer/User/Public fallback), dashboard widget order fallback mantığı. Test raporu: `/app/test_reports/iteration_26.json` (PASS, 1 low test skipped; manual >2MB upload testi ayrıca doğrulandı).
 - **Tema Yönetimi (2026-02-25):** Semantik CSS değişkenleri, light/dark palette standardizasyonu, FOUC önleyici theme-init script, root ErrorBoundary + wizard/detail boundary.
 - **Footer Domain (2026-02-25):** Footer grid builder (row/1-5 column + LinkGroup/Metin/Sosyal), draft/publish + preview, versioning + rollback, admin Footer Yönetimi ve Bilgi Sayfaları CRUD.
 - **Header Domain (2026-02-25):** MainLayout ile public header merkezi; site_header_config modeli + logo upload + cache invalidation (versiyonlu logo_url); admin Header Yönetimi ekranı; guest/auth header state ve responsive menü; logo yoksa asset request atılmaz.
