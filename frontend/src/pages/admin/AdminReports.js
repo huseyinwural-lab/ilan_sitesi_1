@@ -86,10 +86,12 @@ export default function AdminReportsPage() {
       params.set('limit', String(limit));
       if (status !== 'all') params.set('status', status);
       if (reason !== 'all') params.set('reason', reason);
-      if (listingId) params.set('listing_id', listingId);
+      if (reportType === 'listing' && listingId) params.set('listing_id', listingId);
+      if (reportType === 'message' && messageId) params.set('message_id', messageId);
       if (urlCountry) params.set('country', urlCountry);
 
-      const res = await axios.get(`${API}/admin/reports?${params.toString()}`, {
+      const endpoint = reportType === 'message' ? '/admin/reports/messages' : '/admin/reports';
+      const res = await axios.get(`${API}${endpoint}?${params.toString()}`, {
         headers: authHeader,
       });
       setItems(res.data.items || []);
@@ -101,11 +103,18 @@ export default function AdminReportsPage() {
     }
   };
 
-  const openDetail = async (reportId) => {
+  const openDetail = async (reportId, snapshot) => {
     setDetailOpen(true);
     setDetailLoading(true);
     setStatusError(null);
     try {
+      if (reportType === 'message') {
+        setDetailData(snapshot || null);
+        const nextTargets = statusTransitions[snapshot?.status] || [];
+        setStatusTarget(nextTargets[0] || '');
+        setStatusNote('');
+        return;
+      }
       const params = new URLSearchParams();
       if (urlCountry) params.set('country', urlCountry);
       const res = await axios.get(`${API}/admin/reports/${reportId}?${params.toString()}`, {
@@ -142,8 +151,11 @@ export default function AdminReportsPage() {
     try {
       const params = new URLSearchParams();
       if (urlCountry) params.set('country', urlCountry);
+      const endpoint = reportType === 'message'
+        ? `${API}/admin/reports/messages/${detailData.id}/status`
+        : `${API}/admin/reports/${detailData.id}/status`;
       await axios.post(
-        `${API}/admin/reports/${detailData.id}/status?${params.toString()}`,
+        `${endpoint}?${params.toString()}`,
         { target_status: statusTarget, note },
         { headers: authHeader }
       );
@@ -158,13 +170,14 @@ export default function AdminReportsPage() {
     setStatus('all');
     setReason('all');
     setListingId('');
+    setMessageId('');
     setPage(0);
   };
 
   useEffect(() => {
     fetchReports();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, reason, listingId, page, urlCountry]);
+  }, [status, reason, listingId, messageId, page, urlCountry, reportType]);
 
   return (
     <div className="space-y-6" data-testid="admin-reports-page">
