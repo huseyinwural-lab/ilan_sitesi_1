@@ -1686,8 +1686,17 @@ async def lifespan(app: FastAPI):
         logging.getLogger("runtime").warning("Seed users skipped: %s", exc)
 
     app.state.db = None
+    app.state.category_bulk_worker_task = asyncio.create_task(_category_bulk_job_worker_loop())
 
     yield
+
+    worker_task = getattr(app.state, "category_bulk_worker_task", None)
+    if worker_task:
+        worker_task.cancel()
+        try:
+            await worker_task
+        except asyncio.CancelledError:
+            pass
     await sql_engine.dispose()
 
 
