@@ -24,9 +24,9 @@ class TestFAZFinal02SecurityAudit:
                         self.base_url = line.split('=', 1)[1].strip()
                         break
                 else:
-                    self.base_url = "https://theme-config-api.preview.emergentagent.com"
+                    self.base_url = "https://grid-editor-preview.preview.emergentagent.com"
         except FileNotFoundError:
-            self.base_url = "https://theme-config-api.preview.emergentagent.com"
+            self.base_url = "https://grid-editor-preview.preview.emergentagent.com"
         
         self.api_url = f"{self.base_url}/api"
         self.admin_token = None

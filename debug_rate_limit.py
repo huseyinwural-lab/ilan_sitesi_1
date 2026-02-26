@@ -8,7 +8,7 @@ import time
 import json
 
 def test_rate_limit_debug():
-    base_url = "https://theme-config-api.preview.emergentagent.com"
+    base_url = "https://grid-editor-preview.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     print("🔍 Debug Rate Limiting Test")
