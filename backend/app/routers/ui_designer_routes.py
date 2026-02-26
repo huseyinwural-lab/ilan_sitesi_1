@@ -37,6 +37,11 @@ UI_LOGO_RETENTION_DAYS = 7
 UI_LOGO_URL_PREFIX = "/api/site/assets/"
 DASHBOARD_MIN_KPI_WIDGETS = 1
 DASHBOARD_MAX_WIDGETS = 12
+LOGO_ERROR_INVALID_FILE_TYPE = "INVALID_FILE_TYPE"
+LOGO_ERROR_FILE_TOO_LARGE = "FILE_TOO_LARGE"
+LOGO_ERROR_INVALID_ASPECT_RATIO = "INVALID_ASPECT_RATIO"
+LOGO_ERROR_INVALID_FILE_CONTENT = "INVALID_FILE_CONTENT"
+LOGO_ERROR_STORAGE_PIPELINE = "STORAGE_PIPELINE_ERROR"
 
 DEFAULT_CORPORATE_HEADER_CONFIG = {
     "rows": [
@@ -92,6 +97,44 @@ def _site_assets_base_dir() -> Path:
     return Path(__file__).resolve().parents[1] / "static" / "site_assets"
 
 
+def _site_assets_storage_health() -> dict[str, Any]:
+    base_dir = _site_assets_base_dir()
+    base_dir.mkdir(parents=True, exist_ok=True)
+    writable = base_dir.exists() and base_dir.is_dir() and base_dir.stat().st_mode is not None
+    can_write = False
+    try:
+        probe = base_dir / ".logo_upload_health"
+        with probe.open("w", encoding="utf-8") as handle:
+            handle.write("ok")
+        probe.unlink(missing_ok=True)
+        can_write = True
+    except Exception:
+        can_write = False
+
+    return {
+        "status": "ok" if writable and can_write else "degraded",
+        "writable": bool(writable and can_write),
+        "base_dir": str(base_dir),
+    }
+
+
+def _logo_upload_http_error(
+    *,
+    code: str,
+    message: str,
+    status_code: int = 400,
+    details: Optional[dict[str, Any]] = None,
+) -> HTTPException:
+    return HTTPException(
+        status_code=status_code,
+        detail={
+            "code": code,
+            "message": message,
+            "details": details or {},
+        },
+    )
+
+
 def _asset_key_from_url(value: Optional[str]) -> Optional[str]:
     if not value or not value.startswith(UI_LOGO_URL_PREFIX):
         return None
@@ -118,7 +161,11 @@ def _parse_svg_size(data: bytes) -> tuple[float, float]:
     try:
         root = ET.fromstring(data.decode("utf-8", errors="ignore"))
     except ET.ParseError as exc:
-        raise HTTPException(status_code=400, detail="SVG parse edilemedi") from exc
+        raise _logo_upload_http_error(
+            code=LOGO_ERROR_INVALID_FILE_CONTENT,
+            message="SVG parse edilemedi",
+            details={"expected": "Geçerli SVG XML", "received": "Bozuk veya parse edilemeyen içerik"},
+        ) from exc
 
     view_box = root.attrib.get("viewBox") or root.attrib.get("viewbox")
     if view_box:
@@ -148,15 +195,33 @@ def _parse_svg_size(data: bytes) -> tuple[float, float]:
     if width and height and width > 0 and height > 0:
         return width, height
 
-    raise HTTPException(status_code=400, detail="SVG width/height metadata bulunamadı")
+    raise _logo_upload_http_error(
+        code=LOGO_ERROR_INVALID_FILE_CONTENT,
+        message="SVG width/height metadata bulunamadı",
+        details={"expected": "width/height veya viewBox", "received": "Eksik ölçü metadata"},
+    )
 
 
 def _validate_logo_constraints(data: bytes, filename: str) -> dict[str, Any]:
     ext = _extract_file_extension(filename)
     if ext not in UI_LOGO_ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail="Desteklenen formatlar: png/svg/webp")
+        raise _logo_upload_http_error(
+            code=LOGO_ERROR_INVALID_FILE_TYPE,
+            message="Desteklenen formatlar: png/svg/webp",
+            details={
+                "expected": sorted(UI_LOGO_ALLOWED_EXTENSIONS),
+                "received": ext or "unknown",
+            },
+        )
     if len(data) > UI_LOGO_MAX_BYTES:
-        raise HTTPException(status_code=400, detail="Dosya boyutu 2MB sınırını aşıyor")
+        raise _logo_upload_http_error(
+            code=LOGO_ERROR_FILE_TOO_LARGE,
+            message="Dosya boyutu 2MB sınırını aşıyor",
+            details={
+                "expected_max_bytes": UI_LOGO_MAX_BYTES,
+                "received_bytes": len(data),
+            },
+        )
 
     if ext == "svg":
         width, height = _parse_svg_size(data)
@@ -165,17 +230,33 @@ def _validate_logo_constraints(data: bytes, filename: str) -> dict[str, Any]:
             with Image.open(BytesIO(data)) as image:
                 width, height = image.size
         except Exception as exc:
-            raise HTTPException(status_code=400, detail="Görsel dosyası okunamadı") from exc
+            raise _logo_upload_http_error(
+                code=LOGO_ERROR_INVALID_FILE_CONTENT,
+                message="Görsel dosyası okunamadı",
+                details={"expected": "Geçerli png/webp", "received": "Bozuk raster içerik"},
+            ) from exc
 
     if not width or not height:
-        raise HTTPException(status_code=400, detail="Görsel ölçüsü geçersiz")
+        raise _logo_upload_http_error(
+            code=LOGO_ERROR_INVALID_FILE_CONTENT,
+            message="Görsel ölçüsü geçersiz",
+            details={"expected": "Pozitif width/height", "received": {"width": width, "height": height}},
+        )
     ratio = float(width) / float(height)
     min_ratio = UI_LOGO_RATIO_TARGET * (1 - UI_LOGO_RATIO_TOLERANCE)
     max_ratio = UI_LOGO_RATIO_TARGET * (1 + UI_LOGO_RATIO_TOLERANCE)
     if ratio < min_ratio or ratio > max_ratio:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Logo aspect ratio 3:1 (±%10) olmalı. Mevcut oran: {ratio:.2f}",
+        raise _logo_upload_http_error(
+            code=LOGO_ERROR_INVALID_ASPECT_RATIO,
+            message=f"Logo aspect ratio 3:1 (±%10) olmalı. Mevcut oran: {ratio:.2f}",
+            details={
+                "expected": "3:1 ±10%",
+                "expected_min_ratio": round(min_ratio, 4),
+                "expected_max_ratio": round(max_ratio, 4),
+                "received_ratio": round(ratio, 4),
+                "width": int(round(width)),
+                "height": int(round(height)),
+            },
         )
 
     return {
