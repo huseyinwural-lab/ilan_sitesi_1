@@ -18531,9 +18531,7 @@ async def admin_export_category_sample_csv(
     country: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
-    module_value = (module or "vehicle").strip().lower()
-    if module_value not in SUPPORTED_CATEGORY_MODULES:
-        raise HTTPException(status_code=400, detail="Invalid module")
+    module_value = _normalize_category_module(module or "vehicle")
     country_value = (country or "DE").strip().upper()
 
     output = io.StringIO()
@@ -18560,9 +18558,7 @@ async def admin_export_category_sample_xlsx(
     if not CATEGORY_IMPORT_EXPORT_XLSX_ENABLED:
         raise HTTPException(status_code=403, detail="feature_disabled")
 
-    module_value = (module or "vehicle").strip().lower()
-    if module_value not in SUPPORTED_CATEGORY_MODULES:
-        raise HTTPException(status_code=400, detail="Invalid module")
+    module_value = _normalize_category_module(module or "vehicle")
     country_value = (country or "DE").strip().upper()
 
     workbook = Workbook()
