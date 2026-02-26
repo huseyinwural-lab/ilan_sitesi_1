@@ -28,6 +28,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Preformatted
 from openpyxl import Workbook, load_workbook
+from PIL import Image
 
 from fastapi import FastAPI, APIRouter, Depends, HTTPException, Request, Body, Response, Query, WebSocket, WebSocketDisconnect, Header
 from fastapi.routing import APIRoute
