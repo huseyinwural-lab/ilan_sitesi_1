@@ -11466,6 +11466,8 @@ async def _reindex_category_siblings(
 def _serialize_category_sql(category: Category, include_schema: bool = False, include_translations: bool = True) -> dict:
     translations = list(category.translations or [])
     slug_value = _pick_category_slug(category.slug)
+    form_schema = category.form_schema if isinstance(category.form_schema, dict) else {}
+    category_meta = form_schema.get("category_meta") if isinstance(form_schema.get("category_meta"), dict) else {}
     payload = {
         "id": str(category.id),
         "parent_id": str(category.parent_id) if category.parent_id else None,
@@ -11481,6 +11483,8 @@ def _serialize_category_sql(category: Category, include_schema: bool = False, in
         "icon": category.icon,
         "image_url": category.image_url,
         "listing_count": category.listing_count,
+        "vehicle_segment": _normalize_vehicle_type(category_meta.get("vehicle_segment")),
+        "vehicle_master_linked": bool(category_meta.get("master_data_linked")),
         "created_at": category.created_at.isoformat() if category.created_at else None,
         "updated_at": category.updated_at.isoformat() if category.updated_at else None,
     }
