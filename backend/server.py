@@ -134,6 +134,7 @@ from app.models.push_subscription import PushSubscription
 from app.site_media_storage import store_site_asset
 from app.models.cloudflare_config import CloudflareConfig
 from app.models.meilisearch_config import MeiliSearchConfig
+from app.models.search_sync_job import SearchSyncJob
 from app.models.system_setting import SystemSetting
 from app.models.admin_invite import AdminInvite
 from app.models.menu_item import MenuItem
@@ -163,6 +164,13 @@ from app.services.meilisearch_config import (
     encrypt_meili_master_key,
     normalize_meili_url,
     test_and_prepare_meili_index,
+)
+from app.services.meilisearch_index import (
+    bulk_reindex_search_projection,
+    get_active_meili_runtime,
+    meili_delete_document,
+    meili_upsert_documents,
+    sync_listing_to_meili,
 )
 
 
