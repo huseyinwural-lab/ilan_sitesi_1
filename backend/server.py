@@ -19367,7 +19367,8 @@ def _validate_category_import_rows(rows: list[dict], existing: list[Category], c
     for row in rows:
         row_number = row.get("row_number")
         slug_raw = _normalize_import_value(row.get("slug")).lower()
-        module_raw = _normalize_import_value(row.get("module")).lower()
+        module_input = _normalize_import_value(row.get("module")).lower()
+        module_raw = CATEGORY_MODULE_ALIASES.get(module_input, module_input)
         country_raw = _normalize_import_value(row.get("country")).upper()
         schema_version = _normalize_import_value(row.get("schema_version")).lower()
         parent_slug_raw = _normalize_import_value(row.get("parent_slug")).lower() or None
@@ -19378,7 +19379,7 @@ def _validate_category_import_rows(rows: list[dict], existing: list[Category], c
         sort_order = _parse_int_value(row.get("sort_order"))
         wizard_progress, wizard_error = _parse_wizard_progress_value(row.get("wizard_progress"))
 
-        if not module_raw:
+        if not module_input:
             errors.append({"row_number": row_number, "error_code": "REQUIRED_FIELD", "message": "module zorunlu."})
         elif module_raw not in SUPPORTED_CATEGORY_MODULES:
             errors.append({"row_number": row_number, "error_code": "INVALID_MODULE", "message": "Geçersiz module."})
