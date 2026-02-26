@@ -223,6 +223,11 @@ async def meili_update_filterable_attributes(runtime: Dict[str, str], filterable
             f"/indexes/{index_path}/settings/filterable-attributes",
             json=filterable_attributes,
         )
+        if response.status_code == 405:
+            response = await client.put(
+                f"/indexes/{index_path}/settings/filterable-attributes",
+                json=filterable_attributes,
+            )
         if response.status_code not in (200, 202):
             raise RuntimeError(f"meili_filterable_update_failed_{response.status_code}")
     return {"ok": True}
