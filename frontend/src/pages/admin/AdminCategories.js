@@ -1139,12 +1139,22 @@ const AdminCategories = () => {
     setVersionsError("");
     setSelectedVersions([]);
     setVersionDetails({});
+    setVehicleSegment("");
+    setVehicleLinkStatus({
+      checking: false,
+      linked: false,
+      make_count: 0,
+      model_count: 0,
+      message: "",
+    });
     setLastSavedAt("");
     setAutosaveStatus("idle");
     lastSavedSnapshotRef.current = "";
   };
 
   const handleEdit = (item) => {
+    const itemVehicleSegment = item.vehicle_segment || item.form_schema?.category_meta?.vehicle_segment || "";
+    const itemVehicleLinked = Boolean(item.vehicle_master_linked ?? item.form_schema?.category_meta?.master_data_linked);
     setEditing(item);
     setForm({
       name: item.name || "",
@@ -1197,6 +1207,16 @@ const AdminCategories = () => {
     setVersionsError("");
     setSelectedVersions([]);
     setVersionDetails({});
+    setVehicleSegment(itemVehicleSegment);
+    setVehicleLinkStatus({
+      checking: false,
+      linked: itemVehicleLinked,
+      make_count: 0,
+      model_count: 0,
+      message: itemVehicleSegment
+        ? (itemVehicleLinked ? "Master data bağlantısı hazır." : "Master data bağlantısı doğrulanmadı.")
+        : "",
+    });
     setLastSavedAt("");
     setAutosaveStatus("idle");
     lastSavedSnapshotRef.current = "";
