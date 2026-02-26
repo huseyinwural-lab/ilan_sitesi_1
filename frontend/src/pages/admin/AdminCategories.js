@@ -248,6 +248,8 @@ const AdminCategories = () => {
   });
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkJob, setBulkJob] = useState(null);
+  const [bulkJobPolling, setBulkJobPolling] = useState(false);
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
   const [bulkConfirmValue, setBulkConfirmValue] = useState("");
   const [pendingBulkAction, setPendingBulkAction] = useState("");
