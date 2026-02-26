@@ -8,7 +8,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 
-revision: str = "p61_ui_config_dashboard_layout_widgets"
+revision: str = "p61_ui_dashboard_cfg"
 down_revision: Union[str, Sequence[str], None] = "p60_ui_logo_assets"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
