@@ -1,0 +1,106 @@
+{
+  "summary": "P1.2 External Meilisearch Activation + P1.3 Facet/Dynamic Sidebar tests complete. All backend endpoints PASS. Frontend search page loads correctly with categories, make/model filters, and 1000+ results from Meili index.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "SearchPage sidebar",
+        "issues": ["FacetRenderer 'Filtrele' section not visible when no category selected - expected behavior, facets are category-dependent"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p12_p13_external_meili.py",
+    "/app/test_reports/pytest/p12_p13_external_meili_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "External Meili config active at http://217.195.207.70:7700 with index listings_index",
+    "Health endpoint correctly returns ok=true and health.status=PASS",
+    "health-detail endpoint shows meili.connected=true and meili.configured=true",
+    "stage-smoke returns ranking_sort with premium_score:desc, published_at:desc correctly",
+    "bulk reindex working with indexed_docs and index_document_count in response",
+    "sync-jobs metrics show done=39 and dead_letter=0 (healthy queue)",
+    "v2/search returns facet_meta and facets (empty when no filterable attrs for category)",
+    "All sort options (price_asc/desc, date_asc/desc) return HTTP 200",
+    "Event-driven sync triggers verified: listing_create, listing_request_publish, moderation_approve, listing_unpublish, listing_soft_delete"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_p12_p13_external_meili.py"
+  ],
+  "success_rate": {
+    "backend": "100% (all 9 P1.2/P1.3 test scenarios passed via curl)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "user": "user@platform.com / User123!"
+  },
+  "seed_data_creation": "None - used existing Meili index with 5004 documents",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "P1.2 External Meili fully active and verified. P1.3 v2/search endpoint working with facet_meta and facets. FacetRenderer requires category-specific filterable attributes to show 'Filtrele' section. Current index has 5004 documents.",
+  "p12_external_activation_verification": {
+    "meili_health_endpoint": {
+      "status": "PASS",
+      "ok": true,
+      "no_active_config_required_error": true,
+      "active_url": "http://217.195.207.70:7700",
+      "active_index": "listings_index",
+      "index_document_count": 5004
+    },
+    "health_detail_meili_section": {
+      "configured": true,
+      "connected": true,
+      "status": "connected",
+      "reason_code": "ok"
+    },
+    "stage_smoke_endpoint": {
+      "status": "PASS",
+      "ranking_sort": ["premium_score:desc", "published_at:desc"],
+      "hits_count": 10,
+      "index_document_count": 5004
+    },
+    "bulk_reindex_endpoint": {
+      "status": "PASS",
+      "indexed_docs_returned": true,
+      "index_document_count_returned": true
+    },
+    "sync_jobs_metrics": {
+      "status": "PASS",
+      "done": 39,
+      "dead_letter": 0,
+      "queue_healthy": true
+    }
+  },
+  "p13_facet_sidebar_verification": {
+    "v2_search_facet_meta": "PASS - facet_meta key present in response",
+    "v2_search_facets": "PASS - facets key present in response",
+    "attr_filter_query": "PASS - attr[key]=value syntax supported",
+    "pagination_total_updates": "PASS - pagination.total reflects filter results",
+    "sort_options": "PASS - price_asc, price_desc, date_asc, date_desc all return 200"
+  },
+  "frontend_smoke_verification": {
+    "search_page_loads": "PASS",
+    "kategoriler_section_visible": "PASS",
+    "marka_filter_visible": "PASS",
+    "model_filter_visible": "PASS",
+    "pagination_visible": "PASS - Sayfa 1 / 50",
+    "listing_cards_count": 20,
+    "category_navigation": "PASS - clicking category filters results",
+    "filtrele_facet_section": "INFO - Not visible (no filterable attrs mapped to root category)"
+  },
+  "event_driven_sync_triggers_verified": [
+    "listing_create -> upsert",
+    "listing_request_publish -> upsert",
+    "moderation_approve -> upsert",
+    "listing_unpublish -> upsert",
+    "listing_update_draft -> upsert",
+    "listing_soft_delete -> delete"
+  ]
+}
