@@ -1780,10 +1780,28 @@ const AdminCategories = () => {
         return;
       }
 
+      if (res.status === 202 || data?.mode === "async") {
+        const nextJob = data?.job || null;
+        if (nextJob?.job_id) {
+          setBulkJob(nextJob);
+          setBulkJobPolling(true);
+          toast({
+            title: "Toplu işlem kuyruğa alındı",
+            description: `Job ID: ${nextJob.job_id}`,
+          });
+          setBulkConfirmOpen(false);
+          setBulkConfirmValue("");
+          setPendingBulkAction("");
+        }
+        return;
+      }
+
       toast({
         title: "Toplu işlem tamamlandı",
         description: `Etkilenen: ${data?.changed || 0}, değişmeden kalan: ${data?.unchanged || 0}`,
       });
+      setBulkJob(null);
+      setBulkJobPolling(false);
       setSelectedIds([]);
       setBulkConfirmOpen(false);
       setBulkConfirmValue("");
