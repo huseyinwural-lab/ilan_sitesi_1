@@ -11320,9 +11320,68 @@ def _normalize_category_module(value: Optional[str]) -> str:
     if not value:
         return "vehicle"
     module_value = value.strip().lower()
+    module_value = CATEGORY_MODULE_ALIASES.get(module_value, module_value)
     if module_value not in SUPPORTED_CATEGORY_MODULES:
         raise HTTPException(status_code=400, detail="module invalid")
     return module_value
+
+
+def _normalize_vehicle_segment(value: Optional[str]) -> str:
+    segment = _normalize_vehicle_type(value)
+    if not segment or segment not in VEHICLE_TYPE_SET:
+        raise HTTPException(status_code=400, detail="vehicle segment invalid")
+    return segment
+
+
+def _vehicle_segment_from_schema(schema: Optional[Dict[str, Any]]) -> Optional[str]:
+    if not isinstance(schema, dict):
+        return None
+    category_meta = schema.get("category_meta")
+    if not isinstance(category_meta, dict):
+        return None
+    segment = _normalize_vehicle_type(category_meta.get("vehicle_segment"))
+    return segment or None
+
+
+def _merge_vehicle_segment_schema(
+    schema: Optional[Dict[str, Any]],
+    *,
+    vehicle_segment: str,
+    linked: bool,
+) -> Dict[str, Any]:
+    base_schema = dict(schema or {})
+    category_meta = dict(base_schema.get("category_meta") or {})
+    category_meta["vehicle_segment"] = vehicle_segment
+    category_meta["master_data_linked"] = bool(linked)
+    category_meta["master_data_linked_at"] = datetime.now(timezone.utc).isoformat()
+    base_schema["category_meta"] = category_meta
+    base_schema.setdefault("status", "draft")
+    return base_schema
+
+
+async def _get_vehicle_segment_link_status(
+    session: AsyncSession,
+    *,
+    vehicle_segment: str,
+) -> Dict[str, Any]:
+    model_count_query = select(func.count()).select_from(VehicleModel).where(
+        VehicleModel.is_active.is_(True),
+        VehicleModel.vehicle_type == vehicle_segment,
+    )
+    model_count = int((await session.execute(model_count_query)).scalar_one() or 0)
+
+    make_count_query = select(func.count(distinct(VehicleModel.make_id))).where(
+        VehicleModel.is_active.is_(True),
+        VehicleModel.vehicle_type == vehicle_segment,
+    )
+    make_count = int((await session.execute(make_count_query)).scalar_one() or 0)
+
+    return {
+        "segment": vehicle_segment,
+        "linked": model_count > 0,
+        "model_count": model_count,
+        "make_count": make_count,
+    }
 
 
 def _assert_category_parent_compatible(
