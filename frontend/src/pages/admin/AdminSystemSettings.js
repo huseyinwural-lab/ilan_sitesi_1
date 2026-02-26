@@ -510,6 +510,9 @@ export default function AdminSystemSettingsPage() {
     item.key.toLowerCase().includes(filterKey.toLowerCase())
   );
 
+  const meiliStatusTone = meiliActiveConfig?.status === 'active' ? 'success' : 'warning';
+  const meiliLastTest = meiliActiveConfig?.last_test_result;
+
   return (
     <div className="space-y-6" data-testid="admin-system-settings-page">
       <div className="flex items-center justify-between flex-wrap gap-3">
