@@ -1575,6 +1575,8 @@ const AdminCategories = () => {
     const slug = form.slug.trim().toLowerCase();
     const country = (form.country_code || "").trim().toUpperCase();
     const moduleValue = (form.module || "").trim().toLowerCase();
+    const isVehicleModule = moduleValue === "vehicle";
+    const rootSortOrder = Number(form.sort_order || 0);
 
     const fieldErrors = {};
     if (!name) {
@@ -1589,6 +1591,9 @@ const AdminCategories = () => {
     if (!moduleValue) {
       fieldErrors.main_module = "Modül zorunludur.";
     }
+    if (!Number.isFinite(rootSortOrder) || rootSortOrder <= 0) {
+      fieldErrors.main_sort_order = "Sıra 1 veya daha büyük olmalıdır.";
+    }
 
     if (Object.keys(fieldErrors).length > 0) {
       setHierarchyFieldErrors(fieldErrors);
@@ -1596,8 +1601,18 @@ const AdminCategories = () => {
       return { success: false };
     }
 
+    if (isVehicleModule && !vehicleSegment) {
+      setHierarchyError("Vasıta modülü için segment seçimi zorunludur.");
+      return { success: false };
+    }
+
+    if (isVehicleModule && !vehicleLinkStatus.linked) {
+      setHierarchyError(vehicleLinkStatus.message || "Seçilen segment master data ile bağlı değil.");
+      return { success: false };
+    }
+
     const hasCompletedSubcategory = subcategories.some((item) => item.name?.trim() && item.slug?.trim());
-    if (!hasCompletedSubcategory) {
+    if (!isVehicleModule && !hasCompletedSubcategory) {
       setHierarchyError("En az 1 alt kategori tamamlanmalıdır.");
       return { success: false };
     }
