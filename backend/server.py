@@ -18856,6 +18856,8 @@ async def admin_update_category(
 
     if module_value == "vehicle":
         segment_input = payload.vehicle_segment
+        if not segment_input and isinstance(payload.form_schema, dict):
+            segment_input = _vehicle_segment_from_schema(payload.form_schema)
         if not segment_input:
             segment_input = _vehicle_segment_from_schema(schema) if isinstance(schema, dict) else None
         if not segment_input:
