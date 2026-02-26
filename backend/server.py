@@ -14345,6 +14345,421 @@ async def _dealer_header_row3_controls(
     }
 
 
+def _dealer_scope_key(country_code: Optional[str]) -> str:
+    return (country_code or "GLOBAL").upper()
+
+
+def _normalize_dealer_nav_snapshot(nav_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    normalized: List[Dict[str, Any]] = []
+    for index, row in enumerate(nav_items, start=1):
+        location = (row.get("location") or "sidebar").strip().lower()
+        if location not in {"header", "sidebar"}:
+            location = "sidebar"
+        normalized.append(
+            {
+                "id": str(row.get("id") or uuid.uuid4()),
+                "key": str(row.get("key") or f"nav_{index}").strip(),
+                "label_i18n_key": str(row.get("label_i18n_key") or row.get("key") or f"dealer.nav.item_{index}").strip(),
+                "route": str(row.get("route") or "/dealer/overview").strip(),
+                "icon": str(row.get("icon") or "LayoutDashboard").strip(),
+                "order_index": int(row.get("order_index") or index * 10),
+                "visible": bool(row.get("visible", True)),
+                "role_scope": str(row.get("role_scope") or "dealer").strip() or "dealer",
+                "feature_flag": (str(row.get("feature_flag")).strip() if row.get("feature_flag") else None),
+                "location": location,
+            }
+        )
+    normalized.sort(key=lambda item: (item.get("location") != "header", int(item.get("order_index") or 0), item.get("key") or ""))
+    return normalized
+
+
+def _normalize_dealer_module_snapshot(module_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    normalized: List[Dict[str, Any]] = []
+    for index, row in enumerate(module_items, start=1):
+        normalized.append(
+            {
+                "id": str(row.get("id") or uuid.uuid4()),
+                "key": str(row.get("key") or f"module_{index}").strip(),
+                "title_i18n_key": str(row.get("title_i18n_key") or row.get("key") or f"dealer.module_{index}").strip(),
+                "order_index": int(row.get("order_index") or index * 10),
+                "visible": bool(row.get("visible", True)),
+                "feature_flag": (str(row.get("feature_flag")).strip() if row.get("feature_flag") else None),
+                "data_source_key": str(row.get("data_source_key") or row.get("key") or f"module_{index}").strip(),
+            }
+        )
+    normalized.sort(key=lambda item: (int(item.get("order_index") or 0), item.get("key") or ""))
+    return normalized
+
+
+def _serialize_dealer_config_revision_row(row: DealerConfigRevision) -> Dict[str, Any]:
+    return {
+        "id": str(row.id),
+        "scope_key": row.scope_key,
+        "state": row.state,
+        "is_active": bool(row.is_active),
+        "revision_no": int(row.revision_no or 0),
+        "source_revision_id": str(row.source_revision_id) if row.source_revision_id else None,
+        "created_by": str(row.created_by) if row.created_by else None,
+        "created_by_email": row.created_by_email,
+        "updated_by": str(row.updated_by) if row.updated_by else None,
+        "updated_by_email": row.updated_by_email,
+        "published_at": row.published_at.isoformat() if row.published_at else None,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+        "meta_snapshot": row.meta_snapshot or {},
+    }
+
+
+async def _fetch_live_dealer_snapshot(session: AsyncSession) -> Dict[str, List[Dict[str, Any]]]:
+    nav_rows = (
+        await session.execute(
+            select(DealerNavItem).order_by(asc(DealerNavItem.location), asc(DealerNavItem.order_index), asc(DealerNavItem.created_at))
+        )
+    ).scalars().all()
+    module_rows = (
+        await session.execute(select(DealerModule).order_by(asc(DealerModule.order_index), asc(DealerModule.created_at)))
+    ).scalars().all()
+
+    nav_snapshot = [
+        {
+            "id": str(row.id),
+            "key": row.key,
+            "label_i18n_key": row.label_i18n_key,
+            "route": row.route,
+            "icon": row.icon,
+            "order_index": int(row.order_index or 0),
+            "visible": bool(row.visible),
+            "role_scope": row.role_scope,
+            "feature_flag": row.feature_flag,
+            "location": row.location,
+        }
+        for row in nav_rows
+    ]
+    module_snapshot = [
+        {
+            "id": str(row.id),
+            "key": row.key,
+            "title_i18n_key": row.title_i18n_key,
+            "order_index": int(row.order_index or 0),
+            "visible": bool(row.visible),
+            "feature_flag": row.feature_flag,
+            "data_source_key": row.data_source_key,
+        }
+        for row in module_rows
+    ]
+    return {
+        "nav_snapshot": _normalize_dealer_nav_snapshot(nav_snapshot),
+        "module_snapshot": _normalize_dealer_module_snapshot(module_snapshot),
+    }
+
+
+async def _resolve_dealer_portal_config_from_snapshot(
+    session: AsyncSession,
+    *,
+    nav_snapshot: List[Dict[str, Any]],
+    module_snapshot: List[Dict[str, Any]],
+    role: str,
+    country_code: Optional[str],
+) -> Dict[str, Any]:
+    nav_rows = _normalize_dealer_nav_snapshot(nav_snapshot)
+    module_rows = _normalize_dealer_module_snapshot(module_snapshot)
+
+    flag_map = await _resolve_feature_flags_readonly(
+        session,
+        [row.get("feature_flag") for row in nav_rows] + [row.get("feature_flag") for row in module_rows],
+        country_code=country_code,
+    )
+
+    header_items: List[Dict[str, Any]] = []
+    sidebar_items: List[Dict[str, Any]] = []
+    nav_with_meta: List[Dict[str, Any]] = []
+
+    for row in nav_rows:
+        flag_enabled = True if not row.get("feature_flag") else bool(flag_map.get(row.get("feature_flag"), True))
+        role_allowed = _dealer_role_allowed(row.get("role_scope"), role)
+        effective_visible = bool(row.get("visible")) and role_allowed and flag_enabled
+        if row.get("key") == "purchase":
+            effective_visible = role_allowed and bool(row.get("visible"))
+
+        serialized = {
+            **row,
+            "feature_flag_enabled": flag_enabled,
+            "effective_visible": effective_visible,
+        }
+        nav_with_meta.append(serialized)
+        if effective_visible:
+            if row.get("location") == "header":
+                header_items.append(serialized)
+            else:
+                sidebar_items.append(serialized)
+
+    modules: List[Dict[str, Any]] = []
+    modules_with_meta: List[Dict[str, Any]] = []
+    for row in module_rows:
+        flag_enabled = True if not row.get("feature_flag") else bool(flag_map.get(row.get("feature_flag"), True))
+        effective_visible = bool(row.get("visible")) and flag_enabled
+        serialized = {
+            **row,
+            "feature_flag_enabled": flag_enabled,
+            "effective_visible": effective_visible,
+        }
+        modules_with_meta.append(serialized)
+        if effective_visible:
+            modules.append(serialized)
+
+    header_row1_items = header_items if header_items else _dealer_default_header_action_items()
+    return {
+        "header_items": header_row1_items,
+        "header_row1_items": header_row1_items,
+        "header_row1_fixed_blocks": _dealer_default_header_fixed_blocks(),
+        "header_row2_modules": modules,
+        "sidebar_items": sidebar_items,
+        "modules": modules,
+        "all_nav_items": nav_with_meta,
+        "all_modules": modules_with_meta,
+    }
+
+
+async def _get_active_dealer_config_revision(
+    session: AsyncSession,
+    *,
+    scope_key: str,
+    state: str,
+) -> Optional[DealerConfigRevision]:
+    return (
+        await session.execute(
+            select(DealerConfigRevision)
+            .where(
+                DealerConfigRevision.scope_key == scope_key,
+                DealerConfigRevision.state == state,
+                DealerConfigRevision.is_active.is_(True),
+            )
+            .order_by(desc(DealerConfigRevision.updated_at), desc(DealerConfigRevision.created_at))
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+
+
+async def _ensure_active_published_dealer_revision(
+    session: AsyncSession,
+    *,
+    scope_key: str,
+    actor: dict,
+) -> DealerConfigRevision:
+    existing = await _get_active_dealer_config_revision(session, scope_key=scope_key, state="published")
+    if existing:
+        return existing
+
+    live_snapshot = await _fetch_live_dealer_snapshot(session)
+    now_dt = datetime.now(timezone.utc)
+    row = DealerConfigRevision(
+        id=uuid.uuid4(),
+        scope_key=scope_key,
+        state="published",
+        is_active=True,
+        revision_no=1,
+        nav_snapshot=live_snapshot["nav_snapshot"],
+        module_snapshot=live_snapshot["module_snapshot"],
+        meta_snapshot={"seeded": True},
+        created_by=_safe_uuid(actor.get("id")),
+        created_by_email=actor.get("email"),
+        updated_by=_safe_uuid(actor.get("id")),
+        updated_by_email=actor.get("email"),
+        published_at=now_dt,
+        created_at=now_dt,
+        updated_at=now_dt,
+    )
+    session.add(row)
+    await session.flush()
+    return row
+
+
+async def _ensure_active_dealer_draft_revision(
+    session: AsyncSession,
+    *,
+    scope_key: str,
+    actor: dict,
+) -> DealerConfigRevision:
+    existing = await _get_active_dealer_config_revision(session, scope_key=scope_key, state="draft")
+    if existing:
+        return existing
+
+    published = await _ensure_active_published_dealer_revision(session, scope_key=scope_key, actor=actor)
+    now_dt = datetime.now(timezone.utc)
+    draft = DealerConfigRevision(
+        id=uuid.uuid4(),
+        scope_key=scope_key,
+        state="draft",
+        is_active=True,
+        revision_no=int(published.revision_no or 1) + 1,
+        source_revision_id=published.id,
+        nav_snapshot=_normalize_dealer_nav_snapshot(list(published.nav_snapshot or [])),
+        module_snapshot=_normalize_dealer_module_snapshot(list(published.module_snapshot or [])),
+        meta_snapshot={"source": "published", "source_revision_id": str(published.id)},
+        created_by=_safe_uuid(actor.get("id")),
+        created_by_email=actor.get("email"),
+        updated_by=_safe_uuid(actor.get("id")),
+        updated_by_email=actor.get("email"),
+        created_at=now_dt,
+        updated_at=now_dt,
+    )
+    session.add(draft)
+    await session.flush()
+    return draft
+
+
+async def _apply_dealer_snapshot_to_live(
+    session: AsyncSession,
+    *,
+    nav_snapshot: List[Dict[str, Any]],
+    module_snapshot: List[Dict[str, Any]],
+) -> None:
+    normalized_nav = _normalize_dealer_nav_snapshot(nav_snapshot)
+    normalized_modules = _normalize_dealer_module_snapshot(module_snapshot)
+
+    await session.execute(delete(DealerNavItem))
+    await session.execute(delete(DealerModule))
+
+    now_dt = datetime.now(timezone.utc)
+    for index, row in enumerate(normalized_nav, start=1):
+        session.add(
+            DealerNavItem(
+                id=uuid.uuid4(),
+                key=row.get("key"),
+                label_i18n_key=row.get("label_i18n_key"),
+                route=row.get("route"),
+                icon=row.get("icon"),
+                order_index=int(row.get("order_index") or index * 10),
+                visible=bool(row.get("visible", True)),
+                role_scope=row.get("role_scope") or "dealer",
+                feature_flag=row.get("feature_flag"),
+                location=row.get("location") or "sidebar",
+                created_at=now_dt,
+                updated_at=now_dt,
+            )
+        )
+
+    for index, row in enumerate(normalized_modules, start=1):
+        session.add(
+            DealerModule(
+                id=uuid.uuid4(),
+                key=row.get("key"),
+                title_i18n_key=row.get("title_i18n_key"),
+                order_index=int(row.get("order_index") or index * 10),
+                visible=bool(row.get("visible", True)),
+                feature_flag=row.get("feature_flag"),
+                data_source_key=row.get("data_source_key"),
+                created_at=now_dt,
+                updated_at=now_dt,
+            )
+        )
+
+
+async def _publish_dealer_draft_revision(
+    session: AsyncSession,
+    *,
+    scope_key: str,
+    actor: dict,
+    note: Optional[str],
+) -> DealerConfigRevision:
+    draft = await _get_active_dealer_config_revision(session, scope_key=scope_key, state="draft")
+    if not draft:
+        raise HTTPException(status_code=400, detail="Aktif draft bulunamadı")
+
+    current_published = await _get_active_dealer_config_revision(session, scope_key=scope_key, state="published")
+    if current_published:
+        current_published.is_active = False
+        current_published.state = "revision"
+        current_published.updated_at = datetime.now(timezone.utc)
+
+    await _apply_dealer_snapshot_to_live(
+        session,
+        nav_snapshot=list(draft.nav_snapshot or []),
+        module_snapshot=list(draft.module_snapshot or []),
+    )
+
+    next_revision_no = int(current_published.revision_no or 1) + 1 if current_published else 1
+    now_dt = datetime.now(timezone.utc)
+    published = DealerConfigRevision(
+        id=uuid.uuid4(),
+        scope_key=scope_key,
+        state="published",
+        is_active=True,
+        revision_no=next_revision_no,
+        source_revision_id=draft.id,
+        nav_snapshot=_normalize_dealer_nav_snapshot(list(draft.nav_snapshot or [])),
+        module_snapshot=_normalize_dealer_module_snapshot(list(draft.module_snapshot or [])),
+        meta_snapshot={"note": note, "published_from_draft": str(draft.id)},
+        created_by=_safe_uuid(actor.get("id")),
+        created_by_email=actor.get("email"),
+        updated_by=_safe_uuid(actor.get("id")),
+        updated_by_email=actor.get("email"),
+        published_at=now_dt,
+        created_at=now_dt,
+        updated_at=now_dt,
+    )
+    draft.is_active = False
+    draft.updated_at = now_dt
+    session.add(published)
+    await session.flush()
+    _dealer_dashboard_summary_cache.clear()
+    return published
+
+
+async def _rollback_dealer_published_revision(
+    session: AsyncSession,
+    *,
+    scope_key: str,
+    target_revision_id: str,
+    actor: dict,
+) -> DealerConfigRevision:
+    try:
+        target_uuid = uuid.UUID(target_revision_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="revision_id invalid") from exc
+
+    target = await session.get(DealerConfigRevision, target_uuid)
+    if not target or target.scope_key != scope_key or target.state not in {"published", "revision"}:
+        raise HTTPException(status_code=404, detail="Revision not found")
+
+    current_published = await _get_active_dealer_config_revision(session, scope_key=scope_key, state="published")
+    if current_published:
+        current_published.is_active = False
+        current_published.state = "revision"
+        current_published.updated_at = datetime.now(timezone.utc)
+
+    await _apply_dealer_snapshot_to_live(
+        session,
+        nav_snapshot=list(target.nav_snapshot or []),
+        module_snapshot=list(target.module_snapshot or []),
+    )
+
+    next_revision_no = int(current_published.revision_no or 1) + 1 if current_published else int(target.revision_no or 1) + 1
+    now_dt = datetime.now(timezone.utc)
+    published = DealerConfigRevision(
+        id=uuid.uuid4(),
+        scope_key=scope_key,
+        state="published",
+        is_active=True,
+        revision_no=next_revision_no,
+        source_revision_id=target.id,
+        nav_snapshot=_normalize_dealer_nav_snapshot(list(target.nav_snapshot or [])),
+        module_snapshot=_normalize_dealer_module_snapshot(list(target.module_snapshot or [])),
+        meta_snapshot={"rollback_from": str(target.id)},
+        created_by=_safe_uuid(actor.get("id")),
+        created_by_email=actor.get("email"),
+        updated_by=_safe_uuid(actor.get("id")),
+        updated_by_email=actor.get("email"),
+        published_at=now_dt,
+        created_at=now_dt,
+        updated_at=now_dt,
+    )
+    session.add(published)
+    _dealer_dashboard_summary_cache.clear()
+    await session.flush()
+    return published
+
+
 @api_router.get("/dealer/portal/config")
 async def dealer_portal_config(
     request: Request,
