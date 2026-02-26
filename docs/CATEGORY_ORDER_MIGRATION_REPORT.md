@@ -11,3 +11,5 @@
 ## Scope Bazlı Önce/Sonra Order Listesi
 
 - Çakışma tespit edilmedi.
+- Önce order listesi: Yok
+- Sonra order listesi: Yok
