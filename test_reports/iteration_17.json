@@ -1,0 +1,84 @@
+{
+  "summary": "Iteration 17 - Dashboard Stabilization & Yakında Temizliği regression test PASS. All 15 backend tests passed. Dashboard summary endpoint returns kpis/trends/risk_panel. KPI cards are clickable and navigate to correct URLs. Menu Management API disabled (403). CSV-only import/export verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "AdminCategoriesImportExport",
+        "issues": ["Minor React hydration warning in console about <span> inside <select>/<option> - does not affect functionality (known from iteration 16)"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_dashboard_sprint17.py",
+    "/app/test_reports/pytest/dashboard_sprint17_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Dashboard summary endpoint returns full schema: kpis.today, kpis.last_7_days, trends.listings, risk_panel (suspicious_logins, sla_breaches, pending_payments)",
+    "kpi_links correctly set: today -> /admin/listings?period=today, last_7_days -> /admin/listings?period=last_7_days",
+    "Dashboard KPI cards are clickable Link components navigating to correct URLs",
+    "Frontend displays error state gracefully when dashboard data unavailable",
+    "Menu Management API disabled - all endpoints (GET/POST/PATCH/DELETE) return 403 + feature_disabled",
+    "Category import/export: CSV endpoints work (200), XLSX endpoints disabled (403 + feature_disabled)",
+    "Menu Management NOT present in sidebar navigation"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_dashboard_sprint17.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Dashboard stabilization complete. Yakında Temizliği features verified (Menu Management disabled, CSV-only import/export). All KPI links working correctly.",
+  "iteration_17_verification": {
+    "dashboard_summary_endpoint": {
+      "GET /api/admin/dashboard/summary": "200 ✓",
+      "response_contains_kpis": "today + last_7_days ✓",
+      "response_contains_trends": "listings array ✓",
+      "response_contains_risk_panel": "suspicious_logins + sla_breaches + pending_payments ✓",
+      "kpi_links_today": "/admin/listings?period=today ✓",
+      "kpi_links_last_7_days": "/admin/listings?period=last_7_days ✓"
+    },
+    "dashboard_kpi_cards_clickable": {
+      "today_card_link_exists": "present ✓",
+      "today_card_navigates_to": "/admin/listings?period=today ✓",
+      "week_card_link_exists": "present ✓",
+      "week_card_navigates_to": "/admin/listings?period=last_7_days ✓"
+    },
+    "dashboard_error_handling": {
+      "without_auth_returns_401": "✓",
+      "invalid_trend_days_returns_400": "✓",
+      "frontend_shows_loading_state": "verified ✓",
+      "frontend_shows_error_state": "verified ✓"
+    },
+    "menu_management_disabled": {
+      "GET /api/admin/menu-items": "403 + feature_disabled ✓",
+      "POST /api/admin/menu-items": "403 + feature_disabled ✓",
+      "PATCH /api/admin/menu-items/{id}": "403 + feature_disabled ✓",
+      "DELETE /api/admin/menu-items/{id}": "403 + feature_disabled ✓",
+      "sidebar_menu_item": "NOT present ✓"
+    },
+    "category_import_export_csv_only": {
+      "GET export/csv": "200 ✓",
+      "GET sample/csv": "200 ✓",
+      "GET export/xlsx": "403 + feature_disabled ✓",
+      "GET sample/xlsx": "403 + feature_disabled ✓",
+      "frontend_csv_export_button": "present ✓",
+      "frontend_xlsx_export_button": "NOT present ✓",
+      "frontend_csv_sample_button": "present ✓",
+      "frontend_xlsx_sample_button": "NOT present ✓"
+    }
+  }
+}
