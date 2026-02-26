@@ -18417,7 +18417,7 @@ async def admin_category_vehicle_segment_link_status(
 @api_router.get("/admin/categories/order-index/preview")
 async def admin_category_order_index_preview(
     request: Request,
-    country: Optional[str],
+    country: Optional[str] = None,
     module: str,
     parent_id: Optional[str],
     sort_order: int,
