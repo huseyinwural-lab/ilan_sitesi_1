@@ -2463,7 +2463,7 @@ const AdminCategories = () => {
                         )}
                         {form.module === 'vehicle' && (
                           <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700" data-testid="categories-vehicle-note">
-                            Detay araç seçimi ilan verme akışında yapılır.
+                            Vasıta akışında kategori yerine segment seçilir ve master data bağlantısı zorunludur.
                           </div>
                         )}
                       </div>
