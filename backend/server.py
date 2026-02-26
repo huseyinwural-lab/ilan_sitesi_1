@@ -18962,11 +18962,11 @@ async def admin_update_category(
             request,
         )
 
-    await session.commit()
-
-    if "parent_id" in updates and updates["parent_id"] != old_parent_id:
-        await _reindex_category_siblings(session, old_parent_id)
-        await _reindex_category_siblings(session, updates["parent_id"])
+    try:
+        await session.commit()
+    except IntegrityError as exc:
+        await session.rollback()
+        _raise_category_integrity_error(exc)
 
     if schema:
         if schema_status == "draft":
