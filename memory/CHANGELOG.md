@@ -224,3 +224,13 @@
 - Dealer KPI event tracking: `dealer_nav_click`, `dealer_widget_click`, `dealer_listing_create_start`, `dealer_contact_click`
 - Final test: `/app/test_reports/iteration_19.json` PASS
 - Evidence: `/app/docs/DEALER_DASHBOARD_V1_EVIDENCE.md`
+
+## 2026-02-26 — CATEGORY P0 Stabilizasyon Revize (ADS-VEH-SEG-03)
+
+- Vehicle segment akışı: serbest metin + master data zorunlu eşleşme
+- API hata kontratları: `ORDER_INDEX_ALREADY_USED (400)`, `VEHICLE_SEGMENT_NOT_FOUND (400)`
+- Yeni endpoint: `GET /api/admin/categories/order-index/preview` (canlı sıra çakışma önizleme)
+- Vehicle segment country-unique kuralı aktif (aynı segment aynı ülkede tekil)
+- Migration: `/app/backend/migrations/versions/p57_category_ordering_stabilization.py`
+- Rapor: `/app/docs/CATEGORY_ORDER_MIGRATION_REPORT.md`
+- Test: `/app/test_reports/iteration_21.json` PASS (backend 19/19)
