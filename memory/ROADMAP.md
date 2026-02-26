@@ -6,6 +6,11 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 
 ## Faz Durumu
 
+### Admin Phase
+- **CLOSED** ✅
+- Launch eşiği modülleri tamamlandı: Watermark, Transactions Log, Attribute Manager (Search uyum), Minimal Moderation, Search final polish.
+- **Admin Freeze aktif:** Yeni admin feature alınmaz. Sadece bugfix / güvenlik patch.
+
 ### P0 — ListingWizard + VehicleSelector Stabilizasyonu
 - **CLOSED** ✅
 - Kanıt: `/app/docs/P0_VEHICLE_SELECTOR_FIX_EVIDENCE.md`
@@ -34,9 +39,12 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 - Minimal Moderation — **DONE** ✅
 - Search final polish (facet UI + suggest) — **DONE** ✅
 
-### Sonraki Faz (P1)
-- Public-facing kullanıcı deneyimi (listing detay, sonuç ekranı, dashboard)
-- SEO + dönüşüm optimizasyonu
+### Sonraki Faz (Public Phase - P-UX) **ACTIVE** 🔴
+- Suggest → sonuç → detay akışı optimizasyonu
+- Facet UX sadeleştirme
+- Listing detail conversion odaklı düzenleme (CTA / premium badge / güven öğeleri)
+- Conversion funnel event tracking (suggest_open, search_submit, result_click, detail_view, contact_click)
+- P1 hardening paralel: Suggest cache Redis planı, nightly DB↔Meili drift cron, admin health widget (index status)
 
 ---
 
