@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useToast } from '@/components/ui/toaster';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -32,13 +33,30 @@ export default function AdminDealerPortalConfig() {
   const [saving, setSaving] = useState(false);
   const [navItems, setNavItems] = useState([]);
   const [modules, setModules] = useState([]);
-  const [preview, setPreview] = useState({ header_items: [], sidebar_items: [], modules: [] });
+  const [preview, setPreview] = useState({
+    header_items: [],
+    header_row1_items: [],
+    header_row1_fixed_blocks: [],
+    header_row2_modules: [],
+    header_row3_controls: {},
+    sidebar_items: [],
+    modules: [],
+  });
+  const [lastSavedAt, setLastSavedAt] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+  const { toast } = useToast();
   const authHeader = useMemo(() => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }), []);
+
+  const resolveErrorMessage = (payload, fallback) => {
+    if (typeof payload?.detail === 'string') return payload.detail;
+    if (payload?.detail?.message) return payload.detail.message;
+    if (payload?.message) return payload.message;
+    return fallback;
+  };
 
   const fetchAll = async () => {
     setLoading(true);
