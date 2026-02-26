@@ -9,7 +9,7 @@ import AdminUsersPage from '@/pages/admin/AdminUsers';
 import AdminCategories from '@/pages/admin/AdminCategories';
 import AdminCategoriesImportExport from '@/pages/admin/AdminCategoriesImportExport';
 import AdminAttributes from '@/pages/admin/AdminAttributes';
-import AdminDealerPortalConfig from '@/pages/admin/AdminDealerPortalConfig';
+import AdminDealerPortalConfig from '@/pages/admin/AdminDealerPortalConfigDraft';
 import AdminVehicleMakes from '@/pages/admin/AdminVehicleMakes';
 import AdminVehicleModels from '@/pages/admin/AdminVehicleModels';
 import AdminVehicleMasterImport from '@/pages/admin/AdminVehicleMasterImport';
