@@ -961,6 +961,139 @@ export default function AdminSystemSettingsPage() {
         </div>
       </div>
 
+      <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-watermark-card">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-lg font-semibold" data-testid="system-settings-watermark-title">Watermark & Image Pipeline</h2>
+            <div className="text-xs text-muted-foreground" data-testid="system-settings-watermark-subtitle">
+              Key: {WATERMARK_PIPELINE_KEY} · Orijinal private, public türevlerde watermark.
+            </div>
+          </div>
+          <div className={`text-xs font-semibold px-2 py-1 rounded-full ${watermarkConfig.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`} data-testid="system-settings-watermark-status">
+            {watermarkConfig.enabled ? 'Watermark Açık' : 'Watermark Kapalı'}
+          </div>
+        </div>
+
+        {watermarkLoading ? (
+          <div className="text-xs text-muted-foreground" data-testid="system-settings-watermark-loading">Yükleniyor…</div>
+        ) : (
+          <>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3" data-testid="system-settings-watermark-form-grid">
+              <label className="flex items-center gap-2 text-sm" data-testid="system-settings-watermark-enabled-wrap">
+                <input
+                  type="checkbox"
+                  checked={Boolean(watermarkConfig.enabled)}
+                  onChange={(e) => setWatermarkConfig((prev) => ({ ...prev, enabled: e.target.checked }))}
+                  data-testid="system-settings-watermark-enabled"
+                />
+                Watermark aktif
+              </label>
+
+              <div className="space-y-1">
+                <label className="text-xs text-slate-600" data-testid="system-settings-watermark-position-label">Pozisyon</label>
+                <select
+                  className="h-9 w-full rounded-md border px-3 text-sm"
+                  value={watermarkConfig.position}
+                  onChange={(e) => setWatermarkConfig((prev) => ({ ...prev, position: e.target.value }))}
+                  data-testid="system-settings-watermark-position"
+                >
+                  <option value="bottom_right">bottom_right</option>
+                  <option value="bottom_left">bottom_left</option>
+                  <option value="top_right">top_right</option>
+                  <option value="top_left">top_left</option>
+                  <option value="center">center</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-slate-600" data-testid="system-settings-watermark-opacity-label">Opacity: {Number(watermarkConfig.opacity || 0).toFixed(2)}</label>
+                <input
+                  type="range"
+                  min="0.05"
+                  max="0.95"
+                  step="0.05"
+                  value={watermarkConfig.opacity}
+                  onChange={(e) => setWatermarkConfig((prev) => ({ ...prev, opacity: Number(e.target.value) }))}
+                  className="w-full"
+                  data-testid="system-settings-watermark-opacity"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-slate-600" data-testid="system-settings-watermark-web-width-label">Web max width</label>
+                <input
+                  type="number"
+                  min="800"
+                  max="3000"
+                  value={watermarkConfig.web_max_width}
+                  onChange={(e) => setWatermarkConfig((prev) => ({ ...prev, web_max_width: Number(e.target.value) }))}
+                  className="h-9 w-full rounded-md border px-3 text-sm"
+                  data-testid="system-settings-watermark-web-width"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-slate-600" data-testid="system-settings-watermark-thumb-width-label">Thumbnail width</label>
+                <input
+                  type="number"
+                  min="200"
+                  max="1200"
+                  value={watermarkConfig.thumb_max_width}
+                  onChange={(e) => setWatermarkConfig((prev) => ({ ...prev, thumb_max_width: Number(e.target.value) }))}
+                  className="h-9 w-full rounded-md border px-3 text-sm"
+                  data-testid="system-settings-watermark-thumb-width"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2" data-testid="system-settings-watermark-actions">
+              <button
+                onClick={handleSaveWatermarkSettings}
+                disabled={watermarkSaving}
+                className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
+                data-testid="system-settings-watermark-save"
+              >
+                {watermarkSaving ? 'Kaydediliyor…' : 'Kaydet'}
+              </button>
+              <button
+                onClick={() => { fetchWatermarkPreview(); fetchWatermarkPerf(); }}
+                className="h-9 px-3 rounded-md border text-sm"
+                data-testid="system-settings-watermark-refresh-preview"
+              >
+                Preview Yenile
+              </button>
+              {watermarkLogoUrl && (
+                <a href={watermarkLogoUrl} target="_blank" rel="noreferrer" className="text-xs underline text-primary" data-testid="system-settings-watermark-logo-link">
+                  Marka logosunu aç
+                </a>
+              )}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2" data-testid="system-settings-watermark-preview-grid">
+              <div className="rounded-md border p-3 space-y-2" data-testid="system-settings-watermark-preview-card">
+                <div className="text-xs text-muted-foreground" data-testid="system-settings-watermark-preview-title">Preview</div>
+                {watermarkPreviewUrl ? (
+                  <img src={watermarkPreviewUrl} alt="Watermark preview" className="w-full rounded border object-contain" data-testid="system-settings-watermark-preview-image" />
+                ) : (
+                  <div className="text-xs text-muted-foreground" data-testid="system-settings-watermark-preview-empty">Preview görseli yok</div>
+                )}
+              </div>
+
+              <div className="rounded-md border p-3 space-y-2" data-testid="system-settings-watermark-performance-card">
+                <div className="text-xs text-muted-foreground" data-testid="system-settings-watermark-performance-title">Performans Özeti</div>
+                <div className="text-sm" data-testid="system-settings-watermark-performance-sample">Örnek sayısı: {watermarkPerf?.sample_count ?? 0}</div>
+                <div className="text-sm" data-testid="system-settings-watermark-performance-avg-ms">Ortalama işleme: {watermarkPerf?.average_processing_ms ?? 0} ms</div>
+                <div className="text-sm" data-testid="system-settings-watermark-performance-ratio">Boyut düşüş oranı: {watermarkPerf?.average_reduction_ratio ?? 0}%</div>
+              </div>
+            </div>
+
+            {watermarkError && (
+              <div className="text-xs text-rose-600" data-testid="system-settings-watermark-error">{watermarkError}</div>
+            )}
+          </>
+        )}
+      </div>
+
       <div className="flex flex-wrap items-center gap-3" data-testid="system-settings-filters">
         <input
           value={filterKey}
