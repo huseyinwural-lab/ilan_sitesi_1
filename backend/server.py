@@ -19623,6 +19623,223 @@ async def admin_session_health(request: Request, response: Response, current_use
 # Public Search v2 (SQL)
 # =====================
 
+def _parse_attr_query_filters(query_params: Any) -> dict[str, Any]:
+    parsed: dict[str, Any] = {}
+    multi_items = query_params.multi_items() if hasattr(query_params, "multi_items") else query_params.items()
+
+    for raw_key, raw_value in multi_items:
+        if not raw_key.startswith("attr["):
+            continue
+        match = re.match(r"^attr\[([^\]]+)\](_min|_max)?$", raw_key)
+        if not match:
+            continue
+        attr_key = (match.group(1) or "").strip().lower()
+        suffix = match.group(2)
+        if not attr_key:
+            continue
+
+        value = (raw_value or "").strip()
+        if suffix in {"_min", "_max"}:
+            bucket = parsed.get(attr_key)
+            if not isinstance(bucket, dict):
+                bucket = {}
+                parsed[attr_key] = bucket
+            try:
+                num = float(value)
+            except ValueError:
+                continue
+            if suffix == "_min":
+                bucket["min"] = num
+            else:
+                bucket["max"] = num
+            continue
+
+        if attr_key not in parsed or not isinstance(parsed[attr_key], list):
+            parsed[attr_key] = []
+        for token in value.split(","):
+            cleaned = token.strip()
+            if cleaned:
+                parsed[attr_key].append(cleaned)
+
+    normalized: dict[str, Any] = {}
+    for key, value in parsed.items():
+        if isinstance(value, list):
+            deduped = []
+            seen = set()
+            for item in value:
+                lower = item.lower()
+                if lower in seen:
+                    continue
+                seen.add(lower)
+                deduped.append(item)
+            if deduped:
+                normalized[key] = deduped
+        elif isinstance(value, dict):
+            normalized[key] = value
+    return normalized
+
+
+def _meili_quote(value: str) -> str:
+    escaped = str(value).replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+async def _resolve_category_uuid_for_search(session: AsyncSession, category: Optional[str]) -> Optional[uuid.UUID]:
+    if not category:
+        return None
+    category_value = category.strip()
+    if not category_value:
+        return None
+    try:
+        return uuid.UUID(category_value)
+    except ValueError:
+        result = await session.execute(
+            select(Category.id).where(
+                or_(
+                    Category.slug["tr"].astext == category_value,
+                    Category.slug["de"].astext == category_value,
+                    Category.slug["fr"].astext == category_value,
+                    Category.slug["en"].astext == category_value,
+                )
+            )
+        )
+        return result.scalar_one_or_none()
+
+
+async def _resolve_vehicle_numeric_filter(session: AsyncSession, value: Optional[str], model: str) -> Optional[int]:
+    if not value:
+        return None
+    raw = value.strip()
+    if not raw:
+        return None
+
+    try:
+        return stable_numeric_id(uuid.UUID(raw))
+    except ValueError:
+        pass
+
+    if model == "make":
+        result = await session.execute(select(VehicleMake.id).where(VehicleMake.slug == raw))
+    else:
+        result = await session.execute(select(VehicleModel.id).where(VehicleModel.slug == raw))
+    found = result.scalar_one_or_none()
+    return stable_numeric_id(found) if found else None
+
+
+async def _load_filterable_attribute_map(
+    session: AsyncSession,
+    category_uuid: Optional[uuid.UUID],
+) -> tuple[dict[str, dict[str, Any]], list[str]]:
+    if not category_uuid:
+        return {}, []
+
+    result = await session.execute(
+        select(Attribute)
+        .join(CategoryAttributeMap, CategoryAttributeMap.attribute_id == Attribute.id)
+        .options(selectinload(Attribute.options))
+        .where(
+            CategoryAttributeMap.category_id == category_uuid,
+            CategoryAttributeMap.is_active.is_(True),
+            Attribute.is_active.is_(True),
+            Attribute.is_filterable.is_(True),
+        )
+        .order_by(Attribute.key.asc())
+    )
+
+    attr_map: dict[str, dict[str, Any]] = {}
+    facet_fields: list[str] = []
+    for attr in result.scalars().all():
+        key = (attr.key or "").strip().lower()
+        if not key:
+            continue
+        field = f"attribute_{key}"
+        label = key
+        if isinstance(attr.name, dict):
+            label = attr.name.get("tr") or next(iter(attr.name.values()), key)
+        elif isinstance(attr.name, str):
+            label = attr.name
+
+        options = []
+        for opt in attr.options or []:
+            option_label = None
+            if isinstance(opt.label, dict):
+                option_label = opt.label.get("tr") or next(iter(opt.label.values()), None)
+            options.append({"value": opt.value, "label": option_label or opt.value})
+
+        attr_map[key] = {
+            "field": field,
+            "key": key,
+            "label": label,
+            "type": attr.attribute_type,
+            "options": options,
+        }
+        facet_fields.append(field)
+
+    return attr_map, facet_fields
+
+
+def _build_meili_filter_expression(
+    *,
+    category_uuid: Optional[uuid.UUID],
+    make_id_num: Optional[int],
+    model_id_num: Optional[int],
+    price_min: Optional[int],
+    price_max: Optional[int],
+    attr_filters: dict[str, Any],
+    attr_map: dict[str, dict[str, Any]],
+) -> Optional[str]:
+    filters: list[str] = []
+    if category_uuid:
+        filters.append(f"category_path_ids = {_meili_quote(str(category_uuid))}")
+    if make_id_num is not None:
+        filters.append(f"make_id = {make_id_num}")
+    if model_id_num is not None:
+        filters.append(f"model_id = {model_id_num}")
+    if price_min is not None:
+        filters.append(f"price >= {float(price_min)}")
+    if price_max is not None:
+        filters.append(f"price <= {float(price_max)}")
+
+    for key, selected in attr_filters.items():
+        attr_cfg = attr_map.get(key)
+        if not attr_cfg:
+            continue
+        field = attr_cfg["field"]
+
+        if isinstance(selected, dict):
+            if selected.get("min") is not None:
+                filters.append(f"{field} >= {float(selected['min'])}")
+            if selected.get("max") is not None:
+                filters.append(f"{field} <= {float(selected['max'])}")
+            continue
+
+        if not isinstance(selected, list):
+            continue
+        if not selected:
+            continue
+
+        attr_type = attr_cfg.get("type")
+        if attr_type == "boolean":
+            bool_parts = []
+            for item in selected:
+                lower = str(item).strip().lower()
+                if lower in {"true", "1", "yes", "evet"}:
+                    bool_parts.append(f"{field} = true")
+                elif lower in {"false", "0", "no", "hayir", "hayır"}:
+                    bool_parts.append(f"{field} = false")
+            if bool_parts:
+                filters.append(f"({' OR '.join(bool_parts)})")
+            continue
+
+        parts = [f"{field} = {_meili_quote(item)}" for item in selected if str(item).strip()]
+        if parts:
+            filters.append(f"({' OR '.join(parts)})")
+
+    if not filters:
+        return None
+    return " AND ".join(filters)
+
+
 @api_router.get("/v2/search")
 async def public_search_v2(
     request: Request,
@@ -19638,7 +19855,7 @@ async def public_search_v2(
     price_max: Optional[int] = None,
     session: AsyncSession = Depends(get_sql_session),
 ):
-    """SQL-backed search endpoint for Public Portal (active listings only)."""
+    """Meilisearch-backed search endpoint (no DB fallback for facets)."""
 
     country_norm = (country or "").strip().upper()
     if not country_norm:
@@ -19646,104 +19863,146 @@ async def public_search_v2(
 
     page = max(1, int(page))
     limit = min(100, max(1, int(limit)))
+    offset = (page - 1) * limit
 
-    base_conditions = [Listing.status == "published", Listing.country == country_norm]
+    try:
+        runtime = await get_active_meili_runtime(session)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"MEILI_SEARCH_UNAVAILABLE: {exc}") from exc
 
-    if q:
-        q_value = f"%{q.strip()}%"
-        base_conditions.append(or_(Listing.title.ilike(q_value), Listing.description.ilike(q_value)))
+    category_uuid = await _resolve_category_uuid_for_search(session, category)
+    make_id_num = await _resolve_vehicle_numeric_filter(session, make, "make")
+    model_id_num = await _resolve_vehicle_numeric_filter(session, model, "model")
 
-    if category:
-        category_value = category.strip()
-        category_id = None
-        try:
-            category_id = uuid.UUID(category_value)
-        except ValueError:
-            result = await session.execute(
-                select(Category.id).where(
-                    or_(
-                        Category.slug["tr"].astext == category_value,
-                        Category.slug["de"].astext == category_value,
-                        Category.slug["fr"].astext == category_value,
-                        Category.slug["en"].astext == category_value,
-                    )
-                )
-            )
-            category_id = result.scalar_one_or_none()
-        if category_id:
-            base_conditions.append(Listing.category_id == category_id)
+    attr_filters = _parse_attr_query_filters(request.query_params)
+    attr_map, attribute_facet_fields = await _load_filterable_attribute_map(session, category_uuid)
 
-    if make:
-        make_value = make.strip()
-        try:
-            make_id = uuid.UUID(make_value)
-            base_conditions.append(Listing.make_id == make_id)
-        except ValueError:
-            base_conditions.append(Listing.attributes["vehicle"]["make_key"].astext == make_value)
+    base_filterable = [
+        "category_path_ids",
+        "make_id",
+        "model_id",
+        "trim_id",
+        "city_id",
+        "attribute_flat_map",
+        "price",
+        "premium_score",
+    ]
+    all_filterable = list(dict.fromkeys(base_filterable + attribute_facet_fields))
+    try:
+        await meili_update_filterable_attributes(runtime, all_filterable)
+    except Exception:
+        logging.getLogger("search_v2").warning("meili_filterable_update_failed", exc_info=True)
 
-    if model:
-        model_value = model.strip()
-        try:
-            model_id = uuid.UUID(model_value)
-            base_conditions.append(Listing.model_id == model_id)
-        except ValueError:
-            base_conditions.append(Listing.attributes["vehicle"]["model_key"].astext == model_value)
+    filter_expr = _build_meili_filter_expression(
+        category_uuid=category_uuid,
+        make_id_num=make_id_num,
+        model_id_num=model_id_num,
+        price_min=price_min,
+        price_max=price_max,
+        attr_filters=attr_filters,
+        attr_map=attr_map,
+    )
 
-    if price_min is not None:
-        base_conditions.append(Listing.price >= float(price_min))
-    if price_max is not None:
-        base_conditions.append(Listing.price <= float(price_max))
-    if price_min is not None or price_max is not None:
-        base_conditions.append(or_(Listing.price_type == "FIXED", Listing.price_type.is_(None)))
+    sort_map = {
+        "price_asc": ["price:asc", "premium_score:desc", "published_at:desc"],
+        "price_desc": ["price:desc", "premium_score:desc", "published_at:desc"],
+        "date_asc": ["published_at:asc", "premium_score:desc"],
+        "date_desc": ["premium_score:desc", "published_at:desc"],
+    }
+    sort_fields = sort_map.get(sort, sort_map["date_desc"])
 
-    query_stmt = select(Listing).where(and_(*base_conditions))
-    total_stmt = select(func.count()).select_from(Listing).where(and_(*base_conditions))
+    facets_requested = list(dict.fromkeys(attribute_facet_fields + ["make_id", "model_id", "city_id"]))
+    result = await meili_search_documents(
+        runtime,
+        query=(q or "").strip(),
+        limit=limit,
+        offset=offset,
+        sort=sort_fields,
+        filter_query=filter_expr,
+        facets=facets_requested,
+    )
 
-    if sort == "price_asc":
-        query_stmt = query_stmt.order_by(Listing.price.asc().nulls_last())
-    elif sort == "price_desc":
-        query_stmt = query_stmt.order_by(Listing.price.desc().nulls_last())
-    elif sort == "date_asc":
-        query_stmt = query_stmt.order_by(Listing.created_at.asc())
-    else:
-        query_stmt = query_stmt.order_by(Listing.created_at.desc())
-
-    rows = (await session.execute(query_stmt.offset((page - 1) * limit).limit(limit))).scalars().all()
-    total = (await session.execute(total_stmt)).scalar_one() or 0
-
+    raw_hits = result.get("hits", [])
     items = []
-    for listing in rows:
-        attrs = listing.attributes or {}
-        vehicle = attrs.get("vehicle") or {}
-        title = (listing.title or "").strip()
-        if not title:
-            title = f"{(vehicle.get('make_key') or '').upper()} {vehicle.get('model_key') or ''} {vehicle.get('year') or ''}".strip()
-
-        image_url = listing.images[0] if listing.images else None
-
+    for hit in raw_hits:
         items.append(
             {
-                "id": str(listing.id),
-                "title": title,
-                "price": listing.price,
-                "price_type": listing.price_type or "FIXED",
-                "price_amount": listing.price,
-                "hourly_rate": listing.hourly_rate,
-                "currency": listing.currency or "EUR",
+                "id": hit.get("listing_id"),
+                "title": hit.get("title") or "",
+                "price": hit.get("price") or 0,
+                "price_type": "FIXED",
+                "price_amount": hit.get("price") or 0,
+                "hourly_rate": None,
+                "currency": "EUR",
                 "secondary_price": None,
                 "secondary_currency": None,
-                "image": image_url,
-                "city": listing.city or "",
+                "image": None,
+                "city": "",
             }
         )
 
-    pages = (total + limit - 1) // limit if total else 0
+    facet_distribution = result.get("facetDistribution") or {}
+    facet_stats = result.get("facetStats") or {}
+    facets_payload: dict[str, Any] = {}
+    facet_meta: dict[str, Any] = {}
 
+    for key, cfg in attr_map.items():
+        field = cfg["field"]
+        attr_type = cfg.get("type")
+        dist = facet_distribution.get(field) or {}
+        facet_meta[key] = {
+            "label": cfg.get("label") or key,
+            "type": "multi_select" if attr_type in {"select", "text"} else ("boolean" if attr_type == "boolean" else ("range" if attr_type == "number" else "multi_select")),
+        }
+
+        if attr_type in {"select", "text"}:
+            known_options = {str(opt.get("value")): opt.get("label") or opt.get("value") for opt in cfg.get("options") or []}
+            merged_keys = list(dict.fromkeys(list(known_options.keys()) + [str(item) for item in dist.keys()]))
+            options = []
+            for value in merged_keys:
+                options.append(
+                    {
+                        "value": value,
+                        "label": known_options.get(value) or value,
+                        "count": int(dist.get(value, 0)),
+                    }
+                )
+            options.sort(key=lambda item: (-item["count"], item["label"]))
+            facets_payload[key] = options
+            continue
+
+        if attr_type == "boolean":
+            true_count = int(dist.get("true", 0) or dist.get(True, 0) or 0)
+            false_count = int(dist.get("false", 0) or dist.get(False, 0) or 0)
+            facets_payload[key] = {"trueCount": true_count, "falseCount": false_count}
+            continue
+
+        if attr_type == "number":
+            stat = facet_stats.get(field) or {}
+            min_val = stat.get("min")
+            max_val = stat.get("max")
+            if min_val is None and max_val is None and dist:
+                try:
+                    nums = [float(val) for val in dist.keys()]
+                    min_val = min(nums)
+                    max_val = max(nums)
+                except Exception:
+                    min_val = 0
+                    max_val = 0
+            if min_val is None:
+                min_val = 0
+            if max_val is None:
+                max_val = min_val
+            facets_payload[key] = {"min": float(min_val), "max": float(max_val), "step": 1}
+            continue
+
+    total = int(result.get("estimatedTotalHits") or 0)
+    pages = (total + limit - 1) // limit if total else 0
     return {
         "items": items,
-        "facets": {},
-        "facet_meta": {},
-        "pagination": {"total": int(total), "page": page, "pages": pages},
+        "facets": facets_payload,
+        "facet_meta": facet_meta,
+        "pagination": {"total": total, "page": page, "pages": pages},
     }
 
 
