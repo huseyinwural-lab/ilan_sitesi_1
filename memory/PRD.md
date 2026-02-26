@@ -681,18 +681,23 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 
 ## 2026-02-26 — P0 Kategori Yönetimi Düzeltmesi (Bloklayıcı)
 
-### Tamamlanan P0 Kapsamı
-- `module` standardizasyonu: `real_estate`, `vehicle`, `other` (+ alias map: `emlak/realestate/vasita/machinery/services/jobs`)
-- Wizard’da `Diğer` seçeneği ve manuel `Sıra` (sort/order_index) düzenleme aktif
-- Vehicle akışı: segment seçimi + master data link doğrulama zorunlu
-- `GET /api/admin/categories/vehicle-segment/link-status` endpointi eklendi
+### Durum
+- **CLOSED** ✅
+- **Internal Milestone:** `CATEGORY_MODULE_STABLE`
+- **Category Freeze:** sadece bugfix
+
+### Tamamlanan Kapsam
+- `module` standardizasyonu: `real_estate`, `vehicle`, `other`
+- Wizard’da `Diğer` + manuel `Sıra` + canlı sıra çakışma önizleme
+- Vehicle akışı: serbest metin segment, master data zorunlu eşleşme, country-unique segment kuralı
+- Endpointler: `GET /api/admin/categories/vehicle-segment/link-status`, `GET /api/admin/categories/order-index/preview`
 
 ### Veri Bütünlüğü / Migration
-- Yeni migration: `/app/backend/migrations/versions/p56_category_scope_ordering.py`
-- Scope unique index: `uq_categories_scope_sort` on `(country_code, module, parent_id, sort_order)` (soft-delete aware)
-- Eski modül değerleri normalize edildi
-- Migration raporu üretildi: `/app/docs/CATEGORY_ORDER_MIGRATION_REPORT.md`
+- Migrationlar: `/app/backend/migrations/versions/p56_category_scope_ordering.py`, `/app/backend/migrations/versions/p57_category_ordering_stabilization.py`
+- Scope unique index: `uq_categories_scope_sort` on `(country_code, module, parent_id, sort_order)`
+- Migration raporu: `/app/docs/CATEGORY_ORDER_MIGRATION_REPORT.md`
 
-### Doğrulama
-- Kapsamlı test raporu: `/app/test_reports/iteration_20.json` (**PASS**)
-- Doğrulanan başlıklar: unique constraint canlı doğrulama, vehicle segment-link edge-case testleri, real_estate/other multi-level regresyonu, wizard validation ve next/complete akışları.
+### API Kontratları ve Doğrulama
+- Hata kontratı dokümanı: `/app/docs/CATEGORY_API_ERROR_CONTRACTS.md`
+- Swagger/OpenAPI response examples: `ORDER_INDEX_ALREADY_USED`, `VEHICLE_SEGMENT_NOT_FOUND`
+- Final doğrulama raporu: `/app/test_reports/iteration_22.json` (**PASS**)
