@@ -19391,183 +19391,457 @@ async def admin_dashboard_summary(
         response["health"] = health
         return response
 
-    total_listings = (
-        await session.execute(
-            select(func.count()).select_from(Listing).where(
-                Listing.country.in_(effective_countries) if effective_countries else True
-            )
-        )
-    ).scalar_one()
-    published_listings = (
-        await session.execute(
-            select(func.count()).select_from(Listing).where(
-                Listing.status == "published",
-                Listing.country.in_(effective_countries) if effective_countries else True,
-            )
-        )
-    ).scalar_one()
-    pending_moderation = (
-        await session.execute(
-            select(func.count()).select_from(Listing).where(
-                Listing.status == "pending_moderation",
-                Listing.country.in_(effective_countries) if effective_countries else True,
-            )
-        )
-    ).scalar_one()
+    try:
+        listing_scope_condition = Listing.country.in_(effective_countries) if effective_countries else True
+        user_scope_condition = SqlUser.country_code.in_(effective_countries) if effective_countries else True
+        invoice_scope_condition = AdminInvoice.country_code.in_(effective_countries) if effective_countries else True
+        audit_scope_condition = AuditLog.country_scope.in_(effective_countries) if effective_countries else True
 
-    total_users = (
-        await session.execute(
-            select(func.count()).select_from(SqlUser).where(
-                SqlUser.country_code.in_(effective_countries) if effective_countries else True
-            )
-        )
-    ).scalar_one()
-    active_users = (
-        await session.execute(
-            select(func.count()).select_from(SqlUser).where(
-                SqlUser.is_active.is_(True),
-                SqlUser.country_code.in_(effective_countries) if effective_countries else True,
-            )
-        )
-    ).scalar_one()
-    inactive_users = (
-        await session.execute(
-            select(func.count()).select_from(SqlUser).where(
-                SqlUser.is_active.is_(False),
-                SqlUser.country_code.in_(effective_countries) if effective_countries else True,
-            )
-        )
-    ).scalar_one()
-    active_dealers = (
-        await session.execute(
-            select(func.count()).select_from(SqlUser).where(
-                SqlUser.role == "dealer",
-                SqlUser.is_active.is_(True),
-                SqlUser.country_code.in_(effective_countries) if effective_countries else True,
-            )
-        )
-    ).scalar_one()
+        now = datetime.now(timezone.utc)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_start = now - timedelta(days=DASHBOARD_KPI_DAYS)
+        trend_start = (now - timedelta(days=trend_window - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    role_distribution = {}
-    for role_name in ["super_admin", "country_admin", "moderator", "support", "finance", "dealer", "individual"]:
-        role_distribution[role_name] = (
+        total_listings = (
             await session.execute(
-                select(func.count()).select_from(SqlUser).where(
-                    SqlUser.role == role_name,
-                    SqlUser.country_code.in_(effective_countries) if effective_countries else True,
+                select(func.count()).select_from(Listing).where(listing_scope_condition)
+            )
+        ).scalar_one()
+        published_listings = (
+            await session.execute(
+                select(func.count()).select_from(Listing).where(
+                    Listing.status == "published",
+                    listing_scope_condition,
+                )
+            )
+        ).scalar_one()
+        pending_moderation = (
+            await session.execute(
+                select(func.count()).select_from(Listing).where(
+                    Listing.status == "pending_moderation",
+                    listing_scope_condition,
                 )
             )
         ).scalar_one()
 
-    now = datetime.now(timezone.utc)
-    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    revenue_mtd = None
-    totals = {}
-    if can_view_finance:
-        invoice_query = select(AdminInvoice).where(AdminInvoice.status == "paid", AdminInvoice.created_at >= month_start)
-        invoices = (await session.execute(invoice_query)).scalars().all()
-        for inv in invoices:
-            currency = inv.currency or "UNKNOWN"
-            amount = float(inv.amount_total or 0)
-            totals[currency] = totals.get(currency, 0) + amount
-        revenue_mtd = sum(totals.values())
-
-    metrics = {
-        "total_listings": int(total_listings or 0),
-        "published_listings": int(published_listings or 0),
-        "pending_moderation": int(pending_moderation or 0),
-        "active_dealers": int(active_dealers or 0),
-        "revenue_mtd": round(revenue_mtd, 2) if revenue_mtd is not None else None,
-        "revenue_currency_totals": {k: round(v, 2) for k, v in totals.items()} if can_view_finance else None,
-        "month_start_utc": month_start.isoformat(),
-    }
-
-    active_countries_query = select(Country).where(Country.is_enabled.is_(True))
-    if effective_countries:
-        active_countries_query = active_countries_query.where(Country.code.in_(effective_countries))
-    active_countries = (await session.execute(active_countries_query)).scalars().all()
-    active_country_codes = [row.code for row in active_countries]
-
-    categories = (await session.execute(select(Category))).scalars().all()
-    active_modules = set()
-    for cat in categories:
-        schema = _normalize_category_schema(cat.form_schema) if cat.form_schema else {}
-        for key, module in (schema.get("modules") or {}).items():
-            enabled = bool(module.get("enabled")) if isinstance(module, dict) else bool(module)
-            if enabled:
-                active_modules.add(key)
-
-    recent_logs = (
-        await session.execute(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(10))
-    ).scalars().all()
-    recent_activity = [
-        {
-            "id": str(log.id),
-            "event_type": log.event_type or log.action,
-            "action": log.action,
-            "resource_type": log.resource_type,
-            "user_email": log.user_email,
-            "created_at": log.created_at.isoformat() if log.created_at else None,
-            "country_code": log.country_code,
-        }
-        for log in recent_logs
-    ]
-
-    since_dt = now - timedelta(hours=24)
-    new_listings = (
-        await session.execute(
-            select(func.count()).select_from(Listing).where(Listing.created_at >= since_dt)
-        )
-    ).scalar_one()
-    new_users = (
-        await session.execute(
-            select(func.count()).select_from(SqlUser).where(SqlUser.created_at >= since_dt)
-        )
-    ).scalar_one()
-    deleted_content = (
-        await session.execute(
-            select(func.count()).select_from(AuditLog).where(
-                AuditLog.event_type.in_(["LISTING_SOFT_DELETE", "LISTING_FORCE_UNPUBLISH"]),
-                AuditLog.created_at >= since_dt,
+        total_users = (
+            await session.execute(
+                select(func.count()).select_from(SqlUser).where(user_scope_condition)
             )
+        ).scalar_one()
+        active_users = (
+            await session.execute(
+                select(func.count()).select_from(SqlUser).where(
+                    SqlUser.is_active.is_(True),
+                    user_scope_condition,
+                )
+            )
+        ).scalar_one()
+        inactive_users = (
+            await session.execute(
+                select(func.count()).select_from(SqlUser).where(
+                    SqlUser.is_active.is_(False),
+                    user_scope_condition,
+                )
+            )
+        ).scalar_one()
+        active_dealers = (
+            await session.execute(
+                select(func.count()).select_from(SqlUser).where(
+                    SqlUser.role == "dealer",
+                    SqlUser.is_active.is_(True),
+                    user_scope_condition,
+                )
+            )
+        ).scalar_one()
+
+        role_distribution: Dict[str, int] = {}
+        for role_name in ["super_admin", "country_admin", "moderator", "support", "finance", "dealer", "individual"]:
+            role_distribution[role_name] = (
+                await session.execute(
+                    select(func.count()).select_from(SqlUser).where(
+                        SqlUser.role == role_name,
+                        user_scope_condition,
+                    )
+                )
+            ).scalar_one()
+
+        revenue_mtd = None
+        mtd_totals: Dict[str, float] = {}
+        if can_view_finance:
+            mtd_conditions = [
+                AdminInvoice.status == "paid",
+                AdminInvoice.created_at >= month_start,
+                invoice_scope_condition,
+            ]
+            mtd_totals = await _invoice_totals_by_currency(session, mtd_conditions)
+            revenue_mtd = sum(mtd_totals.values())
+
+        metrics = {
+            "total_listings": int(total_listings or 0),
+            "published_listings": int(published_listings or 0),
+            "pending_moderation": int(pending_moderation or 0),
+            "active_dealers": int(active_dealers or 0),
+            "revenue_mtd": round(revenue_mtd, 2) if revenue_mtd is not None else None,
+            "revenue_currency_totals": {k: round(v, 2) for k, v in mtd_totals.items()} if can_view_finance else None,
+            "month_start_utc": month_start.isoformat(),
+        }
+
+        active_countries_query = select(Country).where(Country.is_enabled.is_(True))
+        if effective_countries:
+            active_countries_query = active_countries_query.where(Country.code.in_(effective_countries))
+        active_countries = (await session.execute(active_countries_query)).scalars().all()
+        active_country_codes = [row.code for row in active_countries]
+
+        category_query = select(Category)
+        if effective_countries:
+            category_query = category_query.where(
+                or_(Category.country_code.is_(None), Category.country_code.in_(effective_countries))
+            )
+        categories = (await session.execute(category_query)).scalars().all()
+        active_modules = set()
+        for cat in categories:
+            schema = _normalize_category_schema(cat.form_schema) if cat.form_schema else {}
+            for key, module in (schema.get("modules") or {}).items():
+                enabled = bool(module.get("enabled")) if isinstance(module, dict) else bool(module)
+                if enabled:
+                    active_modules.add(key)
+
+        recent_logs_query = select(AuditLog)
+        if effective_countries:
+            recent_logs_query = recent_logs_query.where(audit_scope_condition)
+        recent_logs = (
+            await session.execute(recent_logs_query.order_by(AuditLog.created_at.desc()).limit(10))
+        ).scalars().all()
+        recent_activity = [
+            {
+                "id": str(log.id),
+                "event_type": log.event_type or log.action,
+                "action": log.action,
+                "resource_type": log.resource_type,
+                "user_email": log.user_email,
+                "created_at": log.created_at.isoformat() if log.created_at else None,
+                "country_code": log.country_scope,
+            }
+            for log in recent_logs
+        ]
+
+        since_dt = now - timedelta(hours=24)
+        new_listings = (
+            await session.execute(
+                select(func.count()).select_from(Listing).where(
+                    Listing.created_at >= since_dt,
+                    listing_scope_condition,
+                )
+            )
+        ).scalar_one()
+        new_users = (
+            await session.execute(
+                select(func.count()).select_from(SqlUser).where(
+                    SqlUser.created_at >= since_dt,
+                    user_scope_condition,
+                )
+            )
+        ).scalar_one()
+        deleted_content_query = select(func.count()).select_from(AuditLog).where(
+            AuditLog.event_type.in_(["LISTING_SOFT_DELETE", "LISTING_FORCE_UNPUBLISH"]),
+            AuditLog.created_at >= since_dt,
         )
-    ).scalar_one()
+        if effective_countries:
+            deleted_content_query = deleted_content_query.where(audit_scope_condition)
+        deleted_content = (await session.execute(deleted_content_query)).scalar_one()
 
-    api_latency_ms = int((time.perf_counter() - start_perf) * 1000)
-    uptime_seconds = int((now - APP_START_TIME).total_seconds())
+        today_listing_count = (
+            await session.execute(
+                select(func.count()).select_from(Listing).where(
+                    Listing.created_at >= today_start,
+                    listing_scope_condition,
+                )
+            )
+        ).scalar_one()
+        today_user_count = (
+            await session.execute(
+                select(func.count()).select_from(SqlUser).where(
+                    SqlUser.created_at >= today_start,
+                    user_scope_condition,
+                )
+            )
+        ).scalar_one()
+        week_listing_count = (
+            await session.execute(
+                select(func.count()).select_from(Listing).where(
+                    Listing.created_at >= week_start,
+                    listing_scope_condition,
+                )
+            )
+        ).scalar_one()
+        week_user_count = (
+            await session.execute(
+                select(func.count()).select_from(SqlUser).where(
+                    SqlUser.created_at >= week_start,
+                    user_scope_condition,
+                )
+            )
+        ).scalar_one()
 
-    summary = {
-        "scope": "country" if effective_countries else "global",
-        "country_codes": effective_countries or active_country_codes,
-        "users": {"total": int(total_users or 0), "active": int(active_users or 0), "inactive": int(inactive_users or 0)},
-        "active_countries": {"count": len(active_country_codes), "codes": active_country_codes},
-        "active_modules": {"count": len(active_modules), "items": sorted(active_modules)},
-        "recent_activity": recent_activity,
-        "role_distribution": role_distribution,
-        "activity_24h": {
-            "new_listings": int(new_listings or 0),
-            "new_users": int(new_users or 0),
-            "deleted_content": int(deleted_content or 0),
-        },
-        "health": {
-            "api_status": "ok",
-            "db_status": "ok",
-            "api_latency_ms": api_latency_ms,
-            "db_latency_ms": 0,
-            "deployed_at": os.environ.get("DEPLOYED_AT") or "unknown",
-            "restart_at": APP_START_TIME.isoformat(),
-            "uptime_seconds": uptime_seconds,
-            "uptime_human": _format_uptime(uptime_seconds),
-        },
-        "metrics": metrics,
-        "kpis": {},
-        "trends": {"window_days": trend_window, "items": []},
-        "risk_panel": {},
-        "finance_visible": can_view_finance,
-    }
+        today_currency_totals: Dict[str, float] = {}
+        week_currency_totals: Dict[str, float] = {}
+        if can_view_finance:
+            today_currency_totals = await _invoice_totals_by_currency(
+                session,
+                [
+                    AdminInvoice.status == "paid",
+                    AdminInvoice.created_at >= today_start,
+                    invoice_scope_condition,
+                ],
+            )
+            week_currency_totals = await _invoice_totals_by_currency(
+                session,
+                [
+                    AdminInvoice.status == "paid",
+                    AdminInvoice.created_at >= week_start,
+                    invoice_scope_condition,
+                ],
+            )
 
-    _set_cached_dashboard_summary(cache_key, summary)
-    return summary
+        kpis = {
+            "today": {
+                "new_listings": int(today_listing_count or 0),
+                "new_users": int(today_user_count or 0),
+                "revenue_total": round(sum(today_currency_totals.values()), 2) if can_view_finance else 0,
+                "revenue_currency_totals": {k: round(v, 2) for k, v in today_currency_totals.items()} if can_view_finance else {},
+            },
+            "last_7_days": {
+                "new_listings": int(week_listing_count or 0),
+                "new_users": int(week_user_count or 0),
+                "revenue_total": round(sum(week_currency_totals.values()), 2) if can_view_finance else 0,
+                "revenue_currency_totals": {k: round(v, 2) for k, v in week_currency_totals.items()} if can_view_finance else {},
+            },
+        }
+
+        day_labels = [
+            (trend_start + timedelta(days=offset)).date().isoformat()
+            for offset in range(trend_window)
+        ]
+
+        listing_bucket_expr = func.date_trunc("day", Listing.created_at)
+        listing_rows = (
+            await session.execute(
+                select(
+                    listing_bucket_expr.label("bucket"),
+                    func.count().label("count"),
+                ).where(
+                    Listing.created_at >= trend_start,
+                    listing_scope_condition,
+                ).group_by(listing_bucket_expr).order_by(listing_bucket_expr.asc())
+            )
+        ).all()
+        listing_map = {
+            row.bucket.date().isoformat(): int(row.count or 0)
+            for row in listing_rows
+            if row.bucket
+        }
+
+        listing_trend = [
+            {"date": label, "count": listing_map.get(label, 0)}
+            for label in day_labels
+        ]
+
+        revenue_trend: List[Dict[str, Any]] = []
+        if can_view_finance:
+            revenue_bucket_expr = func.date_trunc("day", AdminInvoice.created_at)
+            revenue_rows = (
+                await session.execute(
+                    select(
+                        revenue_bucket_expr.label("bucket"),
+                        AdminInvoice.currency,
+                        func.sum(AdminInvoice.amount_total).label("amount"),
+                    ).where(
+                        AdminInvoice.status == "paid",
+                        AdminInvoice.created_at >= trend_start,
+                        invoice_scope_condition,
+                    ).group_by(revenue_bucket_expr, AdminInvoice.currency).order_by(revenue_bucket_expr.asc())
+                )
+            ).all()
+
+            revenue_map: Dict[str, Dict[str, float]] = defaultdict(dict)
+            for row in revenue_rows:
+                if not row.bucket:
+                    continue
+                date_key = row.bucket.date().isoformat()
+                currency = row.currency or "UNKNOWN"
+                revenue_map[date_key][currency] = float(row.amount or 0)
+
+            for label in day_labels:
+                currency_totals = revenue_map.get(label, {})
+                revenue_trend.append(
+                    {
+                        "date": label,
+                        "amount": round(sum(currency_totals.values()), 2),
+                        "currency_totals": {k: round(v, 2) for k, v in currency_totals.items()},
+                    }
+                )
+
+        suspicious_since = now - timedelta(hours=DASHBOARD_MULTI_IP_WINDOW_HOURS)
+        suspicious_ip_count_expr = func.count(distinct(AuditLog.ip_address))
+        suspicious_query = select(
+            AuditLog.user_id,
+            AuditLog.user_email,
+            suspicious_ip_count_expr.label("ip_count"),
+        ).where(
+            AuditLog.created_at >= suspicious_since,
+            AuditLog.ip_address.isnot(None),
+            AuditLog.action.ilike("%login%"),
+        )
+        if effective_countries:
+            suspicious_query = suspicious_query.where(audit_scope_condition)
+        suspicious_rows = (
+            await session.execute(
+                suspicious_query.group_by(AuditLog.user_id, AuditLog.user_email)
+                .having(suspicious_ip_count_expr >= DASHBOARD_MULTI_IP_THRESHOLD)
+                .order_by(suspicious_ip_count_expr.desc())
+                .limit(10)
+            )
+        ).all()
+        suspicious_items = [
+            {
+                "user_id": str(row.user_id) if row.user_id else None,
+                "user_email": row.user_email,
+                "ip_count": int(row.ip_count or 0),
+            }
+            for row in suspicious_rows
+        ]
+
+        sla_since = now - timedelta(hours=DASHBOARD_SLA_HOURS)
+        sla_conditions = [
+            Listing.status == "pending_moderation",
+            Listing.created_at <= sla_since,
+            listing_scope_condition,
+        ]
+        sla_count = (
+            await session.execute(
+                select(func.count()).select_from(Listing).where(*sla_conditions)
+            )
+        ).scalar_one()
+        sla_rows = (
+            await session.execute(
+                select(Listing.id, Listing.country, Listing.created_at)
+                .where(*sla_conditions)
+                .order_by(Listing.created_at.asc())
+                .limit(10)
+            )
+        ).all()
+        sla_items = [
+            {
+                "listing_id": str(row.id),
+                "country": row.country,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+            }
+            for row in sla_rows
+        ]
+
+        pending_since = now - timedelta(days=DASHBOARD_PENDING_PAYMENT_DAYS)
+        pending_conditions = [
+            AdminInvoice.status.in_(["draft", "issued"]),
+            or_(
+                AdminInvoice.due_at <= pending_since,
+                and_(AdminInvoice.due_at.is_(None), AdminInvoice.created_at <= pending_since),
+            ),
+            invoice_scope_condition,
+        ]
+        pending_count = (
+            await session.execute(
+                select(func.count()).select_from(AdminInvoice).where(*pending_conditions)
+            )
+        ).scalar_one()
+        pending_invoice_rows = (
+            await session.execute(
+                select(AdminInvoice)
+                .where(*pending_conditions)
+                .order_by(AdminInvoice.created_at.asc())
+                .limit(10)
+            )
+        ).scalars().all()
+        pending_items = [
+            {
+                "invoice_id": str(inv.id),
+                "invoice_no": inv.invoice_no,
+                "country_code": inv.country_code,
+                "currency": inv.currency,
+                "amount_total": float(inv.amount_total or 0),
+                "created_at": inv.created_at.isoformat() if inv.created_at else None,
+                "due_at": inv.due_at.isoformat() if inv.due_at else None,
+            }
+            for inv in pending_invoice_rows
+        ]
+        pending_currency_totals = await _invoice_totals_by_currency(session, pending_conditions) if can_view_finance else {}
+
+        api_latency_ms = int((time.perf_counter() - start_perf) * 1000)
+        uptime_seconds = int((now - APP_START_TIME).total_seconds())
+
+        summary = {
+            "scope": "country" if effective_countries else "global",
+            "country_codes": effective_countries or active_country_codes,
+            "users": {"total": int(total_users or 0), "active": int(active_users or 0), "inactive": int(inactive_users or 0)},
+            "active_countries": {"count": len(active_country_codes), "codes": active_country_codes},
+            "active_modules": {"count": len(active_modules), "items": sorted(active_modules)},
+            "recent_activity": recent_activity,
+            "role_distribution": role_distribution,
+            "activity_24h": {
+                "new_listings": int(new_listings or 0),
+                "new_users": int(new_users or 0),
+                "deleted_content": int(deleted_content or 0),
+            },
+            "health": {
+                "api_status": "ok",
+                "db_status": "ok",
+                "api_latency_ms": api_latency_ms,
+                "db_latency_ms": 0,
+                "deployed_at": os.environ.get("DEPLOYED_AT") or "unknown",
+                "restart_at": APP_START_TIME.isoformat(),
+                "uptime_seconds": uptime_seconds,
+                "uptime_human": _format_uptime(uptime_seconds),
+            },
+            "metrics": metrics,
+            "kpis": kpis,
+            "kpi_links": {
+                "today": "/admin/listings?period=today",
+                "last_7_days": "/admin/listings?period=last_7_days",
+            },
+            "trends": {
+                "window_days": trend_window,
+                "listings": listing_trend,
+                "revenue": revenue_trend,
+            },
+            "risk_panel": {
+                "suspicious_logins": {
+                    "count": len(suspicious_items),
+                    "items": suspicious_items,
+                    "threshold": DASHBOARD_MULTI_IP_THRESHOLD,
+                    "window_hours": DASHBOARD_MULTI_IP_WINDOW_HOURS,
+                },
+                "sla_breaches": {
+                    "count": int(sla_count or 0),
+                    "items": sla_items,
+                    "threshold": DASHBOARD_SLA_HOURS,
+                },
+                "pending_payments": {
+                    "count": int(pending_count or 0),
+                    "items": pending_items,
+                    "threshold_days": DASHBOARD_PENDING_PAYMENT_DAYS,
+                    "total_amount": round(sum(pending_currency_totals.values()), 2) if can_view_finance else 0,
+                    "currency_totals": {k: round(v, 2) for k, v in pending_currency_totals.items()} if can_view_finance else {},
+                },
+            },
+            "finance_visible": can_view_finance,
+        }
+
+        _set_cached_dashboard_summary(cache_key, summary)
+        return summary
+    except Exception:
+        logging.getLogger("admin_dashboard").exception("dashboard_summary_failed")
+        return _empty_dashboard_summary(start_perf, can_view_finance, trend_window)
 
 
 @api_router.get("/admin/dashboard/export/pdf")
