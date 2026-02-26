@@ -133,6 +133,7 @@ from app.models.pricing_snapshot import PricingPriceSnapshot
 from app.models.push_subscription import PushSubscription
 from app.site_media_storage import store_site_asset
 from app.models.cloudflare_config import CloudflareConfig
+from app.models.meilisearch_config import MeiliSearchConfig
 from app.models.system_setting import SystemSetting
 from app.models.admin_invite import AdminInvite
 from app.models.menu_item import MenuItem
@@ -155,6 +156,13 @@ from app.services.cloudflare_config import (
     resolve_env_source,
     upsert_cloudflare_config,
     update_canary_status,
+)
+from app.services.meilisearch_config import (
+    MeiliConfigError,
+    decrypt_meili_master_key,
+    encrypt_meili_master_key,
+    normalize_meili_url,
+    test_and_prepare_meili_index,
 )
 
 
