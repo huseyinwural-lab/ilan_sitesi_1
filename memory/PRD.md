@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-26 22:45:00 UTC (P61 Dealer Dashboard V2 Backend-Only Stabilization)
+**Son güncelleme:** 2026-02-26 23:25:00 UTC (P62 Dealer Dashboard V2 Frontend Integration + Publish Workflow)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -56,6 +56,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P62 Dealer Dashboard V2 P1 Frontend Entegrasyon (2026-02-26):** Admin UI Designer V2’ye **Kurumsal Dashboard V2** tabı eklendi (dnd-kit ile 12 kolon grid, widget palette: KPI/Grafik/Liste/Paket Özeti/Doping Özeti, draft autosave, publish öncesi diff + zorunlu onay modalı, rollback seçimli akış). **Bireysel Header** tabı row bazlı DnD + visible toggle + logo fallback ile yeniden tasarlandı; draft/publish/rollback endpointleriyle entegre edildi. Backend’de `/api/admin/ui/configs/{type}/diff`, `/publish` (require_confirm), `/rollback` endpointleri ve publish/rollback audit log yazımı tamamlandı. Dealer canlı dashboard ekranı config-driven render’a geçirildi (`/api/ui/dashboard`). Test kanıtı: `/app/test_reports/iteration_28.json` (backend+frontend PASS), self-test: `13/13 PASS`, evidence: `/app/docs/DEALER_DASHBOARD_V2_FRONTEND_EVIDENCE.md`.
 - **P61 Dealer Dashboard V2 P0 Backend-Only (2026-02-26):** `ui_configs` tablosuna `layout/widgets` JSONB kolonları (`p61_ui_dashboard_cfg`) eklendi; `UIConfig` modeli ve `ui_designer_routes` dashboard akışı bu alanları native yönetir hale getirildi. Save/publish aşamasında backend guardrail enforce: **min 1 KPI**, **max 12 widget**, widget/layout `widget_id` benzersizlik + eşleşme kontrolü. `/api/admin/ui/configs/dashboard` ve `/api/ui/dashboard` yanıtları layout/widgets ile genişletildi. Migration upgrade+downgrade+re-upgrade doğrulandı. Test kanıtı: `/app/test_reports/iteration_27.json` (PASS, backend 10/10).
 - **P59 UI Designer Foundation (2026-02-26):** `ADMIN_UI_DESIGNER` permission-role eşlemesi (super_admin/country_admin), `ui_configs/ui_themes/ui_theme_assignments` modelleri + `p59_ui_designer_foundation` migration, `/api/admin/ui/configs/*`, `/api/ui/*`, theme assignment + effective resolve endpointleri, `/admin/user-interface-design` 3 sekmeli admin iskeleti (gerçek GET/POST roundtrip), test raporu: `/app/test_reports/iteration_25.json` (PASS).
 - **P60 UI Designer Sprint 2 Slice (2026-02-26):** Kurumsal header 3 satır drag&drop editör + Row1 logo upload (png/svg/webp, 2MB, 3:1 ±%10), `ui_logo_assets` lifecycle tablosu + `p60_ui_logo_assets` migration, logo soft-replace (`is_replaced`) + 7 gün retention cleanup endpointi (`/api/admin/ui/logo-assets/cleanup`), token bazlı tema form editörü + backend token validation, config-driven header render entegrasyonu (Dealer/User/Public fallback), dashboard widget order fallback mantığı. Test raporu: `/app/test_reports/iteration_26.json` (PASS, 1 low test skipped; manual >2MB upload testi ayrıca doğrulandı).
