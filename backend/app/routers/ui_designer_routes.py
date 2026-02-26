@@ -1790,6 +1790,18 @@ async def admin_cleanup_logo_assets(
     }
 
 
+@router.get("/admin/ui/logo-assets/health")
+async def admin_logo_assets_health(
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+):
+    del current_user
+    storage_health = _site_assets_storage_health()
+    return {
+        "ok": bool(storage_health.get("writable")),
+        "storage_health": storage_health,
+    }
+
+
 @router.get("/ui/{config_type}")
 async def get_effective_ui_config(
     config_type: str,
