@@ -10921,7 +10921,7 @@ async def _admin_listing_action(
     await _schedule_listing_sync_job(
         session,
         listing_id=listing.id,
-        operation="upsert",
+        operation="delete" if event_type in {"LISTING_SOFT_DELETE", "LISTING_FORCE_UNPUBLISH"} else "upsert",
         trigger=event_type.lower(),
     )
 
