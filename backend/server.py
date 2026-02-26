@@ -3235,6 +3235,13 @@ PAYMENTS_ENABLED_COUNTRIES = {
 
 ADMIN_MENU_MANAGEMENT_ENABLED = (os.environ.get("ADMIN_MENU_MANAGEMENT_ENABLED") or "").strip().lower() in {"1", "true", "yes", "y"}
 CATEGORY_IMPORT_EXPORT_XLSX_ENABLED = (os.environ.get("CATEGORY_IMPORT_EXPORT_XLSX_ENABLED") or "").strip().lower() in {"1", "true", "yes", "y"}
+WATERMARK_PIPELINE_SETTING_KEY = "media.watermark.pipeline"
+MESSAGE_REPORT_REASONS = {"spam", "scam", "abuse", "other"}
+MESSAGE_REPORT_STATUS_SET = {"open", "in_review", "resolved", "dismissed"}
+SUGGEST_CACHE_TTL_SECONDS = max(5, int((os.environ.get("SEARCH_SUGGEST_CACHE_TTL_SECONDS") or "45").strip() or "45"))
+SUGGEST_MAX_ITEMS = min(20, max(3, int((os.environ.get("SEARCH_SUGGEST_MAX_ITEMS") or "8").strip() or "8")))
+MEDIA_PIPELINE_METRICS = deque(maxlen=500)
+_search_suggest_cache: Dict[str, dict] = {}
 
 
 def _db_url_is_localhost(value: Optional[str]) -> bool:
