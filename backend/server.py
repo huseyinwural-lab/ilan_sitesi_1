@@ -20551,6 +20551,30 @@ async def _load_all_filterable_attribute_fields(session: AsyncSession) -> list[s
     return list(dict.fromkeys(keys))
 
 
+async def _sync_meili_filterable_attributes_from_db(session: AsyncSession) -> None:
+    try:
+        runtime = await get_active_meili_runtime(session)
+    except Exception:
+        return
+
+    base_filterable = [
+        "category_path_ids",
+        "make_id",
+        "model_id",
+        "trim_id",
+        "city_id",
+        "attribute_flat_map",
+        "price",
+        "premium_score",
+    ]
+    dynamic_fields = await _load_all_filterable_attribute_fields(session)
+    merged = list(dict.fromkeys(base_filterable + dynamic_fields))
+    try:
+        await meili_update_filterable_attributes(runtime, merged)
+    except Exception:
+        logging.getLogger("attribute_sync").warning("meili_filterable_sync_failed", exc_info=True)
+
+
 def _build_meili_filter_expression(
     *,
     category_uuid: Optional[uuid.UUID],
