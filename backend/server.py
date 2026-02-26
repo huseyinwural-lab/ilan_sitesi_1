@@ -18574,6 +18574,76 @@ async def admin_category_order_index_preview(
     }
 
 
+@api_router.post("/admin/categories/bulk-actions")
+async def admin_categories_bulk_actions(
+    payload: CategoryBulkActionPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    rows = await _resolve_bulk_category_targets(payload, current_user=current_user, session=session)
+
+    changed_count = 0
+    unchanged_count = 0
+    changed_ids: List[str] = []
+
+    now_iso = datetime.now(timezone.utc)
+    for row in rows:
+        if payload.action == "delete":
+            if row.is_deleted:
+                unchanged_count += 1
+                continue
+            row.is_deleted = True
+            row.is_enabled = False
+            row.active_flag = False
+            row.updated_at = now_iso
+            changed_count += 1
+            changed_ids.append(str(row.id))
+            continue
+
+        target_visible = payload.action == "activate"
+        if row.is_deleted:
+            unchanged_count += 1
+            continue
+        if bool(row.active_flag) == target_visible and bool(row.is_enabled) == target_visible:
+            unchanged_count += 1
+            continue
+        row.active_flag = target_visible
+        row.is_enabled = target_visible
+        row.updated_at = now_iso
+        changed_count += 1
+        changed_ids.append(str(row.id))
+
+    if changed_count > 0:
+        await _write_audit_log_sql(
+            session=session,
+            action="CATEGORY_BULK_ACTION",
+            actor=current_user,
+            resource_type="categories",
+            resource_id=payload.scope,
+            metadata={
+                "bulk_action": payload.action,
+                "scope": payload.scope,
+                "total_matched": len(rows),
+                "changed_count": changed_count,
+                "ids": changed_ids,
+            },
+            request=request,
+            country_code=current_user.get("country_code"),
+        )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "action": payload.action,
+        "scope": payload.scope,
+        "matched": len(rows),
+        "changed": changed_count,
+        "unchanged": unchanged_count,
+        "changed_ids": changed_ids,
+    }
+
+
 @api_router.get("/admin/categories/import-export/export/json")
 async def admin_export_categories_json(
     request: Request,
