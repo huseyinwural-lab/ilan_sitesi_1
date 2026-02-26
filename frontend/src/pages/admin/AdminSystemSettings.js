@@ -282,6 +282,67 @@ export default function AdminSystemSettingsPage() {
     }
   };
 
+  const fetchWatermarkSettings = async () => {
+    setWatermarkLoading(true);
+    setWatermarkError('');
+    try {
+      const res = await axios.get(`${API}/admin/media/watermark/settings`, { headers: authHeader });
+      setWatermarkConfig({
+        enabled: Boolean(res.data?.config?.enabled ?? true),
+        position: res.data?.config?.position || 'bottom_right',
+        opacity: Number(res.data?.config?.opacity ?? 0.35),
+        web_max_width: Number(res.data?.config?.web_max_width ?? 1800),
+        thumb_max_width: Number(res.data?.config?.thumb_max_width ?? 520),
+      });
+      setWatermarkLogoUrl(res.data?.logo_url || null);
+    } catch (e) {
+      setWatermarkError(e.response?.data?.detail || 'Watermark ayarları yüklenemedi');
+    } finally {
+      setWatermarkLoading(false);
+    }
+  };
+
+  const fetchWatermarkPreview = async () => {
+    try {
+      const res = await axios.get(`${API}/admin/media/watermark/preview`, {
+        headers: authHeader,
+        responseType: 'blob',
+      });
+      const previewObjectUrl = URL.createObjectURL(res.data);
+      setWatermarkPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return previewObjectUrl;
+      });
+    } catch {
+      setWatermarkPreviewUrl(null);
+    }
+  };
+
+  const fetchWatermarkPerf = async () => {
+    try {
+      const res = await axios.get(`${API}/admin/media/pipeline/performance`, { headers: authHeader });
+      setWatermarkPerf(res.data?.summary || null);
+    } catch {
+      setWatermarkPerf(null);
+    }
+  };
+
+  const handleSaveWatermarkSettings = async () => {
+    setWatermarkSaving(true);
+    setWatermarkError('');
+    try {
+      await axios.patch(`${API}/admin/media/watermark/settings`, watermarkConfig, { headers: authHeader });
+      toast({ title: 'Watermark ayarları kaydedildi' });
+      await fetchWatermarkSettings();
+      await fetchWatermarkPreview();
+      await fetchWatermarkPerf();
+    } catch (e) {
+      setWatermarkError(e.response?.data?.detail || 'Watermark ayarları kaydedilemedi');
+    } finally {
+      setWatermarkSaving(false);
+    }
+  };
+
   const handleSaveCloudflare = async () => {
     if (!encryptionKeyPresent) {
       setCloudflareError('Kaydedilemedi: Güvenlik anahtarı eksik.');
