@@ -2612,12 +2612,29 @@ const AdminCategories = () => {
                           className={inputClassName}
                           value={form.sort_order || ''}
                           disabled={isHierarchyLocked}
-                          onChange={(e) => setForm((prev) => ({ ...prev, sort_order: e.target.value }))}
+                          onChange={(e) => {
+                            setForm((prev) => ({ ...prev, sort_order: e.target.value }));
+                            setHierarchyFieldErrors((prev) => {
+                              const next = { ...prev };
+                              delete next.main_sort_order;
+                              return next;
+                            });
+                          }}
                           data-testid="categories-sort-input"
                         />
                         {hierarchyFieldErrors.main_sort_order && (
                           <div className="text-xs text-rose-600" data-testid="categories-sort-error">
                             {hierarchyFieldErrors.main_sort_order}
+                          </div>
+                        )}
+                        {!hierarchyFieldErrors.main_sort_order && !orderPreview.available && (
+                          <div className="text-xs text-rose-600" data-testid="categories-sort-conflict-inline">
+                            {orderPreview.message || "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor."}
+                          </div>
+                        )}
+                        {orderPreview.checking && (
+                          <div className="text-[11px] text-slate-500" data-testid="categories-sort-preview-loading">
+                            Sıra çakışma önizlemesi kontrol ediliyor...
                           </div>
                         )}
                       </div>
