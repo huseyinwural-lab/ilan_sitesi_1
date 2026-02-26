@@ -14103,6 +14103,61 @@ def _serialize_dealer_module(item: DealerModule, *, flag_enabled: Optional[bool]
     }
 
 
+def _dealer_default_header_action_items() -> List[Dict[str, Any]]:
+    return [
+        {
+            "id": "default-quick-create-listing",
+            "key": "quick_create_listing",
+            "label_i18n_key": "dealer.quick.create_listing",
+            "route": "/dealer/listings?create=1",
+            "icon": "PlusSquare",
+            "order_index": 10,
+            "visible": True,
+            "role_scope": "dealer",
+            "feature_flag": None,
+            "location": "header",
+            "feature_flag_enabled": True,
+            "effective_visible": True,
+        },
+        {
+            "id": "default-quick-messages",
+            "key": "quick_messages",
+            "label_i18n_key": "dealer.quick.messages",
+            "route": "/dealer/messages",
+            "icon": "MessageCircle",
+            "order_index": 20,
+            "visible": True,
+            "role_scope": "dealer",
+            "feature_flag": None,
+            "location": "header",
+            "feature_flag_enabled": True,
+            "effective_visible": True,
+        },
+        {
+            "id": "default-quick-profile",
+            "key": "quick_profile",
+            "label_i18n_key": "dealer.quick.profile",
+            "route": "/dealer/settings",
+            "icon": "UserRound",
+            "order_index": 30,
+            "visible": True,
+            "role_scope": "dealer",
+            "feature_flag": None,
+            "location": "header",
+            "feature_flag_enabled": True,
+            "effective_visible": True,
+        },
+    ]
+
+
+def _dealer_default_header_fixed_blocks() -> List[Dict[str, Any]]:
+    return [
+        {"key": "logo", "label": "Logo", "order_index": 10},
+        {"key": "main_menu", "label": "Ana Menü", "order_index": 20},
+        {"key": "quick_actions", "label": "Hızlı Aksiyon", "order_index": 30},
+    ]
+
+
 def _setting_value_to_bool(value: Any) -> bool:
     if isinstance(value, bool):
         return value
