@@ -15624,6 +15624,310 @@ async def admin_revoke_meilisearch_config(
     return {"ok": True, "config": _serialize_meili_config(config)}
 
 
+class SearchSyncProcessPayload(BaseModel):
+    limit: int = 50
+
+
+class SearchReindexPayload(BaseModel):
+    chunk_size: int = 200
+    max_docs: Optional[int] = None
+    reset_index: bool = True
+
+
+def _search_sync_backoff_seconds(attempt: int) -> int:
+    base = max(5, int(os.environ.get("SEARCH_SYNC_BACKOFF_BASE_SECONDS") or "20"))
+    max_delay = max(base, int(os.environ.get("SEARCH_SYNC_BACKOFF_MAX_SECONDS") or "900"))
+    delay = base * (2 ** max(0, attempt - 1))
+    return min(delay, max_delay)
+
+
+def _serialize_search_sync_job(job: SearchSyncJob) -> dict:
+    return {
+        "id": str(job.id),
+        "listing_id": str(job.listing_id) if job.listing_id else None,
+        "operation": job.operation,
+        "trigger": job.trigger,
+        "status": job.status,
+        "attempts": job.attempts,
+        "max_attempts": job.max_attempts,
+        "next_retry_at": job.next_retry_at.isoformat() if job.next_retry_at else None,
+        "last_error": job.last_error,
+        "created_at": job.created_at.isoformat() if job.created_at else None,
+        "updated_at": job.updated_at.isoformat() if job.updated_at else None,
+    }
+
+
+async def _attempt_search_sync_job(session: AsyncSession, job: SearchSyncJob) -> tuple[bool, str]:
+    now_ts = datetime.now(timezone.utc)
+    if not job.listing_id:
+        job.status = "dead_letter"
+        job.last_error = "missing_listing_id"
+        job.updated_at = now_ts
+        return False, "missing_listing_id"
+
+    job.status = "processing"
+    job.attempts = int(job.attempts or 0) + 1
+    job.updated_at = now_ts
+    await session.flush()
+
+    try:
+        await sync_listing_to_meili(session, job.listing_id, job.operation)
+    except Exception as exc:
+        reason = str(exc)[:500]
+        job.last_error = reason
+        if job.attempts >= job.max_attempts:
+            job.status = "dead_letter"
+            job.next_retry_at = None
+        else:
+            backoff = _search_sync_backoff_seconds(job.attempts)
+            job.status = "retry"
+            job.next_retry_at = now_ts + timedelta(seconds=backoff)
+        job.updated_at = datetime.now(timezone.utc)
+        await session.flush()
+        return False, reason
+
+    job.status = "done"
+    job.next_retry_at = None
+    job.last_error = None
+    job.updated_at = datetime.now(timezone.utc)
+    await session.flush()
+    return True, "ok"
+
+
+async def _process_search_sync_jobs(
+    session: AsyncSession,
+    *,
+    limit: int = 50,
+    include_ids: Optional[list[uuid.UUID]] = None,
+) -> dict:
+    safe_limit = min(500, max(1, int(limit or 50)))
+    now_ts = datetime.now(timezone.utc)
+
+    query = select(SearchSyncJob)
+    if include_ids:
+        query = query.where(SearchSyncJob.id.in_(include_ids))
+    else:
+        query = query.where(
+            or_(
+                SearchSyncJob.status == "pending",
+                and_(
+                    SearchSyncJob.status == "retry",
+                    or_(SearchSyncJob.next_retry_at.is_(None), SearchSyncJob.next_retry_at <= now_ts),
+                ),
+            )
+        )
+
+    jobs = (
+        (
+            await session.execute(
+                query.order_by(asc(SearchSyncJob.created_at)).limit(safe_limit)
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    success = 0
+    failed = 0
+    dead_letter = 0
+    results = []
+    for job in jobs:
+        ok, reason = await _attempt_search_sync_job(session, job)
+        if ok:
+            success += 1
+        else:
+            failed += 1
+            if job.status == "dead_letter":
+                dead_letter += 1
+        results.append({"id": str(job.id), "ok": ok, "reason": reason, "status": job.status})
+
+    await session.commit()
+    return {
+        "processed": len(jobs),
+        "success": success,
+        "failed": failed,
+        "dead_letter": dead_letter,
+        "items": results,
+    }
+
+
+async def _schedule_listing_sync_job(
+    session: AsyncSession,
+    *,
+    listing_id: str | uuid.UUID,
+    operation: str,
+    trigger: str,
+) -> None:
+    try:
+        listing_uuid = listing_id if isinstance(listing_id, uuid.UUID) else uuid.UUID(str(listing_id))
+    except ValueError:
+        return
+
+    max_attempts = max(1, int(os.environ.get("SEARCH_SYNC_MAX_RETRIES") or "6"))
+    now_ts = datetime.now(timezone.utc)
+    job = SearchSyncJob(
+        id=uuid.uuid4(),
+        listing_id=listing_uuid,
+        operation=operation,
+        trigger=trigger,
+        payload=None,
+        status="pending",
+        attempts=0,
+        max_attempts=max_attempts,
+        next_retry_at=now_ts,
+        last_error=None,
+        created_at=now_ts,
+        updated_at=now_ts,
+    )
+
+    try:
+        session.add(job)
+        await session.commit()
+        await session.refresh(job)
+        await _process_search_sync_jobs(session, limit=1, include_ids=[job.id])
+    except Exception:
+        await session.rollback()
+        logging.getLogger("search_sync").exception(
+            "search_sync_schedule_failed listing_id=%s operation=%s trigger=%s",
+            str(listing_uuid),
+            operation,
+            trigger,
+        )
+
+
+@api_router.get("/admin/search/meili/health")
+async def admin_search_meili_health(
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    del current_user
+    try:
+        runtime = await get_active_meili_runtime(session)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"ACTIVE_CONFIG_REQUIRED: {exc}") from exc
+
+    result = await test_and_prepare_meili_index(
+        meili_url=runtime["url"],
+        master_key=runtime["master_key"],
+        index_name=runtime["index_name"],
+    )
+    return {"ok": bool(result.get("ok")), "health": result, "active_index": runtime["index_name"], "active_url": runtime["url"]}
+
+
+@api_router.get("/admin/search/meili/sync-jobs")
+async def admin_list_search_sync_jobs(
+    status: Optional[str] = None,
+    limit: int = 100,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    del current_user
+    safe_limit = min(500, max(1, limit))
+    query = select(SearchSyncJob)
+    if status:
+        normalized = status.strip().lower()
+        if normalized not in {"pending", "processing", "retry", "done", "dead_letter"}:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        query = query.where(SearchSyncJob.status == normalized)
+
+    rows = (
+        (
+            await session.execute(
+                query.order_by(desc(SearchSyncJob.created_at)).limit(safe_limit)
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    grouped = (
+        await session.execute(
+            select(SearchSyncJob.status, func.count(SearchSyncJob.id)).group_by(SearchSyncJob.status)
+        )
+    ).all()
+    metrics = {status_key: int(count_value) for status_key, count_value in grouped}
+
+    return {
+        "metrics": metrics,
+        "items": [_serialize_search_sync_job(item) for item in rows],
+    }
+
+
+@api_router.post("/admin/search/meili/sync-jobs/process")
+async def admin_process_search_sync_jobs(
+    payload: SearchSyncProcessPayload,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    del current_user
+    summary = await _process_search_sync_jobs(session, limit=payload.limit)
+    return {"ok": True, **summary}
+
+
+@api_router.post("/admin/search/meili/reindex")
+async def admin_reindex_search_projection(
+    payload: SearchReindexPayload,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    del current_user
+    safe_chunk = min(1000, max(25, payload.chunk_size))
+    max_docs = payload.max_docs if payload.max_docs and payload.max_docs > 0 else None
+
+    runtime = await get_active_meili_runtime(session)
+    if payload.reset_index:
+        await meili_clear_documents(runtime)
+
+    count, elapsed_seconds = await bulk_reindex_search_projection(
+        session=session,
+        chunk_size=safe_chunk,
+        max_docs=max_docs,
+    )
+
+    logging.getLogger("search_sync").info(
+        "meili_bulk_reindex_done docs=%s elapsed_seconds=%.3f chunk=%s",
+        count,
+        elapsed_seconds,
+        safe_chunk,
+    )
+    return {
+        "ok": True,
+        "indexed_docs": count,
+        "elapsed_seconds": elapsed_seconds,
+        "chunk_size": safe_chunk,
+        "reset_index": bool(payload.reset_index),
+        "index_name": runtime["index_name"],
+        "url": runtime["url"],
+    }
+
+
+@api_router.get("/search/meili")
+async def public_search_meili(
+    q: str,
+    limit: int = 20,
+    offset: int = 0,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    safe_limit = min(100, max(1, limit))
+    safe_offset = max(0, offset)
+    runtime = await get_active_meili_runtime(session)
+    result = await meili_search_documents(
+        runtime,
+        query=q,
+        limit=safe_limit,
+        offset=safe_offset,
+        sort=["premium_score:desc", "published_at:desc"],
+    )
+    return {
+        "hits": result.get("hits", []),
+        "estimatedTotalHits": result.get("estimatedTotalHits", 0),
+        "processingTimeMs": result.get("processingTimeMs"),
+        "query": q,
+        "limit": safe_limit,
+        "offset": safe_offset,
+    }
+
+
 @api_router.get("/admin/system-settings")
 async def admin_list_system_settings(
     request: Request,
