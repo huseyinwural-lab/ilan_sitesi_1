@@ -19416,6 +19416,7 @@ VEHICLE_SEGMENT_ALIASES = {
     "suv": "suv",
     "arazi": "offroad",
     "offroad": "offroad",
+    "off_road": "offroad",
     "pickup": "pickup",
     "kamyonet": "pickup",
     "truck": "truck",
