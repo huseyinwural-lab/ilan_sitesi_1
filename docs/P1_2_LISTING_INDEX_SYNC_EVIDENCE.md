@@ -82,6 +82,15 @@ Smoke:
 Public query endpoint:
 - `GET /api/search/meili?q=...&limit=...&offset=...`
 
+### Test raporu
+- Testing agent: `/app/test_reports/iteration_14.json`
+  - Backend: 21/21 PASS
+  - Frontend: PASS
+  - Doğrulanan kritikler:
+    - RBAC (admin-only)
+    - Fail-fast (`ACTIVE_CONFIG_REQUIRED`) davranışı
+    - Ranking sort sözleşmesi (`premium_score:desc`, `published_at:desc`)
+
 ## 6) Bu Tur Sonucu
 
 - P1.2 backend sync altyapısı aktif.
