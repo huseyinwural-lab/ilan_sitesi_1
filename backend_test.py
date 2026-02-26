@@ -164,17 +164,17 @@ class SearchSyncTester:
         """Create a test listing for lifecycle testing"""
         try:
             listing_data = {
-                "title": "Test Search Sync Listing",
-                "description": "Test listing for search sync functionality testing",
+                "title": "Test Search Sync Listing for Backend API Testing",
+                "description": "This is a test listing created specifically for testing search sync functionality in the backend API. It includes all required fields to test the lifecycle hooks and queue behavior.",
                 "price": 15000,
                 "currency": "EUR",
-                "category_id": "e2e-fixture-category",
+                "category_id": "1debb8f9-cb41-47bf-8e6a-4fcc0423b9ec",  # uncategorized category
                 "country": "DE",
                 "city": "Berlin",
                 "attributes": {
                     "vehicle": {
                         "make": "Test Make",
-                        "model": "Test Model",
+                        "model": "Test Model", 
                         "year": 2020,
                         "fuel_type": "gasoline"
                     }
