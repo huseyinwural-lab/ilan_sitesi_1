@@ -18837,6 +18837,8 @@ async def admin_create_category(
             schema,
             vehicle_segment=vehicle_segment,
             linked=bool(vehicle_link_status and vehicle_link_status.get("linked")),
+            make_count=int((vehicle_link_status or {}).get("make_count") or 0),
+            model_count=int((vehicle_link_status or {}).get("model_count") or 0),
         )
         schema_status = schema.get("status", schema_status or "draft")
 
@@ -19064,6 +19066,8 @@ async def admin_update_category(
             updates.get("form_schema", category.form_schema),
             vehicle_segment=vehicle_segment,
             linked=bool(vehicle_link_status and vehicle_link_status.get("linked")),
+            make_count=int((vehicle_link_status or {}).get("make_count") or 0),
+            model_count=int((vehicle_link_status or {}).get("model_count") or 0),
         )
         updates["form_schema"] = merged_schema
         schema = merged_schema
