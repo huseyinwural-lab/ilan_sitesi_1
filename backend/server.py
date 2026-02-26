@@ -15860,7 +15860,19 @@ async def admin_search_meili_health(
         master_key=runtime["master_key"],
         index_name=runtime["index_name"],
     )
-    return {"ok": bool(result.get("ok")), "health": result, "active_index": runtime["index_name"], "active_url": runtime["url"]}
+    stats_payload = None
+    if result.get("ok"):
+        try:
+            stats_payload = await meili_index_stats(runtime)
+        except Exception:
+            stats_payload = None
+    return {
+        "ok": bool(result.get("ok")),
+        "health": result,
+        "active_index": runtime["index_name"],
+        "active_url": runtime["url"],
+        "index_document_count": (stats_payload or {}).get("numberOfDocuments"),
+    }
 
 
 @api_router.get("/admin/search/meili/contract")
@@ -15920,6 +15932,7 @@ async def admin_search_meili_stage_smoke(
         offset=0,
         sort=["premium_score:desc", "published_at:desc"],
     )
+    stats_payload = await meili_index_stats(runtime)
     return {
         "ok": bool(health.get("ok")),
         "health": health,
@@ -15927,6 +15940,7 @@ async def admin_search_meili_stage_smoke(
         "active_index": runtime["index_name"],
         "hits": query_result.get("hits", []),
         "estimatedTotalHits": query_result.get("estimatedTotalHits", 0),
+        "index_document_count": stats_payload.get("numberOfDocuments"),
         "ranking_sort": ["premium_score:desc", "published_at:desc"],
     }
 
@@ -16060,6 +16074,7 @@ async def admin_reindex_search_projection(
         chunk_size=safe_chunk,
         max_docs=max_docs,
     )
+    stats_payload = await meili_index_stats(runtime)
 
     logging.getLogger("search_sync").info(
         "meili_bulk_reindex_done docs=%s elapsed_seconds=%.3f chunk=%s",
@@ -16075,6 +16090,7 @@ async def admin_reindex_search_projection(
         "reset_index": bool(payload.reset_index),
         "index_name": runtime["index_name"],
         "url": runtime["url"],
+        "index_document_count": stats_payload.get("numberOfDocuments"),
     }
 
 
