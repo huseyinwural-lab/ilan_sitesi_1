@@ -21048,6 +21048,78 @@ def _build_meili_filter_expression(
     return " AND ".join(filters)
 
 
+@api_router.get("/search/suggest")
+async def public_search_suggest(
+    session: AsyncSession = Depends(get_sql_session),
+    q: str = "",
+    country: Optional[str] = None,
+    limit: int = 8,
+):
+    query = (q or "").strip()
+    safe_limit = min(SUGGEST_MAX_ITEMS, max(1, int(limit)))
+    if len(query) < 2:
+        return {"items": [], "query": query, "cached": False, "latency_ms": 0}
+
+    country_code = (country or "GLOBAL").strip().upper()
+    cache_key = _suggest_cache_key(country_code, query, safe_limit)
+    cached = _get_cached_suggest_payload(cache_key)
+    if cached:
+        return {**cached, "cached": True}
+
+    started = time.perf_counter()
+    try:
+        runtime = await get_active_meili_runtime(session)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"MEILI_SEARCH_UNAVAILABLE: {exc}") from exc
+
+    try:
+        result = await meili_search_documents(
+            runtime,
+            query=query,
+            limit=max(safe_limit * 3, 10),
+            offset=0,
+            sort=["premium_score:desc", "published_at:desc"],
+            filter_query=None,
+            facets=None,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"MEILI_SUGGEST_FAILED: {exc}") from exc
+
+    seen = set()
+    prefix_items = []
+    fuzzy_items = []
+    query_lower = query.lower()
+    for hit in result.get("hits", []):
+        title = (hit.get("title") or "").strip()
+        if not title:
+            continue
+        key = title.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        item = {
+            "label": title,
+            "listing_id": hit.get("listing_id"),
+            "city": hit.get("city") or "",
+        }
+        if key.startswith(query_lower):
+            prefix_items.append(item)
+        else:
+            fuzzy_items.append(item)
+        if len(prefix_items) + len(fuzzy_items) >= safe_limit:
+            break
+
+    items = (prefix_items + fuzzy_items)[:safe_limit]
+    latency_ms = int((time.perf_counter() - started) * 1000)
+    payload = {
+        "items": items,
+        "query": query,
+        "latency_ms": latency_ms,
+    }
+    _set_cached_suggest_payload(cache_key, payload)
+    return {**payload, "cached": False}
+
+
 @api_router.get("/v2/search")
 async def public_search_v2(
     request: Request,
