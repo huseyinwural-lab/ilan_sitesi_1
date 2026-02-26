@@ -19406,6 +19406,21 @@ CATEGORY_MODULE_ALIASES = {
     "jobs": "other",
 }
 
+VEHICLE_SEGMENT_ALIASES = {
+    "otomobil": "car",
+    "araba": "car",
+    "auto": "car",
+    "suv": "suv",
+    "arazi": "offroad",
+    "offroad": "offroad",
+    "pickup": "pickup",
+    "kamyonet": "pickup",
+    "truck": "truck",
+    "kamyon": "truck",
+    "bus": "bus",
+    "otobus": "bus",
+}
+
 
 def _normalize_import_value(value: Any) -> str:
     if value is None:
