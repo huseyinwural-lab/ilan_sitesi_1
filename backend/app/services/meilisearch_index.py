@@ -227,6 +227,15 @@ async def meili_update_filterable_attributes(runtime: Dict[str, str], filterable
     return {"ok": True}
 
 
+async def meili_index_stats(runtime: Dict[str, str]) -> Dict[str, Any]:
+    index_path = quote(runtime["index_name"], safe="")
+    async with await _meili_client(runtime) as client:
+        response = await client.get(f"/indexes/{index_path}/stats")
+        if response.status_code != 200:
+            raise RuntimeError(f"meili_stats_failed_{response.status_code}")
+        return response.json()
+
+
 async def sync_listing_to_meili(session: AsyncSession, listing_id: uuid.UUID, operation: str) -> Dict[str, Any]:
     runtime = await get_active_meili_runtime(session)
 
