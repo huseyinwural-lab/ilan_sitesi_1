@@ -676,22 +676,18 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### Test & Kanıt
 - Testing agent final raporu: `/app/test_reports/iteration_19.json` (**PASS**)
 - Evidence dosyası: `/app/docs/DEALER_DASHBOARD_V1_EVIDENCE.md`
-
 ---
-
 ## 2026-02-26 — P0 Kategori Yönetimi Düzeltmesi (Bloklayıcı)
 
 ### Durum
 - **CLOSED** ✅
 - **Internal Milestone:** `CATEGORY_MODULE_STABLE`
 - **Category Freeze:** sadece bugfix
-
 ### Tamamlanan Kapsam
 - `module` standardizasyonu: `real_estate`, `vehicle`, `other`
 - Wizard’da `Diğer` + manuel `Sıra` + canlı sıra çakışma önizleme
 - Vehicle akışı: serbest metin segment, master data zorunlu eşleşme, country-unique segment kuralı
 - Endpointler: `GET /api/admin/categories/vehicle-segment/link-status`, `GET /api/admin/categories/order-index/preview`
-
 ### Veri Bütünlüğü / Migration
 - Migrationlar: `/app/backend/migrations/versions/p56_category_scope_ordering.py`, `/app/backend/migrations/versions/p57_category_ordering_stabilization.py`
 - Scope unique index: `uq_categories_scope_sort` on `(country_code, module, parent_id, sort_order)`
