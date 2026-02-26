@@ -704,3 +704,49 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### Admin Kapanış Durumu
 - Admin sprint kapsamı (launch eşiği modülleri) tamamlandı.
 - Sonraki faz odağı: kullanıcı tarafı + SEO + dönüşüm optimizasyonu.
+
+---
+
+## 2026-02-26 — Admin Resmi Kapanış + Public Phase Başlangıç Kararı
+
+### Karar Kayıtları
+- **ADS-ADMIN-CLOSED-01:** Admin fazı kapatıldı (**CLOSED**). Yeni admin feature kabul edilmez.
+- **Admin Freeze:** Sadece bugfix / güvenlik patch.
+- **ADS-PUBLIC-PRIORITY-01:** Öncelik kullanıcı dönüşümü ve arama deneyimi.
+- **ADS-TRACKING-01:** Public search conversion funnel event tracking zorunlu.
+
+### Public Phase (P-UX) Sprint Bazlı Stratejik Plan
+
+#### Sprint 1 — Search UX Akış Temeli
+- Suggest dropdown davranış iyileştirme (açılış, seçim, klavye, empty/loading)
+- Search submit ve sonuç listeleme performans optimizasyonu
+- Facet sadeleştirme: gereksiz seçenekleri gizleme, disabled logic netleştirme
+- KPI: suggest->submit dönüşüm oranı, ilk sonuç render süresi
+
+#### Sprint 2 — Listing Detail Conversion
+- CTA netleştirme (iletişim/favori/ilan verene git)
+- Premium badge görünürlüğü + güven öğeleri (watermark, tarih, doğrulama)
+- Mobil odaklı detail yerleşimi ve üst fold dönüşüm blokları
+- KPI: result_click->detail_view, detail_view->contact_click
+
+#### Sprint 3 — Funnel Telemetry + Optimizasyon
+- Event toplama uçları ve dashboard
+- Drop-off analizi: suggest_open -> search_submit -> result_click -> detail_view -> contact_click
+- A/B varyant hazırlığı (CTA metin/sıra)
+- KPI: adım bazlı düşüş oranı ve toplam conversion uplift
+
+### Event Tracking Teknik Yaklaşım (A seçimi)
+- Backend:
+  - Yeni endpoint: `POST /api/analytics/events`
+  - Event tablosu: `analytics_events`
+  - Zorunlu alanlar: `session_id`, `event_name`, `page`, `timestamp`, `meta_json`
+  - Desteklenen event adları:
+    - `suggest_open`
+    - `search_submit`
+    - `result_click`
+    - `detail_view`
+    - `contact_click`
+- Frontend:
+  - Search header, results list ve listing detail içinde event emit noktaları
+  - Oturum bazlı `session_id` üretimi (persisted)
+
