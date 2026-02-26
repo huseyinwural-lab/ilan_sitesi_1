@@ -19039,6 +19039,16 @@ CATEGORY_IMPORT_COLUMNS = [
 
 SUPPORTED_CATEGORY_MODULES = {"vehicle", "real_estate", "machinery", "services", "jobs"}
 
+CATEGORY_MODULE_ALIASES = {
+    "emlak": "real_estate",
+    "realestate": "real_estate",
+    "real-estate": "real_estate",
+    "vasita": "vehicle",
+    "machinery": "other",
+    "services": "other",
+    "jobs": "other",
+}
+
 
 def _normalize_import_value(value: Any) -> str:
     if value is None:
