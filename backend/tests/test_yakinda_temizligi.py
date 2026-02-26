@@ -21,7 +21,7 @@ ADMIN_PASSWORD = "Admin123!"
 def admin_token():
     """Get admin authentication token"""
     response = requests.post(
-        f"{BASE_URL}/api/auth/admin/login",
+        f"{BASE_URL}/api/auth/login",
         json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD},
     )
     assert response.status_code == 200, f"Admin login failed: {response.text}"
