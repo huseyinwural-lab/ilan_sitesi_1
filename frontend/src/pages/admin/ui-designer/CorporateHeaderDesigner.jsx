@@ -225,6 +225,8 @@ export const CorporateHeaderDesigner = () => {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadPreviewUrl, setUploadPreviewUrl] = useState('');
   const [uploadMeta, setUploadMeta] = useState(null);
+  const [uploadIssue, setUploadIssue] = useState(null);
+  const [storageHealth, setStorageHealth] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -256,6 +258,7 @@ export const CorporateHeaderDesigner = () => {
   const loadDraft = async () => {
     setStatus('');
     setError('');
+    setUploadIssue(null);
     try {
       const response = await fetch(
         `${API}/admin/ui/configs/header?segment=corporate&scope=${scope}${scopeQuery}&status=draft`,
@@ -271,7 +274,7 @@ export const CorporateHeaderDesigner = () => {
       setConfigData(safeDraft);
       setLatestConfigId(item?.id || null);
       setVersions(Array.isArray(data?.items) ? data.items : []);
-      setUploadPreviewUrl(safeDraft?.logo?.url || '');
+      setUploadPreviewUrl(withCacheBust(safeDraft?.logo?.url || ''));
       setStatus('Kurumsal header taslağı yüklendi');
     } catch (requestError) {
       setError(requestError.message || 'Kurumsal header taslağı yüklenemedi');
@@ -282,8 +285,24 @@ export const CorporateHeaderDesigner = () => {
     }
   };
 
+  const loadStorageHealth = async () => {
+    try {
+      const response = await fetch(`${API}/admin/ui/logo-assets/health`, {
+        headers: authHeader,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        return;
+      }
+      setStorageHealth(data?.storage_health || null);
+    } catch (_) {
+      setStorageHealth(null);
+    }
+  };
+
   useEffect(() => {
     loadDraft();
+    loadStorageHealth();
   }, [scope, scopeId]);
 
   const validateGuardrails = (candidate) => {
