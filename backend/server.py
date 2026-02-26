@@ -14061,6 +14061,19 @@ class DealerModuleReorderPayload(BaseModel):
     ordered_ids: List[str]
 
 
+class DealerDraftSavePayload(BaseModel):
+    nav_items: List[Dict[str, Any]] = Field(default_factory=list)
+    modules: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class DealerDraftPublishPayload(BaseModel):
+    note: Optional[str] = None
+
+
+class DealerDraftRollbackPayload(BaseModel):
+    revision_id: str
+
+
 class DealerSettingsUpdatePayload(BaseModel):
     company_name: Optional[str] = None
     authorized_person: Optional[str] = None
