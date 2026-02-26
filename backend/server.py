@@ -18854,6 +18854,17 @@ async def admin_update_category(
             country_code=country_value,
         )
 
+    if module_value == "vehicle":
+        segment_input = payload.vehicle_segment
+        if not segment_input:
+            segment_input = _vehicle_segment_from_schema(schema) if isinstance(schema, dict) else None
+        if not segment_input:
+            segment_input = _vehicle_segment_from_schema(category.form_schema)
+        vehicle_segment = _normalize_vehicle_segment(segment_input)
+        vehicle_link_status = await _get_vehicle_segment_link_status(session, vehicle_segment=vehicle_segment)
+        if not vehicle_link_status.get("linked"):
+            raise HTTPException(status_code=409, detail="Seçilen segment master data ile bağlı değil")
+
     if payload.active_flag is not None:
         updates["is_enabled"] = payload.active_flag
 
