@@ -168,7 +168,9 @@ from app.services.meilisearch_config import (
 from app.services.meilisearch_index import (
     bulk_reindex_search_projection,
     get_active_meili_runtime,
+    meili_clear_documents,
     meili_delete_document,
+    meili_search_documents,
     meili_upsert_documents,
     sync_listing_to_meili,
 )
