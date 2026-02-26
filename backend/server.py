@@ -19529,7 +19529,7 @@ async def admin_dashboard_summary(
         recent_activity = [
             {
                 "id": str(log.id),
-                "event_type": log.event_type or log.action,
+                "event_type": log.action,
                 "action": log.action,
                 "resource_type": log.resource_type,
                 "user_email": log.user_email,
@@ -19557,7 +19557,7 @@ async def admin_dashboard_summary(
             )
         ).scalar_one()
         deleted_content_query = select(func.count()).select_from(AuditLog).where(
-            AuditLog.event_type.in_(["LISTING_SOFT_DELETE", "LISTING_FORCE_UNPUBLISH"]),
+            AuditLog.action.in_(["LISTING_SOFT_DELETE", "LISTING_FORCE_UNPUBLISH"]),
             AuditLog.created_at >= since_dt,
         )
         if effective_countries:
