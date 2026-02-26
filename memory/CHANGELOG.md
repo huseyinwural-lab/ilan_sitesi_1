@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 2026-02-26 — P62 Dealer Dashboard V2 P1 Frontend Integration
+
+**Kapsam**
+- Corporate Dashboard V2 admin editörü eklendi: 12 kolon grid + dnd-kit reorder + widget palette (KPI/Grafik/Liste/Paket Özeti/Doping Özeti).
+- Guardrail UI senkronizasyonu: KPI yoksa publish disabled, max 12 widget limiti; draft autosave aktif.
+- Draft→Preview→Publish akışı: diff ekranı (eklenen/kaldırılan/taşınan), zorunlu onay modalı, publish endpoint confirm ile çağrılıyor.
+- Rollback akışı: snapshot/versiyon seçip geri alma; dashboard ve individual header için aktif.
+- Individual Header editörü row-based DnD + visible toggle + logo fallback ile yenilendi.
+- Dealer canlı dashboard sayfası config-driven widget render yapacak şekilde güncellendi.
+
+**Backend Workflow Genişletmeleri**
+- Yeni endpointler: `/api/admin/ui/configs/{config_type}/diff`, `/publish`, `/rollback`.
+- Publish/Rollback sırasında audit log yazımı eklendi (`ui_config_publish`, `ui_config_rollback`).
+
+**Kanıt/Test**
+- Testing agent raporu: `/app/test_reports/iteration_28.json` (Backend + Frontend PASS)
+- Self-test: `pytest -q backend/tests/test_p61_dashboard_backend.py backend/tests/test_p62_ui_publish_workflow.py` → `13 passed`
+- Evidence dokümanı: `/app/docs/DEALER_DASHBOARD_V2_FRONTEND_EVIDENCE.md`
+
 ## 2026-02-26 — P61 Dealer Dashboard V2 P0 Backend-Only Stabilization
 
 **Kapsam**
