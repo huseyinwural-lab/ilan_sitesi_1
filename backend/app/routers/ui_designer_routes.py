@@ -1025,13 +1025,18 @@ async def get_effective_ui_config(
         tenant_id=(tenant_id or "").strip() or None,
         user_id=(user_id or "").strip() or None,
     )
+    serialized_item = _serialize_ui_config(row) if row else None
+    if serialized_item and normalized_type == "header":
+        serialized_item["config_data"] = _normalize_header_config_data(serialized_item.get("config_data") or {}, normalized_segment)
+
+    effective_config = _effective_config_data(row, normalized_type, normalized_segment)
     return {
         "config_type": normalized_type,
         "segment": normalized_segment,
         "source_scope": source_scope,
         "source_scope_id": source_scope_id,
-        "item": _serialize_ui_config(row) if row else None,
-        "config_data": row.config_data if row else {},
+        "item": serialized_item,
+        "config_data": effective_config,
     }
 
 
