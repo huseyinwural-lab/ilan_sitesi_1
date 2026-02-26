@@ -109,6 +109,7 @@ async def test_and_prepare_meili_index(meili_url: str, master_key: str, index_na
                     "model_id",
                     "trim_id",
                     "city_id",
+                    "attribute_flat_map",
                     "attribute_*",
                     "price",
                     "premium_score",
