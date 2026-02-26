@@ -39,6 +39,7 @@ from app.models.notification import Notification, UserDevice
 from app.models.gdpr_export import GDPRExport
 from app.models.webhook_event_log import WebhookEventLog
 from app.models.meilisearch_config import MeiliSearchConfig
+from app.models.search_sync_job import SearchSyncJob
 from app.models.system_setting import SystemSetting
 from app.models.admin_invite import AdminInvite
 from app.models.menu_item import MenuItem
