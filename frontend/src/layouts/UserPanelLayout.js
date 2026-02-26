@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useUIHeaderConfig } from '@/hooks/useUIHeaderConfig';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -57,6 +58,7 @@ const UserPanelLayout = () => {
   const { user, logout } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const [counts, setCounts] = useState({ favorites: 0, messages: 0 });
+  const { logoUrl: individualLogoUrl } = useUIHeaderConfig({ segment: 'individual', authRequired: true });
 
   const sideMenuGroups = useMemo(
     () => [
@@ -163,7 +165,16 @@ const UserPanelLayout = () => {
               className="flex h-10 w-28 items-center justify-center rounded bg-[var(--color-primary)] text-sm font-bold text-[var(--text-inverse)]"
               data-testid="account-logo"
             >
-              ANNONCIA
+              {individualLogoUrl ? (
+                <img
+                  src={individualLogoUrl}
+                  alt="Bireysel Logo"
+                  className="h-8 w-28 object-contain"
+                  data-testid="account-logo-image"
+                />
+              ) : (
+                <span data-testid="account-logo-fallback">ANNONCIA</span>
+              )}
             </div>
             <div className="text-xs uppercase tracking-[0.2em] text-white/70" data-testid="account-portal-label">
               {t('portal_consumer')}
