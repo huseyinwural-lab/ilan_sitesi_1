@@ -269,7 +269,7 @@ async def get_ui_designer_permissions(current_user=Depends(check_named_permissio
     }
 
 
-@router.get("/admin/ui/{config_type}")
+@router.get("/admin/ui/configs/{config_type}")
 async def admin_get_ui_config(
     config_type: str,
     segment: str = Query(default="individual"),
@@ -309,7 +309,7 @@ async def admin_get_ui_config(
     }
 
 
-@router.post("/admin/ui/{config_type}")
+@router.post("/admin/ui/configs/{config_type}")
 async def admin_save_ui_config(
     config_type: str,
     payload: UIConfigSavePayload,
@@ -357,7 +357,7 @@ async def admin_save_ui_config(
     return {"ok": True, "item": _serialize_ui_config(row)}
 
 
-@router.post("/admin/ui/{config_type}/publish/{config_id}")
+@router.post("/admin/ui/configs/{config_type}/publish/{config_id}")
 async def admin_publish_ui_config(
     config_type: str,
     config_id: str,
