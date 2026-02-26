@@ -170,6 +170,42 @@ async def meili_upsert_documents(runtime: Dict[str, str], docs: Iterable[Dict[st
     return {"ok": True, "count": len(payload)}
 
 
+async def meili_clear_documents(runtime: Dict[str, str]) -> Dict[str, Any]:
+    index_path = quote(runtime["index_name"], safe="")
+    async with await _meili_client(runtime) as client:
+        response = await client.delete(f"/indexes/{index_path}/documents")
+        if response.status_code not in (200, 202):
+            raise RuntimeError(f"meili_clear_failed_{response.status_code}")
+    return {"ok": True}
+
+
+async def meili_search_documents(
+    runtime: Dict[str, str],
+    *,
+    query: str,
+    limit: int = 20,
+    offset: int = 0,
+    sort: List[str] | None = None,
+    filter_query: str | None = None,
+) -> Dict[str, Any]:
+    index_path = quote(runtime["index_name"], safe="")
+    payload: Dict[str, Any] = {
+        "q": query,
+        "limit": limit,
+        "offset": offset,
+    }
+    if sort:
+        payload["sort"] = sort
+    if filter_query:
+        payload["filter"] = filter_query
+
+    async with await _meili_client(runtime) as client:
+        response = await client.post(f"/indexes/{index_path}/search", json=payload)
+        if response.status_code != 200:
+            raise RuntimeError(f"meili_search_failed_{response.status_code}")
+        return response.json()
+
+
 async def sync_listing_to_meili(session: AsyncSession, listing_id: uuid.UUID, operation: str) -> Dict[str, Any]:
     runtime = await get_active_meili_runtime(session)
 
