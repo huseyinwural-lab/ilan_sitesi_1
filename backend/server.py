@@ -15826,6 +15826,71 @@ async def admin_search_meili_health(
     return {"ok": bool(result.get("ok")), "health": result, "active_index": runtime["index_name"], "active_url": runtime["url"]}
 
 
+@api_router.get("/admin/search/meili/contract")
+async def admin_search_meili_contract(
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    del current_user
+    return {
+        "primary_key": "listing_id",
+        "document_fields": [
+            "listing_id",
+            "category_path_ids",
+            "make_id",
+            "model_id",
+            "trim_id",
+            "city_id",
+            "attribute_flat_map",
+            "price",
+            "premium_score",
+            "published_at",
+            "searchable_text",
+        ],
+        "sync_hooks": {
+            "create": "index add/upsert",
+            "update": "index partial upsert",
+            "delete": "index remove",
+            "soft_delete": "index remove",
+        },
+        "queue": {
+            "retry_strategy": "exponential_backoff",
+            "max_retry_env": "SEARCH_SYNC_MAX_RETRIES",
+            "dead_letter_state": "dead_letter",
+        },
+    }
+
+
+@api_router.get("/admin/search/meili/stage-smoke")
+async def admin_search_meili_stage_smoke(
+    q: str = "",
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    del current_user
+    runtime = await get_active_meili_runtime(session)
+    health = await test_and_prepare_meili_index(
+        meili_url=runtime["url"],
+        master_key=runtime["master_key"],
+        index_name=runtime["index_name"],
+    )
+    query_result = await meili_search_documents(
+        runtime,
+        query=q,
+        limit=10,
+        offset=0,
+        sort=["premium_score:desc", "published_at:desc"],
+    )
+    return {
+        "ok": bool(health.get("ok")),
+        "health": health,
+        "active_url": runtime["url"],
+        "active_index": runtime["index_name"],
+        "hits": query_result.get("hits", []),
+        "estimatedTotalHits": query_result.get("estimatedTotalHits", 0),
+        "ranking_sort": ["premium_score:desc", "published_at:desc"],
+    }
+
+
 @api_router.get("/admin/search/meili/sync-jobs")
 async def admin_list_search_sync_jobs(
     status: Optional[str] = None,
