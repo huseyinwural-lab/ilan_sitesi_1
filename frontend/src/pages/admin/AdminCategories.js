@@ -638,11 +638,25 @@ const AdminCategories = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories?country=${selectedCountry}`, {
+      const params = new URLSearchParams();
+      if (selectedCountry) {
+        params.set("country", selectedCountry);
+      }
+      if (listFilters.module !== "all") {
+        params.set("module", listFilters.module);
+      }
+      if (listFilters.status === "active") {
+        params.set("active_flag", "true");
+      }
+      if (listFilters.status === "passive") {
+        params.set("active_flag", "false");
+      }
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories?${params.toString()}`, {
         headers: authHeader,
       });
       const data = await res.json();
       setItems(data.items || []);
+      setSelectedIds([]);
     } finally {
       setLoading(false);
     }
