@@ -457,6 +457,7 @@ export const CorporateHeaderDesigner = () => {
     setConfigData(cloneDefaultConfig());
     setUploadPreviewUrl('');
     setUploadMeta(null);
+    setUploadIssue(null);
     setStatus('Header düzeni varsayılana sıfırlandı');
     setError('');
   };
