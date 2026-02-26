@@ -95,7 +95,7 @@ from app.models.message_report import MessageReport
 from app.models.webhook_event_log import WebhookEventLog
 from app.models.category import Category, CategoryTranslation
 from app.models.category_schema_version import CategorySchemaVersion
-from app.models.core import AuditLog, Country
+from app.models.core import AuditLog, Country, FeatureFlag
 from app.models.attribute import Attribute, AttributeOption, CategoryAttributeMap
 from app.models.dealer_profile import DealerProfile
 from app.models.dealer import DealerApplication, Dealer, DealerUser
