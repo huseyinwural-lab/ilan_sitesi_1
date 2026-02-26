@@ -553,6 +553,61 @@ const AdminCategories = () => {
     }
   };
 
+  const fetchVehicleSegmentLinkStatus = useCallback(async (segment, countryCode) => {
+    if (!segment) {
+      setVehicleLinkStatus({
+        checking: false,
+        linked: false,
+        make_count: 0,
+        model_count: 0,
+        message: "Segment seçiniz.",
+      });
+      return;
+    }
+    setVehicleLinkStatus((prev) => ({ ...prev, checking: true, message: "Master data bağlantısı kontrol ediliyor..." }));
+    try {
+      const params = new URLSearchParams({ segment });
+      if (countryCode) {
+        params.set("country", countryCode);
+      }
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/vehicle-segment/link-status?${params.toString()}`,
+        { headers: authHeader }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setVehicleLinkStatus({
+          checking: false,
+          linked: false,
+          make_count: 0,
+          model_count: 0,
+          message: data?.detail || "Master data bağlantısı doğrulanamadı.",
+        });
+        return;
+      }
+      const linked = Boolean(data?.linked);
+      const makeCount = Number(data?.make_count || 0);
+      const modelCount = Number(data?.model_count || 0);
+      setVehicleLinkStatus({
+        checking: false,
+        linked,
+        make_count: makeCount,
+        model_count: modelCount,
+        message: linked
+          ? `Bağlandı • ${makeCount} make / ${modelCount} model`
+          : "Bu segment için master data kaydı bulunamadı.",
+      });
+    } catch (error) {
+      setVehicleLinkStatus({
+        checking: false,
+        linked: false,
+        make_count: 0,
+        model_count: 0,
+        message: "Master data bağlantısı doğrulanamadı.",
+      });
+    }
+  }, [authHeader]);
+
   const fetchVersions = async () => {
     if (!editing?.id) return;
     setVersionsLoading(true);
@@ -640,6 +695,21 @@ const AdminCategories = () => {
   useEffect(() => {
     fetchItems();
   }, [selectedCountry]);
+
+  useEffect(() => {
+    if (form.module !== "vehicle") {
+      setVehicleLinkStatus({
+        checking: false,
+        linked: false,
+        make_count: 0,
+        model_count: 0,
+        message: "",
+      });
+      return;
+    }
+    const code = (form.country_code || "").trim().toUpperCase();
+    fetchVehicleSegmentLinkStatus(vehicleSegment, code);
+  }, [form.module, form.country_code, vehicleSegment, fetchVehicleSegmentLinkStatus]);
 
   useEffect(() => {
     setPreviewComplete(false);
