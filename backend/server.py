@@ -19167,15 +19167,49 @@ def _build_admin_category_query(
     return query
 
 
+def _build_admin_category_count_query(
+    *,
+    country_code: Optional[str],
+    module_value: Optional[str],
+    active_flag: Optional[bool],
+):
+    query = select(func.count()).select_from(Category).where(Category.is_deleted.is_(False))
+    if country_code:
+        query = query.where(Category.country_code == country_code)
+    if module_value:
+        query = query.where(Category.module == module_value)
+    if active_flag is not None:
+        query = query.where(Category.is_enabled == bool(active_flag))
+    return query
+
+
+def _parse_bulk_category_ids(raw_ids: List[str]) -> List[uuid.UUID]:
+    parsed_ids: List[uuid.UUID] = []
+    seen: set[str] = set()
+    for raw_id in raw_ids:
+        try:
+            parsed = uuid.UUID(str(raw_id))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid id: {raw_id}") from exc
+        parsed_key = str(parsed)
+        if parsed_key in seen:
+            continue
+        seen.add(parsed_key)
+        parsed_ids.append(parsed)
+    return parsed_ids
+
+
 async def _resolve_bulk_category_targets(
     payload: CategoryBulkActionPayload,
     *,
     current_user,
     session: AsyncSession,
-) -> List[Category]:
+    limit: int = CATEGORY_BULK_ASYNC_MAX_RECORDS + 1,
+    enforce_scope: bool = True,
+) -> Tuple[List[Category], int, Optional[str], Optional[str], Optional[bool]]:
     filter_payload = payload.filter or CategoryBulkFilterPayload()
     country_code = (filter_payload.country or "").upper() or None
-    if country_code:
+    if country_code and enforce_scope:
         _assert_country_scope(country_code, current_user)
 
     module_value = _normalize_category_module(filter_payload.module) if filter_payload.module else None
@@ -19187,21 +19221,9 @@ async def _resolve_bulk_category_targets(
         active_flag=active_flag,
     )
 
+    parsed_ids: List[uuid.UUID] = []
     if payload.scope == "ids":
-        if not payload.ids:
-            raise HTTPException(status_code=400, detail="ids is required for scope=ids")
-        parsed_ids: List[uuid.UUID] = []
-        seen: set[str] = set()
-        for raw_id in payload.ids:
-            try:
-                parsed = uuid.UUID(str(raw_id))
-            except ValueError as exc:
-                raise HTTPException(status_code=400, detail=f"Invalid id: {raw_id}") from exc
-            parsed_key = str(parsed)
-            if parsed_key in seen:
-                continue
-            seen.add(parsed_key)
-            parsed_ids.append(parsed)
+        parsed_ids = _parse_bulk_category_ids(payload.ids)
         if not parsed_ids:
             raise HTTPException(status_code=400, detail="ids is required for scope=ids")
         query = query.where(Category.id.in_(parsed_ids))
@@ -19209,12 +19231,354 @@ async def _resolve_bulk_category_targets(
         if not payload.filter:
             raise HTTPException(status_code=400, detail="filter is required for scope=filter")
 
-    query = query.order_by(Category.sort_order.asc(), Category.created_at.asc()).limit(1001)
+    count_query = _build_admin_category_count_query(
+        country_code=country_code,
+        module_value=module_value,
+        active_flag=active_flag,
+    )
+    if payload.scope == "ids" and parsed_ids:
+        count_query = count_query.where(Category.id.in_(parsed_ids))
+    total_matched = int((await session.execute(count_query)).scalar_one() or 0)
+
+    query = query.order_by(Category.sort_order.asc(), Category.created_at.asc()).limit(limit)
     rows = (await session.execute(query)).scalars().all()
-    if len(rows) > 1000:
-        raise HTTPException(status_code=400, detail="Bulk işlem için en fazla 1000 kayıt seçilebilir")
+    if enforce_scope:
+        for row in rows:
+            if row.country_code:
+                _assert_country_scope(str(row.country_code).upper(), current_user)
+
+    return rows, total_matched, country_code, module_value, active_flag
+
+
+def _serialize_category_bulk_job(job: CategoryBulkJob) -> Dict[str, Any]:
+    return {
+        "job_id": str(job.id),
+        "status": job.status,
+        "action": job.action,
+        "scope": job.scope,
+        "is_async": bool(job.is_async),
+        "total_records": int(job.total_records or 0),
+        "processed_records": int(job.processed_records or 0),
+        "changed_records": int(job.changed_records or 0),
+        "unchanged_records": int(job.unchanged_records or 0),
+        "attempts": int(job.attempts or 0),
+        "max_attempts": int(job.max_attempts or 0),
+        "error_code": job.error_code,
+        "error_message": job.error_message,
+        "result_summary": job.result_summary or {},
+        "log_entries": job.log_entries or [],
+        "created_by": str(job.created_by) if job.created_by else None,
+        "created_by_email": job.created_by_email,
+        "locked_at": job.locked_at.isoformat() if job.locked_at else None,
+        "locked_by": job.locked_by,
+        "next_retry_at": job.next_retry_at.isoformat() if job.next_retry_at else None,
+        "started_at": job.started_at.isoformat() if job.started_at else None,
+        "finished_at": job.finished_at.isoformat() if job.finished_at else None,
+        "created_at": job.created_at.isoformat() if job.created_at else None,
+        "updated_at": job.updated_at.isoformat() if job.updated_at else None,
+    }
+
+
+def _append_category_bulk_job_log(job: CategoryBulkJob, entry: Dict[str, Any]) -> None:
+    logs = list(job.log_entries or [])
+    logs.append({
+        **entry,
+        "at": datetime.now(timezone.utc).isoformat(),
+    })
+    job.log_entries = logs[-100:]
+
+
+def _category_bulk_actor_from_job_payload(payload: Dict[str, Any], job: CategoryBulkJob) -> Dict[str, Any]:
+    actor = payload.get("actor") if isinstance(payload, dict) else None
+    if isinstance(actor, dict):
+        return {
+            "id": actor.get("id"),
+            "email": actor.get("email") or job.created_by_email,
+            "country_scope": actor.get("country_scope") or [],
+            "country_code": actor.get("country_code"),
+        }
+    return {
+        "id": str(job.created_by) if job.created_by else None,
+        "email": job.created_by_email,
+        "country_scope": [],
+        "country_code": None,
+    }
+
+
+async def _execute_category_bulk_action_rows(
+    session: AsyncSession,
+    *,
+    rows: List[Category],
+    action: str,
+) -> Dict[str, Any]:
+    changed_count = 0
+    unchanged_count = 0
+    changed_ids: List[str] = []
+
+    now_iso = datetime.now(timezone.utc)
     for row in rows:
-        if row.country_code:
+        if action == "delete":
+            if row.is_deleted:
+                unchanged_count += 1
+                continue
+            row.is_deleted = True
+            row.is_enabled = False
+            row.updated_at = now_iso
+            changed_count += 1
+            changed_ids.append(str(row.id))
+            continue
+
+        target_visible = action == "activate"
+        if row.is_deleted:
+            unchanged_count += 1
+            continue
+        if bool(row.is_enabled) == target_visible:
+            unchanged_count += 1
+            continue
+        row.is_enabled = target_visible
+        row.updated_at = now_iso
+        changed_count += 1
+        changed_ids.append(str(row.id))
+
+    return {
+        "matched": len(rows),
+        "changed": changed_count,
+        "unchanged": unchanged_count,
+        "changed_ids": changed_ids,
+    }
+
+
+def _category_bulk_idempotency_key(payload: CategoryBulkActionPayload, actor: dict) -> str:
+    identity_payload = {
+        "action": payload.action,
+        "scope": payload.scope,
+        "ids": sorted(list({str(item) for item in (payload.ids or [])})),
+        "filter": (payload.filter.model_dump() if payload.filter else None),
+        "actor": actor.get("id"),
+    }
+    raw = json.dumps(identity_payload, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+async def _enqueue_category_bulk_job(
+    payload: CategoryBulkActionPayload,
+    *,
+    actor: dict,
+    total_matched: int,
+    session: AsyncSession,
+) -> CategoryBulkJob:
+    idempotency_key = _category_bulk_idempotency_key(payload, actor)
+    existing = (
+        await session.execute(
+            select(CategoryBulkJob).where(CategoryBulkJob.idempotency_key == idempotency_key)
+        )
+    ).scalar_one_or_none()
+    if existing:
+        return existing
+
+    now_dt = datetime.now(timezone.utc)
+    job = CategoryBulkJob(
+        id=uuid.uuid4(),
+        idempotency_key=idempotency_key,
+        action=payload.action,
+        scope=payload.scope,
+        status="queued",
+        request_payload={
+            "action": payload.action,
+            "scope": payload.scope,
+            "ids": payload.ids,
+            "filter": payload.filter.model_dump() if payload.filter else None,
+            "actor": {
+                "id": actor.get("id"),
+                "email": actor.get("email"),
+                "country_scope": actor.get("country_scope") or [],
+                "country_code": actor.get("country_code"),
+            },
+        },
+        total_records=total_matched,
+        processed_records=0,
+        changed_records=0,
+        unchanged_records=0,
+        attempts=0,
+        max_attempts=CATEGORY_BULK_JOB_MAX_ATTEMPTS,
+        created_by=_safe_uuid(actor.get("id")),
+        created_by_email=actor.get("email"),
+        is_async=True,
+        created_at=now_dt,
+        updated_at=now_dt,
+    )
+    _append_category_bulk_job_log(job, {"event": "queued", "reason_code": "ASYNC_THRESHOLD"})
+    session.add(job)
+    await session.flush()
+    return job
+
+
+async def _claim_next_category_bulk_job(session: AsyncSession, worker_id: str) -> Optional[CategoryBulkJob]:
+    now_dt = datetime.now(timezone.utc)
+    stale_before = now_dt - timedelta(seconds=CATEGORY_BULK_JOB_CLAIM_TTL_SECONDS)
+
+    candidate = (
+        await session.execute(
+            select(CategoryBulkJob)
+            .where(
+                CategoryBulkJob.is_async.is_(True),
+                or_(
+                    CategoryBulkJob.status.in_(["queued", "retry"]),
+                    and_(CategoryBulkJob.status == "running", CategoryBulkJob.locked_at <= stale_before),
+                ),
+                or_(CategoryBulkJob.next_retry_at.is_(None), CategoryBulkJob.next_retry_at <= now_dt),
+            )
+            .order_by(CategoryBulkJob.created_at.asc())
+            .with_for_update(skip_locked=True)
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+
+    if not candidate:
+        return None
+
+    candidate.status = "running"
+    candidate.locked_at = now_dt
+    candidate.locked_by = worker_id
+    candidate.started_at = candidate.started_at or now_dt
+    candidate.updated_at = now_dt
+    if candidate.attempts is None:
+        candidate.attempts = 0
+    candidate.attempts += 1
+    _append_category_bulk_job_log(candidate, {"event": "claimed", "worker": worker_id, "attempt": candidate.attempts})
+    await session.flush()
+    return candidate
+
+
+async def _process_category_bulk_job(job_id: str, worker_id: str) -> None:
+    async with AsyncSessionLocal() as session:
+        job: Optional[CategoryBulkJob] = None
+        actor_for_log: Dict[str, Any] = {"id": None, "email": None, "country_scope": []}
+        try:
+            job = await session.get(CategoryBulkJob, uuid.UUID(job_id))
+            if not job:
+                return
+
+            request_payload = job.request_payload or {}
+            actor_for_log = _category_bulk_actor_from_job_payload(request_payload, job)
+            action_payload = CategoryBulkActionPayload(
+                action=request_payload.get("action"),
+                scope=request_payload.get("scope"),
+                ids=request_payload.get("ids") or [],
+                filter=CategoryBulkFilterPayload(**(request_payload.get("filter") or {})) if request_payload.get("filter") else None,
+            )
+
+            rows, total_matched, _, _, _ = await _resolve_bulk_category_targets(
+                action_payload,
+                current_user=actor_for_log,
+                session=session,
+                limit=CATEGORY_BULK_ASYNC_MAX_RECORDS + 1,
+                enforce_scope=False,
+            )
+
+            if total_matched > CATEGORY_BULK_ASYNC_MAX_RECORDS:
+                job.status = "failed"
+                job.error_code = "BULK_SCOPE_LIMIT_EXCEEDED"
+                job.error_message = f"Bulk işlem en fazla {CATEGORY_BULK_ASYNC_MAX_RECORDS} kayıt için çalıştırılabilir"
+                job.finished_at = datetime.now(timezone.utc)
+                job.updated_at = datetime.now(timezone.utc)
+                _append_category_bulk_job_log(job, {"event": "failed", "reason_code": job.error_code})
+                await session.commit()
+                return
+
+            result = await _execute_category_bulk_action_rows(session, rows=rows, action=action_payload.action)
+            job.processed_records = result["matched"]
+            job.changed_records = result["changed"]
+            job.unchanged_records = result["unchanged"]
+            job.total_records = total_matched
+            job.status = "done"
+            job.result_summary = {
+                "changed_ids": result["changed_ids"],
+                "reason_code": "COMPLETED",
+            }
+            job.error_code = None
+            job.error_message = None
+            job.finished_at = datetime.now(timezone.utc)
+            job.updated_at = datetime.now(timezone.utc)
+            _append_category_bulk_job_log(job, {"event": "done", "reason_code": "COMPLETED", "changed": result["changed"]})
+
+            await _write_audit_log_sql(
+                session=session,
+                action="CATEGORY_BULK_ACTION_ASYNC_DONE",
+                actor=actor_for_log,
+                resource_type="categories",
+                resource_id=job.scope,
+                metadata={
+                    "job_id": str(job.id),
+                    "bulk_action": job.action,
+                    "scope": job.scope,
+                    "matched": result["matched"],
+                    "changed": result["changed"],
+                    "unchanged": result["unchanged"],
+                    "admin_user_id": actor_for_log.get("id"),
+                },
+                request=None,
+                country_code=actor_for_log.get("country_code"),
+            )
+            await session.commit()
+        except Exception as exc:
+            if not job:
+                await session.rollback()
+                return
+
+            await session.rollback()
+            job = await session.get(CategoryBulkJob, job.id)
+            if not job:
+                return
+
+            max_attempts = int(job.max_attempts or CATEGORY_BULK_JOB_MAX_ATTEMPTS)
+            attempts = int(job.attempts or 1)
+            if attempts >= max_attempts:
+                job.status = "failed"
+                job.error_code = "BULK_JOB_MAX_ATTEMPTS"
+                job.error_message = str(exc)
+                job.finished_at = datetime.now(timezone.utc)
+            else:
+                retry_seconds = CATEGORY_BULK_JOB_RETRY_BASE_SECONDS * (2 ** max(0, attempts - 1))
+                job.status = "retry"
+                job.error_code = "BULK_JOB_RETRY_SCHEDULED"
+                job.error_message = str(exc)
+                job.next_retry_at = datetime.now(timezone.utc) + timedelta(seconds=retry_seconds)
+            job.locked_at = None
+            job.locked_by = None
+            job.updated_at = datetime.now(timezone.utc)
+            _append_category_bulk_job_log(
+                job,
+                {
+                    "event": "retry_or_failed",
+                    "reason_code": job.error_code,
+                    "error": str(exc),
+                    "worker": worker_id,
+                },
+            )
+            await session.commit()
+
+
+async def _category_bulk_job_worker_loop() -> None:
+    worker_id = f"worker-{uuid.uuid4()}"
+    while True:
+        try:
+            claimed_job_id: Optional[str] = None
+            async with AsyncSessionLocal() as session:
+                job = await _claim_next_category_bulk_job(session, worker_id)
+                if job:
+                    claimed_job_id = str(job.id)
+                await session.commit()
+
+            if claimed_job_id:
+                await _process_category_bulk_job(claimed_job_id, worker_id)
+            else:
+                await asyncio.sleep(CATEGORY_BULK_JOB_WORKER_INTERVAL_SECONDS)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logging.getLogger("category_bulk_job_worker").exception("category_bulk_job_worker_loop_failed")
+            await asyncio.sleep(CATEGORY_BULK_JOB_WORKER_INTERVAL_SECONDS)
             _assert_country_scope(str(row.country_code).upper(), current_user)
     return rows
 
