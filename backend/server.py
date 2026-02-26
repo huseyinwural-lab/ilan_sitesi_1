@@ -181,6 +181,7 @@ from app.services.meilisearch_index import (
     stable_numeric_id,
     sync_listing_to_meili,
 )
+from app.routers.ui_designer_routes import router as ui_designer_router
 
 
 from fastapi import UploadFile, File, BackgroundTasks, Form
@@ -29797,6 +29798,7 @@ async def get_info_page(slug: str, session: AsyncSession = Depends(get_sql_sessi
     }
 
 # --- Router binding + RBAC allowlist (must be after all route definitions) ---
+app.include_router(ui_designer_router)
 app.include_router(api_router)
 
 RBAC_ALLOWLIST, RBAC_MISSING_POLICIES = _build_rbac_allowlist(app)
