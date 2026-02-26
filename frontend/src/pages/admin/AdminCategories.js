@@ -579,12 +579,13 @@ const AdminCategories = () => {
 
   const fetchVehicleSegmentLinkStatus = useCallback(async (segment, countryCode) => {
     if (!segment) {
+      setVehicleSegmentError("");
       setVehicleLinkStatus({
         checking: false,
         linked: false,
         make_count: 0,
         model_count: 0,
-        message: "Segment seçiniz.",
+        message: "Segment adı giriniz.",
       });
       return;
     }
@@ -600,28 +601,32 @@ const AdminCategories = () => {
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        const parsed = parseApiError(data, "Master data bağlantısı doğrulanamadı.");
+        setVehicleSegmentError(parsed.message);
         setVehicleLinkStatus({
           checking: false,
           linked: false,
           make_count: 0,
           model_count: 0,
-          message: data?.detail || "Master data bağlantısı doğrulanamadı.",
+          message: parsed.message,
         });
         return;
       }
       const linked = Boolean(data?.linked);
       const makeCount = Number(data?.make_count || 0);
       const modelCount = Number(data?.model_count || 0);
+      setVehicleSegmentError("");
       setVehicleLinkStatus({
         checking: false,
         linked,
         make_count: makeCount,
         model_count: modelCount,
         message: linked
-          ? `Bağlandı • ${makeCount} make / ${modelCount} model`
+          ? `Master Data Linked • ${makeCount} make / ${modelCount} model`
           : "Bu segment için master data kaydı bulunamadı.",
       });
     } catch (error) {
+      setVehicleSegmentError("Master data bağlantısı doğrulanamadı.");
       setVehicleLinkStatus({
         checking: false,
         linked: false,
@@ -629,6 +634,44 @@ const AdminCategories = () => {
         model_count: 0,
         message: "Master data bağlantısı doğrulanamadı.",
       });
+    }
+  }, [authHeader]);
+
+  const fetchOrderPreview = useCallback(async ({ moduleValue, countryCode, parentId, sortOrder, excludeId }) => {
+    if (!moduleValue || !countryCode || !Number.isFinite(sortOrder) || sortOrder <= 0) {
+      setOrderPreview({ checking: false, available: true, message: "", conflict: null });
+      return;
+    }
+
+    setOrderPreview((prev) => ({ ...prev, checking: true }));
+    try {
+      const params = new URLSearchParams({
+        module: moduleValue,
+        country: countryCode,
+        sort_order: String(sortOrder),
+      });
+      if (parentId) params.set("parent_id", parentId);
+      if (excludeId) params.set("exclude_id", excludeId);
+
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/order-index/preview?${params.toString()}`,
+        { headers: authHeader }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const parsed = parseApiError(data, "Sıra önizleme kontrolü başarısız.");
+        setOrderPreview({ checking: false, available: true, message: parsed.message, conflict: null });
+        return;
+      }
+
+      setOrderPreview({
+        checking: false,
+        available: Boolean(data?.available),
+        message: data?.message || "",
+        conflict: data?.conflict || null,
+      });
+    } catch (error) {
+      setOrderPreview({ checking: false, available: true, message: "Sıra kontrolü yapılamadı.", conflict: null });
     }
   }, [authHeader]);
 
