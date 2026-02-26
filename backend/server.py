@@ -11389,8 +11389,10 @@ def _vehicle_segment_from_schema(schema: Optional[Dict[str, Any]]) -> Optional[s
     category_meta = schema.get("category_meta")
     if not isinstance(category_meta, dict):
         return None
-    segment = _normalize_vehicle_type(category_meta.get("vehicle_segment"))
-    return segment or None
+    segment_raw = _normalize_segment_key(category_meta.get("vehicle_segment"))
+    if not segment_raw:
+        return None
+    return VEHICLE_SEGMENT_ALIASES.get(segment_raw, segment_raw)
 
 
 def _merge_vehicle_segment_schema(
