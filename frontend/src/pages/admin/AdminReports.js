@@ -31,6 +31,14 @@ const reasonOptions = [
   { value: 'other', label: 'other' },
 ];
 
+const messageReasonOptions = [
+  { value: 'all', label: 'Tümü' },
+  { value: 'spam', label: 'spam' },
+  { value: 'scam', label: 'scam' },
+  { value: 'abuse', label: 'abuse' },
+  { value: 'other', label: 'other' },
+];
+
 const statusTransitions = {
   open: ['in_review'],
   in_review: ['resolved', 'dismissed'],
