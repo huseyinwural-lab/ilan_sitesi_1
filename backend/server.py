@@ -11318,19 +11318,69 @@ def _pick_category_slug(slug_value) -> Optional[str]:
 
 def _normalize_category_module(value: Optional[str]) -> str:
     if not value:
-        return "vehicle"
+        return "other"
     module_value = value.strip().lower()
     module_value = CATEGORY_MODULE_ALIASES.get(module_value, module_value)
     if module_value not in SUPPORTED_CATEGORY_MODULES:
-        raise HTTPException(status_code=400, detail="module invalid")
+        return "other"
     return module_value
 
 
-def _normalize_vehicle_segment(value: Optional[str]) -> str:
-    segment = _normalize_vehicle_type(value)
-    if not segment or segment not in VEHICLE_TYPE_SET:
-        raise HTTPException(status_code=400, detail="vehicle segment invalid")
-    return segment
+def _normalize_segment_key(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    raw = str(value).strip().lower()
+    if not raw:
+        return None
+    turkish_map = str.maketrans({
+        "ç": "c",
+        "ğ": "g",
+        "ı": "i",
+        "ö": "o",
+        "ş": "s",
+        "ü": "u",
+    })
+    normalized = raw.translate(turkish_map)
+    normalized = re.sub(r"[^a-z0-9]+", "_", normalized).strip("_")
+    return normalized or None
+
+
+def _category_error(code: str, message: str, *, status_code: int = 400) -> HTTPException:
+    return HTTPException(status_code=status_code, detail={"error_code": code, "message": message})
+
+
+async def _resolve_vehicle_segment_from_master(
+    session: AsyncSession,
+    *,
+    segment_input: Optional[str],
+) -> Dict[str, Any]:
+    normalized_input = _normalize_segment_key(segment_input)
+    if not normalized_input:
+        raise _category_error("VEHICLE_SEGMENT_NOT_FOUND", "Girilen segment master data’da bulunamadı.")
+
+    canonical_segment = VEHICLE_SEGMENT_ALIASES.get(normalized_input, normalized_input)
+
+    filters = [VehicleModel.is_active.is_(True)]
+    if canonical_segment == "car":
+        filters.append(or_(VehicleModel.vehicle_type == "car", VehicleModel.vehicle_type.is_(None)))
+    else:
+        filters.append(func.lower(VehicleModel.vehicle_type) == canonical_segment)
+
+    model_count_query = select(func.count()).select_from(VehicleModel).where(*filters)
+    model_count = int((await session.execute(model_count_query)).scalar_one() or 0)
+
+    if model_count <= 0:
+        raise _category_error("VEHICLE_SEGMENT_NOT_FOUND", "Girilen segment master data’da bulunamadı.")
+
+    make_count_query = select(func.count(distinct(VehicleModel.make_id))).where(*filters)
+    make_count = int((await session.execute(make_count_query)).scalar_one() or 0)
+
+    return {
+        "segment": canonical_segment,
+        "linked": True,
+        "model_count": model_count,
+        "make_count": make_count,
+    }
 
 
 def _vehicle_segment_from_schema(schema: Optional[Dict[str, Any]]) -> Optional[str]:
@@ -11362,26 +11412,93 @@ def _merge_vehicle_segment_schema(
 async def _get_vehicle_segment_link_status(
     session: AsyncSession,
     *,
-    vehicle_segment: str,
+    vehicle_segment: Optional[str],
 ) -> Dict[str, Any]:
-    model_count_query = select(func.count()).select_from(VehicleModel).where(
-        VehicleModel.is_active.is_(True),
-        VehicleModel.vehicle_type == vehicle_segment,
-    )
-    model_count = int((await session.execute(model_count_query)).scalar_one() or 0)
+    return await _resolve_vehicle_segment_from_master(session, segment_input=vehicle_segment)
 
-    make_count_query = select(func.count(distinct(VehicleModel.make_id))).where(
-        VehicleModel.is_active.is_(True),
-        VehicleModel.vehicle_type == vehicle_segment,
-    )
-    make_count = int((await session.execute(make_count_query)).scalar_one() or 0)
 
-    return {
-        "segment": vehicle_segment,
-        "linked": model_count > 0,
-        "model_count": model_count,
-        "make_count": make_count,
-    }
+async def _assert_vehicle_segment_unique_in_country(
+    session: AsyncSession,
+    *,
+    vehicle_segment: str,
+    country_code: Optional[str],
+    exclude_category_id: Optional[uuid.UUID] = None,
+) -> None:
+    query = select(Category).where(
+        Category.is_deleted.is_(False),
+        Category.module == "vehicle",
+        func.lower(Category.form_schema["category_meta"]["vehicle_segment"].astext) == vehicle_segment,
+    )
+
+    if country_code:
+        query = query.where(Category.country_code == country_code)
+    else:
+        query = query.where(Category.country_code.is_(None))
+
+    if exclude_category_id:
+        query = query.where(Category.id != exclude_category_id)
+
+    existing = (await session.execute(query.limit(1))).scalar_one_or_none()
+    if existing:
+        raise _category_error(
+            "VEHICLE_SEGMENT_ALREADY_DEFINED",
+            "Bu segment bu ülkede zaten tanımlı.",
+        )
+
+
+async def _check_category_sort_conflict(
+    session: AsyncSession,
+    *,
+    country_code: Optional[str],
+    module_value: str,
+    parent_id: Optional[uuid.UUID],
+    sort_order: int,
+    exclude_category_id: Optional[uuid.UUID] = None,
+) -> Optional[Category]:
+    query = select(Category).where(
+        Category.is_deleted.is_(False),
+        Category.module == module_value,
+        Category.sort_order == sort_order,
+    )
+
+    if parent_id:
+        query = query.where(Category.parent_id == parent_id)
+    else:
+        query = query.where(Category.parent_id.is_(None))
+
+    if country_code:
+        query = query.where(Category.country_code == country_code)
+    else:
+        query = query.where(Category.country_code.is_(None))
+
+    if exclude_category_id:
+        query = query.where(Category.id != exclude_category_id)
+
+    return (await session.execute(query.limit(1))).scalar_one_or_none()
+
+
+async def _assert_category_sort_available(
+    session: AsyncSession,
+    *,
+    country_code: Optional[str],
+    module_value: str,
+    parent_id: Optional[uuid.UUID],
+    sort_order: int,
+    exclude_category_id: Optional[uuid.UUID] = None,
+) -> None:
+    conflict = await _check_category_sort_conflict(
+        session,
+        country_code=country_code,
+        module_value=module_value,
+        parent_id=parent_id,
+        sort_order=sort_order,
+        exclude_category_id=exclude_category_id,
+    )
+    if conflict:
+        raise _category_error(
+            "ORDER_INDEX_ALREADY_USED",
+            "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.",
+        )
 
 
 def _assert_category_parent_compatible(
