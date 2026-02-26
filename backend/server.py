@@ -15865,7 +15865,10 @@ async def admin_search_meili_stage_smoke(
     session: AsyncSession = Depends(get_sql_session),
 ):
     del current_user
-    runtime = await get_active_meili_runtime(session)
+    try:
+        runtime = await get_active_meili_runtime(session)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"ACTIVE_CONFIG_REQUIRED: {exc}") from exc
     health = await test_and_prepare_meili_index(
         meili_url=runtime["url"],
         master_key=runtime["master_key"],
@@ -15949,7 +15952,10 @@ async def admin_reindex_search_projection(
     safe_chunk = min(1000, max(25, payload.chunk_size))
     max_docs = payload.max_docs if payload.max_docs and payload.max_docs > 0 else None
 
-    runtime = await get_active_meili_runtime(session)
+    try:
+        runtime = await get_active_meili_runtime(session)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"ACTIVE_CONFIG_REQUIRED: {exc}") from exc
     if payload.reset_index:
         await meili_clear_documents(runtime)
 
