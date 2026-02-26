@@ -204,6 +204,9 @@ export default function AdminDealerPortalConfig() {
         <div>
           <h1 className="text-2xl font-semibold" data-testid="admin-dealer-config-title">Kurumsal Menü Yönetimi</h1>
           <p className="text-sm text-slate-600" data-testid="admin-dealer-config-subtitle">Sadece manuel kontrol: sıralama + görünürlük.</p>
+          <p className="text-xs text-slate-500" data-testid="admin-dealer-config-save-meta">
+            {lastSavedAt ? `Son kaydetme: ${lastSavedAt}` : 'Henüz sıralama kaydı yok'}
+          </p>
         </div>
         <button onClick={fetchAll} className="h-9 rounded-md border px-3 text-sm" data-testid="admin-dealer-config-refresh">Yenile</button>
       </div>
@@ -226,7 +229,7 @@ export default function AdminDealerPortalConfig() {
         </div>
 
         <div className="space-y-3 rounded-xl border bg-white p-4" data-testid="admin-dealer-config-header-card">
-          <h2 className="text-lg font-semibold" data-testid="admin-dealer-config-header-title-quick">Header Quick Actions</h2>
+          <h2 className="text-lg font-semibold" data-testid="admin-dealer-config-header-title-quick">Header 1. Satır (Sabit + Manuel Sıralama)</h2>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(event, headerItems, setNavItems, (rows) => persistNavOrder('header', rows))}>
             <SortableContext items={headerItems.map((row) => row.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-2" data-testid="admin-dealer-config-header-list">
@@ -240,7 +243,7 @@ export default function AdminDealerPortalConfig() {
       </div>
 
       <div className="rounded-xl border bg-white p-4" data-testid="admin-dealer-config-modules-card">
-        <h2 className="text-lg font-semibold mb-3" data-testid="admin-dealer-config-modules-title">Dashboard Widget Registry</h2>
+        <h2 className="text-lg font-semibold mb-3" data-testid="admin-dealer-config-modules-title">Header 2. Satır (Modül Bazlı Manuel Sıralama)</h2>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(event, sortedModules, setModules, persistModuleOrder)}>
           <SortableContext items={sortedModules.map((row) => row.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2" data-testid="admin-dealer-config-modules-list">
@@ -254,23 +257,30 @@ export default function AdminDealerPortalConfig() {
 
       <div className="rounded-xl border bg-white p-4" data-testid="admin-dealer-config-preview-card">
         <h2 className="text-lg font-semibold" data-testid="admin-dealer-config-preview-title">Önizleme (Dealer görünümü)</h2>
-        <div className="mt-3 grid gap-3 md:grid-cols-3 text-sm" data-testid="admin-dealer-config-preview-grid">
+        <div className="mt-3 grid gap-3 md:grid-cols-4 text-sm" data-testid="admin-dealer-config-preview-grid">
           <div data-testid="admin-dealer-config-preview-header-items">
-            <div className="font-medium">Header</div>
+            <div className="font-medium">Header 1. Satır</div>
             <ul className="list-disc pl-5">
-              {(preview.header_items || []).map((row) => <li key={row.id} data-testid={`admin-dealer-config-preview-header-${row.key}`}>{row.label_i18n_key}</li>)}
+              {(preview.header_row1_items || preview.header_items || []).map((row) => <li key={row.id} data-testid={`admin-dealer-config-preview-header-${row.key}`}>{row.label_i18n_key}</li>)}
+            </ul>
+          </div>
+          <div data-testid="admin-dealer-config-preview-header-modules-items">
+            <div className="font-medium">Header 2. Satır</div>
+            <ul className="list-disc pl-5">
+              {(preview.header_row2_modules || preview.modules || []).map((row) => <li key={row.id} data-testid={`admin-dealer-config-preview-header-module-${row.key}`}>{row.title_i18n_key}</li>)}
+            </ul>
+          </div>
+          <div data-testid="admin-dealer-config-preview-header-controls-items">
+            <div className="font-medium">Header 3. Satır</div>
+            <ul className="list-disc pl-5">
+              <li data-testid="admin-dealer-config-preview-header-row3-store">Mağaza filtresi: {String(preview?.header_row3_controls?.store_filter_enabled !== false)}</li>
+              <li data-testid="admin-dealer-config-preview-header-row3-user">Kullanıcı dropdown: {String(preview?.header_row3_controls?.user_dropdown_enabled !== false)}</li>
             </ul>
           </div>
           <div data-testid="admin-dealer-config-preview-sidebar-items">
             <div className="font-medium">Sidebar</div>
             <ul className="list-disc pl-5">
               {(preview.sidebar_items || []).map((row) => <li key={row.id} data-testid={`admin-dealer-config-preview-sidebar-${row.key}`}>{row.label_i18n_key}</li>)}
-            </ul>
-          </div>
-          <div data-testid="admin-dealer-config-preview-modules-items">
-            <div className="font-medium">Widgets</div>
-            <ul className="list-disc pl-5">
-              {(preview.modules || []).map((row) => <li key={row.id} data-testid={`admin-dealer-config-preview-module-${row.key}`}>{row.title_i18n_key}</li>)}
             </ul>
           </div>
         </div>
