@@ -5,7 +5,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const MAX_FILE_MB = 10;
 
-const MODULE_OPTIONS = ['vehicle', 'real_estate', 'machinery', 'services', 'jobs'];
+const MODULE_OPTIONS = ['vehicle', 'real_estate', 'other'];
 
 const TABS = [
   { id: 'export', label: 'Export' },
