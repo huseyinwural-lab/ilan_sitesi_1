@@ -14788,13 +14788,41 @@ async def dealer_portal_config(
 @api_router.get("/admin/dealer-portal/config")
 async def admin_dealer_portal_config(
     request: Request,
+    mode: str = "draft",
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
+    scope_key = _dealer_scope_key(country_code)
+    mode_value = (mode or "draft").strip().lower()
+
+    if mode_value == "draft":
+        draft = await _ensure_active_dealer_draft_revision(
+            session,
+            scope_key=scope_key,
+            actor=current_user,
+        )
+        resolved = await _resolve_dealer_portal_config_from_snapshot(
+            session,
+            nav_snapshot=list(draft.nav_snapshot or []),
+            module_snapshot=list(draft.module_snapshot or []),
+            role="dealer",
+            country_code=country_code,
+        )
+        await session.commit()
+        return {
+            "mode": "draft",
+            "scope_key": scope_key,
+            "draft": _serialize_dealer_config_revision_row(draft),
+            "nav_items": resolved["all_nav_items"],
+            "modules": resolved["all_modules"],
+        }
+
     resolved = await _resolve_dealer_portal_config(session, role="dealer", country_code=country_code)
     return {
+        "mode": "published",
+        "scope_key": scope_key,
         "nav_items": resolved["all_nav_items"],
         "modules": resolved["all_modules"],
     }
@@ -14803,12 +14831,30 @@ async def admin_dealer_portal_config(
 @api_router.get("/admin/dealer-portal/config/preview")
 async def admin_dealer_portal_config_preview(
     request: Request,
+    mode: str = "draft",
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
-    resolved = await _resolve_dealer_portal_config(session, role="dealer", country_code=country_code)
+    scope_key = _dealer_scope_key(country_code)
+    mode_value = (mode or "draft").strip().lower()
+    if mode_value == "draft":
+        draft = await _ensure_active_dealer_draft_revision(
+            session,
+            scope_key=scope_key,
+            actor=current_user,
+        )
+        resolved = await _resolve_dealer_portal_config_from_snapshot(
+            session,
+            nav_snapshot=list(draft.nav_snapshot or []),
+            module_snapshot=list(draft.module_snapshot or []),
+            role="dealer",
+            country_code=country_code,
+        )
+        await session.commit()
+    else:
+        resolved = await _resolve_dealer_portal_config(session, role="dealer", country_code=country_code)
     row3_controls = await _dealer_header_row3_controls(
         session,
         user_id=None,
@@ -14822,6 +14868,152 @@ async def admin_dealer_portal_config_preview(
         "header_row3_controls": row3_controls,
         "sidebar_items": resolved["sidebar_items"],
         "modules": resolved["modules"],
+        "mode": mode_value,
+        "scope_key": scope_key,
+    }
+
+
+@api_router.post("/admin/dealer-portal/config/draft/save")
+async def admin_dealer_portal_draft_save(
+    payload: DealerDraftSavePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
+    scope_key = _dealer_scope_key(country_code)
+
+    draft = await _ensure_active_dealer_draft_revision(
+        session,
+        scope_key=scope_key,
+        actor=current_user,
+    )
+    draft.nav_snapshot = _normalize_dealer_nav_snapshot(payload.nav_items)
+    draft.module_snapshot = _normalize_dealer_module_snapshot(payload.modules)
+    draft.updated_by = _safe_uuid(current_user.get("id"))
+    draft.updated_by_email = current_user.get("email")
+    draft.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_PORTAL_DRAFT_SAVE",
+        actor=current_user,
+        resource_type="dealer_config_revisions",
+        resource_id=str(draft.id),
+        metadata={
+            "scope_key": scope_key,
+            "nav_count": len(draft.nav_snapshot or []),
+            "module_count": len(draft.module_snapshot or []),
+        },
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "draft": _serialize_dealer_config_revision_row(draft),
+    }
+
+
+@api_router.post("/admin/dealer-portal/config/draft/publish")
+async def admin_dealer_portal_draft_publish(
+    payload: DealerDraftPublishPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
+    scope_key = _dealer_scope_key(country_code)
+
+    published = await _publish_dealer_draft_revision(
+        session,
+        scope_key=scope_key,
+        actor=current_user,
+        note=payload.note,
+    )
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_PORTAL_DRAFT_PUBLISH",
+        actor=current_user,
+        resource_type="dealer_config_revisions",
+        resource_id=str(published.id),
+        metadata={"scope_key": scope_key, "source_revision_id": str(published.source_revision_id) if published.source_revision_id else None},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "published": _serialize_dealer_config_revision_row(published),
+    }
+
+
+@api_router.get("/admin/dealer-portal/config/revisions")
+async def admin_dealer_portal_revisions(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
+    scope_key = _dealer_scope_key(country_code)
+
+    rows = (
+        await session.execute(
+            select(DealerConfigRevision)
+            .where(
+                DealerConfigRevision.scope_key == scope_key,
+                DealerConfigRevision.state.in_(["published", "revision"]),
+            )
+            .order_by(desc(DealerConfigRevision.revision_no), desc(DealerConfigRevision.created_at))
+            .limit(100)
+        )
+    ).scalars().all()
+
+    return {
+        "scope_key": scope_key,
+        "items": [_serialize_dealer_config_revision_row(row) for row in rows],
+    }
+
+
+@api_router.post("/admin/dealer-portal/config/rollback")
+async def admin_dealer_portal_rollback(
+    payload: DealerDraftRollbackPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
+    scope_key = _dealer_scope_key(country_code)
+
+    published = await _rollback_dealer_published_revision(
+        session,
+        scope_key=scope_key,
+        target_revision_id=payload.revision_id,
+        actor=current_user,
+    )
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_PORTAL_ROLLBACK",
+        actor=current_user,
+        resource_type="dealer_config_revisions",
+        resource_id=str(published.id),
+        metadata={"scope_key": scope_key, "rollback_from": payload.revision_id},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "published": _serialize_dealer_config_revision_row(published),
     }
 
 
