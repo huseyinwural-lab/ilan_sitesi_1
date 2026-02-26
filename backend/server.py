@@ -18411,6 +18411,76 @@ async def admin_list_categories(
     }
 
 
+def _build_admin_category_query(
+    *,
+    country_code: Optional[str],
+    module_value: Optional[str],
+    active_flag: Optional[bool],
+):
+    query = (
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.is_deleted.is_(False))
+    )
+
+    if country_code:
+        query = query.where(Category.country_code == country_code)
+    if module_value:
+        query = query.where(Category.module == module_value)
+    if active_flag is not None:
+        query = query.where(Category.active_flag == bool(active_flag))
+    return query
+
+
+async def _resolve_bulk_category_targets(
+    payload: CategoryBulkActionPayload,
+    *,
+    current_user,
+    session: AsyncSession,
+) -> List[Category]:
+    filter_payload = payload.filter or CategoryBulkFilterPayload()
+    country_code = (filter_payload.country or "").upper() or None
+    if country_code:
+        _assert_country_scope(country_code, current_user)
+
+    module_value = _normalize_category_module(filter_payload.module) if filter_payload.module else None
+    active_flag = filter_payload.active_flag
+
+    query = _build_admin_category_query(
+        country_code=country_code,
+        module_value=module_value,
+        active_flag=active_flag,
+    )
+
+    if payload.scope == "ids":
+        if not payload.ids:
+            raise HTTPException(status_code=400, detail="ids is required for scope=ids")
+        parsed_ids: List[uuid.UUID] = []
+        seen: set[str] = set()
+        for raw_id in payload.ids:
+            try:
+                parsed = uuid.UUID(str(raw_id))
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=f"Invalid id: {raw_id}") from exc
+            parsed_key = str(parsed)
+            if parsed_key in seen:
+                continue
+            seen.add(parsed_key)
+            parsed_ids.append(parsed)
+        if not parsed_ids:
+            raise HTTPException(status_code=400, detail="ids is required for scope=ids")
+        query = query.where(Category.id.in_(parsed_ids))
+    elif payload.scope == "filter":
+        if not payload.filter:
+            raise HTTPException(status_code=400, detail="filter is required for scope=filter")
+
+    query = query.order_by(Category.sort_order.asc(), Category.created_at.asc()).limit(1001)
+    rows = (await session.execute(query)).scalars().all()
+    if len(rows) > 1000:
+        raise HTTPException(status_code=400, detail="Bulk işlem için en fazla 1000 kayıt seçilebilir")
+    return rows
+
+
 @api_router.get(
     "/admin/categories/vehicle-segment/link-status",
     responses={
