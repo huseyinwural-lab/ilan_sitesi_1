@@ -2679,8 +2679,15 @@ const AdminCategories = () => {
                           )}
                         </div>
                         <div className="rounded-md border border-amber-300 bg-white/70 px-3 py-2 text-xs" data-testid="categories-vehicle-link-status">
-                          <div className="font-semibold text-amber-900" data-testid="categories-vehicle-link-status-title">
-                            Master Data Linked
+                          <div className="flex items-center justify-between gap-2" data-testid="categories-vehicle-link-status-title-row">
+                            <div className="font-semibold text-amber-900" data-testid="categories-vehicle-link-status-title">
+                              Master Data Linked
+                            </div>
+                            {vehicleLinkStatus.linked && (
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700" data-testid="categories-vehicle-linked-badge">
+                                Master Data Linked
+                              </span>
+                            )}
                           </div>
                           <div
                             className={`mt-1 ${vehicleLinkStatus.linked ? 'text-emerald-700' : 'text-amber-800'}`}
