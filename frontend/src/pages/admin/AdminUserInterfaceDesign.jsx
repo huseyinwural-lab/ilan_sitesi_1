@@ -270,7 +270,7 @@ function ThemeManagementTab() {
   };
 
   const fetchAssignments = async () => {
-    const response = await fetch(`${API}/admin/ui/themes/assignments`, { headers: authHeader });
+    const response = await fetch(`${API}/admin/ui/theme-assignments`, { headers: authHeader });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data?.detail || 'Theme assignment listesi alınamadı');
     setAssignments(Array.isArray(data?.items) ? data.items : []);
@@ -343,7 +343,7 @@ function ThemeManagementTab() {
     setStatus('');
     setError('');
     try {
-      const response = await fetch(`${API}/admin/ui/themes/assignments`, {
+      const response = await fetch(`${API}/admin/ui/theme-assignments`, {
         method: 'POST',
         headers: {
           ...authHeader,
