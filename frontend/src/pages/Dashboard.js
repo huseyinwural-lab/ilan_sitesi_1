@@ -233,8 +233,12 @@ const HealthCard = ({ health }) => (
   </div>
 );
 
-const KpiCard = ({ title, subtitle, data, canViewFinance, testId }) => (
-  <div className="bg-card rounded-md border p-6" data-testid={testId}>
+const KpiCard = ({ title, subtitle, data, canViewFinance, testId, to }) => (
+  <Link
+    to={to}
+    className="block bg-card rounded-md border p-6 transition-colors hover:bg-muted/30"
+    data-testid={`${testId}-link`}
+  >
     <div className="flex items-start justify-between mb-4">
       <div>
         <p className="text-xs text-muted-foreground" data-testid={`${testId}-subtitle`}>{subtitle}</p>
@@ -268,8 +272,11 @@ const KpiCard = ({ title, subtitle, data, canViewFinance, testId }) => (
           {formatCurrencyTotals(data?.revenue_currency_totals)}
         </div>
       )}
+      <div className="text-xs text-primary font-medium" data-testid={`${testId}-cta`}>
+        Detaya git
+      </div>
     </div>
-  </div>
+  </Link>
 );
 
 const RiskPanel = ({ data, canViewFinance }) => {
@@ -528,6 +535,7 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
           data={summary?.kpis?.today}
           canViewFinance={canViewFinance}
           testId="dashboard-kpi-today"
+          to={summary?.kpi_links?.today || '/admin/listings?period=today'}
         />
         <KpiCard
           title="Son 7 Gün"
@@ -535,6 +543,7 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
           data={summary?.kpis?.last_7_days}
           canViewFinance={canViewFinance}
           testId="dashboard-kpi-week"
+          to={summary?.kpi_links?.last_7_days || '/admin/listings?period=last_7_days'}
         />
       </div>
 
