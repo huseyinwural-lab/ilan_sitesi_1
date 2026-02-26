@@ -54,7 +54,7 @@ export default function SearchPage() {
   const [error, setError] = useState(null);
   const [data, setData] = useState({ items: [], facets: {}, pagination: {} });
   const [facetMeta, setFacetMeta] = useState({}); // To store types/labels
-  const facetsEnabled = false; // Mongo search MVP: facets disabled
+  const facetsEnabled = Object.keys(facetMeta || {}).length > 0;
   const [categories, setCategories] = useState([]); // Flat list of categories
   const [makes, setMakes] = useState([]);
   const [models, setModels] = useState([]);
@@ -153,8 +153,25 @@ export default function SearchPage() {
           queryParams.set('price_max', searchState.filters.price_max);
         }
 
-        // Attribute filters are not supported in the Mongo search MVP yet.
-        // Keep URL state, but do not send attrs to backend for now.
+        Object.entries(searchState.filters || {}).forEach(([key, value]) => {
+          if (key === 'price_min' || key === 'price_max') return;
+          if (Array.isArray(value) && value.length > 0) {
+            queryParams.set(`attr[${key}]`, value.join(','));
+            return;
+          }
+          if (typeof value === 'object' && value !== null) {
+            if (value.min !== undefined && value.min !== null) {
+              queryParams.set(`attr[${key}]_min`, String(value.min));
+            }
+            if (value.max !== undefined && value.max !== null) {
+              queryParams.set(`attr[${key}]_max`, String(value.max));
+            }
+            return;
+          }
+          if (typeof value === 'boolean') {
+            queryParams.set(`attr[${key}]`, value ? 'true' : 'false');
+          }
+        });
 
         const res = await fetch(`${API}/v2/search?${queryParams.toString()}`);
         
@@ -165,10 +182,7 @@ export default function SearchPage() {
         const json = await res.json();
         setData(json);
         
-        // Use meta from API if available, otherwise fetch (fallback)
-        if (json.facet_meta) {
-            setFacetMeta(json.facet_meta);
-        }
+        setFacetMeta(json.facet_meta || {});
 
       } catch (err) {
         console.error(err);
