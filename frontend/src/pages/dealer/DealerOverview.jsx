@@ -9,6 +9,34 @@ export default function DealerOverview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [widgets, setWidgets] = useState([]);
+  const [dashboardSource, setDashboardSource] = useState('default');
+
+  const applyDashboardConfig = (baseWidgets, configData) => {
+    if (!configData || typeof configData !== 'object') {
+      return { items: baseWidgets, source: 'default' };
+    }
+
+    const hidden = Array.isArray(configData.hidden_widgets) ? new Set(configData.hidden_widgets) : new Set();
+    const filtered = baseWidgets.filter((item) => !hidden.has(item.key));
+    const order = Array.isArray(configData.widget_order) ? configData.widget_order : [];
+    const map = new Map(filtered.map((item) => [item.key, item]));
+
+    const ordered = [];
+    order.forEach((key) => {
+      const widget = map.get(key);
+      if (widget) {
+        ordered.push(widget);
+        map.delete(key);
+      }
+    });
+    map.forEach((item) => ordered.push(item));
+
+    const minWidgets = Number.parseInt(`${configData.min_widgets ?? 1}`, 10);
+    if (!ordered.length || (Number.isFinite(minWidgets) && ordered.length < Math.max(minWidgets, 1))) {
+      return { items: baseWidgets, source: 'default' };
+    }
+    return { items: ordered, source: 'ui_config' };
+  };
 
   const fetchSummary = async () => {
     setLoading(true);
@@ -22,10 +50,28 @@ export default function DealerOverview() {
       if (!res.ok) {
         throw new Error(payload?.message || payload?.detail || 'Dashboard summary alınamadı');
       }
-      setWidgets(Array.isArray(payload?.widgets) ? payload.widgets : []);
+      const baseWidgets = Array.isArray(payload?.widgets) ? payload.widgets : [];
+
+      let uiConfig = null;
+      try {
+        const uiResponse = await fetch(`${API}/ui/dashboard?segment=corporate`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const uiPayload = await uiResponse.json().catch(() => ({}));
+        if (uiResponse.ok) {
+          uiConfig = uiPayload?.config_data || null;
+        }
+      } catch (uiError) {
+        uiConfig = null;
+      }
+
+      const resolved = applyDashboardConfig(baseWidgets, uiConfig);
+      setWidgets(resolved.items);
+      setDashboardSource(resolved.source);
     } catch (err) {
       setError(err?.message || 'Dashboard summary alınamadı');
       setWidgets([]);
+      setDashboardSource('default');
     } finally {
       setLoading(false);
     }
@@ -41,6 +87,9 @@ export default function DealerOverview() {
         <div>
           <h1 className="text-2xl font-semibold" data-testid="dealer-overview-title">Kurumsal Dashboard</h1>
           <p className="text-sm text-slate-600" data-testid="dealer-overview-subtitle">Widget tabanlı özet görünüm.</p>
+          <div className="text-xs text-slate-500" data-testid="dealer-overview-source">
+            Kaynak: {dashboardSource === 'ui_config' ? 'UI Config' : 'Default'}
+          </div>
         </div>
         <button
           onClick={fetchSummary}
