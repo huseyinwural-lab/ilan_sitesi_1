@@ -1,6 +1,6 @@
 # ROADMAP
 
-**Son güncelleme:** 2026-02-26 (P61)
+**Son güncelleme:** 2026-02-26 (P62)
 
 Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tutulur.
 
@@ -62,10 +62,11 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
   - Backend foundation + P1 core implementasyonu hazır (config render, 3 katman header, dnd persist)
   - Kategori P0 kapanışı sonrası yeniden başlatıldı ve ilk iterasyon PASS aldı (`/app/test_reports/iteration_23.json`)
   - **Yeni:** P0 backend stabilization tamamlandı (`p61_ui_dashboard_cfg`, dashboard guardrails, test PASS `/app/test_reports/iteration_27.json`)
+  - **Yeni:** P1 frontend entegrasyon PASS (`/app/test_reports/iteration_28.json`) — corporate dashboard grid editor + individual header editor + diff/publish/rollback akışları canlı
 
 ### Sıradaki Faz — Dealer Dashboard P1 (Restart)
 - **ACTIVE** 🔴
-- P0 backend tamamlandığı için bir sonraki adım: Corporate Dashboard Grid DnD frontend editörü (API entegrasyonu)
+- P1 çekirdek entegrasyon tamamlandı: Corporate Dashboard Grid DnD + Individual Header DnD + diff/publish/rollback
 - Bu iterasyonda tamamlananlar:
   - Config-driven render finalizasyonu (header row1/row2/row3 + modules)
   - dnd-kit menü yönetimi kalıcı kaydetme
@@ -75,7 +76,8 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
   - Iterasyon 2: Undo paneli (persist öncesi), draft save/publish/rollback, revision listesi
   - Bulk 1000+ async job altyapısı (job queue + polling + idempotency + retry)
 - Sonraki iterasyon:
-  - Draft publish UI hardening (multi-admin conflict resolution / version check)
+  - Multi-admin conflict resolution / optimistic version check
+  - Widget şablon kütüphanesi (bu sprint dışı, V2 stabil sonrası UX hızlandırıcı)
   - Bulk job admin monitör ekranı (listeleme + retry butonu)
 
 ---
