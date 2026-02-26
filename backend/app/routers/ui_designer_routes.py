@@ -28,6 +28,52 @@ UI_SEGMENTS = {"corporate", "individual"}
 UI_SCOPES = {"system", "tenant", "user"}
 UI_CONFIG_TYPES = {"header", "nav", "dashboard"}
 UI_CONFIG_STATUSES = {"draft", "published"}
+UI_LOGO_MAX_BYTES = 2 * 1024 * 1024
+UI_LOGO_ALLOWED_EXTENSIONS = {"png", "svg", "webp"}
+UI_LOGO_RATIO_TARGET = 3.0
+UI_LOGO_RATIO_TOLERANCE = 0.1
+UI_LOGO_RETENTION_DAYS = 7
+UI_LOGO_URL_PREFIX = "/api/site/assets/"
+
+DEFAULT_CORPORATE_HEADER_CONFIG = {
+    "rows": [
+        {
+            "id": "row1",
+            "title": "Row 1",
+            "blocks": [
+                {"id": "logo", "type": "logo", "label": "Logo", "required": True},
+                {"id": "quick_actions", "type": "quick_actions", "label": "Hızlı Aksiyonlar"},
+                {"id": "language_switcher", "type": "language_switcher", "label": "Dil"},
+            ],
+        },
+        {
+            "id": "row2",
+            "title": "Row 2",
+            "blocks": [
+                {"id": "fixed_blocks", "type": "fixed_blocks", "label": "Sabit Bloklar"},
+                {"id": "modules", "type": "modules", "label": "Modüller"},
+            ],
+        },
+        {
+            "id": "row3",
+            "title": "Row 3",
+            "blocks": [
+                {"id": "store_filter", "type": "store_filter", "label": "Mağaza Filtresi"},
+                {"id": "user_menu", "type": "user_menu", "label": "Kullanıcı Menüsü"},
+            ],
+        },
+    ],
+    "logo": {
+        "url": None,
+        "alt": "Kurumsal Logo",
+        "fallback_text": "ANNONCIA",
+        "aspect_ratio": "3:1",
+    },
+}
+
+THEME_COLOR_KEYS = ["primary", "secondary", "accent", "text", "inverse"]
+THEME_SPACING_KEYS = ["xs", "sm", "md", "lg", "xl"]
+THEME_RADIUS_KEYS = ["sm", "md", "lg"]
 
 
 def _safe_uuid(value: Optional[str]) -> Optional[uuid.UUID]:
