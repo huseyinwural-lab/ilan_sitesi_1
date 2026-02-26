@@ -234,3 +234,11 @@
 - Migration: `/app/backend/migrations/versions/p57_category_ordering_stabilization.py`
 - Rapor: `/app/docs/CATEGORY_ORDER_MIGRATION_REPORT.md`
 - Test: `/app/test_reports/iteration_21.json` PASS (backend 19/19)
+
+## 2026-02-26 — CATEGORY P0 Resmi Kapanış
+
+- ROADMAP statüsü `CLOSED` olarak güncellendi + `CATEGORY_MODULE_STABLE` internal milestone eklendi.
+- Category freeze kararı işlendi (yalnızca bugfix).
+- Swagger/OpenAPI response örnekleri doğrulandı (`ORDER_INDEX_ALREADY_USED`, `VEHICLE_SEGMENT_NOT_FOUND`).
+- Kapanış regresyon raporu: `/app/test_reports/iteration_22.json` PASS.
+- Sonraki faz aktif edildi: Dealer Dashboard P1 restart kapsam başlıkları roadmap’e işlendi.
