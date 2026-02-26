@@ -251,6 +251,13 @@ async def bulk_reindex_search_projection(
             break
 
         docs = [build_listing_document(item) for item in rows]
+        if max_docs is not None:
+            remaining = max_docs - total_indexed
+            if remaining <= 0:
+                break
+            docs = docs[:remaining]
+            rows = rows[:remaining]
+
         await meili_upsert_documents(runtime, docs)
         total_indexed += len(docs)
         offset += len(rows)
