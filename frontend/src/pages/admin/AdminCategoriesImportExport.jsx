@@ -16,7 +16,6 @@ const TABS = [
 export default function AdminCategoriesImportExport() {
   const { selectedCountry } = useCountry();
   const [activeTab, setActiveTab] = useState('export');
-  const [format, setFormat] = useState('csv');
   const [file, setFile] = useState(null);
   const [dryRunResult, setDryRunResult] = useState(null);
   const [applyResult, setApplyResult] = useState(null);
@@ -27,14 +26,14 @@ export default function AdminCategoriesImportExport() {
 
   const token = useMemo(() => localStorage.getItem('access_token'), []);
 
-  const handleDownload = async (type) => {
+  const handleDownload = async () => {
     setError('');
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (moduleFilter) params.set('module', moduleFilter);
       if (countryFilter) params.set('country', countryFilter);
-      const res = await fetch(`${API}/admin/categories/import-export/export/${type}?${params.toString()}`, {
+      const res = await fetch(`${API}/admin/categories/import-export/export/csv?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
@@ -44,7 +43,7 @@ export default function AdminCategoriesImportExport() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = type === 'xlsx' ? 'categories-export.xlsx' : 'categories-export.csv';
+      link.download = 'categories-export.csv';
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -56,14 +55,14 @@ export default function AdminCategoriesImportExport() {
     }
   };
 
-  const handleSampleDownload = async (type) => {
+  const handleSampleDownload = async () => {
     setError('');
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (moduleFilter) params.set('module', moduleFilter);
       if (countryFilter) params.set('country', countryFilter);
-      const res = await fetch(`${API}/admin/categories/import-export/sample/${type}?${params.toString()}`, {
+      const res = await fetch(`${API}/admin/categories/import-export/sample/csv?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
@@ -73,7 +72,7 @@ export default function AdminCategoriesImportExport() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = type === 'xlsx' ? 'categories-sample.xlsx' : 'categories-sample.csv';
+      link.download = 'categories-sample.csv';
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -106,7 +105,7 @@ export default function AdminCategoriesImportExport() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch(`${API}/admin/categories/import-export/import/dry-run?format=${format}`, {
+      const res = await fetch(`${API}/admin/categories/import-export/import/dry-run?format=csv`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -137,7 +136,7 @@ export default function AdminCategoriesImportExport() {
       const formData = new FormData();
       formData.append('file', file);
       const res = await fetch(
-        `${API}/admin/categories/import-export/import/commit?format=${format}&dry_run_hash=${dryRunResult.dry_run_hash}`,
+        `${API}/admin/categories/import-export/import/commit?format=csv&dry_run_hash=${dryRunResult.dry_run_hash}`,
         {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
@@ -168,7 +167,7 @@ export default function AdminCategoriesImportExport() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900" data-testid="categories-import-export-title">Import / Export</h1>
           <p className="text-sm text-slate-700" data-testid="categories-import-export-subtitle">
-            Kategori master verisini CSV/XLSX formatlarıyla içe/dışa aktar.
+            Kategori master verisini yalnızca CSV formatı ile içe/dışa aktar.
           </p>
         </div>
       </div>
@@ -197,7 +196,7 @@ export default function AdminCategoriesImportExport() {
         <div className="space-y-4" data-testid="categories-import-export-export">
           <div className="rounded-lg border bg-white p-4">
             <h2 className="text-lg font-semibold mb-2" data-testid="categories-export-title">Kategori Export</h2>
-            <p className="text-sm text-slate-600" data-testid="categories-export-desc">Modül ve ülke filtresiyle CSV/XLSX dışa aktarım.</p>
+            <p className="text-sm text-slate-600" data-testid="categories-export-desc">Modül ve ülke filtresiyle CSV dışa aktarım.</p>
             <div className="grid gap-4 md:grid-cols-2 mt-4" data-testid="categories-export-filters">
               <div>
                 <label className="text-sm text-slate-600" htmlFor="export-module">Module</label>
@@ -230,20 +229,11 @@ export default function AdminCategoriesImportExport() {
               <button
                 type="button"
                 className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm"
-                onClick={() => handleDownload('csv')}
+                onClick={handleDownload}
                 disabled={loading}
                 data-testid="categories-export-csv"
               >
                 CSV Export
-              </button>
-              <button
-                type="button"
-                className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm"
-                onClick={() => handleDownload('xlsx')}
-                disabled={loading}
-                data-testid="categories-export-xlsx"
-              >
-                XLSX Export
               </button>
             </div>
           </div>
@@ -253,34 +243,19 @@ export default function AdminCategoriesImportExport() {
       {activeTab === 'import' && (
         <div className="space-y-4" data-testid="categories-import-export-import">
           <div className="rounded-lg border bg-white p-4 space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-sm text-slate-600" htmlFor="import-format">Format</label>
-                <select
-                  id="import-format"
-                  value={format}
-                  onChange={(event) => setFormat(event.target.value)}
-                  className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
-                  data-testid="categories-import-format"
-                >
-                  <option value="csv">CSV</option>
-                  <option value="xlsx">XLSX</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-slate-600" htmlFor="import-file">Dosya</label>
-                <input
-                  id="import-file"
-                  type="file"
-                  accept={format === 'xlsx' ? '.xlsx' : '.csv'}
-                  onChange={(event) => setFile(event.target.files?.[0] || null)}
-                  className="mt-1 block w-full text-sm"
-                  data-testid="categories-import-file"
-                />
-                <p className="text-xs text-slate-500 mt-1" data-testid="categories-import-limit">
-                  Maksimum dosya boyutu: {MAX_FILE_MB}MB
-                </p>
-              </div>
+            <div>
+              <label className="text-sm text-slate-600" htmlFor="import-file">Dosya (CSV)</label>
+              <input
+                id="import-file"
+                type="file"
+                accept=".csv"
+                onChange={(event) => setFile(event.target.files?.[0] || null)}
+                className="mt-1 block w-full text-sm"
+                data-testid="categories-import-file"
+              />
+              <p className="text-xs text-slate-500 mt-1" data-testid="categories-import-limit">
+                Maksimum dosya boyutu: {MAX_FILE_MB}MB
+              </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2" data-testid="categories-import-filters">
               <div>
@@ -315,20 +290,11 @@ export default function AdminCategoriesImportExport() {
               <button
                 type="button"
                 className="px-4 py-2 rounded-md border text-sm"
-                onClick={() => handleSampleDownload('csv')}
+                onClick={handleSampleDownload}
                 disabled={loading}
                 data-testid="categories-import-sample-csv"
               >
                 Örnek CSV indir
-              </button>
-              <button
-                type="button"
-                className="px-4 py-2 rounded-md border text-sm"
-                onClick={() => handleSampleDownload('xlsx')}
-                disabled={loading}
-                data-testid="categories-import-sample-xlsx"
-              >
-                Örnek XLSX indir
               </button>
               <span className="text-xs text-slate-500" data-testid="categories-import-sample-note">
                 schema_version: v1
