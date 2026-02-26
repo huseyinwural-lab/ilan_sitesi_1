@@ -121,10 +121,8 @@ async def test_and_prepare_meili_index(meili_url: str, master_key: str, index_na
                     "attribute",
                     "sort",
                     "exactness",
-                ],
-                "customRanking": [
-                    "desc(premium_score)",
-                    "desc(published_at)",
+                    "premium_score:desc",
+                    "published_at:desc",
                 ],
             }
             settings_resp = await client.patch(f"{index_path}/settings", headers=headers, json=settings_payload)
