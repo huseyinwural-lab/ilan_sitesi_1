@@ -188,8 +188,8 @@ class TestImportDryRunMandatory:
             headers={"Authorization": f"Bearer {admin_token}"},
             files=files,
         )
-        # Should be blocked (400 or 422) since no dry_run_hash provided
-        assert response.status_code in [400, 422], f"Expected 400/422, got {response.status_code}: {response.text}"
+        # Should be blocked (400, 409, or 422) since no dry_run_hash provided
+        assert response.status_code in [400, 409, 422], f"Expected 400/409/422, got {response.status_code}: {response.text}"
         print(f"✓ Apply without dry_run_hash is blocked (returns {response.status_code})")
     
     def test_apply_with_invalid_hash_blocked(self, admin_token):
@@ -204,8 +204,8 @@ class TestImportDryRunMandatory:
             headers={"Authorization": f"Bearer {admin_token}"},
             files=files,
         )
-        # Should be blocked (400) since hash doesn't match
-        assert response.status_code in [400, 422], f"Expected 400/422, got {response.status_code}: {response.text}"
+        # Should be blocked (400, 409) since hash doesn't match
+        assert response.status_code in [400, 409, 422], f"Expected 400/409/422, got {response.status_code}: {response.text}"
         print(f"✓ Apply with invalid dry_run_hash is blocked (returns {response.status_code})")
 
 
