@@ -662,3 +662,45 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 3. Attribute Manager
 4. Minimal Moderation
 5. Search final polish (facet UI + suggest/autocomplete)
+
+---
+
+## 2026-02-26 — ADMIN KAPANIŞ SON SPRINT PAKETİ (Tek Teslim)
+
+### Tamamlanan Modüller
+- **Watermark & Image Pipeline**
+  - Upload pipeline: private original + public web + thumbnail (WebP optimize)
+  - Watermark engine: gerçek brand logo overlay, position/opacity ayarlı, default ON
+  - Admin panel: toggle + position + opacity + preview + performans özeti
+  - Performans API: ortalama işleme süresi ve boyut düşüş oranı
+
+- **Transactions Log (Read-only)**
+  - Liste alanları: user_id, listing_id, provider_ref, amount, currency, status, created_at
+  - Filtreler: status, tarih aralığı, user/listing/query
+  - CSV export: seçili filtreye göre
+  - Immutable yaklaşım: UI’de edit/delete yok, export aksiyonu audit log’a yazılıyor
+
+- **Attribute Manager Stabilizasyonu**
+  - filterable toggle sonrası Meili filterable attributes sync
+  - required enforce: listing submit sırasında ATTRIBUTE_REQUIRED doğrulaması
+  - category mapping stabilizasyonu: update sırasında aktif mapping tutarlılığı
+
+- **Minimal Moderation Hardening**
+  - Reports panel: raporlanan ilanlar + raporlanan mesajlar sekmeleri
+  - Moderation actions: status note + listing soft delete + seller suspend aksiyonları
+  - RBAC/Audit: yetkili roller ve audit log kayıtları
+
+- **Search Final Polish**
+  - `/api/search/suggest?q=` endpoint eklendi
+  - Prefix + typo tolerant Meili arama + in-memory TTL cache
+  - Header suggest dropdown entegrasyonu
+
+### Test ve Kanıt
+- Self-test: backend endpointleri + frontend smoke PASS
+- Testing agent: `/app/test_reports/iteration_18.json`
+  - backend 18/19 → ardından minor bug fix tamamlandı (`/api/admin/payments?q` 500 düzeltildi)
+  - frontend PASS
+
+### Admin Kapanış Durumu
+- Admin sprint kapsamı (launch eşiği modülleri) tamamlandı.
+- Sonraki faz odağı: kullanıcı tarafı + SEO + dönüşüm optimizasyonu.
