@@ -20038,15 +20038,29 @@ async def public_search_v2(
     sort_fields = sort_map.get(sort, sort_map["date_desc"])
 
     facets_requested = list(dict.fromkeys(attribute_facet_fields + ["make_id", "model_id", "city_id"]))
-    result = await meili_search_documents(
-        runtime,
-        query=(q or "").strip(),
-        limit=limit,
-        offset=offset,
-        sort=sort_fields,
-        filter_query=filter_expr,
-        facets=facets_requested,
-    )
+    try:
+        result = await meili_search_documents(
+            runtime,
+            query=(q or "").strip(),
+            limit=limit,
+            offset=offset,
+            sort=sort_fields,
+            filter_query=filter_expr,
+            facets=facets_requested,
+        )
+    except Exception as exc:
+        if "meili_search_failed_400" in str(exc):
+            result = await meili_search_documents(
+                runtime,
+                query=(q or "").strip(),
+                limit=limit,
+                offset=offset,
+                sort=sort_fields,
+                filter_query=filter_expr,
+                facets=None,
+            )
+        else:
+            raise HTTPException(status_code=502, detail=f"MEILI_SEARCH_FAILED: {exc}") from exc
 
     raw_hits = result.get("hits", [])
     items = []
