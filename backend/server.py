@@ -19962,14 +19962,14 @@ async def public_search_v2(
                 "id": hit.get("listing_id"),
                 "title": hit.get("title") or "",
                 "price": hit.get("price") or 0,
-                "price_type": "FIXED",
-                "price_amount": hit.get("price") or 0,
-                "hourly_rate": None,
-                "currency": "EUR",
+                "price_type": hit.get("price_type") or "FIXED",
+                "price_amount": hit.get("price_amount") if hit.get("price_amount") is not None else hit.get("price") or 0,
+                "hourly_rate": hit.get("hourly_rate"),
+                "currency": hit.get("currency") or "EUR",
                 "secondary_price": None,
                 "secondary_currency": None,
-                "image": None,
-                "city": "",
+                "image": hit.get("image"),
+                "city": hit.get("city") or "",
             }
         )
 
