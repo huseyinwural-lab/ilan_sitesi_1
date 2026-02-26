@@ -94,14 +94,33 @@ export default function AdminDealerPortalConfig() {
     fetchAll();
   }, []);
 
+  const saveRequest = async (url, payload, fallbackMessage) => {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { ...authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(resolveErrorMessage(data, fallbackMessage));
+    }
+    setLastSavedAt(new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    return data;
+  };
+
   const persistNavOrder = async (location, orderedItems) => {
     setSaving(true);
     try {
-      await fetch(`${API}/admin/dealer-portal/nav/reorder`, {
-        method: 'POST',
-        headers: { ...authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ location, ordered_ids: orderedItems.map((row) => row.id) }),
-      });
+      await saveRequest(
+        `${API}/admin/dealer-portal/nav/reorder`,
+        { location, ordered_ids: orderedItems.map((row) => row.id) },
+        'Header/Sidebar sıralaması kaydedilemedi',
+      );
+      toast({ title: 'Sıralama kaydedildi', description: `${location} sırası güncellendi.` });
+      await fetchAll();
+    } catch (err) {
+      setError(err?.message || 'Sıralama kaydedilemedi');
+      toast({ title: 'Kaydetme başarısız', description: err?.message || 'Sıralama kaydedilemedi', variant: 'destructive' });
       await fetchAll();
     } finally {
       setSaving(false);
@@ -111,11 +130,16 @@ export default function AdminDealerPortalConfig() {
   const persistModuleOrder = async (orderedItems) => {
     setSaving(true);
     try {
-      await fetch(`${API}/admin/dealer-portal/modules/reorder`, {
-        method: 'POST',
-        headers: { ...authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ordered_ids: orderedItems.map((row) => row.id) }),
-      });
+      await saveRequest(
+        `${API}/admin/dealer-portal/modules/reorder`,
+        { ordered_ids: orderedItems.map((row) => row.id) },
+        'Modül sıralaması kaydedilemedi',
+      );
+      toast({ title: 'Sıralama kaydedildi', description: 'Modül sırası güncellendi.' });
+      await fetchAll();
+    } catch (err) {
+      setError(err?.message || 'Modül sıralaması kaydedilemedi');
+      toast({ title: 'Kaydetme başarısız', description: err?.message || 'Modül sıralaması kaydedilemedi', variant: 'destructive' });
       await fetchAll();
     } finally {
       setSaving(false);
