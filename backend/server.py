@@ -17205,30 +17205,30 @@ async def admin_watermark_preview(
             query = query.where(Listing.country == country_code)
         listing = (await session.execute(query)).scalar_one_or_none()
 
-    if not listing or not listing.images:
-        raise HTTPException(status_code=404, detail="Preview image not found")
-
-    media_meta = _listing_media_meta(listing)
-    if not media_meta:
-        raise HTTPException(status_code=404, detail="Preview image not found")
-    cover = next((m for m in media_meta if m.get("is_cover")), media_meta[0])
-    file_name = cover.get("file")
-    if not file_name:
-        raise HTTPException(status_code=404, detail="Preview image not found")
-
-    try:
-        source_path = resolve_public_media_path(str(listing.id), file_name)
-    except FileNotFoundError as exc:
-        raise HTTPException(status_code=404, detail="Preview image not found") from exc
-
     header_config = await _get_active_header_config(session, create_from_legacy=True)
     logo_file = _resolve_site_logo_file_path(header_config.logo_path if header_config else None)
 
-    with Image.open(source_path) as source_image:
-        preview = _apply_preview_watermark(source_image, logo_path=logo_file, config=config)
-        buffer = io.BytesIO()
-        preview.save(buffer, format="WEBP", quality=82, method=6)
-        payload = buffer.getvalue()
+    preview_image: Optional[Image.Image] = None
+    if listing and listing.images:
+        media_meta = _listing_media_meta(listing)
+        if media_meta:
+            cover = next((m for m in media_meta if m.get("is_cover")), media_meta[0])
+            file_name = cover.get("file")
+            if file_name:
+                try:
+                    source_path = resolve_public_media_path(str(listing.id), file_name)
+                    with Image.open(source_path) as source_image:
+                        preview_image = _apply_preview_watermark(source_image, logo_path=logo_file, config=config)
+                except FileNotFoundError:
+                    preview_image = None
+
+    if preview_image is None:
+        synthetic = Image.new("RGB", (1280, 720), color=(233, 238, 245))
+        preview_image = _apply_preview_watermark(synthetic, logo_path=logo_file, config=config)
+
+    buffer = io.BytesIO()
+    preview_image.save(buffer, format="WEBP", quality=82, method=6)
+    payload = buffer.getvalue()
 
     return Response(content=payload, media_type="image/webp")
 
