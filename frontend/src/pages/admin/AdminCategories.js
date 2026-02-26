@@ -1759,8 +1759,9 @@ const AdminCategories = () => {
             slug,
             country_code: country,
             module: moduleValue,
+            vehicle_segment: isVehicleModule ? vehicleSegment : undefined,
             active_flag: form.active_flag,
-            sort_order: Number(form.sort_order || 0),
+            sort_order: rootSortOrder,
             hierarchy_complete: true,
             wizard_progress: { state: progressState, dirty_steps: dirtyStepsOverride },
             wizard_edit_event: wizardEditEvent || undefined,
@@ -1779,9 +1780,10 @@ const AdminCategories = () => {
           slug,
           country_code: country,
           module: moduleValue,
+          vehicle_segment: isVehicleModule ? vehicleSegment : undefined,
           active_flag: form.active_flag,
-          sort_order: Number(form.sort_order || 0),
-          hierarchy_complete: false,
+          sort_order: rootSortOrder,
+          hierarchy_complete: isVehicleModule,
           wizard_progress: { state: progressState, dirty_steps: dirtyStepsOverride },
         };
         const parentRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
@@ -1800,9 +1802,9 @@ const AdminCategories = () => {
         updatedParent = parentData.category;
       }
 
-      const savedSubs = await persistSubcategories(cleanedSubs, updatedParent.id);
+      const savedSubs = isVehicleModule ? [] : await persistSubcategories(cleanedSubs, updatedParent.id);
 
-      if (!editing && updatedParent?.id) {
+      if (!editing && updatedParent?.id && !isVehicleModule) {
         const patchRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${updatedParent.id}`, {
           method: "PATCH",
           headers: {
