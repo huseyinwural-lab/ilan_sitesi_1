@@ -10955,6 +10955,7 @@ class AttributeCreatePayload(BaseModel):
 
 
 class AttributeUpdatePayload(BaseModel):
+    category_id: Optional[str] = None
     name: Optional[str] = None
     key: Optional[str] = None
     type: Optional[str] = None
@@ -10970,6 +10971,25 @@ class VehicleMakeCreatePayload(BaseModel):
     slug: str
     country_code: str
     active_flag: Optional[bool] = True
+
+
+class WatermarkPipelineUpdatePayload(BaseModel):
+    enabled: Optional[bool] = None
+    position: Optional[str] = None
+    opacity: Optional[float] = None
+    web_max_width: Optional[int] = None
+    thumb_max_width: Optional[int] = None
+
+
+class MessageReportCreatePayload(BaseModel):
+    message_id: str
+    reason: str
+    reason_note: Optional[str] = None
+
+
+class MessageReportStatusPayload(BaseModel):
+    target_status: str
+    note: str
 
 
 class VehicleMakeUpdatePayload(BaseModel):
