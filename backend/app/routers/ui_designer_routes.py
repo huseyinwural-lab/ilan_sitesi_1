@@ -1055,6 +1055,7 @@ async def admin_create_ui_theme(
     current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
     session: AsyncSession = Depends(get_db),
 ):
+    _validate_theme_tokens(payload.tokens or {})
     if payload.is_active:
         await session.execute(update(UITheme).values(is_active=False, updated_at=datetime.now(timezone.utc)))
 
@@ -1111,6 +1112,7 @@ async def admin_update_ui_theme(
     if "name" in payload_data:
         row.name = payload_data["name"].strip()
     if "tokens" in payload_data and payload_data["tokens"] is not None:
+        _validate_theme_tokens(payload_data["tokens"])
         row.tokens = payload_data["tokens"]
     if payload_data.get("is_active") is True:
         await session.execute(update(UITheme).where(UITheme.id != row.id).values(is_active=False, updated_at=datetime.now(timezone.utc)))
