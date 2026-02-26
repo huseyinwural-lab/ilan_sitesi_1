@@ -21250,6 +21250,12 @@ async def create_vehicle_draft(
     session.add(listing)
     await session.commit()
     await session.refresh(listing)
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger="listing_create",
+    )
 
     return {"id": str(listing.id), "status": listing.status, "validation_errors": [], "next_actions": ["upload_media", "submit"]}
 
@@ -21270,6 +21276,12 @@ async def save_vehicle_draft(
     await _validate_listing_vehicle_foreign_keys(session, listing)
     listing.updated_at = datetime.now(timezone.utc)
     await session.commit()
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger="listing_update_draft",
+    )
 
     return {"id": listing_id, "status": listing.status, "updated_at": listing.updated_at.isoformat() if listing.updated_at else None}
 
@@ -21313,6 +21325,12 @@ async def request_publish_vehicle_listing(
         audit_ref=None,
     )
     await session.commit()
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger="listing_request_publish",
+    )
     return {"ok": True, "status": listing.status}
 
 
@@ -21329,6 +21347,12 @@ async def unpublish_vehicle_listing(
     listing.status = "unpublished"
     listing.updated_at = datetime.now(timezone.utc)
     await session.commit()
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger="listing_unpublish",
+    )
     return {"ok": True, "status": listing.status}
 
 
@@ -21342,6 +21366,12 @@ async def archive_vehicle_listing(
     listing.status = "archived"
     listing.updated_at = datetime.now(timezone.utc)
     await session.commit()
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger="listing_archive",
+    )
     return {"ok": True, "status": listing.status}
 
 
@@ -21565,6 +21595,12 @@ async def submit_vehicle_listing(
         audit_ref=None,
     )
     await session.commit()
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger="listing_submit",
+    )
 
     return {
         "id": listing_id,
