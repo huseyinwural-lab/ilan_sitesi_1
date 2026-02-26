@@ -18,6 +18,7 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
   - `/app/test_reports/iteration_20.json`
   - `/app/docs/CATEGORY_ORDER_MIGRATION_REPORT.md`
 - Not: Kullanıcı kararı gereği Dealer Dashboard’a dönmeden önce Category hardening/test turu tamamlandı.
+- Revize stabilizasyon: `ORDER_INDEX_ALREADY_USED` / `VEHICLE_SEGMENT_NOT_FOUND` error contractları + canlı sıra önizleme endpointi + vehicle segment country-unique kuralı.
 
 ### P0 — ListingWizard + VehicleSelector Stabilizasyonu
 - **CLOSED** ✅
