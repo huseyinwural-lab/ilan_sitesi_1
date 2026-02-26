@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, Heart, Mail, Search, User, ChevronDown, Menu } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUIHeaderConfig } from '@/hooks/useUIHeaderConfig';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -16,6 +17,7 @@ export default function SiteHeader({ mode, refreshToken }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [suggestLoading, setSuggestLoading] = useState(false);
+  const { logoUrl: individualUiLogoUrl } = useUIHeaderConfig({ segment: 'individual' });
 
   const isAuthenticated = mode ? mode === 'auth' : Boolean(user);
   const displayName = useMemo(() => {
@@ -27,6 +29,13 @@ export default function SiteHeader({ mode, refreshToken }) {
 
   useEffect(() => {
     let active = true;
+    if (individualUiLogoUrl) {
+      setLogoUrl(individualUiLogoUrl);
+      return () => {
+        active = false;
+      };
+    }
+
     const loadHeader = () => {
       fetch(`${API}/site/header`)
         .then((res) => res.json())
@@ -45,7 +54,7 @@ export default function SiteHeader({ mode, refreshToken }) {
       active = false;
       clearInterval(interval);
     };
-  }, [refreshToken]);
+  }, [refreshToken, individualUiLogoUrl]);
 
   const handleSearch = (evt) => {
     evt.preventDefault();
