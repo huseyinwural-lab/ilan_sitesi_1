@@ -512,10 +512,10 @@ class TestCategoryBulkOperations:
 class TestRegressionWizardFlows:
     """Regression: wizard flows should not be broken"""
 
-    def test_ilan_ver_route_auth_gate(self):
-        """GET /ilan-ver should redirect to login when not authenticated"""
-        # This is frontend behavior, we test the API auth works
-        res = requests.get(f"{BASE_URL}/api/me")  # Without token
+    def test_protected_api_requires_auth(self):
+        """Protected API endpoints require authentication"""
+        # Test dealer endpoint without token - should return 401/403
+        res = requests.get(f"{BASE_URL}/api/dealer/portal/config")  # Without token
         assert res.status_code in [401, 403], f"Expected 401/403, got {res.status_code}"
         print("Auth gate working for protected routes")
 
