@@ -1,0 +1,92 @@
+{
+  "summary": "ADMIN KAPANIŞ SPRINTİ (FINAL) - Yakında Temizliği tests complete. All 12 backend tests PASS. Frontend verification confirms Menu Management not in sidebar, Category Import/Export shows only CSV buttons.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "AdminCategoriesImportExport",
+        "issues": ["Minor React hydration warning in console about <span> inside <select>/<option> - does not affect functionality"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_yakinda_temizligi.py",
+    "/app/test_reports/pytest/yakinda_temizligi_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ADMIN_MENU_MANAGEMENT_ENABLED env var not set, defaults to false - correctly disables menu-items API",
+    "CATEGORY_IMPORT_EXPORT_XLSX_ENABLED env var not set, defaults to false - correctly disables XLSX endpoints",
+    "Menu Management endpoints (GET/POST/PATCH/DELETE /api/admin/menu-items) return 403 with detail=feature_disabled",
+    "XLSX export/sample endpoints return 403 with detail=feature_disabled",
+    "Import dry-run with format=xlsx returns 403 with detail=feature_disabled",
+    "CSV export endpoint returns 200 with proper CSV content",
+    "CSV sample endpoint returns 200 with sample CSV",
+    "Import dry-run with format=csv works and returns dry_run_hash/summary/errors/creates/updates",
+    "Import commit/apply without dry_run_hash returns 409 with Dry-run doğrulaması gerekli",
+    "Import commit/apply with invalid dry_run_hash returns 409",
+    "Frontend AdminCategoriesImportExport.jsx correctly shows only CSV buttons",
+    "Frontend sidebar (Layout.js) has no Menu Management nav item",
+    "Frontend BackofficePortalApp.jsx has no /menu-management route - redirects to /admin",
+    "All required data-testid attributes present in AdminCategoriesImportExport"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_yakinda_temizligi.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Yakında Temizliği feature fully verified. Menu Management API disabled via ADMIN_MENU_MANAGEMENT_ENABLED=false. XLSX import/export disabled via CATEGORY_IMPORT_EXPORT_XLSX_ENABLED=false. Both features return 403 + feature_disabled when accessed.",
+  "yakinda_temizligi_verification": {
+    "menu_management_api_disabled": {
+      "GET /api/admin/menu-items": "403 + feature_disabled ✓",
+      "POST /api/admin/menu-items": "403 + feature_disabled ✓",
+      "PATCH /api/admin/menu-items/{id}": "403 + feature_disabled ✓",
+      "DELETE /api/admin/menu-items/{id}": "403 + feature_disabled ✓"
+    },
+    "category_import_export_csv_only": {
+      "GET /api/admin/categories/import-export/export/csv": "200 ✓",
+      "GET /api/admin/categories/import-export/sample/csv": "200 ✓",
+      "GET /api/admin/categories/import-export/export/xlsx": "403 + feature_disabled ✓",
+      "GET /api/admin/categories/import-export/sample/xlsx": "403 + feature_disabled ✓",
+      "POST dry-run format=csv": "200 (works) ✓",
+      "POST dry-run format=xlsx": "403 + feature_disabled ✓"
+    },
+    "import_dryrun_mandatory": {
+      "apply_without_hash": "409 - Dry-run doğrulaması gerekli ✓",
+      "apply_with_invalid_hash": "409 - Dry-run doğrulaması gerekli ✓"
+    },
+    "frontend_ui": {
+      "menu_management_sidebar_item": "NOT present ✓",
+      "menu_management_route": "redirects to /admin ✓",
+      "csv_export_button": "present ✓",
+      "xlsx_export_button": "NOT present ✓",
+      "csv_sample_button": "present ✓",
+      "xlsx_sample_button": "NOT present ✓",
+      "dryrun_button": "present ✓",
+      "apply_button": "present + disabled hint shown ✓"
+    },
+    "data_testid_verification": {
+      "admin-categories-import-export-page": "present ✓",
+      "categories-import-export-title": "present ✓",
+      "categories-import-export-tabs": "present ✓",
+      "categories-export-csv": "present ✓",
+      "categories-import-sample-csv": "present ✓",
+      "categories-import-dryrun": "present ✓",
+      "categories-import-apply": "present ✓",
+      "categories-import-file": "present ✓"
+    }
+  }
+}
