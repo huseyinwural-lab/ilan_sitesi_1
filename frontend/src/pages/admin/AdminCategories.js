@@ -116,15 +116,6 @@ const CATEGORY_MODULE_OPTIONS = [
   { value: "other", label: "Diğer" },
 ];
 
-const VEHICLE_SEGMENT_OPTIONS = [
-  { value: "car", label: "Otomobil" },
-  { value: "suv", label: "SUV" },
-  { value: "offroad", label: "Arazi" },
-  { value: "pickup", label: "Pickup" },
-  { value: "truck", label: "Kamyon" },
-  { value: "bus", label: "Otobüs" },
-];
-
 const TRANSACTION_TYPE_OPTIONS = [
   { value: "satilik", label: "Satılık" },
   { value: "kiralik", label: "Kiralık" },
