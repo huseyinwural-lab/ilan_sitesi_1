@@ -23,6 +23,15 @@ UI_CONFIG_TYPES = {"header", "nav", "dashboard"}
 UI_CONFIG_STATUSES = {"draft", "published"}
 
 
+def _safe_uuid(value: Optional[str]) -> Optional[uuid.UUID]:
+    if not value:
+        return None
+    try:
+        return uuid.UUID(str(value))
+    except (ValueError, TypeError):
+        return None
+
+
 class UIConfigSavePayload(BaseModel):
     segment: str = Field(default="individual")
     scope: str = Field(default="system")
@@ -329,7 +338,7 @@ async def admin_save_ui_config(
         status=normalized_status,
         version=next_version,
         config_data=payload.config_data or {},
-        created_by=uuid.UUID(str(current_user.get("id"))) if current_user.get("id") else None,
+        created_by=_safe_uuid(current_user.get("id")),
         created_by_email=current_user.get("email"),
         published_at=now_dt if normalized_status == "published" else None,
     )
@@ -430,7 +439,7 @@ async def admin_create_ui_theme(
         name=payload.name.strip(),
         tokens=payload.tokens or {},
         is_active=bool(payload.is_active),
-        created_by=uuid.UUID(str(current_user.get("id"))) if current_user.get("id") else None,
+        created_by=_safe_uuid(current_user.get("id")),
         created_by_email=current_user.get("email"),
     )
     session.add(row)
@@ -561,7 +570,7 @@ async def admin_assign_ui_theme(
 
     if existing:
         existing.theme_id = theme.id
-        existing.assigned_by = uuid.UUID(str(current_user.get("id"))) if current_user.get("id") else None
+        existing.assigned_by = _safe_uuid(current_user.get("id"))
         existing.assigned_by_email = current_user.get("email")
         existing.updated_at = datetime.now(timezone.utc)
         row = existing
@@ -570,7 +579,7 @@ async def admin_assign_ui_theme(
             theme_id=theme.id,
             scope=normalized_scope,
             scope_id=normalized_scope_id,
-            assigned_by=uuid.UUID(str(current_user.get("id"))) if current_user.get("id") else None,
+            assigned_by=_safe_uuid(current_user.get("id")),
             assigned_by_email=current_user.get("email"),
         )
         session.add(row)
