@@ -269,9 +269,11 @@ class SearchSyncTester:
             if response.status_code == 200:
                 data = response.json()
                 return len(data.get("items", []))
-            return 0
+            else:
+                self.log(f"❌ Failed to get sync jobs: {response.status_code}", "DEBUG")
+                return None
         except:
-            return 0
+            return None
 
     def test_error_handling(self):
         """Test 3: Error handling - no active meili config"""
