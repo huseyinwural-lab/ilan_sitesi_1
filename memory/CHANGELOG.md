@@ -213,3 +213,14 @@
 - Admin Freeze: yeni admin feature yok, sadece bugfix/güvenlik patch
 - Kapanış kanıt paketi: `/app/docs/ADMIN_CLOSURE_EVIDENCE_PACKAGE_2026-02-26.md`
 - Public Phase strateji planı: `/app/memory/PUBLIC_PHASE_STRATEGIC_PLAN.md`
+
+## 2026-02-26 — Dealer Dashboard + Manuel Kontrol Sistemi v1
+
+- Bilgi mimarisi/route haritası tamamlandı (`/dealer/overview` ... `/dealer/settings`)
+- Config modelleri eklendi: `dealer_nav_items`, `dealer_modules`
+- Admin Kurumsal Menü Yönetimi: dnd-kit reorder + visible toggle + preview + audit
+- Dealer layout config-driven render (header + sidebar)
+- Dashboard tek summary endpoint + TTL cache + error contract
+- Dealer KPI event tracking: `dealer_nav_click`, `dealer_widget_click`, `dealer_listing_create_start`, `dealer_contact_click`
+- Final test: `/app/test_reports/iteration_19.json` PASS
+- Evidence: `/app/docs/DEALER_DASHBOARD_V1_EVIDENCE.md`
