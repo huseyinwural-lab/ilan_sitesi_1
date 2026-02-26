@@ -19037,7 +19037,7 @@ CATEGORY_IMPORT_COLUMNS = [
     "wizard_progress",
 ]
 
-SUPPORTED_CATEGORY_MODULES = {"vehicle", "real_estate", "machinery", "services", "jobs"}
+SUPPORTED_CATEGORY_MODULES = {"vehicle", "real_estate", "other"}
 
 CATEGORY_MODULE_ALIASES = {
     "emlak": "real_estate",
