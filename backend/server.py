@@ -18476,6 +18476,9 @@ async def _resolve_bulk_category_targets(
     rows = (await session.execute(query)).scalars().all()
     if len(rows) > 1000:
         raise HTTPException(status_code=400, detail="Bulk işlem için en fazla 1000 kayıt seçilebilir")
+    for row in rows:
+        if row.country_code:
+            _assert_country_scope(str(row.country_code).upper(), current_user)
     return rows
 
 
