@@ -1549,6 +1549,10 @@ const AdminCategories = () => {
       setHierarchyError(`${label} için alt tip seçimi zorunludur.`);
       return;
     }
+    if (!Number.isFinite(Number(target.sort_order)) || Number(target.sort_order) <= 0) {
+      setHierarchyError(`${label} için sıra 1 veya daha büyük olmalıdır.`);
+      return;
+    }
     const incompleteChild = (target.children || []).find((child) => !child.is_complete);
     if (incompleteChild) {
       setHierarchyError(`${label} içindeki alt kategoriler tamamlanmadan devam edilemez.`);
