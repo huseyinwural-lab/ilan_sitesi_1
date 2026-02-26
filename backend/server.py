@@ -10723,6 +10723,12 @@ class CloudflareConfigPayload(BaseModel):
     zone_id: Optional[str] = None
 
 
+class MeiliSearchConfigCreatePayload(BaseModel):
+    meili_url: str
+    meili_index_name: Optional[str] = "listings_index"
+    meili_master_key: str
+
+
 class CategoryCreatePayload(BaseModel):
     name: str
     slug: str
