@@ -442,6 +442,10 @@ const AdminCategories = () => {
 
   const applyCategoryFromServer = (category, options = {}) => {
     if (!category) return;
+    const serverVehicleSegment = category.vehicle_segment || category.form_schema?.category_meta?.vehicle_segment || "";
+    const serverVehicleLinked = Boolean(
+      category.vehicle_master_linked ?? category.form_schema?.category_meta?.master_data_linked
+    );
     const nextForm = {
       name: category.name || form.name,
       slug: category.slug || form.slug,
@@ -462,6 +466,14 @@ const AdminCategories = () => {
     setWizardProgress(nextWizardProgress);
     setHierarchyComplete(Boolean(category.hierarchy_complete));
     setLastSavedAt(formatTime(category.updated_at || new Date()));
+    setVehicleSegment(serverVehicleSegment);
+    setVehicleLinkStatus((prev) => ({
+      ...prev,
+      linked: serverVehicleLinked,
+      message: serverVehicleSegment
+        ? (serverVehicleLinked ? "Master data bağlantısı hazır." : "Master data bağlantısı doğrulanmadı.")
+        : "",
+    }));
     persistSnapshot({
       form: nextForm,
       schema: nextSchema,
