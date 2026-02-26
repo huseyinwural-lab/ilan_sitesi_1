@@ -2668,7 +2668,7 @@ const AdminCategories = () => {
                               setVehicleSegmentError("");
                             }}
                             placeholder="Örn: Otomobil"
-                            data-testid="categories-vehicle-segment-input"
+                            data-testid="categories-vehicle-segment-select"
                           />
                           {vehicleSegmentError && (
                             <div className="text-xs text-rose-600" data-testid="categories-vehicle-segment-error">
