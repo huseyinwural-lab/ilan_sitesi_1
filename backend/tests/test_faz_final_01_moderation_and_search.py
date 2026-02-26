@@ -8,7 +8,7 @@ class TestFAZFinal01:
     """Test suite for FAZ-FINAL-01 P0 release blockers"""
     
     def __init__(self):
-        self.base_url = "https://admin-final-sprint.preview.emergentagent.com"
+        self.base_url = "https://category-wizard-1.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.token = None
         self.admin_user = None

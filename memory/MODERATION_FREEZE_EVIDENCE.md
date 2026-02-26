@@ -1,6 +1,6 @@
 # Moderation Freeze Evidence
 
-**Environment:** https://admin-final-sprint.preview.emergentagent.com
+**Environment:** https://category-wizard-1.preview.emergentagent.com
 **Listing (pending created via consumer publish flow):** d91de127-7397-4c6d-b1ed-e7556713591c
 
 ## UI Evidence (Screenshots)

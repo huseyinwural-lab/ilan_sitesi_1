@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Any
 
-BASE_URL = "https://admin-final-sprint.preview.emergentagent.com/api"
+BASE_URL = "https://category-wizard-1.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {"email": "admin@platform.com", "password": "Admin123!"}

@@ -19,7 +19,7 @@ import uuid
 from datetime import datetime, timezone
 
 class DealerApplicationsComprehensiveTester:
-    def __init__(self, base_url="https://admin-final-sprint.preview.emergentagent.com"):
+    def __init__(self, base_url="https://category-wizard-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.admin_token = None
