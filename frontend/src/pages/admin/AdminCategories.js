@@ -2051,6 +2051,7 @@ const AdminCategories = () => {
               const errorKey = `level-${path.join("-")}`;
               const nameError = hierarchyFieldErrors[`${errorKey}-name`];
               const slugError = hierarchyFieldErrors[`${errorKey}-slug`];
+              const sortError = hierarchyFieldErrors[`${errorKey}-sort`];
               const transactionError = hierarchyFieldErrors[`${errorKey}-transaction`];
               const itemInputsDisabled = item.is_complete || isHierarchyLocked;
               return (
@@ -2112,17 +2113,19 @@ const AdminCategories = () => {
                     )}
                     <input
                       type="number"
-                      min={0}
+                      min={1}
                       className={inputClassName}
                       placeholder="Sıra"
                       value={item.sort_order || ''}
-                      disabled
-                      readOnly
+                      disabled={itemInputsDisabled}
+                      onChange={(e) => updateLevelItem(levelIndex, itemIndex, { sort_order: e.target.value })}
                       data-testid={`categories-level-item-sort-${levelIndex}-${itemIndex}`}
                     />
-                    <span className="text-[11px] rounded-full bg-slate-100 px-2 py-1 text-slate-600" data-testid={`categories-level-item-sort-auto-${levelIndex}-${itemIndex}`}>
-                      Otomatik
-                    </span>
+                    {sortError && (
+                      <div className="text-[11px] text-rose-600" data-testid={`categories-level-item-sort-error-${levelIndex}-${itemIndex}`}>
+                        {sortError}
+                      </div>
+                    )}
                     {levelIndex >= 3 && (
                       <div className="space-y-1" data-testid={`categories-level-item-transaction-${levelIndex}-${itemIndex}`}>
                         <select
