@@ -3733,6 +3733,33 @@ async def admin_system_health_detail(
 
     if canary_status and isinstance(cdn_metrics, dict) and not cdn_metrics.get("canary_status"):
         cdn_metrics["canary_status"] = canary_status
+
+    meili_status = {
+        "configured": False,
+        "connected": False,
+        "status": "not_configured",
+        "index_name": None,
+        "url": None,
+        "reason_code": None,
+    }
+    try:
+        async with AsyncSessionLocal() as session:
+            runtime = await get_active_meili_runtime(session)
+        meili_status["configured"] = True
+        meili_status["index_name"] = runtime.get("index_name")
+        meili_status["url"] = runtime.get("url")
+        meili_health = await test_and_prepare_meili_index(
+            meili_url=runtime.get("url"),
+            master_key=runtime.get("master_key"),
+            index_name=runtime.get("index_name"),
+        )
+        meili_status["connected"] = bool(meili_health.get("ok"))
+        meili_status["status"] = "connected" if meili_status["connected"] else "error"
+        meili_status["reason_code"] = meili_health.get("reason_code")
+    except Exception as exc:
+        meili_status["status"] = "error"
+        meili_status["reason_code"] = str(exc)
+
     payload = {
         "db_status": db_status,
         "last_check_at": last_check_at.isoformat(),
@@ -3759,6 +3786,7 @@ async def admin_system_health_detail(
         "cf_metrics_enabled": cf_metrics_enabled,
         "config_missing_reason": config_missing_reason,
         "canary_status": canary_status,
+        "meili": meili_status,
     }
     storage_flag_key = "".join(["mo", "ngo_disabled"])
     payload[storage_flag_key] = True
