@@ -18534,7 +18534,7 @@ def _build_admin_category_query(
     if module_value:
         query = query.where(Category.module == module_value)
     if active_flag is not None:
-        query = query.where(Category.active_flag == bool(active_flag))
+        query = query.where(Category.is_enabled == bool(active_flag))
     return query
 
 
@@ -18706,7 +18706,6 @@ async def admin_categories_bulk_actions(
                 continue
             row.is_deleted = True
             row.is_enabled = False
-            row.active_flag = False
             row.updated_at = now_iso
             changed_count += 1
             changed_ids.append(str(row.id))
@@ -18716,10 +18715,9 @@ async def admin_categories_bulk_actions(
         if row.is_deleted:
             unchanged_count += 1
             continue
-        if bool(row.active_flag) == target_visible and bool(row.is_enabled) == target_visible:
+        if bool(row.is_enabled) == target_visible:
             unchanged_count += 1
             continue
-        row.active_flag = target_visible
         row.is_enabled = target_visible
         row.updated_at = now_iso
         changed_count += 1
