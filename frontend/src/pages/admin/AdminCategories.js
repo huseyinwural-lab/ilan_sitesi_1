@@ -1702,6 +1702,9 @@ const AdminCategories = () => {
     if (!Number.isFinite(rootSortOrder) || rootSortOrder <= 0) {
       fieldErrors.main_sort_order = "Sıra 1 veya daha büyük olmalıdır.";
     }
+    if (!orderPreview.available) {
+      fieldErrors.main_sort_order = orderPreview.message || "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.";
+    }
 
     if (Object.keys(fieldErrors).length > 0) {
       setHierarchyFieldErrors(fieldErrors);
@@ -1710,11 +1713,13 @@ const AdminCategories = () => {
     }
 
     if (isVehicleModule && !vehicleSegment) {
+      setVehicleSegmentError("Vasıta modülü için segment adı zorunludur.");
       setHierarchyError("Vasıta modülü için segment seçimi zorunludur.");
       return { success: false };
     }
 
     if (isVehicleModule && !vehicleLinkStatus.linked) {
+      setVehicleSegmentError(vehicleLinkStatus.message || "Girilen segment master data’da bulunamadı.");
       setHierarchyError(vehicleLinkStatus.message || "Seçilen segment master data ile bağlı değil.");
       return { success: false };
     }
