@@ -1,8 +1,12 @@
 """
 P61 Dashboard backend tests
-- ui_configs.layout/widgets persistence
-- Dashboard guardrails: min 1 KPI, max 12 widget
-- Draft -> publish -> effective resolve
+- Alembic migration: ui_configs table layout/widgets columns verification
+- POST /api/admin/ui/configs/dashboard valid payload with draft creation
+- Guardrail-1: KPI-less dashboard save request returns 400
+- Guardrail-2: >12 widgets dashboard save request returns 400
+- POST /api/admin/ui/configs/dashboard/publish/{config_id} publish flow
+- GET /api/ui/dashboard effective config resolution from tenant scope (layout/widgets)
+- Additional edge cases: widget_id uniqueness, layout-widget mapping
 """
 import os
 import uuid
@@ -34,6 +38,7 @@ def admin_token() -> str:
 
 
 def _build_widgets(count: int, include_kpi: bool) -> list[dict]:
+    """Build widgets list with or without KPI widget"""
     widgets = []
     for idx in range(count):
         widget_id = f"w-{idx + 1}"
@@ -50,6 +55,7 @@ def _build_widgets(count: int, include_kpi: bool) -> list[dict]:
 
 
 def _build_layout(widget_ids: list[str]) -> list[dict]:
+    """Build layout entries for given widget IDs"""
     layout = []
     for idx, widget_id in enumerate(widget_ids):
         layout.append(
