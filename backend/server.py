@@ -19579,8 +19579,6 @@ async def _category_bulk_job_worker_loop() -> None:
         except Exception:
             logging.getLogger("category_bulk_job_worker").exception("category_bulk_job_worker_loop_failed")
             await asyncio.sleep(CATEGORY_BULK_JOB_WORKER_INTERVAL_SECONDS)
-            _assert_country_scope(str(row.country_code).upper(), current_user)
-    return rows
 
 
 @api_router.get(
