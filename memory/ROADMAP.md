@@ -46,6 +46,12 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 - Conversion funnel event tracking (suggest_open, search_submit, result_click, detail_view, contact_click)
 - P1 hardening paralel: Suggest cache Redis planı, nightly DB↔Meili drift cron, admin health widget (index status)
 
+### Public/Commercial Phase Durumu
+- Dealer Dashboard + Manuel Kontrol Sistemi v1 — **DONE** ✅
+  - Config-driven dealer nav/module registry
+  - Admin dealer menu control (dnd-kit + visibility + preview + audit)
+  - Dealer summary API + KPI widget click-through + analytics events
+
 ---
 
 ## P2 Backlog
