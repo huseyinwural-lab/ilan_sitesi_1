@@ -15,6 +15,7 @@ import AdminVehicleMasterImport from '@/pages/admin/AdminVehicleMasterImport';
 
 import AuditLogs from '@/pages/AuditLogs';
 import ModerationQueue from '@/pages/ModerationQueue';
+import AdminReportsPage from '@/pages/admin/AdminReports';
 import DealersPage from '@/pages/admin/Dealers';
 import DealerApplicationsPage from '@/pages/admin/DealerApplications';
 import AdminListingsPage from '@/pages/admin/AdminListings';
@@ -74,6 +75,7 @@ export default function BackofficePortalApp() {
         </AdminLayout>
       } />
       <Route path="/moderation" element={<AdminLayout><ModerationQueue /></AdminLayout>} />
+      <Route path="/reports" element={<AdminLayout><AdminReportsPage /></AdminLayout>} />
       <Route path="/individual-listing-applications" element={<AdminLayout><IndividualListingApplicationsPage /></AdminLayout>} />
       <Route path="/corporate-listing-applications" element={<AdminLayout><CorporateListingApplicationsPage /></AdminLayout>} />
       <Route path="/ads" element={<AdminLayout><AdminAdsManagement /></AdminLayout>} />
