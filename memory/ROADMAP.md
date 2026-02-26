@@ -26,10 +26,13 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 - URL/query state standardizasyonu + breadcrumb senkronu
 
 ### Admin Final Kilit (4 Modül)
+- Yakında Temizliği — **DONE** ✅ (CSV-only import/export + Menu Management disabled)
+- Dashboard Stabilizasyonu — **DONE** ✅ (tek summary endpoint + KPI click-through)
 - Watermark & Image Processing — BACKLOG
 - Transactions Log — BACKLOG
 - Attribute Manager — BACKLOG
 - Minimal Moderation — BACKLOG
+- Search final polish (facet UI + suggest) — BACKLOG
 
 ---
 
