@@ -943,7 +943,6 @@ async def admin_upload_header_logo(
         scope=normalized_scope,
         scope_id=normalized_scope_id,
     )
-    now_dt = datetime.now(timezone.utc)
     new_row = UIConfig(
         config_type="header",
         segment=normalized_segment,
