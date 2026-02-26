@@ -846,7 +846,7 @@ const AdminCategories = () => {
 
   useEffect(() => {
     fetchItems();
-  }, [selectedCountry]);
+  }, [selectedCountry, listFilters.module, listFilters.status]);
 
   useEffect(() => {
     if (form.module !== "vehicle") {
