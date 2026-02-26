@@ -1,27 +1,31 @@
 import React from 'react';
-import { Routes, Route, Navigate, Link } from 'react-router-dom';
-import DealerInvoices from '@/pages/dealer/DealerInvoices';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import DealerOverview from '@/pages/dealer/DealerOverview';
 import DealerListings from '@/pages/dealer/DealerListings';
-import DealerDashboard from '@/pages/dealer/DealerDashboard';
-import DealerCompanyProfile from '@/pages/dealer/DealerCompanyProfile';
-import DealerPrivacyCenter from '@/pages/dealer/DealerPrivacyCenter';
+import DealerMessages from '@/pages/dealer/DealerMessages';
+import DealerCustomers from '@/pages/dealer/DealerCustomers';
+import DealerReports from '@/pages/dealer/DealerReports';
+import DealerPurchase from '@/pages/dealer/DealerPurchase';
+import DealerSettings from '@/pages/dealer/DealerSettings';
 import PaymentSuccess from '@/pages/dealer/PaymentSuccess';
 import PaymentCancel from '@/pages/dealer/PaymentCancel';
 import DealerLayout from '@/layouts/DealerLayout';
-
-function DealerHome() {
-  return <DealerDashboard />;
-}
 
 export default function DealerPortalApp() {
   return (
     <Routes>
       <Route path="/" element={<DealerLayout />}>
-        <Route index element={<DealerHome />} />
+        <Route index element={<Navigate to="overview" replace />} />
+        <Route path="overview" element={<DealerOverview />} />
         <Route path="listings" element={<DealerListings />} />
-        <Route path="invoices" element={<DealerInvoices />} />
-        <Route path="company" element={<DealerCompanyProfile />} />
-        <Route path="privacy" element={<DealerPrivacyCenter />} />
+        <Route path="messages" element={<DealerMessages />} />
+        <Route path="customers" element={<DealerCustomers />} />
+        <Route path="reports" element={<DealerReports />} />
+        <Route path="purchase" element={<DealerPurchase />} />
+        <Route path="settings" element={<DealerSettings />} />
+        <Route path="invoices" element={<Navigate to="/dealer/purchase" replace />} />
+        <Route path="company" element={<Navigate to="/dealer/settings" replace />} />
+        <Route path="privacy" element={<Navigate to="/dealer/settings" replace />} />
         <Route path="payments/success" element={<PaymentSuccess />} />
         <Route path="payments/cancel" element={<PaymentCancel />} />
       </Route>
