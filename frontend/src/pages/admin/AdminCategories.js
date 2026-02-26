@@ -1849,7 +1849,8 @@ const AdminCategories = () => {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          throw new Error(data?.detail || "Alt kategori kaydedilemedi.");
+          const parsed = parseApiError(data, "Alt kategori kaydedilemedi.");
+          throw new Error(parsed.message);
         }
         const saved = data?.category || child;
         const savedId = saved.id || child.id;
