@@ -631,6 +631,184 @@ export default function AdminSystemSettingsPage() {
 
       </div>
 
+      {isSystemAdmin && (
+        <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-meili-card">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h2 className="text-lg font-semibold" data-testid="system-settings-meili-title">Search / Meilisearch</h2>
+              <div className="text-xs text-muted-foreground" data-testid="system-settings-meili-subtitle">
+                Manuel konfig + versiyonlu geçmiş. Master key hiçbir zaman geri gösterilmez.
+              </div>
+            </div>
+            <div
+              className={`rounded-md border px-3 py-2 text-xs ${statusToneClass[meiliStatusTone]}`}
+              data-testid="system-settings-meili-active-status"
+            >
+              Aktif Durum: {meiliActiveConfig?.status || 'inactive'}
+            </div>
+          </div>
+
+          {!meiliEncryptionKeyPresent && (
+            <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700" data-testid="system-settings-meili-encryption-warning">
+              CONFIG_ENCRYPTION_KEY eksik. Konfig kaydetme/aktive etme kapalı.
+            </div>
+          )}
+
+          <div className="flex gap-2" data-testid="system-settings-meili-tabs">
+            <button
+              onClick={() => setMeiliTab('active')}
+              className={`h-8 px-3 rounded-md text-xs border ${meiliTab === 'active' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700'}`}
+              data-testid="system-settings-meili-tab-active"
+            >
+              Aktif Konfig
+            </button>
+            <button
+              onClick={() => setMeiliTab('history')}
+              className={`h-8 px-3 rounded-md text-xs border ${meiliTab === 'history' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700'}`}
+              data-testid="system-settings-meili-tab-history"
+            >
+              Geçmiş
+            </button>
+          </div>
+
+          {meiliLoading ? (
+            <div className="text-xs text-muted-foreground" data-testid="system-settings-meili-loading">Yükleniyor…</div>
+          ) : meiliTab === 'active' ? (
+            <div className="space-y-4" data-testid="system-settings-meili-active-panel">
+              <div className="rounded-md border bg-slate-50 px-3 py-3 text-xs space-y-1" data-testid="system-settings-meili-active-summary">
+                <div data-testid="system-settings-meili-active-id">Config ID: {meiliActiveConfig?.id || 'Yok'}</div>
+                <div data-testid="system-settings-meili-active-url">URL: {meiliActiveConfig?.meili_url || 'Yok'}</div>
+                <div data-testid="system-settings-meili-active-index">Index: {meiliActiveConfig?.meili_index_name || DEFAULT_MEILI_INDEX_NAME}</div>
+                <div data-testid="system-settings-meili-active-last-test">
+                  Son Test: {meiliLastTest?.status || 'N/A'} · {meiliLastTest?.reason_code || 'none'}
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-3" data-testid="system-settings-meili-form-grid">
+                <div className="space-y-1">
+                  <label className="text-xs text-slate-600" data-testid="system-settings-meili-url-label">Meili URL</label>
+                  <input
+                    value={meiliForm.meili_url}
+                    onChange={(e) => setMeiliForm((prev) => ({ ...prev, meili_url: e.target.value }))}
+                    placeholder="https://your-meili-host"
+                    className="h-9 px-3 rounded-md border bg-background text-sm w-full"
+                    data-testid="system-settings-meili-url-input"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-slate-600" data-testid="system-settings-meili-index-label">Index Name</label>
+                  <input
+                    value={meiliForm.meili_index_name}
+                    onChange={(e) => setMeiliForm((prev) => ({ ...prev, meili_index_name: e.target.value }))}
+                    placeholder={DEFAULT_MEILI_INDEX_NAME}
+                    className="h-9 px-3 rounded-md border bg-background text-sm w-full"
+                    data-testid="system-settings-meili-index-input"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-slate-600" data-testid="system-settings-meili-key-label">Master Key</label>
+                  <input
+                    type="password"
+                    value={meiliForm.meili_master_key}
+                    onChange={(e) => setMeiliForm((prev) => ({ ...prev, meili_master_key: e.target.value }))}
+                    placeholder="••••"
+                    className="h-9 px-3 rounded-md border bg-background text-sm w-full"
+                    data-testid="system-settings-meili-key-input"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2" data-testid="system-settings-meili-actions">
+                <button
+                  onClick={handleSaveMeiliConfig}
+                  className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
+                  disabled={meiliSaving || !meiliEncryptionKeyPresent}
+                  title={!meiliEncryptionKeyPresent ? 'Önce güvenlik anahtarı tanımlanmalı.' : undefined}
+                  data-testid="system-settings-meili-save"
+                >
+                  {meiliSaving ? 'Kaydediliyor…' : 'Kaydet (inactive)'}
+                </button>
+
+                <button
+                  onClick={() => handleActivateMeiliConfig(meiliLatestConfigId || meiliActiveConfig?.id)}
+                  className="h-9 px-3 rounded-md border text-sm"
+                  disabled={meiliActivatingId !== null || !(meiliLatestConfigId || meiliActiveConfig?.id) || !meiliEncryptionKeyPresent}
+                  title={!meiliEncryptionKeyPresent ? 'Önce güvenlik anahtarı tanımlanmalı.' : undefined}
+                  data-testid="system-settings-meili-test-activate"
+                >
+                  {meiliActivatingId ? 'Test + Aktivasyon…' : 'Test PASS ile Aktif Et'}
+                </button>
+
+                {(meiliLatestConfigId || meiliActiveConfig?.id) && (
+                  <button
+                    onClick={() => handleTestMeiliConfig(meiliLatestConfigId || meiliActiveConfig?.id)}
+                    className="h-9 px-3 rounded-md border text-sm"
+                    disabled={meiliTestingId !== null}
+                    data-testid="system-settings-meili-test-only"
+                  >
+                    {meiliTestingId ? 'Test Ediliyor…' : 'Sadece Test Et'}
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2" data-testid="system-settings-meili-history-panel">
+              {meiliHistory.length === 0 ? (
+                <div className="text-xs text-muted-foreground" data-testid="system-settings-meili-history-empty">Geçmiş kayıt yok</div>
+              ) : (
+                meiliHistory.map((item) => (
+                  <div key={item.id} className="rounded-md border p-3 space-y-2" data-testid={`system-settings-meili-history-row-${item.id}`}>
+                    <div className="grid gap-2 md:grid-cols-3 text-xs">
+                      <div data-testid={`system-settings-meili-history-url-${item.id}`}>URL: {item.meili_url}</div>
+                      <div data-testid={`system-settings-meili-history-index-${item.id}`}>Index: {item.meili_index_name}</div>
+                      <div data-testid={`system-settings-meili-history-status-${item.id}`}>Status: {item.status}</div>
+                      <div data-testid={`system-settings-meili-history-key-${item.id}`}>Key: {item.master_key_masked || '••••'}</div>
+                      <div data-testid={`system-settings-meili-history-test-${item.id}`}>
+                        Test: {item.last_test_result?.status || 'N/A'} ({item.last_test_result?.reason_code || 'none'})
+                      </div>
+                      <div data-testid={`system-settings-meili-history-created-${item.id}`}>Created: {item.created_at || '-'}</div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2" data-testid={`system-settings-meili-history-actions-${item.id}`}>
+                      <button
+                        onClick={() => handleActivateMeiliConfig(item.id)}
+                        className="h-8 px-2.5 rounded-md border text-xs"
+                        disabled={meiliActivatingId !== null || item.status === 'revoked'}
+                        data-testid={`system-settings-meili-history-activate-${item.id}`}
+                      >
+                        Bu konfigi tekrar aktif et
+                      </button>
+                      <button
+                        onClick={() => handleTestMeiliConfig(item.id)}
+                        className="h-8 px-2.5 rounded-md border text-xs"
+                        disabled={meiliTestingId !== null || item.status === 'revoked'}
+                        data-testid={`system-settings-meili-history-test-${item.id}`}
+                      >
+                        Test
+                      </button>
+                      <button
+                        onClick={() => handleRevokeMeiliConfig(item.id)}
+                        className="h-8 px-2.5 rounded-md border text-xs"
+                        disabled={meiliRevokingId !== null || item.status === 'revoked'}
+                        data-testid={`system-settings-meili-history-revoke-${item.id}`}
+                      >
+                        {meiliRevokingId === item.id ? 'Revoke…' : 'Revoke'}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {meiliError && (
+            <div className="text-xs text-rose-600" data-testid="system-settings-meili-error">{meiliError}</div>
+          )}
+          {meiliNotice && (
+            <div className="text-xs text-emerald-700" data-testid="system-settings-meili-notice">{meiliNotice}</div>
+          )}
+        </div>
+      )}
+
       <div className="rounded-lg border bg-white p-4 space-y-3" data-testid="system-settings-moderation-freeze-card">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
