@@ -15422,22 +15422,26 @@ async def admin_create_meilisearch_config(
     )
     session.add(config)
 
-    await _write_audit_log_sql(
-        session=session,
-        action="MEILI_CONFIG_CREATE",
-        actor=actor,
-        resource_type="meilisearch_config",
-        resource_id=str(config.id),
-        metadata={
-            "status": config.status,
-            "meili_url": config.meili_url,
-            "meili_index_name": config.meili_index_name,
-        },
-        request=request,
-        country_code=None,
-    )
-    await session.commit()
-    await session.refresh(config)
+    try:
+        await _write_audit_log_sql(
+            session=session,
+            action="MEILI_CONFIG_CREATE",
+            actor=actor,
+            resource_type="meilisearch_config",
+            resource_id=str(config.id),
+            metadata={
+                "status": config.status,
+                "meili_url": config.meili_url,
+                "meili_index_name": config.meili_index_name,
+            },
+            request=request,
+            country_code=None,
+        )
+        await session.commit()
+        await session.refresh(config)
+    except Exception as exc:
+        logging.getLogger("meilisearch_config").exception("meili_config_create_failed config_id=%s", str(config.id))
+        raise HTTPException(status_code=500, detail=f"MEILI_CONFIG_CREATE_FAILED: {exc}") from exc
 
     logging.getLogger("meilisearch_config").info(
         "meili_config_saved config_id=%s status=%s",
