@@ -233,13 +233,39 @@ export default function AdminReportsPage() {
       </div>
 
       <div className="flex flex-wrap gap-3 items-center" data-testid="reports-filters">
-        <input
-          value={listingId}
-          onChange={(e) => { setListingId(e.target.value); setPage(0); }}
-          placeholder="Listing ID"
-          className="h-9 px-3 rounded-md border bg-background text-sm"
-          data-testid="reports-listing-id-input"
-        />
+        <div className="inline-flex items-center rounded-md border overflow-hidden" data-testid="reports-type-toggle">
+          <button
+            onClick={() => { setReportType('listing'); setPage(0); }}
+            className={`h-9 px-3 text-sm ${reportType === 'listing' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+            data-testid="reports-type-listing"
+          >
+            Raporlanan İlanlar
+          </button>
+          <button
+            onClick={() => { setReportType('message'); setPage(0); }}
+            className={`h-9 px-3 text-sm ${reportType === 'message' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+            data-testid="reports-type-message"
+          >
+            Raporlanan Mesajlar
+          </button>
+        </div>
+        {reportType === 'listing' ? (
+          <input
+            value={listingId}
+            onChange={(e) => { setListingId(e.target.value); setPage(0); }}
+            placeholder="Listing ID"
+            className="h-9 px-3 rounded-md border bg-background text-sm"
+            data-testid="reports-listing-id-input"
+          />
+        ) : (
+          <input
+            value={messageId}
+            onChange={(e) => { setMessageId(e.target.value); setPage(0); }}
+            placeholder="Message ID"
+            className="h-9 px-3 rounded-md border bg-background text-sm"
+            data-testid="reports-message-id-input"
+          />
+        )}
         <Select value={status} onValueChange={(value) => { setStatus(value); setPage(0); }}>
           <SelectTrigger className="h-9 w-[180px]" data-testid="reports-status-select">
             <SelectValue placeholder="Tümü" />
@@ -261,7 +287,7 @@ export default function AdminReportsPage() {
             <SelectValue placeholder="Tümü" />
           </SelectTrigger>
           <SelectContent>
-            {reasonOptions.map((opt) => (
+            {(reportType === 'message' ? messageReasonOptions : reasonOptions).map((opt) => (
               <SelectItem
                 key={opt.value}
                 value={opt.value}
