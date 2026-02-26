@@ -696,14 +696,3 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### Doğrulama
 - Kapsamlı test raporu: `/app/test_reports/iteration_20.json` (**PASS**)
 - Doğrulanan başlıklar: unique constraint canlı doğrulama, vehicle segment-link edge-case testleri, real_estate/other multi-level regresyonu, wizard validation ve next/complete akışları.
-
-### 2026-02-26 — Revize Stabilizasyon (ADS-VEH-SEG-03)
-- Vehicle segment akışı serbest metin + master data zorunlu eşleşme olarak güncellendi.
-- Yeni kontratlar:
-  - `ORDER_INDEX_ALREADY_USED` → `400`
-  - `VEHICLE_SEGMENT_NOT_FOUND` → `400`
-- Yeni endpoint: `GET /api/admin/categories/order-index/preview` (wizard’da canlı sıra çakışma önizleme)
-- Vehicle segment ülke bazında tekilleştirildi (aynı segment aynı ülkede tekrar kaydedilemez).
-- Yeni migration: `/app/backend/migrations/versions/p57_category_ordering_stabilization.py`
-- Güncel migration raporu: `/app/docs/CATEGORY_ORDER_MIGRATION_REPORT.md`
-- Full test raporu: `/app/test_reports/iteration_21.json` (**PASS**, backend 19/19)
