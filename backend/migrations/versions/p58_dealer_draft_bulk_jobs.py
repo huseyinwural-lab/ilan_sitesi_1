@@ -53,6 +53,7 @@ def upgrade() -> None:
     op.execute("CREATE INDEX IF NOT EXISTS ix_category_bulk_jobs_next_retry_at ON category_bulk_jobs (next_retry_at)")
     op.execute("CREATE INDEX IF NOT EXISTS ix_category_bulk_jobs_locked_at ON category_bulk_jobs (locked_at)")
     op.execute("CREATE INDEX IF NOT EXISTS ix_category_bulk_jobs_idempotency_key ON category_bulk_jobs (idempotency_key)")
+    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_category_bulk_jobs_idempotency_key_idx ON category_bulk_jobs (idempotency_key)")
     op.execute("CREATE INDEX IF NOT EXISTS ix_category_bulk_jobs_status_retry ON category_bulk_jobs (status, next_retry_at)")
     op.execute("CREATE INDEX IF NOT EXISTS ix_category_bulk_jobs_created_at ON category_bulk_jobs (created_at)")
 
