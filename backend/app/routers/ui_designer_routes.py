@@ -34,6 +34,8 @@ UI_LOGO_RATIO_TARGET = 3.0
 UI_LOGO_RATIO_TOLERANCE = 0.1
 UI_LOGO_RETENTION_DAYS = 7
 UI_LOGO_URL_PREFIX = "/api/site/assets/"
+DASHBOARD_MIN_KPI_WIDGETS = 1
+DASHBOARD_MAX_WIDGETS = 12
 
 DEFAULT_CORPORATE_HEADER_CONFIG = {
     "rows": [
@@ -275,6 +277,128 @@ def _validate_corporate_header_guardrails(config_data: dict[str, Any]) -> None:
         raise HTTPException(status_code=400, detail="Row1 içinde zorunlu logo bileşeni bulunmalıdır")
 
 
+def _normalize_dashboard_layout(layout_payload: Any) -> list[dict[str, Any]]:
+    if layout_payload is None:
+        return []
+    if not isinstance(layout_payload, list):
+        raise HTTPException(status_code=400, detail="Dashboard layout liste (array) olmalıdır")
+
+    normalized_items: list[dict[str, Any]] = []
+    for item in layout_payload:
+        if not isinstance(item, dict):
+            raise HTTPException(status_code=400, detail="Dashboard layout öğeleri object olmalıdır")
+
+        widget_id = str(item.get("widget_id") or item.get("i") or item.get("id") or "").strip()
+        if not widget_id:
+            raise HTTPException(status_code=400, detail="Dashboard layout öğesinde widget_id zorunludur")
+
+        normalized_item = {**item, "widget_id": widget_id}
+        for key in ("x", "y", "w", "h"):
+            value = normalized_item.get(key)
+            if value is None:
+                continue
+            try:
+                numeric_value = int(value)
+            except (TypeError, ValueError) as exc:
+                raise HTTPException(status_code=400, detail=f"Dashboard layout alanı '{key}' sayı olmalıdır") from exc
+
+            if key in {"x", "y"} and numeric_value < 0:
+                raise HTTPException(status_code=400, detail=f"Dashboard layout alanı '{key}' 0 veya daha büyük olmalıdır")
+            if key in {"w", "h"} and numeric_value < 1:
+                raise HTTPException(status_code=400, detail=f"Dashboard layout alanı '{key}' 1 veya daha büyük olmalıdır")
+            normalized_item[key] = numeric_value
+
+        normalized_items.append(normalized_item)
+    return normalized_items
+
+
+def _normalize_dashboard_widgets(widgets_payload: Any) -> list[dict[str, Any]]:
+    if widgets_payload is None:
+        return []
+    if not isinstance(widgets_payload, list):
+        raise HTTPException(status_code=400, detail="Dashboard widgets liste (array) olmalıdır")
+
+    normalized_items: list[dict[str, Any]] = []
+    for item in widgets_payload:
+        if not isinstance(item, dict):
+            raise HTTPException(status_code=400, detail="Dashboard widget öğeleri object olmalıdır")
+
+        widget_id = str(item.get("widget_id") or item.get("id") or "").strip()
+        if not widget_id:
+            raise HTTPException(status_code=400, detail="Dashboard widget öğesinde widget_id zorunludur")
+
+        widget_type = str(item.get("widget_type") or item.get("type") or "").strip().lower()
+        if not widget_type:
+            raise HTTPException(status_code=400, detail="Dashboard widget öğesinde widget_type zorunludur")
+
+        normalized_item = {
+            **item,
+            "widget_id": widget_id,
+            "widget_type": widget_type,
+            "enabled": bool(item.get("enabled", True)),
+        }
+        normalized_items.append(normalized_item)
+    return normalized_items
+
+
+def _extract_dashboard_layout_widgets(
+    *,
+    layout_payload: Any,
+    widgets_payload: Any,
+    config_data: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    raw_layout = layout_payload if layout_payload is not None else config_data.get("layout")
+    raw_widgets = widgets_payload if widgets_payload is not None else config_data.get("widgets")
+
+    normalized_layout = _normalize_dashboard_layout(raw_layout)
+    normalized_widgets = _normalize_dashboard_widgets(raw_widgets)
+
+    next_config_data = deepcopy(config_data)
+    next_config_data.pop("layout", None)
+    next_config_data.pop("widgets", None)
+    return normalized_layout, normalized_widgets, next_config_data
+
+
+def _validate_dashboard_guardrails(layout: list[dict[str, Any]], widgets: list[dict[str, Any]]) -> None:
+    total_widgets = len(widgets)
+    if total_widgets > DASHBOARD_MAX_WIDGETS:
+        raise HTTPException(status_code=400, detail=f"Dashboard en fazla {DASHBOARD_MAX_WIDGETS} widget içerebilir")
+
+    kpi_count = sum(
+        1
+        for widget in widgets
+        if str(widget.get("widget_type") or "").strip().lower() == "kpi" and widget.get("enabled", True) is not False
+    )
+    if kpi_count < DASHBOARD_MIN_KPI_WIDGETS:
+        raise HTTPException(status_code=400, detail="Dashboard en az 1 KPI widget içermelidir")
+
+    widget_ids = [str(widget.get("widget_id") or "").strip() for widget in widgets]
+    if len(widget_ids) != len(set(widget_ids)):
+        raise HTTPException(status_code=400, detail="Dashboard widget_id alanları benzersiz olmalıdır")
+
+    layout_widget_ids = [str(item.get("widget_id") or "").strip() for item in layout]
+    if len(layout_widget_ids) != len(set(layout_widget_ids)):
+        raise HTTPException(status_code=400, detail="Dashboard layout widget_id alanları benzersiz olmalıdır")
+
+    if layout_widget_ids:
+        widget_id_set = set(widget_ids)
+        layout_id_set = set(layout_widget_ids)
+
+        missing_layout_ids = sorted(widget_id_set - layout_id_set)
+        if missing_layout_ids:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Her widget için layout girdisi zorunludur: {', '.join(missing_layout_ids)}",
+            )
+
+        unknown_layout_ids = sorted(layout_id_set - widget_id_set)
+        if unknown_layout_ids:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Layout içinde tanımsız widget_id bulundu: {', '.join(unknown_layout_ids)}",
+            )
+
+
 def _extract_header_logo_url(config_data: dict[str, Any]) -> Optional[str]:
     logo = config_data.get("logo") if isinstance(config_data.get("logo"), dict) else {}
     logo_url = (logo.get("url") or "").strip()
@@ -505,6 +629,8 @@ class UIConfigSavePayload(BaseModel):
     scope_id: Optional[str] = None
     status: str = Field(default="draft")
     config_data: dict = Field(default_factory=dict)
+    layout: Optional[list[dict[str, Any]]] = None
+    widgets: Optional[list[dict[str, Any]]] = None
 
 
 class UIThemeCreatePayload(BaseModel):
@@ -572,6 +698,17 @@ def _theme_scope_clause(scope: str, scope_id: Optional[str]):
 
 
 def _serialize_ui_config(row: UIConfig) -> dict[str, Any]:
+    config_data = deepcopy(row.config_data or {})
+    layout_value = row.layout if isinstance(row.layout, list) else []
+    widgets_value = row.widgets if isinstance(row.widgets, list) else []
+
+    if row.config_type == "dashboard":
+        layout_value, widgets_value, config_data = _extract_dashboard_layout_widgets(
+            layout_payload=row.layout,
+            widgets_payload=row.widgets,
+            config_data=config_data,
+        )
+
     return {
         "id": str(row.id),
         "config_type": row.config_type,
@@ -580,7 +717,9 @@ def _serialize_ui_config(row: UIConfig) -> dict[str, Any]:
         "scope_id": row.scope_id,
         "status": row.status,
         "version": row.version,
-        "config_data": row.config_data or {},
+        "config_data": config_data,
+        "layout": layout_value,
+        "widgets": widgets_value,
         "created_by": str(row.created_by) if row.created_by else None,
         "created_by_email": row.created_by_email,
         "published_at": row.published_at.isoformat() if row.published_at else None,
@@ -685,9 +824,22 @@ def _effective_config_data(row: Optional[UIConfig], config_type: str, segment: s
     if row and isinstance(row.config_data, dict):
         if config_type == "header":
             return _normalize_header_config_data(row.config_data, segment)
+        if config_type == "dashboard":
+            layout_value, widgets_value, config_data = _extract_dashboard_layout_widgets(
+                layout_payload=row.layout,
+                widgets_payload=row.widgets,
+                config_data=row.config_data,
+            )
+            return {
+                **config_data,
+                "layout": layout_value,
+                "widgets": widgets_value,
+            }
         return row.config_data
     if config_type == "header":
         return _default_header_config(segment)
+    if config_type == "dashboard":
+        return {"layout": [], "widgets": []}
     return {}
 
 
