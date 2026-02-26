@@ -166,6 +166,50 @@ export default function AdminReportsPage() {
     }
   };
 
+  const handleSoftDeleteListing = async () => {
+    if (!detailData?.listing_id) return;
+    const note = statusNote.trim() || 'Report action: soft delete';
+    setActionLoading(true);
+    setStatusError(null);
+    try {
+      await axios.post(
+        `${API}/admin/listings/${detailData.listing_id}/soft-delete`,
+        { reason: detailData.reason || 'other', reason_note: note },
+        { headers: authHeader }
+      );
+      await fetchReports();
+      await openDetail(detailData.id, detailData);
+    } catch (e) {
+      setStatusError(e.response?.data?.detail || 'Soft delete başarısız');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSuspendSeller = async () => {
+    const sellerId = detailData?.seller_summary?.id;
+    if (!sellerId) {
+      setStatusError('Suspend için seller id bulunamadı');
+      return;
+    }
+    const note = statusNote.trim() || 'Report action: suspend';
+    setActionLoading(true);
+    setStatusError(null);
+    try {
+      await axios.post(
+        `${API}/admin/users/${sellerId}/suspend`,
+        { reason_code: detailData.reason || 'other', reason_detail: note },
+        { headers: authHeader }
+      );
+      await fetchReports();
+      await openDetail(detailData.id, detailData);
+    } catch (e) {
+      setStatusError(e.response?.data?.detail || 'Suspend başarısız');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const clearFilters = () => {
     setStatus('all');
     setReason('all');
