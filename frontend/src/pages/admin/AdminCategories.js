@@ -234,12 +234,19 @@ const AdminCategories = () => {
     sort_order: 1,
   });
   const [vehicleSegment, setVehicleSegment] = useState("");
+  const [vehicleSegmentError, setVehicleSegmentError] = useState("");
   const [vehicleLinkStatus, setVehicleLinkStatus] = useState({
     checking: false,
     linked: false,
     make_count: 0,
     model_count: 0,
     message: "",
+  });
+  const [orderPreview, setOrderPreview] = useState({
+    checking: false,
+    available: true,
+    message: "",
+    conflict: null,
   });
   const [schema, setSchema] = useState(createDefaultSchema());
   const [wizardStep, setWizardStep] = useState("hierarchy");
