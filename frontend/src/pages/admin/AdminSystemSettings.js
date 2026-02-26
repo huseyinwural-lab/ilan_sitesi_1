@@ -198,6 +198,7 @@ export default function AdminSystemSettingsPage() {
       }));
       await fetchMeiliActiveConfig();
       await fetchMeiliHistory();
+      await fetchHealthDetail();
     } catch (e) {
       setMeiliError(e.response?.data?.detail || 'Konfig kaydedilemedi');
     } finally {
@@ -217,6 +218,7 @@ export default function AdminSystemSettingsPage() {
       setMeiliNotice(`Test sonucu: ${testStatus || 'UNKNOWN'} (${reasonCode || 'none'})`);
       await fetchMeiliActiveConfig();
       await fetchMeiliHistory();
+      await fetchHealthDetail();
     } catch (e) {
       setMeiliError(e.response?.data?.detail || 'Test başarısız');
     } finally {
@@ -240,6 +242,7 @@ export default function AdminSystemSettingsPage() {
       }
       await fetchMeiliActiveConfig();
       await fetchMeiliHistory();
+      await fetchHealthDetail();
     } catch (e) {
       setMeiliError(e.response?.data?.detail || 'Aktivasyon başarısız');
     } finally {
@@ -257,6 +260,7 @@ export default function AdminSystemSettingsPage() {
       setMeiliNotice('Konfig revoke edildi.');
       await fetchMeiliActiveConfig();
       await fetchMeiliHistory();
+      await fetchHealthDetail();
     } catch (e) {
       setMeiliError(e.response?.data?.detail || 'Revoke başarısız');
     } finally {
