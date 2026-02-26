@@ -2448,7 +2448,13 @@ const AdminCategories = () => {
                           className={selectClassName}
                           value={form.module}
                           disabled={isHierarchyLocked}
-                          onChange={(e) => setForm((prev) => ({ ...prev, module: e.target.value }))}
+                          onChange={(e) => {
+                            const nextModule = e.target.value;
+                            setForm((prev) => ({ ...prev, module: nextModule }));
+                            if (nextModule !== "vehicle") {
+                              setVehicleSegment("");
+                            }
+                          }}
                           data-testid="categories-module-select"
                         >
                           <option value="">Seçiniz</option>
