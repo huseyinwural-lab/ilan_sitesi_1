@@ -18398,10 +18398,9 @@ async def admin_category_vehicle_segment_link_status(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
-    vehicle_segment = _normalize_vehicle_segment(segment)
     if country:
         _assert_country_scope(country.upper(), current_user)
-    status = await _get_vehicle_segment_link_status(session, vehicle_segment=vehicle_segment)
+    status = await _resolve_vehicle_segment_from_master(session, segment_input=segment)
     return {
         "segment": status["segment"],
         "country": (country or "").upper() or None,
