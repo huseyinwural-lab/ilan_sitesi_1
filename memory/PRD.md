@@ -674,8 +674,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - `dealer_contact_click`
 
 ### Test & Kanıt
-- Testing agent final raporu: `/app/test_reports/iteration_19.json` (**PASS**)
-- Evidence dosyası: `/app/docs/DEALER_DASHBOARD_V1_EVIDENCE.md`
+- Testing agent raporları: `/app/test_reports/iteration_19.json`, `/app/test_reports/iteration_23.json` (**PASS**)
+- Evidence dosyası: `/app/docs/DEALER_DASHBOARD_V1_EVIDENCE.md` + backend test suite `/app/backend/tests/test_p1_dealer_dashboard_bulk_ops.py`
 ---
 ## 2026-02-26 — P0 Kategori Yönetimi Düzeltmesi (Bloklayıcı)
 
@@ -696,4 +696,4 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### API Kontratları ve Doğrulama
 - Hata kontratı dokümanı: `/app/docs/CATEGORY_API_ERROR_CONTRACTS.md`
 - Swagger/OpenAPI response examples: `ORDER_INDEX_ALREADY_USED`, `VEHICLE_SEGMENT_NOT_FOUND`
-- Final doğrulama raporu: `/app/test_reports/iteration_22.json` (**PASS**)
+- Final doğrulama raporları: `/app/test_reports/iteration_22.json` ve `/app/test_reports/iteration_23.json` (**PASS**)
