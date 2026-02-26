@@ -765,6 +765,7 @@ const AdminCategories = () => {
 
   useEffect(() => {
     if (form.module !== "vehicle") {
+      setVehicleSegmentError("");
       setVehicleLinkStatus({
         checking: false,
         linked: false,
@@ -777,6 +778,32 @@ const AdminCategories = () => {
     const code = (form.country_code || "").trim().toUpperCase();
     fetchVehicleSegmentLinkStatus(vehicleSegment, code);
   }, [form.module, form.country_code, vehicleSegment, fetchVehicleSegmentLinkStatus]);
+
+  useEffect(() => {
+    if (!modalOpen || wizardStep !== "hierarchy") return;
+    const moduleValue = (form.module || "").trim().toLowerCase();
+    const countryCode = (form.country_code || "").trim().toUpperCase();
+    const sortOrder = Number(form.sort_order || 0);
+    const timer = setTimeout(() => {
+      fetchOrderPreview({
+        moduleValue,
+        countryCode,
+        parentId: form.parent_id || "",
+        sortOrder,
+        excludeId: editing?.id || "",
+      });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [
+    modalOpen,
+    wizardStep,
+    form.module,
+    form.country_code,
+    form.parent_id,
+    form.sort_order,
+    editing?.id,
+    fetchOrderPreview,
+  ]);
 
   useEffect(() => {
     setPreviewComplete(false);
