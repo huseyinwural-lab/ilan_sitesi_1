@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-25 15:40:00 UTC (Public UI Hardening)
+**Son güncelleme:** 2026-02-26 22:00:00 UTC (P59 UI Designer Foundation)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -56,7 +56,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
-- **Public UI Hardening (2026-02-25):** /bilgi/:slug SEO meta + OG + Article schema; CSP header middleware; 404/500 sayfaları; cross-browser/perf/security dokümantasyonu.
+- **P59 UI Designer Foundation (2026-02-26):** `ADMIN_UI_DESIGNER` permission-role eşlemesi (super_admin/country_admin), `ui_configs/ui_themes/ui_theme_assignments` modelleri + `p59_ui_designer_foundation` migration, `/api/admin/ui/configs/*`, `/api/ui/*`, theme assignment + effective resolve endpointleri, `/admin/user-interface-design` 3 sekmeli admin iskeleti (gerçek GET/POST roundtrip), test raporu: `/app/test_reports/iteration_25.json` (PASS).
 - **Tema Yönetimi (2026-02-25):** Semantik CSS değişkenleri, light/dark palette standardizasyonu, FOUC önleyici theme-init script, root ErrorBoundary + wizard/detail boundary.
 - **Footer Domain (2026-02-25):** Footer grid builder (row/1-5 column + LinkGroup/Metin/Sosyal), draft/publish + preview, versioning + rollback, admin Footer Yönetimi ve Bilgi Sayfaları CRUD.
 - **Header Domain (2026-02-25):** MainLayout ile public header merkezi; site_header_config modeli + logo upload + cache invalidation (versiyonlu logo_url); admin Header Yönetimi ekranı; guest/auth header state ve responsive menü; logo yoksa asset request atılmaz.
