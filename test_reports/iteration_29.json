@@ -1,0 +1,65 @@
+{
+  "summary": "P63 Logo Upload Flow Testing - All backend and frontend tests pass. Validation contracts (INVALID_FILE_TYPE, FILE_TOO_LARGE, INVALID_ASPECT_RATIO), RBAC (dealer 403), scope normalization, storage health visibility, UI inline error banner, cache bust, and publish->dealer live header logo all verified working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p63_logo_upload_contract.py",
+    "/app/backend/tests/test_p60_corporate_header_logo.py",
+    "/app/test_reports/pytest/p63_logo_upload_contract_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (28/28 passed, 1 skipped for edge case)",
+    "frontend": "100% (all UI flows verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "dealer": "dealer@platform.com / Dealer123!"
+  },
+  "seed_data_creation": "Multiple test logo uploads performed during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P63 Logo Upload flow fully tested. All backend contract tests pass: INVALID_FILE_TYPE (400), FILE_TOO_LARGE (400), INVALID_ASPECT_RATIO (400), valid ratio boundary tests (2.7-3.3), RBAC dealer 403, storage health endpoint, scope normalization. Frontend UI verified: inline error banner shows summary/detail/code for validation errors, cache bust working with ?v=timestamp, preview updates after upload, publish to dealer portal shows logo in header.",
+  "features_verified": {
+    "backend_api_contract": {
+      "POST /api/admin/ui/configs/header/logo valid": "200 with logo_url, logo_meta, storage_health",
+      "POST /api/admin/ui/configs/header/logo INVALID_FILE_TYPE": "400 with code=INVALID_FILE_TYPE",
+      "POST /api/admin/ui/configs/header/logo FILE_TOO_LARGE": "400 with code=FILE_TOO_LARGE",
+      "POST /api/admin/ui/configs/header/logo INVALID_ASPECT_RATIO": "400 with code=INVALID_ASPECT_RATIO",
+      "GET /api/admin/ui/logo-assets/health": "200 with storage_health.status=ok",
+      "Dealer token upload": "403 Forbidden"
+    },
+    "validation_contract": {
+      "error_code_in_detail.code": "PASS",
+      "error_message_in_detail.message": "PASS",
+      "error_details_in_detail.details": "PASS (expected/received values)"
+    },
+    "scope_normalization": {
+      "scope=system + scope_id=tenant-001": "normalizes to scope_id=null (PASS)"
+    },
+    "frontend_ui": {
+      "storage_health_display": "PASS - shows 'Storage Health: ok'",
+      "file_input": "PASS - accepts png/svg/webp",
+      "upload_button_disabled_until_file": "PASS",
+      "inline_error_banner_summary": "PASS - shows localized error summary",
+      "inline_error_banner_detail": "PASS - shows expected/received values",
+      "inline_error_banner_code": "PASS - shows Kod: ERROR_CODE",
+      "preview_cache_bust": "PASS - uses ?v=timestamp",
+      "upload_loading_state": "PASS - shows 'Yükleniyor...'",
+      "dimensions_meta_display": "PASS - shows w:300 · h:100 · ratio:3"
+    },
+    "publish_to_live": {
+      "effective_config_has_logo_url": "PASS",
+      "dealer_header_shows_logo": "PASS - logo visible in /dealer/overview header"
+    }
+  }
+}
