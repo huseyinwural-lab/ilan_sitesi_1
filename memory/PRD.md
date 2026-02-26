@@ -695,9 +695,4 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 
 ### Doğrulama
 - Kapsamlı test raporu: `/app/test_reports/iteration_20.json` (**PASS**)
-- Doğrulanan başlıklar:
-  - unique constraint canlı doğrulama
-  - vehicle segment-link edge-case testleri
-  - real_estate/other multi-level regresyonu
-  - wizard validation ve next/complete akışları
-
+- Doğrulanan başlıklar: unique constraint canlı doğrulama, vehicle segment-link edge-case testleri, real_estate/other multi-level regresyonu, wizard validation ve next/complete akışları.
