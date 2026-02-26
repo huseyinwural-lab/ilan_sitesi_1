@@ -190,3 +190,26 @@
 - [x] Row-level error raporu
 - [x] Yetki kontrolü (admin-only)
 - [x] Audit log
+
+## 2026-02-26 — Admin Kapanış Sprinti Tamamlama
+
+### Yakında Temizliği + Dashboard Stabilizasyonu
+- Menu Management UI kaldırıldı; API feature flag kapalıyken `403 feature_disabled`
+- Category Import/Export CSV-only + dry-run zorunlu
+- Dashboard summary endpoint konsolide edildi, KPI click-through eklendi
+- Test kanıtı: `/app/test_reports/iteration_16.json`, `/app/test_reports/iteration_17.json`
+
+### Final Paket (Tek Teslim)
+- Watermark & Image Pipeline
+- Transactions Log (read-only + filtre + CSV)
+- Attribute Manager stabilizasyonu
+- Minimal Moderation hardening (listing/message reports)
+- Search suggest endpoint + TTL cache
+- Test kanıtı: `/app/test_reports/iteration_18.json`
+
+## 2026-02-26 — Admin Resmi Kapanış
+
+- Admin fazı: **CLOSED**
+- Admin Freeze: yeni admin feature yok, sadece bugfix/güvenlik patch
+- Kapanış kanıt paketi: `/app/docs/ADMIN_CLOSURE_EVIDENCE_PACKAGE_2026-02-26.md`
+- Public Phase strateji planı: `/app/memory/PUBLIC_PHASE_STRATEGIC_PLAN.md`
