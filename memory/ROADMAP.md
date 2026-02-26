@@ -12,13 +12,15 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 - **Admin Freeze aktif:** Yeni admin feature alınmaz. Sadece bugfix / güvenlik patch.
 
 ### P0 — Kategori Yönetimi Düzeltmesi (BLOCKER)
-- **DONE** ✅ (2026-02-26)
+- **CLOSED** ✅ (2026-02-26)
 - Kapsam: `other` modülü, manuel sıra, scope unique constraint, vehicle segment-link akışı, real_estate/other regresyonu
 - Kanıtlar:
   - `/app/test_reports/iteration_20.json`
   - `/app/docs/CATEGORY_ORDER_MIGRATION_REPORT.md`
 - Not: Kullanıcı kararı gereği Dealer Dashboard’a dönmeden önce Category hardening/test turu tamamlandı.
 - Revize stabilizasyon: `ORDER_INDEX_ALREADY_USED` / `VEHICLE_SEGMENT_NOT_FOUND` error contractları + canlı sıra önizleme endpointi + vehicle segment country-unique kuralı.
+- **Internal Milestone:** `CATEGORY_MODULE_STABLE`
+- **Category Freeze aktif:** Bu modülde bundan sonra sadece bugfix.
 
 ### P0 — ListingWizard + VehicleSelector Stabilizasyonu
 - **CLOSED** ✅
@@ -58,7 +60,16 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 ### Public/Commercial Phase Durumu
 - Dealer Dashboard + Manuel Kontrol Sistemi v1 — **IN PROGRESS (PAUSED)** 🟡
   - Backend foundation hazır (config modelleri + API)
-  - Öncelik sırası gereği kategori P0 sonrası yeniden ele alınacak
+  - Kategori P0 kapanışı sonrası yeniden başlatılacak
+
+### Sıradaki Faz — Dealer Dashboard P1 (Restart)
+- **ACTIVE** 🔴
+- Başlangıç kapsamı:
+  - Config-driven render finalizasyonu
+  - dnd-kit menü yönetimi kalıcı kaydetme
+  - Header 1. satır sabit + manuel sıralama
+  - 2. satır modül bazlı manuel sıralama
+  - 3. satır mağaza filtresi + kullanıcı dropdown
 
 ---
 
