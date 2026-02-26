@@ -15416,7 +15416,7 @@ async def admin_create_meilisearch_config(
             "status": "FAIL",
             "ok": False,
             "reason_code": "pending_test",
-            "message": "Config saved. Activate için test PASS gerekli.",
+            "message": "Config saved. Activation requires PASS test.",
             "checked_at": now_ts.isoformat(),
         },
     )
@@ -15441,7 +15441,7 @@ async def admin_create_meilisearch_config(
         await session.refresh(config)
     except Exception as exc:
         logging.getLogger("meilisearch_config").exception("meili_config_create_failed config_id=%s", str(config.id))
-        raise HTTPException(status_code=500, detail=f"MEILI_CONFIG_CREATE_FAILED: {exc}") from exc
+        raise HTTPException(status_code=500, detail="MEILI_CONFIG_CREATE_FAILED") from exc
 
     logging.getLogger("meilisearch_config").info(
         "meili_config_saved config_id=%s status=%s",
