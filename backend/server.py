@@ -22549,22 +22549,45 @@ async def upload_vehicle_media(
         raise HTTPException(status_code=400, detail="Only draft/needs_revision can accept media")
 
     media_meta = _listing_media_meta(listing)
+    watermark_config = await _get_watermark_pipeline_config(session, country_code=listing.country)
+    header_config = await _get_active_header_config(session, create_from_legacy=True)
+    logo_file_path = _resolve_site_logo_file_path(header_config.logo_path if header_config else None)
+
     for f in files:
         raw = await f.read()
+        started_at = time.perf_counter()
         try:
-            filename, w, h = store_image(listing.country, listing_id, raw, f.filename or "upload.jpg")
+            stored = store_image(
+                listing.country,
+                listing_id,
+                raw,
+                f.filename or "upload.jpg",
+                watermark_config=watermark_config,
+                watermark_logo_path=str(logo_file_path) if logo_file_path else None,
+            )
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e))
+        processing_ms = round((time.perf_counter() - started_at) * 1000, 2)
 
         media_id = str(uuid.uuid4())
         media_item = {
             "media_id": media_id,
-            "file": filename,
-            "width": w,
-            "height": h,
+            "file": stored["file"],
+            "thumbnail_file": stored.get("thumbnail_file"),
+            "original_file": stored.get("original_file"),
+            "width": stored.get("width"),
+            "height": stored.get("height"),
+            "thumb_width": stored.get("thumb_width"),
+            "thumb_height": stored.get("thumb_height"),
+            "processing_ms": processing_ms,
+            "reduction_ratio": stored.get("reduction_ratio", 0),
+            "original_size": stored.get("original_size", 0),
+            "public_size": stored.get("public_size", 0),
+            "thumbnail_size": stored.get("thumbnail_size", 0),
             "is_cover": False,
         }
         media_meta.append(media_item)
+        _record_media_pipeline_metric(media_item)
 
     if media_meta and not any(m.get("is_cover") for m in media_meta):
         media_meta[0]["is_cover"] = True
@@ -22578,10 +22601,17 @@ async def upload_vehicle_media(
         {
             "media_id": m["media_id"],
             "file": m["file"],
+            "thumbnail_file": m.get("thumbnail_file"),
+            "original_file": m.get("original_file"),
             "width": m.get("width"),
             "height": m.get("height"),
+            "thumb_width": m.get("thumb_width"),
+            "thumb_height": m.get("thumb_height"),
+            "processing_ms": m.get("processing_ms"),
+            "reduction_ratio": m.get("reduction_ratio"),
             "is_cover": m.get("is_cover", False),
             "preview_url": f"/api/v1/listings/vehicle/{listing_id}/media/{m['media_id']}/preview",
+            "thumbnail_url": f"/media/listings/{listing_id}/{m['thumbnail_file']}" if m.get("thumbnail_file") else None,
         }
         for m in media_meta
     ]
@@ -22634,10 +22664,12 @@ async def reorder_vehicle_media(
         {
             "media_id": m.get("media_id"),
             "file": m.get("file"),
+            "thumbnail_file": m.get("thumbnail_file"),
             "width": m.get("width"),
             "height": m.get("height"),
             "is_cover": m.get("is_cover", False),
             "preview_url": f"/api/v1/listings/vehicle/{listing_id}/media/{m.get('media_id')}/preview",
+            "thumbnail_url": f"/media/listings/{listing_id}/{m['thumbnail_file']}" if m.get("thumbnail_file") else None,
         }
         for m in next_media
     ]
@@ -22768,6 +22800,7 @@ async def get_vehicle_detail(listing_id: str, preview: bool = False, session: As
         {
             "media_id": m["media_id"],
             "url": f"/media/listings/{listing_id}/{m['file']}",
+            "thumbnail_url": f"/media/listings/{listing_id}/{m['thumbnail_file']}" if m.get("thumbnail_file") else None,
             "is_cover": m.get("is_cover", False),
             "width": m.get("width"),
             "height": m.get("height"),
