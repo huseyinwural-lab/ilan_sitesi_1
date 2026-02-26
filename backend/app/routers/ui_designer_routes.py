@@ -780,9 +780,18 @@ async def admin_get_ui_config(
         .limit(100)
     )
     versions = (await session.execute(versions_stmt)).scalars().all()
+    current_payload = _serialize_ui_config(current) if current else None
+    if current_payload and normalized_type == "header":
+        current_payload["config_data"] = _normalize_header_config_data(current_payload.get("config_data") or {}, normalized_segment)
+
+    version_payloads = [_serialize_ui_config(item) for item in versions]
+    if normalized_type == "header":
+        for item in version_payloads:
+            item["config_data"] = _normalize_header_config_data(item.get("config_data") or {}, normalized_segment)
+
     return {
-        "item": _serialize_ui_config(current) if current else None,
-        "items": [_serialize_ui_config(item) for item in versions],
+        "item": current_payload,
+        "items": version_payloads,
     }
 
 
