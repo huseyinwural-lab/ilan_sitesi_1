@@ -616,3 +616,49 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Testing agent: `/app/test_reports/iteration_15.json`
   - backend PASS
   - frontend PASS
+
+---
+
+## 2026-02-26 — ADMIN KAPANIŞ SPRINTİ (P0) İlerleme #1 (Yakında Temizliği + Dashboard Stabilizasyonu)
+
+### Tamamlananlar (P0)
+- **Yakında Temizliği (DONE):**
+  - Category Import/Export akışı **CSV-only** olarak sabitlendi (frontend + backend).
+  - Import mode **dry-run zorunlu + apply ayrı adım** olarak korundu.
+  - XLSX export/sample ve XLSX dry-run/commit çağrıları kapatıldı: `403 + feature_disabled`.
+  - Admin sidebar’dan **Menu Management** kaldırıldı (UI görünmez).
+  - Menu Management API modülü feature flag ile kapatıldı: GET/POST/PATCH/DELETE `403 + feature_disabled`.
+
+- **Dashboard Stabilizasyonu (DONE):**
+  - `/api/admin/dashboard/summary` endpointi güçlendirildi ve tek endpointten KPI/trend/risk verisi üretecek şekilde genişletildi.
+  - KPI kartları tıklanabilir hale getirildi (click-through):
+    - today → `/admin/listings?period=today`
+    - last_7_days → `/admin/listings?period=last_7_days`
+  - Endpoint tarafında hata yakalama/fallback davranışı sertleştirildi (frontend loading/error akışları bozulmuyor).
+
+### Teknik Dosyalar
+- Backend:
+  - `backend/server.py`
+- Frontend:
+  - `frontend/src/pages/admin/AdminCategoriesImportExport.jsx`
+  - `frontend/src/components/Layout.js`
+  - `frontend/src/portals/backoffice/BackofficePortalApp.jsx`
+  - `frontend/src/shared/adminRbac.js`
+  - `frontend/src/pages/Dashboard.js`
+
+### Doğrulama
+- Self-test (curl + smoke): PASS
+  - menu API disabled: 403/feature_disabled
+  - csv export/sample: 200
+  - xlsx export/sample + dry-run(format=xlsx): 403/feature_disabled
+  - dashboard summary: 200, kpis/trends/risk_panel dolu
+- Testing agent:
+  - `/app/test_reports/iteration_16.json` → PASS
+  - `/app/test_reports/iteration_17.json` → PASS (backend 15/15, frontend PASS)
+
+### Kalan P0 Sırası (scope freeze)
+1. Watermark & Image Pipeline
+2. Transactions Log
+3. Attribute Manager
+4. Minimal Moderation
+5. Search final polish (facet UI + suggest/autocomplete)
