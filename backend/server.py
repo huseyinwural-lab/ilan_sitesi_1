@@ -15990,6 +15990,23 @@ async def admin_reindex_search_projection(
         runtime = await get_active_meili_runtime(session)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"ACTIVE_CONFIG_REQUIRED: {exc}") from exc
+
+    base_filterable = [
+        "category_path_ids",
+        "make_id",
+        "model_id",
+        "trim_id",
+        "city_id",
+        "attribute_flat_map",
+        "price",
+        "premium_score",
+    ]
+    dynamic_attribute_fields = await _load_all_filterable_attribute_fields(session)
+    try:
+        await meili_update_filterable_attributes(runtime, list(dict.fromkeys(base_filterable + dynamic_attribute_fields)))
+    except Exception:
+        logging.getLogger("search_sync").warning("meili_filterable_update_failed_before_reindex", exc_info=True)
+
     if payload.reset_index:
         await meili_clear_documents(runtime)
 
