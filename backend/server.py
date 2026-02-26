@@ -11322,7 +11322,7 @@ def _normalize_category_module(value: Optional[str]) -> str:
     module_value = value.strip().lower()
     module_value = CATEGORY_MODULE_ALIASES.get(module_value, module_value)
     if module_value not in SUPPORTED_CATEGORY_MODULES:
-        return "other"
+        raise HTTPException(status_code=400, detail="module invalid")
     return module_value
 
 
