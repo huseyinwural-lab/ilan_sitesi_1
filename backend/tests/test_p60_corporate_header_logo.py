@@ -66,10 +66,10 @@ def dealer_token():
 class TestCorporateHeaderGuardrails:
     """Test corporate header 3-row enforcement and row1 logo requirement"""
     
-    def test_corporate_header_requires_3_rows(self, admin_token):
-        """Corporate header POST should reject config with != 3 rows"""
-        # Config with only 2 rows
-        invalid_config = {
+    def test_corporate_header_normalizes_to_3_rows(self, admin_token):
+        """Corporate header normalizes partial config to always have 3 rows"""
+        # Config with only 2 rows - normalization fills in missing row from defaults
+        partial_config = {
             "rows": [
                 {"id": "row1", "title": "Row 1", "blocks": [{"id": "logo", "type": "logo", "label": "Logo"}]},
                 {"id": "row2", "title": "Row 2", "blocks": [{"id": "test", "type": "test", "label": "Test"}]},
@@ -83,13 +83,19 @@ class TestCorporateHeaderGuardrails:
                 "segment": "corporate",
                 "scope": "system",
                 "status": "draft",
-                "config_data": invalid_config
+                "config_data": partial_config
             },
             headers={"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
         )
-        assert response.status_code == 400, f"Expected 400, got {response.status_code}: {response.text[:200]}"
-        assert "3 satır" in response.json().get("detail", "").lower() or "3 row" in response.json().get("detail", "").lower()
-        print("✓ Corporate header correctly rejects config with < 3 rows")
+        # Normalization fills in row3 from defaults, so 200 is expected
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text[:200]}"
+        result = response.json()
+        config_data = result.get("item", {}).get("config_data", {})
+        rows = config_data.get("rows", [])
+        assert len(rows) == 3, f"Expected 3 rows after normalization, got {len(rows)}"
+        row_ids = [row.get("id") for row in rows]
+        assert row_ids == ["row1", "row2", "row3"]
+        print("✓ Corporate header normalizes to 3 rows from partial input")
     
     def test_corporate_header_row1_requires_logo(self, admin_token):
         """Corporate header POST should reject row1 without logo block"""
