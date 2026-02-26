@@ -18737,10 +18737,13 @@ async def admin_create_category(
         segment_input = payload.vehicle_segment
         if not segment_input and isinstance(payload.form_schema, dict):
             segment_input = _vehicle_segment_from_schema(payload.form_schema)
-        vehicle_segment = _normalize_vehicle_segment(segment_input)
-        vehicle_link_status = await _get_vehicle_segment_link_status(session, vehicle_segment=vehicle_segment)
-        if not vehicle_link_status.get("linked"):
-            raise HTTPException(status_code=409, detail="Seçilen segment master data ile bağlı değil")
+        vehicle_link_status = await _resolve_vehicle_segment_from_master(session, segment_input=segment_input)
+        vehicle_segment = vehicle_link_status["segment"]
+        await _assert_vehicle_segment_unique_in_country(
+            session,
+            vehicle_segment=vehicle_segment,
+            country_code=country_code,
+        )
 
     slug_query = await session.execute(
         select(Category)
@@ -18780,17 +18783,14 @@ async def admin_create_category(
 
     wizard_progress = payload.wizard_progress or {"state": "draft"}
 
-    if payload.sort_order is not None:
-        if int(payload.sort_order) <= 0:
-            raise HTTPException(status_code=400, detail="sort_order 1 veya daha büyük olmalı")
-        sort_order = int(payload.sort_order)
-    else:
-        sort_order = await _next_category_sort_order(
-            session,
-            parent_id=parent.id if parent else None,
-            module_value=module_value,
-            country_code=country_code,
-        )
+    sort_order = int(payload.sort_order)
+    await _assert_category_sort_available(
+        session,
+        country_code=country_code,
+        module_value=module_value,
+        parent_id=parent.id if parent else None,
+        sort_order=sort_order,
+    )
 
     category = Category(
         id=uuid.uuid4(),
