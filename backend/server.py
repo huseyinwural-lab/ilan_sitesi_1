@@ -10972,7 +10972,7 @@ class CategoryCreatePayload(BaseModel):
     module: Optional[str] = None
     vehicle_segment: Optional[str] = None
     active_flag: Optional[bool] = True
-    sort_order: Optional[int] = 0
+    sort_order: Optional[int] = None
     hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
     wizard_progress: Optional[Dict[str, Any]] = None
