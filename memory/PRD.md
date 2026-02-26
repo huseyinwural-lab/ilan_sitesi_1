@@ -577,3 +577,42 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### Bilinen Sınır
 - Gerçek external Meili URL+key ile stage/prod smoke, admin panelde aktif edilen confige bağlıdır.
 - Aktif config yoksa health/reindex/stage-smoke endpointleri fail-fast `ACTIVE_CONFIG_REQUIRED` döner.
+
+---
+
+## 2026-02-26 — External Aktivasyon PASS + P1.3 Facet Başlangıcı
+
+### External Meili Aktivasyonu ve Zorunlu Teknik Doğrulama (PASS)
+- External config aktif: `http://217.195.207.70:7700` / `listings_index`
+- `GET /api/admin/search/meili/health` → `ok=true` (ACTIVE_CONFIG_REQUIRED yok)
+- `GET /api/admin/system/health-detail` → `meili.connected=true`, `status=connected`
+- `GET /api/admin/search/meili/stage-smoke?q=` → `200`, hit>0, ranking sort doğrulandı
+- `POST /api/admin/search/meili/reindex` + poll sonrası
+  - `index_document_count == DB active listing count` (5004)
+- Event-driven canlı doğrulama:
+  - publish → index add ✅
+  - unpublish → index remove ✅
+  - soft-delete → index remove ✅
+- Retry queue:
+  - dead_letter=0, failed=0, metrics healthy
+
+### P1.3 (Facet + Dinamik Sidebar) — Bu turda yapılanlar
+- `/api/v2/search` Meili tabanlı facet aggregation ile güncellendi.
+- Attribute Manager `filterable=true` alanlar kategori bazlı facet olarak üretiliyor.
+- `attr[key]`, `attr[key]_min`, `attr[key]_max` query formatı destekleniyor.
+- Facet count’lar Meili aggregation’dan dönüyor (DB fallback yok).
+- Frontend `SearchPage` attribute filtrelerini backend’e gönderiyor.
+- `FacetRenderer` tarafında `count=0` seçenek disable davranışı aktif.
+
+### Ek Teknik Güncellemeler
+- Meili index stats endpoint entegrasyonu (`index_document_count` health/reindex/stage-smoke cevaplarında)
+- Filterable attribute güncellemesinde task-completion bekleme eklendi (race condition azaltıldı)
+- Dead-letter retry endpoint eklendi:
+  - `POST /api/admin/search/meili/sync-jobs/retry-dead-letter`
+
+### Kanıt ve Testler
+- Evidence: `/app/docs/P1_2_LISTING_INDEX_SYNC_EVIDENCE.md`
+- Runbook: `/app/docs/P1_MEILI_PRODUCTION_RUNBOOK.md`
+- Testing agent: `/app/test_reports/iteration_15.json`
+  - backend PASS
+  - frontend PASS
