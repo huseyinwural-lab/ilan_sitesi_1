@@ -191,6 +191,10 @@ function App() {
                   </Route>
 
                   <Route
+                    path="/ilan-ver"
+                    element={<Navigate to="/ilan-ver/kategori-secimi" replace />}
+                  />
+                  <Route
                     path="/ilan-ver/kategori-secimi"
                     element={
                       <ProtectedRoute portalScope="account">
