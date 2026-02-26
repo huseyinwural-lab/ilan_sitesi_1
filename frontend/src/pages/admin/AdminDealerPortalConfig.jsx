@@ -189,6 +189,7 @@ export default function AdminDealerPortalConfig() {
     if (!over || active.id === over.id) return;
     const oldIndex = rows.findIndex((row) => row.id === active.id);
     const newIndex = rows.findIndex((row) => row.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
     const next = arrayMove(rows, oldIndex, newIndex);
     setRows((prev) => {
       const others = prev.filter((row) => !rows.some((it) => it.id === row.id));
