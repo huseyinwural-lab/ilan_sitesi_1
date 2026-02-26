@@ -763,7 +763,7 @@ export default function AdminSystemSettingsPage() {
                       <div data-testid={`system-settings-meili-history-index-${item.id}`}>Index: {item.meili_index_name}</div>
                       <div data-testid={`system-settings-meili-history-status-${item.id}`}>Status: {item.status}</div>
                       <div data-testid={`system-settings-meili-history-key-${item.id}`}>Key: {item.master_key_masked || '••••'}</div>
-                      <div data-testid={`system-settings-meili-history-test-${item.id}`}>
+                      <div data-testid={`system-settings-meili-history-test-result-${item.id}`}>
                         Test: {item.last_test_result?.status || 'N/A'} ({item.last_test_result?.reason_code || 'none'})
                       </div>
                       <div data-testid={`system-settings-meili-history-created-${item.id}`}>Created: {item.created_at || '-'}</div>
