@@ -806,6 +806,12 @@ async def admin_save_ui_config(
     normalized_segment = _normalize_segment(payload.segment)
     normalized_scope, normalized_scope_id = _normalize_scope(payload.scope, payload.scope_id)
     normalized_status = _normalize_status(payload.status)
+    normalized_config_data = payload.config_data or {}
+
+    if normalized_type == "header":
+        normalized_config_data = _normalize_header_config_data(normalized_config_data, normalized_segment)
+        if normalized_segment == "corporate":
+            _validate_corporate_header_guardrails(normalized_config_data)
 
     next_version = await _next_ui_config_version(
         session,
@@ -823,7 +829,7 @@ async def admin_save_ui_config(
         scope_id=normalized_scope_id,
         status=normalized_status,
         version=next_version,
-        config_data=payload.config_data or {},
+        config_data=normalized_config_data,
         created_by=_safe_uuid(current_user.get("id")),
         created_by_email=current_user.get("email"),
         published_at=now_dt if normalized_status == "published" else None,
