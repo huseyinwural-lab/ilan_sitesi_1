@@ -21057,9 +21057,10 @@ async def public_search_suggest(
 
     country_code = (country or "GLOBAL").strip().upper()
     cache_key = _suggest_cache_key(country_code, query, safe_limit)
+    cache_started = time.perf_counter()
     cached = _get_cached_suggest_payload(cache_key)
     if cached:
-        return {**cached, "cached": True}
+        return {**cached, "cached": True, "latency_ms": int((time.perf_counter() - cache_started) * 1000)}
 
     started = time.perf_counter()
     try:
