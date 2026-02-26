@@ -11408,22 +11408,54 @@ def _assert_category_parent_compatible(
 
 
 
-async def _next_category_sort_order(session: AsyncSession, parent_id: Optional[uuid.UUID]) -> int:
+def _raise_category_integrity_error(exc: IntegrityError) -> None:
+    message = str(exc.orig).lower() if exc.orig else str(exc).lower()
+    if "uq_categories_scope_sort" in message or "uq_categories_parent_sort" in message:
+        raise HTTPException(
+            status_code=409,
+            detail="Aynı ülke/modül/üst kategori kapsamında sıra (order_index) benzersiz olmalı.",
+        ) from exc
+    raise HTTPException(status_code=409, detail="Kategori kaydı çakıştı.") from exc
+
+
+async def _next_category_sort_order(
+    session: AsyncSession,
+    *,
+    parent_id: Optional[uuid.UUID],
+    module_value: str,
+    country_code: Optional[str],
+) -> int:
     query = select(func.max(Category.sort_order)).where(Category.is_deleted.is_(False))
+    query = query.where(Category.module == module_value)
     if parent_id:
         query = query.where(Category.parent_id == parent_id)
     else:
         query = query.where(Category.parent_id.is_(None))
+    if country_code:
+        query = query.where(Category.country_code == country_code)
+    else:
+        query = query.where(Category.country_code.is_(None))
     max_value = (await session.execute(query)).scalar_one_or_none() or 0
     return int(max_value) + 1
 
 
-async def _reindex_category_siblings(session: AsyncSession, parent_id: Optional[uuid.UUID]) -> None:
+async def _reindex_category_siblings(
+    session: AsyncSession,
+    *,
+    parent_id: Optional[uuid.UUID],
+    module_value: str,
+    country_code: Optional[str],
+) -> None:
     query = select(Category).where(Category.is_deleted.is_(False))
+    query = query.where(Category.module == module_value)
     if parent_id:
         query = query.where(Category.parent_id == parent_id)
     else:
         query = query.where(Category.parent_id.is_(None))
+    if country_code:
+        query = query.where(Category.country_code == country_code)
+    else:
+        query = query.where(Category.country_code.is_(None))
     result = await session.execute(query.order_by(Category.sort_order.asc(), Category.created_at.asc()))
     siblings = result.scalars().all()
     for idx, item in enumerate(siblings, start=1):
