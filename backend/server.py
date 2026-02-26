@@ -14867,7 +14867,6 @@ async def admin_list_payments(
         conditions.append(
             or_(
                 Payment.provider_ref.ilike(term),
-                Payment.provider_payment_id.ilike(term),
                 cast(Payment.user_id, String).ilike(term),
                 cast(Payment.invoice_id, String).ilike(term),
             )
@@ -14966,7 +14965,6 @@ async def admin_export_payments_csv(
         conditions.append(
             or_(
                 Payment.provider_ref.ilike(term),
-                Payment.provider_payment_id.ilike(term),
                 cast(Payment.user_id, String).ilike(term),
                 cast(Payment.invoice_id, String).ilike(term),
             )
