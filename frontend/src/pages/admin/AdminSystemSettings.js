@@ -650,6 +650,10 @@ export default function AdminSystemSettingsPage() {
             </div>
           </div>
 
+          <div className="text-xs text-slate-600" data-testid="system-settings-meili-health-status">
+            Admin Health: <span className={meiliConnected ? 'text-emerald-600' : 'text-rose-600'}>{meiliConnected ? 'connected' : (meiliHealthInfo?.status || 'not_configured')}</span>
+          </div>
+
           {!meiliEncryptionKeyPresent && (
             <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700" data-testid="system-settings-meili-encryption-warning">
               CONFIG_ENCRYPTION_KEY eksik. Konfig kaydetme/aktive etme kapalı.
