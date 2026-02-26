@@ -653,7 +653,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Header/sidebar DB config üzerinden render
 - Kapalı/yetkisiz item görünmez
 - Aktif route highlight doğru
-- Hardcoded menü fallback kaldırıldı
+- Draft Mode v1: undo (persist öncesi) + publish + rollback + revision listesi
 
 ### Dealer Data & Dashboard
 - Tek endpoint: `GET /api/dealer/dashboard/summary`
@@ -674,8 +674,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
   - `dealer_contact_click`
 
 ### Test & Kanıt
-- Testing agent raporları: `/app/test_reports/iteration_19.json`, `/app/test_reports/iteration_23.json` (**PASS**)
-- Evidence dosyası: `/app/docs/DEALER_DASHBOARD_V1_EVIDENCE.md` + backend test suite `/app/backend/tests/test_p1_dealer_dashboard_bulk_ops.py`
+- Testing agent raporları: `/app/test_reports/iteration_19.json`, `/app/test_reports/iteration_23.json`, `/app/test_reports/iteration_24.json` (**PASS**)
+- Evidence dosyası: `/app/docs/DEALER_DASHBOARD_V1_EVIDENCE.md` + backend test suite `/app/backend/tests/test_p1_dealer_dashboard_bulk_ops.py`, `/app/backend/tests/test_p58_dealer_draft_bulk_async.py`
 ---
 ## 2026-02-26 — P0 Kategori Yönetimi Düzeltmesi (Bloklayıcı)
 
@@ -696,4 +696,4 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 ### API Kontratları ve Doğrulama
 - Hata kontratı dokümanı: `/app/docs/CATEGORY_API_ERROR_CONTRACTS.md`
 - Swagger/OpenAPI response examples: `ORDER_INDEX_ALREADY_USED`, `VEHICLE_SEGMENT_NOT_FOUND`
-- Final doğrulama raporları: `/app/test_reports/iteration_22.json` ve `/app/test_reports/iteration_23.json` (**PASS**)
+- Final doğrulama raporları: `/app/test_reports/iteration_22.json`, `/app/test_reports/iteration_23.json`, `/app/test_reports/iteration_24.json` (**PASS**)
