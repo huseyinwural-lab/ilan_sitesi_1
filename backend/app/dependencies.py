@@ -31,6 +31,10 @@ ADMIN_ROLES = {
 
 DEALER_ROLES = {"dealer"}
 
+PERMISSION_ROLE_MAP = {
+    "ADMIN_UI_DESIGNER": ["super_admin", "country_admin"],
+}
+
 
 async def _get_sql_user(user_id: str, session: AsyncSession) -> Optional[SqlUser]:
     try:
@@ -169,6 +173,16 @@ def check_permissions(required_roles: list[str]):
     permission_checker.required_scope = required_scope
 
     return permission_checker
+
+
+def check_named_permission(permission_code: str):
+    required_roles = PERMISSION_ROLE_MAP.get(permission_code)
+    if not required_roles:
+        raise RuntimeError(f"Unknown permission: {permission_code}")
+
+    checker = check_permissions(required_roles)
+    checker.required_permission = permission_code
+    return checker
 
 
 def require_portal_scope(scope: str):
