@@ -165,7 +165,7 @@ function App() {
                   <Route path="/user/messages" element={<Navigate to="/account/messages" replace />} />
                   <Route path="/user/support" element={<Navigate to="/account/support" replace />} />
                   <Route path="/user/profile" element={<Navigate to="/account/security" replace />} />
-                  <Route path="/dealer/dashboard" element={<Navigate to="/dealer" replace />} />
+                  <Route path="/dealer/dashboard" element={<Navigate to="/dealer/overview" replace />} />
 
                   {/* User Panel Routes */}
                   <Route
