@@ -627,3 +627,53 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Public phase stratejik plan:
   - `/app/memory/PUBLIC_PHASE_STRATEGIC_PLAN.md`
 
+---
+
+## 2026-02-26 — Dealer Dashboard + Manuel Kontrol Sistemi v1 (Tek Paket)
+
+### Teslim Edilenler
+- Route haritası tamamlandı:
+  - `/dealer/overview`, `/dealer/listings`, `/dealer/messages`, `/dealer/customers`, `/dealer/reports`, `/dealer/purchase`, `/dealer/settings`
+- Header hızlı aksiyonları (dealer layout içinde):
+  - Favoriler, Mesajlar, İlan Ver, Profil
+- Config modeli eklendi:
+  - `dealer_nav_items` (header + sidebar)
+  - `dealer_modules` (widget registry)
+- Global default seed config aktif
+
+### Admin Manuel Kontrol UI
+- Sayfa: `/admin/dealer-portal-config`
+- dnd-kit ile drag&drop sıralama (nav + module)
+- visible toggle
+- feature flag read-only gösterim
+- dealer önizleme paneli
+- audit log kayıtları
+
+### Dealer Portal (Config-Driven)
+- Header/sidebar DB config üzerinden render
+- Kapalı/yetkisiz item görünmez
+- Aktif route highlight doğru
+- Hardcoded menü fallback kaldırıldı
+
+### Dealer Data & Dashboard
+- Tek endpoint: `GET /api/dealer/dashboard/summary`
+- In-memory TTL cache v1
+- Error contract: `code + message`
+- Widget seti click-through ile tamamlandı
+
+### RBAC / Visibility
+- Dealer olmayan kullanıcılar `dealer` endpointlerine erişemez
+- feature_flag kapalıysa menü/widget görünmez
+- Purchase route erişilebilir
+
+### KPI Event Tracking
+- `POST /api/analytics/events` dealer eventleriyle entegre edildi:
+  - `dealer_nav_click`
+  - `dealer_widget_click`
+  - `dealer_listing_create_start`
+  - `dealer_contact_click`
+
+### Test & Kanıt
+- Testing agent final raporu: `/app/test_reports/iteration_19.json` (**PASS**)
+- Evidence dosyası: `/app/docs/DEALER_DASHBOARD_V1_EVIDENCE.md`
+
