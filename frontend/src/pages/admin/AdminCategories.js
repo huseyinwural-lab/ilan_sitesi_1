@@ -336,6 +336,47 @@ const AdminCategories = () => {
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
   }), []);
 
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const visibleItems = items;
+  const visibleItemIds = useMemo(() => visibleItems.map((item) => item.id), [visibleItems]);
+  const allVisibleSelected = useMemo(
+    () => visibleItemIds.length > 0 && visibleItemIds.every((id) => selectedIdSet.has(id)),
+    [visibleItemIds, selectedIdSet],
+  );
+  const someVisibleSelected = useMemo(
+    () => visibleItemIds.some((id) => selectedIdSet.has(id)),
+    [visibleItemIds, selectedIdSet],
+  );
+
+  const descendantsByItem = useMemo(() => {
+    const childrenByParent = new Map();
+    visibleItems.forEach((item) => {
+      const parentKey = item.parent_id || "__root__";
+      if (!childrenByParent.has(parentKey)) {
+        childrenByParent.set(parentKey, []);
+      }
+      childrenByParent.get(parentKey).push(item.id);
+    });
+
+    const collectDescendants = (nodeId) => {
+      const stack = [nodeId];
+      const acc = [];
+      while (stack.length > 0) {
+        const currentId = stack.pop();
+        acc.push(currentId);
+        const children = childrenByParent.get(currentId) || [];
+        children.forEach((childId) => stack.push(childId));
+      }
+      return acc;
+    };
+
+    const result = new Map();
+    visibleItems.forEach((item) => {
+      result.set(item.id, collectDescendants(item.id));
+    });
+    return result;
+  }, [visibleItems]);
+
   const trackAdminWizardEvent = useCallback(async (eventName, details = {}) => {
     const token = localStorage.getItem('access_token');
     if (!token) return;
