@@ -464,22 +464,36 @@ export const CorporateHeaderDesigner = () => {
   const handleLogoFileChange = async (event) => {
     setStatus('');
     setError('');
+    setUploadIssue(null);
     const selected = event.target.files?.[0];
     if (!selected) {
       setUploadFile(null);
       setUploadMeta(null);
+      setUploadIssue(null);
       return;
     }
 
     const ext = fileExtension(selected.name);
     if (!['png', 'svg', 'webp'].includes(ext)) {
-      setError('Sadece png/svg/webp formatı desteklenir');
+      const issue = {
+        code: 'INVALID_FILE_TYPE',
+        summary: UPLOAD_ERROR_MESSAGES.INVALID_FILE_TYPE,
+        details: { expected: ['png', 'svg', 'webp'], received: ext || 'unknown' },
+      };
+      setUploadIssue(issue);
+      setError(issue.summary);
       setUploadFile(null);
       setUploadMeta(null);
       return;
     }
     if (selected.size > MAX_LOGO_BYTES) {
-      setError('Logo dosyası 2MB sınırını aşamaz');
+      const issue = {
+        code: 'FILE_TOO_LARGE',
+        summary: UPLOAD_ERROR_MESSAGES.FILE_TOO_LARGE,
+        details: { expected_max_bytes: MAX_LOGO_BYTES, received_bytes: selected.size },
+      };
+      setUploadIssue(issue);
+      setError(issue.summary);
       setUploadFile(null);
       setUploadMeta(null);
       return;
@@ -488,7 +502,13 @@ export const CorporateHeaderDesigner = () => {
     try {
       const dimensions = ext === 'svg' ? await parseSvgDimensions(selected) : await parseRasterDimensions(selected);
       if (!validateRatio(dimensions.ratio)) {
-        setError(`Aspect ratio 3:1 (±%10) olmalı. Mevcut: ${dimensions.ratio.toFixed(2)}`);
+        const issue = {
+          code: 'INVALID_ASPECT_RATIO',
+          summary: UPLOAD_ERROR_MESSAGES.INVALID_ASPECT_RATIO,
+          details: { expected: '3:1 ±10%', received_ratio: Number(dimensions.ratio.toFixed(4)) },
+        };
+        setUploadIssue(issue);
+        setError(issue.summary);
         setUploadFile(null);
         setUploadMeta(null);
         return;
@@ -505,22 +525,36 @@ export const CorporateHeaderDesigner = () => {
         height: Math.round(dimensions.height),
         ratio: Number(dimensions.ratio.toFixed(4)),
       });
+      setUploadIssue(null);
       setStatus('Logo dosyası doğrulandı, yüklemeye hazır');
     } catch (parseError) {
       setUploadFile(null);
       setUploadMeta(null);
-      setError(parseError.message || 'Logo doğrulaması başarısız');
+      const issue = {
+        code: 'INVALID_FILE_CONTENT',
+        summary: parseError.message || UPLOAD_ERROR_MESSAGES.INVALID_FILE_CONTENT,
+        details: { expected: 'Geçerli görsel içeriği', received: 'Parse edilemeyen dosya' },
+      };
+      setUploadIssue(issue);
+      setError(issue.summary);
     }
   };
 
   const uploadLogo = async () => {
     if (!uploadFile) {
-      setError('Önce logo dosyası seçin');
+      const issue = {
+        code: 'INVALID_FILE_CONTENT',
+        summary: 'Önce logo dosyası seçin',
+        details: { expected: 'Seçili dosya', received: 'Boş seçim' },
+      };
+      setUploadIssue(issue);
+      setError(issue.summary);
       return;
     }
 
     setStatus('');
     setError('');
+    setUploadIssue(null);
     setUploading(true);
     try {
       const formData = new FormData();
@@ -538,20 +572,26 @@ export const CorporateHeaderDesigner = () => {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data?.detail || 'Logo yükleme başarısız');
+        const issue = parseApiError(data, response.status);
+        setUploadIssue(issue);
+        throw new Error(issue.summary || 'Logo yükleme başarısız');
       }
 
       const item = data?.item;
       const safeDraft = ensureLogoInRow1(item?.config_data || configData);
       setConfigData(safeDraft);
       setLatestConfigId(item?.id || null);
-      setUploadPreviewUrl(data?.logo_url || safeDraft?.logo?.url || '');
+      setUploadPreviewUrl(withCacheBust(data?.logo_url || safeDraft?.logo?.url || ''));
       setUploadMeta(data?.logo_meta || uploadMeta);
+      setStorageHealth(data?.storage_health || null);
       setUploadFile(null);
+      setUploadIssue(null);
       setStatus(`Logo yüklendi ve taslağa işlendi (v${item?.version || '-'})`);
+      toast.success('Logo yüklendi ve önizleme güncellendi');
       await loadDraft();
     } catch (requestError) {
       setError(requestError.message || 'Logo yükleme başarısız');
+      toast.error(requestError.message || 'Logo yükleme başarısız');
     } finally {
       setUploading(false);
     }
