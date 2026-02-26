@@ -508,6 +508,7 @@ const AdminCategories = () => {
     const payload = {
       ...form,
       sort_order: Number(form.sort_order || 0),
+      vehicle_segment: form.module === "vehicle" ? vehicleSegment : undefined,
       hierarchy_complete: effectiveHierarchyComplete,
       expected_updated_at: activeEditing?.updated_at,
     };
