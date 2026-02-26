@@ -1,6 +1,6 @@
 # ROADMAP
 
-**Son güncelleme:** 2026-02-26
+**Son güncelleme:** 2026-02-26 (P61)
 
 Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tutulur.
 
@@ -61,9 +61,11 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 - Dealer Dashboard + Manuel Kontrol Sistemi v1 — **IN PROGRESS (RESTARTED)** 🔴
   - Backend foundation + P1 core implementasyonu hazır (config render, 3 katman header, dnd persist)
   - Kategori P0 kapanışı sonrası yeniden başlatıldı ve ilk iterasyon PASS aldı (`/app/test_reports/iteration_23.json`)
+  - **Yeni:** P0 backend stabilization tamamlandı (`p61_ui_dashboard_cfg`, dashboard guardrails, test PASS `/app/test_reports/iteration_27.json`)
 
 ### Sıradaki Faz — Dealer Dashboard P1 (Restart)
 - **ACTIVE** 🔴
+- P0 backend tamamlandığı için bir sonraki adım: Corporate Dashboard Grid DnD frontend editörü (API entegrasyonu)
 - Bu iterasyonda tamamlananlar:
   - Config-driven render finalizasyonu (header row1/row2/row3 + modules)
   - dnd-kit menü yönetimi kalıcı kaydetme
