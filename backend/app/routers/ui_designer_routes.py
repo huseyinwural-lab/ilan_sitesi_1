@@ -528,7 +528,7 @@ async def admin_delete_ui_theme(
     return {"ok": True}
 
 
-@router.get("/admin/ui/themes/assignments")
+@router.get("/admin/ui/theme-assignments")
 async def admin_list_ui_theme_assignments(
     scope: Optional[str] = Query(default=None),
     scope_id: Optional[str] = Query(default=None),
@@ -543,7 +543,7 @@ async def admin_list_ui_theme_assignments(
     return {"items": [_serialize_ui_theme_assignment(row) for row in rows]}
 
 
-@router.post("/admin/ui/themes/assignments")
+@router.post("/admin/ui/theme-assignments")
 async def admin_assign_ui_theme(
     payload: UIThemeAssignmentPayload,
     current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
@@ -589,7 +589,7 @@ async def admin_assign_ui_theme(
     return {"ok": True, "item": _serialize_ui_theme_assignment(row)}
 
 
-@router.delete("/admin/ui/themes/assignments/{assignment_id}")
+@router.delete("/admin/ui/theme-assignments/{assignment_id}")
 async def admin_delete_ui_theme_assignment(
     assignment_id: str,
     current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
