@@ -10970,6 +10970,7 @@ class CategoryCreatePayload(BaseModel):
     parent_id: Optional[str] = None
     country_code: Optional[str] = None
     module: Optional[str] = None
+    vehicle_segment: Optional[str] = None
     active_flag: Optional[bool] = True
     sort_order: Optional[int] = 0
     hierarchy_complete: Optional[bool] = None
@@ -10983,6 +10984,7 @@ class CategoryUpdatePayload(BaseModel):
     parent_id: Optional[str] = None
     country_code: Optional[str] = None
     module: Optional[str] = None
+    vehicle_segment: Optional[str] = None
     active_flag: Optional[bool] = None
     sort_order: Optional[int] = None
     hierarchy_complete: Optional[bool] = None
