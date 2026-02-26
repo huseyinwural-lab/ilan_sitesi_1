@@ -12482,6 +12482,12 @@ async def _moderation_transition_sql(
     )
     if commit:
         await session.commit()
+        await _schedule_listing_sync_job(
+            session,
+            listing_id=listing.id,
+            operation="upsert",
+            trigger=f"moderation_{action_type}",
+        )
     else:
         await session.flush()
 
