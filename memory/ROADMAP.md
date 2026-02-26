@@ -70,8 +70,11 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
   - Header 1. satır sabit default set + manuel sıralama
   - 2. satır modül bazlı manuel sıralama
   - 3. satır mağaza filtresi + kullanıcı dropdown
+  - Iterasyon 2: Undo paneli (persist öncesi), draft save/publish/rollback, revision listesi
+  - Bulk 1000+ async job altyapısı (job queue + polling + idempotency + retry)
 - Sonraki iterasyon:
-  - Undo paneli (değişiklik özeti + son işlem geri al) [kapsam dışı bırakıldı, planlı]
+  - Draft publish UI hardening (multi-admin conflict resolution / version check)
+  - Bulk job admin monitör ekranı (listeleme + retry butonu)
 
 ---
 
