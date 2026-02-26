@@ -13,6 +13,7 @@ export const ADMIN_ROLE_GROUPS = {
   pricingManager: ['super_admin', 'pricing_manager'],
   masterdataManager: ['super_admin', 'masterdata_manager'],
   system: ['super_admin', 'country_admin'],
+  uiDesigner: ['super_admin', 'country_admin'],
 };
 
 export const ADMIN_ROUTE_RULES = [
@@ -42,6 +43,7 @@ export const ADMIN_ROUTE_RULES = [
   { pattern: /^\/admin\/site-design\/header$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/site-design\/footer$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/site-design\/theme$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
+  { pattern: /^\/admin\/user-interface-design$/, roles: ADMIN_ROLE_GROUPS.uiDesigner },
   { pattern: /^\/admin\/info-pages$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/categories$/, roles: ADMIN_ROLE_GROUPS.catalogView },
   { pattern: /^\/admin\/categories\/import-export$/, roles: ADMIN_ROLE_GROUPS.catalogAdmin },
