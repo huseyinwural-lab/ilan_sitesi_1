@@ -14836,7 +14836,7 @@ async def dealer_messages(
         await session.execute(
             select(Conversation)
             .where(Conversation.seller_id == dealer_uuid)
-            .order_by(desc(Conversation.updated_at))
+            .order_by(desc(Conversation.created_at))
             .limit(100)
         )
     ).scalars().all()
