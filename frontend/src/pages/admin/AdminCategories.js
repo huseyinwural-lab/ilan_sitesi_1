@@ -2575,8 +2575,15 @@ const AdminCategories = () => {
                           onChange={(e) => {
                             const nextModule = e.target.value;
                             setForm((prev) => ({ ...prev, module: nextModule }));
+                            setHierarchyFieldErrors((prev) => {
+                              const next = { ...prev };
+                              delete next.main_module;
+                              delete next.main_sort_order;
+                              return next;
+                            });
                             if (nextModule !== "vehicle") {
                               setVehicleSegment("");
+                              setVehicleSegmentError("");
                             }
                           }}
                           data-testid="categories-module-select"
