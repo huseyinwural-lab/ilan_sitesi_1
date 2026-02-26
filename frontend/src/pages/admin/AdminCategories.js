@@ -2658,23 +2658,27 @@ const AdminCategories = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3" data-testid="categories-vehicle-segment-grid">
                         <div className="space-y-1">
-                          <label className={labelClassName}>Segment</label>
-                          <select
-                            className={selectClassName}
+                          <label className={labelClassName}>Segment (Serbest Metin)</label>
+                          <input
+                            className={inputClassName}
                             value={vehicleSegment}
                             disabled={isHierarchyLocked}
-                            onChange={(e) => setVehicleSegment(e.target.value)}
-                            data-testid="categories-vehicle-segment-select"
-                          >
-                            <option value="">Segment seçiniz</option>
-                            {VEHICLE_SEGMENT_OPTIONS.map((option) => (
-                              <option key={option.value} value={option.value}>{option.label}</option>
-                            ))}
-                          </select>
+                            onChange={(e) => {
+                              setVehicleSegment(e.target.value);
+                              setVehicleSegmentError("");
+                            }}
+                            placeholder="Örn: Otomobil"
+                            data-testid="categories-vehicle-segment-input"
+                          />
+                          {vehicleSegmentError && (
+                            <div className="text-xs text-rose-600" data-testid="categories-vehicle-segment-error">
+                              {vehicleSegmentError}
+                            </div>
+                          )}
                         </div>
                         <div className="rounded-md border border-amber-300 bg-white/70 px-3 py-2 text-xs" data-testid="categories-vehicle-link-status">
                           <div className="font-semibold text-amber-900" data-testid="categories-vehicle-link-status-title">
-                            Master Data Link
+                            Master Data Linked
                           </div>
                           <div
                             className={`mt-1 ${vehicleLinkStatus.linked ? 'text-emerald-700' : 'text-amber-800'}`}
