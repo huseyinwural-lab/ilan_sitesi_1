@@ -393,9 +393,10 @@ const AdminCategories = () => {
   const autosaveSnapshot = useMemo(() => JSON.stringify({
     form,
     schema,
+    vehicle_segment: vehicleSegment,
     hierarchy_complete: effectiveHierarchyComplete,
     wizard_progress: wizardProgress,
-  }), [form, schema, effectiveHierarchyComplete, wizardProgress]);
+  }), [form, schema, vehicleSegment, effectiveHierarchyComplete, wizardProgress]);
 
   const formatTime = (value) => {
     if (!value) return "";
@@ -413,6 +414,7 @@ const AdminCategories = () => {
     const snapshot = {
       form: override.form ?? form,
       schema: override.schema ?? schema,
+      vehicle_segment: override.vehicle_segment ?? vehicleSegment,
       hierarchy_complete: override.hierarchy_complete ?? effectiveHierarchyComplete,
       wizard_progress: override.wizard_progress ?? wizardProgress,
     };
@@ -428,6 +430,9 @@ const AdminCategories = () => {
       }
       if (snapshot.schema) {
         setSchema(snapshot.schema);
+      }
+      if (typeof snapshot.vehicle_segment === "string") {
+        setVehicleSegment(snapshot.vehicle_segment);
       }
       if (typeof snapshot.hierarchy_complete === "boolean") {
         setHierarchyComplete(snapshot.hierarchy_complete);
