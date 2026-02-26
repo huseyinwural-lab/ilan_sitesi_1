@@ -2584,7 +2584,9 @@ const AdminCategories = () => {
                         <div className="font-medium">{form.active_flag ? 'Aktif' : 'Pasif'}</div>
                       </div>
                     </div>
-                    <div className="mt-2 text-xs text-slate-700">Sıra: Otomatik</div>
+                    <div className="mt-2 text-xs text-slate-700" data-testid="categories-summary-sort-order">
+                      Sıra: {form.sort_order || '-'}
+                    </div>
                     {form.module === 'vehicle' && (
                       <div className="mt-1 text-xs text-slate-700" data-testid="categories-summary-vehicle-segment">
                         Segment: {vehicleSegment || '-'}
