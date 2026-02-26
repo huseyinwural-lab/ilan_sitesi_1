@@ -309,12 +309,26 @@ class SearchSyncTester:
         smoke_result = self.test_endpoint("GET", "/admin/search/meili/stage-smoke", 400, admin=True,
                                         description="Stage-smoke response contract check")
         
-        # When config is available, response should have ranking_sort with premium_score:desc, published_at:desc
+        # When config is available, response should have ranking_sort with premium_score:desc, published_at:desc  
         if smoke_result["response_data"]:
             self.log("ℹ️  Stage-smoke response contract: Should return {ranking_sort: ['premium_score:desc', 'published_at:desc']} when successful")
         
+        # Check the contract endpoint for expected response structures
+        contract_result = self.test_endpoint("GET", "/admin/search/meili/contract", 200, admin=True,
+                                           description="Verify contract response structure")
+        
+        if contract_result["success"] and contract_result["response_data"]:
+            contract = contract_result["response_data"]
+            # Verify response contract fields are documented
+            expected_operations = contract.get("operations", {})
+            if "upsert" in str(expected_operations) and "delete" in str(expected_operations):
+                self.log("✅ Contract documents expected upsert/delete operations")
+            if contract.get("primary_key") == "listing_id":
+                self.log("✅ Contract specifies correct primary_key: listing_id")
+            
         self.results.append(reindex_result)
         self.results.append(smoke_result)
+        self.results.append(contract_result)
 
     def test_contract_endpoint(self):
         """Test the contract endpoint for detailed response structure"""
