@@ -15382,12 +15382,13 @@ async def admin_create_meilisearch_config(
     except MeiliConfigError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    actor_id = current_user.get("id") or current_user.get("sub")
     now_ts = datetime.now(timezone.utc)
     config = MeiliSearchConfig(
         id=uuid.uuid4(),
         created_at=now_ts,
         updated_at=now_ts,
-        created_by=current_user.get("id"),
+        created_by=str(actor_id) if actor_id else None,
         meili_url=normalized_url,
         meili_index_name=index_name,
         meili_master_key_ciphertext=encrypted_master_key,
@@ -15406,7 +15407,10 @@ async def admin_create_meilisearch_config(
     await _write_audit_log_sql(
         session=session,
         action="MEILI_CONFIG_CREATE",
-        actor=current_user,
+        actor={
+            **current_user,
+            "id": str(actor_id) if actor_id else None,
+        },
         resource_type="meilisearch_config",
         resource_id=str(config.id),
         metadata={
