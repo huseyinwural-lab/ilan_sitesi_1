@@ -13803,6 +13803,403 @@ async def admin_invoice_refund(
     return {"invoice": _admin_invoice_to_dict(invoice, user, plan)}
 
 
+class DealerVisibilityPayload(BaseModel):
+    visible: bool
+
+
+class DealerNavReorderPayload(BaseModel):
+    location: str
+    ordered_ids: List[str]
+
+
+class DealerModuleReorderPayload(BaseModel):
+    ordered_ids: List[str]
+
+
+class DealerSettingsUpdatePayload(BaseModel):
+    company_name: Optional[str] = None
+    authorized_person: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    address_street: Optional[str] = None
+    address_zip: Optional[str] = None
+    address_city: Optional[str] = None
+    address_country: Optional[str] = None
+    logo_url: Optional[str] = None
+
+
+def _dealer_role_allowed(role_scope: Optional[str], role: str) -> bool:
+    raw = (role_scope or "dealer").strip()
+    if not raw or raw == "*":
+        return True
+    allowed = {part.strip() for part in raw.split(",") if part.strip()}
+    return role in allowed
+
+
+def _serialize_dealer_nav_item(item: DealerNavItem, *, flag_enabled: Optional[bool] = None, effective_visible: Optional[bool] = None) -> Dict[str, Any]:
+    return {
+        "id": str(item.id),
+        "key": item.key,
+        "label_i18n_key": item.label_i18n_key,
+        "route": item.route,
+        "icon": item.icon,
+        "order_index": int(item.order_index or 0),
+        "visible": bool(item.visible),
+        "role_scope": item.role_scope,
+        "feature_flag": item.feature_flag,
+        "location": item.location,
+        "feature_flag_enabled": flag_enabled,
+        "effective_visible": effective_visible,
+    }
+
+
+def _serialize_dealer_module(item: DealerModule, *, flag_enabled: Optional[bool] = None, effective_visible: Optional[bool] = None) -> Dict[str, Any]:
+    return {
+        "id": str(item.id),
+        "key": item.key,
+        "title_i18n_key": item.title_i18n_key,
+        "order_index": int(item.order_index or 0),
+        "visible": bool(item.visible),
+        "feature_flag": item.feature_flag,
+        "data_source_key": item.data_source_key,
+        "feature_flag_enabled": flag_enabled,
+        "effective_visible": effective_visible,
+    }
+
+
+def _setting_value_to_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, dict):
+        if "enabled" in value:
+            return bool(value.get("enabled"))
+        if "is_enabled" in value:
+            return bool(value.get("is_enabled"))
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
+
+
+async def _resolve_feature_flags_readonly(
+    session: AsyncSession,
+    feature_keys: List[Optional[str]],
+    *,
+    country_code: Optional[str] = None,
+) -> Dict[str, bool]:
+    cleaned = {str(key).strip() for key in feature_keys if key and str(key).strip()}
+    if not cleaned:
+        return {}
+
+    result: Dict[str, bool] = {key: True for key in cleaned}
+    ff_rows = (
+        await session.execute(select(FeatureFlag).where(FeatureFlag.key.in_(list(cleaned))))
+    ).scalars().all()
+
+    ff_map = {row.key: row for row in ff_rows}
+    for key in cleaned:
+        row = ff_map.get(key)
+        if row:
+            enabled = bool(row.is_enabled)
+            allowed_countries = row.enabled_countries or []
+            if enabled and country_code and allowed_countries and country_code not in allowed_countries:
+                enabled = False
+            result[key] = enabled
+            continue
+
+        setting = await _get_system_setting_by_key(session, key, country_code=None)
+        if setting is not None:
+            result[key] = _setting_value_to_bool(setting.value)
+
+    return result
+
+
+async def _resolve_dealer_portal_config(
+    session: AsyncSession,
+    *,
+    role: str,
+    country_code: Optional[str],
+) -> Dict[str, Any]:
+    nav_rows = (
+        await session.execute(
+            select(DealerNavItem).order_by(asc(DealerNavItem.location), asc(DealerNavItem.order_index), asc(DealerNavItem.created_at))
+        )
+    ).scalars().all()
+    module_rows = (
+        await session.execute(select(DealerModule).order_by(asc(DealerModule.order_index), asc(DealerModule.created_at)))
+    ).scalars().all()
+
+    flag_map = await _resolve_feature_flags_readonly(
+        session,
+        [row.feature_flag for row in nav_rows] + [row.feature_flag for row in module_rows],
+        country_code=country_code,
+    )
+
+    header_items = []
+    sidebar_items = []
+    nav_with_meta = []
+    for row in nav_rows:
+        flag_enabled = True if not row.feature_flag else bool(flag_map.get(row.feature_flag, True))
+        role_allowed = _dealer_role_allowed(row.role_scope, role)
+        effective_visible = bool(row.visible) and role_allowed and flag_enabled
+        if row.key == "purchase":
+            effective_visible = role_allowed and bool(row.visible)
+
+        serialized = _serialize_dealer_nav_item(
+            row,
+            flag_enabled=flag_enabled,
+            effective_visible=effective_visible,
+        )
+        nav_with_meta.append(serialized)
+        if effective_visible:
+            if row.location == "header":
+                header_items.append(serialized)
+            else:
+                sidebar_items.append(serialized)
+
+    modules = []
+    modules_with_meta = []
+    for row in module_rows:
+        flag_enabled = True if not row.feature_flag else bool(flag_map.get(row.feature_flag, True))
+        effective_visible = bool(row.visible) and flag_enabled
+        serialized = _serialize_dealer_module(row, flag_enabled=flag_enabled, effective_visible=effective_visible)
+        modules_with_meta.append(serialized)
+        if effective_visible:
+            modules.append(serialized)
+
+    return {
+        "header_items": header_items,
+        "sidebar_items": sidebar_items,
+        "modules": modules,
+        "all_nav_items": nav_with_meta,
+        "all_modules": modules_with_meta,
+        "feature_flags": flag_map,
+    }
+
+
+def _dealer_summary_cache_key(dealer_id: str) -> str:
+    return f"dealer_summary:{dealer_id}"
+
+
+def _dealer_summary_get_cached(cache_key: str) -> Optional[Dict[str, Any]]:
+    row = _dealer_dashboard_summary_cache.get(cache_key)
+    if not row:
+        return None
+    if row.get("expires_at", 0) < time.time():
+        _dealer_dashboard_summary_cache.pop(cache_key, None)
+        return None
+    return row.get("payload")
+
+
+def _dealer_summary_set_cached(cache_key: str, payload: Dict[str, Any]) -> None:
+    _dealer_dashboard_summary_cache[cache_key] = {
+        "payload": payload,
+        "expires_at": time.time() + DEALER_DASHBOARD_CACHE_TTL_SECONDS,
+    }
+
+
+@api_router.get("/dealer/portal/config")
+async def dealer_portal_config(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    role = current_user.get("role") or "dealer"
+    country_code = (current_user.get("country_code") or "").upper() or None
+    resolved = await _resolve_dealer_portal_config(session, role=role, country_code=country_code)
+    return {
+        "header_items": resolved["header_items"],
+        "sidebar_items": resolved["sidebar_items"],
+        "modules": resolved["modules"],
+    }
+
+
+@api_router.get("/admin/dealer-portal/config")
+async def admin_dealer_portal_config(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
+    resolved = await _resolve_dealer_portal_config(session, role="dealer", country_code=country_code)
+    return {
+        "nav_items": resolved["all_nav_items"],
+        "modules": resolved["all_modules"],
+    }
+
+
+@api_router.get("/admin/dealer-portal/config/preview")
+async def admin_dealer_portal_config_preview(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
+    resolved = await _resolve_dealer_portal_config(session, role="dealer", country_code=country_code)
+    return {
+        "header_items": resolved["header_items"],
+        "sidebar_items": resolved["sidebar_items"],
+        "modules": resolved["modules"],
+    }
+
+
+@api_router.post("/admin/dealer-portal/nav/reorder")
+async def admin_dealer_portal_nav_reorder(
+    payload: DealerNavReorderPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    location = (payload.location or "").strip().lower()
+    if location not in {"header", "sidebar"}:
+        raise HTTPException(status_code=400, detail="Invalid location")
+    if not payload.ordered_ids:
+        raise HTTPException(status_code=400, detail="ordered_ids is required")
+
+    ids: List[uuid.UUID] = []
+    for raw in payload.ordered_ids:
+        try:
+            ids.append(uuid.UUID(raw))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid id: {raw}") from exc
+
+    rows = (
+        await session.execute(select(DealerNavItem).where(DealerNavItem.id.in_(ids), DealerNavItem.location == location))
+    ).scalars().all()
+    row_map = {row.id: row for row in rows}
+
+    for index, item_id in enumerate(ids, start=1):
+        row = row_map.get(item_id)
+        if row:
+            row.order_index = index * 10
+            row.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_PORTAL_NAV_REORDER",
+        actor=current_user,
+        resource_type="dealer_nav_items",
+        resource_id=location,
+        metadata={"ordered_ids": payload.ordered_ids, "location": location},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    _dealer_dashboard_summary_cache.clear()
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.patch("/admin/dealer-portal/nav/{item_id}")
+async def admin_dealer_portal_nav_update(
+    item_id: str,
+    payload: DealerVisibilityPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        item_uuid = uuid.UUID(item_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid item id") from exc
+
+    row = await session.get(DealerNavItem, item_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Dealer nav item not found")
+
+    row.visible = bool(payload.visible)
+    row.updated_at = datetime.now(timezone.utc)
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_PORTAL_NAV_VISIBILITY_UPDATE",
+        actor=current_user,
+        resource_type="dealer_nav_items",
+        resource_id=str(row.id),
+        metadata={"visible": bool(payload.visible)},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    _dealer_dashboard_summary_cache.clear()
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.post("/admin/dealer-portal/modules/reorder")
+async def admin_dealer_portal_module_reorder(
+    payload: DealerModuleReorderPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if not payload.ordered_ids:
+        raise HTTPException(status_code=400, detail="ordered_ids is required")
+
+    ids: List[uuid.UUID] = []
+    for raw in payload.ordered_ids:
+        try:
+            ids.append(uuid.UUID(raw))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid id: {raw}") from exc
+
+    rows = (
+        await session.execute(select(DealerModule).where(DealerModule.id.in_(ids)))
+    ).scalars().all()
+    row_map = {row.id: row for row in rows}
+    for index, module_id in enumerate(ids, start=1):
+        row = row_map.get(module_id)
+        if row:
+            row.order_index = index * 10
+            row.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_PORTAL_MODULE_REORDER",
+        actor=current_user,
+        resource_type="dealer_modules",
+        resource_id="global",
+        metadata={"ordered_ids": payload.ordered_ids},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    _dealer_dashboard_summary_cache.clear()
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.patch("/admin/dealer-portal/modules/{module_id}")
+async def admin_dealer_portal_module_update(
+    module_id: str,
+    payload: DealerVisibilityPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        module_uuid = uuid.UUID(module_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid module id") from exc
+
+    row = await session.get(DealerModule, module_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Dealer module not found")
+
+    row.visible = bool(payload.visible)
+    row.updated_at = datetime.now(timezone.utc)
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_PORTAL_MODULE_VISIBILITY_UPDATE",
+        actor=current_user,
+        resource_type="dealer_modules",
+        resource_id=str(row.id),
+        metadata={"visible": bool(payload.visible)},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    _dealer_dashboard_summary_cache.clear()
+    await session.commit()
+    return {"ok": True}
+
+
 @api_router.get("/dealer/invoices")
 async def dealer_list_invoices(
     request: Request,
