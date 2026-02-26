@@ -18934,8 +18934,6 @@ async def admin_update_category(
         updates["depth"] = (parent.depth + 1) if parent else 0
 
     if payload.sort_order is not None:
-        if int(payload.sort_order) <= 0:
-            raise HTTPException(status_code=400, detail="sort_order 1 veya daha büyük olmalı")
         updates["sort_order"] = int(payload.sort_order)
 
     if payload.country_code is not None:
@@ -18946,15 +18944,6 @@ async def admin_update_category(
         country_value = code
         if code:
             updates["allowed_countries"] = [code]
-
-    if payload.parent_id is not None and payload.sort_order is None:
-        parent_for_order = parent_candidate if payload.parent_id is not None else None
-        updates["sort_order"] = await _next_category_sort_order(
-            session,
-            parent_id=parent_for_order.id if parent_for_order else None,
-            module_value=module_value,
-            country_code=country_value,
-        )
 
     should_validate_parent = payload.parent_id is not None or payload.module is not None or payload.country_code is not None
     if should_validate_parent:
@@ -18975,10 +18964,14 @@ async def admin_update_category(
             segment_input = _vehicle_segment_from_schema(schema) if isinstance(schema, dict) else None
         if not segment_input:
             segment_input = _vehicle_segment_from_schema(category.form_schema)
-        vehicle_segment = _normalize_vehicle_segment(segment_input)
-        vehicle_link_status = await _get_vehicle_segment_link_status(session, vehicle_segment=vehicle_segment)
-        if not vehicle_link_status.get("linked"):
-            raise HTTPException(status_code=409, detail="Seçilen segment master data ile bağlı değil")
+        vehicle_link_status = await _resolve_vehicle_segment_from_master(session, segment_input=segment_input)
+        vehicle_segment = vehicle_link_status["segment"]
+        await _assert_vehicle_segment_unique_in_country(
+            session,
+            vehicle_segment=vehicle_segment,
+            country_code=country_value,
+            exclude_category_id=category.id,
+        )
 
     if payload.active_flag is not None:
         updates["is_enabled"] = payload.active_flag
@@ -19017,6 +19010,17 @@ async def admin_update_category(
 
     if not updates:
         return {"category": _serialize_category_sql(category, include_schema=True, include_translations=False)}
+
+    effective_parent_id = updates.get("parent_id", category.parent_id)
+    effective_sort_order = updates.get("sort_order", category.sort_order)
+    await _assert_category_sort_available(
+        session,
+        country_code=country_value,
+        module_value=module_value,
+        parent_id=effective_parent_id,
+        sort_order=int(effective_sort_order),
+        exclude_category_id=category.id,
+    )
 
     if "slug" in updates:
         slug_json = dict(category.slug or {})
