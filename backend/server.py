@@ -22714,6 +22714,24 @@ async def submit_vehicle_listing(
     if not media_meta:
         validation_errors.append({"code": "MEDIA_REQUIRED", "field": "media", "message": "En az 1 görsel ekleyin"})
 
+    required_attribute_keys = await _get_required_attribute_keys(
+        session,
+        str(listing.category_id) if listing.category_id else "",
+        listing.country,
+    )
+    listing_dynamic_attrs = (listing.attributes or {}).get("attributes") or {}
+    for attr_key in required_attribute_keys:
+        value = listing_dynamic_attrs.get(attr_key)
+        missing = value is None or value == "" or (isinstance(value, list) and len(value) == 0)
+        if missing:
+            validation_errors.append(
+                {
+                    "code": "ATTRIBUTE_REQUIRED",
+                    "field": f"attributes.{attr_key}",
+                    "message": f"{attr_key} zorunlu",
+                }
+            )
+
     if validation_errors:
         await session.commit()
         raise HTTPException(
