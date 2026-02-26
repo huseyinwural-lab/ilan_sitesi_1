@@ -1883,7 +1883,14 @@ const AdminCategories = () => {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          setHierarchyError(data?.detail || "Kategori güncellenemedi.");
+          const parsed = parseApiError(data, "Kategori güncellenemedi.");
+          if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
+            setHierarchyFieldErrors((prev) => ({ ...prev, main_sort_order: parsed.message }));
+          }
+          if (parsed.errorCode === "VEHICLE_SEGMENT_NOT_FOUND" || parsed.errorCode === "VEHICLE_SEGMENT_ALREADY_DEFINED") {
+            setVehicleSegmentError(parsed.message);
+          }
+          setHierarchyError(parsed.message);
           return { success: false };
         }
         updatedParent = data?.category || editing;
@@ -1909,7 +1916,14 @@ const AdminCategories = () => {
         });
         const parentData = await parentRes.json().catch(() => ({}));
         if (!parentRes.ok) {
-          setHierarchyError(parentData?.detail || "Ana kategori oluşturulamadı.");
+          const parsed = parseApiError(parentData, "Ana kategori oluşturulamadı.");
+          if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
+            setHierarchyFieldErrors((prev) => ({ ...prev, main_sort_order: parsed.message }));
+          }
+          if (parsed.errorCode === "VEHICLE_SEGMENT_NOT_FOUND" || parsed.errorCode === "VEHICLE_SEGMENT_ALREADY_DEFINED") {
+            setVehicleSegmentError(parsed.message);
+          }
+          setHierarchyError(parsed.message);
           return { success: false };
         }
         updatedParent = parentData.category;
