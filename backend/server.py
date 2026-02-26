@@ -18398,7 +18398,24 @@ async def admin_list_categories(
     }
 
 
-@api_router.get("/admin/categories/vehicle-segment/link-status")
+@api_router.get(
+    "/admin/categories/vehicle-segment/link-status",
+    responses={
+        400: {
+            "description": "Vehicle segment master data'da bulunamadı.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": {
+                            "error_code": "VEHICLE_SEGMENT_NOT_FOUND",
+                            "message": "Girilen segment master data’da bulunamadı.",
+                        }
+                    }
+                }
+            },
+        }
+    },
+)
 async def admin_category_vehicle_segment_link_status(
     request: Request,
     segment: str,
@@ -18760,7 +18777,39 @@ async def admin_export_category_sample_xlsx(
     )
 
 
-@api_router.post("/admin/categories", status_code=201)
+@api_router.post(
+    "/admin/categories",
+    status_code=201,
+    responses={
+        400: {
+            "description": "Kategori validasyon/çakışma hatası",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "order_index_conflict": {
+                            "summary": "Scope içinde sıra numarası çakıştı",
+                            "value": {
+                                "detail": {
+                                    "error_code": "ORDER_INDEX_ALREADY_USED",
+                                    "message": "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.",
+                                }
+                            },
+                        },
+                        "vehicle_segment_not_found": {
+                            "summary": "Vehicle segment master data'da yok",
+                            "value": {
+                                "detail": {
+                                    "error_code": "VEHICLE_SEGMENT_NOT_FOUND",
+                                    "message": "Girilen segment master data’da bulunamadı.",
+                                }
+                            },
+                        },
+                    }
+                }
+            },
+        }
+    },
+)
 async def admin_create_category(
     payload: CategoryCreatePayload,
     request: Request,
@@ -18919,7 +18968,38 @@ async def admin_create_category(
     return {"category": _serialize_category_sql(created, include_schema=True, include_translations=False)}
 
 
-@api_router.patch("/admin/categories/{category_id}")
+@api_router.patch(
+    "/admin/categories/{category_id}",
+    responses={
+        400: {
+            "description": "Kategori validasyon/çakışma hatası",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "order_index_conflict": {
+                            "summary": "Scope içinde sıra numarası çakıştı",
+                            "value": {
+                                "detail": {
+                                    "error_code": "ORDER_INDEX_ALREADY_USED",
+                                    "message": "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.",
+                                }
+                            },
+                        },
+                        "vehicle_segment_not_found": {
+                            "summary": "Vehicle segment master data'da yok",
+                            "value": {
+                                "detail": {
+                                    "error_code": "VEHICLE_SEGMENT_NOT_FOUND",
+                                    "message": "Girilen segment master data’da bulunamadı.",
+                                }
+                            },
+                        },
+                    }
+                }
+            },
+        }
+    },
+)
 async def admin_update_category(
     category_id: str,
     payload: CategoryUpdatePayload,
