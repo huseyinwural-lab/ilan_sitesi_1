@@ -459,6 +459,7 @@ export default function Layout({ children }) {
 
     { divider: true, label: 'İlan & Moderasyon', roles: roles.moderationWithSupport },
     { path: '/admin/moderation', icon: ShieldCheck, label: 'Moderation Queue', roles: roles.moderation, testId: 'listings-moderation-queue' },
+    { path: '/admin/reports', icon: Flag, label: 'Rapor Paneli', roles: roles.moderation, testId: 'listings-reports-panel' },
   { path: '/admin/individual-listing-applications', icon: FileText, label: 'Bireysel İlan Başvuruları', roles: roles.moderation, testId: 'listings-individual-applications' },
   { path: '/admin/corporate-listing-applications', icon: FileText, label: 'Kurumsal İlan Başvuruları', roles: roles.moderation, testId: 'listings-corporate-applications' },
 
@@ -540,6 +541,7 @@ export default function Layout({ children }) {
       '/admin/plans',
       '/admin/payments',
       '/admin/moderation',
+      '/admin/reports',
       '/admin/listings',
       '/admin/invoices',
       '/admin/tax-rates',
