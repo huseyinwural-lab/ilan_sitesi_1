@@ -503,8 +503,19 @@ export default function AdminSystemSettingsPage() {
     fetchHealthDetail();
     fetchMeiliActiveConfig();
     fetchMeiliHistory();
+    fetchWatermarkSettings();
+    fetchWatermarkPreview();
+    fetchWatermarkPerf();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCountry]);
+
+  useEffect(() => {
+    return () => {
+      if (watermarkPreviewUrl) {
+        URL.revokeObjectURL(watermarkPreviewUrl);
+      }
+    };
+  }, [watermarkPreviewUrl]);
 
   useEffect(() => {
     const setting = items.find((item) => item.key === MODERATION_FREEZE_KEY && !item.country_code);
