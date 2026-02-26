@@ -2684,7 +2684,7 @@ const AdminCategories = () => {
                             className={`mt-1 ${vehicleLinkStatus.linked ? 'text-emerald-700' : 'text-amber-800'}`}
                             data-testid="categories-vehicle-link-status-message"
                           >
-                            {vehicleLinkStatus.checking ? 'Kontrol ediliyor...' : (vehicleLinkStatus.message || 'Segment seçiniz.')}
+                            {vehicleLinkStatus.checking ? 'Kontrol ediliyor...' : (vehicleLinkStatus.message || 'Segment adı giriniz.')}
                           </div>
                         </div>
                       </div>
