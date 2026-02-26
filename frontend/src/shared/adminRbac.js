@@ -23,6 +23,7 @@ export const ADMIN_ROUTE_RULES = [
   { pattern: /^\/admin\/roles$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/rbac-matrix$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/feature-flags$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
+  { pattern: /^\/admin\/dealer-portal-config$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/individual-users$/, roles: ADMIN_ROLE_GROUPS.userOps },
   { pattern: /^\/admin\/individual-applications$/, roles: ADMIN_ROLE_GROUPS.userOps },
   { pattern: /^\/admin\/dealers$/, roles: ADMIN_ROLE_GROUPS.userOps },
