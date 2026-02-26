@@ -91,11 +91,63 @@ Public query endpoint:
     - Fail-fast (`ACTIVE_CONFIG_REQUIRED`) davranışı
     - Ranking sort sözleşmesi (`premium_score:desc`, `published_at:desc`)
 
-## 6) Bu Tur Sonucu
+## 6) External Aktivasyon Sonrası Canlı PASS Çıktıları
 
-- P1.2 backend sync altyapısı aktif.
-- Meili projection modeli event-driven olarak listing lifecycle’a bağlandı.
-- Retry/dead-letter mekanizması ve bulk reindex operasyonu hazır.
+Kaynaklar:
+- `/app/test_reports/iteration_15.json`
+- Canlı doğrulama script çıktıları (2026-02-26)
 
-Not:
-- "Gerçek external Meili URL + key" stage doğrulaması, admin panelden gerçek config girildikten sonra aynı endpointlerle (`health`, `stage-smoke`, `reindex`) canlı çalıştırılabilir.
+### 6.1 Health doğrulaması (PASS)
+- `GET /api/admin/search/meili/health` → `200`, `ok=true`, `reason_code=ok`
+- `ACTIVE_CONFIG_REQUIRED` hatası **yok**
+- `index_document_count=5004`
+
+### 6.2 Admin health panel doğrulaması (PASS)
+- `GET /api/admin/system/health-detail`
+  - `meili.status = connected`
+  - `meili.connected = true`
+
+### 6.3 Stage-smoke doğrulaması (PASS)
+- `GET /api/admin/search/meili/stage-smoke?q=` → `200`
+- `hits_count=10` (boş index değil)
+- `ranking_sort = ["premium_score:desc", "published_at:desc"]`
+
+### 6.4 Bulk reindex doğrulaması (PASS)
+- `POST /api/admin/search/meili/reindex` → `indexed_docs=5004`
+- Poll sonrası health `index_document_count=5004`
+- DB active listing count = `5004`
+- Sonuç: `Doc count == DB active listing count` ✅
+
+### 6.5 Event-driven sync canlı doğrulama (PASS)
+- Publish → index add ✅
+- Unpublish → index remove ✅
+- Soft-delete → index remove ✅
+
+### 6.6 Retry queue doğrulaması (PASS)
+- `POST /api/admin/search/meili/sync-jobs/retry-dead-letter` → retried `0`
+- `POST /api/admin/search/meili/sync-jobs/process` → failed `0`, dead_letter `0`
+- `GET /api/admin/search/meili/sync-jobs` metrics → `{"done": 39}`
+
+## 7) P1.3 Facet + Dinamik Sidebar Başlangıç Doğrulaması
+
+### 7.1 Facet mapping (Attribute Manager -> Meili)
+- Filterable attribute: `renk_facet_test` (select)
+- Meili filterable attributes içinde görünür: `attribute_renk_facet_test`
+
+### 7.2 v2 search facet aggregation (PASS)
+- `GET /api/v2/search?country=DE&category=<id>`
+  - `facet_meta_keys = ["renk_facet_test"]`
+  - `facets.renk_facet_test = [
+      {"value":"siyah","count":1},
+      {"value":"beyaz","count":0}
+    ]`
+- `GET /api/v2/search?...&attr[renk_facet_test]=siyah` → `200`, `pagination.total=1`
+
+### 7.3 Sidebar UX davranışı
+- Facet count dinamik güncelleniyor (Meili aggregation tabanlı)
+- `count=0` olan seçenekler disable davranışını destekliyor (UI tarafında)
+
+## 8) Bu Tur Sonucu
+
+- P1.2 external doğrulaması gerçek Meili üzerinde PASS ile kapandı.
+- P1.3 için facet aggregation + dinamik sidebar veri akışı backend/frontend’de aktif.
