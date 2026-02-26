@@ -90,6 +90,7 @@ from app.models.billing import VatRate
 from app.models.monetization import UserSubscription
 from app.models.admin_invoice import AdminInvoice
 from app.models.payment import Payment, PaymentTransaction
+from app.models.message_report import MessageReport
 from app.models.webhook_event_log import WebhookEventLog
 from app.models.category import Category, CategoryTranslation
 from app.models.category_schema_version import CategorySchemaVersion
