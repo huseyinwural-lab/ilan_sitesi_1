@@ -15922,7 +15922,10 @@ async def public_search_meili(
 ):
     safe_limit = min(100, max(1, limit))
     safe_offset = max(0, offset)
-    runtime = await get_active_meili_runtime(session)
+    try:
+        runtime = await get_active_meili_runtime(session)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"MEILI_SEARCH_UNAVAILABLE: {exc}") from exc
     result = await meili_search_documents(
         runtime,
         query=q,
