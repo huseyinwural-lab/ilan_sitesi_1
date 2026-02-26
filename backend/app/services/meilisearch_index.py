@@ -211,7 +211,8 @@ async def meili_search_documents(
     async with await _meili_client(runtime) as client:
         response = await client.post(f"/indexes/{index_path}/search", json=payload)
         if response.status_code != 200:
-            raise RuntimeError(f"meili_search_failed_{response.status_code}")
+            body = response.text[:300]
+            raise RuntimeError(f"meili_search_failed_{response.status_code}: {body}")
         return response.json()
 
 
