@@ -129,14 +129,11 @@ def upgrade() -> None:
 
         assigned_orders: set[int] = {order for order, rows_with_order in by_order.items() if len(rows_with_order) == 1}
         reassignment_rows = []
-        preserved_ids = set()
 
         for order, rows_with_order in sorted(by_order.items(), key=lambda item: item[0]):
             if len(rows_with_order) <= 1:
-                preserved_ids.add(str(rows_with_order[0].id))
                 continue
             keep_row = rows_with_order[0]
-            preserved_ids.add(str(keep_row.id))
             assigned_orders.add(order)
             reassignment_rows.extend(rows_with_order[1:])
 
