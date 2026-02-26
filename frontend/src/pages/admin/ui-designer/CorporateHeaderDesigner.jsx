@@ -626,6 +626,9 @@ export const CorporateHeaderDesigner = () => {
 
       <div className="rounded-xl border bg-slate-50 p-3" data-testid="ui-designer-corporate-logo-uploader">
         <div className="text-sm font-semibold" data-testid="ui-designer-corporate-logo-title">Row1 · Logo Yükle (3:1 ±%10)</div>
+        <div className="mt-1 text-xs" data-testid="ui-designer-corporate-logo-storage-health">
+          Storage Health: {storageHealth?.status || 'unknown'}
+        </div>
         <div className="mt-2 grid gap-3 md:grid-cols-[1fr_auto]" data-testid="ui-designer-corporate-logo-grid">
           <div className="space-y-2" data-testid="ui-designer-corporate-logo-input-wrap">
             <input
@@ -648,6 +651,19 @@ export const CorporateHeaderDesigner = () => {
             {uploading ? 'Yükleniyor...' : 'Logo Yükle'}
           </button>
         </div>
+        {uploadIssue ? (
+          <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs" data-testid="ui-designer-corporate-logo-inline-error-banner">
+            <div className="font-semibold text-rose-700" data-testid="ui-designer-corporate-logo-inline-error-summary">
+              {uploadIssue.summary || UPLOAD_ERROR_MESSAGES[uploadIssue.code] || 'Logo yükleme hatası'}
+            </div>
+            <div className="text-rose-700" data-testid="ui-designer-corporate-logo-inline-error-detail">
+              {buildUploadDetailText(uploadIssue)}
+            </div>
+            <div className="text-[11px] text-rose-500" data-testid="ui-designer-corporate-logo-inline-error-code">
+              Kod: {uploadIssue.code || 'UNKNOWN'}
+            </div>
+          </div>
+        ) : null}
         <div className="mt-3 rounded-lg border bg-white p-3" data-testid="ui-designer-corporate-logo-preview-card">
           <div className="text-xs text-slate-500" data-testid="ui-designer-corporate-logo-preview-title">Önizleme</div>
           <div className="mt-2 flex min-h-14 items-center rounded border bg-slate-50 px-3" data-testid="ui-designer-corporate-logo-preview-wrap">
