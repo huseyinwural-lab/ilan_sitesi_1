@@ -31,7 +31,7 @@ class SearchSyncTester:
     def login_admin(self) -> bool:
         """Login as admin and get token"""
         try:
-            response = requests.post(f"{BASE_URL}/admin/auth/login", json=ADMIN_CREDENTIALS, timeout=10)
+            response = requests.post(f"{BASE_URL}/auth/login", json=ADMIN_CREDENTIALS, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 self.admin_token = data.get("access_token")
