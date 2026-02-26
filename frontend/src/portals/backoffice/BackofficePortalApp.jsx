@@ -33,7 +33,6 @@ import IndividualUsersPage from '@/pages/admin/IndividualUsers';
 import IndividualApplicationsPage from '@/pages/admin/IndividualApplications';
 import IndividualListingApplicationsPage from '@/pages/admin/IndividualListingApplications';
 import CorporateListingApplicationsPage from '@/pages/admin/CorporateListingApplications';
-import MenuManagementPage from '@/pages/admin/MenuManagement';
 import BillingPlaceholderPage from '@/pages/admin/BillingPlaceholder';
 import AdminAdsManagement from '@/pages/admin/AdminAdsManagement';
 import AdminAdsCampaigns from '@/pages/admin/AdminAdsCampaigns';
@@ -60,7 +59,6 @@ export default function BackofficePortalApp() {
       <Route path="/categories" element={<AdminLayout><AdminCategories /></AdminLayout>} />
       <Route path="/categories/import-export" element={<AdminLayout><AdminCategoriesImportExport /></AdminLayout>} />
       <Route path="/attributes" element={<AdminLayout><AdminAttributes /></AdminLayout>} />
-      <Route path="/menu-management" element={<AdminLayout><MenuManagementPage /></AdminLayout>} />
       <Route path="/audit" element={
         <AdminLayout>
           <AdminRouteGuard roles={["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"]}>
