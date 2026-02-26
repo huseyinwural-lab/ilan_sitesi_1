@@ -58,7 +58,9 @@ export default function AdminReportsPage() {
 
   const [status, setStatus] = useState('all');
   const [reason, setReason] = useState('all');
+  const [reportType, setReportType] = useState('listing');
   const [listingId, setListingId] = useState('');
+  const [messageId, setMessageId] = useState('');
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailData, setDetailData] = useState(null);
@@ -66,6 +68,7 @@ export default function AdminReportsPage() {
   const [statusTarget, setStatusTarget] = useState('');
   const [statusNote, setStatusNote] = useState('');
   const [statusError, setStatusError] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
