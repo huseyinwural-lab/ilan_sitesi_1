@@ -8,9 +8,9 @@
 
 ## 2) UI Smoke Kanıtı
 - Admin dealer config sayfası görüntüsü:
-  - `/root/.emergent/automation_output/20260226_180600/final_20260226_180600.jpeg`
+  - `/root/.emergent/automation_output/20260226_181801/final_20260226_181801.jpeg`
 - Smoke log:
-  - `/root/.emergent/automation_output/20260226_180600/console_20260226_180600.log`
+  - `/root/.emergent/automation_output/20260226_181801/console_20260226_181801.log`
 
 ## 3) Config-Driven Render Kanıtı
 - Dealer portal config endpoint:
