@@ -45,6 +45,7 @@ import AdminHeaderManagement from '@/pages/admin/AdminHeaderManagement';
 import AdminFooterManagement from '@/pages/admin/AdminFooterManagement';
 import AdminThemeManagement from '@/pages/admin/AdminThemeManagement';
 import AdminInfoPages from '@/pages/admin/AdminInfoPages';
+import AdminUserInterfaceDesign from '@/pages/admin/AdminUserInterfaceDesign';
 
 export default function BackofficePortalApp() {
   return (
@@ -111,6 +112,16 @@ export default function BackofficePortalApp() {
           <AdminLayout>
             <AdminRouteGuard roles={["super_admin"]}>
               <AdminThemeManagement />
+            </AdminRouteGuard>
+          </AdminLayout>
+        }
+      />
+      <Route
+        path="/user-interface-design"
+        element={
+          <AdminLayout>
+            <AdminRouteGuard roles={["super_admin", "country_admin"]}>
+              <AdminUserInterfaceDesign />
             </AdminRouteGuard>
           </AdminLayout>
         }
