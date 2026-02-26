@@ -2585,6 +2585,11 @@ const AdminCategories = () => {
                       </div>
                     </div>
                     <div className="mt-2 text-xs text-slate-700">Sıra: Otomatik</div>
+                    {form.module === 'vehicle' && (
+                      <div className="mt-1 text-xs text-slate-700" data-testid="categories-summary-vehicle-segment">
+                        Segment: {vehicleSegment || '-'}
+                      </div>
+                    )}
                   </div>
 
               {wizardStep === "core" && (
