@@ -1240,6 +1240,7 @@ const AdminCategories = () => {
     setSelectedVersions([]);
     setVersionDetails({});
     setVehicleSegment("");
+    setVehicleSegmentError("");
     setVehicleLinkStatus({
       checking: false,
       linked: false,
@@ -1247,6 +1248,7 @@ const AdminCategories = () => {
       model_count: 0,
       message: "",
     });
+    setOrderPreview({ checking: false, available: true, message: "", conflict: null });
     setLastSavedAt("");
     setAutosaveStatus("idle");
     lastSavedSnapshotRef.current = "";
@@ -1308,6 +1310,7 @@ const AdminCategories = () => {
     setSelectedVersions([]);
     setVersionDetails({});
     setVehicleSegment(itemVehicleSegment);
+    setVehicleSegmentError("");
     setVehicleLinkStatus({
       checking: false,
       linked: itemVehicleLinked,
@@ -1317,6 +1320,7 @@ const AdminCategories = () => {
         ? (itemVehicleLinked ? "Master data bağlantısı hazır." : "Master data bağlantısı doğrulanmadı.")
         : "",
     });
+    setOrderPreview({ checking: false, available: true, message: "", conflict: null });
     setLastSavedAt("");
     setAutosaveStatus("idle");
     lastSavedSnapshotRef.current = "";
