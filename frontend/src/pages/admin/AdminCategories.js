@@ -2654,6 +2654,20 @@ const AdminCategories = () => {
           </div>
         </div>
 
+        {bulkJob && (
+          <div className="border-b px-4 py-2 text-xs bg-slate-50" data-testid="categories-bulk-job-panel">
+            <div className="font-semibold text-slate-700" data-testid="categories-bulk-job-id">Job: {bulkJob.job_id}</div>
+            <div className="text-slate-600" data-testid="categories-bulk-job-status">
+              Durum: {bulkJob.status} • İşlenen: {bulkJob.processed_records || 0}/{bulkJob.total_records || 0}
+            </div>
+            {bulkJob.error_code && (
+              <div className="text-rose-600" data-testid="categories-bulk-job-error">
+                {bulkJob.error_code}: {bulkJob.error_message || '-'}
+              </div>
+            )}
+          </div>
+        )}
+
         {selectedIds.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-4 py-3" data-testid="categories-bulk-actions-bar">
             <div className="text-sm font-medium text-amber-800" data-testid="categories-bulk-actions-summary">
