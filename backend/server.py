@@ -10304,6 +10304,117 @@ async def _get_system_setting_by_key(
     return result.scalar_one_or_none()
 
 
+def _sanitize_watermark_position(value: Optional[str]) -> str:
+    normalized = str(value or "bottom_right").strip().lower()
+    allowed = {"bottom_right", "bottom_left", "top_right", "top_left", "center"}
+    return normalized if normalized in allowed else "bottom_right"
+
+
+def _normalize_watermark_pipeline_value(raw: Any) -> Dict[str, Any]:
+    payload = raw if isinstance(raw, dict) else {}
+    opacity_raw = payload.get("opacity", 0.35)
+    try:
+        opacity = float(opacity_raw)
+    except (TypeError, ValueError):
+        opacity = 0.35
+    opacity = max(0.05, min(0.95, opacity))
+
+    def _safe_int(value: Any, default: int, minimum: int, maximum: int) -> int:
+        try:
+            parsed = int(value)
+        except (TypeError, ValueError):
+            return default
+        return min(maximum, max(minimum, parsed))
+
+    return {
+        "enabled": bool(payload.get("enabled", True)),
+        "position": _sanitize_watermark_position(payload.get("position")),
+        "opacity": opacity,
+        "web_max_width": _safe_int(payload.get("web_max_width"), 1800, 800, 3000),
+        "thumb_max_width": _safe_int(payload.get("thumb_max_width"), 520, 200, 1200),
+    }
+
+
+async def _get_watermark_pipeline_config(
+    session: AsyncSession,
+    *,
+    country_code: Optional[str] = None,
+) -> Dict[str, Any]:
+    setting = await _get_system_setting_by_key(session, WATERMARK_PIPELINE_SETTING_KEY, country_code)
+    if not setting:
+        return _normalize_watermark_pipeline_value({})
+    return _normalize_watermark_pipeline_value(setting.value)
+
+
+def _record_media_pipeline_metric(metric: Dict[str, Any]) -> None:
+    MEDIA_PIPELINE_METRICS.append(
+        {
+            "processing_ms": float(metric.get("processing_ms") or 0),
+            "reduction_ratio": float(metric.get("reduction_ratio") or 0),
+            "original_size": int(metric.get("original_size") or 0),
+            "public_size": int(metric.get("public_size") or 0),
+            "thumbnail_size": int(metric.get("thumbnail_size") or 0),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+
+
+def _media_pipeline_summary() -> Dict[str, Any]:
+    items = list(MEDIA_PIPELINE_METRICS)
+    if not items:
+        return {
+            "sample_count": 0,
+            "average_processing_ms": 0,
+            "average_reduction_ratio": 0,
+            "total_original_size": 0,
+            "total_public_size": 0,
+        }
+
+    total_processing = sum(float(item.get("processing_ms") or 0) for item in items)
+    total_reduction = sum(float(item.get("reduction_ratio") or 0) for item in items)
+    total_original = sum(int(item.get("original_size") or 0) for item in items)
+    total_public = sum(int(item.get("public_size") or 0) for item in items)
+    return {
+        "sample_count": len(items),
+        "average_processing_ms": round(total_processing / len(items), 2),
+        "average_reduction_ratio": round(total_reduction / len(items), 2),
+        "total_original_size": int(total_original),
+        "total_public_size": int(total_public),
+    }
+
+
+def _extract_listing_id_from_payment_row(payment: Payment, invoice: Optional[AdminInvoice]) -> Optional[str]:
+    for candidate in [
+        (payment.meta_json or {}).get("listing_id"),
+        (invoice.meta_json or {}).get("listing_id") if invoice else None,
+        (payment.meta_json or {}).get("source_id"),
+    ]:
+        if candidate:
+            return str(candidate)
+    return None
+
+
+def _suggest_cache_key(country: str, query: str, limit: int) -> str:
+    return f"{country}|{query.strip().lower()}|{limit}"
+
+
+def _get_cached_suggest_payload(cache_key: str) -> Optional[Dict[str, Any]]:
+    row = _search_suggest_cache.get(cache_key)
+    if not row:
+        return None
+    if row.get("expires_at", 0) < time.time():
+        _search_suggest_cache.pop(cache_key, None)
+        return None
+    return row.get("payload")
+
+
+def _set_cached_suggest_payload(cache_key: str, payload: Dict[str, Any]) -> None:
+    _search_suggest_cache[cache_key] = {
+        "payload": payload,
+        "expires_at": time.time() + SUGGEST_CACHE_TTL_SECONDS,
+    }
+
+
 async def _is_moderation_freeze_active(
     session: AsyncSession, country_code: Optional[str]
 ) -> bool:
