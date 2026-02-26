@@ -252,3 +252,16 @@
 - Yeni endpoint: `POST /api/admin/categories/bulk-actions` (action + scope + ids/filter)
 - Category list API filtreleri genişletildi: `country`, `module`, `active_flag`
 - Test: `/app/test_reports/iteration_23.json` PASS (backend 22/22, frontend 100%)
+
+## 2026-02-26 — Dealer P1 Iterasyon 2 (Undo + Draft Mode + Bulk Async)
+
+- Yeni model/migration: `dealer_config_revisions`, `category_bulk_jobs` (`p58_dealer_draft_bulk_jobs`)
+- Dealer Admin Config ekranı Draft Mode’a alındı:
+  - Persist öncesi undo (revision stack)
+  - Persist edilmemiş değişiklik uyarısı (navigation/beforeunload guard)
+  - Draft save, publish, revisions list, rollback akışları
+- Bulk Actions altyapısı async olacak şekilde genişletildi:
+  - `<=1000` sync, `>1000` async queue
+  - `POST /api/admin/categories/bulk-actions/jobs/{job_id}` polling
+  - idempotency key + retry/backoff + lock TTL + telemetry log entries
+- Test: `/app/test_reports/iteration_24.json` PASS (backend 10/10, frontend 10/10)
