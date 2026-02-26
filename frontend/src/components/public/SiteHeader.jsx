@@ -14,6 +14,8 @@ export default function SiteHeader({ mode, refreshToken }) {
   const [query, setQuery] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
 
   const isAuthenticated = mode ? mode === 'auth' : Boolean(user);
   const displayName = useMemo(() => {
@@ -59,6 +61,35 @@ export default function SiteHeader({ mode, refreshToken }) {
     navigate('/');
   };
 
+  useEffect(() => {
+    const target = query.trim();
+    if (target.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSuggestLoading(true);
+      fetch(`${API}/search/suggest?q=${encodeURIComponent(target)}&limit=8`)
+        .then((res) => res.json())
+        .then((data) => {
+          setSuggestions(Array.isArray(data?.items) ? data.items : []);
+        })
+        .catch(() => setSuggestions([]))
+        .finally(() => setSuggestLoading(false));
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const handlePickSuggestion = (label) => {
+    const normalized = (label || '').trim();
+    if (!normalized) return;
+    setQuery(normalized);
+    setSuggestions([]);
+    navigate(`/search?q=${encodeURIComponent(normalized)}`);
+  };
+
   return (
     <header className="sticky top-0 z-40 border-b bg-[var(--header-bg)] text-[var(--header-text)]" data-testid="site-header">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3" data-testid="site-header-container">
@@ -78,6 +109,11 @@ export default function SiteHeader({ mode, refreshToken }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => {
+              if (query.trim().length >= 2 && suggestions.length > 0) {
+                setSuggestions([...suggestions]);
+              }
+            }}
             placeholder="Arama yap"
             className="h-10 w-full rounded-full border bg-[var(--bg-surface-muted)] px-4 pr-10 text-sm"
             data-testid="site-header-search-input"
@@ -89,6 +125,27 @@ export default function SiteHeader({ mode, refreshToken }) {
           >
             <Search size={18} />
           </button>
+
+          {(suggestions.length > 0 || suggestLoading) && (
+            <div className="absolute left-0 right-0 mt-2 rounded-xl border bg-white shadow-lg overflow-hidden z-20" data-testid="site-header-suggest-dropdown">
+              {suggestLoading ? (
+                <div className="px-3 py-2 text-xs text-slate-500" data-testid="site-header-suggest-loading">Öneriler yükleniyor…</div>
+              ) : (
+                suggestions.map((item, idx) => (
+                  <button
+                    type="button"
+                    key={`${item.label}-${idx}`}
+                    onClick={() => handlePickSuggestion(item.label)}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-slate-100"
+                    data-testid={`site-header-suggest-item-${idx}`}
+                  >
+                    <div className="font-medium" data-testid={`site-header-suggest-label-${idx}`}>{item.label}</div>
+                    {item.city && <div className="text-xs text-slate-500" data-testid={`site-header-suggest-city-${idx}`}>{item.city}</div>}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
         </form>
 
         <div className="flex items-center gap-2" data-testid="site-header-controls">
