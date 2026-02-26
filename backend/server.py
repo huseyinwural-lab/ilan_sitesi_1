@@ -18383,25 +18383,23 @@ async def admin_media_pipeline_performance(
 async def admin_list_categories(
     request: Request,
     country: Optional[str] = None,
+    module: Optional[str] = None,
+    active_flag: Optional[bool] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    if country:
-        code = country.upper()
-        _assert_country_scope(code, current_user)
-        query = (
-            select(Category)
-            .options(selectinload(Category.translations))
-            .where(Category.country_code == code, Category.is_deleted.is_(False))
-        )
-    else:
-        query = (
-            select(Category)
-            .options(selectinload(Category.translations))
-            .where(Category.is_deleted.is_(False))
-        )
+    country_code = country.upper() if country else None
+    if country_code:
+        _assert_country_scope(country_code, current_user)
+    module_value = _normalize_category_module(module) if module else None
 
-    result = await session.execute(query.order_by(Category.sort_order.asc()))
+    query = _build_admin_category_query(
+        country_code=country_code,
+        module_value=module_value,
+        active_flag=active_flag,
+    )
+
+    result = await session.execute(query.order_by(Category.sort_order.asc(), Category.created_at.asc()))
     items = result.scalars().all()
     return {
         "items": [
