@@ -12,13 +12,16 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 
 ### P1 — Search Altyapısı (Meilisearch)
 - **ACTIVE** 🔴
-- Bu tur tamamlanan: Meilisearch config management (manual + history + activation gate)
+- Bu tur tamamlananlar:
+  - Meilisearch config management (manual + history + activation gate)
+  - P1.2 Listing→Index sync core (event hook + retry queue + bulk reindex + smoke endpoints)
 - Kanıt: `/app/docs/P1_MEILI_CONFIG_HISTORY_EVIDENCE.md`
+  - Ek kanıt: `/app/docs/P1_2_LISTING_INDEX_SYNC_EVIDENCE.md`
 
 ### P1 — Sıradaki (devam)
-- Listing → index senkronizasyonunun tam kapsamı (hook + retry + bulk reindex)
 - Facet/dinamik sidebar
 - Suggest/autocomplete endpoint
+ - URL/query state standardizasyonu + breadcrumb senkronu
 
 ### Admin Final Kilit (4 Modül)
 - Watermark & Image Processing — BACKLOG
