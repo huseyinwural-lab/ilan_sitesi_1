@@ -25,7 +25,7 @@ def _normalize_text(value: str) -> str:
     return re.sub(r"\s+", " ", lowered).strip()
 
 
-def _stable_numeric_id(value: Any) -> int | None:
+def stable_numeric_id(value: Any) -> int | None:
     if value in (None, ""):
         return None
     text = str(value)
@@ -101,10 +101,10 @@ def build_listing_document(listing: Listing) -> Dict[str, Any]:
     doc: Dict[str, Any] = {
         "listing_id": str(listing.id),
         "category_path_ids": normalized_category_path,
-        "make_id": _stable_numeric_id(listing.make_id),
-        "model_id": _stable_numeric_id(listing.model_id),
-        "trim_id": _stable_numeric_id(trim_value),
-        "city_id": _stable_numeric_id(city_value),
+        "make_id": stable_numeric_id(listing.make_id),
+        "model_id": stable_numeric_id(listing.model_id),
+        "trim_id": stable_numeric_id(trim_value),
+        "city_id": stable_numeric_id(city_value),
         "attribute_flat_map": attribute_flat_map,
         "price": float(listing.price or listing.hourly_rate or 0),
         "premium_score": premium_score,
