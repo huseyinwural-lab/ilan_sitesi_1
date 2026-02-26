@@ -85,6 +85,420 @@ def _safe_uuid(value: Optional[str]) -> Optional[uuid.UUID]:
         return None
 
 
+def _site_assets_base_dir() -> Path:
+    return Path(__file__).resolve().parents[1] / "static" / "site_assets"
+
+
+def _asset_key_from_url(value: Optional[str]) -> Optional[str]:
+    if not value or not value.startswith(UI_LOGO_URL_PREFIX):
+        return None
+    raw = value.split(UI_LOGO_URL_PREFIX, 1)[-1]
+    key = raw.split("?", 1)[0].strip()
+    return key or None
+
+
+def _asset_path_from_key(asset_key: str) -> Path:
+    base_dir = _site_assets_base_dir()
+    target = (base_dir / asset_key).resolve()
+    if not str(target).startswith(str(base_dir.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid asset path")
+    return target
+
+
+def _extract_file_extension(filename: str) -> str:
+    if not filename or "." not in filename:
+        return ""
+    return filename.rsplit(".", 1)[-1].lower()
+
+
+def _parse_svg_size(data: bytes) -> tuple[float, float]:
+    try:
+        root = ET.fromstring(data.decode("utf-8", errors="ignore"))
+    except ET.ParseError as exc:
+        raise HTTPException(status_code=400, detail="SVG parse edilemedi") from exc
+
+    view_box = root.attrib.get("viewBox") or root.attrib.get("viewbox")
+    if view_box:
+        parts = [item for item in view_box.replace(",", " ").split(" ") if item]
+        if len(parts) == 4:
+            try:
+                width = float(parts[2])
+                height = float(parts[3])
+                if width > 0 and height > 0:
+                    return width, height
+            except ValueError:
+                pass
+
+    def _numeric(value: Optional[str]) -> Optional[float]:
+        if not value:
+            return None
+        cleaned = "".join(ch for ch in value if ch.isdigit() or ch == ".")
+        if not cleaned:
+            return None
+        try:
+            return float(cleaned)
+        except ValueError:
+            return None
+
+    width = _numeric(root.attrib.get("width"))
+    height = _numeric(root.attrib.get("height"))
+    if width and height and width > 0 and height > 0:
+        return width, height
+
+    raise HTTPException(status_code=400, detail="SVG width/height metadata bulunamadı")
+
+
+def _validate_logo_constraints(data: bytes, filename: str) -> dict[str, Any]:
+    ext = _extract_file_extension(filename)
+    if ext not in UI_LOGO_ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Desteklenen formatlar: png/svg/webp")
+    if len(data) > UI_LOGO_MAX_BYTES:
+        raise HTTPException(status_code=400, detail="Dosya boyutu 2MB sınırını aşıyor")
+
+    if ext == "svg":
+        width, height = _parse_svg_size(data)
+    else:
+        try:
+            with Image.open(BytesIO(data)) as image:
+                width, height = image.size
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail="Görsel dosyası okunamadı") from exc
+
+    if not width or not height:
+        raise HTTPException(status_code=400, detail="Görsel ölçüsü geçersiz")
+    ratio = float(width) / float(height)
+    min_ratio = UI_LOGO_RATIO_TARGET * (1 - UI_LOGO_RATIO_TOLERANCE)
+    max_ratio = UI_LOGO_RATIO_TARGET * (1 + UI_LOGO_RATIO_TOLERANCE)
+    if ratio < min_ratio or ratio > max_ratio:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Logo aspect ratio 3:1 (±%10) olmalı. Mevcut oran: {ratio:.2f}",
+        )
+
+    return {
+        "extension": ext,
+        "width": int(round(width)),
+        "height": int(round(height)),
+        "ratio": round(ratio, 4),
+    }
+
+
+def _default_header_config(segment: str) -> dict[str, Any]:
+    if segment == "corporate":
+        return deepcopy(DEFAULT_CORPORATE_HEADER_CONFIG)
+    return {"rows": [], "logo": {"url": None, "fallback_text": "ANNONCIA", "aspect_ratio": "3:1"}}
+
+
+def _normalize_header_config_data(config_data: dict[str, Any], segment: str) -> dict[str, Any]:
+    payload = deepcopy(config_data or {})
+    if segment != "corporate":
+        payload.setdefault("rows", [])
+        payload.setdefault("logo", {"url": None, "fallback_text": "ANNONCIA", "aspect_ratio": "3:1"})
+        return payload
+
+    default = _default_header_config("corporate")
+    rows = payload.get("rows") if isinstance(payload.get("rows"), list) else []
+    row_map: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        row_id = (row.get("id") or "").strip().lower()
+        if row_id in {"row1", "row2", "row3"}:
+            row_map[row_id] = {
+                "id": row_id,
+                "title": row.get("title") or row_id.upper(),
+                "blocks": row.get("blocks") if isinstance(row.get("blocks"), list) else [],
+            }
+
+    normalized_rows = []
+    for fallback_row in default["rows"]:
+        row_id = fallback_row["id"]
+        selected = row_map.get(row_id) or fallback_row
+        blocks = []
+        for block in selected.get("blocks", []):
+            if not isinstance(block, dict):
+                continue
+            block_type = (block.get("type") or "").strip()
+            if not block_type:
+                continue
+            block_id = (block.get("id") or block_type).strip()
+            blocks.append(
+                {
+                    "id": block_id,
+                    "type": block_type,
+                    "label": block.get("label") or block_type,
+                    "required": bool(block.get("required", False)),
+                    "logo_url": block.get("logo_url"),
+                }
+            )
+        normalized_rows.append(
+            {
+                "id": row_id,
+                "title": selected.get("title") or fallback_row.get("title") or row_id.upper(),
+                "blocks": blocks,
+            }
+        )
+
+    logo = payload.get("logo") if isinstance(payload.get("logo"), dict) else {}
+    normalized_logo = {
+        "url": logo.get("url"),
+        "alt": logo.get("alt") or "Kurumsal Logo",
+        "fallback_text": logo.get("fallback_text") or "ANNONCIA",
+        "aspect_ratio": "3:1",
+        "width": logo.get("width"),
+        "height": logo.get("height"),
+        "ratio": logo.get("ratio"),
+    }
+    payload["rows"] = normalized_rows
+    payload["logo"] = normalized_logo
+    return payload
+
+
+def _validate_corporate_header_guardrails(config_data: dict[str, Any]) -> None:
+    rows = config_data.get("rows") if isinstance(config_data.get("rows"), list) else []
+    if len(rows) != 3:
+        raise HTTPException(status_code=400, detail="Kurumsal header 3 satır içermelidir")
+
+    expected = ["row1", "row2", "row3"]
+    row_ids = [str((row or {}).get("id") or "").strip().lower() for row in rows]
+    if row_ids != expected:
+        raise HTTPException(status_code=400, detail="Satır sırası row1,row2,row3 olmalıdır")
+
+    for row in rows:
+        blocks = row.get("blocks") if isinstance(row.get("blocks"), list) else []
+        if not blocks:
+            raise HTTPException(status_code=400, detail=f"{row.get('id')} en az 1 bileşen içermelidir")
+
+    row1_blocks = rows[0].get("blocks") if isinstance(rows[0].get("blocks"), list) else []
+    logo_block = next((block for block in row1_blocks if str(block.get("type") or "") == "logo"), None)
+    if not logo_block:
+        raise HTTPException(status_code=400, detail="Row1 içinde zorunlu logo bileşeni bulunmalıdır")
+
+
+def _extract_header_logo_url(config_data: dict[str, Any]) -> Optional[str]:
+    logo = config_data.get("logo") if isinstance(config_data.get("logo"), dict) else {}
+    logo_url = (logo.get("url") or "").strip()
+    if logo_url:
+        return logo_url
+
+    rows = config_data.get("rows") if isinstance(config_data.get("rows"), list) else []
+    for row in rows:
+        if str((row or {}).get("id") or "").strip().lower() != "row1":
+            continue
+        blocks = row.get("blocks") if isinstance(row.get("blocks"), list) else []
+        for block in blocks:
+            if str((block or {}).get("type") or "").strip() != "logo":
+                continue
+            candidate = (block.get("logo_url") or block.get("url") or "").strip()
+            if candidate:
+                return candidate
+    return None
+
+
+def _apply_header_logo_to_config(config_data: dict[str, Any], logo_url: str, logo_meta: dict[str, Any]) -> dict[str, Any]:
+    normalized = _normalize_header_config_data(config_data, "corporate")
+    rows = normalized["rows"]
+    row1 = rows[0]
+    blocks = row1.get("blocks") or []
+
+    logo_block = None
+    for block in blocks:
+        if str((block or {}).get("type") or "") == "logo":
+            logo_block = block
+            break
+    if not logo_block:
+        logo_block = {"id": "logo", "type": "logo", "label": "Logo", "required": True}
+        blocks.insert(0, logo_block)
+
+    logo_block["logo_url"] = logo_url
+    logo_block["aspect_ratio"] = "3:1"
+    logo_block["width"] = logo_meta.get("width")
+    logo_block["height"] = logo_meta.get("height")
+    logo_block["ratio"] = logo_meta.get("ratio")
+
+    normalized["logo"] = {
+        **(normalized.get("logo") or {}),
+        "url": logo_url,
+        "aspect_ratio": "3:1",
+        "width": logo_meta.get("width"),
+        "height": logo_meta.get("height"),
+        "ratio": logo_meta.get("ratio"),
+        "fallback_text": (normalized.get("logo") or {}).get("fallback_text") or "ANNONCIA",
+    }
+    return normalized
+
+
+async def _upsert_logo_asset_row(
+    session: AsyncSession,
+    *,
+    asset_key: str,
+    asset_url: str,
+    segment: str,
+    scope: str,
+    scope_id: Optional[str],
+    current_user: dict[str, Any],
+) -> UILogoAsset:
+    existing = (await session.execute(select(UILogoAsset).where(UILogoAsset.asset_key == asset_key).limit(1))).scalar_one_or_none()
+    if existing:
+        existing.asset_url = asset_url
+        existing.segment = segment
+        existing.scope = scope
+        existing.scope_id = scope_id
+        existing.config_type = "header"
+        existing.is_deleted = False
+        existing.updated_at = datetime.now(timezone.utc)
+        return existing
+
+    row = UILogoAsset(
+        asset_key=asset_key,
+        asset_url=asset_url,
+        segment=segment,
+        scope=scope,
+        scope_id=scope_id,
+        config_type="header",
+        created_by=_safe_uuid(current_user.get("id")),
+        created_by_email=current_user.get("email"),
+    )
+    session.add(row)
+    return row
+
+
+async def _mark_replaced_logo_if_exists(
+    session: AsyncSession,
+    *,
+    old_logo_url: Optional[str],
+    new_asset_key: str,
+) -> Optional[UILogoAsset]:
+    old_asset_key = _asset_key_from_url(old_logo_url)
+    if not old_asset_key or old_asset_key == new_asset_key:
+        return None
+
+    now_dt = datetime.now(timezone.utc)
+    retention_dt = now_dt + timedelta(days=UI_LOGO_RETENTION_DAYS)
+    existing = (await session.execute(select(UILogoAsset).where(UILogoAsset.asset_key == old_asset_key).limit(1))).scalar_one_or_none()
+    if not existing:
+        existing = UILogoAsset(
+            asset_key=old_asset_key,
+            asset_url=old_logo_url or f"{UI_LOGO_URL_PREFIX}{old_asset_key}",
+            segment="corporate",
+            scope="system",
+            scope_id=None,
+            config_type="header",
+        )
+        session.add(existing)
+
+    existing.is_replaced = True
+    existing.replaced_by_asset_key = new_asset_key
+    existing.replaced_at = now_dt
+    existing.delete_after = retention_dt
+    existing.updated_at = now_dt
+    return existing
+
+
+async def _cleanup_replaced_logo_assets(limit: int = 100) -> dict[str, int]:
+    async with AsyncSessionLocal() as cleanup_session:
+        now_dt = datetime.now(timezone.utc)
+        due_rows = (
+            await cleanup_session.execute(
+                select(UILogoAsset)
+                .where(
+                    UILogoAsset.is_replaced.is_(True),
+                    UILogoAsset.is_deleted.is_(False),
+                    UILogoAsset.delete_after.isnot(None),
+                    UILogoAsset.delete_after <= now_dt,
+                )
+                .order_by(UILogoAsset.delete_after.asc())
+                .limit(limit)
+            )
+        ).scalars().all()
+
+        deleted = 0
+        skipped = 0
+        for row in due_rows:
+            try:
+                target_path = _asset_path_from_key(row.asset_key)
+                if target_path.exists() and target_path.is_file():
+                    target_path.unlink(missing_ok=True)
+                row.is_deleted = True
+                row.updated_at = now_dt
+                deleted += 1
+            except Exception:
+                skipped += 1
+
+        if due_rows:
+            await cleanup_session.commit()
+
+        return {"deleted": deleted, "skipped": skipped}
+
+
+def _is_hex_color(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    raw = value.strip()
+    if len(raw) != 7 or not raw.startswith("#"):
+        return False
+    return all(ch in "0123456789abcdefABCDEF" for ch in raw[1:])
+
+
+def _validate_theme_tokens(tokens: dict[str, Any]) -> None:
+    if not isinstance(tokens, dict):
+        raise HTTPException(status_code=400, detail="Theme tokens object olmalıdır")
+
+    colors = tokens.get("colors")
+    if colors is not None:
+        if not isinstance(colors, dict):
+            raise HTTPException(status_code=400, detail="tokens.colors object olmalıdır")
+        for key in THEME_COLOR_KEYS:
+            value = colors.get(key)
+            if value is None:
+                continue
+            if not _is_hex_color(value):
+                raise HTTPException(status_code=400, detail=f"{key} hex formatında olmalıdır")
+
+    typography = tokens.get("typography")
+    if typography is not None:
+        if not isinstance(typography, dict):
+            raise HTTPException(status_code=400, detail="tokens.typography object olmalıdır")
+        base_size = typography.get("base_font_size")
+        if base_size is not None:
+            try:
+                size_int = int(base_size)
+            except (ValueError, TypeError) as exc:
+                raise HTTPException(status_code=400, detail="base_font_size sayı olmalıdır") from exc
+            if size_int < 12 or size_int > 24:
+                raise HTTPException(status_code=400, detail="base_font_size 12-24 aralığında olmalıdır")
+
+    spacing = tokens.get("spacing")
+    if spacing is not None:
+        if not isinstance(spacing, dict):
+            raise HTTPException(status_code=400, detail="tokens.spacing object olmalıdır")
+        for key in THEME_SPACING_KEYS:
+            value = spacing.get(key)
+            if value is None:
+                continue
+            try:
+                spacing_int = int(value)
+            except (ValueError, TypeError) as exc:
+                raise HTTPException(status_code=400, detail=f"spacing.{key} sayı olmalıdır") from exc
+            if spacing_int < 0 or spacing_int > 64:
+                raise HTTPException(status_code=400, detail=f"spacing.{key} 0-64 aralığında olmalıdır")
+
+    radius = tokens.get("radius")
+    if radius is not None:
+        if not isinstance(radius, dict):
+            raise HTTPException(status_code=400, detail="tokens.radius object olmalıdır")
+        for key in THEME_RADIUS_KEYS:
+            value = radius.get(key)
+            if value is None:
+                continue
+            try:
+                radius_int = int(value)
+            except (ValueError, TypeError) as exc:
+                raise HTTPException(status_code=400, detail=f"radius.{key} sayı olmalıdır") from exc
+            if radius_int < 0 or radius_int > 32:
+                raise HTTPException(status_code=400, detail=f"radius.{key} 0-32 aralığında olmalıdır")
+
+
 class UIConfigSavePayload(BaseModel):
     segment: str = Field(default="individual")
     scope: str = Field(default="system")
