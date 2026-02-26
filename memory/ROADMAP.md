@@ -28,11 +28,15 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 ### Admin Final Kilit (4 Modül)
 - Yakında Temizliği — **DONE** ✅ (CSV-only import/export + Menu Management disabled)
 - Dashboard Stabilizasyonu — **DONE** ✅ (tek summary endpoint + KPI click-through)
-- Watermark & Image Processing — BACKLOG
-- Transactions Log — BACKLOG
-- Attribute Manager — BACKLOG
-- Minimal Moderation — BACKLOG
-- Search final polish (facet UI + suggest) — BACKLOG
+- Watermark & Image Processing — **DONE** ✅
+- Transactions Log — **DONE** ✅
+- Attribute Manager — **DONE** ✅
+- Minimal Moderation — **DONE** ✅
+- Search final polish (facet UI + suggest) — **DONE** ✅
+
+### Sonraki Faz (P1)
+- Public-facing kullanıcı deneyimi (listing detay, sonuç ekranı, dashboard)
+- SEO + dönüşüm optimizasyonu
 
 ---
 
