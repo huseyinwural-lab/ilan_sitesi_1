@@ -121,6 +121,8 @@ async def test_and_prepare_meili_index(meili_url: str, master_key: str, index_na
                     "attribute",
                     "sort",
                     "exactness",
+                ],
+                "customRanking": [
                     "desc(premium_score)",
                     "desc(published_at)",
                 ],
