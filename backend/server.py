@@ -19683,64 +19683,121 @@ async def admin_categories_bulk_actions(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    rows = await _resolve_bulk_category_targets(payload, current_user=current_user, session=session)
+    rows, total_matched, country_code, module_value, active_flag = await _resolve_bulk_category_targets(
+        payload,
+        current_user=current_user,
+        session=session,
+        limit=CATEGORY_BULK_SYNC_THRESHOLD + 1,
+    )
 
-    changed_count = 0
-    unchanged_count = 0
-    changed_ids: List[str] = []
+    if total_matched > CATEGORY_BULK_ASYNC_MAX_RECORDS:
+        raise _category_error(
+            "BULK_SCOPE_LIMIT_EXCEEDED",
+            f"Toplu işlem en fazla {CATEGORY_BULK_ASYNC_MAX_RECORDS} kayıt için çalıştırılabilir.",
+        )
 
-    now_iso = datetime.now(timezone.utc)
-    for row in rows:
-        if payload.action == "delete":
-            if row.is_deleted:
-                unchanged_count += 1
-                continue
-            row.is_deleted = True
-            row.is_enabled = False
-            row.updated_at = now_iso
-            changed_count += 1
-            changed_ids.append(str(row.id))
-            continue
-
-        target_visible = payload.action == "activate"
-        if row.is_deleted:
-            unchanged_count += 1
-            continue
-        if bool(row.is_enabled) == target_visible:
-            unchanged_count += 1
-            continue
-        row.is_enabled = target_visible
-        row.updated_at = now_iso
-        changed_count += 1
-        changed_ids.append(str(row.id))
-
-    if changed_count > 0:
+    if total_matched > CATEGORY_BULK_SYNC_THRESHOLD:
+        job = await _enqueue_category_bulk_job(
+            payload,
+            actor=current_user,
+            total_matched=total_matched,
+            session=session,
+        )
         await _write_audit_log_sql(
             session=session,
-            action="CATEGORY_BULK_ACTION",
+            action="CATEGORY_BULK_ACTION_QUEUED",
             actor=current_user,
-            resource_type="categories",
-            resource_id=payload.scope,
+            resource_type="category_bulk_jobs",
+            resource_id=str(job.id),
             metadata={
                 "bulk_action": payload.action,
                 "scope": payload.scope,
-                "total_matched": len(rows),
-                "changed_count": changed_count,
-                "ids": changed_ids,
+                "total_matched": total_matched,
+                "threshold": CATEGORY_BULK_SYNC_THRESHOLD,
+                "country": country_code,
+                "module": module_value,
+                "active_flag": active_flag,
+                "admin_user_id": current_user.get("id"),
             },
             request=request,
             country_code=current_user.get("country_code"),
         )
+        await session.commit()
+        return JSONResponse(
+            status_code=202,
+            content={
+                "ok": True,
+                "mode": "async",
+                "message": f"Toplu işlem kuyruğa alındı (>{CATEGORY_BULK_SYNC_THRESHOLD}).",
+                "job": _serialize_category_bulk_job(job),
+                "warning": {
+                    "reason_code": "ASYNC_THRESHOLD",
+                    "threshold": CATEGORY_BULK_SYNC_THRESHOLD,
+                    "total_matched": total_matched,
+                },
+            },
+        )
+
+    result = await _execute_category_bulk_action_rows(session, rows=rows, action=payload.action)
+    await _write_audit_log_sql(
+        session=session,
+        action="CATEGORY_BULK_ACTION",
+        actor=current_user,
+        resource_type="categories",
+        resource_id=payload.scope,
+        metadata={
+            "bulk_action": payload.action,
+            "scope": payload.scope,
+            "total_matched": total_matched,
+            "changed_count": result["changed"],
+            "ids": result["changed_ids"],
+            "admin_user_id": current_user.get("id"),
+        },
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
     await session.commit()
 
     return {
         "ok": True,
+        "mode": "sync",
         "action": payload.action,
         "scope": payload.scope,
-        "matched": len(rows),
-        "changed": changed_count,
-        "unchanged": unchanged_count,
-        "changed_ids": changed_ids,
+        "matched": result["matched"],
+        "changed": result["changed"],
+        "unchanged": result["unchanged"],
+        "changed_ids": result["changed_ids"],
+    }
+
+
+@api_router.get("/admin/categories/bulk-actions/jobs/{job_id}")
+async def admin_categories_bulk_action_job_status(
+    job_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    try:
+        job_uuid = uuid.UUID(job_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="job_id invalid") from exc
+
+    job = await session.get(CategoryBulkJob, job_uuid)
+    if not job:
+        raise HTTPException(status_code=404, detail="Bulk job not found")
+
+    if job.created_by and current_user.get("role") == "country_admin":
+        # country_admin sadece kendi ülke scope kayıtlarını görebilsin
+        actor_scope = set(current_user.get("country_scope") or [])
+        payload_filter = (job.request_payload or {}).get("filter") or {}
+        job_country = str(payload_filter.get("country") or "").upper()
+        if job_country and actor_scope and job_country not in actor_scope:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    return {
+        "ok": True,
+        "job": _serialize_category_bulk_job(job),
     }
 
 
