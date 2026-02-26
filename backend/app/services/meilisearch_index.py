@@ -187,6 +187,7 @@ async def meili_search_documents(
     offset: int = 0,
     sort: List[str] | None = None,
     filter_query: str | None = None,
+    facets: List[str] | None = None,
 ) -> Dict[str, Any]:
     index_path = quote(runtime["index_name"], safe="")
     payload: Dict[str, Any] = {
@@ -198,12 +199,26 @@ async def meili_search_documents(
         payload["sort"] = sort
     if filter_query:
         payload["filter"] = filter_query
+    if facets:
+        payload["facets"] = facets
 
     async with await _meili_client(runtime) as client:
         response = await client.post(f"/indexes/{index_path}/search", json=payload)
         if response.status_code != 200:
             raise RuntimeError(f"meili_search_failed_{response.status_code}")
         return response.json()
+
+
+async def meili_update_filterable_attributes(runtime: Dict[str, str], filterable_attributes: List[str]) -> Dict[str, Any]:
+    index_path = quote(runtime["index_name"], safe="")
+    async with await _meili_client(runtime) as client:
+        response = await client.patch(
+            f"/indexes/{index_path}/settings/filterable-attributes",
+            json=filterable_attributes,
+        )
+        if response.status_code not in (200, 202):
+            raise RuntimeError(f"meili_filterable_update_failed_{response.status_code}")
+    return {"ok": True}
 
 
 async def sync_listing_to_meili(session: AsyncSession, listing_id: uuid.UUID, operation: str) -> Dict[str, Any]:
