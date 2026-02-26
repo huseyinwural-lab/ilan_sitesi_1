@@ -3232,6 +3232,9 @@ PAYMENTS_ENABLED_COUNTRIES = {
     if code.strip()
 }
 
+ADMIN_MENU_MANAGEMENT_ENABLED = (os.environ.get("ADMIN_MENU_MANAGEMENT_ENABLED") or "").strip().lower() in {"1", "true", "yes", "y"}
+CATEGORY_IMPORT_EXPORT_XLSX_ENABLED = (os.environ.get("CATEGORY_IMPORT_EXPORT_XLSX_ENABLED") or "").strip().lower() in {"1", "true", "yes", "y"}
+
 
 def _db_url_is_localhost(value: Optional[str]) -> bool:
     if not value:
@@ -16726,6 +16729,9 @@ async def admin_export_categories_xlsx(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    if not CATEGORY_IMPORT_EXPORT_XLSX_ENABLED:
+        raise HTTPException(status_code=403, detail="feature_disabled")
+
     result = await session.execute(
         select(Category)
         .options(selectinload(Category.translations))
@@ -16857,6 +16863,9 @@ async def admin_export_category_sample_xlsx(
     country: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
 ):
+    if not CATEGORY_IMPORT_EXPORT_XLSX_ENABLED:
+        raise HTTPException(status_code=403, detail="feature_disabled")
+
     module_value = (module or "vehicle").strip().lower()
     if module_value not in SUPPORTED_CATEGORY_MODULES:
         raise HTTPException(status_code=400, detail="Invalid module")
@@ -17773,9 +17782,13 @@ async def admin_import_categories_dry_run(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    normalized_format = (format or "csv").strip().lower()
+    if normalized_format != "csv":
+        raise HTTPException(status_code=403, detail="feature_disabled")
+
     content = _read_import_file(file)
     file_hash = hashlib.sha256(content).hexdigest()
-    rows = _parse_category_import_rows(content, format.lower())
+    rows = _parse_category_import_rows(content, normalized_format)
 
     result = await session.execute(select(Category).options(selectinload(Category.translations)))
     existing = result.scalars().all()
@@ -17788,7 +17801,7 @@ async def admin_import_categories_dry_run(
         "category_import",
         None,
         {
-            "format": format,
+            "format": normalized_format,
             "filename": file.filename,
             "summary": validation.get("summary"),
             "hash": file_hash,
@@ -17829,12 +17842,16 @@ async def admin_import_categories_commit(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    normalized_format = (format or "csv").strip().lower()
+    if normalized_format != "csv":
+        raise HTTPException(status_code=403, detail="feature_disabled")
+
     content = _read_import_file(file)
     file_hash = hashlib.sha256(content).hexdigest()
     if not dry_run_hash or dry_run_hash != file_hash:
         raise HTTPException(status_code=409, detail="Dry-run doğrulaması gerekli")
 
-    rows = _parse_category_import_rows(content, format.lower())
+    rows = _parse_category_import_rows(content, normalized_format)
     result = await session.execute(select(Category).options(selectinload(Category.translations)))
     existing_categories = result.scalars().all()
     validation = _validate_category_import_rows(rows, existing_categories, current_user)
@@ -17985,7 +18002,7 @@ async def admin_import_categories_commit(
         "category_import",
         None,
         {
-            "format": format,
+            "format": normalized_format,
             "filename": file.filename,
             "created": created,
             "updated": updated,
@@ -18000,6 +18017,11 @@ async def admin_import_categories_commit(
     }
 
 
+def _ensure_menu_management_enabled() -> None:
+    if not ADMIN_MENU_MANAGEMENT_ENABLED:
+        raise HTTPException(status_code=403, detail="feature_disabled")
+
+
 @api_router.get("/admin/menu-items")
 async def admin_list_menu_items(
     request: Request,
@@ -18007,6 +18029,8 @@ async def admin_list_menu_items(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    _ensure_menu_management_enabled()
+
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     query = select(MenuItem)
     if country:
@@ -18046,6 +18070,8 @@ async def admin_create_menu_item(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    _ensure_menu_management_enabled()
+
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     slug = payload.slug.strip()
     if not slug:
@@ -18122,6 +18148,8 @@ async def admin_update_menu_item(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    _ensure_menu_management_enabled()
+
     await resolve_admin_country_context(request, current_user=current_user, session=session)
     try:
         menu_uuid = uuid.UUID(menu_id)
@@ -18198,6 +18226,8 @@ async def admin_delete_menu_item(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    _ensure_menu_management_enabled()
+
     await resolve_admin_country_context(request, current_user=current_user, session=session)
     try:
         menu_uuid = uuid.UUID(menu_id)
