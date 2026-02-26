@@ -422,6 +422,8 @@ export default function AdminSystemSettingsPage() {
     fetchSettings();
     fetchCloudflareConfig();
     fetchHealthDetail();
+    fetchMeiliActiveConfig();
+    fetchMeiliHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCountry]);
 
