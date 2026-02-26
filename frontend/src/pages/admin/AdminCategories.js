@@ -851,6 +851,54 @@ const AdminCategories = () => {
   }, [selectedCountry, listFilters.module, listFilters.status]);
 
   useEffect(() => {
+    if (!bulkJobPolling || !bulkJob?.job_id) return;
+    let cancelled = false;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/bulk-actions/jobs/${bulkJob.job_id}`,
+          { headers: authHeader },
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data?.job) return;
+        if (cancelled) return;
+
+        setBulkJob(data.job);
+        if (["done", "failed"].includes(data.job.status)) {
+          setBulkJobPolling(false);
+          if (data.job.status === "done") {
+            toast({
+              title: "Toplu işlem tamamlandı",
+              description: `Etkilenen: ${data.job.changed_records || 0}, değişmeden kalan: ${data.job.unchanged_records || 0}`,
+            });
+            setSelectedIds([]);
+            setBulkConfirmOpen(false);
+            setBulkConfirmValue("");
+            setPendingBulkAction("");
+            await fetchItems();
+          } else {
+            toast({
+              title: "Toplu işlem başarısız",
+              description: data.job.error_message || data.job.error_code || "Job başarısız oldu.",
+              variant: "destructive",
+            });
+          }
+        }
+      } catch (error) {
+        // polling best-effort
+      }
+    };
+
+    poll();
+    const timer = setInterval(poll, 2500);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [bulkJobPolling, bulkJob?.job_id, authHeader]);
+
+  useEffect(() => {
     if (form.module !== "vehicle") {
       setVehicleSegmentError("");
       setVehicleLinkStatus({
