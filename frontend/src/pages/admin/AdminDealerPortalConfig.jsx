@@ -68,11 +68,19 @@ export default function AdminDealerPortalConfig() {
       ]);
       const configPayload = await configRes.json().catch(() => ({}));
       const previewPayload = await previewRes.json().catch(() => ({}));
-      if (!configRes.ok) throw new Error(configPayload?.detail || 'Dealer config yüklenemedi');
-      if (!previewRes.ok) throw new Error(previewPayload?.detail || 'Dealer preview yüklenemedi');
+      if (!configRes.ok) throw new Error(resolveErrorMessage(configPayload, 'Dealer config yüklenemedi'));
+      if (!previewRes.ok) throw new Error(resolveErrorMessage(previewPayload, 'Dealer preview yüklenemedi'));
       setNavItems(Array.isArray(configPayload?.nav_items) ? configPayload.nav_items : []);
       setModules(Array.isArray(configPayload?.modules) ? configPayload.modules : []);
-      setPreview(previewPayload || { header_items: [], sidebar_items: [], modules: [] });
+      setPreview(previewPayload || {
+        header_items: [],
+        header_row1_items: [],
+        header_row1_fixed_blocks: [],
+        header_row2_modules: [],
+        header_row3_controls: {},
+        sidebar_items: [],
+        modules: [],
+      });
     } catch (err) {
       setError(err?.message || 'Dealer config yüklenemedi');
       setNavItems([]);
