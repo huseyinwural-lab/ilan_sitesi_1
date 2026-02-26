@@ -113,9 +113,16 @@ const MODULE_LABELS = {
 const CATEGORY_MODULE_OPTIONS = [
   { value: "real_estate", label: "Emlak" },
   { value: "vehicle", label: "Vasıta" },
-  { value: "machinery", label: "Makine" },
-  { value: "services", label: "Hizmet" },
-  { value: "jobs", label: "İş" },
+  { value: "other", label: "Diğer" },
+];
+
+const VEHICLE_SEGMENT_OPTIONS = [
+  { value: "car", label: "Otomobil" },
+  { value: "suv", label: "SUV" },
+  { value: "offroad", label: "Arazi" },
+  { value: "pickup", label: "Pickup" },
+  { value: "truck", label: "Kamyon" },
+  { value: "bus", label: "Otobüs" },
 ];
 
 const TRANSACTION_TYPE_OPTIONS = [
