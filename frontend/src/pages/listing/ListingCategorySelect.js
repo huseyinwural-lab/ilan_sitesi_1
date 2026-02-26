@@ -5,9 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 const MODULE_OPTIONS = [
   { key: 'vehicle', label: 'Vasıta' },
   { key: 'real_estate', label: 'Emlak' },
-  { key: 'machinery', label: 'Makine' },
-  { key: 'services', label: 'Hizmet' },
-  { key: 'jobs', label: 'İş' },
+  { key: 'other', label: 'Diğer' },
 ];
 
 const ListingCategorySelect = () => {
