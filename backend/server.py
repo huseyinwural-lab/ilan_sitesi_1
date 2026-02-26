@@ -18411,6 +18411,62 @@ async def admin_category_vehicle_segment_link_status(
     }
 
 
+@api_router.get("/admin/categories/order-index/preview")
+async def admin_category_order_index_preview(
+    request: Request,
+    country: Optional[str],
+    module: str,
+    parent_id: Optional[str],
+    sort_order: int,
+    exclude_id: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    module_value = _normalize_category_module(module)
+    country_code = country.upper() if country else None
+    if country_code:
+        _assert_country_scope(country_code, current_user)
+
+    if sort_order <= 0:
+        raise _category_error("ORDER_INDEX_INVALID", "Sıra numarası 1 veya daha büyük olmalıdır.")
+
+    parent_uuid = None
+    if parent_id:
+        try:
+            parent_uuid = uuid.UUID(parent_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="parent_id not valid") from exc
+
+    exclude_uuid = None
+    if exclude_id:
+        try:
+            exclude_uuid = uuid.UUID(exclude_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="exclude_id not valid") from exc
+
+    conflict = await _check_category_sort_conflict(
+        session,
+        country_code=country_code,
+        module_value=module_value,
+        parent_id=parent_uuid,
+        sort_order=int(sort_order),
+        exclude_category_id=exclude_uuid,
+    )
+
+    return {
+        "available": conflict is None,
+        "error_code": None if conflict is None else "ORDER_INDEX_ALREADY_USED",
+        "message": None if conflict is None else "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.",
+        "conflict": None if conflict is None else {
+            "id": str(conflict.id),
+            "name": _pick_category_name(list(conflict.translations or []), _pick_category_slug(conflict.slug)),
+            "slug": _pick_category_slug(conflict.slug),
+        },
+    }
+
+
 @api_router.get("/admin/categories/import-export/export/json")
 async def admin_export_categories_json(
     request: Request,
