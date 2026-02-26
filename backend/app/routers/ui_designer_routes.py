@@ -251,7 +251,7 @@ async def _resolve_effective_theme(
         if not assignment:
             continue
         theme = await session.get(UITheme, assignment.theme_id)
-        if theme and theme.is_active:
+        if theme:
             return theme, scope, scope_id, assignment
 
     fallback = (
