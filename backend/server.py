@@ -14294,6 +14294,35 @@ def _dealer_summary_set_cached(cache_key: str, payload: Dict[str, Any]) -> None:
     }
 
 
+async def _dealer_header_row3_controls(
+    session: AsyncSession,
+    *,
+    user_id: Optional[str],
+    fallback_label: Optional[str],
+) -> Dict[str, Any]:
+    company_label = (fallback_label or "Mağazam").strip() or "Mağazam"
+    if user_id:
+        try:
+            user_uuid = uuid.UUID(str(user_id))
+            profile = (
+                await session.execute(select(DealerProfile).where(DealerProfile.user_id == user_uuid))
+            ).scalar_one_or_none()
+            if profile and profile.company_name:
+                company_label = profile.company_name.strip() or company_label
+        except ValueError:
+            pass
+
+    return {
+        "store_filter_enabled": True,
+        "user_dropdown_enabled": True,
+        "stores": [
+            {"key": "all", "label": "Tüm Mağazalar"},
+            {"key": "primary", "label": company_label},
+        ],
+        "default_store_key": "all",
+    }
+
+
 @api_router.get("/dealer/portal/config")
 async def dealer_portal_config(
     request: Request,
