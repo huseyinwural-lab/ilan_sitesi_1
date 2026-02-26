@@ -566,7 +566,9 @@ class TestCategoryWizardRegression:
     
     def test_category_create_draft(self, admin_token):
         """POST /api/admin/categories creates category (wizard flow)"""
+        import random
         timestamp = int(time.time())
+        unique_sort = random.randint(10000, 99999)  # Use high random number to avoid conflicts
         
         res = requests.post(
             f"{BASE_URL}/api/admin/categories",
@@ -580,7 +582,7 @@ class TestCategoryWizardRegression:
                 "country_code": "DE",
                 "module": "other",  # Use 'other' to avoid vehicle_segment requirement
                 "active_flag": True,
-                "sort_order": 999,
+                "sort_order": unique_sort,  # Use unique sort order
                 "hierarchy_complete": True,
                 "form_schema": {
                     "status": "draft",
