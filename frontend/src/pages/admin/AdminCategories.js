@@ -4324,6 +4324,47 @@ const AdminCategories = () => {
         </div>
       </div>
       )}
+
+      {bulkConfirmOpen && pendingBulkAction === "delete" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45" data-testid="categories-bulk-delete-modal">
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl" data-testid="categories-bulk-delete-modal-content">
+            <h3 className="text-lg font-semibold text-slate-900" data-testid="categories-bulk-delete-title">Toplu Silme Onayı</h3>
+            <p className="mt-2 text-sm text-slate-700" data-testid="categories-bulk-delete-description">
+              <strong>{selectedIds.length}</strong> kayıt soft-delete edilecek. Devam etmek için <strong>ONAYLA</strong> yazın.
+            </p>
+            <input
+              value={bulkConfirmValue}
+              onChange={(event) => setBulkConfirmValue(event.target.value)}
+              className="mt-3 h-10 w-full rounded-md border px-3 text-sm"
+              placeholder="ONAYLA"
+              data-testid="categories-bulk-delete-confirm-input"
+            />
+            <div className="mt-4 flex items-center justify-end gap-2" data-testid="categories-bulk-delete-actions">
+              <button
+                type="button"
+                className="rounded border px-3 py-1.5 text-sm"
+                onClick={() => {
+                  setBulkConfirmOpen(false);
+                  setBulkConfirmValue("");
+                  setPendingBulkAction("");
+                }}
+                data-testid="categories-bulk-delete-cancel"
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                className="rounded border border-rose-300 bg-rose-600 px-3 py-1.5 text-sm text-white disabled:opacity-60"
+                onClick={confirmBulkDelete}
+                disabled={bulkRunning}
+                data-testid="categories-bulk-delete-confirm"
+              >
+                {bulkRunning ? 'İşleniyor...' : 'Silmeyi Onayla'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
