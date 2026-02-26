@@ -14619,17 +14619,52 @@ async def admin_replay_webhook_event(
 async def admin_list_payments(
     request: Request,
     status: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    q: Optional[str] = None,
+    user_id: Optional[str] = None,
+    listing_id: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
-    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     conditions = []
     if status:
         status_value = status.strip().lower()
         conditions.append(Payment.status == status_value)
+
+    if start_date:
+        conditions.append(Payment.created_at >= _parse_iso_datetime(start_date, "start_date"))
+    if end_date:
+        conditions.append(Payment.created_at <= _parse_iso_datetime(end_date, "end_date"))
+
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        conditions.append(Payment.country_code == ctx.country)
+
+    if user_id:
+        try:
+            user_uuid = uuid.UUID(user_id)
+            conditions.append(Payment.user_id == user_uuid)
+        except ValueError:
+            conditions.append(cast(Payment.user_id, String).ilike(f"%{user_id.strip()}%"))
+
+    if q:
+        term = f"%{q.strip()}%"
+        conditions.append(
+            or_(
+                Payment.provider_ref.ilike(term),
+                Payment.provider_payment_id.ilike(term),
+                cast(Payment.user_id, String).ilike(term),
+                cast(Payment.invoice_id, String).ilike(term),
+            )
+        )
+
+    if listing_id:
+        conditions.append(cast(Payment.meta_json, Text).ilike(f"%{listing_id.strip()}%"))
 
     limit = min(100, max(1, int(limit)))
     skip = max(0, int(skip))
@@ -14665,12 +14700,17 @@ async def admin_list_payments(
     for row in rows:
         invoice = invoice_map.get(row.invoice_id)
         user_obj = user_map.get(row.user_id)
+        resolved_listing_id = _extract_listing_id_from_payment_row(row, invoice)
+        if listing_id and resolved_listing_id and listing_id.strip() not in resolved_listing_id:
+            continue
         items.append({
             "id": str(row.id),
+            "transaction_id": str(row.id),
             "invoice_id": str(row.invoice_id),
             "invoice_no": invoice.invoice_no if invoice else None,
             "user_id": str(row.user_id),
             "user_email": user_obj.email if user_obj else None,
+            "listing_id": resolved_listing_id,
             "amount_total": float(row.amount_total) if row.amount_total is not None else None,
             "currency": row.currency,
             "status": row.status,
@@ -14680,6 +14720,113 @@ async def admin_list_payments(
         })
 
     return {"items": items, "pagination": {"total": total, "skip": skip, "limit": limit}}
+
+
+@api_router.get("/admin/payments/export/csv")
+async def admin_export_payments_csv(
+    request: Request,
+    status: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    q: Optional[str] = None,
+    user_id: Optional[str] = None,
+    listing_id: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    conditions = []
+    if status:
+        conditions.append(Payment.status == status.strip().lower())
+    if start_date:
+        conditions.append(Payment.created_at >= _parse_iso_datetime(start_date, "start_date"))
+    if end_date:
+        conditions.append(Payment.created_at <= _parse_iso_datetime(end_date, "end_date"))
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        conditions.append(Payment.country_code == ctx.country)
+    if user_id:
+        try:
+            conditions.append(Payment.user_id == uuid.UUID(user_id))
+        except ValueError:
+            conditions.append(cast(Payment.user_id, String).ilike(f"%{user_id.strip()}%"))
+    if q:
+        term = f"%{q.strip()}%"
+        conditions.append(
+            or_(
+                Payment.provider_ref.ilike(term),
+                Payment.provider_payment_id.ilike(term),
+                cast(Payment.user_id, String).ilike(term),
+                cast(Payment.invoice_id, String).ilike(term),
+            )
+        )
+    if listing_id:
+        conditions.append(cast(Payment.meta_json, Text).ilike(f"%{listing_id.strip()}%"))
+
+    rows = (
+        await session.execute(
+            select(Payment).where(*conditions).order_by(Payment.created_at.desc()).limit(5000)
+        )
+    ).scalars().all()
+
+    invoice_ids = {row.invoice_id for row in rows}
+    user_ids = {row.user_id for row in rows}
+    invoices = []
+    users = []
+    if invoice_ids:
+        invoices = (await session.execute(select(AdminInvoice).where(AdminInvoice.id.in_(invoice_ids)))).scalars().all()
+    if user_ids:
+        users = (await session.execute(select(SqlUser).where(SqlUser.id.in_(user_ids)))).scalars().all()
+    invoice_map = {inv.id: inv for inv in invoices}
+    user_map = {u.id: u for u in users}
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["transaction_id", "user_id", "listing_id", "provider_ref", "amount", "currency", "status", "created_at"])
+    for row in rows:
+        invoice = invoice_map.get(row.invoice_id)
+        resolved_listing_id = _extract_listing_id_from_payment_row(row, invoice)
+        if listing_id and resolved_listing_id and listing_id.strip() not in resolved_listing_id:
+            continue
+        writer.writerow([
+            str(row.id),
+            str(row.user_id),
+            resolved_listing_id or "",
+            row.provider_ref or "",
+            float(row.amount_total) if row.amount_total is not None else "",
+            row.currency or "",
+            row.status or "",
+            row.created_at.isoformat() if row.created_at else "",
+        ])
+
+    await _write_audit_log_sql(
+        session=session,
+        action="TRANSACTIONS_CSV_EXPORT",
+        actor=current_user,
+        resource_type="payment",
+        resource_id="transactions",
+        metadata={
+            "status": status,
+            "start_date": start_date,
+            "end_date": end_date,
+            "q": q,
+            "user_id": user_id,
+            "listing_id": listing_id,
+            "rows": len(rows),
+        },
+        request=request,
+        country_code=getattr(ctx, "country", None),
+    )
+    await session.commit()
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    filename = f"transactions-log-{timestamp}.csv"
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
 
 @api_router.get("/admin/finance/revenue")
