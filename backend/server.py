@@ -11602,7 +11602,10 @@ def _serialize_category_sql(category: Category, include_schema: bool = False, in
         "icon": category.icon,
         "image_url": category.image_url,
         "listing_count": category.listing_count,
-        "vehicle_segment": _normalize_vehicle_type(category_meta.get("vehicle_segment")),
+        "vehicle_segment": VEHICLE_SEGMENT_ALIASES.get(
+            _normalize_segment_key(category_meta.get("vehicle_segment")) or "",
+            _normalize_segment_key(category_meta.get("vehicle_segment")),
+        ),
         "vehicle_master_linked": bool(category_meta.get("master_data_linked")),
         "created_at": category.created_at.isoformat() if category.created_at else None,
         "updated_at": category.updated_at.isoformat() if category.updated_at else None,
