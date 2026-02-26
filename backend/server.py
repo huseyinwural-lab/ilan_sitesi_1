@@ -18889,6 +18889,16 @@ async def admin_update_category(
             _validate_category_schema(schema)
         updates["form_schema"] = schema
 
+    if module_value == "vehicle" and vehicle_segment:
+        merged_schema = _merge_vehicle_segment_schema(
+            updates.get("form_schema", category.form_schema),
+            vehicle_segment=vehicle_segment,
+            linked=bool(vehicle_link_status and vehicle_link_status.get("linked")),
+        )
+        updates["form_schema"] = merged_schema
+        schema = merged_schema
+        schema_status = merged_schema.get("status", schema_status or "draft")
+
     if payload.wizard_progress is not None:
         updates["wizard_progress"] = payload.wizard_progress
 
