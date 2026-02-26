@@ -1598,6 +1598,41 @@ async def _ensure_fixture_category_schema(session: AsyncSession):
     await session.commit()
 
 
+async def _ensure_dealer_portal_config_seed(session: AsyncSession) -> None:
+    nav_count = (await session.execute(select(func.count()).select_from(DealerNavItem))).scalar_one()
+    module_count = (await session.execute(select(func.count()).select_from(DealerModule))).scalar_one()
+    now_dt = datetime.now(timezone.utc)
+
+    if int(nav_count or 0) == 0:
+        seed_nav_items = [
+            {"key": "overview", "label_i18n_key": "dealer.nav.overview", "route": "/dealer/overview", "icon": "LayoutDashboard", "order_index": 10, "visible": True, "role_scope": "dealer", "feature_flag": None, "location": "sidebar"},
+            {"key": "listings", "label_i18n_key": "dealer.nav.listings", "route": "/dealer/listings", "icon": "ListChecks", "order_index": 20, "visible": True, "role_scope": "dealer", "feature_flag": None, "location": "sidebar"},
+            {"key": "messages", "label_i18n_key": "dealer.nav.messages", "route": "/dealer/messages", "icon": "MessageCircle", "order_index": 30, "visible": True, "role_scope": "dealer", "feature_flag": None, "location": "sidebar"},
+            {"key": "customers", "label_i18n_key": "dealer.nav.customers", "route": "/dealer/customers", "icon": "Users", "order_index": 40, "visible": True, "role_scope": "dealer", "feature_flag": "dealer_customers_v1", "location": "sidebar"},
+            {"key": "reports", "label_i18n_key": "dealer.nav.reports", "route": "/dealer/reports", "icon": "BarChart3", "order_index": 50, "visible": True, "role_scope": "dealer", "feature_flag": "dealer_reports_v1", "location": "sidebar"},
+            {"key": "purchase", "label_i18n_key": "dealer.nav.purchase", "route": "/dealer/purchase", "icon": "ShoppingCart", "order_index": 60, "visible": True, "role_scope": "dealer", "feature_flag": None, "location": "sidebar"},
+            {"key": "settings", "label_i18n_key": "dealer.nav.settings", "route": "/dealer/settings", "icon": "Settings", "order_index": 70, "visible": True, "role_scope": "dealer", "feature_flag": None, "location": "sidebar"},
+            {"key": "quick_favorites", "label_i18n_key": "dealer.quick.favorites", "route": "/search", "icon": "Heart", "order_index": 10, "visible": True, "role_scope": "dealer", "feature_flag": None, "location": "header"},
+            {"key": "quick_messages", "label_i18n_key": "dealer.quick.messages", "route": "/dealer/messages", "icon": "MessageCircle", "order_index": 20, "visible": True, "role_scope": "dealer", "feature_flag": None, "location": "header"},
+            {"key": "quick_create_listing", "label_i18n_key": "dealer.quick.create_listing", "route": "/dealer/listings?create=1", "icon": "PlusSquare", "order_index": 30, "visible": True, "role_scope": "dealer", "feature_flag": None, "location": "header"},
+            {"key": "quick_profile", "label_i18n_key": "dealer.quick.profile", "route": "/dealer/settings", "icon": "UserRound", "order_index": 40, "visible": True, "role_scope": "dealer", "feature_flag": None, "location": "header"},
+        ]
+        for row in seed_nav_items:
+            session.add(DealerNavItem(created_at=now_dt, updated_at=now_dt, **row))
+
+    if int(module_count or 0) == 0:
+        seed_modules = [
+            {"key": "active_listings", "title_i18n_key": "dealer.widget.active_listings", "order_index": 10, "visible": True, "feature_flag": None, "data_source_key": "active_listings"},
+            {"key": "today_messages", "title_i18n_key": "dealer.widget.today_messages", "order_index": 20, "visible": True, "feature_flag": None, "data_source_key": "today_messages"},
+            {"key": "views_7d", "title_i18n_key": "dealer.widget.views_7d", "order_index": 30, "visible": True, "feature_flag": "dealer_reports_v1", "data_source_key": "views_7d"},
+            {"key": "lead_contact_click", "title_i18n_key": "dealer.widget.lead_contact_click", "order_index": 40, "visible": True, "feature_flag": "dealer_customers_v1", "data_source_key": "lead_contact_click"},
+            {"key": "package_quota", "title_i18n_key": "dealer.widget.package_quota", "order_index": 50, "visible": True, "feature_flag": None, "data_source_key": "package_quota"},
+        ]
+        for row in seed_modules:
+            session.add(DealerModule(created_at=now_dt, updated_at=now_dt, **row))
+
+    await session.commit()
+
 
 async def lifespan(app: FastAPI):
     logging.getLogger("runtime").warning(
