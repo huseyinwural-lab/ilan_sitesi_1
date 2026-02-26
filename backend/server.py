@@ -16704,6 +16704,197 @@ async def system_settings_effective(
     return {"country_code": country_code, "items": items}
 
 
+def _resolve_site_logo_file_path(logo_path: Optional[str]) -> Optional[Path]:
+    if not logo_path:
+        return None
+    if not logo_path.startswith("/api/site/assets/"):
+        return None
+    asset_key = logo_path.split("/api/site/assets/", 1)[-1]
+    base_dir = Path(os.path.dirname(__file__)) / "app" / "static" / "site_assets"
+    full_path = (base_dir / asset_key).resolve()
+    if not str(full_path).startswith(str(base_dir.resolve())):
+        return None
+    if not full_path.exists() or not full_path.is_file():
+        return None
+    return full_path
+
+
+def _apply_preview_watermark(
+    base_image: Image.Image,
+    *,
+    logo_path: Optional[Path],
+    config: Dict[str, Any],
+) -> Image.Image:
+    rendered = base_image.convert("RGBA")
+    if not config.get("enabled", True) or not logo_path:
+        return rendered.convert("RGB")
+
+    with Image.open(logo_path) as logo_raw:
+        logo = logo_raw.convert("RGBA")
+        target_logo_width = max(64, int(rendered.width * 0.2))
+        if logo.width > target_logo_width:
+            ratio = target_logo_width / float(logo.width)
+            logo = logo.resize((target_logo_width, max(1, int(logo.height * ratio))), Image.Resampling.LANCZOS)
+
+        opacity = max(0.05, min(0.95, float(config.get("opacity", 0.35))))
+        alpha = logo.getchannel("A")
+        alpha = alpha.point(lambda p: int(p * opacity))
+        logo.putalpha(alpha)
+
+        position = _sanitize_watermark_position(config.get("position"))
+        margin = max(12, int(rendered.width * 0.02))
+        if position == "bottom_left":
+            x = margin
+            y = rendered.height - logo.height - margin
+        elif position == "top_right":
+            x = rendered.width - logo.width - margin
+            y = margin
+        elif position == "top_left":
+            x = margin
+            y = margin
+        elif position == "center":
+            x = int((rendered.width - logo.width) / 2)
+            y = int((rendered.height - logo.height) / 2)
+        else:
+            x = rendered.width - logo.width - margin
+            y = rendered.height - logo.height - margin
+
+        rendered.alpha_composite(logo, (max(0, x), max(0, y)))
+
+    return rendered.convert("RGB")
+
+
+@api_router.get("/admin/media/watermark/settings")
+async def admin_get_watermark_pipeline_settings(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
+    config = await _get_watermark_pipeline_config(session, country_code=country_code)
+    header_config = await _get_active_header_config(session, create_from_legacy=True)
+    logo_url = _build_header_logo_url(header_config)
+    return {
+        "key": WATERMARK_PIPELINE_SETTING_KEY,
+        "country_code": country_code,
+        "config": config,
+        "logo_url": logo_url,
+    }
+
+
+@api_router.patch("/admin/media/watermark/settings")
+async def admin_update_watermark_pipeline_settings(
+    payload: WatermarkPipelineUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
+
+    current = await _get_watermark_pipeline_config(session, country_code=country_code)
+    merged = {
+        **current,
+        **{k: v for k, v in payload.model_dump(exclude_none=True).items()},
+    }
+    normalized = _normalize_watermark_pipeline_value(merged)
+
+    setting = await _get_system_setting_by_key(session, WATERMARK_PIPELINE_SETTING_KEY, country_code)
+    if not setting:
+        setting = SystemSetting(
+            key=WATERMARK_PIPELINE_SETTING_KEY,
+            value=normalized,
+            country_code=country_code,
+            is_readonly=False,
+            description="Vehicle media watermark & image pipeline settings",
+        )
+        session.add(setting)
+        await session.flush()
+    else:
+        setting.value = normalized
+        setting.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="WATERMARK_PIPELINE_SETTING_UPDATE",
+        actor=current_user,
+        resource_type="system_setting",
+        resource_id=str(setting.id),
+        metadata={"key": WATERMARK_PIPELINE_SETTING_KEY, "country_code": country_code, "value": normalized},
+        request=request,
+        country_code=country_code,
+    )
+    await session.commit()
+    return {"ok": True, "config": normalized}
+
+
+@api_router.get("/admin/media/watermark/preview")
+async def admin_watermark_preview(
+    request: Request,
+    listing_id: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
+    config = await _get_watermark_pipeline_config(session, country_code=country_code)
+
+    listing: Optional[Listing] = None
+    if listing_id:
+        try:
+            listing_uuid = uuid.UUID(str(listing_id))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid listing id") from exc
+        listing = await session.get(Listing, listing_uuid)
+    else:
+        query = select(Listing).where(Listing.images.isnot(None)).order_by(desc(Listing.updated_at)).limit(1)
+        if country_code:
+            query = query.where(Listing.country == country_code)
+        listing = (await session.execute(query)).scalar_one_or_none()
+
+    if not listing or not listing.images:
+        raise HTTPException(status_code=404, detail="Preview image not found")
+
+    media_meta = _listing_media_meta(listing)
+    if not media_meta:
+        raise HTTPException(status_code=404, detail="Preview image not found")
+    cover = next((m for m in media_meta if m.get("is_cover")), media_meta[0])
+    file_name = cover.get("file")
+    if not file_name:
+        raise HTTPException(status_code=404, detail="Preview image not found")
+
+    try:
+        source_path = resolve_public_media_path(str(listing.id), file_name)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Preview image not found") from exc
+
+    header_config = await _get_active_header_config(session, create_from_legacy=True)
+    logo_file = _resolve_site_logo_file_path(header_config.logo_path if header_config else None)
+
+    with Image.open(source_path) as source_image:
+        preview = _apply_preview_watermark(source_image, logo_path=logo_file, config=config)
+        buffer = io.BytesIO()
+        preview.save(buffer, format="WEBP", quality=82, method=6)
+        payload = buffer.getvalue()
+
+    return Response(content=payload, media_type="image/webp")
+
+
+@api_router.get("/admin/media/pipeline/performance")
+async def admin_media_pipeline_performance(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    summary = _media_pipeline_summary()
+    return {
+        "summary": summary,
+        "recent": list(MEDIA_PIPELINE_METRICS)[-20:],
+    }
+
+
 # =====================
 # Master Data: Categories / Attributes / Vehicle
 # =====================
