@@ -1,4 +1,6 @@
 import os
+import base64
+import hashlib
 from datetime import datetime, timezone
 from typing import Any, Dict
 from urllib.parse import quote
@@ -19,8 +21,12 @@ def _get_config_fernet() -> Fernet:
         raise MeiliConfigError("CONFIG_ENCRYPTION_KEY missing", code="config_key_missing")
     try:
         return Fernet(key)
-    except Exception as exc:
-        raise MeiliConfigError("CONFIG_ENCRYPTION_KEY invalid", code="config_key_invalid") from exc
+    except Exception:
+        try:
+            derived = base64.urlsafe_b64encode(hashlib.sha256(key.encode("utf-8")).digest())
+            return Fernet(derived)
+        except Exception as exc:
+            raise MeiliConfigError("CONFIG_ENCRYPTION_KEY invalid", code="config_key_invalid") from exc
 
 
 def encrypt_meili_master_key(master_key: str) -> str:
