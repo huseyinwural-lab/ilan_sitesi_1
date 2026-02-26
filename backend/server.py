@@ -11400,12 +11400,17 @@ def _merge_vehicle_segment_schema(
     *,
     vehicle_segment: str,
     linked: bool,
+    make_count: int = 0,
+    model_count: int = 0,
 ) -> Dict[str, Any]:
     base_schema = dict(schema or {})
     category_meta = dict(base_schema.get("category_meta") or {})
     category_meta["vehicle_segment"] = vehicle_segment
     category_meta["master_data_linked"] = bool(linked)
     category_meta["master_data_linked_at"] = datetime.now(timezone.utc).isoformat()
+    category_meta["master_data_make_count"] = int(make_count)
+    category_meta["master_data_model_count"] = int(model_count)
+    category_meta["master_data_breakdown_mode"] = "auto"
     base_schema["category_meta"] = category_meta
     base_schema.setdefault("status", "draft")
     return base_schema
