@@ -1719,6 +1719,97 @@ const AdminCategories = () => {
     fetchItems();
   };
 
+  const getItemSelectionState = (itemId) => {
+    const descendantIds = descendantsByItem.get(itemId) || [itemId];
+    const selectedCount = descendantIds.filter((id) => selectedIdSet.has(id)).length;
+    return {
+      checked: descendantIds.length > 0 && selectedCount === descendantIds.length,
+      indeterminate: selectedCount > 0 && selectedCount < descendantIds.length,
+    };
+  };
+
+  const toggleItemSelection = (item, checked) => {
+    const descendantIds = descendantsByItem.get(item.id) || [item.id];
+    setSelectedIds((prev) => {
+      const nextSet = new Set(prev);
+      if (checked) {
+        descendantIds.forEach((id) => nextSet.add(id));
+      } else {
+        descendantIds.forEach((id) => nextSet.delete(id));
+      }
+      return Array.from(nextSet);
+    });
+  };
+
+  const toggleAllVisibleSelection = (checked) => {
+    if (checked) {
+      setSelectedIds(visibleItemIds);
+      return;
+    }
+    setSelectedIds([]);
+  };
+
+  const executeBulkAction = async (action) => {
+    if (!selectedIds.length) return;
+    setBulkRunning(true);
+    try {
+      const payload = {
+        action,
+        scope: "ids",
+        ids: selectedIds,
+        filter: {
+          country: selectedCountry,
+          module: listFilters.module !== "all" ? listFilters.module : null,
+          active_flag: listFilters.status === "all" ? null : listFilters.status === "active",
+        },
+      };
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/bulk-actions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const parsed = parseApiError(data, "Toplu işlem başarısız.");
+        toast({ title: "Toplu işlem başarısız", description: parsed.message, variant: "destructive" });
+        return;
+      }
+
+      toast({
+        title: "Toplu işlem tamamlandı",
+        description: `Etkilenen: ${data?.changed || 0}, değişmeden kalan: ${data?.unchanged || 0}`,
+      });
+      setSelectedIds([]);
+      setBulkConfirmOpen(false);
+      setBulkConfirmValue("");
+      setPendingBulkAction("");
+      await fetchItems();
+    } finally {
+      setBulkRunning(false);
+    }
+  };
+
+  const openBulkDeleteConfirm = () => {
+    setPendingBulkAction("delete");
+    setBulkConfirmValue("");
+    setBulkConfirmOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    if (bulkConfirmValue.trim().toUpperCase() !== "ONAYLA") {
+      toast({
+        title: "Onay gerekli",
+        description: "Silme işlemi için ONAYLA yazın.",
+        variant: "destructive",
+      });
+      return;
+    }
+    await executeBulkAction("delete");
+  };
+
   const canAccessStep = (stepId) => {
     if (stepId === "hierarchy") return true;
     if (stepId === wizardStep) return true;
