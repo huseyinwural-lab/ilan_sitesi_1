@@ -866,6 +866,11 @@ async def admin_publish_ui_config(
     if not row or row.config_type != normalized_type:
         raise HTTPException(status_code=404, detail="UI config not found")
 
+    if row.config_type == "header":
+        row.config_data = _normalize_header_config_data(row.config_data or {}, row.segment)
+        if row.segment == "corporate":
+            _validate_corporate_header_guardrails(row.config_data)
+
     await _set_ui_config_scope_to_draft(
         session,
         config_type=row.config_type,
