@@ -18817,7 +18817,18 @@ async def admin_update_category(
         updates["parent_id"] = parent.id if parent else None
         updates["path"] = f"{parent.path}.{updates.get('slug') or _pick_category_slug(category.slug)}" if parent and parent.path else (updates.get("slug") or _pick_category_slug(category.slug))
         updates["depth"] = (parent.depth + 1) if parent else 0
-        updates["sort_order"] = await _next_category_sort_order(session, parent.id if parent else None)
+        if payload.sort_order is None:
+            updates["sort_order"] = await _next_category_sort_order(
+                session,
+                parent_id=parent.id if parent else None,
+                module_value=module_value,
+                country_code=country_value,
+            )
+
+    if payload.sort_order is not None:
+        if int(payload.sort_order) <= 0:
+            raise HTTPException(status_code=400, detail="sort_order 1 veya daha büyük olmalı")
+        updates["sort_order"] = int(payload.sort_order)
 
     if payload.country_code is not None:
         code = payload.country_code.upper() if payload.country_code else None
