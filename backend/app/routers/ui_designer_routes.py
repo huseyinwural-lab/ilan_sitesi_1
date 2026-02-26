@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, get_db
 from app.dependencies import PERMISSION_ROLE_MAP, check_named_permission
+from app.models.core import AuditLog
 from app.models.ui_config import UIConfig
 from app.models.ui_logo_asset import UILogoAsset
 from app.models.ui_theme import UITheme
@@ -633,6 +634,22 @@ class UIConfigSavePayload(BaseModel):
     widgets: Optional[list[dict[str, Any]]] = None
 
 
+class UIConfigPublishPayload(BaseModel):
+    segment: str = Field(default="individual")
+    scope: str = Field(default="system")
+    scope_id: Optional[str] = None
+    config_id: Optional[str] = None
+    require_confirm: bool = False
+
+
+class UIConfigRollbackPayload(BaseModel):
+    segment: str = Field(default="individual")
+    scope: str = Field(default="system")
+    scope_id: Optional[str] = None
+    target_config_id: Optional[str] = None
+    require_confirm: bool = False
+
+
 class UIThemeCreatePayload(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     tokens: dict = Field(default_factory=dict)
@@ -752,6 +769,189 @@ def _serialize_ui_theme_assignment(row: UIThemeAssignment) -> dict[str, Any]:
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
+
+
+def _normalize_header_rows_for_diff(config_data: dict[str, Any], segment: str) -> list[dict[str, Any]]:
+    normalized = _normalize_header_config_data(config_data or {}, segment)
+    rows = normalized.get("rows") if isinstance(normalized.get("rows"), list) else []
+    safe_rows: list[dict[str, Any]] = []
+    for row in rows:
+        blocks = row.get("blocks") if isinstance(row.get("blocks"), list) else []
+        safe_rows.append(
+            {
+                "id": str(row.get("id") or ""),
+                "visible": bool(row.get("visible", True)),
+                "blocks": [
+                    {
+                        "id": str(block.get("id") or block.get("type") or ""),
+                        "type": str(block.get("type") or ""),
+                        "visible": bool(block.get("visible", True)),
+                    }
+                    for block in blocks
+                ],
+            }
+        )
+    return safe_rows
+
+
+def _compute_ui_config_diff(
+    *,
+    config_type: str,
+    segment: str,
+    old_payload: Optional[dict[str, Any]],
+    new_payload: Optional[dict[str, Any]],
+) -> dict[str, Any]:
+    old_payload = old_payload or {"config_data": {}, "layout": [], "widgets": []}
+    new_payload = new_payload or {"config_data": {}, "layout": [], "widgets": []}
+
+    if config_type == "dashboard":
+        old_widgets = old_payload.get("widgets") if isinstance(old_payload.get("widgets"), list) else []
+        new_widgets = new_payload.get("widgets") if isinstance(new_payload.get("widgets"), list) else []
+        old_layout = old_payload.get("layout") if isinstance(old_payload.get("layout"), list) else []
+        new_layout = new_payload.get("layout") if isinstance(new_payload.get("layout"), list) else []
+
+        old_widget_map = {
+            str(item.get("widget_id") or ""): item
+            for item in old_widgets
+            if isinstance(item, dict) and str(item.get("widget_id") or "").strip()
+        }
+        new_widget_map = {
+            str(item.get("widget_id") or ""): item
+            for item in new_widgets
+            if isinstance(item, dict) and str(item.get("widget_id") or "").strip()
+        }
+
+        old_layout_map = {
+            str(item.get("widget_id") or ""): {
+                "x": item.get("x"),
+                "y": item.get("y"),
+                "w": item.get("w"),
+                "h": item.get("h"),
+            }
+            for item in old_layout
+            if isinstance(item, dict) and str(item.get("widget_id") or "").strip()
+        }
+        new_layout_map = {
+            str(item.get("widget_id") or ""): {
+                "x": item.get("x"),
+                "y": item.get("y"),
+                "w": item.get("w"),
+                "h": item.get("h"),
+            }
+            for item in new_layout
+            if isinstance(item, dict) and str(item.get("widget_id") or "").strip()
+        }
+
+        old_ids = set(old_widget_map.keys())
+        new_ids = set(new_widget_map.keys())
+
+        added = sorted(new_ids - old_ids)
+        removed = sorted(old_ids - new_ids)
+        common = sorted(old_ids & new_ids)
+
+        moved: list[dict[str, Any]] = []
+        type_changed: list[dict[str, Any]] = []
+        for widget_id in common:
+            if old_layout_map.get(widget_id) != new_layout_map.get(widget_id):
+                moved.append({
+                    "widget_id": widget_id,
+                    "from": old_layout_map.get(widget_id),
+                    "to": new_layout_map.get(widget_id),
+                })
+            old_type = str((old_widget_map.get(widget_id) or {}).get("widget_type") or "")
+            new_type = str((new_widget_map.get(widget_id) or {}).get("widget_type") or "")
+            if old_type != new_type:
+                type_changed.append({"widget_id": widget_id, "from": old_type, "to": new_type})
+
+        has_changes = bool(added or removed or moved or type_changed)
+        return {
+            "config_type": config_type,
+            "added_widgets": added,
+            "removed_widgets": removed,
+            "moved_widgets": moved,
+            "type_changed_widgets": type_changed,
+            "has_changes": has_changes,
+            "change_count": len(added) + len(removed) + len(moved) + len(type_changed),
+        }
+
+    if config_type == "header":
+        old_rows = _normalize_header_rows_for_diff(old_payload.get("config_data") or {}, segment)
+        new_rows = _normalize_header_rows_for_diff(new_payload.get("config_data") or {}, segment)
+
+        def _signature_map(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+            entries: dict[str, dict[str, Any]] = {}
+            for row_index, row in enumerate(rows):
+                row_id = str(row.get("id") or f"row-{row_index}")
+                blocks = row.get("blocks") if isinstance(row.get("blocks"), list) else []
+                for block_index, block in enumerate(blocks):
+                    block_id = str(block.get("id") or block.get("type") or f"block-{block_index}")
+                    key = f"{row_id}:{block_id}"
+                    entries[key] = {
+                        "row_id": row_id,
+                        "index": block_index,
+                        "visible": bool(block.get("visible", True)),
+                        "type": str(block.get("type") or ""),
+                    }
+            return entries
+
+        old_map = _signature_map(old_rows)
+        new_map = _signature_map(new_rows)
+        old_keys = set(old_map.keys())
+        new_keys = set(new_map.keys())
+
+        added = sorted(new_keys - old_keys)
+        removed = sorted(old_keys - new_keys)
+        moved: list[dict[str, Any]] = []
+        visibility_changed: list[dict[str, Any]] = []
+        for key in sorted(old_keys & new_keys):
+            old_entry = old_map[key]
+            new_entry = new_map[key]
+            if old_entry.get("row_id") != new_entry.get("row_id") or old_entry.get("index") != new_entry.get("index"):
+                moved.append({"module": key, "from": old_entry, "to": new_entry})
+            if old_entry.get("visible") != new_entry.get("visible"):
+                visibility_changed.append({"module": key, "from": old_entry.get("visible"), "to": new_entry.get("visible")})
+
+        has_changes = bool(added or removed or moved or visibility_changed)
+        return {
+            "config_type": config_type,
+            "added_modules": added,
+            "removed_modules": removed,
+            "moved_modules": moved,
+            "visibility_changes": visibility_changed,
+            "has_changes": has_changes,
+            "change_count": len(added) + len(removed) + len(moved) + len(visibility_changed),
+        }
+
+    old_data = old_payload.get("config_data") if isinstance(old_payload.get("config_data"), dict) else {}
+    new_data = new_payload.get("config_data") if isinstance(new_payload.get("config_data"), dict) else {}
+    has_changes = old_data != new_data
+    return {
+        "config_type": config_type,
+        "has_changes": has_changes,
+        "change_count": 1 if has_changes else 0,
+    }
+
+
+def _create_ui_config_audit_log(
+    *,
+    action: str,
+    current_user: dict[str, Any],
+    config_type: str,
+    resource_id: str,
+    old_values: Optional[dict[str, Any]],
+    new_values: Optional[dict[str, Any]],
+    metadata_info: Optional[dict[str, Any]],
+) -> AuditLog:
+    return AuditLog(
+        user_id=_safe_uuid(current_user.get("id")),
+        user_email=current_user.get("email"),
+        action=action,
+        resource_type=f"ui_config:{config_type}",
+        resource_id=resource_id,
+        old_values=old_values,
+        new_values=new_values,
+        metadata_info=metadata_info,
+    )
 
 
 async def _next_ui_config_version(
