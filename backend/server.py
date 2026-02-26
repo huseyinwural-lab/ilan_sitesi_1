@@ -115,7 +115,7 @@ from app.models.vehicle_mdm import VehicleMake, VehicleModel
 from app.models.vehicle_trim import VehicleTrim
 from app.models.vehicle_import_job import VehicleImportJob
 from app.models.user_recent_category import UserRecentCategory
-from app.models.analytics import ListingView
+from app.models.analytics import ListingView, UserInteraction
 from app.models.messaging import Conversation, Message
 from app.models.favorite import Favorite
 from app.models.notification import Notification
@@ -138,6 +138,7 @@ from app.models.cloudflare_config import CloudflareConfig
 from app.models.meilisearch_config import MeiliSearchConfig
 from app.models.search_sync_job import SearchSyncJob
 from app.models.system_setting import SystemSetting
+from app.models.dealer_portal_config import DealerNavItem, DealerModule
 from app.models.admin_invite import AdminInvite
 from app.models.menu_item import MenuItem
 from app.models.report import Report
