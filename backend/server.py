@@ -3371,15 +3371,15 @@ else:
     DATABASE_URL = "postgresql://admin_user:admin_pass@localhost:5432/admin_panel"
 
 try:
-    DB_POOL_SIZE = int(DB_POOL_SIZE_RAW) if DB_POOL_SIZE_RAW else 5
-    DB_MAX_OVERFLOW = int(DB_MAX_OVERFLOW_RAW) if DB_MAX_OVERFLOW_RAW else 10
-    DB_POOL_TIMEOUT = int(DB_POOL_TIMEOUT_RAW) if DB_POOL_TIMEOUT_RAW else 30
+    DB_POOL_SIZE = int(DB_POOL_SIZE_RAW) if DB_POOL_SIZE_RAW else 10
+    DB_MAX_OVERFLOW = int(DB_MAX_OVERFLOW_RAW) if DB_MAX_OVERFLOW_RAW else 20
+    DB_POOL_TIMEOUT = int(DB_POOL_TIMEOUT_RAW) if DB_POOL_TIMEOUT_RAW else 60
     DB_POOL_RECYCLE = int(DB_POOL_RECYCLE_RAW) if DB_POOL_RECYCLE_RAW else 1800
 except ValueError:
     logging.getLogger("sql_config").warning("Invalid DB pool values, defaulting to 5/10/30/1800")
-    DB_POOL_SIZE = 5
-    DB_MAX_OVERFLOW = 10
-    DB_POOL_TIMEOUT = 30
+    DB_POOL_SIZE = 10
+    DB_MAX_OVERFLOW = 20
+    DB_POOL_TIMEOUT = 60
     DB_POOL_RECYCLE = 1800
 
 ssl_context = None
