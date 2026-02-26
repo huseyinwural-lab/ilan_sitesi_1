@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="12" failures="0" skipped="0" tests="12" time="30.486" timestamp="2026-02-26T14:54:43.172063+00:00" hostname="agent-env-c67e60f5-7aba-4c68-b985-e96d989dc4ff"><testcase classname="backend.tests.test_yakinda_temizligi.TestMenuManagementDisabled" name="test_get_menu_items_returns_403" time="30.374"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_yakinda_temizligi.TestMenuManagementDisabled" name="test_post_menu_items_returns_403" time="0.000"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_yakinda_temizligi.TestMenuManagementDisabled" name="test_patch_menu_items_returns_403" time="0.000"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_yakinda_temizligi.TestMenuManagementDisabled" name="test_delete_menu_items_returns_403" time="0.000"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_yakinda_temizligi.TestCategoryImportExportCSVOnly" name="test_csv_export_returns_200" time="0.000"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_yakinda_temizligi.TestCategoryImportExportCSVOnly" name="test_csv_sample_returns_200" time="0.000"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_yakinda_temizligi.TestCategoryImportExportCSVOnly" name="test_xlsx_export_returns_403" time="0.000"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_yakinda_temizligi.TestCategoryImportExportCSVOnly" name="test_xlsx_sample_returns_403" time="0.000"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_yakinda_temizligi.TestImportDryRunMandatory" name="test_import_dryrun_csv_works" time="0.000"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_yakinda_temizligi.TestImportDryRunMandatory" name="test_import_dryrun_xlsx_returns_403" time="0.000"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_yakinda_temizligi.TestImportDryRunMandatory" name="test_apply_without_dryrun_hash_blocked" time="0.000"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_yakinda_temizligi.TestImportDryRunMandatory" name="test_apply_with_invalid_hash_blocked" time="0.000"><error message="failed on setup with &quot;AssertionError: Admin login failed: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code&quot;">backend/tests/test_yakinda_temizligi.py:27: in admin_token
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+E   AssertionError: Admin login failed: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</error></testcase></testsuite></testsuites>
