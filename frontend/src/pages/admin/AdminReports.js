@@ -458,34 +458,49 @@ export default function AdminReportsPage() {
                     <div>
                       <h4 className="text-sm font-semibold">Reporter</h4>
                       <div className="text-xs text-muted-foreground" data-testid="report-detail-reporter">
-                        {detailData.reporter_summary?.email || 'anon'}
+                        {detailData.reporter_summary?.email || detailData.reporter_email || 'anon'}
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="text-sm font-semibold">Listing</h4>
-                      <div className="text-xs text-muted-foreground" data-testid="report-detail-listing-title">
-                        {detailData.listing_snapshot?.title || detailData.listing_id}
+                  {reportType === 'listing' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="text-sm font-semibold">Listing</h4>
+                        <div className="text-xs text-muted-foreground" data-testid="report-detail-listing-title">
+                          {detailData.listing_snapshot?.title || detailData.listing_id}
+                        </div>
+                        <div className="text-xs text-muted-foreground" data-testid="report-detail-listing-status">
+                          Status: {detailData.listing_snapshot?.status || '—'}
+                        </div>
+                        <div className="text-xs text-muted-foreground" data-testid="report-detail-listing-price">
+                          {detailData.listing_snapshot?.price ? `${detailData.listing_snapshot.price.toLocaleString()} ${detailData.listing_snapshot.currency}` : '—'}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground" data-testid="report-detail-listing-status">
-                        Status: {detailData.listing_snapshot?.status || '—'}
-                      </div>
-                      <div className="text-xs text-muted-foreground" data-testid="report-detail-listing-price">
-                        {detailData.listing_snapshot?.price ? `${detailData.listing_snapshot.price.toLocaleString()} ${detailData.listing_snapshot.currency}` : '—'}
+                      <div>
+                        <h4 className="text-sm font-semibold">Seller</h4>
+                        <div className="text-xs text-muted-foreground" data-testid="report-detail-seller-email">
+                          {detailData.seller_summary?.email || '—'}
+                        </div>
+                        <div className="text-xs text-muted-foreground" data-testid="report-detail-seller-role">
+                          {detailData.seller_summary?.role || '—'}
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <h4 className="text-sm font-semibold">Seller</h4>
-                      <div className="text-xs text-muted-foreground" data-testid="report-detail-seller-email">
-                        {detailData.seller_summary?.email || '—'}
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="report-detail-message-wrap">
+                      <div>
+                        <h4 className="text-sm font-semibold">Message</h4>
+                        <div className="text-xs text-muted-foreground" data-testid="report-detail-message-id">{detailData.message_id}</div>
+                        <div className="text-xs text-muted-foreground" data-testid="report-detail-message-preview">{detailData.message_preview || '—'}</div>
                       </div>
-                      <div className="text-xs text-muted-foreground" data-testid="report-detail-seller-role">
-                        {detailData.seller_summary?.role || '—'}
+                      <div>
+                        <h4 className="text-sm font-semibold">Context</h4>
+                        <div className="text-xs text-muted-foreground" data-testid="report-detail-conversation-id">Conversation: {detailData.conversation_id || '—'}</div>
+                        <div className="text-xs text-muted-foreground" data-testid="report-detail-message-listing-id">Listing: {detailData.listing_id || '—'}</div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="border rounded-md p-3 space-y-3">
                     <h4 className="text-sm font-semibold">Status Change</h4>
@@ -527,6 +542,27 @@ export default function AdminReportsPage() {
                     >
                       Status Güncelle
                     </button>
+
+                    {reportType === 'listing' && (
+                      <div className="flex flex-wrap gap-2" data-testid="report-moderation-actions-wrap">
+                        <button
+                          onClick={handleSoftDeleteListing}
+                          disabled={actionLoading}
+                          className="h-9 px-3 rounded-md border text-sm"
+                          data-testid="report-soft-delete-button"
+                        >
+                          Soft Delete Listing
+                        </button>
+                        <button
+                          onClick={handleSuspendSeller}
+                          disabled={actionLoading}
+                          className="h-9 px-3 rounded-md border text-sm"
+                          data-testid="report-suspend-seller-button"
+                        >
+                          Suspend Seller
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
