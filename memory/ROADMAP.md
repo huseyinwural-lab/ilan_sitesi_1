@@ -1,25 +1,34 @@
 # ROADMAP
 
-**Son güncelleme:** 2026-02-23
+**Son güncelleme:** 2026-02-26
 
 Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tutulur.
 
-## Admin V1 Operational Freeze
-- Phase A: Cloudflare & System Health — **CLOSED** (canary OK + evidence)
-- Data Layer Cutover (Mongo Tasfiye) — **IN PROGRESS** (envanter + P0 admin chain SQL)
-- Phase B: RBAC Final Freeze — **PAUSED** (cutover tamamlanınca devam)
-- Phase C: Audit Log %100 kapsama — BACKLOG
-- Phase D: Moderation Pipeline Final — BACKLOG
-- Phase E: Monetizasyon Admin Görünürlük — BACKLOG
-- Phase F: Dashboard Operasyonel Final — BACKLOG
-- Phase G: Master Data Doğrulama (Emlak) — BACKLOG
+## Faz Durumu
 
+### P0 — ListingWizard + VehicleSelector Stabilizasyonu
+- **CLOSED** ✅
+- Kanıt: `/app/docs/P0_VEHICLE_SELECTOR_FIX_EVIDENCE.md`
+
+### P1 — Search Altyapısı (Meilisearch)
+- **ACTIVE** 🔴
+- Bu tur tamamlanan: Meilisearch config management (manual + history + activation gate)
+- Kanıt: `/app/docs/P1_MEILI_CONFIG_HISTORY_EVIDENCE.md`
+
+### P1 — Sıradaki (devam)
+- Listing → index senkronizasyonunun tam kapsamı (hook + retry + bulk reindex)
+- Facet/dinamik sidebar
+- Suggest/autocomplete endpoint
+
+### Admin Final Kilit (4 Modül)
+- Watermark & Image Processing — BACKLOG
+- Transactions Log — BACKLOG
+- Attribute Manager — BACKLOG
+- Minimal Moderation — BACKLOG
 
 ---
 
-## UX & Theme Phase (Backlog)
-- Theme Palette Uygulaması
-- Dark/Light kontrast düzeltmesi
-- İlan verme UI sadeleştirme
-- Eski yapı korunarak modernize edilir (mimari bozulmaz)
-- Tema değişimi mimariyi değil yalnızca UI katmanını etkiler
+## P2 Backlog
+- Kampanya timeline
+- Doping sistemi
+- Public campaign/search UI
