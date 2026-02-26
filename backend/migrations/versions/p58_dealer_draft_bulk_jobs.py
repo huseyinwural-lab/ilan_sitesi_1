@@ -93,6 +93,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.execute("DROP INDEX IF EXISTS uq_dealer_config_active_draft_scope")
+    op.execute("DROP INDEX IF EXISTS uq_category_bulk_jobs_idempotency_key_idx")
 
     op.drop_index("ix_dealer_config_revisions_scope_active", table_name="dealer_config_revisions")
     op.drop_index("ix_dealer_config_revisions_scope_state", table_name="dealer_config_revisions")
