@@ -19810,6 +19810,22 @@ async def _load_filterable_attribute_map(
     return attr_map, facet_fields
 
 
+async def _load_all_filterable_attribute_fields(session: AsyncSession) -> list[str]:
+    result = await session.execute(
+        select(Attribute.key).where(
+            Attribute.is_active.is_(True),
+            Attribute.is_filterable.is_(True),
+        )
+    )
+    keys = []
+    for raw_key in result.scalars().all():
+        key = (raw_key or "").strip().lower()
+        if not key:
+            continue
+        keys.append(f"attribute_{key}")
+    return list(dict.fromkeys(keys))
+
+
 def _build_meili_filter_expression(
     *,
     category_uuid: Optional[uuid.UUID],
