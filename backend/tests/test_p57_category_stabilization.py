@@ -130,7 +130,9 @@ class TestUniqueSortOrderScope:
         """Duplicate sort_order in same scope should return 400 + ORDER_INDEX_ALREADY_USED"""
         unique_slug_1 = f"test-dup1-{uuid.uuid4().hex[:8]}"
         unique_slug_2 = f"test-dup2-{uuid.uuid4().hex[:8]}"
-        sort_order = 777
+        # Use a random high sort_order to avoid conflicts with existing data
+        import random
+        sort_order = random.randint(5000, 9000)
         
         # Create first category
         payload1 = {
