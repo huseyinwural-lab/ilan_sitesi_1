@@ -20019,6 +20019,15 @@ async def public_search_v2(
     except Exception:
         logging.getLogger("search_v2").warning("meili_filterable_update_failed", exc_info=True)
 
+    base_filter_expr = _build_meili_filter_expression(
+        category_uuid=category_uuid,
+        make_id_num=make_id_num,
+        model_id_num=model_id_num,
+        price_min=price_min,
+        price_max=price_max,
+        attr_filters={},
+        attr_map=attr_map,
+    )
     filter_expr = _build_meili_filter_expression(
         category_uuid=category_uuid,
         make_id_num=make_id_num,
@@ -20056,7 +20065,7 @@ async def public_search_v2(
                 limit=limit,
                 offset=offset,
                 sort=sort_fields,
-                filter_query=filter_expr,
+                filter_query=base_filter_expr,
                 facets=None,
             )
         else:
