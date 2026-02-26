@@ -11,6 +11,14 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 - Launch eşiği modülleri tamamlandı: Watermark, Transactions Log, Attribute Manager (Search uyum), Minimal Moderation, Search final polish.
 - **Admin Freeze aktif:** Yeni admin feature alınmaz. Sadece bugfix / güvenlik patch.
 
+### P0 — Kategori Yönetimi Düzeltmesi (BLOCKER)
+- **DONE** ✅ (2026-02-26)
+- Kapsam: `other` modülü, manuel sıra, scope unique constraint, vehicle segment-link akışı, real_estate/other regresyonu
+- Kanıtlar:
+  - `/app/test_reports/iteration_20.json`
+  - `/app/docs/CATEGORY_ORDER_MIGRATION_REPORT.md`
+- Not: Kullanıcı kararı gereği Dealer Dashboard’a dönmeden önce Category hardening/test turu tamamlandı.
+
 ### P0 — ListingWizard + VehicleSelector Stabilizasyonu
 - **CLOSED** ✅
 - Kanıt: `/app/docs/P0_VEHICLE_SELECTOR_FIX_EVIDENCE.md`
@@ -47,10 +55,9 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
 - P1 hardening paralel: Suggest cache Redis planı, nightly DB↔Meili drift cron, admin health widget (index status)
 
 ### Public/Commercial Phase Durumu
-- Dealer Dashboard + Manuel Kontrol Sistemi v1 — **DONE** ✅
-  - Config-driven dealer nav/module registry
-  - Admin dealer menu control (dnd-kit + visibility + preview + audit)
-  - Dealer summary API + KPI widget click-through + analytics events
+- Dealer Dashboard + Manuel Kontrol Sistemi v1 — **IN PROGRESS (PAUSED)** 🟡
+  - Backend foundation hazır (config modelleri + API)
+  - Öncelik sırası gereği kategori P0 sonrası yeniden ele alınacak
 
 ---
 
