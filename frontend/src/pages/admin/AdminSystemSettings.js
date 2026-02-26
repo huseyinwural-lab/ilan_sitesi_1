@@ -499,6 +499,8 @@ export default function AdminSystemSettingsPage() {
   }, [encryptionKeyPresent, cfMetricsEnabled, cloudflareConfig, canaryStatusRaw, configMissingReason, cloudflareError]);
 
   const canaryUserText = canaryStatusRaw === 'OK' ? 'Başarılı' : 'Bağlantı testi yapılamadı';
+  const meiliHealthInfo = healthDetail?.meili || null;
+  const meiliConnected = Boolean(meiliHealthInfo?.connected);
   const statusToneClass = {
     error: 'border-rose-200 bg-rose-50 text-rose-700',
     warning: 'border-amber-200 bg-amber-50 text-amber-700',
