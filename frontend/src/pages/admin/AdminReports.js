@@ -223,6 +223,11 @@ export default function AdminReportsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, reason, listingId, messageId, page, urlCountry, reportType]);
 
+  useEffect(() => {
+    setReason('all');
+    setPage(0);
+  }, [reportType]);
+
   return (
     <div className="space-y-6" data-testid="admin-reports-page">
       <div className="flex flex-col gap-2">
