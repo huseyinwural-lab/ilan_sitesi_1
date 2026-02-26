@@ -18461,7 +18461,7 @@ async def admin_category_order_index_preview(
         "message": None if conflict is None else "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.",
         "conflict": None if conflict is None else {
             "id": str(conflict.id),
-            "name": _pick_category_name(list(conflict.translations or []), _pick_category_slug(conflict.slug)),
+            "name": _pick_category_slug(conflict.slug) or "-",
             "slug": _pick_category_slug(conflict.slug),
         },
     }
