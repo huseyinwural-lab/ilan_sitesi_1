@@ -681,6 +681,16 @@ async def _resolve_effective_ui_config(
     return None, "default", None
 
 
+def _effective_config_data(row: Optional[UIConfig], config_type: str, segment: str) -> dict[str, Any]:
+    if row and isinstance(row.config_data, dict):
+        if config_type == "header":
+            return _normalize_header_config_data(row.config_data, segment)
+        return row.config_data
+    if config_type == "header":
+        return _default_header_config(segment)
+    return {}
+
+
 async def _set_ui_config_scope_to_draft(
     session: AsyncSession,
     *,
