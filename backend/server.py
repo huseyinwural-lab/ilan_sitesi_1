@@ -10994,6 +10994,19 @@ class CategoryUpdatePayload(BaseModel):
     expected_updated_at: Optional[str] = None
 
 
+class CategoryBulkFilterPayload(BaseModel):
+    country: Optional[str] = None
+    module: Optional[str] = None
+    active_flag: Optional[bool] = None
+
+
+class CategoryBulkActionPayload(BaseModel):
+    action: Literal["delete", "activate", "deactivate"]
+    scope: Literal["ids", "filter"] = "ids"
+    ids: List[str] = Field(default_factory=list)
+    filter: Optional[CategoryBulkFilterPayload] = None
+
+
 class MenuItemCreatePayload(BaseModel):
     label: str
     slug: str
