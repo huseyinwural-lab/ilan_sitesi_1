@@ -10972,7 +10972,7 @@ class CategoryCreatePayload(BaseModel):
     module: Optional[str] = None
     vehicle_segment: Optional[str] = None
     active_flag: Optional[bool] = True
-    sort_order: Optional[int] = None
+    sort_order: int = Field(..., ge=1)
     hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
     wizard_progress: Optional[Dict[str, Any]] = None
@@ -10986,7 +10986,7 @@ class CategoryUpdatePayload(BaseModel):
     module: Optional[str] = None
     vehicle_segment: Optional[str] = None
     active_flag: Optional[bool] = None
-    sort_order: Optional[int] = None
+    sort_order: Optional[int] = Field(default=None, ge=1)
     hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
     wizard_progress: Optional[Dict[str, Any]] = None
