@@ -5,7 +5,7 @@
 ## 1) Admin Pricing Campaign (GET)
 **Komut:**
 ```bash
-curl -s -X GET "https://category-wizard-1.preview.emergentagent.com/api/admin/pricing/campaign" \
+curl -s -X GET "https://theme-config-api.preview.emergentagent.com/api/admin/pricing/campaign" \
   -H "Authorization: Bearer <TOKEN>"
 ```
 **Çıktı:**
@@ -16,7 +16,7 @@ curl -s -X GET "https://category-wizard-1.preview.emergentagent.com/api/admin/pr
 ## 2) Admin Pricing Campaign (PUT)
 **Komut:**
 ```bash
-curl -s -X PUT "https://category-wizard-1.preview.emergentagent.com/api/admin/pricing/campaign" \
+curl -s -X PUT "https://theme-config-api.preview.emergentagent.com/api/admin/pricing/campaign" \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"is_active":false,"scope":"both"}'
@@ -29,7 +29,7 @@ curl -s -X PUT "https://category-wizard-1.preview.emergentagent.com/api/admin/pr
 ## 3) Public Pricing Quote (POST)
 **Komut:**
 ```bash
-curl -s -X POST "https://category-wizard-1.preview.emergentagent.com/api/pricing/quote" \
+curl -s -X POST "https://theme-config-api.preview.emergentagent.com/api/pricing/quote" \
   -H "Content-Type: application/json" \
   -d '{"user_type":"individual","listing_count_year":1,"listing_type":"listing"}'
 ```
@@ -41,7 +41,7 @@ curl -s -X POST "https://category-wizard-1.preview.emergentagent.com/api/pricing
 ## 4) Public Pricing Packages (GET)
 **Komut:**
 ```bash
-curl -s -X GET "https://category-wizard-1.preview.emergentagent.com/api/pricing/packages"
+curl -s -X GET "https://theme-config-api.preview.emergentagent.com/api/pricing/packages"
 ```
 **Çıktı:**
 ```json

@@ -1,106 +1,92 @@
 <analysis>**original_problem_statement:**
-The initial goal was to perform a series of UI/UX refinements on an existing Admin V1 application. These refinements included adding a Post Ad button to the header, removing an obsolete menu item, adding a soft-delete function for ads, and creating a comprehensive Theme Management page for admins to control the site's color scheme.
+The initial goal was to fix a blocking issue in the Admin Panel's Category Management module. This involved enabling manual ordering, adding a new Other module type, enforcing unique order constraints via a database migration, and fixing the specialized Vehicle category creation flow. This task was successfully completed and closed.
 
-After completing these tasks, the user introduced a major new feature: a Vehicle Master Data Import module. This module was designed to allow admins to import vehicle data from an external API or a JSON file, running the process as a background job.
+The project then resumed the previously paused development of the Dealer Dashboard P1, focusing on config-driven rendering and drag-and-drop menu management. The core of this was completed.
 
-While developing this import module, a critical JSON validation bug was encountered. The user then pivoted the development priority to address this bug and simultaneously build out a new, related architectural component: a Vehicle Selector Engine. This engine is intended to replace the use of the generic category system for vehicle listings, providing a structured, chained-dropdown experience (Year → Make → Model → Trim) for users creating vehicle ads.
+The current and primary objective is to build a new, comprehensive Kullanıcı Tasarım (UI Designer) module. This major feature will allow administrators to visually design and manage the UI for different user segments (Corporate vs. Individual) and manage application-wide themes. The work is divided into sprints, with the first sprint focusing on backend infrastructure, APIs, and the initial admin UI skeleton.
 
-The current focus is on implementing this Vehicle Selector Engine and integrating it into the ad creation wizard, while also finalizing fixes for the data import validation and improving the core category management system.
+**PRODUCT REQUIREMENTS (from user message #979 & #982):**
 
-**PRODUCT REQUIREMENTS (from user messages #702 & #705):**
+*   **P0 - Kullanıcı Tasarım Module - Sprint 1 (Current Focus):**
+    1.  **Backend Setup:**
+        *   Create a new  permission and assign it to  and .
+        *   Create versioned database models and Alembic migrations for UI configurations (), themes (), and theme assignments ().
+        *   Implement a full set of APIs for managing headers, navigation, dashboards, and themes (e.g., , ).
+    2.  **Admin Panel UI (Skeleton):**
+        *   Add a new Kullanıcı Tasarım item to the admin menu.
+        *   Create a new page with three tabs: Kurumsal UI Tasarım (Corporate), Bireysel Header Tasarım (Individual), and Tema Yönetimi (Theme Management).
 
-*   **P0 - Critical Fixes & Vehicle Engine Implementation:**
-    1.  **Fix JSON Validation Error:** Resolve the  error in the Master Data Import module by providing detailed, field-level error feedback in the UI, adding a Download Sample JSON button, and documenting the required schema.
-    2.  **Architectural Separation:** Formally separate the Vehicle Selector Engine from the standard category tree. The category tree will only manage high-level categories (e.g., 'Automobile'), while all detailed selections (make, model, trim) will be handled by the new engine.
-    3.  **Vehicle Selector Engine:** Implement the backend APIs and frontend components for a chained-selection wizard (Year → Make → Model → Options → Trim). This must be integrated into the main ad creation flow. It must enforce trim selection for vehicles year 2000+ and allow a manual override for older vehicles.
-    4.  **Category System Revision:** Automate the  for categories to prevent data inconsistency and manual errors. This involves backend logic changes and a database migration to re-index existing data.
-*   **P1 - Admin & Data Enhancements:**
-    *   Revise the admin Module dropdown to differentiate between Vehicle and other types.
-    *   Add  support to all vehicle master data tables and APIs.
-    *   Stabilize the import job functionality with better reporting (CSV download for errors, retry button).
-*   **P2 - System Maturation:**
-    *   Implement a visual timeline for pricing campaigns.
-    *   Build the doping (featured listing) system.
-    *   Create the public-facing UI for ads and campaigns.
+*   **P1 - Kullanıcı Tasarım Module - Sprint 2 (Upcoming):**
+    *   Implement the full drag-and-drop UI editors for corporate/individual headers, corporate dashboard widgets, and theme tokens (colors, fonts, etc.).
+    *   Integrate the frontend to dynamically render based on these configurations.
+    *   Implement guardrails (e.g., preventing removal of required UI elements).
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
 The application is a full-stack React/FastAPI/PostgreSQL system.
--   **UI Refinements (from first phase):** The Theme Management page, header Post Ad button, admin menu cleanup, and ad soft-delete functionality are fully implemented and were verified by the user.
--   **Vehicle Master Data Import:** The foundational backend (models, schemas, APIs for ) and frontend (admin page with tabs for API/JSON import) have been created. The JSON validation error reporting has been improved as requested, with more detailed feedback.
--   **Vehicle Selector Engine:** The backend APIs (, , etc.) are implemented. A reusable  component has been created.
--   **Category System:** The backend logic to auto-increment  and add database constraints is complete. A migration script to re-index existing data has been created and run.
+- The Category Management module is fully functional and stable, with manual ordering, unique constraints, and correct logic for all module types (Vehicle, Real Estate, Other). A migration report was generated.
+- A bulk action system for categories (soft delete, activate/deactivate) is complete.
+- An asynchronous job system (using a DB table and an in-process background worker) for handling large bulk actions (>1000 records) has been implemented and is operational.
+- The foundational backend work for the new Kullanıcı Tasarım (UI Designer) module has begun, with the creation of database models and migration scripts.
 
 **Last working item**:
--   **Last item agent was working:** The agent was integrating the new  component into the  flow. It was in the process of debugging an issue where the chained dropdowns (Make, Model, etc.) were not populating or were being reset incorrectly after the user made a selection. The core problem appears to be related to state management and API dependencies within the complex wizard component.
+-   **Last item agent was working:** Setting up the backend for the Kullanıcı Tasarım (UI Designer) module. The agent created the Alembic migration scripts for the new database tables: , , and , and updated the necessary model initialization files.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both.
-    -   **Frontend:** Use the  within a Playwright script to navigate the  wizard, select Vasıta, and verify that the chained dropdowns in the  component populate correctly at each step (Year -> Make -> Model -> Trim).
-    -   **Backend:** Use  to test each of the new vehicle selector endpoints (, , etc.) to ensure they return the correct filtered data.
+-   **Which testing method agent to use?** both. The backend APIs need to be tested with  or a backend testing agent. The full feature will require a frontend testing agent to verify the dynamic rendering and admin editors.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Broken Chained-Selection in Listing Wizard (P0 - HIGHEST PRIORITY)**
-    -   **Description:** The  component, when embedded in the , fails to correctly manage the state of the chained dropdowns. Selecting a year may not correctly trigger the fetching of makes, or subsequent selections are lost/reset.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Frontend
-
-    **Issues Detail:**
-    -   **Issue 1:**
-        -   **Attempted fixes:** The agent has tried multiple approaches to restructure the  hooks and state management within  and . It has attempted to lift state up, pass down callbacks, and adjust dependency arrays, but the interaction between the wizard's overall state and the selector's internal state remains buggy.
-        -   **Next debug checklist:**
-            1.  **Isolate the Component:** First, verify  works perfectly in isolation on a simple test page (e.g., a new temporary route) to confirm its internal logic is sound.
-            2.  **State Management Review:** In , trace the props being passed down to  and the callbacks used to lift state up. Check for any parent component re-renders that might be resetting the selector's state unexpectedly.
-            3.  **Examine Network Requests:** Use the browser's developer tools to inspect the API calls being made as each dropdown is selected. Are the requests being fired at all? Are they using the correct parameters?
-            4.  **Simplify Logic:** Temporarily remove any complex logic from  that isn't essential for the vehicle selector to function, and see if the issue persists. This can help identify if another part of the wizard is interfering.
-        -   **Why fix this issue and what will be achieved with the fix?** This is the core component for the new Vehicle Selector Engine feature. Fixing it is mandatory to allow users to create vehicle ads, which is a primary business function.
-        -   **Blocked on other issue:** None.
+There are no pending issues. The previous blocker has been resolved. Current work is on new feature development.
 
 **In progress Task List**:
--   **Task 1: Finalize P0 Vehicle Selector Engine Integration (P0)**
-    -   **Description:** Complete the full implementation and integration of the vehicle selector.
-    -   **Where to resume:** Resume debugging the state management issue in  as described in Issue 1 above.
-    -   **Sub-tasks remaining:**
-        1.  Fix the chained-selection logic on the frontend.
-        2.  Implement the UI for the manual trim override when .
-        3.  Ensure the final selected  (or manual trim data) is correctly passed to the next step of the wizard.
-        4.  Add a final layer of polish and user feedback (loading spinners, error messages).
-    -   **What will be achieved with this?** The vehicle ad creation process will be fully functional, using the new, robust selector engine instead of the old category system.
+-   **Task 1: P0 - Implement Kullanıcı Tasarım (UI Designer) Module - Sprint 1: Altyapı + API + Admin İskeleti (HIGHEST PRIORITY)**
+    -   **Where to resume:**
+        1.  Apply the newly created Alembic migration to update the database schema.
+        2.  Implement the backend API endpoints as defined in user message #979 (, , , , etc.).
+        3.  Implement the new  permission in the backend and assign it to the  and  roles.
+        4.  Create the skeleton for the new Kullanıcı Tasarım section in the admin panel frontend, including the main route and the three specified tabs.
+    -   **What will be achieved with this?** The backend infrastructure and foundational admin UI for the UI Designer module will be complete, enabling the start of Sprint 2 (UI implementation).
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** Blocked on resolving Issue 1.
+    -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
--   **Upcoming Tasks (P1):**
-    -   **Vehicle Master Data - Country Awareness:** Add  columns to vehicle tables and update import/selector APIs to be country-aware.
-    -   **Import Job Stabilization:** Enhance the Master Data Import job screen with a CSV download for failed records and a Retry Job button.
-    -   **Module Management UI:** Refine the admin Category module to handle the  case cleanly and allow for custom module names.
+-   **Upcoming Tasks (P0 - UI Designer - Sprint 2):**
+    -   Build the drag-and-drop UI editor for Corporate Headers (3 rows).
+    -   Build the drag-and-drop grid editor for Corporate Dashboard widgets.
+    -   Build the drag-and-drop UI editor for the Individual user header.
+    -   Build the Theme Editor for managing design tokens (color, font, spacing, etc.).
+    -   Integrate the main application frontend to render all UI elements (headers, nav, themes) based on the new configuration APIs.
+    -   Implement UI guardrails and a full test suite for the new module.
 
--   **Future Tasks (P2):**
-    -   Pricing Policy Audit Timeline UI
-    -   Doping System (Featured Listings)
-    -   Public Ads/Campaigns Frontend UI
-    -   Header Search Suggestion Chips
-    -   Quick Preview Modal Enhancements (edit/unpublish actions)
+-   **Future Tasks:**
+    -   **P1 - Dealer Dashboard Enhancements:** Implement an Undo Panel and a Draft/Publish/Revision system for configurations.
+    -   **P1 - Async Bulk Job Hardening:** Add a UI for monitoring job status and enhance audit logging.
+    -   **P-UX Phase:** Optimize public search flow, redesign listing detail page, and implement conversion tracking.
+    -   **Backlog:** Move search cache to Redis, implement a data drift detection job, and complete the Master Data Import flow.
 
 **Completed work in this session**
--   **Theme Management Module (DONE):** Fully implemented the admin page for managing site-wide theme colors, including backend APIs for versioning/publishing and a frontend UI with color pickers and a live preview.
--   **General UI Refinements (DONE):**
-    -   Added the İlan Ver (Post Ad) button to the header for authenticated users.
-    -   Removed the obsolete Kampanyalar menu from the admin sidebar.
-    -   Implemented a soft-delete mechanism for ads in the admin panel, with a confirmation modal.
--   **Category System Overhaul (DONE):** Refactored the category management system to automate  and enforce uniqueness constraints, preventing data corruption.
--   **Vehicle Selector Backend (DONE):** Created all necessary backend APIs to power the chained-selection logic.
--   **Data Import Validation Fix (DONE):** Improved the error reporting for the JSON import feature, providing detailed, field-level feedback to the admin.
+-   **P0 - Category Management Fix (DONE):**
+    -   Successfully executed a database migration to add a unique constraint on , add a new , and clean up existing data.
+    -   Updated backend APIs to enforce manual ordering and the special Vehicle segment flow (validated against master data).
+    -   Revamped the frontend Category Wizard UI to support the new logic.
+-   **Bulk Actions for Categories (DONE):**
+    -   Implemented a UI with tri-state checkboxes and a bulk action bar.
+    -   Created a single backend endpoint () for soft-delete, activate, and deactivate actions.
+-   **Async Job System for Bulk Actions (DONE):**
+    -   Developed a system to handle bulk operations asynchronously for large datasets (>1000 items) using a  DB table and an in-process worker.
+    -   Implemented a status polling endpoint and idempotency keys to ensure job safety.
+-   **Dealer Dashboard P1 (Core) (DONE):**
+    -   Finalized config-driven rendering and persistent drag-and-drop reordering for the dealer menu.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Master Data Import End-to-End Flow:** While the JSON validation *reporting* was fixed, the agent was pivoted before the full end-to-end import functionality (especially for the Import from API tab) was completed and tested. The core import logic in  is still a skeleton and needs to be fully implemented.
-    -   **Status:** NOT STARTED
-    -   **Why to solve this issue and what will be achieved with this?** This is a major feature for populating the system with essential vehicle data.
+-   **Issue 1: Master Data Import End-to-End Flow:** The core import logic in  is a skeleton. This was intentionally paused by the user and remains in the backlog.
+    -   **Debug checklist:** Implement the full business logic to parse and import vehicle data from an uploaded file.
+    -   **Why to solve this issue and what will be achieved with this?** This is a key feature for administrators to populate the system with vehicle data efficiently.
     -   **Should Test frontend/backend/both after fix:** both
+    -   **Is recurring issue?** N
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Platform failure to inject  secret.
@@ -111,74 +97,74 @@ The application is a full-stack React/FastAPI/PostgreSQL system.
 
 
 **Key Technical Concepts**
--   **Admin-driven UI Configuration:** Empowering admins to manage site appearance (Theme Colors).
--   **Dynamic Theming with CSS Variables:** Storing theme configuration as a JSON object in the database and applying it at runtime.
--   **Background Job Processing (MVP):** Using FastAPI  and a database table () to manage long-running data import tasks asynchronously.
--   **Chained/Cascading Selects:** A UI pattern where the selection in one dropdown filters the options available in the next, used for the Vehicle Selector.
--   **Architectural Separation:** Decoupling the specific logic for vehicles from the generic category system to avoid bloating the category tree and improve maintainability.
--   **Soft Deletion:** Using  flags instead of permanent deletion.
+-   **Async Task Processing (In-Process):** Using FastAPI's  with a dedicated DB table to manage long-running jobs. Includes DB-level locking () and idempotency keys for safety in multi-instance environments.
+-   **Config-driven UI & Theming:** A centralized system using versioned DB models to define application layout, navigation, and visual themes (design tokens) for different user segments (corporate vs. individual) and tenants.
+-   **Scoped Uniqueness in DB:** Enforcing data integrity with multi-column unique constraints (e.g., for category ordering).
+-   **Database Migrations with Data Cleanup:** Using Alembic to not only change schema but also to run one-time scripts to clean and standardize existing data.
 
 **key DB schema**
--   **theme_settings**: { uid=0(root) gid=0(root) groups=0(root), ,  }
--   **theme_versions**: { uid=0(root) gid=0(root) groups=0(root), , ,  }
--   **import_jobs**: { uid=0(root) gid=0(root) groups=0(root), , , , , ,  }
--   **vehicle_makes**: { uid=0(root) gid=0(root) groups=0(root), ,  }
--   **vehicle_models**: { uid=0(root) gid=0(root) groups=0(root), ,  }
--   **vehicle_trims**: { uid=0(root) gid=0(root) groups=0(root), , , ,  }
+-   **categories**:  constraint on .
+-   **background_jobs**: 
+-   **ui_configs**: 
+-   **ui_themes**: 
+-   **ui_theme_assignments**: 
 
 **changes in tech stack**
--   None.
+- No major changes to the core stack (React, FastAPI, PostgreSQL).
 
 **All files of reference**
--   **Current Debugging:**
-    -    (The parent component with the state management issue)
-    -    (The child component being integrated)
--   **Backend APIs:**
-    -    (APIs that power the selector)
--   **Data Import (Paused):**
-    -   
-    -   
+-   **Current P0 Task (UI Designer):**
+    -   , , 
+    -   The latest alembic migration file in  for the UI config tables.
+    -    (API and service files to be created here).
+    -    (to add the new permission).
+    -    (React components to be created here).
+-   **User Requirements Document:**
+    -   User message #979 contains the master plan for the entire UI Designer feature.
+    -   User message #982 locks in the decisions for the current sprint.
 
 **Critical Info for New Agent**
--   **Your immediate priority is fixing the  integration into the .** This is a P0 blocker for a core feature. Follow the debugging checklist provided in the All Pending/In progress Issue list section.
--   The user has pivoted development multiple times. The current directive is to focus exclusively on the P0 tasks from user message #702: Fix JSON validation, separate Vehicle architecture, build the Vehicle Selector Engine, and automate category ordering. Do not work on the P1/P2 tasks or the paused Master Data Import logic until the P0 tasks are complete and verified.
--   The user is highly technical and provides detailed task lists and architectural decisions (Görev Listesi, Mimari Karar Seti). **You must follow these instructions strictly.**
--   **All user communication must be in Turkish.**
+-   **Your priority is the Kullanıcı Tasarım (UI Designer) module.** All other work is secondary.
+-   You are currently in **Sprint 1: Altyapı + API + Admin İskeleti**. Follow the Where to resume section under In progress Task List.
+-   A new permission, , must be created and assigned to  and .
+-   The feature scope is large but clearly defined by the user in messages #979 and #982. Adhere to it strictly.
+-   All communication with the user must be in **Turkish**.
 
 **documents and test reports created in this job**
--   /app/docs/VEHICLE_MASTER_SCHEMA.md
--   /app/memory/PRD.md
+-   
+-   
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **#1159-#706:** (Agent work) The agent is deep in implementation and debugging loops, primarily focused on fixing the Vehicle Selector integration into the Listing Wizard, based on the user's latest directives.
-2.  **#705:** User provides a more detailed, confirmed version of the P0 task list, reinforcing the plan from message #702. (IN PROGRESS)
-3.  **#703:** (Agent plan) Agent proposes a detailed plan to tackle the P0 tasks from message #702.
-4.  **#702:** **(PIVOT)** User provides a new, critical task list to fix the visible JSON validation failed error and to architect and build a new Vehicle Selector Engine. This redirects focus from the data import feature to this new selector component. (IN PROGRESS)
-5.  **#701-#492:** (Agent work) Agent works on implementing the Vehicle Master Data Import module, creating backend models, APIs, and the frontend UI. It gets stuck on a  bug.
-6.  **#491:** User provides clarifying architectural decisions for the Master Data Import module (use  for keys, 50MB limit, use  for MVP). (COMPLETED)
-7.  **#489:** (Agent plan) Agent asks for clarification on the data import implementation details.
-8.  **#488:** **(PIVOT)** User introduces a major new feature requirement: the Admin Vehicle Master Data Import module, with detailed specs for API/JSON import, background jobs, and a new RBAC role. (PAUSED)
-9.  **#487:** Agent provides the admin link for the user to verify the completed UI refinement tasks. (COMPLETED)
-10. **#486:** User asks for the admin link to check the progress. (COMPLETED)
+1.  **#982:** User confirms the plan for UI Designer Sprint 1, giving the green light for implementation. **(PLAN CONFIRMED)**
+2.  **#979:** **(CRITICAL)** User provides the complete, detailed requirements for the new Kullanıcı Tasarım (UI Designer) feature. This is the main source of truth for the task. **(NEW PLAN)**
+3.  **#814:** User approves the proposed architecture for the async bulk job system (DB table + in-process worker). **(PLAN CONFIRMED)**
+4.  **#811:** User outlines future tasks after the Dealer P1 core is complete, including an Undo Panel and a Draft Mode for configs. **(PLANNING)**
+5.  **#620:** User locks in decisions for the Dealer P1 implementation, notably excluding the Undo panel from the initial scope to prioritize faster delivery. **(PLAN CONFIRMED)**
+6.  **#617:** User adds a new requirement for Bulk Actions in the Category Management module. **(NEW REQUIREMENT)**
+7.  **#548:** User officially closes the Category P0 fix phase and confirms the next priority is resuming the Dealer Dashboard P1 task. **(PLANNING)**
+8.  **#335:** User provides a definitive ruling on the Vehicle Segment logic: the segment name MUST exist in the master data to be saved. **(REQUIREMENT CLARIFICATION)**
+9.  **#333:** User requests the admin link to review progress. **(ADDRESSED)**
+10. **#330:** User provides a revised, detailed task list for the Category P0 fix, superseding all previous instructions on that topic. **(REVISED PLAN)**
 
 **Project Health Check:**
--   **Broken:** The ad creation wizard () is currently broken for the Vasıta category due to the incomplete integration of the  component.
+-   **Broken:** None. The previous blocker (Category Management) is fixed and stable.
 -   **Mocked:** None.
 
 **3rd Party Integrations**
--   PostgreSQL
--   Stripe
--   Cloudflare
+-   **PostgreSQL:** Primary database.
+-   **Meilisearch:** Search-as-a-service. Requires User API Key.
+-   **Stripe:** Payments.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO
+-   **Testing agent used after significant changes:** YES (used for previous major features).
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None
--   **Known regressions:** The  functionality for vehicles is currently regressed/broken.
+-   **Test files created:** None permanent.
+-   **Known regressions:** None.
 
 **Credentials to test flow:**
 -   **Admin:**  / 
 -   **Test User 2 (for 2FA):**  / 
 
 **What agent forgot to execute**
-The agent did not forget tasks but was intentionally redirected by the user. The full implementation of the **Vehicle Master Data Import** feature (specifically the core service logic for processing the import from API and file) was paused to prioritize the **Vehicle Selector Engine.** The next agent must complete the current P0 tasks related to the selector engine before returning to the data import feature.</analysis>
+The agent has followed the user's instructions and priority shifts accurately. No tasks appear to have been overlooked. The development path has been complex due to user-driven reprioritization, but the agent has adapted correctly at each step.</analysis>

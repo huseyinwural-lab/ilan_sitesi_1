@@ -5,7 +5,7 @@
 ## 1) API Health Kanıtı
 **Komut:**
 ```bash
-curl -s "https://category-wizard-1.preview.emergentagent.com/api/health"
+curl -s "https://theme-config-api.preview.emergentagent.com/api/health"
 ```
 **Çıktı:**
 ```json
@@ -15,7 +15,7 @@ curl -s "https://category-wizard-1.preview.emergentagent.com/api/health"
 ## 2) Migration Health Kanıtı
 **Komut:**
 ```bash
-curl -s "https://category-wizard-1.preview.emergentagent.com/api/health/db"
+curl -s "https://theme-config-api.preview.emergentagent.com/api/health/db"
 ```
 **Çıktı:**
 ```json
@@ -25,7 +25,7 @@ curl -s "https://category-wizard-1.preview.emergentagent.com/api/health/db"
 ## 3) Admin Login (API) Kanıtı
 **Komut:**
 ```bash
-curl -s -X POST "https://category-wizard-1.preview.emergentagent.com/api/auth/login" \
+curl -s -X POST "https://theme-config-api.preview.emergentagent.com/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@platform.com","password":"Admin123!"}'
 ```
@@ -37,7 +37,7 @@ curl -s -X POST "https://category-wizard-1.preview.emergentagent.com/api/auth/lo
 ## 4) Admin Session Health Kanıtı
 **Komut:**
 ```bash
-curl -s -X GET "https://category-wizard-1.preview.emergentagent.com/api/admin/session/health" \
+curl -s -X GET "https://theme-config-api.preview.emergentagent.com/api/admin/session/health" \
   -H "Authorization: Bearer <TOKEN>"
 ```
 **Çıktı:**

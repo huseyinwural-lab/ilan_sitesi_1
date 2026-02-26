@@ -3,7 +3,7 @@ import requests
 import time
 
 def trigger_rate_limit():
-    api_url = "https://category-wizard-1.preview.emergentagent.com/api"
+    api_url = "https://theme-config-api.preview.emergentagent.com/api"
     
     print("Attempting to trigger rate limit (20 requests/60s)...")
     for i in range(25):
