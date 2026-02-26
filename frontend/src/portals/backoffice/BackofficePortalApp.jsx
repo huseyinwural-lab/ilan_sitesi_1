@@ -9,6 +9,7 @@ import AdminUsersPage from '@/pages/admin/AdminUsers';
 import AdminCategories from '@/pages/admin/AdminCategories';
 import AdminCategoriesImportExport from '@/pages/admin/AdminCategoriesImportExport';
 import AdminAttributes from '@/pages/admin/AdminAttributes';
+import AdminDealerPortalConfig from '@/pages/admin/AdminDealerPortalConfig';
 import AdminVehicleMakes from '@/pages/admin/AdminVehicleMakes';
 import AdminVehicleModels from '@/pages/admin/AdminVehicleModels';
 import AdminVehicleMasterImport from '@/pages/admin/AdminVehicleMasterImport';
@@ -60,6 +61,7 @@ export default function BackofficePortalApp() {
       <Route path="/categories" element={<AdminLayout><AdminCategories /></AdminLayout>} />
       <Route path="/categories/import-export" element={<AdminLayout><AdminCategoriesImportExport /></AdminLayout>} />
       <Route path="/attributes" element={<AdminLayout><AdminAttributes /></AdminLayout>} />
+      <Route path="/dealer-portal-config" element={<AdminLayout><AdminDealerPortalConfig /></AdminLayout>} />
       <Route path="/audit" element={
         <AdminLayout>
           <AdminRouteGuard roles={["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"]}>
