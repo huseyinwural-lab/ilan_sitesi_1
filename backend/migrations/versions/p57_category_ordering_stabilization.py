@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = "p57_category_ordering_stabilization"
+revision: str = "p57_cat_order_stab"
 down_revision: Union[str, Sequence[str], None] = "p56_category_scope_ordering"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
