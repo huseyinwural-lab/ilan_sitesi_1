@@ -14257,8 +14257,14 @@ async def _resolve_dealer_portal_config(
         if effective_visible:
             modules.append(serialized)
 
+    header_row1_items = header_items if header_items else _dealer_default_header_action_items()
+    header_row2_modules = modules
+
     return {
-        "header_items": header_items,
+        "header_items": header_row1_items,
+        "header_row1_items": header_row1_items,
+        "header_row1_fixed_blocks": _dealer_default_header_fixed_blocks(),
+        "header_row2_modules": header_row2_modules,
         "sidebar_items": sidebar_items,
         "modules": modules,
         "all_nav_items": nav_with_meta,
