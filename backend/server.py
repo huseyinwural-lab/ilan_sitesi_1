@@ -3757,8 +3757,12 @@ async def admin_system_health_detail(
         meili_status["status"] = "connected" if meili_status["connected"] else "error"
         meili_status["reason_code"] = meili_health.get("reason_code")
     except Exception as exc:
-        meili_status["status"] = "error"
-        meili_status["reason_code"] = str(exc)
+        if "no_active_meili_config" in str(exc):
+            meili_status["status"] = "not_configured"
+            meili_status["reason_code"] = "no_active_meili_config"
+        else:
+            meili_status["status"] = "error"
+            meili_status["reason_code"] = str(exc)
 
     payload = {
         "db_status": db_status,
