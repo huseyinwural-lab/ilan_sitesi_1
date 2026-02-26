@@ -14981,15 +14981,10 @@ async def admin_export_payments_csv(
     ).scalars().all()
 
     invoice_ids = {row.invoice_id for row in rows}
-    user_ids = {row.user_id for row in rows}
     invoices = []
-    users = []
     if invoice_ids:
         invoices = (await session.execute(select(AdminInvoice).where(AdminInvoice.id.in_(invoice_ids)))).scalars().all()
-    if user_ids:
-        users = (await session.execute(select(SqlUser).where(SqlUser.id.in_(user_ids)))).scalars().all()
     invoice_map = {inv.id: inv for inv in invoices}
-    user_map = {u.id: u for u in users}
 
     output = io.StringIO()
     writer = csv.writer(output)
