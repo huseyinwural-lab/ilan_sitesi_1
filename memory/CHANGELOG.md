@@ -242,3 +242,13 @@
 - Swagger/OpenAPI response örnekleri doğrulandı (`ORDER_INDEX_ALREADY_USED`, `VEHICLE_SEGMENT_NOT_FOUND`).
 - Kapanış regresyon raporu: `/app/test_reports/iteration_22.json` PASS.
 - Sonraki faz aktif edildi: Dealer Dashboard P1 restart kapsam başlıkları roadmap’e işlendi.
+
+## 2026-02-26 — Dealer Dashboard P1 Core + Category Bulk Operations
+
+- Dealer portal config genişletildi: `header_row1_items`, `header_row1_fixed_blocks`, `header_row2_modules`, `header_row3_controls`
+- DealerLayout 3 katmanlı header production-ready (row1 sabit+hızlı aksiyon, row2 modül sıralı chips, row3 mağaza filtresi + user dropdown)
+- Admin Dealer Config: dnd-kit reorder persist akışı sertleştirildi (error handling + save feedback)
+- Category list tri-state selection + bulk action bar + delete için çift doğrulama modalı (`ONAYLA`) eklendi
+- Yeni endpoint: `POST /api/admin/categories/bulk-actions` (action + scope + ids/filter)
+- Category list API filtreleri genişletildi: `country`, `module`, `active_flag`
+- Test: `/app/test_reports/iteration_23.json` PASS (backend 22/22, frontend 100%)
