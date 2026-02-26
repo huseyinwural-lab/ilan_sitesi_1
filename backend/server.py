@@ -11528,11 +11528,11 @@ def _assert_category_parent_compatible(
 def _raise_category_integrity_error(exc: IntegrityError) -> None:
     message = str(exc.orig).lower() if exc.orig else str(exc).lower()
     if "uq_categories_scope_sort" in message or "uq_categories_parent_sort" in message:
-        raise HTTPException(
-            status_code=409,
-            detail="Aynı ülke/modül/üst kategori kapsamında sıra (order_index) benzersiz olmalı.",
+        raise _category_error(
+            "ORDER_INDEX_ALREADY_USED",
+            "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.",
         ) from exc
-    raise HTTPException(status_code=409, detail="Kategori kaydı çakıştı.") from exc
+    raise _category_error("CATEGORY_CONFLICT", "Kategori kaydı çakıştı.") from exc
 
 
 async def _next_category_sort_order(
