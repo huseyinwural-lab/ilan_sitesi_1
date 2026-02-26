@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/toaster';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const MODERATION_FREEZE_KEY = 'moderation.freeze.active';
+const WATERMARK_PIPELINE_KEY = 'media.watermark.pipeline';
 const DEFAULT_MEILI_INDEX_NAME = 'listings_index';
 
 const resolveFreezeValue = (setting) => {
@@ -93,6 +94,19 @@ export default function AdminSystemSettingsPage() {
     meili_index_name: DEFAULT_MEILI_INDEX_NAME,
     meili_master_key: '',
   });
+  const [watermarkLoading, setWatermarkLoading] = useState(true);
+  const [watermarkSaving, setWatermarkSaving] = useState(false);
+  const [watermarkError, setWatermarkError] = useState('');
+  const [watermarkConfig, setWatermarkConfig] = useState({
+    enabled: true,
+    position: 'bottom_right',
+    opacity: 0.35,
+    web_max_width: 1800,
+    thumb_max_width: 520,
+  });
+  const [watermarkLogoUrl, setWatermarkLogoUrl] = useState(null);
+  const [watermarkPreviewUrl, setWatermarkPreviewUrl] = useState(null);
+  const [watermarkPerf, setWatermarkPerf] = useState(null);
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
