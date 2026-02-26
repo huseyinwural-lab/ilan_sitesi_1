@@ -421,17 +421,26 @@ function ThemeManagementTab() {
         <div className="mt-2 grid gap-3 md:grid-cols-4" data-testid="ui-designer-theme-assign-grid">
           <label className="text-xs" data-testid="ui-designer-theme-select-label">
             Theme
-            <select
+            <input
               value={selectedThemeId}
               onChange={(event) => setSelectedThemeId(event.target.value)}
               className="mt-1 h-10 w-full rounded-md border px-2"
+              placeholder="Theme ID girin veya listeden seçin"
               data-testid="ui-designer-theme-select"
-            >
-              <option value="">Seçiniz</option>
-              {themes.map((theme) => (
-                <option key={theme.id} value={theme.id}>{theme.name}</option>
+            />
+            <div className="mt-1 flex flex-wrap gap-1" data-testid="ui-designer-theme-select-quick-list">
+              {themes.slice(0, 5).map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  onClick={() => setSelectedThemeId(theme.id)}
+                  className="rounded border px-2 py-1 text-[11px]"
+                  data-testid={`ui-designer-theme-quick-select-${theme.id}`}
+                >
+                  {theme.name}
+                </button>
               ))}
-            </select>
+            </div>
           </label>
           <label className="text-xs" data-testid="ui-designer-theme-assign-scope-label">
             Scope
