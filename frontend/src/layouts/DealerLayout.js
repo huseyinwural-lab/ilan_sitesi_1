@@ -110,9 +110,9 @@ const corporateMenuStructure = [
         key: 'consultant_tracking',
         label: 'Danışman Takibi',
         icon: 'Users',
-        route: '/dealer/customers',
+        route: '/dealer/consultant-tracking',
         children: [
-          { key: 'consultant_service_reviews', label: 'Danışman Hizmet Değerlendirmeleri', icon: 'Users', route: '/dealer/reports' },
+          { key: 'consultant_service_reviews', label: 'Danışman Hizmet Değerlendirmeleri', icon: 'Users', route: '/dealer/consultant-tracking?tab=evaluations' },
         ],
       },
       {
