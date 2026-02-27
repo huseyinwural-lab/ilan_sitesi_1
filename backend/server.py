@@ -29211,6 +29211,7 @@ async def _assert_no_overlap_active_campaign_item(
 DEFAULT_PRICING_CAMPAIGN_ITEMS = [
     {
         "scope": "individual",
+        "listing_type": "free",
         "name": "Örnek Bireysel Kampanya",
         "listing_quota": 1,
         "price_amount": 0,
@@ -29219,6 +29220,7 @@ DEFAULT_PRICING_CAMPAIGN_ITEMS = [
     },
     {
         "scope": "corporate",
+        "listing_type": "free",
         "name": "Örnek Kurumsal Kampanya",
         "listing_quota": 10,
         "price_amount": 0,
