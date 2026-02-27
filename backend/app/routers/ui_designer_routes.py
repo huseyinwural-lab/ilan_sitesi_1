@@ -1,7 +1,9 @@
 from copy import deepcopy
 import asyncio
 from datetime import datetime, timedelta, timezone
+import hashlib
 from io import BytesIO
+import json
 from pathlib import Path
 from typing import Any, Optional
 import uuid
@@ -14,7 +16,7 @@ from sqlalchemy import and_, desc, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, get_db
-from app.dependencies import PERMISSION_ROLE_MAP, check_named_permission
+from app.dependencies import PERMISSION_ROLE_MAP, check_named_permission, get_current_user_optional
 from app.models.core import AuditLog
 from app.models.ui_config import UIConfig
 from app.models.ui_logo_asset import UILogoAsset
@@ -47,6 +49,12 @@ PUBLISH_ERROR_MISSING_CONFIG_VERSION = "MISSING_CONFIG_VERSION"
 PUBLISH_ERROR_CONFIG_VERSION_CONFLICT = "CONFIG_VERSION_CONFLICT"
 PUBLISH_ERROR_LOCKED = "PUBLISH_LOCKED"
 ROLLBACK_ERROR_MISSING_REASON = "MISSING_ROLLBACK_REASON"
+PUBLISH_ERROR_SCOPE_CONFLICT = "SCOPE_CONFLICT"
+PUBLISH_ERROR_MISSING_OWNER_SCOPE = "MISSING_OWNER_SCOPE"
+UI_ERROR_FEATURE_DISABLED = "FEATURE_DISABLED"
+UI_ERROR_UNAUTHORIZED_SCOPE = "UNAUTHORIZED_SCOPE"
+THEME_ERROR_INVALID_SCOPE = "INVALID_THEME_SCOPE"
+FEATURE_DISABLE_INDIVIDUAL_HEADER_EDITOR = True
 PUBLISH_LOCK_TTL_SECONDS = 8
 
 _PUBLISH_LOCK_REGISTRY: dict[str, dict[str, Any]] = {}
