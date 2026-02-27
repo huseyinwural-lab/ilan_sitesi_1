@@ -103,17 +103,21 @@ export default function AdminListingsPage({
       const params = new URLSearchParams();
       params.set('skip', String(page * limit));
       params.set('limit', String(limit));
-      if (status) params.set('status', status);
+      if (applicationsMode) params.set('status', 'pending_moderation');
+      else if (status) params.set('status', status);
       if (search) params.set('q', search);
-      if (dealerOnly) params.set('dealer_only', 'true');
+      if (!applicationsMode && dealerOnly) params.set('dealer_only', 'true');
       if (categoryId) params.set('category_id', categoryId);
       if (urlCountry) params.set('country', urlCountry);
+      if (applicantType && applicantType !== 'all') params.set('applicant_type', applicantType);
+      if (dopingType && dopingType !== 'all') params.set('doping_type', dopingType);
 
       const res = await axios.get(`${API}/admin/listings?${params.toString()}`, {
         headers: authHeader,
       });
       setItems(res.data.items || []);
       setTotal(res.data.pagination?.total ?? 0);
+      setDopingCounts(res.data.doping_counts || { free: 0, showcase: 0, urgent: 0 });
     } catch (e) {
       console.error(e);
     } finally {
@@ -128,7 +132,7 @@ export default function AdminListingsPage({
   useEffect(() => {
     fetchListings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, search, dealerOnly, categoryId, page, urlCountry]);
+  }, [status, search, dealerOnly, categoryId, page, urlCountry, applicantType, dopingType, applicationsMode]);
 
   const openActionDialog = (listing, action) => {
     setActionDialog({ listing, action });
