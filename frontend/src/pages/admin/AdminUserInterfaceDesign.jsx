@@ -592,14 +592,6 @@ export default function AdminUserInterfaceDesign() {
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab('individual')}
-          className={`h-10 rounded-md border px-4 text-sm ${activeTab === 'individual' ? 'bg-slate-900 text-white' : ''}`}
-          data-testid="admin-user-interface-design-tab-individual"
-        >
-          Bireysel Header Tasarım
-        </button>
-        <button
-          type="button"
           onClick={() => setActiveTab('theme')}
           className={`h-10 rounded-md border px-4 text-sm ${activeTab === 'theme' ? 'bg-slate-900 text-white' : ''}`}
           data-testid="admin-user-interface-design-tab-theme"
@@ -611,9 +603,6 @@ export default function AdminUserInterfaceDesign() {
       <div className="rounded-xl border bg-white p-4" data-testid="admin-user-interface-design-tab-content">
         {activeTab === 'corporate' ? (
           <HeaderConfigTab segment="corporate" testIdPrefix="ui-designer-corporate-header" />
-        ) : null}
-        {activeTab === 'individual' ? (
-          <HeaderConfigTab segment="individual" testIdPrefix="ui-designer-individual-header" />
         ) : null}
         {activeTab === 'theme' ? <ThemeManagementTab /> : null}
       </div>
