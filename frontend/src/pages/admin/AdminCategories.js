@@ -211,6 +211,15 @@ const sanitizeSchemaStrings = (value) => {
 
 const parseApiError = (payload, fallbackMessage) => {
   const detail = payload?.detail;
+  if (Array.isArray(detail) && detail.length > 0) {
+    const firstError = detail[0] || {};
+    const location = Array.isArray(firstError.loc) ? firstError.loc.join(".") : "";
+    const baseMessage = firstError.msg || firstError.message || fallbackMessage;
+    return {
+      errorCode: payload?.error_code || "",
+      message: location ? `${location}: ${baseMessage}` : baseMessage,
+    };
+  }
   if (typeof detail === "string") {
     return { errorCode: payload?.error_code || "", message: detail || fallbackMessage };
   }
