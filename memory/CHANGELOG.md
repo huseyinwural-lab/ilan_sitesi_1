@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## 2026-02-27 — P64 Publish Hardening P0
+
+**Kapsam**
+- Publish endpointlerinde `config_version` zorunlu:
+  - Yeni endpoint: `/api/admin/ui/configs/{config_type}/publish`
+  - Legacy endpoint: `/api/admin/ui/configs/{config_type}/publish/{config_id}` (deprecated)
+- Hata kontratı:
+  - `400 MISSING_CONFIG_VERSION`
+  - `409 CONFIG_VERSION_CONFLICT` (+ `current_version`, `your_version`, `last_published_by`, `last_published_at`)
+  - `409 PUBLISH_LOCKED`
+  - `400 MISSING_ROLLBACK_REASON`
+- Publish lock (kısa süreli) eklendi.
+- Rollback reason zorunlu yapıldı, audit metadata’ya yazım eklendi.
+- Dashboard publish dialogu görsel diff panelleriyle güçlendirildi (Önceki/Yeni grid, highlight).
+- UI conflict modal eklendi (`Sayfayı Yenile`, `Diff Gör`).
+- Rollback UX: `Son Snapshot’a Dön` hızlı butonu + reason zorunlu input.
+
+**Kanıt/Test**
+- Evidence: `/app/docs/UI_PUBLISH_HARDENING_P0_EVIDENCE.md`
+- Testing agent: `/app/test_reports/iteration_30.json` (PASS)
+- Pytest: `37 passed` (p61+p62+p62_extended+p63+p64)
+
 ## 2026-02-26 — P63 Logo Upload Contract Stabilization
 
 **Kapsam**
