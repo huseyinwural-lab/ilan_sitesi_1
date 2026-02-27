@@ -4,10 +4,16 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 from io import BytesIO
 import json
+import os
 from pathlib import Path
+import smtplib
+import ssl
 import time
 from typing import Any, Optional
+from email.message import EmailMessage
 import uuid
+import urllib.error
+import urllib.request
 import xml.etree.ElementTree as ET
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
@@ -64,6 +70,21 @@ PUBLISH_OPS_THRESHOLDS = {
     "publish_duration_ms_p95": {"warning": 1000, "critical": 1700, "window_minutes": 5},
     "conflict_rate": {"warning": 25, "critical": 40, "window_minutes": 5},
 }
+
+OPS_ALERT_REQUIRED_KEYS = {
+    "slack": ["ALERT_SLACK_WEBHOOK_URL"],
+    "smtp": [
+        "ALERT_SMTP_HOST",
+        "ALERT_SMTP_PORT",
+        "ALERT_SMTP_USER",
+        "ALERT_SMTP_PASS",
+        "ALERT_SMTP_FROM",
+        "ALERT_SMTP_TO",
+    ],
+    "pagerduty": ["ALERT_PAGERDUTY_ROUTING_KEY"],
+}
+OPS_ALERT_DELIVERY_BACKOFF_MS = [0, 700, 1600]
+OPS_ALERT_HTTP_TIMEOUT_SECONDS = 10
 
 LEGACY_PUBLISH_DEPRECATION_HEADERS = {
     "Deprecation": "true",
@@ -1037,6 +1058,493 @@ def _evaluate_publish_alerts(metrics: dict[str, Any]) -> list[dict[str, Any]]:
                 }
             )
     return alerts
+
+
+class AlertDeliveryError(Exception):
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_class: str,
+        provider_code: Optional[str] = None,
+        provider_status: Optional[str] = None,
+    ):
+        super().__init__(message)
+        self.error_class = error_class
+        self.provider_code = provider_code
+        self.provider_status = provider_status
+
+
+def _mask_text(value: Optional[str], visible: int = 4) -> Optional[str]:
+    if value is None:
+        return None
+    raw = str(value)
+    if not raw:
+        return ""
+    if len(raw) <= visible * 2:
+        return "*" * len(raw)
+    return f"{raw[:visible]}***{raw[-visible:]}"
+
+
+def _split_csv_values(raw: Optional[str]) -> list[str]:
+    if not raw:
+        return []
+    return [item.strip() for item in str(raw).split(",") if item and item.strip()]
+
+
+def _ops_alerts_secret_presence() -> dict[str, Any]:
+    missing_keys: list[str] = []
+    channels: dict[str, dict[str, Any]] = {}
+    for channel, keys in OPS_ALERT_REQUIRED_KEYS.items():
+        channel_missing = [key for key in keys if not os.environ.get(key)]
+        missing_keys.extend(channel_missing)
+        channels[channel] = {
+            "status": "ENABLED" if not channel_missing else "DISABLED",
+            "missing_keys": channel_missing,
+        }
+
+    smtp_recipients = _split_csv_values(os.environ.get("ALERT_SMTP_TO"))
+    channels["smtp"]["recipient_list_configured"] = bool(smtp_recipients)
+    channels["smtp"]["recipient_count"] = len(smtp_recipients)
+
+    slack_webhook = os.environ.get("ALERT_SLACK_WEBHOOK_URL")
+    channels["slack"]["target_channel_verified"] = bool(
+        slack_webhook and slack_webhook.startswith("https://hooks.slack.com/services/")
+    )
+
+    unique_missing = sorted(set(missing_keys))
+    return {
+        "status": "READY" if not unique_missing else "BLOCKED",
+        "missing_keys": unique_missing,
+        "channels": channels,
+    }
+
+
+def _classify_slack_http_status(status_code: int) -> str:
+    if status_code in {400, 403, 404}:
+        return "webhook_target_invalid"
+    if status_code == 429:
+        return "provider_rate_limited"
+    if status_code >= 500:
+        return "provider_unavailable"
+    return "slack_delivery_failed"
+
+
+def _classify_url_error(exc: Exception) -> str:
+    raw = str(exc).lower()
+    if "timed out" in raw:
+        return "network_timeout"
+    if "name or service not known" in raw or "temporary failure in name resolution" in raw:
+        return "dns_resolution_failed"
+    return "network_error"
+
+
+def _classify_smtp_exception(exc: Exception) -> str:
+    if isinstance(exc, ssl.SSLError):
+        return "tls_error"
+    if isinstance(exc, smtplib.SMTPAuthenticationError):
+        return "auth_error"
+    if isinstance(exc, smtplib.SMTPConnectError):
+        return "port_or_host_error"
+    if isinstance(exc, smtplib.SMTPServerDisconnected):
+        return "server_disconnected"
+    raw = str(exc).lower()
+    if "starttls" in raw or "ssl" in raw or "tls" in raw:
+        return "tls_error"
+    if "authentication" in raw or "auth" in raw:
+        return "auth_error"
+    if "timed out" in raw:
+        return "network_timeout"
+    return "smtp_delivery_failed"
+
+
+def _classify_pagerduty_http_status(status_code: int) -> str:
+    if status_code in {401, 403}:
+        return "routing_key_invalid"
+    if status_code == 400:
+        return "service_mapping_error"
+    if status_code == 429:
+        return "provider_rate_limited"
+    if status_code >= 500:
+        return "provider_unavailable"
+    return "pagerduty_delivery_failed"
+
+
+def _retry_log_item(
+    *,
+    attempt: int,
+    backoff_ms: int,
+    result: str,
+    provider_code: Optional[str] = None,
+    error_classification: Optional[str] = None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "attempt": attempt,
+        "backoff_ms": backoff_ms,
+        "result": result,
+    }
+    if provider_code is not None:
+        payload["provider_code"] = provider_code
+    if error_classification is not None:
+        payload["error_classification"] = error_classification
+    return payload
+
+
+def _simulate_slack_delivery(correlation_id: str) -> dict[str, Any]:
+    webhook_url = os.environ.get("ALERT_SLACK_WEBHOOK_URL")
+    retry_backoff_log: list[dict[str, Any]] = []
+    target_verified = bool(webhook_url and webhook_url.startswith("https://hooks.slack.com/services/"))
+    last_classification: Optional[str] = None
+    last_provider_code: Optional[str] = None
+
+    for attempt, backoff_ms in enumerate(OPS_ALERT_DELIVERY_BACKOFF_MS, start=1):
+        if backoff_ms > 0:
+            time.sleep(backoff_ms / 1000)
+        try:
+            payload = {
+                "text": f"[UI OPS SIMULATE] correlation_id={correlation_id} severity_probe=critical",
+            }
+            request = urllib.request.Request(
+                webhook_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=OPS_ALERT_HTTP_TIMEOUT_SECONDS) as response:
+                provider_code = str(response.getcode())
+                response_body = response.read().decode("utf-8", errors="ignore").strip()
+            if provider_code not in {"200", "201", "202"}:
+                raise AlertDeliveryError(
+                    "Slack webhook response not successful",
+                    error_class=_classify_slack_http_status(int(provider_code)),
+                    provider_code=provider_code,
+                )
+
+            message_ref_raw = hashlib.sha256(
+                f"slack:{correlation_id}:{provider_code}:{response_body}".encode("utf-8")
+            ).hexdigest()[:16]
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="ok",
+                    provider_code=provider_code,
+                )
+            )
+            return {
+                "delivery_status": "ok",
+                "provider_code": provider_code,
+                "message_ref": _mask_text(message_ref_raw),
+                "target_channel_verified": target_verified,
+                "retry_backoff_log": retry_backoff_log,
+                "last_failure_classification": None,
+            }
+        except urllib.error.HTTPError as exc:
+            last_provider_code = str(exc.code)
+            last_classification = _classify_slack_http_status(exc.code)
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="fail",
+                    provider_code=last_provider_code,
+                    error_classification=last_classification,
+                )
+            )
+        except urllib.error.URLError as exc:
+            last_classification = _classify_url_error(exc)
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="fail",
+                    provider_code=last_provider_code,
+                    error_classification=last_classification,
+                )
+            )
+        except AlertDeliveryError as exc:
+            last_provider_code = exc.provider_code
+            last_classification = exc.error_class
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="fail",
+                    provider_code=last_provider_code,
+                    error_classification=last_classification,
+                )
+            )
+        except Exception as exc:
+            last_classification = _classify_url_error(exc)
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="fail",
+                    provider_code=last_provider_code,
+                    error_classification=last_classification,
+                )
+            )
+
+    return {
+        "delivery_status": "fail",
+        "provider_code": last_provider_code,
+        "message_ref": None,
+        "target_channel_verified": target_verified,
+        "retry_backoff_log": retry_backoff_log,
+        "last_failure_classification": last_classification,
+    }
+
+
+def _simulate_smtp_delivery(correlation_id: str) -> dict[str, Any]:
+    smtp_host = os.environ.get("ALERT_SMTP_HOST")
+    smtp_port_raw = os.environ.get("ALERT_SMTP_PORT")
+    smtp_user = os.environ.get("ALERT_SMTP_USER")
+    smtp_pass = os.environ.get("ALERT_SMTP_PASS")
+    smtp_from = os.environ.get("ALERT_SMTP_FROM")
+    smtp_recipients = _split_csv_values(os.environ.get("ALERT_SMTP_TO"))
+
+    retry_backoff_log: list[dict[str, Any]] = []
+    last_classification: Optional[str] = None
+    last_response_code: Optional[int] = None
+    last_banner: Optional[str] = None
+
+    try:
+        smtp_port = int(str(smtp_port_raw))
+    except (TypeError, ValueError):
+        return {
+            "delivery_status": "fail",
+            "smtp_response_code": None,
+            "smtp_server_banner": None,
+            "recipient_list_verified": bool(smtp_recipients),
+            "recipient_count": len(smtp_recipients),
+            "retry_backoff_log": retry_backoff_log,
+            "last_failure_classification": "port_or_host_error",
+            "root_cause": "SMTP port değeri geçersiz",
+        }
+
+    for attempt, backoff_ms in enumerate(OPS_ALERT_DELIVERY_BACKOFF_MS, start=1):
+        if backoff_ms > 0:
+            time.sleep(backoff_ms / 1000)
+        client: Optional[smtplib.SMTP] = None
+        try:
+            use_ssl = smtp_port == 465
+            if use_ssl:
+                client = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=OPS_ALERT_HTTP_TIMEOUT_SECONDS)
+            else:
+                client = smtplib.SMTP(smtp_host, smtp_port, timeout=OPS_ALERT_HTTP_TIMEOUT_SECONDS)
+
+            code, banner = client.ehlo()
+            last_response_code = int(code)
+            last_banner = banner.decode("utf-8", errors="ignore") if isinstance(banner, bytes) else str(banner)
+
+            if not use_ssl:
+                starttls_enabled = str(os.environ.get("ALERT_SMTP_STARTTLS", "true")).lower() == "true"
+                if starttls_enabled:
+                    client.starttls(context=ssl.create_default_context())
+                    code, banner = client.ehlo()
+                    last_response_code = int(code)
+                    last_banner = (
+                        banner.decode("utf-8", errors="ignore") if isinstance(banner, bytes) else str(banner)
+                    )
+
+            client.login(smtp_user, smtp_pass)
+
+            message = EmailMessage()
+            message["Subject"] = f"UI OPS Alert Simulation {correlation_id}"
+            message["From"] = smtp_from
+            message["To"] = ", ".join(smtp_recipients)
+            message.set_content(
+                f"This is a simulation message for UI publish alert channels. correlation_id={correlation_id}"
+            )
+            send_errors = client.send_message(message)
+            if send_errors:
+                raise AlertDeliveryError(
+                    "SMTP partial send",
+                    error_class="recipient_rejected",
+                    provider_code=str(last_response_code) if last_response_code is not None else None,
+                )
+
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="ok",
+                    provider_code=str(last_response_code) if last_response_code is not None else None,
+                )
+            )
+            return {
+                "delivery_status": "ok",
+                "smtp_response_code": last_response_code,
+                "smtp_server_banner": _mask_text(last_banner),
+                "recipient_list_verified": bool(smtp_recipients),
+                "recipient_count": len(smtp_recipients),
+                "retry_backoff_log": retry_backoff_log,
+                "last_failure_classification": None,
+                "root_cause": None,
+            }
+        except AlertDeliveryError as exc:
+            last_classification = exc.error_class
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="fail",
+                    provider_code=exc.provider_code,
+                    error_classification=last_classification,
+                )
+            )
+        except Exception as exc:
+            last_classification = _classify_smtp_exception(exc)
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="fail",
+                    provider_code=str(last_response_code) if last_response_code is not None else None,
+                    error_classification=last_classification,
+                )
+            )
+        finally:
+            if client:
+                try:
+                    client.quit()
+                except Exception:
+                    pass
+
+    return {
+        "delivery_status": "fail",
+        "smtp_response_code": last_response_code,
+        "smtp_server_banner": _mask_text(last_banner),
+        "recipient_list_verified": bool(smtp_recipients),
+        "recipient_count": len(smtp_recipients),
+        "retry_backoff_log": retry_backoff_log,
+        "last_failure_classification": last_classification,
+        "root_cause": (
+            "SMTP TLS/port/auth bağlantı testi başarısız"
+            if last_classification in {"tls_error", "port_or_host_error", "auth_error"}
+            else "SMTP teslimat testi başarısız"
+        ),
+    }
+
+
+def _simulate_pagerduty_delivery(correlation_id: str) -> dict[str, Any]:
+    routing_key = os.environ.get("ALERT_PAGERDUTY_ROUTING_KEY")
+    retry_backoff_log: list[dict[str, Any]] = []
+    dedup_key = f"ui-publish-sim-{correlation_id}"
+    last_provider_code: Optional[str] = None
+    last_provider_status: Optional[str] = None
+    last_classification: Optional[str] = None
+
+    for attempt, backoff_ms in enumerate(OPS_ALERT_DELIVERY_BACKOFF_MS, start=1):
+        if backoff_ms > 0:
+            time.sleep(backoff_ms / 1000)
+        try:
+            payload = {
+                "routing_key": routing_key,
+                "event_action": "trigger",
+                "dedup_key": dedup_key,
+                "payload": {
+                    "summary": f"UI publish ops simulate correlation={correlation_id}",
+                    "severity": "critical",
+                    "source": "ui-designer-ops",
+                    "component": "publish-pipeline",
+                },
+            }
+            request = urllib.request.Request(
+                "https://events.pagerduty.com/v2/enqueue",
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=OPS_ALERT_HTTP_TIMEOUT_SECONDS) as response:
+                provider_code = str(response.getcode())
+                response_body = response.read().decode("utf-8", errors="ignore").strip()
+            parsed = json.loads(response_body) if response_body else {}
+            provider_status = str(parsed.get("status") or "unknown")
+
+            if provider_code not in {"200", "201", "202"}:
+                raise AlertDeliveryError(
+                    "PagerDuty response not successful",
+                    error_class=_classify_pagerduty_http_status(int(provider_code)),
+                    provider_code=provider_code,
+                    provider_status=provider_status,
+                )
+
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="ok",
+                    provider_code=provider_code,
+                )
+            )
+            return {
+                "delivery_status": "ok",
+                "incident_triggered": provider_status.lower() == "success",
+                "incident_ref": _mask_text(str(parsed.get("dedup_key") or dedup_key)),
+                "provider_status": provider_status,
+                "provider_code": provider_code,
+                "retry_backoff_log": retry_backoff_log,
+                "last_failure_classification": None,
+            }
+        except urllib.error.HTTPError as exc:
+            last_provider_code = str(exc.code)
+            last_classification = _classify_pagerduty_http_status(exc.code)
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="fail",
+                    provider_code=last_provider_code,
+                    error_classification=last_classification,
+                )
+            )
+        except urllib.error.URLError as exc:
+            last_classification = _classify_url_error(exc)
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="fail",
+                    provider_code=last_provider_code,
+                    error_classification=last_classification,
+                )
+            )
+        except AlertDeliveryError as exc:
+            last_provider_code = exc.provider_code
+            last_provider_status = exc.provider_status
+            last_classification = exc.error_class
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="fail",
+                    provider_code=last_provider_code,
+                    error_classification=last_classification,
+                )
+            )
+        except Exception as exc:
+            last_classification = _classify_url_error(exc)
+            retry_backoff_log.append(
+                _retry_log_item(
+                    attempt=attempt,
+                    backoff_ms=backoff_ms,
+                    result="fail",
+                    provider_code=last_provider_code,
+                    error_classification=last_classification,
+                )
+            )
+
+    return {
+        "delivery_status": "fail",
+        "incident_triggered": False,
+        "incident_ref": _mask_text(dedup_key),
+        "provider_status": last_provider_status,
+        "provider_code": last_provider_code,
+        "retry_backoff_log": retry_backoff_log,
+        "last_failure_classification": last_classification,
+    }
 
 
 def _compute_publish_metrics(items: list[dict[str, Any]]) -> dict[str, Any]:
@@ -2359,6 +2867,16 @@ async def admin_ui_publish_ops_thresholds(
     }
 
 
+@router.get("/admin/ui/configs/{config_type}/ops-alerts/secret-presence")
+async def admin_ui_publish_alerts_secret_presence(
+    config_type: str,
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+):
+    del current_user
+    _normalize_config_type(config_type)
+    return {"ops_alerts_secret_presence": _ops_alerts_secret_presence()}
+
+
 @router.post("/admin/ui/configs/{config_type}/ops-alerts/simulate")
 async def admin_ui_publish_alerts_simulate(
     config_type: str,
@@ -2374,6 +2892,54 @@ async def admin_ui_publish_alerts_simulate(
         "conflict_rate": float(payload.get("conflict_rate") or 0),
     }
     alerts = _evaluate_publish_alerts(sample_metrics)
+    correlation_id = str(payload.get("correlation_id") or uuid.uuid4())
+    secret_presence = _ops_alerts_secret_presence()
+
+    channel_results: dict[str, Any] = {}
+    delivery_status = "blocked_missing_secrets"
+    if secret_presence["status"] == "READY":
+        slack_result, smtp_result, pagerduty_result = await asyncio.gather(
+            asyncio.to_thread(_simulate_slack_delivery, correlation_id),
+            asyncio.to_thread(_simulate_smtp_delivery, correlation_id),
+            asyncio.to_thread(_simulate_pagerduty_delivery, correlation_id),
+        )
+        channel_results = {
+            "slack": slack_result,
+            "smtp": smtp_result,
+            "pagerduty": pagerduty_result,
+        }
+        statuses = [
+            str(slack_result.get("delivery_status") or "fail"),
+            str(smtp_result.get("delivery_status") or "fail"),
+            str(pagerduty_result.get("delivery_status") or "fail"),
+        ]
+        delivery_status = "ok" if all(status == "ok" for status in statuses) else "partial_fail"
+
+    if channel_results:
+        for channel_name, channel_payload in channel_results.items():
+            session.add(
+                _create_ui_config_audit_log(
+                    action="ui_config_ops_alert_delivery",
+                    current_user=current_user,
+                    config_type=normalized_type,
+                    resource_id=f"ops_delivery:{channel_name}",
+                    old_values=None,
+                    new_values=None,
+                    metadata_info={
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "correlation_id": correlation_id,
+                        "channel": channel_name,
+                        "delivery_status": channel_payload.get("delivery_status"),
+                        "provider_code": channel_payload.get("provider_code") or channel_payload.get("smtp_response_code"),
+                        "provider_status": channel_payload.get("provider_status"),
+                        "message_ref": channel_payload.get("message_ref"),
+                        "incident_ref": channel_payload.get("incident_ref"),
+                        "retry_backoff_log": channel_payload.get("retry_backoff_log") or [],
+                        "last_failure_classification": channel_payload.get("last_failure_classification"),
+                    },
+                )
+            )
+
     session.add(
         _create_ui_config_audit_log(
             action="ui_config_ops_alert_simulation",
@@ -2384,16 +2950,107 @@ async def admin_ui_publish_alerts_simulate(
             new_values=None,
             metadata_info={
                 "timestamp": datetime.now(timezone.utc).isoformat(),
+                "correlation_id": correlation_id,
+                "ops_alerts_secret_presence": secret_presence,
                 "sample_metrics": sample_metrics,
                 "alerts": alerts,
+                "channel_results": channel_results,
+                "delivery_status": delivery_status,
             },
         )
     )
     await session.commit()
     return {
-        "ok": True,
+        "ok": delivery_status == "ok",
+        "delivery_status": delivery_status,
+        "correlation_id": correlation_id,
+        "ops_alerts_secret_presence": secret_presence,
         "sample_metrics": sample_metrics,
         "alerts": alerts,
+        "channel_results": channel_results,
+        "fail_fast": (
+            {
+                "status": "Blocked: Missing Secrets",
+                "missing_keys": secret_presence.get("missing_keys") or [],
+            }
+            if secret_presence["status"] != "READY"
+            else None
+        ),
+    }
+
+
+@router.get("/admin/ui/configs/{config_type}/ops-alerts/delivery-audit")
+async def admin_ui_publish_alert_delivery_audit(
+    config_type: str,
+    correlation_id: Optional[str] = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=200),
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    normalized_type = _normalize_config_type(config_type)
+
+    stmt = (
+        select(AuditLog)
+        .where(
+            AuditLog.action == "ui_config_ops_alert_delivery",
+            AuditLog.resource_type == f"ui_config:{normalized_type}",
+        )
+        .order_by(desc(AuditLog.created_at))
+        .limit(500)
+    )
+    rows = (await session.execute(stmt)).scalars().all()
+
+    target_correlation_id = correlation_id
+    if not target_correlation_id:
+        for row in rows:
+            metadata = row.metadata_info or {}
+            candidate = metadata.get("correlation_id")
+            if candidate:
+                target_correlation_id = str(candidate)
+                break
+
+    filtered_rows = []
+    for row in rows:
+        metadata = row.metadata_info or {}
+        if target_correlation_id and str(metadata.get("correlation_id") or "") != target_correlation_id:
+            continue
+        filtered_rows.append(row)
+        if len(filtered_rows) >= limit:
+            break
+
+    items = []
+    for row in filtered_rows:
+        metadata = row.metadata_info or {}
+        items.append(
+            {
+                "audit_id": str(row.id),
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "actor_email": row.user_email,
+                "correlation_id": metadata.get("correlation_id"),
+                "channel": metadata.get("channel"),
+                "delivery_status": metadata.get("delivery_status"),
+                "provider_code": metadata.get("provider_code"),
+                "provider_status": metadata.get("provider_status"),
+                "message_ref": metadata.get("message_ref"),
+                "incident_ref": metadata.get("incident_ref"),
+                "retry_backoff_log": metadata.get("retry_backoff_log") or [],
+                "last_failure_classification": metadata.get("last_failure_classification"),
+            }
+        )
+
+    channels_logged = sorted({str(item.get("channel") or "") for item in items if item.get("channel")})
+    expected_channels = ["pagerduty", "slack", "smtp"]
+    missing_channels = [channel for channel in expected_channels if channel not in channels_logged]
+
+    return {
+        "correlation_id": target_correlation_id,
+        "items": items,
+        "total_records": len(items),
+        "channels_logged": channels_logged,
+        "missing_channels": missing_channels,
+        "expected_records": len(expected_channels),
+        "all_channels_recorded": len(missing_channels) == 0,
     }
 
 
