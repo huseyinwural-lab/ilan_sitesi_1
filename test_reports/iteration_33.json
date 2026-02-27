@@ -1,0 +1,162 @@
+{
+  "summary": "P67 Operasyonel Stabilizasyon + P2 Temizlik Planı - All tests pass (20/20). Backend: 11 new P67 tests + 9 existing P64/P66 tests. Legacy publish 410 + deprecation headers. New publish flow with version+hash guard working. Ops thresholds + alert simulation working. Publish audits with KPI/telemetry/windows/trends working. Frontend: All components verified including Publish Audit card, KPI metrics, 24h sparklines, alert badges, drift guard hash display, conflict modal with single primary action.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p67_ops_hardening_p2_cleanup.py",
+    "/app/backend/tests/test_p66_conflict_ux_telemetry.py",
+    "/app/backend/tests/test_p64_publish_hardening.py",
+    "/app/test_reports/pytest/p67_ops_hardening_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_p67_ops_hardening_p2_cleanup.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 tests passed)",
+    "frontend": "100% (all UI components verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "Dashboard drafts created during testing for tenant scopes: p67-legacy-410-*, p67-version-*, p67-hash-*, p67-success-*, p67-audit-*, p67-sync-*, p67-e2e-*, test-conflict-modal",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P67 Ops Hardening + P2 Cleanup complete. All backend APIs working. Legacy publish endpoint returns 410 with LEGACY_ENDPOINT_REMOVED code. New publish endpoint has full config_version + resolved_config_hash guard. Ops thresholds and alert simulation working. Publish audits returns telemetry, KPI, windows (1h/24h/7d), and 24h trend sparkline data.",
+  "features_verified": {
+    "legacy_publish_410": {
+      "endpoint": "POST /api/admin/ui/configs/{config_type}/publish/{config_id}",
+      "status": "PASS",
+      "behavior": "Returns 410 LEGACY_ENDPOINT_REMOVED with deprecation headers"
+    },
+    "new_publish_endpoint": {
+      "endpoint": "POST /api/admin/ui/configs/{config_type}/publish",
+      "status": "PASS",
+      "guards": ["config_version mandatory", "resolved_config_hash validation", "owner_type/owner_id scope checks"]
+    },
+    "ops_thresholds": {
+      "endpoint": "GET /api/admin/ui/configs/{config_type}/ops-thresholds",
+      "status": "PASS",
+      "returns": {
+        "thresholds": ["avg_lock_wait_ms", "max_lock_wait_ms", "publish_duration_ms_p95", "conflict_rate"],
+        "escalation": {"warning": ["slack"], "critical": ["slack", "email", "on_call"]}
+      }
+    },
+    "ops_alert_simulation": {
+      "endpoint": "POST /api/admin/ui/configs/{config_type}/ops-alerts/simulate",
+      "status": "PASS",
+      "behavior": "High lock wait (>450ms) triggers critical alert, conflict_rate >40% triggers critical alert"
+    },
+    "legacy_usage_analysis": {
+      "endpoint": "GET /api/admin/ui/configs/{config_type}/legacy-usage?days=30",
+      "status": "PASS",
+      "returns": ["days", "total_calls", "client_breakdown"]
+    },
+    "publish_audits_kpi_telemetry": {
+      "endpoint": "GET /api/admin/ui/configs/{config_type}/publish-audits",
+      "status": "PASS",
+      "returns": {
+        "items": "audit log entries",
+        "telemetry": ["avg_lock_wait_ms", "max_lock_wait_ms", "publish_duration_ms_p95", "conflict_rate", "publish_success_rate"],
+        "kpi": ["median_retry_count", "time_to_publish_ms", "conflict_resolution_time_ms", "publish_success_rate"],
+        "windows": {"1h": "metrics", "24h": "metrics", "7d": "metrics"},
+        "trends": {"window": "24h", "points": "hourly buckets with conflict_rate, avg_lock_wait_ms, publish_success_rate"}
+      }
+    },
+    "conflict_sync_endpoint": {
+      "endpoint": "POST /api/admin/ui/configs/{config_type}/conflict-sync",
+      "status": "PASS",
+      "returns": ["item (latest draft)", "items (version list)", "diff", "from_item", "to_item"]
+    },
+    "frontend_ui_components": {
+      "publish_audit_card": {
+        "status": "PASS",
+        "elements": ["avg_lock_wait_ms", "max_lock_wait_ms", "publish_duration_ms_p95", "conflict_rate"]
+      },
+      "kpi_metrics": {
+        "status": "PASS",
+        "elements": ["median_retry_count", "time_to_publish_ms", "conflict_resolution_time_ms", "publish_success_rate"]
+      },
+      "24h_sparkline_trends": {
+        "status": "PASS",
+        "elements": ["Son 24s Conflict Rate Sparkline", "Son 24s Lock Wait Sparkline"]
+      },
+      "alert_badge_list": {
+        "status": "PASS",
+        "default_state": "Aktif alert yok"
+      },
+      "drift_guard_hash": {
+        "status": "PASS",
+        "displays": "local_hash and server_hash visible"
+      },
+      "conflict_modal": {
+        "status": "PASS",
+        "single_primary_action": "Latest Draft'ı Çek + Diff'i Yeniden Aç",
+        "data_testid": "ui-designer-dashboard-conflict-sync-and-reopen-button"
+      },
+      "publish_dialog": {
+        "status": "PASS",
+        "shows": ["diff summary", "visual diff grid", "confirmation checkbox"]
+      },
+      "rollback_dialog": {
+        "status": "PASS",
+        "shows": ["rollback reason (required)", "disabled confirm button without reason"]
+      }
+    }
+  },
+  "p67_test_results": {
+    "TestLegacyPublishEndpoint410": {
+      "test_legacy_publish_returns_410_with_deprecation_code": "PASSED",
+      "test_legacy_usage_tracking_endpoint": "PASSED"
+    },
+    "TestNewPublishEndpointFlow": {
+      "test_publish_requires_config_version": "PASSED",
+      "test_publish_hash_mismatch_returns_409": "PASSED",
+      "test_publish_successful_with_correct_parameters": "PASSED"
+    },
+    "TestOpsThresholdEndpoint": {
+      "test_ops_thresholds_returns_valid_structure": "PASSED"
+    },
+    "TestOpsAlertSimulation": {
+      "test_simulate_high_lock_wait_triggers_critical_alert": "PASSED",
+      "test_simulate_warning_level_alerts": "PASSED"
+    },
+    "TestPublishAuditsEndpoint": {
+      "test_publish_audits_returns_telemetry_and_kpi": "PASSED"
+    },
+    "TestConflictSyncEndpoint": {
+      "test_conflict_sync_returns_latest_draft_and_diff": "PASSED"
+    },
+    "TestIntegrationScenario": {
+      "test_full_publish_workflow_with_telemetry_tracking": "PASSED"
+    }
+  },
+  "p64_p66_regression_results": {
+    "TestPublishVersionContracts": "ALL PASSED (3 tests)",
+    "TestPublishLockAndRollbackReason": "ALL PASSED (2 tests)",
+    "TestConflictSyncAndTelemetry": "ALL PASSED (4 tests)"
+  },
+  "ui_verification": {
+    "route": "/admin/user-interface-design",
+    "tabs_present": ["Kurumsal Dashboard V2", "Kurumsal Header Tasarım", "Tema Yönetimi"],
+    "dashboard_components": [
+      "Scope selector (system/tenant)",
+      "Scope ID input",
+      "Widget Palette (KPI, Grafik, Liste, Paket Özeti, Doping Özeti)",
+      "Widget grid with drag-and-drop",
+      "Actions (Taslağı Yükle, Taslağı Kaydet, Yayınla, Rollback, Canlı Render Oku)",
+      "Hash state display (local_hash • server_hash)",
+      "Snapshot/Versions list",
+      "Canlı Render Doğrulama card",
+      "Publish Audit card with metrics and sparklines"
+    ]
+  }
+}
