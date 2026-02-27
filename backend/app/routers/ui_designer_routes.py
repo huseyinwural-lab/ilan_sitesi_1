@@ -737,11 +737,15 @@ class UIConfigPublishPayload(BaseModel):
     scope: str = Field(default="system")
     scope_id: Optional[str] = None
     config_id: Optional[str] = None
+    owner_type: Optional[str] = None
+    owner_id: Optional[str] = None
     config_version: Optional[int] = None
     require_confirm: bool = False
 
 
 class UIConfigLegacyPublishPayload(BaseModel):
+    owner_type: Optional[str] = None
+    owner_id: Optional[str] = None
     config_version: Optional[int] = None
 
 
