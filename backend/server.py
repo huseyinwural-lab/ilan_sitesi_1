@@ -10858,6 +10858,13 @@ class ListingAdminActionPayload(BaseModel):
     reason_note: Optional[str] = None
 
 
+class ListingDopingUpdatePayload(BaseModel):
+    doping_type: Literal["free", "showcase", "urgent"]
+    duration_days: Optional[int] = Field(default=None, ge=1, le=365)
+    until_at: Optional[datetime] = None
+    reason: Optional[str] = None
+
+
 class BulkModerationPayload(BaseModel):
     listing_ids: List[str] = Field(..., min_length=1)
     reason: Optional[str] = None
