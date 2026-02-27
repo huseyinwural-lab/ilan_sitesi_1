@@ -2658,43 +2658,6 @@ async def admin_save_ui_config(
     return {"ok": True, "item": _serialize_ui_config(row)}
 
 
-@router.post("/admin/ui/configs/{config_type}/publish/{config_id}", deprecated=True)
-async def admin_publish_ui_config(
-    config_type: str,
-    config_id: str,
-    payload: Optional[UIConfigLegacyPublishPayload] = None,
-    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
-    session: AsyncSession = Depends(get_db),
-):
-    normalized_type = _normalize_config_type(config_type)
-    retry_count = int(max(0, (payload.retry_count if payload else 0) or 0))
-    session.add(
-        _create_ui_config_audit_log(
-            action="ui_config_publish_legacy_call",
-            current_user=current_user,
-            config_type=normalized_type,
-            resource_id=str(config_id),
-            old_values=None,
-            new_values=None,
-            metadata_info={
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "retry_count": retry_count,
-                "config_version": payload.config_version if payload else None,
-            },
-        )
-    )
-    await session.commit()
-    raise HTTPException(
-        status_code=410,
-        detail={
-            "code": "LEGACY_ENDPOINT_REMOVED",
-            "message": "Legacy publish endpoint kaldırıldı. Yeni endpointi kullanın: /api/admin/ui/configs/{config_type}/publish",
-            "hint": "Client publish entegrasyonunu yeni endpoint contract'ına taşıyın",
-        },
-        headers=LEGACY_PUBLISH_DEPRECATION_HEADERS,
-    )
-
-
 @router.get("/admin/ui/configs/{config_type}/diff")
 async def admin_ui_config_diff(
     config_type: str,
