@@ -1,6 +1,6 @@
 # ROADMAP
 
-**Son güncelleme:** 2026-02-26 (P62)
+**Son güncelleme:** 2026-02-26 (P63)
 
 Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tutulur.
 
@@ -63,6 +63,7 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
   - Kategori P0 kapanışı sonrası yeniden başlatıldı ve ilk iterasyon PASS aldı (`/app/test_reports/iteration_23.json`)
   - **Yeni:** P0 backend stabilization tamamlandı (`p61_ui_dashboard_cfg`, dashboard guardrails, test PASS `/app/test_reports/iteration_27.json`)
   - **Yeni:** P1 frontend entegrasyon PASS (`/app/test_reports/iteration_28.json`) — corporate dashboard grid editor + individual header editor + diff/publish/rollback akışları canlı
+  - **Yeni:** Logo upload P0 stabilizasyon PASS (`/app/test_reports/iteration_29.json`) — kontrat bazlı hata kodları, inline error banner, storage health, cache bust
 
 ### Sıradaki Faz — Dealer Dashboard P1 (Restart)
 - **ACTIVE** 🔴
