@@ -13192,62 +13192,125 @@ async def admin_listings(
     dealer_only: Optional[str] = None,
     category_id: Optional[str] = None,
     owner_id: Optional[str] = None,
+    applicant_type: Optional[str] = None,
+    doping_type: Optional[str] = None,
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session, )
 
-    filters = []
+    base_filters = []
     if getattr(ctx, "mode", "global") == "country" and ctx.country:
-        filters.append(Listing.country == ctx.country)
+        base_filters.append(Listing.country == ctx.country)
     if status:
-        filters.append(Listing.status == status)
+        base_filters.append(Listing.status == status)
 
     if q:
         search_value = f"%{q}%"
-        filters.append(or_(Listing.title.ilike(search_value), cast(Listing.id, String).ilike(search_value)))
+        base_filters.append(or_(Listing.title.ilike(search_value), cast(Listing.id, String).ilike(search_value)))
 
     if category_id:
         try:
             category_uuid = uuid.UUID(category_id)
-            filters.append(Listing.category_id == category_uuid)
+            base_filters.append(Listing.category_id == category_uuid)
         except ValueError:
             pass
 
     if owner_id:
         try:
             owner_uuid = uuid.UUID(owner_id)
-            filters.append(Listing.user_id == owner_uuid)
+            base_filters.append(Listing.user_id == owner_uuid)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="Invalid owner_id") from exc
 
     dealer_only_flag = _parse_bool_flag(dealer_only)
     if dealer_only_flag and not owner_id:
-        filters.append(Listing.is_dealer_listing.is_(True))
+        base_filters.append(Listing.is_dealer_listing.is_(True))
+
+    applicant_type_normalized = (applicant_type or "").strip().lower()
+    if applicant_type_normalized not in {"", "individual", "corporate"}:
+        raise HTTPException(status_code=400, detail="Invalid applicant_type")
+
+    corporate_owner_expr = or_(
+        Listing.is_dealer_listing.is_(True),
+        SqlUser.role == "dealer",
+        SqlUser.portal_scope == "dealer",
+    )
+    individual_owner_expr = and_(
+        Listing.is_dealer_listing.is_(False),
+        or_(
+            SqlUser.id.is_(None),
+            and_(
+                or_(SqlUser.role.is_(None), SqlUser.role != "dealer"),
+                or_(SqlUser.portal_scope.is_(None), SqlUser.portal_scope != "dealer"),
+            ),
+        ),
+    )
+    if applicant_type_normalized == "corporate":
+        base_filters.append(corporate_owner_expr)
+    elif applicant_type_normalized == "individual":
+        base_filters.append(individual_owner_expr)
+
+    now = datetime.now(timezone.utc)
+    featured_active_expr = or_(
+        and_(Listing.featured_until.is_not(None), Listing.featured_until > now),
+        and_(Listing.is_showcase.is_(True), or_(Listing.showcase_expires_at.is_(None), Listing.showcase_expires_at > now)),
+    )
+    urgent_active_expr = and_(Listing.urgent_until.is_not(None), Listing.urgent_until > now)
+
+    doping_type_normalized = (doping_type or "").strip().lower()
+    if doping_type_normalized not in {"", "free", "showcase", "urgent"}:
+        raise HTTPException(status_code=400, detail="Invalid doping_type")
+
+    listing_filters = list(base_filters)
+    if doping_type_normalized == "showcase":
+        listing_filters.append(featured_active_expr)
+    elif doping_type_normalized == "urgent":
+        listing_filters.append(and_(~featured_active_expr, urgent_active_expr))
+    elif doping_type_normalized == "free":
+        listing_filters.append(and_(~featured_active_expr, ~urgent_active_expr))
 
     limit = min(100, max(1, int(limit)))
 
     query = (
-        select(Listing)
-        .where(*filters)
+        select(Listing, SqlUser)
+        .outerjoin(SqlUser, Listing.user_id == SqlUser.id)
+        .where(*listing_filters)
         .order_by(Listing.created_at.desc())
         .offset(int(skip))
         .limit(limit)
     )
     result = await session.execute(query)
-    listings = result.scalars().all()
+    rows = result.all()
 
-    total = await session.scalar(select(func.count(Listing.id)).where(*filters)) or 0
+    total = (
+        await session.scalar(
+            select(func.count(Listing.id))
+            .select_from(Listing)
+            .outerjoin(SqlUser, Listing.user_id == SqlUser.id)
+            .where(*listing_filters)
+        )
+    ) or 0
 
-    owner_ids = [listing.user_id for listing in listings if listing.user_id]
-    user_map: Dict[uuid.UUID, SqlUser] = {}
-    if owner_ids:
-        users = await session.execute(select(SqlUser).where(SqlUser.id.in_(owner_ids)))
-        user_map = {u.id: u for u in users.scalars().all()}
+    count_row = (
+        await session.execute(
+            select(
+                func.sum(case((featured_active_expr, 1), else_=0)).label("showcase_count"),
+                func.sum(case((and_(~featured_active_expr, urgent_active_expr), 1), else_=0)).label("urgent_count"),
+                func.sum(case((and_(~featured_active_expr, ~urgent_active_expr), 1), else_=0)).label("free_count"),
+            )
+            .select_from(Listing)
+            .outerjoin(SqlUser, Listing.user_id == SqlUser.id)
+            .where(*base_filters)
+        )
+    ).first()
 
     items = []
-    for listing in listings:
-        owner = user_map.get(listing.user_id)
+    for listing, owner in rows:
+        is_featured = _listing_featured_active(listing, now=now)
+        is_urgent = _listing_urgent_active(listing, now=now)
+        bucket = _listing_doping_bucket(listing, now=now)
+        applicant_bucket = _listing_applicant_type(listing, owner)
         items.append(
             {
                 "id": str(listing.id),
@@ -13263,10 +13326,30 @@ async def admin_listings(
                 "owner_email": owner.email if owner else None,
                 "owner_role": owner.role if owner else None,
                 "is_dealer_listing": listing.is_dealer_listing or (owner and owner.role == "dealer"),
+                "applicant_type": applicant_bucket,
+                "doping_type": bucket,
+                "is_featured": is_featured,
+                "is_urgent": is_urgent,
+                "featured_until": listing.featured_until.isoformat() if listing.featured_until else None,
+                "urgent_until": listing.urgent_until.isoformat() if listing.urgent_until else None,
             }
         )
 
-    return {"items": items, "pagination": {"total": int(total), "skip": int(skip), "limit": limit}}
+    counts = {
+        "free": int((count_row.showcase_count if False else count_row.free_count) or 0) if count_row else 0,
+        "showcase": int(count_row.showcase_count or 0) if count_row else 0,
+        "urgent": int(count_row.urgent_count or 0) if count_row else 0,
+    }
+
+    return {
+        "items": items,
+        "pagination": {"total": int(total), "skip": int(skip), "limit": limit},
+        "doping_counts": counts,
+        "filters": {
+            "applicant_type": applicant_type_normalized or "all",
+            "doping_type": doping_type_normalized or "all",
+        },
+    }
 
 
 @api_router.post("/admin/listings/{listing_id}/soft-delete")
