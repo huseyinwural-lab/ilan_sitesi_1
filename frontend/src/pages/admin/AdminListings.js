@@ -59,6 +59,7 @@ export default function AdminListingsPage({
   applicantType = 'all',
   applicationsMode = false,
   initialDopingType = 'all',
+  initialStatus = null,
 }) {
   const [searchParams] = useSearchParams();
   const urlCountry = (searchParams.get('country') || '').toUpperCase();
@@ -68,7 +69,8 @@ export default function AdminListingsPage({
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
 
-  const [status, setStatus] = useState(applicationsMode ? 'pending_moderation' : '');
+  const defaultStatus = initialStatus ?? (applicationsMode ? 'pending_moderation' : '');
+  const [status, setStatus] = useState(defaultStatus);
   const [search, setSearch] = useState('');
   const [dealerOnly, setDealerOnly] = useState(false);
   const [categoryId, setCategoryId] = useState('');
@@ -116,8 +118,7 @@ export default function AdminListingsPage({
       const params = new URLSearchParams();
       params.set('skip', String(page * limit));
       params.set('limit', String(limit));
-      if (applicationsMode) params.set('status', 'pending_moderation');
-      else if (status) params.set('status', status);
+      if (status) params.set('status', status);
       if (search) params.set('q', search);
       if (!applicationsMode && dealerOnly) params.set('dealer_only', 'true');
       if (categoryId) params.set('category_id', categoryId);
@@ -151,6 +152,12 @@ export default function AdminListingsPage({
     setDopingType(normalizeDopingType(initialDopingType));
     setPage(0);
   }, [initialDopingType]);
+
+  useEffect(() => {
+    setStatus(defaultStatus);
+    setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultStatus]);
 
   const openActionDialog = (listing, action) => {
     setActionDialog({ listing, action });
@@ -248,12 +255,24 @@ export default function AdminListingsPage({
   };
 
   const clearFilters = () => {
-    setStatus(applicationsMode ? 'pending_moderation' : '');
+    setStatus(defaultStatus);
     setSearch('');
     setDealerOnly(false);
     setCategoryId('');
     setDopingType(normalizeDopingType(initialDopingType));
     setPage(0);
+  };
+
+  const openApprovedUrgentInNewWindow = () => {
+    if (!(applicationsMode && (applicantType === 'individual' || applicantType === 'corporate'))) return false;
+    const basePath = applicantType === 'individual'
+      ? '/admin/individual-listing-applications/urgent'
+      : '/admin/corporate-listing-applications/urgent';
+    const params = new URLSearchParams();
+    if (urlCountry) params.set('country', urlCountry);
+    const target = `${basePath}${params.toString() ? `?${params.toString()}` : ''}`;
+    window.open(target, '_blank', 'noopener,noreferrer');
+    return true;
   };
 
   const resolveCategoryLabel = (key) => {
@@ -361,7 +380,11 @@ export default function AdminListingsPage({
             <button
               key={tab.value}
               type="button"
-              onClick={() => { setDopingType(tab.value); setPage(0); }}
+              onClick={() => {
+                if (tab.value === 'urgent' && openApprovedUrgentInNewWindow()) return;
+                setDopingType(tab.value);
+                setPage(0);
+              }}
               className={`h-9 rounded-full border px-3 text-sm font-semibold ${active ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
               data-testid={`listings-doping-tab-${tab.value}`}
             >
