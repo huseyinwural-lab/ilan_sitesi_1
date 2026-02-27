@@ -146,7 +146,7 @@ class TestDealerReportsEndpoint:
         assert "package_reports" in data, "Missing package_reports"
         assert "doping_usage_report" in data, "Missing doping_usage_report"
         
-        print(f"PASS: Reports response has all required top-level keys")
+        print("PASS: Reports response has all required top-level keys")
 
     def test_reports_window_7_days(self, dealer_token):
         """Test reports endpoint with 7 days window"""
@@ -253,7 +253,7 @@ class TestDealerReportsEndpoint:
             assert "series" in section, f"Missing series in {section_key}"
             assert isinstance(section["series"], list), f"series in {section_key} should be a list"
         
-        print(f"PASS: All 5 report sections have correct structure")
+        print("PASS: All 5 report sections have correct structure")
 
     def test_reports_package_reports_structure(self, dealer_token):
         """Test package_reports have correct structure"""
@@ -356,7 +356,7 @@ class TestDealerMessagesEndpoint:
             ]
             for key in expected_keys:
                 assert key in item, f"Missing key '{key}' in message item"
-            print(f"PASS: Message item has all required fields")
+            print("PASS: Message item has all required fields")
         else:
             print("INFO: No message items to check fields")
 
@@ -426,7 +426,7 @@ class TestDealerCustomersEndpoint:
             ]
             for key in expected_keys:
                 assert key in item, f"Missing key '{key}' in customer item"
-            print(f"PASS: Customer item has all required fields")
+            print("PASS: Customer item has all required fields")
         else:
             print("INFO: No customer items to check structure")
 
@@ -444,7 +444,7 @@ class TestDealerCustomersEndpoint:
             expected_keys = ["user_id", "full_name", "email", "status", "is_active"]
             for key in expected_keys:
                 assert key in item, f"Missing key '{key}' in non_store_user item"
-            print(f"PASS: Non-store user item has all required fields")
+            print("PASS: Non-store user item has all required fields")
         else:
             print("INFO: No non-store users to check structure")
 
