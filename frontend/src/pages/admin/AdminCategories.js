@@ -2804,7 +2804,7 @@ const AdminCategories = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-[40px_1.2fr_1fr_0.7fr_0.8fr_0.6fr_0.7fr_1.5fr] text-xs font-semibold uppercase px-4 py-2 border-b bg-gray-50 text-slate-800">
+        <div className="grid grid-cols-[40px_72px_1.2fr_1fr_0.7fr_0.8fr_0.6fr_0.7fr_1.5fr] text-xs font-semibold uppercase px-4 py-2 border-b bg-gray-50 text-slate-800" data-testid="categories-list-header-row">
           <div>
             <TriStateCheckbox
               checked={allVisibleSelected}
@@ -2814,6 +2814,7 @@ const AdminCategories = () => {
               testId="categories-select-all-checkbox"
             />
           </div>
+          <div data-testid="categories-list-col-image">Görsel</div>
           <div>Ad</div>
           <div>Slug</div>
           <div>Ülke</div>
@@ -2830,7 +2831,7 @@ const AdminCategories = () => {
           visibleItems.map((item) => {
             const rowSelection = getItemSelectionState(item.id);
             return (
-              <div key={item.id} className="grid grid-cols-[40px_1.2fr_1fr_0.7fr_0.8fr_0.6fr_0.7fr_1.5fr] px-4 py-3 border-b text-sm items-center text-slate-900" data-testid={`categories-row-${item.id}`}>
+              <div key={item.id} className="grid grid-cols-[40px_72px_1.2fr_1fr_0.7fr_0.8fr_0.6fr_0.7fr_1.5fr] px-4 py-3 border-b text-sm items-center text-slate-900" data-testid={`categories-row-${item.id}`}>
                 <div>
                   <TriStateCheckbox
                     checked={rowSelection.checked}
@@ -2838,6 +2839,22 @@ const AdminCategories = () => {
                     onChange={(event) => toggleItemSelection(item, event.target.checked)}
                     testId={`categories-row-select-${item.id}`}
                   />
+                </div>
+                <div className="pr-2" data-testid={`categories-row-image-cell-${item.id}`}>
+                  <div className="h-10 w-10 overflow-hidden rounded border border-slate-200 bg-slate-100" data-testid={`categories-row-image-box-${item.id}`}>
+                    {item.image_url ? (
+                      <img
+                        src={resolveCategoryImagePreviewUrl(item.image_url, item.updated_at ? Date.parse(item.updated_at) : item.id)}
+                        alt={`${item.name || 'Kategori'} görseli`}
+                        className="h-full w-full object-cover"
+                        data-testid={`categories-row-image-preview-${item.id}`}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-slate-500" data-testid={`categories-row-image-placeholder-${item.id}`}>
+                        —
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="font-semibold text-slate-900" style={{ paddingLeft: `${Math.min(Number(item.depth || 0), 5) * 12}px` }} data-testid={`categories-row-name-${item.id}`}>{item.name}</div>
                 <div className="text-slate-800" data-testid={`categories-row-slug-${item.id}`}>{item.slug}</div>
