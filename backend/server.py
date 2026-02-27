@@ -28274,6 +28274,152 @@ def _build_theme_validation_report(config: dict) -> List[dict]:
     return report
 
 
+SHOWCASE_LAYOUT_CACHE_SECONDS = 300
+SHOWCASE_ROWS_MIN = 1
+SHOWCASE_ROWS_MAX = 12
+SHOWCASE_COLUMNS_MIN = 1
+SHOWCASE_COLUMNS_MAX = 8
+SHOWCASE_LISTING_MIN = 1
+SHOWCASE_LISTING_MAX = 120
+
+
+def _default_showcase_layout_config() -> dict:
+    return {
+        "homepage": {
+            "enabled": True,
+            "rows": 9,
+            "columns": 7,
+            "listing_count": 63,
+        },
+        "category_showcase": {
+            "enabled": True,
+            "default": {
+                "rows": 2,
+                "columns": 4,
+                "listing_count": 8,
+            },
+            "categories": [],
+        },
+    }
+
+
+def _safe_int(value: Any, fallback: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return fallback
+
+
+def _normalize_showcase_block(value: Any, fallback: dict) -> dict:
+    source = value if isinstance(value, dict) else {}
+    rows = _safe_int(source.get("rows"), fallback["rows"])
+    columns = _safe_int(source.get("columns"), fallback["columns"])
+    listing_count = _safe_int(source.get("listing_count"), fallback["listing_count"])
+    return {
+        "enabled": bool(source.get("enabled", fallback.get("enabled", True))),
+        "rows": max(SHOWCASE_ROWS_MIN, min(SHOWCASE_ROWS_MAX, rows)),
+        "columns": max(SHOWCASE_COLUMNS_MIN, min(SHOWCASE_COLUMNS_MAX, columns)),
+        "listing_count": max(SHOWCASE_LISTING_MIN, min(SHOWCASE_LISTING_MAX, listing_count)),
+    }
+
+
+def _normalize_showcase_layout_config(config: Optional[dict]) -> dict:
+    defaults = _default_showcase_layout_config()
+    if not isinstance(config, dict):
+        return defaults
+
+    homepage_cfg = _normalize_showcase_block(config.get("homepage"), defaults["homepage"])
+
+    category_raw = config.get("category_showcase") if isinstance(config.get("category_showcase"), dict) else {}
+    category_default = _normalize_showcase_block(
+        category_raw.get("default"),
+        defaults["category_showcase"]["default"],
+    )
+
+    normalized_categories = []
+    for item in category_raw.get("categories") or []:
+        if not isinstance(item, dict):
+            continue
+        block = _normalize_showcase_block(item, category_default)
+        category_id = str(item.get("category_id") or "").strip()
+        category_slug = str(item.get("category_slug") or "").strip().lower()
+        category_name = str(item.get("category_name") or "").strip()
+        if not category_id and not category_slug:
+            continue
+        normalized_categories.append(
+            {
+                "enabled": bool(item.get("enabled", True)),
+                "category_id": category_id or None,
+                "category_slug": category_slug or None,
+                "category_name": category_name or None,
+                "rows": block["rows"],
+                "columns": block["columns"],
+                "listing_count": block["listing_count"],
+            }
+        )
+
+    return {
+        "homepage": homepage_cfg,
+        "category_showcase": {
+            "enabled": bool(category_raw.get("enabled", True)),
+            "default": {
+                "rows": category_default["rows"],
+                "columns": category_default["columns"],
+                "listing_count": category_default["listing_count"],
+                "enabled": True,
+            },
+            "categories": normalized_categories,
+        },
+    }
+
+
+def _validate_showcase_layout_config(config: Optional[dict]) -> List[dict]:
+    errors: List[dict] = []
+    if not isinstance(config, dict):
+        return [{"field": "config", "message": "Config eksik"}]
+
+    def _validate_block(prefix: str, block: Any) -> None:
+        if not isinstance(block, dict):
+            errors.append({"field": prefix, "message": "Geçersiz blok"})
+            return
+        rows = _safe_int(block.get("rows"), 0)
+        columns = _safe_int(block.get("columns"), 0)
+        listing_count = _safe_int(block.get("listing_count"), 0)
+        if rows < SHOWCASE_ROWS_MIN or rows > SHOWCASE_ROWS_MAX:
+            errors.append({"field": f"{prefix}.rows", "message": f"{SHOWCASE_ROWS_MIN}-{SHOWCASE_ROWS_MAX} aralığında olmalı"})
+        if columns < SHOWCASE_COLUMNS_MIN or columns > SHOWCASE_COLUMNS_MAX:
+            errors.append({"field": f"{prefix}.columns", "message": f"{SHOWCASE_COLUMNS_MIN}-{SHOWCASE_COLUMNS_MAX} aralığında olmalı"})
+        if listing_count < SHOWCASE_LISTING_MIN or listing_count > SHOWCASE_LISTING_MAX:
+            errors.append({"field": f"{prefix}.listing_count", "message": f"{SHOWCASE_LISTING_MIN}-{SHOWCASE_LISTING_MAX} aralığında olmalı"})
+
+    _validate_block("homepage", config.get("homepage"))
+
+    category_showcase = config.get("category_showcase")
+    if not isinstance(category_showcase, dict):
+        errors.append({"field": "category_showcase", "message": "Geçersiz kategori vitrin ayarı"})
+        return errors
+
+    _validate_block("category_showcase.default", category_showcase.get("default"))
+
+    seen_keys = set()
+    for index, item in enumerate(category_showcase.get("categories") or []):
+        if not isinstance(item, dict):
+            errors.append({"field": f"category_showcase.categories[{index}]", "message": "Geçersiz kategori kaydı"})
+            continue
+        category_id = str(item.get("category_id") or "").strip()
+        category_slug = str(item.get("category_slug") or "").strip().lower()
+        if not category_id and not category_slug:
+            errors.append({"field": f"category_showcase.categories[{index}]", "message": "category_id veya category_slug gerekli"})
+        key = category_id or category_slug
+        if key:
+            if key in seen_keys:
+                errors.append({"field": f"category_showcase.categories[{index}]", "message": "Kategori tekrarlı"})
+            seen_keys.add(key)
+        _validate_block(f"category_showcase.categories[{index}]", item)
+
+    return errors
+
+
 
 def _normalize_ad_dates(start_at: Optional[datetime], end_at: Optional[datetime]) -> Tuple[Optional[datetime], Optional[datetime]]:
     if start_at and end_at and end_at < start_at:
