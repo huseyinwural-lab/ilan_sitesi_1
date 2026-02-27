@@ -1,0 +1,104 @@
+{
+  "summary": "P74 Urgent/Acil İlan Yeni Pencere & Timeline Columns - All features verified. Bireysel/Kurumsal Acil İlan links open in new window with initialStatus=published. Timeline columns (Onay/Bitiş/Kalan) appear on urgent/featured/paid doping pages. API returns published_at, featured_until, urgent_until, paid_until fields correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_urgent_doping_timeline.py",
+    "/app/test_reports/pytest/p74_urgent_doping_timeline_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "openInNewWindow: true correctly set for both individual and corporate urgent links in Layout.js (lines 470, 474)",
+    "initialStatus='published' correctly set for both urgent routes in BackofficePortalApp.jsx (lines 107, 120)",
+    "showDopingTimeline correctly toggles timeline column based on applicationsMode && doping type in AdminListings.js (line 124)",
+    "openApprovedUrgentInNewWindow() function correctly opens new window for urgent tab click when in applications mode (lines 301-311)",
+    "Backend correctly returns published_at, featured_until, urgent_until, paid_until in admin listings response (line 13461-13473)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_urgent_doping_timeline.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "admin_login_url": "/admin/login"
+  },
+  "seed_data_creation": "No seed data created - tested with existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P74 verified: All urgent/featured/paid doping pages have timeline columns (Onay/Bitiş/Kalan) showing published_at, end date, and remaining days. Urgent links in sidebar open in new window with target=_blank. The urgent routes have initialStatus=published so only approved urgent listings are shown.",
+  "features_verified": {
+    "bireysel_acil_tab_new_window": {
+      "status": "PASS",
+      "description": "Clicking 'Acil İlan' tab on Bireysel İlan Başvuruları page opens new window to /admin/individual-listing-applications/urgent"
+    },
+    "kurumsal_acil_sidebar_new_window": {
+      "status": "PASS",
+      "description": "Kurumsal Acil İlan link in sidebar has target=_blank and opens new window"
+    },
+    "bireysel_acil_sidebar_new_window": {
+      "status": "PASS",
+      "description": "Bireysel Acil İlan link in sidebar has target=_blank and opens new window"
+    },
+    "urgent_page_initial_status_published": {
+      "status": "PASS",
+      "description": "Both individual and corporate urgent routes have initialStatus='published' to show only approved urgent listings"
+    },
+    "timeline_column_header_urgent": {
+      "status": "PASS",
+      "description": "Timeline header 'Onay / Bitiş / Kalan' visible on urgent pages"
+    },
+    "timeline_column_header_featured": {
+      "status": "PASS",
+      "description": "Timeline header 'Onay / Bitiş / Kalan' visible on featured/vitrin pages"
+    },
+    "timeline_column_header_paid": {
+      "status": "PASS",
+      "description": "Timeline header 'Onay / Bitiş / Kalan' visible on paid pages"
+    },
+    "api_returns_published_at": {
+      "status": "PASS",
+      "description": "GET /api/admin/listings returns published_at field for timeline display"
+    },
+    "api_returns_doping_end_dates": {
+      "status": "PASS",
+      "description": "GET /api/admin/listings returns featured_until, urgent_until, paid_until for timeline end date display"
+    },
+    "api_doping_counts_structure": {
+      "status": "PASS",
+      "description": "API returns doping_counts with free, paid, showcase, urgent keys"
+    }
+  },
+  "verification_details": {
+    "sidebar_links_openInNewWindow": [
+      "/admin/individual-listing-applications/urgent (line 470 in Layout.js)",
+      "/admin/corporate-listing-applications/urgent (line 474 in Layout.js)"
+    ],
+    "route_definitions_initialStatus": [
+      "/admin/individual-listing-applications/urgent - initialStatus='published' (line 107 in BackofficePortalApp.jsx)",
+      "/admin/corporate-listing-applications/urgent - initialStatus='published' (line 120 in BackofficePortalApp.jsx)"
+    ],
+    "timeline_columns_logic": {
+      "condition": "showDopingTimeline = applicationsMode && ['urgent', 'showcase', 'paid'].includes(dopingType)",
+      "location": "line 124 in AdminListings.js"
+    },
+    "pages_tested": [
+      "Bireysel Onaylı Acil İlanlar - Title matches, timeline header visible",
+      "Kurumsal Onaylı Acil İlanlar - Title matches, timeline header visible",
+      "Bireysel Ücretli İlan Başvuruları - Timeline header visible",
+      "Kurumsal Ücretli İlan Başvuruları - Timeline header visible",
+      "Bireysel Vitrin İlan Başvuruları - Timeline header visible",
+      "Kurumsal Vitrin İlan Başvuruları - Timeline header visible"
+    ]
+  },
+  "rca_of_issue": null
+}
