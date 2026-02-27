@@ -741,6 +741,7 @@ class UIConfigPublishPayload(BaseModel):
     owner_type: Optional[str] = None
     owner_id: Optional[str] = None
     config_version: Optional[int] = None
+    retry_count: int = 0
     require_confirm: bool = False
 
 
@@ -748,6 +749,15 @@ class UIConfigLegacyPublishPayload(BaseModel):
     owner_type: Optional[str] = None
     owner_id: Optional[str] = None
     config_version: Optional[int] = None
+    retry_count: int = 0
+
+
+class UIConfigConflictSyncPayload(BaseModel):
+    segment: str = Field(default="individual")
+    scope: str = Field(default="system")
+    scope_id: Optional[str] = None
+    previous_version: Optional[int] = None
+    retry_count: int = 0
 
 
 class UIConfigRollbackPayload(BaseModel):
