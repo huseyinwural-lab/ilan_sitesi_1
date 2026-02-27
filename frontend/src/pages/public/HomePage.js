@@ -83,6 +83,8 @@ export default function HomePage() {
   const [searchInput, setSearchInput] = useState('');
   const [categories, setCategories] = useState([]);
   const [showcaseItems, setShowcaseItems] = useState([]);
+  const [showcaseLayout, setShowcaseLayout] = useState(DEFAULT_SHOWCASE_LAYOUT);
+  const [categoryShowcases, setCategoryShowcases] = useState([]);
 
   const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
@@ -92,22 +94,72 @@ export default function HomePage() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [categoryRes, showcaseRes] = await Promise.all([
+        const [categoryRes, layoutRes] = await Promise.all([
           fetch(`${API}/categories?module=vehicle&country=${countryCode}`),
-          fetch(`${API}/v2/search?country=${countryCode}&limit=${SHOWCASE_TARGET_COUNT}&page=1`),
+          fetch(`${API}/site/showcase-layout`),
         ]);
 
         const categoryPayload = await categoryRes.json().catch(() => []);
+        const layoutPayload = await layoutRes.json().catch(() => ({}));
+        const nextLayout = normalizeShowcaseLayout(layoutPayload?.config);
+        const homeLimit = Math.max(1, resolveEffectiveCount(nextLayout.homepage));
+
+        const showcaseRes = await fetch(`${API}/v2/search?country=${countryCode}&limit=${homeLimit}&page=1`);
         const showcasePayload = await showcaseRes.json().catch(() => ({}));
 
+        const categoryList = Array.isArray(categoryPayload) ? categoryPayload : [];
+        const rootCategoryById = new Map(categoryList.filter((item) => !item.parent_id).map((item) => [item.id, item]));
+
+        const categoryConfigs = (nextLayout.category_showcase?.categories || [])
+          .filter((item) => item.enabled !== false && (item.category_id || item.category_slug));
+
+        const categoryResultPayloads = await Promise.all(
+          categoryConfigs.map(async (item, index) => {
+            const root = item.category_id ? rootCategoryById.get(item.category_id) : null;
+            const categorySlug = item.category_slug || root?.slug || '';
+            const categoryName = item.category_name || normalizeLabel(root) || categorySlug;
+            if (!categorySlug) return null;
+            const limit = Math.max(1, resolveEffectiveCount(item));
+            try {
+              const res = await fetch(`${API}/v2/search?country=${countryCode}&category=${encodeURIComponent(categorySlug)}&limit=${limit}&page=1`);
+              const payload = await res.json().catch(() => ({}));
+              return {
+                key: `${item.category_id || categorySlug}-${index}`,
+                category_slug: categorySlug,
+                category_name: categoryName,
+                rows: item.rows,
+                columns: item.columns,
+                listing_count: item.listing_count,
+                effective_count: limit,
+                items: Array.isArray(payload?.items) ? payload.items : [],
+              };
+            } catch (_err) {
+              return {
+                key: `${item.category_id || categorySlug}-${index}`,
+                category_slug: categorySlug,
+                category_name: categoryName,
+                rows: item.rows,
+                columns: item.columns,
+                listing_count: item.listing_count,
+                effective_count: limit,
+                items: [],
+              };
+            }
+          })
+        );
+
         if (active) {
-          setCategories(Array.isArray(categoryPayload) ? categoryPayload : []);
+          setCategories(categoryList);
           setShowcaseItems(Array.isArray(showcasePayload?.items) ? showcasePayload.items : []);
+          setShowcaseLayout(nextLayout);
+          setCategoryShowcases(categoryResultPayloads.filter(Boolean));
         }
       } catch (_error) {
         if (active) {
           setCategories([]);
           setShowcaseItems([]);
+          setShowcaseLayout(DEFAULT_SHOWCASE_LAYOUT);
+          setCategoryShowcases([]);
         }
       } finally {
         if (active) setLoading(false);
@@ -147,11 +199,14 @@ export default function HomePage() {
       });
   }, [categories, searchInput]);
 
+  const homeShowcaseBlock = useMemo(() => showcaseLayout.homepage || DEFAULT_SHOWCASE_LAYOUT.homepage, [showcaseLayout]);
+  const homeShowcaseCount = useMemo(() => Math.max(1, resolveEffectiveCount(homeShowcaseBlock)), [homeShowcaseBlock]);
+
   const showcaseWithPlaceholders = useMemo(() => {
-    const base = Array.isArray(showcaseItems) ? showcaseItems.slice(0, SHOWCASE_TARGET_COUNT) : [];
-    while (base.length < SHOWCASE_TARGET_COUNT) base.push(null);
+    const base = Array.isArray(showcaseItems) ? showcaseItems.slice(0, homeShowcaseCount) : [];
+    while (base.length < homeShowcaseCount) base.push(null);
     return base;
-  }, [showcaseItems]);
+  }, [showcaseItems, homeShowcaseCount]);
 
   return (
     <div className="home-v2-page" data-testid="home-v2-page">
