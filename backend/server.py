@@ -26942,12 +26942,19 @@ def _listing_urgent_active(listing: Listing, *, now: Optional[datetime] = None) 
     return bool(listing.urgent_until and listing.urgent_until > ref)
 
 
+def _listing_paid_active(listing: Listing, *, now: Optional[datetime] = None) -> bool:
+    ref = now or datetime.now(timezone.utc)
+    return bool(listing.paid_until and listing.paid_until > ref)
+
+
 def _listing_doping_bucket(listing: Listing, *, now: Optional[datetime] = None) -> str:
-    # Öncelik (kullanıcı onayı): Vitrin > Acil > Ücretsiz
+    # Öncelik: Vitrin > Acil > Ücretli > Ücretsiz
     if _listing_featured_active(listing, now=now):
         return "showcase"
     if _listing_urgent_active(listing, now=now):
         return "urgent"
+    if _listing_paid_active(listing, now=now):
+        return "paid"
     return "free"
 
 
@@ -26965,6 +26972,7 @@ def _listing_to_dict(listing: Listing) -> dict:
     now = datetime.now(timezone.utc)
     is_featured = _listing_featured_active(listing, now=now)
     is_urgent = _listing_urgent_active(listing, now=now)
+    is_paid = _listing_paid_active(listing, now=now)
     doping_bucket = _listing_doping_bucket(listing, now=now)
     return {
         "id": str(listing.id),
@@ -26992,9 +27000,11 @@ def _listing_to_dict(listing: Listing) -> dict:
         "payment_options": attrs.get("payment_options") or {},
         "is_featured": is_featured,
         "is_urgent": is_urgent,
+        "is_paid": is_paid,
         "doping_bucket": doping_bucket,
         "featured_until": listing.featured_until.isoformat() if listing.featured_until else None,
         "urgent_until": listing.urgent_until.isoformat() if listing.urgent_until else None,
+        "paid_until": listing.paid_until.isoformat() if listing.paid_until else None,
         "media": media_meta,
         "created_at": listing.created_at.isoformat() if listing.created_at else None,
         "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
