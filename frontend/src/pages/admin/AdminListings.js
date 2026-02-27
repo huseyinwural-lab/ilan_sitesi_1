@@ -34,7 +34,19 @@ const statusOptions = [
   { value: 'archived', label: 'archived' },
 ];
 
-export default function AdminListingsPage() {
+const dopingTabs = [
+  { value: 'all', label: 'Tümü' },
+  { value: 'free', label: 'Ücretsiz İlan' },
+  { value: 'showcase', label: 'Vitrin İlan' },
+  { value: 'urgent', label: 'Acil İlan' },
+];
+
+export default function AdminListingsPage({
+  title = 'İlanlar',
+  dataTestId = 'admin-listings-page',
+  applicantType = 'all',
+  applicationsMode = false,
+}) {
   const [searchParams] = useSearchParams();
   const urlCountry = (searchParams.get('country') || '').toUpperCase();
 
@@ -43,10 +55,14 @@ export default function AdminListingsPage() {
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
 
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(applicationsMode ? 'pending_moderation' : '');
   const [search, setSearch] = useState('');
   const [dealerOnly, setDealerOnly] = useState(false);
   const [categoryId, setCategoryId] = useState('');
+  const [dopingType, setDopingType] = useState('all');
+  const [dopingCounts, setDopingCounts] = useState({ free: 0, showcase: 0, urgent: 0 });
+  const [dopingConfig, setDopingConfig] = useState({});
+  const [dopingBusyId, setDopingBusyId] = useState('');
   const [page, setPage] = useState(0);
   const limit = 20;
 
