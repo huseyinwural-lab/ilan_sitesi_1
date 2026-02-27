@@ -384,7 +384,7 @@ class TestLegacyPublishRemoval:
             json={}
         )
         assert response.status_code == 404, f"Expected 404 for legacy publish, got {response.status_code}: {response.text}"
-        print(f"Legacy publish correctly returns 404")
+        print("Legacy publish correctly returns 404")
 
     def test_legacy_publish_with_any_config_id(self, admin_headers):
         """Legacy publish with any config_id should return 404"""
@@ -408,7 +408,7 @@ class TestLegacyUsageRemoval:
             headers=admin_headers
         )
         assert response.status_code == 404, f"Expected 404 for legacy-usage, got {response.status_code}: {response.text}"
-        print(f"Legacy usage correctly returns 404")
+        print("Legacy usage correctly returns 404")
 
     def test_legacy_usage_with_params_returns_404(self, admin_headers):
         """GET /api/admin/ui/configs/dashboard/legacy-usage?days=30 should return 404"""
@@ -417,7 +417,7 @@ class TestLegacyUsageRemoval:
             headers=admin_headers
         )
         assert response.status_code == 404, f"Expected 404 for legacy-usage with params, got {response.status_code}"
-        print(f"Legacy usage with params correctly returns 404")
+        print("Legacy usage with params correctly returns 404")
 
 
 class TestAlertDeliveryMetrics:
