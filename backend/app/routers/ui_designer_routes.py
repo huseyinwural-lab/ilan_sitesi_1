@@ -810,6 +810,90 @@ def _normalize_status(value: str) -> str:
     return status
 
 
+def _ui_http_error(*, code: str, message: str, status_code: int, extras: Optional[dict[str, Any]] = None) -> HTTPException:
+    payload = {"code": code, "message": message}
+    if extras:
+        payload.update(extras)
+    return HTTPException(status_code=status_code, detail=payload)
+
+
+def _assert_header_segment_enabled(config_type: str, segment: str) -> None:
+    if FEATURE_DISABLE_INDIVIDUAL_HEADER_EDITOR and config_type == "header" and segment == "individual":
+        raise _ui_http_error(
+            code=UI_ERROR_FEATURE_DISABLED,
+            message="Bireysel header editörü devre dışı",
+            status_code=403,
+            extras={"feature": "individual_header_editor", "hint": "Header modeli yalnızca global + dealer override olarak sadeleştirildi"},
+        )
+
+
+def _normalize_owner_scope(owner_type: Optional[str], owner_id: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    normalized_owner_type = (owner_type or "").strip().lower() or None
+    normalized_owner_id = (owner_id or "").strip() or None
+    return normalized_owner_type, normalized_owner_id
+
+
+def _expected_owner_scope_for_row(row: UIConfig) -> tuple[str, str]:
+    if row.scope == "tenant":
+        return "dealer", (row.scope_id or "").strip()
+    if row.scope == "system":
+        return "global", "global"
+    return row.scope, (row.scope_id or row.scope)
+
+
+def _stable_hash_payload(payload: dict[str, Any]) -> str:
+    normalized = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _build_ui_publish_snapshot(row: UIConfig) -> dict[str, Any]:
+    owner_type, owner_id = _expected_owner_scope_for_row(row)
+    effective_config = _effective_config_data(row, row.config_type, row.segment)
+    snapshot_source = {
+        "config_type": row.config_type,
+        "segment": row.segment,
+        "scope": row.scope,
+        "scope_id": row.scope_id,
+        "config_version": row.version,
+        "config_data": effective_config,
+    }
+    if row.config_type == "dashboard":
+        snapshot_source["layout"] = effective_config.get("layout", [])
+        snapshot_source["widgets"] = effective_config.get("widgets", [])
+
+    return {
+        "owner_type": owner_type,
+        "owner_id": owner_id,
+        "config_version": int(row.version),
+        "resolved_config_hash": _stable_hash_payload(snapshot_source),
+    }
+
+
+def _validate_owner_scope_or_raise(row: UIConfig, owner_type: Optional[str], owner_id: Optional[str]) -> None:
+    normalized_owner_type, normalized_owner_id = _normalize_owner_scope(owner_type, owner_id)
+    if not normalized_owner_type or not normalized_owner_id:
+        raise _ui_http_error(
+            code=PUBLISH_ERROR_MISSING_OWNER_SCOPE,
+            message="owner_type ve owner_id zorunludur",
+            status_code=400,
+            extras={"hint": "Publish öncesi scope owner bilgisi gönderilmelidir"},
+        )
+
+    expected_owner_type, expected_owner_id = _expected_owner_scope_for_row(row)
+    if normalized_owner_type != expected_owner_type or normalized_owner_id != expected_owner_id:
+        raise _ui_http_error(
+            code=PUBLISH_ERROR_SCOPE_CONFLICT,
+            message="owner scope mismatch",
+            status_code=409,
+            extras={
+                "expected_owner_type": expected_owner_type,
+                "expected_owner_id": expected_owner_id,
+                "your_owner_type": normalized_owner_type,
+                "your_owner_id": normalized_owner_id,
+            },
+        )
+
+
 def _scope_clause(scope: str, scope_id: Optional[str]):
     if scope == "system":
         return [UIConfig.scope == "system", or_(UIConfig.scope_id.is_(None), UIConfig.scope_id == "")]
