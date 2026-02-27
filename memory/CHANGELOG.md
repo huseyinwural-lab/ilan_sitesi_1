@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 2026-02-27 — P77 Favoriler + Raporlar PDF Hizalama
+
+- Yeni endpoint: `GET /api/dealer/favorites`
+  - `favorite_listings`, `favorite_searches`, `favorite_sellers`, `summary`
+- Yeni ekran: `/dealer/favorites`
+  - 3 tab (Favori İlanlar / Favori Aramalar / Favori Satıcılar)
+  - arama + tab bazlı tablo
+- `GET /api/dealer/reports` genişletildi
+  - `window_days` (7/14/30/90)
+  - `report_sections`, `package_reports`, `doping_usage_report`
+- `/dealer/reports` ekranı genişletildi
+  - pencere filtreleri + bölüm tabları + metrik/seri render
+- Menü sırası korunurken `Sanal Turlar` yok durumu korundu.
+- Test:
+  - testing agent: `/app/test_reports/iteration_37.json` PASS
+  - pytest: `backend/tests/test_dealer_favorites_reports_v2.py` (27 passed)
+- Kanıt: `/app/docs/P1_DEALER_FAVORITES_REPORTS_ALIGNMENT_EVIDENCE.md`
+
 ## 2026-02-27 — P76 Mesaj Okundu Bilgisi + Müşteri Yönetimi PDF Hizalama
 
 - Mesajlar ekranına okundu bilgisi eklendi:
