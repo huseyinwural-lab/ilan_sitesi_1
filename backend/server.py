@@ -15648,11 +15648,33 @@ async def dealer_dashboard_metrics(
     except Exception:
         messages_payload = {"count": 0, "gated": True}
 
+    latest_invoice = (
+        await session.execute(
+            select(AdminInvoice)
+            .where(AdminInvoice.user_id == dealer_uuid)
+            .order_by(desc(AdminInvoice.created_at))
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    plan_name = None
+    if latest_invoice and latest_invoice.plan_id:
+        plan = await session.get(Plan, latest_invoice.plan_id)
+        if plan and plan.name:
+            plan_name = plan.name
+
     subscription_payload = {
-        "name": "N/A",
-        "status": "gated",
-        "current_period_end": None,
-        "warning": False,
+        "name": plan_name,
+        "status": latest_invoice.status if latest_invoice else None,
+        "current_period_end": (
+            latest_invoice.due_at.isoformat()
+            if latest_invoice and latest_invoice.due_at
+            else (latest_invoice.paid_at.isoformat() if latest_invoice and latest_invoice.paid_at else None)
+        ),
+        "warning": bool(
+            latest_invoice
+            and latest_invoice.status in {"overdue", "open"}
+            and latest_invoice.payment_status not in {"paid", "succeeded"}
+        ),
     }
 
     return {
