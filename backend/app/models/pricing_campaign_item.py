@@ -13,6 +13,7 @@ class PricingCampaignItem(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     scope: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    listing_type: Mapped[str] = mapped_column(String(20), nullable=False, default="free", index=True)
     name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     listing_quota: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     price_amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, default=0)
@@ -35,5 +36,6 @@ class PricingCampaignItem(Base):
     __table_args__ = (
         Index("ix_pricing_campaign_items_scope_active", "scope", "is_active"),
         Index("ix_pricing_campaign_items_scope_deleted", "scope", "is_deleted"),
+        Index("ix_pricing_campaign_items_scope_type_active", "scope", "listing_type", "is_active"),
         Index("ix_pricing_campaign_items_end_at", "end_at"),
     )
