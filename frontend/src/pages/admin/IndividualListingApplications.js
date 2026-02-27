@@ -1,13 +1,13 @@
 import React from "react";
-import ModerationQueue from "../ModerationQueue";
+import AdminListingsPage from "./AdminListings";
 
 export default function IndividualListingApplications() {
   return (
-    <ModerationQueue
+    <AdminListingsPage
       title="Bireysel İlan Başvuruları"
-      description="Bireysel kullanıcı ilan başvuruları ve moderasyon aksiyonları."
-      dealerOnly={false}
-      pageTestId="individual-listing-applications-page"
+      dataTestId="individual-listing-applications-page"
+      applicantType="individual"
+      applicationsMode
     />
   );
 }
