@@ -153,6 +153,19 @@ def _safe_uuid(value: Optional[str]) -> Optional[uuid.UUID]:
         return None
 
 
+def _user_value(current_user: Any, key: str, default: Any = None) -> Any:
+    if isinstance(current_user, dict):
+        return current_user.get(key, default)
+    return getattr(current_user, key, default)
+
+
+def _to_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def _site_assets_base_dir() -> Path:
     return Path(__file__).resolve().parents[1] / "static" / "site_assets"
 
