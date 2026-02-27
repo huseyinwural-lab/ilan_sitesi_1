@@ -3391,6 +3391,30 @@ async def admin_ui_publish_alerts_secret_checklist(
     }
 
 
+@router.get("/admin/ui/configs/{config_type}/ops-alerts/html-report", response_class=HTMLResponse)
+async def admin_ui_publish_alerts_html_report(
+    config_type: str,
+    channels: Optional[str] = Query(default=None, description="Kanallar: smtp,slack,pagerduty"),
+    window: str = Query(default="24h"),
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    normalized_type = _normalize_config_type(config_type)
+    selected_channels = _normalize_ops_alert_channels(channels) if channels else ["smtp", "slack", "pagerduty"]
+    window_hours = _parse_alert_window_hours(window)
+
+    secret_presence = _ops_alerts_secret_presence(selected_channels)
+    metrics = await _aggregate_alert_delivery_metrics(session, window_hours)
+    html_content = _render_ops_alert_html_report(
+        config_type=normalized_type,
+        channels=selected_channels,
+        secret_presence=secret_presence,
+        metrics=metrics,
+    )
+    return HTMLResponse(content=html_content, status_code=200)
+
+
 @router.get("/admin/ops/alert-delivery-metrics")
 async def admin_ops_alert_delivery_metrics(
     window: str = Query(default="24h"),
