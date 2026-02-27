@@ -390,7 +390,7 @@ export default function DealerLayout() {
     const Icon = iconMap[item.icon] || LayoutDashboard;
     const isActive = isCorporateMenuActive(item, activePath);
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
-    const isExpanded = hasChildren && (expandedMenuMap[item.key] || isActive);
+    const isExpanded = hasChildren && !!expandedMenuMap[item.key];
     const depthClass = depth === 0 ? 'pl-0' : depth === 1 ? 'pl-3' : depth === 2 ? 'pl-6' : 'pl-9';
     const labelClass = depth === 0 ? 'text-sm font-semibold' : 'text-sm font-medium';
     const itemClass = isActive
