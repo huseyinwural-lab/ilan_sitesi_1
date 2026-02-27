@@ -29698,6 +29698,7 @@ async def _create_pricing_snapshot(
             "requires_payment": quote.get("requires_payment"),
             "campaign_item_id": quote.get("campaign_item_id"),
             "listing_quota": quote.get("listing_quota"),
+            "listing_type": quote.get("listing_type"),
         },
     )
     session.add(snapshot)
