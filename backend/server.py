@@ -30877,6 +30877,7 @@ async def create_pricing_checkout_session(
             "pricing_publish_days": publish_days,
             "pricing_campaign_item_id": quote.get("campaign_item_id"),
             "pricing_listing_quota": quote.get("listing_quota"),
+            "pricing_listing_type": quote.get("listing_type"),
         },
         scope="country" if country_code else "global",
         country_code=country_code,
@@ -30904,6 +30905,7 @@ async def create_pricing_checkout_session(
             "listing_id": str(listing.id),
             "pricing_snapshot_id": str(snapshot.id),
             "pricing_campaign_item_id": quote.get("campaign_item_id"),
+            "pricing_listing_type": quote.get("listing_type"),
         },
     )
 
@@ -30935,6 +30937,7 @@ async def create_pricing_checkout_session(
             "checkout_url": checkout_session.url,
             "pricing_snapshot_id": str(snapshot.id),
             "pricing_campaign_item_id": quote.get("campaign_item_id"),
+            "pricing_listing_type": quote.get("listing_type"),
         },
         created_at=now,
         updated_at=now,
