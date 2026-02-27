@@ -358,14 +358,15 @@ export const CorporateDashboardDesigner = () => {
       fromItem: data?.from_item || null,
       toItem: data?.to_item || null,
     });
+    return data?.diff || {};
   };
 
   const openPublishDialog = async () => {
     setStatus('');
     setError('');
     try {
-      await loadDiff();
-      if ((diffPayload?.change_count || 0) < 1) {
+      const nextDiff = await loadDiff();
+      if ((nextDiff?.change_count || 0) < 1) {
         setError('Publish öncesi görsel diff üzerinde en az bir değişiklik bulunmalı');
       }
       setConfirmChecked(false);
