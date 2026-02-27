@@ -11,7 +11,19 @@ const toInputValue = (date) => {
 
 const addDays = (date, days) => new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 
+const LISTING_TYPE_OPTIONS = [
+  { value: 'free', label: 'Ücretsiz' },
+  { value: 'paid', label: 'Ücretli' },
+  { value: 'urgent', label: 'Acil' },
+  { value: 'showcase', label: 'Vitrin' },
+];
+
+const LISTING_TYPE_LABEL_MAP = Object.fromEntries(
+  LISTING_TYPE_OPTIONS.map((option) => [option.value, option.label])
+);
+
 const emptyForm = {
+  listing_type: 'free',
   listing_quota: '',
   price_amount: '',
   currency: 'EUR',
@@ -63,6 +75,7 @@ export default function AdminPricingPackages() {
   const openEdit = (item) => {
     const startValue = item.start_at ? toInputValue(new Date(item.start_at)) : '';
     setForm({
+      listing_type: item.listing_type || 'free',
       listing_quota: item.listing_quota ?? '',
       price_amount: item.price_amount ?? '',
       currency: item.currency || 'EUR',
@@ -93,6 +106,7 @@ export default function AdminPricingPackages() {
     if (!form.is_active || !startDate || !endDate) return false;
     return items.some((item) => {
       if (!item.is_active || item.is_deleted || item.id === editingId) return false;
+      if ((item.listing_type || 'free') !== (form.listing_type || 'free')) return false;
       if (!item.start_at || !item.end_at) return false;
       const itemStart = new Date(item.start_at);
       const itemEnd = new Date(item.end_at);
@@ -120,10 +134,20 @@ export default function AdminPricingPackages() {
       return 'Fiyat 0 veya daha büyük olmalıdır.';
     }
     if (hasOverlap) {
-      return 'Bu zaman aralığında aktif kampanya var.';
+      return 'Bu ilan tipi için seçilen zaman aralığında aktif kampanya var.';
     }
     return '';
   }, [form, startDate, endDate, now, startLocked, hasOverlap]);
+
+  const typeQuotaSummary = useMemo(
+    () => LISTING_TYPE_OPTIONS.map((option) => ({
+      ...option,
+      total: items
+        .filter((item) => !item.is_deleted && (item.listing_type || 'free') === option.value)
+        .reduce((sum, item) => sum + Number(item.listing_quota || 0), 0),
+    })),
+    [items]
+  );
 
   const isSaveDisabled = Boolean(validationError);
 
@@ -137,6 +161,7 @@ export default function AdminPricingPackages() {
 
     const payload = {
       scope,
+      listing_type: form.listing_type || 'free',
       listing_quota: Number(form.listing_quota),
       price_amount: Number(form.price_amount || 0),
       currency: (form.currency || 'EUR').toUpperCase(),
@@ -229,10 +254,22 @@ export default function AdminPricingPackages() {
       </div>
 
       <div className="rounded-lg border bg-white p-4" data-testid="admin-pricing-corporate-table">
+        <div className="mb-3 flex flex-wrap gap-2" data-testid="admin-pricing-corporate-type-summary">
+          {typeQuotaSummary.map((entry) => (
+            <div
+              key={entry.value}
+              className="rounded-full border px-3 py-1 text-xs font-semibold"
+              data-testid={`admin-pricing-corporate-type-summary-${entry.value}`}
+            >
+              {entry.label}: {entry.total}
+            </div>
+          ))}
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm" data-testid="admin-pricing-corporate-table-grid">
             <thead>
               <tr className="text-left text-xs text-muted-foreground">
+                <th className="py-2 pr-3">İlan Tipi</th>
                 <th className="py-2 pr-3">İlan Adedi</th>
                 <th className="py-2 pr-3">Fiyat</th>
                 <th className="py-2 pr-3">Süre (gün)</th>
@@ -245,13 +282,16 @@ export default function AdminPricingPackages() {
             <tbody>
               {items.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="py-6 text-center text-xs text-muted-foreground" data-testid="admin-pricing-corporate-empty">
+                  <td colSpan="8" className="py-6 text-center text-xs text-muted-foreground" data-testid="admin-pricing-corporate-empty">
                     Henüz kampanya yok.
                   </td>
                 </tr>
               )}
               {items.map((item) => (
                 <tr key={item.id} className="border-t" data-testid={`admin-pricing-corporate-row-${item.id}`}>
+                  <td className="py-3 pr-3" data-testid={`admin-pricing-corporate-type-${item.id}`}>
+                    {LISTING_TYPE_LABEL_MAP[item.listing_type] || LISTING_TYPE_LABEL_MAP.free}
+                  </td>
                   <td className="py-3 pr-3" data-testid={`admin-pricing-corporate-quota-${item.id}`}>
                     {item.listing_quota}
                   </td>
@@ -332,6 +372,19 @@ export default function AdminPricingPackages() {
             </div>
 
             <div className="space-y-3">
+              <div>
+                <label className="text-xs">İlan Tipi</label>
+                <select
+                  className="mt-1 h-9 w-full rounded-md border px-2"
+                  value={form.listing_type || 'free'}
+                  onChange={(e) => setForm((prev) => ({ ...prev, listing_type: e.target.value }))}
+                  data-testid="admin-pricing-corporate-modal-listing-type"
+                >
+                  {LISTING_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="text-xs">İlan Adedi</label>
                 <input
