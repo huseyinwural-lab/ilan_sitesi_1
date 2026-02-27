@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 20:04:00 UTC (P89 Doping Navigasyon + Badge Finalizasyonu)
+**Son güncelleme:** 2026-02-27 20:48:00 UTC (P90 Ücretli Tipi + Kampanya Tip Genişletmesi)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
