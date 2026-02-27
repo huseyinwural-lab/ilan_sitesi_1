@@ -29235,8 +29235,16 @@ def _normalize_currency_code(value: Optional[str]) -> str:
     return code
 
 
+def _normalize_campaign_item_listing_type(value: Optional[str], *, default: str = "free") -> str:
+    listing_type = (value or default).strip().lower()
+    if listing_type not in PRICING_CAMPAIGN_ITEM_LISTING_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid listing_type")
+    return listing_type
+
+
 def _validate_campaign_item_fields(
     scope: str,
+    listing_type: Optional[str],
     listing_quota: Optional[int],
     price_amount: Optional[float],
     publish_days: Optional[int],
@@ -29247,6 +29255,7 @@ def _validate_campaign_item_fields(
 ) -> None:
     if scope not in PRICING_CAMPAIGN_ITEM_SCOPES:
         raise HTTPException(status_code=400, detail="Invalid scope")
+    _normalize_campaign_item_listing_type(listing_type)
     if listing_quota is not None and listing_quota <= 0:
         raise HTTPException(status_code=400, detail="listing_quota must be > 0")
     if price_amount is not None and price_amount < 0:
@@ -29276,6 +29285,7 @@ async def _ensure_pricing_defaults(session: AsyncSession) -> None:
         session.add(
             PricingCampaignItem(
                 scope=sample["scope"],
+                listing_type=sample.get("listing_type") or "free",
                 name=sample.get("name"),
                 listing_quota=sample["listing_quota"],
                 price_amount=sample["price_amount"],
