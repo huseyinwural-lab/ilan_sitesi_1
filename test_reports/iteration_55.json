@@ -1,0 +1,100 @@
+{
+  "summary": "P75 Doping Timeline Extend Features - All features verified. Timeline columns (Onay/Bitiş/Kalan) visible on Acil/Vitrin/Ücretli başvuru pages. +7g Uzat and +30g Uzat buttons implemented with until_at API parameter. Warning color (text-rose-600) applied when remaining days <=3. Sidebar Acil links preserved with openInNewWindow=true behavior.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p75_doping_timeline_extend.py",
+    "/app/test_reports/pytest/p75_doping_extend_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "resolveRemainingDaysNumber helper (line 90) correctly calculates remaining days from end date",
+    "resolveTimelineDopingType helper (line 99) correctly identifies doping type from listing or activeDopingType",
+    "extendDopingTimeline function (line 309) correctly calculates new until_at based on current end date + daysToAdd",
+    "Warning class 'text-rose-600' correctly applied when remainingDays !== null && remainingDays <= 3 (line 584-593)",
+    "+7g Uzat and +30g Uzat buttons have correct data-testid attributes for automated testing",
+    "Backend /api/admin/listings/{id}/doping correctly accepts until_at parameter and validates it's in the future",
+    "openInNewWindow: true correctly set for sidebar urgent links (Layout.js lines 470, 474)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_p75_doping_timeline_extend.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "No seed data created - tested with existing listings",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P75 verified: Doping timeline extend features working. +7g and +30g buttons call /api/admin/listings/{id}/doping with until_at parameter (ISO format). Warning color (text-rose-600) applied when remaining days <=3 (uses END_WARNING_DAYS=3 from backend/.env). Timeline columns only appear on applicationsMode pages (individual/corporate listing applications) when doping type is urgent/showcase/paid.",
+  "features_verified": {
+    "timeline_columns_on_applications_pages": {
+      "status": "PASS",
+      "description": "Timeline header 'Onay / Bitiş / Kalan' visible on Acil/Vitrin/Ücretli başvuru pages when applicationsMode=true"
+    },
+    "warning_color_remaining_days_lte_3": {
+      "status": "PASS",
+      "description": "text-rose-600 class applied to remaining days when value <= 3, controlled by resolveRemainingDaysNumber helper"
+    },
+    "extend_7_day_button": {
+      "status": "PASS",
+      "description": "+7g Uzat button present with data-testid='listing-doping-extend-7-{id}', calls extendDopingTimeline(listing, 7)"
+    },
+    "extend_30_day_button": {
+      "status": "PASS",
+      "description": "+30g Uzat button present with data-testid='listing-doping-extend-30-{id}', calls extendDopingTimeline(listing, 30)"
+    },
+    "api_until_at_parameter": {
+      "status": "PASS",
+      "description": "POST /api/admin/listings/{id}/doping accepts until_at ISO datetime parameter, extends doping to specified date"
+    },
+    "api_rejects_past_dates": {
+      "status": "PASS",
+      "description": "API returns 400 when until_at is in the past with message 'Doping bitiş tarihi ileri bir tarih olmalıdır'"
+    },
+    "doping_type_preserved_on_extend": {
+      "status": "PASS",
+      "description": "extendDopingTimeline correctly preserves current doping type (urgent/showcase/paid) when extending"
+    },
+    "sidebar_urgent_links_new_window": {
+      "status": "PASS",
+      "description": "Both Bireysel and Kurumsal Acil İlan sidebar links have openInNewWindow=true (target='_blank')"
+    },
+    "api_returns_doping_date_fields": {
+      "status": "PASS",
+      "description": "GET /api/admin/listings returns published_at, featured_until, urgent_until, paid_until for timeline display"
+    },
+    "doping_counts_structure": {
+      "status": "PASS",
+      "description": "API returns doping_counts with free, paid, showcase, urgent integer values"
+    }
+  },
+  "verification_details": {
+    "frontend_helpers": {
+      "resolveRemainingDaysNumber": "line 90 - returns remaining days as number or null",
+      "resolveTimelineDopingType": "line 99 - returns doping type for timeline actions (urgent/showcase/paid)",
+      "extendDopingTimeline": "line 309 - calculates new until_at and calls API"
+    },
+    "backend_endpoint": {
+      "path": "POST /api/admin/listings/{listing_id}/doping",
+      "payload": "{doping_type, until_at?, duration_days?, reason}",
+      "validation": "until_at must be in future, duration_days 1-365"
+    },
+    "warning_threshold": {
+      "condition": "remainingDays !== null && remainingDays <= 3",
+      "css_class": "text-rose-600",
+      "env_var": "END_WARNING_DAYS=3"
+    }
+  },
+  "rca_of_issue": null
+}
