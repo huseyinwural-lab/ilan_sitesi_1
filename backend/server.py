@@ -1675,6 +1675,7 @@ async def lifespan(app: FastAPI):
             await conn.run_sync(Base.metadata.create_all)
             await _ensure_wizard_progress_column(conn)
             await _ensure_listing_doping_columns(conn)
+            await _ensure_pricing_campaign_item_columns(conn)
     except Exception as exc:
         logging.getLogger("sql_config").warning("SQL init skipped: %s", exc)
 
@@ -2101,10 +2102,22 @@ async def _ensure_listing_doping_columns(conn) -> None:
     try:
         await conn.execute(text("ALTER TABLE listings ADD COLUMN IF NOT EXISTS featured_until TIMESTAMPTZ"))
         await conn.execute(text("ALTER TABLE listings ADD COLUMN IF NOT EXISTS urgent_until TIMESTAMPTZ"))
+        await conn.execute(text("ALTER TABLE listings ADD COLUMN IF NOT EXISTS paid_until TIMESTAMPTZ"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_listings_featured_until ON listings (featured_until)"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_listings_urgent_until ON listings (urgent_until)"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_listings_paid_until ON listings (paid_until)"))
     except Exception as exc:
         logging.getLogger("sql_config").warning("Listing doping columns check failed: %s", exc)
+
+
+async def _ensure_pricing_campaign_item_columns(conn) -> None:
+    try:
+        await conn.execute(text("ALTER TABLE pricing_campaign_items ADD COLUMN IF NOT EXISTS listing_type VARCHAR(20)"))
+        await conn.execute(text("UPDATE pricing_campaign_items SET listing_type = 'free' WHERE listing_type IS NULL OR listing_type = ''"))
+        await conn.execute(text("ALTER TABLE pricing_campaign_items ALTER COLUMN listing_type SET DEFAULT 'free'"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_pricing_campaign_items_scope_type_active ON pricing_campaign_items (scope, listing_type, is_active)"))
+    except Exception as exc:
+        logging.getLogger("sql_config").warning("Pricing campaign item columns check failed: %s", exc)
 
 
 def _get_masked_db_target() -> Dict[str, Optional[str]]:
