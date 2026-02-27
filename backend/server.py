@@ -16172,6 +16172,241 @@ async def dealer_customers(
     }
 
 
+@api_router.get("/dealer/consultant-tracking")
+async def dealer_consultant_tracking(
+    request: Request,
+    sort_by: str = Query(default="rating_desc"),
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    dealer_user = await session.get(SqlUser, dealer_uuid)
+    now_dt = datetime.now(timezone.utc)
+    seven_days_ago = now_dt - timedelta(days=7)
+    fourteen_days_ago = now_dt - timedelta(days=14)
+
+    consultant_roles = ["dealer", "consultant", "dealer_agent", "sales_agent", "staff"]
+    consultant_query = select(SqlUser).where(SqlUser.deleted_at.is_(None), SqlUser.id == dealer_uuid)
+    if dealer_user and dealer_user.company_name:
+        consultant_query = consultant_query.union_all(
+            select(SqlUser).where(
+                SqlUser.deleted_at.is_(None),
+                SqlUser.company_name == dealer_user.company_name,
+                SqlUser.role.in_(consultant_roles),
+                SqlUser.id != dealer_uuid,
+            )
+        )
+
+    consultant_rows = (await session.execute(consultant_query)).scalars().all()
+    consultants = {row.id: row for row in consultant_rows}
+    if dealer_user:
+        consultants.setdefault(dealer_user.id, dealer_user)
+
+    consultant_ids = list(consultants.keys())
+    if not consultant_ids:
+        return {"consultants": [], "evaluations": [], "summary": {"consultants_count": 0, "evaluations_count": 0}}
+
+    listing_stats_rows = (
+        await session.execute(
+            select(
+                Listing.user_id,
+                func.count(Listing.id).label("listing_count"),
+                func.sum(case((Listing.status.in_(["active", "published"]), 1), else_=0)).label("active_listing_count"),
+            )
+            .where(
+                Listing.dealer_id == dealer_uuid,
+                Listing.user_id.in_(consultant_ids),
+            )
+            .group_by(Listing.user_id)
+        )
+    ).all()
+    listing_stats = {
+        row.user_id: {
+            "listing_count": int(row.listing_count or 0),
+            "active_listing_count": int(row.active_listing_count or 0),
+        }
+        for row in listing_stats_rows
+    }
+
+    message_total_rows = (
+        await session.execute(
+            select(Message.sender_id, func.count(Message.id).label("message_count"))
+            .select_from(Message)
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .where(
+                Conversation.seller_id == dealer_uuid,
+                Message.sender_id.in_(consultant_ids),
+            )
+            .group_by(Message.sender_id)
+        )
+    ).all()
+    message_total_map = {row.sender_id: int(row.message_count or 0) for row in message_total_rows}
+
+    message_7d_rows = (
+        await session.execute(
+            select(Message.sender_id, func.count(Message.id).label("message_count"))
+            .select_from(Message)
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .where(
+                Conversation.seller_id == dealer_uuid,
+                Message.sender_id.in_(consultant_ids),
+                Message.created_at >= seven_days_ago,
+            )
+            .group_by(Message.sender_id)
+        )
+    ).all()
+    message_7d_map = {row.sender_id: int(row.message_count or 0) for row in message_7d_rows}
+
+    message_prev_7d_rows = (
+        await session.execute(
+            select(Message.sender_id, func.count(Message.id).label("message_count"))
+            .select_from(Message)
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .where(
+                Conversation.seller_id == dealer_uuid,
+                Message.sender_id.in_(consultant_ids),
+                Message.created_at >= fourteen_days_ago,
+                Message.created_at < seven_days_ago,
+            )
+            .group_by(Message.sender_id)
+        )
+    ).all()
+    message_prev_7d_map = {row.sender_id: int(row.message_count or 0) for row in message_prev_7d_rows}
+
+    def _score_from_activity(active_listings: int, total_messages: int, reviews_avg: float, reviews_count: int) -> float:
+        if reviews_count > 0:
+            base = reviews_avg
+        else:
+            base = 3.0 + min(1.7, (active_listings * 0.08) + (total_messages * 0.03))
+        return round(max(1.0, min(5.0, base)), 1)
+
+    def _score_from_comment(comment: str) -> float:
+        text_val = (comment or "").lower()
+        positive = ["teşekkür", "memnun", "harika", "iyi", "mükemmel", "hızlı"]
+        negative = ["kötü", "gecik", "şikayet", "sorun", "yetersiz", "yavaş"]
+        if any(token in text_val for token in negative):
+            return 2.0
+        if any(token in text_val for token in positive):
+            return 4.8
+        return 3.6
+
+    evaluation_source_rows = (
+        await session.execute(
+            select(
+                Message.id,
+                Message.body,
+                Message.created_at,
+                Conversation.buyer_id,
+                Listing.user_id.label("consultant_id"),
+            )
+            .select_from(Message)
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .join(Listing, Conversation.listing_id == Listing.id)
+            .where(
+                Listing.dealer_id == dealer_uuid,
+                Listing.user_id.in_(consultant_ids),
+                Message.sender_id == Conversation.buyer_id,
+                Message.body.is_not(None),
+                Message.body != "",
+            )
+            .order_by(desc(Message.created_at))
+            .limit(300)
+        )
+    ).all()
+
+    buyer_ids = list({row.buyer_id for row in evaluation_source_rows if row.buyer_id})
+    buyer_rows = (await session.execute(select(SqlUser).where(SqlUser.id.in_(buyer_ids)))).scalars().all() if buyer_ids else []
+    buyer_map = {row.id: row for row in buyer_rows}
+
+    evaluations = []
+    consultant_review_bucket: dict[uuid.UUID, list[float]] = defaultdict(list)
+    for row in evaluation_source_rows:
+        comment_text = row.body or ""
+        score_val = _score_from_comment(comment_text)
+        consultant_review_bucket[row.consultant_id].append(score_val)
+        buyer = buyer_map.get(row.buyer_id)
+        evaluations.append(
+            {
+                "evaluation_id": str(row.id),
+                "consultant_id": str(row.consultant_id),
+                "consultant_name": consultants.get(row.consultant_id).full_name if consultants.get(row.consultant_id) else "-",
+                "username": buyer.full_name if buyer and buyer.full_name else (buyer.email if buyer else "Anonim"),
+                "evaluation_date": row.created_at.isoformat() if row.created_at else None,
+                "score": score_val,
+                "comment": comment_text,
+            }
+        )
+
+    consultant_items = []
+    for consultant_id, consultant in consultants.items():
+        list_stats = listing_stats.get(consultant_id, {"listing_count": 0, "active_listing_count": 0})
+        total_messages = int(message_total_map.get(consultant_id) or 0)
+        week_messages = int(message_7d_map.get(consultant_id) or 0)
+        prev_week_messages = int(message_prev_7d_map.get(consultant_id) or 0)
+        week_delta = week_messages - prev_week_messages
+
+        review_scores = consultant_review_bucket.get(consultant_id, [])
+        review_count = len(review_scores)
+        review_avg = round(sum(review_scores) / review_count, 1) if review_count else 0.0
+        score = _score_from_activity(
+            list_stats["active_listing_count"],
+            total_messages,
+            review_avg,
+            review_count,
+        )
+
+        if week_delta > 0:
+            change_label = f"{week_delta} artış"
+        elif week_delta < 0:
+            change_label = f"{abs(week_delta)} azalış"
+        else:
+            change_label = "Değişiklik yok"
+
+        consultant_items.append(
+            {
+                "consultant_id": str(consultant_id),
+                "full_name": consultant.full_name or consultant.email,
+                "email": consultant.email,
+                "role": consultant.role,
+                "is_active": bool(consultant.is_active),
+                "active_listing_count": list_stats["active_listing_count"],
+                "listing_count": list_stats["listing_count"],
+                "message_count": total_messages,
+                "message_count_7d": week_messages,
+                "message_change_7d": week_delta,
+                "message_change_label": change_label,
+                "service_score": score,
+                "review_count": review_count,
+                "detail_route": f"/dealer/consultant-tracking?consultant={consultant_id}",
+            }
+        )
+
+    if sort_by == "name_asc":
+        consultant_items.sort(key=lambda item: item.get("full_name") or "")
+    elif sort_by == "message_change_desc":
+        consultant_items.sort(key=lambda item: int(item.get("message_change_7d") or 0), reverse=True)
+    elif sort_by == "messages_desc":
+        consultant_items.sort(key=lambda item: int(item.get("message_count") or 0), reverse=True)
+    else:
+        consultant_items.sort(
+            key=lambda item: (
+                float(item.get("service_score") or 0),
+                int(item.get("review_count") or 0),
+                int(item.get("message_count") or 0),
+            ),
+            reverse=True,
+        )
+
+    return {
+        "consultants": consultant_items,
+        "evaluations": evaluations,
+        "summary": {
+            "consultants_count": len(consultant_items),
+            "evaluations_count": len(evaluations),
+        },
+    }
+
+
 @api_router.get("/dealer/favorites")
 async def dealer_favorites(
     request: Request,
