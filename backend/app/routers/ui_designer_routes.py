@@ -1215,6 +1215,107 @@ def _ops_alerts_secret_presence(selected_channels: Optional[list[str]] = None) -
     }
 
 
+def _render_ops_alert_html_report(
+    *,
+    config_type: str,
+    channels: list[str],
+    secret_presence: dict[str, Any],
+    metrics: dict[str, Any],
+) -> str:
+    generated_at = html.escape(str(metrics.get("generated_at") or datetime.now(timezone.utc).isoformat()))
+    overall_rate = float(metrics.get("success_rate") or 0)
+    overall_total = int(metrics.get("total_attempts") or 0)
+    overall_success = int(metrics.get("successful_deliveries") or 0)
+    overall_fail = int(metrics.get("failed_deliveries") or 0)
+
+    rows = []
+    channel_breakdown = metrics.get("channel_breakdown") or {}
+    channel_alias_for_metrics = {"smtp": "smtp", "slack": "slack", "pagerduty": "pd"}
+    for channel in channels:
+        metrics_key = channel_alias_for_metrics.get(channel, channel)
+        bucket = channel_breakdown.get(metrics_key) or {}
+        secret_bucket = (secret_presence.get("channels") or {}).get(channel) or {}
+        missing = ", ".join(secret_bucket.get("missing_keys") or []) or "-"
+        rows.append(
+            f"""
+            <tr>
+              <td>{html.escape(channel)}</td>
+              <td>{html.escape(str(secret_bucket.get('status') or '-'))}</td>
+              <td>{html.escape(missing)}</td>
+              <td>{html.escape(str(bucket.get('success_rate') or 0))}%</td>
+              <td>{html.escape(str(bucket.get('total_attempts') or 0))}</td>
+              <td>{html.escape(str(bucket.get('failed_deliveries') or 0))}</td>
+              <td>{html.escape(str(bucket.get('last_failure_timestamp') or '-'))}</td>
+            </tr>
+            """
+        )
+
+    body_rows = "\n".join(rows)
+    secret_status = html.escape(str(secret_presence.get("status") or "BLOCKED"))
+    missing_keys = ", ".join(secret_presence.get("missing_keys") or []) or "-"
+    safe_config_type = html.escape(config_type)
+
+    return f"""
+<!doctype html>
+<html lang=\"tr\">
+  <head>
+    <meta charset=\"utf-8\" />
+    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />
+    <title>Ops Alert HTML Raporu</title>
+    <style>
+      body {{ font-family: 'Segoe UI', Arial, sans-serif; margin: 24px; background: #f8fafc; color: #0f172a; }}
+      .card {{ background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }}
+      .kpi {{ display: inline-block; min-width: 190px; margin-right: 12px; margin-bottom: 8px; }}
+      .label {{ color: #64748b; font-size: 12px; }}
+      .value {{ font-size: 22px; font-weight: 700; }}
+      .ok {{ color: #065f46; }}
+      .warn {{ color: #92400e; }}
+      .bad {{ color: #991b1b; }}
+      table {{ width: 100%; border-collapse: collapse; margin-top: 8px; }}
+      th, td {{ border: 1px solid #e2e8f0; padding: 8px; font-size: 13px; text-align: left; }}
+      th {{ background: #f1f5f9; }}
+      .foot {{ color: #64748b; font-size: 12px; margin-top: 12px; }}
+    </style>
+  </head>
+  <body>
+    <div class=\"card\">
+      <h1>Ops Alert HTML Raporu</h1>
+      <div class=\"foot\">config_type: {safe_config_type} • generated_at: {generated_at}</div>
+    </div>
+
+    <div class=\"card\">
+      <div class=\"kpi\"><div class=\"label\">Secret Presence</div><div class=\"value {('ok' if secret_presence.get('status') == 'READY' else 'bad')}\">{secret_status}</div></div>
+      <div class=\"kpi\"><div class=\"label\">Success Rate</div><div class=\"value {('ok' if overall_rate >= 99 else 'warn' if overall_rate >= 95 else 'bad')}\">{overall_rate:.2f}%</div></div>
+      <div class=\"kpi\"><div class=\"label\">Total Attempts</div><div class=\"value\">{overall_total}</div></div>
+      <div class=\"kpi\"><div class=\"label\">Success / Fail</div><div class=\"value\">{overall_success} / {overall_fail}</div></div>
+      <div class=\"foot\">Missing Keys: {html.escape(missing_keys)}</div>
+    </div>
+
+    <div class=\"card\">
+      <h2>Kanal Bazlı Durum</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Kanal</th>
+            <th>Secret Status</th>
+            <th>Missing Keys</th>
+            <th>Success Rate</th>
+            <th>Total</th>
+            <th>Fail</th>
+            <th>Last Failure</th>
+          </tr>
+        </thead>
+        <tbody>
+          {body_rows}
+        </tbody>
+      </table>
+      <div class=\"foot\">Bu rapor operasyon dry-run ve secret readiness kontrolü için hazırlanmıştır.</div>
+    </div>
+  </body>
+</html>
+    """.strip()
+
+
 def _classify_slack_http_status(status_code: int) -> str:
     if status_code in {400, 403, 404}:
         return "webhook_target_invalid"
