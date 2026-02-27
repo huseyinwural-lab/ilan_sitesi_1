@@ -832,6 +832,9 @@ export const CorporateDashboardDesigner = () => {
       {publishDisabledReason ? (
         <div className="text-xs text-amber-600" data-testid="ui-designer-dashboard-publish-disabled-reason">{publishDisabledReason}</div>
       ) : null}
+      <div className="text-[11px] text-slate-500" data-testid="ui-designer-dashboard-hash-state">
+        local_hash={localDraftHash} • server_hash={serverDraftHash || '-'}
+      </div>
       {status ? <div className="text-xs text-emerald-600" data-testid="ui-designer-dashboard-status">{status}</div> : null}
       {error ? <div className="text-xs text-rose-600" data-testid="ui-designer-dashboard-error">{error}</div> : null}
 
