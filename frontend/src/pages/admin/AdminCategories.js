@@ -273,6 +273,7 @@ const AdminCategories = () => {
     module: "",
     active_flag: true,
     sort_order: 1,
+    image_url: "",
   });
   const [vehicleSegment, setVehicleSegment] = useState("");
   const [vehicleSegmentError, setVehicleSegmentError] = useState("");
@@ -289,6 +290,9 @@ const AdminCategories = () => {
     message: "",
     conflict: null,
   });
+  const [categoryImageUploading, setCategoryImageUploading] = useState(false);
+  const [categoryImageError, setCategoryImageError] = useState("");
+  const [categoryImageCacheBuster, setCategoryImageCacheBuster] = useState(Date.now());
   const [schema, setSchema] = useState(createDefaultSchema());
   const [wizardStep, setWizardStep] = useState("hierarchy");
   const [wizardProgress, setWizardProgress] = useState({ state: "draft", dirty_steps: [] });
