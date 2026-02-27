@@ -17089,6 +17089,180 @@ async def dealer_settings_profile_update(
     return {"ok": True}
 
 
+@api_router.post("/dealer/settings/change-password")
+async def dealer_settings_change_password(
+    payload: ChangePasswordPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if len(payload.new_password or "") < 8:
+        raise HTTPException(status_code=400, detail="Password too short")
+
+    user_uuid = uuid.UUID(current_user.get("id"))
+    user_obj = await session.get(SqlUser, user_uuid)
+    if not user_obj or not verify_password(payload.current_password, user_obj.hashed_password):
+        raise HTTPException(status_code=400, detail="Invalid current password")
+
+    user_obj.hashed_password = get_password_hash(payload.new_password)
+    user_obj.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_PASSWORD_CHANGE",
+        actor=current_user,
+        resource_type="dealer_user",
+        resource_id=str(user_obj.id),
+        metadata={"changed": True},
+        request=request,
+        country_code=user_obj.country_code,
+    )
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.get("/dealer/settings/preferences")
+async def dealer_settings_preferences_get(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(current_user.get("id"))
+    user_obj = await session.get(SqlUser, user_uuid)
+    if not user_obj:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    prefs = _normalize_dealer_settings_prefs(user_obj.notification_prefs)
+    return {
+        "notification_prefs": {
+            "push_enabled": prefs.get("push_enabled", True),
+            "email_enabled": prefs.get("email_enabled", True),
+            "message_email_enabled": prefs.get("message_email_enabled", True),
+            "marketing_email_enabled": prefs.get("marketing_email_enabled", False),
+            "read_receipt_enabled": prefs.get("read_receipt_enabled", True),
+            "sms_enabled": prefs.get("sms_enabled", False),
+        },
+        "blocked_accounts": prefs.get("blocked_accounts", []),
+        "security": {
+            "two_factor_enabled": bool(user_obj.two_factor_enabled),
+            "last_login": user_obj.last_login.isoformat() if user_obj.last_login else None,
+        },
+    }
+
+
+@api_router.patch("/dealer/settings/preferences")
+async def dealer_settings_preferences_update(
+    payload: DealerSettingsPreferencesPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(current_user.get("id"))
+    user_obj = await session.get(SqlUser, user_uuid)
+    if not user_obj:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    next_prefs = _normalize_dealer_settings_prefs(payload.notification_prefs, user_obj.notification_prefs)
+    user_obj.notification_prefs = next_prefs
+    user_obj.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_NOTIFICATION_PREFS_UPDATE",
+        actor=current_user,
+        resource_type="dealer_user",
+        resource_id=str(user_obj.id),
+        metadata={"keys": sorted(list((payload.notification_prefs or {}).keys()))},
+        request=request,
+        country_code=user_obj.country_code,
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "notification_prefs": {
+            "push_enabled": next_prefs.get("push_enabled", True),
+            "email_enabled": next_prefs.get("email_enabled", True),
+            "message_email_enabled": next_prefs.get("message_email_enabled", True),
+            "marketing_email_enabled": next_prefs.get("marketing_email_enabled", False),
+            "read_receipt_enabled": next_prefs.get("read_receipt_enabled", True),
+            "sms_enabled": next_prefs.get("sms_enabled", False),
+        },
+        "blocked_accounts": next_prefs.get("blocked_accounts", []),
+    }
+
+
+@api_router.post("/dealer/settings/blocked-accounts")
+async def dealer_settings_blocked_accounts_add(
+    payload: DealerBlockedAccountPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(current_user.get("id"))
+    user_obj = await session.get(SqlUser, user_uuid)
+    if not user_obj:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    email = str(payload.email).strip().lower()
+    prefs = _normalize_dealer_settings_prefs(user_obj.notification_prefs)
+    blocked_accounts = list(prefs.get("blocked_accounts", []))
+
+    if email in blocked_accounts:
+        return {"ok": True, "blocked_accounts": blocked_accounts}
+
+    blocked_accounts.append(email)
+    prefs["blocked_accounts"] = _normalize_dealer_blocked_accounts(blocked_accounts)
+    user_obj.notification_prefs = prefs
+    user_obj.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_BLOCKED_ACCOUNT_ADD",
+        actor=current_user,
+        resource_type="dealer_user",
+        resource_id=str(user_obj.id),
+        metadata={"blocked_email": email},
+        request=request,
+        country_code=user_obj.country_code,
+    )
+    await session.commit()
+    return {"ok": True, "blocked_accounts": prefs.get("blocked_accounts", [])}
+
+
+@api_router.delete("/dealer/settings/blocked-accounts")
+async def dealer_settings_blocked_accounts_remove(
+    email: str,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(current_user.get("id"))
+    user_obj = await session.get(SqlUser, user_uuid)
+    if not user_obj:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    normalized_email = str(email or "").strip().lower()
+    prefs = _normalize_dealer_settings_prefs(user_obj.notification_prefs)
+    blocked_accounts = [item for item in prefs.get("blocked_accounts", []) if item != normalized_email]
+    prefs["blocked_accounts"] = blocked_accounts
+    user_obj.notification_prefs = prefs
+    user_obj.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_BLOCKED_ACCOUNT_REMOVE",
+        actor=current_user,
+        resource_type="dealer_user",
+        resource_id=str(user_obj.id),
+        metadata={"blocked_email": normalized_email},
+        request=request,
+        country_code=user_obj.country_code,
+    )
+    await session.commit()
+    return {"ok": True, "blocked_accounts": blocked_accounts}
+
+
 def _resolve_payment_status(value: Optional[str]) -> str:
     normalized = (value or "").lower()
     if normalized in {"paid", "succeeded"}:
