@@ -203,7 +203,8 @@ const mergeCorporateMenuRoutes = (nodes, routeOverrides) =>
   }));
 
 const isCorporateMenuActive = (node, pathname) => {
-  const isCurrent = node.route && (pathname === node.route || pathname.startsWith(`${node.route}/`));
+  const routePath = node.route ? node.route.split('?')[0] : null;
+  const isCurrent = routePath && (pathname === routePath || pathname.startsWith(`${routePath}/`));
   if (isCurrent) return true;
   if (!Array.isArray(node.children) || node.children.length === 0) return false;
   return node.children.some((child) => isCorporateMenuActive(child, pathname));
