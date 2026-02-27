@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 2026-02-27 — P72 Kurumsal Menü Satır Yapısı (Row2 Yatay Menü)
+
+- 1. satır kurumsal header korundu.
+- Sol dikey sidebar kaldırıldı.
+- 2. satır yatay ana menüye geçirildi (PDF başlıklarıyla): Özet, İlanlar, Sanal Turlar, Mesajlar, Müşteri Yönetimi, Favoriler, Raporlar, Danışman Takibi, Satın Al, Hesabım.
+- Çocuk menüler tıklanınca aşağı açılan panel olarak çalışır hale getirildi.
+- Kontrast iyileştirildi (silik yazı problemi giderildi).
+- Frontend test agent sonucu: 5/5 PASS.
+
 ## 2026-02-27 — P71 Kurumsal Menü Accordion + Kontrast Düzeltmesi
 
 - Dealer sidebar menü davranışı accordion’a çevrildi: alt menüler tıklanınca aç/kapa çalışır hale getirildi.
