@@ -2242,10 +2242,20 @@ async def get_effective_ui_config(
     segment: str = Query(default="individual"),
     tenant_id: Optional[str] = Query(default=None),
     user_id: Optional[str] = Query(default=None),
+    current_user=Depends(get_current_user_optional),
     session: AsyncSession = Depends(get_db),
 ):
     normalized_type = _normalize_config_type(config_type)
     normalized_segment = _normalize_segment(segment)
+
+    if normalized_type == "header" and normalized_segment == "corporate":
+        if not current_user or current_user.get("portal_scope") != "dealer":
+            raise _ui_http_error(
+                code=UI_ERROR_UNAUTHORIZED_SCOPE,
+                message="Kurumsal header config erişimi sadece dealer oturumunda mümkündür",
+                status_code=403,
+                extras={"required_scope": "dealer"},
+            )
 
     row, source_scope, source_scope_id = await _resolve_effective_ui_config(
         session,
