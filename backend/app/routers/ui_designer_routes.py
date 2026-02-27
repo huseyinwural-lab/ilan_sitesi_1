@@ -2250,6 +2250,20 @@ async def get_effective_ui_config(
     normalized_type = _normalize_config_type(config_type)
     normalized_segment = _normalize_segment(segment)
 
+    if normalized_type == "header" and normalized_segment == "individual":
+        static_header = _default_header_config("individual")
+        return {
+            "config_type": normalized_type,
+            "segment": normalized_segment,
+            "source_scope": "public_default",
+            "source_scope_id": None,
+            "item": None,
+            "config_data": static_header,
+            "layout": [],
+            "widgets": [],
+            "feature_mode": "public_header_static",
+        }
+
     if normalized_type == "header" and normalized_segment == "corporate":
         if not current_user or current_user.get("portal_scope") != "dealer":
             raise _ui_http_error(
