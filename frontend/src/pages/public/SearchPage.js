@@ -386,7 +386,12 @@ export default function SearchPage() {
                       <Card 
                         key={item.id} 
                         className="overflow-hidden hover:shadow-md transition-shadow group cursor-pointer"
+                        style={{
+                          borderColor: item.is_featured ? '#4f46e5' : (item.is_urgent ? '#e11d48' : undefined),
+                          borderWidth: item.is_featured || item.is_urgent ? 2 : 1,
+                        }}
                         onClick={() => navigate(`/ilan/${slugify(item.title)}-${item.id}`)}
+                        data-testid={`search-result-card-${item.id}`}
                       >
                         <div className="aspect-[4/3] relative bg-gray-100 overflow-hidden">
                           {item.image ? (
@@ -405,6 +410,14 @@ export default function SearchPage() {
                           </Badge>
                         </div>
                         <CardHeader className="p-4 pb-2">
+                          <div className="mb-1 flex flex-wrap items-center gap-1" data-testid={`search-result-doping-badges-${item.id}`}>
+                            {item.is_featured ? (
+                              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-semibold text-indigo-700" data-testid={`search-result-featured-badge-${item.id}`}>Vitrin</span>
+                            ) : null}
+                            {item.is_urgent ? (
+                              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700" data-testid={`search-result-urgent-badge-${item.id}`}>Acil</span>
+                            ) : null}
+                          </div>
                           <CardTitle className="text-base line-clamp-2 leading-tight">
                             {item.title}
                           </CardTitle>
