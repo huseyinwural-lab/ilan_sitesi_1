@@ -1647,6 +1647,7 @@ async def admin_get_ui_config(
 ):
     normalized_type = _normalize_config_type(config_type)
     normalized_segment = _normalize_segment(segment)
+    _assert_header_segment_enabled(normalized_type, normalized_segment)
     normalized_scope, normalized_scope_id = _normalize_scope(scope, scope_id)
     normalized_status = _normalize_status(status)
 
@@ -1693,6 +1694,7 @@ async def admin_save_ui_config(
 ):
     normalized_type = _normalize_config_type(config_type)
     normalized_segment = _normalize_segment(payload.segment)
+    _assert_header_segment_enabled(normalized_type, normalized_segment)
     normalized_scope, normalized_scope_id = _normalize_scope(payload.scope, payload.scope_id)
     normalized_status = _normalize_status(payload.status)
     normalized_config_data = payload.config_data or {}
@@ -1766,6 +1768,7 @@ async def admin_publish_ui_config(
     row = await session.get(UIConfig, config_uuid)
     if not row or row.config_type != normalized_type:
         raise HTTPException(status_code=404, detail="UI config not found")
+    _assert_header_segment_enabled(row.config_type, row.segment)
 
     your_version = payload.config_version if payload else None
     await _validate_publish_version_or_raise(
@@ -1773,6 +1776,8 @@ async def admin_publish_ui_config(
         row=row,
         config_version=your_version,
     )
+    if row.config_type == "header":
+        _validate_owner_scope_or_raise(row, payload.owner_type if payload else None, payload.owner_id if payload else None)
 
     lock_key = _publish_scope_key(
         config_type=row.config_type,
@@ -1782,7 +1787,7 @@ async def admin_publish_ui_config(
     )
     await _acquire_publish_lock_or_raise(lock_key, current_user)
     try:
-        published_row, diff_payload, previous_payload = await _publish_ui_config_row(
+        published_row, diff_payload, previous_payload, snapshot_payload = await _publish_ui_config_row(
             session,
             row=row,
             current_user=current_user,
@@ -1797,6 +1802,7 @@ async def admin_publish_ui_config(
         "snapshot": {
             "published_config_id": str(published_row.id),
             "published_version": published_row.version,
+            **snapshot_payload,
         },
         "diff": diff_payload,
         "previous": previous_payload,
@@ -1819,6 +1825,7 @@ async def admin_ui_config_diff(
     del current_user
     normalized_type = _normalize_config_type(config_type)
     normalized_segment = _normalize_segment(segment)
+    _assert_header_segment_enabled(normalized_type, normalized_segment)
     normalized_scope, normalized_scope_id = _normalize_scope(scope, scope_id)
     normalized_from_status = _normalize_status(from_status)
     normalized_to_status = _normalize_status(to_status)
@@ -1871,6 +1878,7 @@ async def admin_publish_latest_ui_config(
 ):
     normalized_type = _normalize_config_type(config_type)
     normalized_segment = _normalize_segment(payload.segment)
+    _assert_header_segment_enabled(normalized_type, normalized_segment)
     normalized_scope, normalized_scope_id = _normalize_scope(payload.scope, payload.scope_id)
 
     if not payload.require_confirm:
@@ -1913,6 +1921,8 @@ async def admin_publish_latest_ui_config(
         row=target_row,
         config_version=payload.config_version,
     )
+    if target_row.config_type == "header":
+        _validate_owner_scope_or_raise(target_row, payload.owner_type, payload.owner_id)
 
     lock_key = _publish_scope_key(
         config_type=target_row.config_type,
@@ -1922,7 +1932,7 @@ async def admin_publish_latest_ui_config(
     )
     await _acquire_publish_lock_or_raise(lock_key, current_user)
     try:
-        published_row, diff_payload, previous_payload = await _publish_ui_config_row(
+        published_row, diff_payload, previous_payload, snapshot_payload = await _publish_ui_config_row(
             session,
             row=target_row,
             current_user=current_user,
@@ -1937,6 +1947,7 @@ async def admin_publish_latest_ui_config(
         "snapshot": {
             "published_config_id": str(published_row.id),
             "published_version": published_row.version,
+            **snapshot_payload,
         },
         "diff": diff_payload,
         "previous": previous_payload,
@@ -1952,6 +1963,7 @@ async def admin_rollback_ui_config(
 ):
     normalized_type = _normalize_config_type(config_type)
     normalized_segment = _normalize_segment(payload.segment)
+    _assert_header_segment_enabled(normalized_type, normalized_segment)
     normalized_scope, normalized_scope_id = _normalize_scope(payload.scope, payload.scope_id)
 
     if not payload.require_confirm:
