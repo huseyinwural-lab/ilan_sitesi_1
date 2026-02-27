@@ -18597,7 +18597,10 @@ async def admin_update_country(
     if payload.active_flag is not None:
         updates["is_enabled"] = payload.active_flag
 
-    if "image_url" in payload.model_fields_set:
+    payload_fields_set = set(getattr(payload, "model_fields_set", set()) or set())
+    payload_fields_set.update(getattr(payload, "__fields_set__", set()) or set())
+
+    if "image_url" in payload_fields_set:
         updates["image_url"] = _normalize_category_image_url(payload.image_url)
     if payload.default_currency is not None:
         updates["default_currency"] = payload.default_currency.upper()
