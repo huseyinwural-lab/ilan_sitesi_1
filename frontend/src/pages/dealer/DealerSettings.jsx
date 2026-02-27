@@ -315,15 +315,14 @@ export default function DealerSettings() {
   }, []);
 
   useEffect(() => {
-    const requested = searchParams.get('section');
-    if (requested && sectionConfig[requested] && requested !== activeSection) {
-      setActiveSection(requested);
+    if (requestedSection && sectionConfig[requestedSection] && requestedSection !== activeSection) {
+      setActiveSection(requestedSection);
       return;
     }
-    if (!requested) {
+    if (!requestedSection) {
       setSearchParams({ section: activeSection }, { replace: true });
     }
-  }, [searchParams]);
+  }, [requestedSection, activeSection, setSearchParams]);
 
   return (
     <div className="space-y-4" data-testid="dealer-settings-page">
@@ -511,15 +510,15 @@ export default function DealerSettings() {
                   </div>
                 ) : (
                   <div className="space-y-2" data-testid="dealer-settings-blocked-list">
-                    {blockedAccounts.map((email) => (
-                      <div key={email} className="flex items-center justify-between rounded-md border border-slate-200 p-3" data-testid={`dealer-settings-blocked-item-${email}`}>
-                        <span className="text-sm text-slate-900" data-testid={`dealer-settings-blocked-email-${email}`}>{email}</span>
+                    {blockedAccounts.map((email, index) => (
+                      <div key={email} className="flex items-center justify-between rounded-md border border-slate-200 p-3" data-testid={`dealer-settings-blocked-item-${index}`}>
+                        <span className="text-sm text-slate-900" data-testid={`dealer-settings-blocked-email-${index}`}>{email}</span>
                         <button
                           type="button"
                           onClick={() => handleBlockedAccountRemove(email)}
                           disabled={blockedSaving}
                           className="h-8 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
-                          data-testid={`dealer-settings-blocked-remove-${email}`}
+                          data-testid={`dealer-settings-blocked-remove-${index}`}
                         >
                           Engeli Kaldır
                         </button>
