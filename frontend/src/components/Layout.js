@@ -478,6 +478,9 @@ export default function Layout({ children }) {
     { path: '/admin/site-design/theme', icon: Palette, label: 'Tema Yönetimi', roles: roles.adminOnly, testId: 'site-design-theme-management' },
     { path: '/admin/user-interface-design', icon: Layers, label: 'Kullanıcı Tasarım', roles: roles.uiDesigner, testId: 'site-design-user-interface-design' },
 
+    { divider: true, label: 'Operasyon', roles: roles.opsReliability },
+    { path: '/admin/ops/publish-health', icon: Activity, label: 'Publish Health', roles: roles.opsReliability, testId: 'ops-publish-health' },
+
     { divider: true, label: 'İçerik Yönetimi', roles: roles.adminOnly },
     { path: '/admin/info-pages', icon: FileText, label: 'Bilgi Sayfaları', roles: roles.adminOnly, testId: 'content-info-pages' },
 
@@ -530,6 +533,7 @@ export default function Layout({ children }) {
       '/admin/site-design/footer',
       '/admin/site-design/theme',
       '/admin/user-interface-design',
+      '/admin/ops/publish-health',
       '/admin/info-pages',
       '/admin/dashboard',
       '/admin/country-compare',
