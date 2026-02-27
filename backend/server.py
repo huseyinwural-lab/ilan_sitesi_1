@@ -21055,6 +21055,63 @@ async def admin_export_category_sample_xlsx(
     )
 
 
+@api_router.post("/admin/categories/image-upload")
+async def admin_upload_category_image(
+    file: UploadFile = File(...),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    if not file:
+        raise _category_error("CATEGORY_IMAGE_REQUIRED", "Görsel dosyası zorunludur.")
+
+    data = await file.read()
+    if not data:
+        raise _category_error("CATEGORY_IMAGE_EMPTY", "Boş dosya yüklenemez.")
+    if len(data) > CATEGORY_IMAGE_MAX_BYTES:
+        raise _category_error("CATEGORY_IMAGE_TOO_LARGE", "Görsel boyutu 2MB sınırını aşıyor.")
+
+    file_name = file.filename or "category.webp"
+    ext = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
+    if ext not in {"png", "jpg", "jpeg", "webp"}:
+        raise _category_error("CATEGORY_IMAGE_TYPE_INVALID", "Sadece png, jpg ve webp formatları desteklenir.")
+
+    try:
+        with Image.open(io.BytesIO(data)) as uploaded_image:
+            width, height = uploaded_image.size
+            if width <= 0 or height <= 0:
+                raise ValueError("image-size-invalid")
+
+            crop_size = min(width, height)
+            left = max((width - crop_size) // 2, 0)
+            top = max((height - crop_size) // 2, 0)
+            cropped = uploaded_image.crop((left, top, left + crop_size, top + crop_size))
+            normalized = cropped.convert("RGBA") if cropped.mode not in {"RGB", "RGBA"} else cropped
+
+            output = io.BytesIO()
+            normalized.save(output, format="WEBP", quality=88, method=6)
+            prepared = output.getvalue()
+    except Exception as exc:
+        raise _category_error("CATEGORY_IMAGE_INVALID", "Görsel işlenemedi. Lütfen geçerli bir dosya yükleyin.") from exc
+
+    try:
+        asset_key, _ = store_site_asset(prepared, "category.webp", folder="categories", allow_svg=False)
+    except ValueError as exc:
+        raise _category_error("CATEGORY_IMAGE_STORE_FAILED", str(exc)) from exc
+
+    image_url = f"/api/site/assets/{asset_key}"
+    cache_bust = int(time.time())
+    return {
+        "ok": True,
+        "image_url": image_url,
+        "preview_url": f"{image_url}?v={cache_bust}",
+        "meta": {
+            "max_bytes": CATEGORY_IMAGE_MAX_BYTES,
+            "recommended_ratio": "1:1",
+            "crop": "center",
+            "format": "webp",
+        },
+    }
+
+
 @api_router.post(
     "/admin/categories",
     status_code=201,
