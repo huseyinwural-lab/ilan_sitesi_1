@@ -6,6 +6,7 @@ import DealerMessages from '@/pages/dealer/DealerMessages';
 import DealerCustomers from '@/pages/dealer/DealerCustomers';
 import DealerFavorites from '@/pages/dealer/DealerFavorites';
 import DealerReports from '@/pages/dealer/DealerReports';
+import DealerConsultantTracking from '@/pages/dealer/DealerConsultantTracking';
 import DealerPurchase from '@/pages/dealer/DealerPurchase';
 import DealerSettings from '@/pages/dealer/DealerSettings';
 import PaymentSuccess from '@/pages/dealer/PaymentSuccess';
@@ -23,6 +24,7 @@ export default function DealerPortalApp() {
         <Route path="customers" element={<DealerCustomers />} />
         <Route path="favorites" element={<DealerFavorites />} />
         <Route path="reports" element={<DealerReports />} />
+        <Route path="consultant-tracking" element={<DealerConsultantTracking />} />
         <Route path="purchase" element={<DealerPurchase />} />
         <Route path="settings" element={<DealerSettings />} />
         <Route path="invoices" element={<Navigate to="/dealer/purchase" replace />} />
