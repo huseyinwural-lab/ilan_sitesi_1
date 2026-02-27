@@ -3417,42 +3417,6 @@ async def admin_ui_publish_alert_delivery_audit(
     }
 
 
-@router.get("/admin/ui/configs/{config_type}/legacy-usage")
-async def admin_ui_legacy_publish_usage(
-    config_type: str,
-    days: int = Query(default=30, ge=1, le=365),
-    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
-    session: AsyncSession = Depends(get_db),
-):
-    del current_user
-    normalized_type = _normalize_config_type(config_type)
-    min_dt = datetime.now(timezone.utc) - timedelta(days=days)
-    stmt = (
-        select(AuditLog)
-        .where(
-            AuditLog.action == "ui_config_publish_legacy_call",
-            AuditLog.resource_type == f"ui_config:{normalized_type}",
-            AuditLog.created_at >= min_dt,
-        )
-        .order_by(desc(AuditLog.created_at))
-        .limit(1000)
-    )
-    rows = (await session.execute(stmt)).scalars().all()
-    by_actor: dict[str, int] = {}
-    for row in rows:
-        key = row.user_email or "unknown"
-        by_actor[key] = by_actor.get(key, 0) + 1
-
-    return {
-        "days": days,
-        "total_calls": len(rows),
-        "client_breakdown": [
-            {"actor_email": actor, "count": count}
-            for actor, count in sorted(by_actor.items(), key=lambda item: item[1], reverse=True)
-        ],
-    }
-
-
 @router.post("/admin/ui/configs/{config_type}/publish")
 async def admin_publish_latest_ui_config(
     config_type: str,
