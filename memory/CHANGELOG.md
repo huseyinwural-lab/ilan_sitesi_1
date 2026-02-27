@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## 2026-02-27 — P67 Ops Hardening + P2 Legacy Cleanup
+
+**Ops Hardening**
+- Threshold endpoint: `GET /api/admin/ui/configs/{config_type}/ops-thresholds`
+- Alert simulation endpoint: `POST /api/admin/ui/configs/{config_type}/ops-alerts/simulate`
+- Publish audits endpoint genişletmesi:
+  - telemetry: lock wait / conflict rate / p95 duration
+  - KPI: median retry, time to publish, conflict resolution time, success rate
+  - windows: `1h`, `24h`, `7d`
+  - trends: 24h saatlik sparkline verileri
+
+**UI Operasyonel Görünürlük**
+- Corporate Dashboard Publish Audit kartı genişletildi:
+  - KPI alanları
+  - conflict & lock wait trend sparkline
+  - alert badge listesi
+
+**Legacy Cleanup (P2)**
+- Legacy publish endpoint artık 410:
+  - `LEGACY_ENDPOINT_REMOVED`
+  - deprecation headers (`Deprecation`, `Sunset`, `Link`)
+- Legacy usage analizi endpointi eklendi:
+  - `GET /api/admin/ui/configs/{config_type}/legacy-usage?days=30`
+
+**Kanıt/Test**
+- Testing agent: `/app/test_reports/iteration_33.json` (PASS)
+- Evidence: `/app/docs/OPS_HARDENING_P2_CLEANUP_EVIDENCE.md`
+
 ## 2026-02-27 — P66 Conflict UX + Publish Telemetry Hardening
 
 **Conflict UX**
