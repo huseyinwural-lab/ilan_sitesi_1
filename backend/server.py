@@ -15892,7 +15892,34 @@ async def dealer_messages(
     ).scalars().all()
     conversation_ids = [row.id for row in conversations]
     if not conversation_ids:
-        return {"items": []}
+        notification_rows = (
+            await session.execute(
+                select(Notification)
+                .where(Notification.user_id == dealer_uuid)
+                .order_by(desc(Notification.created_at))
+                .limit(100)
+            )
+        ).scalars().all()
+        notification_items = [
+            {
+                "notification_id": str(row.id),
+                "title": row.title,
+                "message": row.message,
+                "source_type": row.source_type,
+                "action_url": row.action_url,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "read": bool(row.read_at),
+            }
+            for row in notification_rows
+        ]
+        return {
+            "items": [],
+            "notification_items": notification_items,
+            "summary": {
+                "listing_messages": 0,
+                "notifications": len(notification_items),
+            },
+        }
 
     messages = (
         await session.execute(
@@ -15942,7 +15969,35 @@ async def dealer_messages(
                 "last_message_at": last.created_at.isoformat() if last and last.created_at else None,
             }
         )
-    return {"items": items}
+
+    notification_rows = (
+        await session.execute(
+            select(Notification)
+            .where(Notification.user_id == dealer_uuid)
+            .order_by(desc(Notification.created_at))
+            .limit(100)
+        )
+    ).scalars().all()
+    notification_items = [
+        {
+            "notification_id": str(row.id),
+            "title": row.title,
+            "message": row.message,
+            "source_type": row.source_type,
+            "action_url": row.action_url,
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+            "read": bool(row.read_at),
+        }
+        for row in notification_rows
+    ]
+    return {
+        "items": items,
+        "notification_items": notification_items,
+        "summary": {
+            "listing_messages": len(items),
+            "notifications": len(notification_items),
+        },
+    }
 
 
 @api_router.get("/dealer/customers")
