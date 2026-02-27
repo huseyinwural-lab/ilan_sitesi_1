@@ -239,6 +239,10 @@ export const CorporateDashboardDesigner = () => {
   const [conflictInfo, setConflictInfo] = useState(null);
   const [conflictOpen, setConflictOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState('');
+  const [serverDraftHash, setServerDraftHash] = useState('');
+  const [publishRetryCount, setPublishRetryCount] = useState(0);
+  const [publishAuditItems, setPublishAuditItems] = useState([]);
+  const [publishTelemetry, setPublishTelemetry] = useState(null);
   const [largeScreen, setLargeScreen] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
 
   const initializedRef = useRef(false);
