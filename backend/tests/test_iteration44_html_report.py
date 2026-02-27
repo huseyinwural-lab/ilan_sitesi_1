@@ -144,7 +144,10 @@ class TestAlertSimulationRegression:
         )
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
         data = response.json()
-        assert "status" in data, "Response should contain status"
+        # Response is nested under ops_alerts_secret_presence
+        assert "ops_alerts_secret_presence" in data, "Response should contain ops_alerts_secret_presence"
+        presence_data = data["ops_alerts_secret_presence"]
+        assert "status" in presence_data, "Presence data should contain status"
         print("PASS: Secret presence endpoint still works")
 
     def test_alert_delivery_metrics_still_works(self):
