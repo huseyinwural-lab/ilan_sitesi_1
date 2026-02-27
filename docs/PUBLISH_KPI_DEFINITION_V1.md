@@ -41,6 +41,26 @@ Publish Audit kartında:
 - Son 24 saat conflict rate sparkline
 - Son 24 saat avg lock wait sparkline
 
+## Alert Reliability KPI (P1)
+
+- Metrik: `alert_delivery_success_rate_24s`
+- Formül: `successful_deliveries / total_attempts` (son 24 saat)
+- Endpoint: `GET /api/admin/ops/alert-delivery-metrics?window=24h`
+- Dönen alanlar:
+  - `total_attempts`
+  - `successful_deliveries`
+  - `failed_deliveries`
+  - `success_rate`
+  - `last_failure_timestamp`
+  - `channel_breakdown` (`slack`, `smtp`, `pd`)
+- Eşik renkleri:
+  - `>= 99%` → normal
+  - `95-99%` → warning
+  - `< 95%` → critical
+- Kurallar:
+  - Aggregation tamamen server-side yapılır (UI hesap yapmaz)
+  - `window` en fazla `24h` olabilir (fail-fast validation)
+
 ## Deterministiklik Notları
 
 - Timestamp bazlı sıralama ve pencereler sabit UTC ile hesaplanır.
