@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 12:35:00 UTC (P75 Mesajlar Menüsü PDF Hizalama)
+**Son güncelleme:** 2026-02-27 13:00:00 UTC (P76 Mesaj Okundu + Müşteri Yönetimi PDF Hizalama)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -60,6 +60,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P76 Mesaj Okundu + Müşteri Yönetimi PDF Hizalama (2026-02-27):** Mesajlar ekranına okundu bilgisi eklendi: `Okunma` kolonu, `Okundu/Okunmadı` badge, `Okundu İşaretle` aksiyonu. Backend `GET /api/dealer/messages` yanıtı `unread_count/read_status` ve `summary.unread_listing_messages` ile genişletildi; `POST /api/dealer/messages/{conversation_id}/read` eklendi. Sıralı ilerlemede `Müşteri Yönetimi` ekranı da PDF’e göre dolduruldu: `Kullanıcı Listesi` / `Mağaza Kullanıcısı Olmayanlar` tabları, Ad Soyad/E-Posta/Durumu filtreleri, tablo kolonları (Ad Soyad, E-Posta, Durumu, İşlemler). Kanıt: `/app/docs/P1_DEALER_MESSAGES_READ_AND_CUSTOMERS_ALIGNMENT_EVIDENCE.md`, test: `/app/test_reports/iteration_36.json`.
 - **P75 Mesajlar Menüsü PDF Hizalama (2026-02-27):** Sıralı akışta `Mesajlar` ekranı PDF’e göre dolduruldu. Başlık/sayaç (`İlan Mesajlarım (x)`), iki tab (`Yayında Olan İlanlar`, `Bilgilendirmeler`), arama + filtre aksiyonu, listing tablosu ve bilgilendirme tablosu eklendi. Backend `GET /api/dealer/messages` endpointi `notification_items` ve `summary` alanlarıyla genişletildi. Kanıt: `/app/docs/P1_DEALER_MESSAGES_PDF_ALIGNMENT_EVIDENCE.md`.
 - **P74 İlanlar Menüsü + Sanal Turlar Kaldırma (2026-02-27):** Row2 ana menüden `Sanal Turlar` kaldırıldı (Avrupa kapsamı). `İlanlar` sayfası PDF sırasına göre dolduruldu: başlık, arama, durum tabları (Yayında/Yayında Değil/Tümü), tablo/kart yapısı, satır aksiyonları (`Yayına Al`, `Arşivle`) ve durum/filtre akışları. Kanıt: `/app/docs/P1_DEALER_LISTINGS_PDF_ALIGNMENT_EVIDENCE.md`.
 - **P73 Özet Menüsü PDF Hizalama (2026-02-27):** `Özet` menüsü tıklanınca içerik PDF’e göre dolduruldu. Dealer overview sayfasında Mağaza Performansı (24s/7g ziyaret), ilan ziyaret kırılım tablosu, paket durumu (kullanılan/kalan), yayındaki ilan/müşteri talep KPI kartları ve veri uyarı alanı eklendi. Özet içindeki kartlardan ilgili sayfalara (Raporlar, İlanlar, Müşteriler, Satın Al) dolaşım aktif. Backend summary endpointi `overview` bloğu ile genişletildi. Evidence: `/app/docs/P1_DEALER_OVERVIEW_PDF_ALIGNMENT_EVIDENCE.md`.
