@@ -26938,8 +26938,8 @@ def _listing_doping_bucket(listing: Listing, *, now: Optional[datetime] = None) 
 
 def _listing_applicant_type(listing: Listing, owner: Optional[SqlUser] = None) -> str:
     owner_role = (owner.role if owner else None) or ""
-    owner_scope = (owner.portal_scope if owner else None) or ""
-    if listing.is_dealer_listing or owner_role == "dealer" or owner_scope == "dealer":
+    owner_type = (owner.user_type if owner else None) or ""
+    if listing.is_dealer_listing or owner_role == "dealer" or owner_type == "corporate":
         return "corporate"
     return "individual"
 
