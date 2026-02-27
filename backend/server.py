@@ -16951,6 +16951,55 @@ async def dealer_reports(
     }
 
 
+def _normalize_dealer_blocked_accounts(raw_list: Any) -> List[str]:
+    if not isinstance(raw_list, list):
+        return []
+    normalized: List[str] = []
+    seen: set[str] = set()
+    for item in raw_list:
+        value = str(item or "").strip().lower()
+        if not value:
+            continue
+        if "@" not in value or "." not in value.split("@")[-1]:
+            continue
+        if value in seen:
+            continue
+        seen.add(value)
+        normalized.append(value)
+    return normalized[:100]
+
+
+def _normalize_dealer_settings_prefs(payload: Optional[Dict[str, Any]], existing: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    existing_prefs = existing or {}
+    incoming = payload or {}
+
+    base = {
+        "push_enabled": bool(existing_prefs.get("push_enabled", True)),
+        "email_enabled": bool(existing_prefs.get("email_enabled", True)),
+        "message_email_enabled": bool(existing_prefs.get("message_email_enabled", True)),
+        "marketing_email_enabled": bool(existing_prefs.get("marketing_email_enabled", False)),
+        "read_receipt_enabled": bool(existing_prefs.get("read_receipt_enabled", True)),
+        "sms_enabled": bool(existing_prefs.get("sms_enabled", False)),
+        "blocked_accounts": _normalize_dealer_blocked_accounts(existing_prefs.get("blocked_accounts", [])),
+    }
+
+    for key in [
+        "push_enabled",
+        "email_enabled",
+        "message_email_enabled",
+        "marketing_email_enabled",
+        "read_receipt_enabled",
+        "sms_enabled",
+    ]:
+        if key in incoming:
+            base[key] = bool(incoming.get(key))
+
+    if "blocked_accounts" in incoming:
+        base["blocked_accounts"] = _normalize_dealer_blocked_accounts(incoming.get("blocked_accounts"))
+
+    return base
+
+
 @api_router.get("/dealer/settings/profile")
 async def dealer_settings_profile(
     request: Request,
