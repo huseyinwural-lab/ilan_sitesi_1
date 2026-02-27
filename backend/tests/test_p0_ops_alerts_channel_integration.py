@@ -63,7 +63,7 @@ class TestSecretPresenceEndpoint:
         assert secret_presence["status"] in ["READY", "BLOCKED"], f"Invalid status: {secret_presence['status']}"
         
         assert "missing_keys" in secret_presence, f"Missing 'missing_keys': {secret_presence}"
-        assert isinstance(secret_presence["missing_keys"], list), f"missing_keys should be a list"
+        assert isinstance(secret_presence["missing_keys"], list), "missing_keys should be a list"
         
         assert "channels" in secret_presence, f"Missing 'channels': {secret_presence}"
         
@@ -431,7 +431,7 @@ class TestDeliveryAuditEndpoint:
             first_correlation = items[0].get("correlation_id")
             for item in items:
                 assert item.get("correlation_id") == first_correlation, \
-                    f"Inconsistent correlation_ids in response"
+                    "Inconsistent correlation_ids in response"
 
 
 class TestEndToEndSimulationFlow:
