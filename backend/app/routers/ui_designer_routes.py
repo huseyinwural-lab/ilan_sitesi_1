@@ -3047,6 +3047,15 @@ async def _run_ops_alert_simulation(
     correlation_id = str(payload.get("correlation_id") or uuid.uuid4())
     secret_presence = _ops_alerts_secret_presence()
 
+    trigger_audit_payload = {
+        "event": "OPS_ALERT_SIMULATION_TRIGGERED",
+        "actor_id": str(_user_value(current_user, "id") or "unknown"),
+        "actor_email": _user_value(current_user, "email"),
+        "correlation_id": correlation_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "trigger_source": trigger_source,
+    }
+
     session.add(
         _create_ui_config_audit_log(
             action="OPS_ALERT_SIMULATION_TRIGGERED",
@@ -3055,13 +3064,7 @@ async def _run_ops_alert_simulation(
             resource_id="ops_simulation_trigger",
             old_values=None,
             new_values=None,
-            metadata_info={
-                "actor_id": str(_user_value(current_user, "id") or "unknown"),
-                "actor_email": _user_value(current_user, "email"),
-                "correlation_id": correlation_id,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "trigger_source": trigger_source,
-            },
+            metadata_info=trigger_audit_payload,
         )
     )
 
@@ -3139,6 +3142,7 @@ async def _run_ops_alert_simulation(
         "sample_metrics": sample_metrics,
         "alerts": alerts,
         "channel_results": channel_results,
+        "trigger_audit": trigger_audit_payload,
         "fail_fast": (
             {
                 "status": "Blocked: Missing Secrets",
