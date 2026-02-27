@@ -14355,25 +14355,72 @@ async def _dealer_header_row3_controls(
     user_id: Optional[str],
     fallback_label: Optional[str],
 ) -> Dict[str, Any]:
-    company_label = (fallback_label or "Mağazam").strip() or "Mağazam"
+    user_display_name = (fallback_label or "Kurumsal Kullanıcı").strip() or "Kurumsal Kullanıcı"
+    company_label = "Mağazam"
+    stores: List[Dict[str, Any]] = [{"key": "all", "label": "Tümü"}]
+
     if user_id:
         try:
             user_uuid = uuid.UUID(str(user_id))
+            user_row = await session.get(SqlUser, user_uuid)
+            if user_row:
+                user_display_name = (user_row.full_name or user_row.email or user_display_name).strip() or user_display_name
+
             profile = (
                 await session.execute(select(DealerProfile).where(DealerProfile.user_id == user_uuid))
             ).scalar_one_or_none()
             if profile and profile.company_name:
                 company_label = profile.company_name.strip() or company_label
+
+                consultant_roles = ["dealer", "consultant", "dealer_agent", "sales_agent", "staff"]
+                profile_user_ids = (
+                    await session.execute(
+                        select(DealerProfile.user_id).where(
+                            DealerProfile.company_name == profile.company_name
+                        )
+                    )
+                ).scalars().all()
+
+                if profile_user_ids:
+                    authorized_users = (
+                        await session.execute(
+                            select(SqlUser).where(
+                                SqlUser.id.in_(profile_user_ids),
+                                SqlUser.deleted_at.is_(None),
+                                SqlUser.is_active.is_(True),
+                                SqlUser.role.in_(consultant_roles),
+                            )
+                        )
+                    ).scalars().all()
+
+                    seen: set[str] = set()
+                    for row in authorized_users:
+                        row_id = str(row.id)
+                        if row_id in seen:
+                            continue
+                        seen.add(row_id)
+                        label = (row.full_name or row.email or row_id).strip() or row_id
+                        stores.append(
+                            {
+                                "key": row_id,
+                                "label": label,
+                                "user_id": row_id,
+                                "scope": "authorized_user",
+                            }
+                        )
         except ValueError:
             pass
+
+    if len(stores) == 1:
+        stores.append({"key": "primary", "label": company_label, "scope": "primary_store"})
 
     return {
         "store_filter_enabled": True,
         "user_dropdown_enabled": True,
-        "stores": [
-            {"key": "all", "label": "Tüm Mağazalar"},
-            {"key": "primary", "label": company_label},
-        ],
+        "page_edit_enabled": True,
+        "announcements_enabled": True,
+        "user_display_name": user_display_name,
+        "stores": stores,
         "default_store_key": "all",
     }
 
