@@ -703,6 +703,48 @@ export const CorporateDashboardDesigner = () => {
             <div data-testid="ui-designer-dashboard-diff-removed">Kaldırılan: {(diffPayload?.removed_widgets || []).join(', ') || '-'}</div>
             <div data-testid="ui-designer-dashboard-diff-moved">Taşınan: {(diffPayload?.moved_widgets || []).length}</div>
           </div>
+          <div className="grid gap-3 md:grid-cols-2" data-testid="ui-designer-dashboard-diff-visual-grid">
+            <div className="rounded-md border p-2" data-testid="ui-designer-dashboard-diff-before-panel">
+              <div className="mb-2 text-xs font-semibold text-slate-700" data-testid="ui-designer-dashboard-diff-before-title">Önceki Grid</div>
+              <div className="space-y-2" data-testid="ui-designer-dashboard-diff-before-list">
+                {diffFromWidgets.length === 0 ? (
+                  <div className="text-[11px] text-slate-400" data-testid="ui-designer-dashboard-diff-before-empty">Önceki widget yok</div>
+                ) : diffFromWidgets.map((widget) => {
+                  const isRemoved = removedWidgetIds.has(widget.widget_id);
+                  const isMoved = movedWidgetIds.has(widget.widget_id);
+                  return (
+                    <div
+                      key={`before-${widget.widget_id}`}
+                      className={`rounded border px-2 py-1 text-[11px] ${isRemoved ? 'border-rose-300 bg-rose-50' : isMoved ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-white'}`}
+                      data-testid={`ui-designer-dashboard-diff-before-widget-${widget.widget_id}`}
+                    >
+                      {widget.title} ({widget.widget_type})
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="rounded-md border p-2" data-testid="ui-designer-dashboard-diff-after-panel">
+              <div className="mb-2 text-xs font-semibold text-slate-700" data-testid="ui-designer-dashboard-diff-after-title">Yeni Grid</div>
+              <div className="space-y-2" data-testid="ui-designer-dashboard-diff-after-list">
+                {diffToWidgets.length === 0 ? (
+                  <div className="text-[11px] text-slate-400" data-testid="ui-designer-dashboard-diff-after-empty">Yeni widget yok</div>
+                ) : diffToWidgets.map((widget) => {
+                  const isAdded = addedWidgetIds.has(widget.widget_id);
+                  const isMoved = movedWidgetIds.has(widget.widget_id);
+                  return (
+                    <div
+                      key={`after-${widget.widget_id}`}
+                      className={`rounded border px-2 py-1 text-[11px] ${isAdded ? 'border-emerald-300 bg-emerald-50' : isMoved ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-white'}`}
+                      data-testid={`ui-designer-dashboard-diff-after-widget-${widget.widget_id}`}
+                    >
+                      {widget.title} ({widget.widget_type})
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
           <label className="inline-flex items-center gap-2 text-xs" data-testid="ui-designer-dashboard-publish-confirm-wrap">
             <input
               type="checkbox"
@@ -719,7 +761,7 @@ export const CorporateDashboardDesigner = () => {
             <button
               type="button"
               onClick={publishDraft}
-              disabled={!confirmChecked || Boolean(publishDisabledReason) || publishing}
+              disabled={!confirmChecked || Boolean(publishDisabledReason) || publishing || (diffPayload?.change_count || 0) < 1}
               className="h-9 rounded-md bg-slate-900 px-3 text-sm text-white disabled:opacity-50"
               data-testid="ui-designer-dashboard-publish-confirm-button"
             >
