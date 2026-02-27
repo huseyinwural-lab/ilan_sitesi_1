@@ -203,6 +203,7 @@ SUPPORTED_COUNTRIES = {"DE", "CH", "FR", "AT"}
 TRANSACTION_TYPE_OPTIONS = {"satilik", "kiralik", "gunluk"}
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 CATEGORY_IMPORT_MAX_BYTES = 10 * 1024 * 1024
+CATEGORY_IMAGE_MAX_BYTES = 2 * 1024 * 1024
 VEHICLE_IMPORT_MAX_BYTES = 50 * 1024 * 1024
 VEHICLE_IMPORT_MAX_RECORDS = 200000
 VEHICLE_IMPORT_MAX_ERRORS = 20
@@ -10992,6 +10993,7 @@ class CategoryCreatePayload(BaseModel):
     vehicle_segment: Optional[str] = None
     active_flag: Optional[bool] = True
     sort_order: int = Field(..., ge=1)
+    image_url: Optional[str] = None
     hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
     wizard_progress: Optional[Dict[str, Any]] = None
@@ -11006,6 +11008,7 @@ class CategoryUpdatePayload(BaseModel):
     vehicle_segment: Optional[str] = None
     active_flag: Optional[bool] = None
     sort_order: Optional[int] = Field(default=None, ge=1)
+    image_url: Optional[str] = None
     hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
     wizard_progress: Optional[Dict[str, Any]] = None
@@ -11356,6 +11359,18 @@ def _normalize_category_module(value: Optional[str]) -> str:
     if module_value not in SUPPORTED_CATEGORY_MODULES:
         raise HTTPException(status_code=400, detail="module invalid")
     return module_value
+
+
+def _normalize_category_image_url(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    normalized = raw.split("?", 1)[0]
+    if ".." in normalized or not normalized.startswith("/api/site/assets/"):
+        raise _category_error("CATEGORY_IMAGE_INVALID", "Kategori görsel yolu geçersiz.")
+    return normalized
 
 
 def _normalize_segment_key(value: Optional[str]) -> Optional[str]:
