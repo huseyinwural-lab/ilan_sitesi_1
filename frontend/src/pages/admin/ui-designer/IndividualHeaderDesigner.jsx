@@ -97,6 +97,24 @@ const normalizeHeaderConfig = (rawConfig) => {
   };
 };
 
+const parseApiError = (payload, statusCode = 0) => {
+  const detail = payload?.detail;
+  if (detail && typeof detail === 'object') {
+    return {
+      code: detail.code || 'UNKNOWN',
+      message: detail.message || 'İşlem başarısız',
+      raw: detail,
+      status: statusCode,
+    };
+  }
+  return {
+    code: statusCode === 409 ? 'CONFIG_VERSION_CONFLICT' : 'UNKNOWN',
+    message: typeof detail === 'string' ? detail : 'İşlem başarısız',
+    raw: detail || {},
+    status: statusCode,
+  };
+};
+
 export const IndividualHeaderDesigner = () => {
   const authHeader = useMemo(() => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }), []);
 
@@ -104,6 +122,7 @@ export const IndividualHeaderDesigner = () => {
   const [scopeId, setScopeId] = useState('');
   const [configData, setConfigData] = useState(deepClone(defaultIndividualHeaderConfig));
   const [latestConfigId, setLatestConfigId] = useState(null);
+  const [latestConfigVersion, setLatestConfigVersion] = useState(null);
   const [versions, setVersions] = useState([]);
   const [effectivePayload, setEffectivePayload] = useState(null);
   const [selectedRollbackId, setSelectedRollbackId] = useState('');
@@ -114,6 +133,7 @@ export const IndividualHeaderDesigner = () => {
   const [confirmChecked, setConfirmChecked] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
   const [rollbackOpen, setRollbackOpen] = useState(false);
+  const [rollbackReason, setRollbackReason] = useState('');
 
   const dragRef = useRef(null);
   const scopeQuery = scope === 'tenant' && scopeId.trim() ? `&scope_id=${encodeURIComponent(scopeId.trim())}` : '';
@@ -134,12 +154,14 @@ export const IndividualHeaderDesigner = () => {
       const normalized = normalizeHeaderConfig(data?.item?.config_data || defaultIndividualHeaderConfig);
       setConfigData(normalized);
       setLatestConfigId(data?.item?.id || null);
+      setLatestConfigVersion(data?.item?.version ?? null);
       setVersions(Array.isArray(data?.items) ? data.items : []);
       setStatus('Bireysel header taslağı yüklendi');
     } catch (requestError) {
       setError(requestError.message || 'Bireysel header taslağı yüklenemedi');
       setConfigData(deepClone(defaultIndividualHeaderConfig));
       setLatestConfigId(null);
+      setLatestConfigVersion(null);
       setVersions([]);
     }
   };
@@ -170,6 +192,7 @@ export const IndividualHeaderDesigner = () => {
         throw new Error(data?.detail || 'Taslak kaydedilemedi');
       }
       setLatestConfigId(data?.item?.id || null);
+      setLatestConfigVersion(data?.item?.version ?? null);
       setStatus(`Taslak kaydedildi (v${data?.item?.version || '-'})`);
       toast.success('Bireysel header taslağı kaydedildi');
       await loadDraft();
@@ -236,12 +259,20 @@ export const IndividualHeaderDesigner = () => {
           scope,
           scope_id: scope === 'tenant' ? scopeId.trim() : null,
           config_id: latestConfigId,
+          config_version: latestConfigVersion,
           require_confirm: true,
         }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data?.detail || 'Yayınlama başarısız');
+        const apiError = parseApiError(data, response.status);
+        if (response.status === 400 && apiError.code === 'MISSING_CONFIG_VERSION') {
+          throw new Error('Version bilgisi eksik. Lütfen sayfayı yenileyin ve tekrar deneyin.');
+        }
+        if (response.status === 409 && apiError.code === 'CONFIG_VERSION_CONFLICT') {
+          throw new Error('Başka bir admin daha yeni bir versiyon yayınladı. Lütfen sayfayı yenileyin.');
+        }
+        throw new Error(apiError.message || 'Yayınlama başarısız');
       }
       setStatus(`Yayınlandı (v${data?.item?.version || '-'})`);
       setPublishOpen(false);
@@ -270,15 +301,21 @@ export const IndividualHeaderDesigner = () => {
           scope,
           scope_id: scope === 'tenant' ? scopeId.trim() : null,
           target_config_id: selectedRollbackId || null,
+          rollback_reason: rollbackReason,
           require_confirm: true,
         }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data?.detail || 'Rollback başarısız');
+        const apiError = parseApiError(data, response.status);
+        if (response.status === 400 && apiError.code === 'MISSING_ROLLBACK_REASON') {
+          throw new Error('Rollback sebebi zorunludur');
+        }
+        throw new Error(apiError.message || 'Rollback başarısız');
       }
       setStatus(`Rollback tamamlandı (v${data?.item?.version || '-'})`);
       setRollbackOpen(false);
+      setRollbackReason('');
       toast.success('Bireysel header rollback tamamlandı');
       await Promise.all([loadDraft(), loadEffective()]);
     } catch (requestError) {
