@@ -81,7 +81,7 @@ class TestPublishVersionContracts:
         detail = response.json().get("detail") or {}
         assert detail.get("code") == "MISSING_CONFIG_VERSION"
 
-    def test_publish_legacy_endpoint_requires_config_version(self, admin_token: str):
+    def test_publish_legacy_endpoint_removed_returns_410(self, admin_token: str):
         scope_id = f"p64-missing-legacy-{uuid.uuid4().hex[:8]}"
         config_id, _ = _create_dashboard_draft(admin_token, scope_id)
 
@@ -90,9 +90,9 @@ class TestPublishVersionContracts:
             json={},
             headers=_headers(admin_token),
         )
-        assert response.status_code == 400, f"Expected 400, got {response.status_code}: {response.text[:300]}"
+        assert response.status_code == 410, f"Expected 410, got {response.status_code}: {response.text[:300]}"
         detail = response.json().get("detail") or {}
-        assert detail.get("code") == "MISSING_CONFIG_VERSION"
+        assert detail.get("code") == "LEGACY_ENDPOINT_REMOVED"
 
     def test_publish_version_mismatch_returns_409_contract(self, admin_token: str):
         scope_id = f"p64-conflict-{uuid.uuid4().hex[:8]}"
