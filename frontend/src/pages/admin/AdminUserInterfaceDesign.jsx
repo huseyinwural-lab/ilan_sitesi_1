@@ -22,6 +22,7 @@ function HeaderConfigTab({ segment, testIdPrefix }) {
   const [scopeId, setScopeId] = useState('');
   const [headerJson, setHeaderJson] = useState(prettyJson({}));
   const [latestConfigId, setLatestConfigId] = useState(null);
+  const [latestConfigVersion, setLatestConfigVersion] = useState(null);
   const [versions, setVersions] = useState([]);
   const [effectivePayload, setEffectivePayload] = useState(null);
   const [status, setStatus] = useState('');
@@ -44,6 +45,7 @@ function HeaderConfigTab({ segment, testIdPrefix }) {
 
       const item = data?.item;
       setLatestConfigId(item?.id || null);
+      setLatestConfigVersion(item?.version ?? null);
       setHeaderJson(prettyJson(item?.config_data || {}));
       setVersions(Array.isArray(data?.items) ? data.items : []);
       setStatus('Taslak yüklendi');
@@ -51,6 +53,7 @@ function HeaderConfigTab({ segment, testIdPrefix }) {
       setError(requestError.message || 'Taslak yüklenemedi');
       setVersions([]);
       setLatestConfigId(null);
+      setLatestConfigVersion(null);
     }
   };
 
@@ -80,6 +83,7 @@ function HeaderConfigTab({ segment, testIdPrefix }) {
       }
 
       setLatestConfigId(data?.item?.id || null);
+      setLatestConfigVersion(data?.item?.version ?? null);
       setStatus(`Taslak kaydedildi (v${data?.item?.version || '-'})`);
       await loadDraft();
     } catch (requestError) {
@@ -87,7 +91,7 @@ function HeaderConfigTab({ segment, testIdPrefix }) {
     }
   };
 
-  const publishConfig = async (configId = latestConfigId) => {
+  const publishConfig = async (configId = latestConfigId, configVersion = latestConfigVersion) => {
     if (!configId) {
       setError('Yayınlanacak versiyon bulunamadı');
       return;
@@ -98,11 +102,21 @@ function HeaderConfigTab({ segment, testIdPrefix }) {
     try {
       const response = await fetch(`${API}/admin/ui/configs/header/publish/${configId}`, {
         method: 'POST',
-        headers: authHeader,
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          config_version: configVersion,
+        }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data?.detail || 'Yayınlama başarısız');
+        const detail = data?.detail;
+        if (response.status === 400 && detail?.code === 'MISSING_CONFIG_VERSION') {
+          throw new Error('Version bilgisi eksik. Lütfen sayfayı yenileyin ve tekrar deneyin.');
+        }
+        throw new Error(detail?.message || data?.detail || 'Yayınlama başarısız');
       }
 
       setLatestConfigId(data?.item?.id || configId);
@@ -215,7 +229,7 @@ function HeaderConfigTab({ segment, testIdPrefix }) {
               </div>
               <button
                 type="button"
-                onClick={() => publishConfig(item.id)}
+                onClick={() => publishConfig(item.id, item.version)}
                 className="rounded border px-2 py-1"
                 data-testid={`${testIdPrefix}-publish-version-${item.id}`}
               >
