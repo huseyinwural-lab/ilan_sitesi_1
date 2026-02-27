@@ -1194,6 +1194,12 @@ const AdminCategories = () => {
     return levelSelections.slice(0, levelIndex);
   };
 
+  const getCategoryNumberLabel = (levelIndex, itemIndex) => {
+    const parentPath = getParentPathForLevel(levelIndex);
+    const pathNumbers = [...parentPath, itemIndex].map((part) => Number(part) + 1);
+    return pathNumbers.join(".");
+  };
+
   const getLevelItems = (levelIndex) => {
     if (levelIndex === 0) return subcategories;
     const parent = getNodeByPath(subcategories, getParentPathForLevel(levelIndex));
@@ -2098,6 +2104,22 @@ const AdminCategories = () => {
       slug: node.slug.trim().toLowerCase(),
       is_complete: true,
     })));
+
+    if (path.length === 1) {
+      const completedIndex = path[0];
+      setSubcategories((prev) => {
+        if (!Array.isArray(prev)) return prev;
+        const hasOpenDraftAfterCurrent = prev.slice(completedIndex + 1).some((item) => !item?.is_complete);
+        if (hasOpenDraftAfterCurrent) return prev;
+        return [...prev, createSubcategoryDraft()];
+      });
+      setLevelSelections((prev) => {
+        const next = prev.slice(0, 1);
+        next[0] = completedIndex + 1;
+        return next;
+      });
+      resetLevelCompletionFrom(0);
+    }
   };
 
   const updateSubcategory = (path, patch) => {
