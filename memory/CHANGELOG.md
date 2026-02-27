@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## 2026-02-27 — P65 Header + Theme P0 Simplification
+
+**Header Fazı (P0)**
+- Header ownership modeli sadeleştirildi: global + dealer override.
+- Individual header admin edit akışı kaldırıldı (UI tabı kaldırma + backend `403 FEATURE_DISABLED`).
+- Corporate header effective erişimi dealer scope zorunlu (`403 UNAUTHORIZED_SCOPE`).
+- Header publish snapshot scope-aware zorunlu alanlar: `owner_type`, `owner_id`, `config_version`, `resolved_config_hash`.
+- Scope mismatch için `409 SCOPE_CONFLICT` kontratı eklendi.
+
+**Theme Fazı (P0)**
+- Theme scope modeli sadeleşti: `system` + `tenant`.
+- `user` scope assignment kapatıldı (`400 INVALID_THEME_SCOPE`).
+- Deterministik precedence: `Dealer Override > Global Theme`.
+- Effective response’ta resolved tokens + resolution metadata/hash eklendi.
+
+**Dokümanlar & Kanıt**
+- `/app/docs/HEADER_ARCHITECTURE_V2.md`
+- `/app/docs/THEME_OVERRIDE_MODEL_V2.md`
+- `/app/docs/HEADER_THEME_P0_EVIDENCE.md`
+- Testing agent: `/app/test_reports/iteration_31.json` (PASS)
+
 ## 2026-02-27 — P64 Publish Hardening P0
 
 **Kapsam**
