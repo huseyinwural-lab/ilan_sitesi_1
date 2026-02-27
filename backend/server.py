@@ -13095,6 +13095,12 @@ async def _moderation_transition_sql(
     listing.updated_at = now
     if new_status == "published":
         listing.published_at = now
+        snapshot_result = await session.execute(
+            select(PricingPriceSnapshot).where(PricingPriceSnapshot.listing_id == listing.id)
+        )
+        snapshot = snapshot_result.scalar_one_or_none()
+        _apply_snapshot_listing_type_to_listing(listing, snapshot, now=now)
+        await _consume_campaign_item_slot_if_needed(session, snapshot)
 
     actor_id = current_user.get("id")
     actor_uuid = None
@@ -27732,6 +27738,8 @@ async def submit_vehicle_listing(
     snapshot = None
     if not quote.get("requires_payment"):
         snapshot = await _create_pricing_snapshot(session, listing, current_user, quote, policy, override_active)
+        if quote.get("type") == "campaign_item":
+            await _consume_campaign_item_slot_if_needed(session, snapshot)
 
     if quote.get("quota_used") and quote.get("subscription_id"):
         subscription = await session.get(UserPackageSubscription, uuid.UUID(quote["subscription_id"]))
