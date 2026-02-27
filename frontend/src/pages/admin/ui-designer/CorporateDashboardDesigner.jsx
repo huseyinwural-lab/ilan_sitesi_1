@@ -913,8 +913,29 @@ export const CorporateDashboardDesigner = () => {
           <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-600" data-testid="ui-designer-dashboard-publish-telemetry">
             <div data-testid="ui-designer-dashboard-telemetry-avg-lock">avg_lock_wait_ms: {publishTelemetry?.avg_lock_wait_ms ?? 0}</div>
             <div data-testid="ui-designer-dashboard-telemetry-max-lock">max_lock_wait_ms: {publishTelemetry?.max_lock_wait_ms ?? 0}</div>
-            <div data-testid="ui-designer-dashboard-telemetry-avg-duration">avg_publish_duration_ms: {publishTelemetry?.avg_publish_duration_ms ?? 0}</div>
-            <div data-testid="ui-designer-dashboard-telemetry-max-duration">max_publish_duration_ms: {publishTelemetry?.max_publish_duration_ms ?? 0}</div>
+            <div data-testid="ui-designer-dashboard-telemetry-p95-duration">publish_duration_ms_p95: {publishTelemetry?.publish_duration_ms_p95 ?? 0}</div>
+            <div data-testid="ui-designer-dashboard-telemetry-conflict-rate">conflict_rate: {publishTelemetry?.conflict_rate ?? 0}%</div>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-600" data-testid="ui-designer-dashboard-kpi-grid">
+            <div data-testid="ui-designer-dashboard-kpi-median-retry">median_retry_count: {publishKpi?.median_retry_count ?? 0}</div>
+            <div data-testid="ui-designer-dashboard-kpi-time-to-publish">time_to_publish_ms: {publishKpi?.time_to_publish_ms ?? 0}</div>
+            <div data-testid="ui-designer-dashboard-kpi-conflict-resolution">conflict_resolution_time_ms: {publishKpi?.conflict_resolution_time_ms ?? 0}</div>
+            <div data-testid="ui-designer-dashboard-kpi-success-rate">publish_success_rate: {publishKpi?.publish_success_rate ?? 0}%</div>
+          </div>
+          <div className="mt-2" data-testid="ui-designer-dashboard-trend-charts">
+            <div className="text-[11px] text-slate-600" data-testid="ui-designer-dashboard-trend-conflict-label">Son 24s Conflict Rate Sparkline</div>
+            <SparklineBars points={publishTrends} valueKey="conflict_rate" testId="ui-designer-dashboard-trend-conflict" />
+            <div className="mt-1 text-[11px] text-slate-600" data-testid="ui-designer-dashboard-trend-lock-label">Son 24s Lock Wait Sparkline</div>
+            <SparklineBars points={publishTrends} valueKey="avg_lock_wait_ms" testId="ui-designer-dashboard-trend-lock" />
+          </div>
+          <div className="mt-2 space-y-1" data-testid="ui-designer-dashboard-alert-list">
+            {(publishAlerts || []).length === 0 ? (
+              <div className="text-[11px] text-slate-400" data-testid="ui-designer-dashboard-alert-empty">Aktif alert yok</div>
+            ) : (publishAlerts || []).map((alert, index) => (
+              <div key={`${alert.metric}-${index}`} className={`rounded border px-2 py-1 text-[11px] ${alert.severity === 'critical' ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-amber-300 bg-amber-50 text-amber-700'}`} data-testid={`ui-designer-dashboard-alert-${index}`}>
+                {alert.severity.toUpperCase()} • {alert.metric} = {alert.value} (threshold {alert.threshold})
+              </div>
+            ))}
           </div>
           <div className="mt-2 max-h-52 space-y-2 overflow-auto" data-testid="ui-designer-dashboard-publish-audit-list">
             {publishAuditItems.length === 0 ? (
