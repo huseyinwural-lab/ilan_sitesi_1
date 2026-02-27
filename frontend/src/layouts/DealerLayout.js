@@ -498,7 +498,7 @@ export default function DealerLayout() {
                 {primaryMenuItems.map((item) => {
                   const Icon = iconMap[item.icon] || LayoutDashboard;
                   const hasChildren = Array.isArray(item.children) && item.children.length > 0;
-                  const isActive = isCorporateMenuActive(item, activePath);
+                  const isActive = activePrimaryMenu?.key === item.key;
                   const isOpen = openMenuKey === item.key;
 
                   return (
