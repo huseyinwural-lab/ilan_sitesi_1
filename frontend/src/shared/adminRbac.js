@@ -44,6 +44,7 @@ export const ADMIN_ROUTE_RULES = [
   { pattern: /^\/admin\/site-design\/header$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/site-design\/footer$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/site-design\/theme$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
+  { pattern: /^\/admin\/site-design\/showcase$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/user-interface-design$/, roles: ADMIN_ROLE_GROUPS.uiDesigner },
   { pattern: /^\/admin\/ops\/publish-health$/, roles: ADMIN_ROLE_GROUPS.opsReliability },
   { pattern: /^\/admin\/info-pages$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
