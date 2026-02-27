@@ -187,131 +187,19 @@ class TestUIPublishWorkflow:
         rolled = rollback_response.json()
         assert rolled.get("rolled_back_to") == baseline_id
 
-    def test_individual_header_diff_publish_rollback(self, admin_token: str):
+    def test_individual_header_feature_disabled(self, admin_token: str):
         scope_id = f"tenant-p62-header-{uuid.uuid4().hex[:10]}"
-
-        baseline_header = {
-            "rows": [
-                {
-                    "id": "row1",
-                    "title": "Row 1",
-                    "visible": True,
-                    "blocks": [
-                        {"id": "logo", "type": "logo", "label": "Logo", "visible": True},
-                        {"id": "search", "type": "search", "label": "Arama", "visible": True},
-                    ],
-                },
-                {
-                    "id": "row2",
-                    "title": "Row 2",
-                    "visible": True,
-                    "blocks": [
-                        {"id": "quick-links", "type": "quick_links", "label": "Hızlı Link", "visible": True},
-                    ],
-                },
-            ],
-            "logo": {"fallback_text": "ANNONCIA"},
-        }
-
-        save_baseline = requests.post(
+        response = requests.post(
             f"{BASE_URL}/api/admin/ui/configs/header",
             json={
                 "segment": "individual",
                 "scope": "tenant",
                 "scope_id": scope_id,
                 "status": "draft",
-                "config_data": baseline_header,
+                "config_data": {"rows": []},
             },
             headers=_auth_headers(admin_token),
         )
-        assert save_baseline.status_code == 200, f"Baseline header save failed: {save_baseline.text[:300]}"
-        baseline_id = save_baseline.json().get("item", {}).get("id")
-        baseline_version = save_baseline.json().get("item", {}).get("version")
-        assert baseline_id
-
-        publish_baseline = requests.post(
-            f"{BASE_URL}/api/admin/ui/configs/header/publish",
-            json={
-                "segment": "individual",
-                "scope": "tenant",
-                "scope_id": scope_id,
-                "config_id": baseline_id,
-                "config_version": baseline_version,
-                "require_confirm": True,
-            },
-            headers=_auth_headers(admin_token),
-        )
-        assert publish_baseline.status_code == 200, f"Baseline header publish failed: {publish_baseline.text[:300]}"
-
-        next_header = {
-            "rows": [
-                {
-                    "id": "row1",
-                    "title": "Row 1",
-                    "visible": True,
-                    "blocks": [
-                        {"id": "logo", "type": "logo", "label": "Logo", "visible": True},
-                    ],
-                },
-                {
-                    "id": "row2",
-                    "title": "Row 2",
-                    "visible": True,
-                    "blocks": [
-                        {"id": "quick-links", "type": "quick_links", "label": "Hızlı Link", "visible": False},
-                        {"id": "search", "type": "search", "label": "Arama", "visible": True},
-                    ],
-                },
-            ],
-            "logo": {"fallback_text": "ANNONCIA"},
-        }
-
-        save_next = requests.post(
-            f"{BASE_URL}/api/admin/ui/configs/header",
-            json={
-                "segment": "individual",
-                "scope": "tenant",
-                "scope_id": scope_id,
-                "status": "draft",
-                "config_data": next_header,
-            },
-            headers=_auth_headers(admin_token),
-        )
-        assert save_next.status_code == 200, f"Next header save failed: {save_next.text[:300]}"
-        next_version = save_next.json().get("item", {}).get("version")
-
-        diff_response = requests.get(
-            f"{BASE_URL}/api/admin/ui/configs/header/diff?segment=individual&scope=tenant&scope_id={scope_id}&from_status=published&to_status=draft",
-            headers={"Authorization": f"Bearer {admin_token}"},
-        )
-        assert diff_response.status_code == 200, f"Header diff failed: {diff_response.text[:300]}"
-        diff_payload = diff_response.json().get("diff") or {}
-        assert diff_payload.get("has_changes") is True
-
-        publish_next = requests.post(
-            f"{BASE_URL}/api/admin/ui/configs/header/publish",
-            json={
-                "segment": "individual",
-                "scope": "tenant",
-                "scope_id": scope_id,
-                "config_version": next_version,
-                "require_confirm": True,
-            },
-            headers=_auth_headers(admin_token),
-        )
-        assert publish_next.status_code == 200, f"Header publish failed: {publish_next.text[:300]}"
-
-        rollback_response = requests.post(
-            f"{BASE_URL}/api/admin/ui/configs/header/rollback",
-            json={
-                "segment": "individual",
-                "scope": "tenant",
-                "scope_id": scope_id,
-                "target_config_id": baseline_id,
-                "rollback_reason": "header rollback reason",
-                "require_confirm": True,
-            },
-            headers=_auth_headers(admin_token),
-        )
-        assert rollback_response.status_code == 200, f"Header rollback failed: {rollback_response.text[:300]}"
-        assert rollback_response.json().get("rolled_back_to") == baseline_id
+        assert response.status_code == 403, f"Expected 403, got {response.status_code}: {response.text[:300]}"
+        detail = response.json().get("detail") or {}
+        assert detail.get("code") == "FEATURE_DISABLED"
