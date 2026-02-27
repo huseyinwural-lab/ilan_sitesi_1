@@ -210,6 +210,26 @@ const SortableWidgetCard = ({ widget, width, largeScreen, onRemove, onToggleEnab
   );
 };
 
+const SparklineBars = ({ points, valueKey, testId }) => {
+  const values = (points || []).map((point) => Number(point?.[valueKey] || 0));
+  const maxValue = Math.max(1, ...values);
+  return (
+    <div className="flex h-12 items-end gap-1" data-testid={testId}>
+      {values.map((value, index) => {
+        const heightPercent = Math.max(6, (value / maxValue) * 100);
+        return (
+          <div
+            key={`${testId}-${index}`}
+            className="w-1.5 rounded bg-slate-300"
+            style={{ height: `${heightPercent}%` }}
+            data-testid={`${testId}-bar-${index}`}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
 export const CorporateDashboardDesigner = () => {
   const authHeader = useMemo(() => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }), []);
   const sensors = useSensors(
