@@ -144,7 +144,7 @@ export default function AdminPublishHealthPage() {
   const channelBreakdown = alertMetrics?.channel_breakdown || { slack: null, smtp: null, pd: null };
 
   return (
-    <div className="space-y-6" data-testid="ops-publish-health-page">
+    <div className="min-w-0 space-y-6" data-testid="ops-publish-health-page">
       <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 p-6" data-testid="ops-publish-health-header">
         <h1 className="text-3xl font-semibold text-slate-900" data-testid="ops-publish-health-title">Publish Health & Alert Reliability</h1>
         <p className="mt-2 text-sm text-slate-600" data-testid="ops-publish-health-subtitle">
@@ -153,11 +153,11 @@ export default function AdminPublishHealthPage() {
       </div>
 
       <section className="grid gap-4 xl:grid-cols-3" data-testid="ops-alert-reliability-grid">
-        <article className="xl:col-span-2 rounded-2xl border bg-white p-5" data-testid="ops-alert-success-rate-card">
+        <article className="min-w-0 overflow-hidden xl:col-span-2 rounded-2xl border bg-white p-5" data-testid="ops-alert-success-rate-card">
           <div className="flex flex-wrap items-center justify-between gap-3" data-testid="ops-alert-success-rate-card-header">
             <div>
               <div className="text-sm font-semibold text-slate-900" data-testid="ops-alert-success-rate-title">Son 24s Alarm Teslimat Başarı Oranı</div>
-              <div className="text-xs text-slate-500" data-testid="ops-alert-success-rate-definition">alert_delivery_success_rate_24s = successful_deliveries / total_attempts</div>
+              <div className="break-all text-xs text-slate-500" data-testid="ops-alert-success-rate-definition">alert_delivery_success_rate_24s = successful_deliveries / total_attempts</div>
             </div>
             <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${reliabilityTone.badgeClass}`} data-testid="ops-alert-success-rate-status-badge">
               {reliabilityTone.status.toUpperCase()}
@@ -196,7 +196,7 @@ export default function AdminPublishHealthPage() {
           </div>
         </article>
 
-        <article className="rounded-2xl border bg-white p-5" data-testid="ops-alert-rerun-card">
+        <article className="min-w-0 overflow-hidden rounded-2xl border bg-white p-5" data-testid="ops-alert-rerun-card">
           <div className="text-sm font-semibold text-slate-900" data-testid="ops-alert-rerun-title">Tek Tık Yeniden Simülasyon</div>
           <div className="mt-1 text-xs text-slate-500" data-testid="ops-alert-rerun-description">
             Sadece Admin/Ops rolü erişebilir. Rate limit: dakikada en fazla 3.
@@ -232,7 +232,7 @@ export default function AdminPublishHealthPage() {
           {simulationError ? <div className="mt-3 text-xs text-rose-600" data-testid="ops-alert-rerun-error">{simulationError}</div> : null}
           {lastSimulation ? (
             <div className="mt-3 rounded-md border bg-slate-50 p-3" data-testid="ops-alert-rerun-result-card">
-              <div className="text-xs text-slate-700" data-testid="ops-alert-rerun-result-correlation">correlation_id: {lastSimulation.correlation_id}</div>
+              <div className="break-all text-xs text-slate-700" data-testid="ops-alert-rerun-result-correlation">correlation_id: {lastSimulation.correlation_id}</div>
               <div className="text-xs text-slate-700" data-testid="ops-alert-rerun-result-delivery-status">delivery_status: {lastSimulation.delivery_status}</div>
               <div className="mt-2 space-y-2" data-testid="ops-alert-rerun-channel-results">
                 {Object.keys(lastSimulation.channel_results || {}).length === 0 ? (
@@ -244,17 +244,17 @@ export default function AdminPublishHealthPage() {
                     <div data-testid={`ops-alert-rerun-channel-result-status-${channel}`}>
                       {channel}: {detail.delivery_status}
                     </div>
-                    <div className="text-slate-500" data-testid={`ops-alert-rerun-channel-result-provider-${channel}`}>
+                    <div className="break-all text-slate-500" data-testid={`ops-alert-rerun-channel-result-provider-${channel}`}>
                       provider_code={detail.provider_code ?? detail.smtp_response_code ?? '-'}
                     </div>
-                    <div className="text-slate-500" data-testid={`ops-alert-rerun-channel-result-failure-${channel}`}>
+                    <div className="break-all text-slate-500" data-testid={`ops-alert-rerun-channel-result-failure-${channel}`}>
                       failure_reason={detail.last_failure_classification || '-'}
                     </div>
                   </div>
                 ))}
               </div>
               {lastSimulation.fail_fast?.missing_keys?.length ? (
-                <div className="mt-2 text-[11px] text-amber-700" data-testid="ops-alert-rerun-fail-fast-missing-keys">
+                <div className="mt-2 break-all text-[11px] text-amber-700" data-testid="ops-alert-rerun-fail-fast-missing-keys">
                   Missing keys: {lastSimulation.fail_fast.missing_keys.join(', ')}
                 </div>
               ) : null}
