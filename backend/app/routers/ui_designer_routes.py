@@ -899,6 +899,20 @@ def _validate_owner_scope_or_raise(row: UIConfig, owner_type: Optional[str], own
             extras={"hint": "Publish öncesi scope owner bilgisi gönderilmelidir"},
         )
 
+    expected_owner_type, expected_owner_id = _expected_owner_scope_for_row(row)
+    if normalized_owner_type != expected_owner_type or normalized_owner_id != expected_owner_id:
+        raise _ui_http_error(
+            code=PUBLISH_ERROR_SCOPE_CONFLICT,
+            message="owner scope mismatch",
+            status_code=409,
+            extras={
+                "expected_owner_type": expected_owner_type,
+                "expected_owner_id": expected_owner_id,
+                "your_owner_type": normalized_owner_type,
+                "your_owner_id": normalized_owner_id,
+            },
+        )
+
 
 async def _record_publish_attempt_audit(
     session: AsyncSession,
@@ -952,20 +966,6 @@ async def _record_publish_attempt_audit(
     )
     if commit_now:
         await session.commit()
-
-    expected_owner_type, expected_owner_id = _expected_owner_scope_for_row(row)
-    if normalized_owner_type != expected_owner_type or normalized_owner_id != expected_owner_id:
-        raise _ui_http_error(
-            code=PUBLISH_ERROR_SCOPE_CONFLICT,
-            message="owner scope mismatch",
-            status_code=409,
-            extras={
-                "expected_owner_type": expected_owner_type,
-                "expected_owner_id": expected_owner_id,
-                "your_owner_type": normalized_owner_type,
-                "your_owner_id": normalized_owner_id,
-            },
-        )
 
 
 def _scope_clause(scope: str, scope_id: Optional[str]):
