@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## 2026-02-26 — P63 Logo Upload Contract Stabilization
+
+**Kapsam**
+- Kurumsal header logo upload API kontratı standardize edildi: `detail.code/message/details`.
+- Error code’lar: `INVALID_FILE_TYPE`, `FILE_TOO_LARGE`, `INVALID_ASPECT_RATIO`, `INVALID_FILE_CONTENT`, `STORAGE_PIPELINE_ERROR`.
+- Frontend `CorporateHeaderDesigner` içinde inline error banner eklendi (özet + beklenen/gelen + kod).
+- Upload sonrası preview URL cache-bust eklendi (`?v=timestamp`), success toast + güncel preview akışı doğrulandı.
+- Storage hattı görünürlüğü: upload success response içine `storage_health` ve yeni `GET /api/admin/ui/logo-assets/health` endpointi.
+- RBAC/scope doğrulaması: dealer 403, `scope=system + scope_id` normalize davranışı doğrulandı.
+
+**Kanıt/Test**
+- Testing agent raporu: `/app/test_reports/iteration_29.json` (PASS)
+- Evidence: `/app/docs/LOGO_UPLOAD_P0_STABILIZATION_EVIDENCE.md`
+- Pytest: `backend/tests/test_p63_logo_upload_contract.py`, `backend/tests/test_p60_corporate_header_logo.py`
+
 ## 2026-02-26 — P62 Dealer Dashboard V2 P1 Frontend Integration
 
 **Kapsam**
