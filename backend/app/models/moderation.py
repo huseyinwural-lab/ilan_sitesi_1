@@ -76,9 +76,11 @@ class Listing(Base):
     premium_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     
-    # Showcase (Added in P13)
+    # Showcase / Doping (P13 + P88)
     is_showcase: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     showcase_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    featured_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    urgent_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     # Showcase (Added in P13)
     is_showcase: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     showcase_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -94,6 +96,8 @@ class Listing(Base):
         Index('ix_listings_country_status', 'country', 'status'),
         Index('ix_listings_module_status', 'module', 'status'),
         Index('ix_listings_moderation', 'status', 'country', 'module', 'created_at'),
+        Index('ix_listings_featured_until', 'featured_until'),
+        Index('ix_listings_urgent_until', 'urgent_until'),
         Index('ix_listings_make_id', 'make_id'),
         Index('ix_listings_model_id', 'model_id'),
     )
