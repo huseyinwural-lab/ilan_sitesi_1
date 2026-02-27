@@ -15918,6 +15918,7 @@ async def dealer_messages(
             "summary": {
                 "listing_messages": 0,
                 "notifications": len(notification_items),
+                "unread_listing_messages": 0,
             },
         }
 
