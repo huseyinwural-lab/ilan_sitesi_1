@@ -14,6 +14,7 @@ export const ADMIN_ROLE_GROUPS = {
   masterdataManager: ['super_admin', 'masterdata_manager'],
   system: ['super_admin', 'country_admin'],
   uiDesigner: ['super_admin', 'country_admin'],
+  opsReliability: ['super_admin', 'country_admin', 'ops'],
 };
 
 export const ADMIN_ROUTE_RULES = [
@@ -44,6 +45,7 @@ export const ADMIN_ROUTE_RULES = [
   { pattern: /^\/admin\/site-design\/footer$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/site-design\/theme$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/user-interface-design$/, roles: ADMIN_ROLE_GROUPS.uiDesigner },
+  { pattern: /^\/admin\/ops\/publish-health$/, roles: ADMIN_ROLE_GROUPS.opsReliability },
   { pattern: /^\/admin\/info-pages$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/categories$/, roles: ADMIN_ROLE_GROUPS.catalogView },
   { pattern: /^\/admin\/categories\/import-export$/, roles: ADMIN_ROLE_GROUPS.catalogAdmin },
