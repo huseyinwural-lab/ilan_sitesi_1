@@ -21179,6 +21179,10 @@ async def admin_create_category(
         country_code=country_code,
     )
 
+    image_url = _normalize_category_image_url(payload.image_url)
+    if parent and image_url:
+        raise _category_error("CATEGORY_IMAGE_ROOT_ONLY", "Kategori görseli sadece ana kategoride kullanılabilir.")
+
     vehicle_segment = None
     vehicle_link_status: Optional[Dict[str, Any]] = None
     if module_value == "vehicle":
@@ -21251,7 +21255,7 @@ async def admin_create_category(
         module=module_value,
         slug=slug_json,
         icon=None,
-        image_url=None,
+        image_url=image_url,
         is_enabled=payload.active_flag if payload.active_flag is not None else True,
         is_visible_on_home=False,
         is_deleted=False,
