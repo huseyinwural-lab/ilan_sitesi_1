@@ -16860,7 +16860,7 @@ async def dealer_reports(
         )
     ).scalar_one_or_none()
 
-    package_name = "Profesyonel Emlak Ofisi / Taahhütlü Pro 50"
+    package_name = None
     quota_limit = 0
     if latest_invoice and latest_invoice.plan_id:
         plan = await session.get(Plan, latest_invoice.plan_id)
