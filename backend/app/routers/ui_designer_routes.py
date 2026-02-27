@@ -48,6 +48,7 @@ LOGO_ERROR_INVALID_FILE_CONTENT = "INVALID_FILE_CONTENT"
 LOGO_ERROR_STORAGE_PIPELINE = "STORAGE_PIPELINE_ERROR"
 PUBLISH_ERROR_MISSING_CONFIG_VERSION = "MISSING_CONFIG_VERSION"
 PUBLISH_ERROR_CONFIG_VERSION_CONFLICT = "CONFIG_VERSION_CONFLICT"
+PUBLISH_ERROR_CONFIG_HASH_MISMATCH = "CONFIG_HASH_MISMATCH"
 PUBLISH_ERROR_LOCKED = "PUBLISH_LOCKED"
 ROLLBACK_ERROR_MISSING_REASON = "MISSING_ROLLBACK_REASON"
 PUBLISH_ERROR_SCOPE_CONFLICT = "SCOPE_CONFLICT"
@@ -741,6 +742,7 @@ class UIConfigPublishPayload(BaseModel):
     owner_type: Optional[str] = None
     owner_id: Optional[str] = None
     config_version: Optional[int] = None
+    resolved_config_hash: Optional[str] = None
     retry_count: int = 0
     require_confirm: bool = False
 
@@ -749,6 +751,7 @@ class UIConfigLegacyPublishPayload(BaseModel):
     owner_type: Optional[str] = None
     owner_id: Optional[str] = None
     config_version: Optional[int] = None
+    resolved_config_hash: Optional[str] = None
     retry_count: int = 0
 
 
