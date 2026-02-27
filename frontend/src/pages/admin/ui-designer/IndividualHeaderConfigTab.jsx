@@ -91,7 +91,12 @@ export const IndividualHeaderConfigTab = () => {
     }
   };
 
-  const publishConfig = async (configId = latestConfigId, configVersion = latestConfigVersion) => {
+  const publishConfig = async (
+    configId = latestConfigId,
+    configVersion = latestConfigVersion,
+    ownerType = scope === 'tenant' ? 'dealer' : 'global',
+    ownerId = scope === 'tenant' ? scopeId.trim() : 'global',
+  ) => {
     if (!configId) {
       setError('Yayınlanacak versiyon bulunamadı');
       return;
@@ -108,6 +113,8 @@ export const IndividualHeaderConfigTab = () => {
         },
         body: JSON.stringify({
           config_version: configVersion,
+          owner_type: ownerType,
+          owner_id: ownerId,
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -115,6 +122,9 @@ export const IndividualHeaderConfigTab = () => {
         const detail = data?.detail;
         if (response.status === 400 && detail?.code === 'MISSING_CONFIG_VERSION') {
           throw new Error('Version bilgisi eksik. Lütfen sayfayı yenileyin ve tekrar deneyin.');
+        }
+        if (response.status === 409 && detail?.code === 'SCOPE_CONFLICT') {
+          throw new Error('Publish scope doğrulaması başarısız. Scope bilgisini kontrol edin.');
         }
         throw new Error(detail?.message || data?.detail || 'Yayınlama başarısız');
       }
@@ -225,7 +235,7 @@ export const IndividualHeaderConfigTab = () => {
               </div>
               <button
                 type="button"
-                onClick={() => publishConfig(item.id, item.version)}
+                onClick={() => publishConfig(item.id, item.version, item.scope === 'tenant' ? 'dealer' : 'global', item.scope === 'tenant' ? (item.scope_id || '') : 'global')}
                 className="rounded border px-2 py-1"
                 data-testid={`ui-designer-individual-header-publish-version-${item.id}`}
               >
