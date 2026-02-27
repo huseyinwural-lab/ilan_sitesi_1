@@ -30317,7 +30317,7 @@ async def create_pricing_campaign_item(
         actor=current_user,
         resource_type="pricing_campaign_item",
         resource_id=str(item.id),
-        metadata={"scope": item.scope, "listing_quota": item.listing_quota},
+        metadata={"scope": item.scope, "listing_type": item.listing_type, "listing_quota": item.listing_quota},
         request=request,
         country_code=current_user.get("country_code"),
     )
@@ -30396,7 +30396,7 @@ async def update_pricing_campaign_item(
         actor=current_user,
         resource_type="pricing_campaign_item",
         resource_id=str(item.id),
-        metadata={"scope": item.scope},
+        metadata={"scope": item.scope, "listing_type": item.listing_type},
         request=request,
         country_code=current_user.get("country_code"),
     )
@@ -30438,7 +30438,7 @@ async def update_pricing_campaign_item_status(
         actor=current_user,
         resource_type="pricing_campaign_item",
         resource_id=str(item.id),
-        metadata={"scope": item.scope, "is_active": payload.is_active},
+        metadata={"scope": item.scope, "listing_type": item.listing_type, "is_active": payload.is_active},
         request=request,
         country_code=current_user.get("country_code"),
     )
@@ -30476,7 +30476,7 @@ async def delete_pricing_campaign_item(
         actor=current_user,
         resource_type="pricing_campaign_item",
         resource_id=str(item.id),
-        metadata={"scope": item.scope},
+        metadata={"scope": item.scope, "listing_type": item.listing_type},
         request=request,
         country_code=current_user.get("country_code"),
     )
