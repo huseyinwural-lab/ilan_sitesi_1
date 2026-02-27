@@ -16054,7 +16054,36 @@ async def dealer_customers(
         await session.execute(select(Conversation).where(Conversation.seller_id == dealer_uuid))
     ).scalars().all()
     if not conversations:
-        return {"items": []}
+        non_store_users = (
+            await session.execute(
+                select(SqlUser)
+                .where(
+                    SqlUser.id != dealer_uuid,
+                    SqlUser.role == "individual",
+                    SqlUser.deleted_at.is_(None),
+                )
+                .order_by(desc(SqlUser.created_at))
+                .limit(20)
+            )
+        ).scalars().all()
+
+        return {
+            "items": [],
+            "non_store_users": [
+                {
+                    "user_id": str(row.id),
+                    "full_name": row.full_name,
+                    "email": row.email,
+                    "status": row.status,
+                    "is_active": bool(row.is_active),
+                }
+                for row in non_store_users
+            ],
+            "summary": {
+                "users_count": 0,
+                "non_store_users_count": len(non_store_users),
+            },
+        }
 
     conversation_ids = [row.id for row in conversations]
     messages = (
@@ -16099,13 +16128,47 @@ async def dealer_customers(
                 "customer_id": str(buyer_id),
                 "customer_email": user.email if user else None,
                 "customer_name": user.full_name if user else None,
+                "customer_status": user.status if user else "unknown",
+                "customer_is_active": bool(user.is_active) if user else False,
                 "conversation_count": int(stats["conversation_count"]),
                 "total_messages": int(stats["total_messages"]),
                 "last_contact_at": stats["last_contact_at"].isoformat() if stats["last_contact_at"] else None,
             }
         )
     items.sort(key=lambda item: item.get("last_contact_at") or "", reverse=True)
-    return {"items": items}
+
+    buyer_uuid_set = {uuid.UUID(item["customer_id"]) for item in items if item.get("customer_id")}
+    non_store_query = (
+        select(SqlUser)
+        .where(
+            SqlUser.id != dealer_uuid,
+            SqlUser.role == "individual",
+            SqlUser.deleted_at.is_(None),
+        )
+        .order_by(desc(SqlUser.created_at))
+    )
+    if buyer_uuid_set:
+        non_store_query = non_store_query.where(~SqlUser.id.in_(buyer_uuid_set))
+
+    non_store_users = (await session.execute(non_store_query.limit(20))).scalars().all()
+
+    return {
+        "items": items,
+        "non_store_users": [
+            {
+                "user_id": str(row.id),
+                "full_name": row.full_name,
+                "email": row.email,
+                "status": row.status,
+                "is_active": bool(row.is_active),
+            }
+            for row in non_store_users
+        ],
+        "summary": {
+            "users_count": len(items),
+            "non_store_users_count": len(non_store_users),
+        },
+    }
 
 
 @api_router.get("/dealer/reports")
