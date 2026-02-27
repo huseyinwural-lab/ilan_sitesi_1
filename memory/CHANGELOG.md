@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 2026-02-27 — P73 Özet Menüsü PDF İçerik Doldurma
+
+- `DealerOverview` sayfası Özet için PDF’e göre yeniden kurgulandı:
+  - Mağaza Performansı (24s/7g ziyaret)
+  - İlan ziyaret kırılım tablosu
+  - Paket kartı (kullanılan/kalan + satın alma geçişi)
+  - KPI kartları (yayındaki ilan, talebi olan müşteri, müşteriye uygun ilan)
+  - Veri uyarı alanı + hızlı geçiş kartları
+- `GET /api/dealer/dashboard/summary` endpointine `overview` bloğu eklendi.
+- Row2 ana menüde aktiflik tekilleştirildi (aynı route kullanan placeholder başlıklar çakışmıyor).
+- Kanıt: `/app/docs/P1_DEALER_OVERVIEW_PDF_ALIGNMENT_EVIDENCE.md`
+
 ## 2026-02-27 — P72 Kurumsal Menü Satır Yapısı (Row2 Yatay Menü)
 
 - 1. satır kurumsal header korundu.
