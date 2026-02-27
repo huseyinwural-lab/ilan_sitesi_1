@@ -13577,14 +13577,23 @@ async def admin_update_listing_doping(
         listing.is_showcase = True
         listing.showcase_expires_at = target_until
         listing.urgent_until = None
+        listing.paid_until = None
     elif payload.doping_type == "urgent":
         listing.urgent_until = target_until
         listing.featured_until = None
         listing.is_showcase = False
         listing.showcase_expires_at = None
+        listing.paid_until = None
+    elif payload.doping_type == "paid":
+        listing.paid_until = target_until
+        listing.featured_until = None
+        listing.urgent_until = None
+        listing.is_showcase = False
+        listing.showcase_expires_at = None
     else:
         listing.featured_until = None
         listing.urgent_until = None
+        listing.paid_until = None
         listing.is_showcase = False
         listing.showcase_expires_at = None
 
@@ -13621,8 +13630,10 @@ async def admin_update_listing_doping(
             "doping_type": _listing_doping_bucket(listing),
             "is_featured": _listing_featured_active(listing),
             "is_urgent": _listing_urgent_active(listing),
+            "is_paid": _listing_paid_active(listing),
             "featured_until": listing.featured_until.isoformat() if listing.featured_until else None,
             "urgent_until": listing.urgent_until.isoformat() if listing.urgent_until else None,
+            "paid_until": listing.paid_until.isoformat() if listing.paid_until else None,
         },
     }
 
