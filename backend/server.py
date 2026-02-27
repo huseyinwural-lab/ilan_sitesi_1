@@ -26613,6 +26613,39 @@ def _listing_media_meta(listing: Listing) -> list[dict]:
     return attrs.get("media") or []
 
 
+def _listing_featured_active(listing: Listing, *, now: Optional[datetime] = None) -> bool:
+    ref = now or datetime.now(timezone.utc)
+    if listing.featured_until and listing.featured_until > ref:
+        return True
+    if listing.is_showcase:
+        if listing.showcase_expires_at is None:
+            return True
+        return listing.showcase_expires_at > ref
+    return False
+
+
+def _listing_urgent_active(listing: Listing, *, now: Optional[datetime] = None) -> bool:
+    ref = now or datetime.now(timezone.utc)
+    return bool(listing.urgent_until and listing.urgent_until > ref)
+
+
+def _listing_doping_bucket(listing: Listing, *, now: Optional[datetime] = None) -> str:
+    # Öncelik (kullanıcı onayı): Vitrin > Acil > Ücretsiz
+    if _listing_featured_active(listing, now=now):
+        return "showcase"
+    if _listing_urgent_active(listing, now=now):
+        return "urgent"
+    return "free"
+
+
+def _listing_applicant_type(listing: Listing, owner: Optional[SqlUser] = None) -> str:
+    owner_role = (owner.role if owner else None) or ""
+    owner_scope = (owner.portal_scope if owner else None) or ""
+    if listing.is_dealer_listing or owner_role == "dealer" or owner_scope == "dealer":
+        return "corporate"
+    return "individual"
+
+
 def _listing_to_dict(listing: Listing) -> dict:
     attrs = listing.attributes or {}
     media_meta = _listing_media_meta(listing)
