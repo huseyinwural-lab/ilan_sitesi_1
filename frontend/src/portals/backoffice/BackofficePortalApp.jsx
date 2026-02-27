@@ -88,7 +88,15 @@ export default function BackofficePortalApp() {
         path="/listings/urgent"
         element={<AdminLayout><AdminListingsPage title="Acil İlanlar" dataTestId="admin-listings-urgent-page" initialDopingType="urgent" /></AdminLayout>}
       />
+      <Route
+        path="/listings/paid"
+        element={<AdminLayout><AdminListingsPage title="Ücretli İlanlar" dataTestId="admin-listings-paid-page" initialDopingType="paid" /></AdminLayout>}
+      />
       <Route path="/individual-listing-applications" element={<AdminLayout><IndividualListingApplicationsPage /></AdminLayout>} />
+      <Route
+        path="/individual-listing-applications/paid"
+        element={<AdminLayout><AdminListingsPage title="Bireysel Ücretli İlan Başvuruları" dataTestId="individual-listing-applications-paid-page" applicantType="individual" applicationsMode initialDopingType="paid" /></AdminLayout>}
+      />
       <Route
         path="/individual-listing-applications/featured"
         element={<AdminLayout><AdminListingsPage title="Bireysel Vitrin İlan Başvuruları" dataTestId="individual-listing-applications-featured-page" applicantType="individual" applicationsMode initialDopingType="showcase" /></AdminLayout>}
@@ -98,6 +106,10 @@ export default function BackofficePortalApp() {
         element={<AdminLayout><AdminListingsPage title="Bireysel Acil İlan Başvuruları" dataTestId="individual-listing-applications-urgent-page" applicantType="individual" applicationsMode initialDopingType="urgent" /></AdminLayout>}
       />
       <Route path="/corporate-listing-applications" element={<AdminLayout><CorporateListingApplicationsPage /></AdminLayout>} />
+      <Route
+        path="/corporate-listing-applications/paid"
+        element={<AdminLayout><AdminListingsPage title="Kurumsal Ücretli İlan Başvuruları" dataTestId="corporate-listing-applications-paid-page" applicantType="corporate" applicationsMode initialDopingType="paid" /></AdminLayout>}
+      />
       <Route
         path="/corporate-listing-applications/featured"
         element={<AdminLayout><AdminListingsPage title="Kurumsal Vitrin İlan Başvuruları" dataTestId="corporate-listing-applications-featured-page" applicantType="corporate" applicationsMode initialDopingType="showcase" /></AdminLayout>}
