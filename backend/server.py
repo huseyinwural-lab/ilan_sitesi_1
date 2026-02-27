@@ -26649,6 +26649,10 @@ def _listing_applicant_type(listing: Listing, owner: Optional[SqlUser] = None) -
 def _listing_to_dict(listing: Listing) -> dict:
     attrs = listing.attributes or {}
     media_meta = _listing_media_meta(listing)
+    now = datetime.now(timezone.utc)
+    is_featured = _listing_featured_active(listing, now=now)
+    is_urgent = _listing_urgent_active(listing, now=now)
+    doping_bucket = _listing_doping_bucket(listing, now=now)
     return {
         "id": str(listing.id),
         "module": listing.module,
@@ -26673,6 +26677,11 @@ def _listing_to_dict(listing: Listing) -> dict:
         "detail_groups": attrs.get("detail_groups") or [],
         "modules": attrs.get("modules") or {},
         "payment_options": attrs.get("payment_options") or {},
+        "is_featured": is_featured,
+        "is_urgent": is_urgent,
+        "doping_bucket": doping_bucket,
+        "featured_until": listing.featured_until.isoformat() if listing.featured_until else None,
+        "urgent_until": listing.urgent_until.isoformat() if listing.urgent_until else None,
         "media": media_meta,
         "created_at": listing.created_at.isoformat() if listing.created_at else None,
         "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
