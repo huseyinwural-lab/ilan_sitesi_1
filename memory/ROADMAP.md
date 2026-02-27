@@ -1,6 +1,6 @@
 # ROADMAP
 
-**Son güncelleme:** 2026-02-26 (P63)
+**Son güncelleme:** 2026-02-27 (P64)
 
 Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tutulur.
 
@@ -64,6 +64,7 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
   - **Yeni:** P0 backend stabilization tamamlandı (`p61_ui_dashboard_cfg`, dashboard guardrails, test PASS `/app/test_reports/iteration_27.json`)
   - **Yeni:** P1 frontend entegrasyon PASS (`/app/test_reports/iteration_28.json`) — corporate dashboard grid editor + individual header editor + diff/publish/rollback akışları canlı
   - **Yeni:** Logo upload P0 stabilizasyon PASS (`/app/test_reports/iteration_29.json`) — kontrat bazlı hata kodları, inline error banner, storage health, cache bust
+  - **Yeni:** Publish Hardening P0 PASS (`/app/test_reports/iteration_30.json`) — config_version zorunluluğu (new+legacy), 409 conflict kontratı, publish lock, rollback reason zorunluluğu, görsel diff publish kontrolü
 
 ### Sıradaki Faz — Dealer Dashboard P1 (Restart)
 - **ACTIVE** 🔴
@@ -77,7 +78,8 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
   - Iterasyon 2: Undo paneli (persist öncesi), draft save/publish/rollback, revision listesi
   - Bulk 1000+ async job altyapısı (job queue + polling + idempotency + retry)
 - Sonraki iterasyon:
-  - Multi-admin conflict resolution / optimistic version check
+  - Header mimari sadeleştirme: bireysel header editörü ve bireysel tema override kaldırma (feature_disabled/403)
+  - Dealer header erişim güvenliği + publish snapshot sertleştirme
   - Widget şablon kütüphanesi (bu sprint dışı, V2 stabil sonrası UX hızlandırıcı)
   - Bulk job admin monitör ekranı (listeleme + retry butonu)
 
