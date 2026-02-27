@@ -21461,6 +21461,11 @@ async def admin_update_category(
     if payload.active_flag is not None:
         updates["is_enabled"] = payload.active_flag
 
+    payload_fields_set = set(getattr(payload, "model_fields_set", set()) or set())
+    payload_fields_set.update(getattr(payload, "__fields_set__", set()) or set())
+    if "image_url" in payload_fields_set:
+        updates["image_url"] = _normalize_category_image_url(payload.image_url)
+
     if payload.hierarchy_complete is not None:
         updates["hierarchy_complete"] = payload.hierarchy_complete
 
