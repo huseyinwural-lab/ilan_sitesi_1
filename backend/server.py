@@ -127,6 +127,7 @@ from app.models.advertisement import Advertisement, AdImpression, AdClick, AdCam
 from app.models.doping_request import DopingRequest
 from app.models.footer_layout import FooterLayout
 from app.models.site_theme_config import SiteThemeConfig
+from app.models.site_showcase_layout import SiteShowcaseLayout
 from app.models.info_page import InfoPage
 from app.models.pricing_campaign import PricingCampaign
 from app.models.pricing_campaign_item import PricingCampaignItem
