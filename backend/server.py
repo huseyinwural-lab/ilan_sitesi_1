@@ -16186,18 +16186,30 @@ async def dealer_consultant_tracking(
     fourteen_days_ago = now_dt - timedelta(days=14)
 
     consultant_roles = ["dealer", "consultant", "dealer_agent", "sales_agent", "staff"]
-    consultant_query = select(SqlUser).where(SqlUser.deleted_at.is_(None), SqlUser.id == dealer_uuid)
     if dealer_user and dealer_user.company_name:
-        consultant_query = consultant_query.union_all(
-            select(SqlUser).where(
-                SqlUser.deleted_at.is_(None),
-                SqlUser.company_name == dealer_user.company_name,
-                SqlUser.role.in_(consultant_roles),
-                SqlUser.id != dealer_uuid,
+        consultant_rows = (
+            await session.execute(
+                select(SqlUser).where(
+                    SqlUser.deleted_at.is_(None),
+                    or_(
+                        SqlUser.id == dealer_uuid,
+                        and_(
+                            SqlUser.company_name == dealer_user.company_name,
+                            SqlUser.role.in_(consultant_roles),
+                        ),
+                    ),
+                )
             )
-        )
-
-    consultant_rows = (await session.execute(consultant_query)).scalars().all()
+        ).scalars().all()
+    else:
+        consultant_rows = (
+            await session.execute(
+                select(SqlUser).where(
+                    SqlUser.deleted_at.is_(None),
+                    SqlUser.id == dealer_uuid,
+                )
+            )
+        ).scalars().all()
     consultants = {row.id: row for row in consultant_rows}
     if dealer_user:
         consultants.setdefault(dealer_user.id, dealer_user)
