@@ -169,6 +169,12 @@ export default function AdminPublishHealthPage() {
     });
   };
 
+  const openHtmlReport = () => {
+    const params = new URLSearchParams({ channels: channelSelection.join(','), window: '24h' });
+    const reportUrl = `${API}/admin/ui/configs/dashboard/ops-alerts/html-report?${params.toString()}`;
+    window.open(reportUrl, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="min-w-0 space-y-6" data-testid="ops-publish-health-page">
       <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 p-6" data-testid="ops-publish-health-header">
@@ -263,6 +269,14 @@ export default function AdminPublishHealthPage() {
               data-testid="ops-alert-metrics-refresh-button"
             >
               KPI Yenile
+            </button>
+            <button
+              type="button"
+              onClick={openHtmlReport}
+              className="h-10 rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-800"
+              data-testid="ops-alert-open-html-report-button"
+            >
+              HTML Rapor Aç
             </button>
           </div>
 
