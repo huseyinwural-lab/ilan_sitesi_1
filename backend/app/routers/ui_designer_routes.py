@@ -2872,6 +2872,284 @@ async def admin_ui_publish_audits(
     }
 
 
+def _parse_alert_window_hours(window: str) -> int:
+    raw = (window or "24h").strip().lower()
+    normalized = raw[:-1] if raw.endswith("h") else raw
+    try:
+        hours = int(normalized)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_WINDOW",
+                "message": "window formatı saat cinsinden olmalıdır (örn: 24h)",
+                "allowed": ["1h", "6h", "12h", "24h"],
+            },
+        ) from exc
+
+    if hours < 1 or hours > OPS_ALERT_MAX_WINDOW_HOURS:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_WINDOW",
+                "message": f"window en fazla {OPS_ALERT_MAX_WINDOW_HOURS} saat olabilir",
+                "max_window_hours": OPS_ALERT_MAX_WINDOW_HOURS,
+            },
+        )
+    return hours
+
+
+def _canonical_alert_channel(channel_value: Any) -> Optional[str]:
+    value = str(channel_value or "").strip().lower()
+    if value == "slack":
+        return "slack"
+    if value in {"smtp", "email"}:
+        return "smtp"
+    if value in {"pagerduty", "on_call", "on-call", "pd"}:
+        return "pd"
+    return None
+
+
+def _empty_alert_delivery_counter() -> dict[str, Any]:
+    return {
+        "total_attempts": 0,
+        "successful_deliveries": 0,
+        "failed_deliveries": 0,
+        "success_rate": 0.0,
+        "last_failure_timestamp": None,
+    }
+
+
+async def _aggregate_alert_delivery_metrics(session: AsyncSession, window_hours: int) -> dict[str, Any]:
+    now_dt = datetime.now(timezone.utc)
+    min_dt = now_dt - timedelta(hours=window_hours)
+    stmt = (
+        select(AuditLog)
+        .where(
+            AuditLog.action == "ui_config_ops_alert_delivery",
+            AuditLog.created_at >= min_dt,
+        )
+        .order_by(desc(AuditLog.created_at))
+        .limit(5000)
+    )
+    rows = (await session.execute(stmt)).scalars().all()
+
+    total_attempts = 0
+    successful_deliveries = 0
+    failed_deliveries = 0
+    last_failure_timestamp: Optional[str] = None
+    channel_breakdown = {channel_key: _empty_alert_delivery_counter() for channel_key in OPS_ALERT_CHANNEL_KEYS}
+
+    for row in rows:
+        metadata = row.metadata_info or {}
+        channel_key = _canonical_alert_channel(metadata.get("channel"))
+        if channel_key not in channel_breakdown:
+            continue
+
+        delivery_status = str(metadata.get("delivery_status") or "").lower()
+        is_success = delivery_status == "ok"
+        created_at_iso = row.created_at.isoformat() if row.created_at else None
+
+        total_attempts += 1
+        bucket = channel_breakdown[channel_key]
+        bucket["total_attempts"] += 1
+        if is_success:
+            successful_deliveries += 1
+            bucket["successful_deliveries"] += 1
+        else:
+            failed_deliveries += 1
+            bucket["failed_deliveries"] += 1
+            bucket["last_failure_timestamp"] = bucket.get("last_failure_timestamp") or created_at_iso
+            if not last_failure_timestamp:
+                last_failure_timestamp = created_at_iso
+
+    for channel_key in OPS_ALERT_CHANNEL_KEYS:
+        bucket = channel_breakdown[channel_key]
+        bucket["success_rate"] = _safe_percent(bucket["successful_deliveries"], bucket["total_attempts"])
+
+    return {
+        "window": f"{window_hours}h",
+        "window_hours": window_hours,
+        "total_attempts": total_attempts,
+        "successful_deliveries": successful_deliveries,
+        "failed_deliveries": failed_deliveries,
+        "success_rate": _safe_percent(successful_deliveries, total_attempts),
+        "last_failure_timestamp": last_failure_timestamp,
+        "channel_breakdown": channel_breakdown,
+        "generated_at": now_dt.isoformat(),
+    }
+
+
+async def _enforce_ops_alert_simulation_rate_limit_or_raise(current_user: Any) -> None:
+    actor_key = str(_user_value(current_user, "id") or _user_value(current_user, "email") or "unknown")
+    now_ts = time.time()
+    async with _OPS_ALERT_SIMULATION_RATE_GUARD:
+        active = [
+            ts
+            for ts in _OPS_ALERT_SIMULATION_RATE_REGISTRY.get(actor_key, [])
+            if (now_ts - ts) < OPS_ALERT_SIMULATION_RATE_WINDOW_SECONDS
+        ]
+        if len(active) >= OPS_ALERT_SIMULATION_RATE_LIMIT_PER_MINUTE:
+            oldest = min(active)
+            retry_after = max(1, int(OPS_ALERT_SIMULATION_RATE_WINDOW_SECONDS - (now_ts - oldest)))
+            _OPS_ALERT_SIMULATION_RATE_REGISTRY[actor_key] = active
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "code": "RATE_LIMITED",
+                    "message": "Re-run alert simulation limiti aşıldı (dakikada en fazla 3)",
+                    "retry_after_seconds": retry_after,
+                    "limit_per_minute": OPS_ALERT_SIMULATION_RATE_LIMIT_PER_MINUTE,
+                },
+            )
+        active.append(now_ts)
+        _OPS_ALERT_SIMULATION_RATE_REGISTRY[actor_key] = active
+
+
+async def _run_ops_alert_simulation(
+    *,
+    normalized_type: str,
+    payload: dict[str, Any],
+    current_user: Any,
+    session: AsyncSession,
+    trigger_source: str,
+    enforce_rate_limit: bool,
+    default_to_critical_metrics: bool,
+) -> dict[str, Any]:
+    if enforce_rate_limit:
+        await _enforce_ops_alert_simulation_rate_limit_or_raise(current_user)
+
+    defaults = {
+        "avg_lock_wait_ms": 300.0,
+        "max_lock_wait_ms": 520.0,
+        "publish_duration_ms_p95": 1800.0,
+        "conflict_rate": 45.0,
+    }
+    sample_metrics = {
+        "avg_lock_wait_ms": _to_float(
+            payload.get("avg_lock_wait_ms"),
+            defaults["avg_lock_wait_ms"] if default_to_critical_metrics else 0.0,
+        ),
+        "max_lock_wait_ms": _to_float(
+            payload.get("max_lock_wait_ms"),
+            defaults["max_lock_wait_ms"] if default_to_critical_metrics else 0.0,
+        ),
+        "publish_duration_ms_p95": _to_float(
+            payload.get("publish_duration_ms_p95"),
+            defaults["publish_duration_ms_p95"] if default_to_critical_metrics else 0.0,
+        ),
+        "conflict_rate": _to_float(
+            payload.get("conflict_rate"),
+            defaults["conflict_rate"] if default_to_critical_metrics else 0.0,
+        ),
+    }
+    alerts = _evaluate_publish_alerts(sample_metrics)
+    correlation_id = str(payload.get("correlation_id") or uuid.uuid4())
+    secret_presence = _ops_alerts_secret_presence()
+
+    session.add(
+        _create_ui_config_audit_log(
+            action="OPS_ALERT_SIMULATION_TRIGGERED",
+            current_user=current_user,
+            config_type=normalized_type,
+            resource_id="ops_simulation_trigger",
+            old_values=None,
+            new_values=None,
+            metadata_info={
+                "actor_id": str(_user_value(current_user, "id") or "unknown"),
+                "actor_email": _user_value(current_user, "email"),
+                "correlation_id": correlation_id,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "trigger_source": trigger_source,
+            },
+        )
+    )
+
+    channel_results: dict[str, Any] = {}
+    delivery_status = "blocked_missing_secrets"
+    if secret_presence["status"] == "READY":
+        slack_result, smtp_result, pagerduty_result = await asyncio.gather(
+            asyncio.to_thread(_simulate_slack_delivery, correlation_id),
+            asyncio.to_thread(_simulate_smtp_delivery, correlation_id),
+            asyncio.to_thread(_simulate_pagerduty_delivery, correlation_id),
+        )
+        channel_results = {
+            "slack": slack_result,
+            "smtp": smtp_result,
+            "pagerduty": pagerduty_result,
+        }
+        statuses = [
+            str(slack_result.get("delivery_status") or "fail"),
+            str(smtp_result.get("delivery_status") or "fail"),
+            str(pagerduty_result.get("delivery_status") or "fail"),
+        ]
+        delivery_status = "ok" if all(status == "ok" for status in statuses) else "partial_fail"
+
+    if channel_results:
+        for channel_name, channel_payload in channel_results.items():
+            session.add(
+                _create_ui_config_audit_log(
+                    action="ui_config_ops_alert_delivery",
+                    current_user=current_user,
+                    config_type=normalized_type,
+                    resource_id=f"ops_delivery:{channel_name}",
+                    old_values=None,
+                    new_values=None,
+                    metadata_info={
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "correlation_id": correlation_id,
+                        "channel": channel_name,
+                        "delivery_status": channel_payload.get("delivery_status"),
+                        "provider_code": channel_payload.get("provider_code") or channel_payload.get("smtp_response_code"),
+                        "provider_status": channel_payload.get("provider_status"),
+                        "message_ref": channel_payload.get("message_ref"),
+                        "incident_ref": channel_payload.get("incident_ref"),
+                        "retry_backoff_log": channel_payload.get("retry_backoff_log") or [],
+                        "last_failure_classification": channel_payload.get("last_failure_classification"),
+                    },
+                )
+            )
+
+    session.add(
+        _create_ui_config_audit_log(
+            action="ui_config_ops_alert_simulation",
+            current_user=current_user,
+            config_type=normalized_type,
+            resource_id="ops_simulation",
+            old_values=None,
+            new_values=None,
+            metadata_info={
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "correlation_id": correlation_id,
+                "ops_alerts_secret_presence": secret_presence,
+                "sample_metrics": sample_metrics,
+                "alerts": alerts,
+                "channel_results": channel_results,
+                "delivery_status": delivery_status,
+                "trigger_source": trigger_source,
+            },
+        )
+    )
+    await session.commit()
+    return {
+        "ok": delivery_status == "ok",
+        "delivery_status": delivery_status,
+        "correlation_id": correlation_id,
+        "ops_alerts_secret_presence": secret_presence,
+        "sample_metrics": sample_metrics,
+        "alerts": alerts,
+        "channel_results": channel_results,
+        "fail_fast": (
+            {
+                "status": "Blocked: Missing Secrets",
+                "missing_keys": secret_presence.get("missing_keys") or [],
+            }
+            if secret_presence["status"] != "READY"
+            else None
+        ),
+    }
+
+
 @router.get("/admin/ui/configs/{config_type}/ops-thresholds")
 async def admin_ui_publish_ops_thresholds(
     config_type: str,
