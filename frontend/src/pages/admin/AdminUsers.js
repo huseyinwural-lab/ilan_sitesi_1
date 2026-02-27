@@ -16,6 +16,7 @@ const ROLE_OPTIONS = [
   { value: 'pricing_manager', label: 'Fiyatlandırma Yöneticisi' },
   { value: 'masterdata_manager', label: 'Master Data Yöneticisi' },
   { value: 'support', label: 'Destek' },
+  { value: 'ops', label: 'Operasyon' },
   { value: 'finance', label: 'Finans' },
   { value: 'ROLE_AUDIT_VIEWER', label: 'Audit Viewer' },
 ];
