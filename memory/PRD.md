@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 14:52:00 UTC (P80 Admin Kategori Ana Görsel Alanı)
+**Son güncelleme:** 2026-02-27 15:16:00 UTC (P81 Kategori Listesi Görsel Kolonu)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -60,6 +60,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P81 Kategori Listesi Görsel Kolonu (2026-02-27):** Admin > Kategoriler liste tablosuna `Görsel` kolonu eklendi. Satırlarda `image_url` varsa thumbnail preview, yoksa placeholder gösterimi eklendi; cache-bust için `updated_at` tabanlı URL parametresi kullanıldı. Böylece ana kategori görselleri listede hızlı doğrulanabilir hale geldi. Test: admin categories smoke screenshot (`/tmp/admin-categories-list-image-column.png`) + data-testid doğrulaması.
 - **P80 Admin Kategori Ana Görsel Alanı (2026-02-27):** Admin > Kategoriler > Yeni Kategori/Düzenle akışına yalnızca **ana kategori (root)** için görsel yükleme alanı eklendi. Frontend’de upload+preview (png/jpg/webp, 2MB, center-crop bilgilendirmesi), `Kaldır/Değiştir`, root-dışı durumda kilitli mesajı ve zorunlu validasyon eklendi. Backend’de `POST /api/admin/categories/image-upload` endpointi eklendi (2MB limit, format doğrulama, 1:1 center-crop, `/api/site/assets/categories/...`), `CategoryCreatePayload/CategoryUpdatePayload` için `image_url` desteği açıldı ve child category için `CATEGORY_IMAGE_ROOT_ONLY` kuralı enforce edildi. Test: `/app/test_reports/iteration_40.json` (PASS).
 - **P79 Satın Al + Hesabım İyileştirme (2026-02-27):** Sıralama korunarak `Satın Al` ve `Hesabım` ekranları iyileştirildi. `/dealer/purchase` sayfası paket kataloğu + fatura özet kartları + backend uyumlu durum filtreleri (`all/issued/paid/void/refunded/draft`) + ödenebilir fatura için checkout aksiyonu ile güncellendi. `/dealer/settings` sayfası `Hesap Bilgilerim`/`İşletme Bilgileri` sekmeli, etiketli alanlar ve doğrulama (şirket adı + e-posta formatı) ile yeniden düzenlendi. Ödeme başarı/iptal dönüş linkleri satın alma ekranına yönlendirildi. Test: `/app/test_reports/iteration_39.json` (PASS, low issue fix uygulandı).
 - **P78 Danışman Takibi PDF Hizalama (2026-02-27):** Sıralama korunarak `Danışman Takibi` ekranı eklendi (`/dealer/consultant-tracking`). Backend `GET /api/dealer/consultant-tracking` endpointi oluşturuldu (consultants/evaluations/summary + sort_by). Frontend’de danışman kartları, gelişmiş sıralama, değerlendirme tabı ve tablo eklendi. Test agent tarafından consultant endpoint 500 hatası fixlenerek stabil hale getirildi (company_name kaynağı DealerProfile). Kanıt: `/app/docs/P1_DEALER_CONSULTANT_TRACKING_ALIGNMENT_EVIDENCE.md`, test: `/app/test_reports/iteration_38.json`.
