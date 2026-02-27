@@ -21912,13 +21912,25 @@ async def admin_create_category(
     wizard_progress = payload.wizard_progress or {"state": "draft"}
 
     sort_order = int(payload.sort_order)
-    await _assert_category_sort_available(
-        session,
-        country_code=country_code,
-        module_value=module_value,
-        parent_id=parent.id if parent else None,
-        sort_order=sort_order,
-    )
+    try:
+        await _assert_category_sort_available(
+            session,
+            country_code=country_code,
+            module_value=module_value,
+            parent_id=parent.id if parent else None,
+            sort_order=sort_order,
+        )
+    except HTTPException as exc:
+        detail = exc.detail if isinstance(exc.detail, dict) else {}
+        if detail.get("error_code") == "ORDER_INDEX_ALREADY_USED":
+            sort_order = await _next_category_sort_order(
+                session,
+                country_code=country_code,
+                module_value=module_value,
+                parent_id=parent.id if parent else None,
+            )
+        else:
+            raise
 
     category = Category(
         id=uuid.uuid4(),
