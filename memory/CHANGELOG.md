@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 2026-02-27 — P75 Mesajlar Menüsü PDF Hizalama
+
+- `/dealer/messages` ekranı PDF’e göre güncellendi:
+  - başlık/sayaç: `İlan Mesajlarım (x)`
+  - tablar: `Yayında Olan İlanlar`, `Bilgilendirmeler`
+  - arama + `Filtrele` aksiyonu
+  - listing tablosu (Kullanıcı/İlan/Mesaj/Mesaj Sayısı/Son Mesaj/İşlem)
+  - bilgilendirme tablosu (Başlık/Mesaj/Kaynak/Tarih/Durum)
+- Backend: `GET /api/dealer/messages` yanıtına `notification_items` ve `summary` alanları eklendi.
+- Frontend test agent: COMPLETE PASS.
+- Backend pytest: `-k dealer_messages` → 2 passed.
+- Kanıt: `/app/docs/P1_DEALER_MESSAGES_PDF_ALIGNMENT_EVIDENCE.md`
+
 ## 2026-02-27 — P74 İlanlar Menüsü PDF Hizalama + Sanal Turlar Kaldırma
 
 - Row2 ana menüden `Sanal Turlar` kaldırıldı.
