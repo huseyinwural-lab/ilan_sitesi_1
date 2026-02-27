@@ -46,6 +46,7 @@ import AdminFooterManagement from '@/pages/admin/AdminFooterManagement';
 import AdminThemeManagement from '@/pages/admin/AdminThemeManagement';
 import AdminInfoPages from '@/pages/admin/AdminInfoPages';
 import AdminUserInterfaceDesignV2 from '@/pages/admin/AdminUserInterfaceDesignV2';
+import AdminPublishHealthPage from '@/pages/admin/ops/AdminPublishHealthPage';
 
 export default function BackofficePortalApp() {
   return (
@@ -122,6 +123,16 @@ export default function BackofficePortalApp() {
           <AdminLayout>
             <AdminRouteGuard roles={["super_admin", "country_admin"]}>
               <AdminUserInterfaceDesignV2 />
+            </AdminRouteGuard>
+          </AdminLayout>
+        }
+      />
+      <Route
+        path="/ops/publish-health"
+        element={
+          <AdminLayout>
+            <AdminRouteGuard roles={["super_admin", "country_admin", "ops"]}>
+              <AdminPublishHealthPage />
             </AdminRouteGuard>
           </AdminLayout>
         }
