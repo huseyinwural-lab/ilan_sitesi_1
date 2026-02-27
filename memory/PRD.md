@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 16:08:00 UTC (P82 P1 Alt Modül Kapanışı)
+**Son güncelleme:** 2026-02-27 16:14:00 UTC (P1 Toplu Kapanış Onayı)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -24,8 +24,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - E2E test paketi (Frontend+Backend)
 - Preview DB env workaround notu (yalnız preview, prod/stage yasak)
 
-### P1 (Beklemede)
-- Public Search & Moderation Mongo→PostgreSQL
+### P1 (Toplu Kapanış: TAMAMLANDI)
+- Dealer kurumsal dashboard sıralı ekran kapanışları tamamlandı (Özet/İlanlar/Mesajlar/Müşteri/Favoriler/Raporlar/Danışman Takibi/Satın Al/Hesabım)
+- Hesabım alt modülleri tamamlandı (Güvenlik, Bildirim Tercihleri, Engellenen Hesaplar)
+- Admin Kategori görsel yönetimi P1 iyileştirmeleri tamamlandı (root image upload + liste görsel kolonu + görselli/görselsiz filtre)
+- Kapanış doğrulaması: `/app/test_reports/iteration_41.json` (backend 16/16 PASS, frontend PASS)
 
 ### P2 (Plan)
 - Kayıtlı Arama/Alert (P2 backlog)
