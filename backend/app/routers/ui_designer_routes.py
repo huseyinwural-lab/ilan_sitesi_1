@@ -2260,9 +2260,6 @@ async def admin_ui_publish_audits(
     filtered = []
     for row in rows:
         metadata = row.metadata_info or {}
-        created_at = row.created_at if row.created_at and row.created_at.tzinfo else row.created_at.replace(tzinfo=timezone.utc) if row.created_at else None
-        if created_at and created_at < min_dt:
-            continue
         if metadata.get("segment") != normalized_segment:
             continue
         if metadata.get("scope") != normalized_scope:
@@ -2273,10 +2270,10 @@ async def admin_ui_publish_audits(
         elif metadata.get("scope_id") != normalized_scope_id:
             continue
         filtered.append(row)
-        if len(filtered) >= limit:
+        if len(filtered) >= 500:
             break
 
-    items = []
+    all_items = []
     for row in filtered:
         metadata = row.metadata_info or {}
         lock_ms = int(metadata.get("lock_wait_ms") or 0)
@@ -2284,7 +2281,7 @@ async def admin_ui_publish_audits(
         owner_type = metadata.get("owner_type")
         owner_id = metadata.get("owner_id")
 
-        items.append(
+        all_items.append(
             {
                 "id": str(row.id),
                 "created_at": row.created_at.isoformat() if row.created_at else None,
@@ -2301,8 +2298,25 @@ async def admin_ui_publish_audits(
             }
         )
 
+    items = [
+        item
+        for item in all_items
+        if item.get("created_at") and datetime.fromisoformat(item.get("created_at")) >= min_dt
+    ][:limit]
+
     telemetry = _compute_publish_metrics(items)
     trends = _build_time_window_trends(items, now_dt)
+
+    def _window_metrics(hours: int) -> dict[str, Any]:
+        cutoff = now_dt - timedelta(hours=hours)
+        subset = [item for item in all_items if item.get("created_at") and datetime.fromisoformat(item.get("created_at")) >= cutoff]
+        return _compute_publish_metrics(subset)
+
+    windows = {
+        "1h": _window_metrics(1),
+        "24h": _window_metrics(24),
+        "7d": _window_metrics(24 * 7),
+    }
 
     return {
         "items": items,
@@ -2314,6 +2328,7 @@ async def admin_ui_publish_audits(
             "publish_success_rate": telemetry.get("publish_success_rate", 0),
         },
         "trends": trends,
+        "windows": windows,
         "thresholds": PUBLISH_OPS_THRESHOLDS,
         "window_hours": window_hours,
     }
