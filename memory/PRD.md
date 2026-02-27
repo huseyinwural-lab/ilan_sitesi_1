@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 19:43:00 UTC (P88 Doping Sistemi + Başvuru Ayrıştırma)
+**Son güncelleme:** 2026-02-27 20:04:00 UTC (P89 Doping Navigasyon + Badge Finalizasyonu)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
