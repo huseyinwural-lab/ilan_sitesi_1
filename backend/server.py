@@ -29764,6 +29764,7 @@ async def _resolve_campaign_item_from_payload(
     scope: str,
     payload: Optional[PricingQuotePayload],
     listing_type: Optional[str] = None,
+    user_id: Optional[uuid.UUID] = None,
 ) -> Optional[PricingCampaignItem]:
     if not payload:
         return None
@@ -29781,6 +29782,10 @@ async def _resolve_campaign_item_from_payload(
             raise HTTPException(status_code=409, detail="Campaign item listing_type mismatch")
         if not _campaign_item_is_available(item, now):
             raise HTTPException(status_code=409, detail="Campaign item is not active")
+        if user_id:
+            remaining = await _campaign_item_remaining_slots(session, user_id, item)
+            if remaining is not None and remaining <= 0:
+                raise HTTPException(status_code=409, detail="Campaign slot quota exhausted")
         return item
 
     if payload.listing_quota:
@@ -29794,6 +29799,10 @@ async def _resolve_campaign_item_from_payload(
         result = await session.execute(query)
         for item in result.scalars().all():
             if _campaign_item_is_available(item, now):
+                if user_id:
+                    remaining = await _campaign_item_remaining_slots(session, user_id, item)
+                    if remaining is not None and remaining <= 0:
+                        continue
                 return item
 
     return None
@@ -29826,12 +29835,21 @@ async def _build_campaign_item_quote(
     session: AsyncSession,
     scope: str,
     payload: Optional[PricingQuotePayload],
+    user_id: Optional[uuid.UUID] = None,
 ) -> Dict[str, Any]:
     requested_listing_type = None
     if payload and payload.listing_type:
         requested_listing_type = _normalize_campaign_item_listing_type(payload.listing_type)
     items = await _get_active_pricing_campaign_items(session, scope, requested_listing_type)
-    selected = await _resolve_campaign_item_from_payload(session, scope, payload, requested_listing_type)
+    if user_id:
+        filtered_items: list[PricingCampaignItem] = []
+        for item in items:
+            remaining = await _campaign_item_remaining_slots(session, user_id, item)
+            if remaining is None or remaining > 0:
+                filtered_items.append(item)
+        items = filtered_items
+
+    selected = await _resolve_campaign_item_from_payload(session, scope, payload, requested_listing_type, user_id)
 
     if not selected:
         if len(items) == 1:
@@ -29849,14 +29867,10 @@ async def _build_campaign_item_quote(
                 "listing_type": requested_listing_type,
             }
         else:
-            return {
-                "type": "campaign_selection",
-                "reason": "campaign_selection_required",
-                "requires_payment": True,
-                "items": [_serialize_campaign_item_for_quote(item) for item in items],
-                "scope": scope,
-                "listing_type": requested_listing_type,
-            }
+            selected = sorted(
+                items,
+                key=lambda item: (_campaign_item_priority(item), float(item.price_amount or 0), int(item.listing_quota or 0)),
+            )[0]
 
     amount = float(selected.price_amount or 0)
     return {
@@ -29872,11 +29886,12 @@ async def _build_campaign_item_quote(
         "quota_used": False,
         "scope": scope,
         "listing_type": selected.listing_type,
+        "remaining_slots": await _campaign_item_remaining_slots(session, user_id, selected) if user_id else None,
     }
 
 
 async def _build_individual_quote(session: AsyncSession, user_id: uuid.UUID, payload: Optional[PricingQuotePayload]) -> Dict[str, Any]:
-    return await _build_campaign_item_quote(session, "individual", payload)
+    return await _build_campaign_item_quote(session, "individual", payload, user_id)
 
 
 async def _build_corporate_quote(session: AsyncSession, user_id: uuid.UUID, payload: Optional[PricingQuotePayload]) -> Dict[str, Any]:
@@ -29896,7 +29911,7 @@ async def _build_corporate_quote(session: AsyncSession, user_id: uuid.UUID, payl
             "remaining_quota": subscription.remaining_quota,
         }
 
-    return await _build_campaign_item_quote(session, "corporate", payload)
+    return await _build_campaign_item_quote(session, "corporate", payload, user_id)
 
 
 def _build_pricing_quote_response(
