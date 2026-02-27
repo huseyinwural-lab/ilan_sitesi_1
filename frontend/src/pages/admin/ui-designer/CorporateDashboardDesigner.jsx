@@ -477,6 +477,10 @@ export const CorporateDashboardDesigner = () => {
           scope_id: scope === 'tenant' ? scopeId.trim() : null,
           config_id: latestConfigId,
           config_version: latestConfigVersion,
+          resolved_config_hash: latestResolvedHash || null,
+          owner_type: scope === 'tenant' ? 'dealer' : 'global',
+          owner_id: scope === 'tenant' ? scopeId.trim() : 'global',
+          retry_count: publishRetryCount,
           require_confirm: true,
         }),
       });
@@ -493,6 +497,11 @@ export const CorporateDashboardDesigner = () => {
           setConflictOpen(true);
           throw new Error(apiError.message || 'Publish lock aktif. Kısa süre sonra tekrar deneyin.');
         }
+        if (response.status === 409 && apiError.code === 'CONFIG_HASH_MISMATCH') {
+          setConflictInfo(apiError.raw || {});
+          setConflictOpen(true);
+          throw new Error(apiError.message || 'Draft hash uyuşmazlığı oluştu. Senkronizasyon gerekli.');
+        }
         if (response.status === 400 && apiError.code === 'MISSING_CONFIG_VERSION') {
           throw new Error('Version bilgisi eksik. Lütfen sayfayı yenileyin ve tekrar deneyin.');
         }
@@ -502,7 +511,8 @@ export const CorporateDashboardDesigner = () => {
       setStatus(`Yayınlandı (v${data?.item?.version || '-'})`);
       toast.success('Dashboard konfigürasyonu yayınlandı');
       setIsPublishOpen(false);
-      await Promise.all([loadDraft(), loadEffective()]);
+      setPublishRetryCount(0);
+      await Promise.all([loadDraft({ silent: true }), loadEffective(), loadPublishAudits()]);
     } catch (requestError) {
       setError(requestError.message || 'Yayınlama başarısız');
       toast.error(requestError.message || 'Yayınlama başarısız');
