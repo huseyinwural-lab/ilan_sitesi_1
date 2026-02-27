@@ -61,8 +61,8 @@ class TestDealerInvoices:
 
     def test_dealer_invoices_with_status_filter(self, auth_headers):
         """GET /api/dealer/invoices with status filter should return filtered results"""
-        # cancelled maps to void internally, so test valid statuses only
-        for status in ["issued", "paid", "overdue", "void", "draft", "refunded"]:
+        # Valid statuses: draft, issued, paid, void, refunded
+        for status in ["issued", "paid", "void", "draft", "refunded"]:
             response = requests.get(
                 f"{BASE_URL}/api/dealer/invoices?status={status}",
                 headers=auth_headers,
