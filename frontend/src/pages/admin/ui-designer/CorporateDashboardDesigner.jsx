@@ -808,6 +808,47 @@ export const CorporateDashboardDesigner = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={conflictOpen} onOpenChange={setConflictOpen}>
+        <DialogContent data-testid="ui-designer-dashboard-conflict-dialog">
+          <DialogHeader>
+            <DialogTitle data-testid="ui-designer-dashboard-conflict-title">Publish Çakışması</DialogTitle>
+            <DialogDescription data-testid="ui-designer-dashboard-conflict-description">
+              Başka bir admin daha yeni bir versiyon yayınladı veya publish lock aktif.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1 text-xs" data-testid="ui-designer-dashboard-conflict-meta">
+            <div data-testid="ui-designer-dashboard-conflict-current-version">Current Version: {conflictInfo?.current_version ?? '-'}</div>
+            <div data-testid="ui-designer-dashboard-conflict-your-version">Your Version: {conflictInfo?.your_version ?? latestConfigVersion ?? '-'}</div>
+            <div data-testid="ui-designer-dashboard-conflict-last-published-by">Last Published By: {conflictInfo?.last_published_by || '-'}</div>
+            <div data-testid="ui-designer-dashboard-conflict-last-published-at">Last Published At: {conflictInfo?.last_published_at || '-'}</div>
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={async () => {
+                setConflictOpen(false);
+                await loadDraft();
+              }}
+              className="h-9 rounded-md border px-3 text-sm"
+              data-testid="ui-designer-dashboard-conflict-reload-button"
+            >
+              Sayfayı Yenile
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                setConflictOpen(false);
+                await openPublishDialog();
+              }}
+              className="h-9 rounded-md bg-slate-900 px-3 text-sm text-white"
+              data-testid="ui-designer-dashboard-conflict-view-diff-button"
+            >
+              Diff Gör
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
