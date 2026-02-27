@@ -2319,6 +2319,96 @@ async def admin_ui_publish_audits(
     }
 
 
+@router.get("/admin/ui/configs/{config_type}/ops-thresholds")
+async def admin_ui_publish_ops_thresholds(
+    config_type: str,
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+):
+    del current_user
+    _normalize_config_type(config_type)
+    return {
+        "thresholds": PUBLISH_OPS_THRESHOLDS,
+        "escalation": {
+            "warning": ["slack"],
+            "critical": ["slack", "email", "on_call"],
+        },
+    }
+
+
+@router.post("/admin/ui/configs/{config_type}/ops-alerts/simulate")
+async def admin_ui_publish_alerts_simulate(
+    config_type: str,
+    payload: dict[str, Any],
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    normalized_type = _normalize_config_type(config_type)
+    sample_metrics = {
+        "avg_lock_wait_ms": float(payload.get("avg_lock_wait_ms") or 0),
+        "max_lock_wait_ms": float(payload.get("max_lock_wait_ms") or 0),
+        "publish_duration_ms_p95": float(payload.get("publish_duration_ms_p95") or 0),
+        "conflict_rate": float(payload.get("conflict_rate") or 0),
+    }
+    alerts = _evaluate_publish_alerts(sample_metrics)
+    session.add(
+        _create_ui_config_audit_log(
+            action="ui_config_ops_alert_simulation",
+            current_user=current_user,
+            config_type=normalized_type,
+            resource_id="ops_simulation",
+            old_values=None,
+            new_values=None,
+            metadata_info={
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "sample_metrics": sample_metrics,
+                "alerts": alerts,
+            },
+        )
+    )
+    await session.commit()
+    return {
+        "ok": True,
+        "sample_metrics": sample_metrics,
+        "alerts": alerts,
+    }
+
+
+@router.get("/admin/ui/configs/{config_type}/legacy-usage")
+async def admin_ui_legacy_publish_usage(
+    config_type: str,
+    days: int = Query(default=30, ge=1, le=365),
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    normalized_type = _normalize_config_type(config_type)
+    min_dt = datetime.now(timezone.utc) - timedelta(days=days)
+    stmt = (
+        select(AuditLog)
+        .where(
+            AuditLog.action == "ui_config_publish_legacy_call",
+            AuditLog.resource_type == f"ui_config:{normalized_type}",
+            AuditLog.created_at >= min_dt,
+        )
+        .order_by(desc(AuditLog.created_at))
+        .limit(1000)
+    )
+    rows = (await session.execute(stmt)).scalars().all()
+    by_actor: dict[str, int] = {}
+    for row in rows:
+        key = row.user_email or "unknown"
+        by_actor[key] = by_actor.get(key, 0) + 1
+
+    return {
+        "days": days,
+        "total_calls": len(rows),
+        "client_breakdown": [
+            {"actor_email": actor, "count": count}
+            for actor, count in sorted(by_actor.items(), key=lambda item: item[1], reverse=True)
+        ],
+    }
+
+
 @router.post("/admin/ui/configs/{config_type}/publish")
 async def admin_publish_latest_ui_config(
     config_type: str,
