@@ -782,11 +782,27 @@ export const CorporateDashboardDesigner = () => {
           <div className="text-xs text-slate-600" data-testid="ui-designer-dashboard-rollback-selected">
             Seçili target: {selectedRollbackId || 'Otomatik son snapshot'}
           </div>
+          <label className="text-xs" data-testid="ui-designer-dashboard-rollback-reason-label">
+            Rollback Sebebi (zorunlu)
+            <textarea
+              value={rollbackReason}
+              onChange={(event) => setRollbackReason(event.target.value)}
+              className="mt-1 min-h-[84px] w-full rounded-md border px-3 py-2 text-xs"
+              placeholder="Örn: Yanlış widget sıralaması canlıya çıktı"
+              data-testid="ui-designer-dashboard-rollback-reason-input"
+            />
+          </label>
           <DialogFooter>
             <button type="button" onClick={() => setIsRollbackOpen(false)} className="h-9 rounded-md border px-3 text-sm" data-testid="ui-designer-dashboard-rollback-cancel">
               Vazgeç
             </button>
-            <button type="button" onClick={rollbackLatest} className="h-9 rounded-md bg-slate-900 px-3 text-sm text-white" data-testid="ui-designer-dashboard-rollback-confirm">
+            <button
+              type="button"
+              onClick={rollbackLatest}
+              disabled={!rollbackReason.trim()}
+              className="h-9 rounded-md bg-slate-900 px-3 text-sm text-white disabled:opacity-50"
+              data-testid="ui-designer-dashboard-rollback-confirm"
+            >
               Rollback Uygula
             </button>
           </DialogFooter>
