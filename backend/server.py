@@ -1672,6 +1672,7 @@ async def lifespan(app: FastAPI):
         async with sql_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             await _ensure_wizard_progress_column(conn)
+            await _ensure_listing_doping_columns(conn)
     except Exception as exc:
         logging.getLogger("sql_config").warning("SQL init skipped: %s", exc)
 
