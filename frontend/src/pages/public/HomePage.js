@@ -4,7 +4,58 @@ import AdSlot from '@/components/public/AdSlot';
 import './HomePage.css';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-const SHOWCASE_TARGET_COUNT = 63;
+
+const DEFAULT_SHOWCASE_LAYOUT = {
+  homepage: { enabled: true, rows: 9, columns: 7, listing_count: 63 },
+  category_showcase: {
+    enabled: true,
+    default: { rows: 2, columns: 4, listing_count: 8 },
+    categories: [],
+  },
+};
+
+const clamp = (value, min, max, fallback) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, Math.floor(parsed)));
+};
+
+const normalizeShowcaseLayout = (raw) => {
+  const source = raw || {};
+  const homepage = source.homepage || {};
+  const categoryShowcase = source.category_showcase || {};
+  const categoryDefault = categoryShowcase.default || {};
+
+  return {
+    homepage: {
+      enabled: homepage.enabled !== false,
+      rows: clamp(homepage.rows, 1, 12, 9),
+      columns: clamp(homepage.columns, 1, 8, 7),
+      listing_count: clamp(homepage.listing_count, 1, 120, 63),
+    },
+    category_showcase: {
+      enabled: categoryShowcase.enabled !== false,
+      default: {
+        rows: clamp(categoryDefault.rows, 1, 12, 2),
+        columns: clamp(categoryDefault.columns, 1, 8, 4),
+        listing_count: clamp(categoryDefault.listing_count, 1, 120, 8),
+      },
+      categories: Array.isArray(categoryShowcase.categories)
+        ? categoryShowcase.categories.map((item) => ({
+          enabled: item?.enabled !== false,
+          category_id: item?.category_id || '',
+          category_slug: item?.category_slug || '',
+          category_name: item?.category_name || '',
+          rows: clamp(item?.rows, 1, 12, 2),
+          columns: clamp(item?.columns, 1, 8, 4),
+          listing_count: clamp(item?.listing_count, 1, 120, 8),
+        }))
+        : [],
+    },
+  };
+};
+
+const resolveEffectiveCount = (block) => Math.min(Number(block?.listing_count || 0), Number(block?.rows || 0) * Number(block?.columns || 0));
 
 const formatNumber = (value) => {
   const numeric = Number(value || 0);
