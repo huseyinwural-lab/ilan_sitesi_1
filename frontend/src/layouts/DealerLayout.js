@@ -572,62 +572,27 @@ export default function DealerLayout() {
 
           {(showRow3StoreFilter || showRow3UserMenu) ? (
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-2" data-testid="dealer-layout-header-row3">
-              {showRow3StoreFilter ? (
-                <div className="relative flex items-center gap-2" data-testid="dealer-layout-row3-store-wrap">
-                  <label className="text-xs font-semibold text-slate-600" data-testid="dealer-layout-row3-store-label">
-                    Mağaza
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setStoreMenuOpen((prev) => !prev)}
-                    className="inline-flex h-9 min-w-[160px] items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm"
-                    data-testid="dealer-layout-row3-store-filter"
-                    disabled={!headerRow3Controls?.store_filter_enabled}
-                  >
-                    <span data-testid="dealer-layout-row3-store-selected-label">
-                      {row3Stores.find((store) => store.key === selectedStore)?.label || 'Tüm Mağazalar'}
-                    </span>
-                    {storeMenuOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  </button>
-
-                  {storeMenuOpen && headerRow3Controls?.store_filter_enabled ? (
-                    <div className="absolute left-[52px] top-10 z-20 min-w-[200px] rounded-lg border bg-white p-1 shadow-lg" data-testid="dealer-layout-row3-store-dropdown">
-                      {row3Stores.map((store) => (
-                        <button
-                          key={store.key}
-                          type="button"
-                          onClick={() => handleStoreChange(store.key)}
-                          className={`w-full rounded-md px-3 py-2 text-left text-sm ${selectedStore === store.key ? 'bg-slate-900 text-white' : 'text-slate-800 hover:bg-slate-100'}`}
-                          data-testid={`dealer-layout-row3-store-option-${store.key}`}
-                        >
-                          {store.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ) : <div data-testid="dealer-layout-row3-store-wrap-empty" />}
-
               {showRow3UserMenu ? (
-                <div className="relative" data-testid="dealer-layout-row3-user-menu-wrap">
+                <div className="relative flex items-center gap-2" data-testid="dealer-layout-row3-user-menu-wrap">
                   <button
                     type="button"
                     onClick={() => setUserMenuOpen((prev) => !prev)}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-3 py-1.5 text-xs"
+                    className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1.5"
                     data-testid="dealer-layout-row3-user-menu-button"
                     disabled={!headerRow3Controls?.user_dropdown_enabled}
                   >
-                    <UserRound size={14} />
-                    <span data-testid="dealer-layout-user-label">{user?.full_name || user?.email}</span>
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white" data-testid="dealer-layout-row3-user-avatar">{userInitials}</span>
+                    <span className="text-sm font-semibold text-slate-900" data-testid="dealer-layout-user-label">{row3UserDisplayName}</span>
+                    {userMenuOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                   </button>
 
-                  {userMenuOpen && (
-                    <div className="absolute right-0 top-11 z-20 min-w-[180px] rounded-xl border bg-white p-2 shadow-lg" data-testid="dealer-layout-row3-user-menu-dropdown">
+                  {userMenuOpen ? (
+                    <div className="absolute left-0 top-11 z-20 min-w-[210px] rounded-xl border bg-white p-2 shadow-lg" data-testid="dealer-layout-row3-user-menu-dropdown">
                       <button
                         type="button"
                         onClick={() => {
                           setUserMenuOpen(false);
-                          navigate('/dealer/settings');
+                          navigate('/dealer/settings?section=profile');
                         }}
                         className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
                         data-testid="dealer-layout-row3-user-menu-profile"
@@ -647,9 +612,70 @@ export default function DealerLayout() {
                         {t('logout')}
                       </button>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               ) : <div data-testid="dealer-layout-row3-user-menu-wrap-empty" />}
+
+              <div className="ml-auto flex flex-wrap items-center justify-end gap-2" data-testid="dealer-layout-row3-right-actions">
+                {showRow3StoreFilter ? (
+                  <div className="relative flex items-center gap-2" data-testid="dealer-layout-row3-store-wrap">
+                    <label className="text-xs font-semibold text-slate-600" data-testid="dealer-layout-row3-store-label">
+                      Mağaza Filtresi
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setStoreMenuOpen((prev) => !prev)}
+                      className="inline-flex h-9 min-w-[190px] items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm"
+                      data-testid="dealer-layout-row3-store-filter"
+                      disabled={!headerRow3Controls?.store_filter_enabled}
+                    >
+                      <span data-testid="dealer-layout-row3-store-selected-label">
+                        {row3Stores.find((store) => store.key === selectedStore)?.label || 'Tümü'}
+                      </span>
+                      {storeMenuOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </button>
+
+                    {storeMenuOpen && headerRow3Controls?.store_filter_enabled ? (
+                      <div className="absolute right-0 top-10 z-20 max-h-[340px] min-w-[240px] overflow-y-auto rounded-lg border bg-white p-1 shadow-lg" data-testid="dealer-layout-row3-store-dropdown">
+                        {row3Stores.map((store) => (
+                          <button
+                            key={store.key}
+                            type="button"
+                            onClick={() => handleStoreChange(store.key)}
+                            className={`w-full rounded-md px-3 py-2 text-left text-sm ${selectedStore === store.key ? 'bg-slate-900 text-white' : 'text-slate-800 hover:bg-slate-100'}`}
+                            data-testid={`dealer-layout-row3-store-option-${store.key}`}
+                          >
+                            {store.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {headerRow3Controls?.page_edit_enabled !== false ? (
+                  <button
+                    type="button"
+                    onClick={handlePageEditToggle}
+                    className={`h-9 rounded-md border px-3 text-sm font-semibold ${isPageEditMode ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-900'}`}
+                    data-testid="dealer-layout-row3-page-edit-button"
+                  >
+                    {isPageEditMode ? 'Düzenlemeyi Bitir' : 'Sayfayı Düzenle'}
+                  </button>
+                ) : null}
+
+                {headerRow3Controls?.announcements_enabled !== false ? (
+                  <button
+                    type="button"
+                    onClick={handleAnnouncementsClick}
+                    className="relative h-9 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900"
+                    data-testid="dealer-layout-row3-announcements-button"
+                  >
+                    Duyurular
+                    <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white" data-testid="dealer-layout-row3-announcements-badge">1</span>
+                  </button>
+                ) : null}
+              </div>
             </div>
           ) : null}
         </div>
