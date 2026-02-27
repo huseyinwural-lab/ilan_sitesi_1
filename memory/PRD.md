@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 13:45:00 UTC (P78 Danışman Takibi PDF Hizalama)
+**Son güncelleme:** 2026-02-27 14:20:00 UTC (P79 Satın Al + Hesabım İyileştirme)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -60,6 +60,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P79 Satın Al + Hesabım İyileştirme (2026-02-27):** Sıralama korunarak `Satın Al` ve `Hesabım` ekranları iyileştirildi. `/dealer/purchase` sayfası paket kataloğu + fatura özet kartları + backend uyumlu durum filtreleri (`all/issued/paid/void/refunded/draft`) + ödenebilir fatura için checkout aksiyonu ile güncellendi. `/dealer/settings` sayfası `Hesap Bilgilerim`/`İşletme Bilgileri` sekmeli, etiketli alanlar ve doğrulama (şirket adı + e-posta formatı) ile yeniden düzenlendi. Ödeme başarı/iptal dönüş linkleri satın alma ekranına yönlendirildi. Test: `/app/test_reports/iteration_39.json` (PASS, low issue fix uygulandı).
 - **P78 Danışman Takibi PDF Hizalama (2026-02-27):** Sıralama korunarak `Danışman Takibi` ekranı eklendi (`/dealer/consultant-tracking`). Backend `GET /api/dealer/consultant-tracking` endpointi oluşturuldu (consultants/evaluations/summary + sort_by). Frontend’de danışman kartları, gelişmiş sıralama, değerlendirme tabı ve tablo eklendi. Test agent tarafından consultant endpoint 500 hatası fixlenerek stabil hale getirildi (company_name kaynağı DealerProfile). Kanıt: `/app/docs/P1_DEALER_CONSULTANT_TRACKING_ALIGNMENT_EVIDENCE.md`, test: `/app/test_reports/iteration_38.json`.
 - **P77 Favoriler + Raporlar PDF Hizalama (2026-02-27):** Sıralama korunarak `Favoriler` ve `Raporlar` ekranları tamamlandı. `GET /api/dealer/favorites` endpointi eklendi (favorite_listings/searches/sellers + summary); `/dealer/favorites` sayfasında 3 tab + arama + tablo yapısı kuruldu. `GET /api/dealer/reports` endpointi genişletildi (window_days 7/14/30/90, report_sections, package_reports, doping_usage_report) ve `/dealer/reports` sayfasında bölüm tabları + dönem filtresi + metrik/seri görünümleri eklendi. `Sanal Turlar` menüde yok durumu korundu. Kanıt: `/app/docs/P1_DEALER_FAVORITES_REPORTS_ALIGNMENT_EVIDENCE.md`, test: `/app/test_reports/iteration_37.json`.
 - **P76 Mesaj Okundu + Müşteri Yönetimi PDF Hizalama (2026-02-27):** Mesajlar ekranına okundu bilgisi eklendi: `Okunma` kolonu, `Okundu/Okunmadı` badge, `Okundu İşaretle` aksiyonu. Backend `GET /api/dealer/messages` yanıtı `unread_count/read_status` ve `summary.unread_listing_messages` ile genişletildi; `POST /api/dealer/messages/{conversation_id}/read` eklendi. Sıralı ilerlemede `Müşteri Yönetimi` ekranı da PDF’e göre dolduruldu: `Kullanıcı Listesi` / `Mağaza Kullanıcısı Olmayanlar` tabları, Ad Soyad/E-Posta/Durumu filtreleri, tablo kolonları (Ad Soyad, E-Posta, Durumu, İşlemler). Kanıt: `/app/docs/P1_DEALER_MESSAGES_READ_AND_CUSTOMERS_ALIGNMENT_EVIDENCE.md`, test: `/app/test_reports/iteration_36.json`.
