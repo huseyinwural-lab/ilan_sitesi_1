@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Dict, List, Any
 from PIL import Image
 
-BASE_URL = "https://grid-editor-preview.preview.emergentagent.com/api"
+BASE_URL = "https://config-telemetry.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {"email": "admin@platform.com", "password": "Admin123!"}
@@ -632,7 +632,7 @@ class ComprehensiveLogoTester:
                         self.log(f"   Version: {version}")
                         
                         # Verify the logo asset is accessible
-                        full_logo_url = f"https://grid-editor-preview.preview.emergentagent.com{logo_url}"
+                        full_logo_url = f"https://config-telemetry.preview.emergentagent.com{logo_url}"
                         try:
                             logo_response = requests.head(full_logo_url, timeout=10)
                             logo_accessible = logo_response.status_code == 200

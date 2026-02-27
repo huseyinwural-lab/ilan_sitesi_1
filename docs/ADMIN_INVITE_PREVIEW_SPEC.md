@@ -1,7 +1,7 @@
 # ADMIN_INVITE_PREVIEW_SPEC
 
 **Tarih:** 2026-02-24 11:21:40 UTC
-**Ortam URL:** https://grid-editor-preview.preview.emergentagent.com
+**Ortam URL:** https://config-telemetry.preview.emergentagent.com
 
 ## Beklenen Davranış
 - Token yoksa: **422** (expected validation)
