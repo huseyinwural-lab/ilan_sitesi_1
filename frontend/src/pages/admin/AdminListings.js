@@ -220,10 +220,10 @@ export default function AdminListingsPage({
     .replace(/[^a-z0-9]+/g, '-');
 
   return (
-    <div className="space-y-6" data-testid="admin-listings-page">
+    <div className="space-y-6" data-testid={dataTestId}>
       <div className="flex flex-col gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" data-testid="admin-listings-title">İlanlar</h1>
+          <h1 className="text-2xl font-bold tracking-tight" data-testid="admin-listings-title">{title}</h1>
           <p className="text-sm text-muted-foreground">Global Listing Yönetimi (Sprint 2.1)</p>
         </div>
         <div className="text-xs text-muted-foreground" data-testid="admin-listings-context">
@@ -239,25 +239,27 @@ export default function AdminListingsPage({
           className="h-9 px-3 rounded-md border bg-background text-sm"
           data-testid="listings-search-input"
         />
-        <Select
-          value={statusValue}
-          onValueChange={(value) => { setStatus(value === 'all' ? '' : value); setPage(0); }}
-        >
-          <SelectTrigger className="h-9 w-[180px]" data-testid="listings-status-select">
-            <SelectValue placeholder="Tümü" />
-          </SelectTrigger>
-          <SelectContent>
-            {statusOptions.map((opt) => (
-              <SelectItem
-                key={opt.value || 'all'}
-                value={opt.value || 'all'}
-                data-testid={`listings-status-option-${toTestId(opt.value || 'all')}`}
-              >
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!applicationsMode ? (
+          <Select
+            value={statusValue}
+            onValueChange={(value) => { setStatus(value === 'all' ? '' : value); setPage(0); }}
+          >
+            <SelectTrigger className="h-9 w-[180px]" data-testid="listings-status-select">
+              <SelectValue placeholder="Tümü" />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map((opt) => (
+                <SelectItem
+                  key={opt.value || 'all'}
+                  value={opt.value || 'all'}
+                  data-testid={`listings-status-option-${toTestId(opt.value || 'all')}`}
+                >
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
         <Select
           value={categoryValue}
           onValueChange={(value) => { setCategoryId(value === 'all' ? '' : value); setPage(0); }}
@@ -282,16 +284,18 @@ export default function AdminListingsPage({
             })}
           </SelectContent>
         </Select>
-        <label className="flex items-center gap-2 text-sm" data-testid="listings-dealer-only-toggle">
-          <input
-            type="checkbox"
-            checked={dealerOnly}
-            onChange={(e) => { setDealerOnly(e.target.checked); setPage(0); }}
-            className="h-4 w-4"
-            data-testid="listings-dealer-only-checkbox"
-          />
-          Dealer Only
-        </label>
+        {!applicationsMode ? (
+          <label className="flex items-center gap-2 text-sm" data-testid="listings-dealer-only-toggle">
+            <input
+              type="checkbox"
+              checked={dealerOnly}
+              onChange={(e) => { setDealerOnly(e.target.checked); setPage(0); }}
+              className="h-4 w-4"
+              data-testid="listings-dealer-only-checkbox"
+            />
+            Dealer Only
+          </label>
+        ) : null}
         <button
           onClick={clearFilters}
           className="h-9 px-3 rounded-md border text-sm hover:bg-muted"
@@ -299,6 +303,26 @@ export default function AdminListingsPage({
         >
           Filtreleri Temizle
         </button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2" data-testid="listings-doping-tabs">
+        {dopingTabs.map((tab) => {
+          const count = tab.value === 'all'
+            ? (Number(dopingCounts.free || 0) + Number(dopingCounts.showcase || 0) + Number(dopingCounts.urgent || 0))
+            : Number(dopingCounts[tab.value] || 0);
+          const active = dopingType === tab.value;
+          return (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => { setDopingType(tab.value); setPage(0); }}
+              className={`h-9 rounded-full border px-3 text-sm font-semibold ${active ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
+              data-testid={`listings-doping-tab-${tab.value}`}
+            >
+              {tab.label} ({count})
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex items-center justify-between text-sm text-muted-foreground" data-testid="listings-summary">
