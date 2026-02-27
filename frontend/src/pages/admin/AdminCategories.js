@@ -2733,39 +2733,55 @@ const AdminCategories = () => {
       <div className="bg-white border rounded-lg text-slate-900">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 bg-gray-50" data-testid="categories-list-filters-wrap">
           <div className="flex flex-wrap items-center gap-2" data-testid="categories-list-filters">
-            <select
-              value={listFilters.module}
-              onChange={(event) => setListFilters((prev) => ({ ...prev, module: event.target.value }))}
-              className="h-9 rounded-md border px-3 text-sm"
-              data-testid="categories-list-filter-module"
-            >
-              <option value="all">Tüm Modüller</option>
-              {CATEGORY_MODULE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
+            <div className="flex flex-wrap items-center gap-1" data-testid="categories-list-filter-module-group">
+              {[{ value: "all", label: "Tüm Modüller" }, ...CATEGORY_MODULE_OPTIONS].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setListFilters((prev) => ({ ...prev, module: option.value }))}
+                  className={`h-9 rounded-md border px-3 text-sm ${listFilters.module === option.value ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
+                  data-testid={`categories-list-filter-module-${option.value}`}
+                >
+                  {option.label}
+                </button>
               ))}
-            </select>
+            </div>
 
-            <select
-              value={listFilters.status}
-              onChange={(event) => setListFilters((prev) => ({ ...prev, status: event.target.value }))}
-              className="h-9 rounded-md border px-3 text-sm"
-              data-testid="categories-list-filter-status"
-            >
-              <option value="all">Tüm Durumlar</option>
-              <option value="active">Aktif</option>
-              <option value="passive">Pasif</option>
-            </select>
+            <div className="flex flex-wrap items-center gap-1" data-testid="categories-list-filter-status-group">
+              {[
+                { value: 'all', label: 'Tüm Durumlar' },
+                { value: 'active', label: 'Aktif' },
+                { value: 'passive', label: 'Pasif' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setListFilters((prev) => ({ ...prev, status: option.value }))}
+                  className={`h-9 rounded-md border px-3 text-sm ${listFilters.status === option.value ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
+                  data-testid={`categories-list-filter-status-${option.value}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
 
-            <select
-              value={listFilters.image_presence}
-              onChange={(event) => setListFilters((prev) => ({ ...prev, image_presence: event.target.value }))}
-              className="h-9 rounded-md border px-3 text-sm"
-              data-testid="categories-list-filter-image-presence"
-            >
-              <option value="all">Tüm Görsel Durumları</option>
-              <option value="with_image">Görselli</option>
-              <option value="without_image">Görselsiz</option>
-            </select>
+            <div className="flex flex-wrap items-center gap-1" data-testid="categories-list-filter-image-presence-group">
+              {[
+                { value: 'all', label: 'Tüm Görsel Durumları' },
+                { value: 'with_image', label: 'Görselli' },
+                { value: 'without_image', label: 'Görselsiz' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setListFilters((prev) => ({ ...prev, image_presence: option.value }))}
+                  className={`h-9 rounded-md border px-3 text-sm ${listFilters.image_presence === option.value ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
+                  data-testid={`categories-list-filter-image-presence-${option.value}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="text-xs text-slate-600" data-testid="categories-list-selection-meta">
