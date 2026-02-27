@@ -746,9 +746,9 @@ export default function Layout({ children }) {
       {/* Main Content */}
       <div className={sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}>
         {/* Topbar */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-card/95 backdrop-blur px-4 lg:px-8">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-2 border-b bg-card/95 px-4 backdrop-blur lg:px-8">
           {/* Left - Mobile menu + Country selector */}
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2 rounded-md hover:bg-muted"
@@ -758,7 +758,7 @@ export default function Layout({ children }) {
             </button>
 
             {/* Admin Country Context v2 (URL-based) */}
-            <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-3 sm:flex">
               <div className="flex items-center gap-2 border rounded-md px-2 py-1" data-testid="admin-mode-toggle">
                 <span className={`text-xs ${!isCountryMode ? 'font-semibold' : 'text-muted-foreground'}`}>Global</span>
                 <Switch
@@ -811,7 +811,7 @@ export default function Layout({ children }) {
           </div>
 
           {/* Right - Theme, Language, User */}
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {canViewSystemHealth && (
               <div className="relative" ref={healthPanelRef}>
                 <button
