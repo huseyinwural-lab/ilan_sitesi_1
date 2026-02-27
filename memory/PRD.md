@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 20:48:00 UTC (P90 Ücretli Tipi + Kampanya Tip Genişletmesi)
+**Son güncelleme:** 2026-02-27 21:16:00 UTC (P91 Başvurular için Hızlı Vitrin/Acil Butonları)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
