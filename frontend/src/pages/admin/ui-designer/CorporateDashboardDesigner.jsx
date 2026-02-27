@@ -628,13 +628,22 @@ export const CorporateDashboardDesigner = () => {
         >
           Yayınla
         </button>
-        <button type="button" onClick={() => setIsRollbackOpen(true)} className="h-9 rounded-md border px-3 text-sm" data-testid="ui-designer-dashboard-open-rollback">
+        <button
+          type="button"
+          onClick={() => {
+            setRollbackReason('');
+            setIsRollbackOpen(true);
+          }}
+          className="h-9 rounded-md border px-3 text-sm"
+          data-testid="ui-designer-dashboard-open-rollback"
+        >
           Rollback
         </button>
         <button
           type="button"
           onClick={() => {
             setSelectedRollbackId('');
+            setRollbackReason('');
             setIsRollbackOpen(true);
           }}
           className="h-9 rounded-md border px-3 text-sm"
