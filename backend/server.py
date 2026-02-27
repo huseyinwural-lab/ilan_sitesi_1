@@ -20014,6 +20014,10 @@ async def admin_reindex_search_projection(
         "attribute_flat_map",
         "price",
         "premium_score",
+        "is_featured",
+        "is_urgent",
+        "featured_until_ts",
+        "urgent_until_ts",
     ]
     dynamic_attribute_fields = await _load_all_filterable_attribute_fields(session)
     try:
@@ -25513,6 +25517,13 @@ async def public_search_v2(
         await meili_update_filterable_attributes(runtime, all_filterable)
     except Exception:
         logging.getLogger("search_v2").warning("meili_filterable_update_failed", exc_info=True)
+    try:
+        await meili_update_sortable_attributes(
+            runtime,
+            ["price", "premium_score", "published_at", "featured_until_ts", "urgent_until_ts"],
+        )
+    except Exception:
+        logging.getLogger("search_v2").warning("meili_sortable_update_failed", exc_info=True)
 
     base_filter_expr = _build_meili_filter_expression(
         category_uuid=category_uuid,
@@ -25582,6 +25593,11 @@ async def public_search_v2(
                 "secondary_currency": None,
                 "image": hit.get("image"),
                 "city": hit.get("city") or "",
+                "is_featured": bool(hit.get("is_featured")),
+                "is_urgent": bool(hit.get("is_urgent")),
+                "featured_until": hit.get("featured_until"),
+                "urgent_until": hit.get("urgent_until"),
+                "premium_score": hit.get("premium_score") or 0,
             }
         )
 
