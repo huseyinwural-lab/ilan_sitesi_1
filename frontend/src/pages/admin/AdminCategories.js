@@ -801,6 +801,77 @@ const AdminCategories = () => {
     }
   }, [authHeader]);
 
+  const findNextAvailableSortOrder = useCallback(async ({ moduleValue, countryCode, parentId, startOrder = 1, excludeId }) => {
+    if (!moduleValue || !countryCode) return null;
+    let candidate = Number.isFinite(Number(startOrder)) ? Math.max(1, Number(startOrder)) : 1;
+    for (let index = 0; index < 50; index += 1) {
+      try {
+        const params = new URLSearchParams({
+          module: moduleValue,
+          country: countryCode,
+          sort_order: String(candidate),
+        });
+        if (parentId) params.set("parent_id", parentId);
+        if (excludeId) params.set("exclude_id", excludeId);
+
+        const res = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/order-index/preview?${params.toString()}`,
+          { headers: authHeader }
+        );
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data?.available) return candidate;
+      } catch (error) {
+        return null;
+      }
+      candidate += 1;
+    }
+    return null;
+  }, [authHeader]);
+
+  const createCategoryWithSortFallback = useCallback(async (initialPayload, fallbackMessage) => {
+    const moduleValue = (initialPayload.module || "").trim().toLowerCase();
+    const countryCode = (initialPayload.country_code || "").trim().toUpperCase();
+    const parentId = initialPayload.parent_id || "";
+    let payload = {
+      ...initialPayload,
+      sort_order: Number(initialPayload.sort_order || 1),
+    };
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        return { ok: true, data, payload, autoAdjusted: attempt > 0 };
+      }
+
+      const parsed = parseApiError(data, fallbackMessage);
+      if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
+        const nextSort = await findNextAvailableSortOrder({
+          moduleValue,
+          countryCode,
+          parentId,
+          startOrder: Number(payload.sort_order || 1) + 1,
+        });
+        if (nextSort && nextSort !== payload.sort_order) {
+          payload = { ...payload, sort_order: nextSort };
+          continue;
+        }
+      }
+
+      return { ok: false, parsed, payload };
+    }
+
+    return { ok: false, parsed: { errorCode: "", message: fallbackMessage }, payload };
+  }, [authHeader, findNextAvailableSortOrder]);
+
   const fetchVersions = async () => {
     if (!editing?.id) return;
     setVersionsLoading(true);
