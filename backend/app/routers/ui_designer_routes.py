@@ -1114,10 +1114,86 @@ def _split_csv_values(raw: Optional[str]) -> list[str]:
     return [item.strip() for item in str(raw).split(",") if item and item.strip()]
 
 
-def _ops_alerts_secret_presence() -> dict[str, Any]:
+def _smtp_auth_required() -> bool:
+    return str(os.environ.get("ALERT_SMTP_AUTH_REQUIRED", "true")).strip().lower() == "true"
+
+
+def _ops_alert_required_keys_for_channel(channel: str) -> list[str]:
+    normalized = OPS_ALERT_CHANNEL_ALIASES.get(str(channel).strip().lower())
+    if not normalized:
+        return []
+    if normalized == "smtp":
+        keys = [
+            "ALERT_SMTP_HOST",
+            "ALERT_SMTP_PORT",
+            "ALERT_SMTP_FROM",
+            "ALERT_SMTP_TO",
+        ]
+        if _smtp_auth_required():
+            keys.extend(["ALERT_SMTP_USER", "ALERT_SMTP_PASS"])
+        return keys
+    return list(OPS_ALERT_REQUIRED_KEYS.get(normalized, []))
+
+
+def _normalize_ops_alert_channels(raw_channels: Any) -> list[str]:
+    if raw_channels is None:
+        return ["smtp", "slack", "pagerduty"]
+
+    if isinstance(raw_channels, str):
+        candidates = [item.strip() for item in raw_channels.split(",") if item and item.strip()]
+    elif isinstance(raw_channels, (list, tuple, set)):
+        candidates = [str(item).strip() for item in raw_channels if str(item).strip()]
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_CHANNEL_SELECTION",
+                "message": "channels alanı string/list olmalıdır",
+                "allowed": ["smtp", "slack", "pagerduty"],
+            },
+        )
+
+    if not candidates:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_CHANNEL_SELECTION",
+                "message": "En az bir alert kanalı seçilmelidir",
+                "allowed": ["smtp", "slack", "pagerduty"],
+            },
+        )
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    invalid: list[str] = []
+    for item in candidates:
+        alias = OPS_ALERT_CHANNEL_ALIASES.get(item.lower())
+        if not alias:
+            invalid.append(item)
+            continue
+        if alias not in seen:
+            seen.add(alias)
+            normalized.append(alias)
+
+    if invalid:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_CHANNEL_SELECTION",
+                "message": f"Geçersiz kanal seçimi: {', '.join(invalid)}",
+                "allowed": ["smtp", "slack", "pagerduty"],
+            },
+        )
+
+    return normalized
+
+
+def _ops_alerts_secret_presence(selected_channels: Optional[list[str]] = None) -> dict[str, Any]:
+    channels_to_evaluate = selected_channels or ["smtp", "slack", "pagerduty"]
     missing_keys: list[str] = []
     channels: dict[str, dict[str, Any]] = {}
-    for channel, keys in OPS_ALERT_REQUIRED_KEYS.items():
+    for channel in channels_to_evaluate:
+        keys = _ops_alert_required_keys_for_channel(channel)
         channel_missing = [key for key in keys if not os.environ.get(key)]
         missing_keys.extend(channel_missing)
         channels[channel] = {
@@ -1138,6 +1214,7 @@ def _ops_alerts_secret_presence() -> dict[str, Any]:
     return {
         "status": "READY" if not unique_missing else "BLOCKED",
         "missing_keys": unique_missing,
+        "requested_channels": channels_to_evaluate,
         "channels": channels,
     }
 
