@@ -275,6 +275,9 @@ export default function AdminDealerPortalConfig() {
             <ul className="list-disc pl-5">
               <li data-testid="admin-dealer-config-preview-header-row3-store">Mağaza filtresi: {String(preview?.header_row3_controls?.store_filter_enabled !== false)}</li>
               <li data-testid="admin-dealer-config-preview-header-row3-user">Kullanıcı dropdown: {String(preview?.header_row3_controls?.user_dropdown_enabled !== false)}</li>
+              <li data-testid="admin-dealer-config-preview-header-row3-page-edit">Sayfayı düzenle: {String(preview?.header_row3_controls?.page_edit_enabled !== false)}</li>
+              <li data-testid="admin-dealer-config-preview-header-row3-announcements">Duyurular: {String(preview?.header_row3_controls?.announcements_enabled !== false)}</li>
+              <li data-testid="admin-dealer-config-preview-header-row3-authorized-users">Yetkili kullanıcı sayısı: {Math.max(0, (preview?.header_row3_controls?.stores || []).length - 1)}</li>
             </ul>
           </div>
           <div data-testid="admin-dealer-config-preview-sidebar-items">
