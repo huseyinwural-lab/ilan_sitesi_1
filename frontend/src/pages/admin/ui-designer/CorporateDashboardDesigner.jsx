@@ -362,6 +362,24 @@ export const CorporateDashboardDesigner = () => {
     }
   };
 
+  const loadPublishAudits = async () => {
+    try {
+      const response = await fetch(
+        `${API}/admin/ui/configs/dashboard/publish-audits?segment=corporate&scope=${scope}${scopeQuery}&limit=25`,
+        { headers: authHeader },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(parseApiError(data, response.status).message || 'Publish audit verisi alınamadı');
+      }
+      setPublishAuditItems(Array.isArray(data?.items) ? data.items : []);
+      setPublishTelemetry(data?.telemetry || null);
+    } catch (_) {
+      setPublishAuditItems([]);
+      setPublishTelemetry(null);
+    }
+  };
+
   const saveDraft = async (silent = false) => {
     setSaving(true);
     if (!silent) {
