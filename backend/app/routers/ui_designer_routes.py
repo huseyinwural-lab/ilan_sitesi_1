@@ -91,11 +91,12 @@ OPS_ALERT_MAX_WINDOW_HOURS = 24
 OPS_ALERT_SIMULATION_RATE_LIMIT_PER_MINUTE = 3
 OPS_ALERT_SIMULATION_RATE_WINDOW_SECONDS = 60
 OPS_ALERT_CHANNEL_KEYS = ["slack", "smtp", "pd"]
-
-LEGACY_PUBLISH_DEPRECATION_HEADERS = {
-    "Deprecation": "true",
-    "Sunset": "Wed, 01 Apr 2026 00:00:00 GMT",
-    "Link": '</api/admin/ui/configs/{config_type}/publish>; rel="successor-version"',
+OPS_ALERT_CHANNEL_ALIASES = {
+    "slack": "slack",
+    "smtp": "smtp",
+    "email": "smtp",
+    "pagerduty": "pagerduty",
+    "pd": "pagerduty",
 }
 
 _PUBLISH_LOCK_REGISTRY: dict[str, dict[str, Any]] = {}
