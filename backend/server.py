@@ -25514,17 +25514,18 @@ async def public_search_v2(
         "premium_score",
     ]
     all_filterable = list(dict.fromkeys(base_filterable + attribute_facet_fields))
-    try:
-        await meili_update_filterable_attributes(runtime, all_filterable)
-    except Exception:
-        logging.getLogger("search_v2").warning("meili_filterable_update_failed", exc_info=True)
-    try:
-        await meili_update_sortable_attributes(
-            runtime,
-            ["price", "premium_score", "published_at", "featured_until_ts", "urgent_until_ts"],
-        )
-    except Exception:
-        logging.getLogger("search_v2").warning("meili_sortable_update_failed", exc_info=True)
+    global _meili_settings_last_sync_ts
+    now_ts = time.time()
+    if (now_ts - _meili_settings_last_sync_ts) > 300:
+        try:
+            await meili_update_filterable_attributes(runtime, all_filterable)
+            await meili_update_sortable_attributes(
+                runtime,
+                ["price", "premium_score", "published_at", "featured_until_ts", "urgent_until_ts"],
+            )
+            _meili_settings_last_sync_ts = now_ts
+        except Exception:
+            logging.getLogger("search_v2").warning("meili_settings_update_failed", exc_info=True)
 
     base_filter_expr = _build_meili_filter_expression(
         category_uuid=category_uuid,
