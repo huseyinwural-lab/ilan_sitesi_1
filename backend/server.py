@@ -16304,7 +16304,7 @@ async def dealer_reports(
         return round(((current_value - previous_value) / previous_value) * 100, 1)
 
     def _series(rows: list[tuple[Any, Any]], start_dt: datetime, days: int) -> list[dict[str, Any]]:
-        by_day: dict[date, int] = {}
+        by_day: dict[Any, int] = {}
         for row in rows:
             raw_day = row[0]
             val = row[1]
