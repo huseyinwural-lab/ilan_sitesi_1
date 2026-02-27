@@ -549,11 +549,19 @@ class TestThemeTokenValidation:
 class TestConfigDrivenRender:
     """Test config-driven render: logo resolve, fallback behavior"""
     
-    def test_corporate_header_fallback_when_no_logo(self, admin_token):
-        """When no logo.url, config_data should have fallback_text"""
-        response = requests.get(
+    def test_corporate_header_requires_dealer_scope(self, admin_token, dealer_token):
+        """Corporate header effective endpoint is dealer-scope only"""
+        admin_response = requests.get(
             f"{BASE_URL}/api/ui/header?segment=corporate",
             headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert admin_response.status_code == 403
+        admin_detail = admin_response.json().get("detail") or {}
+        assert admin_detail.get("code") == "UNAUTHORIZED_SCOPE"
+
+        response = requests.get(
+            f"{BASE_URL}/api/ui/header?segment=corporate",
+            headers={"Authorization": f"Bearer {dealer_token}"}
         )
         assert response.status_code == 200
         config_data = response.json().get("config_data", {})
