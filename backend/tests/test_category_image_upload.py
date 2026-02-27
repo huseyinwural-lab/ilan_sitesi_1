@@ -303,7 +303,7 @@ class TestCategoryImagePreview:
     """Tests for image preview URL with cache busting"""
     
     def test_image_url_persisted_in_get(self, auth_header, root_category_id):
-        """Test that image_url is returned in GET category response"""
+        """Test that image_url is returned in category list response"""
         # First set an image
         requests.patch(
             f"{BASE_URL}/api/admin/categories/{root_category_id}",
@@ -311,15 +311,24 @@ class TestCategoryImagePreview:
             json={"image_url": "/api/site/assets/persist-test.webp"}
         )
         
-        # Then GET and verify
+        # Then GET list and verify (no single GET endpoint, use list)
         response = requests.get(
-            f"{BASE_URL}/api/admin/categories/{root_category_id}",
+            f"{BASE_URL}/api/admin/categories?country=DE&module=other",
             headers=auth_header
         )
-        assert response.status_code == 200, f"GET category failed: {response.text}"
+        assert response.status_code == 200, f"GET categories failed: {response.text}"
         data = response.json()
-        assert data["category"]["image_url"] == "/api/site/assets/persist-test.webp"
-        print("✓ image_url correctly persisted and returned in GET")
+        
+        # Find our category in the list
+        found = None
+        for item in data.get("items", []):
+            if item.get("id") == root_category_id:
+                found = item
+                break
+        
+        assert found is not None, f"Category {root_category_id} not found in list"
+        assert found.get("image_url") == "/api/site/assets/persist-test.webp"
+        print("✓ image_url correctly persisted and returned in list")
 
 
 if __name__ == "__main__":
