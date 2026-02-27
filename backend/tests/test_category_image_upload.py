@@ -25,7 +25,9 @@ def auth_header():
 def root_category_id(auth_header):
     """Create a root category for testing"""
     import time
+    import random
     slug = f"test-root-img-{int(time.time())}"
+    sort_order = random.randint(10000, 99999)
     response = requests.post(f"{BASE_URL}/api/admin/categories", 
         headers=auth_header,
         json={
@@ -33,7 +35,7 @@ def root_category_id(auth_header):
             "slug": slug,
             "module": "other",
             "country_code": "DE",
-            "sort_order": 999,
+            "sort_order": sort_order,
             "active_flag": True
         }
     )
@@ -183,7 +185,9 @@ class TestCategoryCreateWithImage:
     def test_root_category_with_image_url(self, auth_header):
         """Test creating root category with image_url (should succeed)"""
         import time
+        import random
         slug = f"test-root-with-img-{int(time.time())}"
+        sort_order = random.randint(100000, 999999)
         
         response = requests.post(f"{BASE_URL}/api/admin/categories", 
             headers=auth_header,
@@ -192,7 +196,7 @@ class TestCategoryCreateWithImage:
                 "slug": slug,
                 "module": "other",
                 "country_code": "DE",
-                "sort_order": 998,
+                "sort_order": sort_order,
                 "active_flag": True,
                 "image_url": "/api/site/assets/test-category.webp"
             }
@@ -206,7 +210,9 @@ class TestCategoryCreateWithImage:
     def test_child_category_with_image_url_rejected(self, auth_header, root_category_id):
         """Test creating child category with image_url (should fail with CATEGORY_IMAGE_ROOT_ONLY)"""
         import time
+        import random
         slug = f"test-child-with-img-{int(time.time())}"
+        sort_order = random.randint(100000, 999999)
         
         response = requests.post(f"{BASE_URL}/api/admin/categories", 
             headers=auth_header,
@@ -216,7 +222,7 @@ class TestCategoryCreateWithImage:
                 "parent_id": root_category_id,
                 "module": "other",
                 "country_code": "DE",
-                "sort_order": 2,
+                "sort_order": sort_order,
                 "active_flag": True,
                 "image_url": "/api/site/assets/test-category.webp"
             }
