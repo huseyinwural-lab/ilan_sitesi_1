@@ -54,6 +54,8 @@ export default function AdminPublishHealthPage() {
   const [alertMetricsError, setAlertMetricsError] = useState('');
   const [simulationError, setSimulationError] = useState('');
   const [retryAfterSeconds, setRetryAfterSeconds] = useState(0);
+  const [secretChecklist, setSecretChecklist] = useState(null);
+  const [channelSelection, setChannelSelection] = useState(['smtp']);
 
   const loadPublishHealth = async () => {
     setLoadingPublishHealth(true);
@@ -94,6 +96,19 @@ export default function AdminPublishHealthPage() {
     }
   };
 
+  const loadSecretChecklist = async () => {
+    try {
+      const response = await fetch(`${API}/admin/ui/configs/dashboard/ops-alerts/secret-checklist`, { headers: authHeader });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.detail?.message || payload?.detail || 'Secret checklist alınamadı');
+      }
+      setSecretChecklist(payload);
+    } catch (_error) {
+      setSecretChecklist(null);
+    }
+  };
+
   const rerunAlertSimulation = async () => {
     setRunningSimulation(true);
     setSimulationError('');
@@ -129,6 +144,7 @@ export default function AdminPublishHealthPage() {
   useEffect(() => {
     loadPublishHealth();
     loadAlertDeliveryMetrics();
+    loadSecretChecklist();
   }, []);
 
   useEffect(() => {
@@ -142,6 +158,16 @@ export default function AdminPublishHealthPage() {
   const successRate = Number(alertMetrics?.success_rate || 0);
   const reliabilityTone = getReliabilityTone(successRate);
   const channelBreakdown = alertMetrics?.channel_breakdown || { slack: null, smtp: null, pd: null };
+
+  const toggleChannel = (channelKey) => {
+    setChannelSelection((prev) => {
+      const set = new Set(prev);
+      if (set.has(channelKey)) set.delete(channelKey);
+      else set.add(channelKey);
+      if (set.size === 0) return ['smtp'];
+      return Array.from(set);
+    });
+  };
 
   return (
     <div className="min-w-0 space-y-6" data-testid="ops-publish-health-page">
@@ -202,10 +228,57 @@ export default function AdminPublishHealthPage() {
             Sadece Admin/Ops rolü erişebilir. Rate limit: dakikada en fazla 3.
           </div>
 
+          <div className="mt-3 flex flex-wrap gap-2" data-testid="ops-alert-rerun-channel-selection">
+            {['smtp', 'slack', 'pagerduty'].map((channelKey) => {
+              const active = channelSelection.includes(channelKey);
+              return (
+                <button
+                  key={channelKey}
+                  type="button"
+                  onClick={() => toggleChannel(channelKey)}
+                  className={`h-8 rounded-full border px-3 text-xs font-semibold ${active ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-700'}`}
+                  data-testid={`ops-alert-rerun-channel-toggle-${channelKey}`}
+                >
+                  {channelKey.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="mt-4 flex flex-wrap gap-2" data-testid="ops-alert-rerun-actions">
             <button
               type="button"
-              onClick={rerunAlertSimulation}
+              onClick={async () => {
+                setRunningSimulation(true);
+                setSimulationError('');
+                try {
+                  const response = await fetch(`${API}/admin/ops/alert-delivery/rerun-simulation`, {
+                    method: 'POST',
+                    headers: {
+                      ...authHeader,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ config_type: 'dashboard', channels: channelSelection }),
+                  });
+                  const payload = await response.json().catch(() => ({}));
+                  if (!response.ok) {
+                    if (response.status === 429) {
+                      const waitSeconds = Number(payload?.detail?.retry_after_seconds || 60);
+                      setRetryAfterSeconds(waitSeconds);
+                      throw new Error(payload?.detail?.message || `Rate limit aktif. ${waitSeconds}s sonra tekrar deneyin.`);
+                    }
+                    throw new Error(payload?.detail?.message || payload?.detail || 'Simülasyon yeniden çalıştırılamadı');
+                  }
+                  setLastSimulation(payload);
+                  toast.success('Alert simulation yeniden çalıştırıldı');
+                  await loadAlertDeliveryMetrics();
+                } catch (error) {
+                  setSimulationError(error.message || 'Simülasyon yeniden çalıştırılamadı');
+                  toast.error(error.message || 'Simülasyon yeniden çalıştırılamadı');
+                } finally {
+                  setRunningSimulation(false);
+                }
+              }}
               disabled={runningSimulation || retryAfterSeconds > 0}
               className="h-10 rounded-md bg-slate-900 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
               title={retryAfterSeconds > 0 ? `Rate limit aktif. ${retryAfterSeconds}s sonra tekrar deneyin.` : 'Re-run Alert Simulation'}
@@ -234,6 +307,7 @@ export default function AdminPublishHealthPage() {
             <div className="mt-3 rounded-md border bg-slate-50 p-3" data-testid="ops-alert-rerun-result-card">
               <div className="break-all text-xs text-slate-700" data-testid="ops-alert-rerun-result-correlation">correlation_id: {lastSimulation.correlation_id}</div>
               <div className="text-xs text-slate-700" data-testid="ops-alert-rerun-result-delivery-status">delivery_status: {lastSimulation.delivery_status}</div>
+              <div className="text-xs text-slate-700" data-testid="ops-alert-rerun-result-channels">channels: {(lastSimulation.channels_requested || []).join(', ') || '-'}</div>
               <div className="mt-2 space-y-2" data-testid="ops-alert-rerun-channel-results">
                 {Object.keys(lastSimulation.channel_results || {}).length === 0 ? (
                   <div className="text-[11px] text-slate-500" data-testid="ops-alert-rerun-channel-results-empty">
@@ -258,6 +332,23 @@ export default function AdminPublishHealthPage() {
                   Missing keys: {lastSimulation.fail_fast.missing_keys.join(', ')}
                 </div>
               ) : null}
+            </div>
+          ) : null}
+
+          {secretChecklist?.channels ? (
+            <div className="mt-3 rounded-md border bg-slate-50 p-3" data-testid="ops-alert-secret-checklist-card">
+              <div className="text-xs font-semibold text-slate-800" data-testid="ops-alert-secret-checklist-title">Secret Checklist</div>
+              <div className="mt-2 space-y-1 text-[11px] text-slate-600" data-testid="ops-alert-secret-checklist-items">
+                {channelSelection.map((channelKey) => {
+                  const data = secretChecklist.channels?.[channelKey];
+                  const keys = Array.isArray(data?.required_secrets) ? data.required_secrets : [];
+                  return (
+                    <div key={channelKey} data-testid={`ops-alert-secret-checklist-item-${channelKey}`}>
+                      {channelKey}: {keys.join(', ') || '-'}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ) : null}
         </article>
