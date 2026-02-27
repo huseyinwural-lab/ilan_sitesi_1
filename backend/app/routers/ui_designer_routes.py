@@ -3176,6 +3176,36 @@ async def admin_ui_publish_alerts_secret_presence(
     return {"ops_alerts_secret_presence": _ops_alerts_secret_presence()}
 
 
+@router.get("/admin/ops/alert-delivery-metrics")
+async def admin_ops_alert_delivery_metrics(
+    window: str = Query(default="24h"),
+    current_user=Depends(check_named_permission(ADMIN_OPS_ALERTS_VIEW_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    window_hours = _parse_alert_window_hours(window)
+    return await _aggregate_alert_delivery_metrics(session, window_hours)
+
+
+@router.post("/admin/ops/alert-delivery/rerun-simulation")
+async def admin_ops_alert_delivery_rerun_simulation(
+    payload: dict[str, Any],
+    current_user=Depends(check_named_permission(ADMIN_OPS_ALERTS_TRIGGER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    requested_type = str(payload.get("config_type") or "dashboard")
+    normalized_type = _normalize_config_type(requested_type)
+    return await _run_ops_alert_simulation(
+        normalized_type=normalized_type,
+        payload=payload,
+        current_user=current_user,
+        session=session,
+        trigger_source="ops_dashboard_rerun",
+        enforce_rate_limit=True,
+        default_to_critical_metrics=True,
+    )
+
+
 @router.post("/admin/ui/configs/{config_type}/ops-alerts/simulate")
 async def admin_ui_publish_alerts_simulate(
     config_type: str,
@@ -3184,98 +3214,15 @@ async def admin_ui_publish_alerts_simulate(
     session: AsyncSession = Depends(get_db),
 ):
     normalized_type = _normalize_config_type(config_type)
-    sample_metrics = {
-        "avg_lock_wait_ms": float(payload.get("avg_lock_wait_ms") or 0),
-        "max_lock_wait_ms": float(payload.get("max_lock_wait_ms") or 0),
-        "publish_duration_ms_p95": float(payload.get("publish_duration_ms_p95") or 0),
-        "conflict_rate": float(payload.get("conflict_rate") or 0),
-    }
-    alerts = _evaluate_publish_alerts(sample_metrics)
-    correlation_id = str(payload.get("correlation_id") or uuid.uuid4())
-    secret_presence = _ops_alerts_secret_presence()
-
-    channel_results: dict[str, Any] = {}
-    delivery_status = "blocked_missing_secrets"
-    if secret_presence["status"] == "READY":
-        slack_result, smtp_result, pagerduty_result = await asyncio.gather(
-            asyncio.to_thread(_simulate_slack_delivery, correlation_id),
-            asyncio.to_thread(_simulate_smtp_delivery, correlation_id),
-            asyncio.to_thread(_simulate_pagerduty_delivery, correlation_id),
-        )
-        channel_results = {
-            "slack": slack_result,
-            "smtp": smtp_result,
-            "pagerduty": pagerduty_result,
-        }
-        statuses = [
-            str(slack_result.get("delivery_status") or "fail"),
-            str(smtp_result.get("delivery_status") or "fail"),
-            str(pagerduty_result.get("delivery_status") or "fail"),
-        ]
-        delivery_status = "ok" if all(status == "ok" for status in statuses) else "partial_fail"
-
-    if channel_results:
-        for channel_name, channel_payload in channel_results.items():
-            session.add(
-                _create_ui_config_audit_log(
-                    action="ui_config_ops_alert_delivery",
-                    current_user=current_user,
-                    config_type=normalized_type,
-                    resource_id=f"ops_delivery:{channel_name}",
-                    old_values=None,
-                    new_values=None,
-                    metadata_info={
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                        "correlation_id": correlation_id,
-                        "channel": channel_name,
-                        "delivery_status": channel_payload.get("delivery_status"),
-                        "provider_code": channel_payload.get("provider_code") or channel_payload.get("smtp_response_code"),
-                        "provider_status": channel_payload.get("provider_status"),
-                        "message_ref": channel_payload.get("message_ref"),
-                        "incident_ref": channel_payload.get("incident_ref"),
-                        "retry_backoff_log": channel_payload.get("retry_backoff_log") or [],
-                        "last_failure_classification": channel_payload.get("last_failure_classification"),
-                    },
-                )
-            )
-
-    session.add(
-        _create_ui_config_audit_log(
-            action="ui_config_ops_alert_simulation",
-            current_user=current_user,
-            config_type=normalized_type,
-            resource_id="ops_simulation",
-            old_values=None,
-            new_values=None,
-            metadata_info={
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "correlation_id": correlation_id,
-                "ops_alerts_secret_presence": secret_presence,
-                "sample_metrics": sample_metrics,
-                "alerts": alerts,
-                "channel_results": channel_results,
-                "delivery_status": delivery_status,
-            },
-        )
+    return await _run_ops_alert_simulation(
+        normalized_type=normalized_type,
+        payload=payload,
+        current_user=current_user,
+        session=session,
+        trigger_source="ui_config_simulate",
+        enforce_rate_limit=False,
+        default_to_critical_metrics=False,
     )
-    await session.commit()
-    return {
-        "ok": delivery_status == "ok",
-        "delivery_status": delivery_status,
-        "correlation_id": correlation_id,
-        "ops_alerts_secret_presence": secret_presence,
-        "sample_metrics": sample_metrics,
-        "alerts": alerts,
-        "channel_results": channel_results,
-        "fail_fast": (
-            {
-                "status": "Blocked: Missing Secrets",
-                "missing_keys": secret_presence.get("missing_keys") or [],
-            }
-            if secret_presence["status"] != "READY"
-            else None
-        ),
-    }
 
 
 @router.get("/admin/ui/configs/{config_type}/ops-alerts/delivery-audit")
