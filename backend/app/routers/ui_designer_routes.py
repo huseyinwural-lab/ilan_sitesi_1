@@ -1475,7 +1475,7 @@ async def _publish_ui_config_row(
     row: UIConfig,
     current_user: dict[str, Any],
     reason: Optional[str] = None,
-) -> tuple[UIConfig, dict[str, Any], Optional[dict[str, Any]]]:
+) -> tuple[UIConfig, dict[str, Any], Optional[dict[str, Any]], dict[str, Any]]:
     _validate_ui_config_before_publish(row)
 
     previous_published = await _latest_ui_config(
@@ -1508,6 +1508,7 @@ async def _publish_ui_config_row(
     row.status = "published"
     row.published_at = now_dt
     row.updated_at = now_dt
+    snapshot_payload = _build_ui_publish_snapshot(row)
 
     session.add(
         _create_ui_config_audit_log(
@@ -1524,13 +1525,14 @@ async def _publish_ui_config_row(
                 "version": row.version,
                 "diff": diff_payload,
                 "reason": reason or "manual_publish",
+                "snapshot": snapshot_payload,
             },
         )
     )
 
     await session.commit()
     await session.refresh(row)
-    return row, diff_payload, previous_payload
+    return row, diff_payload, previous_payload, snapshot_payload
 
 
 async def _resolve_effective_theme(
