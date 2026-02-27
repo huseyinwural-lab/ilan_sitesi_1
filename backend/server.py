@@ -16172,15 +16172,151 @@ async def dealer_customers(
     }
 
 
-@api_router.get("/dealer/reports")
-async def dealer_reports(
+@api_router.get("/dealer/favorites")
+async def dealer_favorites(
     request: Request,
     current_user=Depends(check_permissions(["dealer"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     dealer_uuid = uuid.UUID(current_user.get("id"))
+    ninety_days_ago = datetime.now(timezone.utc) - timedelta(days=90)
+
+    favorite_listing_rows = (
+        await session.execute(
+            select(
+                Listing.id,
+                Listing.title,
+                Listing.price,
+                Listing.city,
+                func.count(Favorite.id).label("favorite_count"),
+                func.max(Favorite.created_at).label("last_favorited_at"),
+            )
+            .select_from(Favorite)
+            .join(Listing, Favorite.listing_id == Listing.id)
+            .where(Listing.dealer_id == dealer_uuid)
+            .group_by(Listing.id, Listing.title, Listing.price, Listing.city)
+            .order_by(desc(func.count(Favorite.id)), desc(func.max(Favorite.created_at)))
+            .limit(200)
+        )
+    ).all()
+
+    favorite_seller_rows = (
+        await session.execute(
+            select(
+                SqlUser.id,
+                SqlUser.full_name,
+                SqlUser.email,
+                func.count(Favorite.id).label("favorite_count"),
+                func.max(Favorite.created_at).label("last_favorited_at"),
+            )
+            .select_from(Favorite)
+            .join(Listing, Favorite.listing_id == Listing.id)
+            .join(SqlUser, Favorite.user_id == SqlUser.id)
+            .where(Listing.dealer_id == dealer_uuid)
+            .group_by(SqlUser.id, SqlUser.full_name, SqlUser.email)
+            .order_by(desc(func.count(Favorite.id)), desc(func.max(Favorite.created_at)))
+            .limit(200)
+        )
+    ).all()
+
+    search_interest_rows = (
+        await session.execute(
+            select(
+                UserInteraction.city,
+                func.count(UserInteraction.id).label("search_count"),
+                func.max(UserInteraction.created_at).label("last_seen_at"),
+            )
+            .select_from(UserInteraction)
+            .join(Listing, UserInteraction.listing_id == Listing.id)
+            .where(
+                Listing.dealer_id == dealer_uuid,
+                UserInteraction.created_at >= ninety_days_ago,
+                UserInteraction.city.is_not(None),
+                UserInteraction.city != "",
+            )
+            .group_by(UserInteraction.city)
+            .order_by(desc(func.count(UserInteraction.id)))
+            .limit(30)
+        )
+    ).all()
+
+    return {
+        "favorite_listings": [
+            {
+                "listing_id": str(row.id),
+                "title": row.title,
+                "city": row.city,
+                "price": int(row.price or 0),
+                "favorite_count": int(row.favorite_count or 0),
+                "last_favorited_at": row.last_favorited_at.isoformat() if row.last_favorited_at else None,
+                "route": "/dealer/listings",
+            }
+            for row in favorite_listing_rows
+        ],
+        "favorite_searches": [
+            {
+                "search_key": f"{row.city}-interest",
+                "label": f"{row.city} bölgesi arama ilgisi",
+                "search_count": int(row.search_count or 0),
+                "last_seen_at": row.last_seen_at.isoformat() if row.last_seen_at else None,
+                "route": "/dealer/reports",
+            }
+            for row in search_interest_rows
+        ],
+        "favorite_sellers": [
+            {
+                "user_id": str(row.id),
+                "full_name": row.full_name,
+                "email": row.email,
+                "favorite_count": int(row.favorite_count or 0),
+                "last_favorited_at": row.last_favorited_at.isoformat() if row.last_favorited_at else None,
+                "route": "/dealer/customers",
+            }
+            for row in favorite_seller_rows
+        ],
+        "summary": {
+            "favorite_listings_count": len(favorite_listing_rows),
+            "favorite_searches_count": len(search_interest_rows),
+            "favorite_sellers_count": len(favorite_seller_rows),
+        },
+    }
+
+
+@api_router.get("/dealer/reports")
+async def dealer_reports(
+    request: Request,
+    window_days: int = Query(default=30, ge=7, le=90),
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if window_days not in {7, 14, 30, 90}:
+        raise HTTPException(status_code=400, detail="window_days must be one of: 7, 14, 30, 90")
+
+    dealer_uuid = uuid.UUID(current_user.get("id"))
     now_dt = datetime.now(timezone.utc)
     week_start = now_dt - timedelta(days=7)
+    window_start = now_dt - timedelta(days=window_days)
+    previous_window_start = window_start - timedelta(days=window_days)
+
+    def _pct(current_value: int, previous_value: int) -> float:
+        if previous_value <= 0:
+            return 0.0 if current_value <= 0 else 100.0
+        return round(((current_value - previous_value) / previous_value) * 100, 1)
+
+    def _series(rows: list[tuple[Any, Any]], start_dt: datetime, days: int) -> list[dict[str, Any]]:
+        by_day: dict[date, int] = {}
+        for row in rows:
+            raw_day = row[0]
+            val = row[1]
+            key_day = raw_day.date() if hasattr(raw_day, "date") else raw_day
+            by_day[key_day] = int(val or 0)
+        out = []
+        for idx in range(days):
+            d = (start_dt + timedelta(days=idx)).date()
+            out.append({"date": d.isoformat(), "label": d.strftime("%d.%m"), "value": by_day.get(d, 0)})
+        return out
+
+    series_start = (now_dt - timedelta(days=window_days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
 
     views_7d = (
         await session.execute(
@@ -16204,11 +16340,314 @@ async def dealer_reports(
         )
     ).scalar_one()
 
+    def _metric_counts_and_series(metric_name: str):
+        if metric_name == "views":
+            current = (
+                await session.execute(
+                    select(func.count())
+                    .select_from(ListingView)
+                    .join(Listing, ListingView.listing_id == Listing.id)
+                    .where(Listing.dealer_id == dealer_uuid, ListingView.created_at >= window_start)
+                )
+            ).scalar_one()
+            previous = (
+                await session.execute(
+                    select(func.count())
+                    .select_from(ListingView)
+                    .join(Listing, ListingView.listing_id == Listing.id)
+                    .where(
+                        Listing.dealer_id == dealer_uuid,
+                        ListingView.created_at >= previous_window_start,
+                        ListingView.created_at < window_start,
+                    )
+                )
+            ).scalar_one()
+            rows = (
+                await session.execute(
+                    select(func.date_trunc("day", ListingView.created_at), func.count(ListingView.id))
+                    .select_from(ListingView)
+                    .join(Listing, ListingView.listing_id == Listing.id)
+                    .where(Listing.dealer_id == dealer_uuid, ListingView.created_at >= window_start)
+                    .group_by(func.date_trunc("day", ListingView.created_at))
+                    .order_by(func.date_trunc("day", ListingView.created_at))
+                )
+            ).all()
+            return int(current or 0), int(previous or 0), rows
+
+        if metric_name == "favorites":
+            current = (
+                await session.execute(
+                    select(func.count())
+                    .select_from(Favorite)
+                    .join(Listing, Favorite.listing_id == Listing.id)
+                    .where(Listing.dealer_id == dealer_uuid, Favorite.created_at >= window_start)
+                )
+            ).scalar_one()
+            previous = (
+                await session.execute(
+                    select(func.count())
+                    .select_from(Favorite)
+                    .join(Listing, Favorite.listing_id == Listing.id)
+                    .where(
+                        Listing.dealer_id == dealer_uuid,
+                        Favorite.created_at >= previous_window_start,
+                        Favorite.created_at < window_start,
+                    )
+                )
+            ).scalar_one()
+            rows = (
+                await session.execute(
+                    select(func.date_trunc("day", Favorite.created_at), func.count(Favorite.id))
+                    .select_from(Favorite)
+                    .join(Listing, Favorite.listing_id == Listing.id)
+                    .where(Listing.dealer_id == dealer_uuid, Favorite.created_at >= window_start)
+                    .group_by(func.date_trunc("day", Favorite.created_at))
+                    .order_by(func.date_trunc("day", Favorite.created_at))
+                )
+            ).all()
+            return int(current or 0), int(previous or 0), rows
+
+        if metric_name == "messages":
+            current = (
+                await session.execute(
+                    select(func.count())
+                    .select_from(Message)
+                    .join(Conversation, Message.conversation_id == Conversation.id)
+                    .join(Listing, Conversation.listing_id == Listing.id)
+                    .where(Listing.dealer_id == dealer_uuid, Message.created_at >= window_start)
+                )
+            ).scalar_one()
+            previous = (
+                await session.execute(
+                    select(func.count())
+                    .select_from(Message)
+                    .join(Conversation, Message.conversation_id == Conversation.id)
+                    .join(Listing, Conversation.listing_id == Listing.id)
+                    .where(
+                        Listing.dealer_id == dealer_uuid,
+                        Message.created_at >= previous_window_start,
+                        Message.created_at < window_start,
+                    )
+                )
+            ).scalar_one()
+            rows = (
+                await session.execute(
+                    select(func.date_trunc("day", Message.created_at), func.count(Message.id))
+                    .select_from(Message)
+                    .join(Conversation, Message.conversation_id == Conversation.id)
+                    .join(Listing, Conversation.listing_id == Listing.id)
+                    .where(Listing.dealer_id == dealer_uuid, Message.created_at >= window_start)
+                    .group_by(func.date_trunc("day", Message.created_at))
+                    .order_by(func.date_trunc("day", Message.created_at))
+                )
+            ).all()
+            return int(current or 0), int(previous or 0), rows
+
+        if metric_name == "mobile_calls":
+            current = (
+                await session.execute(
+                    select(func.count())
+                    .select_from(UserInteraction)
+                    .join(Listing, UserInteraction.listing_id == Listing.id)
+                    .where(
+                        Listing.dealer_id == dealer_uuid,
+                        UserInteraction.created_at >= window_start,
+                        UserInteraction.event_type.in_(["mobile_call_click", "call_click", "phone_click"]),
+                    )
+                )
+            ).scalar_one()
+            previous = (
+                await session.execute(
+                    select(func.count())
+                    .select_from(UserInteraction)
+                    .join(Listing, UserInteraction.listing_id == Listing.id)
+                    .where(
+                        Listing.dealer_id == dealer_uuid,
+                        UserInteraction.created_at >= previous_window_start,
+                        UserInteraction.created_at < window_start,
+                        UserInteraction.event_type.in_(["mobile_call_click", "call_click", "phone_click"]),
+                    )
+                )
+            ).scalar_one()
+            rows = (
+                await session.execute(
+                    select(func.date_trunc("day", UserInteraction.created_at), func.count(UserInteraction.id))
+                    .select_from(UserInteraction)
+                    .join(Listing, UserInteraction.listing_id == Listing.id)
+                    .where(
+                        Listing.dealer_id == dealer_uuid,
+                        UserInteraction.created_at >= window_start,
+                        UserInteraction.event_type.in_(["mobile_call_click", "call_click", "phone_click"]),
+                    )
+                    .group_by(func.date_trunc("day", UserInteraction.created_at))
+                    .order_by(func.date_trunc("day", UserInteraction.created_at))
+                )
+            ).all()
+            return int(current or 0), int(previous or 0), rows
+
+        current = (
+            await session.execute(
+                select(func.count())
+                .select_from(Listing)
+                .where(Listing.dealer_id == dealer_uuid, Listing.created_at >= window_start)
+            )
+        ).scalar_one()
+        previous = (
+            await session.execute(
+                select(func.count())
+                .select_from(Listing)
+                .where(
+                    Listing.dealer_id == dealer_uuid,
+                    Listing.created_at >= previous_window_start,
+                    Listing.created_at < window_start,
+                )
+            )
+        ).scalar_one()
+        rows = (
+            await session.execute(
+                select(func.date_trunc("day", Listing.created_at), func.count(Listing.id))
+                .where(Listing.dealer_id == dealer_uuid, Listing.created_at >= window_start)
+                .group_by(func.date_trunc("day", Listing.created_at))
+                .order_by(func.date_trunc("day", Listing.created_at))
+            )
+        ).all()
+        return int(current or 0), int(previous or 0), rows
+
+    listing_cur, listing_prev, listing_rows = await _metric_counts_and_series("listings")
+    views_cur, views_prev, views_rows = await _metric_counts_and_series("views")
+    favorites_cur, favorites_prev, favorites_rows = await _metric_counts_and_series("favorites")
+    messages_cur, messages_prev, messages_rows = await _metric_counts_and_series("messages")
+    calls_cur, calls_prev, calls_rows = await _metric_counts_and_series("mobile_calls")
+
+    total_active_listings = (
+        await session.execute(
+            select(func.count())
+            .select_from(Listing)
+            .where(Listing.dealer_id == dealer_uuid, Listing.status.in_(["active", "published"]))
+        )
+    ).scalar_one()
+
+    latest_invoice = (
+        await session.execute(
+            select(AdminInvoice)
+            .where(AdminInvoice.user_id == dealer_uuid)
+            .order_by(desc(AdminInvoice.created_at))
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+
+    package_name = "Profesyonel Emlak Ofisi / Taahhütlü Pro 50"
+    quota_limit = 0
+    if latest_invoice and latest_invoice.plan_id:
+        plan = await session.get(Plan, latest_invoice.plan_id)
+        if plan and plan.name:
+            package_name = plan.name
+        quota_limit = int((latest_invoice.plan_snapshot_json or {}).get("listing_quota") or 0)
+
+    package_used = int(total_active_listings or 0)
+    package_remaining = max(quota_limit - package_used, 0)
+
+    package_usage_rows = (
+        await session.execute(
+            select(Listing.id, Listing.title, Listing.status, Listing.created_at)
+            .where(Listing.dealer_id == dealer_uuid)
+            .order_by(desc(Listing.created_at))
+            .limit(12)
+        )
+    ).all()
+
+    doping_rows = (
+        await session.execute(
+            select(func.date_trunc("day", UserInteraction.created_at), func.count(UserInteraction.id))
+            .select_from(UserInteraction)
+            .where(
+                UserInteraction.user_id == dealer_uuid,
+                UserInteraction.created_at >= window_start,
+                UserInteraction.event_type.in_(["doping_click", "boost_click", "listing_boost_purchase"]),
+            )
+            .group_by(func.date_trunc("day", UserInteraction.created_at))
+            .order_by(func.date_trunc("day", UserInteraction.created_at))
+        )
+    ).all()
+    doping_total = int(sum(int(row[1] or 0) for row in doping_rows))
+
     return {
         "kpis": {
             "views_7d": int(views_7d or 0),
             "contact_clicks_7d": int(contact_clicks_7d or 0),
-        }
+        },
+        "filters": {
+            "store": "all",
+            "window_days": window_days,
+            "available_windows": [7, 14, 30, 90],
+        },
+        "report_sections": {
+            "listing_report": {
+                "title": "Yayındaki İlan Raporu",
+                "current_value": listing_cur,
+                "previous_value": listing_prev,
+                "change_pct": _pct(listing_cur, listing_prev),
+                "total": int(total_active_listings or 0),
+                "series": _series(listing_rows, series_start, window_days),
+            },
+            "views_report": {
+                "title": "Görüntülenme Raporu",
+                "current_value": views_cur,
+                "previous_value": views_prev,
+                "change_pct": _pct(views_cur, views_prev),
+                "total": views_cur,
+                "series": _series(views_rows, series_start, window_days),
+            },
+            "favorites_report": {
+                "title": "Favoriye Alınma Raporu",
+                "current_value": favorites_cur,
+                "previous_value": favorites_prev,
+                "change_pct": _pct(favorites_cur, favorites_prev),
+                "total": favorites_cur,
+                "series": _series(favorites_rows, series_start, window_days),
+            },
+            "messages_report": {
+                "title": "Gelen Mesaj Raporu",
+                "current_value": messages_cur,
+                "previous_value": messages_prev,
+                "change_pct": _pct(messages_cur, messages_prev),
+                "total": messages_cur,
+                "series": _series(messages_rows, series_start, window_days),
+            },
+            "mobile_calls_report": {
+                "title": "Gelen Arama Raporu (Mobil)",
+                "current_value": calls_cur,
+                "previous_value": calls_prev,
+                "change_pct": _pct(calls_cur, calls_prev),
+                "total": calls_cur,
+                "series": _series(calls_rows, series_start, window_days),
+            },
+        },
+        "package_reports": {
+            "package_name": package_name,
+            "period": {
+                "start": latest_invoice.period_start.isoformat() if latest_invoice and latest_invoice.period_start else None,
+                "end": latest_invoice.period_end.isoformat() if latest_invoice and latest_invoice.period_end else None,
+            },
+            "used": package_used,
+            "remaining": package_remaining,
+            "quota_limit": quota_limit,
+            "usage_rows": [
+                {
+                    "listing_id": str(row.id),
+                    "listing_title": row.title,
+                    "usage_type": "Yeni İlan" if row.status in {"active", "published"} else "Yeniden Yayınlanan",
+                    "date": row.created_at.isoformat() if row.created_at else None,
+                }
+                for row in package_usage_rows
+            ],
+        },
+        "doping_usage_report": {
+            "total_used": doping_total,
+            "total_views": views_cur,
+            "series_used": _series(doping_rows, series_start, window_days),
+            "series_views": _series(views_rows, series_start, window_days),
+        },
     }
 
 
