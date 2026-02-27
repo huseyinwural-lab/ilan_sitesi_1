@@ -271,39 +271,96 @@ export default function HomePage() {
             <Link to="/search" className="home-v2-showcase-link" data-testid="home-v2-showcase-all-link">Tüm vitrin ilanlarını göster</Link>
           </div>
 
-          <div className="home-v2-showcase-grid" data-testid="home-v2-showcase-grid">
-            {showcaseWithPlaceholders.map((item, index) => (
-              item ? (
-                <Link
-                  key={item.id}
-                  to={`/ilan/${item.id}`}
-                  className={`home-v2-tile ${item.is_featured ? 'home-v2-tile-featured' : ''} ${!item.is_featured && item.is_urgent ? 'home-v2-tile-urgent' : ''}`}
-                  data-testid={`home-v2-showcase-tile-${item.id}`}
-                >
-                  <div className="home-v2-tile-image" data-testid={`home-v2-showcase-image-wrap-${item.id}`}>
-                    {item.image ? <img src={item.image} alt={item.title || 'İlan'} data-testid={`home-v2-showcase-image-${item.id}`} /> : null}
+          {homeShowcaseBlock.enabled !== false ? (
+            <div
+              className="home-v2-showcase-grid"
+              data-testid="home-v2-showcase-grid"
+              style={{ '--home-showcase-columns': homeShowcaseBlock.columns }}
+            >
+              {showcaseWithPlaceholders.map((item, index) => (
+                item ? (
+                  <Link
+                    key={item.id}
+                    to={`/ilan/${item.id}`}
+                    className={`home-v2-tile ${item.is_featured ? 'home-v2-tile-featured' : ''} ${!item.is_featured && item.is_urgent ? 'home-v2-tile-urgent' : ''}`}
+                    data-testid={`home-v2-showcase-tile-${item.id}`}
+                  >
+                    <div className="home-v2-tile-image" data-testid={`home-v2-showcase-image-wrap-${item.id}`}>
+                      {item.image ? <img src={item.image} alt={item.title || 'İlan'} data-testid={`home-v2-showcase-image-${item.id}`} /> : null}
+                    </div>
+                    <div className="home-v2-tile-text" data-testid={`home-v2-showcase-text-${item.id}`}>
+                      <span className="home-v2-tile-badges" data-testid={`home-v2-showcase-badges-${item.id}`}>
+                        {item.is_featured ? <span className="home-v2-doping-badge home-v2-doping-badge-featured" data-testid={`home-v2-featured-badge-${item.id}`}>Vitrin</span> : null}
+                        {item.is_urgent ? <span className="home-v2-doping-badge home-v2-doping-badge-urgent" data-testid={`home-v2-urgent-badge-${item.id}`}>Acil</span> : null}
+                      </span>
+                      <span className="home-v2-tile-title" data-testid={`home-v2-showcase-title-${item.id}`}>{item.title || '-'}</span>
+                      <span className="home-v2-tile-price" data-testid={`home-v2-showcase-price-${item.id}`}>{formatPrice(item.price_amount || item.price, item.currency || 'EUR')}</span>
+                    </div>
+                  </Link>
+                ) : (
+                  <div key={`ph-${index}`} className="home-v2-tile home-v2-tile-placeholder" data-testid={`home-v2-showcase-placeholder-${index}`}>
+                    <div className="home-v2-tile-image" />
+                    <div className="home-v2-tile-text"><span>&nbsp;</span><span>&nbsp;</span></div>
                   </div>
-                  <div className="home-v2-tile-text" data-testid={`home-v2-showcase-text-${item.id}`}>
-                    <span className="home-v2-tile-badges" data-testid={`home-v2-showcase-badges-${item.id}`}>
-                      {item.is_featured ? <span className="home-v2-doping-badge home-v2-doping-badge-featured" data-testid={`home-v2-featured-badge-${item.id}`}>Vitrin</span> : null}
-                      {item.is_urgent ? <span className="home-v2-doping-badge home-v2-doping-badge-urgent" data-testid={`home-v2-urgent-badge-${item.id}`}>Acil</span> : null}
-                    </span>
-                    <span className="home-v2-tile-title" data-testid={`home-v2-showcase-title-${item.id}`}>{item.title || '-'}</span>
-                    <span className="home-v2-tile-price" data-testid={`home-v2-showcase-price-${item.id}`}>{formatPrice(item.price_amount || item.price, item.currency || 'EUR')}</span>
-                  </div>
-                </Link>
-              ) : (
-                <div key={`ph-${index}`} className="home-v2-tile home-v2-tile-placeholder" data-testid={`home-v2-showcase-placeholder-${index}`}>
-                  <div className="home-v2-tile-image" />
-                  <div className="home-v2-tile-text"><span>&nbsp;</span><span>&nbsp;</span></div>
-                </div>
-              )
-            ))}
-          </div>
+                )
+              ))}
+            </div>
+          ) : (
+            <div className="home-v2-empty" data-testid="home-v2-showcase-disabled">Ana sayfa vitrin alanı şu an pasif.</div>
+          )}
 
           <div className="home-v2-mid-ad" data-testid="home-v2-mid-ad-wrap">
             <AdSlot placement="AD_LOGIN_1" className="home-v2-ad-slot home-v2-ad-slot-mid" />
           </div>
+
+          {showcaseLayout.category_showcase?.enabled !== false && categoryShowcases.length > 0 ? (
+            <div className="home-v2-category-showcase-list" data-testid="home-v2-category-showcase-list">
+              {categoryShowcases.map((entry, index) => {
+                const count = Math.max(1, resolveEffectiveCount(entry));
+                const filled = Array.isArray(entry.items) ? entry.items.slice(0, count) : [];
+                while (filled.length < count) filled.push(null);
+                return (
+                  <section className="home-v2-category-showcase-section" key={entry.key} data-testid={`home-v2-category-showcase-section-${index}`}>
+                    <div className="home-v2-category-showcase-head" data-testid={`home-v2-category-showcase-head-${index}`}>
+                      <h3 className="home-v2-category-showcase-title" data-testid={`home-v2-category-showcase-title-${index}`}>{entry.category_name || 'Kategori Vitrini'}</h3>
+                      <Link to={`/search?category=${encodeURIComponent(entry.category_slug || '')}`} className="home-v2-showcase-link" data-testid={`home-v2-category-showcase-link-${index}`}>
+                        Kategoriyi Gör
+                      </Link>
+                    </div>
+                    <div className="home-v2-category-showcase-grid" style={{ '--home-category-showcase-columns': entry.columns }} data-testid={`home-v2-category-showcase-grid-${index}`}>
+                      {filled.map((item, tileIndex) => (
+                        item ? (
+                          <Link
+                            key={`${entry.key}-${item.id}`}
+                            to={`/ilan/${item.id}`}
+                            className={`home-v2-tile ${item.is_featured ? 'home-v2-tile-featured' : ''} ${!item.is_featured && item.is_urgent ? 'home-v2-tile-urgent' : ''}`}
+                            data-testid={`home-v2-category-showcase-tile-${index}-${item.id}`}
+                          >
+                            <div className="home-v2-tile-image">
+                              {item.image ? <img src={item.image} alt={item.title || 'İlan'} /> : null}
+                            </div>
+                            <div className="home-v2-tile-text">
+                              <span className="home-v2-tile-badges">
+                                {item.is_featured ? <span className="home-v2-doping-badge home-v2-doping-badge-featured">Vitrin</span> : null}
+                                {item.is_urgent ? <span className="home-v2-doping-badge home-v2-doping-badge-urgent">Acil</span> : null}
+                              </span>
+                              <span className="home-v2-tile-title">{item.title || '-'}</span>
+                              <span className="home-v2-tile-price">{formatPrice(item.price_amount || item.price, item.currency || 'EUR')}</span>
+                            </div>
+                          </Link>
+                        ) : (
+                          <div key={`${entry.key}-ph-${tileIndex}`} className="home-v2-tile home-v2-tile-placeholder" data-testid={`home-v2-category-showcase-placeholder-${index}-${tileIndex}`}>
+                            <div className="home-v2-tile-image" />
+                            <div className="home-v2-tile-text"><span>&nbsp;</span><span>&nbsp;</span></div>
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          ) : null}
         </section>
       </div>
     </div>
