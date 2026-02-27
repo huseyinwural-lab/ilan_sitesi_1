@@ -1945,8 +1945,8 @@ def _create_ui_config_audit_log(
     metadata_info: Optional[dict[str, Any]],
 ) -> AuditLog:
     return AuditLog(
-        user_id=_safe_uuid(current_user.get("id")),
-        user_email=current_user.get("email"),
+        user_id=_safe_uuid(_user_value(current_user, "id")),
+        user_email=_user_value(current_user, "email"),
         action=action,
         resource_type=f"ui_config:{config_type}",
         resource_id=resource_id,
