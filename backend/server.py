@@ -29688,6 +29688,7 @@ async def _consume_campaign_item_slot_if_needed(
     metadata["slot_consumed"] = True
     metadata["slot_consumed_at"] = datetime.now(timezone.utc).isoformat()
     snapshot.meta = metadata
+    await session.flush()
 
 
 def _apply_snapshot_listing_type_to_listing(
