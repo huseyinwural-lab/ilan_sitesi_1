@@ -43,6 +43,7 @@ const dopingTabs = [
 ];
 
 const dopingTabValues = new Set(dopingTabs.map((tab) => tab.value));
+const quickPromoteEligibleTypes = new Set(['free', 'paid']);
 const dopingLabelMap = {
   free: 'Ücretsiz',
   paid: 'Ücretli',
@@ -213,6 +214,34 @@ export default function AdminListingsPage({
       await fetchListings();
     } catch (error) {
       alert(error.response?.data?.detail || 'Doping güncellenemedi');
+    } finally {
+      setDopingBusyId('');
+    }
+  };
+
+  const applyQuickPromote = async (listing, targetType) => {
+    const manualDaysRaw = dopingConfig[listing.id]?.quickDays ?? '7';
+    const manualDays = Number(manualDaysRaw);
+
+    if (!Number.isFinite(manualDays) || manualDays <= 0) {
+      alert('Manuel gün sayısı 1 veya daha büyük olmalı');
+      return;
+    }
+
+    setDopingBusyId(listing.id);
+    try {
+      await axios.post(
+        `${API}/admin/listings/${listing.id}/doping`,
+        {
+          doping_type: targetType,
+          duration_days: Math.min(365, Math.floor(manualDays)),
+          reason: 'moderation_quick_promote',
+        },
+        { headers: authHeader }
+      );
+      await fetchListings();
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Hızlı atama yapılamadı');
     } finally {
       setDopingBusyId('');
     }
@@ -502,6 +531,52 @@ export default function AdminListingsPage({
                       {dopingBusyId === listing.id ? 'Uygulanıyor...' : 'Uygula'}
                     </button>
                   </div>
+                  {applicationsMode && quickPromoteEligibleTypes.has(listing.doping_type || 'free') ? (
+                    <div
+                      className="flex flex-wrap items-center gap-1"
+                      data-testid={`listing-doping-quick-promote-${listing.id}`}
+                    >
+                      <span
+                        className="text-[11px] font-medium text-muted-foreground"
+                        data-testid={`listing-doping-promote-days-label-${listing.id}`}
+                      >
+                        Gün:
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={dopingConfig[listing.id]?.quickDays ?? '7'}
+                        onChange={(event) => setDopingConfig((prev) => ({
+                          ...prev,
+                          [listing.id]: {
+                            ...(prev[listing.id] || {}),
+                            quickDays: event.target.value,
+                          },
+                        }))}
+                        className="h-8 w-16 rounded-md border px-2 text-xs"
+                        data-testid={`listing-doping-promote-days-${listing.id}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => applyQuickPromote(listing, 'showcase')}
+                        className="h-8 rounded-md border border-indigo-300 bg-indigo-50 px-2 text-xs font-semibold text-indigo-700"
+                        disabled={dopingBusyId === listing.id}
+                        data-testid={`listing-doping-promote-showcase-${listing.id}`}
+                      >
+                        Vitrine Ata
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyQuickPromote(listing, 'urgent')}
+                        className="h-8 rounded-md border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700"
+                        disabled={dopingBusyId === listing.id}
+                        data-testid={`listing-doping-promote-urgent-${listing.id}`}
+                      >
+                        Acile Ata
+                      </button>
+                    </div>
+                  ) : null}
                   <div className="inline-flex flex-wrap gap-2 lg:justify-end">
                     <button
                       onClick={() => openActionDialog(listing, 'force_unpublish')}
