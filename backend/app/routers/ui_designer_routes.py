@@ -3136,7 +3136,8 @@ async def _run_ops_alert_simulation(
     }
     alerts = _evaluate_publish_alerts(sample_metrics)
     correlation_id = str(payload.get("correlation_id") or uuid.uuid4())
-    secret_presence = _ops_alerts_secret_presence()
+    channels_requested = _normalize_ops_alert_channels(payload.get("channels"))
+    secret_presence = _ops_alerts_secret_presence(channels_requested)
 
     trigger_audit_payload = {
         "event": "OPS_ALERT_SIMULATION_TRIGGERED",
@@ -3162,20 +3163,22 @@ async def _run_ops_alert_simulation(
     channel_results: dict[str, Any] = {}
     delivery_status = "blocked_missing_secrets"
     if secret_presence["status"] == "READY":
-        slack_result, smtp_result, pagerduty_result = await asyncio.gather(
-            asyncio.to_thread(_simulate_slack_delivery, correlation_id),
-            asyncio.to_thread(_simulate_smtp_delivery, correlation_id),
-            asyncio.to_thread(_simulate_pagerduty_delivery, correlation_id),
-        )
+        channel_jobs: list[tuple[str, Any]] = []
+        if "smtp" in channels_requested:
+            channel_jobs.append(("smtp", asyncio.to_thread(_simulate_smtp_delivery, correlation_id)))
+        if "slack" in channels_requested:
+            channel_jobs.append(("slack", asyncio.to_thread(_simulate_slack_delivery, correlation_id)))
+        if "pagerduty" in channels_requested:
+            channel_jobs.append(("pagerduty", asyncio.to_thread(_simulate_pagerduty_delivery, correlation_id)))
+
+        results = await asyncio.gather(*[job for _, job in channel_jobs]) if channel_jobs else []
         channel_results = {
-            "slack": slack_result,
-            "smtp": smtp_result,
-            "pagerduty": pagerduty_result,
+            channel_jobs[index][0]: result
+            for index, result in enumerate(results)
         }
         statuses = [
-            str(slack_result.get("delivery_status") or "fail"),
-            str(smtp_result.get("delivery_status") or "fail"),
-            str(pagerduty_result.get("delivery_status") or "fail"),
+            str((channel_results.get(channel) or {}).get("delivery_status") or "fail")
+            for channel in channels_requested
         ]
         delivery_status = "ok" if all(status == "ok" for status in statuses) else "partial_fail"
 
@@ -3220,6 +3223,7 @@ async def _run_ops_alert_simulation(
                 "alerts": alerts,
                 "channel_results": channel_results,
                 "delivery_status": delivery_status,
+                "channels_requested": channels_requested,
                 "trigger_source": trigger_source,
             },
         )
@@ -3230,6 +3234,7 @@ async def _run_ops_alert_simulation(
         "delivery_status": delivery_status,
         "correlation_id": correlation_id,
         "ops_alerts_secret_presence": secret_presence,
+        "channels_requested": channels_requested,
         "sample_metrics": sample_metrics,
         "alerts": alerts,
         "channel_results": channel_results,
@@ -3237,6 +3242,7 @@ async def _run_ops_alert_simulation(
         "fail_fast": (
             {
                 "status": "Blocked: Missing Secrets",
+                "channels_requested": channels_requested,
                 "missing_keys": secret_presence.get("missing_keys") or [],
             }
             if secret_presence["status"] != "READY"
