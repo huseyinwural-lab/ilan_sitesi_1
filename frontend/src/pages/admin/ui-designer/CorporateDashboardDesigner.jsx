@@ -244,6 +244,9 @@ export const CorporateDashboardDesigner = () => {
   const [publishRetryCount, setPublishRetryCount] = useState(0);
   const [publishAuditItems, setPublishAuditItems] = useState([]);
   const [publishTelemetry, setPublishTelemetry] = useState(null);
+  const [publishKpi, setPublishKpi] = useState(null);
+  const [publishTrends, setPublishTrends] = useState([]);
+  const [publishAlerts, setPublishAlerts] = useState([]);
   const [largeScreen, setLargeScreen] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
 
   const initializedRef = useRef(false);
@@ -379,9 +382,15 @@ export const CorporateDashboardDesigner = () => {
       }
       setPublishAuditItems(Array.isArray(data?.items) ? data.items : []);
       setPublishTelemetry(data?.telemetry || null);
+      setPublishKpi(data?.kpi || null);
+      setPublishTrends(Array.isArray(data?.trends?.points) ? data.trends.points : []);
+      setPublishAlerts(Array.isArray(data?.telemetry?.alerts) ? data.telemetry.alerts : []);
     } catch (_) {
       setPublishAuditItems([]);
       setPublishTelemetry(null);
+      setPublishKpi(null);
+      setPublishTrends([]);
+      setPublishAlerts([]);
     }
   };
 
