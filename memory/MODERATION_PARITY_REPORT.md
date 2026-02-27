@@ -1,7 +1,7 @@
 # Moderation Parity Report (Mongo → SQL)
 
 **Tarih:** 2026-02-24 12:55:00 UTC
-**Ortam URL:** https://config-telemetry.preview.emergentagent.com
+**Ortam URL:** https://corporate-ui-build.preview.emergentagent.com
 
 ## Scope
 - SQL moderation state machine parity (pending_moderation → approved/rejected)

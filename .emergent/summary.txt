@@ -1,170 +1,158 @@
 <analysis>**original_problem_statement:**
-The initial goal was to fix a blocking issue in the Admin Panel's Category Management module. This involved enabling manual ordering, adding a new Other module type, enforcing unique order constraints via a database migration, and fixing the specialized Vehicle category creation flow. This task was successfully completed and closed.
+The initial project was to build and harden a Kullanıcı Tasarım (UI Designer) module for an admin panel, focusing on a secure publish/rollback workflow and implementing operational telemetry and alerting.
 
-The project then resumed the previously paused development of the Dealer Dashboard P1, focusing on config-driven rendering and drag-and-drop menu management. The core of this was completed.
-
-The current and primary objective is to build a new, comprehensive Kullanıcı Tasarım (UI Designer) module. This major feature will allow administrators to visually design and manage the UI for different user segments (Corporate vs. Individual) and manage application-wide themes. The work is divided into sprints, with the first sprint focusing on backend infrastructure, APIs, and the initial admin UI skeleton.
-
-**PRODUCT REQUIREMENTS (from user message #979 & #982):**
-
-*   **P0 - Kullanıcı Tasarım Module - Sprint 1 (Current Focus):**
-    1.  **Backend Setup:**
-        *   Create a new  permission and assign it to  and .
-        *   Create versioned database models and Alembic migrations for UI configurations (), themes (), and theme assignments ().
-        *   Implement a full set of APIs for managing headers, navigation, dashboards, and themes (e.g., , ).
-    2.  **Admin Panel UI (Skeleton):**
-        *   Add a new Kullanıcı Tasarım item to the admin menu.
-        *   Create a new page with three tabs: Kurumsal UI Tasarım (Corporate), Bireysel Header Tasarım (Individual), and Tema Yönetimi (Theme Management).
-
-*   **P1 - Kullanıcı Tasarım Module - Sprint 2 (Upcoming):**
-    *   Implement the full drag-and-drop UI editors for corporate/individual headers, corporate dashboard widgets, and theme tokens (colors, fonts, etc.).
-    *   Integrate the frontend to dynamically render based on these configurations.
-    *   Implement guardrails (e.g., preventing removal of required UI elements).
+However, during this session, the user initiated a major pivot, requesting a complete redesign and build-out of the corporate dashboard UI. The new requirements are based on a series of detailed PDF documents and images provided by the user, dictating a new navigation structure, page layouts, and component functionalities. The current focus is to implement this new UI design, following a specific sequence defined by the user.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application is a full-stack React/FastAPI/PostgreSQL system.
-- The Category Management module is fully functional and stable, with manual ordering, unique constraints, and correct logic for all module types (Vehicle, Real Estate, Other). A migration report was generated.
-- A bulk action system for categories (soft delete, activate/deactivate) is complete.
-- An asynchronous job system (using a DB table and an in-process background worker) for handling large bulk actions (>1000 records) has been implemented and is operational.
-- The foundational backend work for the new Kullanıcı Tasarım (UI Designer) module has begun, with the creation of database models and migration scripts.
+The application is a full-stack React/FastAPI/PostgreSQL app. While the original hardened backend for UI configuration management is still in place, the primary focus of this session was a massive overhaul of the frontend corporate dashboard.
+
+-   **Backend:** The original robust backend for UI configuration, versioning, and publishing remains. To support the rapid frontend development, a new set of API endpoints under  has been created. **CRITICALLY, all of these new endpoints are currently mocked and return static, hardcoded data.** They do not interact with the database.
+-   **Frontend:** The frontend has been significantly rebuilt according to the user's PDF specifications. The main navigation has been restructured into a new two-row header and a collapsible, accordion-style sidebar. New pages and components have been created for 'Özet' (Summary), 'İlanlar' (Listings), 'Mesajlar' (Messages), 'Müşteri Yönetimi' (Customer Management), 'Favoriler' (Favorites), and 'Raporlar' (Reports). The application UI now closely follows the user-provided designs.
 
 **Last working item**:
--   **Last item agent was working:** Setting up the backend for the Kullanıcı Tasarım (UI Designer) module. The agent created the Alembic migration scripts for the new database tables: , , and , and updated the necessary model initialization files.
+-   **Last item agent was working:** Implementing the Danışman Takibi (Consultant Tracking) page. The agent had just finished creating the mock backend endpoint () and the corresponding Pydantic schema. The next step is to build the frontend component for this page.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both. The backend APIs need to be tested with  or a backend testing agent. The full feature will require a frontend testing agent to verify the dynamic rendering and admin editors.
+-   **Which testing method agent to use?** both. The backend endpoint should be tested with  to ensure it returns the mock data correctly. After the frontend component is built, the  should be used to verify the UI.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-There are no pending issues. The previous blocker has been resolved. Current work is on new feature development.
+-   **Issue 1: Mocked Backend for Corporate Dashboard (P1)**
+    -   **Description:** The entire backend supporting the new corporate dashboard UI is mocked. All endpoints in  return hardcoded data. This was a deliberate choice to accelerate frontend development.
+    -   **Next debug checklist:**
+        1.  Prioritize with the user when to transition from mock data to a live database implementation.
+        2.  For each module (Summary, Listings, Messages, etc.), replace the mock data generation with actual database queries (SELECT, JOIN, aggregate).
+        3.  Create or update database tables and Alembic migrations as needed to support the new data structures.
+    -   **Why fix this issue and what will be achieved with the fix?** The dashboard will become a dynamic, data-driven tool instead of a static prototype.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue:** None. This is a major upcoming work package.
 
 **In progress Task List**:
--   **Task 1: P0 - Implement Kullanıcı Tasarım (UI Designer) Module - Sprint 1: Altyapı + API + Admin İskeleti (HIGHEST PRIORITY)**
-    -   **Where to resume:**
-        1.  Apply the newly created Alembic migration to update the database schema.
-        2.  Implement the backend API endpoints as defined in user message #979 (, , , , etc.).
-        3.  Implement the new  permission in the backend and assign it to the  and  roles.
-        4.  Create the skeleton for the new Kullanıcı Tasarım section in the admin panel frontend, including the main route and the three specified tabs.
-    -   **What will be achieved with this?** The backend infrastructure and foundational admin UI for the UI Designer module will be complete, enabling the start of Sprint 2 (UI implementation).
+-   **Task 1: Complete Danışman Takibi (Consultant Tracking) Page (P0)**
+    -   **Where to resume:** Create the frontend component  to display the data from the newly created mock endpoint.
+    -   **What will be achieved with this?** This will complete the next UI section in the sequence requested by the user.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
--   **Upcoming Tasks (P0 - UI Designer - Sprint 2):**
-    -   Build the drag-and-drop UI editor for Corporate Headers (3 rows).
-    -   Build the drag-and-drop grid editor for Corporate Dashboard widgets.
-    -   Build the drag-and-drop UI editor for the Individual user header.
-    -   Build the Theme Editor for managing design tokens (color, font, spacing, etc.).
-    -   Integrate the main application frontend to render all UI elements (headers, nav, themes) based on the new configuration APIs.
-    -   Implement UI guardrails and a full test suite for the new module.
+-   **Upcoming Tasks (P1):** (Following user's sequence for the UI build-out)
+    1.  **Implement Satın Al (Purchase) Page:** Create the mock backend and frontend for the purchasing section as per user specifications.
+    2.  **Implement Hesabım (My Account) Page:** Build out the My Account page and its various sub-sections, starting with mock data.
 
--   **Future Tasks:**
-    -   **P1 - Dealer Dashboard Enhancements:** Implement an Undo Panel and a Draft/Publish/Revision system for configurations.
-    -   **P1 - Async Bulk Job Hardening:** Add a UI for monitoring job status and enhance audit logging.
-    -   **P-UX Phase:** Optimize public search flow, redesign listing detail page, and implement conversion tracking.
-    -   **Backlog:** Move search cache to Redis, implement a data drift detection job, and complete the Master Data Import flow.
+-   **Future Tasks (P2 & Backlog):**
+    1.  **P2 - Connect Corporate Dashboard to Database:** Convert all mocked backend endpoints for the new dashboard to use real data from the PostgreSQL database. This is the highest priority future task.
+    2.  **P2 - Alerting Channel Integration:** The original P0 task to integrate Slack, SMTP, and PagerDuty is blocked pending user action to provide secrets. This has been deprioritized by the user's pivot to UI work.
+    3.  **P2 - Physical Deletion of Legacy Publish Endpoint:** Remove the deprecated  endpoint.
+    4.  **Backlog - Master Data Import:** Implement the business logic in .
+    5.  **Backlog - Theme Token Editor:** Build the UI for managing granular design tokens (colors, fonts).
+    6.  **Backlog - Widget Template Library:** Create a library of pre-configured, reusable dashboard widget templates.
 
 **Completed work in this session**
--   **P0 - Category Management Fix (DONE):**
-    -   Successfully executed a database migration to add a unique constraint on , add a new , and clean up existing data.
-    -   Updated backend APIs to enforce manual ordering and the special Vehicle segment flow (validated against master data).
-    -   Revamped the frontend Category Wizard UI to support the new logic.
--   **Bulk Actions for Categories (DONE):**
-    -   Implemented a UI with tri-state checkboxes and a bulk action bar.
-    -   Created a single backend endpoint () for soft-delete, activate, and deactivate actions.
--   **Async Job System for Bulk Actions (DONE):**
-    -   Developed a system to handle bulk operations asynchronously for large datasets (>1000 items) using a  DB table and an in-process worker.
-    -   Implemented a status polling endpoint and idempotency keys to ensure job safety.
--   **Dealer Dashboard P1 (Core) (DONE):**
-    -   Finalized config-driven rendering and persistent drag-and-drop reordering for the dealer menu.
+-   **Corporate Dashboard UI Overhaul (Frontend Prototype):**
+    -   **Navigation:** Implemented a new two-row header and a collapsible accordion sidebar (, ) based on the user's design.
+    -   **'Özet' (Summary) Page:** Created a page with summary statistics cards.
+    -   **'İlanlar' (Listings) Page:** Created a listings page with filtering and a list view.
+    -   **'Mesajlar' (Messages) Page:** Built a messages interface, including a requested read/unread status feature.
+    -   **'Müşteri Yönetimi > Sözleşmeler' Page:** Created the contracts page.
+    -   **'Favoriler' (Favorites) Page:** Created the favorites page with its sub-sections.
+    -   **'Raporlar' (Reports) Page:** Created the reports page with its sub-sections.
+    -   **Menu Adjustments:** Made menus collapsible and improved text visibility as requested. Removed 'Sanal Turlar' (Virtual Tours) from the menu.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Master Data Import End-to-End Flow:** The core import logic in  is a skeleton. This was intentionally paused by the user and remains in the backlog.
-    -   **Debug checklist:** Implement the full business logic to parse and import vehicle data from an uploaded file.
-    -   **Why to solve this issue and what will be achieved with this?** This is a key feature for administrators to populate the system with vehicle data efficiently.
-    -   **Should Test frontend/backend/both after fix:** both
-    -   **Is recurring issue?** N
+-   **Issue 1: Master Data Import Logic:** The service at  is a skeleton and requires full implementation. This is a known backlog item.
+-   **Issue 2: Alerting Channel Integration:** The P0 task from the previous fork is blocked because it requires the user to provide secrets for Slack, SMTP, and PagerDuty. This task was superseded by the user's request for a UI overhaul and is now in the backlog.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Platform failure to inject  secret.
 -   **Recurrence count:** 10+
--   **Status:** BLOCKED (Workaround in place: using  for all secret configurations). The agent must continue to rely on the  file for database configuration.
+-   **Status:** BLOCKED (Workaround in place: using  for all secret configurations). The agent must continue to rely on the  file.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Async Task Processing (In-Process):** Using FastAPI's  with a dedicated DB table to manage long-running jobs. Includes DB-level locking () and idempotency keys for safety in multi-instance environments.
--   **Config-driven UI & Theming:** A centralized system using versioned DB models to define application layout, navigation, and visual themes (design tokens) for different user segments (corporate vs. individual) and tenants.
--   **Scoped Uniqueness in DB:** Enforcing data integrity with multi-column unique constraints (e.g., for category ordering).
--   **Database Migrations with Data Cleanup:** Using Alembic to not only change schema but also to run one-time scripts to clean and standardize existing data.
+-   **Mock-First Development:** Creating mock backend endpoints that return static data to enable rapid, parallel development of the frontend UI without waiting for database implementation.
+-   **PDF-Driven UI Implementation:** Translating visual designs and requirements from PDF documents directly into React components and page structures.
+-   **Component-Based Architecture:** Using reusable React components (from  and custom-built) to construct the new UI.
+-   **Config-driven UI:** The underlying principle that UI elements can be dynamically rendered based on configuration, which is still relevant for the header and other elements.
+-   **Secure Publish Workflow:** The original hardened mechanism for publishing UI changes, which is still present in the backend but not the current focus of development.
 
 **key DB schema**
--   **categories**:  constraint on .
--   **background_jobs**: 
--   **ui_configs**: 
--   **ui_themes**: 
--   **ui_theme_assignments**: 
+No new database tables were created in this session. All new backend endpoints rely on Pydantic schemas for their response models but return hardcoded data, not data from the database. The original  and  tables remain.
 
 **changes in tech stack**
-- No major changes to the core stack (React, FastAPI, PostgreSQL).
+No new third-party libraries were added. Development relied on the existing stack (React, FastAPI, PostgreSQL) and UI components from .
 
 **All files of reference**
--   **Current P0 Task (UI Designer):**
-    -   , , 
-    -   The latest alembic migration file in  for the UI config tables.
-    -    (API and service files to be created here).
-    -    (to add the new permission).
-    -    (React components to be created here).
--   **User Requirements Document:**
-    -   User message #979 contains the master plan for the entire UI Designer feature.
-    -   User message #982 locks in the decisions for the current sprint.
+-   **New Backend Domain:**  (and all sub-files)
+-   **New Frontend Pages:**  (and all  files within)
+-   **New Frontend Components:** , , 
+-   **User-Provided Artifacts:**
+    -   
+    -   
+    -   Image of the desired header structure (from Chat Message #348)
+
+**Areas that need refactoring**:
+-   **Backend Mocking:** The most significant area for future work is to remove all mock data from  and replace it with live database queries.
+
+**key api endpoints**
+All new endpoints are prefixed with .
+-   
+-   
+-   
+-   
+-    (multiple endpoints for different favorite types)
+-    (multiple endpoints for different reports)
+-    (recently added)
 
 **Critical Info for New Agent**
--   **Your priority is the Kullanıcı Tasarım (UI Designer) module.** All other work is secondary.
--   You are currently in **Sprint 1: Altyapı + API + Admin İskeleti**. Follow the Where to resume section under In progress Task List.
--   A new permission, , must be created and assigned to  and .
--   The feature scope is large but clearly defined by the user in messages #979 and #982. Adhere to it strictly.
--   All communication with the user must be in **Turkish**.
+-   **PROJECT PIVOT:** The project's focus has completely shifted from backend hardening to a rapid frontend redesign based on user-provided PDFs. The original high-priority tasks from the handoff summary are now in the backlog.
+-   **BACKEND IS MOCKED:** Be aware that the entire new corporate dashboard is a frontend prototype. All new backend endpoints under  return static, hardcoded data. Do not attempt to debug database queries for these endpoints, as there are none. The next major work package will be to implement the database logic.
+-   **FOLLOW USER'S SEQUENCE:** The user has provided a clear, step-by-step sequence for building the UI. You must continue this sequence. The current task is the Danışman Takibi page, to be followed by Satın Al and Hesabım.
+-   **COMMUNICATE IN TURKISH:** The user's primary language is Turkish. All communication must be in Turkish.
 
 **documents and test reports created in this job**
--   
--   
--   
+No new final documents or test reports were generated in this session, as the agent was in a continuous loop of iterative development based on user feedback and never reached a  state.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **#982:** User confirms the plan for UI Designer Sprint 1, giving the green light for implementation. **(PLAN CONFIRMED)**
-2.  **#979:** **(CRITICAL)** User provides the complete, detailed requirements for the new Kullanıcı Tasarım (UI Designer) feature. This is the main source of truth for the task. **(NEW PLAN)**
-3.  **#814:** User approves the proposed architecture for the async bulk job system (DB table + in-process worker). **(PLAN CONFIRMED)**
-4.  **#811:** User outlines future tasks after the Dealer P1 core is complete, including an Undo Panel and a Draft Mode for configs. **(PLANNING)**
-5.  **#620:** User locks in decisions for the Dealer P1 implementation, notably excluding the Undo panel from the initial scope to prioritize faster delivery. **(PLAN CONFIRMED)**
-6.  **#617:** User adds a new requirement for Bulk Actions in the Category Management module. **(NEW REQUIREMENT)**
-7.  **#548:** User officially closes the Category P0 fix phase and confirms the next priority is resuming the Dealer Dashboard P1 task. **(PLANNING)**
-8.  **#335:** User provides a definitive ruling on the Vehicle Segment logic: the segment name MUST exist in the master data to be saved. **(REQUIREMENT CLARIFICATION)**
-9.  **#333:** User requests the admin link to review progress. **(ADDRESSED)**
-10. **#330:** User provides a revised, detailed task list for the Category P0 fix, superseding all previous instructions on that topic. **(REVISED PLAN)**
+1.  : Continue with your order, making the necessary improvements. - Instruction to proceed with the Danışman Takibi page.
+2.  : Continue with your order, making the necessary improvements. - Instruction to proceed with the Raporlar page.
+3.  : Continue with your order and make necessary improvements. - Instruction to proceed with the Favoriler page.
+4.  : Add a read status to messages and continue with your order. - New feature request for the Mesajlar page.
+5.  : Continue. - Instruction to proceed with the Müşteri Yönetimi page.
+6.  : 1. YES 2. Continue. - Confirmation to remove Sanal Turlar and proceed.
+7.  : Continue with the same order. Remove Sanal Turlar, its not in Europe." - Instruction for the "İlanlar" page.
+8.  `#369`: "Lets fill the second row... Start with Özet... Im providing a PDF." - Kicked off the implementation of the main content area.
+9.  `#348`: "This will be the menu structure... Lets go in order. Do this first. - Provided an image defining the new header/menu layout, initiating the major UI redesign.
+10. : The menus are not on the left but on the 2nd row. Check again. - User correcting the agent's initial understanding of the new layout.
 
 **Project Health Check:**
--   **Broken:** None. The previous blocker (Category Management) is fixed and stable.
--   **Mocked:** None.
+-   **Broken:** None
+-   **Mocked:** **High.** The entire backend for the new corporate dashboard feature is mocked with static data. This is the most critical aspect of the current project state.
 
 **3rd Party Integrations**
 -   **PostgreSQL:** Primary database.
--   **Meilisearch:** Search-as-a-service. Requires User API Key.
+-   **Meilisearch:** Search-as-a-service.
 -   **Stripe:** Payments.
+-   **react-beautiful-dnd:** For row-based drag-and-drop.
+-   **react-grid-layout / dnd-kit:** For grid-based drag-and-drop.
+-   **Slack (pending integration):** For operational alerts.
+-   **PagerDuty (pending integration):** For critical on-call alerts.
+-   **SMTP (pending integration):** For email alerts.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (used for previous major features).
+-   **Testing agent used after significant changes:** NO (Agent was in a rapid, iterative development cycle driven by user feedback).
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None permanent.
+-   **Test files created:** None in this session.
 -   **Known regressions:** None.
 
 **Credentials to test flow:**
 -   **Admin:**  / 
--   **Test User 2 (for 2FA):**  / 
 
 **What agent forgot to execute**
-The agent has followed the user's instructions and priority shifts accurately. No tasks appear to have been overlooked. The development path has been complex due to user-driven reprioritization, but the agent has adapted correctly at each step.</analysis>
+The agent did not forget any tasks. It was redirected by the user to a completely new set of high-priority requirements (the UI redesign). The originally planned tasks (e.g., Alerting Integration) were implicitly deprioritized by the user and are correctly captured in the backlog.</analysis>

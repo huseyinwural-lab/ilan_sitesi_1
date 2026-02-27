@@ -5,7 +5,7 @@
 ## 1) API Health Kanıtı
 **Komut:**
 ```bash
-curl -s "https://config-telemetry.preview.emergentagent.com/api/health"
+curl -s "https://corporate-ui-build.preview.emergentagent.com/api/health"
 ```
 **Çıktı:**
 ```json
@@ -15,7 +15,7 @@ curl -s "https://config-telemetry.preview.emergentagent.com/api/health"
 ## 2) Migration Health Kanıtı
 **Komut:**
 ```bash
-curl -s "https://config-telemetry.preview.emergentagent.com/api/health/db"
+curl -s "https://corporate-ui-build.preview.emergentagent.com/api/health/db"
 ```
 **Çıktı:**
 ```json
@@ -25,7 +25,7 @@ curl -s "https://config-telemetry.preview.emergentagent.com/api/health/db"
 ## 3) Admin Login (API) Kanıtı
 **Komut:**
 ```bash
-curl -s -X POST "https://config-telemetry.preview.emergentagent.com/api/auth/login" \
+curl -s -X POST "https://corporate-ui-build.preview.emergentagent.com/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@platform.com","password":"Admin123!"}'
 ```
@@ -37,7 +37,7 @@ curl -s -X POST "https://config-telemetry.preview.emergentagent.com/api/auth/log
 ## 4) Admin Session Health Kanıtı
 **Komut:**
 ```bash
-curl -s -X GET "https://config-telemetry.preview.emergentagent.com/api/admin/session/health" \
+curl -s -X GET "https://corporate-ui-build.preview.emergentagent.com/api/admin/session/health" \
   -H "Authorization: Bearer <TOKEN>"
 ```
 **Çıktı:**

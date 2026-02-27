@@ -60,7 +60,7 @@ Response (örnek):
 
 ## Checkout Session + Snapshot
 ```bash
-curl -X POST "$API/pricing/checkout-session" -H "Authorization: Bearer $USER"   -H "Content-Type: application/json"   -d '{"listing_id":"01624f22-dc83-4fa4-b38e-af181ee60dbd","origin_url":"https://config-telemetry.preview.emergentagent.com","campaign_item_id":"648ef6c2-fb0f-41f9-b369-d32087dcd84d"}'
+curl -X POST "$API/pricing/checkout-session" -H "Authorization: Bearer $USER"   -H "Content-Type: application/json"   -d '{"listing_id":"01624f22-dc83-4fa4-b38e-af181ee60dbd","origin_url":"https://corporate-ui-build.preview.emergentagent.com","campaign_item_id":"648ef6c2-fb0f-41f9-b369-d32087dcd84d"}'
 ```
 Response (örnek):
 ```json
