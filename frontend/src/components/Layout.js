@@ -666,6 +666,17 @@ export default function Layout({ children }) {
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
                       )}
                     </div>
+                  ) : item.openInNewWindow ? (
+                    <a
+                      href={withCountryParam(item.path)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="sidebar-item"
+                      data-testid={`nav-${item.testId}`}
+                    >
+                      <item.icon size={18} />
+                      {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
+                    </a>
                   ) : (
                     <NavLink
                       to={withCountryParam(item.path)}
@@ -742,6 +753,18 @@ export default function Layout({ children }) {
                           <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
                         </div>
+                      ) : item.openInNewWindow ? (
+                        <a
+                          href={withCountryParam(item.path)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setSidebarOpen(false)}
+                          className="sidebar-item"
+                          data-testid={`nav-mobile-${item.testId}`}
+                        >
+                          <item.icon size={18} />
+                          {typeof item.label === 'string' ? t(item.label) : item.label}
+                        </a>
                       ) : (
                         <NavLink
                           to={withCountryParam(item.path)}
