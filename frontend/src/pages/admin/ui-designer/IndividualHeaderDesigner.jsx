@@ -547,7 +547,29 @@ export const IndividualHeaderDesigner = () => {
         <button type="button" onClick={loadDraft} className="h-9 rounded-md border px-3 text-sm" data-testid="ui-designer-individual-header-v2-load-draft">Taslağı Yükle</button>
         <button type="button" onClick={saveDraft} className="h-9 rounded-md border px-3 text-sm" data-testid="ui-designer-individual-header-v2-save-draft">Taslağı Kaydet</button>
         <button type="button" onClick={openPublishDialog} className="h-9 rounded-md bg-slate-900 px-3 text-sm text-white" data-testid="ui-designer-individual-header-v2-open-publish" disabled={!latestConfigId}>Yayınla</button>
-        <button type="button" onClick={() => setRollbackOpen(true)} className="h-9 rounded-md border px-3 text-sm" data-testid="ui-designer-individual-header-v2-open-rollback">Rollback</button>
+        <button
+          type="button"
+          onClick={() => {
+            setRollbackReason('');
+            setRollbackOpen(true);
+          }}
+          className="h-9 rounded-md border px-3 text-sm"
+          data-testid="ui-designer-individual-header-v2-open-rollback"
+        >
+          Rollback
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedRollbackId('');
+            setRollbackReason('');
+            setRollbackOpen(true);
+          }}
+          className="h-9 rounded-md border px-3 text-sm"
+          data-testid="ui-designer-individual-header-v2-rollback-last-snapshot"
+        >
+          Son Snapshot’a Dön
+        </button>
         <button type="button" onClick={loadEffective} className="h-9 rounded-md border px-3 text-sm" data-testid="ui-designer-individual-header-v2-load-effective">Effective Oku</button>
       </div>
 
@@ -637,9 +659,27 @@ export const IndividualHeaderDesigner = () => {
           <div className="text-xs text-slate-600" data-testid="ui-designer-individual-header-v2-rollback-selected">
             Seçili target: {selectedRollbackId || 'Otomatik son snapshot'}
           </div>
+          <label className="text-xs" data-testid="ui-designer-individual-header-v2-rollback-reason-label">
+            Rollback Sebebi (zorunlu)
+            <textarea
+              value={rollbackReason}
+              onChange={(event) => setRollbackReason(event.target.value)}
+              className="mt-1 min-h-[84px] w-full rounded-md border px-3 py-2 text-xs"
+              placeholder="Örn: Canlıda yanlış modül sıralaması"
+              data-testid="ui-designer-individual-header-v2-rollback-reason-input"
+            />
+          </label>
           <DialogFooter>
             <button type="button" onClick={() => setRollbackOpen(false)} className="h-9 rounded-md border px-3 text-sm" data-testid="ui-designer-individual-header-v2-rollback-cancel">Vazgeç</button>
-            <button type="button" onClick={rollbackConfig} className="h-9 rounded-md bg-slate-900 px-3 text-sm text-white" data-testid="ui-designer-individual-header-v2-rollback-confirm">Rollback Uygula</button>
+            <button
+              type="button"
+              onClick={rollbackConfig}
+              disabled={!rollbackReason.trim()}
+              className="h-9 rounded-md bg-slate-900 px-3 text-sm text-white disabled:opacity-50"
+              data-testid="ui-designer-individual-header-v2-rollback-confirm"
+            >
+              Rollback Uygula
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
