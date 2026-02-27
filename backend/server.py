@@ -2094,6 +2094,16 @@ async def _ensure_wizard_progress_column(conn) -> None:
         logging.getLogger("sql_config").warning("Wizard progress column check failed: %s", exc)
 
 
+async def _ensure_listing_doping_columns(conn) -> None:
+    try:
+        await conn.execute(text("ALTER TABLE listings ADD COLUMN IF NOT EXISTS featured_until TIMESTAMPTZ"))
+        await conn.execute(text("ALTER TABLE listings ADD COLUMN IF NOT EXISTS urgent_until TIMESTAMPTZ"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_listings_featured_until ON listings (featured_until)"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_listings_urgent_until ON listings (urgent_until)"))
+    except Exception as exc:
+        logging.getLogger("sql_config").warning("Listing doping columns check failed: %s", exc)
+
+
 def _get_masked_db_target() -> Dict[str, Optional[str]]:
     try:
         parsed = urllib.parse.urlparse(DATABASE_URL)
