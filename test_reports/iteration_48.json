@@ -1,0 +1,77 @@
+{
+  "summary": "P88 Doping Feature Final Verification - Backend 100% (20/20), Frontend tabs verified, CSS border override issue found",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "HomePage.js / SearchPage.js",
+        "issue": "Doping border styling not applied - CSS `.home-v2-tile { border: 1px solid var(--home-border); }` overrides inline style={{borderColor, borderWidth}}. Same issue in SearchPage Card component.",
+        "selector": "[data-testid^='home-v2-showcase-tile-'], [data-testid^='search-result-card-']",
+        "priority": "MEDIUM",
+        "root_cause": "CSS border shorthand property overrides React inline borderColor/borderWidth. CSS specificity issue.",
+        "suggested_fix": "Option 1: Change inline style to use `border` shorthand instead of borderColor/borderWidth. Option 2: Add !important to inline styles. Option 3: Use className-based conditional styling instead of inline styles."
+      },
+      {
+        "component": "HomePage.js",
+        "issue": "Doping badges (Vitrin/Acil) not rendering even when is_featured=true. API returns correct data but badges not visible in DOM.",
+        "selector": "[data-testid^='home-v2-featured-badge-'], [data-testid^='home-v2-urgent-badge-']",
+        "priority": "MEDIUM",
+        "root_cause": "Likely same rendering issue - React conditional rendering appears to work (badges exist in JSX) but DOM doesn't show them. Need to verify badge CSS visibility."
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_doping_features.py",
+    "/app/test_reports/pytest/pytest_doping_results.xml"
+  ],
+  "action_items": [
+    "Fix CSS border override in HomePage.css - change `.home-v2-tile { border: ... }` to not override inline styles or use className-based conditional styling",
+    "Verify SearchPage Card component border styling similarly affected",
+    "Check badge visibility CSS - ensure .home-v2-doping-badge is not hidden"
+  ],
+  "critical_code_review_comments": [
+    "Backend: All doping endpoints working correctly - GET filters (applicant_type, doping_type), POST doping with 7/30/90/custom days, priority (Vitrin > Acil > Ücretsiz)",
+    "Backend: /api/v2/search correctly returns is_featured, is_urgent, featured_until, urgent_until fields",
+    "Frontend: Individual/Corporate Listing Applications pages correctly show 4 doping tabs (Tümü, Ücretsiz, Vitrin, Acil)",
+    "Frontend: HomePage and SearchPage have correct JSX for badge/border rendering but CSS specificity issue prevents display"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (20/20 tests passed)",
+    "frontend": "75% - Tabs work, border/badge display has CSS issue"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "Applied showcase doping to listing f6c2d04b-db2a-4358-a8e1-5a5e96251352 for testing",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "P88 doping backend fully working. Frontend admin pages (Individual/Corporate Listing Applications) show all 4 doping tabs correctly. HomePage and SearchPage have CSS specificity issue where `.home-v2-tile { border: 1px solid }` overrides React inline style={{borderColor, borderWidth}}. The API correctly returns is_featured=true but the border color doesn't change in the UI. Main agent needs to fix CSS to allow inline border styling to take precedence.",
+  "features_verified": {
+    "GET_admin_listings_applicant_type_filter": "PASS - individual/corporate filters work",
+    "GET_admin_listings_doping_type_filter": "PASS - free/showcase/urgent filters work",
+    "POST_admin_doping_endpoint": "PASS - 7/30/90/custom days all work",
+    "api_v2_search_doping_fields": "PASS - returns is_featured, is_urgent correctly",
+    "individual_listing_applications_doping_tabs": "PASS - 4 tabs visible (Tümü, Ücretsiz, Vitrin, Acil)",
+    "corporate_listing_applications_doping_tabs": "PASS - 4 tabs visible (Tümü, Ücretsiz, Vitrin, Acil)",
+    "search_page_doping_border": "FAIL - CSS override prevents border color change",
+    "search_page_doping_badges": "NOT_TESTED - no search results with doping",
+    "home_page_doping_border": "FAIL - CSS override prevents border color change",
+    "home_page_doping_badges": "FAIL - badges not rendering despite is_featured=true in data"
+  },
+  "rca_of_issue": {
+    "issue": "Doping border/badge not visible on HomePage cards",
+    "root_cause": "CSS specificity - `.home-v2-tile { border: 1px solid var(--home-border); }` (line 184 of HomePage.css) uses shorthand property which overrides React's inline style={{borderColor, borderWidth}}",
+    "reproduction_steps": [
+      "1. Set showcase doping on a listing via POST /api/admin/listings/{id}/doping",
+      "2. Visit home page - listing should have indigo border but doesn't",
+      "3. Inspect DOM - style attribute is empty, border comes from CSS class"
+    ],
+    "mitigation": "Change inline style to use border shorthand: `style={{ border: item.is_featured ? '2px solid #4f46e5' : (item.is_urgent ? '2px solid #e11d48' : undefined) }}` or use CSS classes with conditional className"
+  }
+}
