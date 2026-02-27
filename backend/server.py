@@ -31636,8 +31636,6 @@ async def publish_showcase_layout_config(
                 "errors": errors,
             },
         )
-    normalized = _normalize_showcase_layout_config(layout.config)
-
     await session.execute(update(SiteShowcaseLayout).values(status="draft"))
     layout.status = "published"
     layout.updated_at = datetime.now(timezone.utc)
