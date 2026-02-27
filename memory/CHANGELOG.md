@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 2026-02-27 — P78 Danışman Takibi PDF Hizalama
+
+- Yeni endpoint: `GET /api/dealer/consultant-tracking`
+  - consultants/evaluations/summary + `sort_by`
+- Yeni ekran: `/dealer/consultant-tracking`
+  - tablar: Danışmanlar / Danışman Hizmet Değerlendirmeleri
+  - arama + gelişmiş sıralama
+  - danışman kartları + değerlendirme tablosu
+- Menü rota güncellemesi:
+  - `Danışman Takibi` -> `/dealer/consultant-tracking`
+  - `Danışman Hizmet Değerlendirmeleri` -> `?tab=evaluations`
+- Test agent fixi uygulandı:
+  - consultant endpoint 500 (company_name source) -> DealerProfile üzerinden düzeltildi
+- Test:
+  - testing agent: `/app/test_reports/iteration_38.json` PASS
+  - pytest birleşik: 71 passed
+- Kanıt: `/app/docs/P1_DEALER_CONSULTANT_TRACKING_ALIGNMENT_EVIDENCE.md`
+
 ## 2026-02-27 — P77 Favoriler + Raporlar PDF Hizalama
 
 - Yeni endpoint: `GET /api/dealer/favorites`
