@@ -729,7 +729,12 @@ class UIConfigPublishPayload(BaseModel):
     scope: str = Field(default="system")
     scope_id: Optional[str] = None
     config_id: Optional[str] = None
+    config_version: Optional[int] = None
     require_confirm: bool = False
+
+
+class UIConfigLegacyPublishPayload(BaseModel):
+    config_version: Optional[int] = None
 
 
 class UIConfigRollbackPayload(BaseModel):
@@ -737,6 +742,7 @@ class UIConfigRollbackPayload(BaseModel):
     scope: str = Field(default="system")
     scope_id: Optional[str] = None
     target_config_id: Optional[str] = None
+    rollback_reason: Optional[str] = None
     require_confirm: bool = False
 
 
