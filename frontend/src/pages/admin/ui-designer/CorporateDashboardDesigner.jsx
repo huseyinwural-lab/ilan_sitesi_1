@@ -440,6 +440,10 @@ export const CorporateDashboardDesigner = () => {
   const openPublishDialog = async () => {
     setStatus('');
     setError('');
+    if (driftMismatch) {
+      setError('Draft hash mismatch tespit edildi. Lütfen taslağı yeniden senkronize edin.');
+      return;
+    }
     try {
       const nextDiff = await loadDiff();
       if ((nextDiff?.change_count || 0) < 1) {
