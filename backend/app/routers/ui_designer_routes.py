@@ -3384,6 +3384,7 @@ async def admin_ui_publish_alerts_simulate(
 async def admin_ui_publish_alert_delivery_audit(
     config_type: str,
     correlation_id: Optional[str] = Query(default=None),
+    channels: Optional[str] = Query(default=None, description="Kanallar: smtp,slack,pagerduty"),
     limit: int = Query(default=20, ge=1, le=200),
     current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
     session: AsyncSession = Depends(get_db),
@@ -3402,6 +3403,8 @@ async def admin_ui_publish_alert_delivery_audit(
     )
     rows = (await session.execute(stmt)).scalars().all()
 
+    selected_channels = _normalize_ops_alert_channels(channels) if channels else ["smtp", "slack", "pagerduty"]
+
     target_correlation_id = correlation_id
     if not target_correlation_id:
         for row in rows:
@@ -3415,6 +3418,9 @@ async def admin_ui_publish_alert_delivery_audit(
     for row in rows:
         metadata = row.metadata_info or {}
         if target_correlation_id and str(metadata.get("correlation_id") or "") != target_correlation_id:
+            continue
+        row_channel = str(metadata.get("channel") or "")
+        if row_channel and row_channel not in selected_channels:
             continue
         filtered_rows.append(row)
         if len(filtered_rows) >= limit:
@@ -3441,11 +3447,12 @@ async def admin_ui_publish_alert_delivery_audit(
         )
 
     channels_logged = sorted({str(item.get("channel") or "") for item in items if item.get("channel")})
-    expected_channels = ["pagerduty", "slack", "smtp"]
+    expected_channels = selected_channels
     missing_channels = [channel for channel in expected_channels if channel not in channels_logged]
 
     return {
         "correlation_id": target_correlation_id,
+        "channels_requested": selected_channels,
         "items": items,
         "total_records": len(items),
         "channels_logged": channels_logged,
