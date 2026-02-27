@@ -242,6 +242,7 @@ BILLING_AUDIT_ACTIONS = {
 
 _failed_login_attempts: Dict[str, List[float]] = {}
 _failed_login_blocked_until: Dict[str, float] = {}
+_meili_settings_last_sync_ts: float = 0.0
 
 # Dealer Application reasons (v1)
 DEALER_APP_REJECT_REASONS_V1 = {
