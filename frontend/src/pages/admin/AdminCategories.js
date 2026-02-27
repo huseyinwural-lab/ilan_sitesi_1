@@ -1498,6 +1498,71 @@ const AdminCategories = () => {
     setModalOpen(true);
   };
 
+  const handleCategoryImageUpload = async (event) => {
+    const selectedFile = event.target.files?.[0];
+    event.target.value = "";
+    if (!selectedFile) return;
+    if (!isRootCategory) {
+      setCategoryImageError("Görsel yükleme sadece ana kategori için kullanılabilir.");
+      return;
+    }
+
+    const extension = (selectedFile.name || "").split(".").pop()?.toLowerCase() || "";
+    if (!CATEGORY_IMAGE_ALLOWED_EXTENSIONS.includes(extension)) {
+      setCategoryImageError("Sadece png, jpg ve webp dosyaları yüklenebilir.");
+      return;
+    }
+    if (selectedFile.size > CATEGORY_IMAGE_MAX_BYTES) {
+      setCategoryImageError("Görsel boyutu 2MB sınırını aşamaz.");
+      return;
+    }
+
+    setCategoryImageUploading(true);
+    setCategoryImageError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/image-upload`, {
+        method: "POST",
+        headers: {
+          ...authHeader,
+        },
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const parsed = parseApiError(data, "Kategori görseli yüklenemedi.");
+        throw new Error(parsed.message);
+      }
+
+      const uploadedUrl = data?.image_url || "";
+      if (!uploadedUrl) {
+        throw new Error("Kategori görseli yüklenemedi.");
+      }
+
+      setForm((prev) => ({ ...prev, image_url: uploadedUrl }));
+      setHierarchyFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next.main_image_url;
+        return next;
+      });
+      setCategoryImageCacheBuster(Date.now());
+      setCategoryImageError("");
+    } catch (error) {
+      setCategoryImageError(error?.message || "Kategori görseli yüklenemedi.");
+    } finally {
+      setCategoryImageUploading(false);
+    }
+  };
+
+  const handleCategoryImageRemove = () => {
+    if (isHierarchyLocked) return;
+    setForm((prev) => ({ ...prev, image_url: "" }));
+    setCategoryImageCacheBuster(Date.now());
+    setCategoryImageError("");
+  };
+
   const handleModuleToggle = (key, enabled) => {
     setSchema((prev) => {
       const updated = {
