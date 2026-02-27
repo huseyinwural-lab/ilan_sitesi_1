@@ -29501,14 +29501,14 @@ async def _resolve_campaign_item_from_payload(
         return item
 
     if payload.listing_quota:
-        result = await session.execute(
-            select(PricingCampaignItem).where(
-                PricingCampaignItem.scope == scope,
-                PricingCampaignItem.listing_quota == payload.listing_quota,
-                PricingCampaignItem.is_deleted.is_(False),
-                PricingCampaignItem.listing_type == listing_type if listing_type else true(),
-            )
+        query = select(PricingCampaignItem).where(
+            PricingCampaignItem.scope == scope,
+            PricingCampaignItem.listing_quota == payload.listing_quota,
+            PricingCampaignItem.is_deleted.is_(False),
         )
+        if listing_type:
+            query = query.where(PricingCampaignItem.listing_type == listing_type)
+        result = await session.execute(query)
         for item in result.scalars().all():
             if _campaign_item_is_available(item, now):
                 return item
@@ -29520,11 +29520,10 @@ async def _get_active_pricing_campaign_items(
     session: AsyncSession, scope: str, listing_type: Optional[str] = None
 ) -> list[PricingCampaignItem]:
     now = datetime.now(timezone.utc)
-    result = await session.execute(
+    query = (
         select(PricingCampaignItem)
         .where(
             PricingCampaignItem.scope == scope,
-            PricingCampaignItem.listing_type == listing_type if listing_type else true(),
             PricingCampaignItem.is_deleted.is_(False),
             PricingCampaignItem.is_active.is_(True),
             PricingCampaignItem.start_at.isnot(None),
@@ -29534,6 +29533,9 @@ async def _get_active_pricing_campaign_items(
         )
         .order_by(PricingCampaignItem.listing_quota)
     )
+    if listing_type:
+        query = query.where(PricingCampaignItem.listing_type == listing_type)
+    result = await session.execute(query)
     return result.scalars().all()
 
 
