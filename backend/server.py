@@ -13458,6 +13458,7 @@ async def admin_listings(
                 "currency": listing.currency,
                 "image_count": len(listing.images or []),
                 "created_at": listing.created_at.isoformat() if listing.created_at else None,
+                "published_at": listing.published_at.isoformat() if listing.published_at else None,
                 "owner_id": str(listing.user_id) if listing.user_id else None,
                 "owner_email": owner.email if owner else None,
                 "owner_role": owner.role if owner else None,
