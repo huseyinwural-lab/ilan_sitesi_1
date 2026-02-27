@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## 2026-02-27 — P69 Ops Publish Health + Alert Reliability
+
+**Backend**
+- `GET /api/admin/ops/alert-delivery-metrics?window=24h` endpointi eklendi
+  - `total_attempts`, `successful_deliveries`, `failed_deliveries`, `success_rate`
+  - `last_failure_timestamp`, `channel_breakdown(slack/smtp/pd)`
+  - `window<=24h` guard (`400 INVALID_WINDOW`)
+- `POST /api/admin/ops/alert-delivery/rerun-simulation` endpointi eklendi
+  - Admin/Ops role erişimi
+  - Rate limit: dakika başına 3 (429 `RATE_LIMITED` + `retry_after_seconds`)
+  - Audit trigger: `OPS_ALERT_SIMULATION_TRIGGERED` (`actor_id`, `correlation_id`, `timestamp`)
+
+**Frontend**
+- Yeni sayfa: `/admin/ops/publish-health`
+  - “Son 24s Alarm Teslimat Başarı Oranı” kartı
+  - Kanal breakdown mini kartları
+  - “Re-run Alert Simulation” butonu + canlı sonuç kartı
+  - Rate-limit warning ve disabled UX
+  - Publish KPI özet kartı
+- Mobil overflow düzeltmesi (390px yatay kaydırma sorunu kapatıldı)
+
+**Schema / Perf**
+- Migration: `p68_ops_alert_delivery_index.py`
+  - partial index: `ix_audit_logs_ops_alert_delivery_time_channel`
+  - sütunlar: `created_at`, `resource_id` (`action='ui_config_ops_alert_delivery'`)
+
+**Kanıt/Test**
+- Testing agent: `/app/test_reports/iteration_35.json` (PASS)
+- Pytest: `37 passed, 2 skipped`
+- Evidence: `/app/docs/P1_OPS_PUBLISH_HEALTH_ALERT_RELIABILITY_EVIDENCE.md`
+
 ## 2026-02-27 — P67 Ops Hardening + P2 Legacy Cleanup
 
 **Ops Hardening**
