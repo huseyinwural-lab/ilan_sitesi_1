@@ -19,9 +19,25 @@ const statusLabels = {
   archived: 'Arşiv',
 };
 
+const statusPillClass = {
+  active: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  draft: 'border-amber-200 bg-amber-50 text-amber-700',
+  archived: 'border-slate-300 bg-slate-100 text-slate-700',
+};
+
+const computeExpiry = (createdAt) => {
+  if (!createdAt) return '-';
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return '-';
+  date.setDate(date.getDate() + 90);
+  return date.toLocaleDateString('tr-TR');
+};
+
+const inactiveStatuses = new Set(['draft', 'archived']);
+
 export default function DealerListings() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [items, setItems] = useState([]);
+  const [allItems, setAllItems] = useState([]);
   const [quota, setQuota] = useState({ limit: 0, used: 0, remaining: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,6 +46,7 @@ export default function DealerListings() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [statusFilter, setStatusFilter] = useState('active');
+  const [query, setQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [lastBulkAction, setLastBulkAction] = useState(null);
@@ -39,17 +56,16 @@ export default function DealerListings() {
     []
   );
 
-  const fetchListings = async (statusValue = statusFilter) => {
+  const fetchListings = async () => {
     setLoading(true);
     setError('');
     try {
-      const query = statusValue && statusValue !== 'all' ? `?status=${statusValue}` : '';
-      const res = await fetch(`${API}/dealer/listings${query}`, { headers: authHeader });
+      const res = await fetch(`${API}/dealer/listings?status=all`, { headers: authHeader });
       if (!res.ok) {
         throw new Error('İlanlar yüklenemedi');
       }
       const data = await res.json();
-      setItems(data.items || []);
+      setAllItems(data.items || []);
       setQuota(data.quota || { limit: 0, used: 0, remaining: 0 });
     } catch (err) {
       setError('İlanlar yüklenemedi.');
@@ -59,8 +75,8 @@ export default function DealerListings() {
   };
 
   useEffect(() => {
-    fetchListings(statusFilter);
-  }, [statusFilter]);
+    fetchListings();
+  }, []);
 
   useEffect(() => {
     if (searchParams.get('create') === '1') {
@@ -74,8 +90,29 @@ export default function DealerListings() {
   }, [searchParams, setSearchParams]);
 
   useEffect(() => {
-    setSelectedIds((prev) => prev.filter((id) => items.some((item) => item.id === id)));
-  }, [items]);
+    setSelectedIds((prev) => prev.filter((id) => allItems.some((item) => item.id === id)));
+  }, [allItems]);
+
+  const counters = useMemo(() => {
+    const active = allItems.filter((item) => item.status === 'active').length;
+    const inactive = allItems.filter((item) => inactiveStatuses.has(item.status)).length;
+    return { active, inactive, total: allItems.length };
+  }, [allItems]);
+
+  const filteredItems = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return allItems.filter((item) => {
+      const statusMatched =
+        statusFilter === 'all'
+          ? true
+          : statusFilter === 'inactive'
+            ? inactiveStatuses.has(item.status)
+            : item.status === statusFilter;
+      if (!statusMatched) return false;
+      if (!normalizedQuery) return true;
+      return `${item.title || ''}`.toLowerCase().includes(normalizedQuery);
+    });
+  }, [allItems, statusFilter, query]);
 
   const handleOpenCreate = () => {
     trackDealerEvent('dealer_listing_create_start', { source: 'dealer_listings' });
@@ -111,7 +148,7 @@ export default function DealerListings() {
         throw new Error(detail?.detail || 'İlan oluşturulamadı');
       }
       setCreateOpen(false);
-      fetchListings(statusFilter);
+      fetchListings();
     } catch (err) {
       setFormError(err?.message || 'İlan oluşturulamadı');
     } finally {
@@ -119,14 +156,14 @@ export default function DealerListings() {
     }
   };
 
-  const allSelected = items.length > 0 && selectedIds.length === items.length;
+  const allSelected = filteredItems.length > 0 && selectedIds.length === filteredItems.length;
   const bulkDisabled = selectedIds.length === 0 || bulkLoading;
 
   const handleSelectAll = () => {
     if (allSelected) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(items.map((item) => item.id));
+      setSelectedIds(filteredItems.map((item) => item.id));
     }
   };
 
@@ -169,7 +206,7 @@ export default function DealerListings() {
         setLastBulkAction(null);
       }
 
-      await fetchListings(statusFilter);
+      await fetchListings();
       setSelectedIds([]);
     } catch (err) {
       toast({ title: err?.message || 'Toplu işlem başarısız', variant: 'destructive' });
@@ -182,6 +219,27 @@ export default function DealerListings() {
   const handleRetry = () => {
     if (!lastBulkAction) return;
     handleBulkAction(lastBulkAction.action, lastBulkAction.ids);
+  };
+
+  const handleStatusUpdate = async (listingId, status) => {
+    try {
+      const res = await fetch(`${API}/dealer/listings/${listingId}/status`, {
+        method: 'POST',
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({}));
+        throw new Error(detail?.detail || 'İlan güncellenemedi');
+      }
+      toast({ title: 'İlan durumu güncellendi' });
+      await fetchListings();
+    } catch (err) {
+      toast({ title: err?.message || 'İlan güncellenemedi', variant: 'destructive' });
+    }
   };
 
   if (loading) {
@@ -214,17 +272,19 @@ export default function DealerListings() {
     <div className="space-y-6" data-testid="dealer-listings">
       <div className="flex flex-wrap items-start justify-between gap-3" data-testid="dealer-listings-header">
         <div>
-          <h2 className="text-2xl font-bold" data-testid="dealer-listings-title">İlanlarım</h2>
-          <p className="text-sm text-muted-foreground" data-testid="dealer-listings-subtitle">
-            Kurumsal ilanlarınızı yönetin.
+          <h2 className="text-2xl font-bold text-slate-900" data-testid="dealer-listings-title">
+            Yayında Olan İlanlar ({counters.active})
+          </h2>
+          <p className="text-sm font-medium text-slate-700" data-testid="dealer-listings-subtitle">
+            PDF akışına uygun kurumsal ilan yönetimi.
           </p>
         </div>
         <div className="flex items-center gap-3" data-testid="dealer-listings-actions">
-          <div className="rounded-md border bg-white px-3 py-2 text-xs" data-testid="dealer-listings-quota">
+          <div className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800" data-testid="dealer-listings-quota">
             Kota: <span data-testid="dealer-listings-quota-used">{quota.used}</span> /{' '}
             <span data-testid="dealer-listings-quota-limit">{quota.limit}</span>
             {quota.remaining !== undefined && (
-              <span className="ml-2 text-muted-foreground" data-testid="dealer-listings-quota-remaining">
+              <span className="ml-2 text-slate-600" data-testid="dealer-listings-quota-remaining">
                 Kalan {quota.remaining}
               </span>
             )}
@@ -240,33 +300,50 @@ export default function DealerListings() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-white p-4" data-testid="dealer-listings-toolbar">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-4" data-testid="dealer-listings-filters">
-            <div className="flex items-center gap-2" data-testid="dealer-listings-filter-status">
-              <label className="text-xs font-medium text-muted-foreground" htmlFor="dealer-status-filter">
-                Durum
-              </label>
-              <select
-                id="dealer-status-filter"
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-                className="h-9 rounded-md border px-3 text-sm"
-                data-testid="dealer-listings-status-select"
-              >
-                <option value="active">Aktif</option>
-                <option value="draft">Taslak</option>
-                <option value="archived">Arşiv</option>
-                <option value="all">Tümü</option>
-              </select>
-            </div>
-            <span className="text-xs text-muted-foreground" data-testid="dealer-listings-sort-info">
-              Sıralama: Yeni → Eski
-            </span>
+      <div className="rounded-lg border border-slate-200 bg-white p-4" data-testid="dealer-listings-toolbar">
+        <div className="flex flex-wrap items-center justify-between gap-3" data-testid="dealer-listings-search-row">
+          <div className="relative w-full max-w-md" data-testid="dealer-listings-search-wrap">
+            <input
+              type="text"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="İlan başlığı ile ara"
+              className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-900"
+              data-testid="dealer-listings-search-input"
+            />
           </div>
+          <span className="text-xs font-semibold text-slate-700" data-testid="dealer-listings-sort-info">Sıralama: Yeni → Eski</span>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2" data-testid="dealer-listings-bulk-actions">
-            <span className="text-xs text-muted-foreground" data-testid="dealer-listings-selected-count">
+        <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="dealer-listings-status-tabs">
+          <button
+            type="button"
+            onClick={() => setStatusFilter('active')}
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${statusFilter === 'active' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
+            data-testid="dealer-listings-status-tab-active"
+          >
+            Yayında ({counters.active})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('inactive')}
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${statusFilter === 'inactive' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
+            data-testid="dealer-listings-status-tab-inactive"
+          >
+            Yayında Değil ({counters.inactive})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('all')}
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${statusFilter === 'all' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
+            data-testid="dealer-listings-status-tab-all"
+          >
+            Tümü ({counters.total})
+          </button>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="dealer-listings-bulk-actions">
+            <span className="text-xs font-medium text-slate-700" data-testid="dealer-listings-selected-count">
               Seçili: {selectedIds.length}
             </span>
             <button
@@ -306,17 +383,16 @@ export default function DealerListings() {
                 Tekrar Dene
               </button>
             )}
-          </div>
         </div>
       </div>
 
-      {items.length === 0 ? (
-        <div className="rounded-lg border bg-white p-6 text-sm text-muted-foreground" data-testid="dealer-listings-empty">
+      {filteredItems.length === 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm font-medium text-slate-700" data-testid="dealer-listings-empty">
           Bu filtrede ilan bulunamadı. Farklı bir durum seçin veya yeni ilan oluşturun.
         </div>
       ) : (
-        <div className="rounded-lg border bg-white overflow-hidden" data-testid="dealer-listings-table">
-          <div className="grid grid-cols-5 gap-4 bg-muted text-sm font-medium px-3 py-2" data-testid="dealer-listings-table-header">
+        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden" data-testid="dealer-listings-table">
+          <div className="grid grid-cols-[60px_1fr_120px_120px_120px_120px_110px] gap-3 bg-slate-50 text-sm font-semibold px-3 py-2 text-slate-800" data-testid="dealer-listings-table-header">
             <div className="flex items-center" data-testid="dealer-listings-header-select">
               <input
                 type="checkbox"
@@ -328,14 +404,17 @@ export default function DealerListings() {
             </div>
             <div data-testid="dealer-listings-header-title">İlan</div>
             <div data-testid="dealer-listings-header-price">Fiyat</div>
-            <div data-testid="dealer-listings-header-status">Durum</div>
-            <div data-testid="dealer-listings-header-created">Oluşturma</div>
+            <div data-testid="dealer-listings-header-views">Görüntülenme</div>
+            <div data-testid="dealer-listings-header-favorites">Favori</div>
+            <div data-testid="dealer-listings-header-messages">Mesaj</div>
+            <div data-testid="dealer-listings-header-expiry">Bitiş</div>
+            <div data-testid="dealer-listings-header-actions">İşlem</div>
           </div>
           <div className="divide-y" data-testid="dealer-listings-table-body">
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <div
                 key={item.id}
-                className="grid grid-cols-5 gap-4 px-3 py-3 text-sm"
+                className="grid grid-cols-[60px_1fr_120px_120px_120px_120px_120px_110px] gap-3 px-3 py-3 text-sm"
                 data-testid={`dealer-listings-row-${item.id}`}
               >
                 <div className="flex items-center" data-testid={`dealer-listings-select-cell-${item.id}`}>
@@ -347,13 +426,39 @@ export default function DealerListings() {
                     data-testid={`dealer-listings-select-${item.id}`}
                   />
                 </div>
-                <div data-testid={`dealer-listings-title-${item.id}`}>{item.title}</div>
-                <div data-testid={`dealer-listings-price-${item.id}`}>{formatPrice(item.price)}</div>
-                <div data-testid={`dealer-listings-status-${item.id}`}>
-                  {statusLabels[item.status] || item.status}
+                <div data-testid={`dealer-listings-title-${item.id}`}>
+                  <div className="font-semibold text-slate-900">{item.title}</div>
+                  <div className="mt-1 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold text-slate-700" data-testid={`dealer-listings-status-pill-${item.id}`}>
+                    {statusLabels[item.status] || item.status}
+                  </div>
                 </div>
-                <div data-testid={`dealer-listings-created-${item.id}`}>
-                  {item.created_at ? new Date(item.created_at).toLocaleDateString('tr-TR') : '-'}
+                <div className="font-semibold text-slate-900" data-testid={`dealer-listings-price-${item.id}`}>{formatPrice(item.price)}</div>
+                <div className="font-semibold text-slate-900" data-testid={`dealer-listings-views-${item.id}`}>0</div>
+                <div className="font-semibold text-slate-900" data-testid={`dealer-listings-favorites-${item.id}`}>0</div>
+                <div className="font-semibold text-slate-900" data-testid={`dealer-listings-messages-${item.id}`}>0</div>
+                <div className="font-medium text-slate-700" data-testid={`dealer-listings-expiry-${item.id}`}>{computeExpiry(item.created_at)}</div>
+                <div data-testid={`dealer-listings-status-${item.id}`}>
+                  <div className="flex flex-wrap items-center gap-1" data-testid={`dealer-listings-actions-${item.id}`}>
+                    {item.status !== 'active' ? (
+                      <button
+                        type="button"
+                        onClick={() => handleStatusUpdate(item.id, 'active')}
+                        className="rounded border border-emerald-200 px-2 py-1 text-[11px] font-semibold text-emerald-700"
+                        data-testid={`dealer-listings-action-publish-${item.id}`}
+                      >
+                        Yayına Al
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleStatusUpdate(item.id, 'archived')}
+                        className="rounded border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700"
+                        data-testid={`dealer-listings-action-archive-${item.id}`}
+                      >
+                        Arşivle
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
