@@ -16547,7 +16547,7 @@ async def dealer_reports(
         plan = await session.get(Plan, latest_invoice.plan_id)
         if plan and plan.name:
             package_name = plan.name
-        quota_limit = int((latest_invoice.plan_snapshot_json or {}).get("listing_quota") or 0)
+        quota_limit = int((latest_invoice.meta_json or {}).get("listing_quota") or 0)
 
     package_used = int(total_active_listings or 0)
     package_remaining = max(quota_limit - package_used, 0)
@@ -16632,8 +16632,16 @@ async def dealer_reports(
         "package_reports": {
             "package_name": package_name,
             "period": {
-                "start": latest_invoice.period_start.isoformat() if latest_invoice and latest_invoice.period_start else None,
-                "end": latest_invoice.period_end.isoformat() if latest_invoice and latest_invoice.period_end else None,
+                "start": (
+                    latest_invoice.issued_at.isoformat()
+                    if latest_invoice and latest_invoice.issued_at
+                    else (latest_invoice.created_at.isoformat() if latest_invoice and latest_invoice.created_at else None)
+                ),
+                "end": (
+                    latest_invoice.due_at.isoformat()
+                    if latest_invoice and latest_invoice.due_at
+                    else (latest_invoice.paid_at.isoformat() if latest_invoice and latest_invoice.paid_at else None)
+                ),
             },
             "used": package_used,
             "remaining": package_remaining,
