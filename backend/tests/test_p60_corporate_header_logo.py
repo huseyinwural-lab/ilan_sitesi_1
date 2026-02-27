@@ -397,11 +397,15 @@ class TestLogoPersistenceAndEffective:
         
         # Step 2: Publish
         publish_response = requests.post(
-            f"{BASE_URL}/api/admin/ui/configs/header/publish/{config_id}",
+            f"{BASE_URL}/api/admin/ui/configs/header/publish",
             json={
+                "segment": "corporate",
+                "scope": "system",
+                "config_id": config_id,
                 "config_version": config_version,
                 "owner_type": "global",
                 "owner_id": "global",
+                "require_confirm": True,
             },
             headers={"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
         )
