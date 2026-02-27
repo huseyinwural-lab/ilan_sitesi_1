@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## 2026-02-27 — P66 Conflict UX + Publish Telemetry Hardening
+
+**Conflict UX**
+- Conflict modal tek primary aksiyonla güncellendi: `Latest Draft’ı Çek + Diff’i Yeniden Aç`.
+- Conflict sync endpoint eklendi: `POST /api/admin/ui/configs/{config_type}/conflict-sync`.
+- Sync sonrası publish dialog auto-reopen + güncel version ile devam.
+
+**Drift Guard**
+- UI hash gösterimi: `local_hash` / `server_hash`.
+- Hash mismatch durumunda publish disable.
+- Backend publish hash doğrulaması: `409 CONFIG_HASH_MISMATCH`.
+
+**Telemetry / Audit**
+- Publish attempt event: `ui_config_publish_attempt`.
+- Alanlar: `conflict_detected`, `lock_wait_ms`, `retry_count`, `publish_duration_ms`.
+- Endpoint: `GET /api/admin/ui/configs/{config_type}/publish-audits`.
+- UI: Publish Audit kartı (conflict badge + retry + lock/publish süreleri + avg/max metrikler).
+
+**Test / Evidence**
+- Testing agent: `/app/test_reports/iteration_32.json` (PASS)
+- Evidence: `/app/docs/UI_CONFLICT_UX_PUBLISH_TELEMETRY_P0_EVIDENCE.md`
+
 ## 2026-02-27 — P65 Header + Theme P0 Simplification
 
 **Header Fazı (P0)**
