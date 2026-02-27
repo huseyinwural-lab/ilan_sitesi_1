@@ -326,6 +326,7 @@ export const CorporateDashboardDesigner = () => {
       }
 
       setLatestConfigId(data?.item?.id || null);
+      setLatestConfigVersion(data?.item?.version ?? null);
       lastSavedHashRef.current = snapshotHash;
       setStatus(`Taslak kaydedildi (v${data?.item?.version || '-'})`);
       if (silent) {
@@ -349,9 +350,14 @@ export const CorporateDashboardDesigner = () => {
     );
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(data?.detail || 'Diff bilgisi alınamadı');
+      const apiError = parseApiError(data, response.status);
+      throw new Error(apiError.message || 'Diff bilgisi alınamadı');
     }
     setDiffPayload(data?.diff || {});
+    setPublishDiffContext({
+      fromItem: data?.from_item || null,
+      toItem: data?.to_item || null,
+    });
   };
 
   const openPublishDialog = async () => {
@@ -359,6 +365,9 @@ export const CorporateDashboardDesigner = () => {
     setError('');
     try {
       await loadDiff();
+      if ((diffPayload?.change_count || 0) < 1) {
+        setError('Publish öncesi görsel diff üzerinde en az bir değişiklik bulunmalı');
+      }
       setConfirmChecked(false);
       setIsPublishOpen(true);
     } catch (requestError) {
@@ -382,12 +391,22 @@ export const CorporateDashboardDesigner = () => {
           scope,
           scope_id: scope === 'tenant' ? scopeId.trim() : null,
           config_id: latestConfigId,
+          config_version: latestConfigVersion,
           require_confirm: true,
         }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data?.detail || 'Yayınlama başarısız');
+        const apiError = parseApiError(data, response.status);
+        if (response.status === 409 && apiError.code === 'CONFIG_VERSION_CONFLICT') {
+          setConflictInfo(apiError.raw || {});
+          setConflictOpen(true);
+          throw new Error(apiError.message || 'Başka bir admin daha yeni bir versiyon yayınladı');
+        }
+        if (response.status === 400 && apiError.code === 'MISSING_CONFIG_VERSION') {
+          throw new Error('Version bilgisi eksik. Lütfen sayfayı yenileyin ve tekrar deneyin.');
+        }
+        throw new Error(apiError.message || 'Yayınlama başarısız');
       }
 
       setStatus(`Yayınlandı (v${data?.item?.version || '-'})`);
@@ -417,16 +436,22 @@ export const CorporateDashboardDesigner = () => {
           scope,
           scope_id: scope === 'tenant' ? scopeId.trim() : null,
           target_config_id: selectedRollbackId || null,
+          rollback_reason: rollbackReason,
           require_confirm: true,
         }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data?.detail || 'Rollback başarısız');
+        const apiError = parseApiError(data, response.status);
+        if (response.status === 400 && apiError.code === 'MISSING_ROLLBACK_REASON') {
+          throw new Error('Rollback sebebi zorunludur');
+        }
+        throw new Error(apiError.message || 'Rollback başarısız');
       }
       setStatus(`Rollback tamamlandı (v${data?.item?.version || '-'})`);
       toast.success('Dashboard rollback tamamlandı');
       setIsRollbackOpen(false);
+      setRollbackReason('');
       await Promise.all([loadDraft(), loadEffective()]);
     } catch (requestError) {
       setError(requestError.message || 'Rollback başarısız');
