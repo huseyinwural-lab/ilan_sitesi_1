@@ -672,8 +672,10 @@ export const CorporateDashboardDesigner = () => {
   };
 
   useEffect(() => {
+    setPublishRetryCount(0);
     loadDraft();
     loadEffective();
+    loadPublishAudits();
   }, [scope, scopeId]);
 
   useEffect(() => {
