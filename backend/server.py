@@ -10980,7 +10980,7 @@ class ListingAdminActionPayload(BaseModel):
 
 
 class ListingDopingUpdatePayload(BaseModel):
-    doping_type: Literal["free", "showcase", "urgent"]
+    doping_type: Literal["free", "paid", "showcase", "urgent"]
     duration_days: Optional[int] = Field(default=None, ge=1, le=365)
     until_at: Optional[datetime] = None
     reason: Optional[str] = None
