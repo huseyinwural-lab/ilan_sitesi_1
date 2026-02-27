@@ -15779,9 +15779,9 @@ async def dealer_dashboard_summary(
             )
         ).scalar_one()
 
-        quota_limit = DEALER_LISTING_QUOTA_LIMIT
+        quota_limit = 0
         quota_used = int(active_listings or 0)
-        quota_remaining = max(0, quota_limit - quota_used)
+        quota_remaining = 0
 
         latest_invoice = (
             await session.execute(
@@ -15793,6 +15793,9 @@ async def dealer_dashboard_summary(
         ).scalar_one_or_none()
         package_status = latest_invoice.status if latest_invoice else None
         package_name = None
+        if latest_invoice:
+            quota_limit = int((latest_invoice.meta_json or {}).get("listing_quota") or 0)
+            quota_remaining = max(0, quota_limit - quota_used)
         if latest_invoice and latest_invoice.plan_id:
             plan = await session.get(Plan, latest_invoice.plan_id)
             if plan and plan.name:
