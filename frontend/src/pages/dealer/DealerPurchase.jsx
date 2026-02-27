@@ -2,7 +2,16 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const invoiceStatuses = ['all', 'issued', 'paid', 'overdue', 'cancelled', 'refunded', 'draft'];
+const invoiceStatuses = ['all', 'issued', 'paid', 'void', 'refunded', 'draft'];
+
+const invoiceStatusLabel = {
+  all: 'Tümü',
+  issued: 'issued',
+  paid: 'paid',
+  void: 'void',
+  refunded: 'refunded',
+  draft: 'draft',
+};
 
 const formatDate = (value) => {
   if (!value) return '-';
@@ -181,7 +190,7 @@ export default function DealerPurchase() {
                 className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusFilter === statusKey ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
                 data-testid={`dealer-purchase-status-filter-${statusKey}`}
               >
-                {statusKey === 'all' ? 'Tümü' : statusKey}
+                {invoiceStatusLabel[statusKey] || statusKey}
               </button>
             ))}
           </div>
