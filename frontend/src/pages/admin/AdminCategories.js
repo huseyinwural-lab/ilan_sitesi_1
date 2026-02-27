@@ -3270,6 +3270,9 @@ const AdminCategories = () => {
                     <div className="mt-2 text-xs text-slate-700" data-testid="categories-summary-sort-order">
                       Sıra: {form.sort_order || '-'}
                     </div>
+                    <div className="mt-1 text-xs text-slate-700" data-testid="categories-summary-image-status">
+                      Görsel: {form.image_url ? 'Yüklendi' : 'Varsayılan ikon'}
+                    </div>
                     {form.module === 'vehicle' && (
                       <div className="mt-1 text-xs text-slate-700" data-testid="categories-summary-vehicle-segment">
                         Segment: {vehicleSegment || '-'}
