@@ -346,7 +346,9 @@ class TestLogoUploadValidation:
             data=data,
             headers={"Authorization": f"Bearer {admin_token}"}
         )
-        assert response.status_code == 400, f"Expected 400 for non-corporate segment, got {response.status_code}"
+        assert response.status_code == 403, f"Expected 403 for disabled individual segment, got {response.status_code}"
+        detail = response.json().get("detail") or {}
+        assert detail.get("code") == "FEATURE_DISABLED"
         print("✓ Non-corporate segment correctly rejected")
 
 
