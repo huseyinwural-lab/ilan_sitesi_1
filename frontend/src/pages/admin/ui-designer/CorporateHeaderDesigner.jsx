@@ -359,7 +359,12 @@ export const CorporateHeaderDesigner = () => {
     }
   };
 
-  const publishLatest = async (configId = latestConfigId, configVersion = latestConfigVersion) => {
+  const publishLatest = async (
+    configId = latestConfigId,
+    configVersion = latestConfigVersion,
+    ownerType = scope === 'tenant' ? 'dealer' : 'global',
+    ownerId = scope === 'tenant' ? scopeId.trim() : 'global',
+  ) => {
     if (!configId) {
       setError('Yayınlanacak versiyon bulunamadı');
       return;
@@ -375,6 +380,8 @@ export const CorporateHeaderDesigner = () => {
         },
         body: JSON.stringify({
           config_version: configVersion,
+          owner_type: ownerType,
+          owner_id: ownerId,
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -385,6 +392,9 @@ export const CorporateHeaderDesigner = () => {
         }
         if (response.status === 409 && detail?.code === 'CONFIG_VERSION_CONFLICT') {
           throw new Error('Başka bir admin daha yeni bir versiyon yayınladı. Lütfen sayfayı yenileyin.');
+        }
+        if (response.status === 409 && detail?.code === 'SCOPE_CONFLICT') {
+          throw new Error('Publish scope doğrulaması başarısız. Lütfen scope bilgisini kontrol edin.');
         }
         throw new Error(detail?.message || data?.detail || 'Yayınlama başarısız');
       }
@@ -803,7 +813,7 @@ export const CorporateHeaderDesigner = () => {
               </div>
               <button
                 type="button"
-                onClick={() => publishLatest(item.id, item.version)}
+                onClick={() => publishLatest(item.id, item.version, item.scope === 'tenant' ? 'dealer' : 'global', item.scope === 'tenant' ? (item.scope_id || '') : 'global')}
                 className="rounded border px-2 py-1"
                 data-testid={`ui-designer-corporate-publish-version-${item.id}`}
               >
