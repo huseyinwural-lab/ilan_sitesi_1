@@ -254,6 +254,7 @@ const AdminCategories = () => {
   const [listFilters, setListFilters] = useState({
     module: "all",
     status: "all",
+    image_presence: "all",
   });
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkRunning, setBulkRunning] = useState(false);
@@ -352,7 +353,15 @@ const AdminCategories = () => {
   }), []);
 
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-  const visibleItems = items;
+  const visibleItems = useMemo(() => {
+    if (listFilters.image_presence === "with_image") {
+      return items.filter((item) => Boolean((item.image_url || "").trim()));
+    }
+    if (listFilters.image_presence === "without_image") {
+      return items.filter((item) => !Boolean((item.image_url || "").trim()));
+    }
+    return items;
+  }, [items, listFilters.image_presence]);
   const visibleItemIds = useMemo(() => visibleItems.map((item) => item.id), [visibleItems]);
   const allVisibleSelected = useMemo(
     () => visibleItemIds.length > 0 && visibleItemIds.every((id) => selectedIdSet.has(id)),
