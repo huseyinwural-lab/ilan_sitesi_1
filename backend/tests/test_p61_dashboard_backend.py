@@ -171,12 +171,14 @@ class TestDashboardGuardrailsAndPersistence:
         )
         assert save_response.status_code == 200, f"Draft save failed: {save_response.text[:300]}"
         config_id = save_response.json().get("item", {}).get("id")
+        config_version = save_response.json().get("item", {}).get("version")
         assert config_id, "Draft config_id missing"
 
         # Step 2: Publish
         publish_response = requests.post(
             f"{BASE_URL}/api/admin/ui/configs/dashboard/publish/{config_id}",
-            headers={"Authorization": f"Bearer {admin_token}"},
+            json={"config_version": config_version},
+            headers={"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"},
         )
         assert publish_response.status_code == 200, f"Publish failed: {publish_response.text[:300]}"
         published_item = publish_response.json().get("item") or {}
