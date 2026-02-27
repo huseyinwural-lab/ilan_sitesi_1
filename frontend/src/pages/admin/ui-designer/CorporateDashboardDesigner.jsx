@@ -127,6 +127,35 @@ const normalizeDiffWidgets = (item) => {
     }));
 };
 
+const stableStringify = (value) => {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(',')}]`;
+  }
+  if (value && typeof value === 'object') {
+    const keys = Object.keys(value).sort();
+    return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+};
+
+const simpleHash = (value) => {
+  const str = stableStringify(value);
+  let hash = 5381;
+  for (let i = 0; i < str.length; i += 1) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash &= 0xffffffff;
+  }
+  return `h${Math.abs(hash)}`;
+};
+
+const buildDraftHashPayload = ({ widgets, layout, configData, scope, scopeId }) => ({
+  widgets,
+  layout,
+  configData,
+  scope,
+  scopeId: scope === 'tenant' ? (scopeId || '').trim() : null,
+});
+
 const SortableWidgetCard = ({ widget, width, largeScreen, onRemove, onToggleEnabled }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: widget.widget_id });
   const style = {
