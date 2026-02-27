@@ -130,8 +130,8 @@ class TestConflictSyncAndTelemetry:
         metrics = telemetry_payload.get("telemetry") or {}
         assert "avg_lock_wait_ms" in metrics
         assert "max_lock_wait_ms" in metrics
-        assert "avg_publish_duration_ms" in metrics
-        assert "max_publish_duration_ms" in metrics
+        assert "publish_duration_ms" in metrics
+        assert "publish_duration_ms_p95" in metrics
 
     def test_ops_thresholds_and_alert_simulation(self, admin_token: str):
         thresholds_response = requests.get(
