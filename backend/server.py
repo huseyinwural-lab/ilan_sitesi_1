@@ -27912,6 +27912,12 @@ CAMPAIGN_STATUSES = {"draft", "active", "paused", "expired"}
 PRICING_CAMPAIGN_SCOPES = {"individual", "corporate", "all"}
 PRICING_CAMPAIGN_ITEM_SCOPES = {"individual", "corporate"}
 PRICING_CAMPAIGN_ITEM_LISTING_TYPES = {"free", "paid", "urgent", "showcase"}
+PRICING_LISTING_TYPE_PRIORITY = {
+    "showcase": 0,
+    "urgent": 1,
+    "paid": 2,
+    "free": 3,
+}
 
 DOPING_STATUSES = {"requested", "paid", "approved", "published", "expired"}
 
