@@ -10710,7 +10710,7 @@ async def moderation_queue(
     corporate_owner_expr = or_(
         Listing.is_dealer_listing.is_(True),
         SqlUser.role == "dealer",
-        SqlUser.portal_scope == "dealer",
+        SqlUser.user_type == "corporate",
     )
     individual_owner_expr = and_(
         Listing.is_dealer_listing.is_(False),
@@ -10718,7 +10718,7 @@ async def moderation_queue(
             SqlUser.id.is_(None),
             and_(
                 or_(SqlUser.role.is_(None), SqlUser.role != "dealer"),
-                or_(SqlUser.portal_scope.is_(None), SqlUser.portal_scope != "dealer"),
+                or_(SqlUser.user_type.is_(None), SqlUser.user_type != "corporate"),
             ),
         ),
     )
@@ -10837,7 +10837,7 @@ async def moderation_queue_count(
     corporate_owner_expr = or_(
         Listing.is_dealer_listing.is_(True),
         SqlUser.role == "dealer",
-        SqlUser.portal_scope == "dealer",
+        SqlUser.user_type == "corporate",
     )
     individual_owner_expr = and_(
         Listing.is_dealer_listing.is_(False),
@@ -10845,7 +10845,7 @@ async def moderation_queue_count(
             SqlUser.id.is_(None),
             and_(
                 or_(SqlUser.role.is_(None), SqlUser.role != "dealer"),
-                or_(SqlUser.portal_scope.is_(None), SqlUser.portal_scope != "dealer"),
+                or_(SqlUser.user_type.is_(None), SqlUser.user_type != "corporate"),
             ),
         ),
     )
@@ -13341,7 +13341,7 @@ async def admin_listings(
     corporate_owner_expr = or_(
         Listing.is_dealer_listing.is_(True),
         SqlUser.role == "dealer",
-        SqlUser.portal_scope == "dealer",
+        SqlUser.user_type == "corporate",
     )
     individual_owner_expr = and_(
         Listing.is_dealer_listing.is_(False),
@@ -13349,7 +13349,7 @@ async def admin_listings(
             SqlUser.id.is_(None),
             and_(
                 or_(SqlUser.role.is_(None), SqlUser.role != "dealer"),
-                or_(SqlUser.portal_scope.is_(None), SqlUser.portal_scope != "dealer"),
+                or_(SqlUser.user_type.is_(None), SqlUser.user_type != "corporate"),
             ),
         ),
     )
