@@ -29444,6 +29444,7 @@ def _campaign_item_is_available(item: PricingCampaignItem, now: datetime) -> boo
 def _serialize_campaign_item_for_quote(item: PricingCampaignItem) -> Dict[str, Any]:
     return {
         "id": str(item.id),
+        "listing_type": item.listing_type,
         "name": item.name,
         "listing_quota": item.listing_quota,
         "price_amount": float(item.price_amount or 0),
@@ -29459,6 +29460,7 @@ def _serialize_pricing_campaign_item(item: PricingCampaignItem) -> Dict[str, Any
     return {
         "id": str(item.id),
         "scope": item.scope,
+        "listing_type": item.listing_type,
         "name": item.name,
         "listing_quota": item.listing_quota,
         "price_amount": float(item.price_amount or 0),
