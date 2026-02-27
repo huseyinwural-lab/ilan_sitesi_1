@@ -1405,23 +1405,6 @@ async def _validate_publish_version_or_raise(
         )
         raise HTTPException(status_code=409, detail=conflict)
 
-
-def _validate_publish_hash_or_raise(row: UIConfig, resolved_config_hash: Optional[str]) -> None:
-    if not resolved_config_hash:
-        return
-    current_hash = _serialize_ui_config(row).get("resolved_config_hash")
-    if current_hash != resolved_config_hash:
-        raise _publish_http_error(
-            code=PUBLISH_ERROR_CONFIG_HASH_MISMATCH,
-            message="Config hash mismatch",
-            status_code=409,
-            extras={
-                "current_hash": current_hash,
-                "your_hash": resolved_config_hash,
-                "hint": "Latest draft ile diff ekranını yeniden açın",
-            },
-        )
-
     if row.status != "draft":
         conflict = await _build_publish_conflict_payload(
             session,
@@ -1447,6 +1430,23 @@ def _validate_publish_hash_or_raise(row: UIConfig, resolved_config_hash: Optiona
             message="Daha güncel bir draft versiyonu mevcut",
         )
         raise HTTPException(status_code=409, detail=conflict)
+
+
+def _validate_publish_hash_or_raise(row: UIConfig, resolved_config_hash: Optional[str]) -> None:
+    if not resolved_config_hash:
+        return
+    current_hash = _serialize_ui_config(row).get("resolved_config_hash")
+    if current_hash != resolved_config_hash:
+        raise _publish_http_error(
+            code=PUBLISH_ERROR_CONFIG_HASH_MISMATCH,
+            message="Config hash mismatch",
+            status_code=409,
+            extras={
+                "current_hash": current_hash,
+                "your_hash": resolved_config_hash,
+                "hint": "Latest draft ile diff ekranını yeniden açın",
+            },
+        )
 
 
 async def _next_ui_config_version(
