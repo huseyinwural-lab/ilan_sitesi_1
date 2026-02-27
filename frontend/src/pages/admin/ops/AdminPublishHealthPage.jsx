@@ -109,7 +109,7 @@ export default function AdminPublishHealthPage() {
     }
   };
 
-  const rerunAlertSimulation = async () => {
+  const rerunAlertSimulation = async (channels = ['smtp', 'slack', 'pagerduty']) => {
     setRunningSimulation(true);
     setSimulationError('');
     try {
@@ -119,7 +119,7 @@ export default function AdminPublishHealthPage() {
           ...authHeader,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ config_type: 'dashboard' }),
+        body: JSON.stringify({ config_type: 'dashboard', channels }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -248,37 +248,7 @@ export default function AdminPublishHealthPage() {
           <div className="mt-4 flex flex-wrap gap-2" data-testid="ops-alert-rerun-actions">
             <button
               type="button"
-              onClick={async () => {
-                setRunningSimulation(true);
-                setSimulationError('');
-                try {
-                  const response = await fetch(`${API}/admin/ops/alert-delivery/rerun-simulation`, {
-                    method: 'POST',
-                    headers: {
-                      ...authHeader,
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ config_type: 'dashboard', channels: channelSelection }),
-                  });
-                  const payload = await response.json().catch(() => ({}));
-                  if (!response.ok) {
-                    if (response.status === 429) {
-                      const waitSeconds = Number(payload?.detail?.retry_after_seconds || 60);
-                      setRetryAfterSeconds(waitSeconds);
-                      throw new Error(payload?.detail?.message || `Rate limit aktif. ${waitSeconds}s sonra tekrar deneyin.`);
-                    }
-                    throw new Error(payload?.detail?.message || payload?.detail || 'Simülasyon yeniden çalıştırılamadı');
-                  }
-                  setLastSimulation(payload);
-                  toast.success('Alert simulation yeniden çalıştırıldı');
-                  await loadAlertDeliveryMetrics();
-                } catch (error) {
-                  setSimulationError(error.message || 'Simülasyon yeniden çalıştırılamadı');
-                  toast.error(error.message || 'Simülasyon yeniden çalıştırılamadı');
-                } finally {
-                  setRunningSimulation(false);
-                }
-              }}
+              onClick={() => rerunAlertSimulation(channelSelection)}
               disabled={runningSimulation || retryAfterSeconds > 0}
               className="h-10 rounded-md bg-slate-900 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
               title={retryAfterSeconds > 0 ? `Rate limit aktif. ${retryAfterSeconds}s sonra tekrar deneyin.` : 'Re-run Alert Simulation'}
