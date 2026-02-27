@@ -2234,6 +2234,7 @@ async def admin_ui_publish_audits(
     scope: str = Query(default="system"),
     scope_id: Optional[str] = Query(default=None),
     limit: int = Query(default=30, ge=1, le=200),
+    window_hours: int = Query(default=24, ge=1, le=24 * 30),
     current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
     session: AsyncSession = Depends(get_db),
 ):
@@ -2253,10 +2254,15 @@ async def admin_ui_publish_audits(
         .limit(500)
     )
     rows = (await session.execute(stmt)).scalars().all()
+    now_dt = datetime.now(timezone.utc)
+    min_dt = now_dt - timedelta(hours=window_hours)
 
     filtered = []
     for row in rows:
         metadata = row.metadata_info or {}
+        created_at = row.created_at if row.created_at and row.created_at.tzinfo else row.created_at.replace(tzinfo=timezone.utc) if row.created_at else None
+        if created_at and created_at < min_dt:
+            continue
         if metadata.get("segment") != normalized_segment:
             continue
         if metadata.get("scope") != normalized_scope:
@@ -2271,22 +2277,20 @@ async def admin_ui_publish_audits(
             break
 
     items = []
-    lock_values: list[int] = []
-    publish_values: list[int] = []
     for row in filtered:
         metadata = row.metadata_info or {}
         lock_ms = int(metadata.get("lock_wait_ms") or 0)
         publish_ms = metadata.get("publish_duration_ms")
-        if lock_ms >= 0:
-            lock_values.append(lock_ms)
-        if isinstance(publish_ms, int) and publish_ms >= 0:
-            publish_values.append(publish_ms)
+        owner_type = metadata.get("owner_type")
+        owner_id = metadata.get("owner_id")
 
         items.append(
             {
                 "id": str(row.id),
                 "created_at": row.created_at.isoformat() if row.created_at else None,
                 "actor_email": row.user_email,
+                "owner_type": owner_type,
+                "owner_id": owner_id,
                 "status": metadata.get("status"),
                 "message": metadata.get("message"),
                 "conflict_detected": bool(metadata.get("conflict_detected", False)),
@@ -2297,16 +2301,21 @@ async def admin_ui_publish_audits(
             }
         )
 
-    telemetry = {
-        "avg_lock_wait_ms": round(sum(lock_values) / len(lock_values), 2) if lock_values else 0,
-        "max_lock_wait_ms": max(lock_values) if lock_values else 0,
-        "avg_publish_duration_ms": round(sum(publish_values) / len(publish_values), 2) if publish_values else 0,
-        "max_publish_duration_ms": max(publish_values) if publish_values else 0,
-    }
+    telemetry = _compute_publish_metrics(items)
+    trends = _build_time_window_trends(items, now_dt)
 
     return {
         "items": items,
         "telemetry": telemetry,
+        "kpi": {
+            "median_retry_count": telemetry.get("median_retry_count", 0),
+            "time_to_publish_ms": telemetry.get("time_to_publish_ms", 0),
+            "conflict_resolution_time_ms": telemetry.get("conflict_resolution_time_ms", 0),
+            "publish_success_rate": telemetry.get("publish_success_rate", 0),
+        },
+        "trends": trends,
+        "thresholds": PUBLISH_OPS_THRESHOLDS,
+        "window_hours": window_hours,
     }
 
 
