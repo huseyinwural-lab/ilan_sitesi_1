@@ -56,6 +56,7 @@ const normalizeShowcaseLayout = (raw) => {
 };
 
 const resolveEffectiveCount = (block) => Math.min(Number(block?.listing_count || 0), Number(block?.rows || 0) * Number(block?.columns || 0));
+const normalizeGridColumns = (value, fallback = 4) => clamp(value, 1, 8, fallback);
 
 const formatNumber = (value) => {
   const numeric = Number(value || 0);
@@ -96,7 +97,7 @@ export default function HomePage() {
       try {
         const [categoryRes, layoutRes] = await Promise.all([
           fetch(`${API}/categories?module=vehicle&country=${countryCode}`),
-          fetch(`${API}/site/showcase-layout`),
+          fetch(`${API}/site/showcase-layout?_ts=${Date.now()}`, { cache: 'no-store' }),
         ]);
 
         const categoryPayload = await categoryRes.json().catch(() => []);
@@ -201,6 +202,10 @@ export default function HomePage() {
 
   const homeShowcaseBlock = useMemo(() => showcaseLayout.homepage || DEFAULT_SHOWCASE_LAYOUT.homepage, [showcaseLayout]);
   const homeShowcaseCount = useMemo(() => Math.max(1, resolveEffectiveCount(homeShowcaseBlock)), [homeShowcaseBlock]);
+  const homeGridColumnClass = useMemo(
+    () => `home-v2-showcase-grid-cols-${normalizeGridColumns(homeShowcaseBlock.columns, 7)}`,
+    [homeShowcaseBlock.columns]
+  );
 
   const showcaseWithPlaceholders = useMemo(() => {
     const base = Array.isArray(showcaseItems) ? showcaseItems.slice(0, homeShowcaseCount) : [];
@@ -273,12 +278,8 @@ export default function HomePage() {
 
           {homeShowcaseBlock.enabled !== false ? (
             <div
-              className="home-v2-showcase-grid"
+              className={`home-v2-showcase-grid ${homeGridColumnClass}`}
               data-testid="home-v2-showcase-grid"
-              data-rows={homeShowcaseBlock.rows}
-              data-columns={homeShowcaseBlock.columns}
-              data-listing-count={homeShowcaseBlock.listing_count}
-              style={{ '--home-showcase-columns': homeShowcaseBlock.columns }}
             >
               {showcaseWithPlaceholders.map((item, index) => (
                 item ? (
@@ -331,12 +332,8 @@ export default function HomePage() {
                       </Link>
                     </div>
                     <div
-                      className="home-v2-category-showcase-grid"
-                      style={{ '--home-category-showcase-columns': entry.columns }}
+                      className={`home-v2-category-showcase-grid home-v2-category-showcase-grid-cols-${normalizeGridColumns(entry.columns, 4)}`}
                       data-testid={`home-v2-category-showcase-grid-${index}`}
-                      data-rows={entry.rows}
-                      data-columns={entry.columns}
-                      data-listing-count={entry.listing_count}
                     >
                       {filled.map((item, tileIndex) => (
                         item ? (
