@@ -441,6 +441,11 @@ const AdminCategories = () => {
     return wizardProgressIndex >= getProgressIndex(STEP_PROGRESS_STATE[stepId] || "draft");
   };
   const isHierarchyLocked = isStepCompleted("hierarchy");
+  const isRootCategory = !form.parent_id;
+  const categoryImagePreviewUrl = useMemo(
+    () => resolveCategoryImagePreviewUrl(form.image_url, categoryImageCacheBuster),
+    [form.image_url, categoryImageCacheBuster],
+  );
   const isNextEnabled = Boolean(nextStep) && isStepCompleted(wizardStep) && !stepSaving;
   const nextTooltip = stepSaving
     ? "Kaydediliyor..."
