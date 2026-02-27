@@ -2298,10 +2298,19 @@ async def admin_ui_publish_audits(
             }
         )
 
+    def _created_at_or_none(item: dict[str, Any]) -> Optional[datetime]:
+        raw = item.get("created_at")
+        if not raw:
+            return None
+        try:
+            return datetime.fromisoformat(raw)
+        except ValueError:
+            return None
+
     items = [
         item
         for item in all_items
-        if item.get("created_at") and datetime.fromisoformat(item.get("created_at")) >= min_dt
+        if _created_at_or_none(item) and _created_at_or_none(item) >= min_dt
     ][:limit]
 
     telemetry = _compute_publish_metrics(items)
@@ -2309,7 +2318,7 @@ async def admin_ui_publish_audits(
 
     def _window_metrics(hours: int) -> dict[str, Any]:
         cutoff = now_dt - timedelta(hours=hours)
-        subset = [item for item in all_items if item.get("created_at") and datetime.fromisoformat(item.get("created_at")) >= cutoff]
+        subset = [item for item in all_items if _created_at_or_none(item) and _created_at_or_none(item) >= cutoff]
         return _compute_publish_metrics(subset)
 
     windows = {
