@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-02-27 — P71 Kurumsal Menü Accordion + Kontrast Düzeltmesi
+
+- Dealer sidebar menü davranışı accordion’a çevrildi: alt menüler tıklanınca aç/kapa çalışır hale getirildi.
+- Uzun menü için sidebar liste alanına `max-height + overflow-y-auto` eklendi.
+- Menü yazı kontrastı güçlendirildi (aktif: koyu zemin + beyaz metin, pasif: koyu metin).
+- `Favoriler` toggle sorunu düzeltildi (expanded/collapsed çift yönlü PASS).
+
 ## 2026-02-27 — P70 Kurumsal Menü Yapısı PDF Hizalama
 
 - Dealer portal sol menüsü (`frontend/src/layouts/DealerLayout.js`) PDF hiyerarşisine göre yeniden düzenlendi.
