@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 2026-02-27 — P76 Mesaj Okundu Bilgisi + Müşteri Yönetimi PDF Hizalama
+
+- Mesajlar ekranına okundu bilgisi eklendi:
+  - `Okunma` kolonu
+  - `Okundu / Okunmadı` badge
+  - `Okundu İşaretle` aksiyonu
+- Backend:
+  - `GET /api/dealer/messages` → `unread_count`, `read_status`, `summary.unread_listing_messages`
+  - `POST /api/dealer/messages/{conversation_id}/read` endpointi eklendi
+- Müşteri Yönetimi ekranı PDF yapısına hizalandı:
+  - tablar: `Kullanıcı Listesi`, `Mağaza Kullanıcısı Olmayanlar`
+  - filtreler: `Ad Soyad`, `E-Posta`, `Durumu`
+  - tablo kolonları: `Ad Soyad`, `E-Posta`, `Durumu`, `İşlemler`
+  - backend `GET /api/dealer/customers` → `non_store_users` + `summary`
+- Testler:
+  - Testing agent: `/app/test_reports/iteration_36.json` PASS
+  - Pytest subset: `19 passed`
+- Kanıt: `/app/docs/P1_DEALER_MESSAGES_READ_AND_CUSTOMERS_ALIGNMENT_EVIDENCE.md`
+
 ## 2026-02-27 — P75 Mesajlar Menüsü PDF Hizalama
 
 - `/dealer/messages` ekranı PDF’e göre güncellendi:
