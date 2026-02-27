@@ -311,127 +311,25 @@ class TestPublishAndRollbackE2E:
         assert len(effective.get("widgets") or []) == 1, "Should have only 1 widget after rollback"
 
 
-class TestIndividualHeaderE2E:
-    """Individual Header admin E2E tests"""
+class TestIndividualHeaderFeatureDisabled:
+    """Individual Header endpoint disabled tests"""
 
-    def test_header_save_and_publish_flow(self, admin_token: str):
-        """Individual Header: save draft → publish → rollback"""
-        scope_id = f"test-header-{uuid.uuid4().hex[:10]}"
-        
-        # Step 1: Create header config with modules
-        header_config = {
-            "rows": [
-                {
-                    "id": "row1",
-                    "title": "Row 1",
-                    "visible": True,
-                    "blocks": [
-                        {"id": "logo", "type": "logo", "label": "Logo", "visible": True},
-                        {"id": "search", "type": "search", "label": "Arama", "visible": True},
-                    ],
-                },
-            ],
-            "logo": {"fallback_text": "TEST_BRAND"},
-        }
-        
-        response = requests.post(
+    def test_header_endpoints_disabled(self, admin_token: str):
+        scope_id = f"test-header-disabled-{uuid.uuid4().hex[:10]}"
+        save_response = requests.post(
             f"{BASE_URL}/api/admin/ui/configs/header",
             json={
                 "segment": "individual",
                 "scope": "tenant",
                 "scope_id": scope_id,
                 "status": "draft",
-                "config_data": header_config,
+                "config_data": {"rows": []},
             },
             headers=_auth_headers(admin_token),
         )
-        assert response.status_code == 200, f"Header draft failed: {response.text[:300]}"
-        config_id = response.json().get("item", {}).get("id")
-        config_version = response.json().get("item", {}).get("version")
-        
-        # Step 2: Publish
-        response = requests.post(
-            f"{BASE_URL}/api/admin/ui/configs/header/publish",
-            json={
-                "segment": "individual",
-                "scope": "tenant",
-                "scope_id": scope_id,
-                "config_id": config_id,
-                "config_version": config_version,
-                "require_confirm": True,
-            },
-            headers=_auth_headers(admin_token),
-        )
-        assert response.status_code == 200, f"Header publish failed: {response.text[:300]}"
-        
-        # Step 3: Update with new module
-        updated_config = {
-            "rows": [
-                {
-                    "id": "row1",
-                    "title": "Row 1",
-                    "visible": True,
-                    "blocks": [
-                        {"id": "logo", "type": "logo", "label": "Logo", "visible": True},
-                        {"id": "search", "type": "search", "label": "Arama", "visible": False},
-                        {"id": "notifications", "type": "notifications", "label": "Bildirim", "visible": True},
-                    ],
-                },
-            ],
-            "logo": {"fallback_text": "UPDATED_BRAND"},
-        }
-        
-        response = requests.post(
-            f"{BASE_URL}/api/admin/ui/configs/header",
-            json={
-                "segment": "individual",
-                "scope": "tenant",
-                "scope_id": scope_id,
-                "status": "draft",
-                "config_data": updated_config,
-            },
-            headers=_auth_headers(admin_token),
-        )
-        assert response.status_code == 200, f"Header update failed: {response.text[:300]}"
-        updated_version = response.json().get("item", {}).get("version")
-        
-        # Step 4: Check diff
-        response = requests.get(
-            f"{BASE_URL}/api/admin/ui/configs/header/diff?segment=individual&scope=tenant&scope_id={scope_id}&from_status=published&to_status=draft",
-            headers={"Authorization": f"Bearer {admin_token}"},
-        )
-        assert response.status_code == 200, f"Header diff failed: {response.text[:300]}"
-        diff = response.json().get("diff") or {}
-        assert diff.get("has_changes") is True
-        
-        # Step 5: Publish update
-        response = requests.post(
-            f"{BASE_URL}/api/admin/ui/configs/header/publish",
-            json={
-                "segment": "individual",
-                "scope": "tenant",
-                "scope_id": scope_id,
-                "config_version": updated_version,
-                "require_confirm": True,
-            },
-            headers=_auth_headers(admin_token),
-        )
-        assert response.status_code == 200, f"Header second publish failed: {response.text[:300]}"
-        
-        # Step 6: Rollback
-        response = requests.post(
-            f"{BASE_URL}/api/admin/ui/configs/header/rollback",
-            json={
-                "segment": "individual",
-                "scope": "tenant",
-                "scope_id": scope_id,
-                "target_config_id": config_id,
-                "rollback_reason": "header rollback reason",
-                "require_confirm": True,
-            },
-            headers=_auth_headers(admin_token),
-        )
-        assert response.status_code == 200, f"Header rollback failed: {response.text[:300]}"
+        assert save_response.status_code == 403, f"Expected 403, got {save_response.status_code}: {save_response.text[:300]}"
+        detail = save_response.json().get("detail") or {}
+        assert detail.get("code") == "FEATURE_DISABLED"
 
 
 class TestLiveRenderVerification:
