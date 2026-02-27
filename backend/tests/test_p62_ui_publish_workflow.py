@@ -104,6 +104,7 @@ class TestUIPublishWorkflow:
         )
         assert save_baseline.status_code == 200, f"Baseline draft save failed: {save_baseline.text[:300]}"
         baseline_id = save_baseline.json().get("item", {}).get("id")
+        baseline_version = save_baseline.json().get("item", {}).get("version")
         assert baseline_id
 
         publish_baseline = requests.post(
@@ -113,6 +114,7 @@ class TestUIPublishWorkflow:
                 "scope": "tenant",
                 "scope_id": scope_id,
                 "config_id": baseline_id,
+                "config_version": baseline_version,
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
@@ -144,6 +146,7 @@ class TestUIPublishWorkflow:
             headers=_auth_headers(admin_token),
         )
         assert save_next.status_code == 200, f"Next draft save failed: {save_next.text[:300]}"
+        next_version = save_next.json().get("item", {}).get("version")
 
         diff_response = requests.get(
             f"{BASE_URL}/api/admin/ui/configs/dashboard/diff?segment=corporate&scope=tenant&scope_id={scope_id}&from_status=published&to_status=draft",
@@ -160,6 +163,7 @@ class TestUIPublishWorkflow:
                 "segment": "corporate",
                 "scope": "tenant",
                 "scope_id": scope_id,
+                "config_version": next_version,
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
@@ -173,6 +177,7 @@ class TestUIPublishWorkflow:
                 "scope": "tenant",
                 "scope_id": scope_id,
                 "target_config_id": baseline_id,
+                "rollback_reason": "publish regression rollback",
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
@@ -220,6 +225,7 @@ class TestUIPublishWorkflow:
         )
         assert save_baseline.status_code == 200, f"Baseline header save failed: {save_baseline.text[:300]}"
         baseline_id = save_baseline.json().get("item", {}).get("id")
+        baseline_version = save_baseline.json().get("item", {}).get("version")
         assert baseline_id
 
         publish_baseline = requests.post(
@@ -229,6 +235,7 @@ class TestUIPublishWorkflow:
                 "scope": "tenant",
                 "scope_id": scope_id,
                 "config_id": baseline_id,
+                "config_version": baseline_version,
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
@@ -270,6 +277,7 @@ class TestUIPublishWorkflow:
             headers=_auth_headers(admin_token),
         )
         assert save_next.status_code == 200, f"Next header save failed: {save_next.text[:300]}"
+        next_version = save_next.json().get("item", {}).get("version")
 
         diff_response = requests.get(
             f"{BASE_URL}/api/admin/ui/configs/header/diff?segment=individual&scope=tenant&scope_id={scope_id}&from_status=published&to_status=draft",
@@ -285,6 +293,7 @@ class TestUIPublishWorkflow:
                 "segment": "individual",
                 "scope": "tenant",
                 "scope_id": scope_id,
+                "config_version": next_version,
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
@@ -298,6 +307,7 @@ class TestUIPublishWorkflow:
                 "scope": "tenant",
                 "scope_id": scope_id,
                 "target_config_id": baseline_id,
+                "rollback_reason": "header rollback reason",
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
