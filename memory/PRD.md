@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 16:32:00 UTC (P0 Toplu Kapanış Onayı)
+**Son güncelleme:** 2026-02-27 17:08:00 UTC (P2 Toplu Kapanış)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -35,13 +35,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Admin Kategori görsel yönetimi P1 iyileştirmeleri tamamlandı (root image upload + liste görsel kolonu + görselli/görselsiz filtre)
 - Kapanış doğrulaması: `/app/test_reports/iteration_41.json` (backend 16/16 PASS, frontend PASS)
 
-### P2 (Plan)
-- Kayıtlı Arama/Alert (P2 backlog)
-- Parametre Alanları tabı
-- VIES VAT doğrulama
-- GDPR CSV export
-- Moderation reject flow
-- Scheduled token cleanup
+### P2 (Toplu Kapanış: TAMAMLANDI)
+- Alerting operasyonları modül modül kapatıldı (SMTP → Slack → PagerDuty)
+- Secret checklist + dry-run senaryosu + kanal bazlı audit doğrulama eklendi
+- UI teknik borç temizliği (DealerLayout / Visual Editor hydration warning)
+- Legacy publish route/usage endpoint fiziksel kaldırımı tamamlandı
 
 ### UI Designer Yol Haritası Durumu (Güncel)
 - **P1 Complete:** `/admin/ops/publish-health` dashboardı canlı (Alert Reliability KPI, kanal breakdown, re-run simulation, rate-limit UX, mobile overflow fix)
@@ -68,6 +66,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P84 P2 Toplu Kapanış (2026-02-27):** Alerting tarafında kanal-bazlı operasyon modeli tamamlandı. Backend’de `ops-alerts` endpointleri `channels` parametresi ile modül bazlı çalışacak şekilde genişletildi (`secret-presence`, `rerun-simulation`, `delivery-audit`) ve yeni `GET /api/admin/ui/configs/{config_type}/ops-alerts/secret-checklist` endpointi eklendi. Dry-run sırası SMTP→Slack→PagerDuty olarak kanıtlandı (correlation/audit kayıtları). Legacy publish cleanup kapsamında `POST /api/admin/ui/configs/{config_type}/publish/{config_id}` ile `GET /api/admin/ui/configs/{config_type}/legacy-usage` fiziksel olarak kaldırıldı (404). UI teknik borçta DealerLayout mağaza filtresi ve AdminCategories liste filtreleri `<select>`ten buton/dropdown yapısına taşındı. Kanıt dokümanları: `/app/docs/P2_ALERTING_SECRET_CHECKLIST.md`, `/app/docs/P2_ALERTING_DRY_RUN_SCENARY.md`, `/app/docs/P2_ALERTING_MODULE_CLOSURE_REPORT.md`, `/app/docs/P2_UI_AND_LEGACY_CLEANUP_REPORT.md`.
 - **P83 P0 Toplu Kapanış (2026-02-27):** Corporate dashboard modülleri için canlı veri + empty-state stratejisi tek turda kapatıldı. `GET /api/dealer/dashboard/summary` endpointinde sabit package fallback kaldırıldı, `demand_customer_count` ve `matching_listing_count` gerçek `Conversation/Listing` query’lerinden hesaplanır hale getirildi. `GET /api/dealer/reports` endpointinde package adı fallback’i kaldırıldı (plan/invoice yoksa null + empty-state). `GET /api/dealer/dashboard/metrics` subscription alanı gerçek son invoice/plan verisiyle dolduruldu. Dealer listings UI’da hardcoded `0` metrikleri kaldırılıp backend kaynaklı alanlar (yoksa `-`) gösterimine geçildi. Kapanış testi: `/app/test_reports/iteration_42.json`.
 - **P82 P1 Alt Modül Kapanışı (2026-02-27):** P1 kapsamı tek iterasyonda kapatıldı. Dealer `Hesabım` sayfası `?section=` deep-link destekli hale getirildi (`profile/address/security/notifications/blocked`) ve backend’de yeni endpointler eklendi: `POST /api/dealer/settings/change-password`, `GET/PATCH /api/dealer/settings/preferences`, `POST/DELETE /api/dealer/settings/blocked-accounts`. Admin Kategoriler listesine `Görselli/Görselsiz` filtresi ve görünür kayıt sayacı eklendi; kategori görsel alanında format + son güncelleme metadata gösterimi tamamlandı. Doğrulama: `/app/test_reports/iteration_41.json` (backend 16/16 PASS, frontend PASS).
 - **P81 Kategori Listesi Görsel Kolonu (2026-02-27):** Admin > Kategoriler liste tablosuna `Görsel` kolonu eklendi. Satırlarda `image_url` varsa thumbnail preview, yoksa placeholder gösterimi eklendi; cache-bust için `updated_at` tabanlı URL parametresi kullanıldı. Böylece ana kategori görselleri listede hızlı doğrulanabilir hale geldi. Test: admin categories smoke screenshot (`/tmp/admin-categories-list-image-column.png`) + data-testid doğrulaması.
