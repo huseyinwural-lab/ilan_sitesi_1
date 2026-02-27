@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 08:45:00 UTC (P67 Ops Hardening + P2 Legacy Cleanup)
+**Son güncelleme:** 2026-02-27 09:40:00 UTC (P68 Ops Alert Channel Integration Verify)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -35,6 +35,10 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Moderation reject flow
 - Scheduled token cleanup
 
+### UI Designer Yol Haritası Durumu (Güncel)
+- **P1 Ready:** `/admin/ops/publish-health` dashboard UI (KPI trend + aktif alarm paneli + anomali önerileri)
+- **P2 Ready:** Legacy publish route physical removal sonrası referans/CI tarama temizliği (plan sırası korunarak)
+
 ## Kullanıcı Personaları
 - **Consumer (Bireysel)**
 - **Dealer (Kurumsal)**
@@ -56,6 +60,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P68 Ops Alert Channel Integration Verify (2026-02-27):** `GET /api/admin/ui/configs/{config_type}/ops-alerts/secret-presence` endpointi eklendi (kanal bazlı ENABLED/DISABLED + missing key listesi). `POST /ops-alerts/simulate` gerçek kanal doğrulama akışını destekleyecek şekilde genişletildi: correlation_id, fail-fast blokaj çıktısı, kanal bazlı sonuç şeması (Slack/SMTP/PagerDuty), retry/backoff log alanları ve masked telemetry. `GET /ops-alerts/delivery-audit` endpointi eklendi (correlation_id filtreli audit doğrulama). Bu ortamda secret’lar eksik olduğu için akış güvenli şekilde **Blocked: Missing Secrets** olarak doğrulandı. Evidence: `/app/docs/OPS_ALERTS_CHANNEL_INTEGRATION_P0_EVIDENCE.md`, test: `/app/test_reports/iteration_34.json`.
 - **P67 Operasyonel Stabilizasyon + P2 Temizlik (2026-02-27):** Ops hardening tamamlandı. Yeni endpointler: `/ops-thresholds`, `/ops-alerts/simulate`, `/legacy-usage`; publish audit endpoint KPI/telemetry/windows/trends döndürecek şekilde genişletildi (1h/24h/7d, conflict_rate, p95 duration, retry medyan vb). Corporate Dashboard’da Publish Audit kartı KPI + sparkline trend + alert badge ile güçlendirildi. **Legacy publish endpoint** hard-removed davranışına alındı (`410 LEGACY_ENDPOINT_REMOVED`, deprecation headers). Tek publish kontratı yeni endpointte bırakıldı. Dokümanlar: `/app/docs/PUBLISH_OPS_THRESHOLD_V1.md`, `/app/docs/PUBLISH_KPI_DEFINITION_V1.md`, `/app/docs/LEGACY_PUBLISH_DEPRECATION_PLAN.md`. Evidence: `/app/docs/OPS_HARDENING_P2_CLEANUP_EVIDENCE.md`, test raporu: `/app/test_reports/iteration_33.json`.
 - **P66 Conflict UX + Deterministic Publish Telemetry (2026-02-27):** Conflict dialog tek aksiyonlu senkronizasyona geçirildi: **Latest Draft’ı Çek + Diff’i Yeniden Aç**. Bu aksiyon latest draft’ı server’dan çekip local state’i replace ediyor ve publish dialogunu otomatik yeniden açıyor. Hash tabanlı drift guard eklendi (`local_hash` vs `server_hash`); mismatch durumunda publish butonu disable. Backend’de `resolved_config_hash` publish öncesi doğrulanıyor (`409 CONFIG_HASH_MISMATCH`). Yeni endpointler: `/api/admin/ui/configs/{config_type}/conflict-sync` ve `/api/admin/ui/configs/{config_type}/publish-audits`. Audit/telemetry genişletmesi: `DRAFT_UPDATED`, `DRAFT_SYNCED_AFTER_CONFLICT`, `ui_config_publish_attempt` eventleri; metadata alanları `conflict_detected`, `lock_wait_ms`, `retry_count`, `publish_duration_ms`. Admin UI’da Publish Audit kartı (conflict badge + retry + lock süreleri + telemetry metrikleri) eklendi. Evidence: `/app/docs/UI_CONFLICT_UX_PUBLISH_TELEMETRY_P0_EVIDENCE.md`, test raporu: `/app/test_reports/iteration_32.json`.
 - **P65 Header + Theme P0 Simplification (2026-02-27):** Faz 1+2 tamamlandı. Header mimarisi `global + dealer override` modeline sadeleştirildi; bireysel header editörü UI’dan kaldırıldı ve backend admin endpointleri `403 FEATURE_DISABLED` ile hard-close edildi. Corporate header effective erişimi dealer scope zorunlu (`403 UNAUTHORIZED_SCOPE`). Header publish snapshot alanları zorunlu scope-aware hale getirildi: `owner_type`, `owner_id`, `config_version`, `resolved_config_hash`; scope mismatch `409 SCOPE_CONFLICT`. Theme override modeli `Dealer Override > Global Theme` olarak sabitlendi; `user` scope assignment `400 INVALID_THEME_SCOPE`; resolved theme snapshot/hash çıktılarına eklendi. Dokümanlar: `/app/docs/HEADER_ARCHITECTURE_V2.md`, `/app/docs/THEME_OVERRIDE_MODEL_V2.md`. Evidence: `/app/docs/HEADER_THEME_P0_EVIDENCE.md`, test raporu: `/app/test_reports/iteration_31.json`.
