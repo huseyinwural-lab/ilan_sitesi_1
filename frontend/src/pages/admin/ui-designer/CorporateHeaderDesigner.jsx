@@ -219,6 +219,7 @@ export const CorporateHeaderDesigner = () => {
   const [scopeId, setScopeId] = useState('');
   const [configData, setConfigData] = useState(cloneDefaultConfig());
   const [latestConfigId, setLatestConfigId] = useState(null);
+  const [latestConfigVersion, setLatestConfigVersion] = useState(null);
   const [versions, setVersions] = useState([]);
   const [effectivePayload, setEffectivePayload] = useState(null);
 
@@ -273,6 +274,7 @@ export const CorporateHeaderDesigner = () => {
       const safeDraft = ensureLogoInRow1(item?.config_data || cloneDefaultConfig());
       setConfigData(safeDraft);
       setLatestConfigId(item?.id || null);
+      setLatestConfigVersion(item?.version ?? null);
       setVersions(Array.isArray(data?.items) ? data.items : []);
       setUploadPreviewUrl(withCacheBust(safeDraft?.logo?.url || ''));
       setStatus('Kurumsal header taslağı yüklendi');
@@ -280,6 +282,7 @@ export const CorporateHeaderDesigner = () => {
       setError(requestError.message || 'Kurumsal header taslağı yüklenemedi');
       setConfigData(cloneDefaultConfig());
       setLatestConfigId(null);
+      setLatestConfigVersion(null);
       setVersions([]);
       setUploadPreviewUrl('');
     }
@@ -346,6 +349,7 @@ export const CorporateHeaderDesigner = () => {
         throw new Error(data?.detail || 'Taslak kaydedilemedi');
       }
       setLatestConfigId(data?.item?.id || null);
+      setLatestConfigVersion(data?.item?.version ?? null);
       setStatus(`Taslak kaydedildi (v${data?.item?.version || '-'})`);
       await loadDraft();
     } catch (requestError) {
@@ -355,7 +359,7 @@ export const CorporateHeaderDesigner = () => {
     }
   };
 
-  const publishLatest = async (configId = latestConfigId) => {
+  const publishLatest = async (configId = latestConfigId, configVersion = latestConfigVersion) => {
     if (!configId) {
       setError('Yayınlanacak versiyon bulunamadı');
       return;
@@ -365,11 +369,24 @@ export const CorporateHeaderDesigner = () => {
     try {
       const response = await fetch(`${API}/admin/ui/configs/header/publish/${configId}`, {
         method: 'POST',
-        headers: authHeader,
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          config_version: configVersion,
+        }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data?.detail || 'Yayınlama başarısız');
+        const detail = data?.detail;
+        if (response.status === 400 && detail?.code === 'MISSING_CONFIG_VERSION') {
+          throw new Error('Version bilgisi eksik. Lütfen sayfayı yenileyin ve tekrar deneyin.');
+        }
+        if (response.status === 409 && detail?.code === 'CONFIG_VERSION_CONFLICT') {
+          throw new Error('Başka bir admin daha yeni bir versiyon yayınladı. Lütfen sayfayı yenileyin.');
+        }
+        throw new Error(detail?.message || data?.detail || 'Yayınlama başarısız');
       }
       setStatus(`Yayınlandı (v${data?.item?.version || '-'})`);
       await loadDraft();
@@ -582,6 +599,7 @@ export const CorporateHeaderDesigner = () => {
       const safeDraft = ensureLogoInRow1(item?.config_data || configData);
       setConfigData(safeDraft);
       setLatestConfigId(item?.id || null);
+      setLatestConfigVersion(item?.version ?? null);
       setUploadPreviewUrl(withCacheBust(data?.logo_url || safeDraft?.logo?.url || ''));
       setUploadMeta(data?.logo_meta || uploadMeta);
       setStorageHealth(data?.storage_health || null);
