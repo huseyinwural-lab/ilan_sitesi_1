@@ -1426,6 +1426,7 @@ const AdminCategories = () => {
       module: item.module || "",
       active_flag: item.active_flag ?? true,
       sort_order: item.sort_order || 1,
+      image_url: item.image_url || "",
     });
     setSchema(applySchemaDefaults(item.form_schema));
     setWizardStep("hierarchy");
@@ -1481,6 +1482,9 @@ const AdminCategories = () => {
         : "",
     });
     setOrderPreview({ checking: false, available: true, message: "", conflict: null });
+    setCategoryImageUploading(false);
+    setCategoryImageError("");
+    setCategoryImageCacheBuster(Date.now());
     setLastSavedAt("");
     setAutosaveStatus("idle");
     lastSavedSnapshotRef.current = "";
