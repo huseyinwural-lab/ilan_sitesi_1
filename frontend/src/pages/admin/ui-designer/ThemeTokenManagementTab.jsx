@@ -120,6 +120,14 @@ const validateTokenForm = (tokenForm) => {
   return errors;
 };
 
+const parseApiErrorMessage = (payload, fallback) => {
+  const detail = payload?.detail;
+  if (detail && typeof detail === 'object') {
+    return detail.message || fallback;
+  }
+  return detail || fallback;
+};
+
 export const ThemeTokenManagementTab = () => {
   const authHeader = useMemo(
     () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }),
@@ -134,7 +142,6 @@ export const ThemeTokenManagementTab = () => {
   const [assignScope, setAssignScope] = useState('system');
   const [assignScopeId, setAssignScopeId] = useState('');
   const [effectiveTenantId, setEffectiveTenantId] = useState('');
-  const [effectiveUserId, setEffectiveUserId] = useState('');
   const [effectiveResult, setEffectiveResult] = useState(null);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -144,7 +151,7 @@ export const ThemeTokenManagementTab = () => {
   const fetchThemes = async () => {
     const response = await fetch(`${API}/admin/ui/themes`, { headers: authHeader });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data?.detail || 'Theme listesi alınamadı');
+    if (!response.ok) throw new Error(parseApiErrorMessage(data, 'Theme listesi alınamadı'));
     const items = Array.isArray(data?.items) ? data.items : [];
     setThemes(items);
     if (!selectedThemeId && items[0]?.id) {
@@ -155,7 +162,7 @@ export const ThemeTokenManagementTab = () => {
   const fetchAssignments = async () => {
     const response = await fetch(`${API}/admin/ui/theme-assignments`, { headers: authHeader });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data?.detail || 'Theme assignment listesi alınamadı');
+    if (!response.ok) throw new Error(parseApiErrorMessage(data, 'Theme assignment listesi alınamadı'));
     setAssignments(Array.isArray(data?.items) ? data.items : []);
   };
 
@@ -204,7 +211,7 @@ export const ThemeTokenManagementTab = () => {
         body: JSON.stringify(payload),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.detail || 'Theme oluşturulamadı');
+      if (!response.ok) throw new Error(parseApiErrorMessage(data, 'Theme oluşturulamadı'));
 
       setSelectedThemeId(data?.item?.id || '');
       setStatus(`Theme oluşturuldu: ${data?.item?.name || '-'}`);
@@ -235,7 +242,7 @@ export const ThemeTokenManagementTab = () => {
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.detail || 'Theme güncellenemedi');
+      if (!response.ok) throw new Error(parseApiErrorMessage(data, 'Theme güncellenemedi'));
 
       setStatus(`Theme güncellendi: ${data?.item?.name || '-'}`);
       await refreshThemeData();
