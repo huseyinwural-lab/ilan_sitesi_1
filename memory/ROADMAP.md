@@ -1,6 +1,6 @@
 # ROADMAP
 
-**Son güncelleme:** 2026-02-27 (P65)
+**Son güncelleme:** 2026-02-27 (P66)
 
 Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tutulur.
 
@@ -66,6 +66,7 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
   - **Yeni:** Logo upload P0 stabilizasyon PASS (`/app/test_reports/iteration_29.json`) — kontrat bazlı hata kodları, inline error banner, storage health, cache bust
   - **Yeni:** Publish Hardening P0 PASS (`/app/test_reports/iteration_30.json`) — config_version zorunluluğu (new+legacy), 409 conflict kontratı, publish lock, rollback reason zorunluluğu, görsel diff publish kontrolü
   - **Yeni:** Header+Theme P0 simplification PASS (`/app/test_reports/iteration_31.json`) — individual header editor kaldırıldı, corporate header dealer-scope enforce, theme precedence dealer>global, user-scope theme override kapalı
+  - **Yeni:** Conflict UX + publish telemetry hardening PASS (`/app/test_reports/iteration_32.json`) — tek aksiyon conflict sync, auto-reopen publish, drift guard, telemetry/audit görünürlüğü
 
 ### Sıradaki Faz — Dealer Dashboard P1 (Restart)
 - **ACTIVE** 🔴
@@ -79,8 +80,8 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
   - Iterasyon 2: Undo paneli (persist öncesi), draft save/publish/rollback, revision listesi
   - Bulk 1000+ async job altyapısı (job queue + polling + idempotency + retry)
 - Sonraki iterasyon:
-  - Header+Theme sadeleştirme sonrası operatif polish (conflict UX tek aksiyonlu refresh+diff)
-  - Dealer header erişim güvenliği artık enforce; izleme/telemetri hardening
+  - Publish telemetry için alarm/threshold politikaları (ops)
+  - Conflict çözüm süre KPI dashboard’u
   - Widget şablon kütüphanesi (bu sprint dışı, V2 stabil sonrası UX hızlandırıcı)
   - Bulk job admin monitör ekranı (listeleme + retry butonu)
 
