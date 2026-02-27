@@ -265,6 +265,7 @@ export default function DealerLayout() {
   });
   const [selectedStore, setSelectedStore] = useState('all');
   const [storeMenuOpen, setStoreMenuOpen] = useState(false);
+  const [isPageEditMode, setIsPageEditMode] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [openMenuKey, setOpenMenuKey] = useState('favorites');
 
@@ -310,8 +311,15 @@ export default function DealerLayout() {
   );
   const row3Stores = useMemo(() => {
     const stores = headerRow3Controls?.stores;
-    return Array.isArray(stores) && stores.length ? stores : [{ key: 'all', label: 'Tüm Mağazalar' }];
+    return Array.isArray(stores) && stores.length ? stores : [{ key: 'all', label: 'Tümü' }];
   }, [headerRow3Controls]);
+  const row3UserDisplayName = headerRow3Controls?.user_display_name || user?.full_name || user?.email || 'Kurumsal Kullanıcı';
+  const userInitials = row3UserDisplayName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'KU';
 
   const sidebarRouteOverrides = useMemo(
     () => Object.fromEntries((sidebarItems || []).map((item) => [item.key, item.route])),
@@ -363,6 +371,22 @@ export default function DealerLayout() {
     setSelectedStore(nextStoreKey);
     setStoreMenuOpen(false);
     trackDealerEvent('dealer_header_store_filter_change', { store_key: nextStoreKey });
+  };
+
+  const handlePageEditToggle = () => {
+    setIsPageEditMode((prev) => {
+      const next = !prev;
+      trackDealerEvent('dealer_page_edit_toggle', { enabled: next, route: activePath });
+      return next;
+    });
+    if (!activePath.startsWith('/dealer/overview')) {
+      navigate('/dealer/overview');
+    }
+  };
+
+  const handleAnnouncementsClick = () => {
+    trackDealerEvent('dealer_announcements_open', { route: activePath });
+    navigate('/dealer/messages');
   };
 
   const handleNavClick = (item, locationType) => {
