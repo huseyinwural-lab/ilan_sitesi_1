@@ -13387,9 +13387,10 @@ async def admin_listings(
         and_(Listing.is_showcase.is_(True), or_(Listing.showcase_expires_at.is_(None), Listing.showcase_expires_at > now)),
     )
     urgent_active_expr = and_(Listing.urgent_until.is_not(None), Listing.urgent_until > now)
+    paid_active_expr = and_(Listing.paid_until.is_not(None), Listing.paid_until > now)
 
     doping_type_normalized = (doping_type or "").strip().lower()
-    if doping_type_normalized not in {"", "free", "showcase", "urgent"}:
+    if doping_type_normalized not in {"", "free", "paid", "showcase", "urgent"}:
         raise HTTPException(status_code=400, detail="Invalid doping_type")
 
     listing_filters = list(base_filters)
@@ -13397,8 +13398,10 @@ async def admin_listings(
         listing_filters.append(featured_active_expr)
     elif doping_type_normalized == "urgent":
         listing_filters.append(and_(~featured_active_expr, urgent_active_expr))
+    elif doping_type_normalized == "paid":
+        listing_filters.append(and_(~featured_active_expr, ~urgent_active_expr, paid_active_expr))
     elif doping_type_normalized == "free":
-        listing_filters.append(and_(~featured_active_expr, ~urgent_active_expr))
+        listing_filters.append(and_(~featured_active_expr, ~urgent_active_expr, ~paid_active_expr))
 
     limit = min(100, max(1, int(limit)))
 
@@ -13427,7 +13430,8 @@ async def admin_listings(
             select(
                 func.sum(case((featured_active_expr, 1), else_=0)).label("showcase_count"),
                 func.sum(case((and_(~featured_active_expr, urgent_active_expr), 1), else_=0)).label("urgent_count"),
-                func.sum(case((and_(~featured_active_expr, ~urgent_active_expr), 1), else_=0)).label("free_count"),
+                func.sum(case((and_(~featured_active_expr, ~urgent_active_expr, paid_active_expr), 1), else_=0)).label("paid_count"),
+                func.sum(case((and_(~featured_active_expr, ~urgent_active_expr, ~paid_active_expr), 1), else_=0)).label("free_count"),
             )
             .select_from(Listing)
             .outerjoin(SqlUser, Listing.user_id == SqlUser.id)
@@ -13439,6 +13443,7 @@ async def admin_listings(
     for listing, owner in rows:
         is_featured = _listing_featured_active(listing, now=now)
         is_urgent = _listing_urgent_active(listing, now=now)
+        is_paid = _listing_paid_active(listing, now=now)
         bucket = _listing_doping_bucket(listing, now=now)
         applicant_bucket = _listing_applicant_type(listing, owner)
         items.append(
@@ -13460,13 +13465,16 @@ async def admin_listings(
                 "doping_type": bucket,
                 "is_featured": is_featured,
                 "is_urgent": is_urgent,
+                "is_paid": is_paid,
                 "featured_until": listing.featured_until.isoformat() if listing.featured_until else None,
                 "urgent_until": listing.urgent_until.isoformat() if listing.urgent_until else None,
+                "paid_until": listing.paid_until.isoformat() if listing.paid_until else None,
             }
         )
 
     counts = {
         "free": int(count_row.free_count or 0) if count_row else 0,
+        "paid": int(count_row.paid_count or 0) if count_row else 0,
         "showcase": int(count_row.showcase_count or 0) if count_row else 0,
         "urgent": int(count_row.urgent_count or 0) if count_row else 0,
     }
