@@ -44,6 +44,7 @@ import AdminPricingPackages from '@/pages/admin/AdminPricingPackages';
 import AdminHeaderManagement from '@/pages/admin/AdminHeaderManagement';
 import AdminFooterManagement from '@/pages/admin/AdminFooterManagement';
 import AdminThemeManagement from '@/pages/admin/AdminThemeManagement';
+import AdminShowcaseManagement from '@/pages/admin/AdminShowcaseManagement';
 import AdminInfoPages from '@/pages/admin/AdminInfoPages';
 import AdminUserInterfaceDesignV2 from '@/pages/admin/AdminUserInterfaceDesignV2';
 import AdminPublishHealthPage from '@/pages/admin/ops/AdminPublishHealthPage';
@@ -149,6 +150,16 @@ export default function BackofficePortalApp() {
           <AdminLayout>
             <AdminRouteGuard roles={["super_admin"]}>
               <AdminThemeManagement />
+            </AdminRouteGuard>
+          </AdminLayout>
+        }
+      />
+      <Route
+        path="/site-design/showcase"
+        element={
+          <AdminLayout>
+            <AdminRouteGuard roles={["super_admin"]}>
+              <AdminShowcaseManagement />
             </AdminRouteGuard>
           </AdminLayout>
         }
