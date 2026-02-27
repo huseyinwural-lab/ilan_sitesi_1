@@ -8,8 +8,8 @@ export default function PaymentCancel() {
       <p className="text-sm text-muted-foreground" data-testid="dealer-payment-cancel-message">
         Ödeme işlemi iptal edildi. İsterseniz tekrar deneyebilirsiniz.
       </p>
-      <Link className="text-sm text-primary" to="/dealer/invoices" data-testid="dealer-payment-cancel-back">
-        Faturalara dön
+      <Link className="text-sm text-primary" to="/dealer/purchase" data-testid="dealer-payment-cancel-back">
+        Satın Al sayfasına dön
       </Link>
     </div>
   );
