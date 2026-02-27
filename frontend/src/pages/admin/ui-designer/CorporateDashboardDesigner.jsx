@@ -224,6 +224,7 @@ export const CorporateDashboardDesigner = () => {
   const [configData, setConfigData] = useState({ title: 'Dealer Dashboard V2' });
   const [latestConfigId, setLatestConfigId] = useState(null);
   const [latestConfigVersion, setLatestConfigVersion] = useState(null);
+  const [latestResolvedHash, setLatestResolvedHash] = useState('');
   const [versions, setVersions] = useState([]);
   const [effectivePayload, setEffectivePayload] = useState(null);
   const [status, setStatus] = useState('');
@@ -312,6 +313,7 @@ export const CorporateDashboardDesigner = () => {
       setConfigData(normalized.configData);
       setLatestConfigId(data?.item?.id || null);
       setLatestConfigVersion(data?.item?.version ?? null);
+      setLatestResolvedHash(data?.item?.resolved_config_hash || '');
       setVersions(Array.isArray(data?.items) ? data.items : []);
       setSelectedRollbackId('');
       if (!silent) {
@@ -342,6 +344,7 @@ export const CorporateDashboardDesigner = () => {
       setConfigData({ title: 'Dealer Dashboard V2' });
       setLatestConfigId(null);
       setLatestConfigVersion(null);
+      setLatestResolvedHash('');
       setVersions([]);
       setSelectedRollbackId('');
       setServerDraftHash('');
