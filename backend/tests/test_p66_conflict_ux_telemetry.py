@@ -132,3 +132,50 @@ class TestConflictSyncAndTelemetry:
         assert "max_lock_wait_ms" in metrics
         assert "avg_publish_duration_ms" in metrics
         assert "max_publish_duration_ms" in metrics
+
+    def test_ops_thresholds_and_alert_simulation(self, admin_token: str):
+        thresholds_response = requests.get(
+            f"{BASE_URL}/api/admin/ui/configs/dashboard/ops-thresholds",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert thresholds_response.status_code == 200
+        thresholds = thresholds_response.json().get("thresholds") or {}
+        assert "max_lock_wait_ms" in thresholds
+        assert "conflict_rate" in thresholds
+
+        simulation_response = requests.post(
+            f"{BASE_URL}/api/admin/ui/configs/dashboard/ops-alerts/simulate",
+            json={
+                "avg_lock_wait_ms": 300,
+                "max_lock_wait_ms": 520,
+                "publish_duration_ms_p95": 1800,
+                "conflict_rate": 45,
+            },
+            headers=_headers(admin_token),
+        )
+        assert simulation_response.status_code == 200
+        alerts = simulation_response.json().get("alerts") or []
+        assert any(alert.get("metric") == "max_lock_wait_ms" and alert.get("severity") == "critical" for alert in alerts)
+
+    def test_legacy_publish_returns_410_and_usage_visible(self, admin_token: str):
+        scope_id = f"p66-legacy-{uuid.uuid4().hex[:8]}"
+        draft = _create_dashboard_draft(admin_token, scope_id, title="Legacy call")
+        config_id = draft.get("id")
+
+        legacy_response = requests.post(
+            f"{BASE_URL}/api/admin/ui/configs/dashboard/publish/{config_id}",
+            json={"config_version": draft.get("version")},
+            headers=_headers(admin_token),
+        )
+        assert legacy_response.status_code == 410
+        detail = legacy_response.json().get("detail") or {}
+        assert detail.get("code") == "LEGACY_ENDPOINT_REMOVED"
+
+        usage_response = requests.get(
+            f"{BASE_URL}/api/admin/ui/configs/dashboard/legacy-usage?days=30",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert usage_response.status_code == 200
+        usage_payload = usage_response.json()
+        assert usage_payload.get("days") == 30
+        assert usage_payload.get("total_calls", 0) >= 1
