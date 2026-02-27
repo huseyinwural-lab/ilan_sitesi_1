@@ -77,6 +77,7 @@ class TestUIPublishWorkflow:
             json={
                 "segment": "corporate",
                 "scope": "system",
+                "config_version": 1,
                 "require_confirm": False,
             },
             headers=_auth_headers(admin_token),
