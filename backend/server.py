@@ -30248,13 +30248,18 @@ async def unlink_ad_from_campaign(
 @api_router.get("/admin/pricing/campaign-items")
 async def list_pricing_campaign_items(
     scope: str,
+    listing_type: Optional[str] = None,
     include_deleted: bool = False,
     current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    _validate_campaign_item_fields(scope, "free", None, None, None, None, None)
+    if scope not in PRICING_CAMPAIGN_ITEM_SCOPES:
+        raise HTTPException(status_code=400, detail="Invalid scope")
+    normalized_listing_type = _normalize_campaign_item_listing_type(listing_type) if listing_type else None
     await _expire_pricing_campaign_items(session, actor=current_user)
     query = select(PricingCampaignItem).where(PricingCampaignItem.scope == scope)
+    if normalized_listing_type:
+        query = query.where(PricingCampaignItem.listing_type == normalized_listing_type)
     if not include_deleted:
         query = query.where(PricingCampaignItem.is_deleted.is_(False))
     query = query.order_by(desc(PricingCampaignItem.updated_at))
