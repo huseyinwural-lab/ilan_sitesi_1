@@ -1539,6 +1539,7 @@ def _simulate_smtp_delivery(correlation_id: str) -> dict[str, Any]:
 
 def _simulate_pagerduty_delivery(correlation_id: str) -> dict[str, Any]:
     routing_key = os.environ.get("ALERT_PAGERDUTY_ROUTING_KEY")
+    events_url = os.environ.get("ALERT_PAGERDUTY_EVENTS_URL", "https://events.pagerduty.com/v2/enqueue")
     retry_backoff_log: list[dict[str, Any]] = []
     dedup_key = f"ui-publish-sim-{correlation_id}"
     last_provider_code: Optional[str] = None
@@ -1561,7 +1562,7 @@ def _simulate_pagerduty_delivery(correlation_id: str) -> dict[str, Any]:
                 },
             }
             request = urllib.request.Request(
-                "https://events.pagerduty.com/v2/enqueue",
+                events_url,
                 data=json.dumps(payload).encode("utf-8"),
                 headers={"Content-Type": "application/json"},
                 method="POST",
@@ -1594,6 +1595,7 @@ def _simulate_pagerduty_delivery(correlation_id: str) -> dict[str, Any]:
                 "incident_ref": _mask_text(str(parsed.get("dedup_key") or dedup_key)),
                 "provider_status": provider_status,
                 "provider_code": provider_code,
+                "target_verified": events_url.startswith("https://events.pagerduty.com/"),
                 "retry_backoff_log": retry_backoff_log,
                 "last_failure_classification": None,
             }
@@ -1651,6 +1653,7 @@ def _simulate_pagerduty_delivery(correlation_id: str) -> dict[str, Any]:
         "incident_ref": _mask_text(dedup_key),
         "provider_status": last_provider_status,
         "provider_code": last_provider_code,
+        "target_verified": events_url.startswith("https://events.pagerduty.com/"),
         "retry_backoff_log": retry_backoff_log,
         "last_failure_classification": last_classification,
     }
