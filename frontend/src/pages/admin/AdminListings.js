@@ -169,11 +169,44 @@ export default function AdminListingsPage({
     }
   };
 
+  const applyDoping = async (listing) => {
+    const config = dopingConfig[listing.id] || { type: listing.doping_type || 'free', preset: '7', customDays: '' };
+    const payload = {
+      doping_type: config.type || 'free',
+      reason: 'moderation_manual_doping',
+    };
+
+    if (payload.doping_type !== 'free') {
+      const preset = config.preset || '7';
+      const customDays = Number(config.customDays || 0);
+      if (preset === 'custom') {
+        if (!Number.isFinite(customDays) || customDays <= 0) {
+          alert('Manuel gün sayısı 1 veya daha büyük olmalı');
+          return;
+        }
+        payload.duration_days = Math.min(365, Math.floor(customDays));
+      } else {
+        payload.duration_days = Number(preset);
+      }
+    }
+
+    setDopingBusyId(listing.id);
+    try {
+      await axios.post(`${API}/admin/listings/${listing.id}/doping`, payload, { headers: authHeader });
+      await fetchListings();
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Doping güncellenemedi');
+    } finally {
+      setDopingBusyId('');
+    }
+  };
+
   const clearFilters = () => {
-    setStatus('');
+    setStatus(applicationsMode ? 'pending_moderation' : '');
     setSearch('');
     setDealerOnly(false);
     setCategoryId('');
+    setDopingType('all');
     setPage(0);
   };
 
