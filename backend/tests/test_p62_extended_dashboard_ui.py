@@ -96,12 +96,15 @@ class TestDashboardAPIContract:
             json={
                 "segment": "corporate",
                 "scope": "system",
+                "config_version": 1,
                 "require_confirm": False,
             },
             headers=_auth_headers(admin_token),
         )
         assert response.status_code == 400, f"Expected 400 when confirm not required, got {response.status_code}"
-        assert "onay" in response.json().get("detail", "").lower() or "confirm" in response.json().get("detail", "").lower()
+        detail = response.json().get("detail")
+        detail_text = detail.get("message", "") if isinstance(detail, dict) else str(detail)
+        assert "onay" in detail_text.lower() or "confirm" in detail_text.lower()
 
     def test_get_dashboard_diff(self, admin_token: str):
         """GET /api/admin/ui/configs/dashboard/diff - retrieves diff between statuses"""
@@ -120,6 +123,7 @@ class TestDashboardAPIContract:
             json={
                 "segment": "corporate",
                 "scope": "system",
+                "rollback_reason": "test reason",
                 "require_confirm": False,
             },
             headers=_auth_headers(admin_token),
@@ -214,6 +218,7 @@ class TestPublishAndRollbackE2E:
         )
         assert response.status_code == 200, f"Initial draft failed: {response.text[:300]}"
         config_id_v1 = response.json().get("item", {}).get("id")
+        config_version_v1 = response.json().get("item", {}).get("version")
         
         # Step 2: Publish initial draft
         response = requests.post(
@@ -223,6 +228,7 @@ class TestPublishAndRollbackE2E:
                 "scope": "tenant",
                 "scope_id": scope_id,
                 "config_id": config_id_v1,
+                "config_version": config_version_v1,
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
@@ -253,6 +259,7 @@ class TestPublishAndRollbackE2E:
             headers=_auth_headers(admin_token),
         )
         assert response.status_code == 200, f"Updated draft failed: {response.text[:300]}"
+        updated_version = response.json().get("item", {}).get("version")
         
         # Step 4: Check diff
         response = requests.get(
@@ -271,6 +278,7 @@ class TestPublishAndRollbackE2E:
                 "segment": "corporate",
                 "scope": "tenant",
                 "scope_id": scope_id,
+                "config_version": updated_version,
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
@@ -285,6 +293,7 @@ class TestPublishAndRollbackE2E:
                 "scope": "tenant",
                 "scope_id": scope_id,
                 "target_config_id": config_id_v1,
+                "rollback_reason": "dashboard rollback reason",
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
@@ -338,6 +347,7 @@ class TestIndividualHeaderE2E:
         )
         assert response.status_code == 200, f"Header draft failed: {response.text[:300]}"
         config_id = response.json().get("item", {}).get("id")
+        config_version = response.json().get("item", {}).get("version")
         
         # Step 2: Publish
         response = requests.post(
@@ -347,6 +357,7 @@ class TestIndividualHeaderE2E:
                 "scope": "tenant",
                 "scope_id": scope_id,
                 "config_id": config_id,
+                "config_version": config_version,
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
@@ -382,6 +393,7 @@ class TestIndividualHeaderE2E:
             headers=_auth_headers(admin_token),
         )
         assert response.status_code == 200, f"Header update failed: {response.text[:300]}"
+        updated_version = response.json().get("item", {}).get("version")
         
         # Step 4: Check diff
         response = requests.get(
@@ -399,6 +411,7 @@ class TestIndividualHeaderE2E:
                 "segment": "individual",
                 "scope": "tenant",
                 "scope_id": scope_id,
+                "config_version": updated_version,
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
@@ -413,6 +426,7 @@ class TestIndividualHeaderE2E:
                 "scope": "tenant",
                 "scope_id": scope_id,
                 "target_config_id": config_id,
+                "rollback_reason": "header rollback reason",
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
@@ -452,6 +466,7 @@ class TestLiveRenderVerification:
         )
         assert response.status_code == 200
         config_id = response.json().get("item", {}).get("id")
+        config_version = response.json().get("item", {}).get("version")
         
         # Publish
         response = requests.post(
@@ -461,6 +476,7 @@ class TestLiveRenderVerification:
                 "scope": "tenant",
                 "scope_id": scope_id,
                 "config_id": config_id,
+                "config_version": config_version,
                 "require_confirm": True,
             },
             headers=_auth_headers(admin_token),
