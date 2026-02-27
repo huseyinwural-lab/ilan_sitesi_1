@@ -375,7 +375,7 @@ class TestLogoPersistenceAndEffective:
         print(f"✓ Draft created with logo.url: {logo_url}")
         return result["item"]["id"], logo_url
     
-    def test_published_corporate_header_has_logo_in_effective(self, admin_token):
+    def test_published_corporate_header_has_logo_in_effective(self, admin_token, dealer_token):
         """After upload and publish, effective endpoint should return logo.url"""
         # Step 1: Upload logo
         img_data = create_test_image(300, 100, "PNG")
@@ -390,19 +390,25 @@ class TestLogoPersistenceAndEffective:
         )
         assert upload_response.status_code == 200
         config_id = upload_response.json()["item"]["id"]
+        config_version = upload_response.json()["item"].get("version")
         uploaded_logo_url = upload_response.json()["logo_url"]
         
         # Step 2: Publish
         publish_response = requests.post(
             f"{BASE_URL}/api/admin/ui/configs/header/publish/{config_id}",
-            headers={"Authorization": f"Bearer {admin_token}"}
+            json={
+                "config_version": config_version,
+                "owner_type": "global",
+                "owner_id": "global",
+            },
+            headers={"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
         )
         assert publish_response.status_code == 200
         
         # Step 3: Check effective
         effective_response = requests.get(
             f"{BASE_URL}/api/ui/header?segment=corporate",
-            headers={"Authorization": f"Bearer {admin_token}"}
+            headers={"Authorization": f"Bearer {dealer_token}"}
         )
         assert effective_response.status_code == 200
         effective_data = effective_response.json()
