@@ -36,7 +36,7 @@ Header publish için zorunlu payload:
 
 Endpointler:
 - Yeni: `POST /api/admin/ui/configs/{config_type}/publish`
-- Legacy: `POST /api/admin/ui/configs/{config_type}/publish/{config_id}` (**deprecated**, remove plan: P2)
+- Legacy: **kaldırıldı** (`POST /api/admin/ui/configs/{config_type}/publish/{config_id}` artık yok)
 
 Doğrulamalar:
 1. `config_version` yoksa → `400 MISSING_CONFIG_VERSION`
