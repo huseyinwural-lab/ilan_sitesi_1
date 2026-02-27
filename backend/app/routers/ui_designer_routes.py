@@ -1984,6 +1984,169 @@ async def admin_ui_config_diff(
     }
 
 
+@router.post("/admin/ui/configs/{config_type}/conflict-sync")
+async def admin_ui_config_conflict_sync(
+    config_type: str,
+    payload: UIConfigConflictSyncPayload,
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    normalized_type = _normalize_config_type(config_type)
+    normalized_segment = _normalize_segment(payload.segment)
+    _assert_header_segment_enabled(normalized_type, normalized_segment)
+    normalized_scope, normalized_scope_id = _normalize_scope(payload.scope, payload.scope_id)
+
+    latest_draft = await _latest_ui_config(
+        session,
+        config_type=normalized_type,
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+        status="draft",
+    )
+    latest_published = await _latest_ui_config(
+        session,
+        config_type=normalized_type,
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+        status="published",
+    )
+    if not latest_draft:
+        raise HTTPException(status_code=404, detail="Senkron için draft config bulunamadı")
+
+    from_payload = _serialize_ui_config(latest_published) if latest_published else None
+    to_payload = _serialize_ui_config(latest_draft)
+    diff_payload = _compute_ui_config_diff(
+        config_type=normalized_type,
+        segment=normalized_segment,
+        old_payload=from_payload,
+        new_payload=to_payload,
+    )
+
+    owner_type, owner_id = _owner_scope_from_scope(normalized_scope, normalized_scope_id)
+    session.add(
+        _create_ui_config_audit_log(
+            action="DRAFT_SYNCED_AFTER_CONFLICT",
+            current_user=current_user,
+            config_type=normalized_type,
+            resource_id=str(latest_draft.id),
+            old_values=None,
+            new_values=None,
+            metadata_info={
+                "actor_id": current_user.get("id"),
+                "owner_type": owner_type,
+                "owner_id": owner_id,
+                "previous_version": payload.previous_version,
+                "new_version": latest_draft.version,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "retry_count": int(max(0, payload.retry_count or 0)),
+            },
+        )
+    )
+    await session.commit()
+
+    listing = await _ui_config_listing(
+        session,
+        config_type=normalized_type,
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+        status="draft",
+    )
+    return {
+        "ok": True,
+        "item": listing.get("item"),
+        "items": listing.get("items", []),
+        "from_item": from_payload,
+        "to_item": to_payload,
+        "diff": diff_payload,
+    }
+
+
+@router.get("/admin/ui/configs/{config_type}/publish-audits")
+async def admin_ui_publish_audits(
+    config_type: str,
+    segment: str = Query(default="individual"),
+    scope: str = Query(default="system"),
+    scope_id: Optional[str] = Query(default=None),
+    limit: int = Query(default=30, ge=1, le=200),
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    normalized_type = _normalize_config_type(config_type)
+    normalized_segment = _normalize_segment(segment)
+    _assert_header_segment_enabled(normalized_type, normalized_segment)
+    normalized_scope, normalized_scope_id = _normalize_scope(scope, scope_id)
+
+    stmt = (
+        select(AuditLog)
+        .where(
+            AuditLog.action == "ui_config_publish_attempt",
+            AuditLog.resource_type == f"ui_config:{normalized_type}",
+        )
+        .order_by(desc(AuditLog.created_at))
+        .limit(500)
+    )
+    rows = (await session.execute(stmt)).scalars().all()
+
+    filtered = []
+    for row in rows:
+        metadata = row.metadata_info or {}
+        if metadata.get("segment") != normalized_segment:
+            continue
+        if metadata.get("scope") != normalized_scope:
+            continue
+        if normalized_scope == "system":
+            if (metadata.get("scope_id") or None) not in {None, ""}:
+                continue
+        elif metadata.get("scope_id") != normalized_scope_id:
+            continue
+        filtered.append(row)
+        if len(filtered) >= limit:
+            break
+
+    items = []
+    lock_values: list[int] = []
+    publish_values: list[int] = []
+    for row in filtered:
+        metadata = row.metadata_info or {}
+        lock_ms = int(metadata.get("lock_wait_ms") or 0)
+        publish_ms = metadata.get("publish_duration_ms")
+        if lock_ms >= 0:
+            lock_values.append(lock_ms)
+        if isinstance(publish_ms, int) and publish_ms >= 0:
+            publish_values.append(publish_ms)
+
+        items.append(
+            {
+                "id": str(row.id),
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "actor_email": row.user_email,
+                "status": metadata.get("status"),
+                "message": metadata.get("message"),
+                "conflict_detected": bool(metadata.get("conflict_detected", False)),
+                "retry_count": int(metadata.get("retry_count") or 0),
+                "lock_wait_ms": lock_ms,
+                "publish_duration_ms": publish_ms,
+                "config_version": metadata.get("config_version"),
+            }
+        )
+
+    telemetry = {
+        "avg_lock_wait_ms": round(sum(lock_values) / len(lock_values), 2) if lock_values else 0,
+        "max_lock_wait_ms": max(lock_values) if lock_values else 0,
+        "avg_publish_duration_ms": round(sum(publish_values) / len(publish_values), 2) if publish_values else 0,
+        "max_publish_duration_ms": max(publish_values) if publish_values else 0,
+    }
+
+    return {
+        "items": items,
+        "telemetry": telemetry,
+    }
+
+
 @router.post("/admin/ui/configs/{config_type}/publish")
 async def admin_publish_latest_ui_config(
     config_type: str,
