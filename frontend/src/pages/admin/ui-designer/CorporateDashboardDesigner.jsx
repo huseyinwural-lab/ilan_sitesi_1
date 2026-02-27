@@ -314,6 +314,7 @@ export const CorporateDashboardDesigner = () => {
       setLatestConfigId(data?.item?.id || null);
       setLatestConfigVersion(data?.item?.version ?? null);
       setLatestResolvedHash(data?.item?.resolved_config_hash || '');
+      setLatestResolvedHash(data?.item?.resolved_config_hash || '');
       setVersions(Array.isArray(data?.items) ? data.items : []);
       setSelectedRollbackId('');
       if (!silent) {
