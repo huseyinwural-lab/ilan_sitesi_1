@@ -168,12 +168,25 @@ export default function HomePage() {
           <div className="home-v2-showcase-grid" data-testid="home-v2-showcase-grid">
             {showcaseWithPlaceholders.map((item, index) => (
               item ? (
-                <Link key={item.id} to={`/ilan/${item.id}`} className="home-v2-tile" data-testid={`home-v2-showcase-tile-${item.id}`}>
+                <Link
+                  key={item.id}
+                  to={`/ilan/${item.id}`}
+                  className="home-v2-tile"
+                  style={{
+                    borderColor: item.is_featured ? '#4f46e5' : (item.is_urgent ? '#e11d48' : undefined),
+                    borderWidth: item.is_featured || item.is_urgent ? 2 : 1,
+                  }}
+                  data-testid={`home-v2-showcase-tile-${item.id}`}
+                >
                   <div className="home-v2-tile-image" data-testid={`home-v2-showcase-image-wrap-${item.id}`}>
                     {item.image ? <img src={item.image} alt={item.title || 'İlan'} data-testid={`home-v2-showcase-image-${item.id}`} /> : null}
                   </div>
                   <div className="home-v2-tile-text" data-testid={`home-v2-showcase-text-${item.id}`}>
-                    <span className="home-v2-tile-title" data-testid={`home-v2-showcase-title-${item.id}`}>{item.title || '-'}</span>
+                    <span className="home-v2-tile-title" data-testid={`home-v2-showcase-title-${item.id}`}>
+                      {item.title || '-'}
+                      {item.is_featured ? <span className="home-v2-doping-badge home-v2-doping-badge-featured" data-testid={`home-v2-featured-badge-${item.id}`}>Vitrin</span> : null}
+                      {item.is_urgent ? <span className="home-v2-doping-badge home-v2-doping-badge-urgent" data-testid={`home-v2-urgent-badge-${item.id}`}>Acil</span> : null}
+                    </span>
                     <span className="home-v2-tile-price" data-testid={`home-v2-showcase-price-${item.id}`}>{formatPrice(item.price_amount || item.price, item.currency || 'EUR')}</span>
                   </div>
                 </Link>
