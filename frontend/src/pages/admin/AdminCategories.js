@@ -2047,6 +2047,9 @@ const AdminCategories = () => {
     if (!Number.isFinite(rootSortOrder) || rootSortOrder <= 0) {
       fieldErrors.main_sort_order = "Sıra 1 veya daha büyük olmalıdır.";
     }
+    if (isRootCategory && !form.image_url?.trim()) {
+      fieldErrors.main_image_url = "Ana kategori görseli zorunludur.";
+    }
     if (!orderPreview.available) {
       fieldErrors.main_sort_order = orderPreview.message || "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.";
     }
