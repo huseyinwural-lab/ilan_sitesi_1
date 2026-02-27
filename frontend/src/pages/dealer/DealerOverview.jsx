@@ -111,22 +111,6 @@ export default function DealerOverview() {
         <div className="flex items-center gap-2" data-testid="dealer-overview-actions">
           <button
             type="button"
-            onClick={() => navigate('/dealer/settings')}
-            className="h-9 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-900"
-            data-testid="dealer-overview-edit-page-button"
-          >
-            Sayfayı Düzenle
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/dealer/messages')}
-            className="h-9 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-900"
-            data-testid="dealer-overview-announcements-button"
-          >
-            Duyurular
-          </button>
-          <button
-            type="button"
             onClick={fetchSummary}
             className="h-9 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-900"
             data-testid="dealer-overview-refresh-button"
