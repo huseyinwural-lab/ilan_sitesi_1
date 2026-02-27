@@ -1,0 +1,71 @@
+{
+  "summary": "P71 Quick Promote Buttons - All features verified. Individual Listing Applications shows quick promote section for free/paid listings with 'Gün' input + 'Vitrine Ata' + 'Acile Ata' buttons. Corporate page loads correctly (no pending listings). Invalid day validation working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_51.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Quick promote section renders only when applicationsMode=true AND listing.doping_type is 'free' or 'paid'",
+    "Days input has default value '7' and min=1, max=365 validation",
+    "applyQuickPromote calls POST /api/admin/listings/{id}/doping with doping_type and duration_days",
+    "Invalid day values (0, empty, negative) show alert 'Manuel gün sayısı 1 veya daha büyük olmalı'",
+    "After promotion to showcase/urgent, quick promote section is hidden (listing no longer free/paid)",
+    "data-testid attributes properly set: listing-doping-promote-days-{id}, listing-doping-promote-showcase-{id}, listing-doping-promote-urgent-{id}"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100% (all quick promote features verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "Tested with existing pending_moderation listings. Two listings promoted: 1 to Vitrin, 1 to Acil",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P71 Quick Promote buttons fully operational on Individual Listing Applications page. Corporate page loads but had no pending listings to test with. Quick promote section shows for free/paid doping_type listings in applicationsMode. Validation prevents invalid days (0/empty). Both 'Vitrine Ata' and 'Acile Ata' buttons work correctly, calling doping endpoint and updating listing status.",
+  "features_verified": {
+    "individual_listings_quick_promote_section": {
+      "status": "PASS",
+      "description": "Quick promote section visible for free/paid listings in applicationsMode"
+    },
+    "days_input": {
+      "status": "PASS",
+      "description": "Days input with default value '7', accepts 1-365"
+    },
+    "vitrine_ata_button": {
+      "status": "PASS",
+      "description": "'Vitrine Ata' button promotes listing to showcase type"
+    },
+    "acile_ata_button": {
+      "status": "PASS",
+      "description": "'Acile Ata' button promotes listing to urgent type"
+    },
+    "invalid_day_validation": {
+      "status": "PASS",
+      "description": "Shows alert for empty/0 day values"
+    },
+    "quick_promote_hidden_after_promotion": {
+      "status": "PASS",
+      "description": "Section hidden after listing promoted to showcase/urgent"
+    },
+    "corporate_listings_page": {
+      "status": "PASS",
+      "description": "Page loads correctly, shows empty state (no pending corporate listings)"
+    },
+    "doping_counts_update": {
+      "status": "PASS",
+      "description": "Tab counts update correctly after promotion"
+    }
+  },
+  "rca_of_issue": null
+}
