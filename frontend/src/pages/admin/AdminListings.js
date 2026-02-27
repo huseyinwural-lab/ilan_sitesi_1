@@ -53,6 +53,40 @@ const dopingLabelMap = {
 
 const normalizeDopingType = (value) => (dopingTabValues.has(value) ? value : 'all');
 
+const formatDateTimeTR = (value) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+};
+
+const resolveDopingEndAt = (listing, dopingType) => {
+  if (!listing) return null;
+  if (dopingType === 'showcase') return listing.featured_until;
+  if (dopingType === 'urgent') return listing.urgent_until;
+  if (dopingType === 'paid') return listing.paid_until;
+  if (listing.is_featured) return listing.featured_until;
+  if (listing.is_urgent) return listing.urgent_until;
+  if (listing.is_paid) return listing.paid_until;
+  return null;
+};
+
+const resolveRemainingDays = (endAt) => {
+  if (!endAt) return '—';
+  const endDate = new Date(endAt);
+  if (Number.isNaN(endDate.getTime())) return '—';
+  const diffMs = endDate.getTime() - Date.now();
+  if (diffMs <= 0) return '0 gün';
+  const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  return `${days} gün`;
+};
+
 export default function AdminListingsPage({
   title = 'İlanlar',
   dataTestId = 'admin-listings-page',
@@ -87,6 +121,7 @@ export default function AdminListingsPage({
 
   const statusValue = status || 'all';
   const categoryValue = categoryId || 'all';
+  const showDopingTimeline = applicationsMode && ['urgent', 'showcase', 'paid'].includes(dopingType);
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -400,12 +435,13 @@ export default function AdminListingsPage({
       </div>
 
       <div className="rounded-md border bg-card overflow-hidden" data-testid="listings-table">
-        <div className="hidden lg:grid grid-cols-[2fr_1.1fr_1.1fr_0.9fr_1.2fr_1.4fr] gap-4 bg-muted px-4 py-3 text-sm font-medium">
+        <div className={`hidden lg:grid gap-4 bg-muted px-4 py-3 text-sm font-medium ${showDopingTimeline ? 'grid-cols-[2fr_1.05fr_1.05fr_0.85fr_1.1fr_1.25fr_1.35fr]' : 'grid-cols-[2fr_1.1fr_1.1fr_0.9fr_1.2fr_1.4fr]'}`}>
           <div>İlan</div>
           <div>Sahip</div>
           <div>Ülke / Kategori</div>
           <div>Durum</div>
           <div>Doping</div>
+          {showDopingTimeline ? <div data-testid="listings-timeline-header">Onay / Bitiş / Kalan</div> : null}
           <div className="text-right">Aksiyon</div>
         </div>
 
@@ -420,7 +456,7 @@ export default function AdminListingsPage({
             items.map((listing) => (
               <div
                 key={listing.id}
-                className="grid grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-[2fr_1.1fr_1.1fr_0.9fr_1.2fr_1.4fr]"
+                className={`grid grid-cols-1 gap-4 px-4 py-4 ${showDopingTimeline ? 'lg:grid-cols-[2fr_1.05fr_1.05fr_0.85fr_1.1fr_1.25fr_1.35fr]' : 'lg:grid-cols-[2fr_1.1fr_1.1fr_0.9fr_1.2fr_1.4fr]'}`}
                 data-testid={`listing-row-${listing.id}`}
               >
                 <div>
@@ -489,6 +525,22 @@ export default function AdminListingsPage({
                     {dopingLabelMap[listing.doping_type] || dopingLabelMap.free}
                   </div>
                 </div>
+                {showDopingTimeline ? (
+                  <div data-testid={`listing-doping-timeline-${listing.id}`}>
+                    <div className="text-xs uppercase text-muted-foreground lg:hidden">Onay / Bitiş / Kalan</div>
+                    <div className="text-xs">
+                      <div data-testid={`listing-approved-at-${listing.id}`}>
+                        <span className="text-muted-foreground">Onay:</span> {formatDateTimeTR(listing.published_at)}
+                      </div>
+                      <div data-testid={`listing-doping-end-at-${listing.id}`}>
+                        <span className="text-muted-foreground">Bitiş:</span> {formatDateTimeTR(resolveDopingEndAt(listing, dopingType))}
+                      </div>
+                      <div className="font-semibold" data-testid={`listing-doping-remaining-days-${listing.id}`}>
+                        <span className="text-muted-foreground font-normal">Kalan:</span> {resolveRemainingDays(resolveDopingEndAt(listing, dopingType))}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
                 <div className="flex flex-col gap-2 lg:items-end">
                   <div className="text-xs uppercase text-muted-foreground lg:hidden">Aksiyon</div>
                   <div className="flex flex-wrap items-center gap-1" data-testid={`listing-doping-editor-${listing.id}`}>
