@@ -210,19 +210,6 @@ const isCorporateMenuActive = (node, pathname) => {
   return node.children.some((child) => isCorporateMenuActive(child, pathname));
 };
 
-const getCorporateMenuActiveTrail = (nodes, pathname, trail = []) => {
-  for (const node of nodes) {
-    const nextTrail = [...trail, node.key];
-    const isCurrent = node.route && (pathname === node.route || pathname.startsWith(`${node.route}/`));
-    if (isCurrent) return nextTrail;
-    if (Array.isArray(node.children) && node.children.length) {
-      const childTrail = getCorporateMenuActiveTrail(node.children, pathname, nextTrail);
-      if (childTrail.length) return childTrail;
-    }
-  }
-  return [];
-};
-
 const labelMap = {
   'dealer.nav.overview': 'Genel Bakış',
   'dealer.nav.listings': 'İlanlar',
@@ -278,7 +265,7 @@ export default function DealerLayout() {
   });
   const [selectedStore, setSelectedStore] = useState('all');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [expandedMenuMap, setExpandedMenuMap] = useState({ ofisim: true });
+  const [openMenuKey, setOpenMenuKey] = useState('favorites');
 
   const corporateRowMap = useMemo(() => {
     const rows = Array.isArray(corporateHeaderConfig?.rows) ? corporateHeaderConfig.rows : [];
@@ -335,9 +322,19 @@ export default function DealerLayout() {
     [sidebarRouteOverrides],
   );
 
-  const activeMenuTrail = useMemo(
-    () => getCorporateMenuActiveTrail(structuredSidebarItems, activePath),
-    [structuredSidebarItems, activePath],
+  const primaryMenuItems = useMemo(
+    () => (structuredSidebarItems[0]?.children || []),
+    [structuredSidebarItems],
+  );
+
+  const openPrimaryMenu = useMemo(
+    () => primaryMenuItems.find((item) => item.key === openMenuKey) || null,
+    [primaryMenuItems, openMenuKey],
+  );
+
+  const activePrimaryMenu = useMemo(
+    () => primaryMenuItems.find((item) => isCorporateMenuActive(item, activePath)) || null,
+    [primaryMenuItems, activePath],
   );
 
   useEffect(() => {
@@ -345,17 +342,11 @@ export default function DealerLayout() {
   }, [headerRow3Controls?.default_store_key]);
 
   useEffect(() => {
-    setExpandedMenuMap((prev) => {
-      const next = { ...prev };
-      activeMenuTrail.forEach((key) => {
-        next[key] = true;
-      });
-      if (typeof next.ofisim === 'undefined') {
-        next.ofisim = true;
-      }
-      return next;
-    });
-  }, [activeMenuTrail]);
+    if (!activePrimaryMenu?.key) return;
+    if (activePrimaryMenu.key !== openMenuKey) {
+      setOpenMenuKey(activePrimaryMenu.key);
+    }
+  }, [activePrimaryMenu?.key]);
 
   const handleLogout = () => {
     logout();
@@ -378,58 +369,42 @@ export default function DealerLayout() {
     }
   };
 
-  const handleMenuToggle = (itemKey) => {
-    setExpandedMenuMap((prev) => ({
-      ...prev,
-      [itemKey]: !prev[itemKey],
-    }));
-    trackDealerEvent('dealer_nav_expand_toggle', { key: itemKey, location: 'sidebar_tree' });
+  const getSecondaryDepthClass = (depth) => {
+    if (depth <= 0) return 'pl-0';
+    if (depth === 1) return 'pl-4';
+    if (depth === 2) return 'pl-8';
+    return 'pl-10';
   };
 
-  const renderCorporateMenuItem = (item, depth = 0) => {
+  const renderSecondaryMenuItem = (item, depth = 0) => {
     const Icon = iconMap[item.icon] || LayoutDashboard;
     const isActive = isCorporateMenuActive(item, activePath);
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
-    const isExpanded = hasChildren && !!expandedMenuMap[item.key];
-    const depthClass = depth === 0 ? 'pl-0' : depth === 1 ? 'pl-3' : depth === 2 ? 'pl-6' : 'pl-9';
-    const labelClass = depth === 0 ? 'text-sm font-semibold' : 'text-sm font-medium';
-    const itemClass = isActive
-      ? 'bg-slate-800 text-white shadow-sm'
-      : 'text-slate-900 hover:bg-slate-100';
+    const depthClass = getSecondaryDepthClass(depth);
+    const itemClass = isActive ? 'bg-slate-800 text-white' : 'text-slate-900 hover:bg-slate-100';
 
     return (
-      <div key={item.key} className={`${depthClass}`} data-testid={`dealer-sidebar-tree-item-${item.key}`}>
-        {hasChildren ? (
-          <button
-            type="button"
-            onClick={() => handleMenuToggle(item.key)}
-            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 transition ${itemClass}`}
-            data-testid={`dealer-sidebar-tree-toggle-${item.key}`}
-          >
-            <Icon size={15} />
-            <span className={`${labelClass} flex-1 text-left`} data-testid={`dealer-sidebar-tree-label-${item.key}`}>{item.label}</span>
-            {isExpanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-          </button>
-        ) : item.route ? (
+      <div key={item.key} className={`${depthClass}`} data-testid={`dealer-row2-submenu-item-${item.key}`}>
+        {item.route ? (
           <NavLink
             to={item.route}
-            onClick={() => handleNavClick({ key: item.key, route: item.route }, 'sidebar_tree')}
+            onClick={() => handleNavClick({ key: item.key, route: item.route }, 'row2_submenu')}
             className={`flex items-center gap-2 rounded-xl px-3 py-2 transition ${itemClass}`}
-            data-testid={`dealer-sidebar-tree-link-${item.key}`}
+            data-testid={`dealer-row2-submenu-link-${item.key}`}
           >
             <Icon size={15} />
-            <span className={labelClass} data-testid={`dealer-sidebar-tree-label-${item.key}`}>{item.label}</span>
+            <span className="text-sm font-medium" data-testid={`dealer-row2-submenu-label-${item.key}`}>{item.label}</span>
           </NavLink>
         ) : (
-          <div className="flex items-center gap-2 rounded-xl px-3 py-2 text-slate-800" data-testid={`dealer-sidebar-tree-link-${item.key}`}>
+          <div className="flex items-center gap-2 rounded-xl px-3 py-2 text-slate-900" data-testid={`dealer-row2-submenu-link-${item.key}`}>
             <Icon size={15} />
-            <span className={labelClass} data-testid={`dealer-sidebar-tree-label-${item.key}`}>{item.label}</span>
+            <span className="text-sm font-medium" data-testid={`dealer-row2-submenu-label-${item.key}`}>{item.label}</span>
           </div>
         )}
 
-        {hasChildren && isExpanded ? (
-          <div className="mt-1 space-y-1" data-testid={`dealer-sidebar-tree-children-${item.key}`}>
-            {item.children.map((child) => renderCorporateMenuItem(child, depth + 1))}
+        {hasChildren ? (
+          <div className="mt-1 space-y-1" data-testid={`dealer-row2-submenu-children-${item.key}`}>
+            {item.children.map((child) => renderSecondaryMenuItem(child, depth + 1))}
           </div>
         ) : null}
       </div>
@@ -517,41 +492,50 @@ export default function DealerLayout() {
             ) : null}
           </div>
 
-          {(showRow2FixedBlocks || showRow2Modules) ? (
-            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2" data-testid="dealer-layout-header-row2">
-              {showRow2FixedBlocks ? (headerRow1FixedBlocks || []).map((block) => (
-                <span
-                  key={block.key}
-                  className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600"
-                  data-testid={`dealer-layout-header-row1-fixed-${block.key}`}
-                >
-                  {block.label}
-                </span>
-              )) : null}
-              {showRow2Modules ? row2Modules.map((module) => {
-                const route = moduleRouteMap[module.data_source_key] || '/dealer/overview';
-                const isActive = activePath === route || activePath.startsWith(`${route}/`);
-                return (
-                  <button
-                    type="button"
-                    key={module.id}
-                    onClick={() => {
-                      trackDealerEvent('dealer_header_module_click', {
-                        key: module.key,
-                        route,
-                        location: 'header_row2',
-                      });
-                      navigate(route);
-                    }}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                      isActive ? 'border-[var(--brand-navy)] text-[var(--brand-navy)] bg-[var(--bg-warm-soft)]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                    }`}
-                    data-testid={`dealer-header-row2-module-${module.key}`}
-                  >
-                    {resolveModuleLabel(module.title_i18n_key, module.key, t)}
-                  </button>
-                );
-              }) : null}
+          {showRow2Modules ? (
+            <div className="border-t border-slate-200 pt-2" data-testid="dealer-layout-header-row2">
+              <div className="flex items-center gap-1 overflow-x-auto pb-1" data-testid="dealer-layout-row2-primary-menu">
+                {primaryMenuItems.map((item) => {
+                  const Icon = iconMap[item.icon] || LayoutDashboard;
+                  const hasChildren = Array.isArray(item.children) && item.children.length > 0;
+                  const isActive = isCorporateMenuActive(item, activePath);
+                  const isOpen = openMenuKey === item.key;
+
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => {
+                        if (hasChildren) {
+                          setOpenMenuKey((prev) => (prev === item.key ? null : item.key));
+                          trackDealerEvent('dealer_nav_expand_toggle', { key: item.key, location: 'header_row2' });
+                        } else if (item.route) {
+                          navigate(item.route);
+                          handleNavClick({ key: item.key, route: item.route }, 'header_row2');
+                        }
+                      }}
+                      className={`inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                        isActive || isOpen ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 text-slate-900 hover:bg-slate-100'
+                      }`}
+                      data-testid={`dealer-row2-primary-menu-item-${item.key}`}
+                    >
+                      <Icon size={15} />
+                      <span data-testid={`dealer-row2-primary-menu-label-${item.key}`}>{item.label}</span>
+                      {hasChildren ? (
+                        isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {openPrimaryMenu?.children?.length ? (
+                <div className="mt-2 rounded-xl border border-slate-200 bg-white p-2" data-testid={`dealer-layout-row2-submenu-${openPrimaryMenu.key}`}>
+                  <div className="space-y-1" data-testid="dealer-layout-row2-submenu-items">
+                    {openPrimaryMenu.children.map((child) => renderSecondaryMenuItem(child, 0))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -625,26 +609,13 @@ export default function DealerLayout() {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[260px_1fr] lg:px-6" data-testid="dealer-layout-main-grid">
-        <aside className="rounded-2xl bg-white p-4 shadow-sm" data-testid="dealer-layout-sidebar">
-          <div className="text-xs uppercase tracking-[0.2em] text-slate-600" data-testid="dealer-layout-sidebar-title">
-            Navigasyon
-          </div>
-
-          {loading ? (
-            <div className="mt-4 text-xs text-slate-500" data-testid="dealer-layout-sidebar-loading">Yükleniyor…</div>
-          ) : (
-            <div className="mt-4 max-h-[calc(100vh-14rem)] space-y-1 overflow-y-auto pr-1" data-testid="dealer-layout-sidebar-items">
-              {structuredSidebarItems.map((item) => renderCorporateMenuItem(item, 0))}
-            </div>
-          )}
-
-          {error && (
-            <div className="mt-3 text-xs text-rose-600" data-testid="dealer-layout-sidebar-error">
-              {error}
-            </div>
-          )}
-        </aside>
+      <main className="mx-auto max-w-7xl px-4 py-6 lg:px-6" data-testid="dealer-layout-main-grid">
+        {loading ? (
+          <div className="mb-3 text-xs text-slate-600" data-testid="dealer-layout-content-loading">Menü yükleniyor…</div>
+        ) : null}
+        {error ? (
+          <div className="mb-3 text-xs text-rose-700" data-testid="dealer-layout-content-error">{error}</div>
+        ) : null}
 
         <section className="rounded-2xl bg-white p-6 shadow-sm" data-testid="dealer-layout-content">
           <Outlet />
