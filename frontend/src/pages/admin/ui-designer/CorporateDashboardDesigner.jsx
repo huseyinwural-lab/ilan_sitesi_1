@@ -397,7 +397,7 @@ export const CorporateDashboardDesigner = () => {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data?.detail || 'Taslak kaydedilemedi');
+        throw new Error(parseApiError(data, response.status).message || 'Taslak kaydedilemedi');
       }
 
       setLatestConfigId(data?.item?.id || null);
@@ -407,7 +407,8 @@ export const CorporateDashboardDesigner = () => {
       if (silent) {
         toast.success('Dashboard taslağı otomatik kaydedildi');
       }
-      await loadDraft();
+      await loadDraft({ silent: true });
+      await loadPublishAudits();
     } catch (requestError) {
       setError(requestError.message || 'Taslak kaydedilemedi');
       if (silent) {
