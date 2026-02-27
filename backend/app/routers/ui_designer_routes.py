@@ -1194,13 +1194,15 @@ def _ops_alerts_secret_presence(selected_channels: Optional[list[str]] = None) -
         }
 
     smtp_recipients = _split_csv_values(os.environ.get("ALERT_SMTP_TO"))
-    channels["smtp"]["recipient_list_configured"] = bool(smtp_recipients)
-    channels["smtp"]["recipient_count"] = len(smtp_recipients)
+    if "smtp" in channels:
+        channels["smtp"]["recipient_list_configured"] = bool(smtp_recipients)
+        channels["smtp"]["recipient_count"] = len(smtp_recipients)
 
     slack_webhook = os.environ.get("ALERT_SLACK_WEBHOOK_URL")
-    channels["slack"]["target_channel_verified"] = bool(
-        slack_webhook and slack_webhook.startswith("https://hooks.slack.com/services/")
-    )
+    if "slack" in channels:
+        channels["slack"]["target_channel_verified"] = bool(
+            slack_webhook and slack_webhook.startswith("https://hooks.slack.com/services/")
+        )
 
     unique_missing = sorted(set(missing_keys))
     return {
