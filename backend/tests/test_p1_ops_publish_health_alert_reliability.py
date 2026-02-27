@@ -224,6 +224,11 @@ class TestRerunAlertSimulation:
         data = response.json()
         assert "correlation_id" in data, "Response should include correlation_id"
         assert data["correlation_id"], "correlation_id should not be empty"
+        trigger = data.get("trigger_audit") or {}
+        assert trigger.get("event") == "OPS_ALERT_SIMULATION_TRIGGERED"
+        assert trigger.get("actor_id"), "trigger_audit.actor_id should be present"
+        assert trigger.get("correlation_id") == data.get("correlation_id")
+        assert trigger.get("timestamp"), "trigger_audit.timestamp should be present"
 
     def test_rerun_simulation_returns_delivery_status(self, admin_headers):
         """Should return delivery_status in response."""
@@ -239,8 +244,8 @@ class TestRerunAlertSimulation:
         assert response.status_code == 200
         data = response.json()
         assert "delivery_status" in data, "Response should include delivery_status"
-        # delivery_status can be "ok", "partial", "fail", or "blocked_missing_secrets"
-        valid_statuses = ["ok", "partial", "fail", "blocked_missing_secrets"]
+        # delivery_status can be "ok", "partial_fail", or "blocked_missing_secrets"
+        valid_statuses = ["ok", "partial_fail", "blocked_missing_secrets"]
         assert data["delivery_status"] in valid_statuses, f"Invalid delivery_status: {data['delivery_status']}"
 
     def test_rerun_simulation_returns_channel_results_or_fail_fast(self, admin_headers):
