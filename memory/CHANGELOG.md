@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 2026-02-27 — P74 İlanlar Menüsü PDF Hizalama + Sanal Turlar Kaldırma
+
+- Row2 ana menüden `Sanal Turlar` kaldırıldı.
+- `/dealer/listings` sayfası PDF akışına göre güncellendi:
+  - `Yayında Olan İlanlar (x)` başlığı
+  - arama inputu
+  - status tabları (`Yayında`, `Yayında Değil`, `Tümü`)
+  - ilan tablo/kart görünümü + işlem butonları (`Yayına Al`, `Arşivle`)
+- Frontend test agent sonucu: COMPLETE PASS.
+- Kanıt: `/app/docs/P1_DEALER_LISTINGS_PDF_ALIGNMENT_EVIDENCE.md`
+
 ## 2026-02-27 — P73 Özet Menüsü PDF İçerik Doldurma
 
 - `DealerOverview` sayfası Özet için PDF’e göre yeniden kurgulandı:
