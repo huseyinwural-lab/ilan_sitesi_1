@@ -299,6 +299,7 @@ const AdminCategories = () => {
     available: true,
     message: "",
     conflict: null,
+    suggested_next_sort_order: null,
   });
   const [categoryImageUploading, setCategoryImageUploading] = useState(false);
   const [categoryImageError, setCategoryImageError] = useState("");
@@ -765,7 +766,7 @@ const AdminCategories = () => {
 
   const fetchOrderPreview = useCallback(async ({ moduleValue, countryCode, parentId, sortOrder, excludeId }) => {
     if (!moduleValue || !countryCode || !Number.isFinite(sortOrder) || sortOrder <= 0) {
-      setOrderPreview({ checking: false, available: true, message: "", conflict: null });
+      setOrderPreview({ checking: false, available: true, message: "", conflict: null, suggested_next_sort_order: null });
       return;
     }
 
@@ -786,7 +787,7 @@ const AdminCategories = () => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const parsed = parseApiError(data, "Sıra önizleme kontrolü başarısız.");
-        setOrderPreview({ checking: false, available: true, message: parsed.message, conflict: null });
+        setOrderPreview({ checking: false, available: true, message: parsed.message, conflict: null, suggested_next_sort_order: null });
         return;
       }
 
@@ -795,9 +796,10 @@ const AdminCategories = () => {
         available: Boolean(data?.available),
         message: data?.message || "",
         conflict: data?.conflict || null,
+        suggested_next_sort_order: Number.isFinite(Number(data?.suggested_next_sort_order)) ? Number(data.suggested_next_sort_order) : null,
       });
     } catch (error) {
-      setOrderPreview({ checking: false, available: true, message: "Sıra kontrolü yapılamadı.", conflict: null });
+      setOrderPreview({ checking: false, available: true, message: "Sıra kontrolü yapılamadı.", conflict: null, suggested_next_sort_order: null });
     }
   }, [authHeader]);
 
