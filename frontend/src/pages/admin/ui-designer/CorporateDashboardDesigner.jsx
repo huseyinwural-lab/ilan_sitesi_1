@@ -838,7 +838,7 @@ export const CorporateDashboardDesigner = () => {
       {status ? <div className="text-xs text-emerald-600" data-testid="ui-designer-dashboard-status">{status}</div> : null}
       {error ? <div className="text-xs text-rose-600" data-testid="ui-designer-dashboard-error">{error}</div> : null}
 
-      <div className="grid gap-4 lg:grid-cols-2" data-testid="ui-designer-dashboard-bottom-grid">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3" data-testid="ui-designer-dashboard-bottom-grid">
         <div className="rounded-xl border bg-white p-3" data-testid="ui-designer-dashboard-versions-card">
           <div className="text-sm font-semibold" data-testid="ui-designer-dashboard-versions-title">Snapshot / Versiyonlar</div>
           <div className="mt-2 max-h-56 space-y-2 overflow-auto" data-testid="ui-designer-dashboard-versions-list">
@@ -872,6 +872,39 @@ export const CorporateDashboardDesigner = () => {
           <pre className="mt-2 max-h-44 overflow-auto rounded bg-slate-50 p-2 text-[11px]" data-testid="ui-designer-dashboard-effective-json">
             {JSON.stringify(effectivePayload?.config_data || {}, null, 2)}
           </pre>
+        </div>
+
+        <div className="rounded-xl border bg-white p-3" data-testid="ui-designer-dashboard-publish-audit-card">
+          <div className="flex items-center justify-between" data-testid="ui-designer-dashboard-publish-audit-header">
+            <div className="text-sm font-semibold" data-testid="ui-designer-dashboard-publish-audit-title">Publish Audit</div>
+            <button type="button" onClick={loadPublishAudits} className="rounded border px-2 py-1 text-xs" data-testid="ui-designer-dashboard-publish-audit-refresh">
+              Yenile
+            </button>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-600" data-testid="ui-designer-dashboard-publish-telemetry">
+            <div data-testid="ui-designer-dashboard-telemetry-avg-lock">avg_lock_wait_ms: {publishTelemetry?.avg_lock_wait_ms ?? 0}</div>
+            <div data-testid="ui-designer-dashboard-telemetry-max-lock">max_lock_wait_ms: {publishTelemetry?.max_lock_wait_ms ?? 0}</div>
+            <div data-testid="ui-designer-dashboard-telemetry-avg-duration">avg_publish_duration_ms: {publishTelemetry?.avg_publish_duration_ms ?? 0}</div>
+            <div data-testid="ui-designer-dashboard-telemetry-max-duration">max_publish_duration_ms: {publishTelemetry?.max_publish_duration_ms ?? 0}</div>
+          </div>
+          <div className="mt-2 max-h-52 space-y-2 overflow-auto" data-testid="ui-designer-dashboard-publish-audit-list">
+            {publishAuditItems.length === 0 ? (
+              <div className="text-xs text-slate-400" data-testid="ui-designer-dashboard-publish-audit-empty">Kayıt yok</div>
+            ) : publishAuditItems.map((item) => (
+              <div key={item.id} className="rounded border px-2 py-2 text-[11px]" data-testid={`ui-designer-dashboard-publish-audit-item-${item.id}`}>
+                <div className="flex items-center justify-between gap-2" data-testid={`ui-designer-dashboard-publish-audit-item-head-${item.id}`}>
+                  <span data-testid={`ui-designer-dashboard-publish-audit-status-${item.id}`}>{item.status}</span>
+                  {item.conflict_detected ? (
+                    <span className="rounded bg-amber-100 px-1 py-0.5 text-[10px] text-amber-700" data-testid={`ui-designer-dashboard-publish-audit-conflict-badge-${item.id}`}>Conflict</span>
+                  ) : null}
+                </div>
+                <div className="text-slate-500" data-testid={`ui-designer-dashboard-publish-audit-meta-${item.id}`}>
+                  retry={item.retry_count} • lock={item.lock_wait_ms}ms • publish={item.publish_duration_ms ?? '-'}ms
+                </div>
+                <div className="text-slate-500" data-testid={`ui-designer-dashboard-publish-audit-actor-${item.id}`}>{item.actor_email || '-'}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
