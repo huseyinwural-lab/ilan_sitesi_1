@@ -18945,3 +18945,127 @@ Comprehensive P64 Publish Hardening UI validation test as per review request: "P
 
 
 
+
+---
+
+## Mobile Responsiveness Test - /admin/ops/publish-health (Feb 27, 2026 - LATEST) ✅ PASS
+
+### Test Summary
+Mobile responsiveness re-test for /admin/ops/publish-health page at 390px viewport width as per review request: "Re-test only mobile responsiveness issue previously reported on /admin/ops/publish-health. Use admin@platform.com / Admin123!. Verify at viewport width ~390px that horizontal overflow is gone (no right-side clipping / no horizontal scroll), including after clicking 'Re-run Alert Simulation'."
+
+### Test Flow Executed:
+1. ✅ Set viewport to 390px x 844px (mobile)
+2. ✅ Admin login with admin@platform.com / Admin123!
+3. ✅ Navigate to /admin/ops/publish-health
+4. ✅ Check for horizontal overflow BEFORE clicking button
+5. ✅ Click 'Re-run Alert Simulation' button
+6. ✅ Check for horizontal overflow AFTER clicking button
+
+### Critical Findings:
+
+#### ✅ MOBILE RESPONSIVENESS ISSUE FIXED (100% PASS):
+
+**1. Viewport Configuration**: ✅ SET
+  - **Width**: 390px (mobile)
+  - **Height**: 844px
+  - **Test Environment**: Chrome mobile viewport emulation
+
+**2. Page Load at Mobile Viewport**: ✅ WORKING
+  - **URL**: https://config-telemetry.preview.emergentagent.com/admin/ops/publish-health
+  - **Page Title**: "Publish Health & Alert Reliability"
+  - **Content Rendering**: All sections properly contained within 390px width
+  - **CRITICAL**: Page loads correctly at mobile viewport
+
+**3. Horizontal Overflow Check - BEFORE Button Click**: ✅ NO OVERFLOW
+  - **Document scrollWidth**: 390px
+  - **Document clientWidth**: 390px
+  - **Has Overflow**: False
+  - **Overflow Amount**: 0px
+  - **Horizontal Scrollbar Present**: False
+  - **CRITICAL**: ✅ No horizontal overflow detected at 390px viewport width
+
+**4. 'Re-run Alert Simulation' Button**: ✅ FOUND AND CLICKED
+  - **Button Located**: Yes - using selector `button:has-text("Re-run Alert Simulation")`
+  - **Button Text**: "Re-run Alert Simulation"
+  - **Clickable**: Yes
+  - **Action Performed**: Button clicked successfully
+  - **CRITICAL**: Button is functional and accessible on mobile viewport
+
+**5. Horizontal Overflow Check - AFTER Button Click**: ✅ NO OVERFLOW
+  - **Document scrollWidth**: 390px
+  - **Document clientWidth**: 390px
+  - **Has Overflow**: False
+  - **Overflow Amount**: 0px
+  - **Horizontal Scrollbar Present**: False
+  - **CRITICAL**: ✅ No horizontal overflow detected after clicking 'Re-run Alert Simulation'
+
+### Screenshots Captured:
+1. **mobile-publish-health-before-v2.png**: Page at 390px viewport showing "Publish Health & Alert Reliability" content properly contained
+2. **mobile-publish-health-after-v2.png**: Page after clicking "Re-run Alert Simulation" showing refreshed content with "Tek Tik Yeniden Simülasyon" section, all content properly contained within 390px
+
+### Visual Verification:
+
+**Before Screenshot Content**:
+- Page header with breadcrumb (Admin > ops > publish-health)
+- Title: "Publish Health & Alert Reliability"
+- Subtitle properly wrapped
+- Statistics cards:
+  - "Son 24s Alarm Teslimat Başarı Oranı" with CRITICAL badge
+  - "0.00%" large text with total/success/fail counts
+  - Channel breakdowns: Slack (0.00%), SMTP (0.00%), PagerDuty (0.00%)
+- "Son failure: -" text
+- "Tek Tik Yeniden Simülasyon" section with "Çalıştırılıyor..." button
+- All content fits within viewport, no clipping
+
+**After Screenshot Content**:
+- Page refreshed showing updated simulation results
+- Same layout structure maintained
+- Content properly contained
+- No horizontal scrolling required
+- All text and UI elements visible without overflow
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (5/5 checks passed)
+- **Viewport Set to 390px**: ✅ VERIFIED
+- **Page Loads at Mobile Width**: ✅ VERIFIED
+- **No Horizontal Overflow (Before Button Click)**: ✅ VERIFIED
+- **Button Clickable**: ✅ VERIFIED
+- **No Horizontal Overflow (After Button Click)**: ✅ VERIFIED
+
+### Measurements:
+
+**Before Button Click**:
+| Metric | Value | Status |
+|--------|-------|--------|
+| Viewport Width | 390px | Set |
+| Document scrollWidth | 390px | ✅ Matches viewport |
+| Document clientWidth | 390px | ✅ Matches viewport |
+| Overflow Amount | 0px | ✅ No overflow |
+| Horizontal Scroll | False | ✅ Not present |
+
+**After Button Click**:
+| Metric | Value | Status |
+|--------|-------|--------|
+| Viewport Width | 390px | Set |
+| Document scrollWidth | 390px | ✅ Matches viewport |
+| Document clientWidth | 390px | ✅ Matches viewport |
+| Overflow Amount | 0px | ✅ No overflow |
+| Horizontal Scroll | False | ✅ Not present |
+
+### Final Status:
+- **Overall Result**: ✅ **PASS** - Mobile responsiveness issue is FIXED
+- **Horizontal Overflow at 390px**: ✅ GONE (previously reported issue is now resolved)
+- **Content Clipping**: ✅ NONE (all content visible within viewport)
+- **Horizontal Scrolling**: ✅ NOT REQUIRED (no horizontal scroll present)
+- **After Button Interaction**: ✅ NO REGRESSION (overflow remains absent after clicking button)
+- **UI**: ✅ MOBILE-READY (page properly responsive at mobile viewport width)
+
+### Comparison with Previous Report:
+**Previously Reported Issue**: Horizontal overflow causing right-side clipping at mobile viewport
+**Current Status**: ✅ FIXED - No horizontal overflow detected at 390px viewport width
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 27, 2026 (LATEST)
+- **Message**: Mobile responsiveness re-test for /admin/ops/publish-health SUCCESSFULLY COMPLETED with 100% PASS. CRITICAL VERIFICATION: Previously reported mobile responsiveness issue is FIXED. Test performed at 390px viewport width (mobile). FLOW VERIFICATION: 1) Admin login successful with admin@platform.com / Admin123! ✅. 2) Navigated to /admin/ops/publish-health page at mobile viewport (390px x 844px) ✅. 3) BEFORE clicking 'Re-run Alert Simulation' button: Document scrollWidth=390px, clientWidth=390px, NO horizontal overflow detected (0px overflow), NO horizontal scrollbar present ✅. 4) Successfully found and clicked 'Re-run Alert Simulation' button ✅. 5) AFTER clicking button: Document scrollWidth=390px, clientWidth=390px, NO horizontal overflow detected (0px overflow), NO horizontal scrollbar present ✅. Screenshots captured show all content properly contained within 390px viewport width both before and after button interaction. No right-side clipping detected. No horizontal scrolling required. Page content (title, statistics cards, simulation section) all fit within mobile viewport. Mobile responsiveness issue is RESOLVED and page is production-ready for mobile devices.
+
