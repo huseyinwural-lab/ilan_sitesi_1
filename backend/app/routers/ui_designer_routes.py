@@ -802,14 +802,6 @@ class UIConfigPublishPayload(BaseModel):
     require_confirm: bool = False
 
 
-class UIConfigLegacyPublishPayload(BaseModel):
-    owner_type: Optional[str] = None
-    owner_id: Optional[str] = None
-    config_version: Optional[int] = None
-    resolved_config_hash: Optional[str] = None
-    retry_count: int = 0
-
-
 class UIConfigConflictSyncPayload(BaseModel):
     segment: str = Field(default="individual")
     scope: str = Field(default="system")
