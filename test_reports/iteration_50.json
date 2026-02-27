@@ -1,0 +1,98 @@
+{
+  "summary": "P70 Paid Listing + Campaign Item listing_type - All features verified. Backend 100% (15/15 tests), Frontend tabs/routes/modals working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "AdminPricingTiers / AdminPricingPackages",
+        "issues": ["Console hydration warnings: '<tr> cannot be a child of <span>', '<span> cannot be a child of <tbody>' - caused by React DevTools or Emergent wrapper spans. Not blocking functionality."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_paid_doping_campaign_items.py",
+    "/app/test_reports/pytest/iteration50_paid_campaign_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "POST /api/admin/listings/{id}/doping now supports paid doping_type with duration_days",
+    "doping_type filter (free/paid/showcase/urgent) works on admin listings endpoint",
+    "doping_counts returns all 4 types with proper counts",
+    "PricingCampaignItem model has listing_type field (free/paid/urgent/showcase) - working correctly",
+    "Campaign item CRUD endpoints (POST/PUT/GET/DELETE) handle listing_type properly",
+    "Individual and corporate scopes both support all 4 listing types",
+    "Type summary badges show quota totals per listing_type in both AdminPricingTiers and AdminPricingPackages",
+    "Admin sidebar has paid routes: /admin/listings/paid, /admin/individual-listing-applications/paid, /admin/corporate-listing-applications/paid",
+    "All 5 doping tabs visible on admin listings page (Tümü, Ücretsiz İlan, Ücretli İlan, Vitrin İlan, Acil İlan)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_paid_doping_campaign_items.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (all routes, tabs, modals verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "Campaign items created during testing were cleaned up",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P70 Paid Listing + Campaign Type fully operational. Backend: POST doping with paid type sets paid_until, listings filter by doping_type=paid works, campaign items support 4 listing_types. Frontend: All 5 doping tabs with counts, paid routes (/admin/listings/paid, /admin/individual-listing-applications/paid, /admin/corporate-listing-applications/paid) work, campaign modal has 4-option listing_type select.",
+  "features_verified": {
+    "doping_endpoint_paid_support": {
+      "status": "PASS",
+      "description": "POST /api/admin/listings/{id}/doping with doping_type=paid sets paid_until"
+    },
+    "listings_doping_filter_paid": {
+      "status": "PASS",
+      "description": "GET /api/admin/listings?doping_type=paid filters correctly"
+    },
+    "listings_doping_counts_structure": {
+      "status": "PASS",
+      "description": "doping_counts includes free, paid, showcase, urgent keys"
+    },
+    "campaign_item_listing_type_crud": {
+      "status": "PASS",
+      "description": "Create/Read/Update campaign items with listing_type (free/paid/urgent/showcase)"
+    },
+    "admin_listings_paid_tab": {
+      "status": "PASS",
+      "description": "Ücretli İlan tab visible with count on admin listings page"
+    },
+    "admin_listings_paid_route": {
+      "status": "PASS",
+      "description": "/admin/listings/paid loads correctly"
+    },
+    "individual_applications_paid_route": {
+      "status": "PASS",
+      "description": "/admin/individual-listing-applications/paid shows 'Bireysel Ücretli İlan Başvuruları'"
+    },
+    "corporate_applications_paid_route": {
+      "status": "PASS",
+      "description": "/admin/corporate-listing-applications/paid shows 'Kurumsal Ücretli İlan Başvuruları'"
+    },
+    "pricing_tiers_listing_type_modal": {
+      "status": "PASS",
+      "description": "AdminPricingTiers modal has 4-option listing_type select (Ücretsiz/Ücretli/Acil/Vitrin)"
+    },
+    "pricing_tiers_type_summary": {
+      "status": "PASS",
+      "description": "Type summary badges show totals per listing_type (e.g., Ücretsiz: 16, Ücretli: 30)"
+    },
+    "pricing_packages_listing_type": {
+      "status": "PASS",
+      "description": "Corporate campaign items support listing_type field"
+    },
+    "sidebar_paid_links": {
+      "status": "PASS",
+      "description": "Sidebar has 3 new paid links: Ücretli İlanlar, Bireysel Ücretli İlan, Kurumsal Ücretli İlan"
+    }
+  },
+  "rca_of_issue": null
+}
