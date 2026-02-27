@@ -80,8 +80,32 @@ export default function BackofficePortalApp() {
       } />
       <Route path="/moderation" element={<AdminLayout><ModerationQueue /></AdminLayout>} />
       <Route path="/reports" element={<AdminLayout><AdminReportsPage /></AdminLayout>} />
+      <Route
+        path="/listings/featured"
+        element={<AdminLayout><AdminListingsPage title="Vitrin İlanlar" dataTestId="admin-listings-featured-page" initialDopingType="showcase" /></AdminLayout>}
+      />
+      <Route
+        path="/listings/urgent"
+        element={<AdminLayout><AdminListingsPage title="Acil İlanlar" dataTestId="admin-listings-urgent-page" initialDopingType="urgent" /></AdminLayout>}
+      />
       <Route path="/individual-listing-applications" element={<AdminLayout><IndividualListingApplicationsPage /></AdminLayout>} />
+      <Route
+        path="/individual-listing-applications/featured"
+        element={<AdminLayout><AdminListingsPage title="Bireysel Vitrin İlan Başvuruları" dataTestId="individual-listing-applications-featured-page" applicantType="individual" applicationsMode initialDopingType="showcase" /></AdminLayout>}
+      />
+      <Route
+        path="/individual-listing-applications/urgent"
+        element={<AdminLayout><AdminListingsPage title="Bireysel Acil İlan Başvuruları" dataTestId="individual-listing-applications-urgent-page" applicantType="individual" applicationsMode initialDopingType="urgent" /></AdminLayout>}
+      />
       <Route path="/corporate-listing-applications" element={<AdminLayout><CorporateListingApplicationsPage /></AdminLayout>} />
+      <Route
+        path="/corporate-listing-applications/featured"
+        element={<AdminLayout><AdminListingsPage title="Kurumsal Vitrin İlan Başvuruları" dataTestId="corporate-listing-applications-featured-page" applicantType="corporate" applicationsMode initialDopingType="showcase" /></AdminLayout>}
+      />
+      <Route
+        path="/corporate-listing-applications/urgent"
+        element={<AdminLayout><AdminListingsPage title="Kurumsal Acil İlan Başvuruları" dataTestId="corporate-listing-applications-urgent-page" applicantType="corporate" applicationsMode initialDopingType="urgent" /></AdminLayout>}
+      />
       <Route path="/ads" element={<AdminLayout><AdminAdsManagement /></AdminLayout>} />
       <Route path="/ads/campaigns" element={<AdminLayout><AdminAdsCampaigns /></AdminLayout>} />
       <Route path="/pricing/campaign" element={<AdminLayout><AdminPricingCampaign /></AdminLayout>} />
