@@ -15698,18 +15698,18 @@ async def dealer_dashboard_summary(
 
         active_listings = (
             await session.execute(
-                select(func.count()).select_from(DealerListing).where(
-                    DealerListing.dealer_id == dealer_uuid,
-                    DealerListing.status == "active",
-                    DealerListing.deleted_at.is_(None),
+                select(func.count()).select_from(Listing).where(
+                    Listing.dealer_id == dealer_uuid,
+                    Listing.status.in_(["active", "published"]),
+                    Listing.deleted_at.is_(None),
                 )
             )
         ).scalar_one()
         total_listings = (
             await session.execute(
-                select(func.count()).select_from(DealerListing).where(
-                    DealerListing.dealer_id == dealer_uuid,
-                    DealerListing.deleted_at.is_(None),
+                select(func.count()).select_from(Listing).where(
+                    Listing.dealer_id == dealer_uuid,
+                    Listing.deleted_at.is_(None),
                 )
             )
         ).scalar_one()
@@ -15791,12 +15791,35 @@ async def dealer_dashboard_summary(
                 .limit(1)
             )
         ).scalar_one_or_none()
-        package_status = latest_invoice.status if latest_invoice else "trial"
-        package_name = "Profesyonel Emlak Ofisi / Taahhütlü Pro 50"
+        package_status = latest_invoice.status if latest_invoice else None
+        package_name = None
         if latest_invoice and latest_invoice.plan_id:
             plan = await session.get(Plan, latest_invoice.plan_id)
             if plan and plan.name:
                 package_name = plan.name
+
+        demand_customer_count = (
+            await session.execute(
+                select(func.count(func.distinct(Conversation.buyer_id))).where(
+                    Conversation.seller_id == dealer_uuid,
+                    Conversation.buyer_id.is_not(None),
+                )
+            )
+        ).scalar_one()
+
+        matching_listing_count = (
+            await session.execute(
+                select(func.count(func.distinct(Conversation.listing_id)))
+                .select_from(Conversation)
+                .join(Listing, Conversation.listing_id == Listing.id)
+                .where(
+                    Conversation.seller_id == dealer_uuid,
+                    Conversation.listing_id.is_not(None),
+                    Listing.status.in_(["active", "published"]),
+                    Listing.deleted_at.is_(None),
+                )
+            )
+        ).scalar_one()
 
         listing_visit_breakdown = [
             {
@@ -15877,12 +15900,16 @@ async def dealer_dashboard_summary(
                 },
                 "kpi_cards": {
                     "published_listing_count": int(active_listings or 0),
-                    "demand_customer_count": 0,
-                    "matching_listing_count": 0,
+                    "demand_customer_count": int(demand_customer_count or 0),
+                    "matching_listing_count": int(matching_listing_count or 0),
                 },
                 "data_notice": {
-                    "demand_data_available": False,
-                    "message": "Müşteri veya talep kaydı olmadığı için veri gösterilemiyor.",
+                    "demand_data_available": bool((demand_customer_count or 0) > 0),
+                    "message": (
+                        "Müşteri veya talep kaydı olmadığı için veri gösterilemiyor."
+                        if int(demand_customer_count or 0) <= 0
+                        else ""
+                    ),
                 },
             },
             "generated_at": now_dt.isoformat(),
