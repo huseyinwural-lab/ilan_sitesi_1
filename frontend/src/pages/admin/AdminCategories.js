@@ -560,6 +560,7 @@ const AdminCategories = () => {
       module: category.module || form.module,
       active_flag: category.active_flag ?? form.active_flag,
       sort_order: category.sort_order ?? form.sort_order,
+      image_url: category.image_url || "",
     };
     const nextSchema = category.form_schema ? applySchemaDefaults(category.form_schema) : schema;
     const nextWizardProgress = normalizeWizardProgress(category.wizard_progress);
@@ -582,6 +583,8 @@ const AdminCategories = () => {
         : "",
     }));
     setOrderPreview({ checking: false, available: true, message: "", conflict: null });
+    setCategoryImageError("");
+    setCategoryImageCacheBuster(Date.now());
     persistSnapshot({
       form: nextForm,
       schema: nextSchema,
