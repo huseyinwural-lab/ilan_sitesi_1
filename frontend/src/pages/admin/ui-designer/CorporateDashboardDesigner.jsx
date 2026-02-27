@@ -93,6 +93,40 @@ const normalizeDashboard = (item) => {
   };
 };
 
+const parseApiError = (payload, statusCode = 0) => {
+  const detail = payload?.detail;
+  if (detail && typeof detail === 'object') {
+    return {
+      code: detail.code || 'UNKNOWN',
+      message: detail.message || 'İşlem başarısız',
+      status: statusCode,
+      raw: detail,
+    };
+  }
+  return {
+    code: statusCode === 409 ? 'CONFIG_VERSION_CONFLICT' : 'UNKNOWN',
+    message: typeof detail === 'string' ? detail : 'İşlem başarısız',
+    status: statusCode,
+    raw: detail || {},
+  };
+};
+
+const normalizeDiffWidgets = (item) => {
+  if (!item || typeof item !== 'object') return [];
+  const widgets = Array.isArray(item.widgets)
+    ? item.widgets
+    : Array.isArray(item.config_data?.widgets)
+      ? item.config_data.widgets
+      : [];
+  return widgets
+    .filter((widget) => widget && typeof widget === 'object')
+    .map((widget, index) => ({
+      widget_id: `${widget.widget_id || widget.id || `widget-${index + 1}`}`,
+      widget_type: `${widget.widget_type || widget.type || 'widget'}`,
+      title: `${widget.title || widget.widget_type || widget.type || 'Widget'}`,
+    }));
+};
+
 const SortableWidgetCard = ({ widget, width, largeScreen, onRemove, onToggleEnabled }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: widget.widget_id });
   const style = {
