@@ -2137,18 +2137,24 @@ async def admin_ui_config_conflict_sync(
     )
     await session.commit()
 
-    listing = await _ui_config_listing(
-        session,
-        config_type=normalized_type,
-        segment=normalized_segment,
-        scope=normalized_scope,
-        scope_id=normalized_scope_id,
-        status="draft",
+    stmt = (
+        select(UIConfig)
+        .where(
+            UIConfig.config_type == normalized_type,
+            UIConfig.segment == normalized_segment,
+            *_scope_clause(normalized_scope, normalized_scope_id),
+            UIConfig.status == "draft",
+        )
+        .order_by(desc(UIConfig.version), desc(UIConfig.updated_at))
+        .limit(20)
     )
+    rows = (await session.execute(stmt)).scalars().all()
+    item_payload = _serialize_ui_config(rows[0]) if rows else None
+    items_payload = [_serialize_ui_config(entry) for entry in rows]
     return {
         "ok": True,
-        "item": listing.get("item"),
-        "items": listing.get("items", []),
+        "item": item_payload,
+        "items": items_payload,
         "from_item": from_payload,
         "to_item": to_payload,
         "diff": diff_payload,
