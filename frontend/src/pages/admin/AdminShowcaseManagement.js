@@ -239,6 +239,23 @@ export default function AdminShowcaseManagement() {
     }
   };
 
+  const deleteVersion = async (id, statusValue) => {
+    if (statusValue === 'published') {
+      setError('Aktif versiyon silinemez');
+      return;
+    }
+    const confirmed = window.confirm('Bu versiyonu silmek istediğine emin misin?');
+    if (!confirmed) return;
+    try {
+      await axios.delete(`${API}/admin/site/showcase-layout/config/${id}`, { headers: authHeader });
+      setStatus('Versiyon silindi');
+      setError('');
+      await fetchVersions();
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Versiyon silinemedi');
+    }
+  };
+
   return (
     <div className="space-y-6" data-testid="admin-showcase-management-page">
       <div className="flex flex-wrap items-start justify-between gap-4" data-testid="admin-showcase-management-header">
@@ -383,11 +400,27 @@ export default function AdminShowcaseManagement() {
                   Yükle
                 </button>
                 {item.status !== 'published' ? (
-                  <button type="button" className="rounded-md bg-primary px-2 py-1 text-primary-foreground" onClick={() => publishVersion(item.id)} data-testid={`admin-showcase-version-publish-${item.id}`}>
-                    Yayınla
-                  </button>
+                  <>
+                    <button type="button" className="rounded-md bg-primary px-2 py-1 text-primary-foreground" onClick={() => publishVersion(item.id)} data-testid={`admin-showcase-version-publish-${item.id}`}>
+                      Yayınla
+                    </button>
+                    <button type="button" className="rounded-md border border-rose-300 px-2 py-1 text-rose-700" onClick={() => deleteVersion(item.id, item.status)} data-testid={`admin-showcase-version-delete-${item.id}`}>
+                      Sil
+                    </button>
+                  </>
                 ) : (
-                  <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700" data-testid={`admin-showcase-version-live-${item.id}`}>Aktif</span>
+                  <>
+                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700" data-testid={`admin-showcase-version-live-${item.id}`}>Aktif</span>
+                    <button
+                      type="button"
+                      className="rounded-md border border-slate-200 px-2 py-1 text-slate-400"
+                      disabled
+                      title="Aktif versiyon silinemez"
+                      data-testid={`admin-showcase-version-delete-disabled-${item.id}`}
+                    >
+                      Sil
+                    </button>
+                  </>
                 )}
               </div>
             </div>
