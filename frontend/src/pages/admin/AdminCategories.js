@@ -2630,7 +2630,7 @@ const AdminCategories = () => {
       >
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold text-slate-900" data-testid={`categories-level-title-${levelIndex}`}>
-            Kategori {levelIndex + 1}
+            {levelIndex === 0 ? "Ana Kategori Grubu" : `${levelIndex + 1}. Seviye`}
           </div>
           <button
             type="button"
@@ -2665,7 +2665,7 @@ const AdminCategories = () => {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-xs font-semibold text-slate-700" data-testid={`categories-level-item-label-${levelIndex}-${itemIndex}`}>
-                      {item.name || `Kategori ${itemIndex + 1}`}
+                      {item.name || `Kategori ${getCategoryNumberLabel(levelIndex, itemIndex)}`}
                     </div>
                     <div className="flex items-center gap-2">
                       {item.is_complete ? (
@@ -2815,10 +2815,12 @@ const AdminCategories = () => {
   const renderLevelColumns = () => {
     const columns = [];
     let levelIndex = 0;
-    while (levelIndex < 6) {
+    while (levelIndex < 12) {
       columns.push(renderLevelColumn(levelIndex));
-      if (!levelCompletion[levelIndex]) break;
       if (levelSelections[levelIndex] === undefined) break;
+      const selectedPath = levelSelections.slice(0, levelIndex + 1);
+      const selectedNode = getNodeByPath(subcategories, selectedPath);
+      if (!selectedNode) break;
       levelIndex += 1;
     }
     return columns;
