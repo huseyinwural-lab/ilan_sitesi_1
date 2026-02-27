@@ -105,16 +105,22 @@ function HeaderConfigTab({ segment, testIdPrefix }) {
     setStatus('');
     setError('');
     try {
-      const response = await fetch(`${API}/admin/ui/configs/header/publish/${configId}`, {
+      const response = await fetch(`${API}/admin/ui/configs/header/publish`, {
         method: 'POST',
         headers: {
           ...authHeader,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          segment,
+          scope,
+          scope_id: scope === 'tenant' ? scopeId.trim() : null,
+          config_id: configId,
           config_version: configVersion,
+          resolved_config_hash: versions.find((entry) => entry.id === configId)?.resolved_config_hash || null,
           owner_type: ownerType,
           owner_id: ownerId,
+          require_confirm: true,
         }),
       });
       const data = await response.json().catch(() => ({}));
