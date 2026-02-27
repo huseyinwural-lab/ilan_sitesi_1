@@ -15930,9 +15930,12 @@ async def dealer_messages(
     ).scalars().all()
 
     message_count: Dict[uuid.UUID, int] = defaultdict(int)
+    unread_count_by_conversation: Dict[uuid.UUID, int] = defaultdict(int)
     last_message: Dict[uuid.UUID, Message] = {}
     for msg in messages:
         message_count[msg.conversation_id] += 1
+        if (not msg.is_read) and msg.sender_id != dealer_uuid:
+            unread_count_by_conversation[msg.conversation_id] += 1
         if msg.conversation_id not in last_message:
             last_message[msg.conversation_id] = msg
 
@@ -15957,6 +15960,7 @@ async def dealer_messages(
         last = last_message.get(conv.id)
         listing = listing_map.get(conv.listing_id) if conv.listing_id else None
         buyer = buyer_map.get(conv.buyer_id) if conv.buyer_id else None
+        unread_count = int(unread_count_by_conversation.get(conv.id) or 0)
         items.append(
             {
                 "conversation_id": str(conv.id),
@@ -15967,6 +15971,8 @@ async def dealer_messages(
                 "message_count": int(message_count.get(conv.id) or 0),
                 "last_message": (last.body if last else None),
                 "last_message_at": last.created_at.isoformat() if last and last.created_at else None,
+                "unread_count": unread_count,
+                "read_status": "okunmadı" if unread_count > 0 else "okundu",
             }
         )
 
@@ -15996,7 +16002,44 @@ async def dealer_messages(
         "summary": {
             "listing_messages": len(items),
             "notifications": len(notification_items),
+            "unread_listing_messages": int(
+                sum(1 for item in items if int(item.get("unread_count") or 0) > 0)
+            ),
         },
+    }
+
+
+@api_router.post("/dealer/messages/{conversation_id}/read")
+async def dealer_mark_conversation_read(
+    conversation_id: str,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    try:
+        conversation_uuid = uuid.UUID(conversation_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="conversation_id invalid") from exc
+
+    conversation = await session.get(Conversation, conversation_uuid)
+    if not conversation or conversation.seller_id != dealer_uuid:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    update_result = await session.execute(
+        update(Message)
+        .where(
+            Message.conversation_id == conversation_uuid,
+            Message.sender_id != dealer_uuid,
+            Message.is_read.is_(False),
+        )
+        .values(is_read=True)
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "conversation_id": str(conversation_uuid),
+        "updated_count": int(update_result.rowcount or 0),
     }
 
 
