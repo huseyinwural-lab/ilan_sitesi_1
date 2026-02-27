@@ -427,9 +427,9 @@ export default function DealerListings() {
                   </div>
                 </div>
                 <div className="font-semibold text-slate-900" data-testid={`dealer-listings-price-${item.id}`}>{formatPrice(item.price)}</div>
-                <div className="font-semibold text-slate-900" data-testid={`dealer-listings-views-${item.id}`}>0</div>
-                <div className="font-semibold text-slate-900" data-testid={`dealer-listings-favorites-${item.id}`}>0</div>
-                <div className="font-semibold text-slate-900" data-testid={`dealer-listings-messages-${item.id}`}>0</div>
+                <div className="font-semibold text-slate-900" data-testid={`dealer-listings-views-${item.id}`}>{Number.isFinite(Number(item.view_count)) ? Number(item.view_count) : '-'}</div>
+                <div className="font-semibold text-slate-900" data-testid={`dealer-listings-favorites-${item.id}`}>{Number.isFinite(Number(item.favorite_count)) ? Number(item.favorite_count) : '-'}</div>
+                <div className="font-semibold text-slate-900" data-testid={`dealer-listings-messages-${item.id}`}>{Number.isFinite(Number(item.message_count)) ? Number(item.message_count) : '-'}</div>
                 <div className="font-medium text-slate-700" data-testid={`dealer-listings-expiry-${item.id}`}>{computeExpiry(item.created_at)}</div>
                 <div data-testid={`dealer-listings-status-${item.id}`}>
                   <div className="flex flex-wrap items-center gap-1" data-testid={`dealer-listings-actions-${item.id}`}>
