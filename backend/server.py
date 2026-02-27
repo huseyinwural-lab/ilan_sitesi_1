@@ -10748,16 +10748,19 @@ async def moderation_queue(
         and_(Listing.is_showcase.is_(True), or_(Listing.showcase_expires_at.is_(None), Listing.showcase_expires_at > now)),
     )
     urgent_active_expr = and_(Listing.urgent_until.is_not(None), Listing.urgent_until > now)
+    paid_active_expr = and_(Listing.paid_until.is_not(None), Listing.paid_until > now)
 
     doping_type_normalized = (doping_type or "").strip().lower()
-    if doping_type_normalized not in {"", "free", "showcase", "urgent"}:
+    if doping_type_normalized not in {"", "free", "paid", "showcase", "urgent"}:
         raise HTTPException(status_code=400, detail="Invalid doping_type")
     if doping_type_normalized == "showcase":
         conditions.append(featured_active_expr)
     elif doping_type_normalized == "urgent":
         conditions.append(and_(~featured_active_expr, urgent_active_expr))
+    elif doping_type_normalized == "paid":
+        conditions.append(and_(~featured_active_expr, ~urgent_active_expr, paid_active_expr))
     elif doping_type_normalized == "free":
-        conditions.append(and_(~featured_active_expr, ~urgent_active_expr))
+        conditions.append(and_(~featured_active_expr, ~urgent_active_expr, ~paid_active_expr))
 
     if current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
@@ -10783,6 +10786,7 @@ async def moderation_queue(
         vehicle = attrs.get("vehicle") or {}
         is_featured = _listing_featured_active(listing, now=now)
         is_urgent = _listing_urgent_active(listing, now=now)
+        is_paid = _listing_paid_active(listing, now=now)
         bucket = _listing_doping_bucket(listing, now=now)
         applicant_bucket = _listing_applicant_type(listing, owner)
         title = (listing.title or "").strip()
@@ -10814,8 +10818,10 @@ async def moderation_queue(
                 "doping_type": bucket,
                 "is_featured": is_featured,
                 "is_urgent": is_urgent,
+                "is_paid": is_paid,
                 "featured_until": listing.featured_until.isoformat() if listing.featured_until else None,
                 "urgent_until": listing.urgent_until.isoformat() if listing.urgent_until else None,
+                "paid_until": listing.paid_until.isoformat() if listing.paid_until else None,
             }
         )
 
@@ -10875,16 +10881,19 @@ async def moderation_queue_count(
         and_(Listing.is_showcase.is_(True), or_(Listing.showcase_expires_at.is_(None), Listing.showcase_expires_at > now)),
     )
     urgent_active_expr = and_(Listing.urgent_until.is_not(None), Listing.urgent_until > now)
+    paid_active_expr = and_(Listing.paid_until.is_not(None), Listing.paid_until > now)
 
     doping_type_normalized = (doping_type or "").strip().lower()
-    if doping_type_normalized not in {"", "free", "showcase", "urgent"}:
+    if doping_type_normalized not in {"", "free", "paid", "showcase", "urgent"}:
         raise HTTPException(status_code=400, detail="Invalid doping_type")
     if doping_type_normalized == "showcase":
         conditions.append(featured_active_expr)
     elif doping_type_normalized == "urgent":
         conditions.append(and_(~featured_active_expr, urgent_active_expr))
+    elif doping_type_normalized == "paid":
+        conditions.append(and_(~featured_active_expr, ~urgent_active_expr, paid_active_expr))
     elif doping_type_normalized == "free":
-        conditions.append(and_(~featured_active_expr, ~urgent_active_expr))
+        conditions.append(and_(~featured_active_expr, ~urgent_active_expr, ~paid_active_expr))
 
     if current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
