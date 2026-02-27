@@ -552,7 +552,7 @@ export const CorporateDashboardDesigner = () => {
       toast.success('Dashboard rollback tamamlandı');
       setIsRollbackOpen(false);
       setRollbackReason('');
-      await Promise.all([loadDraft(), loadEffective()]);
+      await Promise.all([loadDraft({ silent: true }), loadEffective(), loadPublishAudits()]);
     } catch (requestError) {
       setError(requestError.message || 'Rollback başarısız');
       toast.error(requestError.message || 'Rollback başarısız');
