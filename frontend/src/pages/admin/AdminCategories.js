@@ -3171,6 +3171,16 @@ const AdminCategories = () => {
                                 Kaldır
                               </button>
                             </div>
+                            {form.image_url && (
+                              <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700" data-testid="categories-image-meta">
+                                <div data-testid="categories-image-meta-format">
+                                  Format: {String(form.image_url).split(".").pop()?.split("?")[0]?.toUpperCase() || "WEBP"}
+                                </div>
+                                <div data-testid="categories-image-meta-updated">
+                                  Son Güncelleme: {editing?.updated_at ? new Date(editing.updated_at).toLocaleString("tr-TR") : (lastSavedAt || "-")}
+                                </div>
+                              </div>
+                            )}
                             {categoryImageUploading && (
                               <div className="text-xs text-slate-600" data-testid="categories-image-uploading">
                                 Görsel yükleniyor...
