@@ -2055,126 +2055,32 @@ async def admin_publish_ui_config(
     session: AsyncSession = Depends(get_db),
 ):
     normalized_type = _normalize_config_type(config_type)
-    try:
-        config_uuid = uuid.UUID(config_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid config id") from exc
-
-    row = await session.get(UIConfig, config_uuid)
-    if not row or row.config_type != normalized_type:
-        raise HTTPException(status_code=404, detail="UI config not found")
-    _assert_header_segment_enabled(row.config_type, row.segment)
-
-    your_version = payload.config_version if payload else None
     retry_count = int(max(0, (payload.retry_count if payload else 0) or 0))
-    try:
-        await _validate_publish_version_or_raise(
-            session,
-            row=row,
-            config_version=your_version,
-        )
-        _validate_publish_hash_or_raise(row, payload.resolved_config_hash if payload else None)
-        if row.config_type == "header":
-            _validate_owner_scope_or_raise(row, payload.owner_type if payload else None, payload.owner_id if payload else None)
-    except HTTPException as exc:
-        detail = exc.detail if isinstance(exc.detail, dict) else {"message": str(exc.detail)}
-        await _record_publish_attempt_audit(
-            session,
+    session.add(
+        _create_ui_config_audit_log(
+            action="ui_config_publish_legacy_call",
             current_user=current_user,
-            config_type=row.config_type,
-            segment=row.segment,
-            scope=row.scope,
-            scope_id=row.scope_id,
-            config_id=str(row.id),
-            config_version=your_version,
-            retry_count=retry_count,
-            conflict_detected=exc.status_code == 409,
-            lock_wait_ms=0,
-            publish_duration_ms=None,
-            status="validation_error",
-            detail_message=detail.get("message") or "Publish validation error",
-            extra={"code": detail.get("code")},
-            commit_now=True,
+            config_type=normalized_type,
+            resource_id=str(config_id),
+            old_values=None,
+            new_values=None,
+            metadata_info={
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "retry_count": retry_count,
+                "config_version": payload.config_version if payload else None,
+            },
         )
-        raise
-
-    lock_key = _publish_scope_key(
-        config_type=row.config_type,
-        segment=row.segment,
-        scope=row.scope,
-        scope_id=row.scope_id,
     )
-    lock_start = time.perf_counter()
-    try:
-        await _acquire_publish_lock_or_raise(lock_key, current_user)
-    except HTTPException as exc:
-        lock_wait_ms = int((time.perf_counter() - lock_start) * 1000)
-        detail = exc.detail if isinstance(exc.detail, dict) else {"message": str(exc.detail)}
-        await _record_publish_attempt_audit(
-            session,
-            current_user=current_user,
-            config_type=row.config_type,
-            segment=row.segment,
-            scope=row.scope,
-            scope_id=row.scope_id,
-            config_id=str(row.id),
-            config_version=your_version,
-            retry_count=retry_count,
-            conflict_detected=True,
-            lock_wait_ms=lock_wait_ms,
-            publish_duration_ms=None,
-            status="locked",
-            detail_message=detail.get("message") or "Publish lock active",
-            extra={"code": detail.get("code")},
-            commit_now=True,
-        )
-        raise
-
-    lock_wait_ms = int((time.perf_counter() - lock_start) * 1000)
-    publish_start = time.perf_counter()
-    try:
-        published_row, diff_payload, previous_payload, snapshot_payload = await _publish_ui_config_row(
-            session,
-            row=row,
-            current_user=current_user,
-            reason="publish_by_config_id_legacy",
-        )
-    finally:
-        await _release_publish_lock(lock_key)
-
-    publish_duration_ms = int((time.perf_counter() - publish_start) * 1000)
-    await _record_publish_attempt_audit(
-        session,
-        current_user=current_user,
-        config_type=published_row.config_type,
-        segment=published_row.segment,
-        scope=published_row.scope,
-        scope_id=published_row.scope_id,
-        config_id=str(published_row.id),
-        config_version=published_row.version,
-        retry_count=retry_count,
-        conflict_detected=False,
-        lock_wait_ms=lock_wait_ms,
-        publish_duration_ms=publish_duration_ms,
-        status="success",
-        detail_message="Publish success",
-        extra={"deprecated_endpoint": True},
-        commit_now=True,
-    )
-
-    return {
-        "ok": True,
-        "item": _serialize_ui_config(published_row),
-        "snapshot": {
-            "published_config_id": str(published_row.id),
-            "published_version": published_row.version,
-            **snapshot_payload,
+    await session.commit()
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "code": "LEGACY_ENDPOINT_REMOVED",
+            "message": "Legacy publish endpoint kaldırıldı. Yeni endpointi kullanın: /api/admin/ui/configs/{config_type}/publish",
+            "hint": "Client publish entegrasyonunu yeni endpoint contract'ına taşıyın",
         },
-        "diff": diff_payload,
-        "previous": previous_payload,
-        "deprecated_endpoint": True,
-        "deprecation_note": "Bu endpoint deprecated. Kaldırma planı: P2. Yeni endpoint: /api/admin/ui/configs/{config_type}/publish",
-    }
+        headers=LEGACY_PUBLISH_DEPRECATION_HEADERS,
+    )
 
 
 @router.get("/admin/ui/configs/{config_type}/diff")
