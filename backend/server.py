@@ -30953,9 +30953,13 @@ async def create_pricing_checkout_session(
 
 
 @api_router.get("/pricing/packages")
-async def list_pricing_packages_endpoint(session: AsyncSession = Depends(get_sql_session)):
+async def list_pricing_packages_endpoint(
+    listing_type: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
     now = datetime.now(timezone.utc)
-    result = await session.execute(
+    normalized_listing_type = _normalize_campaign_item_listing_type(listing_type) if listing_type else None
+    query = (
         select(PricingCampaignItem)
         .where(
             PricingCampaignItem.scope == "corporate",
@@ -30968,11 +30972,15 @@ async def list_pricing_packages_endpoint(session: AsyncSession = Depends(get_sql
         )
         .order_by(PricingCampaignItem.listing_quota)
     )
+    if normalized_listing_type:
+        query = query.where(PricingCampaignItem.listing_type == normalized_listing_type)
+    result = await session.execute(query)
     items = []
     for item in result.scalars().all():
         items.append(
             {
                 "id": str(item.id),
+                "listing_type": item.listing_type,
                 "name": item.name,
                 "listing_quota": item.listing_quota,
                 "price_amount": float(item.price_amount or 0),
