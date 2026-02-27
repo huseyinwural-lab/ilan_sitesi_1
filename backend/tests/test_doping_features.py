@@ -214,10 +214,11 @@ class TestAdminDopingEndpoint:
         )
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text[:300]}"
         data = response.json()
-        assert data.get("is_featured") is True, "Listing should be featured after showcase doping"
-        assert data.get("doping_type") == "showcase", "doping_type should be showcase"
-        assert data.get("featured_until") is not None, "featured_until should be set"
-        print(f"PASS: Showcase 7 days applied - featured_until={data.get('featured_until')}")
+        listing = data.get("listing", data)  # Handle nested structure
+        assert listing.get("is_featured") is True, "Listing should be featured after showcase doping"
+        assert listing.get("doping_type") == "showcase", "doping_type should be showcase"
+        assert listing.get("featured_until") is not None, "featured_until should be set"
+        print(f"PASS: Showcase 7 days applied - featured_until={listing.get('featured_until')}")
 
     def test_doping_urgent_30days(self, auth_headers, test_listing_id):
         """Test setting urgent doping for 30 days"""
@@ -232,10 +233,11 @@ class TestAdminDopingEndpoint:
         )
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text[:300]}"
         data = response.json()
+        listing = data.get("listing", data)  # Handle nested structure
         # Note: After urgent, showcase priority means is_featured might still be True if featured_until > now
-        assert data.get("is_urgent") is True, "Listing should be urgent after urgent doping"
-        assert data.get("urgent_until") is not None, "urgent_until should be set"
-        print(f"PASS: Urgent 30 days applied - urgent_until={data.get('urgent_until')}")
+        assert listing.get("is_urgent") is True, "Listing should be urgent after urgent doping"
+        assert listing.get("urgent_until") is not None, "urgent_until should be set"
+        print(f"PASS: Urgent 30 days applied - urgent_until={listing.get('urgent_until')}")
 
     def test_doping_free(self, auth_headers, test_listing_id):
         """Test removing doping (set to free)"""
@@ -249,10 +251,11 @@ class TestAdminDopingEndpoint:
         )
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text[:300]}"
         data = response.json()
-        assert data.get("is_featured") is False, "Listing should not be featured after free doping"
-        assert data.get("is_urgent") is False, "Listing should not be urgent after free doping"
-        assert data.get("featured_until") is None, "featured_until should be None"
-        assert data.get("urgent_until") is None, "urgent_until should be None"
+        listing = data.get("listing", data)  # Handle nested structure
+        assert listing.get("is_featured") is False, "Listing should not be featured after free doping"
+        assert listing.get("is_urgent") is False, "Listing should not be urgent after free doping"
+        assert listing.get("featured_until") is None, "featured_until should be None"
+        assert listing.get("urgent_until") is None, "urgent_until should be None"
         print("PASS: Doping reset to free")
 
     def test_doping_showcase_90days(self, auth_headers, test_listing_id):
@@ -268,7 +271,8 @@ class TestAdminDopingEndpoint:
         )
         assert response.status_code == 200
         data = response.json()
-        assert data.get("is_featured") is True
+        listing = data.get("listing", data)  # Handle nested structure
+        assert listing.get("is_featured") is True
         print(f"PASS: Showcase 90 days applied")
 
     def test_doping_custom_days(self, auth_headers, test_listing_id):
@@ -284,7 +288,8 @@ class TestAdminDopingEndpoint:
         )
         assert response.status_code == 200
         data = response.json()
-        assert data.get("urgent_until") is not None
+        listing = data.get("listing", data)  # Handle nested structure
+        assert listing.get("urgent_until") is not None
         print(f"PASS: Custom 45 days urgent applied")
 
     def test_doping_invalid_listing_id(self, auth_headers):
@@ -384,10 +389,11 @@ class TestDopingPriority:
         )
         assert response.status_code == 200
         data = response.json()
+        listing = data.get("listing", data)  # Handle nested structure
         
         # Based on implementation, showcase clears urgent_until
-        assert data.get("is_featured") is True, "Showcase should be active"
-        assert data.get("urgent_until") is None, "urgent_until should be cleared when showcase is set"
+        assert listing.get("is_featured") is True, "Showcase should be active"
+        assert listing.get("urgent_until") is None, "urgent_until should be cleared when showcase is set"
         print("PASS: Showcase priority correctly applied (clears urgent)")
 
         # Clean up
