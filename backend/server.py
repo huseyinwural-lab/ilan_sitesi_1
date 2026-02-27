@@ -14111,6 +14111,14 @@ class DealerSettingsUpdatePayload(BaseModel):
     logo_url: Optional[str] = None
 
 
+class DealerSettingsPreferencesPayload(BaseModel):
+    notification_prefs: Optional[Dict[str, Any]] = None
+
+
+class DealerBlockedAccountPayload(BaseModel):
+    email: EmailStr
+
+
 def _dealer_role_allowed(role_scope: Optional[str], role: str) -> bool:
     raw = (role_scope or "dealer").strip()
     if not raw or raw == "*":
