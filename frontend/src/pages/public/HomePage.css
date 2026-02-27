@@ -222,6 +222,25 @@
   text-overflow: ellipsis;
 }
 
+.home-v2-doping-badge {
+  margin-left: 6px;
+  border-radius: 999px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 900;
+  vertical-align: middle;
+}
+
+.home-v2-doping-badge-featured {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.home-v2-doping-badge-urgent {
+  background: #ffe4e6;
+  color: #9f1239;
+}
+
 .home-v2-tile-price {
   color: #111318;
   font-weight: 900;
