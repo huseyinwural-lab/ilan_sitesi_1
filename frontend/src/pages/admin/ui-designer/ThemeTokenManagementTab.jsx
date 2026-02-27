@@ -281,7 +281,7 @@ export const ThemeTokenManagementTab = () => {
         body: JSON.stringify({ is_active: true }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.detail || 'Theme aktive edilemedi');
+      if (!response.ok) throw new Error(parseApiErrorMessage(data, 'Theme aktive edilemedi'));
 
       setStatus(`Aktif tema: ${data?.item?.name || '-'}`);
       await refreshThemeData();
@@ -312,7 +312,7 @@ export const ThemeTokenManagementTab = () => {
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.detail || 'Theme ataması başarısız');
+      if (!response.ok) throw new Error(parseApiErrorMessage(data, 'Theme ataması başarısız'));
 
       setStatus('Theme ataması kaydedildi');
       await fetchAssignments();
@@ -327,13 +327,12 @@ export const ThemeTokenManagementTab = () => {
     try {
       const params = new URLSearchParams();
       if (effectiveTenantId.trim()) params.set('tenant_id', effectiveTenantId.trim());
-      if (effectiveUserId.trim()) params.set('user_id', effectiveUserId.trim());
 
       const response = await fetch(`${API}/ui/themes/effective?${params.toString()}`, {
         headers: authHeader,
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.detail || 'Effective theme alınamadı');
+      if (!response.ok) throw new Error(parseApiErrorMessage(data, 'Effective theme alınamadı'));
 
       setEffectiveResult(data);
       setStatus('Effective theme alındı');
