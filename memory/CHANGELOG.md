@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-02-27 — P70 Kurumsal Menü Yapısı PDF Hizalama
+
+- Dealer portal sol menüsü (`frontend/src/layouts/DealerLayout.js`) PDF hiyerarşisine göre yeniden düzenlendi.
+- Menü ağacı çok seviyeli hale getirildi: Ofisim > (Özet, İlanlar, Sanal Turlar, Mesajlar, Müşteri Yönetimi>Sözleşmeler, Favoriler alt menüleri, Raporlar alt menüleri, Danışman Takibi, Satın Al, Hesabım alt menüleri).
+- Var olan route’lara eşleme yapıldı (`/dealer/overview`, `/dealer/listings`, `/dealer/messages`, `/dealer/customers`, `/dealer/reports`, `/dealer/purchase`, `/dealer/settings`, `/dealer/company`, `/dealer/invoices`).
+- Yeni menü öğeleri için `data-testid` kapsaması eklendi (tree item/link/label/children).
+
 ## 2026-02-27 — P69 Ops Publish Health + Alert Reliability
 
 **Backend**
