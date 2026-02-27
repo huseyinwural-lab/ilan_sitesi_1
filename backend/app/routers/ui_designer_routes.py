@@ -1538,28 +1538,90 @@ async def _resolve_effective_theme(
     *,
     tenant_id: Optional[str],
     user_id: Optional[str],
-) -> tuple[Optional[UITheme], str, Optional[str], Optional[UIThemeAssignment]]:
-    chain = [("user", user_id), ("tenant", tenant_id), ("system", None)]
-    for scope, scope_id in chain:
-        if scope in {"tenant", "user"} and not scope_id:
-            continue
-        assignment_stmt = (
+) -> tuple[Optional[UITheme], str, Optional[str], Optional[UIThemeAssignment], dict[str, Any]]:
+    del user_id
+
+    global_assignment = (
+        await session.execute(
             select(UIThemeAssignment)
-            .where(*_theme_scope_clause(scope, scope_id))
+            .where(*_theme_scope_clause("system", None))
             .order_by(desc(UIThemeAssignment.updated_at))
             .limit(1)
         )
-        assignment = (await session.execute(assignment_stmt)).scalar_one_or_none()
-        if not assignment:
-            continue
-        theme = await session.get(UITheme, assignment.theme_id)
-        if theme:
-            return theme, scope, scope_id, assignment
-
-    fallback = (
-        await session.execute(select(UITheme).where(UITheme.is_active.is_(True)).order_by(desc(UITheme.updated_at)).limit(1))
     ).scalar_one_or_none()
-    return fallback, "active_fallback", None, None
+    global_theme = await session.get(UITheme, global_assignment.theme_id) if global_assignment else None
+    if global_theme is None:
+        global_theme = (
+            await session.execute(select(UITheme).where(UITheme.is_active.is_(True)).order_by(desc(UITheme.updated_at)).limit(1))
+        ).scalar_one_or_none()
+
+    tenant_assignment = None
+    tenant_theme = None
+    if tenant_id:
+        tenant_assignment = (
+            await session.execute(
+                select(UIThemeAssignment)
+                .where(*_theme_scope_clause("tenant", tenant_id))
+                .order_by(desc(UIThemeAssignment.updated_at))
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        tenant_theme = await session.get(UITheme, tenant_assignment.theme_id) if tenant_assignment else None
+
+    if tenant_theme and global_theme:
+        resolved_tokens = _deep_merge_tokens(global_theme.tokens or {}, tenant_theme.tokens or {})
+        resolution = {
+            "mode": "dealer_override_over_global",
+            "global_theme_id": str(global_theme.id),
+            "dealer_theme_id": str(tenant_theme.id),
+            "resolved_config_hash": _stable_hash_payload(resolved_tokens),
+        }
+        return tenant_theme, "tenant", tenant_id, tenant_assignment, {
+            "tokens": resolved_tokens,
+            "resolution": resolution,
+            "global_theme": global_theme,
+            "dealer_theme": tenant_theme,
+        }
+
+    if tenant_theme and not global_theme:
+        resolution = {
+            "mode": "dealer_only_fallback",
+            "global_theme_id": None,
+            "dealer_theme_id": str(tenant_theme.id),
+            "resolved_config_hash": _stable_hash_payload(tenant_theme.tokens or {}),
+        }
+        return tenant_theme, "tenant", tenant_id, tenant_assignment, {
+            "tokens": tenant_theme.tokens or {},
+            "resolution": resolution,
+            "global_theme": None,
+            "dealer_theme": tenant_theme,
+        }
+
+    if global_theme:
+        resolution = {
+            "mode": "global_theme",
+            "global_theme_id": str(global_theme.id),
+            "dealer_theme_id": None,
+            "resolved_config_hash": _stable_hash_payload(global_theme.tokens or {}),
+        }
+        return global_theme, "system", None, global_assignment, {
+            "tokens": global_theme.tokens or {},
+            "resolution": resolution,
+            "global_theme": global_theme,
+            "dealer_theme": None,
+        }
+
+    return None, "active_fallback", None, None, {
+        "tokens": {},
+        "resolution": {
+            "mode": "empty",
+            "global_theme_id": None,
+            "dealer_theme_id": None,
+            "resolved_config_hash": _stable_hash_payload({}),
+        },
+        "global_theme": None,
+        "dealer_theme": None,
+    }
 
 
 @router.get("/admin/ui/permissions")
