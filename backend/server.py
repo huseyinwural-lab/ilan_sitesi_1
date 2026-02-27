@@ -31515,6 +31515,136 @@ async def publish_site_theme_config(
     return {"ok": True, "id": str(theme.id), "version": theme.version, "validation_report": report}
 
 
+@api_router.get("/site/showcase-layout")
+async def get_site_showcase_layout(session: AsyncSession = Depends(get_sql_session)):
+    result = await session.execute(
+        select(SiteShowcaseLayout)
+        .where(SiteShowcaseLayout.status == "published")
+        .order_by(desc(SiteShowcaseLayout.updated_at))
+        .limit(1)
+    )
+    layout = result.scalar_one_or_none()
+    normalized = _normalize_showcase_layout_config(layout.config if layout else None)
+    content = {
+        "config": normalized,
+        "version": layout.version if layout else 0,
+        "updated_at": layout.updated_at.isoformat() if layout and layout.updated_at else None,
+    }
+    return JSONResponse(content=content, headers={"Cache-Control": f"public, max-age={SHOWCASE_LAYOUT_CACHE_SECONDS}"})
+
+
+@api_router.get("/admin/site/showcase-layout")
+async def get_showcase_layout_admin(
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(select(SiteShowcaseLayout).order_by(desc(SiteShowcaseLayout.version)).limit(1))
+    layout = result.scalar_one_or_none()
+    return {
+        "id": str(layout.id) if layout else None,
+        "config": _normalize_showcase_layout_config(layout.config if layout else None),
+        "status": layout.status if layout else "draft",
+        "version": layout.version if layout else 0,
+        "updated_at": layout.updated_at.isoformat() if layout and layout.updated_at else None,
+    }
+
+
+@api_router.get("/admin/site/showcase-layout/configs")
+async def list_showcase_layout_configs(
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await session.execute(select(SiteShowcaseLayout).order_by(desc(SiteShowcaseLayout.version)))
+    items = []
+    for layout in result.scalars().all():
+        items.append(
+            {
+                "id": str(layout.id),
+                "status": layout.status,
+                "version": layout.version,
+                "updated_at": layout.updated_at.isoformat() if layout.updated_at else None,
+            }
+        )
+    return {"items": items}
+
+
+@api_router.get("/admin/site/showcase-layout/config/{layout_id}")
+async def get_showcase_layout_config(
+    layout_id: str,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        layout_uuid = uuid.UUID(layout_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid showcase layout id") from exc
+
+    layout = await session.get(SiteShowcaseLayout, layout_uuid)
+    if not layout:
+        raise HTTPException(status_code=404, detail="Showcase layout config not found")
+    return {
+        "id": str(layout.id),
+        "config": _normalize_showcase_layout_config(layout.config),
+        "status": layout.status,
+        "version": layout.version,
+        "updated_at": layout.updated_at.isoformat() if layout.updated_at else None,
+    }
+
+
+@api_router.put("/admin/site/showcase-layout/config")
+async def save_showcase_layout_config(
+    payload: ShowcaseLayoutConfigPayload,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    normalized = _normalize_showcase_layout_config(payload.config)
+    errors = _validate_showcase_layout_config(normalized)
+    if errors:
+        raise HTTPException(status_code=400, detail={"message": "Showcase layout validation failed", "errors": errors})
+
+    latest = await session.execute(select(SiteShowcaseLayout).order_by(desc(SiteShowcaseLayout.version)).limit(1))
+    latest_row = latest.scalar_one_or_none()
+    next_version = (latest_row.version if latest_row else 0) + 1
+
+    layout = SiteShowcaseLayout(config=normalized, status=payload.status or "draft", version=next_version)
+    session.add(layout)
+    await session.commit()
+    return {"ok": True, "id": str(layout.id), "version": layout.version}
+
+
+@api_router.post("/admin/site/showcase-layout/config/{layout_id}/publish")
+async def publish_showcase_layout_config(
+    layout_id: str,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        layout_uuid = uuid.UUID(layout_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid showcase layout id") from exc
+
+    layout = await session.get(SiteShowcaseLayout, layout_uuid)
+    if not layout:
+        raise HTTPException(status_code=404, detail="Showcase layout config not found")
+
+    normalized = _normalize_showcase_layout_config(layout.config)
+    errors = _validate_showcase_layout_config(normalized)
+    if errors:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "Showcase layout validation failed",
+                "errors": errors,
+            },
+        )
+
+    await session.execute(update(SiteShowcaseLayout).values(status="draft"))
+    layout.status = "published"
+    layout.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+    return {"ok": True, "id": str(layout.id), "version": layout.version}
+
+
 @api_router.get("/site/footer")
 async def get_footer_layout(session: AsyncSession = Depends(get_sql_session)):
     result = await session.execute(
