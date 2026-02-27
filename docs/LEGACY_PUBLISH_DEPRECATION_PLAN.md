@@ -11,12 +11,9 @@ Yeni endpoint:
 
 ## Son 30 Gün Kullanım Analizi
 
-Analiz endpointi:
-- `GET /api/admin/ui/configs/{config_type}/legacy-usage?days=30`
-
-Çıktı:
-- toplam çağrı sayısı
-- actor bazlı breakdown
+Not:
+- Legacy usage analiz endpointi (`/legacy-usage`) P2 fiziksel temizlik kapsamında kaldırıldı.
+- Geçmiş kullanım analizi için sadece mevcut audit kayıtları (DB) sorgulanır.
 
 ## Deprecation Aşamaları
 
@@ -25,24 +22,21 @@ Analiz endpointi:
 - Audit: `ui_config_publish_legacy_call`
 
 ### Aşama 2 (Tamamlandı)
-- Legacy endpoint çağrısı artık **410 Gone**
-- Response:
-  - `code = LEGACY_ENDPOINT_REMOVED`
-  - deprecation header’ları (`Deprecation`, `Sunset`, `Link`)
+- Legacy endpoint çağrısı `410 Gone` ile yönlendirme yapıyordu
 
-### Aşama 3 (P2 Cleanup)
-- OpenAPI’den legacy path çıkarımı
-- Client SDK referans temizliği
-- Route kodunun fiziksel kaldırılması
+### Aşama 3 (Tamamlandı - P2 Cleanup)
+- OpenAPI’den legacy path çıkarıldı
+- Client SDK referans temizliği tamamlandı
+- Route kodu fiziksel olarak kaldırıldı
 
 ## Kontrat Temizliği
 
 Hedef:
 - Tek publish kontratı (new endpoint)
-- Legacy usage sıfıra indiğinde route kaldırımı
+- Legacy route/usage endpointlerinin fiziksel kaldırımı
 
 ## Regression Checklist
 
-- Legacy endpoint çağrısı -> `410`
+- Legacy endpoint çağrısı -> `404` (route yok)
 - Yeni endpoint publish -> PASS
 - Snapshot integrity -> PASS
