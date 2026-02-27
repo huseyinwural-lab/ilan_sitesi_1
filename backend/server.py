@@ -15712,6 +15712,37 @@ async def dealer_dashboard_summary(
             )
         ).scalar_one()
 
+        views_24h = (
+            await session.execute(
+                select(func.count())
+                .select_from(ListingView)
+                .join(Listing, ListingView.listing_id == Listing.id)
+                .where(
+                    Listing.dealer_id == dealer_uuid,
+                    ListingView.created_at >= now_dt - timedelta(hours=24),
+                )
+            )
+        ).scalar_one()
+
+        top_listing_rows = (
+            await session.execute(
+                select(
+                    Listing.id,
+                    Listing.title,
+                    func.count(ListingView.id).label("visit_count"),
+                )
+                .select_from(ListingView)
+                .join(Listing, ListingView.listing_id == Listing.id)
+                .where(
+                    Listing.dealer_id == dealer_uuid,
+                    ListingView.created_at >= now_dt - timedelta(hours=24),
+                )
+                .group_by(Listing.id, Listing.title)
+                .order_by(desc(func.count(ListingView.id)))
+                .limit(5)
+            )
+        ).all()
+
         lead_clicks_7d = (
             await session.execute(
                 select(func.count())
@@ -15738,6 +15769,21 @@ async def dealer_dashboard_summary(
             )
         ).scalar_one_or_none()
         package_status = latest_invoice.status if latest_invoice else "trial"
+        package_name = "Profesyonel Emlak Ofisi / Taahhütlü Pro 50"
+        if latest_invoice and latest_invoice.plan_id:
+            plan = await session.get(Plan, latest_invoice.plan_id)
+            if plan and plan.name:
+                package_name = plan.name
+
+        listing_visit_breakdown = [
+            {
+                "listing_id": str(row.id),
+                "title": row.title,
+                "visit_count": int(row.visit_count or 0),
+                "route": "/dealer/listings",
+            }
+            for row in top_listing_rows
+        ]
 
         widget_map = {
             "active_listings": {
@@ -15792,6 +15838,30 @@ async def dealer_dashboard_summary(
 
         payload = {
             "widgets": widgets,
+            "overview": {
+                "store_performance": {
+                    "title": "Mağaza Performansı",
+                    "visit_count_last_24h": int(views_24h or 0),
+                    "visit_count_last_7d": int(views_7d or 0),
+                    "visit_breakdown": listing_visit_breakdown,
+                },
+                "package_summary": {
+                    "name": package_name,
+                    "status": package_status,
+                    "listing_quota_limit": quota_limit,
+                    "listing_quota_used": quota_used,
+                    "listing_quota_remaining": quota_remaining,
+                },
+                "kpi_cards": {
+                    "published_listing_count": int(active_listings or 0),
+                    "demand_customer_count": 0,
+                    "matching_listing_count": 0,
+                },
+                "data_notice": {
+                    "demand_data_available": False,
+                    "message": "Müşteri veya talep kaydı olmadığı için veri gösterilemiyor.",
+                },
+            },
             "generated_at": now_dt.isoformat(),
             "cache": {"hit": False, "ttl_seconds": DEALER_DASHBOARD_CACHE_TTL_SECONDS},
         }
