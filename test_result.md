@@ -18520,3 +18520,59 @@ Keep current behavior but ensure InfoPage uses NotFoundPage data-testids when sh
 ---
 
 
+## Logo Upload Stabilization Test (Feb 27, 2026 - LATEST)
+
+### Test Summary
+Logo upload stabilization test for backend+frontend validation as per review request: "Logo upload stabilizasyonu için backend+frontend doğrulama yap: 1) Admin ile POST /api/admin/ui/configs/header/logo valid png (3:1) -> 200 + logo_url + logo_meta + storage_health. 2) invalid format/txt -> 400 code=INVALID_FILE_TYPE. 3) >2MB -> 400 code=FILE_TOO_LARGE. 4) invalid aspect -> 400 code=INVALID_ASPECT_RATIO. 5) dealer token ile upload -> 403. 6) GET /api/admin/ui/logo-assets/health -> 200. 7) Frontend admin corporate header tabında inline error banner (summary/detail/code) göründüğünü ve upload sonrası preview src'nin ?v=timestamp cache bust içerdiğini doğrula. 8) Publish sonrası /dealer/overview header logo görüntülensin."
+
+### Test Flow Executed:
+
+### Critical Findings:
+
+---
+
+backend:
+  - task: "Logo Upload API Validation"
+    implemented: true
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Initial testing setup - checking logo upload endpoints"
+
+frontend:
+  - task: "Logo Upload UI Integration"
+    implemented: true
+    working: "NA"
+    file: "AdminCorporateHeader.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Initial testing setup - checking frontend logo upload UI"
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Logo Upload API Validation"
+    - "Logo Upload UI Integration"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "testing"
+    - message: "Starting logo upload stabilization test. Need to verify endpoints and functionality."
+
+
