@@ -991,6 +991,7 @@ def _serialize_ui_theme_assignment(row: UIThemeAssignment) -> dict[str, Any]:
         "scope_id": row.scope_id,
         "assigned_by": str(row.assigned_by) if row.assigned_by else None,
         "assigned_by_email": row.assigned_by_email,
+        "deprecated": row.scope == "user",
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
