@@ -1798,6 +1798,15 @@ async def admin_save_ui_config(
         )
         _validate_dashboard_guardrails(normalized_layout, normalized_widgets)
 
+    previous_draft = await _latest_ui_config(
+        session,
+        config_type=normalized_type,
+        segment=normalized_segment,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+        status="draft",
+    )
+
     next_version = await _next_ui_config_version(
         session,
         config_type=normalized_type,
@@ -1828,6 +1837,27 @@ async def admin_save_ui_config(
             segment=normalized_segment,
             scope=normalized_scope,
             scope_id=normalized_scope_id,
+        )
+
+    if normalized_status == "draft":
+        owner_type, owner_id = _owner_scope_from_scope(normalized_scope, normalized_scope_id)
+        session.add(
+            _create_ui_config_audit_log(
+                action="DRAFT_UPDATED",
+                current_user=current_user,
+                config_type=normalized_type,
+                resource_id=str(row.id),
+                old_values=None,
+                new_values=None,
+                metadata_info={
+                    "actor_id": current_user.get("id"),
+                    "owner_type": owner_type,
+                    "owner_id": owner_id,
+                    "previous_version": previous_draft.version if previous_draft else None,
+                    "new_version": row.version,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                },
+            )
         )
 
     session.add(row)
