@@ -10684,6 +10684,8 @@ async def moderation_queue(
     dealer_only: Optional[bool] = None,
     country: Optional[str] = None,
     module: Optional[str] = None,
+    applicant_type: Optional[str] = None,
+    doping_type: Optional[str] = None,
     limit: int = 50,
     skip: int = 0,
     current_user=Depends(check_permissions(list(ALLOWED_MODERATION_ROLES))),
@@ -10700,6 +10702,48 @@ async def moderation_queue(
     if module:
         conditions.append(Listing.module == module)
 
+    applicant_type_normalized = (applicant_type or "").strip().lower()
+    if applicant_type_normalized not in {"", "individual", "corporate"}:
+        raise HTTPException(status_code=400, detail="Invalid applicant_type")
+
+    corporate_owner_expr = or_(
+        Listing.is_dealer_listing.is_(True),
+        SqlUser.role == "dealer",
+        SqlUser.portal_scope == "dealer",
+    )
+    individual_owner_expr = and_(
+        Listing.is_dealer_listing.is_(False),
+        or_(
+            SqlUser.id.is_(None),
+            and_(
+                or_(SqlUser.role.is_(None), SqlUser.role != "dealer"),
+                or_(SqlUser.portal_scope.is_(None), SqlUser.portal_scope != "dealer"),
+            ),
+        ),
+    )
+
+    if applicant_type_normalized == "corporate":
+        conditions.append(corporate_owner_expr)
+    elif applicant_type_normalized == "individual":
+        conditions.append(individual_owner_expr)
+
+    now = datetime.now(timezone.utc)
+    featured_active_expr = or_(
+        and_(Listing.featured_until.is_not(None), Listing.featured_until > now),
+        and_(Listing.is_showcase.is_(True), or_(Listing.showcase_expires_at.is_(None), Listing.showcase_expires_at > now)),
+    )
+    urgent_active_expr = and_(Listing.urgent_until.is_not(None), Listing.urgent_until > now)
+
+    doping_type_normalized = (doping_type or "").strip().lower()
+    if doping_type_normalized not in {"", "free", "showcase", "urgent"}:
+        raise HTTPException(status_code=400, detail="Invalid doping_type")
+    if doping_type_normalized == "showcase":
+        conditions.append(featured_active_expr)
+    elif doping_type_normalized == "urgent":
+        conditions.append(and_(~featured_active_expr, urgent_active_expr))
+    elif doping_type_normalized == "free":
+        conditions.append(and_(~featured_active_expr, ~urgent_active_expr))
+
     if current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
         if "*" not in scope:
@@ -10708,8 +10752,9 @@ async def moderation_queue(
     limit = min(200, max(1, int(limit)))
     offset = max(0, int(skip))
     query_stmt = (
-        select(ModerationItem, Listing)
+        select(ModerationItem, Listing, SqlUser)
         .join(Listing, ModerationItem.listing_id == Listing.id)
+        .outerjoin(SqlUser, Listing.user_id == SqlUser.id)
         .where(and_(*conditions))
         .order_by(desc(ModerationItem.created_at))
         .offset(offset)
@@ -10718,9 +10763,13 @@ async def moderation_queue(
     rows = (await session.execute(query_stmt)).all()
 
     out = []
-    for item, listing in rows:
+    for item, listing, owner in rows:
         attrs = listing.attributes or {}
         vehicle = attrs.get("vehicle") or {}
+        is_featured = _listing_featured_active(listing, now=now)
+        is_urgent = _listing_urgent_active(listing, now=now)
+        bucket = _listing_doping_bucket(listing, now=now)
+        applicant_bucket = _listing_applicant_type(listing, owner)
         title = (listing.title or "").strip()
         if not title:
             title = f"{(vehicle.get('make_key') or '').upper()} {vehicle.get('model_key') or ''} {vehicle.get('year') or ''}".strip()
@@ -10746,6 +10795,12 @@ async def moderation_queue(
                 "is_dealer_listing": bool(listing.is_dealer_listing),
                 "dealer_only": bool(listing.is_dealer_listing),
                 "is_premium": bool(listing.is_premium),
+                "applicant_type": applicant_bucket,
+                "doping_type": bucket,
+                "is_featured": is_featured,
+                "is_urgent": is_urgent,
+                "featured_until": listing.featured_until.isoformat() if listing.featured_until else None,
+                "urgent_until": listing.urgent_until.isoformat() if listing.urgent_until else None,
             }
         )
 
