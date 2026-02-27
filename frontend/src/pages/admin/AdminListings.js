@@ -331,11 +331,12 @@ export default function AdminListingsPage({
       </div>
 
       <div className="rounded-md border bg-card overflow-hidden" data-testid="listings-table">
-        <div className="hidden lg:grid grid-cols-[2fr_1.2fr_1.2fr_0.8fr_1fr] gap-4 bg-muted px-4 py-3 text-sm font-medium">
+        <div className="hidden lg:grid grid-cols-[2fr_1.1fr_1.1fr_0.9fr_1.2fr_1.4fr] gap-4 bg-muted px-4 py-3 text-sm font-medium">
           <div>İlan</div>
           <div>Sahip</div>
           <div>Ülke / Kategori</div>
           <div>Durum</div>
+          <div>Doping</div>
           <div className="text-right">Aksiyon</div>
         </div>
 
@@ -350,7 +351,7 @@ export default function AdminListingsPage({
             items.map((listing) => (
               <div
                 key={listing.id}
-                className="grid grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-[2fr_1.2fr_1.2fr_0.8fr_1fr]"
+                className="grid grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-[2fr_1.1fr_1.1fr_0.9fr_1.2fr_1.4fr]"
                 data-testid={`listing-row-${listing.id}`}
               >
                 <div>
@@ -379,8 +380,84 @@ export default function AdminListingsPage({
                     {listing.status}
                   </span>
                 </div>
+                <div data-testid={`listing-doping-${listing.id}`}>
+                  <div className="text-xs uppercase text-muted-foreground lg:hidden">Doping</div>
+                  <div className="flex flex-wrap gap-1">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${listing.is_featured ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-700'}`} data-testid={`listing-doping-featured-${listing.id}`}>
+                      {listing.is_featured ? 'Vitrin' : 'Vitrin Yok'}
+                    </span>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${listing.is_urgent ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'}`} data-testid={`listing-doping-urgent-${listing.id}`}>
+                      {listing.is_urgent ? 'Acil' : 'Acil Yok'}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-[11px] text-muted-foreground" data-testid={`listing-doping-bucket-${listing.id}`}>
+                    {listing.doping_type || 'free'}
+                  </div>
+                </div>
                 <div className="flex flex-col gap-2 lg:items-end">
                   <div className="text-xs uppercase text-muted-foreground lg:hidden">Aksiyon</div>
+                  <div className="flex flex-wrap items-center gap-1" data-testid={`listing-doping-editor-${listing.id}`}>
+                    <select
+                      value={(dopingConfig[listing.id]?.type) || listing.doping_type || 'free'}
+                      onChange={(event) => setDopingConfig((prev) => ({
+                        ...prev,
+                        [listing.id]: {
+                          ...(prev[listing.id] || {}),
+                          type: event.target.value,
+                        },
+                      }))}
+                      className="h-8 rounded-md border px-2 text-xs"
+                      data-testid={`listing-doping-type-select-${listing.id}`}
+                    >
+                      <option value="free">Ücretsiz</option>
+                      <option value="showcase">Vitrin</option>
+                      <option value="urgent">Acil</option>
+                    </select>
+                    <select
+                      value={(dopingConfig[listing.id]?.preset) || '7'}
+                      onChange={(event) => setDopingConfig((prev) => ({
+                        ...prev,
+                        [listing.id]: {
+                          ...(prev[listing.id] || {}),
+                          preset: event.target.value,
+                        },
+                      }))}
+                      className="h-8 rounded-md border px-2 text-xs"
+                      data-testid={`listing-doping-preset-select-${listing.id}`}
+                    >
+                      <option value="7">7g</option>
+                      <option value="30">30g</option>
+                      <option value="90">90g</option>
+                      <option value="custom">Manuel</option>
+                    </select>
+                    {(dopingConfig[listing.id]?.preset || '7') === 'custom' ? (
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={dopingConfig[listing.id]?.customDays || ''}
+                        onChange={(event) => setDopingConfig((prev) => ({
+                          ...prev,
+                          [listing.id]: {
+                            ...(prev[listing.id] || {}),
+                            customDays: event.target.value,
+                          },
+                        }))}
+                        className="h-8 w-20 rounded-md border px-2 text-xs"
+                        placeholder="gün"
+                        data-testid={`listing-doping-custom-days-${listing.id}`}
+                      />
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => applyDoping(listing)}
+                      className="h-8 rounded-md border border-slate-300 px-2 text-xs font-semibold"
+                      disabled={dopingBusyId === listing.id}
+                      data-testid={`listing-doping-apply-${listing.id}`}
+                    >
+                      {dopingBusyId === listing.id ? 'Uygulanıyor...' : 'Uygula'}
+                    </button>
+                  </div>
                   <div className="inline-flex flex-wrap gap-2 lg:justify-end">
                     <button
                       onClick={() => openActionDialog(listing, 'force_unpublish')}
