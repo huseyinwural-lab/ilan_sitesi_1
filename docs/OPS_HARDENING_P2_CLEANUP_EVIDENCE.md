@@ -47,13 +47,11 @@ Doküman:
 - `/app/docs/LEGACY_PUBLISH_DEPRECATION_PLAN.md`
 
 Durum:
-- Legacy endpoint (`/publish/{config_id}`) artık `410 GONE`
-- Kod: `LEGACY_ENDPOINT_REMOVED`
-- Deprecation headerları dönüyor (`Deprecation`, `Sunset`, `Link`)
+- Legacy endpoint (`/publish/{config_id}`) **fiziksel olarak kaldırıldı** (route yok)
+- Beklenen davranış: `404 Not Found`
 
 Usage analizi endpointi:
-- `GET /api/admin/ui/configs/{config_type}/legacy-usage?days=30`
-- çıktı: `days`, `total_calls`, `client_breakdown`
+- `GET /api/admin/ui/configs/{config_type}/legacy-usage` kaldırıldı (P2 route cleanup)
 
 Test kanıtı:
 - `backend/tests/test_p67_ops_hardening_p2_cleanup.py::TestLegacyPublishEndpoint410`
@@ -87,7 +85,7 @@ Testing Agent:
 
 - Alarm eşikleri aktif + test edilmiş.
 - KPI dashboard (backend pipeline + frontend görünürlük) canlı.
-- Legacy publish endpoint kaldırımı (410) tamamlandı.
+- Legacy publish endpoint fiziksel kaldırımı tamamlandı.
 - Publish domain tek kontrata indirgendi ve operasyonel olarak ölçülebilir hale geldi.
 
 **MOCKED API YOK**
