@@ -13,6 +13,7 @@ export default function DealerMessages() {
   const [activeTab, setActiveTab] = useState('listing');
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [markingReadId, setMarkingReadId] = useState('');
 
   const formatDate = (value) => {
     if (!value) return '-';
@@ -72,12 +73,36 @@ export default function DealerMessages() {
     setSearchQuery(searchInput);
   };
 
+  const handleMarkAsRead = async (conversationId) => {
+    if (!conversationId) return;
+    setMarkingReadId(conversationId);
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${API}/dealer/messages/${conversationId}/read`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload?.detail || 'Okundu bilgisi güncellenemedi');
+      await fetchItems();
+    } catch (err) {
+      setError(err?.message || 'Okundu bilgisi güncellenemedi');
+    } finally {
+      setMarkingReadId('');
+    }
+  };
+
   return (
     <div className="space-y-4" data-testid="dealer-messages-page">
       <div className="flex flex-wrap items-center justify-between gap-3" data-testid="dealer-messages-header">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900" data-testid="dealer-messages-title">İlan Mesajlarım ({summary.listing_messages || 0})</h1>
-          <p className="text-sm font-medium text-slate-700" data-testid="dealer-messages-subtitle">Mesaj ve bilgilendirme akışını tek ekrandan yönetin.</p>
+          <p className="text-sm font-medium text-slate-700" data-testid="dealer-messages-subtitle">
+            Mesaj ve bilgilendirme akışını tek ekrandan yönetin. Okunmamış konuşma: {summary.unread_listing_messages || 0}
+          </p>
         </div>
         <button
           type="button"
@@ -139,14 +164,15 @@ export default function DealerMessages() {
                 <th className="px-3 py-2 text-left text-slate-800">Mesaj</th>
                 <th className="px-3 py-2 text-left text-slate-800">Mesaj Sayısı</th>
                 <th className="px-3 py-2 text-left text-slate-800">Son Mesaj</th>
+                <th className="px-3 py-2 text-left text-slate-800">Okunma</th>
                 <th className="px-3 py-2 text-left text-slate-800">İşlem</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td className="px-3 py-4" colSpan={6} data-testid="dealer-messages-loading">Yükleniyor...</td></tr>
+                <tr><td className="px-3 py-4" colSpan={7} data-testid="dealer-messages-loading">Yükleniyor...</td></tr>
               ) : filteredListingItems.length === 0 ? (
-                <tr><td className="px-3 py-4 text-slate-600" colSpan={6} data-testid="dealer-messages-empty">Kayıt yok</td></tr>
+                <tr><td className="px-3 py-4 text-slate-600" colSpan={7} data-testid="dealer-messages-empty">Kayıt yok</td></tr>
               ) : (
                 filteredListingItems.map((item) => (
                   <tr key={item.conversation_id} className="border-t" data-testid={`dealer-message-row-${item.conversation_id}`}>
@@ -155,15 +181,38 @@ export default function DealerMessages() {
                     <td className="px-3 py-2" data-testid={`dealer-message-last-${item.conversation_id}`}>{item.last_message || '-'}</td>
                     <td className="px-3 py-2 font-semibold" data-testid={`dealer-message-count-${item.conversation_id}`}>{item.message_count}</td>
                     <td className="px-3 py-2" data-testid={`dealer-message-last-at-${item.conversation_id}`}>{formatDate(item.last_message_at)}</td>
+                    <td className="px-3 py-2" data-testid={`dealer-message-read-status-${item.conversation_id}`}>
+                      {Number(item.unread_count || 0) > 0 ? (
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700" data-testid={`dealer-message-read-badge-unread-${item.conversation_id}`}>
+                          Okunmadı ({item.unread_count})
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700" data-testid={`dealer-message-read-badge-read-${item.conversation_id}`}>
+                          Okundu
+                        </span>
+                      )}
+                    </td>
                     <td className="px-3 py-2" data-testid={`dealer-message-action-${item.conversation_id}`}>
-                      <button
-                        type="button"
-                        onClick={() => navigate('/dealer/messages')}
-                        className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-900"
-                        data-testid={`dealer-message-open-${item.conversation_id}`}
-                      >
-                        Aç
-                      </button>
+                      {Number(item.unread_count || 0) > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => handleMarkAsRead(item.conversation_id)}
+                          disabled={markingReadId === item.conversation_id}
+                          className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-900 disabled:opacity-50"
+                          data-testid={`dealer-message-mark-read-${item.conversation_id}`}
+                        >
+                          {markingReadId === item.conversation_id ? 'İşleniyor...' : 'Okundu İşaretle'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => navigate('/dealer/messages')}
+                          className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-900"
+                          data-testid={`dealer-message-open-${item.conversation_id}`}
+                        >
+                          Görüntüle
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
