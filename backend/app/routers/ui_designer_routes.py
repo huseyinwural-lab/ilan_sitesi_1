@@ -1022,6 +1022,18 @@ def _serialize_ui_config(row: UIConfig) -> dict[str, Any]:
             config_data=config_data,
         )
 
+    hash_source = {
+        "config_type": row.config_type,
+        "segment": row.segment,
+        "scope": row.scope,
+        "scope_id": row.scope_id,
+        "config_version": int(row.version),
+        "config_data": config_data,
+    }
+    if row.config_type == "dashboard":
+        hash_source["layout"] = layout_value
+        hash_source["widgets"] = widgets_value
+
     return {
         "id": str(row.id),
         "config_type": row.config_type,
@@ -1035,6 +1047,7 @@ def _serialize_ui_config(row: UIConfig) -> dict[str, Any]:
         "widgets": widgets_value,
         "created_by": str(row.created_by) if row.created_by else None,
         "created_by_email": row.created_by_email,
+        "resolved_config_hash": _stable_hash_payload(hash_source),
         "published_at": row.published_at.isoformat() if row.published_at else None,
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
