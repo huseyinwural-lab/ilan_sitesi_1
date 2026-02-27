@@ -27836,6 +27836,7 @@ PRICING_MANAGER_ROLES = ["super_admin", "pricing_manager"]
 CAMPAIGN_STATUSES = {"draft", "active", "paused", "expired"}
 PRICING_CAMPAIGN_SCOPES = {"individual", "corporate", "all"}
 PRICING_CAMPAIGN_ITEM_SCOPES = {"individual", "corporate"}
+PRICING_CAMPAIGN_ITEM_LISTING_TYPES = {"free", "paid", "urgent", "showcase"}
 
 DOPING_STATUSES = {"requested", "paid", "approved", "published", "expired"}
 
@@ -27933,6 +27934,7 @@ class PricingPackageUpdatePayload(BaseModel):
 
 class PricingCampaignItemCreatePayload(BaseModel):
     scope: str
+    listing_type: str = "free"
     name: Optional[str] = None
     listing_quota: int
     price_amount: float
@@ -27944,6 +27946,7 @@ class PricingCampaignItemCreatePayload(BaseModel):
 
 
 class PricingCampaignItemUpdatePayload(BaseModel):
+    listing_type: Optional[str] = None
     name: Optional[str] = None
     listing_quota: Optional[int] = None
     price_amount: Optional[float] = None
