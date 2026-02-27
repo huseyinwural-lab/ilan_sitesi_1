@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 
 import { CorporateHeaderDesigner } from './ui-designer/CorporateHeaderDesigner';
 import { CorporateDashboardDesigner } from './ui-designer/CorporateDashboardDesigner';
-import { IndividualHeaderDesigner } from './ui-designer/IndividualHeaderDesigner';
 import { ThemeTokenManagementTab } from './ui-designer/ThemeTokenManagementTab';
 
 export default function AdminUserInterfaceDesignV2() {
@@ -13,7 +12,7 @@ export default function AdminUserInterfaceDesignV2() {
       <div data-testid="admin-user-interface-design-header">
         <h1 className="text-2xl font-semibold" data-testid="admin-user-interface-design-title">Kullanıcı Tasarım</h1>
         <p className="text-sm text-slate-600" data-testid="admin-user-interface-design-subtitle">
-          Dealer Dashboard V2: Grid DnD editör, bireysel header DnD, draft→preview→publish ve rollback
+          Dealer Dashboard V2: Grid DnD editör, kurumsal header yönetimi, draft→preview→publish ve rollback
         </p>
       </div>
 
@@ -36,14 +35,6 @@ export default function AdminUserInterfaceDesignV2() {
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab('individual')}
-          className={`h-10 rounded-md border px-4 text-sm ${activeTab === 'individual' ? 'bg-slate-900 text-white' : ''}`}
-          data-testid="admin-user-interface-design-tab-individual"
-        >
-          Bireysel Header Tasarım
-        </button>
-        <button
-          type="button"
           onClick={() => setActiveTab('theme')}
           className={`h-10 rounded-md border px-4 text-sm ${activeTab === 'theme' ? 'bg-slate-900 text-white' : ''}`}
           data-testid="admin-user-interface-design-tab-theme"
@@ -55,7 +46,6 @@ export default function AdminUserInterfaceDesignV2() {
       <div className="rounded-xl border bg-white p-4" data-testid="admin-user-interface-design-tab-content">
         {activeTab === 'dashboard' ? <CorporateDashboardDesigner /> : null}
         {activeTab === 'corporate-header' ? <CorporateHeaderDesigner /> : null}
-        {activeTab === 'individual' ? <IndividualHeaderDesigner /> : null}
         {activeTab === 'theme' ? <ThemeTokenManagementTab /> : null}
       </div>
     </div>
