@@ -87,6 +87,23 @@ const resolveRemainingDays = (endAt) => {
   return `${days} gün`;
 };
 
+const resolveRemainingDaysNumber = (endAt) => {
+  if (!endAt) return null;
+  const endDate = new Date(endAt);
+  if (Number.isNaN(endDate.getTime())) return null;
+  const diffMs = endDate.getTime() - Date.now();
+  if (diffMs <= 0) return 0;
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+};
+
+const resolveTimelineDopingType = (listing, activeDopingType) => {
+  if (['urgent', 'showcase', 'paid'].includes(activeDopingType)) return activeDopingType;
+  if (listing?.is_featured) return 'showcase';
+  if (listing?.is_urgent) return 'urgent';
+  if (listing?.is_paid) return 'paid';
+  return null;
+};
+
 export default function AdminListingsPage({
   title = 'İlanlar',
   dataTestId = 'admin-listings-page',
@@ -284,6 +301,38 @@ export default function AdminListingsPage({
       await fetchListings();
     } catch (error) {
       alert(error.response?.data?.detail || 'Hızlı atama yapılamadı');
+    } finally {
+      setDopingBusyId('');
+    }
+  };
+
+  const extendDopingTimeline = async (listing, daysToAdd = 7) => {
+    const targetType = resolveTimelineDopingType(listing, dopingType);
+    if (!targetType) {
+      alert('Uzatma için aktif doping tipi bulunamadı');
+      return;
+    }
+
+    const currentEnd = resolveDopingEndAt(listing, targetType);
+    const currentEndDate = currentEnd ? new Date(currentEnd) : null;
+    const now = new Date();
+    const baseDate = currentEndDate && currentEndDate.getTime() > now.getTime() ? currentEndDate : now;
+    const nextUntilAt = new Date(baseDate.getTime() + (daysToAdd * 24 * 60 * 60 * 1000));
+
+    setDopingBusyId(listing.id);
+    try {
+      await axios.post(
+        `${API}/admin/listings/${listing.id}/doping`,
+        {
+          doping_type: targetType,
+          until_at: nextUntilAt.toISOString(),
+          reason: 'moderation_timeline_extend',
+        },
+        { headers: authHeader }
+      );
+      await fetchListings();
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Doping süresi uzatılamadı');
     } finally {
       setDopingBusyId('');
     }
@@ -529,15 +578,44 @@ export default function AdminListingsPage({
                   <div data-testid={`listing-doping-timeline-${listing.id}`}>
                     <div className="text-xs uppercase text-muted-foreground lg:hidden">Onay / Bitiş / Kalan</div>
                     <div className="text-xs">
-                      <div data-testid={`listing-approved-at-${listing.id}`}>
-                        <span className="text-muted-foreground">Onay:</span> {formatDateTimeTR(listing.published_at)}
-                      </div>
-                      <div data-testid={`listing-doping-end-at-${listing.id}`}>
-                        <span className="text-muted-foreground">Bitiş:</span> {formatDateTimeTR(resolveDopingEndAt(listing, dopingType))}
-                      </div>
-                      <div className="font-semibold" data-testid={`listing-doping-remaining-days-${listing.id}`}>
-                        <span className="text-muted-foreground font-normal">Kalan:</span> {resolveRemainingDays(resolveDopingEndAt(listing, dopingType))}
-                      </div>
+                      {(() => {
+                        const endAt = resolveDopingEndAt(listing, dopingType);
+                        const remainingDays = resolveRemainingDaysNumber(endAt);
+                        const warning = remainingDays !== null && remainingDays <= 3;
+                        return (
+                          <>
+                            <div data-testid={`listing-approved-at-${listing.id}`}>
+                              <span className="text-muted-foreground">Onay:</span> {formatDateTimeTR(listing.published_at)}
+                            </div>
+                            <div data-testid={`listing-doping-end-at-${listing.id}`}>
+                              <span className="text-muted-foreground">Bitiş:</span> {formatDateTimeTR(endAt)}
+                            </div>
+                            <div className={`font-semibold ${warning ? 'text-rose-600' : ''}`} data-testid={`listing-doping-remaining-days-${listing.id}`}>
+                              <span className="text-muted-foreground font-normal">Kalan:</span> {resolveRemainingDays(endAt)}
+                            </div>
+                            <div className="mt-1 flex items-center gap-1" data-testid={`listing-doping-timeline-actions-${listing.id}`}>
+                              <button
+                                type="button"
+                                className="h-7 rounded-md border border-slate-300 px-2 text-[11px] font-semibold"
+                                onClick={() => extendDopingTimeline(listing, 7)}
+                                disabled={dopingBusyId === listing.id}
+                                data-testid={`listing-doping-extend-7-${listing.id}`}
+                              >
+                                +7g Uzat
+                              </button>
+                              <button
+                                type="button"
+                                className="h-7 rounded-md border border-slate-300 px-2 text-[11px] font-semibold"
+                                onClick={() => extendDopingTimeline(listing, 30)}
+                                disabled={dopingBusyId === listing.id}
+                                data-testid={`listing-doping-extend-30-${listing.id}`}
+                              >
+                                +30g Uzat
+                              </button>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 ) : null}
