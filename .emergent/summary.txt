@@ -1,139 +1,147 @@
-<analysis>**original_problem_statement:**
-The initial project was to build and harden a Kullanıcı Tasarım (UI Designer) module for an admin panel, focusing on a secure publish/rollback workflow and implementing operational telemetry and alerting.
+<analysis>Analyse and provide a useful summary for the next agent to work on it without hinderance.
 
-However, during this session, the user initiated a major pivot, requesting a complete redesign and build-out of the corporate dashboard UI. The new requirements are based on a series of detailed PDF documents and images provided by the user, dictating a new navigation structure, page layouts, and component functionalities. The current focus is to implement this new UI design, following a specific sequence defined by the user.
+**original_problem_statement:**
+The initial project was to build and harden a Kullanıcı Tasarım (UI Designer) module. However, the project has undergone several major pivots driven by the user:
+1.  **Corporate Dashboard Overhaul:** A complete redesign of the admin dashboard based on user-provided PDFs. This involved creating a new UI and a set of initially mocked backend endpoints.
+2.  **Live Data Migration:** The agent converted all the mocked corporate dashboard endpoints to use a live PostgreSQL database, closing out the major technical debt.
+3.  **Homepage from HTML:** The user provided a complete, single-file HTML/CSS/JS page for the public homepage. The agent was tasked with integrating this static file into the existing React/FastAPI application, making it dynamic.
+4.  **Doping System for Listings:** The most recent request is to implement a Doping System that allows moderators to mark listings as Acil (Urgent) or Vitrin (Showcase) for a specified duration. This involves database changes, new backend logic, and updates to the admin moderation UI.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application is a full-stack React/FastAPI/PostgreSQL app. While the original hardened backend for UI configuration management is still in place, the primary focus of this session was a massive overhaul of the frontend corporate dashboard.
+The application is a full-stack React/FastAPI/PostgreSQL app.
 
--   **Backend:** The original robust backend for UI configuration, versioning, and publishing remains. To support the rapid frontend development, a new set of API endpoints under  has been created. **CRITICALLY, all of these new endpoints are currently mocked and return static, hardcoded data.** They do not interact with the database.
--   **Frontend:** The frontend has been significantly rebuilt according to the user's PDF specifications. The main navigation has been restructured into a new two-row header and a collapsible, accordion-style sidebar. New pages and components have been created for 'Özet' (Summary), 'İlanlar' (Listings), 'Mesajlar' (Messages), 'Müşteri Yönetimi' (Customer Management), 'Favoriler' (Favorites), and 'Raporlar' (Reports). The application UI now closely follows the user-provided designs.
+-   **Backend:** The backend now has live, data-driven endpoints for the entire corporate dashboard. The previously mocked routes have been replaced with real database interactions. A new Doping System has been implemented, which involved:
+    -   An Alembic migration to add  and  (timestamp) columns to the  table.
+    -   New services and API endpoints () to manage these new listing states.
+    -   The  model now dynamically computes  and  properties.
+    -   A new domain () and endpoint () were created to serve data for the new public-facing homepage.
+
+-   **Frontend:** The frontend includes the rebuilt corporate dashboard, now powered by live data. A new  has been created by integrating a user-provided static HTML file, served via a new . For the Doping System, the admin sidebar has been updated to include new sub-menus for Vitrin İlan (Showcase Listing) and Acil İlan (Urgent Listing) under both individual and corporate application sections.
 
 **Last working item**:
--   **Last item agent was working:** Implementing the Danışman Takibi (Consultant Tracking) page. The agent had just finished creating the mock backend endpoint () and the corresponding Pydantic schema. The next step is to build the frontend component for this page.
+-   **Last item agent was working:** Implementing the Doping System UI. The agent successfully updated the admin sidebar and created the necessary pages and routes. The final step was to display Acil and Vitrin badges on the listing cards within the main listings page () based on the new  and  flags from the backend.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both. The backend endpoint should be tested with  to ensure it returns the mock data correctly. After the frontend component is built, the  should be used to verify the UI.
+-   **Which testing method agent to use?** both. The backend endpoints for the doping system should be verified with . The frontend UI (sidebar navigation, new filtered listing pages, and visibility of the new badges) should be verified with the .
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Mocked Backend for Corporate Dashboard (P1)**
-    -   **Description:** The entire backend supporting the new corporate dashboard UI is mocked. All endpoints in  return hardcoded data. This was a deliberate choice to accelerate frontend development.
+-   **Issue 1: Complete Doping System Frontend Integration (P0)**
+    -   **Description:** The frontend work for the Doping System is not fully complete. The UI for moderating listings is in place, but the visual indicators (badges) on the main listings page are missing. The new sidebar links also need end-to-end verification.
     -   **Next debug checklist:**
-        1.  Prioritize with the user when to transition from mock data to a live database implementation.
-        2.  For each module (Summary, Listings, Messages, etc.), replace the mock data generation with actual database queries (SELECT, JOIN, aggregate).
-        3.  Create or update database tables and Alembic migrations as needed to support the new data structures.
-    -   **Why fix this issue and what will be achieved with the fix?** The dashboard will become a dynamic, data-driven tool instead of a static prototype.
-    -   **Status:** NOT STARTED
+        1.  Modify  to conditionally render Acil and Vitrin badges on each listing card based on the  and  booleans in the data fetched from the API.
+        2.  Verify that clicking the new sidebar links (Vitrin İlan, Acil İlan) navigates to the correct pages (, , etc.) and that these pages correctly filter the listings.
+    -   **Why fix this issue and what will be achieved with the fix?** This will complete the Doping System feature, making it fully functional for moderators from both a management and visibility perspective.
+    -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on other issue:** None. This is a major upcoming work package.
+    -   **Blocked on other issue:** None.
 
 **In progress Task List**:
--   **Task 1: Complete Danışman Takibi (Consultant Tracking) Page (P0)**
-    -   **Where to resume:** Create the frontend component  to display the data from the newly created mock endpoint.
-    -   **What will be achieved with this?** This will complete the next UI section in the sequence requested by the user.
+-   **Task 1: Finalize Doping System UI (P0)**
+    -   **Where to resume:** .
+    -   **What will be achieved with this?** A fully functional Doping System as requested by the user, with clear visual indicators for moderators.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
--   **Upcoming Tasks (P1):** (Following user's sequence for the UI build-out)
-    1.  **Implement Satın Al (Purchase) Page:** Create the mock backend and frontend for the purchasing section as per user specifications.
-    2.  **Implement Hesabım (My Account) Page:** Build out the My Account page and its various sub-sections, starting with mock data.
-
--   **Future Tasks (P2 & Backlog):**
-    1.  **P2 - Connect Corporate Dashboard to Database:** Convert all mocked backend endpoints for the new dashboard to use real data from the PostgreSQL database. This is the highest priority future task.
-    2.  **P2 - Alerting Channel Integration:** The original P0 task to integrate Slack, SMTP, and PagerDuty is blocked pending user action to provide secrets. This has been deprioritized by the user's pivot to UI work.
-    3.  **P2 - Physical Deletion of Legacy Publish Endpoint:** Remove the deprecated  endpoint.
-    4.  **Backlog - Master Data Import:** Implement the business logic in .
-    5.  **Backlog - Theme Token Editor:** Build the UI for managing granular design tokens (colors, fonts).
-    6.  **Backlog - Widget Template Library:** Create a library of pre-configured, reusable dashboard widget templates.
+-   **Future Tasks (Backlog):**
+    1.  **P2 - Alerting Channel Integration:** Integrate Slack, SMTP, and PagerDuty for alerts. This has been a long-standing task blocked on the user providing necessary secrets.
+    2.  **P2 - Physical Deletion of Legacy Publish Endpoint:** The deprecated endpoint  needs to be removed from the codebase.
+    3.  **Backlog - Master Data Import:** The business logic in  is still a skeleton and needs to be implemented.
+    4.  **Backlog - Theme Token Editor:** Build the UI for managing granular design tokens (colors, fonts).
+    5.  **Backlog - Widget Template Library:** Create a library of pre-configured, reusable dashboard widget templates.
 
 **Completed work in this session**
--   **Corporate Dashboard UI Overhaul (Frontend Prototype):**
-    -   **Navigation:** Implemented a new two-row header and a collapsible accordion sidebar (, ) based on the user's design.
-    -   **'Özet' (Summary) Page:** Created a page with summary statistics cards.
-    -   **'İlanlar' (Listings) Page:** Created a listings page with filtering and a list view.
-    -   **'Mesajlar' (Messages) Page:** Built a messages interface, including a requested read/unread status feature.
-    -   **'Müşteri Yönetimi > Sözleşmeler' Page:** Created the contracts page.
-    -   **'Favoriler' (Favorites) Page:** Created the favorites page with its sub-sections.
-    -   **'Raporlar' (Reports) Page:** Created the reports page with its sub-sections.
-    -   **Menu Adjustments:** Made menus collapsible and improved text visibility as requested. Removed 'Sanal Turlar' (Virtual Tours) from the menu.
+-   **Live Data Migration (P0 Closure):** Successfully converted all mocked endpoints for the corporate dashboard under  to use live data from the PostgreSQL database.
+-   **Hesabım Sub-modules (P1 Closure):** Implemented and connected the My Account sub-modules (Security, Notifications, Profile) to the live backend.
+-   **Homepage Integration from HTML:** Integrated a user-provided static HTML file as the new public homepage. This involved creating , , and a new backend domain  to serve dynamic data to it.
+-   **Header Cleanup:** Removed the second-row category navigation bar (Emlak / Vasıta) from the main layout as requested by the user.
+-   **Doping System Implementation (Backend & Initial Frontend):**
+    -   Created database migration to add  and  fields to the  table.
+    -   Built backend logic and API endpoints to manage listing doping.
+    -   Restructured the admin sidebar () to add new sub-menus for moderating Acil and Vitrin listings.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Master Data Import Logic:** The service at  is a skeleton and requires full implementation. This is a known backlog item.
--   **Issue 2: Alerting Channel Integration:** The P0 task from the previous fork is blocked because it requires the user to provide secrets for Slack, SMTP, and PagerDuty. This task was superseded by the user's request for a UI overhaul and is now in the backlog.
+-   **Issue 1: Hydration Warnings:** The agent noted React hydration warnings related to  and the . These were acknowledged as technical debt but have not been addressed.
+    -   **Debug checklist:** Investigate server-side rendering mismatch in the mentioned components.
+    -   **Why to solve this issue and what will be achieved with this?** Fixes React errors, improves application stability and performance.
+    -   **Should Test frontend/backend/both after fix:** frontend
+    -   **Is recurring issue?** Y
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Platform failure to inject  secret.
 -   **Recurrence count:** 10+
--   **Status:** BLOCKED (Workaround in place: using  for all secret configurations). The agent must continue to rely on the  file.
+-   **Status:** BLOCKED (Workaround in place: using  for all secret configurations). The agent must continue to rely on the  file for secrets.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Mock-First Development:** Creating mock backend endpoints that return static data to enable rapid, parallel development of the frontend UI without waiting for database implementation.
--   **PDF-Driven UI Implementation:** Translating visual designs and requirements from PDF documents directly into React components and page structures.
--   **Component-Based Architecture:** Using reusable React components (from  and custom-built) to construct the new UI.
--   **Config-driven UI:** The underlying principle that UI elements can be dynamically rendered based on configuration, which is still relevant for the header and other elements.
--   **Secure Publish Workflow:** The original hardened mechanism for publishing UI changes, which is still present in the backend but not the current focus of development.
+-   **Mock-to-Live Migration:** The process of replacing hardcoded backend responses with live database queries, which was the main task for the corporate dashboard.
+-   **Raw HTML to React Integration:** Converting a user-provided static HTML file into a dynamic React component (), separating its CSS, and creating a dedicated backend endpoint () to inject data.
+-   **Database Migration (Alembic):** Using Alembic to evolve the database schema by adding  and  columns to the  table.
+-   **Dynamic Model Properties:** Using the  decorator in the SQLAlchemy  model to compute  and  flags based on the current time and the  timestamps.
 
 **key DB schema**
-No new database tables were created in this session. All new backend endpoints rely on Pydantic schemas for their response models but return hardcoded data, not data from the database. The original  and  tables remain.
+-   **listings:** 
 
 **changes in tech stack**
-No new third-party libraries were added. Development relied on the existing stack (React, FastAPI, PostgreSQL) and UI components from .
+-   None. The existing stack of React, FastAPI, and PostgreSQL was used.
 
 **All files of reference**
--   **New Backend Domain:**  (and all sub-files)
--   **New Frontend Pages:**  (and all  files within)
--   **New Frontend Components:** , , 
--   **User-Provided Artifacts:**
+-   **Doping System Backend:**
     -   
     -   
-    -   Image of the desired header structure (from Chat Message #348)
+    -   
+    -   
+-   **Doping System Frontend:**
+    -   
+    -   
+    -   Files inside 
+-   **Homepage Integration:**
+    -   
+    -   
+    -   
+    -   
 
 **Areas that need refactoring**:
--   **Backend Mocking:** The most significant area for future work is to remove all mock data from  and replace it with live database queries.
+-   **HomePage Component:**  was created by directly translating a large HTML file. It could be broken down into smaller, more manageable React components for better maintainability.
+-   **Hydration Warnings:** The persistent React hydration warnings should be investigated and fixed.
 
 **key api endpoints**
-All new endpoints are prefixed with .
--   
--   
--   
--   
--    (multiple endpoints for different favorite types)
--    (multiple endpoints for different reports)
--    (recently added)
+-    (GET): Serves data for the new public homepage.
+-    (POST): Updates the doping status (urgent/featured) of a listing.
+-    (GET): Now returns  and  flags for each listing.
 
 **Critical Info for New Agent**
--   **PROJECT PIVOT:** The project's focus has completely shifted from backend hardening to a rapid frontend redesign based on user-provided PDFs. The original high-priority tasks from the handoff summary are now in the backlog.
--   **BACKEND IS MOCKED:** Be aware that the entire new corporate dashboard is a frontend prototype. All new backend endpoints under  return static, hardcoded data. Do not attempt to debug database queries for these endpoints, as there are none. The next major work package will be to implement the database logic.
--   **FOLLOW USER'S SEQUENCE:** The user has provided a clear, step-by-step sequence for building the UI. You must continue this sequence. The current task is the Danışman Takibi page, to be followed by Satın Al and Hesabım.
--   **COMMUNICATE IN TURKISH:** The user's primary language is Turkish. All communication must be in Turkish.
+-   **Follow User's Lead:** The user has repeatedly pivoted the project's direction. Be prepared to adapt to new, high-level requests. The current focus is completing the Doping System.
+-   **Autonomous Execution:** The user expects the agent to handle implementation details autonomously after providing a high-level goal (e.g., kapat - close it, devam et - continue).
+-   **Doping System is Priority:** The immediate task is to finish the frontend integration for the Doping System. This is the user's latest request and should be treated as P0.
+-   **Communicate in Turkish:** All user-facing communication must be in Turkish.
 
 **documents and test reports created in this job**
-No new final documents or test reports were generated in this session, as the agent was in a continuous loop of iterative development based on user feedback and never reached a  state.
+-   
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  : Continue with your order, making the necessary improvements. - Instruction to proceed with the Danışman Takibi page.
-2.  : Continue with your order, making the necessary improvements. - Instruction to proceed with the Raporlar page.
-3.  : Continue with your order and make necessary improvements. - Instruction to proceed with the Favoriler page.
-4.  : Add a read status to messages and continue with your order. - New feature request for the Mesajlar page.
-5.  : Continue. - Instruction to proceed with the Müşteri Yönetimi page.
-6.  : 1. YES 2. Continue. - Confirmation to remove Sanal Turlar and proceed.
-7.  : Continue with the same order. Remove Sanal Turlar, its not in Europe." - Instruction for the "İlanlar" page.
-8.  `#369`: "Lets fill the second row... Start with Özet... Im providing a PDF." - Kicked off the implementation of the main content area.
-9.  `#348`: "This will be the menu structure... Lets go in order. Do this first. - Provided an image defining the new header/menu layout, initiating the major UI redesign.
-10. : The menus are not on the left but on the 2nd row. Check again. - User correcting the agent's initial understanding of the new layout.
+1.  : User confirms the plan for implementing the Doping System.
+2.  : **(Latest Major Request)** User provides detailed requirements for the Doping System, including DB changes and UI updates to categorize listings into ücretsiz, vitrin, and acil.
+3.  : Agent confirms removal of the 2nd row navigation.
+4.  : User asks to remove the second row navigation below the header (emlak vasıta yazıyor).
+5.  : User repeats the request to remove the 2nd row.
+6.  : User provides the raw HTML code for the new public homepage.
+7.  : Agent confirms completion of the corporate section updates (3rd row).
+8.  : User says kapat (close it), signaling completion of the 3rd-row header task.
+9.  : User requests to add a 3rd row to the corporate header with user info and filters.
+10. : User instructs the agent to make all necessary improvements without asking for confirmation on every small step.
 
 **Project Health Check:**
 -   **Broken:** None
--   **Mocked:** **High.** The entire backend for the new corporate dashboard feature is mocked with static data. This is the most critical aspect of the current project state.
+-   **Mocked:** Very Low. The main corporate dashboard, which was previously fully mocked, is now connected to the live database. The primary functionality is data-driven.
 
 **3rd Party Integrations**
 -   **PostgreSQL:** Primary database.
@@ -146,13 +154,13 @@ No new final documents or test reports were generated in this session, as the ag
 -   **SMTP (pending integration):** For email alerts.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO (Agent was in a rapid, iterative development cycle driven by user feedback).
+-   **Testing agent used after significant changes:** YES (but not for the most recent Doping System feature).
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None in this session.
--   **Known regressions:** None.
+-   **Test files created:** None recently.
+-   **Known regressions:** React hydration warnings persist in the frontend.
 
 **Credentials to test flow:**
 -   **Admin:**  / 
 
 **What agent forgot to execute**
-The agent did not forget any tasks. It was redirected by the user to a completely new set of high-priority requirements (the UI redesign). The originally planned tasks (e.g., Alerting Integration) were implicitly deprioritized by the user and are correctly captured in the backlog.</analysis>
+-   The P2 task to physically delete the legacy publish endpoint () was part of a planned cleanup but appears to have been missed during execution. It remains in the backlog.</analysis>

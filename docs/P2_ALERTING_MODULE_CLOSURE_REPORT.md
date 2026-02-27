@@ -16,7 +16,7 @@
   - `provider_code`: `250`
   - `failure`: `null`
 - Audit doğrulama:
-  - `GET .../ops-alerts/delivery-audit?correlation_id=b9aa4710-c2dd-4c9b-aa53-612b35ab61a1&channels=smtp`
+  - `GET .../ops-alerts/delivery-audit?correlation_id=feature-complete-36&channels=smtp`
   - `total_records=1`, `channels_logged=["smtp"]`, `all_channels_recorded=true`
 - Log kanıtı (SMTP debug):
   - `/tmp/fake_smtp.log` içinde `Subject: UI OPS Alert Simulation b9aa...`

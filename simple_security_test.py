@@ -12,9 +12,9 @@ try:
                 base_url = line.split('=', 1)[1].strip()
                 break
         else:
-            base_url = "https://corporate-ui-build.preview.emergentagent.com"
+            base_url = "https://feature-complete-36.preview.emergentagent.com"
 except FileNotFoundError:
-    base_url = "https://corporate-ui-build.preview.emergentagent.com"
+    base_url = "https://feature-complete-36.preview.emergentagent.com"
 
 api_url = f"{base_url}/api"
 

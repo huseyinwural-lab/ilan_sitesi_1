@@ -14,7 +14,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://corporate-ui-build.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://feature-complete-36.preview.emergentagent.com").rstrip("/")
 
 # Test credentials
 TEST_USER_EMAIL = "user@platform.com"
