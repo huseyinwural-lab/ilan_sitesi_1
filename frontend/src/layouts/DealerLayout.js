@@ -61,7 +61,6 @@ const corporateMenuStructure = [
     children: [
       { key: 'overview', label: 'Özet', icon: 'LayoutDashboard', route: '/dealer/overview' },
       { key: 'listings', label: 'İlanlar', icon: 'ListChecks', route: '/dealer/listings' },
-      { key: 'virtual_tours', label: 'Sanal Turlar', icon: 'LayoutDashboard', route: '/dealer/overview' },
       { key: 'messages', label: 'Mesajlar', icon: 'MessageCircle', route: '/dealer/messages' },
       {
         key: 'customers',
