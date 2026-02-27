@@ -467,11 +467,11 @@ export default function Layout({ children }) {
     { path: '/admin/individual-listing-applications', icon: FileText, label: 'Bireysel İlan Başvuruları', roles: roles.moderation, testId: 'listings-individual-applications' },
     { path: '/admin/individual-listing-applications/paid', icon: FileText, label: 'Bireysel Ücretli İlan', roles: roles.moderation, testId: 'listings-individual-paid' },
     { path: '/admin/individual-listing-applications/featured', icon: FileText, label: 'Bireysel Vitrin İlan', roles: roles.moderation, testId: 'listings-individual-featured' },
-    { path: '/admin/individual-listing-applications/urgent', icon: FileText, label: 'Bireysel Acil İlan', roles: roles.moderation, testId: 'listings-individual-urgent' },
+    { path: '/admin/individual-listing-applications/urgent', icon: FileText, label: 'Bireysel Acil İlan', roles: roles.moderation, testId: 'listings-individual-urgent', openInNewWindow: true },
     { path: '/admin/corporate-listing-applications', icon: FileText, label: 'Kurumsal İlan Başvuruları', roles: roles.moderation, testId: 'listings-corporate-applications' },
     { path: '/admin/corporate-listing-applications/paid', icon: FileText, label: 'Kurumsal Ücretli İlan', roles: roles.moderation, testId: 'listings-corporate-paid' },
     { path: '/admin/corporate-listing-applications/featured', icon: FileText, label: 'Kurumsal Vitrin İlan', roles: roles.moderation, testId: 'listings-corporate-featured' },
-    { path: '/admin/corporate-listing-applications/urgent', icon: FileText, label: 'Kurumsal Acil İlan', roles: roles.moderation, testId: 'listings-corporate-urgent' },
+    { path: '/admin/corporate-listing-applications/urgent', icon: FileText, label: 'Kurumsal Acil İlan', roles: roles.moderation, testId: 'listings-corporate-urgent', openInNewWindow: true },
 
     { divider: true, label: 'Reklamlar', roles: roles.adsManager },
   { path: '/admin/ads', icon: Activity, label: 'Reklam Yönetimi', roles: roles.adsManager, testId: 'ads-management' },
