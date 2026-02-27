@@ -20,6 +20,7 @@ TOKEN_VERSION = os.environ.get("TOKEN_VERSION", "v2")
 ADMIN_ROLES = {
     "super_admin",
     "country_admin",
+    "ops",
     "moderator",
     "support",
     "finance",
@@ -33,6 +34,8 @@ DEALER_ROLES = {"dealer"}
 
 PERMISSION_ROLE_MAP = {
     "ADMIN_UI_DESIGNER": ["super_admin", "country_admin"],
+    "ADMIN_OPS_ALERTS_VIEW": ["super_admin", "country_admin", "ops"],
+    "ADMIN_OPS_ALERTS_TRIGGER": ["super_admin", "country_admin", "ops"],
 }
 
 
