@@ -21308,10 +21308,20 @@ async def admin_category_order_index_preview(
         exclude_category_id=exclude_uuid,
     )
 
+    suggested_next_sort_order = None
+    if conflict is not None:
+        suggested_next_sort_order = await _next_category_sort_order(
+            session,
+            country_code=country_code,
+            module_value=module_value,
+            parent_id=parent_uuid,
+        )
+
     return {
         "available": conflict is None,
         "error_code": None if conflict is None else "ORDER_INDEX_ALREADY_USED",
         "message": None if conflict is None else "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.",
+        "suggested_next_sort_order": suggested_next_sort_order,
         "conflict": None if conflict is None else {
             "id": str(conflict.id),
             "name": _pick_category_slug(conflict.slug) or "-",
