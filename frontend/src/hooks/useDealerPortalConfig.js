@@ -12,7 +12,10 @@ export const useDealerPortalConfig = () => {
   const [headerRow3Controls, setHeaderRow3Controls] = useState({
     store_filter_enabled: true,
     user_dropdown_enabled: true,
-    stores: [{ key: 'all', label: 'Tüm Mağazalar' }],
+    page_edit_enabled: true,
+    announcements_enabled: true,
+    user_display_name: '',
+    stores: [{ key: 'all', label: 'Tümü' }],
     default_store_key: 'all',
   });
   const [sidebarItems, setSidebarItems] = useState([]);
@@ -38,7 +41,10 @@ export const useDealerPortalConfig = () => {
       setHeaderRow3Controls(payload?.header_row3_controls || {
         store_filter_enabled: true,
         user_dropdown_enabled: true,
-        stores: [{ key: 'all', label: 'Tüm Mağazalar' }],
+        page_edit_enabled: true,
+        announcements_enabled: true,
+        user_display_name: '',
+        stores: [{ key: 'all', label: 'Tümü' }],
         default_store_key: 'all',
       });
       setSidebarItems(Array.isArray(payload?.sidebar_items) ? payload.sidebar_items : []);
@@ -52,7 +58,10 @@ export const useDealerPortalConfig = () => {
       setHeaderRow3Controls({
         store_filter_enabled: true,
         user_dropdown_enabled: true,
-        stores: [{ key: 'all', label: 'Tüm Mağazalar' }],
+        page_edit_enabled: true,
+        announcements_enabled: true,
+        user_display_name: '',
+        stores: [{ key: 'all', label: 'Tümü' }],
         default_store_key: 'all',
       });
       setSidebarItems([]);
