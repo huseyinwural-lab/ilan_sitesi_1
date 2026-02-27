@@ -271,6 +271,24 @@ async def meili_update_filterable_attributes(runtime: Dict[str, str], filterable
     return {"ok": True}
 
 
+async def meili_update_sortable_attributes(runtime: Dict[str, str], sortable_attributes: List[str]) -> Dict[str, Any]:
+    index_path = quote(runtime["index_name"], safe="")
+    attrs = list(dict.fromkeys(sortable_attributes))
+    async with await _meili_client(runtime) as client:
+        response = await client.patch(
+            f"/indexes/{index_path}/settings/sortable-attributes",
+            json=attrs,
+        )
+        if response.status_code == 405:
+            response = await client.put(
+                f"/indexes/{index_path}/settings/sortable-attributes",
+                json=attrs,
+            )
+        if response.status_code not in (200, 202):
+            raise RuntimeError(f"meili_sortable_update_failed_{response.status_code}")
+    return {"ok": True}
+
+
 async def meili_index_stats(runtime: Dict[str, str]) -> Dict[str, Any]:
     index_path = quote(runtime["index_name"], safe="")
     async with await _meili_client(runtime) as client:
