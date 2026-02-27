@@ -16362,14 +16362,15 @@ async def dealer_reports(
                     )
                 )
             ).scalar_one()
+            bucket = func.date_trunc("day", ListingView.created_at)
             rows = (
                 await session.execute(
-                    select(func.date_trunc("day", ListingView.created_at), func.count(ListingView.id))
+                    select(bucket, func.count(ListingView.id))
                     .select_from(ListingView)
                     .join(Listing, ListingView.listing_id == Listing.id)
                     .where(Listing.dealer_id == dealer_uuid, ListingView.created_at >= window_start)
-                    .group_by(func.date_trunc("day", ListingView.created_at))
-                    .order_by(func.date_trunc("day", ListingView.created_at))
+                    .group_by(bucket)
+                    .order_by(bucket)
                 )
             ).all()
             return int(current or 0), int(previous or 0), rows
@@ -16395,14 +16396,15 @@ async def dealer_reports(
                     )
                 )
             ).scalar_one()
+            bucket = func.date_trunc("day", Favorite.created_at)
             rows = (
                 await session.execute(
-                    select(func.date_trunc("day", Favorite.created_at), func.count(Favorite.id))
+                    select(bucket, func.count(Favorite.id))
                     .select_from(Favorite)
                     .join(Listing, Favorite.listing_id == Listing.id)
                     .where(Listing.dealer_id == dealer_uuid, Favorite.created_at >= window_start)
-                    .group_by(func.date_trunc("day", Favorite.created_at))
-                    .order_by(func.date_trunc("day", Favorite.created_at))
+                    .group_by(bucket)
+                    .order_by(bucket)
                 )
             ).all()
             return int(current or 0), int(previous or 0), rows
@@ -16430,15 +16432,16 @@ async def dealer_reports(
                     )
                 )
             ).scalar_one()
+            bucket = func.date_trunc("day", Message.created_at)
             rows = (
                 await session.execute(
-                    select(func.date_trunc("day", Message.created_at), func.count(Message.id))
+                    select(bucket, func.count(Message.id))
                     .select_from(Message)
                     .join(Conversation, Message.conversation_id == Conversation.id)
                     .join(Listing, Conversation.listing_id == Listing.id)
                     .where(Listing.dealer_id == dealer_uuid, Message.created_at >= window_start)
-                    .group_by(func.date_trunc("day", Message.created_at))
-                    .order_by(func.date_trunc("day", Message.created_at))
+                    .group_by(bucket)
+                    .order_by(bucket)
                 )
             ).all()
             return int(current or 0), int(previous or 0), rows
@@ -16469,9 +16472,10 @@ async def dealer_reports(
                     )
                 )
             ).scalar_one()
+            bucket = func.date_trunc("day", UserInteraction.created_at)
             rows = (
                 await session.execute(
-                    select(func.date_trunc("day", UserInteraction.created_at), func.count(UserInteraction.id))
+                    select(bucket, func.count(UserInteraction.id))
                     .select_from(UserInteraction)
                     .join(Listing, UserInteraction.listing_id == Listing.id)
                     .where(
@@ -16479,8 +16483,8 @@ async def dealer_reports(
                         UserInteraction.created_at >= window_start,
                         UserInteraction.event_type.in_(["mobile_call_click", "call_click", "phone_click"]),
                     )
-                    .group_by(func.date_trunc("day", UserInteraction.created_at))
-                    .order_by(func.date_trunc("day", UserInteraction.created_at))
+                    .group_by(bucket)
+                    .order_by(bucket)
                 )
             ).all()
             return int(current or 0), int(previous or 0), rows
@@ -16503,12 +16507,13 @@ async def dealer_reports(
                 )
             )
         ).scalar_one()
+        bucket = func.date_trunc("day", Listing.created_at)
         rows = (
             await session.execute(
-                select(func.date_trunc("day", Listing.created_at), func.count(Listing.id))
+                select(bucket, func.count(Listing.id))
                 .where(Listing.dealer_id == dealer_uuid, Listing.created_at >= window_start)
-                .group_by(func.date_trunc("day", Listing.created_at))
-                .order_by(func.date_trunc("day", Listing.created_at))
+                .group_by(bucket)
+                .order_by(bucket)
             )
         ).all()
         return int(current or 0), int(previous or 0), rows
@@ -16556,17 +16561,18 @@ async def dealer_reports(
         )
     ).all()
 
+    doping_bucket = func.date_trunc("day", UserInteraction.created_at)
     doping_rows = (
         await session.execute(
-            select(func.date_trunc("day", UserInteraction.created_at), func.count(UserInteraction.id))
+            select(doping_bucket, func.count(UserInteraction.id))
             .select_from(UserInteraction)
             .where(
                 UserInteraction.user_id == dealer_uuid,
                 UserInteraction.created_at >= window_start,
                 UserInteraction.event_type.in_(["doping_click", "boost_click", "listing_boost_purchase"]),
             )
-            .group_by(func.date_trunc("day", UserInteraction.created_at))
-            .order_by(func.date_trunc("day", UserInteraction.created_at))
+            .group_by(doping_bucket)
+            .order_by(doping_bucket)
         )
     ).all()
     doping_total = int(sum(int(row[1] or 0) for row in doping_rows))
