@@ -1,0 +1,106 @@
+{
+  "summary": "P66 Conflict UX + Deterministic Publish Telemetry Testing Complete - All backend tests pass (7/7). Frontend UI verified: Conflict modal with single primary action (Latest Draft'ı Çek + Diff'i Yeniden Aç), Publish Audit card with telemetry metrics (avg/max lock_wait_ms, avg/max publish_duration_ms), Version drift guard (hash mismatch → 409 CONFIG_HASH_MISMATCH), Auto-draft sync event log (DRAFT_SYNCED_AFTER_CONFLICT).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p66_conflict_ux_telemetry.py",
+    "/app/backend/tests/test_p64_publish_hardening.py",
+    "/app/test_reports/pytest/p66_conflict_ux_telemetry_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (7/7 passed - 2 P66 + 5 P64)",
+    "frontend": "100% (all UI flows verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "dealer": "dealer@platform.com / Dealer123!"
+  },
+  "seed_data_creation": "Dashboard drafts created during testing for tenant scopes p66-sync-*, p66-telemetry-*, hash-mismatch-test-001",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P66 Conflict UX + Publish Telemetry complete. All backend APIs working. UI Designer has conflict modal with single sync+reopen button, Publish Audit card with telemetry metrics. Hash guard working (409 CONFIG_HASH_MISMATCH). Audit logs for DRAFT_SYNCED_AFTER_CONFLICT events recorded.",
+  "features_verified": {
+    "conflict_sync_endpoint": {
+      "endpoint": "POST /api/admin/ui/configs/{config_type}/conflict-sync",
+      "status": "PASS",
+      "returns": "item (latest draft), items (version list), diff, from_item, to_item"
+    },
+    "publish_hash_guard": {
+      "behavior": "resolved_config_hash mismatch → 409 CONFIG_HASH_MISMATCH",
+      "status": "PASS",
+      "error_response": {
+        "code": "CONFIG_HASH_MISMATCH",
+        "current_hash": "provided",
+        "your_hash": "provided",
+        "hint": "Latest draft ile diff ekranını yeniden açın"
+      }
+    },
+    "publish_audits_telemetry_endpoint": {
+      "endpoint": "GET /api/admin/ui/configs/{config_type}/publish-audits",
+      "status": "PASS",
+      "telemetry_fields": ["avg_lock_wait_ms", "max_lock_wait_ms", "avg_publish_duration_ms", "max_publish_duration_ms"],
+      "audit_item_fields": ["id", "created_at", "actor_email", "status", "message", "conflict_detected", "retry_count", "lock_wait_ms", "publish_duration_ms", "config_version"]
+    },
+    "publish_attempt_audit_metadata": {
+      "fields_logged": ["conflict_detected", "lock_wait_ms", "retry_count", "publish_duration_ms", "status"],
+      "event_actions": ["ui_config_publish_attempt", "DRAFT_SYNCED_AFTER_CONFLICT"]
+    },
+    "ui_conflict_modal": {
+      "single_primary_action": "Latest Draft'ı Çek + Diff'i Yeniden Aç",
+      "behavior": "Calls conflict-sync endpoint, syncs local state, auto-reopens publish dialog",
+      "status": "PASS",
+      "data_testid": "ui-designer-dashboard-conflict-sync-and-reopen-button"
+    },
+    "ui_drift_guard": {
+      "hash_display": "local_hash and server_hash shown in UI",
+      "mismatch_behavior": "Publish button disabled with reason: 'Draft hash mismatch: latest draft senkronizasyonu gerekli'",
+      "status": "PASS"
+    },
+    "admin_publish_audit_card": {
+      "location": "Bottom grid of CorporateDashboardDesigner",
+      "displays": ["avg_lock_wait_ms", "max_lock_wait_ms", "avg_publish_duration_ms", "max_publish_duration_ms"],
+      "audit_items": "Shows conflict badge, retry_count, lock_wait_ms per item",
+      "status": "PASS"
+    },
+    "regression": {
+      "existing_publish_hardening": "PASS - All P64 tests still pass",
+      "logo_theme_flows": "PASS - P65 tests still pass"
+    }
+  },
+  "p66_test_results": {
+    "test_conflict_sync_endpoint_returns_latest_and_diff": "PASSED",
+    "test_publish_telemetry_endpoint_and_hash_guard": "PASSED"
+  },
+  "p64_test_results": {
+    "test_publish_new_endpoint_requires_config_version": "PASSED",
+    "test_publish_legacy_endpoint_requires_config_version": "PASSED",
+    "test_publish_version_mismatch_returns_409_contract": "PASSED",
+    "test_parallel_publish_lock_or_conflict": "PASSED",
+    "test_rollback_reason_required": "PASSED"
+  },
+  "ui_verification": {
+    "tabs_present": ["Kurumsal Dashboard V2", "Kurumsal Header Tasarım", "Tema Yönetimi"],
+    "publish_dialog": {
+      "title": "Draft → Publish Onayı",
+      "diff_sections": ["Eklenen", "Kaldırılan", "Taşınan"],
+      "visual_diff": "Önceki Grid vs Yeni Grid panels with color-coded changes",
+      "confirmation": "Checkbox required before publish"
+    },
+    "conflict_dialog": {
+      "title": "Publish Çakışması",
+      "shows": ["current_version", "your_version", "last_published_by", "last_published_at"],
+      "actions": ["Kapat (secondary)", "Latest Draft'ı Çek + Diff'i Yeniden Aç (primary)"]
+    },
+    "hash_state_display": "Shows local_hash and server_hash at bottom of designer"
+  }
+}
