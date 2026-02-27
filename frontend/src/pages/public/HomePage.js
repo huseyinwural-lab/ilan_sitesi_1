@@ -330,7 +330,14 @@ export default function HomePage() {
                         Kategoriyi Gör
                       </Link>
                     </div>
-                    <div className="home-v2-category-showcase-grid" style={{ '--home-category-showcase-columns': entry.columns }} data-testid={`home-v2-category-showcase-grid-${index}`}>
+                    <div
+                      className="home-v2-category-showcase-grid"
+                      style={{ '--home-category-showcase-columns': entry.columns }}
+                      data-testid={`home-v2-category-showcase-grid-${index}`}
+                      data-rows={entry.rows}
+                      data-columns={entry.columns}
+                      data-listing-count={entry.listing_count}
+                    >
                       {filled.map((item, tileIndex) => (
                         item ? (
                           <Link
