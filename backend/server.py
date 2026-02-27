@@ -16340,7 +16340,7 @@ async def dealer_reports(
         )
     ).scalar_one()
 
-    def _metric_counts_and_series(metric_name: str):
+    async def _metric_counts_and_series(metric_name: str):
         if metric_name == "views":
             current = (
                 await session.execute(
