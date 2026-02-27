@@ -188,6 +188,14 @@
   transition: transform 0.1s ease;
 }
 
+.home-v2-tile-featured {
+  border: 2px solid #4f46e5;
+}
+
+.home-v2-tile-urgent {
+  border: 2px solid #e11d48;
+}
+
 .home-v2-tile:hover {
   transform: translateY(-1px);
 }
@@ -205,9 +213,11 @@
 }
 
 .home-v2-tile-text {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "badges badges"
+    "title price";
   gap: 8px;
   padding: 8px;
   font-size: 12px;
@@ -215,7 +225,15 @@
   font-weight: 800;
 }
 
+.home-v2-tile-badges {
+  grid-area: badges;
+  display: flex;
+  gap: 4px;
+  min-height: 16px;
+}
+
 .home-v2-tile-title {
+  grid-area: title;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -223,7 +241,6 @@
 }
 
 .home-v2-doping-badge {
-  margin-left: 6px;
   border-radius: 999px;
   padding: 1px 6px;
   font-size: 10px;
