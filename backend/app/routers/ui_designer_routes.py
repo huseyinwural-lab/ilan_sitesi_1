@@ -1050,6 +1050,171 @@ def _create_ui_config_audit_log(
     )
 
 
+def _publish_http_error(
+    *,
+    code: str,
+    message: str,
+    status_code: int,
+    extras: Optional[dict[str, Any]] = None,
+) -> HTTPException:
+    payload = {
+        "code": code,
+        "message": message,
+    }
+    if extras:
+        payload.update(extras)
+    return HTTPException(status_code=status_code, detail=payload)
+
+
+def _publish_scope_key(*, config_type: str, segment: str, scope: str, scope_id: Optional[str]) -> str:
+    return f"{config_type}:{segment}:{scope}:{scope_id or 'system'}"
+
+
+async def _acquire_publish_lock_or_raise(lock_key: str, current_user: dict[str, Any]) -> None:
+    now_dt = datetime.now(timezone.utc)
+    async with _PUBLISH_LOCK_GUARD:
+        existing = _PUBLISH_LOCK_REGISTRY.get(lock_key)
+        if existing:
+            expires_at = existing.get("expires_at")
+            if isinstance(expires_at, datetime) and expires_at > now_dt:
+                raise _publish_http_error(
+                    code=PUBLISH_ERROR_LOCKED,
+                    message="Aynı scope için publish işlemi devam ediyor",
+                    status_code=409,
+                    extras={
+                        "active_lock_until": expires_at.isoformat(),
+                        "lock_owner": existing.get("owner_email"),
+                        "retry_after_seconds": max(1, int((expires_at - now_dt).total_seconds())),
+                    },
+                )
+
+        _PUBLISH_LOCK_REGISTRY[lock_key] = {
+            "owner_email": current_user.get("email"),
+            "acquired_at": now_dt,
+            "expires_at": now_dt + timedelta(seconds=PUBLISH_LOCK_TTL_SECONDS),
+        }
+
+
+async def _release_publish_lock(lock_key: str) -> None:
+    async with _PUBLISH_LOCK_GUARD:
+        _PUBLISH_LOCK_REGISTRY.pop(lock_key, None)
+
+
+async def _latest_publish_actor(
+    session: AsyncSession,
+    *,
+    config_type: str,
+    resource_id: str,
+) -> tuple[Optional[str], Optional[str]]:
+    stmt = (
+        select(AuditLog)
+        .where(
+            AuditLog.action == "ui_config_publish",
+            AuditLog.resource_type == f"ui_config:{config_type}",
+            AuditLog.resource_id == resource_id,
+        )
+        .order_by(desc(AuditLog.created_at))
+        .limit(1)
+    )
+    row = (await session.execute(stmt)).scalar_one_or_none()
+    if not row:
+        return None, None
+    return row.user_email, row.created_at.isoformat() if row.created_at else None
+
+
+async def _build_publish_conflict_payload(
+    session: AsyncSession,
+    *,
+    row: UIConfig,
+    your_version: Optional[int],
+    message: str,
+) -> dict[str, Any]:
+    latest_published = await _latest_ui_config(
+        session,
+        config_type=row.config_type,
+        segment=row.segment,
+        scope=row.scope,
+        scope_id=row.scope_id,
+        status="published",
+    )
+    current_version = row.version
+    last_published_by = latest_published.created_by_email if latest_published else None
+    last_published_at = latest_published.published_at.isoformat() if latest_published and latest_published.published_at else None
+
+    if latest_published:
+        actor_email, actor_at = await _latest_publish_actor(
+            session,
+            config_type=row.config_type,
+            resource_id=str(latest_published.id),
+        )
+        if actor_email:
+            last_published_by = actor_email
+        if actor_at:
+            last_published_at = actor_at
+        current_version = max(current_version, latest_published.version)
+
+    return {
+        "code": PUBLISH_ERROR_CONFIG_VERSION_CONFLICT,
+        "message": message,
+        "current_version": current_version,
+        "your_version": your_version,
+        "last_published_by": last_published_by,
+        "last_published_at": last_published_at,
+        "hint": "Sayfayı yenileyin ve diff ekranını tekrar kontrol edin",
+    }
+
+
+async def _validate_publish_version_or_raise(
+    session: AsyncSession,
+    *,
+    row: UIConfig,
+    config_version: Optional[int],
+) -> None:
+    if config_version is None:
+        raise _publish_http_error(
+            code=PUBLISH_ERROR_MISSING_CONFIG_VERSION,
+            message="config_version zorunludur",
+            status_code=400,
+            extras={"hint": "Sayfayı yenileyin ve tekrar deneyin"},
+        )
+
+    your_version = int(config_version)
+    if your_version != int(row.version):
+        conflict = await _build_publish_conflict_payload(
+            session,
+            row=row,
+            your_version=your_version,
+            message="config_version güncel değil",
+        )
+        raise HTTPException(status_code=409, detail=conflict)
+
+    if row.status != "draft":
+        conflict = await _build_publish_conflict_payload(
+            session,
+            row=row,
+            your_version=your_version,
+            message="Bu versiyon artık draft değil; başka bir admin publish etmiş olabilir",
+        )
+        raise HTTPException(status_code=409, detail=conflict)
+
+    latest_draft = await _latest_ui_config(
+        session,
+        config_type=row.config_type,
+        segment=row.segment,
+        scope=row.scope,
+        scope_id=row.scope_id,
+        status="draft",
+    )
+    if latest_draft and latest_draft.id != row.id:
+        conflict = await _build_publish_conflict_payload(
+            session,
+            row=latest_draft,
+            your_version=your_version,
+            message="Daha güncel bir draft versiyonu mevcut",
+        )
+        raise HTTPException(status_code=409, detail=conflict)
+
+
 async def _next_ui_config_version(
     session: AsyncSession,
     *,
