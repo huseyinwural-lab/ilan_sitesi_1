@@ -2755,10 +2755,22 @@ const AdminCategories = () => {
               <option value="active">Aktif</option>
               <option value="passive">Pasif</option>
             </select>
+
+            <select
+              value={listFilters.image_presence}
+              onChange={(event) => setListFilters((prev) => ({ ...prev, image_presence: event.target.value }))}
+              className="h-9 rounded-md border px-3 text-sm"
+              data-testid="categories-list-filter-image-presence"
+            >
+              <option value="all">Tüm Görsel Durumları</option>
+              <option value="with_image">Görselli</option>
+              <option value="without_image">Görselsiz</option>
+            </select>
           </div>
 
           <div className="text-xs text-slate-600" data-testid="categories-list-selection-meta">
-            Seçili: <span className="font-semibold" data-testid="categories-list-selection-count">{selectedIds.length}</span>
+            Seçili: <span className="font-semibold" data-testid="categories-list-selection-count">{selectedIds.length}</span> •
+            Görünen: <span className="font-semibold" data-testid="categories-list-visible-count">{visibleItems.length}</span>
           </div>
         </div>
 
