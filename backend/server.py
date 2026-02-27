@@ -18596,6 +18596,9 @@ async def admin_update_country(
         updates["name"] = payload.name
     if payload.active_flag is not None:
         updates["is_enabled"] = payload.active_flag
+
+    if payload.image_url is not None:
+        updates["image_url"] = _normalize_category_image_url(payload.image_url)
     if payload.default_currency is not None:
         updates["default_currency"] = payload.default_currency.upper()
     if payload.default_language is not None:
@@ -21499,6 +21502,11 @@ async def admin_update_category(
         return {"category": _serialize_category_sql(category, include_schema=True, include_translations=False)}
 
     effective_parent_id = updates.get("parent_id", category.parent_id)
+    if effective_parent_id and payload.image_url is None and category.image_url:
+        updates["image_url"] = None
+    if effective_parent_id and updates.get("image_url"):
+        raise _category_error("CATEGORY_IMAGE_ROOT_ONLY", "Kategori görseli sadece ana kategoride kullanılabilir.")
+
     effective_sort_order = updates.get("sort_order", category.sort_order)
     await _assert_category_sort_available(
         session,
