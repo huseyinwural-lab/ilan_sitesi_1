@@ -91,12 +91,23 @@ def build_listing_document(listing: Listing) -> Dict[str, Any]:
     city_value = attrs.get("city_id") or listing.city
 
     searchable_text = _normalize_text(f"{listing.title or ''} {listing.description or ''}")
+    now = datetime.now(timezone.utc)
+    is_featured = False
+    if listing.featured_until and listing.featured_until > now:
+        is_featured = True
+    elif listing.is_showcase and (listing.showcase_expires_at is None or listing.showcase_expires_at > now):
+        is_featured = True
+    is_urgent = bool(listing.urgent_until and listing.urgent_until > now)
+
+    # Öncelik (kullanıcı kararı): Vitrin > Acil > Ücretsiz
     premium_score = 0
     if listing.is_premium:
         premium_score += 1000
-    if listing.is_showcase:
-        premium_score += 400
-    if listing.premium_until and listing.premium_until > datetime.now(timezone.utc):
+    if is_featured:
+        premium_score += 900
+    elif is_urgent:
+        premium_score += 600
+    if listing.premium_until and listing.premium_until > now:
         premium_score += 200
 
     doc: Dict[str, Any] = {
@@ -120,6 +131,12 @@ def build_listing_document(listing: Listing) -> Dict[str, Any]:
         "city": listing.city or "",
         "image": (listing.images[0] if listing.images else None),
         "status": listing.status,
+        "is_featured": is_featured,
+        "is_urgent": is_urgent,
+        "featured_until": listing.featured_until.isoformat() if listing.featured_until else None,
+        "urgent_until": listing.urgent_until.isoformat() if listing.urgent_until else None,
+        "featured_until_ts": int(listing.featured_until.timestamp()) if listing.featured_until else 0,
+        "urgent_until_ts": int(listing.urgent_until.timestamp()) if listing.urgent_until else 0,
     }
 
     for key, value in attribute_flat_map.items():
