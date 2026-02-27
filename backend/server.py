@@ -29622,6 +29622,108 @@ def _campaign_item_is_available(item: PricingCampaignItem, now: datetime) -> boo
     return True
 
 
+def _campaign_item_priority(item: PricingCampaignItem) -> int:
+    return PRICING_LISTING_TYPE_PRIORITY.get((item.listing_type or "free").strip().lower(), 99)
+
+
+async def _count_consumed_campaign_item_slots(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    campaign_item_id: uuid.UUID,
+) -> int:
+    result = await session.execute(
+        select(PricingPriceSnapshot).where(
+            PricingPriceSnapshot.user_id == user_id,
+            PricingPriceSnapshot.campaign_item_id == campaign_item_id,
+        )
+    )
+    rows = result.scalars().all()
+    consumed = 0
+    for row in rows:
+        metadata = row.meta if isinstance(row.meta, dict) else {}
+        if metadata.get("slot_consumed"):
+            consumed += 1
+    return consumed
+
+
+async def _campaign_item_remaining_slots(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    item: PricingCampaignItem,
+) -> Optional[int]:
+    quota = int(item.listing_quota or 0)
+    if quota <= 0:
+        return None
+    used = await _count_consumed_campaign_item_slots(session, user_id, item.id)
+    return max(0, quota - used)
+
+
+async def _consume_campaign_item_slot_if_needed(
+    session: AsyncSession,
+    snapshot: Optional[PricingPriceSnapshot],
+) -> None:
+    if not snapshot or snapshot.snapshot_type != "campaign_item" or not snapshot.campaign_item_id:
+        return
+
+    metadata = dict(snapshot.meta or {})
+    if metadata.get("slot_consumed"):
+        return
+
+    campaign_item = await session.get(PricingCampaignItem, snapshot.campaign_item_id)
+    if not campaign_item or campaign_item.is_deleted:
+        raise HTTPException(status_code=409, detail="Campaign item not found")
+
+    remaining = await _campaign_item_remaining_slots(session, snapshot.user_id, campaign_item)
+    if remaining is not None and remaining <= 0:
+        raise HTTPException(status_code=409, detail="Campaign slot quota exhausted")
+
+    metadata["slot_consumed"] = True
+    metadata["slot_consumed_at"] = datetime.now(timezone.utc).isoformat()
+    snapshot.meta = metadata
+
+
+def _apply_snapshot_listing_type_to_listing(
+    listing: Listing,
+    snapshot: Optional[PricingPriceSnapshot],
+    *,
+    now: Optional[datetime] = None,
+) -> None:
+    if not snapshot:
+        return
+
+    metadata = snapshot.meta if isinstance(snapshot.meta, dict) else {}
+    listing_type = str(metadata.get("listing_type") or "").strip().lower()
+    if listing_type not in {"showcase", "urgent", "paid"}:
+        return
+
+    ref_now = now or datetime.now(timezone.utc)
+    duration_days = int(snapshot.publish_days or snapshot.duration_days or 30)
+    duration_days = max(1, min(365, duration_days))
+    until_at = ref_now + timedelta(days=duration_days)
+
+    if listing_type == "showcase":
+        listing.featured_until = until_at
+        listing.urgent_until = None
+        listing.paid_until = None
+        listing.is_showcase = True
+        listing.showcase_expires_at = until_at
+        return
+
+    if listing_type == "urgent":
+        listing.urgent_until = until_at
+        listing.featured_until = None
+        listing.paid_until = None
+        listing.is_showcase = False
+        listing.showcase_expires_at = None
+        return
+
+    listing.paid_until = until_at
+    listing.featured_until = None
+    listing.urgent_until = None
+    listing.is_showcase = False
+    listing.showcase_expires_at = None
+
+
 def _serialize_campaign_item_for_quote(item: PricingCampaignItem) -> Dict[str, Any]:
     return {
         "id": str(item.id),
