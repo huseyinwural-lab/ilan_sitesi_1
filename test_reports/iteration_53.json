@@ -1,0 +1,94 @@
+{
+  "summary": "P72 Vitrin Yönetimi Sync & Delete Tests - All features verified. Admin changes correctly sync to public page. Delete button exists in versions list with proper disabled state for published version. Backend returns 400 for published version delete attempts. Public HomePage correctly applies column/row/listing_count from config.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_showcase_delete_sync.py",
+    "/app/test_reports/pytest/p72_showcase_sync_delete_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Public endpoint GET /api/site/showcase-layout correctly returns Cache-Control: no-store header to prevent caching",
+    "Admin showcase management page correctly shows Sil (Delete) buttons with proper disabled state for published versions",
+    "DELETE /api/admin/site/showcase-layout/config/{id} correctly returns 400 for published versions with Turkish error message",
+    "Draft versions can be successfully deleted via DELETE endpoint",
+    "Public HomePage correctly applies grid columns class based on config (e.g., home-v2-showcase-grid-cols-5)",
+    "Tile count calculation using min(listing_count, rows*columns) works correctly"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_showcase_delete_sync.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "admin_login_url": "/admin/login"
+  },
+  "seed_data_creation": "Created multiple showcase layout versions during testing (draft and published)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P72 verified: Admin showcase changes sync to public page correctly. Delete button exists in versions list - published has disabled delete, draft versions have active delete button. Backend DELETE endpoint returns 400 for published versions. Public HomePage grid correctly shows configured column count via CSS class.",
+  "features_verified": {
+    "db_public_config_sync": {
+      "status": "PASS",
+      "description": "GET /api/site/showcase-layout returns same values as admin saved config (rows=6, columns=5, listing_count=30)"
+    },
+    "admin_versions_delete_button": {
+      "status": "PASS",
+      "description": "Sil (Delete) button present in versions list for both published and draft versions"
+    },
+    "published_version_delete_disabled": {
+      "status": "PASS",
+      "description": "Published version (v13) has disabled Sil button in UI and backend returns 400 with 'Aktif versiyon silinemez'"
+    },
+    "draft_version_delete_works": {
+      "status": "PASS",
+      "description": "Draft versions have active Sil button and DELETE endpoint returns 200"
+    },
+    "public_homepage_columns": {
+      "status": "PASS",
+      "description": "HomePage grid uses CSS class home-v2-showcase-grid-cols-{n} matching config columns value"
+    },
+    "cache_control_no_store": {
+      "status": "PASS",
+      "description": "GET /api/site/showcase-layout includes Cache-Control: no-store header to prevent caching"
+    },
+    "save_draft_publish_sync": {
+      "status": "PASS",
+      "description": "Save Draft -> Publish flow correctly updates public endpoint with new values"
+    }
+  },
+  "verification_details": {
+    "admin_config_values": {
+      "rows": 6,
+      "columns": 5,
+      "listing_count": 30
+    },
+    "public_api_values": {
+      "rows": 6,
+      "columns": 5,
+      "listing_count": 30
+    },
+    "homepage_ui_values": {
+      "grid_class": "home-v2-showcase-grid-cols-5",
+      "tile_count": 30
+    },
+    "versions_list": {
+      "total_versions": 13,
+      "published_count": 1,
+      "draft_count": 12,
+      "disabled_delete_buttons": 1,
+      "active_delete_buttons": 12
+    }
+  },
+  "rca_of_issue": null
+}
