@@ -19174,3 +19174,252 @@ Mobile responsiveness re-test for /admin/ops/publish-health page at 390px viewpo
 - **Date**: Feb 27, 2026 (LATEST)
 - **Message**: Mobile responsiveness re-test for /admin/ops/publish-health SUCCESSFULLY COMPLETED with 100% PASS. CRITICAL VERIFICATION: Previously reported mobile responsiveness issue is FIXED. Test performed at 390px viewport width (mobile). FLOW VERIFICATION: 1) Admin login successful with admin@platform.com / Admin123! ✅. 2) Navigated to /admin/ops/publish-health page at mobile viewport (390px x 844px) ✅. 3) BEFORE clicking 'Re-run Alert Simulation' button: Document scrollWidth=390px, clientWidth=390px, NO horizontal overflow detected (0px overflow), NO horizontal scrollbar present ✅. 4) Successfully found and clicked 'Re-run Alert Simulation' button ✅. 5) AFTER clicking button: Document scrollWidth=390px, clientWidth=390px, NO horizontal overflow detected (0px overflow), NO horizontal scrollbar present ✅. Screenshots captured show all content properly contained within 390px viewport width both before and after button interaction. No right-side clipping detected. No horizontal scrolling required. Page content (title, statistics cards, simulation section) all fit within mobile viewport. Mobile responsiveness issue is RESOLVED and page is production-ready for mobile devices.
 
+
+
+## Corporate Menu Row Structure Test - Dealer View (Feb 27, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Comprehensive test of new corporate menu row structure in dealer view as per review request: "Yeni kurumsal menü satır yapısını test et. URL: https://config-telemetry.preview.emergentagent.com. Beklenenler: 1) Dealer görünümünde 1. satır kurumsal header (logo/kurumsal alan) görünmeli. 2) 2. satır yatay ana menü görünmeli: Özet, İlanlar, Sanal Turlar, Mesajlar, Müşteri Yönetimi, Favoriler, Raporlar, Danışman Takibi, Satın Al, Hesabım. 3) 2. satırda çocuk menüsü olan başlıklar tıklanınca aşağı doğru alt menü paneli açılmalı (ör. Raporlar/Favoriler). 4) Metin kontrastı silik olmamalı (aktif ve pasif okunaklı). 5) Sol dikey sidebar artık olmamalı. Kısa PASS/FAIL raporu ver."
+
+### Test Flow Executed:
+1. ✅ Dealer login with dealer@platform.com / Dealer123! → authentication successful
+2. ✅ Navigate to /dealer/overview → page loads correctly
+3. ✅ Verify Row 1 - Corporate header (logo/corporate area) → PRESENT
+4. ✅ Verify Row 2 - Horizontal main menu with all expected items → ALL 10 ITEMS PRESENT
+5. ✅ Test submenu dropdown - Favoriler → OPENS CORRECTLY
+6. ✅ Test submenu dropdown - Raporlar → OPENS CORRECTLY
+7. ✅ Check text contrast (active/passive states) → EXCELLENT CONTRAST
+8. ✅ Verify NO vertical left sidebar → CONFIRMED ABSENT
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS - 5/5 TESTS):
+
+**1. Row 1 - Corporate Header**: ✅ WORKING PERFECTLY
+  - **Row 1 Container**: data-testid="dealer-layout-header-row1" ✅ PRESENT
+  - **Brand/Logo Wrap**: data-testid="dealer-layout-brand-wrap" ✅ PRESENT
+  - **Logo Button**: data-testid="dealer-layout-brand-button" ✅ VISIBLE (yellow button with ANNONCIA)
+  - **Portal Label**: data-testid="dealer-layout-portal-label" ✅ VISIBLE
+  - **Label Text**: "KURUMSAL PORTAL" displayed correctly
+  - **CRITICAL**: Row 1 correctly displays corporate header with logo and corporate area label
+
+**2. Row 2 - Horizontal Main Menu**: ✅ WORKING PERFECTLY
+  - **Row 2 Container**: data-testid="dealer-layout-header-row2" ✅ PRESENT
+  - **Primary Menu Container**: data-testid="dealer-layout-row2-primary-menu" ✅ VISIBLE
+  - **Total Menu Items**: 10 items found (all expected items present)
+  - **Menu Items Verified**:
+    1. ✅ Özet (overview)
+    2. ✅ İlanlar (listings)
+    3. ✅ Sanal Turlar (virtual_tours)
+    4. ✅ Mesajlar (messages)
+    5. ✅ Müşteri Yönetimi (customers)
+    6. ✅ Favoriler (favorites) - with children
+    7. ✅ Raporlar (reports) - with children
+    8. ✅ Danışman Takibi (consultant_tracking) - with children
+    9. ✅ Satın Al (purchase) - with children
+    10. ✅ Hesabım (account) - with children
+  - **Layout**: Horizontal row with pills/rounded buttons
+  - **CRITICAL**: All 10 expected menu items are present in Row 2 horizontal layout
+
+**3. Submenu Dropdown - Favoriler**: ✅ WORKING PERFECTLY
+  - **Button Element**: data-testid="dealer-row2-primary-menu-item-favorites" ✅ CLICKABLE
+  - **Submenu Panel**: data-testid="dealer-layout-row2-submenu-favorites" ✅ OPENS
+  - **Submenu Items**:
+    - ✅ Favori İlanlar (Favorite Listings)
+    - ✅ Favori Aramalar (Favorite Searches) - highlighted in dark background
+    - ✅ Favori Satıcılar (Favorite Sellers)
+  - **Animation**: Smooth dropdown animation
+  - **Panel Position**: Opens downward below Row 2 menu
+  - **CRITICAL**: Favoriler submenu opens correctly when clicked, displaying all child items
+
+**4. Submenu Dropdown - Raporlar**: ✅ WORKING PERFECTLY
+  - **Button Element**: data-testid="dealer-row2-primary-menu-item-reports" ✅ CLICKABLE
+  - **Submenu Panel**: data-testid="dealer-layout-row2-submenu-reports" ✅ OPENS
+  - **Submenu Items**:
+    - ✅ Saatlik Ziyaret Sayısı (Hourly Visit Report)
+    - ✅ Performans Raporları (Performance Reports) - with nested children
+      - Yayındaki İlan Raporu (Live Listing Report)
+      - Görüntüleme Raporu (View Report)
+      - Favoriye Alınma Raporu (Favorite Report)
+      - Gelen Mesaj Raporu (Message Report)
+      - Gelen Arama Raporu (Mobil) (Mobile Call Report)
+    - ✅ Paket Raporları (Package Reports)
+    - ✅ Doping Kullanım Raporu (Doping Usage Report)
+  - **Nested Structure**: Supports multi-level menu hierarchy
+  - **CRITICAL**: Raporlar submenu opens correctly with nested sub-items displayed
+
+**5. Text Contrast - No Fading**: ✅ EXCELLENT
+  - **Active/Open Item Styles** (Raporlar button after click):
+    - Color: rgb(255, 255, 255) - WHITE
+    - Background: rgb(30, 41, 59) - DARK SLATE
+    - Opacity: 1 - FULL OPACITY (no transparency)
+    - Filter: none - NO GRAYSCALE or BLUR
+  - **Inactive Item Styles** (other menu buttons):
+    - Color: rgb(51, 65, 85) - DARK SLATE
+    - Background: transparent / white
+    - Opacity: 1 - FULL OPACITY
+    - Border: visible with good contrast
+  - **Readability**: ✅ EXCELLENT in both active and passive states
+  - **No Fading Issues**: ✅ CONFIRMED - text is not faded, washed out, or hard to read
+  - **CRITICAL**: Text contrast is excellent with full opacity in all states, no readability issues
+
+**6. No Vertical Left Sidebar**: ✅ CONFIRMED ABSENT
+  - **Sidebar Elements Found**: 0 (zero)
+  - **Old Sidebar Patterns Checked**:
+    - `aside` elements: NOT FOUND
+    - Elements with "sidebar" class: NOT FOUND
+    - Elements with "sidebar" id: NOT FOUND
+    - Fixed left-positioned elements: NOT FOUND
+  - **Layout Structure**: Clean horizontal-only navigation
+  - **CRITICAL**: ✅ No vertical left sidebar present - old sidebar structure has been completely removed
+
+### UI Elements Verified:
+
+#### ✅ ROW 1 - CORPORATE HEADER:
+- ✅ Yellow brand/logo button (ANNONCIA) - clickable, navigates to /dealer/overview
+- ✅ "KURUMSAL PORTAL" label in uppercase with letter spacing
+- ✅ "Ana Menü" button (optional quick action)
+- ✅ Quick action buttons on right side
+- ✅ Language switcher (TR/DE/FR)
+
+#### ✅ ROW 2 - HORIZONTAL MAIN MENU:
+- ✅ 10 horizontal menu buttons in a scrollable row
+- ✅ Each button has icon + label + chevron (if has children)
+- ✅ Active/open state: dark background (slate-800), white text
+- ✅ Inactive state: white/transparent background, dark text, border
+- ✅ Hover effect: light gray background
+- ✅ Chevron icons change: ChevronRight (closed) ↔ ChevronDown (open)
+
+#### ✅ SUBMENU PANELS:
+- ✅ Opens below Row 2 menu with smooth animation
+- ✅ White background with border and rounded corners
+- ✅ List of clickable submenu items
+- ✅ Supports nested hierarchy (e.g., Performans Raporları under Raporlar)
+- ✅ Active submenu items highlighted with dark background
+- ✅ Icons next to each submenu item label
+
+#### ✅ ROW 3 - STORE FILTER & USER MENU:
+- ✅ Store selector dropdown ("Tüm Mağazalar")
+- ✅ User menu button with "Dealer Demo" label
+- ✅ Dropdown for profile settings and logout
+
+### Screenshots Captured:
+1. **dealer-submenu-favoriler.png**: Favoriler submenu expanded showing 3 child items (Favori İlanlar, Favori Aramalar, Favori Satıcılar)
+2. **dealer-submenu-raporlar.png**: Raporlar submenu expanded showing multiple report options including nested Performans Raporları
+3. **dealer-menu-final.png**: Final state showing clean horizontal menu layout without submenu open
+
+### Code Implementation Verification:
+
+**DealerLayout.js** (frontend):
+- **Lines 418-452**: Row 1 - Corporate Header
+  - Logo/brand button (data-testid="dealer-layout-brand-button")
+  - Portal label (data-testid="dealer-layout-portal-label") showing "Kurumsal Portal"
+  - Quick actions and language switcher
+- **Lines 495-540**: Row 2 - Primary Horizontal Menu
+  - Primary menu container (data-testid="dealer-layout-row2-primary-menu")
+  - Maps over primaryMenuItems (10 items from corporateMenuStructure)
+  - Each button has data-testid="dealer-row2-primary-menu-item-{key}"
+  - onClick handler toggles openMenuKey state to show/hide submenu
+- **Lines 532-538**: Submenu Panel
+  - Conditionally renders when openPrimaryMenu has children
+  - data-testid="dealer-layout-row2-submenu-{openMenuKey}"
+  - renderSecondaryMenuItem function handles nested items
+- **Lines 517-519**: Button Styling
+  - Active/open: 'border-slate-800 bg-slate-800 text-white'
+  - Inactive: 'border-slate-200 text-slate-900 hover:bg-slate-100'
+  - Full opacity, no transparency or grayscale
+- **Lines 55-195**: corporateMenuStructure
+  - Defines all menu items with nested children
+  - 10 top-level items under 'ofisim' parent
+  - Supports multi-level nesting (e.g., Raporlar > Performans Raporları > sub-items)
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (8/8 tests passed)
+- **Row 1 Corporate Header**: ✅ VERIFIED (logo + portal label visible)
+- **Row 2 Horizontal Menu**: ✅ VERIFIED (all 10 items present)
+- **Submenu Dropdown - Favoriler**: ✅ WORKING (3 items displayed)
+- **Submenu Dropdown - Raporlar**: ✅ WORKING (nested structure with multiple items)
+- **Text Contrast**: ✅ EXCELLENT (opacity=1, no fading)
+- **No Vertical Sidebar**: ✅ CONFIRMED (0 sidebar elements found)
+- **No Console Errors**: ✅ CLEAN (no JavaScript errors)
+- **Visual Quality**: ✅ PRODUCTION-READY (smooth animations, clear hierarchy)
+
+### Layout Architecture:
+
+**New Corporate Menu Structure**:
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Row 1: [ANNONCIA Logo] [Ana Menü] KURUMSAL PORTAL  [Actions] [TR]│
+├─────────────────────────────────────────────────────────────────┤
+│ Row 2: [Özet] [İlanlar] [Sanal Turlar] [Mesajlar] [Müşteri...]  │
+│        [Favoriler ▼] [Raporlar] [Danışman...] [Satın Al] [H...] │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ Submenu: • Favori İlanlar                                   │ │
+│ │          • Favori Aramalar (selected)                       │ │
+│ │          • Favori Satıcılar                                 │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────────┤
+│ Row 3: Mağaza: [Tüm Mağazalar ▼]              [👤 Dealer Demo]  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Old Structure (REMOVED)**:
+- ❌ Vertical left sidebar with menu items (GONE)
+- ❌ Fixed left column layout (GONE)
+- ❌ Sidebar toggle button (GONE)
+
+**New Benefits**:
+- ✅ More horizontal screen space for content
+- ✅ Modern horizontal navigation pattern
+- ✅ Better mobile responsiveness potential
+- ✅ Cleaner, less cluttered interface
+- ✅ Dropdown submenus keep hierarchy visible when needed
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - All requirements satisfied 100%
+- **Row 1 Corporate Header**: ✅ PRODUCTION-READY (logo + portal label)
+- **Row 2 Horizontal Menu**: ✅ PRODUCTION-READY (all 10 items present)
+- **Submenu Dropdowns**: ✅ PRODUCTION-READY (Favoriler + Raporlar tested, working perfectly)
+- **Text Contrast**: ✅ PRODUCTION-READY (excellent readability, no fading)
+- **No Vertical Sidebar**: ✅ PRODUCTION-READY (completely removed)
+- **UI/UX**: ✅ PRODUCTION-READY (smooth animations, clear visual hierarchy)
+
+### Review Request Compliance:
+✅ **Review Request**: "Yeni kurumsal menü satır yapısını test et. Beklenenler: 1) Dealer görünümünde 1. satır kurumsal header (logo/kurumsal alan) görünmeli. 2) 2. satır yatay ana menü görünmeli: Özet, İlanlar, Sanal Turlar, Mesajlar, Müşteri Yönetimi, Favoriler, Raporlar, Danışman Takibi, Satın Al, Hesabım. 3) 2. satırda çocuk menüsü olan başlıklar tıklanınca aşağı doğru alt menü paneli açılmalı (ör. Raporlar/Favoriler). 4) Metin kontrastı silik olmamalı (aktif ve pasif okunaklı). 5) Sol dikey sidebar artık olmamalı."
+
+**Results**:
+1. ✅ **Requirement 1**: Dealer view 1st row shows corporate header ✅ GÖRÜNÜYOR
+   - Logo/brand button: ANNONCIA (yellow button)
+   - Corporate label: "KURUMSAL PORTAL"
+   - Clean, professional corporate header layout
+
+2. ✅ **Requirement 2**: 2nd row shows horizontal main menu with all items ✅ GÖRÜNÜYOR
+   - All 10 items present in horizontal layout:
+   - ✅ Özet, ✅ İlanlar, ✅ Sanal Turlar, ✅ Mesajlar, ✅ Müşteri Yönetimi
+   - ✅ Favoriler, ✅ Raporlar, ✅ Danışman Takibi, ✅ Satın Al, ✅ Hesabım
+
+3. ✅ **Requirement 3**: Menu items with children open dropdown submenu downward ✅ AÇILIYOR
+   - Favoriler: ✅ Opens submenu with 3 items (Favori İlanlar, Favori Aramalar, Favori Satıcılar)
+   - Raporlar: ✅ Opens submenu with 8+ items including nested Performans Raporları
+   - Submenu panel appears below Row 2 menu with smooth animation
+   - Chevron icons change from ChevronRight to ChevronDown when open
+
+4. ✅ **Requirement 4**: Text contrast is not faded (active and passive readable) ✅ OKUNAKLI
+   - Active state: rgb(255,255,255) white text on rgb(30,41,59) dark background, opacity=1
+   - Passive state: rgb(51,65,85) dark text, opacity=1
+   - NO fading, NO grayscale filter, NO low opacity
+   - EXCELLENT readability in all states
+
+5. ✅ **Requirement 5**: Left vertical sidebar no longer present ✅ YOK
+   - 0 sidebar elements detected
+   - Old vertical sidebar structure completely removed
+   - Clean horizontal-only navigation layout
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 27, 2026 (LATEST)
+- **Message**: Corporate menu row structure test for dealer view SUCCESSFULLY COMPLETED with 100% PASS rate (5/5 requirements). All requirements from Turkish review request fully satisfied. CRITICAL VERIFICATION: New horizontal corporate menu structure is PRODUCTION-READY and working perfectly. FLOW VERIFICATION: 1) REQUIREMENT 1 ✅ PASS: Dealer view 1st row (data-testid="dealer-layout-header-row1") displays corporate header with logo button (ANNONCIA) and "KURUMSAL PORTAL" label - kurumsal header GÖRÜNÜYOR. 2) REQUIREMENT 2 ✅ PASS: 2nd row (data-testid="dealer-layout-header-row2") displays horizontal main menu with ALL 10 expected items: Özet, İlanlar, Sanal Turlar, Mesajlar, Müşteri Yönetimi, Favoriler, Raporlar, Danışman Takibi, Satın Al, Hesabım - yatay ana menü GÖRÜNÜYOR. 3) REQUIREMENT 3 ✅ PASS: Menu items with children (Favoriler, Raporlar) open dropdown submenu panel DOWNWARD when clicked (data-testid="dealer-layout-row2-submenu-favorites" and "dealer-layout-row2-submenu-reports") - Favoriler shows 3 items, Raporlar shows 8+ items with nested Performans Raporları sub-items - alt menü paneli aşağı doğru AÇILIYOR. 4) REQUIREMENT 4 ✅ PASS: Text contrast is EXCELLENT in both active (rgb(255,255,255) on rgb(30,41,59), opacity=1) and passive states (rgb(51,65,85), opacity=1) - NO fading, NO low opacity, NO grayscale - text is clearly readable - metin kontrastı SİLİK DEĞİL, aktif ve pasif durumlar OKUNAKLI. 5) REQUIREMENT 5 ✅ PASS: Vertical left sidebar is completely ABSENT (0 sidebar elements detected) - old sidebar structure removed - sol dikey sidebar YOK. All UI elements working correctly with smooth animations. No console errors. All screenshots captured. Corporate menu row structure is production-ready and meets all Turkish requirements: GÖRÜNÜYOR, AÇILIYOR, OKUNAKLI, YOK.
+
+---
+
+
