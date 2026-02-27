@@ -2355,17 +2355,9 @@ const AdminCategories = () => {
           hierarchy_complete: isVehicleModule,
           wizard_progress: { state: progressState, dirty_steps: dirtyStepsOverride },
         };
-        const parentRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...authHeader,
-          },
-          body: JSON.stringify(parentPayload),
-        });
-        const parentData = await parentRes.json().catch(() => ({}));
-        if (!parentRes.ok) {
-          const parsed = parseApiError(parentData, "Ana kategori oluşturulamadı.");
+        const createdParent = await createCategoryWithSortFallback(parentPayload, "Ana kategori oluşturulamadı.");
+        if (!createdParent.ok) {
+          const parsed = createdParent.parsed;
           if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
             setHierarchyFieldErrors((prev) => ({ ...prev, main_sort_order: parsed.message }));
           }
@@ -2375,7 +2367,14 @@ const AdminCategories = () => {
           setHierarchyError(parsed.message);
           return { success: false };
         }
-        updatedParent = parentData.category;
+        if (createdParent.autoAdjusted && createdParent.payload?.sort_order) {
+          setForm((prev) => ({ ...prev, sort_order: String(createdParent.payload.sort_order) }));
+          toast({
+            title: "Sıra otomatik düzeltildi",
+            description: `Ana kategori için sıra ${createdParent.payload.sort_order} olarak güncellendi.`,
+          });
+        }
+        updatedParent = createdParent.data?.category;
       }
 
       const savedSubs = isVehicleModule ? [] : await persistSubcategories(cleanedSubs, updatedParent.id);
