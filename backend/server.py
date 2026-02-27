@@ -31597,10 +31597,10 @@ async def save_showcase_layout_config(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    normalized = _normalize_showcase_layout_config(payload.config)
-    errors = _validate_showcase_layout_config(normalized)
+    errors = _validate_showcase_layout_config(payload.config)
     if errors:
         raise HTTPException(status_code=400, detail={"message": "Showcase layout validation failed", "errors": errors})
+    normalized = _normalize_showcase_layout_config(payload.config)
 
     latest = await session.execute(select(SiteShowcaseLayout).order_by(desc(SiteShowcaseLayout.version)).limit(1))
     latest_row = latest.scalar_one_or_none()
@@ -31627,8 +31627,7 @@ async def publish_showcase_layout_config(
     if not layout:
         raise HTTPException(status_code=404, detail="Showcase layout config not found")
 
-    normalized = _normalize_showcase_layout_config(layout.config)
-    errors = _validate_showcase_layout_config(normalized)
+    errors = _validate_showcase_layout_config(layout.config)
     if errors:
         raise HTTPException(
             status_code=400,
@@ -31637,6 +31636,7 @@ async def publish_showcase_layout_config(
                 "errors": errors,
             },
         )
+    normalized = _normalize_showcase_layout_config(layout.config)
 
     await session.execute(update(SiteShowcaseLayout).values(status="draft"))
     layout.status = "published"
