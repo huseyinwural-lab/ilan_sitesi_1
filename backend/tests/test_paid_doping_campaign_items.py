@@ -57,9 +57,10 @@ class TestDopingEndpointPaidSupport:
         )
         assert response.status_code == 200, f"Failed to apply paid doping: {response.text}"
         data = response.json()
-        assert data.get("doping_type") == "paid", "Doping type should be paid"
-        assert data.get("paid_until") is not None, "paid_until should be set"
-        print(f"PASS: POST doping with paid type works. paid_until: {data.get('paid_until')}")
+        listing = data.get("listing", {})
+        assert listing.get("doping_type") == "paid", f"Doping type should be paid, got: {listing.get('doping_type')}"
+        assert listing.get("paid_until") is not None, "paid_until should be set"
+        print(f"PASS: POST doping with paid type works. paid_until: {listing.get('paid_until')}")
         
         # Revert to free
         response = requests.post(
@@ -164,11 +165,12 @@ class TestPricingCampaignItemListingType:
         )
         assert response.status_code in [200, 201], f"Failed to create campaign item: {response.text}"
         data = response.json()
-        assert data.get("listing_type") == "free"
-        print(f"PASS: Created individual campaign with listing_type=free. ID: {data.get('id')}")
+        item = data.get("item", data)
+        assert item.get("listing_type") == "free"
+        print(f"PASS: Created individual campaign with listing_type=free. ID: {item.get('id')}")
         
         # Cleanup
-        item_id = data.get("id")
+        item_id = item.get("id")
         if item_id:
             requests.delete(f"{BASE_URL}/api/admin/pricing/campaign-items/{item_id}", headers=auth_header)
     
@@ -195,11 +197,12 @@ class TestPricingCampaignItemListingType:
         )
         assert response.status_code in [200, 201], f"Failed: {response.text}"
         data = response.json()
-        assert data.get("listing_type") == "paid"
-        print(f"PASS: Created individual campaign with listing_type=paid. ID: {data.get('id')}")
+        item = data.get("item", data)
+        assert item.get("listing_type") == "paid"
+        print(f"PASS: Created individual campaign with listing_type=paid. ID: {item.get('id')}")
         
         # Cleanup
-        item_id = data.get("id")
+        item_id = item.get("id")
         if item_id:
             requests.delete(f"{BASE_URL}/api/admin/pricing/campaign-items/{item_id}", headers=auth_header)
     
@@ -226,11 +229,12 @@ class TestPricingCampaignItemListingType:
         )
         assert response.status_code in [200, 201], f"Failed: {response.text}"
         data = response.json()
-        assert data.get("listing_type") == "urgent"
-        print(f"PASS: Created individual campaign with listing_type=urgent. ID: {data.get('id')}")
+        item = data.get("item", data)
+        assert item.get("listing_type") == "urgent"
+        print(f"PASS: Created individual campaign with listing_type=urgent. ID: {item.get('id')}")
         
         # Cleanup
-        item_id = data.get("id")
+        item_id = item.get("id")
         if item_id:
             requests.delete(f"{BASE_URL}/api/admin/pricing/campaign-items/{item_id}", headers=auth_header)
     
@@ -257,11 +261,12 @@ class TestPricingCampaignItemListingType:
         )
         assert response.status_code in [200, 201], f"Failed: {response.text}"
         data = response.json()
-        assert data.get("listing_type") == "showcase"
-        print(f"PASS: Created individual campaign with listing_type=showcase. ID: {data.get('id')}")
+        item = data.get("item", data)
+        assert item.get("listing_type") == "showcase"
+        print(f"PASS: Created individual campaign with listing_type=showcase. ID: {item.get('id')}")
         
         # Cleanup
-        item_id = data.get("id")
+        item_id = item.get("id")
         if item_id:
             requests.delete(f"{BASE_URL}/api/admin/pricing/campaign-items/{item_id}", headers=auth_header)
     
@@ -288,12 +293,13 @@ class TestPricingCampaignItemListingType:
         )
         assert response.status_code in [200, 201], f"Failed: {response.text}"
         data = response.json()
-        assert data.get("listing_type") == "paid"
-        assert data.get("scope") == "corporate"
-        print(f"PASS: Created corporate campaign with listing_type=paid. ID: {data.get('id')}")
+        item = data.get("item", data)
+        assert item.get("listing_type") == "paid"
+        assert item.get("scope") == "corporate"
+        print(f"PASS: Created corporate campaign with listing_type=paid. ID: {item.get('id')}")
         
         # Cleanup
-        item_id = data.get("id")
+        item_id = item.get("id")
         if item_id:
             requests.delete(f"{BASE_URL}/api/admin/pricing/campaign-items/{item_id}", headers=auth_header)
 
@@ -356,7 +362,9 @@ class TestCampaignItemUpdateWithListingType:
             headers=auth_header
         )
         assert response.status_code in [200, 201], f"Create failed: {response.text}"
-        item_id = response.json().get("id")
+        created = response.json()
+        created_item = created.get("item", created)
+        item_id = created_item.get("id")
         
         # Update listing_type to paid
         response = requests.put(
@@ -374,7 +382,8 @@ class TestCampaignItemUpdateWithListingType:
             headers=auth_header
         )
         assert response.status_code == 200, f"Update failed: {response.text}"
-        updated = response.json()
+        updated_data = response.json()
+        updated = updated_data.get("item", updated_data)
         assert updated.get("listing_type") == "paid", f"listing_type should be paid, got: {updated.get('listing_type')}"
         print(f"PASS: Updated campaign item listing_type from free to paid")
         
