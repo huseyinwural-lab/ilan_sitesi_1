@@ -1556,10 +1556,11 @@ async def admin_save_ui_config(
     return {"ok": True, "item": _serialize_ui_config(row)}
 
 
-@router.post("/admin/ui/configs/{config_type}/publish/{config_id}")
+@router.post("/admin/ui/configs/{config_type}/publish/{config_id}", deprecated=True)
 async def admin_publish_ui_config(
     config_type: str,
     config_id: str,
+    payload: Optional[UIConfigLegacyPublishPayload] = None,
     current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
     session: AsyncSession = Depends(get_db),
 ):
@@ -1573,12 +1574,30 @@ async def admin_publish_ui_config(
     if not row or row.config_type != normalized_type:
         raise HTTPException(status_code=404, detail="UI config not found")
 
-    published_row, diff_payload, previous_payload = await _publish_ui_config_row(
+    your_version = payload.config_version if payload else None
+    await _validate_publish_version_or_raise(
         session,
         row=row,
-        current_user=current_user,
-        reason="publish_by_config_id",
+        config_version=your_version,
     )
+
+    lock_key = _publish_scope_key(
+        config_type=row.config_type,
+        segment=row.segment,
+        scope=row.scope,
+        scope_id=row.scope_id,
+    )
+    await _acquire_publish_lock_or_raise(lock_key, current_user)
+    try:
+        published_row, diff_payload, previous_payload = await _publish_ui_config_row(
+            session,
+            row=row,
+            current_user=current_user,
+            reason="publish_by_config_id_legacy",
+        )
+    finally:
+        await _release_publish_lock(lock_key)
+
     return {
         "ok": True,
         "item": _serialize_ui_config(published_row),
@@ -1588,6 +1607,8 @@ async def admin_publish_ui_config(
         },
         "diff": diff_payload,
         "previous": previous_payload,
+        "deprecated_endpoint": True,
+        "deprecation_note": "Bu endpoint deprecated. Kaldırma planı: P2. Yeni endpoint: /api/admin/ui/configs/{config_type}/publish",
     }
 
 
@@ -1694,12 +1715,29 @@ async def admin_publish_latest_ui_config(
     if not target_row:
         raise HTTPException(status_code=404, detail="Yayınlanacak draft config bulunamadı")
 
-    published_row, diff_payload, previous_payload = await _publish_ui_config_row(
+    await _validate_publish_version_or_raise(
         session,
         row=target_row,
-        current_user=current_user,
-        reason="publish_latest_endpoint",
+        config_version=payload.config_version,
     )
+
+    lock_key = _publish_scope_key(
+        config_type=target_row.config_type,
+        segment=target_row.segment,
+        scope=target_row.scope,
+        scope_id=target_row.scope_id,
+    )
+    await _acquire_publish_lock_or_raise(lock_key, current_user)
+    try:
+        published_row, diff_payload, previous_payload = await _publish_ui_config_row(
+            session,
+            row=target_row,
+            current_user=current_user,
+            reason="publish_latest_endpoint",
+        )
+    finally:
+        await _release_publish_lock(lock_key)
+
     return {
         "ok": True,
         "item": _serialize_ui_config(published_row),
@@ -1725,6 +1763,15 @@ async def admin_rollback_ui_config(
 
     if not payload.require_confirm:
         raise HTTPException(status_code=400, detail="Rollback onayı zorunludur (require_confirm=true)")
+
+    rollback_reason = (payload.rollback_reason or "").strip()
+    if not rollback_reason:
+        raise _publish_http_error(
+            code=ROLLBACK_ERROR_MISSING_REASON,
+            message="rollback_reason zorunludur",
+            status_code=400,
+            extras={"hint": "Rollback sebebini girip tekrar deneyin"},
+        )
 
     current_published = await _latest_ui_config(
         session,
@@ -1813,6 +1860,7 @@ async def admin_rollback_ui_config(
                 "from_config_id": str(current_published.id),
                 "to_config_id": str(target_row.id),
                 "diff": diff_payload,
+                "rollback_reason": rollback_reason,
             },
         )
     )
@@ -1825,6 +1873,7 @@ async def admin_rollback_ui_config(
         "item": _serialize_ui_config(target_row),
         "rolled_back_from": str(current_published.id),
         "rolled_back_to": str(target_row.id),
+        "rollback_reason": rollback_reason,
         "diff": diff_payload,
     }
 
