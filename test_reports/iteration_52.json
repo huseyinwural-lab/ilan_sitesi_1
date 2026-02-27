@@ -1,0 +1,95 @@
+{
+  "summary": "P71 Vitrin Yönetimi (Showcase Management) - Full E2E testing completed. Backend APIs fully functional. Admin UI working correctly with save/publish workflow. Public HomePage correctly applies showcase layout config.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "PUT /api/admin/site/showcase-layout/config",
+        "issue": "Empty category_id/slug in categories array does not return 400 - backend normalizes instead of rejecting",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_showcase_layout.py",
+    "/app/test_reports/pytest/p71_showcase_layout_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Backend showcase layout endpoints properly implemented with validation and normalization",
+    "Frontend AdminShowcaseManagement page has all required data-testid attributes for testing",
+    "Public HomePage correctly consumes showcase layout config via GET /api/site/showcase-layout",
+    "Version history with load/publish workflow working correctly",
+    "Default homepage showcase: 9 rows x 7 columns x 63 listings"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_showcase_layout.py"
+  ],
+  "success_rate": {
+    "backend": "91% (10/11 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "Created multiple showcase layout versions during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P71 Vitrin Yönetimi feature is fully functional. Backend endpoints: GET /api/site/showcase-layout (public), GET /api/admin/site/showcase-layout, GET /api/admin/site/showcase-layout/configs, PUT /api/admin/site/showcase-layout/config, GET /api/admin/site/showcase-layout/config/{id}, POST /api/admin/site/showcase-layout/config/{id}/publish. Admin page at /admin/site-design/showcase allows editing homepage showcase settings (rows, columns, listing_count) and category showcase configurations. Save draft creates new version, publish marks it as active.",
+  "features_verified": {
+    "admin_route_accessible": {
+      "status": "PASS",
+      "description": "/admin/site-design/showcase route opens correctly"
+    },
+    "homepage_showcase_settings": {
+      "status": "PASS",
+      "description": "Ana Sayfa Vitrin: enabled, rows, columns, listing_count editable and saveable"
+    },
+    "category_showcase_settings": {
+      "status": "PASS",
+      "description": "Ana Kategori Vitrin: default settings and add/remove category layouts working"
+    },
+    "save_draft_workflow": {
+      "status": "PASS",
+      "description": "Taslağı Kaydet creates new version and shows status message"
+    },
+    "publish_workflow": {
+      "status": "PASS",
+      "description": "Yayınla publishes current config and updates version list"
+    },
+    "version_list_display": {
+      "status": "PASS",
+      "description": "Versiyonlar section shows versions with Yükle/Yayınla/Aktif buttons"
+    },
+    "backend_public_endpoint": {
+      "status": "PASS",
+      "description": "GET /api/site/showcase-layout returns normalized published config"
+    },
+    "backend_admin_endpoint": {
+      "status": "PASS",
+      "description": "GET /api/admin/site/showcase-layout returns latest config with version info"
+    },
+    "backend_save_endpoint": {
+      "status": "PASS",
+      "description": "PUT /api/admin/site/showcase-layout/config saves draft with incremented version"
+    },
+    "backend_publish_endpoint": {
+      "status": "PASS",
+      "description": "POST /api/admin/site/showcase-layout/config/{id}/publish marks version as published"
+    },
+    "public_homepage_rendering": {
+      "status": "PASS",
+      "description": "HomePage correctly displays showcase grid with configured number of tiles"
+    },
+    "sidebar_navigation": {
+      "status": "PASS",
+      "description": "Vitrin Yönetimi link visible in Site İç Tasarımı section for super_admin"
+    }
+  },
+  "rca_of_issue": null
+}
