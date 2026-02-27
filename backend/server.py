@@ -30237,7 +30237,7 @@ async def list_pricing_campaign_items(
     current_user=Depends(check_permissions(PRICING_MANAGER_ROLES)),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    _validate_campaign_item_fields(scope, None, None, None, None, None)
+    _validate_campaign_item_fields(scope, "free", None, None, None, None, None)
     await _expire_pricing_campaign_items(session, actor=current_user)
     query = select(PricingCampaignItem).where(PricingCampaignItem.scope == scope)
     if not include_deleted:
@@ -30259,6 +30259,7 @@ async def create_pricing_campaign_item(
     end_at = _ensure_aware_datetime(payload.end_at)
     _validate_campaign_item_fields(
         payload.scope,
+        payload.listing_type,
         payload.listing_quota,
         payload.price_amount,
         payload.publish_days,
@@ -30268,11 +30269,13 @@ async def create_pricing_campaign_item(
         enforce_start_future=True,
     )
     currency = _normalize_currency_code(payload.currency)
+    listing_type = _normalize_campaign_item_listing_type(payload.listing_type)
     if payload.is_active:
-        await _assert_no_overlap_active_campaign_item(session, payload.scope, start_at, end_at)
+        await _assert_no_overlap_active_campaign_item(session, payload.scope, listing_type, start_at, end_at)
 
     item = PricingCampaignItem(
         scope=payload.scope,
+        listing_type=listing_type,
         name=payload.name,
         listing_quota=payload.listing_quota,
         price_amount=payload.price_amount,
@@ -30326,6 +30329,7 @@ async def update_pricing_campaign_item(
 
     _validate_campaign_item_fields(
         item.scope,
+        payload.listing_type if payload.listing_type is not None else item.listing_type,
         payload.listing_quota,
         payload.price_amount,
         payload.publish_days,
@@ -30340,9 +30344,12 @@ async def update_pricing_campaign_item(
             raise HTTPException(status_code=400, detail="start_at must be in the future")
 
     target_active = payload.is_active if payload.is_active is not None else item.is_active
+    target_listing_type = _normalize_campaign_item_listing_type(payload.listing_type if payload.listing_type is not None else item.listing_type)
     if target_active:
-        await _assert_no_overlap_active_campaign_item(session, item.scope, start_at, end_at, exclude_id=item.id)
+        await _assert_no_overlap_active_campaign_item(session, item.scope, target_listing_type, start_at, end_at, exclude_id=item.id)
 
+    if payload.listing_type is not None:
+        item.listing_type = target_listing_type
     if payload.name is not None:
         item.name = payload.name
     if payload.listing_quota is not None:
@@ -30399,7 +30406,7 @@ async def update_pricing_campaign_item_status(
     if payload.is_active:
         if item.start_at is None or item.end_at is None:
             raise HTTPException(status_code=400, detail="start_at and end_at required")
-        await _assert_no_overlap_active_campaign_item(session, item.scope, item.start_at, item.end_at, exclude_id=item.id)
+        await _assert_no_overlap_active_campaign_item(session, item.scope, _normalize_campaign_item_listing_type(item.listing_type), item.start_at, item.end_at, exclude_id=item.id)
 
     item.is_active = payload.is_active
     item.updated_at = datetime.now(timezone.utc)
