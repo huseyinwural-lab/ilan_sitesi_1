@@ -2249,7 +2249,7 @@ const AdminCategories = () => {
     const persistSubcategories = async (nodes, parentId) => {
       const savedNodes = [];
       for (const child of nodes) {
-        const payload = {
+        const basePayload = {
           name: child.name,
           slug: child.slug,
           parent_id: parentId,
@@ -2260,7 +2260,7 @@ const AdminCategories = () => {
           hierarchy_complete: true,
         };
         if (child.transaction_type) {
-          payload.form_schema = {
+          basePayload.form_schema = {
             status: "draft",
             category_meta: { transaction_type: child.transaction_type },
           };
@@ -2269,18 +2269,27 @@ const AdminCategories = () => {
           ? `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${child.id}`
           : `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`;
         const method = child.id ? "PATCH" : "POST";
-        const res = await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            ...authHeader,
-          },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          const parsed = parseApiError(data, "Alt kategori kaydedilemedi.");
-          throw new Error(parsed.message);
+        let data = {};
+        if (method === "POST") {
+          const created = await createCategoryWithSortFallback(basePayload, "Alt kategori kaydedilemedi.");
+          if (!created.ok) {
+            throw new Error(created.parsed.message);
+          }
+          data = created.data;
+        } else {
+          const res = await fetch(url, {
+            method,
+            headers: {
+              "Content-Type": "application/json",
+              ...authHeader,
+            },
+            body: JSON.stringify(basePayload),
+          });
+          data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            const parsed = parseApiError(data, "Alt kategori kaydedilemedi.");
+            throw new Error(parsed.message);
+          }
         }
         const saved = data?.category || child;
         const savedId = saved.id || child.id;
