@@ -2427,6 +2427,45 @@ async def admin_assign_ui_theme(
         raise HTTPException(status_code=404, detail="Theme not found")
 
     normalized_scope, normalized_scope_id = _normalize_scope(payload.scope, payload.scope_id)
+    _validate_theme_scope_v2_or_raise(normalized_scope)
+
+    if normalized_scope == "tenant":
+        global_assignment = (
+            await session.execute(
+                select(UIThemeAssignment)
+                .where(*_theme_scope_clause("system", None))
+                .order_by(desc(UIThemeAssignment.updated_at))
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        if not global_assignment:
+            raise _ui_http_error(
+                code=THEME_ERROR_INVALID_SCOPE,
+                message="Dealer override için global theme ataması zorunludur",
+                status_code=400,
+                extras={"missing_dependency": "global_theme_assignment"},
+            )
+
+        global_theme = await session.get(UITheme, global_assignment.theme_id)
+        if not global_theme:
+            raise _ui_http_error(
+                code=THEME_ERROR_INVALID_SCOPE,
+                message="Dealer override için global theme bulunamadı",
+                status_code=400,
+                extras={"missing_dependency": "global_theme"},
+            )
+
+        global_paths = _flatten_token_paths(global_theme.tokens or {})
+        override_paths = _flatten_token_paths(theme.tokens or {})
+        invalid_paths = sorted(path for path in override_paths if path not in global_paths)
+        if invalid_paths:
+            raise _ui_http_error(
+                code=THEME_ERROR_INVALID_SCOPE,
+                message="Dealer override global theme dışında token alanı içeremez",
+                status_code=400,
+                extras={"invalid_override_paths": invalid_paths[:20]},
+            )
+
     existing = (
         await session.execute(
             select(UIThemeAssignment)
@@ -2454,7 +2493,21 @@ async def admin_assign_ui_theme(
 
     await session.commit()
     await session.refresh(row)
-    return {"ok": True, "item": _serialize_ui_theme_assignment(row)}
+    _, _, _, _, resolved = await _resolve_effective_theme(
+        session,
+        tenant_id=normalized_scope_id if normalized_scope == "tenant" else None,
+        user_id=None,
+    )
+    resolution_meta = resolved.get("resolution", {}) if isinstance(resolved, dict) else {}
+    return {
+        "ok": True,
+        "item": _serialize_ui_theme_assignment(row),
+        "resolved_snapshot": {
+            "owner_type": "dealer" if normalized_scope == "tenant" else "global",
+            "owner_id": normalized_scope_id if normalized_scope == "tenant" else "global",
+            "resolved_config_hash": resolution_meta.get("resolved_config_hash"),
+        },
+    }
 
 
 @router.delete("/admin/ui/theme-assignments/{assignment_id}")
@@ -2471,6 +2524,13 @@ async def admin_delete_ui_theme_assignment(
     row = await session.get(UIThemeAssignment, assignment_uuid)
     if not row:
         raise HTTPException(status_code=404, detail="Theme assignment not found")
+    if row.scope == "user":
+        raise _ui_http_error(
+            code=UI_ERROR_FEATURE_DISABLED,
+            message="Site-level theme override read-only ve deprecated durumdadır",
+            status_code=403,
+            extras={"feature": "site_level_theme_override", "deprecation_plan": "P2"},
+        )
     await session.delete(row)
     await session.commit()
     return {"ok": True}
@@ -2482,17 +2542,26 @@ async def get_effective_ui_theme(
     user_id: Optional[str] = Query(default=None),
     session: AsyncSession = Depends(get_db),
 ):
-    theme, source_scope, source_scope_id, assignment = await _resolve_effective_theme(
+    theme, source_scope, source_scope_id, assignment, resolved = await _resolve_effective_theme(
         session,
         tenant_id=(tenant_id or "").strip() or None,
         user_id=(user_id or "").strip() or None,
     )
+    resolved_tokens = resolved.get("tokens", {}) if isinstance(resolved, dict) else {}
+    resolution_meta = resolved.get("resolution", {}) if isinstance(resolved, dict) else {}
     return {
         "source_scope": source_scope,
         "source_scope_id": source_scope_id,
         "assignment": _serialize_ui_theme_assignment(assignment) if assignment else None,
         "theme": _serialize_ui_theme(theme) if theme else None,
-        "tokens": theme.tokens if theme else {},
+        "tokens": resolved_tokens,
+        "resolution": {
+            "mode": resolution_meta.get("mode"),
+            "global_theme_id": resolution_meta.get("global_theme_id"),
+            "dealer_theme_id": resolution_meta.get("dealer_theme_id"),
+            "resolved_config_hash": resolution_meta.get("resolved_config_hash"),
+            "precedence": "dealer_override > global_theme",
+        },
     }
 
 
