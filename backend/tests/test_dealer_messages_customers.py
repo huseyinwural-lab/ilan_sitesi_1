@@ -83,7 +83,7 @@ class TestDealerMessages:
                              "unread_count", "read_status"]
             for field in required_fields:
                 assert field in first_item, f"Item must have '{field}' field"
-            print(f"✓ Items have required fields including unread_count and read_status")
+            print("✓ Items have required fields including unread_count and read_status")
         else:
             print("✓ No items - structure check skipped (no conversations)")
 
@@ -171,7 +171,7 @@ class TestDealerCustomers:
             required_fields = ["user_id", "full_name", "email", "status", "is_active"]
             for field in required_fields:
                 assert field in first_user, f"Non-store user must have '{field}' field"
-            print(f"✓ Non-store users have required fields")
+            print("✓ Non-store users have required fields")
         else:
             print("✓ No non-store users - structure check skipped")
 
