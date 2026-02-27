@@ -2095,6 +2095,7 @@ async def admin_upload_header_logo(
     background_tasks: BackgroundTasks = None,
 ):
     normalized_segment = _normalize_segment(segment)
+    _assert_header_segment_enabled("header", normalized_segment)
     if normalized_segment != "corporate":
         raise HTTPException(status_code=400, detail="Logo upload bu sprintte sadece corporate segment için açık")
     normalized_scope, normalized_scope_id = _normalize_scope(scope, scope_id)
