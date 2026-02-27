@@ -1,0 +1,161 @@
+{
+  "summary": "Iteration 38 - Fixed critical bug in GET /api/dealer/consultant-tracking endpoint (500 error). All backend tests passing (24/24). All frontend pages verified. Row2 menu order preserved, 'Sanal Turlar' NOT present, 'Danışman Takibi' added correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [],
+    "fixed_in_this_iteration": [
+      {
+        "endpoint": "GET /api/dealer/consultant-tracking",
+        "issue": "500 Internal Server Error - AttributeError: 'User' object has no attribute 'company_name'",
+        "root_cause": "Endpoint was incorrectly accessing company_name directly from SqlUser model, but company_name exists on DealerProfile model",
+        "fix": "Updated endpoint to first fetch DealerProfile and then use company_name from profile to find consultants",
+        "file": "/app/backend/server.py",
+        "lines": "16175-16230"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_dealer_consultant_tracking.py",
+    "/app/test_reports/pytest/iteration38_consultant_tracking.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/server.py",
+    "/app/backend/tests/test_dealer_consultant_tracking.py"
+  ],
+  "success_rate": {
+    "backend": "100% (24/24 tests passed)",
+    "frontend": "100% (all pages verified)"
+  },
+  "test_credentials": {
+    "dealer": "dealer@platform.com / Dealer123!"
+  },
+  "seed_data_creation": "None - used existing dealer account",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All dealer portal features working. Consultant tracking endpoint fixed - was using company_name from SqlUser but it exists on DealerProfile.",
+  "features_verified": {
+    "Row2_Menu_Order": {
+      "status": "PASS",
+      "menu_items": ["Özet", "İlanlar", "Mesajlar", "Müşteri Yönetimi", "Favoriler", "Raporlar", "Danışman Takibi", "Satın Al", "Hesabım"],
+      "sanal_turlar": "NOT present (as expected)"
+    },
+    "GET /api/dealer/consultant-tracking": {
+      "status": "PASS (after fix)",
+      "response_shape": {
+        "consultants": "list with consultant_id, full_name, email, role, is_active, active_listing_count, listing_count, message_count, message_count_7d, message_change_7d, message_change_label, service_score, review_count, detail_route",
+        "evaluations": "list with evaluation_id, consultant_id, consultant_name, username, evaluation_date, score, comment",
+        "summary": {
+          "consultants_count": "number",
+          "evaluations_count": "number"
+        }
+      },
+      "sort_by_param": "rating_desc (default), message_change_desc, messages_desc, name_asc"
+    },
+    "/dealer/consultant-tracking UI": {
+      "status": "PASS",
+      "elements": [
+        "Title: Danışman Takibi",
+        "Subtitle: Danışman performansı ve hizmet değerlendirmeleri",
+        "Tabs: Danışmanlar (count), Danışman Hizmet Değerlendirmeleri (count)",
+        "Search input",
+        "Sort select with 4 options",
+        "Consultant cards grid (in overview tab)",
+        "Evaluations table (in evaluations tab) with columns: Danışman, Kullanıcı Adı, Değerlendirme Tarihi, Puan, Yorum"
+      ]
+    },
+    "GET /api/dealer/favorites": {
+      "status": "PASS",
+      "response_shape": {
+        "favorite_listings": "list",
+        "favorite_searches": "list",
+        "favorite_sellers": "list",
+        "summary": {
+          "favorite_listings_count": "number",
+          "favorite_searches_count": "number",
+          "favorite_sellers_count": "number"
+        }
+      }
+    },
+    "/dealer/favorites UI": {
+      "status": "PASS",
+      "elements": [
+        "3 tabs: Favori İlanlar, Favori Aramalar, Favori Satıcılar",
+        "Search input",
+        "Tables with correct columns"
+      ]
+    },
+    "GET /api/dealer/reports?window_days": {
+      "status": "PASS",
+      "valid_windows": [7, 14, 30, 90],
+      "invalid_windows_return_400": [15, 31]
+    },
+    "/dealer/reports UI": {
+      "status": "PASS",
+      "elements": [
+        "KPI cards: Son 7 Gün Görüntülenme, Lead/İletişim Tıklaması",
+        "Window filters: 7, 14, 30, 90 days",
+        "Section tabs: Yayındaki İlan Raporu, Görüntülenme Raporu, Favoriye Alınma Raporu, Gelen Mesaj Raporu, Gelen Arama Raporu (Mobil), Paket Raporları, Doping Kullanım Raporu",
+        "Package section metrics",
+        "Doping section metrics"
+      ]
+    },
+    "GET /api/dealer/messages": {
+      "status": "PASS",
+      "response_shape": {
+        "items": "list with conversation_id, unread_count",
+        "notification_items": "list",
+        "summary": {
+          "listing_messages": "count",
+          "notifications": "count",
+          "unread_listing_messages": "count"
+        }
+      }
+    },
+    "/dealer/messages UI": {
+      "status": "PASS",
+      "read_status_features": [
+        "Subtitle shows 'Okunmamış konuşma: X'",
+        "Table has 'Okunma' column",
+        "Table has 'İşlem' column with 'Okundu İşaretle' button"
+      ]
+    },
+    "POST /api/dealer/messages/{conversation_id}/read": {
+      "status": "PASS",
+      "invalid_uuid_returns_400": true,
+      "not_found_returns_404": true
+    },
+    "GET /api/dealer/customers": {
+      "status": "PASS",
+      "response_shape": {
+        "items": "list",
+        "non_store_users": "list",
+        "summary": {
+          "users_count": "count",
+          "non_store_users_count": "count"
+        }
+      }
+    },
+    "/dealer/customers UI": {
+      "status": "PASS",
+      "elements": [
+        "Tabs: Kullanıcı Listesi, Mağaza Kullanıcısı Olmayanlar",
+        "Filters: Ad Soyad, E-Posta, Durumu (select)",
+        "Table columns: Ad Soyad, E-Posta, Durumu, İşlemler"
+      ]
+    }
+  },
+  "fix_details": {
+    "issue": "GET /api/dealer/consultant-tracking returning 500 error",
+    "error_message": "AttributeError: 'User' object has no attribute 'company_name'",
+    "root_cause": "The endpoint at line 16189 was trying to access dealer_user.company_name, but the SqlUser model does not have a company_name field. The company_name field exists on the DealerProfile model instead.",
+    "fix_applied": "Updated the endpoint to first fetch the DealerProfile for the dealer user, then extract company_name from the profile to find other consultants with matching company names",
+    "code_change": "Added DealerProfile query and changed conditional from 'dealer_user.company_name' to 'dealer_company_name' from the profile"
+  }
+}
