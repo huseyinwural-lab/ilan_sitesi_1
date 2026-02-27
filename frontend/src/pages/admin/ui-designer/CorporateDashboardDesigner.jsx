@@ -460,6 +460,77 @@ export const CorporateDashboardDesigner = () => {
     }
   };
 
+  const syncLatestDraftAfterConflict = async () => {
+    const hasUnsavedChanges = snapshotHash !== lastSavedHashRef.current;
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm('Kaydedilmemiş yerel değişiklikleriniz var. En güncel draft ile değiştirilecek. Devam etmek istiyor musunuz?');
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setError('');
+    setStatus('');
+    try {
+      const response = await fetch(`${API}/admin/ui/configs/dashboard/conflict-sync`, {
+        method: 'POST',
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          segment: 'corporate',
+          scope,
+          scope_id: scope === 'tenant' ? scopeId.trim() : null,
+          previous_version: latestConfigVersion,
+          retry_count: publishRetryCount + 1,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(parseApiError(data, response.status).message || 'Conflict senkronizasyonu başarısız');
+      }
+
+      const normalized = normalizeDashboard(data?.item || {});
+      setWidgets(normalized.widgets);
+      setLayout(normalized.layout);
+      setConfigData(normalized.configData);
+      setLatestConfigId(data?.item?.id || null);
+      setLatestConfigVersion(data?.item?.version ?? null);
+      setLatestResolvedHash(data?.item?.resolved_config_hash || '');
+      setVersions(Array.isArray(data?.items) ? data.items : []);
+      setDiffPayload(data?.diff || {});
+      setPublishDiffContext({ fromItem: data?.from_item || null, toItem: data?.to_item || null });
+      setPublishRetryCount((prev) => prev + 1);
+      setConflictOpen(false);
+      setConfirmChecked(false);
+
+      const nextHashPayload = buildDraftHashPayload({
+        widgets: normalized.widgets,
+        layout: normalized.layout,
+        configData: normalized.configData,
+        scope,
+        scopeId,
+      });
+      const nextLocalHash = simpleHash(nextHashPayload);
+      setServerDraftHash(nextLocalHash);
+      lastSavedHashRef.current = JSON.stringify({
+        widgets: normalized.widgets,
+        layout: normalized.layout,
+        configData: normalized.configData,
+        scope,
+        scopeId: scope === 'tenant' ? scopeId.trim() : null,
+      });
+
+      setStatus('En güncel draft senkronlandı. Diff ekranı yeniden açıldı.');
+      await loadPublishAudits();
+      setIsPublishOpen(true);
+    } catch (requestError) {
+      setError(requestError.message || 'Conflict senkronizasyonu başarısız');
+      toast.error(requestError.message || 'Conflict senkronizasyonu başarısız');
+    }
+  };
+
   const publishDraft = async () => {
     setPublishing(true);
     setStatus('');
