@@ -1886,13 +1886,36 @@ async def admin_publish_ui_config(
     _assert_header_segment_enabled(row.config_type, row.segment)
 
     your_version = payload.config_version if payload else None
-    await _validate_publish_version_or_raise(
-        session,
-        row=row,
-        config_version=your_version,
-    )
-    if row.config_type == "header":
-        _validate_owner_scope_or_raise(row, payload.owner_type if payload else None, payload.owner_id if payload else None)
+    retry_count = int(max(0, (payload.retry_count if payload else 0) or 0))
+    try:
+        await _validate_publish_version_or_raise(
+            session,
+            row=row,
+            config_version=your_version,
+        )
+        if row.config_type == "header":
+            _validate_owner_scope_or_raise(row, payload.owner_type if payload else None, payload.owner_id if payload else None)
+    except HTTPException as exc:
+        detail = exc.detail if isinstance(exc.detail, dict) else {"message": str(exc.detail)}
+        await _record_publish_attempt_audit(
+            session,
+            current_user=current_user,
+            config_type=row.config_type,
+            segment=row.segment,
+            scope=row.scope,
+            scope_id=row.scope_id,
+            config_id=str(row.id),
+            config_version=your_version,
+            retry_count=retry_count,
+            conflict_detected=exc.status_code == 409,
+            lock_wait_ms=0,
+            publish_duration_ms=None,
+            status="validation_error",
+            detail_message=detail.get("message") or "Publish validation error",
+            extra={"code": detail.get("code")},
+            commit_now=True,
+        )
+        raise
 
     lock_key = _publish_scope_key(
         config_type=row.config_type,
@@ -1900,7 +1923,34 @@ async def admin_publish_ui_config(
         scope=row.scope,
         scope_id=row.scope_id,
     )
-    await _acquire_publish_lock_or_raise(lock_key, current_user)
+    lock_start = time.perf_counter()
+    try:
+        await _acquire_publish_lock_or_raise(lock_key, current_user)
+    except HTTPException as exc:
+        lock_wait_ms = int((time.perf_counter() - lock_start) * 1000)
+        detail = exc.detail if isinstance(exc.detail, dict) else {"message": str(exc.detail)}
+        await _record_publish_attempt_audit(
+            session,
+            current_user=current_user,
+            config_type=row.config_type,
+            segment=row.segment,
+            scope=row.scope,
+            scope_id=row.scope_id,
+            config_id=str(row.id),
+            config_version=your_version,
+            retry_count=retry_count,
+            conflict_detected=True,
+            lock_wait_ms=lock_wait_ms,
+            publish_duration_ms=None,
+            status="locked",
+            detail_message=detail.get("message") or "Publish lock active",
+            extra={"code": detail.get("code")},
+            commit_now=True,
+        )
+        raise
+
+    lock_wait_ms = int((time.perf_counter() - lock_start) * 1000)
+    publish_start = time.perf_counter()
     try:
         published_row, diff_payload, previous_payload, snapshot_payload = await _publish_ui_config_row(
             session,
@@ -1910,6 +1960,26 @@ async def admin_publish_ui_config(
         )
     finally:
         await _release_publish_lock(lock_key)
+
+    publish_duration_ms = int((time.perf_counter() - publish_start) * 1000)
+    await _record_publish_attempt_audit(
+        session,
+        current_user=current_user,
+        config_type=published_row.config_type,
+        segment=published_row.segment,
+        scope=published_row.scope,
+        scope_id=published_row.scope_id,
+        config_id=str(published_row.id),
+        config_version=published_row.version,
+        retry_count=retry_count,
+        conflict_detected=False,
+        lock_wait_ms=lock_wait_ms,
+        publish_duration_ms=publish_duration_ms,
+        status="success",
+        detail_message="Publish success",
+        extra={"deprecated_endpoint": True},
+        commit_now=True,
+    )
 
     return {
         "ok": True,
