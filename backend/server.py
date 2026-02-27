@@ -15729,16 +15729,13 @@ async def dealer_dashboard_summary(
                 select(
                     Listing.id,
                     Listing.title,
-                    func.count(ListingView.id).label("visit_count"),
+                    Listing.view_count,
                 )
-                .select_from(ListingView)
-                .join(Listing, ListingView.listing_id == Listing.id)
                 .where(
                     Listing.dealer_id == dealer_uuid,
-                    ListingView.created_at >= now_dt - timedelta(hours=24),
+                    Listing.status.in_(["active", "published"]),
                 )
-                .group_by(Listing.id, Listing.title)
-                .order_by(desc(func.count(ListingView.id)))
+                .order_by(desc(Listing.view_count), desc(Listing.updated_at))
                 .limit(5)
             )
         ).all()
@@ -15779,7 +15776,7 @@ async def dealer_dashboard_summary(
             {
                 "listing_id": str(row.id),
                 "title": row.title,
-                "visit_count": int(row.visit_count or 0),
+                "visit_count": int(row.view_count or 0),
                 "route": "/dealer/listings",
             }
             for row in top_listing_rows
