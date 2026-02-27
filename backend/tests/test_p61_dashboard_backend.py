@@ -176,8 +176,16 @@ class TestDashboardGuardrailsAndPersistence:
 
         # Step 2: Publish
         publish_response = requests.post(
-            f"{BASE_URL}/api/admin/ui/configs/dashboard/publish/{config_id}",
-            json={"config_version": config_version},
+            f"{BASE_URL}/api/admin/ui/configs/dashboard/publish",
+            json={
+                "segment": "corporate",
+                "scope": "tenant",
+                "scope_id": scope_id,
+                "config_id": config_id,
+                "config_version": config_version,
+                "resolved_config_hash": save_response.json().get("item", {}).get("resolved_config_hash"),
+                "require_confirm": True,
+            },
             headers={"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"},
         )
         assert publish_response.status_code == 200, f"Publish failed: {publish_response.text[:300]}"
