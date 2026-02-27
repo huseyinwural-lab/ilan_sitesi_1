@@ -980,6 +980,154 @@ async def _record_publish_attempt_audit(
         await session.commit()
 
 
+def _safe_percent(numerator: int, denominator: int) -> float:
+    if denominator <= 0:
+        return 0.0
+    return round((numerator / denominator) * 100, 2)
+
+
+def _percentile(values: list[int], percentile: float) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    index = max(0, min(len(ordered) - 1, int(round((percentile / 100) * (len(ordered) - 1)))))
+    return float(ordered[index])
+
+
+def _median_int(values: list[int]) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    mid = len(ordered) // 2
+    if len(ordered) % 2 == 1:
+        return float(ordered[mid])
+    return round((ordered[mid - 1] + ordered[mid]) / 2, 2)
+
+
+def _evaluate_publish_alerts(metrics: dict[str, Any]) -> list[dict[str, Any]]:
+    alerts: list[dict[str, Any]] = []
+    mapping = {
+        "avg_lock_wait_ms": metrics.get("avg_lock_wait_ms", 0),
+        "max_lock_wait_ms": metrics.get("max_lock_wait_ms", 0),
+        "publish_duration_ms_p95": metrics.get("publish_duration_ms_p95", 0),
+        "conflict_rate": metrics.get("conflict_rate", 0),
+    }
+    for metric_name, value in mapping.items():
+        threshold = PUBLISH_OPS_THRESHOLDS.get(metric_name, {})
+        warning = threshold.get("warning")
+        critical = threshold.get("critical")
+        if critical is not None and value >= critical:
+            alerts.append(
+                {
+                    "metric": metric_name,
+                    "severity": "critical",
+                    "value": value,
+                    "threshold": critical,
+                    "window_minutes": threshold.get("window_minutes"),
+                }
+            )
+        elif warning is not None and value >= warning:
+            alerts.append(
+                {
+                    "metric": metric_name,
+                    "severity": "warning",
+                    "value": value,
+                    "threshold": warning,
+                    "window_minutes": threshold.get("window_minutes"),
+                }
+            )
+    return alerts
+
+
+def _compute_publish_metrics(items: list[dict[str, Any]]) -> dict[str, Any]:
+    total = len(items)
+    conflict_count = sum(1 for item in items if item.get("conflict_detected"))
+    success_items = [item for item in items if item.get("status") == "success"]
+
+    lock_values = [int(item.get("lock_wait_ms") or 0) for item in items]
+    publish_values = [int(item.get("publish_duration_ms") or 0) for item in success_items if item.get("publish_duration_ms") is not None]
+    retry_values = [int(item.get("retry_count") or 0) for item in items]
+
+    conflict_resolution_values = []
+    owner_groups: dict[str, list[dict[str, Any]]] = {}
+    for item in items:
+        key = f"{item.get('owner_type')}:{item.get('owner_id')}"
+        owner_groups.setdefault(key, []).append(item)
+
+    for grouped in owner_groups.values():
+        ordered = sorted(grouped, key=lambda entry: entry.get("created_at") or "")
+        for index, entry in enumerate(ordered):
+            if not entry.get("conflict_detected"):
+                continue
+            conflict_at = entry.get("created_at")
+            if not conflict_at:
+                continue
+            for next_entry in ordered[index + 1 :]:
+                if next_entry.get("status") != "success":
+                    continue
+                next_at = next_entry.get("created_at")
+                if not next_at:
+                    continue
+                try:
+                    dt_conflict = datetime.fromisoformat(conflict_at)
+                    dt_success = datetime.fromisoformat(next_at)
+                except ValueError:
+                    continue
+                delta_ms = int((dt_success - dt_conflict).total_seconds() * 1000)
+                if delta_ms >= 0:
+                    conflict_resolution_values.append(delta_ms)
+                break
+
+    metrics = {
+        "total_attempts": total,
+        "success_count": len(success_items),
+        "conflict_count": conflict_count,
+        "conflict_rate": _safe_percent(conflict_count, total),
+        "publish_success_rate": _safe_percent(len(success_items), total),
+        "avg_lock_wait_ms": round(sum(lock_values) / len(lock_values), 2) if lock_values else 0,
+        "max_lock_wait_ms": max(lock_values) if lock_values else 0,
+        "publish_duration_ms": round(sum(publish_values) / len(publish_values), 2) if publish_values else 0,
+        "publish_duration_ms_p95": round(_percentile(publish_values, 95), 2) if publish_values else 0,
+        "time_to_publish_ms": round(_median_int(publish_values), 2) if publish_values else 0,
+        "median_retry_count": round(_median_int(retry_values), 2) if retry_values else 0,
+        "conflict_resolution_time_ms": round(_median_int(conflict_resolution_values), 2) if conflict_resolution_values else 0,
+    }
+    metrics["alerts"] = _evaluate_publish_alerts(metrics)
+    return metrics
+
+
+def _build_time_window_trends(items: list[dict[str, Any]], now_dt: datetime) -> dict[str, Any]:
+    buckets = []
+    for hours_back in range(23, -1, -1):
+        hour_start = (now_dt - timedelta(hours=hours_back)).replace(minute=0, second=0, microsecond=0)
+        hour_end = hour_start + timedelta(hours=1)
+        bucket_items = []
+        for item in items:
+            created_at = item.get("created_at")
+            if not created_at:
+                continue
+            try:
+                dt_created = datetime.fromisoformat(created_at)
+            except ValueError:
+                continue
+            if hour_start <= dt_created < hour_end:
+                bucket_items.append(item)
+        bucket_metrics = _compute_publish_metrics(bucket_items)
+        buckets.append(
+            {
+                "hour": hour_start.isoformat(),
+                "conflict_rate": bucket_metrics.get("conflict_rate", 0),
+                "avg_lock_wait_ms": bucket_metrics.get("avg_lock_wait_ms", 0),
+                "publish_success_rate": bucket_metrics.get("publish_success_rate", 0),
+                "attempt_count": bucket_metrics.get("total_attempts", 0),
+            }
+        )
+    return {
+        "window": "24h",
+        "points": buckets,
+    }
+
+
 def _scope_clause(scope: str, scope_id: Optional[str]):
     if scope == "system":
         return [UIConfig.scope == "system", or_(UIConfig.scope_id.is_(None), UIConfig.scope_id == "")]
