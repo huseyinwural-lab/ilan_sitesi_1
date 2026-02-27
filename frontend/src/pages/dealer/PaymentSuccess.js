@@ -46,8 +46,8 @@ export default function PaymentSuccess() {
           Checkout status: {status} / Payment: {paymentStatus || '-'}
         </div>
       )}
-      <Link className="text-sm text-primary" to="/dealer/invoices" data-testid="dealer-payment-success-back">
-        Faturalara dön
+      <Link className="text-sm text-primary" to="/dealer/purchase" data-testid="dealer-payment-success-back">
+        Satın Al sayfasına dön
       </Link>
     </div>
   );
