@@ -10814,6 +10814,8 @@ async def moderation_queue_count(
     dealer_only: Optional[bool] = None,
     country: Optional[str] = None,
     module: Optional[str] = None,
+    applicant_type: Optional[str] = None,
+    doping_type: Optional[str] = None,
     current_user=Depends(check_permissions(list(ALLOWED_MODERATION_ROLES))),
     session: AsyncSession = Depends(get_sql_session),
 ):
@@ -10827,6 +10829,48 @@ async def moderation_queue_count(
     if module:
         conditions.append(Listing.module == module)
 
+    applicant_type_normalized = (applicant_type or "").strip().lower()
+    if applicant_type_normalized not in {"", "individual", "corporate"}:
+        raise HTTPException(status_code=400, detail="Invalid applicant_type")
+
+    corporate_owner_expr = or_(
+        Listing.is_dealer_listing.is_(True),
+        SqlUser.role == "dealer",
+        SqlUser.portal_scope == "dealer",
+    )
+    individual_owner_expr = and_(
+        Listing.is_dealer_listing.is_(False),
+        or_(
+            SqlUser.id.is_(None),
+            and_(
+                or_(SqlUser.role.is_(None), SqlUser.role != "dealer"),
+                or_(SqlUser.portal_scope.is_(None), SqlUser.portal_scope != "dealer"),
+            ),
+        ),
+    )
+
+    if applicant_type_normalized == "corporate":
+        conditions.append(corporate_owner_expr)
+    elif applicant_type_normalized == "individual":
+        conditions.append(individual_owner_expr)
+
+    now = datetime.now(timezone.utc)
+    featured_active_expr = or_(
+        and_(Listing.featured_until.is_not(None), Listing.featured_until > now),
+        and_(Listing.is_showcase.is_(True), or_(Listing.showcase_expires_at.is_(None), Listing.showcase_expires_at > now)),
+    )
+    urgent_active_expr = and_(Listing.urgent_until.is_not(None), Listing.urgent_until > now)
+
+    doping_type_normalized = (doping_type or "").strip().lower()
+    if doping_type_normalized not in {"", "free", "showcase", "urgent"}:
+        raise HTTPException(status_code=400, detail="Invalid doping_type")
+    if doping_type_normalized == "showcase":
+        conditions.append(featured_active_expr)
+    elif doping_type_normalized == "urgent":
+        conditions.append(and_(~featured_active_expr, urgent_active_expr))
+    elif doping_type_normalized == "free":
+        conditions.append(and_(~featured_active_expr, ~urgent_active_expr))
+
     if current_user.get("role") == "country_admin":
         scope = current_user.get("country_scope") or []
         if "*" not in scope:
@@ -10836,10 +10880,17 @@ async def moderation_queue_count(
         select(func.count())
         .select_from(ModerationItem)
         .join(Listing, ModerationItem.listing_id == Listing.id)
+        .outerjoin(SqlUser, Listing.user_id == SqlUser.id)
         .where(and_(*conditions))
     )
     count = (await session.execute(count_stmt)).scalar_one() or 0
-    return {"count": int(count)}
+    return {
+        "count": int(count),
+        "filters": {
+            "applicant_type": applicant_type_normalized or "all",
+            "doping_type": doping_type_normalized or "all",
+        },
+    }
 
 
 @api_router.get("/admin/moderation/listings/{listing_id}")
