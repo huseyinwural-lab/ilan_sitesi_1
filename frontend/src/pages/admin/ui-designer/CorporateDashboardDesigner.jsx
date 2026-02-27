@@ -531,6 +531,14 @@ export const CorporateDashboardDesigner = () => {
   }, [snapshotHash]);
 
   const layoutMap = useMemo(() => new Map(layout.map((item) => [item.widget_id, item])), [layout]);
+  const diffFromWidgets = useMemo(() => normalizeDiffWidgets(publishDiffContext.fromItem), [publishDiffContext.fromItem]);
+  const diffToWidgets = useMemo(() => normalizeDiffWidgets(publishDiffContext.toItem), [publishDiffContext.toItem]);
+  const addedWidgetIds = useMemo(() => new Set(diffPayload?.added_widgets || []), [diffPayload]);
+  const removedWidgetIds = useMemo(() => new Set(diffPayload?.removed_widgets || []), [diffPayload]);
+  const movedWidgetIds = useMemo(
+    () => new Set((diffPayload?.moved_widgets || []).map((item) => item?.widget_id).filter(Boolean)),
+    [diffPayload],
+  );
 
   return (
     <div className="space-y-4" data-testid="ui-designer-dashboard-container">
