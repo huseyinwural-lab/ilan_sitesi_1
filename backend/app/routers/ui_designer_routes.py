@@ -906,6 +906,39 @@ def _theme_scope_clause(scope: str, scope_id: Optional[str]):
     return [UIThemeAssignment.scope == scope, UIThemeAssignment.scope_id == scope_id]
 
 
+def _flatten_token_paths(payload: Any, prefix: str = "") -> set[str]:
+    if not isinstance(payload, dict):
+        return set()
+    paths: set[str] = set()
+    for key, value in payload.items():
+        key_name = f"{prefix}.{key}" if prefix else str(key)
+        if isinstance(value, dict):
+            paths |= _flatten_token_paths(value, key_name)
+        else:
+            paths.add(key_name)
+    return paths
+
+
+def _deep_merge_tokens(base_tokens: dict[str, Any], override_tokens: dict[str, Any]) -> dict[str, Any]:
+    merged = deepcopy(base_tokens or {})
+    for key, value in (override_tokens or {}).items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge_tokens(merged[key], value)
+        else:
+            merged[key] = deepcopy(value)
+    return merged
+
+
+def _validate_theme_scope_v2_or_raise(scope: str) -> None:
+    if scope not in {"system", "tenant"}:
+        raise _ui_http_error(
+            code=THEME_ERROR_INVALID_SCOPE,
+            message="Theme override sadece system veya tenant scope için desteklenir",
+            status_code=400,
+            extras={"allowed_scopes": ["system", "tenant"], "received_scope": scope},
+        )
+
+
 def _serialize_ui_config(row: UIConfig) -> dict[str, Any]:
     config_data = deepcopy(row.config_data or {})
     layout_value = row.layout if isinstance(row.layout, list) else []
