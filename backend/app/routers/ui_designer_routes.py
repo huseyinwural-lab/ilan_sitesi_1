@@ -3270,11 +3270,65 @@ async def admin_ui_publish_ops_thresholds(
 @router.get("/admin/ui/configs/{config_type}/ops-alerts/secret-presence")
 async def admin_ui_publish_alerts_secret_presence(
     config_type: str,
+    channels: Optional[str] = Query(default=None, description="Kanallar: smtp,slack,pagerduty"),
     current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
 ):
     del current_user
     _normalize_config_type(config_type)
-    return {"ops_alerts_secret_presence": _ops_alerts_secret_presence()}
+    selected_channels = _normalize_ops_alert_channels(channels) if channels else ["smtp", "slack", "pagerduty"]
+    return {"ops_alerts_secret_presence": _ops_alerts_secret_presence(selected_channels)}
+
+
+@router.get("/admin/ui/configs/{config_type}/ops-alerts/secret-checklist")
+async def admin_ui_publish_alerts_secret_checklist(
+    config_type: str,
+    current_user=Depends(check_named_permission(ADMIN_UI_DESIGNER_PERMISSION)),
+):
+    del current_user
+    _normalize_config_type(config_type)
+    return {
+        "channels": {
+            "smtp": {
+                "required_secrets": _ops_alert_required_keys_for_channel("smtp"),
+                "formats": {
+                    "ALERT_SMTP_HOST": "FQDN veya IP",
+                    "ALERT_SMTP_PORT": "25|465|587",
+                    "ALERT_SMTP_FROM": "noreply@domain.com",
+                    "ALERT_SMTP_TO": "ops1@domain.com,ops2@domain.com",
+                    "ALERT_SMTP_USER": "SMTP kullanıcı adı (auth açık ise)",
+                    "ALERT_SMTP_PASS": "SMTP şifre/token (auth açık ise)",
+                    "ALERT_SMTP_STARTTLS": "true|false",
+                    "ALERT_SMTP_AUTH_REQUIRED": "true|false",
+                },
+                "used_in": "_simulate_smtp_delivery",
+                "test_payload": {"config_type": "dashboard", "channels": ["smtp"]},
+            },
+            "slack": {
+                "required_secrets": _ops_alert_required_keys_for_channel("slack"),
+                "formats": {
+                    "ALERT_SLACK_WEBHOOK_URL": "https://hooks.slack.com/services/...",
+                },
+                "used_in": "_simulate_slack_delivery",
+                "test_payload": {"config_type": "dashboard", "channels": ["slack"]},
+            },
+            "pagerduty": {
+                "required_secrets": _ops_alert_required_keys_for_channel("pagerduty"),
+                "formats": {
+                    "ALERT_PAGERDUTY_ROUTING_KEY": "32+ karakter integration key",
+                    "ALERT_PAGERDUTY_EVENTS_URL": "Opsiyonel override URL (varsayılan PagerDuty enqueue)",
+                },
+                "used_in": "_simulate_pagerduty_delivery",
+                "test_payload": {"config_type": "dashboard", "channels": ["pagerduty"]},
+            },
+        },
+        "dry_run_scenario": [
+            "1) Secret presence kontrolü: GET .../ops-alerts/secret-presence?channels=smtp",
+            "2) Simülasyon tetikle: POST /api/admin/ops/alert-delivery/rerun-simulation body={config_type:'dashboard', channels:['smtp']}",
+            "3) correlation_id al ve audit doğrula: GET .../ops-alerts/delivery-audit?correlation_id=<id>&channels=smtp",
+            "4) Sonucu değerlendir: delivery_status=ok|partial_fail, failure_classification boş olmalı",
+            "5) Kapatma: test alarmını incident tool üzerinden ack/resolve et",
+        ],
+    }
 
 
 @router.get("/admin/ops/alert-delivery-metrics")
