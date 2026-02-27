@@ -488,7 +488,7 @@ export const ThemeTokenManagementTab = () => {
       </div>
 
       <div className="rounded-md border bg-white p-3" data-testid="ui-designer-theme-assign-card">
-        <div className="text-sm font-semibold" data-testid="ui-designer-theme-assign-title">Theme Assign (system / tenant / user)</div>
+        <div className="text-sm font-semibold" data-testid="ui-designer-theme-assign-title">Theme Assign (global / dealer override)</div>
         <div className="mt-2 grid gap-3 md:grid-cols-4" data-testid="ui-designer-theme-assign-grid">
           <label className="text-xs" data-testid="ui-designer-theme-assign-scope-label">
             Scope
@@ -500,7 +500,6 @@ export const ThemeTokenManagementTab = () => {
             >
               <option value="system">system</option>
               <option value="tenant">tenant</option>
-              <option value="user">user</option>
             </select>
           </label>
           <label className="text-xs md:col-span-2" data-testid="ui-designer-theme-assign-scope-id-label">
@@ -509,7 +508,7 @@ export const ThemeTokenManagementTab = () => {
               value={assignScopeId}
               onChange={(event) => setAssignScopeId(event.target.value)}
               className="mt-1 h-10 w-full rounded-md border px-2"
-              placeholder="tenant-001 veya user-001"
+              placeholder="tenant-001"
               data-testid="ui-designer-theme-assign-scope-id-input"
             />
           </label>
@@ -547,6 +546,7 @@ export const ThemeTokenManagementTab = () => {
           ) : assignments.map((assignment) => (
             <div key={assignment.id} className="rounded border px-2 py-2 text-xs" data-testid={`ui-designer-theme-assignment-item-${assignment.id}`}>
               scope={assignment.scope} / scope_id={assignment.scope_id || 'system'} / theme_id={assignment.theme_id}
+              {assignment.deprecated ? ' / deprecated-read-only' : ''}
             </div>
           ))}
         </div>
@@ -554,7 +554,7 @@ export const ThemeTokenManagementTab = () => {
 
       <div className="rounded-md border bg-white p-3" data-testid="ui-designer-theme-effective-card">
         <div className="text-sm font-semibold" data-testid="ui-designer-theme-effective-title">Effective Theme Resolve</div>
-        <div className="mt-2 grid gap-3 md:grid-cols-3" data-testid="ui-designer-theme-effective-grid">
+        <div className="mt-2 grid gap-3 md:grid-cols-2" data-testid="ui-designer-theme-effective-grid">
           <label className="text-xs" data-testid="ui-designer-theme-effective-tenant-label">
             tenant_id
             <input
@@ -562,15 +562,6 @@ export const ThemeTokenManagementTab = () => {
               onChange={(event) => setEffectiveTenantId(event.target.value)}
               className="mt-1 h-10 w-full rounded-md border px-2"
               data-testid="ui-designer-theme-effective-tenant-input"
-            />
-          </label>
-          <label className="text-xs" data-testid="ui-designer-theme-effective-user-label">
-            user_id
-            <input
-              value={effectiveUserId}
-              onChange={(event) => setEffectiveUserId(event.target.value)}
-              className="mt-1 h-10 w-full rounded-md border px-2"
-              data-testid="ui-designer-theme-effective-user-input"
             />
           </label>
           <div className="flex items-end" data-testid="ui-designer-theme-effective-action">
@@ -581,6 +572,9 @@ export const ThemeTokenManagementTab = () => {
         </div>
         <div className="mt-2 text-xs text-slate-600" data-testid="ui-designer-theme-effective-source">
           Source: {effectiveResult?.source_scope || '-'} / {effectiveResult?.source_scope_id || 'system'}
+        </div>
+        <div className="mt-1 text-xs text-slate-600" data-testid="ui-designer-theme-effective-precedence">
+          Precedence: Dealer Override &gt; Global Theme
         </div>
         <pre className="mt-2 max-h-52 overflow-auto rounded bg-slate-50 p-2 text-[11px]" data-testid="ui-designer-theme-effective-json">
           {JSON.stringify(effectiveResult?.tokens || {}, null, 2)}
