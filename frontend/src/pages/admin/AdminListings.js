@@ -41,11 +41,21 @@ const dopingTabs = [
   { value: 'urgent', label: 'Acil İlan' },
 ];
 
+const dopingTabValues = new Set(dopingTabs.map((tab) => tab.value));
+const dopingLabelMap = {
+  free: 'Ücretsiz',
+  showcase: 'Vitrin',
+  urgent: 'Acil',
+};
+
+const normalizeDopingType = (value) => (dopingTabValues.has(value) ? value : 'all');
+
 export default function AdminListingsPage({
   title = 'İlanlar',
   dataTestId = 'admin-listings-page',
   applicantType = 'all',
   applicationsMode = false,
+  initialDopingType = 'all',
 }) {
   const [searchParams] = useSearchParams();
   const urlCountry = (searchParams.get('country') || '').toUpperCase();
@@ -59,7 +69,7 @@ export default function AdminListingsPage({
   const [search, setSearch] = useState('');
   const [dealerOnly, setDealerOnly] = useState(false);
   const [categoryId, setCategoryId] = useState('');
-  const [dopingType, setDopingType] = useState('all');
+  const [dopingType, setDopingType] = useState(() => normalizeDopingType(initialDopingType));
   const [dopingCounts, setDopingCounts] = useState({ free: 0, showcase: 0, urgent: 0 });
   const [dopingConfig, setDopingConfig] = useState({});
   const [dopingBusyId, setDopingBusyId] = useState('');
@@ -134,6 +144,11 @@ export default function AdminListingsPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, search, dealerOnly, categoryId, page, urlCountry, applicantType, dopingType, applicationsMode]);
 
+  useEffect(() => {
+    setDopingType(normalizeDopingType(initialDopingType));
+    setPage(0);
+  }, [initialDopingType]);
+
   const openActionDialog = (listing, action) => {
     setActionDialog({ listing, action });
     setActionReason('');
@@ -206,7 +221,7 @@ export default function AdminListingsPage({
     setSearch('');
     setDealerOnly(false);
     setCategoryId('');
-    setDopingType('all');
+    setDopingType(normalizeDopingType(initialDopingType));
     setPage(0);
   };
 
@@ -383,15 +398,33 @@ export default function AdminListingsPage({
                 <div data-testid={`listing-doping-${listing.id}`}>
                   <div className="text-xs uppercase text-muted-foreground lg:hidden">Doping</div>
                   <div className="flex flex-wrap gap-1">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${listing.is_featured ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-700'}`} data-testid={`listing-doping-featured-${listing.id}`}>
-                      {listing.is_featured ? 'Vitrin' : 'Vitrin Yok'}
-                    </span>
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${listing.is_urgent ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'}`} data-testid={`listing-doping-urgent-${listing.id}`}>
-                      {listing.is_urgent ? 'Acil' : 'Acil Yok'}
-                    </span>
+                    {listing.is_featured ? (
+                      <span
+                        className="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700"
+                        data-testid={`listing-doping-featured-${listing.id}`}
+                      >
+                        Vitrin
+                      </span>
+                    ) : null}
+                    {listing.is_urgent ? (
+                      <span
+                        className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700"
+                        data-testid={`listing-doping-urgent-${listing.id}`}
+                      >
+                        Acil
+                      </span>
+                    ) : null}
+                    {!listing.is_featured && !listing.is_urgent ? (
+                      <span
+                        className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
+                        data-testid={`listing-doping-free-${listing.id}`}
+                      >
+                        Ücretsiz
+                      </span>
+                    ) : null}
                   </div>
                   <div className="mt-1 text-[11px] text-muted-foreground" data-testid={`listing-doping-bucket-${listing.id}`}>
-                    {listing.doping_type || 'free'}
+                    {dopingLabelMap[listing.doping_type] || dopingLabelMap.free}
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 lg:items-end">
