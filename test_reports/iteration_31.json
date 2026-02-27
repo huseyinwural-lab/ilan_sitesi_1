@@ -1,0 +1,86 @@
+{
+  "summary": "P65 Header + Theme V2 Simplification Testing Complete - All backend tests pass (10/10). Frontend UI verified: Individual header editor tab removed, Theme scope limited to system/tenant (user rejected with INVALID_THEME_SCOPE), Corporate header effective requires dealer scope (UNAUTHORIZED_SCOPE), Publish snapshot with owner_type/owner_id/config_version/resolved_config_hash, Visual diff panels and rollback reason required.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p65_header_theme_v2.py",
+    "/app/backend/tests/test_p64_publish_hardening.py",
+    "/app/test_reports/pytest/p65_header_theme_v2_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (10/10 passed - 5 P65 + 5 P64)",
+    "frontend": "100% (all UI flows verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "dealer": "dealer@platform.com / Dealer123!"
+  },
+  "seed_data_creation": "Corporate header and theme configs created during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P65 Header + Theme V2 simplification complete. All backend APIs working. UI Designer now has only 3 tabs (Dashboard V2, Corporate Header, Theme). Individual header endpoints return 403 FEATURE_DISABLED. Corporate header effective endpoint requires dealer scope (403 UNAUTHORIZED_SCOPE for non-dealer). Theme assignment scope limited to system/tenant (400 INVALID_THEME_SCOPE for user). Publish snapshot includes owner_type, owner_id, config_version, resolved_config_hash. Theme precedence: Dealer Override > Global Theme.",
+  "features_verified": {
+    "backend_api_contracts": {
+      "individual_header_admin_endpoints": "403 FEATURE_DISABLED (hard disabled)",
+      "corporate_header_effective_non_dealer": "403 UNAUTHORIZED_SCOPE",
+      "corporate_header_effective_dealer": "200 OK",
+      "header_publish_without_config_version": "400 MISSING_CONFIG_VERSION",
+      "header_publish_without_owner_scope": "400 MISSING_OWNER_SCOPE",
+      "header_publish_scope_mismatch": "409 SCOPE_CONFLICT",
+      "header_publish_success_snapshot_fields": "owner_type, owner_id, config_version, resolved_config_hash all present",
+      "theme_assignment_user_scope": "400 INVALID_THEME_SCOPE",
+      "theme_assignment_system_scope": "200 OK",
+      "theme_assignment_tenant_scope": "200 OK",
+      "theme_effective_with_dealer_override": "200 OK with resolved tokens (dealer > global)",
+      "rollback_without_reason": "400 MISSING_ROLLBACK_REASON"
+    },
+    "frontend_ui_verified": {
+      "individual_header_tab_removed": "PASS - Tab not present in UI Designer",
+      "ui_tabs_present": ["Kurumsal Dashboard V2", "Kurumsal Header Tasarım", "Tema Yönetimi"],
+      "theme_scope_dropdown_options": ["system", "tenant"],
+      "corporate_header_logo_uploader": "PASS - 3:1 ±10% ratio constraint",
+      "corporate_header_3row_dnd": "PASS - Row1/Row2/Row3 with drag-and-drop",
+      "dashboard_widget_palette": "PASS - KPI/Grafik/Liste/Paket Özeti/Doping Özeti",
+      "dashboard_snapshots_card": "PASS",
+      "dashboard_publish_button": "PASS",
+      "dashboard_rollback_button": "PASS"
+    },
+    "publish_snapshot_validation": {
+      "owner_type_required": "PASS",
+      "owner_id_required": "PASS",
+      "config_version_required": "PASS",
+      "resolved_config_hash_generated": "PASS - 64 char SHA256 hash",
+      "scope_mismatch_detection": "PASS - 409 SCOPE_CONFLICT"
+    },
+    "theme_override_model": {
+      "precedence_chain": "Dealer Override > Global Theme",
+      "resolved_tokens_merge": "PASS - deep merge dealer tokens over global",
+      "user_scope_rejected": "PASS - 400 INVALID_THEME_SCOPE",
+      "resolved_snapshot_in_assignment": "PASS - owner_type, owner_id, resolved_config_hash"
+    }
+  },
+  "p65_test_results": {
+    "test_individual_header_admin_endpoints_feature_disabled": "PASSED",
+    "test_corporate_effective_requires_dealer_scope": "PASSED",
+    "test_publish_scope_conflict_and_snapshot_integrity": "PASSED",
+    "test_invalid_scope_user_is_rejected": "PASSED",
+    "test_dealer_override_precedence_and_resolved_snapshot": "PASSED"
+  },
+  "p64_test_results": {
+    "test_publish_new_endpoint_requires_config_version": "PASSED",
+    "test_publish_legacy_endpoint_requires_config_version": "PASSED",
+    "test_publish_version_mismatch_returns_409_contract": "PASSED",
+    "test_parallel_publish_lock_or_conflict": "PASSED",
+    "test_rollback_reason_required": "PASSED"
+  }
+}
