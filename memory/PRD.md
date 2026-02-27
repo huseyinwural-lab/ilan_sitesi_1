@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 22:22:00 UTC (P94 Vitrin Senkron + Versiyon Silme)
+**Son güncelleme:** 2026-02-27 22:40:00 UTC (P95 Onaylı Acil İlanlar Yeni Pencere)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -67,6 +67,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P95 Onaylı Acil İlanlar Yeni Pencere Akışı (2026-02-27):** Kullanıcı talebine göre `İlan & Moderasyon > Bireysel İlan Başvuruları` ve `Kurumsal İlan Başvuruları` içindeki **Acil** tıklaması yeni pencerede onaylı acil ilan listesine yönlendirildi. `AdminListings` bileşenine `initialStatus` eklendi; route bazında urgent sayfalar `initialStatus="published"` + `initialDopingType="urgent"` ile çalışır hale getirildi (`BackofficePortalApp`). Ayrıca sidebar’daki `Bireysel Acil İlan` ve `Kurumsal Acil İlan` linkleri `_blank` olarak açılıyor. Doğrulama: popup URL `.../individual-listing-applications/urgent`, popup başlığı `Bireysel Onaylı Acil İlanlar`, sidebar urgent link `target=_blank` smoke PASS.
 - **P94 Vitrin Senkron + Versiyon Silme (2026-02-27):** Kullanıcı geri bildirimi üzerine vitrin ayarlarının public’e yansımama/kesik senkron problemi kapatıldı. `GET /api/site/showcase-layout` cache header’ı `no-store` yapıldı; public `HomePage` grid kolon uygulaması class-based modele taşındı (`home-v2-showcase-grid-cols-{n}` / `home-v2-category-showcase-grid-cols-{n}`), böylece admindeki **1. Ana Sayfa Vitrin** sütun değeri HTML render’a doğrudan uygulanıyor. Ayrıca versiyon listesine satır bazlı `Sil` butonu eklendi (v11/v10 alanı): draft silme aktif, published için UI disabled + backend guard `400 Aktif versiyon silinemez`. Doğrulama: `/app/test_reports/iteration_53.json` (**backend 9/9 PASS, frontend 100% PASS**).
 - **P93 Ana Sayfa Vitrin HTML Bağlantısı Netleştirme (2026-02-27):** Kullanıcı talebine göre public `HomePage` vitrini, Admin > Site İç Tasarım > Vitrin Yönetimi > **1. Ana Sayfa Vitrin** ayarlarından beslenecek şekilde netleştirildi. Vitrin HTML/JSX bloğunda kolon/satır/ilan alanı konfigürasyonuna bağlı render korunurken, responsive tarafta sabit kolon override’ları kaldırıldı; böylece admin’de verilen sütun düzeni doğrudan vitrin gridine uygulanıyor. `GET /api/site/showcase-layout` → `HomePage` entegrasyonu aktif doğrulandı (smoke test).
 - **P92 Site İç Tasarım > Vitrin Yönetimi (2026-02-27):** Kullanıcı talebine göre Admin > Site İç Tasarım altında yeni **Vitrin Yönetimi** alanı eklendi (`/admin/site-design/showcase`). Ekranda iki ana bölüm var: **(1) Ana Sayfa Vitrin** ve **(2) Ana Kategori Vitrin**. Her bölümde satır/sütun/ilan alanı manuel yönetiliyor; kategori vitrininde birden fazla ana kategori için ayrı düzen tanımlanabiliyor (kategori bazlı rows/columns/listing_count + aktif/pasif). Taslak kaydet, yayınla, versiyon listeleme/yükleme akışları eklendi.
