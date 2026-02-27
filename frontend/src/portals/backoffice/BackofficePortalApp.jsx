@@ -104,7 +104,7 @@ export default function BackofficePortalApp() {
       />
       <Route
         path="/individual-listing-applications/urgent"
-        element={<AdminLayout><AdminListingsPage title="Bireysel Acil İlan Başvuruları" dataTestId="individual-listing-applications-urgent-page" applicantType="individual" applicationsMode initialDopingType="urgent" /></AdminLayout>}
+        element={<AdminLayout><AdminListingsPage title="Bireysel Onaylı Acil İlanlar" dataTestId="individual-listing-applications-urgent-page" applicantType="individual" applicationsMode initialDopingType="urgent" initialStatus="published" /></AdminLayout>}
       />
       <Route path="/corporate-listing-applications" element={<AdminLayout><CorporateListingApplicationsPage /></AdminLayout>} />
       <Route
@@ -117,7 +117,7 @@ export default function BackofficePortalApp() {
       />
       <Route
         path="/corporate-listing-applications/urgent"
-        element={<AdminLayout><AdminListingsPage title="Kurumsal Acil İlan Başvuruları" dataTestId="corporate-listing-applications-urgent-page" applicantType="corporate" applicationsMode initialDopingType="urgent" /></AdminLayout>}
+        element={<AdminLayout><AdminListingsPage title="Kurumsal Onaylı Acil İlanlar" dataTestId="corporate-listing-applications-urgent-page" applicantType="corporate" applicationsMode initialDopingType="urgent" initialStatus="published" /></AdminLayout>}
       />
       <Route path="/ads" element={<AdminLayout><AdminAdsManagement /></AdminLayout>} />
       <Route path="/ads/campaigns" element={<AdminLayout><AdminAdsCampaigns /></AdminLayout>} />
