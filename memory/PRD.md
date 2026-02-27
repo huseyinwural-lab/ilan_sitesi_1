@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 16:14:00 UTC (P1 Toplu Kapanış Onayı)
+**Son güncelleme:** 2026-02-27 16:32:00 UTC (P0 Toplu Kapanış Onayı)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -18,11 +18,16 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - EU uyumlu portal navigasyonu (TR/DE/FR)
 - İlan ver sihirbazı tamamlanması (test-id kapsamı)
 
-## P0 Kapsam Kilidi (Admin Kategori Sihirbazı)
-- Akış düzeltmesi (Tamam→PATCH, Next gating + tooltip)
-- Backend authoritative wizard_progress
-- E2E test paketi (Frontend+Backend)
-- Preview DB env workaround notu (yalnız preview, prod/stage yasak)
+## P0 Kapsam Kilidi (Corporate Dashboard Mock→Live)
+- Sadece corporate dashboard modülleri canlı PostgreSQL query ile çalışacak (legacy publish temizlikleri P1+)
+- Empty-state stratejisi: veri yoksa boş durum döner, **mock fallback yok**
+- Modül sırası: Summary → Listings → Messages → Customers → Favorites → Reports → Consultant Tracking
+- Tek tur kabul kriteri: backend canlı query + frontend akış + testing agent PASS
+
+### P0 (Toplu Kapanış: TAMAMLANDI)
+- Dealer corporate dashboard modüllerinde mock fallback davranışları kaldırıldı, empty-state standardize edildi
+- Summary/Reports package fallback’ları kaldırıldı; KPI tarafında gerçek conversation/listing tabanlı hesaplar aktif
+- Kapanış doğrulaması: `/app/test_reports/iteration_42.json` (backend %100 PASS, frontend %100 PASS)
 
 ### P1 (Toplu Kapanış: TAMAMLANDI)
 - Dealer kurumsal dashboard sıralı ekran kapanışları tamamlandı (Özet/İlanlar/Mesajlar/Müşteri/Favoriler/Raporlar/Danışman Takibi/Satın Al/Hesabım)
@@ -63,6 +68,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P83 P0 Toplu Kapanış (2026-02-27):** Corporate dashboard modülleri için canlı veri + empty-state stratejisi tek turda kapatıldı. `GET /api/dealer/dashboard/summary` endpointinde sabit package fallback kaldırıldı, `demand_customer_count` ve `matching_listing_count` gerçek `Conversation/Listing` query’lerinden hesaplanır hale getirildi. `GET /api/dealer/reports` endpointinde package adı fallback’i kaldırıldı (plan/invoice yoksa null + empty-state). `GET /api/dealer/dashboard/metrics` subscription alanı gerçek son invoice/plan verisiyle dolduruldu. Dealer listings UI’da hardcoded `0` metrikleri kaldırılıp backend kaynaklı alanlar (yoksa `-`) gösterimine geçildi. Kapanış testi: `/app/test_reports/iteration_42.json`.
 - **P82 P1 Alt Modül Kapanışı (2026-02-27):** P1 kapsamı tek iterasyonda kapatıldı. Dealer `Hesabım` sayfası `?section=` deep-link destekli hale getirildi (`profile/address/security/notifications/blocked`) ve backend’de yeni endpointler eklendi: `POST /api/dealer/settings/change-password`, `GET/PATCH /api/dealer/settings/preferences`, `POST/DELETE /api/dealer/settings/blocked-accounts`. Admin Kategoriler listesine `Görselli/Görselsiz` filtresi ve görünür kayıt sayacı eklendi; kategori görsel alanında format + son güncelleme metadata gösterimi tamamlandı. Doğrulama: `/app/test_reports/iteration_41.json` (backend 16/16 PASS, frontend PASS).
 - **P81 Kategori Listesi Görsel Kolonu (2026-02-27):** Admin > Kategoriler liste tablosuna `Görsel` kolonu eklendi. Satırlarda `image_url` varsa thumbnail preview, yoksa placeholder gösterimi eklendi; cache-bust için `updated_at` tabanlı URL parametresi kullanıldı. Böylece ana kategori görselleri listede hızlı doğrulanabilir hale geldi. Test: admin categories smoke screenshot (`/tmp/admin-categories-list-image-column.png`) + data-testid doğrulaması.
 - **P80 Admin Kategori Ana Görsel Alanı (2026-02-27):** Admin > Kategoriler > Yeni Kategori/Düzenle akışına yalnızca **ana kategori (root)** için görsel yükleme alanı eklendi. Frontend’de upload+preview (png/jpg/webp, 2MB, center-crop bilgilendirmesi), `Kaldır/Değiştir`, root-dışı durumda kilitli mesajı ve zorunlu validasyon eklendi. Backend’de `POST /api/admin/categories/image-upload` endpointi eklendi (2MB limit, format doğrulama, 1:1 center-crop, `/api/site/assets/categories/...`), `CategoryCreatePayload/CategoryUpdatePayload` için `image_url` desteği açıldı ve child category için `CATEGORY_IMAGE_ROOT_ONLY` kuralı enforce edildi. Test: `/app/test_reports/iteration_40.json` (PASS).
