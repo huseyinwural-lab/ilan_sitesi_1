@@ -37,6 +37,7 @@ const statusOptions = [
 const dopingTabs = [
   { value: 'all', label: 'Tümü' },
   { value: 'free', label: 'Ücretsiz İlan' },
+  { value: 'paid', label: 'Ücretli İlan' },
   { value: 'showcase', label: 'Vitrin İlan' },
   { value: 'urgent', label: 'Acil İlan' },
 ];
@@ -44,6 +45,7 @@ const dopingTabs = [
 const dopingTabValues = new Set(dopingTabs.map((tab) => tab.value));
 const dopingLabelMap = {
   free: 'Ücretsiz',
+  paid: 'Ücretli',
   showcase: 'Vitrin',
   urgent: 'Acil',
 };
@@ -70,7 +72,7 @@ export default function AdminListingsPage({
   const [dealerOnly, setDealerOnly] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [dopingType, setDopingType] = useState(() => normalizeDopingType(initialDopingType));
-  const [dopingCounts, setDopingCounts] = useState({ free: 0, showcase: 0, urgent: 0 });
+  const [dopingCounts, setDopingCounts] = useState({ free: 0, paid: 0, showcase: 0, urgent: 0 });
   const [dopingConfig, setDopingConfig] = useState({});
   const [dopingBusyId, setDopingBusyId] = useState('');
   const [page, setPage] = useState(0);
@@ -127,7 +129,7 @@ export default function AdminListingsPage({
       });
       setItems(res.data.items || []);
       setTotal(res.data.pagination?.total ?? 0);
-      setDopingCounts(res.data.doping_counts || { free: 0, showcase: 0, urgent: 0 });
+      setDopingCounts(res.data.doping_counts || { free: 0, paid: 0, showcase: 0, urgent: 0 });
     } catch (e) {
       console.error(e);
     } finally {
@@ -323,7 +325,7 @@ export default function AdminListingsPage({
       <div className="flex flex-wrap items-center gap-2" data-testid="listings-doping-tabs">
         {dopingTabs.map((tab) => {
           const count = tab.value === 'all'
-            ? (Number(dopingCounts.free || 0) + Number(dopingCounts.showcase || 0) + Number(dopingCounts.urgent || 0))
+            ? (Number(dopingCounts.free || 0) + Number(dopingCounts.paid || 0) + Number(dopingCounts.showcase || 0) + Number(dopingCounts.urgent || 0))
             : Number(dopingCounts[tab.value] || 0);
           const active = dopingType === tab.value;
           return (
@@ -414,7 +416,15 @@ export default function AdminListingsPage({
                         Acil
                       </span>
                     ) : null}
-                    {!listing.is_featured && !listing.is_urgent ? (
+                    {listing.is_paid && !listing.is_featured && !listing.is_urgent ? (
+                      <span
+                        className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700"
+                        data-testid={`listing-doping-paid-${listing.id}`}
+                      >
+                        Ücretli
+                      </span>
+                    ) : null}
+                    {!listing.is_featured && !listing.is_urgent && !listing.is_paid ? (
                       <span
                         className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
                         data-testid={`listing-doping-free-${listing.id}`}
@@ -443,6 +453,7 @@ export default function AdminListingsPage({
                       data-testid={`listing-doping-type-select-${listing.id}`}
                     >
                       <option value="free">Ücretsiz</option>
+                      <option value="paid">Ücretli</option>
                       <option value="showcase">Vitrin</option>
                       <option value="urgent">Acil</option>
                     </select>
