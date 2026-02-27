@@ -1,16 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
+  Ban,
   BarChart3,
+  Bell,
+  Building2,
+  FileText,
   Heart,
   LayoutDashboard,
   ListChecks,
   LogOut,
   MessageCircle,
+  Shield,
   PlusSquare,
   Settings,
   ShoppingCart,
   UserRound,
+  UserSquare2,
   Users,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +32,7 @@ const languageOptions = [
 ];
 
 const iconMap = {
+  Ban,
   LayoutDashboard,
   ListChecks,
   MessageCircle,
@@ -36,6 +43,169 @@ const iconMap = {
   Heart,
   PlusSquare,
   UserRound,
+  Bell,
+  FileText,
+  Building2,
+  UserSquare2,
+  Shield,
+};
+
+const corporateMenuStructure = [
+  {
+    key: 'ofisim',
+    label: 'Ofisim',
+    icon: 'LayoutDashboard',
+    route: '/dealer/overview',
+    children: [
+      { key: 'overview', label: 'Özet', icon: 'LayoutDashboard', route: '/dealer/overview' },
+      { key: 'listings', label: 'İlanlar', icon: 'ListChecks', route: '/dealer/listings' },
+      { key: 'virtual_tours', label: 'Sanal Turlar', icon: 'LayoutDashboard', route: '/dealer/overview' },
+      { key: 'messages', label: 'Mesajlar', icon: 'MessageCircle', route: '/dealer/messages' },
+      {
+        key: 'customers',
+        label: 'Müşteri Yönetimi',
+        icon: 'Users',
+        route: '/dealer/customers',
+        children: [
+          { key: 'contracts', label: 'Sözleşmeler', icon: 'FileText', route: '/dealer/customers' },
+        ],
+      },
+      {
+        key: 'favorites',
+        label: 'Favoriler',
+        icon: 'Heart',
+        route: '/dealer/overview',
+        children: [
+          { key: 'favorite_listings', label: 'Favori İlanlar', icon: 'Heart', route: '/dealer/listings' },
+          { key: 'favorite_searches', label: 'Favori Aramalar', icon: 'Heart', route: '/dealer/overview' },
+          { key: 'favorite_sellers', label: 'Favori Satıcılar', icon: 'Heart', route: '/dealer/customers' },
+        ],
+      },
+      {
+        key: 'reports',
+        label: 'Raporlar',
+        icon: 'BarChart3',
+        route: '/dealer/reports',
+        children: [
+          { key: 'hourly_visit_report', label: 'Saatlik Ziyaret Sayısı', icon: 'BarChart3', route: '/dealer/reports' },
+          {
+            key: 'performance_reports',
+            label: 'Performans Raporları',
+            icon: 'BarChart3',
+            route: '/dealer/reports',
+            children: [
+              { key: 'live_listing_report', label: 'Yayındaki İlan Raporu', icon: 'BarChart3', route: '/dealer/reports' },
+              { key: 'view_report', label: 'Görüntüleme Raporu', icon: 'BarChart3', route: '/dealer/reports' },
+              { key: 'favorite_report', label: 'Favoriye Alınma Raporu', icon: 'BarChart3', route: '/dealer/reports' },
+              { key: 'message_report', label: 'Gelen Mesaj Raporu', icon: 'BarChart3', route: '/dealer/reports' },
+              { key: 'mobile_call_report', label: 'Gelen Arama Raporu (Mobil)', icon: 'BarChart3', route: '/dealer/reports' },
+            ],
+          },
+          { key: 'package_reports', label: 'Paket Raporları', icon: 'BarChart3', route: '/dealer/reports' },
+          { key: 'doping_usage_report', label: 'Doping Kullanım Raporu', icon: 'BarChart3', route: '/dealer/reports' },
+        ],
+      },
+      {
+        key: 'consultant_tracking',
+        label: 'Danışman Takibi',
+        icon: 'Users',
+        route: '/dealer/customers',
+        children: [
+          { key: 'consultant_service_reviews', label: 'Danışman Hizmet Değerlendirmeleri', icon: 'Users', route: '/dealer/reports' },
+        ],
+      },
+      {
+        key: 'purchase',
+        label: 'Satın Al',
+        icon: 'ShoppingCart',
+        route: '/dealer/purchase',
+        children: [
+          { key: 'bulk_doping_purchase', label: 'Toplu Doping Satın Al', icon: 'ShoppingCart', route: '/dealer/purchase' },
+        ],
+      },
+      {
+        key: 'account',
+        label: 'Hesabım',
+        icon: 'Settings',
+        route: '/dealer/settings',
+        children: [
+          {
+            key: 'account_information',
+            label: 'Hesap Bilgilerim',
+            icon: 'UserRound',
+            route: '/dealer/settings',
+            children: [
+              { key: 'personal_info', label: 'Kişisel Bilgilerim', icon: 'UserRound', route: '/dealer/settings' },
+              { key: 'account_email', label: 'E-Posta', icon: 'UserRound', route: '/dealer/settings' },
+              { key: 'account_phone', label: 'Cep Telefonu', icon: 'UserRound', route: '/dealer/settings' },
+              { key: 'password_change', label: 'Şifre Değişikliği', icon: 'Shield', route: '/dealer/settings' },
+              { key: 'account_verification', label: 'Hesap Doğrulama', icon: 'Shield', route: '/dealer/settings' },
+              { key: 'recovery_email', label: 'Kurtarma E-Postası', icon: 'Shield', route: '/dealer/settings' },
+              { key: 'sessions_devices', label: 'Oturumlar ve Cihazlar', icon: 'Shield', route: '/dealer/settings' },
+            ],
+          },
+          {
+            key: 'security',
+            label: 'Güvenlik',
+            icon: 'Shield',
+            route: '/dealer/settings',
+            children: [
+              { key: 'two_factor', label: '2 Aşamalı Doğrulama', icon: 'Shield', route: '/dealer/settings' },
+            ],
+          },
+          {
+            key: 'store',
+            label: 'Mağazam',
+            icon: 'Building2',
+            route: '/dealer/company',
+            children: [
+              { key: 'store_content', label: 'Mağaza İçeriği', icon: 'Building2', route: '/dealer/company' },
+              { key: 'custom_categories', label: 'Özel Kategoriler', icon: 'Building2', route: '/dealer/company' },
+              { key: 'business_info', label: 'İşletme Bilgileri', icon: 'Building2', route: '/dealer/company' },
+              { key: 'store_users', label: 'Kullanıcılar', icon: 'UserSquare2', route: '/dealer/company' },
+              { key: 'packages_services', label: 'Paket ve Ek Hizmetler', icon: 'ShoppingCart', route: '/dealer/purchase' },
+              { key: 'saved_cards', label: 'Kayıtlı Kartlarım', icon: 'FileText', route: '/dealer/settings' },
+              { key: 'my_invoices', label: 'Faturalarım', icon: 'FileText', route: '/dealer/invoices' },
+              { key: 'account_movements', label: 'Hesap Hareketlerim', icon: 'FileText', route: '/dealer/invoices' },
+              { key: 'my_permissions', label: 'İzinlerim', icon: 'Shield', route: '/dealer/settings' },
+            ],
+          },
+          {
+            key: 'notification_preferences',
+            label: 'Bildirim Tercihleri',
+            icon: 'Bell',
+            route: '/dealer/settings',
+            children: [
+              { key: 'electronic_messages', label: 'Elektronik İleti', icon: 'Bell', route: '/dealer/settings' },
+              { key: 'read_receipt', label: 'Mesaj Okundu Bilgisi', icon: 'Bell', route: '/dealer/settings' },
+            ],
+          },
+          {
+            key: 'blocked_accounts',
+            label: 'Engellediğim Hesap Sahipleri',
+            icon: 'Ban',
+            route: '/dealer/settings',
+          },
+        ],
+      },
+    ],
+  },
+];
+
+const mergeCorporateMenuRoutes = (nodes, routeOverrides) =>
+  nodes.map((node) => ({
+    ...node,
+    route: routeOverrides[node.key] || node.route || null,
+    children: Array.isArray(node.children) && node.children.length
+      ? mergeCorporateMenuRoutes(node.children, routeOverrides)
+      : [],
+  }));
+
+const isCorporateMenuActive = (node, pathname) => {
+  const isCurrent = node.route && (pathname === node.route || pathname.startsWith(`${node.route}/`));
+  if (isCurrent) return true;
+  if (!Array.isArray(node.children) || node.children.length === 0) return false;
+  return node.children.some((child) => isCorporateMenuActive(child, pathname));
 };
 
 const labelMap = {
@@ -139,6 +309,16 @@ export default function DealerLayout() {
     return Array.isArray(stores) && stores.length ? stores : [{ key: 'all', label: 'Tüm Mağazalar' }];
   }, [headerRow3Controls]);
 
+  const sidebarRouteOverrides = useMemo(
+    () => Object.fromEntries((sidebarItems || []).map((item) => [item.key, item.route])),
+    [sidebarItems],
+  );
+
+  const structuredSidebarItems = useMemo(
+    () => mergeCorporateMenuRoutes(corporateMenuStructure, sidebarRouteOverrides),
+    [sidebarRouteOverrides],
+  );
+
   useEffect(() => {
     setSelectedStore(headerRow3Controls?.default_store_key || 'all');
   }, [headerRow3Controls?.default_store_key]);
@@ -162,6 +342,43 @@ export default function DealerLayout() {
     if (item.key === 'quick_create_listing') {
       trackDealerEvent('dealer_listing_create_start', { route: item.route });
     }
+  };
+
+  const renderCorporateMenuItem = (item, depth = 0) => {
+    const Icon = iconMap[item.icon] || LayoutDashboard;
+    const isActive = isCorporateMenuActive(item, activePath);
+    const hasChildren = Array.isArray(item.children) && item.children.length > 0;
+    const depthClass = depth === 0 ? 'pl-0' : depth === 1 ? 'pl-3' : depth === 2 ? 'pl-6' : 'pl-9';
+    const labelClass = depth === 0 ? 'text-sm font-semibold' : 'text-sm';
+
+    return (
+      <div key={item.key} className={`${depthClass}`} data-testid={`dealer-sidebar-tree-item-${item.key}`}>
+        {item.route ? (
+          <NavLink
+            to={item.route}
+            onClick={() => handleNavClick({ key: item.key, route: item.route }, 'sidebar_tree')}
+            className={`flex items-center gap-2 rounded-xl px-3 py-2 transition ${
+              isActive ? 'bg-[var(--bg-warm-soft)] text-[var(--brand-navy)]' : 'text-slate-700 hover:bg-slate-100'
+            }`}
+            data-testid={`dealer-sidebar-tree-link-${item.key}`}
+          >
+            <Icon size={15} />
+            <span className={labelClass} data-testid={`dealer-sidebar-tree-label-${item.key}`}>{item.label}</span>
+          </NavLink>
+        ) : (
+          <div className="flex items-center gap-2 rounded-xl px-3 py-2 text-slate-500" data-testid={`dealer-sidebar-tree-link-${item.key}`}>
+            <Icon size={15} />
+            <span className={labelClass} data-testid={`dealer-sidebar-tree-label-${item.key}`}>{item.label}</span>
+          </div>
+        )}
+
+        {hasChildren ? (
+          <div className="mt-1 space-y-1" data-testid={`dealer-sidebar-tree-children-${item.key}`}>
+            {item.children.map((child) => renderCorporateMenuItem(child, depth + 1))}
+          </div>
+        ) : null}
+      </div>
+    );
   };
 
   return (
@@ -363,24 +580,7 @@ export default function DealerLayout() {
             <div className="mt-4 text-xs text-slate-500" data-testid="dealer-layout-sidebar-loading">Yükleniyor…</div>
           ) : (
             <div className="mt-4 space-y-1" data-testid="dealer-layout-sidebar-items">
-              {sidebarItems.map((item) => {
-                const Icon = iconMap[item.icon] || LayoutDashboard;
-                const isActive = activePath === item.route || activePath.startsWith(`${item.route}/`);
-                return (
-                  <NavLink
-                    key={item.id}
-                    to={item.route}
-                    onClick={() => handleNavClick(item, 'sidebar')}
-                    className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
-                      isActive ? 'bg-[var(--bg-warm-soft)] text-[var(--brand-navy)]' : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                    data-testid={`dealer-sidebar-item-${item.key}`}
-                  >
-                    <Icon size={16} />
-                    <span>{resolveLabel(item.label_i18n_key, t)}</span>
-                  </NavLink>
-                );
-              })}
+              {structuredSidebarItems.map((item) => renderCorporateMenuItem(item, 0))}
             </div>
           )}
 
