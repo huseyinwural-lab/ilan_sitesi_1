@@ -803,7 +803,7 @@ export const CorporateHeaderDesigner = () => {
               </div>
               <button
                 type="button"
-                onClick={() => publishLatest(item.id)}
+                onClick={() => publishLatest(item.id, item.version)}
                 className="rounded border px-2 py-1"
                 data-testid={`ui-designer-corporate-publish-version-${item.id}`}
               >
