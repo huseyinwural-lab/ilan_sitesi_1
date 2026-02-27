@@ -1353,6 +1353,7 @@ const AdminCategories = () => {
       module: "",
       active_flag: true,
       sort_order: 1,
+      image_url: "",
     });
     setSchema(createDefaultSchema());
     setEditing(null);
@@ -1405,6 +1406,9 @@ const AdminCategories = () => {
       message: "",
     });
     setOrderPreview({ checking: false, available: true, message: "", conflict: null });
+    setCategoryImageUploading(false);
+    setCategoryImageError("");
+    setCategoryImageCacheBuster(Date.now());
     setLastSavedAt("");
     setAutosaveStatus("idle");
     lastSavedSnapshotRef.current = "";
