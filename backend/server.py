@@ -15884,7 +15884,7 @@ async def dealer_dashboard_summary(
             "package_quota": {
                 "title": "Paket Durumu / Kota",
                 "value": f"{quota_remaining} / {quota_limit}",
-                "subtitle": f"Paket: {package_status}",
+                "subtitle": f"Paket: {package_status or '-'}",
                 "route": "/dealer/purchase",
             },
         }
