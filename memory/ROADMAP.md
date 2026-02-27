@@ -1,6 +1,6 @@
 # ROADMAP
 
-**Son güncelleme:** 2026-02-27 (P67)
+**Son güncelleme:** 2026-02-27 (P69)
 
 Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tutulur.
 
@@ -68,6 +68,7 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
   - **Yeni:** Header+Theme P0 simplification PASS (`/app/test_reports/iteration_31.json`) — individual header editor kaldırıldı, corporate header dealer-scope enforce, theme precedence dealer>global, user-scope theme override kapalı
   - **Yeni:** Conflict UX + publish telemetry hardening PASS (`/app/test_reports/iteration_32.json`) — tek aksiyon conflict sync, auto-reopen publish, drift guard, telemetry/audit görünürlüğü
   - **Yeni:** Ops hardening + P2 legacy cleanup PASS (`/app/test_reports/iteration_33.json`) — thresholds, alert simulation, KPI pipeline (1h/24h/7d), legacy publish 410, usage analizi
+  - **Yeni:** P1 Ops Publish Health + Alert Reliability PASS (`/app/test_reports/iteration_35.json`) — `/admin/ops/publish-health`, 24s alert success KPI, rerun simulation (rate-limit + admin/ops RBAC), mobile overflow fix
 
 ### Sıradaki Faz — Dealer Dashboard P1 (Restart)
 - **ACTIVE** 🔴
@@ -81,8 +82,8 @@ Bu dosya faz bazlı backlog özetini içerir. Detaylı iş listeleri PRD’de tu
   - Iterasyon 2: Undo paneli (persist öncesi), draft save/publish/rollback, revision listesi
   - Bulk 1000+ async job altyapısı (job queue + polling + idempotency + retry)
 - Sonraki iterasyon:
-  - Ops alarmlarını gerçek Slack/Email/On-call entegrasyonuna bağlama
-  - Publish KPI trendlerini ayrı operasyon dashboard sayfasına taşıma
+  - Ops alarmlarını gerçek Slack/Email/On-call entegrasyonunda secret inject sonrası production PASS’e kapatma
+  - P2: legacy publish route physical removal sonrası referans/CI tarama temizliği
   - Widget şablon kütüphanesi (bu sprint dışı, V2 stabil sonrası UX hızlandırıcı)
   - Bulk job admin monitör ekranı (listeleme + retry butonu)
 
