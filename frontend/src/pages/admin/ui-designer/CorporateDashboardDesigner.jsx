@@ -291,9 +291,11 @@ export const CorporateDashboardDesigner = () => {
     [configData, layout, scope, scopeId, widgets],
   );
 
-  const loadDraft = async () => {
-    setStatus('');
-    setError('');
+  const loadDraft = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setStatus('');
+      setError('');
+    }
     try {
       const response = await fetch(
         `${API}/admin/ui/configs/dashboard?segment=corporate&scope=${scope}${scopeQuery}&status=draft`,
@@ -312,7 +314,9 @@ export const CorporateDashboardDesigner = () => {
       setLatestConfigVersion(data?.item?.version ?? null);
       setVersions(Array.isArray(data?.items) ? data.items : []);
       setSelectedRollbackId('');
-      setStatus('Dashboard taslağı yüklendi');
+      if (!silent) {
+        setStatus('Dashboard taslağı yüklendi');
+      }
 
       const nextHash = JSON.stringify({
         widgets: normalized.widgets,
@@ -322,7 +326,15 @@ export const CorporateDashboardDesigner = () => {
         scopeId: scope === 'tenant' ? scopeId.trim() : null,
       });
       lastSavedHashRef.current = nextHash;
+      setServerDraftHash(simpleHash(buildDraftHashPayload({
+        widgets: normalized.widgets,
+        layout: normalized.layout,
+        configData: normalized.configData,
+        scope,
+        scopeId,
+      })));
       initializedRef.current = true;
+      return data;
     } catch (requestError) {
       setError(requestError.message || 'Dashboard taslağı yüklenemedi');
       setWidgets([]);
@@ -332,6 +344,8 @@ export const CorporateDashboardDesigner = () => {
       setLatestConfigVersion(null);
       setVersions([]);
       setSelectedRollbackId('');
+      setServerDraftHash('');
+      return null;
     }
   };
 
