@@ -257,6 +257,16 @@ export const CorporateDashboardDesigner = () => {
     [widgets, layout, configData, scope, scopeId],
   );
 
+  const localDraftHash = useMemo(
+    () => simpleHash(buildDraftHashPayload({ widgets, layout, configData, scope, scopeId })),
+    [widgets, layout, configData, scope, scopeId],
+  );
+
+  const driftMismatch = useMemo(
+    () => Boolean(serverDraftHash) && localDraftHash !== serverDraftHash,
+    [localDraftHash, serverDraftHash],
+  );
+
   const enabledKpiCount = useMemo(
     () => widgets.filter((widget) => widget.widget_type === 'kpi' && widget.enabled !== false).length,
     [widgets],
