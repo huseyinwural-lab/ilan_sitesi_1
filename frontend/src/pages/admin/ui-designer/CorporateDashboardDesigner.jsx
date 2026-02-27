@@ -404,6 +404,11 @@ export const CorporateDashboardDesigner = () => {
           setConflictOpen(true);
           throw new Error(apiError.message || 'Başka bir admin daha yeni bir versiyon yayınladı');
         }
+        if (response.status === 409 && apiError.code === 'PUBLISH_LOCKED') {
+          setConflictInfo(apiError.raw || {});
+          setConflictOpen(true);
+          throw new Error(apiError.message || 'Publish lock aktif. Kısa süre sonra tekrar deneyin.');
+        }
         if (response.status === 400 && apiError.code === 'MISSING_CONFIG_VERSION') {
           throw new Error('Version bilgisi eksik. Lütfen sayfayı yenileyin ve tekrar deneyin.');
         }
