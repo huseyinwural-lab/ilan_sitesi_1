@@ -89,6 +89,23 @@ class TestLogoUploadContract:
         detail = _detail(response)
         assert detail.get("code") == "INVALID_ASPECT_RATIO"
 
+    @pytest.mark.parametrize(
+        "width,height",
+        [
+            (300, 100),  # exact 3:1
+            (270, 100),  # lower boundary 2.7
+            (330, 100),  # upper boundary 3.3
+        ],
+    )
+    def test_aspect_ratio_boundaries_are_accepted(self, admin_token: str, width: int, height: int):
+        response = requests.post(
+            f"{BASE_URL}/api/admin/ui/configs/header/logo",
+            files={"file": ("boundary.png", _image_bytes(width, height, "PNG"), "image/png")},
+            data={"segment": "corporate", "scope": "system"},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert response.status_code == 200, f"Expected 200 for ratio {width}:{height}, got {response.status_code}: {response.text[:200]}"
+
     def test_scope_system_with_scope_id_is_accepted(self, admin_token: str):
         response = requests.post(
             f"{BASE_URL}/api/admin/ui/configs/header/logo",
