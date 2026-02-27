@@ -267,7 +267,7 @@ export const CorporateDashboardDesigner = () => {
   const [publishKpi, setPublishKpi] = useState(null);
   const [publishTrends, setPublishTrends] = useState([]);
   const [publishAlerts, setPublishAlerts] = useState([]);
-  const [largeScreen, setLargeScreen] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+  const [largeScreen, setLargeScreen] = useState(true);
 
   const initializedRef = useRef(false);
   const autoSaveRef = useRef(null);
@@ -710,6 +710,7 @@ export const CorporateDashboardDesigner = () => {
 
   useEffect(() => {
     const onResize = () => setLargeScreen(window.innerWidth >= 1024);
+    onResize();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
