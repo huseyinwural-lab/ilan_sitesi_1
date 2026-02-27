@@ -170,6 +170,15 @@ const createSubcategoryDraft = () => ({
   children: [],
 });
 
+const CATEGORY_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
+const CATEGORY_IMAGE_ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "webp"];
+
+const resolveCategoryImagePreviewUrl = (imageUrl, cacheBuster) => {
+  if (!imageUrl) return "";
+  const separator = imageUrl.includes("?") ? "&" : "?";
+  return `${imageUrl}${separator}v=${cacheBuster}`;
+};
+
 const TURKISH_CHAR_MAP = {
   ç: "c",
   Ç: "C",
