@@ -13404,6 +13404,91 @@ async def admin_force_unpublish_listing(
     return {"ok": True, "listing": {"id": updated["id"], "status": updated.get("status")}}
 
 
+@api_router.post("/admin/listings/{listing_id}/doping")
+async def admin_update_listing_doping(
+    listing_id: str,
+    payload: ListingDopingUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
+
+    try:
+        listing_uuid = uuid.UUID(str(listing_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid listing id") from exc
+
+    listing = await session.get(Listing, listing_uuid)
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    now = datetime.now(timezone.utc)
+    target_until = payload.until_at
+    if payload.doping_type != "free":
+        if target_until and target_until.tzinfo is None:
+            target_until = target_until.replace(tzinfo=timezone.utc)
+        if target_until is None:
+            duration_days = int(payload.duration_days or 7)
+            target_until = now + timedelta(days=duration_days)
+        if target_until <= now:
+            raise HTTPException(status_code=400, detail="Doping bitiş tarihi ileri bir tarih olmalıdır")
+
+    if payload.doping_type == "showcase":
+        listing.featured_until = target_until
+        listing.is_showcase = True
+        listing.showcase_expires_at = target_until
+        listing.urgent_until = None
+    elif payload.doping_type == "urgent":
+        listing.urgent_until = target_until
+        listing.featured_until = None
+        listing.is_showcase = False
+        listing.showcase_expires_at = None
+    else:
+        listing.featured_until = None
+        listing.urgent_until = None
+        listing.is_showcase = False
+        listing.showcase_expires_at = None
+
+    listing.updated_at = now
+
+    await _write_audit_log_sql(
+        session=session,
+        action="LISTING_DOPING_UPDATED",
+        actor=current_user,
+        resource_type="listing",
+        resource_id=str(listing.id),
+        metadata={
+            "doping_type": payload.doping_type,
+            "duration_days": payload.duration_days,
+            "until_at": target_until.isoformat() if target_until else None,
+            "reason": payload.reason,
+        },
+        request=request,
+        country_code=listing.country,
+    )
+
+    await session.commit()
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger="admin_doping_update",
+    )
+
+    return {
+        "ok": True,
+        "listing": {
+            "id": str(listing.id),
+            "doping_type": _listing_doping_bucket(listing),
+            "is_featured": _listing_featured_active(listing),
+            "is_urgent": _listing_urgent_active(listing),
+            "featured_until": listing.featured_until.isoformat() if listing.featured_until else None,
+            "urgent_until": listing.urgent_until.isoformat() if listing.urgent_until else None,
+        },
+    }
+
+
 # =====================
 # Sprint 2.2 — Reports Engine
 # =====================
