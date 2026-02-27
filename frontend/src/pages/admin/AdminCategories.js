@@ -2733,7 +2733,7 @@ const AdminCategories = () => {
       <div className="bg-white border rounded-lg text-slate-900">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 bg-gray-50" data-testid="categories-list-filters-wrap">
           <div className="flex flex-wrap items-center gap-2" data-testid="categories-list-filters">
-            <div className="flex flex-wrap items-center gap-1" data-testid="categories-list-filter-module-group">
+            <div className="flex flex-wrap items-center gap-1" data-testid="categories-list-filter-module">
               {[{ value: "all", label: "Tüm Modüller" }, ...CATEGORY_MODULE_OPTIONS].map((option) => (
                 <button
                   key={option.value}
@@ -2747,7 +2747,7 @@ const AdminCategories = () => {
               ))}
             </div>
 
-            <div className="flex flex-wrap items-center gap-1" data-testid="categories-list-filter-status-group">
+            <div className="flex flex-wrap items-center gap-1" data-testid="categories-list-filter-status">
               {[
                 { value: 'all', label: 'Tüm Durumlar' },
                 { value: 'active', label: 'Aktif' },
@@ -2765,7 +2765,7 @@ const AdminCategories = () => {
               ))}
             </div>
 
-            <div className="flex flex-wrap items-center gap-1" data-testid="categories-list-filter-image-presence-group">
+            <div className="flex flex-wrap items-center gap-1" data-testid="categories-list-filter-image-presence">
               {[
                 { value: 'all', label: 'Tüm Görsel Durumları' },
                 { value: 'with_image', label: 'Görselli' },
