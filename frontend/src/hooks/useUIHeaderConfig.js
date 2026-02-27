@@ -52,7 +52,11 @@ export const useUIHeaderConfig = ({ segment = 'individual', tenantId = '', userI
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(payload?.detail || 'Header config okunamadı');
+          const detail = payload?.detail;
+          if (detail && typeof detail === 'object') {
+            throw new Error(detail.message || 'Header config okunamadı');
+          }
+          throw new Error(detail || 'Header config okunamadı');
         }
 
         if (!active) return;
