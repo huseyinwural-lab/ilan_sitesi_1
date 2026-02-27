@@ -1,0 +1,99 @@
+{
+  "summary": "Iteration 40 - Tested Category Image Upload feature for admin panel. All backend APIs pass (12/12). Frontend UI correctly shows image upload section for root categories and hides it for subcategories.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "AdminCategories modal",
+        "issues": ["React hydration warnings present (span inside option/select) - Visual Editor artifact, non-blocking"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_category_image_upload.py",
+    "/app/test_reports/pytest/iteration40_category_image.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Image upload feature correctly implements root-only restriction both in backend and frontend",
+    "Backend properly returns CATEGORY_IMAGE_ROOT_ONLY error (400) when trying to set image_url on child categories",
+    "Frontend shows 'Alt kategorilerde görsel alanı kapalıdır' message for non-root categories",
+    "Image upload supports png/jpg/jpeg/webp with 2MB limit and center-crop to 1:1 ratio"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_category_image_upload.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% (all UI elements working)"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "Created test root and child categories during pytest execution",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Category image upload feature is complete. Backend endpoint POST /api/admin/categories/image-upload working. Create/update endpoints properly enforce CATEGORY_IMAGE_ROOT_ONLY rule. Frontend shows image section only for root categories.",
+  "features_verified": {
+    "POST /api/admin/categories/image-upload": {
+      "status": "PASS",
+      "tests": [
+        "Valid PNG upload returns 200 with image_url",
+        "Valid JPG upload returns 200 with image_url",
+        "Valid WEBP upload returns 200 with image_url",
+        "Invalid format (txt) returns 400",
+        "File > 2MB returns 400",
+        "Unauthenticated request returns 401/403"
+      ]
+    },
+    "POST /api/admin/categories (create)": {
+      "status": "PASS",
+      "tests": [
+        "Root category with image_url succeeds (201)",
+        "Child category with image_url rejected with CATEGORY_IMAGE_ROOT_ONLY (400)"
+      ]
+    },
+    "PATCH /api/admin/categories/{id} (update)": {
+      "status": "PASS",
+      "tests": [
+        "Root category image_url update succeeds (200)",
+        "Child category image_url update rejected with CATEGORY_IMAGE_ROOT_ONLY (400)",
+        "Root category image removal succeeds (200)",
+        "image_url persists and is returned in list API"
+      ]
+    },
+    "Frontend UI": {
+      "status": "PASS",
+      "elements_verified": [
+        "Ana kategori görseli section visible for root categories (create modal)",
+        "Ana kategori görseli section visible for root categories (edit modal)",
+        "'Alt kategorilerde görsel alanı kapalıdır' message shown for child categories",
+        "Görsel Yükle button present and functional",
+        "Kaldır button present",
+        "Preview container shows 'Varsayılan ikon' when no image",
+        "Help text shows: Dosya tipleri: png/jpg/webp • Maks: 2MB • 1:1 oranı center-crop uygulanır"
+      ]
+    }
+  },
+  "data_testids_verified": [
+    "categories-image-section",
+    "categories-image-root-uploader",
+    "categories-image-preview-container",
+    "categories-image-preview",
+    "categories-image-placeholder",
+    "categories-image-hint",
+    "categories-image-actions",
+    "categories-image-upload-trigger",
+    "categories-image-upload-input",
+    "categories-image-remove-button",
+    "categories-image-uploading",
+    "categories-image-error",
+    "categories-image-required-error",
+    "categories-image-root-only-note"
+  ]
+}
