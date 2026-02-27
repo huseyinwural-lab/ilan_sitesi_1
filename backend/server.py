@@ -13336,7 +13336,7 @@ async def admin_listings(
         )
 
     counts = {
-        "free": int((count_row.showcase_count if False else count_row.free_count) or 0) if count_row else 0,
+        "free": int(count_row.free_count or 0) if count_row else 0,
         "showcase": int(count_row.showcase_count or 0) if count_row else 0,
         "urgent": int(count_row.urgent_count or 0) if count_row else 0,
     }
