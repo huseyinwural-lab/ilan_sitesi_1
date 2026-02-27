@@ -16185,8 +16185,24 @@ async def dealer_consultant_tracking(
     seven_days_ago = now_dt - timedelta(days=7)
     fourteen_days_ago = now_dt - timedelta(days=14)
 
+    # Get dealer profile to access company_name
+    dealer_profile = (
+        await session.execute(
+            select(DealerProfile).where(DealerProfile.user_id == dealer_uuid)
+        )
+    ).scalar_one_or_none()
+    dealer_company_name = dealer_profile.company_name if dealer_profile else None
+
     consultant_roles = ["dealer", "consultant", "dealer_agent", "sales_agent", "staff"]
-    if dealer_user and dealer_user.company_name:
+    if dealer_user and dealer_company_name:
+        # Find users with matching company name via DealerProfile
+        matching_profile_user_ids = (
+            await session.execute(
+                select(DealerProfile.user_id).where(
+                    DealerProfile.company_name == dealer_company_name
+                )
+            )
+        ).scalars().all()
         consultant_rows = (
             await session.execute(
                 select(SqlUser).where(
@@ -16194,7 +16210,7 @@ async def dealer_consultant_tracking(
                     or_(
                         SqlUser.id == dealer_uuid,
                         and_(
-                            SqlUser.company_name == dealer_user.company_name,
+                            SqlUser.id.in_(matching_profile_user_ids),
                             SqlUser.role.in_(consultant_roles),
                         ),
                     ),
