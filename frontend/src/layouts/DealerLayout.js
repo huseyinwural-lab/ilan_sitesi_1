@@ -264,6 +264,7 @@ export default function DealerLayout() {
     authRequired: true,
   });
   const [selectedStore, setSelectedStore] = useState('all');
+  const [storeMenuOpen, setStoreMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [openMenuKey, setOpenMenuKey] = useState('favorites');
 
@@ -342,6 +343,11 @@ export default function DealerLayout() {
   }, [headerRow3Controls?.default_store_key]);
 
   useEffect(() => {
+    setStoreMenuOpen(false);
+    setUserMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
     if (!activePrimaryMenu?.key) return;
     if (activePrimaryMenu.key !== openMenuKey) {
       setOpenMenuKey(activePrimaryMenu.key);
@@ -355,6 +361,7 @@ export default function DealerLayout() {
 
   const handleStoreChange = (nextStoreKey) => {
     setSelectedStore(nextStoreKey);
+    setStoreMenuOpen(false);
     trackDealerEvent('dealer_header_store_filter_change', { store_key: nextStoreKey });
   };
 
@@ -542,23 +549,38 @@ export default function DealerLayout() {
           {(showRow3StoreFilter || showRow3UserMenu) ? (
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-2" data-testid="dealer-layout-header-row3">
               {showRow3StoreFilter ? (
-                <div className="flex items-center gap-2" data-testid="dealer-layout-row3-store-wrap">
+                <div className="relative flex items-center gap-2" data-testid="dealer-layout-row3-store-wrap">
                   <label className="text-xs font-semibold text-slate-600" data-testid="dealer-layout-row3-store-label">
                     Mağaza
                   </label>
-                  <select
-                    value={selectedStore}
-                    onChange={(event) => handleStoreChange(event.target.value)}
-                    className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm"
+                  <button
+                    type="button"
+                    onClick={() => setStoreMenuOpen((prev) => !prev)}
+                    className="inline-flex h-9 min-w-[160px] items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm"
                     data-testid="dealer-layout-row3-store-filter"
                     disabled={!headerRow3Controls?.store_filter_enabled}
                   >
-                    {row3Stores.map((store) => (
-                      <option key={store.key} value={store.key} data-testid={`dealer-layout-row3-store-option-${store.key}`}>
-                        {store.label}
-                      </option>
-                    ))}
-                  </select>
+                    <span data-testid="dealer-layout-row3-store-selected-label">
+                      {row3Stores.find((store) => store.key === selectedStore)?.label || 'Tüm Mağazalar'}
+                    </span>
+                    {storeMenuOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  </button>
+
+                  {storeMenuOpen && headerRow3Controls?.store_filter_enabled ? (
+                    <div className="absolute left-[52px] top-10 z-20 min-w-[200px] rounded-lg border bg-white p-1 shadow-lg" data-testid="dealer-layout-row3-store-dropdown">
+                      {row3Stores.map((store) => (
+                        <button
+                          key={store.key}
+                          type="button"
+                          onClick={() => handleStoreChange(store.key)}
+                          className={`w-full rounded-md px-3 py-2 text-left text-sm ${selectedStore === store.key ? 'bg-slate-900 text-white' : 'text-slate-800 hover:bg-slate-100'}`}
+                          data-testid={`dealer-layout-row3-store-option-${store.key}`}
+                        >
+                          {store.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ) : <div data-testid="dealer-layout-row3-store-wrap-empty" />}
 
