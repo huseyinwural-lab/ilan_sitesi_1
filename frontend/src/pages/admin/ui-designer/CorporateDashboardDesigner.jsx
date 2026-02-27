@@ -276,8 +276,9 @@ export const CorporateDashboardDesigner = () => {
   const publishDisabledReason = useMemo(() => {
     if (widgets.length > MAX_WIDGETS) return 'En fazla 12 widget ekleyebilirsiniz';
     if (enabledKpiCount < 1) return 'En az 1 görünür KPI widget zorunludur';
+    if (driftMismatch) return 'Draft hash mismatch: latest draft senkronizasyonu gerekli';
     return '';
-  }, [enabledKpiCount, widgets.length]);
+  }, [driftMismatch, enabledKpiCount, widgets.length]);
 
   const payloadForSave = useMemo(
     () => ({
