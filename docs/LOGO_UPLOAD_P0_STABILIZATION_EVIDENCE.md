@@ -107,3 +107,4 @@ Referans:
 ### Ek pytest
 - `backend/tests/test_p63_logo_upload_contract.py`
 - `backend/tests/test_p60_corporate_header_logo.py`
+- Güncel koşum: `test_p63_logo_upload_contract.py` → **9 passed** (3:1 + sınır 2.7/3.3 kabul testleri dahil)
