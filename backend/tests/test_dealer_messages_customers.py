@@ -182,5 +182,47 @@ class TestDealerCustomers:
         print("✓ Unauthenticated access blocked")
 
 
+class TestDealerFavorites:
+    """Test /api/dealer/favorites endpoint"""
+
+    def test_get_favorites_returns_200(self, dealer_headers):
+        response = requests.get(f"{BASE_URL}/api/dealer/favorites", headers=dealer_headers)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        print("✓ GET /api/dealer/favorites returns 200")
+
+    def test_get_favorites_has_expected_fields(self, dealer_headers):
+        response = requests.get(f"{BASE_URL}/api/dealer/favorites", headers=dealer_headers)
+        data = response.json()
+        assert "favorite_listings" in data
+        assert "favorite_searches" in data
+        assert "favorite_sellers" in data
+        assert "summary" in data
+        print("✓ Favorites payload has expected fields")
+
+
+class TestDealerReports:
+    """Test /api/dealer/reports endpoint"""
+
+    def test_get_reports_returns_200(self, dealer_headers):
+        response = requests.get(f"{BASE_URL}/api/dealer/reports?window_days=30", headers=dealer_headers)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        print("✓ GET /api/dealer/reports returns 200")
+
+    def test_reports_has_expected_blocks(self, dealer_headers):
+        response = requests.get(f"{BASE_URL}/api/dealer/reports?window_days=30", headers=dealer_headers)
+        data = response.json()
+        assert "kpis" in data
+        assert "filters" in data
+        assert "report_sections" in data
+        assert "package_reports" in data
+        assert "doping_usage_report" in data
+        print("✓ Reports payload has expected blocks")
+
+    def test_reports_invalid_window_returns_400(self, dealer_headers):
+        response = requests.get(f"{BASE_URL}/api/dealer/reports?window_days=31", headers=dealer_headers)
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+        print("✓ Invalid window_days rejected")
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
