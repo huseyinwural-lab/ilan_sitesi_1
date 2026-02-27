@@ -275,6 +275,9 @@ export default function HomePage() {
             <div
               className="home-v2-showcase-grid"
               data-testid="home-v2-showcase-grid"
+              data-rows={homeShowcaseBlock.rows}
+              data-columns={homeShowcaseBlock.columns}
+              data-listing-count={homeShowcaseBlock.listing_count}
               style={{ '--home-showcase-columns': homeShowcaseBlock.columns }}
             >
               {showcaseWithPlaceholders.map((item, index) => (
