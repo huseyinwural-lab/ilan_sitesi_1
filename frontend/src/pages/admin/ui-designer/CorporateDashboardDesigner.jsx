@@ -1044,25 +1044,19 @@ export const CorporateDashboardDesigner = () => {
           <DialogFooter>
             <button
               type="button"
-              onClick={async () => {
-                setConflictOpen(false);
-                await loadDraft();
-              }}
+              onClick={() => setConflictOpen(false)}
               className="h-9 rounded-md border px-3 text-sm"
-              data-testid="ui-designer-dashboard-conflict-reload-button"
+              data-testid="ui-designer-dashboard-conflict-cancel-button"
             >
-              Sayfayı Yenile
+              Kapat
             </button>
             <button
               type="button"
-              onClick={async () => {
-                setConflictOpen(false);
-                await openPublishDialog();
-              }}
+              onClick={syncLatestDraftAfterConflict}
               className="h-9 rounded-md bg-slate-900 px-3 text-sm text-white"
-              data-testid="ui-designer-dashboard-conflict-view-diff-button"
+              data-testid="ui-designer-dashboard-conflict-sync-and-reopen-button"
             >
-              Diff Gör
+              Latest Draft’ı Çek + Diff’i Yeniden Aç
             </button>
           </DialogFooter>
         </DialogContent>
