@@ -1402,6 +1402,7 @@ def _simulate_smtp_delivery(correlation_id: str) -> dict[str, Any]:
     smtp_pass = os.environ.get("ALERT_SMTP_PASS")
     smtp_from = os.environ.get("ALERT_SMTP_FROM")
     smtp_recipients = _split_csv_values(os.environ.get("ALERT_SMTP_TO"))
+    auth_required = _smtp_auth_required()
 
     retry_backoff_log: list[dict[str, Any]] = []
     last_classification: Optional[str] = None
@@ -1447,7 +1448,14 @@ def _simulate_smtp_delivery(correlation_id: str) -> dict[str, Any]:
                         banner.decode("utf-8", errors="ignore") if isinstance(banner, bytes) else str(banner)
                     )
 
-            client.login(smtp_user, smtp_pass)
+            if auth_required:
+                if not smtp_user or not smtp_pass:
+                    raise AlertDeliveryError(
+                        "SMTP auth credentials missing",
+                        error_class="auth_error",
+                        provider_code=str(last_response_code) if last_response_code is not None else None,
+                    )
+                client.login(smtp_user, smtp_pass)
 
             message = EmailMessage()
             message["Subject"] = f"UI OPS Alert Simulation {correlation_id}"
@@ -1478,6 +1486,7 @@ def _simulate_smtp_delivery(correlation_id: str) -> dict[str, Any]:
                 "smtp_server_banner": _mask_text(last_banner),
                 "recipient_list_verified": bool(smtp_recipients),
                 "recipient_count": len(smtp_recipients),
+                "auth_required": auth_required,
                 "retry_backoff_log": retry_backoff_log,
                 "last_failure_classification": None,
                 "root_cause": None,
@@ -1517,6 +1526,7 @@ def _simulate_smtp_delivery(correlation_id: str) -> dict[str, Any]:
         "smtp_server_banner": _mask_text(last_banner),
         "recipient_list_verified": bool(smtp_recipients),
         "recipient_count": len(smtp_recipients),
+        "auth_required": auth_required,
         "retry_backoff_log": retry_backoff_log,
         "last_failure_classification": last_classification,
         "root_cause": (
