@@ -19,12 +19,6 @@ const statusLabels = {
   archived: 'Arşiv',
 };
 
-const statusPillClass = {
-  active: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  draft: 'border-amber-200 bg-amber-50 text-amber-700',
-  archived: 'border-slate-300 bg-slate-100 text-slate-700',
-};
-
 const computeExpiry = (createdAt) => {
   if (!createdAt) return '-';
   const date = new Date(createdAt);
@@ -258,7 +252,7 @@ export default function DealerListings() {
         </p>
         <button
           type="button"
-          onClick={() => fetchListings(statusFilter)}
+          onClick={() => fetchListings()}
           className="h-9 px-3 rounded-md border text-sm"
           data-testid="dealer-listings-retry"
         >
@@ -392,7 +386,7 @@ export default function DealerListings() {
         </div>
       ) : (
         <div className="rounded-lg border border-slate-200 bg-white overflow-hidden" data-testid="dealer-listings-table">
-          <div className="grid grid-cols-[60px_1fr_120px_120px_120px_120px_110px] gap-3 bg-slate-50 text-sm font-semibold px-3 py-2 text-slate-800" data-testid="dealer-listings-table-header">
+          <div className="grid grid-cols-[60px_1fr_120px_120px_120px_120px_120px_110px] gap-3 bg-slate-50 text-sm font-semibold px-3 py-2 text-slate-800" data-testid="dealer-listings-table-header">
             <div className="flex items-center" data-testid="dealer-listings-header-select">
               <input
                 type="checkbox"
