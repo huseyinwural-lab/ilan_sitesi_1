@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 12:20:00 UTC (P74 İlanlar Menüsü + Sanal Turlar Kaldırma)
+**Son güncelleme:** 2026-02-27 12:35:00 UTC (P75 Mesajlar Menüsü PDF Hizalama)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -60,6 +60,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P75 Mesajlar Menüsü PDF Hizalama (2026-02-27):** Sıralı akışta `Mesajlar` ekranı PDF’e göre dolduruldu. Başlık/sayaç (`İlan Mesajlarım (x)`), iki tab (`Yayında Olan İlanlar`, `Bilgilendirmeler`), arama + filtre aksiyonu, listing tablosu ve bilgilendirme tablosu eklendi. Backend `GET /api/dealer/messages` endpointi `notification_items` ve `summary` alanlarıyla genişletildi. Kanıt: `/app/docs/P1_DEALER_MESSAGES_PDF_ALIGNMENT_EVIDENCE.md`.
 - **P74 İlanlar Menüsü + Sanal Turlar Kaldırma (2026-02-27):** Row2 ana menüden `Sanal Turlar` kaldırıldı (Avrupa kapsamı). `İlanlar` sayfası PDF sırasına göre dolduruldu: başlık, arama, durum tabları (Yayında/Yayında Değil/Tümü), tablo/kart yapısı, satır aksiyonları (`Yayına Al`, `Arşivle`) ve durum/filtre akışları. Kanıt: `/app/docs/P1_DEALER_LISTINGS_PDF_ALIGNMENT_EVIDENCE.md`.
 - **P73 Özet Menüsü PDF Hizalama (2026-02-27):** `Özet` menüsü tıklanınca içerik PDF’e göre dolduruldu. Dealer overview sayfasında Mağaza Performansı (24s/7g ziyaret), ilan ziyaret kırılım tablosu, paket durumu (kullanılan/kalan), yayındaki ilan/müşteri talep KPI kartları ve veri uyarı alanı eklendi. Özet içindeki kartlardan ilgili sayfalara (Raporlar, İlanlar, Müşteriler, Satın Al) dolaşım aktif. Backend summary endpointi `overview` bloğu ile genişletildi. Evidence: `/app/docs/P1_DEALER_OVERVIEW_PDF_ALIGNMENT_EVIDENCE.md`.
 - **P72 Kurumsal Menü Satır Yapısı (2026-02-27):** Dealer sayfasında menü yerleşimi güncellendi: sol dikey sidebar kaldırıldı, ana menü 2. satıra yatay alındı. 1. satır kurumsal header korunarak bırakıldı. 2. satır menü öğeleri (`Özet, İlanlar, Sanal Turlar, Mesajlar, Müşteri Yönetimi, Favoriler, Raporlar, Danışman Takibi, Satın Al, Hesabım`) tıklama ile aşağı açılan alt menü paneli davranışına geçirildi. PDF hiyerarşisindeki alt menüler row2 altında render ediliyor. Metin kontrastı güçlendirildi; silik görünüm giderildi.
