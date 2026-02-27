@@ -31530,7 +31530,7 @@ async def get_site_showcase_layout(session: AsyncSession = Depends(get_sql_sessi
         "version": layout.version if layout else 0,
         "updated_at": layout.updated_at.isoformat() if layout and layout.updated_at else None,
     }
-    return JSONResponse(content=content, headers={"Cache-Control": f"public, max-age={SHOWCASE_LAYOUT_CACHE_SECONDS}"})
+    return JSONResponse(content=content, headers={"Cache-Control": "no-store"})
 
 
 @api_router.get("/admin/site/showcase-layout")
@@ -31641,6 +31641,29 @@ async def publish_showcase_layout_config(
     layout.updated_at = datetime.now(timezone.utc)
     await session.commit()
     return {"ok": True, "id": str(layout.id), "version": layout.version}
+
+
+@api_router.delete("/admin/site/showcase-layout/config/{layout_id}")
+async def delete_showcase_layout_config(
+    layout_id: str,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        layout_uuid = uuid.UUID(layout_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid showcase layout id") from exc
+
+    layout = await session.get(SiteShowcaseLayout, layout_uuid)
+    if not layout:
+        raise HTTPException(status_code=404, detail="Showcase layout config not found")
+
+    if layout.status == "published":
+        raise HTTPException(status_code=400, detail="Aktif versiyon silinemez")
+
+    await session.delete(layout)
+    await session.commit()
+    return {"ok": True, "id": str(layout_uuid)}
 
 
 @api_router.get("/site/footer")
