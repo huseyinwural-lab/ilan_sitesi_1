@@ -29480,6 +29480,7 @@ async def _resolve_campaign_item_from_payload(
     session: AsyncSession,
     scope: str,
     payload: Optional[PricingQuotePayload],
+    listing_type: Optional[str] = None,
 ) -> Optional[PricingCampaignItem]:
     if not payload:
         return None
@@ -29493,6 +29494,8 @@ async def _resolve_campaign_item_from_payload(
         item = await session.get(PricingCampaignItem, item_uuid)
         if not item or item.scope != scope or item.is_deleted:
             raise HTTPException(status_code=404, detail="Campaign item not found")
+        if listing_type and item.listing_type != listing_type:
+            raise HTTPException(status_code=409, detail="Campaign item listing_type mismatch")
         if not _campaign_item_is_available(item, now):
             raise HTTPException(status_code=409, detail="Campaign item is not active")
         return item
@@ -29503,6 +29506,7 @@ async def _resolve_campaign_item_from_payload(
                 PricingCampaignItem.scope == scope,
                 PricingCampaignItem.listing_quota == payload.listing_quota,
                 PricingCampaignItem.is_deleted.is_(False),
+                PricingCampaignItem.listing_type == listing_type if listing_type else true(),
             )
         )
         for item in result.scalars().all():
@@ -29513,13 +29517,14 @@ async def _resolve_campaign_item_from_payload(
 
 
 async def _get_active_pricing_campaign_items(
-    session: AsyncSession, scope: str
+    session: AsyncSession, scope: str, listing_type: Optional[str] = None
 ) -> list[PricingCampaignItem]:
     now = datetime.now(timezone.utc)
     result = await session.execute(
         select(PricingCampaignItem)
         .where(
             PricingCampaignItem.scope == scope,
+            PricingCampaignItem.listing_type == listing_type if listing_type else true(),
             PricingCampaignItem.is_deleted.is_(False),
             PricingCampaignItem.is_active.is_(True),
             PricingCampaignItem.start_at.isnot(None),
@@ -29537,8 +29542,11 @@ async def _build_campaign_item_quote(
     scope: str,
     payload: Optional[PricingQuotePayload],
 ) -> Dict[str, Any]:
-    items = await _get_active_pricing_campaign_items(session, scope)
-    selected = await _resolve_campaign_item_from_payload(session, scope, payload)
+    requested_listing_type = None
+    if payload and payload.listing_type:
+        requested_listing_type = _normalize_campaign_item_listing_type(payload.listing_type)
+    items = await _get_active_pricing_campaign_items(session, scope, requested_listing_type)
+    selected = await _resolve_campaign_item_from_payload(session, scope, payload, requested_listing_type)
 
     if not selected:
         if len(items) == 1:
@@ -29553,6 +29561,7 @@ async def _build_campaign_item_quote(
                 "publish_days": 90,
                 "listing_quota": 1,
                 "scope": scope,
+                "listing_type": requested_listing_type,
             }
         else:
             return {
@@ -29561,6 +29570,7 @@ async def _build_campaign_item_quote(
                 "requires_payment": True,
                 "items": [_serialize_campaign_item_for_quote(item) for item in items],
                 "scope": scope,
+                "listing_type": requested_listing_type,
             }
 
     amount = float(selected.price_amount or 0)
@@ -29576,6 +29586,7 @@ async def _build_campaign_item_quote(
         "requires_payment": amount > 0,
         "quota_used": False,
         "scope": scope,
+        "listing_type": selected.listing_type,
     }
 
 
