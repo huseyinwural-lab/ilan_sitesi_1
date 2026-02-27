@@ -852,6 +852,12 @@ def _expected_owner_scope_for_row(row: UIConfig) -> tuple[str, str]:
     return row.scope, (row.scope_id or row.scope)
 
 
+def _owner_scope_from_scope(scope: str, scope_id: Optional[str]) -> tuple[str, str]:
+    if scope == "tenant":
+        return "dealer", (scope_id or "").strip()
+    return "global", "global"
+
+
 def _stable_hash_payload(payload: dict[str, Any]) -> str:
     normalized = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
@@ -889,6 +895,60 @@ def _validate_owner_scope_or_raise(row: UIConfig, owner_type: Optional[str], own
             status_code=400,
             extras={"hint": "Publish öncesi scope owner bilgisi gönderilmelidir"},
         )
+
+
+async def _record_publish_attempt_audit(
+    session: AsyncSession,
+    *,
+    current_user: dict[str, Any],
+    config_type: str,
+    segment: str,
+    scope: str,
+    scope_id: Optional[str],
+    config_id: Optional[str],
+    config_version: Optional[int],
+    retry_count: int,
+    conflict_detected: bool,
+    lock_wait_ms: int,
+    publish_duration_ms: Optional[int],
+    status: str,
+    detail_message: str,
+    extra: Optional[dict[str, Any]] = None,
+    commit_now: bool = False,
+) -> None:
+    owner_type, owner_id = _owner_scope_from_scope(scope, scope_id)
+    metadata = {
+        "actor_id": current_user.get("id"),
+        "owner_type": owner_type,
+        "owner_id": owner_id,
+        "segment": segment,
+        "scope": scope,
+        "scope_id": scope_id,
+        "config_version": config_version,
+        "retry_count": int(max(0, retry_count or 0)),
+        "conflict_detected": bool(conflict_detected),
+        "lock_wait_ms": int(max(0, lock_wait_ms or 0)),
+        "publish_duration_ms": int(max(0, publish_duration_ms or 0)) if publish_duration_ms is not None else None,
+        "status": status,
+        "message": detail_message,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    if extra:
+        metadata.update(extra)
+
+    session.add(
+        _create_ui_config_audit_log(
+            action="ui_config_publish_attempt",
+            current_user=current_user,
+            config_type=config_type,
+            resource_id=config_id or "scope_attempt",
+            old_values=None,
+            new_values=None,
+            metadata_info=metadata,
+        )
+    )
+    if commit_now:
+        await session.commit()
 
     expected_owner_type, expected_owner_id = _expected_owner_scope_for_row(row)
     if normalized_owner_type != expected_owner_type or normalized_owner_id != expected_owner_id:
