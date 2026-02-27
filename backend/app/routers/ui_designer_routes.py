@@ -58,6 +58,18 @@ UI_ERROR_UNAUTHORIZED_SCOPE = "UNAUTHORIZED_SCOPE"
 THEME_ERROR_INVALID_SCOPE = "INVALID_THEME_SCOPE"
 FEATURE_DISABLE_INDIVIDUAL_HEADER_EDITOR = True
 PUBLISH_LOCK_TTL_SECONDS = 8
+PUBLISH_OPS_THRESHOLDS = {
+    "avg_lock_wait_ms": {"warning": 120, "critical": 220, "window_minutes": 5},
+    "max_lock_wait_ms": {"warning": 250, "critical": 450, "window_minutes": 5},
+    "publish_duration_ms_p95": {"warning": 1000, "critical": 1700, "window_minutes": 5},
+    "conflict_rate": {"warning": 25, "critical": 40, "window_minutes": 5},
+}
+
+LEGACY_PUBLISH_DEPRECATION_HEADERS = {
+    "Deprecation": "true",
+    "Sunset": "Wed, 01 Apr 2026 00:00:00 GMT",
+    "Link": '</api/admin/ui/configs/{config_type}/publish>; rel="successor-version"',
+}
 
 _PUBLISH_LOCK_REGISTRY: dict[str, dict[str, Any]] = {}
 _PUBLISH_LOCK_GUARD = asyncio.Lock()
