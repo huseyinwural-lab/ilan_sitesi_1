@@ -3247,6 +3247,19 @@ const AdminCategories = () => {
                             {orderPreview.message || "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor."}
                           </div>
                         )}
+                        {!hierarchyFieldErrors.main_sort_order && !orderPreview.available && orderPreview.suggested_next_sort_order && (
+                          <div className="flex items-center gap-2 text-[11px] text-emerald-700" data-testid="categories-sort-suggested-next">
+                            <span>Önerilen boş sıra: {orderPreview.suggested_next_sort_order}</span>
+                            <button
+                              type="button"
+                              className="rounded border border-emerald-300 px-2 py-0.5 text-[11px] font-semibold"
+                              onClick={() => setForm((prev) => ({ ...prev, sort_order: String(orderPreview.suggested_next_sort_order) }))}
+                              data-testid="categories-sort-apply-suggestion"
+                            >
+                              Uygula
+                            </button>
+                          </div>
+                        )}
                         {orderPreview.checking && (
                           <div className="text-[11px] text-slate-500" data-testid="categories-sort-preview-loading">
                             Sıra çakışma önizlemesi kontrol ediliyor...
