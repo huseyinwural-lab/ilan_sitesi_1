@@ -1913,6 +1913,7 @@ async def admin_publish_ui_config(
             row=row,
             config_version=your_version,
         )
+        _validate_publish_hash_or_raise(row, payload.resolved_config_hash if payload else None)
         if row.config_type == "header":
             _validate_owner_scope_or_raise(row, payload.owner_type if payload else None, payload.owner_id if payload else None)
     except HTTPException as exc:
@@ -2291,6 +2292,7 @@ async def admin_publish_latest_ui_config(
             row=target_row,
             config_version=payload.config_version,
         )
+        _validate_publish_hash_or_raise(target_row, payload.resolved_config_hash)
         if target_row.config_type == "header":
             _validate_owner_scope_or_raise(target_row, payload.owner_type, payload.owner_id)
     except HTTPException as exc:
