@@ -40,6 +40,7 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - Secret checklist + dry-run senaryosu + kanal bazlı audit doğrulama eklendi
 - UI teknik borç temizliği (DealerLayout / Visual Editor hydration warning)
 - Legacy publish route/usage endpoint fiziksel kaldırımı tamamlandı
+- Not: Production canlı alarm gönderimi için gerçek kanal secretları checklist’e göre Ops tarafından sağlanmalıdır.
 
 ### UI Designer Yol Haritası Durumu (Güncel)
 - **P1 Complete:** `/admin/ops/publish-health` dashboardı canlı (Alert Reliability KPI, kanal breakdown, re-run simulation, rate-limit UX, mobile overflow fix)
