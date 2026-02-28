@@ -141,6 +141,7 @@ export default function SearchPage() {
         if (searchState.category) queryParams.set('category', searchState.category);
         if (searchState.make) queryParams.set('make', searchState.make);
         if (searchState.model) queryParams.set('model', searchState.model);
+        if (searchState.doping) queryParams.set('doping_type', searchState.doping);
         if (searchState.sort) queryParams.set('sort', searchState.sort);
         queryParams.set('page', searchState.page);
         queryParams.set('limit', searchState.limit);
@@ -200,6 +201,15 @@ export default function SearchPage() {
     setSearchState({ category: categoryId, filters: {}, page: 1 });
   };
 
+  const searchTitle = (() => {
+    if (searchState.doping === 'urgent') return 'Acil İlanlar';
+    if (searchState.doping === 'showcase') return 'Vitrin İlanları';
+    if (searchState.category) {
+      return `Kategori: ${categories.find(c => c.id === searchState.category || c.slug === searchState.category)?.name || searchState.category}`;
+    }
+    return 'Tüm İlanlar';
+  })();
+
   const handleMakeChange = (makeKey) => {
     const nextMake = makeKey === 'all' ? null : makeKey;
     setSearchState({ make: nextMake, model: null, page: 1 });
@@ -251,7 +261,7 @@ export default function SearchPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight" data-testid="search-results-title">
-               {searchState.category ? `Kategori: ${categories.find(c => c.id === searchState.category || c.slug === searchState.category)?.name || searchState.category}` : 'Tüm İlanlar'}
+               {searchTitle}
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
               {data.pagination.total || 0} sonuç bulundu
