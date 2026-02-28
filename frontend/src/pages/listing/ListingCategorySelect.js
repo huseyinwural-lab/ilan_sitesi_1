@@ -488,14 +488,10 @@ const ListingCategorySelect = () => {
     }
   }, [country, persistRecentToStorage]);
 
-  const handleContinue = useCallback(async (categoryOverride, pathOverride, options = {}) => {
-    const { auto = false } = options;
+  const handleContinue = useCallback(async (categoryOverride, pathOverride) => {
     const category = categoryOverride || activeCategory;
     const path = pathOverride && pathOverride.length ? pathOverride : selectedPath.length ? selectedPath : [category].filter(Boolean);
     if (!category || !selectedModule) return;
-    if (auto) {
-      setAutoAdvanceActive(true);
-    }
     const localRecent = {
       category,
       module: selectedModule,
@@ -515,16 +511,6 @@ const ListingCategorySelect = () => {
     const targetRoute = selectedModule === 'vehicle' ? '/ilan-ver/arac-sec' : '/ilan-ver/detaylar';
     navigate(targetRoute);
   }, [activeCategory, country, navigate, persistRecentToStorage, persistWizardSelection, saveRecentCategory, selectedModule, selectedModuleLabel, selectedPath]);
-
-  useEffect(() => {
-    if (selectionComplete && activeCategory && autoAdvanceRef.current) {
-      autoAdvanceRef.current = false;
-      handleContinue(activeCategory, selectedPath, { auto: true });
-    }
-    if (!selectionComplete) {
-      setAutoAdvanceActive(false);
-    }
-  }, [activeCategory, handleContinue, selectedPath, selectionComplete]);
 
   const handleRecentContinue = () => {
     if (!recentCategory?.category?.id) return;
