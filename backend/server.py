@@ -21233,6 +21233,121 @@ async def _category_bulk_job_worker_loop() -> None:
             await asyncio.sleep(CATEGORY_BULK_JOB_WORKER_INTERVAL_SECONDS)
 
 
+def _build_pricing_user_context_from_user(user: User) -> dict:
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "role": user.role,
+        "user_type": user.user_type,
+        "is_dealer": bool(user.is_dealer),
+        "country_code": user.country_code,
+    }
+
+
+async def _run_batch_publish_scheduler_once(
+    session: AsyncSession,
+    *,
+    limit: int = BATCH_PUBLISH_LIMIT_PER_RUN,
+) -> dict:
+    result = await session.execute(
+        select(Listing)
+        .where(Listing.status == "pending_moderation")
+        .order_by(Listing.created_at.asc())
+        .limit(limit)
+    )
+    listings = result.scalars().all()
+
+    processed = 0
+    published = 0
+    skipped = 0
+    errors = 0
+
+    for listing in listings:
+        processed += 1
+        try:
+            async with session.begin_nested():
+                if not listing.user_id:
+                    skipped += 1
+                    continue
+
+                owner = await session.get(User, listing.user_id)
+                if not owner:
+                    skipped += 1
+                    continue
+
+                owner_ctx = _build_pricing_user_context_from_user(owner)
+                pricing_response, quote, policy, override_active = await _compute_pricing_quote(session, owner_ctx, None)
+                if not pricing_response or not quote:
+                    skipped += 1
+                    continue
+
+                if quote.get("requires_payment"):
+                    skipped += 1
+                    continue
+
+                snapshot_result = await session.execute(
+                    select(PricingPriceSnapshot).where(PricingPriceSnapshot.listing_id == listing.id)
+                )
+                snapshot = snapshot_result.scalar_one_or_none()
+                if not snapshot:
+                    snapshot = await _create_pricing_snapshot(session, listing, owner_ctx, quote, policy, override_active)
+
+                _apply_snapshot_listing_type_to_listing(listing, snapshot)
+                await _consume_campaign_item_slot_if_needed(session, snapshot)
+
+                now_dt = datetime.now(timezone.utc)
+                listing.status = "published"
+                listing.published_at = now_dt
+                listing.updated_at = now_dt
+                published += 1
+        except HTTPException:
+            skipped += 1
+        except Exception:
+            errors += 1
+            logging.getLogger("batch_publish_scheduler").exception(
+                "batch_publish_scheduler_listing_failed listing_id=%s",
+                str(listing.id),
+            )
+
+    await session.commit()
+    return {
+        "processed": processed,
+        "published": published,
+        "skipped": skipped,
+        "errors": errors,
+    }
+
+
+async def _batch_publish_scheduler_loop() -> None:
+    while True:
+        try:
+            async with AsyncSessionLocal() as session:
+                result = await _run_batch_publish_scheduler_once(session)
+                logging.getLogger("batch_publish_scheduler").info(
+                    "batch_publish_scheduler_run processed=%s published=%s skipped=%s errors=%s",
+                    result.get("processed"),
+                    result.get("published"),
+                    result.get("skipped"),
+                    result.get("errors"),
+                )
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logging.getLogger("batch_publish_scheduler").exception("batch_publish_scheduler_loop_failed")
+        await asyncio.sleep(BATCH_PUBLISH_INTERVAL_SECONDS)
+
+
+@api_router.post("/admin/listings/batch-publish/run")
+async def admin_run_batch_publish_scheduler_once(
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    result = await _run_batch_publish_scheduler_once(session)
+    result["triggered_by"] = current_user.get("id")
+    result["interval_seconds"] = BATCH_PUBLISH_INTERVAL_SECONDS
+    return result
+
+
 @api_router.get(
     "/admin/categories/vehicle-segment/link-status",
     responses={
