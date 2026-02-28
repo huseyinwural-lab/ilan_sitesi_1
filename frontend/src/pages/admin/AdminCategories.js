@@ -2078,6 +2078,45 @@ const AdminCategories = () => {
     const target = getNodeByPath(subcategories, path);
     if (!target) return;
     const label = getSubcategoryLabel(path);
+    if (path.length === 1) {
+      if (!Array.isArray(target.children) || target.children.length === 0) {
+        setHierarchyError(`${label} için en az 1 alt kategori eklenmelidir.`);
+        return;
+      }
+      const invalidChild = target.children.find(
+        (child) => !child?.name?.trim() || !child?.slug?.trim() || !Number.isFinite(Number(child.sort_order)) || Number(child.sort_order) <= 0
+      );
+      if (invalidChild) {
+        setHierarchyError(`${label} içindeki alt kategorilerde ad/slug/sıra alanları zorunludur.`);
+        return;
+      }
+      const incompleteChild = target.children.find((child) => !child.is_complete);
+      if (incompleteChild) {
+        setHierarchyError(`${label} içindeki alt kategoriler tamamlanmadan devam edilemez.`);
+        return;
+      }
+
+      setSubcategories((prev) => updateNodeByPath(prev, path, (node) => ({
+        ...node,
+        is_complete: true,
+      })));
+
+      const completedIndex = path[0];
+      setSubcategories((prev) => {
+        if (!Array.isArray(prev)) return prev;
+        const hasOpenDraftAfterCurrent = prev.slice(completedIndex + 1).some((item) => !item?.is_complete);
+        if (hasOpenDraftAfterCurrent) return prev;
+        return [...prev, createSubcategoryGroupDraft()];
+      });
+      setLevelSelections((prev) => {
+        const next = prev.slice(0, 1);
+        next[0] = completedIndex + 1;
+        return next;
+      });
+      resetLevelCompletionFrom(0);
+      return;
+    }
+
     if (!target?.name?.trim() || !target?.slug?.trim()) {
       setHierarchyError(`${label} için ad ve slug zorunludur.`);
       return;
@@ -2086,6 +2125,7 @@ const AdminCategories = () => {
       setHierarchyError(`${label} için sıra 1 veya daha büyük olmalıdır.`);
       return;
     }
+
     if (path.length === 1 && (!Array.isArray(target.children) || target.children.length === 0)) {
       setHierarchyError(`${label} için en az 1 alt kategori eklenmelidir.`);
       return;
@@ -2101,22 +2141,6 @@ const AdminCategories = () => {
       slug: node.slug.trim().toLowerCase(),
       is_complete: true,
     })));
-
-    if (path.length === 1) {
-      const completedIndex = path[0];
-      setSubcategories((prev) => {
-        if (!Array.isArray(prev)) return prev;
-        const hasOpenDraftAfterCurrent = prev.slice(completedIndex + 1).some((item) => !item?.is_complete);
-        if (hasOpenDraftAfterCurrent) return prev;
-        return [...prev, createSubcategoryGroupDraft()];
-      });
-      setLevelSelections((prev) => {
-        const next = prev.slice(0, 1);
-        next[0] = completedIndex + 1;
-        return next;
-      });
-      resetLevelCompletionFrom(0);
-    }
   };
 
   const updateSubcategory = (path, patch) => {
