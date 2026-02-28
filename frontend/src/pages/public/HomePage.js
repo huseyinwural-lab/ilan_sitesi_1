@@ -242,7 +242,6 @@ export default function HomePage() {
                       <div key={root.id} className="home-v2-category-row" data-testid={`home-v2-category-row-${root.id}`}>
                         <Link to={root.url} className="home-v2-root-link" data-testid={`home-v2-root-link-${root.id}`}>
                           <span className="home-v2-root-title" data-testid={`home-v2-root-title-${root.id}`}>{root.name}</span>
-                          <span className="home-v2-root-count" data-testid={`home-v2-root-count-${root.id}`}>({formatNumber(root.total_count)})</span>
                         </Link>
 
                         {visibleChildren.length > 0 ? (
