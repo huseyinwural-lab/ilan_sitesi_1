@@ -21242,12 +21242,13 @@ async def _category_bulk_job_worker_loop() -> None:
 
 
 def _build_pricing_user_context_from_user(user: SqlUser) -> dict:
+    is_dealer = bool((user.user_type or "").lower() == "corporate" or (user.dealer_status or "").lower() == "approved")
     return {
         "id": str(user.id),
         "email": user.email,
         "role": user.role,
         "user_type": user.user_type,
-        "is_dealer": bool(user.is_dealer),
+        "is_dealer": is_dealer,
         "country_code": user.country_code,
     }
 
