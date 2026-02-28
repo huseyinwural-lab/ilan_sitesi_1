@@ -110,7 +110,6 @@
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   border-radius: 8px;
   padding: 8px;
@@ -128,13 +127,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.home-v2-root-count {
-  font-size: 12px;
-  font-weight: 900;
-  color: var(--home-muted);
-  white-space: nowrap;
 }
 
 .home-v2-child-list {
