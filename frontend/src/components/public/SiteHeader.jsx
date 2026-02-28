@@ -162,7 +162,7 @@ export default function SiteHeader({ mode, refreshToken }) {
           {isAuthenticated && (
             <button
               type="button"
-              onClick={() => navigate('/ilan-ver/kategori-secimi')}
+              onClick={() => navigate('/ilan-ver')}
               className="inline-flex h-9 items-center rounded-full bg-[var(--button-primary-bg)] px-3 text-xs font-semibold text-[var(--button-primary-text)] hover:bg-[var(--color-primary-hover)] sm:px-4 sm:text-sm"
               data-testid="site-header-create-listing"
             >
