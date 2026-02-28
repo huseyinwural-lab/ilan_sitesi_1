@@ -169,6 +169,10 @@ const createSubcategoryDraft = () => ({
   is_complete: false,
   children: [],
 });
+const createSubcategoryGroupDraft = () => ({
+  ...createSubcategoryDraft(),
+  children: [createSubcategoryDraft()],
+});
 
 const CATEGORY_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 const CATEGORY_IMAGE_ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "webp"];
@@ -311,7 +315,7 @@ const AdminCategories = () => {
   const [hierarchyComplete, setHierarchyComplete] = useState(false);
   const [hierarchyError, setHierarchyError] = useState("");
   const [hierarchyFieldErrors, setHierarchyFieldErrors] = useState({});
-  const [subcategories, setSubcategories] = useState([createSubcategoryDraft()]);
+  const [subcategories, setSubcategories] = useState([createSubcategoryGroupDraft()]);
   const [levelSelections, setLevelSelections] = useState([]);
   const [levelCompletion, setLevelCompletion] = useState({});
   const [dynamicDraft, setDynamicDraft] = useState({
@@ -1452,7 +1456,7 @@ const AdminCategories = () => {
     setHierarchyComplete(false);
     setHierarchyError("");
     setHierarchyFieldErrors({});
-    const initialSubcategories = [createSubcategoryDraft()];
+    const initialSubcategories = [createSubcategoryGroupDraft()];
     setSubcategories(initialSubcategories);
     setLevelSelections([]);
     setLevelCompletion({});
@@ -1495,7 +1499,7 @@ const AdminCategories = () => {
       model_count: 0,
       message: "",
     });
-    setOrderPreview({ checking: false, available: true, message: "", conflict: null });
+    setOrderPreview({ checking: false, available: true, message: "", conflict: null, suggested_next_sort_order: null });
     setCategoryImageUploading(false);
     setCategoryImageError("");
     setCategoryImageCacheBuster(Date.now());
@@ -1526,7 +1530,7 @@ const AdminCategories = () => {
     setHierarchyError("");
     setHierarchyFieldErrors({});
     const relatedSubs = buildSubcategoryTree(item.id);
-    const nextSubcategories = relatedSubs.length ? relatedSubs : [createSubcategoryDraft()];
+    const nextSubcategories = relatedSubs.length ? relatedSubs : [createSubcategoryGroupDraft()];
     setSubcategories(nextSubcategories);
     setLevelSelections([]);
     setLevelCompletion({});
@@ -2104,7 +2108,7 @@ const AdminCategories = () => {
         if (!Array.isArray(prev)) return prev;
         const hasOpenDraftAfterCurrent = prev.slice(completedIndex + 1).some((item) => !item?.is_complete);
         if (hasOpenDraftAfterCurrent) return prev;
-        return [...prev, createSubcategoryDraft()];
+        return [...prev, createSubcategoryGroupDraft()];
       });
       setLevelSelections((prev) => {
         const next = prev.slice(0, 1);
@@ -2415,7 +2419,7 @@ const AdminCategories = () => {
       }
 
       applyCategoryFromServer(updatedParent, { clearEditMode: editModeStep === "hierarchy" });
-      const nextSubcategories = savedSubs.length ? savedSubs : [createSubcategoryDraft()];
+      const nextSubcategories = savedSubs.length ? savedSubs : [createSubcategoryGroupDraft()];
       setSubcategories(nextSubcategories);
       setHierarchyFieldErrors({});
       fetchItems();
