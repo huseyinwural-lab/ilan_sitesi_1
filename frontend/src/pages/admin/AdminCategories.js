@@ -174,6 +174,24 @@ const createSubcategoryGroupDraft = () => ({
   children: [createSubcategoryDraft()],
 });
 
+const normalizeSlugValue = (value) => {
+  if (!value) return "";
+  return String(value)
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i")
+    .replace(/ş/g, "s")
+    .replace(/ğ/g, "g")
+    .replace(/ç/g, "c")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/[^a-z0-9-\s]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+};
+
 const reorderArray = (items, fromIndex, toIndex) => {
   if (!Array.isArray(items)) return [];
   if (fromIndex === toIndex) return [...items];
@@ -851,14 +869,14 @@ const AdminCategories = () => {
     const moduleValue = (initialPayload.module || "").trim().toLowerCase();
     const countryCode = (initialPayload.country_code || "").trim().toUpperCase();
     const parentId = initialPayload.parent_id || "";
-    const baseSlug = String(initialPayload.slug || "").trim().toLowerCase();
+    const baseSlug = normalizeSlugValue(initialPayload.slug || initialPayload.name || "") || `kategori-${Date.now().toString().slice(-5)}`;
     let payload = {
       ...initialPayload,
       slug: baseSlug,
       sort_order: Number(initialPayload.sort_order || 1),
     };
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    for (let attempt = 0; attempt < 12; attempt += 1) {
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
         method: "POST",
         headers: {
@@ -877,8 +895,10 @@ const AdminCategories = () => {
 
       const parsedMessageLower = String(parsed?.message || "").toLowerCase();
       const hasSlugConflict = parsedMessageLower.includes("slug") && parsedMessageLower.includes("exists");
-      if (hasSlugConflict && baseSlug) {
-        payload = { ...payload, slug: `${baseSlug}-${attempt + 2}` };
+      const hasSlugFormatError = parsedMessageLower.includes("slug") && parsedMessageLower.includes("format");
+      if ((hasSlugConflict || hasSlugFormatError) && baseSlug) {
+        const uniqueSuffix = `${Date.now().toString().slice(-4)}-${attempt + 2}`;
+        payload = { ...payload, slug: normalizeSlugValue(`${baseSlug}-${uniqueSuffix}`) };
         continue;
       }
 
