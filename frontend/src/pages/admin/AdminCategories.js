@@ -2615,6 +2615,10 @@ const AdminCategories = () => {
     const selectedIndex = levelSelections[levelIndex];
     const isLevelLocked = Boolean(levelCompletion[levelIndex]);
 
+    const levelTitle = levelIndex === 0
+      ? "Ana Kategori Grupları"
+      : `${(levelSelections[0] ?? 0) + 1}. Alt Kategori Grubu`;
+
     return (
       <div
         key={`level-${levelIndex}`}
@@ -2623,7 +2627,7 @@ const AdminCategories = () => {
       >
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold text-slate-900" data-testid={`categories-level-title-${levelIndex}`}>
-            {levelIndex === 0 ? "Ana Kategori Grubu" : `${levelIndex + 1}. Seviye`}
+            {levelTitle}
           </div>
           <button
             type="button"
@@ -2635,10 +2639,10 @@ const AdminCategories = () => {
             {isLevelLocked ? "Düzenle" : "Tamam"}
           </button>
         </div>
-        <div className="space-y-3 max-h-[420px] overflow-y-auto" data-testid={`categories-level-items-${levelIndex}`}>
+        <div className={`${levelIndex === 1 ? 'flex gap-3 overflow-x-auto pb-2' : 'space-y-3 max-h-[420px] overflow-y-auto'}`} data-testid={`categories-level-items-${levelIndex}`}>
           {items.length === 0 ? (
             <div className="text-xs text-slate-500" data-testid={`categories-level-empty-${levelIndex}`}>
-              Bu seviyede kategori yok.
+              {levelIndex === 0 ? 'Ana kategori grubu yok.' : 'Bu grup için alt kategori yok.'}
             </div>
           ) : (
             items.map((item, itemIndex) => {
@@ -2653,7 +2657,7 @@ const AdminCategories = () => {
               return (
                 <div
                   key={`level-${levelIndex}-item-${itemIndex}`}
-                  className={`rounded-md border p-3 space-y-2 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'}`}
+                  className={`rounded-md border p-3 space-y-2 ${levelIndex === 1 ? 'min-w-[280px]' : ''} ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'}`}
                   data-testid={`categories-level-item-${levelIndex}-${itemIndex}`}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -2722,25 +2726,9 @@ const AdminCategories = () => {
                         {sortError}
                       </div>
                     )}
-                    {levelIndex >= 3 && (
-                      <div className="space-y-1" data-testid={`categories-level-item-transaction-${levelIndex}-${itemIndex}`}>
-                        <select
-                          className={selectClassName}
-                          value={item.transaction_type || ""}
-                          disabled={itemInputsDisabled}
-                          onChange={(e) => updateLevelItem(levelIndex, itemIndex, { transaction_type: e.target.value })}
-                          data-testid={`categories-level-item-transaction-select-${levelIndex}-${itemIndex}`}
-                        >
-                          <option value="">Alt Tip Seçiniz</option>
-                          {TRANSACTION_TYPE_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                        {transactionError && (
-                          <div className="text-[11px] text-rose-600" data-testid={`categories-level-item-transaction-error-${levelIndex}-${itemIndex}`}>
-                            {transactionError}
-                          </div>
-                        )}
+                    {transactionError && (
+                      <div className="text-[11px] text-rose-600" data-testid={`categories-level-item-transaction-error-${levelIndex}-${itemIndex}`}>
+                        {transactionError}
                       </div>
                     )}
                     <label className="flex items-center gap-2 text-xs text-slate-700" data-testid={`categories-level-item-active-${levelIndex}-${itemIndex}`}>
@@ -2799,22 +2787,17 @@ const AdminCategories = () => {
           disabled={isHierarchyLocked}
           data-testid={`categories-level-add-${levelIndex}`}
         >
-          Ekle
+          {levelIndex === 0 ? 'Ana Grup Ekle' : 'Alt Kategori Ekle'}
         </button>
       </div>
     );
   };
 
   const renderLevelColumns = () => {
-    const columns = [];
-    let levelIndex = 0;
-    while (levelIndex < 12) {
-      columns.push(renderLevelColumn(levelIndex));
-      if (levelSelections[levelIndex] === undefined) break;
-      const selectedPath = levelSelections.slice(0, levelIndex + 1);
-      const selectedNode = getNodeByPath(subcategories, selectedPath);
-      if (!selectedNode) break;
-      levelIndex += 1;
+    const columns = [renderLevelColumn(0)];
+    const hasRootSelection = Number.isInteger(levelSelections[0]) && levelSelections[0] >= 0;
+    if (hasRootSelection) {
+      columns.push(renderLevelColumn(1));
     }
     return columns;
   };
