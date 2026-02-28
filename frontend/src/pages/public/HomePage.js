@@ -9,6 +9,15 @@ const DEFAULT_SHOWCASE_LAYOUT = {
   homepage: { enabled: true, rows: 3, columns: 4, listing_count: 12 },
 };
 
+const MODULE_CONFIG = [
+  { key: 'real_estate', label: 'Emlak' },
+  { key: 'vehicle', label: 'Vasıta' },
+  { key: 'other', label: 'Diğer' },
+];
+
+const MODULE_ROOT_LIMIT = 8;
+const ROOT_CHILD_LIMIT = 8;
+
 const clamp = (value, min, max, fallback) => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -18,13 +27,12 @@ const clamp = (value, min, max, fallback) => {
 const normalizeShowcaseLayout = (raw) => {
   const source = raw || {};
   const homepage = source.homepage || {};
-
   return {
     homepage: {
       enabled: homepage.enabled !== false,
-      rows: clamp(homepage.rows, 1, 12, 9),
-      columns: clamp(homepage.columns, 1, 8, 7),
-      listing_count: clamp(homepage.listing_count, 1, 120, 63),
+      rows: clamp(homepage.rows, 1, 12, 3),
+      columns: clamp(homepage.columns, 1, 8, 4),
+      listing_count: clamp(homepage.listing_count, 1, 120, 12),
     },
   };
 };
@@ -56,10 +64,12 @@ const normalizeLabel = (category) => {
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
-  const [categories, setCategories] = useState([]);
+  const [categoriesByModule, setCategoriesByModule] = useState({});
   const [showcaseItems, setShowcaseItems] = useState([]);
   const [showcaseLayout, setShowcaseLayout] = useState(DEFAULT_SHOWCASE_LAYOUT);
   const [urgentTotal, setUrgentTotal] = useState(0);
+  const [expandedModules, setExpandedModules] = useState({});
+  const [expandedRoots, setExpandedRoots] = useState({});
 
   const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
@@ -69,15 +79,22 @@ export default function HomePage() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [categoryResult, layoutResult] = await Promise.allSettled([
-          fetch(`${API}/categories?module=vehicle&country=${countryCode}`),
+        const categoryRequests = MODULE_CONFIG.map((moduleItem) => fetch(`${API}/categories?module=${moduleItem.key}&country=${countryCode}`));
+        const [layoutResult, ...categoryResults] = await Promise.allSettled([
           fetch(`${API}/site/showcase-layout?_ts=${Date.now()}`, { cache: 'no-store' }),
+          ...categoryRequests,
         ]);
 
-        let categoryList = [];
-        if (categoryResult.status === 'fulfilled') {
-          const categoryPayload = await categoryResult.value.json().catch(() => []);
-          categoryList = Array.isArray(categoryPayload) ? categoryPayload : [];
+        const nextCategoriesByModule = {};
+        for (let index = 0; index < MODULE_CONFIG.length; index += 1) {
+          const moduleKey = MODULE_CONFIG[index].key;
+          const result = categoryResults[index];
+          if (result?.status === 'fulfilled') {
+            const payload = await result.value.json().catch(() => []);
+            nextCategoriesByModule[moduleKey] = Array.isArray(payload) ? payload : [];
+          } else {
+            nextCategoriesByModule[moduleKey] = [];
+          }
         }
 
         let nextLayout = DEFAULT_SHOWCASE_LAYOUT;
@@ -87,8 +104,8 @@ export default function HomePage() {
         }
 
         const homeLimit = Math.max(1, resolveEffectiveCount(nextLayout.homepage));
+
         let showcaseItemsPayload = [];
-        let urgentPayloadTotal = 0;
         try {
           const showcaseRes = await fetch(`${API}/v2/search?country=${countryCode}&limit=${homeLimit}&page=1&doping_type=showcase`);
           const showcasePayload = await showcaseRes.json().catch(() => ({}));
@@ -97,6 +114,7 @@ export default function HomePage() {
           showcaseItemsPayload = [];
         }
 
+        let urgentPayloadTotal = 0;
         try {
           const urgentRes = await fetch(`${API}/v2/search?country=${countryCode}&limit=1&page=1&doping_type=urgent`);
           const urgentPayload = await urgentRes.json().catch(() => ({}));
@@ -106,7 +124,7 @@ export default function HomePage() {
         }
 
         if (!active) return;
-        setCategories(categoryList);
+        setCategoriesByModule(nextCategoriesByModule);
         setShowcaseItems(showcaseItemsPayload);
         setShowcaseLayout(nextLayout);
         setUrgentTotal(urgentPayloadTotal);
@@ -123,43 +141,60 @@ export default function HomePage() {
     };
   }, [countryCode]);
 
-  const filteredCategoryRows = useMemo(() => {
-    const byParent = new Map();
-    categories.forEach((item) => {
-      const key = item.parent_id || 'root';
-      if (!byParent.has(key)) byParent.set(key, []);
-      byParent.get(key).push(item);
-    });
-
-    const roots = byParent.get('root') || [];
+  const moduleGroups = useMemo(() => {
     const query = searchInput.trim().toLowerCase();
 
-    return roots
-      .map((root) => {
-        const children = (byParent.get(root.id) || []).sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
-        const firstChild = children[0] || null;
-        const countValue = firstChild ? Number(firstChild.listing_count || 0) : Number(root.listing_count || 0);
-        return { root, firstChild, countValue };
-      })
-      .filter(({ root, firstChild }) => {
-        if (!query) return true;
-        const rootTitle = normalizeLabel(root).toLowerCase();
-        const childTitle = normalizeLabel(firstChild).toLowerCase();
-        return rootTitle.includes(query) || childTitle.includes(query);
+    return MODULE_CONFIG.map((moduleItem) => {
+      const categories = categoriesByModule[moduleItem.key] || [];
+      const byParent = new Map();
+      categories.forEach((item) => {
+        const key = item.parent_id || 'root';
+        if (!byParent.has(key)) byParent.set(key, []);
+        byParent.get(key).push(item);
       });
-  }, [categories, searchInput]);
+
+      const roots = (byParent.get('root') || [])
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+        .map((root) => {
+          const rootName = normalizeLabel(root);
+          const rawChildren = (byParent.get(root.id) || []).sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+          const rootMatches = rootName.toLowerCase().includes(query);
+
+          const children = rawChildren.filter((child) => {
+            if (!query) return true;
+            return rootMatches || normalizeLabel(child).toLowerCase().includes(query);
+          });
+
+          if (query && !rootMatches && children.length === 0) return null;
+
+          const rootTotalCount = Number(root.listing_count || 0) || children.reduce((sum, child) => sum + Number(child.listing_count || 0), 0);
+          return {
+            id: root.id,
+            name: rootName,
+            total_count: rootTotalCount,
+            url: `/search?category=${encodeURIComponent(root.slug || root.id)}`,
+            children_level1: children.map((child) => ({
+              id: child.id,
+              name: normalizeLabel(child),
+              listing_count: Number(child.listing_count || 0),
+              url: `/search?category=${encodeURIComponent(child.slug || child.id)}`,
+            })),
+          };
+        })
+        .filter(Boolean);
+
+      return {
+        module_key: moduleItem.key,
+        module_label: moduleItem.label,
+        roots,
+      };
+    });
+  }, [categoriesByModule, searchInput]);
 
   const homeShowcaseBlock = useMemo(() => showcaseLayout.homepage || DEFAULT_SHOWCASE_LAYOUT.homepage, [showcaseLayout]);
   const homeShowcaseCount = useMemo(() => Math.max(1, resolveEffectiveCount(homeShowcaseBlock)), [homeShowcaseBlock]);
-  const homeGridColumnClass = useMemo(
-    () => `home-v2-showcase-grid-cols-${normalizeGridColumns(homeShowcaseBlock.columns, 7)}`,
-    [homeShowcaseBlock.columns]
-  );
-
-  const showcaseVisibleItems = useMemo(() => {
-    if (!Array.isArray(showcaseItems)) return [];
-    return showcaseItems.slice(0, homeShowcaseCount);
-  }, [showcaseItems, homeShowcaseCount]);
+  const homeGridColumnClass = useMemo(() => `home-v2-showcase-grid-cols-${normalizeGridColumns(homeShowcaseBlock.columns, 4)}`, [homeShowcaseBlock.columns]);
+  const showcaseVisibleItems = useMemo(() => (Array.isArray(showcaseItems) ? showcaseItems.slice(0, homeShowcaseCount) : []), [showcaseItems, homeShowcaseCount]);
 
   return (
     <div className="home-v2-page" data-testid="home-v2-page">
@@ -187,24 +222,72 @@ export default function HomePage() {
           <div className="home-v2-category-list" data-testid="home-v2-category-list">
             {loading ? (
               <div className="home-v2-empty" data-testid="home-v2-category-loading">Kategoriler yükleniyor...</div>
-            ) : filteredCategoryRows.length === 0 ? (
+            ) : moduleGroups.every((moduleGroup) => moduleGroup.roots.length === 0) ? (
               <div className="home-v2-empty" data-testid="home-v2-category-empty">Kategori bulunamadı</div>
-            ) : filteredCategoryRows.map(({ root, firstChild, countValue }) => {
-              const rootLabel = normalizeLabel(root);
-              const firstChildLabel = normalizeLabel(firstChild);
-              const categoryTarget = firstChild?.slug || firstChild?.id || root?.slug || root?.id;
-              const pathText = firstChild ? `${rootLabel} > ${firstChildLabel}` : rootLabel;
+            ) : moduleGroups.map((moduleGroup) => {
+              const moduleExpanded = !!expandedModules[moduleGroup.module_key];
+              const visibleRoots = moduleExpanded ? moduleGroup.roots : moduleGroup.roots.slice(0, MODULE_ROOT_LIMIT);
+
               return (
-                <div key={root.id} className="home-v2-category-row" data-testid={`home-v2-category-row-${root.id}`}>
-                  <Link
-                    to={`/search?category=${encodeURIComponent(categoryTarget)}`}
-                    className="home-v2-category-path"
-                    data-testid={`home-v2-category-path-link-${root.id}`}
-                  >
-                    <span className="home-v2-category-path-title" data-testid={`home-v2-category-path-title-${root.id}`}>{pathText}</span>
-                    <span className="home-v2-category-path-count" data-testid={`home-v2-category-path-count-${root.id}`}>({formatNumber(countValue)})</span>
-                  </Link>
-                </div>
+                <section key={moduleGroup.module_key} className="home-v2-module-group" data-testid={`home-v2-module-group-${moduleGroup.module_key}`}>
+                  <div className="home-v2-module-title" data-testid={`home-v2-module-title-${moduleGroup.module_key}`}>
+                    {moduleGroup.module_label}
+                  </div>
+
+                  {visibleRoots.map((root) => {
+                    const rootExpanded = !!expandedRoots[root.id];
+                    const visibleChildren = rootExpanded ? root.children_level1 : root.children_level1.slice(0, ROOT_CHILD_LIMIT);
+
+                    return (
+                      <div key={root.id} className="home-v2-category-row" data-testid={`home-v2-category-row-${root.id}`}>
+                        <Link to={root.url} className="home-v2-root-link" data-testid={`home-v2-root-link-${root.id}`}>
+                          <span className="home-v2-root-title" data-testid={`home-v2-root-title-${root.id}`}>{root.name}</span>
+                          <span className="home-v2-root-count" data-testid={`home-v2-root-count-${root.id}`}>({formatNumber(root.total_count)})</span>
+                        </Link>
+
+                        {visibleChildren.length > 0 ? (
+                          <div className="home-v2-child-list" data-testid={`home-v2-child-list-${root.id}`}>
+                            {visibleChildren.map((child) => (
+                              <Link
+                                key={child.id}
+                                to={child.url}
+                                className="home-v2-first-child"
+                                data-testid={`home-v2-first-child-link-${child.id}`}
+                              >
+                                <span className="home-v2-first-child-title" data-testid={`home-v2-first-child-title-${child.id}`}>{child.name}</span>
+                                <span className="home-v2-first-child-count" data-testid={`home-v2-first-child-count-${child.id}`}>
+                                  ({formatNumber(child.listing_count)})
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        {root.children_level1.length > ROOT_CHILD_LIMIT ? (
+                          <button
+                            type="button"
+                            className="home-v2-toggle-btn"
+                            onClick={() => setExpandedRoots((prev) => ({ ...prev, [root.id]: !rootExpanded }))}
+                            data-testid={`home-v2-root-toggle-${root.id}`}
+                          >
+                            {rootExpanded ? 'Daha az göster' : 'Daha fazla göster'}
+                          </button>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+
+                  {moduleGroup.roots.length > MODULE_ROOT_LIMIT ? (
+                    <button
+                      type="button"
+                      className="home-v2-toggle-btn"
+                      onClick={() => setExpandedModules((prev) => ({ ...prev, [moduleGroup.module_key]: !moduleExpanded }))}
+                      data-testid={`home-v2-module-toggle-${moduleGroup.module_key}`}
+                    >
+                      {moduleExpanded ? 'Daha az göster' : 'Tümünü Göster'}
+                    </button>
+                  ) : null}
+                </section>
               );
             })}
           </div>
@@ -212,14 +295,13 @@ export default function HomePage() {
 
         <section className="home-v2-right-content" data-testid="home-v2-right-content">
           <div className="home-v2-toolbar" data-testid="home-v2-toolbar">
-            <Link to="/search?doping=showcase" className="home-v2-showcase-link" data-testid="home-v2-showcase-all-link">Tüm vitrin ilanlarını göster</Link>
+            <Link to="/search?doping=showcase" className="home-v2-showcase-link" data-testid="home-v2-showcase-all-link">
+              Tüm vitrin ilanlarını göster
+            </Link>
           </div>
 
           {homeShowcaseBlock.enabled !== false ? (
-            <div
-              className={`home-v2-showcase-grid ${homeGridColumnClass}`}
-              data-testid="home-v2-showcase-grid"
-            >
+            <div className={`home-v2-showcase-grid ${homeGridColumnClass}`} data-testid="home-v2-showcase-grid">
               {loading ? (
                 <div className="home-v2-empty" data-testid="home-v2-showcase-loading">Vitrin ilanları yükleniyor...</div>
               ) : showcaseVisibleItems.length === 0 ? (
