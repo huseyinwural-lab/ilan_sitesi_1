@@ -192,15 +192,15 @@ function App() {
 
                   <Route
                     path="/ilan-ver"
-                    element={<Navigate to="/ilan-ver/kategori-secimi" replace />}
-                  />
-                  <Route
-                    path="/ilan-ver/kategori-secimi"
                     element={
                       <ProtectedRoute portalScope="account">
                         <ListingCategorySelect />
                       </ProtectedRoute>
                     }
+                  />
+                  <Route
+                    path="/ilan-ver/kategori-secimi"
+                    element={<Navigate to="/ilan-ver" replace />}
                   />
                   <Route
                     path="/ilan-ver/arac-sec"
