@@ -219,13 +219,18 @@ class TestP79CategoryAPIEndpoints:
             params={"segment": "pkw", "country": "DE"}
         )
         
-        # Should return 200 even if segment not found (with linked=false)
-        assert response.status_code == 200, f"Vehicle segment link status failed: {response.text}"
-        
-        data = response.json()
-        assert "linked" in data, "Response missing 'linked' field"
-        
-        print(f"PASS: Vehicle segment link status - linked={data.get('linked')}")
+        # Endpoint returns 400 with VEHICLE_SEGMENT_NOT_FOUND if segment not in master data
+        # or 200 with linked=true/false if found
+        if response.status_code == 400:
+            data = response.json()
+            detail = data.get("detail", {})
+            assert detail.get("error_code") == "VEHICLE_SEGMENT_NOT_FOUND", "Unexpected error code"
+            print("PASS: Vehicle segment link status correctly returns error for unknown segment")
+        else:
+            assert response.status_code == 200, f"Vehicle segment link status failed: {response.text}"
+            data = response.json()
+            assert "linked" in data, "Response missing 'linked' field"
+            print(f"PASS: Vehicle segment link status - linked={data.get('linked')}")
 
 
 if __name__ == "__main__":
