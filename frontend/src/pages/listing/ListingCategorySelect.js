@@ -832,7 +832,7 @@ const ListingCategorySelect = () => {
         </div>
         <button
           type="button"
-          onClick={() => handleContinue(activeCategory, selectedPath, { auto: false })}
+          onClick={() => handleContinue(activeCategory, selectedPath)}
           disabled={!selectionComplete}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           data-testid="ilan-ver-continue-button"
