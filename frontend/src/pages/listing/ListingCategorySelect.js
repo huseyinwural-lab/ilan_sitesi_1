@@ -165,6 +165,7 @@ const ListingCategorySelect = () => {
     if (!moduleKey || pathIds.length === 0) return;
     setPageLoading(true);
     setError('');
+    setColumnErrors({});
     try {
       const nextColumns = [];
       const nextPath = [];
@@ -193,6 +194,7 @@ const ListingCategorySelect = () => {
       setSelectedPath(nextPath);
       setSelectionComplete(children.length === 0);
       setActiveCategory(children.length === 0 ? nextPath[nextPath.length - 1] : null);
+      setMobileColumnIndex(Math.min(nextPath.length, Math.max(nextColumns.length - 1, 0)));
     } catch (err) {
       setError('Kategori yolu yüklenemedi.');
     } finally {
