@@ -326,8 +326,14 @@ const ListingCategorySelect = () => {
 
   const handleSelectCategory = async (columnIndex, category) => {
     setError('');
-    autoAdvanceRef.current = false;
-    setAutoAdvanceActive(false);
+    setColumnErrors((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((key) => {
+        if (Number(key) >= columnIndex + 1) delete next[key];
+      });
+      return next;
+    });
+
     const nextPath = [...selectedPath.slice(0, columnIndex), category];
     const trimmedColumns = columns.slice(0, columnIndex + 1).map((col, idx) => ({
       ...col,
@@ -350,16 +356,27 @@ const ListingCategorySelect = () => {
     });
 
     setLoadingColumn(columnIndex + 1);
-    const children = await fetchChildren(category.id, selectedModule);
-    setLoadingColumn(null);
-
-    if (children.length > 0) {
-      setColumns([...trimmedColumns, { parentId: category.id, items: children, selectedId: null }]);
-    } else {
-      setSelectionComplete(true);
-      setActiveCategory(category);
-      autoAdvanceRef.current = false;
-      handleContinue(category, nextPath, { auto: true });
+    try {
+      const children = await fetchChildren(category.id, selectedModule);
+      if (children.length > 0) {
+        setColumns([...trimmedColumns, { parentId: category.id, items: children, selectedId: null }]);
+        setMobileColumnIndex(columnIndex + 1);
+      } else {
+        setSelectionComplete(true);
+        setActiveCategory(category);
+        setColumns(trimmedColumns);
+        setMobileColumnIndex(columnIndex);
+      }
+    } catch (_err) {
+      setColumnErrors((prev) => ({
+        ...prev,
+        [columnIndex + 1]: 'Alt kategoriler yüklenemedi. Lütfen tekrar deneyin.',
+      }));
+      setColumns(trimmedColumns);
+      setSelectionComplete(false);
+      setActiveCategory(null);
+    } finally {
+      setLoadingColumn(null);
     }
   };
 
