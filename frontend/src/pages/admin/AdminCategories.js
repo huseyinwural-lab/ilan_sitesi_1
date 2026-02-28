@@ -2741,7 +2741,7 @@ const AdminCategories = () => {
                             <button
                               type="button"
                               className="text-xs border rounded px-2 py-1"
-                              onClick={() => handleLevelEditItem(1, childIndex)}
+                              onClick={() => setSubcategories((prev) => updateNodeByPath(prev, childPath, (node) => ({ ...node, is_complete: false })))}
                               data-testid={`categories-level-item-edit-1-${childIndex}`}
                             >
                               Düzenle
@@ -2793,7 +2793,7 @@ const AdminCategories = () => {
                   <button
                     type="button"
                     className="text-xs border rounded px-2 py-1"
-                    onClick={() => handleLevelEditItem(0, groupIndex)}
+                    onClick={() => setSubcategories((prev) => updateNodeByPath(prev, groupPath, (node) => ({ ...node, is_complete: false })))}
                     data-testid={`categories-level-item-edit-0-${groupIndex}`}
                   >
                     Düzenle
