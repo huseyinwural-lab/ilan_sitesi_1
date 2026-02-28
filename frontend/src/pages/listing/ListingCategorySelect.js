@@ -385,7 +385,6 @@ const ListingCategorySelect = () => {
     const pathIds = path.map((entry) => entry.id).filter(Boolean);
     updateUrlState(selectedModule, pathIds);
     await hydratePathFromIds(pathIds, selectedModule);
-    autoAdvanceRef.current = true;
   };
 
   useEffect(() => {
