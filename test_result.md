@@ -19870,3 +19870,305 @@ Comprehensive test of dealer latest developments focusing on 5 requirements: Row
 ---
 
 
+
+
+## Home + Search Doping Validation Test (Feb 28, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Comprehensive Home and Search page doping parameter validation as per review request: "Home + Search son değişikliklerini doğrula: 1) Home sol blokta module groups yapısı (home-v2-module-group-*) ve root/child link test-id'leri render oluyor mu? 2) ACİL linki /search?doping=urgent ve vitrin linki /search?doping=showcase mi? 3) Search /search?doping=urgent sayfasında başlık 'Acil İlanlar' ve doping chip (search-doping-chip) görünür mü? 4) Empty-state metni urgent akışında kurumsal metne dönüyor mu? 5) API doğrulama: /api/v2/search doping_type urgent/showcase total değerleri."
+
+### Test Flow Executed:
+1. ✅ Home page module groups structure verification
+2. ✅ Root and child category link test-ids verification
+3. ✅ ACİL link URL validation (/search?doping=urgent)
+4. ✅ Vitrin link URL validation (/search?doping=showcase)
+5. ✅ Search page /search?doping=urgent title validation
+6. ✅ Doping chip visibility verification (search-doping-chip)
+7. ✅ Empty state corporate text code verification
+8. ✅ API validation: /api/v2/search?doping_type=urgent
+9. ✅ API validation: /api/v2/search?doping_type=showcase
+10. ✅ Search page /search?doping=showcase title validation
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS - 10/10 TESTS):
+
+**1. Home Page Module Groups Structure**: ✅ WORKING PERFECTLY
+  - **Module Groups Found**: 3/3 modules
+    - ✅ data-testid="home-v2-module-group-real_estate" - Emlak module
+    - ✅ data-testid="home-v2-module-group-vehicle" - Vasıta module
+    - ✅ data-testid="home-v2-module-group-other" - Diğer module
+  - **Root Category Links**: 2 links found
+    - ✅ data-testid="home-v2-root-link-{root.id}" pattern working
+    - ✅ Links navigate to /search?category={slug}
+  - **Child Category Links**: 8 links found
+    - ✅ data-testid="home-v2-first-child-link-{child.id}" pattern working
+    - ✅ Links navigate to /search?category={slug}
+  - **Implementation**: HomePage.js lines 232-291
+    - Line 232: Module group container with dynamic test-id
+    - Line 243: Root link with dynamic test-id
+    - Line 255: Child link with dynamic test-id
+  - **CRITICAL**: Module groups structure fully implemented with proper test-ids for testing
+
+**2. ACİL Link to /search?doping=urgent**: ✅ WORKING PERFECTLY
+  - **Link Element**: data-testid="home-v2-urgent-row"
+  - **Link URL**: /search?doping=urgent ✅ CORRECT
+  - **Link Text**: "ACİL (10)" - shows count of urgent listings
+  - **Implementation**: HomePage.js line 207
+    - `<Link to="/search?doping=urgent"` with proper test-id
+    - Line 119: Fetches urgent total from API: `/api/v2/search?doping_type=urgent`
+  - **CRITICAL**: ACİL link correctly routes to urgent search page with doping parameter
+
+**3. Vitrin Link to /search?doping=showcase**: ✅ WORKING PERFECTLY
+  - **Link Element**: data-testid="home-v2-showcase-all-link"
+  - **Link URL**: /search?doping=showcase ✅ CORRECT
+  - **Link Text**: "Tüm vitrin ilanlarını göster"
+  - **Implementation**: HomePage.js line 298
+    - `<Link to="/search?doping=showcase"` with proper test-id
+  - **CRITICAL**: Vitrin link correctly routes to showcase search page with doping parameter
+
+**4. Search Page /search?doping=urgent - Title and Chip**: ✅ WORKING PERFECTLY
+  - **Page Title**: "Acil İlanlar" ✅ CORRECT
+    - data-testid="search-results-title"
+    - Implementation: SearchPage.js line 211
+      - `if (activeDoping === 'urgent') return 'Acil İlanlar';`
+  - **Doping Chip**: ✅ VISIBLE
+    - data-testid="search-doping-chip"
+    - Chip Label: "Acil Filtresi"
+    - Clear Button: "Temizle" (data-testid="search-doping-chip-clear")
+    - Implementation: SearchPage.js lines 296-309
+  - **Results Count**: "10 sonuç bulundu"
+  - **Doping Cards**: All 10 listing cards show "Acil" badge (red/rose-100)
+  - **CRITICAL**: Urgent search page displays correct title and visible doping chip
+
+**5. Search Page /search?doping=showcase - Title and Chip**: ✅ WORKING PERFECTLY
+  - **Page Title**: "Vitrin İlanları" ✅ CORRECT
+    - Implementation: SearchPage.js line 212
+      - `if (activeDoping === 'showcase') return 'Vitrin İlanları';`
+  - **Doping Chip**: ✅ VISIBLE
+    - Chip Label: "Vitrin Filtresi"
+  - **Results Count**: "1 sonuç bulundu"
+  - **Doping Cards**: Listing card shows "Vitrin" badge (indigo-100)
+  - **CRITICAL**: Showcase search page displays correct title and visible doping chip
+
+**6. Empty State Corporate Text for Urgent Flow**: ✅ VERIFIED (CODE REVIEW)
+  - **Status**: Could not test with real data (10 urgent listings exist)
+  - **Code Implementation Verified**: SearchPage.js lines 422-427
+    - **Empty Title** (line 422): 
+      - `{isUrgentSearch ? 'Şu an aktif acil ilan bulunmuyor' : 'Sonuç bulunamadı'}`
+      - data-testid="search-empty-title"
+    - **Empty Description** (line 425-427):
+      - Urgent flow text: `'Kurumsal öneri: Kategori filtrelerini genişletin veya kısa süre sonra tekrar kontrol edin. Yeni onaylı acil ilanlar düzenli aralıklarla yayınlanır.'`
+      - Regular flow text: `'Arama kriterlerinizi değiştirerek tekrar deneyin.'`
+      - data-testid="search-empty-description"
+  - **CRITICAL**: Empty state for urgent search correctly shows corporate advisory text when no results found
+
+**7. API Validation - /api/v2/search?doping_type=urgent**: ✅ WORKING PERFECTLY
+  - **Endpoint**: GET /api/v2/search?country=DE&doping_type=urgent&limit=10&page=1
+  - **Response Status**: 200 ✅
+  - **Response Data**:
+    - ✅ pagination.total: 10 (urgent listings available)
+    - ✅ items.length: 10 (returned 10 items)
+    - ✅ has_pagination: true
+  - **Implementation**: 
+    - HomePage.js lines 118-124: Fetches urgent total for home page counter
+    - SearchPage.js lines 145-147: Maps `doping` URL param to `doping_type` API param
+  - **CRITICAL**: API correctly filters and returns urgent listings with total count
+
+**8. API Validation - /api/v2/search?doping_type=showcase**: ✅ WORKING PERFECTLY
+  - **Endpoint**: GET /api/v2/search?country=DE&doping_type=showcase&limit=10&page=1
+  - **Response Status**: 200 ✅
+  - **Response Data**:
+    - ✅ pagination.total: 1 (showcase listing available)
+    - ✅ items.length: 1 (returned 1 item)
+    - ✅ has_pagination: true
+  - **Implementation**:
+    - HomePage.js lines 109-115: Fetches showcase items for home page display
+    - SearchPage.js lines 145-147: Maps `doping` URL param to `doping_type` API param
+  - **CRITICAL**: API correctly filters and returns showcase listings with total count
+
+### UI Elements Verified:
+
+#### ✅ HOME PAGE LEFT BLOCK:
+- ✅ Module groups container (data-testid="home-v2-category-list")
+- ✅ Module group sections:
+  - home-v2-module-group-real_estate (Emlak)
+  - home-v2-module-group-vehicle (Vasıta)
+  - home-v2-module-group-other (Diğer)
+- ✅ Module titles (data-testid="home-v2-module-title-{module_key}")
+- ✅ Root category links (data-testid="home-v2-root-link-{root.id}")
+- ✅ Root category titles (data-testid="home-v2-root-title-{root.id}")
+- ✅ Root category counts (data-testid="home-v2-root-count-{root.id}")
+- ✅ Child category links (data-testid="home-v2-first-child-link-{child.id}")
+- ✅ Child category titles (data-testid="home-v2-first-child-title-{child.id}")
+- ✅ Child category counts (data-testid="home-v2-first-child-count-{child.id}")
+- ✅ ACİL urgent row link (data-testid="home-v2-urgent-row") → /search?doping=urgent
+- ✅ ACİL text with count (data-testid="home-v2-urgent-text"): "ACİL (10)"
+
+#### ✅ HOME PAGE RIGHT BLOCK:
+- ✅ Showcase link (data-testid="home-v2-showcase-all-link") → /search?doping=showcase
+- ✅ Showcase grid (data-testid="home-v2-showcase-grid")
+- ✅ Showcase tiles with featured/urgent badges
+
+#### ✅ SEARCH PAGE /search?doping=urgent:
+- ✅ Page title: "Acil İlanlar" (data-testid="search-results-title")
+- ✅ Results count: "10 sonuç bulundu"
+- ✅ Doping chip (data-testid="search-doping-chip"):
+  - Chip label: "Acil Filtresi" (data-testid="search-doping-chip-label")
+  - Clear button: "Temizle" (data-testid="search-doping-chip-clear")
+- ✅ Listing cards (data-testid="search-result-card-{id}"):
+  - All 10 cards have "Acil" badge (red/rose)
+  - Badge test-id: "search-result-urgent-badge-{id}"
+- ✅ Sort dropdown with "En Yeni" selected
+- ✅ Sidebar filters (category, make, model)
+
+#### ✅ SEARCH PAGE /search?doping=showcase:
+- ✅ Page title: "Vitrin İlanları" (data-testid="search-results-title")
+- ✅ Results count: "1 sonuç bulundu"
+- ✅ Doping chip (data-testid="search-doping-chip"):
+  - Chip label: "Vitrin Filtresi"
+  - Clear button: "Temizle"
+- ✅ Listing card with "Vitrin" badge (indigo-100)
+  - Badge test-id: "search-result-featured-badge-{id}"
+
+### Screenshots Captured:
+1. **urgent-search-page.png**: Urgent search page showing "Acil İlanlar" title, doping chip with "Acil Filtresi", 10 urgent listing cards with red "Acil" badges
+2. **showcase-search-page.png**: Showcase search page showing "Vitrin İlanları" title, doping chip with "Vitrin Filtresi", 1 showcase listing card with blue "Vitrin" badge
+
+### Code Implementation Verification:
+
+**HomePage.js** (frontend):
+- **Module Groups Structure** (Lines 144-192):
+  - Line 147-190: Maps MODULE_CONFIG to create module groups with roots and children
+  - Line 232: Module group container with `data-testid={`home-v2-module-group-${moduleGroup.module_key}`}`
+  - Line 243: Root link with `data-testid={`home-v2-root-link-${root.id}`}`
+  - Line 255: Child link with `data-testid={`home-v2-first-child-link-${child.id}`}`
+- **ACİL Link** (Line 207):
+  - `<Link to="/search?doping=urgent"` with `data-testid="home-v2-urgent-row"`
+  - Line 209: Shows count from urgentTotal state
+- **Vitrin Link** (Line 298):
+  - `<Link to="/search?doping=showcase"` with `data-testid="home-v2-showcase-all-link"`
+- **API Calls**:
+  - Lines 118-124: Fetches urgent total: `/api/v2/search?doping_type=urgent`
+  - Lines 109-115: Fetches showcase items: `/api/v2/search?doping_type=showcase`
+
+**SearchPage.js** (frontend):
+- **Doping Parameter Handling** (Lines 145-147, 202-203):
+  - Line 145: Reads `doping` from URL params
+  - Line 147: Maps to API param: `doping_type`
+  - Line 202: `const dopingFromUrl = useMemo(() => new URLSearchParams(location.search).get('doping'), [location.search]);`
+  - Line 203: `const activeDoping = searchState.doping || dopingFromUrl;`
+- **Search Title** (Lines 210-217):
+  - Line 211: `if (activeDoping === 'urgent') return 'Acil İlanlar';`
+  - Line 212: `if (activeDoping === 'showcase') return 'Vitrin İlanları';`
+- **Doping Chip** (Lines 296-309):
+  - Line 296: `data-testid="search-doping-chip"` visible when doping filter active
+  - Line 297: Shows label "Acil Filtresi" or "Vitrin Filtresi"
+  - Line 303: Clear button to remove doping filter
+- **Empty State** (Lines 417-437):
+  - Line 422: Title for urgent: `{isUrgentSearch ? 'Şu an aktif acil ilan bulunmuyor' : 'Sonuç bulunamadı'}`
+  - Line 425-427: Corporate text for urgent flow
+- **Listing Cards** (Lines 441-486):
+  - Lines 469-476: Doping badges rendering
+  - Line 471: Featured badge "Vitrin" (indigo-100)
+  - Line 474: Urgent badge "Acil" (rose-100)
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (10/10 requirements verified)
+- **Module Groups Structure**: ✅ WORKING (3 modules, test-ids render correctly)
+- **Root/Child Links**: ✅ WORKING (2 root links, 8 child links with test-ids)
+- **ACİL Link URL**: ✅ CORRECT (/search?doping=urgent)
+- **Vitrin Link URL**: ✅ CORRECT (/search?doping=showcase)
+- **Urgent Search Title**: ✅ CORRECT ("Acil İlanlar")
+- **Urgent Doping Chip**: ✅ VISIBLE (search-doping-chip)
+- **Showcase Search Title**: ✅ CORRECT ("Vitrin İlanları")
+- **Showcase Doping Chip**: ✅ VISIBLE
+- **Empty State Corporate Text**: ✅ VERIFIED (code implementation correct)
+- **Urgent API**: ✅ WORKING (total=10)
+- **Showcase API**: ✅ WORKING (total=1)
+- **No Console Errors**: ✅ CONFIRMED
+
+### Backend API Endpoints:
+
+**Search with Doping Filters**:
+- **GET** /api/v2/search?doping_type=urgent - Returns listings with is_urgent=true ✅
+- **GET** /api/v2/search?doping_type=showcase - Returns listings with is_featured=true ✅
+- **Response Format**:
+  ```json
+  {
+    "items": [...],
+    "pagination": {
+      "total": 10,
+      "page": 1,
+      "pages": 1,
+      "limit": 10
+    },
+    "facets": {...},
+    "facet_meta": {...}
+  }
+  ```
+
+### Doping Parameter Flow:
+
+**Frontend → Backend Mapping**:
+1. **Home Page**: 
+   - User clicks ACİL link → navigates to `/search?doping=urgent`
+   - User clicks Vitrin link → navigates to `/search?doping=showcase`
+2. **Search Page URL**: 
+   - URL param: `?doping=urgent` or `?doping=showcase`
+3. **Search Page State**:
+   - Reads `doping` from URL (SearchPage.js line 145, 202)
+   - Sets title based on doping value (lines 211-212)
+   - Shows doping chip (lines 296-309)
+4. **API Request**:
+   - Maps URL param `doping` to API param `doping_type` (line 147)
+   - Sends: `/api/v2/search?doping_type=urgent` or `doping_type=showcase`
+5. **Backend Response**:
+   - Filters listings by is_urgent or is_featured
+   - Returns filtered items with total count
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - All requirements satisfied 100%
+- **Module Groups Structure**: ✅ PRODUCTION-READY (test-ids render correctly)
+- **Root/Child Links**: ✅ PRODUCTION-READY (test-ids working)
+- **ACİL Link**: ✅ PRODUCTION-READY (routes to /search?doping=urgent)
+- **Vitrin Link**: ✅ PRODUCTION-READY (routes to /search?doping=showcase)
+- **Urgent Search Page**: ✅ PRODUCTION-READY (title + chip visible)
+- **Showcase Search Page**: ✅ PRODUCTION-READY (title + chip visible)
+- **Empty State**: ✅ PRODUCTION-READY (corporate text implemented)
+- **API Integration**: ✅ PRODUCTION-READY (doping_type filters working)
+- **UI/UX**: ✅ PRODUCTION-READY (all elements visible, badges correct, test-ids present)
+
+### Review Request Compliance:
+✅ **Review Request**: "Home + Search son değişikliklerini doğrula: 1) Home sol blokta module groups yapısı (home-v2-module-group-*) ve root/child link test-id'leri render oluyor mu? 2) ACİL linki /search?doping=urgent ve vitrin linki /search?doping=showcase mi? 3) Search /search?doping=urgent sayfasında başlık 'Acil İlanlar' ve doping chip (search-doping-chip) görünür mü? 4) Empty-state metni urgent akışında kurumsal metne dönüyor mu? 5) API doğrulama: /api/v2/search doping_type urgent/showcase total değerleri."
+
+**Results**:
+- ✅ Requirement 1: Home sol blokta module groups yapısı
+  - home-v2-module-group-real_estate ✅
+  - home-v2-module-group-vehicle ✅
+  - home-v2-module-group-other ✅
+  - Root link test-ids: home-v2-root-link-{id} ✅ (2 found)
+  - Child link test-ids: home-v2-first-child-link-{id} ✅ (8 found)
+- ✅ Requirement 2: Link URLs
+  - ACİL linki: /search?doping=urgent ✅
+  - Vitrin linki: /search?doping=showcase ✅
+- ✅ Requirement 3: Search /search?doping=urgent
+  - Başlık: "Acil İlanlar" ✅
+  - Doping chip (search-doping-chip): Görünür ✅
+  - Chip label: "Acil Filtresi" ✅
+- ✅ Requirement 4: Empty-state urgent akışı
+  - Code verified: SearchPage.js lines 425-427 ✅
+  - Corporate text: "Kurumsal öneri: Kategori filtrelerini genişletin..." ✅
+  - Could not test with real data (10 urgent listings exist)
+- ✅ Requirement 5: API doğrulama
+  - /api/v2/search?doping_type=urgent: total=10 ✅
+  - /api/v2/search?doping_type=showcase: total=1 ✅
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Feb 28, 2026 (LATEST)
+- **Message**: Home + Search doping validation test SUCCESSFULLY COMPLETED with 100% PASS rate (10/10 tests). All requirements from review request satisfied. CRITICAL VERIFICATION: Home and Search pages correctly implement doping parameter filtering with proper test-ids, URL routing, titles, chips, empty states, and API integration. REQUIREMENT 1 ✅: Home left block module groups structure WORKING - Found 3 module groups (home-v2-module-group-real_estate, home-v2-module-group-vehicle, home-v2-module-group-other), 2 root category links (home-v2-root-link-*), and 8 child category links (home-v2-first-child-link-*). All test-ids render correctly. REQUIREMENT 2 ✅: Link URLs CORRECT - ACİL link points to /search?doping=urgent (showing "ACİL (10)"), Vitrin link points to /search?doping=showcase ("Tüm vitrin ilanlarını göster"). REQUIREMENT 3 ✅: Search page /search?doping=urgent WORKING - Page title is "Acil İlanlar", doping chip (search-doping-chip) visible with label "Acil Filtresi" and "Temizle" button. All 10 listing cards show red "Acil" badge. REQUIREMENT 4 ✅: Empty state corporate text VERIFIED - Code review confirms SearchPage.js lines 422-427 implement corporate advisory text for urgent flow: "Kurumsal öneri: Kategori filtrelerini genişletin veya kısa süre sonra tekrar kontrol edin. Yeni onaylı acil ilanlar düzenli aralıklarla yayınlanır." Could not test with real data as 10 urgent listings currently exist, but implementation is correct. REQUIREMENT 5 ✅: API validation WORKING - GET /api/v2/search?doping_type=urgent returns 200 with pagination.total=10, GET /api/v2/search?doping_type=showcase returns 200 with pagination.total=1. Both APIs correctly filter by doping type. Showcase search page also tested: title "Vitrin İlanları" ✅, doping chip "Vitrin Filtresi" ✅, 1 listing with blue "Vitrin" badge ✅. Code implementation verified: HomePage.js (lines 207, 298 for links; lines 109-124 for API calls; lines 232-291 for module groups), SearchPage.js (lines 145-147 for doping param mapping; lines 210-217 for title; lines 296-309 for chip; lines 422-427 for empty state). Screenshots captured showing urgent and showcase search pages. No console errors. Home + Search doping filtering is production-ready.
+
+---
+
+
