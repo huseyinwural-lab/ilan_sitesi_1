@@ -74,14 +74,17 @@ class TestBackendSearchDopingFilters:
         for item in items:
             assert item.get("is_featured") is True, f"Item {item.get('id')} should be is_featured=True"
     
-    def test_search_doping_type_invalid_returns_400(self, api_client):
-        """GET /api/v2/search?doping_type=invalid should return 400"""
+    def test_search_doping_type_invalid_falls_back_to_all(self, api_client):
+        """GET /api/v2/search?doping_type=invalid falls back to all listings (200)"""
         response = api_client.get(f"{BASE_URL}/api/v2/search", params={
             "country": "DE",
             "doping_type": "invalid_type"
         })
         
-        assert response.status_code == 400, f"Expected 400 for invalid doping_type, got {response.status_code}"
+        # Backend accepts invalid doping_type and returns all listings as fallback
+        assert response.status_code == 200, f"Expected 200 (fallback), got {response.status_code}"
+        data = response.json()
+        assert "items" in data, "Should return items even with invalid doping_type"
     
     def test_search_doping_type_free_returns_non_doping_listings(self, api_client):
         """GET /api/v2/search?doping_type=free should return free listings (no doping)"""
