@@ -2629,15 +2629,9 @@ const AdminCategories = () => {
           <div className="text-sm font-semibold text-slate-900" data-testid={`categories-level-title-${levelIndex}`}>
             {levelTitle}
           </div>
-          <button
-            type="button"
-            className="text-xs px-2 py-1 rounded border disabled:opacity-60"
-            onClick={() => (isLevelLocked ? handleLevelEditColumn(levelIndex, items) : handleLevelComplete(levelIndex, items))}
-            disabled={!isLevelLocked && !levelComplete}
-            data-testid={`categories-level-complete-${levelIndex}`}
-          >
-            {isLevelLocked ? "Düzenle" : "Tamam"}
-          </button>
+          <div className="text-[11px] text-slate-500" data-testid={`categories-level-meta-${levelIndex}`}>
+            {levelIndex === 0 ? 'Önce grubu tamamlayın, sonra bir sonraki grup açılır.' : 'Seçilen gruba ait 1.x, 2.x, 3.x alt kategorileri.'}
+          </div>
         </div>
         <div className={`${levelIndex === 1 ? 'flex gap-3 overflow-x-auto pb-2' : 'space-y-3 max-h-[420px] overflow-y-auto'}`} data-testid={`categories-level-items-${levelIndex}`}>
           {items.length === 0 ? (
