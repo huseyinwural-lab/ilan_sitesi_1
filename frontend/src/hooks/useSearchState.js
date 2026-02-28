@@ -17,6 +17,7 @@ export const useSearchState = () => {
       category: params.get('category') || null,
       make: params.get('make') || null,
       model: params.get('model') || null,
+      doping: params.get('doping') || null,
       sort: params.get('sort') || 'date_desc',
       page: parseInt(params.get('page') || '1', 10),
       limit: parseInt(params.get('limit') || '20', 10),
@@ -73,6 +74,7 @@ export const useSearchState = () => {
     if (current.category) query.set('category', current.category);
     if (current.make) query.set('make', current.make);
     if (current.model) query.set('model', current.model);
+    if (current.doping) query.set('doping', current.doping);
     if (current.sort && current.sort !== 'date_desc') query.set('sort', current.sort);
     if (current.page && current.page > 1) query.set('page', current.page.toString());
     if (current.limit && current.limit !== 20) query.set('limit', current.limit.toString());
