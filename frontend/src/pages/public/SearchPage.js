@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchState } from '@/hooks/useSearchState';
 import { FacetRenderer } from '@/components/search/FacetRenderer';
 import { CategorySidebar } from '@/components/search/CategorySidebar';
