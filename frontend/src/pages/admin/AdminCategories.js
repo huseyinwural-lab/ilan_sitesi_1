@@ -1269,13 +1269,6 @@ const AdminCategories = () => {
       setHierarchyError(`Kategori ${levelIndex + 1} için ad ve slug zorunludur.`);
       return;
     }
-    if (levelIndex >= 3) {
-      const missingTransaction = items.find((item) => !item.transaction_type);
-      if (missingTransaction) {
-        setHierarchyError(`Kategori ${levelIndex + 1} için alt tip seçimi zorunludur.`);
-        return;
-      }
-    }
     const invalidSort = items.find((item) => !Number.isFinite(Number(item.sort_order)) || Number(item.sort_order) <= 0);
     if (invalidSort) {
       setHierarchyError(`Kategori ${levelIndex + 1} için sıra 1 veya daha büyük olmalıdır.`);
@@ -2085,12 +2078,12 @@ const AdminCategories = () => {
       setHierarchyError(`${label} için ad ve slug zorunludur.`);
       return;
     }
-    if (path.length === 3 && !target.transaction_type) {
-      setHierarchyError(`${label} için alt tip seçimi zorunludur.`);
-      return;
-    }
     if (!Number.isFinite(Number(target.sort_order)) || Number(target.sort_order) <= 0) {
       setHierarchyError(`${label} için sıra 1 veya daha büyük olmalıdır.`);
+      return;
+    }
+    if (path.length === 1 && (!Array.isArray(target.children) || target.children.length === 0)) {
+      setHierarchyError(`${label} için en az 1 alt kategori eklenmelidir.`);
       return;
     }
     const incompleteChild = (target.children || []).find((child) => !child.is_complete);
@@ -2235,20 +2228,20 @@ const AdminCategories = () => {
         if (!node.slug) {
           fieldErrors[`level-${pathKey}-slug`] = "Slug zorunludur.";
         }
-        if (nodePath.length === 3 && !node.transaction_type) {
-          fieldErrors[`level-${pathKey}-transaction`] = "Alt tip zorunludur.";
-        }
         if (!Number.isFinite(Number(node.sort_order)) || Number(node.sort_order) <= 0) {
           fieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
+        }
+        if (nodePath.length === 1 && (node.children || []).length === 0) {
+          fieldErrors[`level-${pathKey}-children`] = "En az 1 alt kategori gereklidir.";
         }
         if (!node.name || !node.slug) {
           return `${label} için ad ve slug zorunludur.`;
         }
-        if (nodePath.length === 3 && !node.transaction_type) {
-          return `${label} için alt tip zorunludur.`;
-        }
         if (!Number.isFinite(Number(node.sort_order)) || Number(node.sort_order) <= 0) {
           return `${label} için sıra 1 veya daha büyük olmalıdır.`;
+        }
+        if (nodePath.length === 1 && (node.children || []).length === 0) {
+          return `${label} için en az 1 alt kategori eklenmelidir.`;
         }
         if ((node.children || []).length > 0) {
           const childError = validateTree(node.children, nodePath);
