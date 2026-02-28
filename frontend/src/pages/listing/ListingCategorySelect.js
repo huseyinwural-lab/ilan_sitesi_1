@@ -214,16 +214,14 @@ const ListingCategorySelect = () => {
       setSelectionComplete(false);
       setActiveCategory(null);
       setLoadingColumn(null);
-      autoAdvanceRef.current = false;
-      setAutoAdvanceActive(false);
+      setColumnErrors({});
       return;
     }
     if (moduleParam === selectedModule && selectedPathKey === pathParam && columns.length > 0) {
       return;
     }
-    autoAdvanceRef.current = false;
-    setAutoAdvanceActive(false);
     setLoadingColumn(null);
+    setColumnErrors({});
     setSelectedModule(moduleParam);
     setSelectionComplete(false);
     setActiveCategory(null);
@@ -233,6 +231,7 @@ const ListingCategorySelect = () => {
       hydratePathFromIds(pathIds, moduleParam);
     } else {
       setSelectedPath([]);
+      setMobileColumnIndex(0);
       loadRootCategories(moduleParam);
     }
   }, [hydratePathFromIds, loadRootCategories, searchParams]);
