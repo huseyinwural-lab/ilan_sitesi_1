@@ -174,6 +174,15 @@ const createSubcategoryGroupDraft = () => ({
   children: [createSubcategoryDraft()],
 });
 
+const reorderArray = (items, fromIndex, toIndex) => {
+  if (!Array.isArray(items)) return [];
+  if (fromIndex === toIndex) return [...items];
+  const next = [...items];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
+  return next;
+};
+
 const CATEGORY_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 const CATEGORY_IMAGE_ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "webp"];
 
@@ -838,8 +847,10 @@ const AdminCategories = () => {
     const moduleValue = (initialPayload.module || "").trim().toLowerCase();
     const countryCode = (initialPayload.country_code || "").trim().toUpperCase();
     const parentId = initialPayload.parent_id || "";
+    const baseSlug = String(initialPayload.slug || "").trim().toLowerCase();
     let payload = {
       ...initialPayload,
+      slug: baseSlug,
       sort_order: Number(initialPayload.sort_order || 1),
     };
 
@@ -859,6 +870,14 @@ const AdminCategories = () => {
       }
 
       const parsed = parseApiError(data, fallbackMessage);
+
+      const parsedMessageLower = String(parsed?.message || "").toLowerCase();
+      const hasSlugConflict = parsedMessageLower.includes("slug") && parsedMessageLower.includes("exists");
+      if (hasSlugConflict && baseSlug) {
+        payload = { ...payload, slug: `${baseSlug}-${attempt + 2}` };
+        continue;
+      }
+
       if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
         const nextSort = await findNextAvailableSortOrder({
           moduleValue,
