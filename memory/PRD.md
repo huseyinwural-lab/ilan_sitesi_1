@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-28 02:40:00 UTC (P104 Admin Render Loop Fix + Kategori Save Stabilizasyon + Home Showcase Fallback Harden)
+**Son güncelleme:** 2026-02-28 17:30:00 UTC (P105 Home HTML Toparlama + PDF İlan Ver Sayfası)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -67,6 +67,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P105 Ana Sayfa HTML Toparlama (2026-02-28):** Home akışı kullanıcı talebine göre sadeleştirildi. Vitrin alanı artık `GET /api/v2/search?...&doping_type=showcase` ile **admin onaylı vitrin** ilanlarını çekiyor; eski placeholder/kalıntı davranışları temizlendi. `ACİL` alanı linke çevrilip `/search?doping=urgent` yönlendirmesi eklendi. Sol kategori blokları admin kategorilerinden `Ana Kategori > 1. Alt Kategori (ilan adedi)` formatında render edildi.
+- **P105 Search Doping URL Desteği (2026-02-28):** URL state’e `doping` parametresi eklendi (`useSearchState`). `SearchPage` artık `doping=urgent/showcase` parametresini backend’e `doping_type` olarak iletir ve başlıkları (`Acil İlanlar` / `Vitrin İlanları`) dinamik gösterir.
+- **P105 Backend Doping Filtreleme (2026-02-28):** `GET /api/v2/search` endpointine `doping_type` parametresi eklendi. Meili filtre ifadesi `showcase -> is_featured=true`, `urgent -> is_urgent=true` kurallarıyla genişletildi; filterable attribute setine `is_featured/is_urgent` dahil edildi.
+- **P105 İlan Ver Route + PDF Uyumlu Detay Şablonu (2026-02-28):** `/ilan-ver` route’u artık aktif ekran (redirect değil), `/ilan-ver/kategori-secimi -> /ilan-ver` redirecti korundu. `ListingDetails` sayfası PDF’e göre 1..8 madde düzeninde yeniden tasarlandı: çekirdek/parametre/adres/detay gruplar/medya/iletişim/kampanya/koşullar + kampanya kartları + koşul checkbox + devam aksiyonu.
+- **P105 Test Doğrulama (2026-02-28):** `/app/test_reports/iteration_63.json` PASS (**backend 100%, frontend 100%**). Doğrulanan başlıklar: doping_type API filtreleri, home link yönlendirmeleri, search doping başlıkları, `/ilan-ver` route davranışı ve PDF section yapısı.
 - **P104 Admin Render Loop Fix + Kategori Save Stabilizasyon (2026-02-28):** `Layout.js` içinde sidebar section collapse senkron effect’i harden edilerek `Maximum update depth exceeded` döngüsü kapatıldı (state değişmedikçe update yapılmıyor). Sonuç: `/admin/categories` ve ilgili admin rotaları tekrar stabil açılıyor. Kategori hiyerarşi kaydet akışı yeniden doğrulandı; root + child kayıt backend’de başarılı üretildi ve TypeError blokajı tekrar gözlenmedi.
 - **P104 Home Showcase Fallback Harden (2026-02-28):** `HomePage` veri yükleme akışı `Promise.all` yerine `Promise.allSettled` yaklaşımına geçirildi. Böylece kategori çağrısı geçici fail olsa bile yayınlanmış showcase layout’u default’a düşmeden uygulanabiliyor; admindeki vitrin ayarlarının yansıma dayanıklılığı artırıldı.
 - **P104 Test Doğrulama (2026-02-28):** `/app/test_reports/iteration_62.json` raporunda kritik hedefler PASS: admin kategori ve showcase sayfaları crash olmadan açılıyor, kategori hiyerarşi save akışı çalışıyor, sidebar accordion stabil.
