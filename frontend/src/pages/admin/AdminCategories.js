@@ -2802,6 +2802,22 @@ const AdminCategories = () => {
     return columns;
   };
 
+  const hierarchyPreviewNodes = subcategories
+    .filter((group) => group?.name?.trim() || (group.children || []).length > 0)
+    .map((group, groupIndex) => {
+      const children = (group.children || [])
+        .filter((child) => child?.name?.trim())
+        .map((child, childIndex) => ({
+          key: `${groupIndex}-${childIndex}`,
+          label: `${groupIndex + 1}.${childIndex + 1} ${child.name.trim()}`,
+        }));
+      return {
+        key: `group-${groupIndex}`,
+        label: `${groupIndex + 1} ${group.name?.trim() || 'Taslak Grup'}`,
+        children,
+      };
+    });
+
 
 
   return (
