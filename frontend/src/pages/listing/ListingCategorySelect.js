@@ -272,6 +272,24 @@ const ListingCategorySelect = () => {
     fetchRecentCategory();
   }, [fetchRecentCategory]);
 
+  useEffect(() => {
+    const onResize = () => setIsMobileView(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    childrenCacheRef.current.clear();
+  }, [country]);
+
+  useEffect(() => {
+    if (!columns.length) {
+      setMobileColumnIndex(0);
+      return;
+    }
+    setMobileColumnIndex((prev) => Math.min(prev, columns.length - 1));
+  }, [columns]);
+
   const breadcrumbLabel = selectedPath.length
     ? selectedPath.map((item) => item.name).join(' > ')
     : selectedModuleLabel
