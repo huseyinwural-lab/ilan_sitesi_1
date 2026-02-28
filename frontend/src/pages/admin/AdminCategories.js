@@ -3370,9 +3370,9 @@ const AdminCategories = () => {
                           data-testid="categories-module-select"
                         >
                           <option value="">Seçiniz</option>
-                          {CATEGORY_MODULE_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
+                          <option value="real_estate">Emlak</option>
+                          <option value="vehicle">Vasıta</option>
+                          <option value="other">Diğer</option>
                         </select>
                         {hierarchyFieldErrors.main_module && (
                           <div className="text-xs text-rose-600" data-testid="categories-module-error">
