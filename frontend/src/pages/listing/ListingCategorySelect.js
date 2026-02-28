@@ -531,11 +531,68 @@ const ListingCategorySelect = () => {
     navigate(targetRoute);
   };
 
+  const retryColumnLoad = useCallback(async (columnIndex) => {
+    if (!selectedModule) return;
+
+    const parentId = columnIndex === 0
+      ? null
+      : selectedPath[columnIndex - 1]?.id || columns[columnIndex]?.parentId;
+
+    if (columnIndex > 0 && !parentId) return;
+
+    setLoadingColumn(columnIndex);
+    setColumnErrors((prev) => {
+      const next = { ...prev };
+      delete next[columnIndex];
+      return next;
+    });
+
+    try {
+      const items = await fetchChildren(parentId, selectedModule, { force: true });
+      setColumns((prev) => {
+        const next = [...prev];
+        if (columnIndex >= next.length) {
+          next.push({ parentId, items, selectedId: null });
+        } else {
+          next[columnIndex] = {
+            ...next[columnIndex],
+            parentId,
+            items,
+          };
+        }
+        return next;
+      });
+    } catch (_err) {
+      setColumnErrors((prev) => ({
+        ...prev,
+        [columnIndex]: 'Alt kategori servisi geçici olarak erişilemiyor. Tekrar deneyiniz.',
+      }));
+    } finally {
+      setLoadingColumn(null);
+    }
+  }, [columns, fetchChildren, selectedModule, selectedPath]);
+
+  const handleMobileBack = () => {
+    setMobileColumnIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleMobileNext = () => {
+    setMobileColumnIndex((prev) => Math.min(columns.length - 1, prev + 1));
+  };
+
+  const canMobileBack = mobileColumnIndex > 0;
+  const canMobileNext = mobileColumnIndex < columns.length - 1 && Boolean(columns[mobileColumnIndex]?.selectedId);
+
+  const renderedColumns = useMemo(() => {
+    if (isMobileView) {
+      if (!columns[mobileColumnIndex]) return [];
+      return [{ column: columns[mobileColumnIndex], columnIndex: mobileColumnIndex }];
+    }
+    return columns.map((column, columnIndex) => ({ column, columnIndex }));
+  }, [columns, isMobileView, mobileColumnIndex]);
+
   const columnTitle = (columnIndex) => {
-    if (columnIndex === 0) return 'Kategori 1 (L1)';
-    if (columnIndex === 1) return 'Kategori 2 (L2)';
-    if (columnIndex === 2) return 'Kategori 3 (L3)';
-    return 'Alt Tip Seçimi';
+    return `Kategori ${columnIndex + 1} (L${columnIndex + 1})`;
   };
 
   return (
