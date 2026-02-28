@@ -3428,7 +3428,7 @@ const AdminCategories = () => {
                         <div>
                           <h3 className="text-md font-semibold">Alt Kategoriler</h3>
                           <p className="text-xs text-slate-600" data-testid="categories-subcategory-hint">
-                            Önce ana kategori grubunu (1,2,3...) seçin; sonra sağdaki panelde aynı grubun alt kategorilerini (1.1, 1.2, 1.3...) sınırsız ekleyin.
+                            1.1 ile başlayın; 1. grup bitince otomatik 2. grup açılır. Her grupta 1.x / 2.x / 3.x alt kategorileri sınırsız ekleyebilirsiniz.
                           </p>
                         </div>
                       </div>
