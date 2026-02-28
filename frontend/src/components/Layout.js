@@ -522,6 +522,65 @@ export default function Layout({ children }) {
     !item.roles || item.roles.includes(user?.role)
   );
 
+  const navSections = useMemo(() => {
+    const sections = [];
+    let current = null;
+    filteredNavItems.forEach((item, index) => {
+      if (item.divider) {
+        current = {
+          key: `${item.label}-${index}`,
+          label: item.label,
+          items: [],
+        };
+        sections.push(current);
+        return;
+      }
+      if (!current) {
+        current = {
+          key: `section-${index}`,
+          label: 'Menü',
+          items: [],
+        };
+        sections.push(current);
+      }
+      current.items.push(item);
+    });
+    return sections.filter((section) => section.items.length > 0);
+  }, [filteredNavItems]);
+
+  const [collapsedSections, setCollapsedSections] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('admin_sidebar_collapsed_sections') || '{}');
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('admin_sidebar_collapsed_sections', JSON.stringify(collapsedSections));
+  }, [collapsedSections]);
+
+  useEffect(() => {
+    const activePath = location.pathname;
+    setCollapsedSections((prev) => {
+      const next = { ...prev };
+      navSections.forEach((section) => {
+        const hasActive = section.items.some((item) => item.path === activePath);
+        if (hasActive) next[section.key] = false;
+      });
+      return next;
+    });
+  }, [location.pathname, navSections]);
+
+  const isSectionCollapsed = (sectionKey) => Boolean(collapsedSections[sectionKey]);
+
+  const toggleSectionCollapse = (sectionKey) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey],
+    }));
+  };
+
   const isAdminPathDisabled = (path) => {
     if (!path) return false;
     // If route is not registered, treat as disabled (prevents 404 navigation)
@@ -641,56 +700,62 @@ export default function Layout({ children }) {
         {/* Navigation */}
         <nav className={`flex-1 overflow-y-auto ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
           <ul className="space-y-1">
-            {filteredNavItems.map((item, index) => (
-              item.divider ? (
-                <li key={`divider-${index}`} className="pt-4 pb-2">
-                  {!sidebarCollapsed && (
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3">
-                      {item.label}
-                    </span>
-                  )}
-                </li>
-              ) : (
-                <li key={item.path}>
-                  {item.comingSoon || isAdminPathDisabled(item.path) ? (
-                    <div
-                      className="sidebar-item opacity-60 cursor-not-allowed"
-                      title="Coming soon"
-                    data-testid={`nav-${item.testId}`}
-                    >
-                      <item.icon size={18} />
-                      {!sidebarCollapsed && (
-                        <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
-                      )}
-                      {!sidebarCollapsed && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
-                      )}
-                    </div>
-                  ) : item.openInNewWindow ? (
-                    <a
-                      href={withCountryParam(item.path)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="sidebar-item"
-                      data-testid={`nav-${item.testId}`}
-                    >
-                      <item.icon size={18} />
-                      {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
-                    </a>
-                  ) : (
-                    <NavLink
-                      to={withCountryParam(item.path)}
-                      className={({ isActive }) =>
-                        `sidebar-item ${isActive ? 'active' : ''}`
-                      }
-                    data-testid={`nav-${item.testId}`}
-                    >
-                      <item.icon size={18} />
-                      {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
-                    </NavLink>
-                  )}
-                </li>
-              )
+            {navSections.map((section) => (
+              <li key={section.key} className="space-y-1">
+                {!sidebarCollapsed && (
+                  <button
+                    type="button"
+                    onClick={() => toggleSectionCollapse(section.key)}
+                    className="w-full flex items-center justify-between px-3 pt-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                    data-testid={`nav-section-toggle-${section.key}`}
+                  >
+                    <span>{section.label}</span>
+                    <ChevronDown size={14} className={`transition-transform ${isSectionCollapsed(section.key) ? '-rotate-90' : ''}`} />
+                  </button>
+                )}
+
+                {(sidebarCollapsed || !isSectionCollapsed(section.key)) && section.items.map((item) => (
+                  <li key={item.path}>
+                    {item.comingSoon || isAdminPathDisabled(item.path) ? (
+                      <div
+                        className="sidebar-item opacity-60 cursor-not-allowed"
+                        title="Coming soon"
+                        data-testid={`nav-${item.testId}`}
+                      >
+                        <item.icon size={18} />
+                        {!sidebarCollapsed && (
+                          <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
+                        )}
+                        {!sidebarCollapsed && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
+                        )}
+                      </div>
+                    ) : item.openInNewWindow ? (
+                      <a
+                        href={withCountryParam(item.path)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="sidebar-item"
+                        data-testid={`nav-${item.testId}`}
+                      >
+                        <item.icon size={18} />
+                        {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
+                      </a>
+                    ) : (
+                      <NavLink
+                        to={withCountryParam(item.path)}
+                        className={({ isActive }) =>
+                          `sidebar-item ${isActive ? 'active' : ''}`
+                        }
+                        data-testid={`nav-${item.testId}`}
+                      >
+                        <item.icon size={18} />
+                        {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
+                      </NavLink>
+                    )}
+                  </li>
+                ))}
+              </li>
             ))}
           </ul>
         </nav>
@@ -734,52 +799,58 @@ export default function Layout({ children }) {
             </div>
             <nav className="p-4">
               <ul className="space-y-1">
-                {filteredNavItems.map((item, index) => (
-                  item.divider ? (
-                    <li key={`divider-mobile-${index}`} className="pt-4 pb-2">
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3">
-                        {item.label}
-                      </span>
-                    </li>
-                  ) : (
-                    <li key={item.path}>
-                      {item.comingSoon || isAdminPathDisabled(item.path) ? (
-                        <div
-                          className="sidebar-item opacity-60 cursor-not-allowed"
-                          title="Coming soon"
-                    data-testid={`nav-mobile-${item.testId}`}
-                        >
-                          <item.icon size={18} />
-                          <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
-                        </div>
-                      ) : item.openInNewWindow ? (
-                        <a
-                          href={withCountryParam(item.path)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => setSidebarOpen(false)}
-                          className="sidebar-item"
-                          data-testid={`nav-mobile-${item.testId}`}
-                        >
-                          <item.icon size={18} />
-                          {typeof item.label === 'string' ? t(item.label) : item.label}
-                        </a>
-                      ) : (
-                        <NavLink
-                          to={withCountryParam(item.path)}
-                          onClick={() => setSidebarOpen(false)}
-                          className={({ isActive }) =>
-                            `sidebar-item ${isActive ? 'active' : ''}`
-                          }
-                    data-testid={`nav-mobile-${item.testId}`}
-                        >
-                          <item.icon size={18} />
-                          {typeof item.label === 'string' ? t(item.label) : item.label}
-                        </NavLink>
-                      )}
-                    </li>
-                  )
+                {navSections.map((section) => (
+                  <li key={`mobile-${section.key}`} className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionCollapse(section.key)}
+                      className="w-full flex items-center justify-between px-3 pt-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      data-testid={`nav-mobile-section-toggle-${section.key}`}
+                    >
+                      <span>{section.label}</span>
+                      <ChevronDown size={14} className={`transition-transform ${isSectionCollapsed(section.key) ? '-rotate-90' : ''}`} />
+                    </button>
+
+                    {!isSectionCollapsed(section.key) && section.items.map((item) => (
+                      <li key={item.path}>
+                        {item.comingSoon || isAdminPathDisabled(item.path) ? (
+                          <div
+                            className="sidebar-item opacity-60 cursor-not-allowed"
+                            title="Coming soon"
+                            data-testid={`nav-mobile-${item.testId}`}
+                          >
+                            <item.icon size={18} />
+                            <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
+                          </div>
+                        ) : item.openInNewWindow ? (
+                          <a
+                            href={withCountryParam(item.path)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setSidebarOpen(false)}
+                            className="sidebar-item"
+                            data-testid={`nav-mobile-${item.testId}`}
+                          >
+                            <item.icon size={18} />
+                            {typeof item.label === 'string' ? t(item.label) : item.label}
+                          </a>
+                        ) : (
+                          <NavLink
+                            to={withCountryParam(item.path)}
+                            onClick={() => setSidebarOpen(false)}
+                            className={({ isActive }) =>
+                              `sidebar-item ${isActive ? 'active' : ''}`
+                            }
+                            data-testid={`nav-mobile-${item.testId}`}
+                          >
+                            <item.icon size={18} />
+                            {typeof item.label === 'string' ? t(item.label) : item.label}
+                          </NavLink>
+                        )}
+                      </li>
+                    ))}
+                  </li>
                 ))}
               </ul>
             </nav>
