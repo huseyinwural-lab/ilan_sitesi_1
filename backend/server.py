@@ -25549,6 +25549,8 @@ async def _sync_meili_filterable_attributes_from_db(session: AsyncSession) -> No
         "attribute_flat_map",
         "price",
         "premium_score",
+        "is_featured",
+        "is_urgent",
     ]
     dynamic_fields = await _load_all_filterable_attribute_fields(session)
     merged = list(dict.fromkeys(base_filterable + dynamic_fields))
