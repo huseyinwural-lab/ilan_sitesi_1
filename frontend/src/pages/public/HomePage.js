@@ -6,12 +6,7 @@ import './HomePage.css';
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const DEFAULT_SHOWCASE_LAYOUT = {
-  homepage: { enabled: true, rows: 9, columns: 7, listing_count: 63 },
-  category_showcase: {
-    enabled: true,
-    default: { rows: 2, columns: 4, listing_count: 8 },
-    categories: [],
-  },
+  homepage: { enabled: true, rows: 3, columns: 4, listing_count: 12 },
 };
 
 const clamp = (value, min, max, fallback) => {
@@ -23,8 +18,6 @@ const clamp = (value, min, max, fallback) => {
 const normalizeShowcaseLayout = (raw) => {
   const source = raw || {};
   const homepage = source.homepage || {};
-  const categoryShowcase = source.category_showcase || {};
-  const categoryDefault = categoryShowcase.default || {};
 
   return {
     homepage: {
@@ -32,25 +25,6 @@ const normalizeShowcaseLayout = (raw) => {
       rows: clamp(homepage.rows, 1, 12, 9),
       columns: clamp(homepage.columns, 1, 8, 7),
       listing_count: clamp(homepage.listing_count, 1, 120, 63),
-    },
-    category_showcase: {
-      enabled: categoryShowcase.enabled !== false,
-      default: {
-        rows: clamp(categoryDefault.rows, 1, 12, 2),
-        columns: clamp(categoryDefault.columns, 1, 8, 4),
-        listing_count: clamp(categoryDefault.listing_count, 1, 120, 8),
-      },
-      categories: Array.isArray(categoryShowcase.categories)
-        ? categoryShowcase.categories.map((item) => ({
-          enabled: item?.enabled !== false,
-          category_id: item?.category_id || '',
-          category_slug: item?.category_slug || '',
-          category_name: item?.category_name || '',
-          rows: clamp(item?.rows, 1, 12, 2),
-          columns: clamp(item?.columns, 1, 8, 4),
-          listing_count: clamp(item?.listing_count, 1, 120, 8),
-        }))
-        : [],
     },
   };
 };
@@ -85,7 +59,7 @@ export default function HomePage() {
   const [categories, setCategories] = useState([]);
   const [showcaseItems, setShowcaseItems] = useState([]);
   const [showcaseLayout, setShowcaseLayout] = useState(DEFAULT_SHOWCASE_LAYOUT);
-  const [categoryShowcases, setCategoryShowcases] = useState([]);
+  const [urgentTotal, setUrgentTotal] = useState(0);
 
   const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
@@ -114,58 +88,28 @@ export default function HomePage() {
 
         const homeLimit = Math.max(1, resolveEffectiveCount(nextLayout.homepage));
         let showcaseItemsPayload = [];
+        let urgentPayloadTotal = 0;
         try {
-          const showcaseRes = await fetch(`${API}/v2/search?country=${countryCode}&limit=${homeLimit}&page=1`);
+          const showcaseRes = await fetch(`${API}/v2/search?country=${countryCode}&limit=${homeLimit}&page=1&doping_type=showcase`);
           const showcasePayload = await showcaseRes.json().catch(() => ({}));
           showcaseItemsPayload = Array.isArray(showcasePayload?.items) ? showcasePayload.items : [];
         } catch (_err) {
           showcaseItemsPayload = [];
         }
 
-        const rootCategoryById = new Map(categoryList.filter((item) => !item.parent_id).map((item) => [item.id, item]));
-        const categoryConfigs = (nextLayout.category_showcase?.categories || [])
-          .filter((item) => item.enabled !== false && (item.category_id || item.category_slug));
-
-        const categoryResultPayloads = await Promise.all(
-          categoryConfigs.map(async (item, index) => {
-            const root = item.category_id ? rootCategoryById.get(item.category_id) : null;
-            const categorySlug = item.category_slug || root?.slug || '';
-            const categoryName = item.category_name || normalizeLabel(root) || categorySlug;
-            if (!categorySlug) return null;
-            const limit = Math.max(1, resolveEffectiveCount(item));
-            try {
-              const res = await fetch(`${API}/v2/search?country=${countryCode}&category=${encodeURIComponent(categorySlug)}&limit=${limit}&page=1`);
-              const payload = await res.json().catch(() => ({}));
-              return {
-                key: `${item.category_id || categorySlug}-${index}`,
-                category_slug: categorySlug,
-                category_name: categoryName,
-                rows: item.rows,
-                columns: item.columns,
-                listing_count: item.listing_count,
-                effective_count: limit,
-                items: Array.isArray(payload?.items) ? payload.items : [],
-              };
-            } catch (_err) {
-              return {
-                key: `${item.category_id || categorySlug}-${index}`,
-                category_slug: categorySlug,
-                category_name: categoryName,
-                rows: item.rows,
-                columns: item.columns,
-                listing_count: item.listing_count,
-                effective_count: limit,
-                items: [],
-              };
-            }
-          })
-        );
+        try {
+          const urgentRes = await fetch(`${API}/v2/search?country=${countryCode}&limit=1&page=1&doping_type=urgent`);
+          const urgentPayload = await urgentRes.json().catch(() => ({}));
+          urgentPayloadTotal = Number(urgentPayload?.pagination?.total || 0);
+        } catch (_err) {
+          urgentPayloadTotal = 0;
+        }
 
         if (!active) return;
         setCategories(categoryList);
         setShowcaseItems(showcaseItemsPayload);
         setShowcaseLayout(nextLayout);
-        setCategoryShowcases(categoryResultPayloads.filter(Boolean));
+        setUrgentTotal(urgentPayloadTotal);
       } finally {
         if (active) setLoading(false);
       }
@@ -194,7 +138,8 @@ export default function HomePage() {
       .map((root) => {
         const children = (byParent.get(root.id) || []).sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
         const firstChild = children[0] || null;
-        return { root, firstChild };
+        const countValue = firstChild ? Number(firstChild.listing_count || 0) : Number(root.listing_count || 0);
+        return { root, firstChild, countValue };
       })
       .filter(({ root, firstChild }) => {
         if (!query) return true;
@@ -211,10 +156,9 @@ export default function HomePage() {
     [homeShowcaseBlock.columns]
   );
 
-  const showcaseWithPlaceholders = useMemo(() => {
-    const base = Array.isArray(showcaseItems) ? showcaseItems.slice(0, homeShowcaseCount) : [];
-    while (base.length < homeShowcaseCount) base.push(null);
-    return base;
+  const showcaseVisibleItems = useMemo(() => {
+    if (!Array.isArray(showcaseItems)) return [];
+    return showcaseItems.slice(0, homeShowcaseCount);
   }, [showcaseItems, homeShowcaseCount]);
 
   return (
@@ -225,10 +169,10 @@ export default function HomePage() {
 
       <div className="home-v2-main-grid" data-testid="home-v2-main-grid">
         <aside className="home-v2-left-card" data-testid="home-v2-left-column">
-          <div className="home-v2-urgent-row" data-testid="home-v2-urgent-row">
+          <Link to="/search?doping=urgent" className="home-v2-urgent-row home-v2-urgent-link" data-testid="home-v2-urgent-row">
             <span className="home-v2-urgent-dot" aria-hidden="true" />
-            <span className="home-v2-urgent-text" data-testid="home-v2-urgent-text">ACİL</span>
-          </div>
+            <span className="home-v2-urgent-text" data-testid="home-v2-urgent-text">ACİL ({formatNumber(urgentTotal)})</span>
+          </Link>
 
           <div className="home-v2-category-search-wrap" data-testid="home-v2-category-search-wrap">
             <input
@@ -245,30 +189,21 @@ export default function HomePage() {
               <div className="home-v2-empty" data-testid="home-v2-category-loading">Kategoriler yükleniyor...</div>
             ) : filteredCategoryRows.length === 0 ? (
               <div className="home-v2-empty" data-testid="home-v2-category-empty">Kategori bulunamadı</div>
-            ) : filteredCategoryRows.map(({ root, firstChild }) => {
+            ) : filteredCategoryRows.map(({ root, firstChild, countValue }) => {
               const rootLabel = normalizeLabel(root);
-              const iconText = (rootLabel || '?').charAt(0).toUpperCase();
+              const firstChildLabel = normalizeLabel(firstChild);
+              const categoryTarget = firstChild?.slug || firstChild?.id || root?.slug || root?.id;
+              const pathText = firstChild ? `${rootLabel} > ${firstChildLabel}` : rootLabel;
               return (
                 <div key={root.id} className="home-v2-category-row" data-testid={`home-v2-category-row-${root.id}`}>
                   <Link
-                    to={`/search?category=${encodeURIComponent(root.slug || root.id)}`}
-                    className="home-v2-main-category"
-                    data-testid={`home-v2-main-category-link-${root.id}`}
+                    to={`/search?category=${encodeURIComponent(categoryTarget)}`}
+                    className="home-v2-category-path"
+                    data-testid={`home-v2-category-path-link-${root.id}`}
                   >
-                    <span className="home-v2-main-category-icon" data-testid={`home-v2-main-category-icon-${root.id}`}>{iconText}</span>
-                    <span className="home-v2-main-category-title" data-testid={`home-v2-main-category-title-${root.id}`}>{rootLabel}</span>
+                    <span className="home-v2-category-path-title" data-testid={`home-v2-category-path-title-${root.id}`}>{pathText}</span>
+                    <span className="home-v2-category-path-count" data-testid={`home-v2-category-path-count-${root.id}`}>({formatNumber(countValue)})</span>
                   </Link>
-
-                  {firstChild ? (
-                    <Link
-                      to={`/search?category=${encodeURIComponent(firstChild.slug || firstChild.id)}`}
-                      className="home-v2-first-child"
-                      data-testid={`home-v2-first-child-link-${firstChild.id}`}
-                    >
-                      <span className="home-v2-first-child-title" data-testid={`home-v2-first-child-title-${firstChild.id}`}>{normalizeLabel(firstChild)}</span>
-                      <span className="home-v2-first-child-count" data-testid={`home-v2-first-child-count-${firstChild.id}`}>({formatNumber(firstChild.listing_count || 0)})</span>
-                    </Link>
-                  ) : null}
                 </div>
               );
             })}
@@ -277,7 +212,7 @@ export default function HomePage() {
 
         <section className="home-v2-right-content" data-testid="home-v2-right-content">
           <div className="home-v2-toolbar" data-testid="home-v2-toolbar">
-            <Link to="/search" className="home-v2-showcase-link" data-testid="home-v2-showcase-all-link">Tüm vitrin ilanlarını göster</Link>
+            <Link to="/search?doping=showcase" className="home-v2-showcase-link" data-testid="home-v2-showcase-all-link">Tüm vitrin ilanlarını göster</Link>
           </div>
 
           {homeShowcaseBlock.enabled !== false ? (
@@ -285,8 +220,12 @@ export default function HomePage() {
               className={`home-v2-showcase-grid ${homeGridColumnClass}`}
               data-testid="home-v2-showcase-grid"
             >
-              {showcaseWithPlaceholders.map((item, index) => (
-                item ? (
+              {loading ? (
+                <div className="home-v2-empty" data-testid="home-v2-showcase-loading">Vitrin ilanları yükleniyor...</div>
+              ) : showcaseVisibleItems.length === 0 ? (
+                <div className="home-v2-empty" data-testid="home-v2-showcase-empty">Vitrinde aktif ilan bulunmuyor.</div>
+              ) : (
+                showcaseVisibleItems.map((item) => (
                   <Link
                     key={item.id}
                     to={`/ilan/${item.id}`}
@@ -305,13 +244,8 @@ export default function HomePage() {
                       <span className="home-v2-tile-price" data-testid={`home-v2-showcase-price-${item.id}`}>{formatPrice(item.price_amount || item.price, item.currency || 'EUR')}</span>
                     </div>
                   </Link>
-                ) : (
-                  <div key={`ph-${index}`} className="home-v2-tile home-v2-tile-placeholder" data-testid={`home-v2-showcase-placeholder-${index}`}>
-                    <div className="home-v2-tile-image" />
-                    <div className="home-v2-tile-text"><span>&nbsp;</span><span>&nbsp;</span></div>
-                  </div>
-                )
-              ))}
+                ))
+              )}
             </div>
           ) : (
             <div className="home-v2-empty" data-testid="home-v2-showcase-disabled">Ana sayfa vitrin alanı şu an pasif.</div>
@@ -320,58 +254,6 @@ export default function HomePage() {
           <div className="home-v2-mid-ad" data-testid="home-v2-mid-ad-wrap">
             <AdSlot placement="AD_LOGIN_1" className="home-v2-ad-slot home-v2-ad-slot-mid" />
           </div>
-
-          {showcaseLayout.category_showcase?.enabled !== false && categoryShowcases.length > 0 ? (
-            <div className="home-v2-category-showcase-list" data-testid="home-v2-category-showcase-list">
-              {categoryShowcases.map((entry, index) => {
-                const count = Math.max(1, resolveEffectiveCount(entry));
-                const filled = Array.isArray(entry.items) ? entry.items.slice(0, count) : [];
-                while (filled.length < count) filled.push(null);
-                return (
-                  <section className="home-v2-category-showcase-section" key={entry.key} data-testid={`home-v2-category-showcase-section-${index}`}>
-                    <div className="home-v2-category-showcase-head" data-testid={`home-v2-category-showcase-head-${index}`}>
-                      <h3 className="home-v2-category-showcase-title" data-testid={`home-v2-category-showcase-title-${index}`}>{entry.category_name || 'Kategori Vitrini'}</h3>
-                      <Link to={`/search?category=${encodeURIComponent(entry.category_slug || '')}`} className="home-v2-showcase-link" data-testid={`home-v2-category-showcase-link-${index}`}>
-                        Kategoriyi Gör
-                      </Link>
-                    </div>
-                    <div
-                      className={`home-v2-category-showcase-grid home-v2-category-showcase-grid-cols-${normalizeGridColumns(entry.columns, 4)}`}
-                      data-testid={`home-v2-category-showcase-grid-${index}`}
-                    >
-                      {filled.map((item, tileIndex) => (
-                        item ? (
-                          <Link
-                            key={`${entry.key}-${item.id}`}
-                            to={`/ilan/${item.id}`}
-                            className={`home-v2-tile ${item.is_featured ? 'home-v2-tile-featured' : ''} ${!item.is_featured && item.is_urgent ? 'home-v2-tile-urgent' : ''}`}
-                            data-testid={`home-v2-category-showcase-tile-${index}-${item.id}`}
-                          >
-                            <div className="home-v2-tile-image">
-                              {item.image ? <img src={item.image} alt={item.title || 'İlan'} /> : null}
-                            </div>
-                            <div className="home-v2-tile-text">
-                              <span className="home-v2-tile-badges">
-                                {item.is_featured ? <span className="home-v2-doping-badge home-v2-doping-badge-featured">Vitrin</span> : null}
-                                {item.is_urgent ? <span className="home-v2-doping-badge home-v2-doping-badge-urgent">Acil</span> : null}
-                              </span>
-                              <span className="home-v2-tile-title">{item.title || '-'}</span>
-                              <span className="home-v2-tile-price">{formatPrice(item.price_amount || item.price, item.currency || 'EUR')}</span>
-                            </div>
-                          </Link>
-                        ) : (
-                          <div key={`${entry.key}-ph-${tileIndex}`} className="home-v2-tile home-v2-tile-placeholder" data-testid={`home-v2-category-showcase-placeholder-${index}-${tileIndex}`}>
-                            <div className="home-v2-tile-image" />
-                            <div className="home-v2-tile-text"><span>&nbsp;</span><span>&nbsp;</span></div>
-                          </div>
-                        )
-                      ))}
-                    </div>
-                  </section>
-                );
-              })}
-            </div>
-          ) : null}
         </section>
       </div>
     </div>
