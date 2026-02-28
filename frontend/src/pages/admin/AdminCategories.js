@@ -634,7 +634,7 @@ const AdminCategories = () => {
         ? (serverVehicleLinked ? "Master data bağlantısı hazır." : "Master data bağlantısı doğrulanmadı.")
         : "",
     }));
-    setOrderPreview({ checking: false, available: true, message: "", conflict: null });
+    setOrderPreview({ checking: false, available: true, message: "", conflict: null, suggested_next_sort_order: null });
     setCategoryImageError("");
     setCategoryImageCacheBuster(Date.now());
     persistSnapshot({
@@ -1640,6 +1640,8 @@ const AdminCategories = () => {
     setLastSavedAt("");
     setAutosaveStatus("idle");
     lastSavedSnapshotRef.current = "";
+    setIsModalFullscreen(false);
+    setModalSize({ width: 1280, height: 820 });
     setModalOpen(true);
   };
 
@@ -1647,6 +1649,8 @@ const AdminCategories = () => {
     resetForm();
     setWizardStep("hierarchy");
     setHierarchyComplete(false);
+    setIsModalFullscreen(false);
+    setModalSize({ width: 1280, height: 820 });
     setModalOpen(true);
   };
 
