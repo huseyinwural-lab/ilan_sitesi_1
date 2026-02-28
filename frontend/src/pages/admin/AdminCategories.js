@@ -327,6 +327,10 @@ const AdminCategories = () => {
   const [subcategories, setSubcategories] = useState([createSubcategoryGroupDraft()]);
   const [levelSelections, setLevelSelections] = useState([]);
   const [levelCompletion, setLevelCompletion] = useState({});
+  const [draggingGroupIndex, setDraggingGroupIndex] = useState(null);
+  const [draggingChild, setDraggingChild] = useState(null);
+  const [isModalFullscreen, setIsModalFullscreen] = useState(false);
+  const [modalSize, setModalSize] = useState({ width: 1280, height: 820 });
   const [dynamicDraft, setDynamicDraft] = useState({
     label: "",
     key: "",
