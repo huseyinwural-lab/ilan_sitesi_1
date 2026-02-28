@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-28 18:15:00 UTC (P105 Home Modül Grupları + Urgent Seed + Search Doping Chip Fix)
+**Son güncelleme:** 2026-02-28 23:10:00 UTC (P105c Root-Only Admin Liste + /ilan-ver N-Kolon Finalizasyonu)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -67,6 +67,15 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P105c Admin Kategori Liste Sadeleştirme (2026-02-28):** `AdminCategories` liste tablosu root-only moda alındı (`parent_id` dolu alt kategoriler tablo satırı olarak gösterilmiyor). Böylece admin ekran şişmesi engellendi; alt kategori düzeni sadece kategori düzenleme/oluşturma akışı içinde yönetiliyor.
+- **P105c Home Kategori Kolonu İnce Ayar (2026-02-28):** Sol blokta modül > ana kategori > 1. seviye alt kategori (adet) standardı korunurken ana kategori satırındaki adet etiketi kaldırıldı; adet gösterimi alt kategori satırlarına odaklandı.
+- **P105c /ilan-ver Kategori Kolonları Final (2026-02-28):**
+  - Desktop: N-seviye multi-column seçim davranışı korunup deterministik sağ kolon kapanışı doğrulandı.
+  - Leaf kuralı: Yalnız leaf seçilince tamam durumu + `Devam` aktif.
+  - Lazy load + session cache: child fetch yalnız seçimde; aynı parent tekrarında cache kullanımı.
+  - Kolon bazlı hata/retry UI: child fetch fail olduğunda kurumsal hata metni + tekrar dene butonu.
+  - Mobil karar uygulandı: stepper (tek kolon), `Geri/İleri`, üstte sabit breadcrumb + seviye etiketi.
+- **P105c Test Doğrulama (2026-02-28):** `/app/test_reports/iteration_65.json` frontend doğrulaması **100% PASS** (admin root-only liste, home module-root-L1 görünümü, /ilan-ver desktop+mobile davranışları).
 - **P105b Home Sol Blok Standardizasyonu (2026-02-28):** Ana sayfa sol blok `Modül -> Ana Kategori -> 1. Alt Kategori (adet)` hiyerarşisine çekildi. Veri modeli `moduleGroups[]` mantığında normalize edildi (`module_key`, `module_label`, `roots[]`, `children_level1[]`). Limit kuralları eklendi: modül başına ilk 8 root + `Tümünü Göster`, root başına ilk 8 child + `Daha fazla göster`.
 - **P105b Vitrin/Acil Veri Akışı + Periyodik Yenileme (2026-02-28):** Home vitrin ilanları `doping_type=showcase` ile, ACİL sayaç `doping_type=urgent` ile okunuyor; fetch döngüsü 5 dakikada bir otomatik yenileme şeklinde çalışıyor.
 - **P105b Urgent Seed Doğrulama (2026-02-28):** Admin üzerinden yayındaki ilanlara seed uygulanarak en az 10 acil ilan üretildi (API doğrulaması: `/api/v2/search?doping_type=urgent` toplam 10).
