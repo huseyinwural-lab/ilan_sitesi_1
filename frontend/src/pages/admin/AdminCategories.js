@@ -2634,7 +2634,7 @@ const AdminCategories = () => {
   const renderLevelColumns = () => (
     <div className="space-y-3" data-testid="categories-level-group-builder">
       <div className="text-sm font-semibold text-slate-900" data-testid="categories-level-group-builder-title">
-        Alt Kategori Grubu
+        Alt Kategoriler
       </div>
       <div className="space-y-3" data-testid="categories-level-items-0">
         {subcategories.length === 0 ? (
@@ -2643,163 +2643,138 @@ const AdminCategories = () => {
           </div>
         ) : subcategories.map((group, groupIndex) => {
           const groupPath = [groupIndex];
-          const groupErrorKey = `level-${groupIndex}`;
-          const groupNameError = hierarchyFieldErrors[`${groupErrorKey}-name`];
-          const groupSlugError = hierarchyFieldErrors[`${groupErrorKey}-slug`];
-          const groupSortError = hierarchyFieldErrors[`${groupErrorKey}-sort`];
-          const groupChildrenError = hierarchyFieldErrors[`${groupErrorKey}-children`];
-          const groupInputsDisabled = group.is_complete || isHierarchyLocked;
+          const groupChildrenError = hierarchyFieldErrors[`level-${groupIndex}-children`];
           const children = Array.isArray(group.children) && group.children.length > 0 ? group.children : [createSubcategoryDraft()];
+          const isGroupLocked = isHierarchyLocked || Boolean(group.is_complete);
 
           return (
-            <div key={`group-${groupIndex}`} className="rounded-md border border-slate-200 bg-white p-3 space-y-3" data-testid={`categories-level-item-0-${groupIndex}`}>
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-xs font-semibold text-slate-700" data-testid={`categories-level-item-label-0-${groupIndex}`}>
-                  {`${groupIndex + 1} ${group.name || 'Alt Kategori Grubu'}`}
-                </div>
-                <div className="flex items-center gap-2">
-                  {group.is_complete ? (
-                    <span className="text-[11px] font-semibold text-emerald-600" data-testid={`categories-level-item-status-0-${groupIndex}`}>Tamamlandı</span>
-                  ) : (
-                    <span className="text-[11px] font-semibold text-amber-600" data-testid={`categories-level-item-status-0-${groupIndex}`}>Taslak</span>
-                  )}
-                </div>
+            <div key={`group-${groupIndex}`} className="rounded-md border border-slate-200 bg-white p-3 space-y-2" data-testid={`categories-level-item-0-${groupIndex}`}>
+              <div className="text-xs font-semibold text-slate-700" data-testid={`categories-level-item-label-0-${groupIndex}`}>
+                {`${groupIndex + 1}. Grup`}
               </div>
 
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                <div>
-                  <input
-                    className={inputClassName}
-                    placeholder={`${groupIndex + 1}. Grup Adı`}
-                    value={group.name}
-                    disabled={groupInputsDisabled}
-                    onChange={(e) => setSubcategories((prev) => updateNodeByPath(prev, groupPath, (node) => ({ ...node, name: e.target.value })))}
-                    data-testid={`categories-level-item-name-0-${groupIndex}`}
-                  />
-                  {groupNameError ? <div className="text-[11px] text-rose-600">{groupNameError}</div> : null}
-                </div>
-                <div>
-                  <input
-                    className={inputClassName}
-                    placeholder={`${groupIndex + 1}. Grup Slug`}
-                    value={group.slug}
-                    disabled={groupInputsDisabled}
-                    onChange={(e) => setSubcategories((prev) => updateNodeByPath(prev, groupPath, (node) => ({ ...node, slug: e.target.value })))}
-                    data-testid={`categories-level-item-slug-0-${groupIndex}`}
-                  />
-                  {groupSlugError ? <div className="text-[11px] text-rose-600">{groupSlugError}</div> : null}
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    min={1}
-                    className={inputClassName}
-                    placeholder="Sıra"
-                    value={group.sort_order || ""}
-                    disabled={groupInputsDisabled}
-                    onChange={(e) => setSubcategories((prev) => updateNodeByPath(prev, groupPath, (node) => ({ ...node, sort_order: e.target.value })))}
-                    data-testid={`categories-level-item-sort-0-${groupIndex}`}
-                  />
-                  {groupSortError ? <div className="text-[11px] text-rose-600">{groupSortError}</div> : null}
-                </div>
-              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2" data-testid={`categories-level-items-1-group-${groupIndex}`}>
+                {children.map((child, childIndex) => {
+                  const childPath = [groupIndex, childIndex];
+                  const childErrorKey = `level-${groupIndex}-${childIndex}`;
+                  const childNameError = hierarchyFieldErrors[`${childErrorKey}-name`];
+                  const childSlugError = hierarchyFieldErrors[`${childErrorKey}-slug`];
+                  const childSortError = hierarchyFieldErrors[`${childErrorKey}-sort`];
+                  const childInputsDisabled = isGroupLocked || child.is_complete;
 
-              <div className="space-y-2" data-testid={`categories-level-group-children-wrap-${groupIndex}`}>
-                <div className="text-[11px] font-semibold text-slate-600">{`${groupIndex + 1}.x Alt Kategoriler`}</div>
-                <div className="flex gap-3 overflow-x-auto pb-2" data-testid={`categories-level-items-1-group-${groupIndex}`}>
-                  {children.map((child, childIndex) => {
-                    const childPath = [groupIndex, childIndex];
-                    const childErrorKey = `level-${groupIndex}-${childIndex}`;
-                    const childNameError = hierarchyFieldErrors[`${childErrorKey}-name`];
-                    const childSlugError = hierarchyFieldErrors[`${childErrorKey}-slug`];
-                    const childSortError = hierarchyFieldErrors[`${childErrorKey}-sort`];
-                    const childInputsDisabled = child.is_complete || isHierarchyLocked || group.is_complete;
-
-                    return (
-                      <div key={`group-${groupIndex}-child-${childIndex}`} className="min-w-[280px] rounded-md border border-slate-200 bg-slate-50 p-3 space-y-2" data-testid={`categories-level-item-1-${childIndex}`}>
+                  return (
+                    <div key={`group-${groupIndex}-child-${childIndex}`} className="min-w-[300px] rounded-md border border-slate-200 bg-slate-50 p-3 space-y-2" data-testid={`categories-level-item-1-${childIndex}`}>
+                      <div className="flex items-center justify-between gap-2">
                         <div className="text-xs font-semibold text-slate-700" data-testid={`categories-level-item-label-1-${childIndex}`}>
-                          {`${groupIndex + 1}.${childIndex + 1}`}
+                          {`${groupIndex + 1}.${childIndex + 1} Kategori`}
                         </div>
-                        <input
-                          className={inputClassName}
-                          placeholder={`${groupIndex + 1}.${childIndex + 1} Ad`}
-                          value={child.name}
-                          disabled={childInputsDisabled}
-                          onChange={(e) => setSubcategories((prev) => updateNodeByPath(prev, childPath, (node) => ({ ...node, name: e.target.value })))}
-                          data-testid={`categories-level-item-name-1-${childIndex}`}
-                        />
-                        {childNameError ? <div className="text-[11px] text-rose-600">{childNameError}</div> : null}
-                        <input
-                          className={inputClassName}
-                          placeholder={`${groupIndex + 1}.${childIndex + 1} Slug`}
-                          value={child.slug}
-                          disabled={childInputsDisabled}
-                          onChange={(e) => setSubcategories((prev) => updateNodeByPath(prev, childPath, (node) => ({ ...node, slug: e.target.value })))}
-                          data-testid={`categories-level-item-slug-1-${childIndex}`}
-                        />
-                        {childSlugError ? <div className="text-[11px] text-rose-600">{childSlugError}</div> : null}
-                        <input
-                          type="number"
-                          min={1}
-                          className={inputClassName}
-                          placeholder="Sıra"
-                          value={child.sort_order || ""}
-                          disabled={childInputsDisabled}
-                          onChange={(e) => setSubcategories((prev) => updateNodeByPath(prev, childPath, (node) => ({ ...node, sort_order: e.target.value })))}
-                          data-testid={`categories-level-item-sort-1-${childIndex}`}
-                        />
-                        {childSortError ? <div className="text-[11px] text-rose-600">{childSortError}</div> : null}
-                        <div className="flex flex-wrap gap-2">
-                          {!child.is_complete ? (
-                            <button
-                              type="button"
-                              className="text-xs text-white bg-[var(--brand-navy-deep)] rounded px-3 py-1 disabled:opacity-60"
-                              onClick={() => completeSubcategory(childPath)}
-                              disabled={isHierarchyLocked || group.is_complete}
-                              data-testid={`categories-level-item-complete-1-${childIndex}`}
-                            >
-                              Tamam
-                            </button>
+                        <div className="flex items-center gap-2">
+                          {child.is_complete ? (
+                            <span className="text-[11px] font-semibold text-emerald-600">Tamamlandı</span>
                           ) : (
-                            <button
-                              type="button"
-                              className="text-xs border rounded px-2 py-1"
-                              onClick={() => setSubcategories((prev) => updateNodeByPath(prev, childPath, (node) => ({ ...node, is_complete: false })))}
-                              data-testid={`categories-level-item-edit-1-${childIndex}`}
-                            >
-                              Düzenle
-                            </button>
+                            <span className="text-[11px] font-semibold text-amber-600">Taslak</span>
                           )}
-                          {!child.is_complete ? (
-                            <button
-                              type="button"
-                              className="text-xs text-rose-600 border rounded px-2 py-1 disabled:opacity-60"
-                              onClick={() => setSubcategories((prev) => removeNodeByPath(prev, childPath))}
-                              disabled={isHierarchyLocked || group.is_complete}
-                              data-testid={`categories-level-item-remove-1-${childIndex}`}
-                            >
-                              Sil
-                            </button>
-                          ) : null}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-                <button
-                  type="button"
-                  className="text-xs border rounded px-3 py-1 disabled:opacity-60"
-                  onClick={() => setSubcategories((prev) => updateNodeByPath(prev, groupPath, (node) => ({
-                    ...node,
-                    children: [...(node.children || []), createSubcategoryDraft()],
-                  })))}
-                  disabled={isHierarchyLocked || group.is_complete}
-                  data-testid={`categories-level-add-1-${groupIndex}`}
-                >
-                  {`${groupIndex + 1}.x Alt Kategori Ekle`}
-                </button>
-                {groupChildrenError ? <div className="text-[11px] text-rose-600">{groupChildrenError}</div> : null}
+
+                      <input
+                        className={inputClassName}
+                        placeholder={`${groupIndex + 1}.${childIndex + 1} Ad`}
+                        value={child.name}
+                        disabled={childInputsDisabled}
+                        onChange={(e) => setSubcategories((prev) => updateNodeByPath(prev, childPath, (node) => ({ ...node, name: e.target.value })))}
+                        data-testid={`categories-level-item-name-1-${childIndex}`}
+                      />
+                      {childNameError ? <div className="text-[11px] text-rose-600">{childNameError}</div> : null}
+
+                      <input
+                        className={inputClassName}
+                        placeholder={`${groupIndex + 1}.${childIndex + 1} Slug`}
+                        value={child.slug}
+                        disabled={childInputsDisabled}
+                        onChange={(e) => setSubcategories((prev) => updateNodeByPath(prev, childPath, (node) => ({ ...node, slug: e.target.value })))}
+                        data-testid={`categories-level-item-slug-1-${childIndex}`}
+                      />
+                      {childSlugError ? <div className="text-[11px] text-rose-600">{childSlugError}</div> : null}
+
+                      <input
+                        type="number"
+                        min={1}
+                        className={inputClassName}
+                        placeholder="Sıra"
+                        value={child.sort_order || ""}
+                        disabled={childInputsDisabled}
+                        onChange={(e) => setSubcategories((prev) => updateNodeByPath(prev, childPath, (node) => ({ ...node, sort_order: e.target.value })))}
+                        data-testid={`categories-level-item-sort-1-${childIndex}`}
+                      />
+                      {childSortError ? <div className="text-[11px] text-rose-600">{childSortError}</div> : null}
+
+                      <label className="flex items-center gap-2 text-xs text-slate-700" data-testid={`categories-level-item-active-1-${childIndex}`}>
+                        <input
+                          type="checkbox"
+                          checked={child.active_flag}
+                          disabled={childInputsDisabled}
+                          onChange={(e) => setSubcategories((prev) => updateNodeByPath(prev, childPath, (node) => ({ ...node, active_flag: e.target.checked })))}
+                          data-testid={`categories-level-item-active-input-1-${childIndex}`}
+                        />
+                        Aktif
+                      </label>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        {!child.is_complete ? (
+                          <button
+                            type="button"
+                            className="text-xs text-white bg-[var(--brand-navy-deep)] rounded px-3 py-1 disabled:opacity-60"
+                            onClick={() => completeSubcategory(childPath)}
+                            disabled={isGroupLocked}
+                            data-testid={`categories-level-item-complete-1-${childIndex}`}
+                          >
+                            Tamam
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-xs border rounded px-2 py-1"
+                            onClick={() => setSubcategories((prev) => updateNodeByPath(prev, childPath, (node) => ({ ...node, is_complete: false })))}
+                            data-testid={`categories-level-item-edit-1-${childIndex}`}
+                          >
+                            Düzenle
+                          </button>
+                        )}
+                        {!child.is_complete ? (
+                          <button
+                            type="button"
+                            className="text-xs text-rose-600 border rounded px-2 py-1 disabled:opacity-60"
+                            onClick={() => setSubcategories((prev) => updateNodeByPath(prev, groupPath, (node) => ({
+                              ...node,
+                              children: (node.children || []).filter((_, idx) => idx !== childIndex),
+                            })))}
+                            disabled={isGroupLocked}
+                            data-testid={`categories-level-item-remove-1-${childIndex}`}
+                          >
+                            Sil
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+
+              <button
+                type="button"
+                className="w-full text-sm border rounded px-3 py-2 disabled:opacity-60"
+                onClick={() => setSubcategories((prev) => updateNodeByPath(prev, groupPath, (node) => ({
+                  ...node,
+                  children: [...(node.children || []), createSubcategoryDraft()],
+                })))}
+                disabled={isGroupLocked}
+                data-testid={`categories-level-add-1-${groupIndex}`}
+              >
+                Alt Kategori Ekle
+              </button>
+
+              {groupChildrenError ? <div className="text-[11px] text-rose-600">{groupChildrenError}</div> : null}
 
               <div className="flex flex-wrap items-center gap-2">
                 {!group.is_complete ? (
@@ -2826,7 +2801,7 @@ const AdminCategories = () => {
                   <button
                     type="button"
                     className="text-xs text-rose-600 border rounded px-2 py-1 disabled:opacity-60"
-                    onClick={() => setSubcategories((prev) => removeNodeByPath(prev, groupPath))}
+                    onClick={() => setSubcategories((prev) => prev.filter((_, idx) => idx !== groupIndex))}
                     disabled={isHierarchyLocked}
                     data-testid={`categories-level-item-remove-0-${groupIndex}`}
                   >
@@ -2838,6 +2813,7 @@ const AdminCategories = () => {
           );
         })}
       </div>
+
       <button
         type="button"
         className="w-full text-sm border rounded px-3 py-2 disabled:opacity-60"
@@ -2845,26 +2821,23 @@ const AdminCategories = () => {
         disabled={isHierarchyLocked}
         data-testid="categories-level-add-0"
       >
-        Yeni Alt Kategori Grubu Ekle
+        Yeni Grup Ekle
       </button>
     </div>
   );
 
   const hierarchyPreviewNodes = subcategories
-    .filter((group) => group?.name?.trim() || (group.children || []).length > 0)
-    .map((group, groupIndex) => {
-      const children = (group.children || [])
+    .map((group, groupIndex) => ({
+      key: `group-${groupIndex}`,
+      label: `${groupIndex + 1}`,
+      children: (group.children || [])
         .filter((child) => child?.name?.trim())
         .map((child, childIndex) => ({
           key: `${groupIndex}-${childIndex}`,
           label: `${groupIndex + 1}.${childIndex + 1} ${child.name.trim()}`,
-        }));
-      return {
-        key: `group-${groupIndex}`,
-        label: `${groupIndex + 1} ${group.name?.trim() || 'Taslak Grup'}`,
-        children,
-      };
-    });
+        })),
+    }))
+    .filter((group) => group.children.length > 0);
 
 
 
