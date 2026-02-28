@@ -563,12 +563,16 @@ export default function Layout({ children }) {
   useEffect(() => {
     const activePath = location.pathname;
     setCollapsedSections((prev) => {
+      let changed = false;
       const next = { ...prev };
       navSections.forEach((section) => {
         const hasActive = section.items.some((item) => item.path === activePath);
-        if (hasActive) next[section.key] = false;
+        if (hasActive && prev[section.key]) {
+          next[section.key] = false;
+          changed = true;
+        }
       });
-      return next;
+      return changed ? next : prev;
     });
   }, [location.pathname, navSections]);
 
