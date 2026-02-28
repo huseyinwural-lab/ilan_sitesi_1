@@ -1696,6 +1696,7 @@ async def lifespan(app: FastAPI):
 
     app.state.db = None
     app.state.category_bulk_worker_task = asyncio.create_task(_category_bulk_job_worker_loop())
+    app.state.batch_publish_scheduler_task = asyncio.create_task(_batch_publish_scheduler_loop())
 
     yield
 
@@ -1704,6 +1705,13 @@ async def lifespan(app: FastAPI):
         worker_task.cancel()
         try:
             await worker_task
+        except asyncio.CancelledError:
+            pass
+    batch_publish_task = getattr(app.state, "batch_publish_scheduler_task", None)
+    if batch_publish_task:
+        batch_publish_task.cancel()
+        try:
+            await batch_publish_task
         except asyncio.CancelledError:
             pass
     await sql_engine.dispose()
