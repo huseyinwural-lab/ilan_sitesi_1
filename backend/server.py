@@ -25563,6 +25563,7 @@ def _build_meili_filter_expression(
     category_uuid: Optional[uuid.UUID],
     make_id_num: Optional[int],
     model_id_num: Optional[int],
+    doping_type: Optional[str],
     price_min: Optional[int],
     price_max: Optional[int],
     attr_filters: dict[str, Any],
@@ -25575,6 +25576,13 @@ def _build_meili_filter_expression(
         filters.append(f"make_id = {make_id_num}")
     if model_id_num is not None:
         filters.append(f"model_id = {model_id_num}")
+
+    normalized_doping = (doping_type or "").strip().lower()
+    if normalized_doping in {"showcase", "vitrin", "featured"}:
+        filters.append("is_featured = true")
+    elif normalized_doping in {"urgent", "acil"}:
+        filters.append("is_urgent = true")
+
     if price_min is not None:
         filters.append(f"price >= {float(price_min)}")
     if price_max is not None:
@@ -25701,6 +25709,7 @@ async def public_search_v2(
     category: Optional[str] = None,
     make: Optional[str] = None,
     model: Optional[str] = None,
+    doping_type: Optional[str] = None,
     sort: str = "date_desc",
     page: int = 1,
     limit: int = 20,
@@ -25739,6 +25748,8 @@ async def public_search_v2(
         "attribute_flat_map",
         "price",
         "premium_score",
+        "is_featured",
+        "is_urgent",
     ]
     all_filterable = list(dict.fromkeys(base_filterable + attribute_facet_fields))
     global _meili_settings_last_sync_ts
@@ -25758,6 +25769,7 @@ async def public_search_v2(
         category_uuid=category_uuid,
         make_id_num=make_id_num,
         model_id_num=model_id_num,
+        doping_type=doping_type,
         price_min=price_min,
         price_max=price_max,
         attr_filters={},
@@ -25767,6 +25779,7 @@ async def public_search_v2(
         category_uuid=category_uuid,
         make_id_num=make_id_num,
         model_id_num=model_id_num,
+        doping_type=doping_type,
         price_min=price_min,
         price_max=price_max,
         attr_filters=attr_filters,
