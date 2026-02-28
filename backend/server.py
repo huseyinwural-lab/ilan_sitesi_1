@@ -21241,7 +21241,7 @@ async def _category_bulk_job_worker_loop() -> None:
             await asyncio.sleep(CATEGORY_BULK_JOB_WORKER_INTERVAL_SECONDS)
 
 
-def _build_pricing_user_context_from_user(user: User) -> dict:
+def _build_pricing_user_context_from_user(user: SqlUser) -> dict:
     return {
         "id": str(user.id),
         "email": user.email,
@@ -21278,7 +21278,7 @@ async def _run_batch_publish_scheduler_once(
                     skipped += 1
                     continue
 
-                owner = await session.get(User, listing.user_id)
+                owner = await session.get(SqlUser, listing.user_id)
                 if not owner:
                     skipped += 1
                     continue
