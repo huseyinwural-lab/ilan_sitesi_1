@@ -714,47 +714,51 @@ export default function Layout({ children }) {
                   </button>
                 )}
 
-                {(sidebarCollapsed || !isSectionCollapsed(section.key)) && section.items.map((item) => (
-                  <li key={item.path}>
-                    {item.comingSoon || isAdminPathDisabled(item.path) ? (
-                      <div
-                        className="sidebar-item opacity-60 cursor-not-allowed"
-                        title="Coming soon"
-                        data-testid={`nav-${item.testId}`}
-                      >
-                        <item.icon size={18} />
-                        {!sidebarCollapsed && (
-                          <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
+                {(sidebarCollapsed || !isSectionCollapsed(section.key)) ? (
+                  <ul className="space-y-1">
+                    {section.items.map((item) => (
+                      <li key={item.path}>
+                        {item.comingSoon || isAdminPathDisabled(item.path) ? (
+                          <div
+                            className="sidebar-item opacity-60 cursor-not-allowed"
+                            title="Coming soon"
+                            data-testid={`nav-${item.testId}`}
+                          >
+                            <item.icon size={18} />
+                            {!sidebarCollapsed && (
+                              <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
+                            )}
+                            {!sidebarCollapsed && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
+                            )}
+                          </div>
+                        ) : item.openInNewWindow ? (
+                          <a
+                            href={withCountryParam(item.path)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="sidebar-item"
+                            data-testid={`nav-${item.testId}`}
+                          >
+                            <item.icon size={18} />
+                            {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
+                          </a>
+                        ) : (
+                          <NavLink
+                            to={withCountryParam(item.path)}
+                            className={({ isActive }) =>
+                              `sidebar-item ${isActive ? 'active' : ''}`
+                            }
+                            data-testid={`nav-${item.testId}`}
+                          >
+                            <item.icon size={18} />
+                            {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
+                          </NavLink>
                         )}
-                        {!sidebarCollapsed && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
-                        )}
-                      </div>
-                    ) : item.openInNewWindow ? (
-                      <a
-                        href={withCountryParam(item.path)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="sidebar-item"
-                        data-testid={`nav-${item.testId}`}
-                      >
-                        <item.icon size={18} />
-                        {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
-                      </a>
-                    ) : (
-                      <NavLink
-                        to={withCountryParam(item.path)}
-                        className={({ isActive }) =>
-                          `sidebar-item ${isActive ? 'active' : ''}`
-                        }
-                        data-testid={`nav-${item.testId}`}
-                      >
-                        <item.icon size={18} />
-                        {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
-                      </NavLink>
-                    )}
-                  </li>
-                ))}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -811,45 +815,49 @@ export default function Layout({ children }) {
                       <ChevronDown size={14} className={`transition-transform ${isSectionCollapsed(section.key) ? '-rotate-90' : ''}`} />
                     </button>
 
-                    {!isSectionCollapsed(section.key) && section.items.map((item) => (
-                      <li key={item.path}>
-                        {item.comingSoon || isAdminPathDisabled(item.path) ? (
-                          <div
-                            className="sidebar-item opacity-60 cursor-not-allowed"
-                            title="Coming soon"
-                            data-testid={`nav-mobile-${item.testId}`}
-                          >
-                            <item.icon size={18} />
-                            <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
-                          </div>
-                        ) : item.openInNewWindow ? (
-                          <a
-                            href={withCountryParam(item.path)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={() => setSidebarOpen(false)}
-                            className="sidebar-item"
-                            data-testid={`nav-mobile-${item.testId}`}
-                          >
-                            <item.icon size={18} />
-                            {typeof item.label === 'string' ? t(item.label) : item.label}
-                          </a>
-                        ) : (
-                          <NavLink
-                            to={withCountryParam(item.path)}
-                            onClick={() => setSidebarOpen(false)}
-                            className={({ isActive }) =>
-                              `sidebar-item ${isActive ? 'active' : ''}`
-                            }
-                            data-testid={`nav-mobile-${item.testId}`}
-                          >
-                            <item.icon size={18} />
-                            {typeof item.label === 'string' ? t(item.label) : item.label}
-                          </NavLink>
-                        )}
-                      </li>
-                    ))}
+                    {!isSectionCollapsed(section.key) ? (
+                      <ul className="space-y-1">
+                        {section.items.map((item) => (
+                          <li key={item.path}>
+                            {item.comingSoon || isAdminPathDisabled(item.path) ? (
+                              <div
+                                className="sidebar-item opacity-60 cursor-not-allowed"
+                                title="Coming soon"
+                                data-testid={`nav-mobile-${item.testId}`}
+                              >
+                                <item.icon size={18} />
+                                <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
+                              </div>
+                            ) : item.openInNewWindow ? (
+                              <a
+                                href={withCountryParam(item.path)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => setSidebarOpen(false)}
+                                className="sidebar-item"
+                                data-testid={`nav-mobile-${item.testId}`}
+                              >
+                                <item.icon size={18} />
+                                {typeof item.label === 'string' ? t(item.label) : item.label}
+                              </a>
+                            ) : (
+                              <NavLink
+                                to={withCountryParam(item.path)}
+                                onClick={() => setSidebarOpen(false)}
+                                className={({ isActive }) =>
+                                  `sidebar-item ${isActive ? 'active' : ''}`
+                                }
+                                data-testid={`nav-mobile-${item.testId}`}
+                              >
+                                <item.icon size={18} />
+                                {typeof item.label === 'string' ? t(item.label) : item.label}
+                              </NavLink>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </li>
                 ))}
               </ul>
