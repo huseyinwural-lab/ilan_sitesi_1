@@ -311,13 +311,13 @@ const ListingCategorySelect = () => {
   }, [moduleLabelByKey, recentCategory]);
 
   const handleSelectModule = (moduleKey) => {
-    autoAdvanceRef.current = false;
-    setAutoAdvanceActive(false);
     setSelectedModule(moduleKey);
     setColumns([]);
     setSelectedPath([]);
     setSelectionComplete(false);
     setActiveCategory(null);
+    setColumnErrors({});
+    setMobileColumnIndex(0);
     setSearchTerm('');
     setSearchResults([]);
     updateUrlState(moduleKey, []);
