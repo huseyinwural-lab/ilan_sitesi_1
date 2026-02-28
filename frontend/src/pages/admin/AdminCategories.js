@@ -257,17 +257,6 @@ const TriStateCheckbox = ({ checked, indeterminate, onChange, disabled, testId }
     }
   }, [indeterminate]);
 
-  const modalPanelStyle = isModalFullscreen
-    ? { width: "100vw", height: "100vh", maxWidth: "100vw", maxHeight: "100vh" }
-    : {
-      width: `${modalSize.width}px`,
-      height: `${modalSize.height}px`,
-      maxWidth: "95vw",
-      maxHeight: "92vh",
-      resize: "both",
-      overflow: "auto",
-    };
-
   return (
     <input
       ref={ref}
