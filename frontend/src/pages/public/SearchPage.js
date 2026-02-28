@@ -210,6 +210,26 @@ export default function SearchPage() {
     return 'Tüm İlanlar';
   })();
 
+  const isUrgentSearch = searchState.doping === 'urgent';
+  const isShowcaseSearch = searchState.doping === 'showcase';
+
+  useEffect(() => {
+    const title = `${searchTitle} | annonceia`;
+    let description = 'Güncel ilanları filtreleyin, kategorilere göre keşfedin ve size uygun sonuçlara hızlıca ulaşın.';
+
+    if (isUrgentSearch) {
+      description = 'Acil ilanları tek listede görüntüleyin. Uygun ilan yoksa filtreleri genişletin veya yeni ilan bildirimi oluşturun.';
+    } else if (isShowcaseSearch) {
+      description = 'Vitrin ilanlarında öne çıkan seçenekleri keşfedin.';
+    }
+
+    document.title = title;
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) {
+      meta.setAttribute('content', description);
+    }
+  }, [searchTitle, isUrgentSearch, isShowcaseSearch]);
+
   const handleMakeChange = (makeKey) => {
     const nextMake = makeKey === 'all' ? null : makeKey;
     setSearchState({ make: nextMake, model: null, page: 1 });
@@ -266,6 +286,21 @@ export default function SearchPage() {
             <p className="text-muted-foreground text-sm mt-1">
               {data.pagination.total || 0} sonuç bulundu
             </p>
+            {searchState.doping ? (
+              <div className="mt-2 inline-flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium" data-testid="search-doping-chip">
+                <span data-testid="search-doping-chip-label">
+                  {isUrgentSearch ? 'Acil Filtresi' : 'Vitrin Filtresi'}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-full border px-2 py-0.5 text-[11px]"
+                  onClick={() => setSearchState({ doping: null, page: 1 })}
+                  data-testid="search-doping-chip-clear"
+                >
+                  Temizle
+                </button>
+              </div>
+            ) : null}
             {(searchState.filters?.price_min || searchState.filters?.price_max) && (
               <p className="text-xs text-muted-foreground mt-1" data-testid="search-price-filter-note">
                 Not: Saatlik ücretli ilanlar fiyat filtresinde gösterilmez.
@@ -377,14 +412,19 @@ export default function SearchPage() {
                    <div className="bg-muted rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                      <Search className="h-8 w-8 text-muted-foreground" />
                    </div>
-                   <h3 className="text-lg font-medium">Sonuç bulunamadı</h3>
-                   <p className="text-muted-foreground mt-2">
-                     Arama kriterlerinizi değiştirerek tekrar deneyin.
+                   <h3 className="text-lg font-medium" data-testid="search-empty-title">
+                     {isUrgentSearch ? 'Şu an aktif acil ilan bulunmuyor' : 'Sonuç bulunamadı'}
+                   </h3>
+                   <p className="text-muted-foreground mt-2" data-testid="search-empty-description">
+                     {isUrgentSearch
+                       ? 'Kurumsal öneri: Kategori filtrelerini genişletin veya kısa süre sonra tekrar kontrol edin. Yeni onaylı acil ilanlar düzenli aralıklarla yayınlanır.'
+                       : 'Arama kriterlerinizi değiştirerek tekrar deneyin.'}
                    </p>
                    <Button 
                      variant="outline" 
                      className="mt-4"
                      onClick={() => handleFilterChange({})}
+                     data-testid="search-empty-clear-filters"
                    >
                      Filtreleri Temizle
                    </Button>
