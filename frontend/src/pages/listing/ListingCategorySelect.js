@@ -25,8 +25,10 @@ const ListingCategorySelect = () => {
   const [recentCategory, setRecentCategory] = useState(null);
   const [recentLoading, setRecentLoading] = useState(true);
   const [recentError, setRecentError] = useState('');
-  const [autoAdvanceActive, setAutoAdvanceActive] = useState(false);
-  const autoAdvanceRef = useRef(false);
+  const [columnErrors, setColumnErrors] = useState({});
+  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth < 768);
+  const [mobileColumnIndex, setMobileColumnIndex] = useState(0);
+  const childrenCacheRef = useRef(new Map());
 
   const country = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
