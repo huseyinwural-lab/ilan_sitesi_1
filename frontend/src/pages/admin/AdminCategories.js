@@ -399,13 +399,15 @@ const AdminCategories = () => {
 
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const visibleItems = useMemo(() => {
+    const rootOnlyItems = items.filter((item) => !item.parent_id);
+
     if (listFilters.image_presence === "with_image") {
-      return items.filter((item) => Boolean((item.image_url || "").trim()));
+      return rootOnlyItems.filter((item) => Boolean((item.image_url || "").trim()));
     }
     if (listFilters.image_presence === "without_image") {
-      return items.filter((item) => !Boolean((item.image_url || "").trim()));
+      return rootOnlyItems.filter((item) => !Boolean((item.image_url || "").trim()));
     }
-    return items;
+    return rootOnlyItems;
   }, [items, listFilters.image_presence]);
   const visibleItemIds = useMemo(() => visibleItems.map((item) => item.id), [visibleItems]);
   const allVisibleSelected = useMemo(
@@ -419,7 +421,7 @@ const AdminCategories = () => {
 
   const descendantsByItem = useMemo(() => {
     const childrenByParent = new Map();
-    visibleItems.forEach((item) => {
+    items.forEach((item) => {
       const parentKey = item.parent_id || "__root__";
       if (!childrenByParent.has(parentKey)) {
         childrenByParent.set(parentKey, []);
