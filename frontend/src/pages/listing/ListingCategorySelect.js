@@ -700,6 +700,39 @@ const ListingCategorySelect = () => {
           )}
         </div>
 
+        {isMobileView && selectedModule ? (
+          <div className="sticky top-2 z-10 mt-3 rounded-lg border bg-slate-50 p-3" data-testid="ilan-ver-mobile-stepper">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs font-semibold text-slate-700" data-testid="ilan-ver-mobile-level-label">
+                Seviye: L{mobileColumnIndex + 1}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleMobileBack}
+                  disabled={!canMobileBack}
+                  className="rounded-md border px-2 py-1 text-xs disabled:opacity-50"
+                  data-testid="ilan-ver-mobile-back"
+                >
+                  Geri
+                </button>
+                <button
+                  type="button"
+                  onClick={handleMobileNext}
+                  disabled={!canMobileNext}
+                  className="rounded-md border px-2 py-1 text-xs disabled:opacity-50"
+                  data-testid="ilan-ver-mobile-next"
+                >
+                  İleri
+                </button>
+              </div>
+            </div>
+            <div className="mt-2 text-xs text-slate-600" data-testid="ilan-ver-mobile-path">
+              {breadcrumbLabel}
+            </div>
+          </div>
+        ) : null}
+
         {!selectedModule && !pageLoading ? (
           <div className="mt-4 text-sm text-slate-500" data-testid="ilan-ver-columns-empty">Önce modül seçiniz.</div>
         ) : (
@@ -725,7 +758,7 @@ const ListingCategorySelect = () => {
                 </button>
               </div>
             ) : (
-              columns.map((column, columnIndex) => (
+              renderedColumns.map(({ column, columnIndex }) => (
                 <div
                   key={`column-${column.parentId || 'root'}-${columnIndex}`}
                   className="min-w-[220px] rounded-lg border bg-slate-50 p-3"
@@ -759,6 +792,20 @@ const ListingCategorySelect = () => {
                         </button>
                       ))
                     )}
+
+                    {columnErrors[columnIndex] ? (
+                      <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700" data-testid={`ilan-ver-column-error-${columnIndex}`}>
+                        <div>{columnErrors[columnIndex]}</div>
+                        <button
+                          type="button"
+                          onClick={() => retryColumnLoad(columnIndex)}
+                          className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-[11px] font-semibold text-rose-700"
+                          data-testid={`ilan-ver-column-retry-${columnIndex}`}
+                        >
+                          Tekrar Dene
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ))
