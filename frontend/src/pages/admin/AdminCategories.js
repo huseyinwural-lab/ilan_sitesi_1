@@ -3543,11 +3543,22 @@ const AdminCategories = () => {
                           <div className="space-y-2" data-testid="categories-hierarchy-live-preview-tree">
                             {hierarchyPreviewNodes.map((group) => (
                               <div key={group.key} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1" data-testid={`categories-hierarchy-live-preview-group-${group.key}`}>
-                                <div className="text-xs font-semibold text-slate-900">{group.label}</div>
+                                <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
+                                  <span>{group.label}</span>
+                                  {group.children.some((child) => child.missing) ? (
+                                    <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-700" data-testid={`categories-hierarchy-live-preview-group-missing-${group.key}`}>
+                                      Eksik alan var
+                                    </span>
+                                  ) : (
+                                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700" data-testid={`categories-hierarchy-live-preview-group-ok-${group.key}`}>
+                                      Tamam
+                                    </span>
+                                  )}
+                                </div>
                                 {group.children.length > 0 ? (
                                   <ul className="mt-1 space-y-1 pl-4 text-xs text-slate-700" data-testid={`categories-hierarchy-live-preview-children-${group.key}`}>
                                     {group.children.map((child) => (
-                                      <li key={child.key}>{child.label}</li>
+                                      <li key={child.key} className={child.missing ? "text-rose-600" : ""}>{child.label}</li>
                                     ))}
                                   </ul>
                                 ) : (
