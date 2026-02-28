@@ -2126,15 +2126,6 @@ const AdminCategories = () => {
       return;
     }
 
-    if (path.length === 1 && (!Array.isArray(target.children) || target.children.length === 0)) {
-      setHierarchyError(`${label} için en az 1 alt kategori eklenmelidir.`);
-      return;
-    }
-    const incompleteChild = (target.children || []).find((child) => !child.is_complete);
-    if (incompleteChild) {
-      setHierarchyError(`${label} içindeki alt kategoriler tamamlanmadan devam edilemez.`);
-      return;
-    }
     setSubcategories((prev) => updateNodeByPath(prev, path, (node) => ({
       ...node,
       name: node.name.trim(),
