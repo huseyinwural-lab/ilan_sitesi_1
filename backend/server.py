@@ -21328,11 +21328,26 @@ async def _run_batch_publish_scheduler_once(
     }
 
 
+def _record_batch_publish_run(result: dict, *, source: str, triggered_by: Optional[str] = None) -> None:
+    BATCH_PUBLISH_RUN_EVENTS.appendleft(
+        {
+            "run_at": datetime.now(timezone.utc).isoformat(),
+            "source": source,
+            "triggered_by": triggered_by,
+            "processed": int(result.get("processed", 0) or 0),
+            "published": int(result.get("published", 0) or 0),
+            "skipped": int(result.get("skipped", 0) or 0),
+            "errors": int(result.get("errors", 0) or 0),
+        }
+    )
+
+
 async def _batch_publish_scheduler_loop() -> None:
     while True:
         try:
             async with AsyncSessionLocal() as session:
                 result = await _run_batch_publish_scheduler_once(session)
+                _record_batch_publish_run(result, source="scheduler")
                 logging.getLogger("batch_publish_scheduler").info(
                     "batch_publish_scheduler_run processed=%s published=%s skipped=%s errors=%s",
                     result.get("processed"),
@@ -21353,9 +21368,23 @@ async def admin_run_batch_publish_scheduler_once(
     session: AsyncSession = Depends(get_sql_session),
 ):
     result = await _run_batch_publish_scheduler_once(session)
+    _record_batch_publish_run(result, source="manual", triggered_by=current_user.get("id"))
     result["triggered_by"] = current_user.get("id")
     result["interval_seconds"] = BATCH_PUBLISH_INTERVAL_SECONDS
     return result
+
+
+@api_router.get("/admin/listings/batch-publish/stats")
+async def admin_get_batch_publish_stats(
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+):
+    latest = BATCH_PUBLISH_RUN_EVENTS[0] if BATCH_PUBLISH_RUN_EVENTS else None
+    return {
+        "interval_seconds": BATCH_PUBLISH_INTERVAL_SECONDS,
+        "latest": latest,
+        "recent_runs": list(BATCH_PUBLISH_RUN_EVENTS),
+        "requested_by": current_user.get("id"),
+    }
 
 
 @api_router.get(
