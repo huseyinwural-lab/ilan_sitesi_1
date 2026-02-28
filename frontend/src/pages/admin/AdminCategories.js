@@ -2685,6 +2685,22 @@ const AdminCategories = () => {
     }));
   };
 
+  const moveGroup = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex || fromIndex === null || toIndex === null) return;
+    setSubcategories((prev) => reorderArray(prev, fromIndex, toIndex));
+  };
+
+  const moveChild = (groupIndex, fromIndex, toIndex) => {
+    if (fromIndex === toIndex || fromIndex === null || toIndex === null) return;
+    setSubcategories((prev) => updateNodeByPath(prev, [groupIndex], (node) => {
+      const reordered = reorderArray(node.children || [], fromIndex, toIndex).map((child, idx) => ({
+        ...child,
+        sort_order: Number(child.sort_order || idx + 1),
+      }));
+      return { ...node, children: reordered };
+    }));
+  };
+
   const renderLevelColumns = () => (
     <div className="space-y-3" data-testid="categories-level-group-builder">
       <div className="text-sm font-semibold text-slate-900" data-testid="categories-level-group-builder-title">
