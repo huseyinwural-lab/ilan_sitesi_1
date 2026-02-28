@@ -18,7 +18,7 @@ import {
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${API_URL}/api`;
@@ -49,6 +49,7 @@ const slugify = (text) => {
 
 export default function SearchPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchState, setSearchState] = useSearchState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -141,7 +142,9 @@ export default function SearchPage() {
         if (searchState.category) queryParams.set('category', searchState.category);
         if (searchState.make) queryParams.set('make', searchState.make);
         if (searchState.model) queryParams.set('model', searchState.model);
-        if (searchState.doping) queryParams.set('doping_type', searchState.doping);
+        const dopingFromUrl = new URLSearchParams(location.search).get('doping');
+        const activeDopingParam = searchState.doping || dopingFromUrl;
+        if (activeDopingParam) queryParams.set('doping_type', activeDopingParam);
         if (searchState.sort) queryParams.set('sort', searchState.sort);
         queryParams.set('page', searchState.page);
         queryParams.set('limit', searchState.limit);
@@ -194,7 +197,10 @@ export default function SearchPage() {
     };
 
     fetchData();
-  }, [searchState]); // Re-run when URL state changes
+  }, [searchState, location.search]); // Re-run when URL state changes
+
+  const dopingFromUrl = useMemo(() => new URLSearchParams(location.search).get('doping'), [location.search]);
+  const activeDoping = searchState.doping || dopingFromUrl;
 
   const handleCategoryChange = (categoryId) => {
     // Reset filters on category change (Architecture Decision 3)
@@ -202,16 +208,16 @@ export default function SearchPage() {
   };
 
   const searchTitle = (() => {
-    if (searchState.doping === 'urgent') return 'Acil İlanlar';
-    if (searchState.doping === 'showcase') return 'Vitrin İlanları';
+    if (activeDoping === 'urgent') return 'Acil İlanlar';
+    if (activeDoping === 'showcase') return 'Vitrin İlanları';
     if (searchState.category) {
       return `Kategori: ${categories.find(c => c.id === searchState.category || c.slug === searchState.category)?.name || searchState.category}`;
     }
     return 'Tüm İlanlar';
   })();
 
-  const isUrgentSearch = searchState.doping === 'urgent';
-  const isShowcaseSearch = searchState.doping === 'showcase';
+  const isUrgentSearch = activeDoping === 'urgent';
+  const isShowcaseSearch = activeDoping === 'showcase';
 
   useEffect(() => {
     const title = `${searchTitle} | annonceia`;
@@ -286,7 +292,7 @@ export default function SearchPage() {
             <p className="text-muted-foreground text-sm mt-1">
               {data.pagination.total || 0} sonuç bulundu
             </p>
-            {searchState.doping ? (
+            {isUrgentSearch || isShowcaseSearch ? (
               <div className="mt-2 inline-flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium" data-testid="search-doping-chip">
                 <span data-testid="search-doping-chip-label">
                   {isUrgentSearch ? 'Acil Filtresi' : 'Vitrin Filtresi'}
