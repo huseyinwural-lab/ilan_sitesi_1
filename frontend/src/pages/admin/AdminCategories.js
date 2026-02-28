@@ -2206,7 +2206,9 @@ const AdminCategories = () => {
       return { success: false };
     }
 
-    const hasCompletedSubcategory = subcategories.some((item) => item.name?.trim() && item.slug?.trim());
+    const hasCompletedSubcategory = subcategories.some((group) =>
+      Array.isArray(group.children) && group.children.some((child) => child.name?.trim() && child.slug?.trim())
+    );
     if (!isVehicleModule && !hasCompletedSubcategory) {
       setHierarchyError("En az 1 alt kategori tamamlanmalıdır.");
       return { success: false };
@@ -2230,50 +2232,50 @@ const AdminCategories = () => {
       };
     }
 
-    const normalizeTree = (nodes) => nodes
-      .map((node) => ({
+    const normalizeTree = (nodes) => (nodes || [])
+      .map((node, index) => ({
         ...node,
         name: node.name ? node.name.trim() : "",
         slug: node.slug ? node.slug.trim().toLowerCase() : "",
-        sort_order: Number(node.sort_order || 0),
+        sort_order: Number(node.sort_order || index + 1),
         is_complete: true,
-        children: normalizeTree(node.children || []),
+        children: (node.children || []).map((child) => ({
+          ...child,
+          name: child.name ? child.name.trim() : "",
+          slug: child.slug ? child.slug.trim().toLowerCase() : "",
+          sort_order: Number(child.sort_order || 0),
+          is_complete: true,
+          children: [],
+        })),
       }))
-      .filter((node) => node.name || node.slug || (node.children || []).length > 0);
+      .filter((node) => (node.children || []).some((child) => child.name || child.slug));
 
-    const validateTree = (nodes, path = []) => {
-      if (path.length === 0 && nodes.length === 0) {
+    const validateTree = (nodes) => {
+      if (nodes.length === 0) {
         return "En az 1 alt kategori eklenmelidir.";
       }
-      for (let index = 0; index < nodes.length; index += 1) {
-        const node = nodes[index];
-        const nodePath = [...path, index];
-        const label = getSubcategoryLabel(nodePath);
-        const pathKey = nodePath.join("-");
-        if (!node.name) {
-          fieldErrors[`level-${pathKey}-name`] = "Ad zorunludur.";
+      for (let groupIndex = 0; groupIndex < nodes.length; groupIndex += 1) {
+        const group = nodes[groupIndex];
+        const children = group.children || [];
+        if (children.length === 0) {
+          fieldErrors[`level-${groupIndex}-children`] = "En az 1 alt kategori gereklidir.";
+          return `${groupIndex + 1}. grup için en az 1 alt kategori eklenmelidir.`;
         }
-        if (!node.slug) {
-          fieldErrors[`level-${pathKey}-slug`] = "Slug zorunludur.";
-        }
-        if (!Number.isFinite(Number(node.sort_order)) || Number(node.sort_order) <= 0) {
-          fieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
-        }
-        if (nodePath.length === 1 && (node.children || []).length === 0) {
-          fieldErrors[`level-${pathKey}-children`] = "En az 1 alt kategori gereklidir.";
-        }
-        if (!node.name || !node.slug) {
-          return `${label} için ad ve slug zorunludur.`;
-        }
-        if (!Number.isFinite(Number(node.sort_order)) || Number(node.sort_order) <= 0) {
-          return `${label} için sıra 1 veya daha büyük olmalıdır.`;
-        }
-        if (nodePath.length === 1 && (node.children || []).length === 0) {
-          return `${label} için en az 1 alt kategori eklenmelidir.`;
-        }
-        if ((node.children || []).length > 0) {
-          const childError = validateTree(node.children, nodePath);
-          if (childError) return childError;
+        for (let childIndex = 0; childIndex < children.length; childIndex += 1) {
+          const child = children[childIndex];
+          const pathKey = `${groupIndex}-${childIndex}`;
+          const label = `${groupIndex + 1}.${childIndex + 1}`;
+          if (!child.name) fieldErrors[`level-${pathKey}-name`] = "Ad zorunludur.";
+          if (!child.slug) fieldErrors[`level-${pathKey}-slug`] = "Slug zorunludur.";
+          if (!Number.isFinite(Number(child.sort_order)) || Number(child.sort_order) <= 0) {
+            fieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
+          }
+          if (!child.name || !child.slug) {
+            return `${label} için ad ve slug zorunludur.`;
+          }
+          if (!Number.isFinite(Number(child.sort_order)) || Number(child.sort_order) <= 0) {
+            return `${label} için sıra 1 veya daha büyük olmalıdır.`;
+          }
         }
       }
       return "";
@@ -2292,61 +2294,67 @@ const AdminCategories = () => {
     }
 
     const persistSubcategories = async (nodes, parentId) => {
-      const savedNodes = [];
-      for (const child of nodes) {
-        const basePayload = {
-          name: child.name,
-          slug: child.slug,
-          parent_id: parentId,
-          country_code: country,
-          module: moduleValue,
-          active_flag: child.active_flag,
-          sort_order: Number(child.sort_order || 0),
-          hierarchy_complete: true,
-        };
-        if (child.transaction_type) {
-          basePayload.form_schema = {
-            status: "draft",
-            category_meta: { transaction_type: child.transaction_type },
+      const savedGroups = [];
+      for (const group of nodes) {
+        const children = [];
+        for (const child of group.children || []) {
+          const basePayload = {
+            name: child.name,
+            slug: child.slug,
+            parent_id: parentId,
+            country_code: country,
+            module: moduleValue,
+            active_flag: child.active_flag,
+            sort_order: Number(child.sort_order || 0),
+            hierarchy_complete: true,
           };
-        }
-        const url = child.id
-          ? `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${child.id}`
-          : `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`;
-        const method = child.id ? "PATCH" : "POST";
-        let data = {};
-        if (method === "POST") {
-          const created = await createCategoryWithSortFallback(basePayload, "Alt kategori kaydedilemedi.");
-          if (!created.ok) {
-            throw new Error(created.parsed.message);
+          if (child.transaction_type) {
+            basePayload.form_schema = {
+              status: "draft",
+              category_meta: { transaction_type: child.transaction_type },
+            };
           }
-          data = created.data;
-        } else {
-          const res = await fetch(url, {
-            method,
-            headers: {
-              "Content-Type": "application/json",
-              ...authHeader,
-            },
-            body: JSON.stringify(basePayload),
+          const url = child.id
+            ? `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${child.id}`
+            : `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`;
+          const method = child.id ? "PATCH" : "POST";
+          let data = {};
+          if (method === "POST") {
+            const created = await createCategoryWithSortFallback(basePayload, "Alt kategori kaydedilemedi.");
+            if (!created.ok) {
+              throw new Error(created.parsed.message);
+            }
+            data = created.data;
+          } else {
+            const res = await fetch(url, {
+              method,
+              headers: {
+                "Content-Type": "application/json",
+                ...authHeader,
+              },
+              body: JSON.stringify(basePayload),
+            });
+            data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              const parsed = parseApiError(data, "Alt kategori kaydedilemedi.");
+              throw new Error(parsed.message);
+            }
+          }
+          const saved = data?.category || child;
+          children.push({
+            ...child,
+            id: saved.id || child.id,
+            is_complete: true,
+            children: [],
           });
-          data = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            const parsed = parseApiError(data, "Alt kategori kaydedilemedi.");
-            throw new Error(parsed.message);
-          }
         }
-        const saved = data?.category || child;
-        const savedId = saved.id || child.id;
-        const savedChildren = await persistSubcategories(child.children || [], savedId);
-        savedNodes.push({
-          ...child,
-          id: savedId,
+        savedGroups.push({
+          ...group,
           is_complete: true,
-          children: savedChildren,
+          children,
         });
       }
-      return savedNodes;
+      return savedGroups;
     };
 
     try {
