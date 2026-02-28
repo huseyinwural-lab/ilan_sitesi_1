@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-28 01:00:00 UTC (P102 Alt Kategori Grubu Akışı Stabilizasyonu)
+**Son güncelleme:** 2026-02-28 01:45:00 UTC (P103 Kategori Hata Fix + Resize + DnD + Batch Dashboard)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -67,6 +67,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P103 Kategori Hata Fix + UI İyileştirmeleri (2026-02-28):** Kullanıcı şikayeti sonrası kategori kayıt akışı tekrar harden edildi. `createCategoryWithSortFallback` artık sadece sıra çakışmasını değil **slug çakışmasını** da otomatik çözerek tekrar dener (örn. `slug-2`), böylece "Ana kategori oluşturulamadı" blokajı azaltıldı. Kategori modalına **Tam Ekran/Normal toggle + resizable panel** eklendi (büyüt/küçült). Grup ve alt kategori kartlarına **drag-drop** sıralama eklendi. Canlı hiyerarşi önizlemesine **Eksik alan var / Tamam** rozetleri eklendi.
+- **P103 Batch Publish Dashboard Kartı (2026-02-28):** Admin dashboard’a batch scheduler log/istatistik kartı eklendi (`İşlenen/Yayınlanan/Atlanan/Hata`, son koşular listesi, refresh, manuel "Şimdi Çalıştır"). Backend’e `GET /api/admin/listings/batch-publish/stats` endpoint’i eklendi ve scheduler/manual run sonuçları in-memory recent run listesine yazılıyor.
+- **P103 Test Doğrulama (2026-02-28):** `/app/test_reports/iteration_61.json` ile tüm hedefler doğrulandı (**backend 100%, frontend 100%**): kategori modal davranışları (resize/fullscreen/drag-drop/preview badges) ve dashboard batch publish kartı + endpointler PASS.
 - **P102 Alt Kategori Grubu Akışı Stabilizasyonu (2026-02-28):** Kullanıcı geri bildirimine göre kategori ekranı tekrar sadeleştirildi ve hatalar giderildi. `Ana Kategori Grupları` metni tamamen kaldırıldı; doğrudan **Alt Kategori** akışı kaldı: `1.1` ile başlar, grup tamamlanınca otomatik `2.1`, sonra `3.1`... şeklinde devam eder. Grup başına alt kartlar yatay/sınırsız (`1.1, 1.2, 1.3 ...`) eklenecek şekilde netleştirildi. Kayıt tarafında da bloklayan hatalar ("alt kategori oluşmadı", "ana kategori oluşturulamadı") için persist akışı group-wrapper yerine çocukları doğrudan parent altına kaydedecek şekilde düzeltildi. Doğrulama: `/app/test_reports/iteration_60.json` (**frontend 100% PASS**, istenen 6/6 davranış doğrulandı).
 - **P101 Alt Kategori Akışı Revizyonu (2026-02-28):** Kullanıcı geri bildirimiyle kategori editor tekrar sadeleştirildi: "Ana Kategori Grupları" kaldırıldı, doğrudan **Alt Kategori Grubu** akışı getirildi. Yeni model: grup (1,2,3...) + her grup içinde yatay ve sınırsız altlar (1.1,1.2... / 2.1,2.2...). Grup tamamlandığında otomatik bir sonraki grup taslağı açılıyor (2.1 başlangıcı). Root grup tamamlamak için en az 1 alt kategori zorunlu. Canlı hiyerarşi önizleme ağacı korunarak güncellendi. Doğrulama: `/app/test_reports/iteration_59.json` (**backend 100%, frontend 100% PASS**).
 - **P101 Kayıt Hata Azaltma + Boş Sıra Uygulama (2026-02-28):** Kayıt akışındaki "alt kategori/ana kategori oluşturulamadı" şikayetine karşı create akışı güvenli hale getirildi: sıra çakışmasında otomatik uygun sıraya kaydırma, preview endpoint üzerinden `suggested_next_sort_order` ve UI’da tek tık "Uygula".
