@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-27 23:55:00 UTC (P99 Hiyerarşi Akışı + Slot Yayın Bağlantısı)
+**Son güncelleme:** 2026-02-28 00:27:00 UTC (P100 2-Seviyeli Kategori Akışı Final + Batch Publish)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -67,6 +67,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P100 Kategori Akışı Final Düzeltmesi (2026-02-28):** Kullanıcı tarifine göre yeni kategori editörü 2-seviyeli modele kesin geçirildi: **ana grup (1,2,3...)** + seçili grup altında **alt kategoriler (1.1,1.2... / 2.1,2.2...)**. Akış: ana grup seçimi → alt kategori yönetimi; root grup tamamlanınca otomatik sonraki grup taslağı açılıyor. Alt kategori kartları sağa doğru yatay akışta sınırsız ekleniyor. Root tamamlamak için en az 1 alt kategori zorunlu hale getirildi. Ayrıca canlı **hiyerarşi önizleme ağacı** eklendi.
+- **P100 Boş Sıra Önerisi (Canlı) (2026-02-28):** `order-index/preview` endpoint’i conflict durumunda `suggested_next_sort_order` döndürür hale geldi; frontend’de sıra input yanında "Önerilen boş sıra" ve tek tık "Uygula" aksiyonu eklendi.
+- **P100 Batch Publish Scheduler + Slot Entegrasyonu (2026-02-28):** Kampanya/slot kuralları yayın akışına tam bağlandı. Batch scheduler 5 dakikada bir (`300s`) `pending_moderation` ilanları koşullara göre yayınlar; manuel tetik endpointi eklendi: `POST /api/admin/listings/batch-publish/run`. Slot öncelik kuralı: **Vitrin > Acil > Ücretli > Ücretsiz**. Slot tüketimi publish anında `slot_consumed` olarak işlenir; snapshot listing_type moderasyon publish’te doping alanlarına uygulanır.
 - **P99 Kategori Hiyerarşi Akış Revizyonu (2026-02-27):** Kullanıcı akışına göre kategori modalı yeniden akıtıldı: seviye kolonları artık `levelCompletion` kilidine bağlı değil, seçime göre dinamik açılıyor (12 seviyeye kadar). Root kart tamamlandığında sistem otomatik yeni root taslak kartını (Kategori 2, 3, 4 …) ekliyor; böylece `1 -> 1.1/1.2 ... -> 2 -> 2.1 ...` işleyişi destekleniyor. Ayrıca sıra çakışmasında canlı **önerilen boş sıra** (`suggested_next_sort_order`) backend’den dönüyor ve input yanında “Uygula” ile tek tık atanıyor.
 - **P99 Kampanya/Slot Kurallarını Yayın Akışına Bağlama (2026-02-27):** Kampanya item seçiminde öncelik kuralı kodlandı: **Vitrin > Acil > Ücretli > Ücretsiz**. Campaign slot tüketimi yayın akışına bağlandı (`slot_consumed`, `slot_consumed_at`) ve kota doluysa publish zinciri 409 ile korunuyor. Moderasyon publish adımında pricing snapshot’taki `listing_type` listing doping alanlarına uygulanıyor (`featured_until/urgent_until/paid_until`) ve publish süresi `publish_days` üzerinden set ediliyor.
 - **P98 Kategori Oluşturma Hata Düzeltmesi (2026-02-27):** Tüm modüllerde kategori oluşturma akışındaki blokaj giderildi. Frontend `AdminCategories` tarafında hata ayrıştırma iyileştirildi (`detail` array/string/object), `ORDER_INDEX_ALREADY_USED` durumunda otomatik uygun sıra bulup tekrar create eden fallback eklendi (ana kategori + alt kategori). Backend `POST /api/admin/categories` endpointi de harden edildi: sort çakışmasında artık create isteğini düşürmek yerine `_next_category_sort_order` ile bir sonraki uygun `sort_order` otomatik atanıyor. Sonuç: kullanıcı `1` gibi çakışan sıra verse dahi kategori oluşturma akışı kesilmeden devam ediyor.
