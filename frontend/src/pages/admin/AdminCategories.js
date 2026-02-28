@@ -1193,6 +1193,30 @@ const AdminCategories = () => {
     }));
   };
 
+  const mapTreeToGroupRows = (treeNodes = []) => {
+    if (!Array.isArray(treeNodes) || treeNodes.length === 0) {
+      return [createSubcategoryGroupDraft()];
+    }
+    return treeNodes.map((node) => {
+      const directChildren = Array.isArray(node.children) ? node.children : [];
+      const normalizedChildren = (directChildren.length > 0 ? directChildren : [node]).map((child) => ({
+        id: child.id,
+        name: child.name || "",
+        slug: child.slug || "",
+        active_flag: child.active_flag ?? true,
+        sort_order: child.sort_order || 0,
+        transaction_type: child.transaction_type || "",
+        is_complete: true,
+        children: [],
+      }));
+      return {
+        ...createSubcategoryGroupDraft(),
+        is_complete: true,
+        children: normalizedChildren,
+      };
+    });
+  };
+
   const getParentPathForLevel = (levelIndex) => {
     if (levelIndex === 0) return [];
     return levelSelections.slice(0, levelIndex);
@@ -1530,7 +1554,7 @@ const AdminCategories = () => {
     setHierarchyError("");
     setHierarchyFieldErrors({});
     const relatedSubs = buildSubcategoryTree(item.id);
-    const nextSubcategories = relatedSubs.length ? relatedSubs : [createSubcategoryGroupDraft()];
+    const nextSubcategories = mapTreeToGroupRows(relatedSubs);
     setSubcategories(nextSubcategories);
     setLevelSelections([]);
     setLevelCompletion({});
