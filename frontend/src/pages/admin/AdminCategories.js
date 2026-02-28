@@ -257,6 +257,17 @@ const TriStateCheckbox = ({ checked, indeterminate, onChange, disabled, testId }
     }
   }, [indeterminate]);
 
+  const modalPanelStyle = isModalFullscreen
+    ? { width: "100vw", height: "100vh", maxWidth: "100vw", maxHeight: "100vh" }
+    : {
+      width: `${modalSize.width}px`,
+      height: `${modalSize.height}px`,
+      maxWidth: "95vw",
+      maxHeight: "92vh",
+      resize: "both",
+      overflow: "auto",
+    };
+
   return (
     <input
       ref={ref}
@@ -3146,11 +3157,31 @@ const AdminCategories = () => {
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" data-testid="categories-modal">
-          <div className="bg-white p-6 rounded-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto text-slate-900">
+        <div className={`fixed inset-0 bg-black/40 z-50 ${isModalFullscreen ? '' : 'flex items-center justify-center'}`} data-testid="categories-modal">
+          <div className={`bg-white p-6 text-slate-900 ${isModalFullscreen ? '' : 'rounded-lg shadow-xl'}`} style={modalPanelStyle} data-testid="categories-modal-panel">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">{editing ? "Kategori Düzenle" : "Yeni Kategori"}</h2>
-              <button onClick={() => setModalOpen(false)} data-testid="categories-modal-close">✕</button>
+              <div className="flex items-center gap-2">
+                {!isModalFullscreen ? (
+                  <button
+                    type="button"
+                    onClick={() => setModalSize({ width: 1280, height: 820 })}
+                    className="rounded border px-2 py-1 text-xs"
+                    data-testid="categories-modal-size-reset"
+                  >
+                    Boyutu Sıfırla
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setIsModalFullscreen((prev) => !prev)}
+                  className="rounded border px-2 py-1 text-xs"
+                  data-testid="categories-modal-toggle-fullscreen"
+                >
+                  {isModalFullscreen ? 'Normal' : 'Tam Ekran'}
+                </button>
+                <button onClick={() => setModalOpen(false)} data-testid="categories-modal-close">✕</button>
+              </div>
             </div>
 
             <div className="space-y-4">
