@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-28 17:30:00 UTC (P105 Home HTML Toparlama + PDF İlan Ver Sayfası)
+**Son güncelleme:** 2026-02-28 18:15:00 UTC (P105 Home Modül Grupları + Urgent Seed + Search Doping Chip Fix)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -67,6 +67,10 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P105b Home Sol Blok Standardizasyonu (2026-02-28):** Ana sayfa sol blok `Modül -> Ana Kategori -> 1. Alt Kategori (adet)` hiyerarşisine çekildi. Veri modeli `moduleGroups[]` mantığında normalize edildi (`module_key`, `module_label`, `roots[]`, `children_level1[]`). Limit kuralları eklendi: modül başına ilk 8 root + `Tümünü Göster`, root başına ilk 8 child + `Daha fazla göster`.
+- **P105b Vitrin/Acil Veri Akışı + Periyodik Yenileme (2026-02-28):** Home vitrin ilanları `doping_type=showcase` ile, ACİL sayaç `doping_type=urgent` ile okunuyor; fetch döngüsü 5 dakikada bir otomatik yenileme şeklinde çalışıyor.
+- **P105b Urgent Seed Doğrulama (2026-02-28):** Admin üzerinden yayındaki ilanlara seed uygulanarak en az 10 acil ilan üretildi (API doğrulaması: `/api/v2/search?doping_type=urgent` toplam 10).
+- **P105b Search Doping Chip + SEO Tutarlılığı (2026-02-28):** `SearchPage` üzerinde doping filtre chip’i (`search-doping-chip`) kalıcı/kararlı render olacak şekilde düzeltildi; doping bazlı title/description senkronu eklendi; urgent empty-state kurumsal metne güncellendi.
 - **P105 Ana Sayfa HTML Toparlama (2026-02-28):** Home akışı kullanıcı talebine göre sadeleştirildi. Vitrin alanı artık `GET /api/v2/search?...&doping_type=showcase` ile **admin onaylı vitrin** ilanlarını çekiyor; eski placeholder/kalıntı davranışları temizlendi. `ACİL` alanı linke çevrilip `/search?doping=urgent` yönlendirmesi eklendi. Sol kategori blokları admin kategorilerinden `Ana Kategori > 1. Alt Kategori (ilan adedi)` formatında render edildi.
 - **P105 Search Doping URL Desteği (2026-02-28):** URL state’e `doping` parametresi eklendi (`useSearchState`). `SearchPage` artık `doping=urgent/showcase` parametresini backend’e `doping_type` olarak iletir ve başlıkları (`Acil İlanlar` / `Vitrin İlanları`) dinamik gösterir.
 - **P105 Backend Doping Filtreleme (2026-02-28):** `GET /api/v2/search` endpointine `doping_type` parametresi eklendi. Meili filtre ifadesi `showcase -> is_featured=true`, `urgent -> is_urgent=true` kurallarıyla genişletildi; filterable attribute setine `is_featured/is_urgent` dahil edildi.
