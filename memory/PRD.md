@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-28 00:27:00 UTC (P100 2-Seviyeli Kategori Akışı Final + Batch Publish)
+**Son güncelleme:** 2026-02-28 00:56:00 UTC (P101 Alt Kategori Akışı Revizyonu)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -67,6 +67,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P101 Alt Kategori Akışı Revizyonu (2026-02-28):** Kullanıcı geri bildirimiyle kategori editor tekrar sadeleştirildi: "Ana Kategori Grupları" kaldırıldı, doğrudan **Alt Kategori Grubu** akışı getirildi. Yeni model: grup (1,2,3...) + her grup içinde yatay ve sınırsız altlar (1.1,1.2... / 2.1,2.2...). Grup tamamlandığında otomatik bir sonraki grup taslağı açılıyor (2.1 başlangıcı). Root grup tamamlamak için en az 1 alt kategori zorunlu. Canlı hiyerarşi önizleme ağacı korunarak güncellendi. Doğrulama: `/app/test_reports/iteration_59.json` (**backend 100%, frontend 100% PASS**).
+- **P101 Kayıt Hata Azaltma + Boş Sıra Uygulama (2026-02-28):** Kayıt akışındaki "alt kategori/ana kategori oluşturulamadı" şikayetine karşı create akışı güvenli hale getirildi: sıra çakışmasında otomatik uygun sıraya kaydırma, preview endpoint üzerinden `suggested_next_sort_order` ve UI’da tek tık "Uygula".
 - **P100 Kategori Akışı Final Düzeltmesi (2026-02-28):** Kullanıcı tarifine göre yeni kategori editörü 2-seviyeli modele kesin geçirildi: **ana grup (1,2,3...)** + seçili grup altında **alt kategoriler (1.1,1.2... / 2.1,2.2...)**. Akış: ana grup seçimi → alt kategori yönetimi; root grup tamamlanınca otomatik sonraki grup taslağı açılıyor. Alt kategori kartları sağa doğru yatay akışta sınırsız ekleniyor. Root tamamlamak için en az 1 alt kategori zorunlu hale getirildi. Ayrıca canlı **hiyerarşi önizleme ağacı** eklendi.
 - **P100 Boş Sıra Önerisi (Canlı) (2026-02-28):** `order-index/preview` endpoint’i conflict durumunda `suggested_next_sort_order` döndürür hale geldi; frontend’de sıra input yanında "Önerilen boş sıra" ve tek tık "Uygula" aksiyonu eklendi.
 - **P100 Batch Publish Scheduler + Slot Entegrasyonu (2026-02-28):** Kampanya/slot kuralları yayın akışına tam bağlandı. Batch scheduler 5 dakikada bir (`300s`) `pending_moderation` ilanları koşullara göre yayınlar; manuel tetik endpointi eklendi: `POST /api/admin/listings/batch-publish/run`. Slot öncelik kuralı: **Vitrin > Acil > Ücretli > Ücretsiz**. Slot tüketimi publish anında `slot_consumed` olarak işlenir; snapshot listing_type moderasyon publish’te doping alanlarına uygulanır.
