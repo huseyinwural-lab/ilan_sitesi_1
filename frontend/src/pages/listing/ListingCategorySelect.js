@@ -138,10 +138,12 @@ const ListingCategorySelect = () => {
     if (!moduleKey) {
       setColumns([]);
       setPageLoading(false);
+      setColumnErrors({});
       return;
     }
     setPageLoading(true);
     setError('');
+    setColumnErrors({});
     try {
       const roots = await fetchChildren(null, moduleKey);
       if (!roots.length) {
@@ -151,6 +153,7 @@ const ListingCategorySelect = () => {
         return;
       }
       setColumns([{ parentId: null, items: roots, selectedId: null }]);
+      setMobileColumnIndex(0);
     } catch (err) {
       setError('Kategoriler yüklenemedi.');
     } finally {
