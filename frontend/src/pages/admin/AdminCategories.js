@@ -2718,9 +2718,21 @@ const AdminCategories = () => {
           const isGroupLocked = isHierarchyLocked || Boolean(group.is_complete);
 
           return (
-            <div key={`group-${groupIndex}`} className="rounded-md border border-slate-200 bg-white p-3 space-y-2" data-testid={`categories-level-item-0-${groupIndex}`}>
+            <div
+              key={`group-${groupIndex}`}
+              className="rounded-md border border-slate-200 bg-white p-3 space-y-2"
+              data-testid={`categories-level-item-0-${groupIndex}`}
+              draggable={!isHierarchyLocked}
+              onDragStart={() => setDraggingGroupIndex(groupIndex)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => {
+                moveGroup(draggingGroupIndex, groupIndex);
+                setDraggingGroupIndex(null);
+              }}
+              onDragEnd={() => setDraggingGroupIndex(null)}
+            >
               <div className="text-xs font-semibold text-slate-700" data-testid={`categories-level-item-label-0-${groupIndex}`}>
-                {`${groupIndex + 1}. Grup`}
+                {`${groupIndex + 1}. Grup`} <span className="text-slate-400">↕</span>
               </div>
 
               <div className="flex gap-3 overflow-x-auto pb-2" data-testid={`categories-level-items-1-group-${groupIndex}`}>
@@ -2733,10 +2745,24 @@ const AdminCategories = () => {
                   const childInputsDisabled = isGroupLocked || child.is_complete;
 
                   return (
-                    <div key={`group-${groupIndex}-child-${childIndex}`} className="min-w-[300px] rounded-md border border-slate-200 bg-slate-50 p-3 space-y-2" data-testid={`categories-level-item-1-${childIndex}`}>
+                    <div
+                      key={`group-${groupIndex}-child-${childIndex}`}
+                      className="min-w-[300px] rounded-md border border-slate-200 bg-slate-50 p-3 space-y-2"
+                      data-testid={`categories-level-item-1-${childIndex}`}
+                      draggable={!isGroupLocked}
+                      onDragStart={() => setDraggingChild({ groupIndex, childIndex })}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={() => {
+                        if (draggingChild && draggingChild.groupIndex === groupIndex) {
+                          moveChild(groupIndex, draggingChild.childIndex, childIndex);
+                        }
+                        setDraggingChild(null);
+                      }}
+                      onDragEnd={() => setDraggingChild(null)}
+                    >
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-xs font-semibold text-slate-700" data-testid={`categories-level-item-label-1-${childIndex}`}>
-                          {`${groupIndex + 1}.${childIndex + 1} Kategori`}
+                          {`${groupIndex + 1}.${childIndex + 1} Kategori`} <span className="text-slate-400">↕</span>
                         </div>
                         <div className="flex items-center gap-2">
                           {child.is_complete ? (
