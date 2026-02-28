@@ -112,15 +112,27 @@ const ListingCategorySelect = () => {
     setSearchParams(params);
   }, [setSearchParams]);
 
-  const fetchChildren = useCallback(async (parentId, moduleKey) => {
+  const getCacheKey = useCallback((parentId, moduleKey) => `${moduleKey}::${parentId || 'root'}`, []);
+
+  const fetchChildren = useCallback(async (parentId, moduleKey, options = {}) => {
+    const { force = false } = options;
     if (!moduleKey) return [];
+    const cacheKey = getCacheKey(parentId, moduleKey);
+    if (!force && childrenCacheRef.current.has(cacheKey)) {
+      return childrenCacheRef.current.get(cacheKey) || [];
+    }
+
     const params = new URLSearchParams({ country, module: moduleKey });
     if (parentId) params.append('parent_id', parentId);
     const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/categories/children?${params.toString()}`);
-    if (!res.ok) return [];
+    if (!res.ok) {
+      throw new Error('CATEGORY_CHILD_FETCH_FAILED');
+    }
     const data = await res.json();
-    return data || [];
-  }, [country]);
+    const normalized = Array.isArray(data) ? data : [];
+    childrenCacheRef.current.set(cacheKey, normalized);
+    return normalized;
+  }, [country, getCacheKey]);
 
   const loadRootCategories = useCallback(async (moduleKey) => {
     if (!moduleKey) {
