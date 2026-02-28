@@ -3414,6 +3414,31 @@ const AdminCategories = () => {
                           {renderLevelColumns()}
                         </div>
                       )}
+                      <div className="rounded-md border border-dashed border-slate-300 bg-white p-3" data-testid="categories-hierarchy-live-preview">
+                        <div className="mb-2 text-xs font-semibold text-slate-700">Canlı Hiyerarşi Önizleme</div>
+                        {hierarchyPreviewNodes.length === 0 ? (
+                          <div className="text-xs text-slate-500" data-testid="categories-hierarchy-live-preview-empty">
+                            Önizleme için grup ve alt kategori ekleyin.
+                          </div>
+                        ) : (
+                          <div className="space-y-2" data-testid="categories-hierarchy-live-preview-tree">
+                            {hierarchyPreviewNodes.map((group) => (
+                              <div key={group.key} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1" data-testid={`categories-hierarchy-live-preview-group-${group.key}`}>
+                                <div className="text-xs font-semibold text-slate-900">{group.label}</div>
+                                {group.children.length > 0 ? (
+                                  <ul className="mt-1 space-y-1 pl-4 text-xs text-slate-700" data-testid={`categories-hierarchy-live-preview-children-${group.key}`}>
+                                    {group.children.map((child) => (
+                                      <li key={child.key}>{child.label}</li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <div className="mt-1 text-[11px] text-amber-600">Bu grup için alt kategori bekleniyor.</div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
