@@ -2926,12 +2926,14 @@ const AdminCategories = () => {
     .map((group, groupIndex) => ({
       key: `group-${groupIndex}`,
       label: `${groupIndex + 1}`,
-      children: (group.children || [])
-        .filter((child) => child?.name?.trim())
-        .map((child, childIndex) => ({
+      children: (group.children || []).map((child, childIndex) => {
+        const missing = !child?.name?.trim() || !child?.slug?.trim() || !Number.isFinite(Number(child?.sort_order)) || Number(child?.sort_order) <= 0;
+        return {
           key: `${groupIndex}-${childIndex}`,
-          label: `${groupIndex + 1}.${childIndex + 1} ${child.name.trim()}`,
-        })),
+          label: `${groupIndex + 1}.${childIndex + 1} ${child?.name?.trim() || "(eksik ad)"}`,
+          missing,
+        };
+      }),
     }))
     .filter((group) => group.children.length > 0);
 
