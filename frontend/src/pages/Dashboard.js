@@ -17,6 +17,8 @@ import {
   BarChart3,
   Lock,
   Download,
+  Play,
+  RefreshCw,
 } from 'lucide-react';
 
 const TrendsSection = lazy(() => import('../components/admin/dashboard/TrendsSection'));
@@ -179,6 +181,55 @@ const ActivitySummaryCard = ({ summary }) => (
     </div>
   </div>
 );
+
+const BatchPublishCard = ({ stats, running, onRunNow, onRefresh }) => {
+  const latest = stats?.latest;
+  const recent = Array.isArray(stats?.recent_runs) ? stats.recent_runs : [];
+  return (
+    <div className="bg-card rounded-md border p-6" data-testid="dashboard-batch-publish-card">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold">Batch Publish Scheduler</h3>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="rounded border px-2 py-1 text-xs"
+            data-testid="dashboard-batch-publish-refresh"
+          >
+            <RefreshCw size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={onRunNow}
+            disabled={running}
+            className="rounded bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground disabled:opacity-60"
+            data-testid="dashboard-batch-publish-run-now"
+          >
+            <Play size={14} className="inline mr-1" />
+            {running ? 'Çalışıyor...' : 'Şimdi Çalıştır'}
+          </button>
+        </div>
+      </div>
+      <div className="text-xs text-muted-foreground" data-testid="dashboard-batch-publish-interval">
+        Otomatik aralık: {stats?.interval_seconds || 300} sn
+      </div>
+      <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+        <div data-testid="dashboard-batch-publish-processed"><div className="text-muted-foreground text-xs">İşlenen</div><div className="font-semibold">{latest?.processed ?? 0}</div></div>
+        <div data-testid="dashboard-batch-publish-published"><div className="text-muted-foreground text-xs">Yayınlanan</div><div className="font-semibold">{latest?.published ?? 0}</div></div>
+        <div data-testid="dashboard-batch-publish-skipped"><div className="text-muted-foreground text-xs">Atlanan</div><div className="font-semibold">{latest?.skipped ?? 0}</div></div>
+        <div data-testid="dashboard-batch-publish-errors"><div className="text-muted-foreground text-xs">Hata</div><div className="font-semibold">{latest?.errors ?? 0}</div></div>
+      </div>
+      <div className="mt-4 space-y-2" data-testid="dashboard-batch-publish-recent-runs">
+        {recent.slice(0, 5).map((run, idx) => (
+          <div key={`${run.run_at}-${idx}`} className="flex items-center justify-between rounded border px-2 py-1 text-xs" data-testid={`dashboard-batch-publish-run-${idx}`}>
+            <span>{run.source === 'manual' ? 'Manuel' : 'Otomatik'} · {run.run_at ? new Date(run.run_at).toLocaleTimeString() : '-'}</span>
+            <span>{run.published}/{run.processed}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const HealthCard = ({ health }) => (
   <div className="bg-card rounded-md border p-6" data-testid="dashboard-health-card">
@@ -365,6 +416,8 @@ const RiskPanel = ({ data, canViewFinance }) => {
 
 export default function Dashboard({ title = 'Kontrol Paneli' }) {
   const [summary, setSummary] = useState(null);
+  const [batchPublishStats, setBatchPublishStats] = useState(null);
+  const [runningBatchPublish, setRunningBatchPublish] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [trendDays, setTrendDays] = useState(DEFAULT_TREND_DAYS);
@@ -400,10 +453,16 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
         params.set('trend_days', String(trendDays));
       }
       const qs = params.toString() ? `?${params.toString()}` : '';
-      const response = await axios.get(`${API}/admin/dashboard/summary${qs}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSummary(response.data);
+      const [summaryResponse, batchResponse] = await Promise.all([
+        axios.get(`${API}/admin/dashboard/summary${qs}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API}/admin/listings/batch-publish/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      setSummary(summaryResponse.data);
+      setBatchPublishStats(batchResponse.data);
     } catch (error) {
       setError('Dashboard verileri yüklenemedi.');
     } finally {
@@ -448,6 +507,21 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
       setExportError('PDF dışa aktarma başarısız.');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleRunBatchPublishNow = async () => {
+    setRunningBatchPublish(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      await axios.post(`${API}/admin/listings/batch-publish/run`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      await fetchSummary();
+    } catch (err) {
+      setError('Batch publish çalıştırılamadı.');
+    } finally {
+      setRunningBatchPublish(false);
     }
   };
 
@@ -618,6 +692,13 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
         <HealthCard health={summary?.health} />
         <RoleDistribution data={summary?.role_distribution || {}} t={t} />
       </div>
+
+      <BatchPublishCard
+        stats={batchPublishStats}
+        running={runningBatchPublish}
+        onRunNow={handleRunBatchPublishNow}
+        onRefresh={fetchSummary}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <RecentActivity logs={summary?.recent_activity || []} />
