@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-28 01:45:00 UTC (P103 Kategori Hata Fix + Resize + DnD + Batch Dashboard)
+**Son güncelleme:** 2026-02-28 02:40:00 UTC (P104 Admin Render Loop Fix + Kategori Save Stabilizasyon + Home Showcase Fallback Harden)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -67,6 +67,9 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P104 Admin Render Loop Fix + Kategori Save Stabilizasyon (2026-02-28):** `Layout.js` içinde sidebar section collapse senkron effect’i harden edilerek `Maximum update depth exceeded` döngüsü kapatıldı (state değişmedikçe update yapılmıyor). Sonuç: `/admin/categories` ve ilgili admin rotaları tekrar stabil açılıyor. Kategori hiyerarşi kaydet akışı yeniden doğrulandı; root + child kayıt backend’de başarılı üretildi ve TypeError blokajı tekrar gözlenmedi.
+- **P104 Home Showcase Fallback Harden (2026-02-28):** `HomePage` veri yükleme akışı `Promise.all` yerine `Promise.allSettled` yaklaşımına geçirildi. Böylece kategori çağrısı geçici fail olsa bile yayınlanmış showcase layout’u default’a düşmeden uygulanabiliyor; admindeki vitrin ayarlarının yansıma dayanıklılığı artırıldı.
+- **P104 Test Doğrulama (2026-02-28):** `/app/test_reports/iteration_62.json` raporunda kritik hedefler PASS: admin kategori ve showcase sayfaları crash olmadan açılıyor, kategori hiyerarşi save akışı çalışıyor, sidebar accordion stabil.
 - **P103 Kategori Hata Fix + UI İyileştirmeleri (2026-02-28):** Kullanıcı şikayeti sonrası kategori kayıt akışı tekrar harden edildi. `createCategoryWithSortFallback` artık sadece sıra çakışmasını değil **slug çakışmasını** da otomatik çözerek tekrar dener (örn. `slug-2`), böylece "Ana kategori oluşturulamadı" blokajı azaltıldı. Kategori modalına **Tam Ekran/Normal toggle + resizable panel** eklendi (büyüt/küçült). Grup ve alt kategori kartlarına **drag-drop** sıralama eklendi. Canlı hiyerarşi önizlemesine **Eksik alan var / Tamam** rozetleri eklendi.
 - **P103 Batch Publish Dashboard Kartı (2026-02-28):** Admin dashboard’a batch scheduler log/istatistik kartı eklendi (`İşlenen/Yayınlanan/Atlanan/Hata`, son koşular listesi, refresh, manuel "Şimdi Çalıştır"). Backend’e `GET /api/admin/listings/batch-publish/stats` endpoint’i eklendi ve scheduler/manual run sonuçları in-memory recent run listesine yazılıyor.
 - **P103 Test Doğrulama (2026-02-28):** `/app/test_reports/iteration_61.json` ile tüm hedefler doğrulandı (**backend 100%, frontend 100%**): kategori modal davranışları (resize/fullscreen/drag-drop/preview badges) ve dashboard batch publish kartı + endpointler PASS.
