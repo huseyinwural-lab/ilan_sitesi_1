@@ -718,9 +718,6 @@ const ListingCategorySelect = () => {
               <CheckCircle2 size={18} />
               Kategori seçimi tamamlandı: {activeCategory.name}
             </div>
-            {autoAdvanceActive && (
-              <div className="text-xs text-emerald-700" data-testid="ilan-ver-complete-auto">Çekirdek alanlara yönlendiriliyor...</div>
-            )}
           </div>
         )}
       </div>
