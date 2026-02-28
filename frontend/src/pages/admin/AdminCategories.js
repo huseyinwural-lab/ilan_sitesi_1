@@ -1258,7 +1258,7 @@ const AdminCategories = () => {
   const addLevelItem = (levelIndex) => {
     resetLevelCompletionFrom(levelIndex);
     if (levelIndex === 0) {
-      setSubcategories((prev) => [...prev, createSubcategoryDraft()]);
+      setSubcategories((prev) => [...prev, createSubcategoryGroupDraft()]);
       return;
     }
     const parentPath = getParentPathForLevel(levelIndex);
