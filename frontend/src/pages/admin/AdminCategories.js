@@ -2461,6 +2461,13 @@ const AdminCategories = () => {
             description: `Ana kategori için sıra ${createdParent.payload.sort_order} olarak güncellendi.`,
           });
         }
+        if (createdParent.payload?.slug && createdParent.payload.slug !== slug) {
+          setForm((prev) => ({ ...prev, slug: createdParent.payload.slug }));
+          toast({
+            title: "Slug otomatik düzeltildi",
+            description: `Ana kategori slug değeri ${createdParent.payload.slug} olarak güncellendi.`,
+          });
+        }
         updatedParent = createdParent.data?.category;
       }
 
