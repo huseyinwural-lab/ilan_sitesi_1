@@ -1,0 +1,91 @@
+{
+  "summary": "Iteration 65 - P105 Category UI verification: Admin root-only table, Home module→root→L1 children with counts, /ilan-ver multi-column desktop + mobile stepper + leaf rule + deterministic column closing",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_65.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "Skipped (frontend only)",
+    "frontend": "100% - All features verified"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "user": "user@platform.com / User123!"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P105 iteration 65 verified: 1) Admin categories table shows only root categories (no parent_id), child categories like Konut/Ticari Alan are hidden. 2) Home page left column shows Module→Root→L1 children with (count) format. 3) /ilan-ver desktop multi-column works with deterministic right column closing when re-selecting earlier columns. 4) Leaf selection enables Continue button. 5) Mobile stepper with Geri/İleri buttons and Seviye:L1/L2 labels working.",
+  "features_verified": {
+    "admin_categories_root_only": {
+      "status": "PASS",
+      "description": "Admin categories table at /admin/categories shows only 1 root category (Emlak) despite API returning 12 categories (1 root + 11 children). Line 402 in AdminCategories.js: const rootOnlyItems = items.filter((item) => !item.parent_id);"
+    },
+    "home_left_column_module_root_l1": {
+      "status": "PASS",
+      "description": "Home page left column shows: Module titles (Emlak, Vasıta, Diğer) → Root categories (Emlak under Emlak module) → L1 children with counts (Konut (0), Ticari Alan (0), Arsa (0), etc.)"
+    },
+    "ilan_ver_desktop_multi_column": {
+      "status": "PASS",
+      "description": "Desktop /ilan-ver shows multi-column layout: Kategori 1 (L1) → Kategori 2 (L2). Selecting module shows Column 0 with root categories, clicking root loads children in Column 1."
+    },
+    "ilan_ver_deterministic_column_closing": {
+      "status": "PASS",
+      "description": "Re-clicking column 0 item after selecting items in column 1+ deterministically closes right columns. TEST 8 PASS confirmed."
+    },
+    "ilan_ver_leaf_rule": {
+      "status": "PASS",
+      "description": "Continue button (Devam) is disabled until leaf category is selected. After selecting 'Konut', message shows 'Kategori seçimi tamamlandı: Konut' and button becomes enabled (disabled=None)."
+    },
+    "ilan_ver_lazy_load_children": {
+      "status": "PASS",
+      "description": "Children are fetched only when parent is clicked (lazy loading). Column 1 appeared with 11 children only after clicking 'Emlak' in Column 0."
+    },
+    "ilan_ver_mobile_stepper": {
+      "status": "PASS",
+      "description": "Mobile stepper (data-testid=ilan-ver-mobile-stepper) renders at viewport <768px. Shows: Seviye: L1/L2 label, Geri/İleri buttons, breadcrumb path. Only one column visible at a time."
+    },
+    "ilan_ver_breadcrumb": {
+      "status": "PASS",
+      "description": "Breadcrumb (data-testid=ilan-ver-breadcrumb) updates: 'Modül seçimi bekleniyor' → 'Emlak seçildi, kategori bekleniyor' → 'Emlak > Konut'"
+    },
+    "ilan_ver_error_retry_ui": {
+      "status": "VERIFIED_CODE",
+      "description": "Error/retry UI code verified at lines 796-808 in ListingCategorySelect.js. data-testid=ilan-ver-column-error-{columnIndex} and data-testid=ilan-ver-column-retry-{columnIndex} implemented."
+    },
+    "ilan_ver_session_cache": {
+      "status": "VERIFIED_CODE",
+      "description": "Session cache implemented via childrenCacheRef Map (line 31) with getCacheKey function. fetchChildren checks cache before API call (lines 118-124)."
+    }
+  },
+  "api_verification": {
+    "GET /api/admin/categories?country=DE": {
+      "status": 200,
+      "response": "12 categories (1 root Emlak with parent_id=null, 11 children with parent_id set)"
+    },
+    "GET /api/categories?module=real_estate&country=DE": {
+      "status": 200,
+      "response": "Categories for homepage display"
+    }
+  },
+  "screenshots": [
+    ".screenshots/home_categories_loaded.png - HomePage with left category column showing Module→Root→L1 children",
+    ".screenshots/admin_categories.png - Admin table showing only root category Emlak",
+    ".screenshots/ilan_ver_desktop_multi_column.png - Desktop multi-column category selection",
+    ".screenshots/ilan_ver_category_selected.png - Leaf category selected with completion message",
+    ".screenshots/ilan_ver_deterministic_close.png - Columns closed after re-selecting earlier column",
+    ".screenshots/ilan_ver_mobile_initial.png - Mobile stepper with Seviye: L1",
+    ".screenshots/ilan_ver_mobile_after_select.png - Mobile stepper with Seviye: L2"
+  ]
+}
