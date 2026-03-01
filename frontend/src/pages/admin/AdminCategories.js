@@ -3322,9 +3322,16 @@ const AdminCategories = () => {
                         <div className="text-xs font-semibold text-slate-700" data-testid={`categories-level-item-label-${levelIndex}-${itemIndex}`}>
                           {`Kategori ${levelIndex + 1}.${itemIndex + 1}`} <span className="text-slate-400">↕</span>
                         </div>
-                        <span className={`text-[11px] font-semibold ${item.is_leaf ? 'text-amber-600' : 'text-emerald-600'}`} data-testid={`categories-level-item-leaf-badge-${levelIndex}-${itemIndex}`}>
-                          {item.is_leaf ? 'Leaf' : 'Dal Açık'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {item.inherit_children ? (
+                            <span className="text-[11px] font-semibold text-indigo-600" data-testid={`categories-level-item-inherit-badge-${levelIndex}-${itemIndex}`}>
+                              Miraslı
+                            </span>
+                          ) : null}
+                          <span className={`text-[11px] font-semibold ${item.is_leaf ? 'text-amber-600' : 'text-emerald-600'}`} data-testid={`categories-level-item-leaf-badge-${levelIndex}-${itemIndex}`}>
+                            {item.is_leaf ? 'Leaf' : 'Dal Açık'}
+                          </span>
+                        </div>
                       </div>
 
                       <input
