@@ -1417,27 +1417,54 @@ const AdminCategories = () => {
 
   const handleLevelComplete = (levelIndex, items) => {
     if (!items || items.length === 0) {
-      setHierarchyError(`Kategori ${levelIndex + 1} için en az bir kayıt gerekir.`);
-      return;
-    }
-    const missing = items.find((item) => !item.name?.trim() || !item.slug?.trim());
-    if (missing) {
-      setHierarchyError(`Kategori ${levelIndex + 1} için ad ve slug zorunludur.`);
-      return;
-    }
-    const invalidSort = items.find((item) => !Number.isFinite(Number(item.sort_order)) || Number(item.sort_order) <= 0);
-    if (invalidSort) {
-      setHierarchyError(`Kategori ${levelIndex + 1} için sıra 1 veya daha büyük olmalıdır.`);
+      setHierarchyError(`Seviye ${levelIndex + 1} için en az bir kategori gerekir.`);
       return;
     }
 
-    const normalizedItems = items.map((item) => ({
+    const nextFieldErrors = {};
+    const sortOrders = new Set();
+    const slugs = new Set();
+
+    items.forEach((item, itemIndex) => {
+      const pathKey = `${levelIndex}-${itemIndex}`;
+      if (!item?.name?.trim()) {
+        nextFieldErrors[`level-${pathKey}-name`] = "Ad zorunludur.";
+      }
+      if (!item?.slug?.trim()) {
+        nextFieldErrors[`level-${pathKey}-slug`] = "Slug zorunludur.";
+      }
+      const sortValue = Number(item?.sort_order);
+      if (!Number.isFinite(sortValue) || sortValue <= 0) {
+        nextFieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
+      } else if (sortOrders.has(sortValue)) {
+        nextFieldErrors[`level-${pathKey}-sort`] = "Bu seviyede sıra numarası tekrar edemez.";
+      } else {
+        sortOrders.add(sortValue);
+      }
+
+      const slugKey = (item?.slug || "").trim().toLowerCase();
+      if (slugKey) {
+        if (slugs.has(slugKey)) {
+          nextFieldErrors[`level-${pathKey}-slug`] = "Bu seviyede slug tekrar edemez.";
+        }
+        slugs.add(slugKey);
+      }
+    });
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setHierarchyFieldErrors((prev) => ({ ...prev, ...nextFieldErrors }));
+      setHierarchyError(`Seviye ${levelIndex + 1} için alanları tamamlayın.`);
+      return;
+    }
+
+    const normalizedItems = items.map((item, index) => ({
       ...item,
       name: item.name.trim(),
       slug: item.slug.trim().toLowerCase(),
-      sort_order: Number(item.sort_order || 0),
+      sort_order: Number(item.sort_order || index + 1),
       is_complete: true,
-      children: item.children || [],
+      is_leaf: Boolean(item.is_leaf),
+      children: item.is_leaf ? [] : (item.children || []),
     }));
 
     if (levelIndex === 0) {
@@ -1450,6 +1477,7 @@ const AdminCategories = () => {
       }
       setSubcategories((prev) => updateNodeByPath(prev, parentPath, (node) => ({
         ...node,
+        is_leaf: false,
         children: normalizedItems,
       })));
     }
