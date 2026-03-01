@@ -27266,6 +27266,7 @@ def _listing_applicant_type(listing: Listing, owner: Optional[SqlUser] = None) -
 
 def _listing_to_dict(listing: Listing) -> dict:
     attrs = listing.attributes or {}
+    flow = _normalize_listing_flow(attrs, str(listing.id))
     media_meta = _listing_media_meta(listing)
     now = datetime.now(timezone.utc)
     is_featured = _listing_featured_active(listing, now=now)
@@ -27295,7 +27296,12 @@ def _listing_to_dict(listing: Listing) -> dict:
         "attributes": attrs.get("attributes") or {},
         "detail_groups": attrs.get("detail_groups") or [],
         "modules": attrs.get("modules") or {},
+        "location": attrs.get("location") or {"city": listing.city or "", "country": listing.country},
+        "contact": attrs.get("contact") or {},
         "payment_options": attrs.get("payment_options") or {},
+        "selected_category_path": attrs.get("selected_category_path") or [],
+        "flow": flow,
+        "flow_state": flow.get("state") or LISTING_FLOW_DRAFT,
         "is_featured": is_featured,
         "is_urgent": is_urgent,
         "is_paid": is_paid,
