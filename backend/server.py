@@ -10897,7 +10897,7 @@ def _default_listing_site_design_config() -> dict:
             "columns": 4,
             "cards": [
                 {
-                    "id": "vehicle-default",
+                    "id": "vehicle",
                     "title": "Vasıta",
                     "description": "Araç ilanı ver",
                     "module_key": "vehicle",
@@ -10905,7 +10905,7 @@ def _default_listing_site_design_config() -> dict:
                     "image_url": "",
                 },
                 {
-                    "id": "real-estate-default",
+                    "id": "real_estate",
                     "title": "Emlak",
                     "description": "Emlak ilanı ver",
                     "module_key": "real_estate",
@@ -10913,7 +10913,7 @@ def _default_listing_site_design_config() -> dict:
                     "image_url": "",
                 },
                 {
-                    "id": "other-default",
+                    "id": "other",
                     "title": "Diğer",
                     "description": "Genel ilan ver",
                     "module_key": "other",
