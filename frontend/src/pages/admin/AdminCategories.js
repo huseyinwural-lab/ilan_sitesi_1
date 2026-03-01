@@ -3411,6 +3411,17 @@ const AdminCategories = () => {
                             Altını Doldur
                           </button>
                         ) : null}
+                        {item.inherit_children ? (
+                          <button
+                            type="button"
+                            className="text-xs border rounded px-2 py-1 disabled:opacity-60"
+                            onClick={() => handleBreakInheritance(levelIndex, itemIndex)}
+                            disabled={levelLocked}
+                            data-testid={`categories-level-item-inherit-break-${levelIndex}-${itemIndex}`}
+                          >
+                            Mirası Kopar
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           className="text-xs text-rose-600 border rounded px-2 py-1 disabled:opacity-60"
