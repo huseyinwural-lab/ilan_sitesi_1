@@ -1336,7 +1336,7 @@ export default function ListingDetails() {
 
             <div className="grid gap-4 md:grid-cols-3">
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-city-wrap">
-                <span>Il *</span>
+                <span>Il {listingCreateConfig.require_city ? '*' : ''}</span>
                 <input
                   value={form.city}
                   onChange={(e) => saveFormLocal({ city: e.target.value })}
