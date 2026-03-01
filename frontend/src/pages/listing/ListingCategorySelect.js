@@ -25,6 +25,7 @@ const DEFAULT_LISTING_LAYOUT = {
 
 const ListingCategorySelect = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const [columns, setColumns] = useState([]);
   const [selectedPath, setSelectedPath] = useState([]);
@@ -33,6 +34,8 @@ const ListingCategorySelect = () => {
   const [error, setError] = useState('');
   const [selectionComplete, setSelectionComplete] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
+  const [listingLayout, setListingLayout] = useState(DEFAULT_LISTING_LAYOUT);
+  const [expandedColumns, setExpandedColumns] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
