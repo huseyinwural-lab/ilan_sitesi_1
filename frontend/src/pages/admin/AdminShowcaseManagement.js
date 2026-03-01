@@ -219,6 +219,7 @@ export default function AdminShowcaseManagement() {
       setStatus(`Yayına alındı (v${saved.version || '-'})`);
       await fetchVersions();
       await fetchConfig();
+      notifyShowcaseLayoutUpdated();
     } catch (err) {
       setError(err?.response?.data?.detail?.message || 'Yayınlama başarısız');
     }
@@ -241,6 +242,7 @@ export default function AdminShowcaseManagement() {
       setStatus('Seçilen versiyon yayına alındı');
       await fetchVersions();
       await fetchConfig();
+      notifyShowcaseLayoutUpdated();
       setError('');
     } catch (_err) {
       setError('Versiyon yayınlanamadı');
