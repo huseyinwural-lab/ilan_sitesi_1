@@ -197,16 +197,31 @@ const ListingCategorySelect = () => {
   const recentPathKey = 'ilan_ver_recent_path';
 
   const moduleGridColumns = useMemo(
-    () => Math.max(1, Number(listingLayout.listing_module_grid_columns) || DEFAULT_LISTING_LAYOUT.listing_module_grid_columns),
-    [listingLayout.listing_module_grid_columns]
+    () => Math.max(
+      1,
+      Number(listingSiteDesign?.step1?.columns)
+      || Number(listingLayout.listing_module_grid_columns)
+      || DEFAULT_LISTING_LAYOUT.listing_module_grid_columns
+    ),
+    [listingLayout.listing_module_grid_columns, listingSiteDesign?.step1?.columns]
   );
   const moduleGridRows = useMemo(
-    () => Math.max(1, Number(listingLayout.listing_module_grid_rows) || DEFAULT_LISTING_LAYOUT.listing_module_grid_rows),
-    [listingLayout.listing_module_grid_rows]
+    () => Math.max(
+      1,
+      Number(listingSiteDesign?.step1?.rows)
+      || Number(listingLayout.listing_module_grid_rows)
+      || DEFAULT_LISTING_LAYOUT.listing_module_grid_rows
+    ),
+    [listingLayout.listing_module_grid_rows, listingSiteDesign?.step1?.rows]
   );
   const listingLxLimit = useMemo(
-    () => Math.max(5, Number(listingLayout.listing_lx_limit) || DEFAULT_LISTING_LAYOUT.listing_lx_limit),
-    [listingLayout.listing_lx_limit]
+    () => Math.max(
+      5,
+      Number(listingSiteDesign?.step2?.continue_limit)
+      || Number(listingLayout.listing_lx_limit)
+      || DEFAULT_LISTING_LAYOUT.listing_lx_limit
+    ),
+    [listingLayout.listing_lx_limit, listingSiteDesign?.step2?.continue_limit]
   );
 
   const getCategoryLabel = useCallback((category) => {
@@ -356,12 +371,27 @@ const ListingCategorySelect = () => {
 
   const fetchListingLayout = useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/site/home-category-layout?country=${country}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      setListingLayout(normalizeListingLayout(data?.config));
+      const [layoutRes, listingRes] = await Promise.all([
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/site/home-category-layout?country=${country}`),
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/site/listing-design`),
+      ]);
+
+      if (layoutRes.ok) {
+        const data = await layoutRes.json();
+        setListingLayout(normalizeListingLayout(data?.config));
+      } else {
+        setListingLayout(DEFAULT_LISTING_LAYOUT);
+      }
+
+      if (listingRes.ok) {
+        const listingData = await listingRes.json();
+        setListingSiteDesign(normalizeListingSiteDesign(listingData?.config));
+      } else {
+        setListingSiteDesign(DEFAULT_LISTING_SITE_DESIGN);
+      }
     } catch (err) {
       setListingLayout(DEFAULT_LISTING_LAYOUT);
+      setListingSiteDesign(DEFAULT_LISTING_SITE_DESIGN);
     }
   }, [country]);
 
