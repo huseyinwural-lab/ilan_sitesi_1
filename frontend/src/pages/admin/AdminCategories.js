@@ -192,6 +192,25 @@ const createSubcategoryGroupDraft = () => ({
   ...createSubcategoryDraft(),
 });
 
+const buildInheritanceGroupKey = (parentPath, levelIndex) => {
+  const parentKey = parentPath.length ? parentPath.join(".") : "root";
+  return `${parentKey}::${levelIndex}`;
+};
+
+const cloneHierarchyTemplate = (nodes = []) => nodes.map((node, index) => ({
+  ...createSubcategoryDraft(),
+  name: node?.name || "",
+  slug: node?.slug || "",
+  active_flag: node?.active_flag ?? true,
+  sort_order: Number(node?.sort_order || index + 1),
+  transaction_type: node?.transaction_type || "",
+  is_complete: true,
+  is_leaf: Boolean(node?.is_leaf),
+  inherit_children: false,
+  inherit_group_key: "",
+  children: node?.is_leaf ? [] : cloneHierarchyTemplate(node?.children || []),
+}));
+
 const normalizeSlugValue = (value) => {
   if (!value) return "";
   return String(value)
