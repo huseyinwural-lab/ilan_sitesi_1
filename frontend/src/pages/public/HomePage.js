@@ -18,7 +18,9 @@ const MODULE_CONFIG = [
 const DEFAULT_HOME_CATEGORY_LAYOUT = {
   column_width: 286,
   l1_initial_limit: 5,
+  module_order_mode: 'manual',
   module_order: MODULE_CONFIG.map((item) => item.key),
+  module_l1_order_mode: {},
   module_l1_order: {},
 };
 

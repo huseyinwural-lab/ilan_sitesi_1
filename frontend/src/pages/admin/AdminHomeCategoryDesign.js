@@ -37,10 +37,20 @@ const normalizeConfig = (raw) => {
   MODULES.forEach((item) => {
     if (!moduleOrder.includes(item.key)) moduleOrder.push(item.key);
   });
+  const moduleOrderMode = source.module_order_mode === 'alphabetical' ? 'alphabetical' : 'manual';
+  const l1Modes = typeof source.module_l1_order_mode === 'object' && source.module_l1_order_mode ? source.module_l1_order_mode : {};
+  const moduleL1OrderMode = {};
+  Object.entries(l1Modes).forEach(([key, value]) => {
+    if (value === 'alphabetical' || value === 'manual') {
+      moduleL1OrderMode[key] = value;
+    }
+  });
   return {
     column_width: clamp(source.column_width, 220, 520, DEFAULT_CONFIG.column_width),
     l1_initial_limit: DEFAULT_CONFIG.l1_initial_limit,
+    module_order_mode: moduleOrderMode,
     module_order: moduleOrder,
+    module_l1_order_mode: moduleL1OrderMode,
     module_l1_order: typeof source.module_l1_order === 'object' && source.module_l1_order ? source.module_l1_order : {},
   };
 };
