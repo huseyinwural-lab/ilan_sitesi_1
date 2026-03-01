@@ -62,6 +62,9 @@ const normalizeConfig = (raw) => {
     module_order: moduleOrder,
     module_l1_order_mode: moduleL1OrderMode,
     module_l1_order: typeof source.module_l1_order === 'object' && source.module_l1_order ? source.module_l1_order : {},
+    listing_module_grid_rows: clamp(source.listing_module_grid_rows, 1, 6, DEFAULT_CONFIG.listing_module_grid_rows),
+    listing_module_grid_columns: clamp(source.listing_module_grid_columns, 1, 6, DEFAULT_CONFIG.listing_module_grid_columns),
+    listing_lx_limit: clamp(source.listing_lx_limit, 5, 50, DEFAULT_CONFIG.listing_lx_limit),
   };
 };
 
