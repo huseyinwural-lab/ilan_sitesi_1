@@ -10437,6 +10437,106 @@ async def _get_system_setting_by_key(
     return result.scalar_one_or_none()
 
 
+def _mask_api_key(value: str) -> str:
+    raw = (value or "").strip()
+    if not raw:
+        return ""
+    if len(raw) <= 10:
+        return "*" * len(raw)
+    return f"{raw[:6]}{'*' * (len(raw) - 10)}{raw[-4:]}"
+
+
+async def _resolve_google_maps_api_key(
+    session: AsyncSession,
+    *,
+    runtime_key: Optional[str] = None,
+    country_code: Optional[str] = None,
+) -> tuple[Optional[str], str]:
+    env_key = (os.environ.get("GOOGLE_MAPS_API_KEY") or "").strip()
+    if env_key:
+        return env_key, "env"
+
+    runtime = (runtime_key or "").strip()
+    if runtime:
+        return runtime, "manual_runtime"
+
+    setting = await _get_system_setting_by_key(session, GOOGLE_MAPS_API_KEY_SETTING_KEY, country_code)
+    stored_key = ""
+    if setting and isinstance(setting.value, dict):
+        stored_key = str(setting.value.get("api_key") or "").strip()
+    if stored_key:
+        return stored_key, "system_setting"
+
+    return None, "none"
+
+
+def _check_places_rate_limit(request: Request) -> tuple[bool, int, int]:
+    if request.client and request.client.host:
+        client_key = request.client.host
+    else:
+        client_key = "unknown"
+
+    now_ts = time.time()
+    queue = _places_rate_limit_tracker[client_key]
+    window_start = now_ts - PLACES_RATE_LIMIT_WINDOW_SECONDS
+    while queue and queue[0] < window_start:
+        queue.popleft()
+
+    if len(queue) >= PLACES_RATE_LIMIT_MAX_REQUESTS:
+        retry_after = max(1, int(queue[0] + PLACES_RATE_LIMIT_WINDOW_SECONDS - now_ts)) if queue else 1
+        return False, 0, retry_after
+
+    queue.append(now_ts)
+    remaining = max(0, PLACES_RATE_LIMIT_MAX_REQUESTS - len(queue))
+    return True, remaining, 0
+
+
+async def _fetch_google_places_json(url: str) -> dict:
+    def _request() -> dict:
+        with urllib.request.urlopen(url, timeout=8) as response:
+            body = response.read().decode("utf-8")
+            return json.loads(body or "{}")
+
+    return await asyncio.to_thread(_request)
+
+
+def _normalize_google_place_details(raw: dict) -> dict:
+    result = raw.get("result") if isinstance(raw.get("result"), dict) else {}
+    components = result.get("address_components") if isinstance(result.get("address_components"), list) else []
+
+    def _find_component(*component_types: str) -> Optional[str]:
+        expected = set(component_types)
+        for comp in components:
+            c_types = set(comp.get("types") or [])
+            if expected.issubset(c_types):
+                value = str(comp.get("long_name") or "").strip()
+                if value:
+                    return value
+        return None
+
+    city = _find_component("administrative_area_level_1") or _find_component("locality")
+    district = _find_component("administrative_area_level_2") or _find_component("sublocality", "sublocality_level_1")
+    neighborhood = _find_component("neighborhood") or _find_component("sublocality", "sublocality_level_2")
+
+    geometry = result.get("geometry") if isinstance(result.get("geometry"), dict) else {}
+    location = geometry.get("location") if isinstance(geometry.get("location"), dict) else {}
+    lat = location.get("lat")
+    lng = location.get("lng")
+
+    return {
+        "place_id": result.get("place_id") or raw.get("place_id"),
+        "formatted_address": result.get("formatted_address") or "",
+        "city": city,
+        "district": district,
+        "neighborhood": neighborhood,
+        "postal_code": _find_component("postal_code"),
+        "country_code": (_find_component("country") or "")[:2].upper() or None,
+        "latitude": float(lat) if isinstance(lat, (int, float)) else None,
+        "longitude": float(lng) if isinstance(lng, (int, float)) else None,
+        "components": components,
+    }
+
+
 def _sanitize_watermark_position(value: Optional[str]) -> str:
     normalized = str(value or "bottom_right").strip().lower()
     allowed = {"bottom_right", "bottom_left", "top_right", "top_left", "center"}
