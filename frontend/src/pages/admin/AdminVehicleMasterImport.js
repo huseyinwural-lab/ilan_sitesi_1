@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -99,11 +100,13 @@ export default function AdminVehicleMasterImport() {
   const [apiLoading, setApiLoading] = useState(false);
 
   const [uploadFile, setUploadFile] = useState(null);
+  const [uploadMode, setUploadMode] = useState('json');
   const [uploadDryRun, setUploadDryRun] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [uploadErrorInfo, setUploadErrorInfo] = useState(null);
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadMeta, setUploadMeta] = useState(null);
 
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
