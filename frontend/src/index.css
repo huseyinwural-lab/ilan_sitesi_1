@@ -167,6 +167,47 @@
     font-family: 'Inter', sans-serif;
   }
 
+  html,
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  body[data-theme='light'] {
+    color-scheme: light;
+  }
+
+  body[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--text-muted);
+  }
+
+  table {
+    color: var(--text-primary);
+  }
+
+  th,
+  td {
+    border-color: var(--border-subtle);
+  }
+
+  [role='dialog'] {
+    background-color: var(--bg-modal);
+    color: var(--text-primary);
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Manrope', sans-serif;
   }
