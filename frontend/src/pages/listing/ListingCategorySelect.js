@@ -671,6 +671,7 @@ const ListingCategorySelect = () => {
     if (selectedModule === 'vehicle') {
       localStorage.removeItem('ilan_ver_vehicle_selection');
       localStorage.removeItem('ilan_ver_vehicle_trim_id');
+      localStorage.removeItem('ilan_ver_vehicle_trim_key');
       localStorage.removeItem('ilan_ver_manual_trim_flag');
       localStorage.removeItem('ilan_ver_manual_trim');
     }
@@ -688,6 +689,7 @@ const ListingCategorySelect = () => {
     if (moduleKey === 'vehicle') {
       localStorage.removeItem('ilan_ver_vehicle_selection');
       localStorage.removeItem('ilan_ver_vehicle_trim_id');
+      localStorage.removeItem('ilan_ver_vehicle_trim_key');
       localStorage.removeItem('ilan_ver_manual_trim_flag');
       localStorage.removeItem('ilan_ver_manual_trim');
     }
