@@ -1423,6 +1423,10 @@ const AdminCategories = () => {
     return parent?.children || [];
   };
 
+  const getInheritanceGroupKeyForLevel = (levelIndex) => (
+    buildInheritanceGroupKey(getParentPathForLevel(levelIndex), levelIndex)
+  );
+
   const levelBreadcrumbs = useMemo(() => {
     const crumbs = [];
     let currentNodes = subcategories;
