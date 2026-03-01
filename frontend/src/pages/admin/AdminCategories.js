@@ -2394,31 +2394,31 @@ const AdminCategories = () => {
     const isVehicleModule = moduleValue === "vehicle";
     const rootSortOrder = Number(form.sort_order || 0);
 
-    const fieldErrors = {};
+    const mainFieldErrors = {};
     if (!name) {
-      fieldErrors.main_name = "Ana kategori adı zorunludur.";
+      mainFieldErrors.main_name = "Ana kategori adı zorunludur.";
     }
     if (!slug) {
-      fieldErrors.main_slug = "Slug zorunludur.";
+      mainFieldErrors.main_slug = "Slug zorunludur.";
     }
     if (!country) {
-      fieldErrors.main_country = "Ülke zorunludur.";
+      mainFieldErrors.main_country = "Ülke zorunludur.";
     }
     if (!moduleValue) {
-      fieldErrors.main_module = "Modül zorunludur.";
+      mainFieldErrors.main_module = "Modül zorunludur.";
     }
     if (!Number.isFinite(rootSortOrder) || rootSortOrder <= 0) {
-      fieldErrors.main_sort_order = "Sıra 1 veya daha büyük olmalıdır.";
+      mainFieldErrors.main_sort_order = "Sıra 1 veya daha büyük olmalıdır.";
     }
     if (isRootCategory && !form.image_url?.trim()) {
-      fieldErrors.main_image_url = "Ana kategori görseli zorunludur.";
+      mainFieldErrors.main_image_url = "Ana kategori görseli zorunludur.";
     }
     if (!orderPreview.available) {
-      fieldErrors.main_sort_order = orderPreview.message || "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.";
+      mainFieldErrors.main_sort_order = orderPreview.message || "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.";
     }
 
-    if (Object.keys(fieldErrors).length > 0) {
-      setHierarchyFieldErrors(fieldErrors);
+    if (Object.keys(mainFieldErrors).length > 0) {
+      setHierarchyFieldErrors(mainFieldErrors);
       setHierarchyError("Lütfen işaretli alanları doldurun.");
       return { success: false };
     }
