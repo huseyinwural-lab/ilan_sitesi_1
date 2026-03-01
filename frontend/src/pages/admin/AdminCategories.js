@@ -1031,7 +1031,10 @@ const AdminCategories = () => {
         body: JSON.stringify(payload),
       });
 
-      const data = await safeParseJson(res);
+      let data = await safeParseJson(res);
+      if (!res.ok && (!data || Object.keys(data).length === 0)) {
+        data = { message: `Sunucu hatası (${res.status})` };
+      }
       if (res.ok) {
         return { ok: true, data, payload, autoAdjusted: attempt > 0 };
       }
