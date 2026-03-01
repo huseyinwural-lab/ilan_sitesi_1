@@ -694,8 +694,17 @@ const ListingCategorySelect = () => {
   };
 
   const handleMobileNext = () => {
+    if (!canMobileNext) return;
     setMobileColumnIndex((prev) => Math.min(columns.length - 1, prev + 1));
   };
+
+  const handleExpandColumn = (columnIndex) => {
+    setExpandedColumns((prev) => ({
+      ...prev,
+      [columnIndex]: !prev[columnIndex],
+    }));
+  };
+
 
   const canMobileBack = mobileColumnIndex > 0;
   const canMobileNext = mobileColumnIndex < columns.length - 1 && Boolean(columns[mobileColumnIndex]?.selectedId);
