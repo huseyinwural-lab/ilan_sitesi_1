@@ -369,14 +369,25 @@ export default function AdminVehicleMasterImport() {
         </div>
 
         <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="vehicle-master-import-upload-card">
-          <div>
-            <h2 className="text-lg font-semibold">JSON Yükle</h2>
-            <p className="text-xs text-muted-foreground">Array of records formatı zorunludur.</p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">JSON / Excel Yükle</h2>
+              <p className="text-xs text-muted-foreground">Array of records formatı zorunludur.</p>
+            </div>
+            <select
+              className="h-9 rounded-md border px-3 text-xs"
+              value={uploadMode}
+              onChange={(e) => handleUploadModeChange(e.target.value)}
+              data-testid="vehicle-import-upload-mode"
+            >
+              <option value="json">JSON</option>
+              <option value="excel">Excel</option>
+            </select>
           </div>
           <div className="space-y-2">
             <input
               type="file"
-              accept="application/json"
+              accept={uploadMode === 'excel' ? '.xlsx,.xls' : 'application/json,.json'}
               onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
               data-testid="vehicle-import-upload-file"
             />
@@ -390,9 +401,16 @@ export default function AdminVehicleMasterImport() {
                 Örnek JSON indir
               </button>
               <span className="text-xs text-muted-foreground" data-testid="vehicle-import-upload-format">
-                Beklenen format: Array; zorunlu alanlar: year, make, model, trim
+                {uploadMode === 'excel'
+                  ? 'Excel yüklemede ilk sayfa kullanılır. Başlıklar: year, make, model, trim'
+                  : 'Beklenen format: Array; zorunlu alanlar: year, make, model, trim'}
               </span>
             </div>
+            {uploadMeta?.record_count ? (
+              <div className="text-xs text-slate-500" data-testid="vehicle-import-upload-meta">
+                Excel dönüştürüldü: {uploadMeta.record_count} kayıt
+              </div>
+            ) : null}
             <label className="flex items-center gap-2 text-xs" data-testid="vehicle-import-upload-dry-run-toggle">
               <input
                 type="checkbox"
@@ -411,7 +429,7 @@ export default function AdminVehicleMasterImport() {
               disabled={uploadLoading}
               data-testid="vehicle-import-upload-submit"
             >
-              {uploadLoading ? 'Yükleniyor...' : 'JSON Yükle ve Import Et'}
+              {uploadLoading ? 'Yükleniyor...' : uploadMode === 'excel' ? 'Excel Yükle ve Import Et' : 'JSON Yükle ve Import Et'}
             </button>
           </div>
           {uploadStatus && (
