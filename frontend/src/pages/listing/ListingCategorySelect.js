@@ -23,6 +23,55 @@ const DEFAULT_LISTING_LAYOUT = {
   listing_lx_limit: 5,
 };
 
+const DEFAULT_LISTING_SITE_DESIGN = {
+  step1: {
+    rows: 2,
+    columns: 4,
+    cards: MODULE_OPTIONS.map((item) => ({
+      id: item.key,
+      title: item.label,
+      description: '',
+      module_key: item.key,
+      border_color: '#334155',
+      image_url: '',
+    })),
+  },
+  step2: {
+    continue_limit: 5,
+  },
+};
+
+const normalizeListingSiteDesign = (raw) => {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const step1 = source.step1 && typeof source.step1 === 'object' ? source.step1 : {};
+  const step2 = source.step2 && typeof source.step2 === 'object' ? source.step2 : {};
+
+  const cardsRaw = Array.isArray(step1.cards) ? step1.cards : DEFAULT_LISTING_SITE_DESIGN.step1.cards;
+  const cards = cardsRaw.map((card, index) => {
+    const moduleKey = String(card?.module_key || '').trim().toLowerCase();
+    const validModule = MODULE_OPTIONS.some((item) => item.key === moduleKey) ? moduleKey : 'other';
+    return {
+      id: String(card?.id || `card-${index + 1}`),
+      title: String(card?.title || `Modül ${index + 1}`),
+      description: String(card?.description || ''),
+      module_key: validModule,
+      border_color: String(card?.border_color || '#334155'),
+      image_url: String(card?.image_url || ''),
+    };
+  });
+
+  return {
+    step1: {
+      rows: Math.max(1, Number(step1.rows) || DEFAULT_LISTING_SITE_DESIGN.step1.rows),
+      columns: Math.max(1, Number(step1.columns) || DEFAULT_LISTING_SITE_DESIGN.step1.columns),
+      cards: cards.length ? cards : DEFAULT_LISTING_SITE_DESIGN.step1.cards,
+    },
+    step2: {
+      continue_limit: Math.max(5, Number(step2.continue_limit) || DEFAULT_LISTING_SITE_DESIGN.step2.continue_limit),
+    },
+  };
+};
+
 const normalizeListingLayout = (raw) => {
   const source = raw || {};
   const orderMode = source.module_order_mode === 'alphabetical' ? 'alphabetical' : 'manual';
@@ -59,6 +108,7 @@ const ListingCategorySelect = () => {
   const [selectionComplete, setSelectionComplete] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
   const [listingLayout, setListingLayout] = useState(DEFAULT_LISTING_LAYOUT);
+  const [listingSiteDesign, setListingSiteDesign] = useState(DEFAULT_LISTING_SITE_DESIGN);
   const [expandedColumns, setExpandedColumns] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
