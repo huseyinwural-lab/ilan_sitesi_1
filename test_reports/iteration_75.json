@@ -1,0 +1,49 @@
+{
+  "summary": "İlan Tasarım (Listing Design) admin page testing completed. Fixed 403 permission error by adding missing route rule to adminRbac.js. All backend endpoints working (GET/PUT admin, GET public). Admin page loads correctly with 8 sections/blocks. Web ilan-ver flow uses admin config.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "AdminListingDesign", "issues": ["Console warnings about span/option nesting in select elements (non-blocking)"]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_listing_design.py",
+    "/app/test_reports/pytest/pytest_listing_design.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "FIXED: Missing route rule for /admin/site-design/listing in adminRbac.js caused 403 error"
+  ],
+  "updated_files": [
+    "/app/frontend/src/shared/adminRbac.js"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "Admin: admin@platform.com / Admin123!, User: user@platform.com / User123!",
+  "seed_data_creation": "None required",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "İlan Tasarım admin page at /admin/site-design/listing now works. The page manages listing creation flow configuration with 3 main steps (Module Grid, Category Selection, 8-block Form). Backend endpoints tested: GET/PUT /api/admin/site/listing-design and GET /api/site/listing-design.",
+  "features_tested": {
+    "admin_menu_visibility": "PASS - İlan Tasarım visible under 'Site İç Tasarımı' section",
+    "route_access": "PASS - /admin/site-design/listing loads correctly after fix",
+    "page_sections": "PASS - 8 sections render: Module Grid, Category Search, Address Rules, Google Maps, Photo/Video, Contact, Duration, Terms",
+    "save_button": "PASS - Tümünü Kaydet button saves all configs",
+    "backend_get_admin": "PASS - GET /api/admin/site/listing-design returns config",
+    "backend_put_admin": "PASS - PUT /api/admin/site/listing-design updates config",
+    "backend_get_public": "PASS - GET /api/site/listing-design returns config (no setting_id)",
+    "web_ilan_ver_step1": "PASS - /ilan-ver shows module cards from admin config (Emlak, Vasıta, Diğer)"
+  },
+  "bug_fixed": {
+    "issue": "403 error when accessing /admin/site-design/listing",
+    "root_cause": "Missing route rule in ADMIN_ROUTE_RULES array in /app/frontend/src/shared/adminRbac.js",
+    "fix": "Added { pattern: /^\\/admin\\/site-design\\/listing$/, roles: ADMIN_ROLE_GROUPS.adminOnly } to adminRbac.js line 49"
+  }
+}
