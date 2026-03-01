@@ -921,14 +921,15 @@ export default function ListingDetails() {
     if (files.length === 0) return;
     setError('');
 
-    if ((mediaItems.length + files.length) > 20) {
-      setError('En fazla 20 fotoğraf yükleyebilirsiniz.');
+    if ((mediaItems.length + files.length) > mediaConfig.max_photos) {
+      setError(`En fazla ${mediaConfig.max_photos} fotoğraf yükleyebilirsiniz.`);
       return;
     }
 
-    const invalid = files.find((file) => !file.type.startsWith('image/') || file.size > 2 * 1024 * 1024);
+    const maxFileBytes = mediaConfig.max_file_size_mb * 1024 * 1024;
+    const invalid = files.find((file) => !mediaConfig.accepted_types.includes(file.type) || file.size > maxFileBytes);
     if (invalid) {
-      setError('Sadece png/jpg/webp ve maksimum 2MB dosya yükleyebilirsiniz.');
+      setError(`Sadece ${mediaConfig.accepted_types.join(', ')} ve maksimum ${mediaConfig.max_file_size_mb}MB dosya yükleyebilirsiniz.`);
       return;
     }
 
