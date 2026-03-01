@@ -16,7 +16,7 @@
 
 .home-v2-main-grid {
   display: grid;
-  grid-template-columns: 286px 1fr;
+  grid-template-columns: var(--home-left-width, 286px) 1fr;
   gap: 16px;
   align-items: start;
   padding-top: 14px;
