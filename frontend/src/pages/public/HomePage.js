@@ -36,6 +36,9 @@ const LANGUAGE_LOCALE_MAP = {
   fr: 'fr-FR',
 };
 
+const MODULE_ROOT_LIMIT = DEFAULT_HOME_CATEGORY_LAYOUT.l1_initial_limit;
+const ROOT_CHILD_LIMIT = 8;
+
 
 const clamp = (value, min, max, fallback) => {
   const parsed = Number(value);
