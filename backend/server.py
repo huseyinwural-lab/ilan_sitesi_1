@@ -26634,6 +26634,9 @@ def _normalize_vehicle_import_record(record: dict) -> tuple[Optional[dict], Opti
     trim_name = _extract_named_value(raw_trim) or _extract_named_value(record.get("trim_name"))
     trim_ref = _extract_reference_value(record.get("trim_id") or record.get("trimId") or record.get("id"))
 
+    raw_vehicle_type = _extract_vehicle_field(record, ["vehicle_type", "vehicleType", "type", "segment"]) or record.get("vehicle_type")
+    vehicle_type = _normalize_vehicle_type(raw_vehicle_type) or "car"
+
     year = _cast_int(record.get("year") or record.get("model_year") or record.get("year_start"))
 
     if not make_name:
@@ -26644,6 +26647,8 @@ def _normalize_vehicle_import_record(record: dict) -> tuple[Optional[dict], Opti
         return None, "Missing trim"
     if year is None:
         return None, "Missing year"
+    if vehicle_type not in VEHICLE_TYPE_SET:
+        return None, f"vehicle_type invalid: {vehicle_type}"
 
     attributes: dict[str, Any] = {}
     for key in VEHICLE_IMPORT_ATTR_KEYS:
