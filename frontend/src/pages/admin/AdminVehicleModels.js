@@ -134,6 +134,40 @@ const AdminVehicleModels = () => {
     }
   };
 
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      if (prev.size === items.length) {
+        return new Set();
+      }
+      return new Set(items.map((item) => item.id));
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`${selectedIds.size} model pasif edilsin mi?`)) return;
+    try {
+      await axios.post(`${API_BASE_URL}/api/admin/vehicle-models/bulk-delete`, {
+        ids: Array.from(selectedIds),
+      }, { headers: authHeader });
+      fetchItems();
+    } catch (e) {
+      alert('Toplu silme başarısız');
+    }
+  };
+
   const makeMap = useMemo(() => {
     const map = new Map();
     makes.forEach((make) => map.set(make.id, { name: make.name, country_code: make.country_code }));
