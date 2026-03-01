@@ -26692,6 +26692,7 @@ def _normalize_vehicle_import_record(record: dict) -> tuple[Optional[dict], Opti
         "trim_name": trim_name,
         "trim_ref": trim_ref,
         "year": year,
+        "vehicle_type": vehicle_type,
         "attributes": attributes,
     }, None
 
