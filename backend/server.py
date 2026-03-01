@@ -27163,7 +27163,10 @@ LISTING_FLOW_SUBMITTED = "submitted_for_review"
 
 def _normalize_listing_flow(attrs: dict, listing_id: str) -> dict:
     flow = attrs.get("listing_flow") if isinstance(attrs.get("listing_flow"), dict) else {}
-    draft_id = str(flow.get("draft_id") or listing_id)
+    raw_draft_id = flow.get("draft_id")
+    if raw_draft_id in [None, "", "None"]:
+        raw_draft_id = listing_id
+    draft_id = str(raw_draft_id)
     state = str(flow.get("state") or LISTING_FLOW_DRAFT)
     return {
         **flow,
