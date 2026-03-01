@@ -109,6 +109,19 @@ const ListingCategorySelect = () => {
   const recentStorageKey = 'ilan_ver_recent_category';
   const recentPathKey = 'ilan_ver_recent_path';
 
+  const moduleGridColumns = useMemo(
+    () => Math.max(1, Number(listingLayout.listing_module_grid_columns) || DEFAULT_LISTING_LAYOUT.listing_module_grid_columns),
+    [listingLayout.listing_module_grid_columns]
+  );
+  const moduleGridRows = useMemo(
+    () => Math.max(1, Number(listingLayout.listing_module_grid_rows) || DEFAULT_LISTING_LAYOUT.listing_module_grid_rows),
+    [listingLayout.listing_module_grid_rows]
+  );
+  const listingLxLimit = useMemo(
+    () => Math.max(5, Number(listingLayout.listing_lx_limit) || DEFAULT_LISTING_LAYOUT.listing_lx_limit),
+    [listingLayout.listing_lx_limit]
+  );
+
   const getCategoryLabel = useCallback((category) => {
     if (!category) return '';
     const translations = Array.isArray(category.translations) ? category.translations : [];
