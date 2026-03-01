@@ -2508,7 +2508,7 @@ const AdminCategories = () => {
 
     const mainFieldErrors = {};
     if (!name) {
-      mainFieldErrors.main_name = "Ana kategori adı zorunludur.";
+      mainFieldErrors.main_name = "Modül adı zorunludur.";
     }
     if (!slug) {
       mainFieldErrors.main_slug = "Slug zorunludur.";
