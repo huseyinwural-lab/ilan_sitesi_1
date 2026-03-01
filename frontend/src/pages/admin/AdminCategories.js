@@ -1393,6 +1393,7 @@ const AdminCategories = () => {
     if (parentPath.length === 0) return;
     setSubcategories((prev) => updateNodeByPath(prev, parentPath, (node) => ({
       ...node,
+      is_leaf: false,
       children: [...(node.children || []), createSubcategoryDraft()],
     })));
   };
@@ -1400,7 +1401,14 @@ const AdminCategories = () => {
   const updateLevelItem = (levelIndex, itemIndex, patch) => {
     resetLevelCompletionFrom(levelIndex);
     const path = [...getParentPathForLevel(levelIndex), itemIndex];
-    updateSubcategory(path, patch);
+    const normalizedPatch = { ...patch };
+    if (Object.prototype.hasOwnProperty.call(patch, "is_leaf")) {
+      normalizedPatch.is_leaf = Boolean(patch.is_leaf);
+      if (normalizedPatch.is_leaf) {
+        normalizedPatch.children = [];
+      }
+    }
+    updateSubcategory(path, normalizedPatch);
   };
 
   const removeLevelItem = (levelIndex, itemIndex) => {
