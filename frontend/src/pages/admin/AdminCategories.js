@@ -2472,7 +2472,7 @@ const AdminCategories = () => {
         children: node.is_leaf ? [] : normalizeTree(node.children || []),
       }));
 
-    const fieldErrors = {};
+    const treeFieldErrors = {};
     const validateTree = (nodes, levelIndex = 0) => {
       if (levelIndex === 0 && nodes.length === 0) {
         return "Seviye 1 için en az bir kategori eklenmelidir.";
@@ -2485,16 +2485,16 @@ const AdminCategories = () => {
         const node = nodes[index];
         const pathKey = `${levelIndex}-${index}`;
         const label = `Seviye ${levelIndex + 1}.${index + 1}`;
-        if (!node.name) fieldErrors[`level-${pathKey}-name`] = "Ad zorunludur.";
-        if (!node.slug) fieldErrors[`level-${pathKey}-slug`] = "Slug zorunludur.";
+        if (!node.name) treeFieldErrors[`level-${pathKey}-name`] = "Ad zorunludur.";
+        if (!node.slug) treeFieldErrors[`level-${pathKey}-slug`] = "Slug zorunludur.";
         if (!Number.isFinite(Number(node.sort_order)) || Number(node.sort_order) <= 0) {
-          fieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
+          treeFieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
         }
 
         const sortValue = Number(node.sort_order);
         if (Number.isFinite(sortValue)) {
           if (sortOrders.has(sortValue)) {
-            fieldErrors[`level-${pathKey}-sort`] = "Bu seviyede sıra numarası tekrar edemez.";
+            treeFieldErrors[`level-${pathKey}-sort`] = "Bu seviyede sıra numarası tekrar edemez.";
           }
           sortOrders.add(sortValue);
         }
@@ -2502,7 +2502,7 @@ const AdminCategories = () => {
         const slugValue = (node.slug || "").trim().toLowerCase();
         if (slugValue) {
           if (slugKeys.has(slugValue)) {
-            fieldErrors[`level-${pathKey}-slug`] = "Bu seviyede slug tekrar edemez.";
+            treeFieldErrors[`level-${pathKey}-slug`] = "Bu seviyede slug tekrar edemez.";
           }
           slugKeys.add(slugValue);
         }
@@ -2510,7 +2510,7 @@ const AdminCategories = () => {
         if (!node.is_leaf) {
           const children = Array.isArray(node.children) ? node.children : [];
           if (children.length === 0) {
-            fieldErrors[`level-${pathKey}-children`] = "Alt seviye yoksa leaf seçilmelidir.";
+            treeFieldErrors[`level-${pathKey}-children`] = "Alt seviye yoksa leaf seçilmelidir.";
             return `${label} için alt seviye bulunamadı. Leaf işaretleyin.`;
           }
           const nestedError = validateTree(children, levelIndex + 1);
@@ -2518,7 +2518,7 @@ const AdminCategories = () => {
         }
       }
 
-      if (Object.keys(fieldErrors).length > 0) {
+      if (Object.keys(treeFieldErrors).length > 0) {
         return `Seviye ${levelIndex + 1} için alanları tamamlayın.`;
       }
       return "";
@@ -2528,8 +2528,8 @@ const AdminCategories = () => {
     if (!isVehicleModule) {
       const validationError = validateTree(cleanedSubs);
       if (validationError) {
-        if (Object.keys(fieldErrors).length > 0) {
-          setHierarchyFieldErrors(fieldErrors);
+        if (Object.keys(treeFieldErrors).length > 0) {
+          setHierarchyFieldErrors(treeFieldErrors);
         }
         setHierarchyError(validationError);
         return { success: false };
