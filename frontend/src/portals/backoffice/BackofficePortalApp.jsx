@@ -166,6 +166,16 @@ export default function BackofficePortalApp() {
         }
       />
       <Route
+        path="/site-design/home-category"
+        element={
+          <AdminLayout>
+            <AdminRouteGuard roles={["super_admin"]}>
+              <AdminHomeCategoryDesign />
+            </AdminRouteGuard>
+          </AdminLayout>
+        }
+      />
+      <Route
         path="/user-interface-design"
         element={
           <AdminLayout>
