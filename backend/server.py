@@ -28899,6 +28899,11 @@ class ShowcaseLayoutConfigPayload(BaseModel):
     status: Optional[str] = "draft"
 
 
+class HomeCategoryLayoutPayload(BaseModel):
+    config: dict
+    country_code: Optional[str] = None
+
+
 class InfoPagePayload(BaseModel):
     slug: str
     title_tr: str
