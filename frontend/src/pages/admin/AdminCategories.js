@@ -3758,7 +3758,7 @@ const AdminCategories = () => {
                         )}
                       </div>
                       <div className="space-y-2 md:col-span-2" data-testid="categories-image-section">
-                        <label className={labelClassName}>Ana kategori görseli</label>
+                        <label className={labelClassName}>Modül görseli</label>
                         {isRootCategory ? (
                           <div className="rounded-md border border-dashed border-slate-300 p-3 space-y-3" data-testid="categories-image-root-uploader">
                             <div className="flex flex-wrap items-center gap-3" data-testid="categories-image-preview-wrap">
