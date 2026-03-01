@@ -221,6 +221,45 @@ export default function AdminVehicleMasterImport() {
     return { file: uploadFile, meta: { mode: 'json' } };
   };
 
+  const handleUploadSubmit = async () => {
+    setUploadLoading(true);
+    setUploadError('');
+    setUploadStatus('');
+    setUploadErrorInfo(null);
+    setUploadMeta(null);
+    try {
+      const prepared = await prepareUploadFile();
+      if (prepared.error) {
+        setUploadError(prepared.error);
+        setUploadErrorInfo({ error_code: 'UPLOAD_ERROR', message: prepared.error, field_errors: [] });
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', prepared.file);
+      formData.append('dry_run', uploadDryRun ? 'true' : 'false');
+      const res = await axios.post(`${API}/admin/vehicle-master-import/jobs/upload`, formData, {
+        headers: { ...authHeader, 'Content-Type': 'multipart/form-data' },
+      });
+      setUploadStatus(`Job oluşturuldu: ${res.data?.job?.id || ''}`);
+      setUploadMeta(prepared.meta || null);
+      setSelectedJob(res.data?.job || null);
+      fetchJobs();
+    } catch (error) {
+      const status = error?.response?.status;
+      const detail = error?.response?.data;
+      if (detail?.error_code) {
+        setUploadErrorInfo(detail);
+        setUploadError(detail.message || `Upload başarısız${status ? ` (HTTP ${status})` : ''}.`);
+      } else {
+        const message = detail?.message || detail || `Upload başarısız${status ? ` (HTTP ${status})` : ''}.`;
+        setUploadErrorInfo({ error_code: 'UPLOAD_ERROR', message, field_errors: detail?.field_errors || [] });
+        setUploadError(message);
+      }
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
 
   const summary = selectedJob?.summary || {};
   const errorLog = selectedJob?.error_log || {};
