@@ -32578,6 +32578,97 @@ async def get_site_showcase_layout(session: AsyncSession = Depends(get_sql_sessi
     return JSONResponse(content=content, headers={"Cache-Control": "no-store"})
 
 
+@api_router.get("/site/home-category-layout")
+async def get_site_home_category_layout(
+    country: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    country_code = country.upper() if country else None
+    setting = await _get_system_setting_by_key(session, HOME_CATEGORY_LAYOUT_SETTING_KEY, country_code)
+    normalized = _normalize_home_category_layout_config(setting.value if setting else None)
+    content = {
+        "config": normalized,
+        "updated_at": setting.updated_at.isoformat() if setting and setting.updated_at else None,
+    }
+    return JSONResponse(content=content, headers={"Cache-Control": "no-store"})
+
+
+@api_router.get("/admin/site/home-category-layout")
+async def get_home_category_layout_admin(
+    request: Request,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    country_code = country.upper() if country else None
+    if country_code:
+        _assert_country_scope(country_code, current_user)
+    setting = await _get_system_setting_by_key(session, HOME_CATEGORY_LAYOUT_SETTING_KEY, country_code)
+    return {
+        "config": _normalize_home_category_layout_config(setting.value if setting else None),
+        "country_code": country_code or (setting.country_code if setting else None),
+        "updated_at": setting.updated_at.isoformat() if setting and setting.updated_at else None,
+    }
+
+
+@api_router.put("/admin/site/home-category-layout")
+async def save_home_category_layout_admin(
+    payload: HomeCategoryLayoutPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    country_code = payload.country_code.upper() if payload.country_code else None
+    if country_code:
+        _assert_country_scope(country_code, current_user)
+
+    normalized = _normalize_home_category_layout_config(payload.config)
+
+    query = select(SystemSetting).where(SystemSetting.key == HOME_CATEGORY_LAYOUT_SETTING_KEY)
+    if country_code:
+        query = query.where(SystemSetting.country_code == country_code)
+    else:
+        query = query.where(or_(SystemSetting.country_code.is_(None), SystemSetting.country_code == ""))
+    result = await session.execute(query)
+    setting = result.scalar_one_or_none()
+
+    if setting:
+        setting.value = normalized
+        setting.country_code = country_code
+        setting.updated_at = datetime.now(timezone.utc)
+    else:
+        setting = SystemSetting(
+            key=HOME_CATEGORY_LAYOUT_SETTING_KEY,
+            value=normalized,
+            country_code=country_code,
+            description="Home category column layout",
+        )
+        session.add(setting)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="HOME_CATEGORY_LAYOUT_UPDATE",
+        actor=current_user,
+        resource_type="home_category_layout",
+        resource_id=str(setting.id),
+        metadata={
+            "country_code": country_code,
+        },
+        request=request,
+        country_code=country_code,
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "id": str(setting.id),
+        "config": normalized,
+        "updated_at": setting.updated_at.isoformat() if setting.updated_at else None,
+    }
+
+
 @api_router.get("/admin/site/showcase-layout")
 async def get_showcase_layout_admin(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
