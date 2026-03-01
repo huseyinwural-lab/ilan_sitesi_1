@@ -235,7 +235,7 @@ export default function HomePage() {
       if (!unique.includes(item.key)) unique.push(item.key);
     });
     return unique;
-  }, [homeCategoryLayout.module_order, homeCategoryLayout.module_order_mode, language, moduleLabelMap]);
+  }, [homeCategoryLayout.module_order, homeCategoryLayout.module_order_mode, language]);
 
 
   const moduleGroups = useMemo(() => {
