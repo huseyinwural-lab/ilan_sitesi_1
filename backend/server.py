@@ -8857,12 +8857,14 @@ async def get_places_config(
     session: AsyncSession = Depends(get_sql_session),
 ):
     api_key, source = await _resolve_google_maps_api_key(session)
+    country_options = await _resolve_google_maps_country_options(session)
     return {
         "real_mode": bool(api_key),
         "mode": "real" if api_key else "fallback",
         "key_source": source,
         "manual_key_supported": True,
         "key_configured": bool(api_key),
+        "country_options": country_options,
     }
 
 
@@ -8904,7 +8906,7 @@ async def places_autocomplete(
             "key_source": source,
             "items": [],
             "remaining": remaining,
-            "message": "GOOGLE_MAPS_API_KEY bulunamadı. Manuel key girin.",
+            "message": "GOOGLE_MAPS_API_KEY admin ayarlarında bulunamadı.",
         }
 
     params = {
@@ -8959,6 +8961,133 @@ async def places_autocomplete(
     }
 
 
+@api_router.get("/places/postal-lookup")
+async def places_postal_lookup(
+    request: Request,
+    postal_code: str,
+    country: str,
+    manual_key: Optional[str] = None,
+    x_google_maps_key: Optional[str] = Header(default=None),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    allowed, remaining, retry_after = _check_places_rate_limit(request)
+    if not allowed:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "mode": "fallback",
+                "item": None,
+                "streets": [],
+                "message": "Rate limit aşıldı. Lütfen tekrar deneyin.",
+                "retry_after": retry_after,
+            },
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    postal = str(postal_code or "").strip()
+    country_code = str(country or "").strip().upper()
+    if not postal:
+        raise HTTPException(status_code=400, detail="postal_code gerekli")
+    if not re.match(r"^[A-Z]{2}$", country_code):
+        raise HTTPException(status_code=400, detail="country geçersiz")
+
+    runtime_key = (x_google_maps_key or manual_key or "").strip() or None
+    api_key, source = await _resolve_google_maps_api_key(session, runtime_key=runtime_key, country_code=country_code)
+    if not api_key:
+        return {
+            "mode": "fallback",
+            "key_source": source,
+            "remaining": remaining,
+            "item": None,
+            "streets": [],
+            "message": "GOOGLE_MAPS_API_KEY admin ayarlarında bulunamadı.",
+        }
+
+    geocode_params = {
+        "address": f"{postal}, {country_code}",
+        "key": api_key,
+        "language": "tr",
+    }
+    geocode_url = f"https://maps.googleapis.com/maps/api/geocode/json?{urllib.parse.urlencode(geocode_params)}"
+
+    try:
+        geocode_payload = await _fetch_google_places_json(geocode_url)
+    except Exception:
+        return JSONResponse(
+            status_code=502,
+            content={"mode": "fallback", "item": None, "streets": [], "message": "Posta kodu geocode servisine ulaşılamadı."},
+        )
+
+    geocode_status = str(geocode_payload.get("status") or "")
+    if geocode_status in {"REQUEST_DENIED", "INVALID_REQUEST", "ZERO_RESULTS"}:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "mode": "fallback",
+                "item": None,
+                "streets": [],
+                "message": geocode_payload.get("error_message") or "Posta kodu için alan bulunamadı.",
+            },
+        )
+    if geocode_status == "OVER_QUERY_LIMIT":
+        return JSONResponse(
+            status_code=429,
+            content={"mode": "fallback", "item": None, "streets": [], "message": "Google Places kota limiti aşıldı."},
+        )
+
+    normalized = _normalize_google_geocode_result(geocode_payload)
+    lat = normalized.get("latitude")
+    lng = normalized.get("longitude")
+    if not isinstance(lat, (int, float)) or not isinstance(lng, (int, float)):
+        return JSONResponse(
+            status_code=400,
+            content={"mode": "fallback", "item": None, "streets": [], "message": "Posta kodu için koordinat üretilemedi."},
+        )
+
+    street_params = {
+        "input": f"{postal} {country_code}",
+        "key": api_key,
+        "language": "tr",
+        "types": "address",
+        "location": f"{lat},{lng}",
+        "radius": 3500,
+        "components": f"country:{country_code.lower()}",
+    }
+    street_url = f"https://maps.googleapis.com/maps/api/place/autocomplete/json?{urllib.parse.urlencode(street_params)}"
+
+    streets: List[dict] = []
+    try:
+        street_payload = await _fetch_google_places_json(street_url)
+        predictions = street_payload.get("predictions") if isinstance(street_payload.get("predictions"), list) else []
+        for row in predictions[:20]:
+            structured = row.get("structured_formatting") if isinstance(row.get("structured_formatting"), dict) else {}
+            streets.append(
+                {
+                    "place_id": row.get("place_id"),
+                    "description": row.get("description"),
+                    "main_text": structured.get("main_text") or row.get("description"),
+                    "secondary_text": structured.get("secondary_text") or "",
+                }
+            )
+    except Exception:
+        streets = []
+
+    map_embed_url = f"https://maps.google.com/maps?q={lat},{lng}&z=14&output=embed"
+    return {
+        "mode": "real",
+        "key_source": source,
+        "status": geocode_status or "OK",
+        "remaining": remaining,
+        "item": {
+            **normalized,
+            "postal_code": postal,
+            "country_code": country_code,
+            "map_embed_url": map_embed_url,
+        },
+        "streets": streets,
+    }
+
+
 @api_router.get("/places/details")
 async def places_details(
     request: Request,
@@ -8997,7 +9126,7 @@ async def places_details(
             "key_source": source,
             "remaining": remaining,
             "item": None,
-            "message": "GOOGLE_MAPS_API_KEY bulunamadı. Manuel key girin.",
+            "message": "GOOGLE_MAPS_API_KEY admin ayarlarında bulunamadı.",
         }
 
     params = {
