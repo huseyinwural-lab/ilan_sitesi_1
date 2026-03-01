@@ -2746,7 +2746,7 @@ const AdminCategories = () => {
           hierarchy_complete: isVehicleModule,
           wizard_progress: { state: progressState, dirty_steps: dirtyStepsOverride },
         };
-        const createdParent = await createCategoryWithSortFallback(parentPayload, "Ana kategori oluşturulamadı.");
+        const createdParent = await createCategoryWithSortFallback(parentPayload, "Modül oluşturulamadı.");
         if (!createdParent.ok) {
           const parsed = createdParent.parsed;
           if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
