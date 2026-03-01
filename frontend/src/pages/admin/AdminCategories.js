@@ -303,6 +303,20 @@ const parseApiError = (payload, fallbackMessage) => {
   };
 };
 
+const safeParseJson = async (response) => {
+  const clone = response.clone();
+  try {
+    return await response.json();
+  } catch (error) {
+    try {
+      const text = await clone.text();
+      return text ? { message: text, detail: text } : {};
+    } catch (readError) {
+      return {};
+    }
+  }
+};
+
 const TriStateCheckbox = ({ checked, indeterminate, onChange, disabled, testId }) => {
   const ref = useRef(null);
 
