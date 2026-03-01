@@ -80,11 +80,13 @@ export default function ListingDetails() {
   const [loadingContinue, setLoadingContinue] = useState(false);
   const [error, setError] = useState('');
   const [autosaveInfo, setAutosaveInfo] = useState({ status: 'idle', block: '', message: '' });
-  const [placesConfig, setPlacesConfig] = useState({ real_mode: false, mode: 'fallback', key_source: 'none' });
+  const [placesConfig, setPlacesConfig] = useState({ real_mode: false, mode: 'fallback', key_source: 'none', country_options: [] });
   const [placesConfigLoading, setPlacesConfigLoading] = useState(false);
   const [placesLoading, setPlacesLoading] = useState(false);
   const [placesError, setPlacesError] = useState('');
   const [placeSuggestions, setPlaceSuggestions] = useState([]);
+  const [postalLookupItem, setPostalLookupItem] = useState(null);
+  const [selectedStreetPlaceId, setSelectedStreetPlaceId] = useState('');
 
   const [acceptedTerms, setAcceptedTerms] = useState(() => {
     const raw = readJson(FORM_STORAGE_KEY, {});
@@ -98,6 +100,7 @@ export default function ListingDetails() {
       description: raw.description || '',
       price: raw.price || '',
       city: raw.city || '',
+      address_country: (raw.address_country || localStorage.getItem('selected_country') || 'DE').toUpperCase(),
       postal_code: raw.postal_code || '',
       district: raw.district || '',
       neighborhood: raw.neighborhood || '',
@@ -105,7 +108,6 @@ export default function ListingDetails() {
       longitude: raw.longitude || '',
       address_line: raw.address_line || '',
       google_autocomplete_query: raw.google_autocomplete_query || '',
-      google_maps_api_key: raw.google_maps_api_key || localStorage.getItem(GOOGLE_MAPS_KEY_STORAGE) || '',
       contact_name: raw.contact_name || '',
       contact_phone: raw.contact_phone || '',
       allow_phone: raw.allow_phone !== false,
