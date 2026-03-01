@@ -1056,6 +1056,108 @@ export default function AdminSystemSettingsPage() {
         )}
       </div>
 
+      <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-listing-create-card">
+        <div>
+          <h2 className="text-lg font-semibold" data-testid="system-settings-listing-create-title">İlan Ver Akış Ayarları</h2>
+          <div className="text-xs text-muted-foreground" data-testid="system-settings-listing-create-subtitle">
+            İlan sayfası davranışlarını admin panelden yönetin.
+          </div>
+        </div>
+
+        {listingCreateLoading ? (
+          <div className="text-xs text-muted-foreground" data-testid="system-settings-listing-create-loading">Yükleniyor…</div>
+        ) : (
+          <>
+            <div className="space-y-2" data-testid="system-settings-listing-create-modules">
+              <div className="text-xs font-medium text-slate-700">Uygulanacak modüller</div>
+              <div className="flex flex-wrap gap-2" data-testid="system-settings-listing-create-modules-options">
+                {[
+                  { key: 'vehicle', label: 'Vasıta' },
+                  { key: 'real_estate', label: 'Emlak' },
+                  { key: 'other', label: 'Diğer' },
+                ].map((mod) => (
+                  <label key={mod.key} className="inline-flex items-center gap-2 rounded-md border px-2 py-2 text-xs" data-testid={`system-settings-listing-create-module-wrap-${mod.key}`}>
+                    <input
+                      type="checkbox"
+                      checked={(listingCreateConfig.apply_modules || []).includes(mod.key)}
+                      onChange={() => toggleListingCreateModule(mod.key)}
+                      data-testid={`system-settings-listing-create-module-${mod.key}`}
+                    />
+                    <span>{mod.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2" data-testid="system-settings-listing-create-country-mode">
+              <label className="space-y-1 text-xs" data-testid="system-settings-listing-create-country-mode-wrap">
+                <span>Ülke seçimi bileşeni</span>
+                <select
+                  value={listingCreateConfig.country_selector_mode}
+                  onChange={(e) => setListingCreateConfig((prev) => ({ ...prev, country_selector_mode: e.target.value }))}
+                  className="h-9 w-full rounded-md border px-2 text-sm"
+                  data-testid="system-settings-listing-create-country-mode-select"
+                >
+                  <option value="radio">Radio</option>
+                  <option value="select">Select</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3" data-testid="system-settings-listing-create-toggles">
+              {[
+                ['postal_code_required', 'Posta kodu zorunlu'],
+                ['map_required', 'Harita seçimi zorunlu'],
+                ['street_selection_required', 'Sokak seçimi zorunlu'],
+                ['require_city', 'İl zorunlu'],
+                ['require_district', 'İlçe zorunlu'],
+                ['require_neighborhood', 'Mahalle zorunlu'],
+                ['require_latitude', 'Lat zorunlu'],
+                ['require_longitude', 'Lng zorunlu'],
+                ['require_address_line', 'Açık adres zorunlu'],
+              ].map(([key, label]) => (
+                <label key={key} className="inline-flex items-center gap-2 rounded-md border px-2 py-2 text-xs" data-testid={`system-settings-listing-create-toggle-wrap-${key}`}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(listingCreateConfig[key])}
+                    onChange={(e) => setListingCreateConfig((prev) => ({ ...prev, [key]: e.target.checked }))}
+                    data-testid={`system-settings-listing-create-toggle-${key}`}
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2" data-testid="system-settings-listing-create-actions">
+              <button
+                type="button"
+                onClick={handleSaveListingCreateConfig}
+                disabled={listingCreateSaving}
+                className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
+                data-testid="system-settings-listing-create-save"
+              >
+                {listingCreateSaving ? 'Kaydediliyor…' : 'İlan Ver Ayarlarını Kaydet'}
+              </button>
+              <button
+                type="button"
+                onClick={fetchListingCreateConfig}
+                className="h-9 px-3 rounded-md border text-sm"
+                data-testid="system-settings-listing-create-refresh"
+              >
+                Yenile
+              </button>
+            </div>
+
+            {listingCreateError ? (
+              <div className="text-xs text-rose-600" data-testid="system-settings-listing-create-error">{listingCreateError}</div>
+            ) : null}
+            {listingCreateNotice ? (
+              <div className="text-xs text-emerald-700" data-testid="system-settings-listing-create-notice">{listingCreateNotice}</div>
+            ) : null}
+          </>
+        )}
+      </div>
+
       {isSystemAdmin && (
         <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-meili-card">
           <div className="flex items-start justify-between gap-3 flex-wrap">
