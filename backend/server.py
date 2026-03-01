@@ -28042,8 +28042,8 @@ async def create_vehicle_draft(
 @api_router.post("/v1/listings/vehicle/{listing_id}/draft")
 async def save_vehicle_draft(
     listing_id: str,
-    payload: dict = Body(default={}),
     request: Request,
+    payload: dict = Body(default={}),
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
