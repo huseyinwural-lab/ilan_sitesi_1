@@ -27713,6 +27713,305 @@ async def get_vehicle_draft(
     return {"item": _listing_to_dict(listing)}
 
 
+class ListingPreviewReadyPayload(BaseModel):
+    core_fields: Optional[Dict[str, Any]] = None
+    location: Optional[Dict[str, Any]] = None
+    contact: Optional[Dict[str, Any]] = None
+    selected_category_path: Optional[List[Dict[str, Any]]] = None
+
+
+class ListingDopingSelectionPayload(BaseModel):
+    doping_type: Literal["none", "urgent", "showcase"] = "none"
+    duration_days: Optional[int] = 7
+
+
+@api_router.post("/v1/listings/vehicle/{listing_id}/preview-ready")
+async def mark_vehicle_listing_preview_ready(
+    listing_id: str,
+    payload: ListingPreviewReadyPayload,
+    request: Request,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    if listing.status not in ["draft", "needs_revision", "unpublished"]:
+        raise HTTPException(status_code=400, detail="Listing not editable")
+
+    incoming = {
+        "core_fields": payload.core_fields or {},
+        "location": payload.location or {},
+        "contact": payload.contact or {},
+        "selected_category_path": payload.selected_category_path or [],
+    }
+    _apply_listing_payload_sql(listing, incoming)
+    await _validate_listing_vehicle_foreign_keys(session, listing)
+
+    errors = _listing_preview_validation_errors(listing)
+    if errors:
+        raise HTTPException(status_code=422, detail={"validation_errors": errors, "flow_state": LISTING_FLOW_DRAFT})
+
+    flow = _set_listing_flow(
+        listing,
+        state=LISTING_FLOW_PREVIEW_READY,
+        patch={"preview_ready_at": datetime.now(timezone.utc).isoformat()},
+    )
+    listing.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="LISTING_PREVIEW_READY",
+        actor=current_user,
+        resource_type="listing",
+        resource_id=str(listing.id),
+        metadata={
+            "listing_id": str(listing.id),
+            "draft_id": flow.get("draft_id"),
+            "flow_state": flow.get("state"),
+        },
+        request=request,
+        country_code=listing.country,
+    )
+
+    await session.commit()
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger="listing_preview_ready",
+    )
+
+    return {
+        "id": str(listing.id),
+        "status": listing.status,
+        "flow_state": flow.get("state"),
+        "validation_errors": [],
+    }
+
+
+@api_router.get("/v1/listings/vehicle/{listing_id}/preview")
+async def get_vehicle_listing_preview(
+    listing_id: str,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    payload = _listing_to_dict(listing)
+    attrs = listing.attributes or {}
+    flow = _normalize_listing_flow(attrs, str(listing.id))
+    selected_path = attrs.get("selected_category_path") or await _build_listing_category_path_payload(session, listing)
+    media = payload.get("media") or []
+    cover = next((item for item in media if item.get("is_cover")), media[0] if media else None)
+
+    return {
+        "id": str(listing.id),
+        "status": listing.status,
+        "flow_state": flow.get("state") or LISTING_FLOW_DRAFT,
+        "draft_id": flow.get("draft_id") or str(listing.id),
+        "title": listing.title or (attrs.get("core_fields") or {}).get("title") or "",
+        "description": listing.description or (attrs.get("core_fields") or {}).get("description") or "",
+        "price": {
+            "price_type": listing.price_type or "FIXED",
+            "amount": listing.price,
+            "hourly_rate": listing.hourly_rate,
+            "currency": listing.currency or "EUR",
+        },
+        "location": attrs.get("location") or {"city": listing.city or "", "country": listing.country},
+        "contact": attrs.get("contact") or {},
+        "selected_category_path": selected_path,
+        "media": media,
+        "cover_media": cover,
+        "doping_selection": flow.get("doping_selection") or {"enabled": False, "doping_type": "none"},
+    }
+
+
+@api_router.get("/v1/listings/doping/options")
+async def list_listing_doping_options(
+    current_user=Depends(require_portal_scope("account")),
+):
+    return {
+        "options": [
+            {
+                "doping_type": "none",
+                "label": "Doping yok",
+                "description": "Standart yayın akışı",
+                "requires_payment": False,
+                "price_eur": 0,
+                "durations": [0],
+            },
+            {
+                "doping_type": "urgent",
+                "label": "Acil",
+                "description": "Kısa süreli öne çıkarma",
+                "requires_payment": True,
+                "price_eur": 9,
+                "durations": [3, 7, 14],
+            },
+            {
+                "doping_type": "showcase",
+                "label": "Vitrin",
+                "description": "Ana sayfa vitrin görünürlüğü",
+                "requires_payment": True,
+                "price_eur": 19,
+                "durations": [7, 15, 30],
+            },
+        ]
+    }
+
+
+@api_router.post("/v1/listings/vehicle/{listing_id}/doping")
+async def select_vehicle_listing_doping(
+    listing_id: str,
+    payload: ListingDopingSelectionPayload,
+    request: Request,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    flow = _normalize_listing_flow(listing.attributes or {}, str(listing.id))
+    current_state = flow.get("state") or LISTING_FLOW_DRAFT
+
+    if current_state not in {LISTING_FLOW_PREVIEW_READY, LISTING_FLOW_DOPING_SELECTED}:
+        raise HTTPException(status_code=409, detail="Önce önizleme adımı tamamlanmalıdır")
+
+    duration = int(payload.duration_days or 0)
+    if duration < 0:
+        raise HTTPException(status_code=400, detail="duration_days invalid")
+
+    is_enabled = payload.doping_type != "none"
+    selection = {
+        "enabled": is_enabled,
+        "doping_type": payload.doping_type,
+        "duration_days": duration,
+        "selected_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    next_state = LISTING_FLOW_DOPING_SELECTED if is_enabled else LISTING_FLOW_PREVIEW_READY
+    flow = _set_listing_flow(
+        listing,
+        state=next_state,
+        patch={"doping_selection": selection},
+    )
+    listing.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="LISTING_DOPING_SELECTED",
+        actor=current_user,
+        resource_type="listing",
+        resource_id=str(listing.id),
+        metadata={
+            "listing_id": str(listing.id),
+            "draft_id": flow.get("draft_id"),
+            "doping_selection": selection,
+            "flow_state": flow.get("state"),
+        },
+        request=request,
+        country_code=listing.country,
+    )
+
+    await session.commit()
+
+    return {
+        "id": str(listing.id),
+        "flow_state": flow.get("state"),
+        "doping_selection": selection,
+    }
+
+
+@api_router.post("/v1/listings/vehicle/{listing_id}/submit-review")
+async def submit_vehicle_listing_for_review(
+    listing_id: str,
+    request: Request,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    normalized_key = (idempotency_key or "").strip()
+    if not normalized_key:
+        raise HTTPException(status_code=400, detail="Idempotency-Key header zorunludur")
+
+    attrs = dict(listing.attributes or {})
+    flow = _normalize_listing_flow(attrs, str(listing.id))
+    flow_state = flow.get("state") or LISTING_FLOW_DRAFT
+
+    if listing.status == LISTING_FLOW_SUBMITTED:
+        if flow.get("last_submit_idempotency_key") == normalized_key:
+            return flow.get("last_submit_response") or {
+                "id": str(listing.id),
+                "status": listing.status,
+                "flow_state": LISTING_FLOW_SUBMITTED,
+                "idempotency_reused": True,
+            }
+        raise HTTPException(status_code=409, detail="Bu ilan zaten onaya gönderildi")
+
+    if flow_state not in {LISTING_FLOW_PREVIEW_READY, LISTING_FLOW_DOPING_SELECTED}:
+        raise HTTPException(status_code=409, detail="Önizleme adımı tamamlanmadan onaya gönderilemez")
+
+    if flow.get("last_submit_idempotency_key") == normalized_key and flow.get("last_submit_response"):
+        return {**flow.get("last_submit_response"), "idempotency_reused": True}
+
+    listing.status = LISTING_FLOW_SUBMITTED
+    listing.updated_at = datetime.now(timezone.utc)
+
+    await _upsert_moderation_item(
+        session=session,
+        listing=listing,
+        status="PENDING",
+        reason=None,
+        moderator_id=None,
+        audit_ref=None,
+    )
+
+    selected_path = attrs.get("selected_category_path") or await _build_listing_category_path_payload(session, listing)
+    response_payload = {
+        "id": str(listing.id),
+        "status": listing.status,
+        "flow_state": LISTING_FLOW_SUBMITTED,
+        "queue_status": "PENDING",
+        "idempotency_reused": False,
+        "doping_selection": flow.get("doping_selection") or {"enabled": False, "doping_type": "none"},
+    }
+
+    flow = _set_listing_flow(
+        listing,
+        state=LISTING_FLOW_SUBMITTED,
+        patch={
+            "submitted_at": datetime.now(timezone.utc).isoformat(),
+            "last_submit_idempotency_key": normalized_key,
+            "last_submit_response": response_payload,
+        },
+    )
+
+    await _write_audit_log_sql(
+        session=session,
+        action="LISTING_SUBMITTED_FOR_REVIEW",
+        actor=current_user,
+        resource_type="listing",
+        resource_id=str(listing.id),
+        metadata={
+            "user_id": current_user.get("id"),
+            "listing_id": str(listing.id),
+            "draft_id": flow.get("draft_id"),
+            "idempotency_key": normalized_key,
+            "selected_category_path": selected_path,
+            "doping_selection": flow.get("doping_selection") or {"enabled": False, "doping_type": "none"},
+        },
+        request=request,
+        country_code=listing.country,
+    )
+
+    await session.commit()
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger="listing_submit_review",
+    )
+
+    return response_payload
+
+
 @api_router.post("/v1/listings/vehicle/{listing_id}/request-publish")
 async def request_publish_vehicle_listing(
     listing_id: str,
