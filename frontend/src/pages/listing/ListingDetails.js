@@ -414,9 +414,18 @@ export default function ListingDetails() {
     if (!selectedCategory?.id) issues.push('Kategori seçimi bulunamadı.');
     if (!form.title.trim()) issues.push('Başlık zorunludur.');
     if (!form.price || Number(form.price) <= 0) issues.push('Fiyat zorunludur.');
-    if (!form.address_country) issues.push('Ülke seçimi zorunludur.');
-    if (!form.postal_code.trim()) issues.push('Posta kodu zorunludur.');
-    if (!form.city.trim()) issues.push('Şehir zorunludur.');
+    if (listingAddressConfigActive) {
+      if (!form.address_country) issues.push('Ülke seçimi zorunludur.');
+      if (listingCreateConfig.postal_code_required && !form.postal_code.trim()) issues.push('Posta kodu zorunludur.');
+      if (listingCreateConfig.require_city && !form.city.trim()) issues.push('Şehir zorunludur.');
+      if (listingCreateConfig.require_district && !form.district.trim()) issues.push('İlçe zorunludur.');
+      if (listingCreateConfig.require_neighborhood && !form.neighborhood.trim()) issues.push('Mahalle zorunludur.');
+      if (listingCreateConfig.require_latitude && (form.latitude === '' || form.latitude === null)) issues.push('Latitude zorunludur.');
+      if (listingCreateConfig.require_longitude && (form.longitude === '' || form.longitude === null)) issues.push('Longitude zorunludur.');
+      if (listingCreateConfig.require_address_line && !form.address_line.trim()) issues.push('Açık adres zorunludur.');
+      if (listingCreateConfig.map_required && !postalLookupItem?.map_embed_url) issues.push('Harita alanı seçimi zorunludur.');
+      if (listingCreateConfig.street_selection_required && !selectedStreetPlaceId) issues.push('Sokak seçimi zorunludur.');
+    }
 
     dynamicFields.forEach((field) => {
       if (!field?.required) return;
@@ -447,7 +456,7 @@ export default function ListingDetails() {
     }
 
     return issues;
-  }, [acceptedTerms, detailGroups, durationBlockEnabled, dynamicFields, form.address_country, form.city, form.detail_values, form.duration_key, form.dynamic_values, form.postal_code, form.price, form.title, mediaItems.length, photoBlockEnabled, selectedCategory?.id]);
+  }, [acceptedTerms, detailGroups, durationBlockEnabled, dynamicFields, form.address_country, form.address_line, form.city, form.detail_values, form.district, form.duration_key, form.dynamic_values, form.latitude, form.longitude, form.neighborhood, form.postal_code, form.price, form.title, listingAddressConfigActive, listingCreateConfig.map_required, listingCreateConfig.postal_code_required, listingCreateConfig.require_address_line, listingCreateConfig.require_city, listingCreateConfig.require_district, listingCreateConfig.require_latitude, listingCreateConfig.require_longitude, listingCreateConfig.require_neighborhood, listingCreateConfig.street_selection_required, mediaItems.length, photoBlockEnabled, postalLookupItem?.map_embed_url, selectedCategory?.id, selectedStreetPlaceId]);
 
   const completionBlocks = useMemo(() => {
     const dynamicRequiredMissing = dynamicFields.some((field) => {
