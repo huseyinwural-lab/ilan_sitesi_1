@@ -196,8 +196,9 @@ const ListingCategorySelect = () => {
     }
     const data = await res.json();
     const normalized = Array.isArray(data) ? data : [];
-    childrenCacheRef.current.set(cacheKey, normalized);
-    return normalized;
+    const sorted = sortCategories(normalized);
+    childrenCacheRef.current.set(cacheKey, sorted);
+    return sorted;
   }, [country, getCacheKey]);
 
   const loadRootCategories = useCallback(async (moduleKey) => {
