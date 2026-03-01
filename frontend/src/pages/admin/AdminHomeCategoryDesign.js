@@ -379,11 +379,20 @@ export default function AdminHomeCategoryDesign() {
                 <div className="text-xs text-slate-500" data-testid={`home-category-module-label-${section.moduleKey}`}>Modül</div>
                 <div className="text-lg font-semibold" data-testid={`home-category-module-title-${section.moduleKey}`}>{section.moduleLabel}</div>
               </div>
-              <div className="flex items-center gap-2" data-testid={`home-category-module-actions-${section.moduleKey}`}>
+              <div className="flex flex-wrap items-center gap-2" data-testid={`home-category-module-actions-${section.moduleKey}`}>
+                <select
+                  className="h-9 rounded-md border px-3 text-sm"
+                  value={section.l1Mode}
+                  onChange={(event) => handleL1ModeChange(section.moduleKey, event.target.value)}
+                  data-testid={`home-category-l1-mode-${section.moduleKey}`}
+                >
+                  <option value="manual">L1 Manuel</option>
+                  <option value="alphabetical">L1 Alfabetik</option>
+                </select>
                 <button
                   type="button"
                   onClick={() => handleModuleMove(index, -1)}
-                  disabled={index === 0}
+                  disabled={index === 0 || config.module_order_mode === 'alphabetical'}
                   className="h-9 rounded-md border px-3 text-sm disabled:opacity-50"
                   data-testid={`home-category-module-up-${section.moduleKey}`}
                 >
@@ -392,7 +401,7 @@ export default function AdminHomeCategoryDesign() {
                 <button
                   type="button"
                   onClick={() => handleModuleMove(index, 1)}
-                  disabled={index === moduleSections.length - 1}
+                  disabled={index === moduleSections.length - 1 || config.module_order_mode === 'alphabetical'}
                   className="h-9 rounded-md border px-3 text-sm disabled:opacity-50"
                   data-testid={`home-category-module-down-${section.moduleKey}`}
                 >
@@ -400,6 +409,12 @@ export default function AdminHomeCategoryDesign() {
                 </button>
               </div>
             </div>
+
+            {section.l1Mode === 'alphabetical' ? (
+              <div className="mt-2 text-xs text-slate-500" data-testid={`home-category-module-alpha-hint-${section.moduleKey}`}>
+                L1 listesi alfabetik sıralanıyor. Manuel butonlar devre dışı.
+              </div>
+            ) : null}
 
             <div className="mt-4 space-y-2" data-testid={`home-category-module-rows-${section.moduleKey}`}>
               {section.roots.length === 0 ? (
