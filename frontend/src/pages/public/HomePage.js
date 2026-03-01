@@ -171,6 +171,7 @@ export default function HomePage() {
         setCategoriesByModule(nextCategoriesByModule);
         setShowcaseItems(showcaseItemsPayload);
         setShowcaseLayout(nextLayout);
+        setHomeCategoryLayout(nextHomeCategoryLayout);
         setUrgentTotal(urgentPayloadTotal);
       } finally {
         if (active) setLoading(false);
