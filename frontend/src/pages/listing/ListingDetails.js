@@ -656,6 +656,10 @@ export default function ListingDetails() {
 
   const runPostalLookup = useCallback(async () => {
     if (!addressBlockEnabled) return;
+    if (!googleAutocompleteEnabled) {
+      setPlacesError('Admin ayarlarında Google Maps API key tanımlı değil.');
+      return;
+    }
     const postalCode = String(form.postal_code || '').trim();
     const countryCode = String(form.address_country || '').trim().toUpperCase();
     if (postalCode.length < 3 || !countryCode) {
@@ -697,7 +701,7 @@ export default function ListingDetails() {
     } finally {
       setPlacesLoading(false);
     }
-  }, [API, addressBlockEnabled, form.address_country, form.postal_code, saveFormLocal]);
+  }, [API, addressBlockEnabled, form.address_country, form.postal_code, googleAutocompleteEnabled, saveFormLocal]);
 
   useEffect(() => {
     if (!addressBlockEnabled) return;
