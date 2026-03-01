@@ -180,9 +180,13 @@ export default function ListingDetails() {
   const photoBlockEnabled = schemaReady && (moduleConfig.photos?.enabled !== false);
   const contactBlockEnabled = schemaReady && (moduleConfig.contact?.enabled !== false);
   const durationBlockEnabled = schemaReady && (moduleConfig.payment?.enabled !== false);
-  const manualGoogleKey = String(form.google_maps_api_key || '').trim();
-  const googleAutocompleteEnabled = Boolean(placesConfig.real_mode || manualGoogleKey);
-  const googleModeLabel = placesConfig.real_mode ? 'Real API (Backend Key)' : manualGoogleKey ? 'Real API (Manuel Key)' : 'Fallback';
+  const googleAutocompleteEnabled = Boolean(placesConfig.real_mode);
+  const googleModeLabel = placesConfig.real_mode ? 'Real API (Admin Key)' : 'Fallback';
+  const countryRadioOptions = useMemo(() => {
+    const options = Array.isArray(placesConfig.country_options) ? placesConfig.country_options : [];
+    if (options.length > 0) return options;
+    return [{ code: 'DE', name: 'Germany' }];
+  }, [placesConfig.country_options]);
 
   const buildVehiclePayload = useCallback(() => {
     if (!selectedVehicle) return null;
