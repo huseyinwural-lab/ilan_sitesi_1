@@ -167,11 +167,11 @@ const createSubcategoryDraft = () => ({
   sort_order: 1,
   transaction_type: "",
   is_complete: false,
+  is_leaf: false,
   children: [],
 });
 const createSubcategoryGroupDraft = () => ({
   ...createSubcategoryDraft(),
-  children: [createSubcategoryDraft()],
 });
 
 const normalizeSlugValue = (value) => {
