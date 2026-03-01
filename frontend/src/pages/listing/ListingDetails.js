@@ -388,6 +388,8 @@ export default function ListingDetails() {
     if (!selectedCategory?.id) issues.push('Kategori seçimi bulunamadı.');
     if (!form.title.trim()) issues.push('Başlık zorunludur.');
     if (!form.price || Number(form.price) <= 0) issues.push('Fiyat zorunludur.');
+    if (!form.address_country) issues.push('Ülke seçimi zorunludur.');
+    if (!form.postal_code.trim()) issues.push('Posta kodu zorunludur.');
     if (!form.city.trim()) issues.push('Şehir zorunludur.');
 
     dynamicFields.forEach((field) => {
@@ -419,7 +421,7 @@ export default function ListingDetails() {
     }
 
     return issues;
-  }, [acceptedTerms, detailGroups, durationBlockEnabled, dynamicFields, form.city, form.detail_values, form.duration_key, form.dynamic_values, form.price, form.title, mediaItems.length, photoBlockEnabled, selectedCategory?.id]);
+  }, [acceptedTerms, detailGroups, durationBlockEnabled, dynamicFields, form.address_country, form.city, form.detail_values, form.duration_key, form.dynamic_values, form.postal_code, form.price, form.title, mediaItems.length, photoBlockEnabled, selectedCategory?.id]);
 
   const completionBlocks = useMemo(() => {
     const dynamicRequiredMissing = dynamicFields.some((field) => {
