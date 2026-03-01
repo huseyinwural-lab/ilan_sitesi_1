@@ -66,8 +66,8 @@ export default function AdminShowcaseManagement() {
   const authHeader = useMemo(() => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }), []);
   const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
-  const notifyShowcaseLayoutUpdated = () => {
-    const versionValue = String(Date.now());
+  const notifyShowcaseLayoutUpdated = (revalidateToken) => {
+    const versionValue = String(revalidateToken || Date.now());
     localStorage.setItem('showcase_layout_updated_at', versionValue);
     localStorage.setItem('homepage_revalidate_token', versionValue);
     window.dispatchEvent(new CustomEvent('showcase-layout-updated', { detail: { version: versionValue } }));
@@ -215,11 +215,11 @@ export default function AdminShowcaseManagement() {
     const saved = await saveDraft();
     if (!saved?.id) return;
     try {
-      await axios.post(`${API}/admin/site/showcase-layout/config/${saved.id}/publish`, {}, { headers: authHeader });
-      setStatus(`Yayına alındı (v${saved.version || '-'})`);
+      const publishRes = await axios.post(`${API}/admin/site/showcase-layout/config/${saved.id}/publish`, {}, { headers: authHeader });
+      setStatus(`Yayına alındı (v${publishRes.data?.version || saved.version || '-'})`);
       await fetchVersions();
       await fetchConfig();
-      notifyShowcaseLayoutUpdated();
+      notifyShowcaseLayoutUpdated(publishRes.data?.revalidate_token);
     } catch (err) {
       setError(err?.response?.data?.detail?.message || 'Yayınlama başarısız');
     }
@@ -238,11 +238,11 @@ export default function AdminShowcaseManagement() {
 
   const publishVersion = async (id) => {
     try {
-      await axios.post(`${API}/admin/site/showcase-layout/config/${id}/publish`, {}, { headers: authHeader });
+      const publishRes = await axios.post(`${API}/admin/site/showcase-layout/config/${id}/publish`, {}, { headers: authHeader });
       setStatus('Seçilen versiyon yayına alındı');
       await fetchVersions();
       await fetchConfig();
-      notifyShowcaseLayoutUpdated();
+      notifyShowcaseLayoutUpdated(publishRes.data?.revalidate_token);
       setError('');
     } catch (_err) {
       setError('Versiyon yayınlanamadı');
