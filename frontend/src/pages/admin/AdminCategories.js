@@ -3202,6 +3202,11 @@ const AdminCategories = () => {
                         />
                         Bu dal burada bitti (leaf)
                       </label>
+                      {hierarchyFieldErrors[`level-${levelIndex}-${itemIndex}-children`] ? (
+                        <div className="text-[11px] text-rose-600">
+                          {hierarchyFieldErrors[`level-${levelIndex}-${itemIndex}-children`]}
+                        </div>
+                      ) : null}
 
                       <div className="flex flex-wrap items-center gap-2">
                         <button
