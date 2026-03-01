@@ -345,7 +345,8 @@ const ListingCategorySelect = () => {
   }, [fetchChildren, loadRootCategories]);
 
   useEffect(() => {
-    const moduleParam = searchParams.get('module') || '';
+    const moduleParam = searchParams.get('module') || localStorage.getItem('ilan_ver_module') || '';
+    const moduleIdParam = searchParams.get('module_id') || '';
     const pathParam = searchParams.get('path') || '';
     const pathIds = pathParam ? pathParam.split(',').filter(Boolean) : [];
     const selectedPathKey = selectedPath.map((item) => item.id).join(',');
@@ -365,6 +366,9 @@ const ListingCategorySelect = () => {
     setLoadingColumn(null);
     setColumnErrors({});
     setSelectedModule(moduleParam);
+    const moduleMeta = moduleMetaByKey(moduleParam);
+    localStorage.setItem('ilan_ver_module', moduleParam);
+    localStorage.setItem('ilan_ver_module_id', moduleIdParam || moduleMeta?.id || '');
     setSelectionComplete(false);
     setActiveCategory(null);
     setSearchTerm('');
@@ -376,7 +380,7 @@ const ListingCategorySelect = () => {
       setMobileColumnIndex(0);
       loadRootCategories(moduleParam);
     }
-  }, [hydratePathFromIds, loadRootCategories, searchParams]);
+  }, [hydratePathFromIds, loadRootCategories, moduleMetaByKey, searchParams]);
 
   const fetchRecentCategory = useCallback(async () => {
     setRecentLoading(true);
