@@ -9,6 +9,20 @@ const MODULE_OPTIONS = [
   { key: 'other', label: 'Diğer' },
 ];
 
+const LANGUAGE_LOCALE_MAP = {
+  tr: 'tr-TR',
+  de: 'de-DE',
+  fr: 'fr-FR',
+};
+
+const DEFAULT_LISTING_LAYOUT = {
+  module_order_mode: 'manual',
+  module_order: MODULE_OPTIONS.map((item) => item.key),
+  listing_module_grid_rows: 2,
+  listing_module_grid_columns: 3,
+  listing_lx_limit: 10,
+};
+
 const ListingCategorySelect = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
