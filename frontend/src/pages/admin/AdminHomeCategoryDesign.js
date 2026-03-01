@@ -16,6 +16,9 @@ const DEFAULT_CONFIG = {
   module_order: MODULES.map((item) => item.key),
   module_l1_order_mode: {},
   module_l1_order: {},
+  listing_module_grid_rows: 2,
+  listing_module_grid_columns: 3,
+  listing_lx_limit: 10,
 };
 
 const LANGUAGE_LOCALE_MAP = {
