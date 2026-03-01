@@ -963,7 +963,10 @@ const ListingCategorySelect = () => {
                         Bu seviyede kategori yok.
                       </div>
                     ) : (
-                      column.items.map((item) => (
+                      (expandedColumns[columnIndex]
+                        ? column.items
+                        : column.items.slice(0, listingLxLimit)
+                      ).map((item) => (
                         <button
                           key={item.id}
                           type="button"
@@ -977,6 +980,19 @@ const ListingCategorySelect = () => {
                         </button>
                       ))
                     )}
+
+                    {column.items.length > listingLxLimit ? (
+                      <button
+                        type="button"
+                        onClick={() => handleExpandColumn(columnIndex)}
+                        className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:border-blue-400"
+                        data-testid={`ilan-ver-column-expand-${columnIndex}`}
+                      >
+                        {expandedColumns[columnIndex]
+                          ? `Daha Az Göster (${column.items.length - listingLxLimit} gizle)`
+                          : `Devamını Gör (+${column.items.length - listingLxLimit})`}
+                      </button>
+                    ) : null}
 
                     {columnErrors[columnIndex] ? (
                       <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700" data-testid={`ilan-ver-column-error-${columnIndex}`}>
