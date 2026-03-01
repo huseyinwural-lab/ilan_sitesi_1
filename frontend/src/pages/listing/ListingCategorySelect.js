@@ -63,6 +63,30 @@ const ListingCategorySelect = () => {
     return match ? match.label : moduleKey;
   }, []);
 
+  const getCategoryLabel = useCallback((category) => {
+    if (!category) return '';
+    const translations = Array.isArray(category.translations) ? category.translations : [];
+    const match = translations.find((item) => item?.language === language);
+    const fallback = translations.find((item) => item?.language === 'tr');
+    return match?.name || fallback?.name || translations[0]?.name || category.name || category.slug || '';
+  }, [language]);
+
+  const sortCategories = useCallback((items) => {
+    const locale = LANGUAGE_LOCALE_MAP[language] || 'tr-TR';
+    return [...items].sort((a, b) => {
+      const aSort = Number(a.sort_order);
+      const bSort = Number(b.sort_order);
+      const aHas = Number.isFinite(aSort) && aSort > 0;
+      const bHas = Number.isFinite(bSort) && bSort > 0;
+      if (aHas && bHas) return aSort - bSort;
+      if (aHas && !bHas) return -1;
+      if (!aHas && bHas) return 1;
+      const nameA = getCategoryLabel(a).toLowerCase();
+      const nameB = getCategoryLabel(b).toLowerCase();
+      return nameA.localeCompare(nameB, locale);
+    });
+  }, [getCategoryLabel, language]);
+
   const persistRecentToStorage = useCallback((recent) => {
     if (!recent?.category?.id) return;
     localStorage.setItem(recentStorageKey, JSON.stringify({
