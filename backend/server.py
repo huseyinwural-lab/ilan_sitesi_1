@@ -10649,12 +10649,56 @@ async def _resolve_google_maps_api_key(
 
     setting = await _get_system_setting_by_key(session, GOOGLE_MAPS_API_KEY_SETTING_KEY, country_code)
     stored_key = ""
-    if setting and isinstance(setting.value, dict):
-        stored_key = str(setting.value.get("api_key") or "").strip()
+    if setting:
+        if isinstance(setting.value, dict):
+            stored_key = str(setting.value.get("api_key") or "").strip()
+        elif isinstance(setting.value, str):
+            stored_key = setting.value.strip()
     if stored_key:
         return stored_key, "system_setting"
 
     return None, "none"
+
+
+def _normalize_country_code_list(raw: Any) -> List[str]:
+    source = raw
+    if isinstance(raw, dict):
+        source = raw.get("country_codes")
+    if isinstance(source, str):
+        source = [part.strip() for part in source.split(",")]
+    if not isinstance(source, list):
+        return []
+
+    seen: set[str] = set()
+    normalized: List[str] = []
+    for item in source:
+        code = str(item or "").strip().upper()
+        if not re.match(r"^[A-Z]{2}$", code):
+            continue
+        if code in seen:
+            continue
+        seen.add(code)
+        normalized.append(code)
+    return normalized
+
+
+async def _resolve_google_maps_country_options(session: AsyncSession) -> List[dict]:
+    setting = await _get_system_setting_by_key(session, GOOGLE_MAPS_COUNTRY_OPTIONS_SETTING_KEY, None)
+    configured_codes = _normalize_country_code_list(setting.value if setting else None)
+
+    country_rows = (
+        await session.execute(select(Country).where(Country.is_enabled.is_(True)).order_by(Country.code.asc()))
+    ).scalars().all()
+    name_by_code = {row.code.upper(): row.name for row in country_rows}
+
+    fallback_codes = configured_codes or [row.code.upper() for row in country_rows] or sorted(SUPPORTED_COUNTRIES)
+    options: List[dict] = []
+    for code in fallback_codes:
+        options.append({
+            "code": code,
+            "name": name_by_code.get(code) or code,
+        })
+    return options
 
 
 def _check_places_rate_limit(request: Request) -> tuple[bool, int, int]:
@@ -10722,6 +10766,15 @@ def _normalize_google_place_details(raw: dict) -> dict:
         "longitude": float(lng) if isinstance(lng, (int, float)) else None,
         "components": components,
     }
+
+
+def _normalize_google_geocode_result(raw: dict) -> dict:
+    results = raw.get("results") if isinstance(raw.get("results"), list) else []
+    first = results[0] if results else {}
+    wrapped = {"result": first}
+    normalized = _normalize_google_place_details(wrapped)
+    normalized["formatted_address"] = first.get("formatted_address") or normalized.get("formatted_address") or ""
+    return normalized
 
 
 def _sanitize_watermark_position(value: Optional[str]) -> str:
