@@ -110,3 +110,36 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ## Mock Durumu
 - MOCKED API: **Yok**
 - Google autocomplete şu an gerçek mod/fallback guard ile hazır; gerçek sonuçlar kullanıcı key girişiyle çalışacak şekilde implement edildi.
+
+
+---
+
+## 2026-03-01 (Kullanıcı Talebi Revizyonu)
+
+### Uygulanan 2 Talep
+1) **Google Maps key admin paneline taşındı**
+- Yeni admin entegrasyon ayarı eklendi:
+  - `GET /api/admin/system-settings/google-maps`
+  - `POST /api/admin/system-settings/google-maps`
+- Admin ekranı: `AdminSystemSettings.js` içinde **Google Maps (İlan Adres Akışı)** kartı
+  - API key kaydetme (masked gösterim)
+  - Ülke kodları yönetimi (webde radio olarak kullanılacak)
+
+2) **Adres akışı PDF mantığına göre değiştirildi**
+- `ListingDetails.js` adres bloğunda akış:
+  - Adminden gelen ülkeler **radio**
+  - Posta kodu girişi
+  - **Haritada Aç** (posta koduna göre alan lookup)
+  - Harita alanındaki sokaklardan seçim
+  - Seçim sonrası adres alanlarının otomatik dolması: il / ilçe / mahalle / lat / lng / açık adres
+- Backend eklendi:
+  - `GET /api/places/postal-lookup`
+  - `GET /api/places/config` artık `country_options` döndürüyor
+
+### Not
+- Gerçek Google Maps sonucu için geçerli key gereklidir. Key yok/yanlışsa fallback uyarısı verilir (uygulama kırılmaz).
+
+### Test
+- Testing agent raporu: `/app/test_reports/iteration_71.json`
+  - Backend 19/19 PASS
+  - Frontend admin kart + address flow davranışı PASS
