@@ -207,6 +207,15 @@ export default function HomePage() {
 
   const moduleOrder = useMemo(() => {
     const rawOrder = Array.isArray(homeCategoryLayout.module_order) ? homeCategoryLayout.module_order : [];
+    if (homeCategoryLayout.module_order_mode === 'alphabetical') {
+      return MODULE_CONFIG
+        .map((item) => item.key)
+        .sort((a, b) => {
+          const labelA = moduleLabelMap.get(a) || a;
+          const labelB = moduleLabelMap.get(b) || b;
+          return labelA.localeCompare(labelB, LANGUAGE_LOCALE_MAP[language] || 'tr-TR');
+        });
+    }
     const unique = [];
     const seen = new Set();
     rawOrder.forEach((item) => {
@@ -219,7 +228,7 @@ export default function HomePage() {
       if (!unique.includes(item.key)) unique.push(item.key);
     });
     return unique;
-  }, [homeCategoryLayout.module_order]);
+  }, [homeCategoryLayout.module_order, homeCategoryLayout.module_order_mode, language, moduleLabelMap]);
 
   const moduleLabelMap = useMemo(() => new Map(MODULE_CONFIG.map((item) => [item.key, item.label])), []);
 
