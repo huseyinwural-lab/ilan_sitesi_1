@@ -532,6 +532,121 @@ export default function ListingDetails() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listingId]);
 
+  useEffect(() => {
+    let active = true;
+    const loadPlacesConfig = async () => {
+      setPlacesConfigLoading(true);
+      try {
+        const res = await fetch(`${API}/places/config`);
+        const data = await res.json().catch(() => ({}));
+        if (!active) return;
+        setPlacesConfig({
+          real_mode: Boolean(data?.real_mode),
+          mode: data?.mode || 'fallback',
+          key_source: data?.key_source || 'none',
+        });
+      } catch (_err) {
+        if (!active) return;
+        setPlacesConfig({ real_mode: false, mode: 'fallback', key_source: 'none' });
+      } finally {
+        if (active) setPlacesConfigLoading(false);
+      }
+    };
+    loadPlacesConfig();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!addressBlockEnabled) return;
+    const query = String(form.google_autocomplete_query || '').trim();
+    if (query.length < 2) {
+      setPlaceSuggestions([]);
+      setPlacesError('');
+      return;
+    }
+
+    const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setPlacesLoading(true);
+      setPlacesError('');
+      try {
+        const params = new URLSearchParams({ q: query, country });
+        const headers = {};
+        if (manualGoogleKey) headers['X-Google-Maps-Key'] = manualGoogleKey;
+        const res = await fetch(`${API}/places/autocomplete?${params.toString()}`, {
+          headers,
+          signal: controller.signal,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data?.message || data?.detail || 'Autocomplete alınamadı');
+        }
+        const items = Array.isArray(data?.items) ? data.items : [];
+        setPlaceSuggestions(items);
+        if (!googleAutocompleteEnabled) {
+          setPlacesError(data?.message || 'Google API key eksik, manuel giriş açık.');
+        }
+      } catch (err) {
+        if (err?.name === 'AbortError') return;
+        setPlaceSuggestions([]);
+        setPlacesError(err.message || 'Autocomplete alınamadı');
+      } finally {
+        setPlacesLoading(false);
+      }
+    }, AUTOCOMPLETE_DEBOUNCE_MS);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [API, addressBlockEnabled, form.google_autocomplete_query, googleAutocompleteEnabled, manualGoogleKey]);
+
+  const handleSelectAddressSuggestion = useCallback(async (suggestion) => {
+    if (!suggestion?.place_id) return;
+    const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
+    setPlacesLoading(true);
+    setPlacesError('');
+    try {
+      const params = new URLSearchParams({ place_id: suggestion.place_id, country });
+      const headers = {};
+      if (manualGoogleKey) headers['X-Google-Maps-Key'] = manualGoogleKey;
+      const res = await fetch(`${API}/places/details?${params.toString()}`, { headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.item) {
+        throw new Error(data?.message || data?.detail || 'Adres detayları alınamadı');
+      }
+
+      const location = data.item;
+      saveFormLocal((prev) => ({
+        ...prev,
+        google_autocomplete_query: suggestion.description || location.formatted_address || '',
+        city: location.city || prev.city,
+        district: location.district || prev.district,
+        neighborhood: location.neighborhood || prev.neighborhood,
+        postal_code: location.postal_code || prev.postal_code,
+        address_line: location.formatted_address || prev.address_line,
+        latitude: location.latitude ?? prev.latitude,
+        longitude: location.longitude ?? prev.longitude,
+      }));
+      setPlaceSuggestions([]);
+
+      await trackEvent('block_completed', {
+        block_key: 'address',
+        category_id: selectedCategory?.id,
+        listing_id: listingId || null,
+        source: 'google_places',
+      });
+      await saveAddressBlock();
+    } catch (err) {
+      setPlacesError(err.message || 'Adres seçimi tamamlanamadı');
+    } finally {
+      setPlacesLoading(false);
+    }
+  }, [API, listingId, manualGoogleKey, saveAddressBlock, saveFormLocal, selectedCategory?.id, trackEvent]);
+
   const handleUploadMedia = async (event) => {
     if (!photoBlockEnabled) return;
     const files = Array.from(event.target.files || []);
