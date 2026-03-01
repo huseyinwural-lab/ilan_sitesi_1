@@ -322,7 +322,7 @@ export default function AccountDashboard() {
           </div>
           <Link
             to="/ilan-ver/kategori-secimi"
-            className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white ${
+            className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-[var(--button-primary-text)] ${
               shouldDisableCTA ? 'bg-slate-300 pointer-events-none' : 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)]'
             }`}
             data-testid="account-cta-button"
