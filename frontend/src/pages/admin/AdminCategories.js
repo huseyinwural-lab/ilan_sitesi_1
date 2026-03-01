@@ -1581,7 +1581,6 @@ const AdminCategories = () => {
     const resetItems = items.map((item) => ({
       ...item,
       is_complete: false,
-      children: item.children || [],
     }));
     if (levelIndex === 0) {
       setSubcategories(resetItems);
@@ -1590,19 +1589,12 @@ const AdminCategories = () => {
       if (parentPath.length === 0) return;
       setSubcategories((prev) => updateNodeByPath(prev, parentPath, (node) => ({
         ...node,
+        is_leaf: false,
         children: resetItems,
       })));
     }
-    setLevelCompletion((prev) => {
-      const next = { ...prev };
-      Object.keys(next).forEach((key) => {
-        if (Number(key) >= levelIndex) {
-          delete next[key];
-        }
-      });
-      return next;
-    });
-    setLevelSelections((prev) => prev.slice(0, levelIndex));
+    resetLevelCompletionFrom(levelIndex);
+    setLevelSelections((prev) => prev.slice(0, levelIndex + 1));
     setHierarchyError("");
     setHierarchyFieldErrors({});
   };
@@ -1611,15 +1603,7 @@ const AdminCategories = () => {
     await handleUnlockStep("hierarchy");
     const path = [...getParentPathForLevel(levelIndex), itemIndex];
     updateSubcategory(path, { is_complete: false });
-    setLevelCompletion((prev) => {
-      const next = { ...prev };
-      Object.keys(next).forEach((key) => {
-        if (Number(key) >= levelIndex) {
-          delete next[key];
-        }
-      });
-      return next;
-    });
+    resetLevelCompletionFrom(levelIndex);
     setLevelSelections((prev) => prev.slice(0, levelIndex + 1));
     setHierarchyError("");
     setHierarchyFieldErrors({});
