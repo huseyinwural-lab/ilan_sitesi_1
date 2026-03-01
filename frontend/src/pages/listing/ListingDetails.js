@@ -1535,7 +1535,7 @@ export default function ListingDetails() {
 
       <section className="rounded-xl border bg-white p-4 space-y-4" data-testid="ilan-ver-block-media">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900" data-testid="ilan-ver-block-media-title">5) Fotoğraf (max 20) + 1 Video</h2>
+          <h2 className="text-sm font-semibold text-slate-900" data-testid="ilan-ver-block-media-title">5) Fotoğraf (max {mediaConfig.max_photos}) + {mediaConfig.max_videos} Video</h2>
           <button type="button" className="rounded-md border px-3 py-1 text-xs" onClick={saveMediaBlock} disabled={!photoBlockEnabled} data-testid="ilan-ver-block-media-save">Kaydet</button>
         </div>
         {!photoBlockEnabled ? (
@@ -1545,16 +1545,16 @@ export default function ListingDetails() {
         ) : (
           <>
             <div className="space-y-2" data-testid="ilan-ver-media-upload-wrap">
-              <label className="text-xs" data-testid="ilan-ver-media-upload-label">Fotoğraf Yükle (png/jpg/webp, max 2MB)</label>
+              <label className="text-xs" data-testid="ilan-ver-media-upload-label">Fotoğraf Yükle ({mediaConfig.accepted_types.join(', ')}, max {mediaConfig.max_file_size_mb}MB)</label>
               <input
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept={mediaConfig.accepted_types.join(',')}
                 multiple
                 onChange={handleUploadMedia}
-                disabled={uploadingMedia || mediaItems.length >= 20}
+                disabled={uploadingMedia || mediaItems.length >= mediaConfig.max_photos}
                 data-testid="ilan-ver-media-upload-input"
               />
-              <div className="text-xs text-slate-500" data-testid="ilan-ver-media-count">Yüklü: {mediaItems.length} / 20</div>
+              <div className="text-xs text-slate-500" data-testid="ilan-ver-media-count">Yüklü: {mediaItems.length} / {mediaConfig.max_photos}</div>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2" data-testid="ilan-ver-media-grid">
@@ -1581,12 +1581,13 @@ export default function ListingDetails() {
             </div>
 
             <label className="space-y-1 text-xs" data-testid="ilan-ver-video-url-wrap">
-              <span>Video URL (1 adet)</span>
+              <span>Video URL ({mediaConfig.max_videos} adet)</span>
               <input
                 value={form.video_url}
                 onChange={(e) => saveFormLocal({ video_url: e.target.value })}
                 onBlur={saveMediaBlock}
                 placeholder="https://..."
+                disabled={mediaConfig.max_videos < 1}
                 className="h-10 w-full rounded-md border px-3"
                 data-testid="ilan-ver-video-url-input"
               />
