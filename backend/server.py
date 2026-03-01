@@ -8859,6 +8859,7 @@ async def get_places_config(
 ):
     api_key, source = await _resolve_google_maps_api_key(session)
     country_options = await _resolve_google_maps_country_options(session)
+    listing_create_config = await _resolve_listing_create_config(session)
     return {
         "real_mode": bool(api_key),
         "mode": "real" if api_key else "fallback",
@@ -8866,6 +8867,7 @@ async def get_places_config(
         "manual_key_supported": True,
         "key_configured": bool(api_key),
         "country_options": country_options,
+        "listing_create_config": listing_create_config,
     }
 
 
