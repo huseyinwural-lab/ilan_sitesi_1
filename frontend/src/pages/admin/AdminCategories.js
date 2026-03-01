@@ -1502,6 +1502,19 @@ const AdminCategories = () => {
   };
 
   const handleLevelSelect = (levelIndex, itemIndex) => {
+    if (levelIndex >= INHERITANCE_START_LEVEL) {
+      const parentPath = getParentPathForLevel(levelIndex);
+      const groupKey = getInheritanceGroupKeyForLevel(levelIndex);
+      const template = inheritanceGroups[groupKey]?.template || [];
+      const selectedItem = getLevelItems(levelIndex)[itemIndex];
+      if (selectedItem && selectedItem.inherit_children && template.length > 0 && (!Array.isArray(selectedItem.children) || selectedItem.children.length === 0)) {
+        setSubcategories((prev) => updateNodeByPath(prev, [...parentPath, itemIndex], (node) => ({
+          ...node,
+          is_leaf: false,
+          children: cloneHierarchyTemplate(template),
+        })));
+      }
+    }
     setLevelSelections((prev) => {
       const next = prev.slice(0, levelIndex);
       next[levelIndex] = itemIndex;
