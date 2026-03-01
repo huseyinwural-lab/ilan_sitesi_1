@@ -10953,6 +10953,12 @@ def _default_listing_site_design_config() -> dict:
     }
 
 
+def _ascii_safe_text(value: Any) -> str:
+    text = str(value or "")
+    normalized = unicodedata.normalize("NFKD", text)
+    return normalized.encode("ascii", "ignore").decode("ascii")
+
+
 def _normalize_listing_site_design_config(raw: Any) -> dict:
     defaults = _default_listing_site_design_config()
     if not isinstance(raw, dict):
