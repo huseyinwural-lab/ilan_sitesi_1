@@ -210,7 +210,6 @@ export default function HomePage() {
     };
   }, [countryCode]);
 
-  const moduleLabelMap = useMemo(() => new Map(MODULE_CONFIG.map((item) => [item.key, item.label])), []);
 
   const moduleOrder = useMemo(() => {
     const rawOrder = Array.isArray(homeCategoryLayout.module_order) ? homeCategoryLayout.module_order : [];
