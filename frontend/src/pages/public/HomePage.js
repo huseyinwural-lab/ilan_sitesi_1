@@ -15,6 +15,11 @@ const MODULE_CONFIG = [
   { key: 'other', label: 'Diğer' },
 ];
 
+const REAL_ESTATE_DISPLAY_SCHEMA = {
+  l1: ['Emlak'],
+  l2: ['Konut', 'Ticari Alan', 'Arsa'],
+};
+
 const MODULE_ROOT_LIMIT = 8;
 const ROOT_CHILD_LIMIT = 8;
 
@@ -60,6 +65,8 @@ const normalizeLabel = (category) => {
     : '';
   return translated || category.name || category.slug || '';
 };
+
+const normalizeNameKey = (value) => String(value || '').trim().toLowerCase();
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -165,11 +172,34 @@ export default function HomePage() {
         return total;
       };
 
-      const roots = (byParent.get('root') || [])
+      const level1Allowed = new Set(REAL_ESTATE_DISPLAY_SCHEMA.l1.map((name) => normalizeNameKey(name)));
+      const level2Allowed = new Set(REAL_ESTATE_DISPLAY_SCHEMA.l2.map((name) => normalizeNameKey(name)));
+      const level2SortIndex = new Map(REAL_ESTATE_DISPLAY_SCHEMA.l2.map((name, index) => [normalizeNameKey(name), index]));
+
+      let rootCandidates = (byParent.get('root') || [])
         .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+        .filter((root) => {
+          if (moduleItem.key !== 'real_estate') return true;
+          return level1Allowed.has(normalizeNameKey(normalizeLabel(root)));
+        });
+
+      const roots = rootCandidates
         .map((root) => {
           const rootName = normalizeLabel(root);
-          const rawChildren = (byParent.get(root.id) || []).sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+          let rawChildren = (byParent.get(root.id) || []).sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+
+          if (moduleItem.key === 'real_estate') {
+            rawChildren = rawChildren
+              .filter((child) => level2Allowed.has(normalizeNameKey(normalizeLabel(child))))
+              .sort((a, b) => {
+                const aKey = normalizeNameKey(normalizeLabel(a));
+                const bKey = normalizeNameKey(normalizeLabel(b));
+                const ai = level2SortIndex.has(aKey) ? level2SortIndex.get(aKey) : 999;
+                const bi = level2SortIndex.has(bKey) ? level2SortIndex.get(bKey) : 999;
+                if (ai !== bi) return ai - bi;
+                return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+              });
+          }
           const rootMatches = rootName.toLowerCase().includes(query);
 
           const children = rawChildren.filter((child) => {
