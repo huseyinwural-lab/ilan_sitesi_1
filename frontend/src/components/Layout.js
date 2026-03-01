@@ -589,6 +589,8 @@ export default function Layout({ children }) {
 
   const isAdminPathDisabled = (path) => {
     if (!path) return false;
+    // Strip query parameters to check base path
+    const basePath = path.split('?')[0];
     // If route is not registered, treat as disabled (prevents 404 navigation)
     const known = new Set([
       '/admin',
@@ -624,6 +626,7 @@ export default function Layout({ children }) {
       '/admin/countries',
       '/admin/system-settings',
       '/admin/categories',
+      '/admin/categories/import-export',
       '/admin/dealer-portal-config',
       '/admin/attributes',
       '/admin/vehicle-makes',
@@ -646,7 +649,7 @@ export default function Layout({ children }) {
       '/admin/system-settings',
 
     ]);
-    return !known.has(path);
+    return !known.has(basePath);
   };
 
   if (sessionStatus === 'loading') {
