@@ -763,8 +763,17 @@ const ListingCategorySelect = () => {
             <span className="text-xs font-semibold text-blue-600" data-testid="ilan-ver-module-selected">{selectedModuleLabel}</span>
           )}
         </div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5" data-testid="ilan-ver-module-grid">
-          {MODULE_OPTIONS.map((item) => (
+        <div
+          className="mt-3 grid gap-3"
+          style={{
+            gridTemplateColumns: isMobileView
+              ? 'repeat(2, minmax(0, 1fr))'
+              : `repeat(${moduleGridColumns}, minmax(0, 1fr))`,
+            gridTemplateRows: `repeat(${moduleGridRows}, minmax(0, 1fr))`,
+          }}
+          data-testid="ilan-ver-module-grid"
+        >
+          {orderedModules.map((item) => (
             <button
               key={item.key}
               type="button"
