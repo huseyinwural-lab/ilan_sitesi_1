@@ -308,6 +308,15 @@ export default function HomePage() {
     });
   }, [categoriesByModule, homeCategoryLayout.module_l1_order, moduleLabelMap, moduleOrder, searchInput]);
 
+  const moduleRootLimit = useMemo(
+    () => clamp(homeCategoryLayout.l1_initial_limit, 1, 20, MODULE_ROOT_LIMIT),
+    [homeCategoryLayout.l1_initial_limit]
+  );
+  const homeCategoryWidth = useMemo(
+    () => clamp(homeCategoryLayout.column_width, 220, 520, DEFAULT_HOME_CATEGORY_LAYOUT.column_width),
+    [homeCategoryLayout.column_width]
+  );
+
   const homeShowcaseBlock = useMemo(() => showcaseLayout.homepage || DEFAULT_SHOWCASE_LAYOUT.homepage, [showcaseLayout]);
   const homeShowcaseCount = useMemo(() => Math.max(1, resolveEffectiveCount(homeShowcaseBlock)), [homeShowcaseBlock]);
   const homeGridColumnClass = useMemo(() => `home-v2-showcase-grid-cols-${normalizeGridColumns(homeShowcaseBlock.columns, 4)}`, [homeShowcaseBlock.columns]);
