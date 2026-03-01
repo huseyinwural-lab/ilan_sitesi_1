@@ -123,14 +123,16 @@ export default function AdminHomeCategoryDesign() {
         MODULES.map((moduleItem) => fetch(`${API}/categories?module=${moduleItem.key}&country=${countryCode}`))
       );
       const next = {};
-      responses.forEach((result, index) => {
+      for (let index = 0; index < responses.length; index += 1) {
+        const result = responses[index];
         const moduleKey = MODULES[index].key;
         if (result.status === 'fulfilled') {
-          next[moduleKey] = Array.isArray(result.value) ? result.value : [];
+          const payload = await result.value.json().catch(() => []);
+          next[moduleKey] = Array.isArray(payload) ? payload : [];
         } else {
           next[moduleKey] = [];
         }
-      });
+      }
       setCategoriesByModule(next);
     } catch (_err) {
       setCategoriesByModule({});
