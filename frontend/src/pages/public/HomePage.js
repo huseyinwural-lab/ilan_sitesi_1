@@ -117,8 +117,9 @@ export default function HomePage() {
       setLoading(true);
       try {
         const categoryRequests = MODULE_CONFIG.map((moduleItem) => fetch(`${API}/categories?module=${moduleItem.key}&country=${countryCode}`));
-        const [layoutResult, ...categoryResults] = await Promise.allSettled([
+        const [layoutResult, homeCategoryResult, ...categoryResults] = await Promise.allSettled([
           fetch(`${API}/site/showcase-layout?_ts=${Date.now()}`, { cache: 'no-store' }),
+          fetch(`${API}/site/home-category-layout?country=${countryCode}&_ts=${Date.now()}`, { cache: 'no-store' }),
           ...categoryRequests,
         ]);
 
