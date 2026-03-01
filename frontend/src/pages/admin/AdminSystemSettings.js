@@ -7,6 +7,8 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const MODERATION_FREEZE_KEY = 'moderation.freeze.active';
 const WATERMARK_PIPELINE_KEY = 'media.watermark.pipeline';
+const GOOGLE_MAPS_SETTINGS_KEY = 'integrations.google_maps.api_key';
+const GOOGLE_MAPS_COUNTRY_OPTIONS_KEY = 'listing.address.country_options';
 const DEFAULT_MEILI_INDEX_NAME = 'listings_index';
 
 const resolveFreezeValue = (setting) => {
