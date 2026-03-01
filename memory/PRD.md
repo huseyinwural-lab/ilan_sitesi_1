@@ -67,6 +67,8 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P106 Admin Kategori Kademeli Hiyerarşi Editörü (2026-03-01):** Yeni kategori modalı "level builder" mantığına taşındı: Root modül alanları, Level Navigator (root/back/next), sınırsız seviye kolonları, leaf işaretleme ve drag-sıra. Vasıta modülü için şablon + API/JSON/Excel import paneli eklendi.
+- **P106 Test Doğrulama (2026-03-01):** `/app/test_reports/iteration_68.json` ve `auto_frontend_testing_agent` PASS. Leaf işaretlendiğinde "Altını Doldur" butonu gizleniyor (self-test screenshot: `admin_categories_leaf.png`).
 - **P105d Standart Emlak Hiyerarşi Seed (2026-03-01):** Backend’e `POST /api/admin/categories/seed/real-estate-standard` endpointi eklendi. Şema otomatik ve idempotent kuruluyor: **L1 Emlak → L2 (Konut, Ticari Alan, Arsa) → L3 (Satılık, Kiralık, Günlük Kiralık) → L4 (Daire, Müstakil Ev, Köşk & Konak, Bina, Çiftlik Evi)**.
 - **P105d Home Kategori Görünümü (2026-03-01):** Ana sayfa sol blok L1/L2 kuralına göre filtrelendi; üstte L1, altında bağlı L2 satırları ve yanında ilan adetleri. Sol kolon genişliği daraltılıp kart görsel dili netleştirildi.
 - **P105d Admin Hiyerarşi Görünümü (2026-03-01):** Admin kategori ekranına L1→L6 hiyerarşi önizleme paneli eklendi (seviye rozetleri + adet). Üst aksiyona “Standart Emlak Şeması” butonu eklendi.
