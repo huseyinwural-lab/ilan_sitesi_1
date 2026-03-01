@@ -461,6 +461,7 @@ const ListingCategorySelect = () => {
   }, [moduleLabelByKey, recentCategory]);
 
   const handleSelectModule = (moduleKey) => {
+    const moduleMeta = moduleMetaByKey(moduleKey);
     setSelectedModule(moduleKey);
     setColumns([]);
     setSelectedPath([]);
@@ -474,6 +475,7 @@ const ListingCategorySelect = () => {
     const taxonomySource = moduleKey === 'vehicle' ? 'vehicle_master' : 'category_tree';
     localStorage.setItem('ilan_ver_taxonomy_source', taxonomySource);
     localStorage.setItem('ilan_ver_module', moduleKey);
+    localStorage.setItem('ilan_ver_module_id', moduleMeta?.id || '');
     updateUrlState(moduleKey, []);
     trackEvent('step_select_module', { module: moduleKey, taxonomy_source: taxonomySource });
   };
@@ -613,13 +615,15 @@ const ListingCategorySelect = () => {
 
   const persistWizardSelection = useCallback((category, path, moduleKey, moduleLabel) => {
     if (!category?.id || !moduleKey) return;
+    const moduleMeta = moduleMetaByKey(moduleKey);
     const taxonomySource = moduleKey === 'vehicle' ? 'vehicle_master' : 'category_tree';
     localStorage.setItem('ilan_ver_category', JSON.stringify({ ...category, module: moduleKey, label: getCategoryLabel(category) }));
     localStorage.setItem('ilan_ver_category_path', JSON.stringify(path || []));
     localStorage.setItem('ilan_ver_module', moduleKey);
+    localStorage.setItem('ilan_ver_module_id', moduleMeta?.id || '');
     localStorage.setItem('ilan_ver_module_label', moduleLabel || moduleKey);
     localStorage.setItem('ilan_ver_taxonomy_source', taxonomySource);
-  }, [getCategoryLabel]);
+  }, [getCategoryLabel, moduleMetaByKey]);
 
   const saveRecentCategory = useCallback(async (category, path, moduleKey) => {
     if (!category?.id || !moduleKey) return;
