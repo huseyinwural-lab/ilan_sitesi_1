@@ -129,6 +129,7 @@ from app.models.doping_request import DopingRequest
 from app.models.footer_layout import FooterLayout
 from app.models.site_theme_config import SiteThemeConfig
 from app.models.site_showcase_layout import SiteShowcaseLayout
+from app.models.listing_design_config import ListingDesignConfig
 from app.models.info_page import InfoPage
 from app.models.pricing_campaign import PricingCampaign
 from app.models.pricing_campaign_item import PricingCampaignItem
@@ -11044,10 +11045,72 @@ def _normalize_listing_site_design_config(raw: Any) -> dict:
 
 
 async def _resolve_listing_site_design_config(session: AsyncSession) -> dict:
+    published_result = await session.execute(
+        select(ListingDesignConfig)
+        .where(ListingDesignConfig.status == "published")
+        .order_by(desc(ListingDesignConfig.version))
+        .limit(1)
+    )
+    published = published_result.scalar_one_or_none()
+    if published:
+        return _normalize_listing_site_design_config(published.payload)
+
     setting = await _get_system_setting_by_key(session, LISTING_SITE_DESIGN_SETTING_KEY, None)
-    if not setting:
-        return _default_listing_site_design_config()
-    return _normalize_listing_site_design_config(setting.value)
+    if setting:
+        return _normalize_listing_site_design_config(setting.value)
+    return _default_listing_site_design_config()
+
+
+async def _resolve_listing_site_design_admin_config(session: AsyncSession) -> tuple[dict, str, int, Optional[datetime], Optional[uuid.UUID]]:
+    draft_result = await session.execute(
+        select(ListingDesignConfig)
+        .where(ListingDesignConfig.status == "draft")
+        .order_by(desc(ListingDesignConfig.version))
+        .limit(1)
+    )
+    draft = draft_result.scalar_one_or_none()
+    if draft:
+        return (
+            _normalize_listing_site_design_config(draft.payload),
+            "draft",
+            int(draft.version),
+            draft.updated_at,
+            draft.id,
+        )
+
+    published_result = await session.execute(
+        select(ListingDesignConfig)
+        .where(ListingDesignConfig.status == "published")
+        .order_by(desc(ListingDesignConfig.version))
+        .limit(1)
+    )
+    published = published_result.scalar_one_or_none()
+    if published:
+        return (
+            _normalize_listing_site_design_config(published.payload),
+            "published",
+            int(published.version),
+            published.updated_at,
+            published.id,
+        )
+
+    setting = await _get_system_setting_by_key(session, LISTING_SITE_DESIGN_SETTING_KEY, None)
+    if setting:
+        return (
+            _normalize_listing_site_design_config(setting.value),
+            "published",
+            0,
+            setting.updated_at,
+            None,
+        )
+
+    return _default_listing_site_design_config(), "published", 0, None, None
+
+
+async def _next_listing_site_design_version(session: AsyncSession) -> int:
+    result = await session.execute(select(func.max(ListingDesignConfig.version)))
+    current_max = result.scalar_one_or_none() or 0
+    return int(current_max) + 1
 
 
 def _check_places_rate_limit(request: Request) -> tuple[bool, int, int]:
@@ -11855,6 +11918,14 @@ class ListingCreateConfigPayload(BaseModel):
 
 class ListingSiteDesignPayload(BaseModel):
     config: Dict[str, Any]
+
+
+class ListingSiteDesignPublishPayload(BaseModel):
+    version: Optional[int] = None
+
+
+class ListingSiteDesignRollbackPayload(BaseModel):
+    target_version: Optional[int] = None
 
 
 class MeiliSearchConfigCreatePayload(BaseModel):
@@ -33694,11 +33765,19 @@ async def get_site_home_category_layout(
 async def get_site_listing_design(
     session: AsyncSession = Depends(get_sql_session),
 ):
+    published_result = await session.execute(
+        select(ListingDesignConfig)
+        .where(ListingDesignConfig.status == "published")
+        .order_by(desc(ListingDesignConfig.version))
+        .limit(1)
+    )
+    published = published_result.scalar_one_or_none()
     config = await _resolve_listing_site_design_config(session)
     return JSONResponse(
         content={
             "config": config,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "version": int(published.version) if published else 0,
+            "updated_at": (published.updated_at.isoformat() if published and published.updated_at else datetime.now(timezone.utc).isoformat()),
         },
         headers={"Cache-Control": "no-store"},
     )
@@ -33787,12 +33866,33 @@ async def get_admin_listing_design(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
-    setting = await _get_system_setting_by_key(session, LISTING_SITE_DESIGN_SETTING_KEY, None)
-    config = await _resolve_listing_site_design_config(session)
+    config, status, version, updated_at, config_id = await _resolve_listing_site_design_admin_config(session)
+
+    published_result = await session.execute(
+        select(ListingDesignConfig)
+        .where(ListingDesignConfig.status == "published")
+        .order_by(desc(ListingDesignConfig.version))
+        .limit(1)
+    )
+    published = published_result.scalar_one_or_none()
+
+    draft_result = await session.execute(
+        select(ListingDesignConfig)
+        .where(ListingDesignConfig.status == "draft")
+        .order_by(desc(ListingDesignConfig.version))
+        .limit(1)
+    )
+    draft = draft_result.scalar_one_or_none()
+
     return {
         "config": config,
-        "setting_id": str(setting.id) if setting else None,
-        "updated_at": setting.updated_at.isoformat() if setting and setting.updated_at else None,
+        "setting_id": str(config_id) if config_id else None,
+        "status": status,
+        "version": version,
+        "draft_version": int(draft.version) if draft else None,
+        "published_version": int(published.version) if published else 0,
+        "updated_at": updated_at.isoformat() if updated_at else None,
+        "published_at": published.published_at.isoformat() if published and published.published_at else None,
     }
 
 
@@ -33805,33 +33905,141 @@ async def save_admin_listing_design(
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
     normalized = _normalize_listing_site_design_config(payload.config)
-    setting = await _get_system_setting_by_key(session, LISTING_SITE_DESIGN_SETTING_KEY, None)
     now_ts = datetime.now(timezone.utc)
 
-    if setting:
-        setting.value = normalized
-        setting.updated_at = now_ts
-        setting.description = setting.description or "Listing site design config"
-    else:
-        setting = SystemSetting(
-            key=LISTING_SITE_DESIGN_SETTING_KEY,
-            value=normalized,
-            country_code=None,
-            is_readonly=False,
-            description="Listing site design config",
-            created_at=now_ts,
-            updated_at=now_ts,
-        )
-        session.add(setting)
-        await session.flush()
+    await session.execute(
+        update(ListingDesignConfig)
+        .where(ListingDesignConfig.status == "draft")
+        .values(status="archived", updated_at=now_ts)
+    )
+
+    next_version = await _next_listing_site_design_version(session)
+    draft_config = ListingDesignConfig(
+        payload=normalized,
+        status="draft",
+        version=next_version,
+        created_at=now_ts,
+        updated_at=now_ts,
+    )
+    session.add(draft_config)
+    await session.flush()
 
     await session.commit()
 
     return {
         "ok": True,
-        "setting_id": str(setting.id),
+        "setting_id": str(draft_config.id),
+        "status": "draft",
+        "version": int(draft_config.version),
         "config": normalized,
-        "updated_at": setting.updated_at.isoformat() if setting.updated_at else None,
+        "updated_at": draft_config.updated_at.isoformat() if draft_config.updated_at else None,
+    }
+
+
+@api_router.post("/admin/site/listing-design/publish")
+async def publish_admin_listing_design(
+    payload: ListingSiteDesignPublishPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    draft_query = select(ListingDesignConfig).where(ListingDesignConfig.status == "draft")
+    if payload.version is not None:
+        draft_query = draft_query.where(ListingDesignConfig.version == payload.version)
+    draft_query = draft_query.order_by(desc(ListingDesignConfig.version)).limit(1)
+    draft_result = await session.execute(draft_query)
+    draft = draft_result.scalar_one_or_none()
+    if not draft:
+        raise HTTPException(status_code=404, detail="Publish edilecek draft sürüm bulunamadı")
+
+    now_ts = datetime.now(timezone.utc)
+    await session.execute(
+        update(ListingDesignConfig)
+        .where(ListingDesignConfig.status.in_(["published", "draft"]))
+        .values(status="archived", updated_at=now_ts)
+    )
+
+    next_version = await _next_listing_site_design_version(session)
+    published = ListingDesignConfig(
+        payload=_normalize_listing_site_design_config(draft.payload),
+        status="published",
+        version=next_version,
+        created_at=now_ts,
+        updated_at=now_ts,
+        published_at=now_ts,
+    )
+    session.add(published)
+    await session.flush()
+    await session.commit()
+
+    return {
+        "ok": True,
+        "status": "published",
+        "version": int(published.version),
+        "source_version": int(draft.version),
+        "updated_at": published.updated_at.isoformat() if published.updated_at else None,
+        "published_at": published.published_at.isoformat() if published.published_at else None,
+    }
+
+
+@api_router.post("/admin/site/listing-design/rollback")
+async def rollback_admin_listing_design(
+    payload: ListingSiteDesignRollbackPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    published_history_result = await session.execute(
+        select(ListingDesignConfig)
+        .where(ListingDesignConfig.published_at.is_not(None))
+        .order_by(desc(ListingDesignConfig.version))
+        .limit(50)
+    )
+    published_history = published_history_result.scalars().all()
+    current_live = next((row for row in published_history if row.status == "published"), None)
+
+    target = None
+    if payload.target_version is not None:
+        target = next((row for row in published_history if int(row.version) == int(payload.target_version)), None)
+        if not target:
+            raise HTTPException(status_code=404, detail="Rollback hedef sürümü bulunamadı")
+    else:
+        if len(published_history) < 2:
+            raise HTTPException(status_code=400, detail="Rollback için önceki published sürüm bulunamadı")
+        target = published_history[1]
+
+    now_ts = datetime.now(timezone.utc)
+    await session.execute(
+        update(ListingDesignConfig)
+        .where(ListingDesignConfig.status == "published")
+        .values(status="archived", updated_at=now_ts)
+    )
+
+    next_version = await _next_listing_site_design_version(session)
+    rollback_row = ListingDesignConfig(
+        payload=_normalize_listing_site_design_config(target.payload),
+        status="published",
+        version=next_version,
+        created_at=now_ts,
+        updated_at=now_ts,
+        published_at=now_ts,
+    )
+    session.add(rollback_row)
+    await session.flush()
+    await session.commit()
+
+    return {
+        "ok": True,
+        "status": "published",
+        "version": int(rollback_row.version),
+        "rollback_from_version": int(target.version),
+        "previous_live_version": int(current_live.version) if current_live else None,
+        "updated_at": rollback_row.updated_at.isoformat() if rollback_row.updated_at else None,
+        "published_at": rollback_row.published_at.isoformat() if rollback_row.published_at else None,
     }
 
 
