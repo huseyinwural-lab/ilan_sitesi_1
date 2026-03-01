@@ -545,7 +545,7 @@ const ListingCategorySelect = () => {
       trackEvent(`step_select_category_L${path.length}`, {
         module: selectedModule,
         category_id: path[path.length - 1].id,
-        category_name: path[path.length - 1].name,
+        category_name: getCategoryLabel(path[path.length - 1]),
         level: path.length,
         path: path.map((p) => p.name),
         source: 'search',
