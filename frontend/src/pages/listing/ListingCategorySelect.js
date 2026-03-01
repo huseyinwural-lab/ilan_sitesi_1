@@ -454,9 +454,9 @@ const ListingCategorySelect = () => {
     trackEvent(`step_select_category_L${columnIndex + 1}`, {
       module: selectedModule,
       category_id: category.id,
-      category_name: category.name,
+      category_name: getCategoryLabel(category),
       level: columnIndex + 1,
-      path: nextPath.map((item) => item.name),
+      path: nextPath.map((item) => getCategoryLabel(item)),
     });
 
     setLoadingColumn(columnIndex + 1);
