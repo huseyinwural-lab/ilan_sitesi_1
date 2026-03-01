@@ -328,7 +328,7 @@ export default function HomePage() {
         <AdSlot placement="AD_HOME_TOP" className="home-v2-ad-slot" />
       </section>
 
-      <div className="home-v2-main-grid" data-testid="home-v2-main-grid">
+      <div className="home-v2-main-grid" style={{ '--home-left-width': `${homeCategoryWidth}px` }} data-testid="home-v2-main-grid">
         <aside className="home-v2-left-card" data-testid="home-v2-left-column">
           <Link to="/search?doping=urgent" className="home-v2-urgent-row home-v2-urgent-link" data-testid="home-v2-urgent-row">
             <span className="home-v2-urgent-dot" aria-hidden="true" />
