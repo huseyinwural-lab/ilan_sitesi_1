@@ -4,9 +4,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const MODULE_OPTIONS = [
-  { key: 'vehicle', label: 'Vasıta' },
-  { key: 'real_estate', label: 'Emlak' },
-  { key: 'other', label: 'Diğer' },
+  { id: '1', key: 'vehicle', label: 'Vasıta', sort_order: 1 },
+  { id: '2', key: 'real_estate', label: 'Emlak', sort_order: 2 },
+  { id: '3', key: 'other', label: 'Diğer', sort_order: 3 },
 ];
 
 const LANGUAGE_LOCALE_MAP = {
@@ -19,8 +19,8 @@ const DEFAULT_LISTING_LAYOUT = {
   module_order_mode: 'manual',
   module_order: MODULE_OPTIONS.map((item) => item.key),
   listing_module_grid_rows: 2,
-  listing_module_grid_columns: 3,
-  listing_lx_limit: 10,
+  listing_module_grid_columns: 4,
+  listing_lx_limit: 5,
 };
 
 const normalizeListingLayout = (raw) => {
