@@ -235,7 +235,6 @@ export default function HomePage() {
     return unique;
   }, [homeCategoryLayout.module_order, homeCategoryLayout.module_order_mode, language, moduleLabelMap]);
 
-  const moduleLabelMap = useMemo(() => new Map(MODULE_CONFIG.map((item) => [item.key, item.label])), []);
 
   const moduleGroups = useMemo(() => {
     const query = searchInput.trim().toLowerCase();
