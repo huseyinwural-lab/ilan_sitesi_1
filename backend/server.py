@@ -11430,6 +11430,11 @@ class CloudflareConfigPayload(BaseModel):
     zone_id: Optional[str] = None
 
 
+class GoogleMapsSettingsPayload(BaseModel):
+    api_key: Optional[str] = None
+    country_codes: List[str] = Field(default_factory=list)
+
+
 class MeiliSearchConfigCreatePayload(BaseModel):
     meili_url: str
     meili_index_name: Optional[str] = "listings_index"
