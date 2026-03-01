@@ -55,11 +55,15 @@ async def ensure_category(session, module: str, parent: Category | None, slug_tr
     query = select(Category).where(
         Category.module == module,
         Category.parent_id == (parent.id if parent else None),
-        Category.slug["tr"].astext == slug_tr,
         Category.is_deleted.is_(False),
     )
     row = await session.execute(query)
-    category = row.scalar_one_or_none()
+    category = None
+    for item in row.scalars().all():
+        slug_map = item.slug if isinstance(item.slug, dict) else {}
+        if str(slug_map.get("tr") or "").strip() == slug_tr:
+            category = item
+            break
     now = datetime.now(timezone.utc)
 
     if not category:
