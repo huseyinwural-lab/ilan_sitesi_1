@@ -504,7 +504,7 @@ export default function ListingDetails() {
       setSchemaLoading(true);
       setSchemaError('');
       try {
-        const country = (localStorage.getItem('selected_country') || 'DE').toUpperCase();
+        const country = (form.address_country || localStorage.getItem('selected_country') || 'DE').toUpperCase();
         const params = new URLSearchParams({ category_id: selectedCategory.id, country });
         const res = await fetch(`${API}/catalog/schema?${params.toString()}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -526,7 +526,7 @@ export default function ListingDetails() {
 
     fetchSchema();
     return () => controller.abort();
-  }, [selectedCategory?.id]);
+  }, [form.address_country, selectedCategory?.id]);
 
   useEffect(() => {
     const token = getToken();
@@ -889,7 +889,7 @@ export default function ListingDetails() {
         dynamic_fields: form.dynamic_values,
         location: {
           city: form.city,
-          country: (localStorage.getItem('selected_country') || 'DE').toUpperCase(),
+          country: (form.address_country || localStorage.getItem('selected_country') || 'DE').toUpperCase(),
           postal_code: form.postal_code,
           district: form.district,
           neighborhood: form.neighborhood,
