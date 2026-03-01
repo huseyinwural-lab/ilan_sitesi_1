@@ -27935,6 +27935,7 @@ async def list_my_listings(
 @api_router.post("/v1/listings/vehicle")
 async def create_vehicle_draft(
     payload: dict,
+    request: Request,
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
@@ -28000,6 +28001,26 @@ async def create_vehicle_draft(
     _set_listing_flow(listing, state=LISTING_FLOW_DRAFT, patch={"draft_id": str(listing.id)})
     await session.commit()
     await session.refresh(listing)
+    flow = _normalize_listing_flow(listing.attributes or {}, str(listing.id))
+
+    await _write_audit_log_sql(
+        session=session,
+        action="LISTING_DRAFT_CREATED",
+        actor=current_user,
+        resource_type="listing",
+        resource_id=str(listing.id),
+        metadata={
+            "listing_id": str(listing.id),
+            "draft_id": flow.get("draft_id") or str(listing.id),
+            "flow_state": flow.get("state") or LISTING_FLOW_DRAFT,
+            "module": listing.module,
+            "category_id": str(listing.category_id) if listing.category_id else None,
+        },
+        request=request,
+        country_code=listing.country,
+    )
+    await session.commit()
+
     await _schedule_listing_sync_job(
         session,
         listing_id=listing.id,
@@ -28022,6 +28043,7 @@ async def create_vehicle_draft(
 async def save_vehicle_draft(
     listing_id: str,
     payload: dict = Body(default={}),
+    request: Request,
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
@@ -28037,6 +28059,24 @@ async def save_vehicle_draft(
     await _validate_listing_vehicle_foreign_keys(session, listing)
     listing.updated_at = datetime.now(timezone.utc)
     await session.commit()
+
+    current_flow = _normalize_listing_flow(listing.attributes or {}, str(listing.id))
+    await _write_audit_log_sql(
+        session=session,
+        action="LISTING_UPDATED",
+        actor=current_user,
+        resource_type="listing",
+        resource_id=str(listing.id),
+        metadata={
+            "listing_id": str(listing.id),
+            "draft_id": current_flow.get("draft_id") or str(listing.id),
+            "flow_state": current_flow.get("state") or LISTING_FLOW_DRAFT,
+        },
+        request=request,
+        country_code=listing.country,
+    )
+    await session.commit()
+
     await _schedule_listing_sync_job(
         session,
         listing_id=listing.id,
