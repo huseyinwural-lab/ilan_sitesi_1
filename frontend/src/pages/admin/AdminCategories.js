@@ -1837,6 +1837,13 @@ const AdminCategories = () => {
         ? (itemVehicleLinked ? "Master data bağlantısı hazır." : "Master data bağlantısı doğrulanmadı.")
         : "",
     });
+    setVehicleImportMode("");
+    setVehicleImportPayload("{\n  \"dry_run\": true\n}");
+    setVehicleImportFile(null);
+    setVehicleImportDryRun(true);
+    setVehicleImportStatus("");
+    setVehicleImportError("");
+    setVehicleImportLoading(false);
     setOrderPreview({ checking: false, available: true, message: "", conflict: null });
     setCategoryImageUploading(false);
     setCategoryImageError("");
