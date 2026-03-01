@@ -402,7 +402,7 @@ export default function HomePage() {
                     );
                   })}
 
-                  {moduleGroup.roots.length > MODULE_ROOT_LIMIT ? (
+                  {moduleGroup.roots.length > moduleRootLimit ? (
                     <button
                       type="button"
                       className="home-v2-toggle-btn"
