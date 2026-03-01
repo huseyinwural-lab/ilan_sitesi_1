@@ -29382,6 +29382,15 @@ def _normalize_home_category_layout_config(config: Optional[dict]) -> dict:
     limit = _safe_int(source.get("l1_initial_limit"), defaults["l1_initial_limit"])
     limit = max(HOME_CATEGORY_MIN_L1_LIMIT, min(HOME_CATEGORY_MAX_L1_LIMIT, limit))
 
+    listing_rows = _safe_int(source.get("listing_module_grid_rows"), defaults["listing_module_grid_rows"])
+    listing_rows = max(HOME_CATEGORY_LISTING_GRID_ROWS_MIN, min(HOME_CATEGORY_LISTING_GRID_ROWS_MAX, listing_rows))
+
+    listing_cols = _safe_int(source.get("listing_module_grid_columns"), defaults["listing_module_grid_columns"])
+    listing_cols = max(HOME_CATEGORY_LISTING_GRID_COLS_MIN, min(HOME_CATEGORY_LISTING_GRID_COLS_MAX, listing_cols))
+
+    listing_lx_limit = _safe_int(source.get("listing_lx_limit"), defaults["listing_lx_limit"])
+    listing_lx_limit = max(HOME_CATEGORY_LISTING_LX_LIMIT_MIN, min(HOME_CATEGORY_LISTING_LX_LIMIT_MAX, listing_lx_limit))
+
     module_order_mode = source.get("module_order_mode") if source.get("module_order_mode") in ("manual", "alphabetical") else defaults["module_order_mode"]
 
     raw_module_order = source.get("module_order") if isinstance(source.get("module_order"), list) else []
