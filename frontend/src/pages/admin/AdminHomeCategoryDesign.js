@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -15,6 +16,12 @@ const DEFAULT_CONFIG = {
   module_order: MODULES.map((item) => item.key),
   module_l1_order_mode: {},
   module_l1_order: {},
+};
+
+const LANGUAGE_LOCALE_MAP = {
+  tr: 'tr-TR',
+  de: 'de-DE',
+  fr: 'fr-FR',
 };
 
 const clamp = (value, min, max, fallback) => {
