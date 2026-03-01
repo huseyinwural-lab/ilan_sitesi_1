@@ -953,6 +953,15 @@ export default function AdminSystemSettingsPage() {
               </button>
               <button
                 type="button"
+                onClick={handleClearGoogleMapsKey}
+                disabled={googleMapsSaving}
+                className="h-9 px-3 rounded-md border border-rose-300 text-rose-700 text-sm"
+                data-testid="system-settings-google-maps-clear-key"
+              >
+                Key’i Temizle
+              </button>
+              <button
+                type="button"
                 onClick={fetchGoogleMapsSettings}
                 className="h-9 px-3 rounded-md border text-sm"
                 data-testid="system-settings-google-maps-refresh"
