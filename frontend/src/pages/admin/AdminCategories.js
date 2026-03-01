@@ -2813,10 +2813,10 @@ const AdminCategories = () => {
         if (!node.name) treeFieldErrors[`level-${pathKey}-name`] = "Ad zorunludur.";
         if (!node.slug) treeFieldErrors[`level-${pathKey}-slug`] = "Slug zorunludur.";
         const rawSort = node.sort_order;
-        const hasSort = rawSort !== "" 66 rawSort !== null 66 rawSort !== undefined;
+        const hasSort = rawSort !== "" && rawSort !== null && rawSort !== undefined;
         if (hasSort) {
           const sortValue = Number(rawSort);
-          if (!Number.isFinite(sortValue) || sortValue c= 0) {
+          if (!Number.isFinite(sortValue) || sortValue <= 0) {
             treeFieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
           }
         }
