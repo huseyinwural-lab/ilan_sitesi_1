@@ -92,6 +92,15 @@ export default function AdminHomeCategoryDesign() {
 
   const moduleOrder = useMemo(() => {
     const rawOrder = Array.isArray(config.module_order) ? config.module_order : [];
+    if (config.module_order_mode === 'alphabetical') {
+      return MODULES
+        .map((item) => item.key)
+        .sort((a, b) => {
+          const labelA = moduleLabelMap.get(a) || a;
+          const labelB = moduleLabelMap.get(b) || b;
+          return labelA.localeCompare(labelB, LANGUAGE_LOCALE_MAP[language] || 'tr-TR');
+        });
+    }
     const unique = [];
     const seen = new Set();
     rawOrder.forEach((item) => {
@@ -104,7 +113,7 @@ export default function AdminHomeCategoryDesign() {
       if (!unique.includes(item.key)) unique.push(item.key);
     });
     return unique;
-  }, [config.module_order]);
+  }, [config.module_order, config.module_order_mode, language, moduleLabelMap]);
 
   const moduleSections = useMemo(() => moduleOrder.map((moduleKey) => {
     const moduleLabel = moduleLabelMap.get(moduleKey) || moduleKey;
