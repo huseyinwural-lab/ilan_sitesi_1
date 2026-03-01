@@ -268,12 +268,19 @@ export default function HomePage() {
         return null;
       };
 
+      const l1OrderMode = homeCategoryLayout.module_l1_order_mode?.[moduleKey] || 'manual';
+
       const level1Allowed = new Set(REAL_ESTATE_DISPLAY_SCHEMA.l1.map((name) => normalizeNameKey(name)));
       const level2Allowed = new Set(REAL_ESTATE_DISPLAY_SCHEMA.l2.map((name) => normalizeNameKey(name)));
       const level2SortIndex = new Map(REAL_ESTATE_DISPLAY_SCHEMA.l2.map((name, index) => [normalizeNameKey(name), index]));
 
       let rootCandidates = (byParent.get('root') || [])
         .sort((a, b) => {
+          if (l1OrderMode === 'alphabetical') {
+            const nameA = normalizeLabel(a, language);
+            const nameB = normalizeLabel(b, language);
+            return nameA.localeCompare(nameB, LANGUAGE_LOCALE_MAP[language] || 'tr-TR');
+          }
           const ai = resolveOrderIndex(a);
           const bi = resolveOrderIndex(b);
           if (ai !== null || bi !== null) {
@@ -283,20 +290,20 @@ export default function HomePage() {
         })
         .filter((root) => {
           if (moduleKey !== 'real_estate') return true;
-          return level1Allowed.has(normalizeNameKey(normalizeLabel(root)));
+          return level1Allowed.has(normalizeNameKey(normalizeLabel(root, language)));
         });
 
       const roots = rootCandidates
         .map((root) => {
-          const rootName = normalizeLabel(root);
+          const rootName = normalizeLabel(root, language);
           let rawChildren = (byParent.get(root.id) || []).sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
 
           if (moduleKey === 'real_estate') {
             rawChildren = rawChildren
-              .filter((child) => level2Allowed.has(normalizeNameKey(normalizeLabel(child))))
+              .filter((child) => level2Allowed.has(normalizeNameKey(normalizeLabel(child, language))))
               .sort((a, b) => {
-                const aKey = normalizeNameKey(normalizeLabel(a));
-                const bKey = normalizeNameKey(normalizeLabel(b));
+                const aKey = normalizeNameKey(normalizeLabel(a, language));
+                const bKey = normalizeNameKey(normalizeLabel(b, language));
                 const ai = level2SortIndex.has(aKey) ? level2SortIndex.get(aKey) : 999;
                 const bi = level2SortIndex.has(bKey) ? level2SortIndex.get(bKey) : 999;
                 if (ai !== bi) return ai - bi;
@@ -307,7 +314,7 @@ export default function HomePage() {
 
           const children = rawChildren.filter((child) => {
             if (!query) return true;
-            return rootMatches || normalizeLabel(child).toLowerCase().includes(query);
+            return rootMatches || normalizeLabel(child, language).toLowerCase().includes(query);
           });
 
           if (query && !rootMatches && children.length === 0) return null;
@@ -320,7 +327,7 @@ export default function HomePage() {
             url: `/search?category=${encodeURIComponent(root.slug || root.id)}`,
             children_level1: children.map((child) => ({
               id: child.id,
-              name: normalizeLabel(child),
+              name: normalizeLabel(child, language),
               listing_count: resolveDescendantCount(child),
               url: `/search?category=${encodeURIComponent(child.slug || child.id)}`,
             })),
@@ -334,7 +341,7 @@ export default function HomePage() {
         roots,
       };
     });
-  }, [categoriesByModule, homeCategoryLayout.module_l1_order, moduleLabelMap, moduleOrder, searchInput]);
+  }, [categoriesByModule, homeCategoryLayout.module_l1_order, homeCategoryLayout.module_l1_order_mode, language, moduleLabelMap, moduleOrder, searchInput]);
 
   const moduleRootLimit = useMemo(
     () => clamp(homeCategoryLayout.l1_initial_limit, 1, 20, MODULE_ROOT_LIMIT),
