@@ -182,6 +182,8 @@ const createSubcategoryDraft = () => ({
   transaction_type: "",
   is_complete: false,
   is_leaf: false,
+  inherit_children: false,
+  inherit_group_key: "",
   children: [],
 });
 const createSubcategoryGroupDraft = () => ({
