@@ -1,166 +1,169 @@
-<analysis>Analyse and provide a useful summary for the next agent to work on it without hinderance.
+<analysis>**original_problem_statement:**
+The user's initial goal was to refine a full-stack application (React/FastAPI/PostgreSQL) by fixing a hierarchical category system and building a multi-step İlan ver (Post Ad) page.
 
-**original_problem_statement:**
-The initial project was to build and harden a Kullanıcı Tasarım (UI Designer) module. However, the project has undergone several major pivots driven by the user:
-1.  **Corporate Dashboard Overhaul:** A complete redesign of the admin dashboard based on user-provided PDFs. This involved creating a new UI and a set of initially mocked backend endpoints.
-2.  **Live Data Migration:** The agent converted all the mocked corporate dashboard endpoints to use a live PostgreSQL database, closing out the major technical debt.
-3.  **Homepage from HTML:** The user provided a complete, single-file HTML/CSS/JS page for the public homepage. The agent was tasked with integrating this static file into the existing React/FastAPI application, making it dynamic.
-4.  **Doping System for Listings:** The most recent request is to implement a Doping System that allows moderators to mark listings as Acil (Urgent) or Vitrin (Showcase) for a specified duration. This involves database changes, new backend logic, and updates to the admin moderation UI.
+However, the project's scope has massively expanded based on a series of detailed user requests. The core requirements now are:
+1.  **New Category System (Level Builder):** Build a completely new admin interface for creating an infinitely deep category hierarchy (). This system must support a special, pre-defined structure for the Vasıta (Vehicle) module, which involves loading master data.
+2.  **Sibling Category Inheritance:** When creating categories, new siblings should automatically inherit the child structure of the first sibling in the same level.
+3.  **Vehicle Master Data Import:** Implement a system in the admin panel to import vehicle brands, models, and trims from JSON, Excel, or API sources. This includes providing UIs to view and bulk-manage the imported data.
+4.  **Homepage Category Designer:** Create a new admin tool to let the user visually design the category section on the homepage. This includes manually reordering modules (L0) and their sub-categories (L1), choosing between manual and alphabetical sorting for L1 items, and controlling the layout's width.
+5.  **Complete İlan ver (Post Ad) Page Overhaul:** Rebuild the entire Post Ad page from scratch to match a new, detailed PDF (). This is a complex, multi-stage process:
+    *   **İlan 1:** A grid-based module selection screen.
+    *   **İlan 2:** An infinitely-scrolling category selector that uses the Level Builder data and, for vehicles, the imported master data.
+    *   **İlan 3:** A new 8-step form for filling in listing details.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application is a full-stack React/FastAPI/PostgreSQL app.
-
--   **Backend:** The backend now has live, data-driven endpoints for the entire corporate dashboard. The previously mocked routes have been replaced with real database interactions. A new Doping System has been implemented, which involved:
-    -   An Alembic migration to add  and  (timestamp) columns to the  table.
-    -   New services and API endpoints () to manage these new listing states.
-    -   The  model now dynamically computes  and  properties.
-    -   A new domain () and endpoint () were created to serve data for the new public-facing homepage.
-
--   **Frontend:** The frontend includes the rebuilt corporate dashboard, now powered by live data. A new  has been created by integrating a user-provided static HTML file, served via a new . For the Doping System, the admin sidebar has been updated to include new sub-menus for Vitrin İlan (Showcase Listing) and Acil İlan (Urgent Listing) under both individual and corporate application sections.
+The application has undergone significant evolution from the initial problem statement.
+- **New Category System:** The entire category management has been rebuilt. There is a new Category Builder page () that allows creating modules (Level 0) and then adding infinite child levels in a multi-column UI. The backend supports this with new  and  models and corresponding APIs.
+- **Vehicle Master Data:** A system for importing vehicle master data is complete. It supports JSON/Excel/API uploads, and the agent fixed an Nginx  error to support large files. There are now admin pages to view (, ) and bulk-delete this data.
+- **Homepage Layout Editor:** A new page () allows the user to reorder modules and their L1 children for the homepage display. It also supports setting a sorting preference (manual or alphabetical) for each module's L1 list. The homepage now renders its category list based on this configuration.
+- **İlan Ver Page Overhaul:** The process of rebuilding this page has begun. The old page has been deconstructed, and the agent has started implementing the new multi-step flow inside . The first step,  (İlan 1), is partially built.
 
 **Last working item**:
--   **Last item agent was working:** Implementing the Doping System UI. The agent successfully updated the admin sidebar and created the necessary pages and routes. The final step was to display Acil and Vitrin badges on the listing cards within the main listings page () based on the new  and  flags from the backend.
+-   **Last item agent was working:** The agent was actively rebuilding the İlan ver (Post Ad) page () based on the user's new, highly detailed specifications and PDF file. The immediate task was the implementation of the first step, , which involves fetching modules and displaying them in a configurable grid layout as the entry point to the ad creation process.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both. The backend endpoints for the doping system should be verified with . The frontend UI (sidebar navigation, new filtered listing pages, and visibility of the new badges) should be verified with the .
+-   **Which testing method agent to use?** both. The frontend UI for each step of the İlan Ver page needs to be verified visually using the  against the provided PDF (). The backend endpoints that will be created to support this new flow (e.g., creating draft listings, fetching form configurations) will need to be tested with .
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Complete Doping System Frontend Integration (P0)**
-    -   **Description:** The frontend work for the Doping System is not fully complete. The UI for moderating listings is in place, but the visual indicators (badges) on the main listings page are missing. The new sidebar links also need end-to-end verification.
+-   **Issue 1: Showcase Management Not Reflecting Changes (P1)**
+    -   **Description:** An issue carried over from the previous fork. The user reported that after saving a new showcase configuration in Vitrin Yönetimi, the changes are not visible on the homepage. This was never addressed.
+    -   **Attempted fixes:** None in this session.
     -   **Next debug checklist:**
-        1.  Modify  to conditionally render Acil and Vitrin badges on each listing card based on the  and  booleans in the data fetched from the API.
-        2.  Verify that clicking the new sidebar links (Vitrin İlan, Acil İlan) navigates to the correct pages (, , etc.) and that these pages correctly filter the listings.
-    -   **Why fix this issue and what will be achieved with the fix?** This will complete the Doping System feature, making it fully functional for moderators from both a management and visibility perspective.
-    -   **Status:** IN PROGRESS
+        1.  Use  to call the backend endpoint () and verify it returns the latest active configuration from the database.
+        2.  Inspect the code in  to confirm it is fetching data from this endpoint on page load.
+        3.  Check browser network tools to see if the API call is being made and what data is being returned.
+        4.  Investigate the backend logic to ensure the  flag is being correctly managed when a new configuration is saved.
+    -   **Why fix this issue and what will be achieved with the fix?** It's a core feature for the admin to control homepage content. Fixing it restores expected functionality.
+    -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on other issue:** None.
+    -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1: Finalize Doping System UI (P0)**
-    -   **Where to resume:** .
-    -   **What will be achieved with this?** A fully functional Doping System as requested by the user, with clear visual indicators for moderators.
+-   **Task 1: Complete the İlan Ver Page Overhaul (P0 - CRITICAL)**
+    -   **Description:** This is the current, highest-priority task. The goal is to fully implement the new multi-stage ad creation flow as defined by the user in messages #1167, #1170, #1171, and the  artifact.
+    -   **Where to resume:** The work is centered in .
+        1.  Finalize the UI and logic for  (İlan 1).
+        2.  Create and implement  (İlan 2), which must handle the infinite-level category selection and also integrate the  for the Vasıta module.
+        3.  Create and implement the 8-step form detailed in the PDF (İlan 3), including steps for parameters, address, media, etc.
+        4.  Implement the backend logic and API endpoints for creating, updating, and submitting the listing for admin review.
+        5.  Ensure the Preview and final redirection to the Listing Detail page work correctly.
+    -   **What will be achieved with this?** A core user journey will be completely rebuilt to the user's exact specifications, replacing a major source of previous issues.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** None.
+    -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
--   **Future Tasks (Backlog):**
-    1.  **P2 - Alerting Channel Integration:** Integrate Slack, SMTP, and PagerDuty for alerts. This has been a long-standing task blocked on the user providing necessary secrets.
-    2.  **P2 - Physical Deletion of Legacy Publish Endpoint:** The deprecated endpoint  needs to be removed from the codebase.
-    3.  **Backlog - Master Data Import:** The business logic in  is still a skeleton and needs to be implemented.
-    4.  **Backlog - Theme Token Editor:** Build the UI for managing granular design tokens (colors, fonts).
-    5.  **Backlog - Widget Template Library:** Create a library of pre-configured, reusable dashboard widget templates.
+-   **Upcoming Tasks:**
+    -   **P1 - Live Data for Urgent Listings Page:** Validate the  page with real data and ensure filtering and pagination work correctly.
+    -   **P1 - Dynamic Homepage Content:** Connect the campaign cards and other sections on the homepage to backend services as per user's earlier task lists (e.g., P107).
+-   **Future Tasks:**
+    -   **P2 - Drag-and-Drop** for category reordering in the Category Builder.
+    -   **P2 - Batch Publish Scheduler**.
+    -   **P2 - Alerting Channel Integration** (Slack, SMTP, PagerDuty).
 
 **Completed work in this session**
--   **Live Data Migration (P0 Closure):** Successfully converted all mocked endpoints for the corporate dashboard under  to use live data from the PostgreSQL database.
--   **Hesabım Sub-modules (P1 Closure):** Implemented and connected the My Account sub-modules (Security, Notifications, Profile) to the live backend.
--   **Homepage Integration from HTML:** Integrated a user-provided static HTML file as the new public homepage. This involved creating , , and a new backend domain  to serve dynamic data to it.
--   **Header Cleanup:** Removed the second-row category navigation bar (Emlak / Vasıta) from the main layout as requested by the user.
--   **Doping System Implementation (Backend & Initial Frontend):**
-    -   Created database migration to add  and  fields to the  table.
-    -   Built backend logic and API endpoints to manage listing doping.
-    -   Restructured the admin sidebar () to add new sub-menus for moderating Acil and Vitrin listings.
+-   **Category System Overhaul:** The entire category system was scrapped and rebuilt into a Category Builder with infinite levels, new models (, ), APIs, and a new multi-panel admin UI ().
+-   **Vehicle Master Data Import:** A full pipeline for importing vehicle data from files (JSON, Excel) was implemented, including new database tables (, , ), backend processing logic, and a fix for Nginx's file size limit.
+-   **Vehicle Data Management UI:** New admin pages were created to view, search, and bulk-delete the imported vehicle brands and models.
+-   **Homepage Category Designer:** A new admin feature was built to allow manual reordering and sorting (manual/alphabetical) of categories displayed on the homepage, with corresponding database models (, etc.) and API endpoints.
+-   **Initial work on İlan Ver Overhaul:** The agent has started rebuilding the  and has created the first step component, .
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Hydration Warnings:** The agent noted React hydration warnings related to  and the . These were acknowledged as technical debt but have not been addressed.
-    -   **Debug checklist:** Investigate server-side rendering mismatch in the mentioned components.
-    -   **Why to solve this issue and what will be achieved with this?** Fixes React errors, improves application stability and performance.
-    -   **Should Test frontend/backend/both after fix:** frontend
-    -   **Is recurring issue?** Y
+-   **React Hydration Warnings:** Noted in the previous fork related to  and . This technical debt has not been addressed.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Platform failure to inject  secret.
 -   **Recurrence count:** 10+
--   **Status:** BLOCKED (Workaround in place: using  for all secret configurations). The agent must continue to rely on the  file for secrets.
+-   **Status:** BLOCKED (Workaround in place: using  for all secret configurations).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Mock-to-Live Migration:** The process of replacing hardcoded backend responses with live database queries, which was the main task for the corporate dashboard.
--   **Raw HTML to React Integration:** Converting a user-provided static HTML file into a dynamic React component (), separating its CSS, and creating a dedicated backend endpoint () to inject data.
--   **Database Migration (Alembic):** Using Alembic to evolve the database schema by adding  and  columns to the  table.
--   **Dynamic Model Properties:** Using the  decorator in the SQLAlchemy  model to compute  and  flags based on the current time and the  timestamps.
+-   **Complex Dynamic Admin UIs:** Building multi-column, stateful interfaces for managing hierarchical data ().
+-   **Data Import Pipelines:** Handling large file uploads (JSON/Excel), parsing them in the backend, and populating multiple database tables.
+-   **Nginx Configuration:** Modifying  to increase  to handle large file uploads.
+-   **Multi-Step Form Architecture:** Deconstructing a complex user flow into separate, manageable React components/steps with a shared parent state ().
+-   **Config-Driven UI:** Building UIs where elements (like grid layout or sorting behavior) are determined by settings configured by an admin in another part of the app.
 
 **key DB schema**
--   **listings:** 
-
-**changes in tech stack**
--   None. The existing stack of React, FastAPI, and PostgreSQL was used.
+-   **modules:** 
+-   **categories:** 
+-   **vehicle_brands:** 
+-   **vehicle_models:** 
+-   **vehicle_trims:** 
+-   **homepage_category_layouts:** 
+-   **homepage_category_modules:** 
+-   **homepage_category_items:** 
 
 **All files of reference**
--   **Doping System Backend:**
+-   **Critical for İlan Ver task:**
+    -    (User artifact)
+    -   
+-   **New Admin Features:**
     -   
     -   
     -   
     -   
--   **Doping System Frontend:**
-    -   
-    -   
-    -   Files inside 
--   **Homepage Integration:**
-    -   
-    -   
-    -   
-    -   
+-   **Configuration:**
+    -    (for payload size)
+    -    (for Starlette request size)
 
 **Areas that need refactoring**:
--   **HomePage Component:**  was created by directly translating a large HTML file. It could be broken down into smaller, more manageable React components for better maintainability.
--   **Hydration Warnings:** The persistent React hydration warnings should be investigated and fixed.
+-    is currently in a transitional state and needs to be fully built out into the new multi-step architecture. The old code is being replaced.
 
 **key api endpoints**
--    (GET): Serves data for the new public homepage.
--    (POST): Updates the doping status (urgent/featured) of a listing.
--    (GET): Now returns  and  flags for each listing.
+-   : Create a new module (L0).
+-   : Endpoint for the sibling inheritance feature.
+-   : To save the homepage category design.
+-   : To upload vehicle data files.
+-   : For bulk deletion of brands.
 
 **Critical Info for New Agent**
--   **Follow User's Lead:** The user has repeatedly pivoted the project's direction. Be prepared to adapt to new, high-level requests. The current focus is completing the Doping System.
--   **Autonomous Execution:** The user expects the agent to handle implementation details autonomously after providing a high-level goal (e.g., kapat - close it, devam et - continue).
--   **Doping System is Priority:** The immediate task is to finish the frontend integration for the Doping System. This is the user's latest request and should be treated as P0.
--   **Communicate in Turkish:** All user-facing communication must be in Turkish.
+-   **Follow the User's Görev Listesi.** The user now provides extremely detailed, structured task lists and architectural decisions (e.g., messages #1170, #1171, #1173). Treat these as the absolute source of truth. Do not deviate or make assumptions.
+-   **The İlan Ver page is the #1 priority.** All work should be focused on completing the overhaul of this page according to the user's new PDF and instructions.
+-   **The old category hierarchy problem is obsolete.** The entire system was rebuilt at the user's request. The focus is now on the new Category Builder and its integration into the İlan Ver page.
+-   **Communicate exclusively in Turkish.** This is non-negotiable.
 
 **documents and test reports created in this job**
--   
--   
+-   User uploaded artifact: 
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  : User confirms the plan for implementing the Doping System.
-2.  : **(Latest Major Request)** User provides detailed requirements for the Doping System, including DB changes and UI updates to categorize listings into ücretsiz, vitrin, and acil.
-3.  : Agent confirms removal of the 2nd row navigation.
-4.  : User asks to remove the second row navigation below the header (emlak vasıta yazıyor).
-5.  : User repeats the request to remove the 2nd row.
-6.  : User provides the raw HTML code for the new public homepage.
-7.  : Agent confirms completion of the corporate section updates (3rd row).
-8.  : User says kapat (close it), signaling completion of the 3rd-row header task.
-9.  : User requests to add a 3rd row to the corporate header with user info and filters.
-10. : User instructs the agent to make all necessary improvements without asking for confirmation on every small step.
+1.  **#1226 (devam):** continue. User asking agent to proceed with the current task.
+2.  **#1173 (İlan 1 grid boyutlandırma...):** User provides another set of detailed architectural decisions and assumptions for the İlan Ver page, including fallback behaviors, form policies, and URL structures. **[CRITICAL PRD]**
+3.  **#1171 (Görev Listesi...):** User provides a detailed list of architectural decisions to lock in the scope for the İlan Ver page update, confirming that all three parts (İlan 1, 2, 3) should be updated together. **[CRITICAL PRD]**
+4.  **#1170 (Görev Listesi...):** User provides the main task list for the İlan Ver page overhaul, breaking it down into İlan 1, 2, 3 and specifying the end-to-end testing scope. **[CRITICAL PRD]**
+5.  **#1167 (ilan sayfasını buna göre...):** User uploads a new PDF () and asks if the İlan Ver page should be updated according to it. This message triggers the entire page overhaul task.
+6.  **#938 (otomobil ve diğer araçlar için...):** User reports that imported vehicle data is not visible and requests bulk delete functionality.
+7.  **#872 (Araç Master Data Import kısmına...):** User reports an error (implied ) when trying to upload a large JSON file for vehicle data.
+8.  **#717 (1. hiç bir şık...):** User clarifies requirements for the homepage category sorting, confirming they want both manual and alphabetical options per-module, and cancels the apply to siblings feature.
+9.  **#714 (L1 sıralaması bence alfabetik olsun...):** User requests that L1 sorting be alphabetical and cancels a previous implementation. This leads to the more nuanced request in #717.
+10. **#469 (1. Admin Panel...):** User provides detailed requirements for the new Homepage Category Designer feature.
 
 **Project Health Check:**
--   **Broken:** None
--   **Mocked:** Very Low. The main corporate dashboard, which was previously fully mocked, is now connected to the live database. The primary functionality is data-driven.
+-   **Broken:** The İlan ver page is intentionally broken as it is in the middle of a complete overhaul.
+-   **Mocked:** None currently. The new İlan ver form steps are being built but are not yet mocked with data.
 
 **3rd Party Integrations**
--   **PostgreSQL:** Primary database.
--   **Meilisearch:** Search-as-a-service.
--   **Stripe:** Payments.
--   **react-beautiful-dnd:** For row-based drag-and-drop.
--   **react-grid-layout / dnd-kit:** For grid-based drag-and-drop.
--   **Slack (pending integration):** For operational alerts.
--   **PagerDuty (pending integration):** For critical on-call alerts.
--   **SMTP (pending integration):** For email alerts.
+-   PostgreSQL
+-   Meilisearch
+-   Stripe
+-   react-beautiful-dnd (Used for sorting in Homepage Category Editor)
+-   **Pending (from original request):** Slack, PagerDuty, SMTP for alerts.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (but not for the most recent Doping System feature).
+-   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None recently.
--   **Known regressions:** React hydration warnings persist in the frontend.
+-   **Test files created:** None
+-   **Known regressions:** The İlan ver page is temporarily non-functional due to the ongoing overhaul.
 
 **Credentials to test flow:**
 -   **Admin:**  / 
 
 **What agent forgot to execute**
--   The P2 task to physically delete the legacy publish endpoint () was part of a planned cleanup but appears to have been missed during execution. It remains in the backlog.</analysis>
+-   The pre-existing bug regarding Vitrin Yönetimi (Showcase Management) changes not appearing on the homepage was not addressed during this session and remains pending.
+-   The React Hydration warnings mentioned in the previous fork summary were also not addressed.</analysis>
