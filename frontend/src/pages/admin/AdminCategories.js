@@ -1932,6 +1932,97 @@ const AdminCategories = () => {
     });
   };
 
+  const resetVehicleImportStatus = () => {
+    setVehicleImportStatus("");
+    setVehicleImportError("");
+  };
+
+  const handleApplyVehicleTemplate = () => {
+    const templateItems = VEHICLE_LEVEL0_TEMPLATES.map((name, index) => ({
+      ...createSubcategoryDraft(),
+      name,
+      slug: normalizeSlugValue(name),
+      sort_order: index + 1,
+      is_complete: false,
+      is_leaf: false,
+      children: [],
+    }));
+    setSubcategories(templateItems.length ? templateItems : [createSubcategoryDraft()]);
+    setLevelSelections([]);
+    setLevelCompletion({});
+    setHierarchyError("");
+  };
+
+  const handleVehicleImportApi = async () => {
+    resetVehicleImportStatus();
+    setVehicleImportLoading(true);
+    try {
+      const parsedPayload = vehicleImportPayload ? JSON.parse(vehicleImportPayload) : {};
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/vehicle-master-import/jobs/api`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify({
+          ...parsedPayload,
+          dry_run: vehicleImportDryRun,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.detail || data?.message || "API import başlatılamadı.");
+      }
+      setVehicleImportStatus(`Job oluşturuldu: ${data?.job?.id || "-"}`);
+    } catch (error) {
+      setVehicleImportError(error?.message || "API import başlatılamadı.");
+    } finally {
+      setVehicleImportLoading(false);
+    }
+  };
+
+  const handleVehicleImportUpload = async (mode) => {
+    resetVehicleImportStatus();
+    if (!vehicleImportFile) {
+      setVehicleImportError("Dosya seçin.");
+      return;
+    }
+    setVehicleImportLoading(true);
+    try {
+      let fileToUpload = vehicleImportFile;
+      if (mode === "excel") {
+        const buffer = await vehicleImportFile.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonRows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+        const blob = new Blob([JSON.stringify(jsonRows)], { type: "application/json" });
+        fileToUpload = new File([blob], "vehicle_import.json", { type: "application/json" });
+      }
+
+      const formData = new FormData();
+      formData.append("file", fileToUpload);
+      formData.append("dry_run", vehicleImportDryRun ? "true" : "false");
+
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/vehicle-master-import/jobs/upload`, {
+        method: "POST",
+        headers: {
+          ...authHeader,
+        },
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.message || data?.detail || "Upload başarısız.");
+      }
+      setVehicleImportStatus(`Job oluşturuldu: ${data?.job?.id || "-"}`);
+    } catch (error) {
+      setVehicleImportError(error?.message || "Upload başarısız.");
+    } finally {
+      setVehicleImportLoading(false);
+    }
+  };
+
   const handleCopySchema = () => {
     try {
       const text = JSON.stringify(schema, null, 2);
