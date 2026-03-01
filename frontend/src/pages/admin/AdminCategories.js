@@ -3628,7 +3628,7 @@ const AdminCategories = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <label className={labelClassName}>Ana kategori adı</label>
+                        <label className={labelClassName}>Modül adı</label>
                         <input
                           className={inputClassName}
                           value={form.name}
