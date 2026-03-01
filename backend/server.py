@@ -11693,6 +11693,10 @@ class ListingCreateConfigPayload(BaseModel):
     require_address_line: bool = True
 
 
+class ListingSiteDesignPayload(BaseModel):
+    config: Dict[str, Any]
+
+
 class MeiliSearchConfigCreatePayload(BaseModel):
     meili_url: str
     meili_index_name: Optional[str] = "listings_index"
