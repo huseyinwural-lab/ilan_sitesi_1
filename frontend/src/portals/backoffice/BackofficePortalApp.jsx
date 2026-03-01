@@ -227,13 +227,31 @@ export default function BackofficePortalApp() {
 
       <Route path="/dealers" element={<AdminLayout><DealersPage /></AdminLayout>} />
       <Route path="/dealer-applications" element={<AdminLayout><DealerApplicationsPage /></AdminLayout>} />
-      <Route path="/vehicle-makes" element={<AdminLayout><AdminVehicleMakes /></AdminLayout>} />
-      <Route path="/vehicle-models" element={<AdminLayout><AdminVehicleModels /></AdminLayout>} />
+      <Route
+        path="/vehicle-makes"
+        element={
+          <AdminLayout>
+            <AdminRouteGuard roles={["super_admin", "country_admin", "moderator", "masterdata_manager"]}>
+              <AdminVehicleMakes />
+            </AdminRouteGuard>
+          </AdminLayout>
+        }
+      />
+      <Route
+        path="/vehicle-models"
+        element={
+          <AdminLayout>
+            <AdminRouteGuard roles={["super_admin", "country_admin", "moderator", "masterdata_manager"]}>
+              <AdminVehicleModels />
+            </AdminRouteGuard>
+          </AdminLayout>
+        }
+      />
       <Route
         path="/vehicle-master-import"
         element={
           <AdminLayout>
-            <AdminRouteGuard roles={["super_admin", "masterdata_manager"]}>
+            <AdminRouteGuard roles={["super_admin", "country_admin", "moderator", "masterdata_manager"]}>
               <AdminVehicleMasterImport />
             </AdminRouteGuard>
           </AdminLayout>
