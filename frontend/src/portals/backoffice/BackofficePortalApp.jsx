@@ -169,7 +169,7 @@ export default function BackofficePortalApp() {
         path="/site-design/home-category"
         element={
           <AdminLayout>
-            <AdminRouteGuard roles={["super_admin"]}>
+            <AdminRouteGuard roles={["super_admin", "country_admin"]}>
               <AdminHomeCategoryDesign />
             </AdminRouteGuard>
           </AdminLayout>
