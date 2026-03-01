@@ -153,6 +153,82 @@
     --link-hover: var(--theme-dark-link-hover);
     color-scheme: dark;
   }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: var(--theme-dark-background-hsl);
+      --foreground: var(--theme-dark-text-primary-hsl);
+      --card: var(--theme-dark-surface-hsl);
+      --card-foreground: var(--theme-dark-text-primary-hsl);
+      --popover: var(--theme-dark-surface-hsl);
+      --popover-foreground: var(--theme-dark-text-primary-hsl);
+      --primary: var(--theme-dark-primary-hsl);
+      --primary-foreground: var(--theme-dark-button-primary-text-hsl);
+      --secondary: var(--theme-dark-secondary-hsl);
+      --secondary-foreground: var(--theme-dark-button-secondary-text-hsl);
+      --muted: var(--theme-dark-surface-2-hsl);
+      --muted-foreground: var(--theme-dark-text-muted-hsl);
+      --accent: var(--theme-dark-accent-hsl);
+      --accent-foreground: var(--theme-dark-text-inverse-hsl);
+      --destructive: var(--theme-dark-danger-hsl);
+      --destructive-foreground: var(--theme-dark-text-inverse-hsl);
+      --border: var(--theme-dark-border-hsl);
+      --input: var(--theme-dark-border-hsl);
+      --ring: var(--theme-dark-primary-hsl);
+      --chart-1: var(--theme-dark-primary-hsl);
+      --chart-2: var(--theme-dark-success-hsl);
+      --chart-3: var(--theme-dark-accent-hsl);
+      --chart-4: var(--theme-dark-secondary-hsl);
+      --chart-5: var(--theme-dark-warning-hsl);
+
+      --color-primary: var(--theme-dark-primary);
+      --color-primary-hover: var(--theme-dark-primary-hover);
+      --color-primary-dark: var(--theme-dark-primary-hover);
+      --color-primary-soft: color-mix(in srgb, var(--color-primary) 15%, transparent);
+      --color-secondary: var(--theme-dark-secondary);
+      --color-secondary-dark: var(--theme-dark-link-hover);
+      --color-accent: var(--theme-dark-accent);
+      --color-success: var(--theme-dark-success);
+      --color-warning: var(--theme-dark-warning);
+      --color-danger: var(--theme-dark-danger);
+      --color-info: var(--theme-dark-accent);
+      --color-app-bg: var(--theme-dark-background);
+
+      --text-primary: var(--theme-dark-text-primary);
+      --text-secondary: var(--theme-dark-text-secondary);
+      --text-muted: var(--theme-dark-text-muted);
+      --text-inverse: var(--theme-dark-text-inverse);
+
+      --bg-page: var(--theme-dark-background);
+      --bg-page-alt: var(--theme-dark-background-alt);
+      --bg-surface: var(--theme-dark-surface);
+      --bg-surface-muted: var(--theme-dark-surface-2);
+      --bg-modal: var(--theme-dark-modal-background);
+      --bg-surface-soft: color-mix(in srgb, var(--bg-surface) 70%, transparent);
+      --bg-soft: var(--theme-dark-background-alt);
+      --bg-warm: var(--theme-dark-background-alt);
+      --bg-warm-soft: color-mix(in srgb, var(--bg-warm) 60%, transparent);
+
+      --border-subtle: var(--theme-dark-border);
+      --border-warm: var(--theme-dark-border-strong);
+
+      --brand-navy: var(--theme-dark-header-bg);
+      --brand-navy-deep: color-mix(in srgb, var(--theme-dark-header-bg) 75%, black);
+
+      --button-primary-bg: var(--theme-dark-button-primary-bg);
+      --button-primary-text: var(--theme-dark-button-primary-text);
+      --button-secondary-bg: var(--theme-dark-button-secondary-bg);
+      --button-secondary-text: var(--theme-dark-button-secondary-text);
+
+      --header-bg: var(--theme-dark-header-bg);
+      --header-text: var(--theme-dark-header-text);
+      --footer-bg: var(--theme-dark-footer-bg);
+      --footer-text: var(--theme-dark-footer-text);
+      --link: var(--theme-dark-link);
+      --link-hover: var(--theme-dark-link-hover);
+      color-scheme: dark;
+    }
+  }
 }
 
 @layer base {
