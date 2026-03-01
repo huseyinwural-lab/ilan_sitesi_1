@@ -27943,12 +27943,13 @@ async def submit_vehicle_listing_for_review(
 
     if listing.status == LISTING_FLOW_SUBMITTED:
         if flow.get("last_submit_idempotency_key") == normalized_key:
-            return flow.get("last_submit_response") or {
+            previous = flow.get("last_submit_response") or {
                 "id": str(listing.id),
                 "status": listing.status,
                 "flow_state": LISTING_FLOW_SUBMITTED,
                 "idempotency_reused": True,
             }
+            return {**previous, "idempotency_reused": True}
         raise HTTPException(status_code=409, detail="Bu ilan zaten onaya gönderildi")
 
     if flow_state not in {LISTING_FLOW_PREVIEW_READY, LISTING_FLOW_DOPING_SELECTED}:
