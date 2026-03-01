@@ -16,7 +16,7 @@
 
 .home-v2-main-grid {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 286px 1fr;
   gap: 16px;
   align-items: start;
   padding-top: 14px;
@@ -93,17 +93,17 @@
 
 .home-v2-module-group {
   border: 1px solid var(--home-border);
-  border-radius: 10px;
-  background: var(--home-surface-2);
-  padding: 8px;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 10px;
 }
 
 .home-v2-module-title {
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.02em;
-  color: #1d2939;
-  margin: 2px 2px 8px;
+  color: #344054;
+  margin: 2px 2px 10px;
 }
 
 .home-v2-root-link {
@@ -111,18 +111,21 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  border-radius: 8px;
-  padding: 8px;
+  border-radius: 10px;
+  padding: 9px 10px;
+  border: 1px solid #dbe4f0;
+  background: #eef4ff;
   text-decoration: none;
 }
 
 .home-v2-root-link:hover {
-  background: #fff;
+  background: #e2ecff;
 }
 
 .home-v2-root-title {
   font-size: 13px;
   font-weight: 900;
+  color: #1d4ed8;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -130,9 +133,10 @@
 }
 
 .home-v2-child-list {
-  margin-left: 8px;
-  padding-left: 6px;
-  border-left: 2px solid #e4e7ec;
+  margin-top: 7px;
+  margin-left: 6px;
+  padding-left: 8px;
+  border-left: 2px solid #dbeafe;
   display: grid;
   gap: 6px;
 }
@@ -224,14 +228,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 6px 8px;
+  padding: 7px 9px;
   border-radius: 10px;
-  border: 1px solid var(--home-border);
+  border: 1px solid #dbe4f0;
   background: #fff;
 }
 
 .home-v2-first-child:hover {
-  background: #fff;
+  background: #f8fbff;
 }
 
 .home-v2-first-child-title {
