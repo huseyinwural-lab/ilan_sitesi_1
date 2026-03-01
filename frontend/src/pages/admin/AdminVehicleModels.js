@@ -252,12 +252,20 @@ const AdminVehicleModels = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td className="px-3 py-4" colSpan="7">Yükleniyor...</td></tr>
+              <tr><td className="px-3 py-4" colSpan="8">Yükleniyor...</td></tr>
             ) : items.length === 0 ? (
-              <tr><td className="px-3 py-4" colSpan="7">Kayıt yok</td></tr>
+              <tr><td className="px-3 py-4" colSpan="8">Kayıt yok</td></tr>
             ) : (
               items.map((item) => (
                 <tr key={item.id} className="border-t" data-testid={`vehicle-models-row-${item.id}`}>
+                  <td className="px-3 py-2" data-testid={`vehicle-models-select-${item.id}`}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onChange={() => toggleSelect(item.id)}
+                      data-testid={`vehicle-models-select-input-${item.id}`}
+                    />
+                  </td>
                   <td className="px-3 py-2" data-testid={`vehicle-models-make-${item.id}`}>{resolveMakeName(item.make_id)}</td>
                   <td className="px-3 py-2" data-testid={`vehicle-models-name-${item.id}`}>{item.name}</td>
                   <td className="px-3 py-2 text-muted-foreground" data-testid={`vehicle-models-slug-${item.id}`}>{item.slug}</td>
