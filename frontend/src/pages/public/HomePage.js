@@ -15,6 +15,13 @@ const MODULE_CONFIG = [
   { key: 'other', label: 'Diğer' },
 ];
 
+const DEFAULT_HOME_CATEGORY_LAYOUT = {
+  column_width: 286,
+  l1_initial_limit: 5,
+  module_order: MODULE_CONFIG.map((item) => item.key),
+  module_l1_order: {},
+};
+
 const REAL_ESTATE_DISPLAY_SCHEMA = {
   l1: ['Emlak'],
   l2: ['Konut', 'Ticari Alan', 'Arsa'],
