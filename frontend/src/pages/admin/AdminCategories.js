@@ -2739,14 +2739,8 @@ const AdminCategories = () => {
     if (!moduleValue) {
       mainFieldErrors.main_module = "Modül zorunludur.";
     }
-    if (!Number.isFinite(rootSortOrder) || rootSortOrder <= 0) {
-      mainFieldErrors.main_sort_order = "Sıra 1 veya daha büyük olmalıdır.";
-    }
     if (isRootCategory && !form.image_url?.trim()) {
       mainFieldErrors.main_image_url = "Modül görseli zorunludur.";
-    }
-    if (!orderPreview.available) {
-      mainFieldErrors.main_sort_order = orderPreview.message || "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.";
     }
 
     if (Object.keys(mainFieldErrors).length > 0) {
