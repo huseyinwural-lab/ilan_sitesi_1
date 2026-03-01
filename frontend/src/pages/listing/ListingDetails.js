@@ -1014,26 +1014,78 @@ export default function ListingDetails() {
           </div>
         ) : (
           <div className="space-y-4" data-testid="ilan-ver-address-fields">
+            <div className="grid gap-3 md:grid-cols-2" data-testid="ilan-ver-google-key-row">
+              <label className="space-y-1 text-xs" data-testid="ilan-ver-google-maps-key-wrap">
+                <span>GOOGLE_MAPS_API_KEY (manuel)</span>
+                <input
+                  value={form.google_maps_api_key}
+                  onChange={(e) => {
+                    const keyValue = e.target.value;
+                    saveFormLocal({ google_maps_api_key: keyValue });
+                    localStorage.setItem(GOOGLE_MAPS_KEY_STORAGE, keyValue);
+                  }}
+                  placeholder="AIza..."
+                  className="h-10 w-full rounded-md border px-3"
+                  data-testid="ilan-ver-google-maps-key-input"
+                />
+              </label>
+              <div className="rounded-md border bg-slate-50 p-3 text-xs text-slate-700" data-testid="ilan-ver-google-mode-info">
+                <div className="font-semibold">Adres Servis Modu</div>
+                <div className="mt-1">Mod: {googleModeLabel}</div>
+                <div className="mt-1">Kaynak: {placesConfig.key_source || 'none'}</div>
+                {placesConfigLoading ? <div className="mt-1 text-slate-500">Config yükleniyor...</div> : null}
+              </div>
+            </div>
+
             <label className="space-y-1 text-xs" data-testid="ilan-ver-address-autocomplete-wrap">
               <span>Google Autocomplete Araması</span>
               <input
                 value={form.google_autocomplete_query}
                 onChange={(e) => saveFormLocal({ google_autocomplete_query: e.target.value })}
-                onBlur={saveAddressBlock}
-                disabled={!googleAutocompleteEnabled}
-                placeholder={googleAutocompleteEnabled ? 'Adres yazın...' : 'Google API key eksik'}
+                placeholder={googleAutocompleteEnabled ? 'Adres yazın...' : 'GOOGLE_MAPS_API_KEY girin'}
                 className="h-10 w-full rounded-md border px-3 disabled:bg-slate-100"
                 data-testid="ilan-ver-address-autocomplete-input"
               />
             </label>
-            {!googleAutocompleteEnabled ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800" data-testid="ilan-ver-address-autocomplete-warning">
-                Google Autocomplete için config eksik. Blok manuel adres girişine geçti.
+
+            {placesLoading ? (
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600" data-testid="ilan-ver-address-autocomplete-loading">
+                Öneriler getiriliyor...
               </div>
             ) : null}
-            <div className="grid gap-4 md:grid-cols-3">
+
+            {placesError ? (
+              <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700" data-testid="ilan-ver-address-autocomplete-error">
+                {placesError}
+              </div>
+            ) : null}
+
+            {placeSuggestions.length > 0 ? (
+              <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border bg-white p-2" data-testid="ilan-ver-address-suggestions-list">
+                {placeSuggestions.map((item) => (
+                  <button
+                    key={item.place_id}
+                    type="button"
+                    onClick={() => handleSelectAddressSuggestion(item)}
+                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-left text-xs hover:border-blue-400 hover:bg-blue-50"
+                    data-testid={`ilan-ver-address-suggestion-${item.place_id}`}
+                  >
+                    <div className="font-semibold text-slate-800">{item.main_text || item.description}</div>
+                    <div className="text-slate-500">{item.secondary_text || item.description}</div>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            {!googleAutocompleteEnabled ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800" data-testid="ilan-ver-address-autocomplete-warning">
+                Google Places key tanımlı değil. Manuel giriş alanı ile key girip real moda geçebilirsiniz.
+              </div>
+            ) : null}
+
+            <div className="grid gap-4 md:grid-cols-4">
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-city-wrap">
-                <span>Şehir *</span>
+                <span>İl *</span>
                 <input
                   value={form.city}
                   onChange={(e) => saveFormLocal({ city: e.target.value })}
@@ -1062,7 +1114,41 @@ export default function ListingDetails() {
                   data-testid="ilan-ver-field-district"
                 />
               </label>
+              <label className="space-y-1 text-xs" data-testid="ilan-ver-field-neighborhood-wrap">
+                <span>Mahalle</span>
+                <input
+                  value={form.neighborhood}
+                  onChange={(e) => saveFormLocal({ neighborhood: e.target.value })}
+                  onBlur={saveAddressBlock}
+                  className="h-10 w-full rounded-md border px-3"
+                  data-testid="ilan-ver-field-neighborhood"
+                />
+              </label>
             </div>
+
+            <div className="grid gap-4 md:grid-cols-2" data-testid="ilan-ver-field-latlng-row">
+              <label className="space-y-1 text-xs" data-testid="ilan-ver-field-latitude-wrap">
+                <span>Lat</span>
+                <input
+                  value={form.latitude}
+                  onChange={(e) => saveFormLocal({ latitude: e.target.value })}
+                  onBlur={saveAddressBlock}
+                  className="h-10 w-full rounded-md border px-3"
+                  data-testid="ilan-ver-field-latitude"
+                />
+              </label>
+              <label className="space-y-1 text-xs" data-testid="ilan-ver-field-longitude-wrap">
+                <span>Lng</span>
+                <input
+                  value={form.longitude}
+                  onChange={(e) => saveFormLocal({ longitude: e.target.value })}
+                  onBlur={saveAddressBlock}
+                  className="h-10 w-full rounded-md border px-3"
+                  data-testid="ilan-ver-field-longitude"
+                />
+              </label>
+            </div>
+
             <label className="space-y-1 text-xs" data-testid="ilan-ver-field-address-line-wrap">
               <span>Açık Adres</span>
               <input
