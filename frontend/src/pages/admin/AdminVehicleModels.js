@@ -233,6 +233,14 @@ const AdminVehicleModels = () => {
         <table className="min-w-full text-sm">
           <thead className="bg-muted">
             <tr>
+              <th className="text-left px-3 py-2" data-testid="vehicle-models-header-select">
+                <input
+                  type="checkbox"
+                  checked={items.length > 0 && selectedIds.size === items.length}
+                  onChange={toggleSelectAll}
+                  data-testid="vehicle-models-select-all"
+                />
+              </th>
               <th className="text-left px-3 py-2" data-testid="vehicle-models-header-make">Make</th>
               <th className="text-left px-3 py-2" data-testid="vehicle-models-header-name">Model</th>
               <th className="text-left px-3 py-2" data-testid="vehicle-models-header-slug">Slug</th>
