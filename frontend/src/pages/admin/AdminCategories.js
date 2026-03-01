@@ -342,11 +342,11 @@ const AdminCategories = () => {
   const [hierarchyComplete, setHierarchyComplete] = useState(false);
   const [hierarchyError, setHierarchyError] = useState("");
   const [hierarchyFieldErrors, setHierarchyFieldErrors] = useState({});
-  const [subcategories, setSubcategories] = useState([createSubcategoryGroupDraft()]);
+  const [subcategories, setSubcategories] = useState([createSubcategoryDraft()]);
   const [levelSelections, setLevelSelections] = useState([]);
   const [levelCompletion, setLevelCompletion] = useState({});
-  const [draggingGroupIndex, setDraggingGroupIndex] = useState(null);
-  const [draggingChild, setDraggingChild] = useState(null);
+  const [draggingLevelIndex, setDraggingLevelIndex] = useState(null);
+  const [draggingItemIndex, setDraggingItemIndex] = useState(null);
   const [isModalFullscreen, setIsModalFullscreen] = useState(false);
   const [modalSize, setModalSize] = useState({ width: 1280, height: 820 });
   const [dynamicDraft, setDynamicDraft] = useState({
