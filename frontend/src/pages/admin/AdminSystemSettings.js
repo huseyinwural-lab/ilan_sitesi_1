@@ -653,6 +653,14 @@ export default function AdminSystemSettingsPage() {
   }, [filterCountry]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search || '');
+    if (params.get('focus') !== 'google-maps') return;
+    setTimeout(() => {
+      googleMapsCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 250);
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (watermarkPreviewUrl) {
         URL.revokeObjectURL(watermarkPreviewUrl);
