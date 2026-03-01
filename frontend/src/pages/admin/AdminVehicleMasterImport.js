@@ -500,6 +500,15 @@ export default function AdminVehicleMasterImport() {
         </div>
       </div>
 
+      <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="vehicle-master-import-visibility-note">
+        <h3 className="text-sm font-semibold" data-testid="vehicle-master-import-visibility-title">Yüklendikten sonra nerede görünür?</h3>
+        <ul className="text-xs text-muted-foreground space-y-1" data-testid="vehicle-master-import-visibility-list">
+          <li>✅ Admin → Araç Markaları & Araç Modelleri listelerinde görünür.</li>
+          <li>✅ İlan Ver → Araç Seç adımında (yıl/marka/model/trim) görünür.</li>
+          <li>ℹ️ Dry-run işaretliyse sadece job önizlemesi oluşur, canlı listelere yazılmaz.</li>
+        </ul>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]" data-testid="vehicle-master-import-jobs">
         <div className="rounded-lg border bg-white p-4 space-y-3" data-testid="vehicle-import-job-list">
           <div className="flex items-center justify-between">
