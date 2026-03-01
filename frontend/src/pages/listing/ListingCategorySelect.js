@@ -901,17 +901,36 @@ const ListingCategorySelect = () => {
           }}
           data-testid="ilan-ver-module-grid"
         >
-          {orderedModules.map((item) => (
+          {(moduleCards.length > 0 ? moduleCards : orderedModules.map((item) => ({
+            id: item.key,
+            title: item.label,
+            description: '',
+            module_key: item.key,
+            border_color: '#334155',
+            image_url: '',
+          }))).map((item) => (
             <button
-              key={item.key}
+              key={item.id}
               type="button"
-              onClick={() => handleSelectModule(item.key)}
+              onClick={() => handleSelectModule(item.module_key, item)}
               className={`rounded-lg border px-3 py-2 text-sm text-left transition ${
-                selectedModule === item.key ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white hover:border-blue-400'
+                selectedModule === item.module_key ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white hover:border-blue-400'
               }`}
-              data-testid={`ilan-ver-module-card-${item.key}`}
+              style={{ borderColor: selectedModule === item.module_key ? '#2563eb' : item.border_color || '#cbd5e1' }}
+              data-testid={`ilan-ver-module-card-${item.id}`}
             >
-              {item.label}
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.title}
+                  className="mb-2 h-12 w-full rounded object-cover"
+                  data-testid={`ilan-ver-module-card-image-${item.id}`}
+                />
+              ) : null}
+              <div className="font-semibold" data-testid={`ilan-ver-module-card-title-${item.id}`}>{item.title}</div>
+              {item.description ? (
+                <div className="mt-1 text-xs text-slate-500" data-testid={`ilan-ver-module-card-description-${item.id}`}>{item.description}</div>
+              ) : null}
             </button>
           ))}
         </div>
