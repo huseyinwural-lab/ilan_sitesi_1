@@ -20745,7 +20745,10 @@ async def admin_save_google_maps_settings(
 
     api_setting = await _get_system_setting_by_key(session, GOOGLE_MAPS_API_KEY_SETTING_KEY, None)
     api_key_value = str(payload.api_key or "").strip()
-    if api_setting:
+    if payload.clear_api_key and api_setting:
+        await session.delete(api_setting)
+        api_setting = None
+    elif api_setting:
         if api_key_value:
             api_setting.value = {"api_key": api_key_value}
         api_setting.description = api_setting.description or "Google Maps API key"
@@ -20790,6 +20793,7 @@ async def admin_save_google_maps_settings(
         resource_id=str(country_setting.id),
         metadata={
             "api_key_configured": bool(api_key_value or (api_setting and api_setting.value)),
+            "clear_api_key": bool(payload.clear_api_key),
             "country_codes": normalized_codes,
         },
         request=request,
