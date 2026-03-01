@@ -186,6 +186,24 @@ export default function HomePage() {
     };
   }, [countryCode]);
 
+  const moduleOrder = useMemo(() => {
+    const rawOrder = Array.isArray(homeCategoryLayout.module_order) ? homeCategoryLayout.module_order : [];
+    const unique = [];
+    const seen = new Set();
+    rawOrder.forEach((item) => {
+      const value = String(item || '').trim();
+      if (!value || seen.has(value)) return;
+      unique.push(value);
+      seen.add(value);
+    });
+    MODULE_CONFIG.forEach((item) => {
+      if (!unique.includes(item.key)) unique.push(item.key);
+    });
+    return unique;
+  }, [homeCategoryLayout.module_order]);
+
+  const moduleLabelMap = useMemo(() => new Map(MODULE_CONFIG.map((item) => [item.key, item.label])), []);
+
   const moduleGroups = useMemo(() => {
     const query = searchInput.trim().toLowerCase();
 
