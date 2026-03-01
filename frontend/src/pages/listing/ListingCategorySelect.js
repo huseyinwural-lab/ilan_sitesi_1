@@ -552,7 +552,7 @@ const ListingCategorySelect = () => {
     return moduleLabelByKey(recentCategory.module);
   }, [moduleLabelByKey, recentCategory]);
 
-  const handleSelectModule = (moduleKey) => {
+  const handleSelectModule = (moduleKey, cardMeta = null) => {
     const moduleMeta = moduleMetaByKey(moduleKey);
     setSelectedModule(moduleKey);
     setColumns([]);
@@ -568,6 +568,8 @@ const ListingCategorySelect = () => {
     localStorage.setItem('ilan_ver_taxonomy_source', taxonomySource);
     localStorage.setItem('ilan_ver_module', moduleKey);
     localStorage.setItem('ilan_ver_module_id', moduleMeta?.id || '');
+    localStorage.setItem('ilan_ver_module_card_id', cardMeta?.id || moduleKey);
+    localStorage.setItem('ilan_ver_module_card_title', cardMeta?.title || moduleMeta?.label || moduleKey);
     updateUrlState(moduleKey, []);
     trackEvent('step_select_module', { module: moduleKey, taxonomy_source: taxonomySource });
   };
