@@ -27645,6 +27645,7 @@ async def create_vehicle_draft(
         images=[],
     )
     _apply_listing_payload_sql(listing, payload)
+    _set_listing_flow(listing, state=LISTING_FLOW_DRAFT)
     await _validate_listing_vehicle_foreign_keys(session, listing)
     session.add(listing)
     await session.commit()
@@ -27656,7 +27657,14 @@ async def create_vehicle_draft(
         trigger="listing_create",
     )
 
-    return {"id": str(listing.id), "status": listing.status, "validation_errors": [], "next_actions": ["upload_media", "submit"]}
+    return {
+        "id": str(listing.id),
+        "status": listing.status,
+        "flow_state": LISTING_FLOW_DRAFT,
+        "draft_id": str(listing.id),
+        "validation_errors": [],
+        "next_actions": ["upload_media", "preview_ready", "submit_review"],
+    }
 
 
 @api_router.patch("/v1/listings/vehicle/{listing_id}/draft")
