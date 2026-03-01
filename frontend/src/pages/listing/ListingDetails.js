@@ -103,6 +103,7 @@ export default function ListingDetails() {
   const [error, setError] = useState('');
   const [autosaveInfo, setAutosaveInfo] = useState({ status: 'idle', block: '', message: '' });
   const [placesConfig, setPlacesConfig] = useState({ real_mode: false, mode: 'fallback', key_source: 'none', country_options: [], listing_create_config: null });
+  const [listingSiteDesign, setListingSiteDesign] = useState(DEFAULT_LISTING_SITE_DESIGN);
   const [placesConfigLoading, setPlacesConfigLoading] = useState(false);
   const [placesLoading, setPlacesLoading] = useState(false);
   const [placesError, setPlacesError] = useState('');
