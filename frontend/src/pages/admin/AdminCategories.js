@@ -1634,15 +1634,19 @@ const AdminCategories = () => {
       return;
     }
 
-    const normalizedItems = items.map((item, index) => ({
-      ...item,
-      name: item.name.trim(),
-      slug: item.slug.trim().toLowerCase(),
-      sort_order: Number(item.sort_order || index + 1),
-      is_complete: true,
-      is_leaf: Boolean(item.is_leaf),
-      children: item.is_leaf ? [] : (item.children || []),
-    }));
+    const normalizedItems = items.map((item, index) => {
+      const parsedSort = Number(item.sort_order);
+      const resolvedSort = Number.isFinite(parsedSort) && parsedSort > 0 ? parsedSort : index + 1;
+      return {
+        ...item,
+        name: item.name.trim(),
+        slug: item.slug.trim().toLowerCase(),
+        sort_order: resolvedSort,
+        is_complete: true,
+        is_leaf: Boolean(item.is_leaf),
+        children: item.is_leaf ? [] : (item.children || []),
+      };
+    });
 
     const parentLevel = levelIndex - 1;
     const parentPath = getParentPathForLevel(levelIndex);
