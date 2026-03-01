@@ -273,6 +273,7 @@ DEALER_APPLICATION_EVENT_TYPES = {"DEALER_APPLICATION_APPROVED", "DEALER_APPLICA
 _failed_login_block_audited: Dict[str, bool] = {}
 
 GOOGLE_MAPS_API_KEY_SETTING_KEY = "integrations.google_maps.api_key"
+GOOGLE_MAPS_COUNTRY_OPTIONS_SETTING_KEY = "listing.address.country_options"
 PLACES_RATE_LIMIT_WINDOW_SECONDS = 60
 PLACES_RATE_LIMIT_MAX_REQUESTS = 45
 _places_rate_limit_tracker: Dict[str, deque] = defaultdict(deque)
