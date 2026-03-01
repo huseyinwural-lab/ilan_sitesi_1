@@ -1,0 +1,53 @@
+{
+  "summary": "Testing of new İlan Ver Akış Ayarları admin card and listing-create config endpoints - All features verified working",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_listing_create_config.py",
+    "/app/test_reports/pytest/p83_listing_create_config_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_listing_create_config.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "İlan Ver Akış Ayarları card is fully functional. listing_create_config is exposed via /api/places/config and editable via admin endpoints.",
+  "verified_features": {
+    "ilan_ver_card_visibility": "PASS - 'İlan Ver Akış Ayarları' card visible in Admin System Settings",
+    "ilan_ver_card_title": "PASS - Card title shows 'İlan Ver Akış Ayarları'",
+    "ilan_ver_modules_section": "PASS - Uygulanacak modüller section with Vasıta, Emlak, Diğer checkboxes",
+    "ilan_ver_country_selector_mode": "PASS - Ülke seçimi bileşeni dropdown (Radio/Select)",
+    "ilan_ver_toggle_options": "PASS - 9 toggle options visible: postal_code_required, map_required, street_selection_required, require_city, require_district, require_neighborhood, require_latitude, require_longitude, require_address_line",
+    "ilan_ver_save_button": "PASS - İlan Ver Ayarlarını Kaydet button functional",
+    "get_listing_create_config_endpoint": "PASS - GET /api/admin/system-settings/listing-create returns config",
+    "post_listing_create_config_endpoint": "PASS - POST /api/admin/system-settings/listing-create saves config",
+    "places_config_returns_listing_config": "PASS - GET /api/places/config returns listing_create_config field",
+    "config_persistence": "PASS - Saved config is reflected in both admin GET and places/config",
+    "google_maps_card_visible": "PASS - Google Maps (İlan Adres Akışı) card visible",
+    "google_maps_key_status": "PASS - Shows 'Key Tanımlı' with masked key",
+    "google_maps_clear_key_button": "PASS - Key'i Temizle button visible and clickable",
+    "postal_lookup_real_mode": "PASS - Postal lookup works in real mode with live API key"
+  },
+  "api_test_results": {
+    "GET /api/admin/system-settings/listing-create": "200 OK - Returns config object with all expected fields",
+    "POST /api/admin/system-settings/listing-create": "200 OK - Saves and returns updated config",
+    "GET /api/places/config": "200 OK - Returns listing_create_config with saved values",
+    "GET /api/admin/system-settings/google-maps": "200 OK - Returns key_configured=true",
+    "GET /api/places/postal-lookup?postal_code=10115&country=DE": "200 OK - mode=real, returns Berlin"
+  }
+}
