@@ -892,7 +892,7 @@ const ListingCategorySelect = () => {
                           }`}
                           data-testid={`ilan-ver-column-item-${columnIndex}-${item.id}`}
                         >
-                          {item.name}
+                          {getCategoryLabel(item)}
                         </button>
                       ))
                     )}
