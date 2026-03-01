@@ -227,6 +227,17 @@ const ListingCategorySelect = () => {
     }
   }, [fetchChildren]);
 
+  const fetchListingLayout = useCallback(async () => {
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/site/home-category-layout?country=${country}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setListingLayout(normalizeListingLayout(data?.config));
+    } catch (err) {
+      setListingLayout(DEFAULT_LISTING_LAYOUT);
+    }
+  }, [country]);
+
   const hydratePathFromIds = useCallback(async (pathIds, moduleKey) => {
     if (!moduleKey || pathIds.length === 0) return;
     setPageLoading(true);
