@@ -510,15 +510,18 @@ export default function ListingDetails() {
     if (photoBlockEnabled && mediaItems.length === 0) {
       issues.push('En az 1 fotoğraf yüklenmelidir.');
     }
+    if (photoBlockEnabled && mediaItems.length > mediaConfig.max_photos) {
+      issues.push(`En fazla ${mediaConfig.max_photos} fotoğraf yüklenebilir.`);
+    }
     if (durationBlockEnabled && !form.duration_key) {
       issues.push('İlan süresi seçimi zorunludur.');
     }
-    if (!acceptedTerms) {
+    if (termsConfig.required && !acceptedTerms) {
       issues.push('İlan verme kurallarını kabul etmelisiniz.');
     }
 
     return issues;
-  }, [acceptedTerms, detailGroups, durationBlockEnabled, dynamicFields, form.address_country, form.address_line, form.city, form.detail_values, form.district, form.duration_key, form.dynamic_values, form.latitude, form.longitude, form.neighborhood, form.postal_code, form.price, form.title, listingAddressConfigActive, listingCreateConfig.map_required, listingCreateConfig.postal_code_required, listingCreateConfig.require_address_line, listingCreateConfig.require_city, listingCreateConfig.require_district, listingCreateConfig.require_latitude, listingCreateConfig.require_longitude, listingCreateConfig.require_neighborhood, listingCreateConfig.street_selection_required, mediaItems.length, photoBlockEnabled, postalLookupItem?.map_embed_url, selectedCategory?.id, selectedStreetPlaceId]);
+  }, [acceptedTerms, detailGroups, durationBlockEnabled, dynamicFields, form.address_country, form.address_line, form.city, form.detail_values, form.district, form.duration_key, form.dynamic_values, form.latitude, form.longitude, form.neighborhood, form.postal_code, form.price, form.title, listingAddressConfigActive, listingCreateConfig.map_required, listingCreateConfig.postal_code_required, listingCreateConfig.require_address_line, listingCreateConfig.require_city, listingCreateConfig.require_district, listingCreateConfig.require_latitude, listingCreateConfig.require_longitude, listingCreateConfig.require_neighborhood, listingCreateConfig.street_selection_required, mediaConfig.max_photos, mediaItems.length, photoBlockEnabled, postalLookupItem?.map_embed_url, selectedCategory?.id, selectedStreetPlaceId, termsConfig.required]);
 
   const completionBlocks = useMemo(() => {
     const dynamicRequiredMissing = dynamicFields.some((field) => {
