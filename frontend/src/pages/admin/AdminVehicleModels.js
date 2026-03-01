@@ -40,6 +40,7 @@ const AdminVehicleModels = () => {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [error, setError] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -65,6 +66,7 @@ const AdminVehicleModels = () => {
       const query = params.toString();
       const res = await axios.get(`${API_BASE_URL}/api/admin/vehicle-models${query ? `?${query}` : ''}`, { headers: authHeader });
       setItems(res.data.items || []);
+      setSelectedIds(new Set());
     } catch (e) {
       console.error('Failed to load models', e);
     } finally {
