@@ -6,6 +6,47 @@ const ThemeContext = createContext(null);
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const THEME_STORAGE_KEY = 'theme';
+const VALID_THEME_SET = new Set(['light', 'dark']);
+
+const resolveSystemTheme = () => {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'light';
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+const normalizeThemeValue = (value) => (VALID_THEME_SET.has(value) ? value : 'light');
+
+const applyThemeMode = (nextTheme) => {
+  if (typeof document === 'undefined') return;
+  const normalized = normalizeThemeValue(nextTheme);
+  const root = document.documentElement;
+  const body = document.body;
+
+  root.classList.toggle('dark', normalized === 'dark');
+  root.classList.remove(normalized === 'dark' ? 'light' : 'dark');
+  root.dataset.theme = normalized;
+  root.style.colorScheme = normalized;
+
+  if (body) {
+    body.classList.remove('light', 'dark');
+    body.classList.add(normalized);
+    body.dataset.theme = normalized;
+  }
+};
+
+const resolveInitialTheme = () => {
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (VALID_THEME_SET.has(stored)) {
+      return stored;
+    }
+  } catch (_error) {
+    // no-op
+  }
+  return resolveSystemTheme();
+};
 
 const readStoredThemeConfig = () => {
   const stored = localStorage.getItem('site_theme_config');
@@ -23,23 +64,31 @@ const readStoredThemeConfig = () => {
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    const stored = localStorage.getItem('theme');
-    const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const initialTheme = stored || preferred;
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(initialTheme);
-    document.documentElement.dataset.theme = initialTheme;
+    const initialTheme = resolveInitialTheme();
+    applyThemeMode(initialTheme);
     return initialTheme;
   });
   const [themeConfig, setThemeConfig] = useState(() => readStoredThemeConfig());
   const [themeStatus, setThemeStatus] = useState('idle');
 
   useEffect(() => {
-    localStorage.setItem('theme', theme);
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(theme);
-    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch (_error) {
+      // no-op
+    }
+    applyThemeMode(theme);
   }, [theme]);
+
+  useEffect(() => {
+    const handleStorage = (event) => {
+      if (event.key !== THEME_STORAGE_KEY) return;
+      if (!VALID_THEME_SET.has(event.newValue)) return;
+      setTheme(event.newValue);
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   useEffect(() => {
     applyThemeConfig(themeConfig, document.documentElement);
@@ -79,7 +128,7 @@ export function ThemeProvider({ children }) {
   }, []);
 
   const toggleTheme = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   return (
