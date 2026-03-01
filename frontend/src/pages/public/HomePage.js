@@ -30,8 +30,12 @@ const REAL_ESTATE_DISPLAY_SCHEMA = {
   l2: ['Konut', 'Ticari Alan', 'Arsa'],
 };
 
-const MODULE_ROOT_LIMIT = DEFAULT_HOME_CATEGORY_LAYOUT.l1_initial_limit;
-const ROOT_CHILD_LIMIT = 8;
+const LANGUAGE_LOCALE_MAP = {
+  tr: 'tr-TR',
+  de: 'de-DE',
+  fr: 'fr-FR',
+};
+
 
 const clamp = (value, min, max, fallback) => {
   const parsed = Number(value);
