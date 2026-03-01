@@ -103,6 +103,7 @@ export default function HomePage() {
   const [categoriesByModule, setCategoriesByModule] = useState({});
   const [showcaseItems, setShowcaseItems] = useState([]);
   const [showcaseLayout, setShowcaseLayout] = useState(DEFAULT_SHOWCASE_LAYOUT);
+  const [homeCategoryLayout, setHomeCategoryLayout] = useState(DEFAULT_HOME_CATEGORY_LAYOUT);
   const [urgentTotal, setUrgentTotal] = useState(0);
   const [expandedModules, setExpandedModules] = useState({});
   const [expandedRoots, setExpandedRoots] = useState({});
