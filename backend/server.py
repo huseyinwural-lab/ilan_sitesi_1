@@ -8870,6 +8870,7 @@ async def places_autocomplete(
     request: Request,
     q: str,
     country: Optional[str] = None,
+    manual_key: Optional[str] = None,
     x_google_maps_key: Optional[str] = Header(default=None),
     session: AsyncSession = Depends(get_sql_session),
 ):
@@ -8894,7 +8895,8 @@ async def places_autocomplete(
     if code and code not in SUPPORTED_COUNTRIES:
         code = ""
 
-    api_key, source = await _resolve_google_maps_api_key(session, runtime_key=x_google_maps_key, country_code=code or None)
+    runtime_key = (x_google_maps_key or manual_key or "").strip() or None
+    api_key, source = await _resolve_google_maps_api_key(session, runtime_key=runtime_key, country_code=code or None)
     if not api_key:
         return {
             "mode": "fallback",
@@ -8961,6 +8963,7 @@ async def places_details(
     request: Request,
     place_id: str,
     country: Optional[str] = None,
+    manual_key: Optional[str] = None,
     x_google_maps_key: Optional[str] = Header(default=None),
     session: AsyncSession = Depends(get_sql_session),
 ):
@@ -8985,7 +8988,8 @@ async def places_details(
     if code and code not in SUPPORTED_COUNTRIES:
         code = ""
 
-    api_key, source = await _resolve_google_maps_api_key(session, runtime_key=x_google_maps_key, country_code=code or None)
+    runtime_key = (x_google_maps_key or manual_key or "").strip() or None
+    api_key, source = await _resolve_google_maps_api_key(session, runtime_key=runtime_key, country_code=code or None)
     if not api_key:
         return {
             "mode": "fallback",
