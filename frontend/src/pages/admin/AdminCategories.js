@@ -1394,6 +1394,8 @@ const AdminCategories = () => {
       transaction_type: node.transaction_type || "",
       is_complete: true,
       is_leaf: node.is_leaf ?? ((node.children || []).length === 0),
+      inherit_children: false,
+      inherit_group_key: "",
       children: (node.children || []).map(normalizeNode),
     });
 
