@@ -45,6 +45,7 @@ import AdminHeaderManagement from '@/pages/admin/AdminHeaderManagement';
 import AdminFooterManagement from '@/pages/admin/AdminFooterManagement';
 import AdminThemeManagement from '@/pages/admin/AdminThemeManagement';
 import AdminShowcaseManagement from '@/pages/admin/AdminShowcaseManagement';
+import AdminHomeCategoryDesign from '@/pages/admin/AdminHomeCategoryDesign';
 import AdminInfoPages from '@/pages/admin/AdminInfoPages';
 import AdminUserInterfaceDesignV2 from '@/pages/admin/AdminUserInterfaceDesignV2';
 import AdminPublishHealthPage from '@/pages/admin/ops/AdminPublishHealthPage';
