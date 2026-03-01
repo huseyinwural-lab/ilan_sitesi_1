@@ -33262,7 +33262,14 @@ async def publish_showcase_layout_config(
     layout.status = "published"
     layout.updated_at = datetime.now(timezone.utc)
     await session.commit()
-    return {"ok": True, "id": str(layout.id), "version": layout.version}
+    revalidate_token = int(layout.updated_at.timestamp() * 1000) if layout.updated_at else int(time.time() * 1000)
+    return {
+        "ok": True,
+        "id": str(layout.id),
+        "version": layout.version,
+        "published_at": layout.updated_at.isoformat() if layout.updated_at else None,
+        "revalidate_token": revalidate_token,
+    }
 
 
 @api_router.delete("/admin/site/showcase-layout/config/{layout_id}")
