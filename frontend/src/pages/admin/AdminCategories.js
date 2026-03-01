@@ -1754,6 +1754,13 @@ const AdminCategories = () => {
       model_count: 0,
       message: "",
     });
+    setVehicleImportMode("");
+    setVehicleImportPayload("{\n  \"dry_run\": true\n}");
+    setVehicleImportFile(null);
+    setVehicleImportDryRun(true);
+    setVehicleImportStatus("");
+    setVehicleImportError("");
+    setVehicleImportLoading(false);
     setOrderPreview({ checking: false, available: true, message: "", conflict: null, suggested_next_sort_order: null });
     setCategoryImageUploading(false);
     setCategoryImageError("");
