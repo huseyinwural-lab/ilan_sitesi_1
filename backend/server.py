@@ -11282,6 +11282,10 @@ class VehicleModelUpdatePayload(BaseModel):
     active_flag: Optional[bool] = None
 
 
+class VehicleBulkDeletePayload(BaseModel):
+    ids: List[str]
+
+
 class VehicleMakeImportPayload(BaseModel):
     name: str
     slug: str
