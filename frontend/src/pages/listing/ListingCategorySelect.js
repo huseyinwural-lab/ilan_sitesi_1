@@ -74,6 +74,28 @@ const ListingCategorySelect = () => {
 
   const country = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
+  const moduleOrder = useMemo(() => {
+    if (listingLayout.module_order_mode === 'alphabetical') {
+      const locale = LANGUAGE_LOCALE_MAP[language] || 'tr-TR';
+      return MODULE_OPTIONS
+        .map((item) => item.key)
+        .sort((a, b) => moduleLabelByKey(a).localeCompare(moduleLabelByKey(b), locale));
+    }
+    const order = Array.isArray(listingLayout.module_order) ? listingLayout.module_order : [];
+    const unique = [];
+    const seen = new Set();
+    order.forEach((item) => {
+      const value = String(item || '').trim();
+      if (!value || seen.has(value)) return;
+      unique.push(value);
+      seen.add(value);
+    });
+    MODULE_OPTIONS.forEach((item) => {
+      if (!unique.includes(item.key)) unique.push(item.key);
+    });
+    return unique.length ? unique : MODULE_OPTIONS.map((item) => item.key);
+  }, [language, listingLayout.module_order, listingLayout.module_order_mode, moduleLabelByKey]);
+
   const selectedModuleLabel = useMemo(() => {
     const match = MODULE_OPTIONS.find((item) => item.key === selectedModule);
     return match ? match.label : '';
