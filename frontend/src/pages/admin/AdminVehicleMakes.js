@@ -207,6 +207,14 @@ const AdminVehicleMakes = () => {
         <table className="min-w-full text-sm">
           <thead className="bg-muted">
             <tr>
+              <th className="text-left px-3 py-2" data-testid="vehicle-makes-header-select">
+                <input
+                  type="checkbox"
+                  checked={items.length > 0 && selectedIds.size === items.length}
+                  onChange={toggleSelectAll}
+                  data-testid="vehicle-makes-select-all"
+                />
+              </th>
               <th className="text-left px-3 py-2" data-testid="vehicle-makes-header-name">Name</th>
               <th className="text-left px-3 py-2" data-testid="vehicle-makes-header-slug">Slug</th>
               <th className="text-left px-3 py-2" data-testid="vehicle-makes-header-country">Country</th>
