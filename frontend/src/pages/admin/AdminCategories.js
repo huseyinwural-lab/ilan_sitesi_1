@@ -1474,11 +1474,20 @@ const AdminCategories = () => {
       setHierarchyError("Leaf işaretli kategorinin altı açılamaz.");
       return;
     }
+
+    const groupKey = currentLevel >= INHERITANCE_START_LEVEL
+      ? buildInheritanceGroupKey(getParentPathForLevel(currentLevel), currentLevel)
+      : "";
+    const template = groupKey ? (inheritanceGroups[groupKey]?.template || []) : [];
+    const shouldCloneTemplate = currentLevel >= INHERITANCE_START_LEVEL && template.length > 0;
+
     if (!Array.isArray(selectedNode.children) || selectedNode.children.length === 0) {
       setSubcategories((prev) => updateNodeByPath(prev, selectedPath, (node) => ({
         ...node,
         is_leaf: false,
-        children: [...(node.children || []), createSubcategoryDraft()],
+        inherit_children: shouldCloneTemplate ? true : node.inherit_children,
+        inherit_group_key: shouldCloneTemplate ? groupKey : node.inherit_group_key,
+        children: shouldCloneTemplate ? cloneHierarchyTemplate(template) : [...(node.children || []), createSubcategoryDraft()],
       })));
     }
     setLevelSelections((prev) => {
