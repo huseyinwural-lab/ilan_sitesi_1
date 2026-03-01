@@ -143,3 +143,13 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Testing agent raporu: `/app/test_reports/iteration_71.json`
   - Backend 19/19 PASS
   - Frontend admin kart + address flow davranışı PASS
+
+
+### 2026-03-01 (Ek Revizyon)
+- Admin panel görünürlüğü için sidebar’a doğrudan **Google Maps Ayarları** menü linki eklendi:
+  - `/admin/system-settings?focus=google-maps`
+- System settings sayfasında `focus=google-maps` query geldiğinde kart otomatik scroll/focus alıyor.
+- Google Maps kartına güvenli **Key’i Temizle** aksiyonu eklendi.
+- Canlı E2E doğrulaması tamamlandı:
+  - Posta Kodu -> Harita alanı -> Sokak listesi -> Place details -> Draft save -> submit
+  - Test raporu: `/app/test_reports/iteration_73.json`
