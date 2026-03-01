@@ -141,6 +141,12 @@ export default function HomePage() {
           nextLayout = normalizeShowcaseLayout(layoutPayload?.config);
         }
 
+        let nextHomeCategoryLayout = DEFAULT_HOME_CATEGORY_LAYOUT;
+        if (homeCategoryResult.status === 'fulfilled') {
+          const categoryLayoutPayload = await homeCategoryResult.value.json().catch(() => ({}));
+          nextHomeCategoryLayout = normalizeHomeCategoryLayout(categoryLayoutPayload?.config);
+        }
+
         const homeLimit = Math.max(1, resolveEffectiveCount(nextLayout.homepage));
 
         let showcaseItemsPayload = [];
