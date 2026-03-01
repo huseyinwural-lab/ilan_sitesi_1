@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const FORM_STORAGE_KEY = 'ilan_ver_listing_form';
-const GOOGLE_MAPS_KEY_STORAGE = 'GOOGLE_MAPS_API_KEY';
 const AUTOCOMPLETE_DEBOUNCE_MS = 450;
 
 const getToken = () => localStorage.getItem('access_token') || localStorage.getItem('token') || '';
