@@ -415,6 +415,79 @@ export default function ListingDetails() {
     return issues;
   }, [acceptedTerms, detailGroups, durationBlockEnabled, dynamicFields, form.city, form.detail_values, form.duration_key, form.dynamic_values, form.price, form.title, mediaItems.length, photoBlockEnabled, selectedCategory?.id]);
 
+  const completionBlocks = useMemo(() => {
+    const dynamicRequiredMissing = dynamicFields.some((field) => {
+      if (!field?.required) return false;
+      const value = form.dynamic_values?.[field.key];
+      return value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
+    });
+
+    const detailRequiredMissing = detailGroups.some((group) => {
+      if (!group?.required) return false;
+      const groupId = group.id || group.title;
+      const selected = form.detail_values?.[groupId] || [];
+      return !Array.isArray(selected) || selected.length === 0;
+    });
+
+    const rows = [
+      { key: 'core', label: 'Çekirdek alanlar', complete: Boolean(form.title.trim() && Number(form.price || 0) > 0) },
+      { key: 'dynamic', label: 'Parametre alanları', complete: !dynamicBlockEnabled || !dynamicRequiredMissing },
+      { key: 'address', label: 'Adres formu', complete: !addressBlockEnabled || Boolean(form.city.trim()) },
+      { key: 'details', label: 'Detay grupları', complete: !detailBlockEnabled || !detailRequiredMissing },
+      { key: 'media', label: 'Foto + Video', complete: !photoBlockEnabled || mediaItems.length > 0 },
+      { key: 'contact', label: 'İletişim bilgileri', complete: !contactBlockEnabled || Boolean(form.contact_name.trim() && form.contact_phone.trim()) },
+      { key: 'duration', label: 'İlan süresi', complete: !durationBlockEnabled || Boolean(form.duration_key) },
+      { key: 'terms', label: 'Onay kutusu', complete: Boolean(acceptedTerms) },
+    ];
+    return rows;
+  }, [
+    acceptedTerms,
+    addressBlockEnabled,
+    contactBlockEnabled,
+    detailBlockEnabled,
+    detailGroups,
+    durationBlockEnabled,
+    dynamicBlockEnabled,
+    dynamicFields,
+    form.city,
+    form.contact_name,
+    form.contact_phone,
+    form.detail_values,
+    form.duration_key,
+    form.dynamic_values,
+    form.price,
+    form.title,
+    mediaItems.length,
+    photoBlockEnabled,
+  ]);
+
+  const completionScore = useMemo(() => {
+    const total = completionBlocks.length || 1;
+    const completed = completionBlocks.filter((item) => item.complete).length;
+    return Math.round((completed / total) * 100);
+  }, [completionBlocks]);
+
+  const missingChecklist = useMemo(
+    () => completionBlocks.filter((item) => !item.complete).map((item) => item.label),
+    [completionBlocks]
+  );
+
+  const completedAnalyticsRef = useRef(new Set());
+
+  useEffect(() => {
+    completionBlocks.forEach((item) => {
+      if (item.complete && !completedAnalyticsRef.current.has(item.key)) {
+        completedAnalyticsRef.current.add(item.key);
+        void trackEvent('block_completed', {
+          block_key: item.key,
+          listing_id: listingId || null,
+          category_id: selectedCategory?.id || null,
+          completion_score: completionScore,
+        });
+      }
+    });
+  }, [completionBlocks, completionScore, listingId, selectedCategory?.id, trackEvent]);
+
   useEffect(() => {
     if (!selectedCategory?.id) return;
     const token = getToken();
