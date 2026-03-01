@@ -719,6 +719,10 @@ export default function ListingDetails() {
 
   const handleSelectAddressSuggestion = useCallback(async (suggestion) => {
     if (!suggestion?.place_id) return;
+    if (!googleAutocompleteEnabled) {
+      setPlacesError('Google Maps key tanımlı olmadığından sokak detayı alınamıyor.');
+      return;
+    }
     const countryCode = String(form.address_country || localStorage.getItem('selected_country') || 'DE').toUpperCase();
     setPlacesLoading(true);
     setPlacesError('');
@@ -756,7 +760,7 @@ export default function ListingDetails() {
     } finally {
       setPlacesLoading(false);
     }
-  }, [API, form.address_country, listingId, saveAddressBlock, saveFormLocal, selectedCategory?.id, trackEvent]);
+  }, [API, form.address_country, googleAutocompleteEnabled, listingId, saveAddressBlock, saveFormLocal, selectedCategory?.id, trackEvent]);
 
   const handleUploadMedia = async (event) => {
     if (!photoBlockEnabled) return;
