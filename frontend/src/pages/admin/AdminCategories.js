@@ -1651,8 +1651,6 @@ const AdminCategories = () => {
     const parentLevel = levelIndex - 1;
     const parentPath = getParentPathForLevel(levelIndex);
     const inheritanceEnabled = parentLevel >= INHERITANCE_START_LEVEL;
-    let applyToSiblings = false;
-    let detachCurrent = false;
     let shouldSetTemplate = false;
     let groupKey = "";
     let template = [];
@@ -1670,20 +1668,8 @@ const AdminCategories = () => {
       const currentParent = siblings[currentParentIndex];
       const currentInherits = Boolean(currentParent?.inherit_children)
         && currentParent?.inherit_group_key === groupKey;
-      const inheritingSiblings = siblings.filter((sibling, idx) => idx !== currentParentIndex
-        && sibling.inherit_children
-        && sibling.inherit_group_key === groupKey);
 
-      if (existingGroup && currentInherits && inheritingSiblings.length > 0) {
-        applyToSiblings = window.confirm("Bu değişikliği aynı seviyedeki diğer kardeş kategorilere de uygula mı?");
-        detachCurrent = !applyToSiblings;
-      }
-
-      if (existingGroup && !currentInherits) {
-        detachCurrent = true;
-      }
-
-      if (!existingGroup || (currentInherits && (applyToSiblings || inheritingSiblings.length === 0))) {
+      if (!existingGroup || currentInherits) {
         shouldSetTemplate = true;
         template = cloneHierarchyTemplate(normalizedItems);
       }
@@ -1703,59 +1689,24 @@ const AdminCategories = () => {
         children: normalizedItems,
       })));
     } else {
-      const templateToApply = template.length ? template : (inheritanceGroups[groupKey]?.template || []);
       const parentPathLocal = parentPath;
       if (parentPathLocal.length === 0) {
         setHierarchyError("Önce üst seviyeden bir kategori seçin.");
         return;
       }
 
-      setSubcategories((prev) => {
-        const updateSiblings = (siblingsList = []) => siblingsList.map((sibling, idx) => {
-          const isCurrent = idx === currentParentIndex;
-          if (isCurrent) {
-            return {
-              ...sibling,
-              is_leaf: false,
-              inherit_children: !detachCurrent,
-              inherit_group_key: detachCurrent ? "" : groupKey,
-              children: normalizedItems,
-            };
-          }
-
-          if (applyToSiblings && sibling.inherit_children && sibling.inherit_group_key === groupKey) {
-            return {
-              ...sibling,
-              is_leaf: false,
-              inherit_children: true,
-              inherit_group_key: groupKey,
-              children: cloneHierarchyTemplate(templateToApply),
-            };
-          }
-
-          if (!inheritanceGroups[groupKey]
-            && templateToApply.length > 0
-            && !sibling.is_leaf
-            && (!Array.isArray(sibling.children) || sibling.children.length === 0)) {
-            return {
-              ...sibling,
-              is_leaf: false,
-              inherit_children: true,
-              inherit_group_key: groupKey,
-              children: cloneHierarchyTemplate(templateToApply),
-            };
-          }
-          return sibling;
-        });
-
-        if (parentLevel === 0) {
-          return updateSiblings(prev);
-        }
-        return updateNodeByPath(prev, siblingParentPath, (node) => ({
+      setSubcategories((prev) => updateNodeByPath(prev, parentPathLocal, (node) => {
+        const shouldInherit = inheritanceGroups[groupKey]
+          ? (node.inherit_children && node.inherit_group_key === groupKey)
+          : true;
+        return {
           ...node,
-          children: updateSiblings(node.children || []),
-        }));
-      });
+          is_leaf: false,
+          inherit_children: shouldInherit,
+          inherit_group_key: shouldInherit ? groupKey : "",
+          children: normalizedItems,
+        };
+      }));
     }
 
     if (inheritanceEnabled && shouldSetTemplate) {
