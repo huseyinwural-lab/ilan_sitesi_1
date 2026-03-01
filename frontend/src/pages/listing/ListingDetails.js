@@ -830,6 +830,17 @@ export default function ListingDetails() {
 
   const handleContinue = async () => {
     setError('');
+    if (completionScore < 100) {
+      setError(`Form tamamlanma oranı %${completionScore}. Lütfen eksik blokları tamamlayın.`);
+      await trackEvent('submit_blocked_incomplete', {
+        listing_id: listingId || null,
+        category_id: selectedCategory?.id || null,
+        completion_score: completionScore,
+        missing_blocks: missingChecklist,
+      });
+      return;
+    }
+
     const issues = validateClient();
     if (issues.length > 0) {
       setError(issues[0]);
