@@ -26822,6 +26822,8 @@ async def _process_vehicle_import_records(
         if not job.dry_run and source_label and make.source != source_label:
             make.source = source_label
 
+        vehicle_type = normalized.get("vehicle_type") or "car"
+
         model_key = (str(make.id), model_slug)
         model = model_cache.get(model_key)
         if model is None:
@@ -26834,7 +26836,7 @@ async def _process_vehicle_import_records(
                     make_id=make.id,
                     name=model_name,
                     slug=model_slug,
-                    vehicle_type="car",
+                    vehicle_type=vehicle_type,
                     is_active=True,
                     year_from=None,
                     year_to=None,
@@ -26858,6 +26860,10 @@ async def _process_vehicle_import_records(
             model_changed = True
             if not job.dry_run:
                 model.name = model_name
+        if model.vehicle_type != vehicle_type:
+            model_changed = True
+            if not job.dry_run:
+                model.vehicle_type = vehicle_type
 
         trim = None
         if trim_ref:
