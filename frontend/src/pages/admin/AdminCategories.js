@@ -1525,16 +1525,29 @@ const AdminCategories = () => {
 
   const addLevelItem = (levelIndex) => {
     resetLevelCompletionFrom(levelIndex);
+    const parentPath = getParentPathForLevel(levelIndex);
+    const groupKey = levelIndex >= INHERITANCE_START_LEVEL ? getInheritanceGroupKeyForLevel(levelIndex) : "";
+    const template = groupKey ? (inheritanceGroups[groupKey]?.template || []) : [];
+    const shouldCloneTemplate = levelIndex >= INHERITANCE_START_LEVEL && template.length > 0;
+    const newItem = shouldCloneTemplate
+      ? {
+          ...createSubcategoryDraft(),
+          inherit_children: true,
+          inherit_group_key: groupKey,
+          is_leaf: false,
+          children: cloneHierarchyTemplate(template),
+        }
+      : createSubcategoryDraft();
+
     if (levelIndex === 0) {
-      setSubcategories((prev) => [...prev, createSubcategoryDraft()]);
+      setSubcategories((prev) => [...prev, newItem]);
       return;
     }
-    const parentPath = getParentPathForLevel(levelIndex);
     if (parentPath.length === 0) return;
     setSubcategories((prev) => updateNodeByPath(prev, parentPath, (node) => ({
       ...node,
       is_leaf: false,
-      children: [...(node.children || []), createSubcategoryDraft()],
+      children: [...(node.children || []), newItem],
     })));
   };
 
