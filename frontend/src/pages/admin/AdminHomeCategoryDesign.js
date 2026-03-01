@@ -435,7 +435,7 @@ export default function AdminHomeCategoryDesign() {
                     <button
                       type="button"
                       onClick={() => handleL1Move(section.moduleKey, rootIndex, -1)}
-                      disabled={rootIndex === 0}
+                      disabled={rootIndex === 0 || section.l1Mode === 'alphabetical'}
                       className="h-8 rounded-md border px-3 text-xs disabled:opacity-50"
                       data-testid={`home-category-l1-up-${section.moduleKey}-${root.id}`}
                     >
@@ -444,7 +444,7 @@ export default function AdminHomeCategoryDesign() {
                     <button
                       type="button"
                       onClick={() => handleL1Move(section.moduleKey, rootIndex, 1)}
-                      disabled={rootIndex === section.roots.length - 1}
+                      disabled={rootIndex === section.roots.length - 1 || section.l1Mode === 'alphabetical'}
                       className="h-8 rounded-md border px-3 text-xs disabled:opacity-50"
                       data-testid={`home-category-l1-down-${section.moduleKey}-${root.id}`}
                     >
