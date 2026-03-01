@@ -81,6 +81,11 @@ export default function ListingDetails() {
   const [loadingContinue, setLoadingContinue] = useState(false);
   const [error, setError] = useState('');
   const [autosaveInfo, setAutosaveInfo] = useState({ status: 'idle', block: '', message: '' });
+  const [placesConfig, setPlacesConfig] = useState({ real_mode: false, mode: 'fallback', key_source: 'none' });
+  const [placesConfigLoading, setPlacesConfigLoading] = useState(false);
+  const [placesLoading, setPlacesLoading] = useState(false);
+  const [placesError, setPlacesError] = useState('');
+  const [placeSuggestions, setPlaceSuggestions] = useState([]);
 
   const [acceptedTerms, setAcceptedTerms] = useState(() => {
     const raw = readJson(FORM_STORAGE_KEY, {});
@@ -96,8 +101,12 @@ export default function ListingDetails() {
       city: raw.city || '',
       postal_code: raw.postal_code || '',
       district: raw.district || '',
+      neighborhood: raw.neighborhood || '',
+      latitude: raw.latitude || '',
+      longitude: raw.longitude || '',
       address_line: raw.address_line || '',
       google_autocomplete_query: raw.google_autocomplete_query || '',
+      google_maps_api_key: raw.google_maps_api_key || localStorage.getItem(GOOGLE_MAPS_KEY_STORAGE) || '',
       contact_name: raw.contact_name || '',
       contact_phone: raw.contact_phone || '',
       allow_phone: raw.allow_phone !== false,
