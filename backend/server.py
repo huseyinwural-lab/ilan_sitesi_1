@@ -24460,6 +24460,45 @@ async def admin_delete_vehicle_model(
     return {"model": _normalize_vehicle_model_doc(model)}
 
 
+@api_router.post("/admin/vehicle-models/bulk-delete")
+async def admin_bulk_delete_vehicle_models(
+    payload: VehicleBulkDeletePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    model_ids = []
+    for item_id in payload.ids:
+        try:
+            model_ids.append(uuid.UUID(item_id))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid model id: {item_id}") from exc
+
+    if not model_ids:
+        return {"updated": 0, "ids": []}
+
+    result = await session.execute(select(VehicleModel).where(VehicleModel.id.in_(model_ids)))
+    models = result.scalars().all()
+    for model in models:
+        model.is_active = False
+
+    await _write_audit_log_sql(
+        session=session,
+        action="VEHICLE_MODEL_BULK_DELETE",
+        actor=current_user,
+        resource_type="vehicle_model",
+        resource_id="bulk",
+        metadata={"count": len(models)},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    return {"updated": len(models), "ids": [str(model.id) for model in models]}
+
+
 async def _prepare_vehicle_import_payload(session: AsyncSession, payload: VehicleImportPayload) -> dict:
     makes = payload.makes or []
     models = payload.models or []
