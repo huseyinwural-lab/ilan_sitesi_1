@@ -2423,16 +2423,8 @@ const AdminCategories = () => {
       return { success: false };
     }
 
-    if (isVehicleModule && !vehicleSegment) {
-      setVehicleSegmentError("Vasıta modülü için segment adı zorunludur.");
-      setHierarchyError("Vasıta modülü için segment adı zorunludur.");
-      return { success: false };
-    }
-
-    if (isVehicleModule && !vehicleLinkStatus.linked) {
-      setVehicleSegmentError(vehicleLinkStatus.message || "Girilen segment master data’da bulunamadı.");
-      setHierarchyError(vehicleLinkStatus.message || "Seçilen segment master data ile bağlı değil.");
-      return { success: false };
+    if (isVehicleModule) {
+      setVehicleSegmentError("");
     }
 
     const hasCompletedSubcategory = subcategories.some((node) => node.name?.trim() && node.slug?.trim());
