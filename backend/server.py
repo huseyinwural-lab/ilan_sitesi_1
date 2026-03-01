@@ -11620,6 +11620,20 @@ class GoogleMapsSettingsPayload(BaseModel):
     clear_api_key: bool = False
 
 
+class ListingCreateConfigPayload(BaseModel):
+    apply_modules: List[str] = Field(default_factory=lambda: ["vehicle", "real_estate", "other"])
+    country_selector_mode: str = "radio"
+    postal_code_required: bool = True
+    map_required: bool = True
+    street_selection_required: bool = True
+    require_city: bool = True
+    require_district: bool = False
+    require_neighborhood: bool = False
+    require_latitude: bool = False
+    require_longitude: bool = False
+    require_address_line: bool = True
+
+
 class MeiliSearchConfigCreatePayload(BaseModel):
     meili_url: str
     meili_index_name: Optional[str] = "listings_index"
