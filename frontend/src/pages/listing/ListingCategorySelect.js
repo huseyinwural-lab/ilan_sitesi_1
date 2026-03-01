@@ -74,6 +74,11 @@ const ListingCategorySelect = () => {
 
   const country = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
+  const moduleLabelByKey = useCallback((moduleKey) => {
+    const match = MODULE_OPTIONS.find((item) => item.key === moduleKey);
+    return match ? match.label : moduleKey;
+  }, []);
+
   const moduleOrder = useMemo(() => {
     if (listingLayout.module_order_mode === 'alphabetical') {
       const locale = LANGUAGE_LOCALE_MAP[language] || 'tr-TR';
@@ -103,11 +108,6 @@ const ListingCategorySelect = () => {
 
   const recentStorageKey = 'ilan_ver_recent_category';
   const recentPathKey = 'ilan_ver_recent_path';
-
-  const moduleLabelByKey = useCallback((moduleKey) => {
-    const match = MODULE_OPTIONS.find((item) => item.key === moduleKey);
-    return match ? match.label : moduleKey;
-  }, []);
 
   const getCategoryLabel = useCallback((category) => {
     if (!category) return '';
