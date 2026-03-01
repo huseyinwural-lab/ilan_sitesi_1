@@ -80,7 +80,7 @@ export default function ListingDetails() {
   const [loadingContinue, setLoadingContinue] = useState(false);
   const [error, setError] = useState('');
   const [autosaveInfo, setAutosaveInfo] = useState({ status: 'idle', block: '', message: '' });
-  const [placesConfig, setPlacesConfig] = useState({ real_mode: false, mode: 'fallback', key_source: 'none', country_options: [] });
+  const [placesConfig, setPlacesConfig] = useState({ real_mode: false, mode: 'fallback', key_source: 'none', country_options: [], listing_create_config: null });
   const [placesConfigLoading, setPlacesConfigLoading] = useState(false);
   const [placesLoading, setPlacesLoading] = useState(false);
   const [placesError, setPlacesError] = useState('');
@@ -187,6 +187,32 @@ export default function ListingDetails() {
     if (options.length > 0) return options;
     return [{ code: 'DE', name: 'Germany' }];
   }, [placesConfig.country_options]);
+  const listingCreateConfig = useMemo(() => {
+    const raw = placesConfig.listing_create_config && typeof placesConfig.listing_create_config === 'object'
+      ? placesConfig.listing_create_config
+      : {};
+    return {
+      apply_modules: Array.isArray(raw.apply_modules) ? raw.apply_modules : ['vehicle', 'real_estate', 'other'],
+      country_selector_mode: raw.country_selector_mode === 'select' ? 'select' : 'radio',
+      postal_code_required: raw.postal_code_required !== false,
+      map_required: raw.map_required !== false,
+      street_selection_required: raw.street_selection_required !== false,
+      require_city: raw.require_city !== false,
+      require_district: Boolean(raw.require_district),
+      require_neighborhood: Boolean(raw.require_neighborhood),
+      require_latitude: Boolean(raw.require_latitude),
+      require_longitude: Boolean(raw.require_longitude),
+      require_address_line: raw.require_address_line !== false,
+    };
+  }, [placesConfig.listing_create_config]);
+  const activeModuleKey = useMemo(
+    () => (selectedCategory?.module || localStorage.getItem('ilan_ver_module') || 'vehicle').toLowerCase(),
+    [selectedCategory?.module]
+  );
+  const listingAddressConfigActive = useMemo(
+    () => (listingCreateConfig.apply_modules || []).includes(activeModuleKey),
+    [activeModuleKey, listingCreateConfig.apply_modules]
+  );
 
   const buildVehiclePayload = useCallback(() => {
     if (!selectedVehicle) return null;
