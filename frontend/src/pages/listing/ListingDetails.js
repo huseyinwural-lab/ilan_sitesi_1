@@ -1630,26 +1630,30 @@ export default function ListingDetails() {
               </label>
             </div>
             <div className="flex flex-wrap gap-3 text-xs" data-testid="ilan-ver-field-contact-options">
-              <label className="inline-flex items-center gap-2" data-testid="ilan-ver-field-allow-phone-wrap">
-                <input
-                  type="checkbox"
-                  checked={form.allow_phone}
-                  onChange={(e) => saveFormLocal({ allow_phone: e.target.checked })}
-                  onBlur={saveContactBlock}
-                  data-testid="ilan-ver-field-allow-phone"
-                />
-                Telefon ile iletişime izin ver
-              </label>
-              <label className="inline-flex items-center gap-2" data-testid="ilan-ver-field-allow-message-wrap">
-                <input
-                  type="checkbox"
-                  checked={form.allow_message}
-                  onChange={(e) => saveFormLocal({ allow_message: e.target.checked })}
-                  onBlur={saveContactBlock}
-                  data-testid="ilan-ver-field-allow-message"
-                />
-                Mesaj ile iletişime izin ver
-              </label>
+              {contactConfig.allow_phone_toggle ? (
+                <label className="inline-flex items-center gap-2" data-testid="ilan-ver-field-allow-phone-wrap">
+                  <input
+                    type="checkbox"
+                    checked={form.allow_phone}
+                    onChange={(e) => saveFormLocal({ allow_phone: e.target.checked })}
+                    onBlur={saveContactBlock}
+                    data-testid="ilan-ver-field-allow-phone"
+                  />
+                  Telefon ile iletişime izin ver
+                </label>
+              ) : null}
+              {contactConfig.allow_message_toggle ? (
+                <label className="inline-flex items-center gap-2" data-testid="ilan-ver-field-allow-message-wrap">
+                  <input
+                    type="checkbox"
+                    checked={form.allow_message}
+                    onChange={(e) => saveFormLocal({ allow_message: e.target.checked })}
+                    onBlur={saveContactBlock}
+                    data-testid="ilan-ver-field-allow-message"
+                  />
+                  Mesaj ile iletişime izin ver
+                </label>
+              ) : null}
             </div>
           </>
         )}
