@@ -207,8 +207,9 @@ export default function HomePage() {
   const moduleGroups = useMemo(() => {
     const query = searchInput.trim().toLowerCase();
 
-    return MODULE_CONFIG.map((moduleItem) => {
-      const categories = categoriesByModule[moduleItem.key] || [];
+    return moduleOrder.map((moduleKey) => {
+      const moduleLabel = moduleLabelMap.get(moduleKey) || moduleKey;
+      const categories = categoriesByModule[moduleKey] || [];
       const byParent = new Map();
       categories.forEach((item) => {
         const key = item.parent_id || 'root';
@@ -228,14 +229,32 @@ export default function HomePage() {
         return total;
       };
 
+      const moduleOrderList = Array.isArray(homeCategoryLayout.module_l1_order?.[moduleKey])
+        ? homeCategoryLayout.module_l1_order[moduleKey]
+        : [];
+      const moduleOrderIndex = new Map(moduleOrderList.map((item, index) => [item, index]));
+      const resolveOrderIndex = (node) => {
+        if (!node) return null;
+        if (moduleOrderIndex.has(node.id)) return moduleOrderIndex.get(node.id);
+        if (node.slug && moduleOrderIndex.has(node.slug)) return moduleOrderIndex.get(node.slug);
+        return null;
+      };
+
       const level1Allowed = new Set(REAL_ESTATE_DISPLAY_SCHEMA.l1.map((name) => normalizeNameKey(name)));
       const level2Allowed = new Set(REAL_ESTATE_DISPLAY_SCHEMA.l2.map((name) => normalizeNameKey(name)));
       const level2SortIndex = new Map(REAL_ESTATE_DISPLAY_SCHEMA.l2.map((name, index) => [normalizeNameKey(name), index]));
 
       let rootCandidates = (byParent.get('root') || [])
-        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+        .sort((a, b) => {
+          const ai = resolveOrderIndex(a);
+          const bi = resolveOrderIndex(b);
+          if (ai !== null || bi !== null) {
+            return (ai ?? 9999) - (bi ?? 9999);
+          }
+          return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+        })
         .filter((root) => {
-          if (moduleItem.key !== 'real_estate') return true;
+          if (moduleKey !== 'real_estate') return true;
           return level1Allowed.has(normalizeNameKey(normalizeLabel(root)));
         });
 
@@ -244,7 +263,7 @@ export default function HomePage() {
           const rootName = normalizeLabel(root);
           let rawChildren = (byParent.get(root.id) || []).sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
 
-          if (moduleItem.key === 'real_estate') {
+          if (moduleKey === 'real_estate') {
             rawChildren = rawChildren
               .filter((child) => level2Allowed.has(normalizeNameKey(normalizeLabel(child))))
               .sort((a, b) => {
@@ -282,12 +301,12 @@ export default function HomePage() {
         .filter(Boolean);
 
       return {
-        module_key: moduleItem.key,
-        module_label: moduleItem.label,
+        module_key: moduleKey,
+        module_label: moduleLabel,
         roots,
       };
     });
-  }, [categoriesByModule, searchInput]);
+  }, [categoriesByModule, homeCategoryLayout.module_l1_order, moduleLabelMap, moduleOrder, searchInput]);
 
   const homeShowcaseBlock = useMemo(() => showcaseLayout.homepage || DEFAULT_SHOWCASE_LAYOUT.homepage, [showcaseLayout]);
   const homeShowcaseCount = useMemo(() => Math.max(1, resolveEffectiveCount(homeShowcaseBlock)), [homeShowcaseBlock]);
