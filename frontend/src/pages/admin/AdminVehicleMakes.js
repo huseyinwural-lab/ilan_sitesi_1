@@ -225,12 +225,20 @@ const AdminVehicleMakes = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td className="px-3 py-4" colSpan="6">Yükleniyor...</td></tr>
+              <tr><td className="px-3 py-4" colSpan="7">Yükleniyor...</td></tr>
             ) : items.length === 0 ? (
-              <tr><td className="px-3 py-4" colSpan="6">Kayıt yok</td></tr>
+              <tr><td className="px-3 py-4" colSpan="7">Kayıt yok</td></tr>
             ) : (
               items.map((item) => (
                 <tr key={item.id} className="border-t" data-testid={`vehicle-makes-row-${item.id}`}>
+                  <td className="px-3 py-2" data-testid={`vehicle-makes-select-${item.id}`}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onChange={() => toggleSelect(item.id)}
+                      data-testid={`vehicle-makes-select-input-${item.id}`}
+                    />
+                  </td>
                   <td className="px-3 py-2" data-testid={`vehicle-makes-name-${item.id}`}>{item.name}</td>
                   <td className="px-3 py-2 text-muted-foreground" data-testid={`vehicle-makes-slug-${item.id}`}>{item.slug}</td>
                   <td className="px-3 py-2" data-testid={`vehicle-makes-country-${item.id}`}>{item.country_code}</td>
