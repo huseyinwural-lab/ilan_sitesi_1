@@ -1,5 +1,5 @@
 # FAZ EU Panel — Ürün Gereksinimleri
-**Son güncelleme:** 2026-03-01 04:22:00 UTC (P106 Admin Kategori Kademeli Hiyerarşi Editörü + Vasıta paneli)
+**Son güncelleme:** 2026-03-01 09:25:00 UTC (Kardeş mirası + modül hata mesajı netleştirme)
 
 ## Orijinal Problem
 Avrupa odaklı ilan platformu için full-stack (React + FastAPI + PostgreSQL) bir sistem isteniyor. Yönetici panelinde kategori hiyerarşisi, ilan oluşturma akışı ve vitrin/doping yönetimi; public tarafta ise kategori + vitrin listeleri ve ilan verme akışı uçtan uca çalışmalı.
