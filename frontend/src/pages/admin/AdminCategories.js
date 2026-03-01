@@ -2769,7 +2769,7 @@ const AdminCategories = () => {
           setForm((prev) => ({ ...prev, slug: createdParent.payload.slug }));
           toast({
             title: "Slug otomatik düzeltildi",
-            description: `Ana kategori slug değeri ${createdParent.payload.slug} olarak güncellendi.`,
+            description: `Modül slug değeri ${createdParent.payload.slug} olarak güncellendi.`,
           });
         }
         updatedParent = createdParent.data?.category;
