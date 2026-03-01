@@ -26479,6 +26479,18 @@ def _resolve_required_vehicle_fields(record: dict, index: int) -> tuple[Optional
             )
         )
 
+    raw_vehicle_type = _extract_vehicle_field(record, ["vehicle_type", "vehicleType", "type", "segment"]) or record.get("vehicle_type")
+    vehicle_type = _normalize_vehicle_type(raw_vehicle_type) or "car"
+    if vehicle_type not in VEHICLE_TYPE_SET:
+        errors.append(
+            _vehicle_import_field_error(
+                path=f"$[{index}].vehicle_type",
+                expected=f"{sorted(VEHICLE_TYPE_SET)}",
+                got=raw_vehicle_type,
+                hint="vehicle_type geçersiz",
+            )
+        )
+
     if errors:
         return None, errors
 
@@ -26491,6 +26503,7 @@ def _resolve_required_vehicle_fields(record: dict, index: int) -> tuple[Optional
         "trim": trim_name,
         "year": year,
         "trim_ref": trim_ref,
+        "vehicle_type": vehicle_type,
     }, []
 
 
