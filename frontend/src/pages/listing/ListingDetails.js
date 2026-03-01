@@ -312,7 +312,7 @@ export default function ListingDetails() {
     await patchDraft('address', {
       location: {
         city: form.city,
-        country: (localStorage.getItem('selected_country') || 'DE').toUpperCase(),
+        country: (form.address_country || localStorage.getItem('selected_country') || 'DE').toUpperCase(),
         postal_code: form.postal_code,
         district: form.district,
         neighborhood: form.neighborhood,
@@ -325,6 +325,7 @@ export default function ListingDetails() {
   }, [
     addressBlockEnabled,
     form.address_line,
+    form.address_country,
     form.city,
     form.district,
     form.latitude,
