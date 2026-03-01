@@ -24227,6 +24227,49 @@ async def admin_delete_vehicle_make(
     return {"make": _normalize_vehicle_make_doc(make)}
 
 
+@api_router.post("/admin/vehicle-makes/bulk-delete")
+async def admin_bulk_delete_vehicle_makes(
+    payload: VehicleBulkDeletePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    make_ids = []
+    for item_id in payload.ids:
+        try:
+            make_ids.append(uuid.UUID(item_id))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid make id: {item_id}") from exc
+
+    if not make_ids:
+        return {"updated": 0, "ids": []}
+
+    result = await session.execute(select(VehicleMake).where(VehicleMake.id.in_(make_ids)))
+    makes = result.scalars().all()
+    for make in makes:
+        make.is_active = False
+
+    await session.execute(
+        update(VehicleModel).where(VehicleModel.make_id.in_(make_ids)).values(is_active=False)
+    )
+
+    await _write_audit_log_sql(
+        session=session,
+        action="VEHICLE_MAKE_BULK_DELETE",
+        actor=current_user,
+        resource_type="vehicle_make",
+        resource_id="bulk",
+        metadata={"count": len(makes)},
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    return {"updated": len(makes), "ids": [str(make.id) for make in makes]}
+
+
 @api_router.get("/admin/vehicle-models")
 async def admin_list_vehicle_models(
     request: Request,
