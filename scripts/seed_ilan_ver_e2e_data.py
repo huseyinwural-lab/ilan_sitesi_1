@@ -30,7 +30,7 @@ def leaf_schema(field_label: str, detail_title: str) -> dict:
                 "type": "select",
                 "required": True,
                 "options": ["A", "B", "C"],
-                "messages": {"required": f"{field_label} zorunlu"},
+                "messages": {"required": f"{field_label} required"},
             }
         ],
         "detail_groups": [
@@ -39,7 +39,7 @@ def leaf_schema(field_label: str, detail_title: str) -> dict:
                 "title": detail_title,
                 "required": True,
                 "options": ["Opsiyon-1", "Opsiyon-2", "Opsiyon-3"],
-                "messages": {"required": f"{detail_title} zorunlu"},
+                "messages": {"required": f"{detail_title} required"},
             }
         ],
         "modules": {
@@ -227,7 +227,7 @@ async def ensure_listing(
     if not listing:
         listing = Listing(
             title=title,
-            description=f"{title} açıklaması",
+            description=f"{title} aciklama",
             module=module,
             category_id=category_id,
             country="DE",
@@ -269,15 +269,15 @@ async def main():
     async with Session() as session:
         roots = [
             ("konut", "Konut", [
-                ("satilik-daire", "Satılık Daire", leaf_schema("Oda Sayısı", "Konut Donanım")),
-                ("kiralik-daire", "Kiralık Daire", leaf_schema("Metrekare", "Konut Özellik")),
+                ("satilik-daire", "Satilik Daire", leaf_schema("Oda Sayisi", "Konut Donanim")),
+                ("kiralik-daire", "Kiralik Daire", leaf_schema("Metrekare", "Konut Ozellik")),
             ]),
             ("ticari", "Ticari", [
-                ("satilik-dukkan", "Satılık Dükkan", leaf_schema("Vitrin Uzunluğu", "Ticari Donanım")),
-                ("kiralik-ofis", "Kiralık Ofis", leaf_schema("Kat", "Ofis Özellik")),
+                ("satilik-dukkan", "Satilik Dukkan", leaf_schema("Vitrin Uzunlugu", "Ticari Donanim")),
+                ("kiralik-ofis", "Kiralik Ofis", leaf_schema("Kat", "Ofis Ozellik")),
             ]),
             ("arsa", "Arsa", [
-                ("imara-acik", "İmara Açık Arsa", leaf_schema("Parsel No", "Tapu Bilgileri")),
+                ("imara-acik", "Imara Acik Arsa", leaf_schema("Parsel No", "Tapu Bilgileri")),
                 ("tarla", "Tarla", leaf_schema("Arazi Tipi", "Tarla Özellik")),
             ]),
         ]
@@ -345,7 +345,7 @@ async def main():
                     owner,
                     "real_estate",
                     leaf_id,
-                    f"E2E Emlak İlanı {idx + 1}",
+                    f"E2E Emlak Ilani {idx + 1}",
                     "Berlin",
                     100000 + (idx * 5000),
                     urgent=(idx % 2 == 0),
