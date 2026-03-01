@@ -7,6 +7,7 @@ import csv
 import urllib.request
 import urllib.parse
 import json
+import unicodedata
 import xml.etree.ElementTree as ET
 import hashlib
 import secrets
