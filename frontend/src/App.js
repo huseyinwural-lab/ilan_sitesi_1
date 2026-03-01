@@ -49,6 +49,8 @@ import VerifyEmail from '@/pages/VerifyEmail';
 import ListingCategorySelect from '@/pages/listing/ListingCategorySelect';
 import VehicleSelector from '@/pages/listing/VehicleSelector';
 import ListingDetails from '@/pages/listing/ListingDetails';
+import ListingPreview from '@/pages/listing/ListingPreview';
+import ListingDoping from '@/pages/listing/ListingDoping';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
@@ -215,6 +217,22 @@ function App() {
                     element={
                       <ProtectedRoute portalScope="account">
                         <ListingDetails />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/ilan-ver/onizleme"
+                    element={
+                      <ProtectedRoute portalScope="account">
+                        <ListingPreview />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/ilan-ver/doping"
+                    element={
+                      <ProtectedRoute portalScope="account">
+                        <ListingDoping />
                       </ProtectedRoute>
                     }
                   />
