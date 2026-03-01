@@ -2812,16 +2812,13 @@ const AdminCategories = () => {
         const label = `Seviye ${levelIndex + 1}.${index + 1}`;
         if (!node.name) treeFieldErrors[`level-${pathKey}-name`] = "Ad zorunludur.";
         if (!node.slug) treeFieldErrors[`level-${pathKey}-slug`] = "Slug zorunludur.";
-        if (!Number.isFinite(Number(node.sort_order)) || Number(node.sort_order) <= 0) {
-          treeFieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
-        }
-
-        const sortValue = Number(node.sort_order);
-        if (Number.isFinite(sortValue)) {
-          if (sortOrders.has(sortValue)) {
-            treeFieldErrors[`level-${pathKey}-sort`] = "Bu seviyede sıra numarası tekrar edemez.";
+        const rawSort = node.sort_order;
+        const hasSort = rawSort !== "" 66 rawSort !== null 66 rawSort !== undefined;
+        if (hasSort) {
+          const sortValue = Number(rawSort);
+          if (!Number.isFinite(sortValue) || sortValue c= 0) {
+            treeFieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
           }
-          sortOrders.add(sortValue);
         }
 
         const slugValue = (node.slug || "").trim().toLowerCase();
