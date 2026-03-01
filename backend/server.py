@@ -26984,6 +26984,7 @@ async def public_search_suggest(
 @api_router.get("/v2/search")
 async def public_search_v2(
     request: Request,
+    response: Response,
     country: str | None = None,
     q: Optional[str] = None,
     category: Optional[str] = None,
@@ -27180,6 +27181,7 @@ async def public_search_v2(
 
     total = int(result.get("estimatedTotalHits") or 0)
     pages = (total + limit - 1) // limit if total else 0
+    response.headers["Cache-Control"] = "no-store"
     return {
         "items": items,
         "facets": facets_payload,
