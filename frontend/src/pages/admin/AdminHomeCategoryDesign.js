@@ -77,6 +77,7 @@ const resolveOrderIndex = (orderIndex, node) => {
 };
 
 export default function AdminHomeCategoryDesign() {
+  const { language } = useLanguage();
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [categoriesByModule, setCategoriesByModule] = useState({});
   const [loading, setLoading] = useState(true);
