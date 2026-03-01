@@ -347,6 +347,93 @@ export default function AdminSystemSettingsPage() {
     }
   };
 
+  const fetchGoogleMapsSettings = async () => {
+    setGoogleMapsLoading(true);
+    setGoogleMapsError('');
+    try {
+      const res = await axios.get(`${API}/admin/system-settings/google-maps`, { headers: authHeader });
+      const payload = res.data || {};
+      const codes = Array.isArray(payload.country_codes) ? payload.country_codes : [];
+      setGoogleMapsConfig({
+        key_configured: Boolean(payload.key_configured),
+        api_key_masked: payload.api_key_masked || '',
+        country_codes: codes,
+        country_options: Array.isArray(payload.country_options) ? payload.country_options : [],
+      });
+      setGoogleMapsForm((prev) => ({
+        ...prev,
+        country_codes: codes,
+      }));
+    } catch (e) {
+      setGoogleMapsError(e.response?.data?.detail || 'Google Maps ayarları alınamadı');
+    } finally {
+      setGoogleMapsLoading(false);
+    }
+  };
+
+  const toggleGoogleMapsCountryCode = (code) => {
+    setGoogleMapsForm((prev) => {
+      const next = new Set(prev.country_codes || []);
+      if (next.has(code)) {
+        next.delete(code);
+      } else {
+        next.add(code);
+      }
+      return {
+        ...prev,
+        country_codes: Array.from(next),
+      };
+    });
+  };
+
+  const handleAddGoogleMapsCountryCode = () => {
+    const code = String(googleMapsForm.custom_country_code || '').trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(code)) return;
+    setGoogleMapsForm((prev) => {
+      const next = new Set(prev.country_codes || []);
+      next.add(code);
+      return {
+        ...prev,
+        country_codes: Array.from(next),
+        custom_country_code: '',
+      };
+    });
+  };
+
+  const handleSaveGoogleMapsSettings = async () => {
+    setGoogleMapsSaving(true);
+    setGoogleMapsError('');
+    setGoogleMapsNotice('');
+    try {
+      if (!Array.isArray(googleMapsForm.country_codes) || googleMapsForm.country_codes.length === 0) {
+        setGoogleMapsError('En az bir ülke kodu seçmelisiniz.');
+        return;
+      }
+      const payload = {
+        api_key: String(googleMapsForm.api_key || '').trim() || null,
+        country_codes: googleMapsForm.country_codes,
+      };
+      const res = await axios.post(`${API}/admin/system-settings/google-maps`, payload, { headers: authHeader });
+      setGoogleMapsNotice('Google Maps ayarları kaydedildi.');
+      setGoogleMapsConfig((prev) => ({
+        ...prev,
+        key_configured: Boolean(res.data?.key_configured),
+        api_key_masked: res.data?.api_key_masked || prev.api_key_masked,
+        country_codes: Array.isArray(res.data?.country_codes) ? res.data.country_codes : prev.country_codes,
+        country_options: Array.isArray(res.data?.country_options) ? res.data.country_options : prev.country_options,
+      }));
+      setGoogleMapsForm((prev) => ({
+        ...prev,
+        api_key: '',
+        country_codes: Array.isArray(res.data?.country_codes) ? res.data.country_codes : prev.country_codes,
+      }));
+    } catch (e) {
+      setGoogleMapsError(e.response?.data?.detail || 'Google Maps ayarları kaydedilemedi');
+    } finally {
+      setGoogleMapsSaving(false);
+    }
+  };
+
   const handleSaveWatermarkSettings = async () => {
     setWatermarkSaving(true);
     setWatermarkError('');
