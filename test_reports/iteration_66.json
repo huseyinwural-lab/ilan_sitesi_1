@@ -1,0 +1,80 @@
+{
+  "summary": "P106 Listing Flow - Backend + Frontend Testing completed. Admin Categories root-only filtering verified. Home category card layout working. Listing flow endpoints (draft→preview_ready→doping_selected→submitted_for_review) all functional with idempotency. Audit logs capturing events correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p106_listing_flow.py",
+    "/app/test_reports/pytest/p106_listing_flow_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_p106_listing_flow.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "user": "user@platform.com / User123!"
+  },
+  "seed_data_creation": "Test listings created via P106 flow endpoints during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P106 listing flow endpoints fully tested. Idempotency-Key required for submit-review. Doping options are static (MOCKED - payment gateway not integrated). Admin categories table shows only root categories (parent_id=null). Home page displays categories in card layout with ACİL/Vitrin links.",
+  "test_details": {
+    "admin_categories_root_only": {
+      "status": "PASS",
+      "details": "Admin /admin/categories shows only 1 root category (Emlak), 11 child categories with parent_id are hidden from table"
+    },
+    "home_left_block_visual": {
+      "status": "PASS",
+      "details": "Module cards (Emlak, Vasıta, Diğer) render correctly with root categories and L1 children showing counts. ACİL link shows (10), Vitrin link functional"
+    },
+    "listing_flow_endpoints": {
+      "status": "PASS",
+      "details": {
+        "create_draft": "POST /api/v1/listings/vehicle → 200/201",
+        "save_draft": "POST /api/v1/listings/vehicle/{id}/draft → 200",
+        "preview_ready": "POST /api/v1/listings/vehicle/{id}/preview-ready → 200, flow_state=preview_ready",
+        "get_preview": "GET /api/v1/listings/vehicle/{id}/preview → 200, includes doping_selection",
+        "doping_options": "GET /api/v1/listings/doping/options → 200, returns none/urgent/showcase types",
+        "doping_select": "POST /api/v1/listings/vehicle/{id}/doping → 200, flow_state=doping_selected",
+        "submit_review": "POST /api/v1/listings/vehicle/{id}/submit-review → 200, requires Idempotency-Key"
+      }
+    },
+    "submit_idempotency": {
+      "status": "PASS",
+      "details": "Same Idempotency-Key returns idempotency_reused=true without duplicates. Different key on submitted listing returns 409"
+    },
+    "admin_moderation_queue": {
+      "status": "PASS",
+      "details": "GET /api/admin/moderation/queue?status=pending_moderation returns submitted_for_review listings with PENDING status"
+    },
+    "audit_logs": {
+      "status": "PASS",
+      "details": "Events captured: LISTING_PREVIEW_READY, LISTING_DOPING_SELECTED, LISTING_SUBMITTED_FOR_REVIEW with metadata including doping_selection"
+    },
+    "frontend_flow": {
+      "status": "PASS",
+      "details": {
+        "ilan_ver": "Category selection with module→L1→L2/L3 hierarchy working",
+        "detaylar": "Form fields (title, price, description, city, contact) rendering correctly",
+        "onizleme": "Preview page loads with proper error handling when no draft",
+        "doping": "Doping selection page loads with options and back navigation"
+      }
+    }
+  },
+  "mocked_apis": {
+    "doping_options": "Static backend list - payment gateway NOT integrated",
+    "campaign_cards": "Admin CMS integration NOT connected"
+  }
+}
