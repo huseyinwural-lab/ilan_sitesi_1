@@ -2762,7 +2762,7 @@ const AdminCategories = () => {
           setForm((prev) => ({ ...prev, sort_order: String(createdParent.payload.sort_order) }));
           toast({
             title: "Sıra otomatik düzeltildi",
-            description: `Ana kategori için sıra ${createdParent.payload.sort_order} olarak güncellendi.`,
+            description: `Modül için sıra ${createdParent.payload.sort_order} olarak güncellendi.`,
           });
         }
         if (createdParent.payload?.slug && createdParent.payload.slug !== slug) {
