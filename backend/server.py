@@ -29441,6 +29441,9 @@ def _normalize_home_category_layout_config(config: Optional[dict]) -> dict:
         "module_order": module_order,
         "module_l1_order_mode": module_l1_order_mode,
         "module_l1_order": module_l1_order,
+        "listing_module_grid_rows": listing_rows,
+        "listing_module_grid_columns": listing_cols,
+        "listing_lx_limit": listing_lx_limit,
     }
 
 
