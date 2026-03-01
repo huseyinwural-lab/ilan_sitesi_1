@@ -1,5 +1,5 @@
 # FAZ EU Panel — Ürün Gereksinimleri
-**Son güncelleme:** 2026-03-01 10:30:00 UTC (Ana Site Kategorisi tasarım paneli + homepage config)
+**Son güncelleme:** 2026-03-01 11:12:00 UTC (L0/L1 alfabetik sıralama modu + kardeş onayı kaldırıldı)
 
 ## Orijinal Problem
 Avrupa odaklı ilan platformu için full-stack (React + FastAPI + PostgreSQL) bir sistem isteniyor. Yönetici panelinde kategori hiyerarşisi, ilan oluşturma akışı ve vitrin/doping yönetimi; public tarafta ise kategori + vitrin listeleri ve ilan verme akışı uçtan uca çalışmalı.
