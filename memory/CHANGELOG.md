@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## Uygulanan Özellikler
+- **P108 Araç Master Import JSON/Excel Düzeltmesi (2026-03-01):** JSON/Excel yükleme seçici eklendi, Excel → JSON dönüşümü yapılıyor, upload auth başlığı erişim token’ına geçirildi ve hata mesajları HTTP durumuyla netleşti.
 - **P107 L0/L1 Alfabetik Sıralama Modu (2026-03-01):** Ana Site Kategorisi paneline L0 (modül) ve L1 için manuel/alfabetik sıralama modu eklendi. Alfabetik modda yukarı/aşağı butonları devre dışı.
 - **P106 Kardeş Güncelleme Onayı Kaldırıldı (2026-03-01):** Kademeli hiyerarşide “kardeşlere uygula” onayı kaldırıldı; otomatik klonlama devam eder, güncellemeler yalnız seçili dalı etkiler.
 - **P107 Ana Site Kategorisi Tasarım Paneli (2026-03-01):** Admin → Site İç Tasarımı → Ana Site Kategorisi ekranı eklendi; modül ve L1 sırası yukarı/aşağı ile belirleniyor, kolon genişliği ayarlanıyor.

@@ -1,5 +1,5 @@
 # ROADMAP
-**Son güncelleme:** 2026-03-01 11:12:00 UTC
+**Son güncelleme:** 2026-03-01 12:20:00 UTC
 
 ## P0 (Aktif)
 - Kademeli kategori editöründe leaf seviyesine parametre seti bağlama (form şablonu eşleme)
