@@ -486,6 +486,55 @@ export default function AdminSystemSettingsPage() {
     }
   };
 
+  const fetchListingCreateConfig = async () => {
+    setListingCreateLoading(true);
+    setListingCreateError('');
+    try {
+      const res = await axios.get(`${API}/admin/system-settings/listing-create`, { headers: authHeader });
+      setListingCreateConfig((prev) => ({
+        ...prev,
+        ...(res.data?.config || {}),
+      }));
+    } catch (e) {
+      setListingCreateError(e.response?.data?.detail || 'İlan ver ayarları alınamadı');
+    } finally {
+      setListingCreateLoading(false);
+    }
+  };
+
+  const toggleListingCreateModule = (moduleKey) => {
+    setListingCreateConfig((prev) => {
+      const current = Array.isArray(prev.apply_modules) ? prev.apply_modules : [];
+      const next = new Set(current);
+      if (next.has(moduleKey)) next.delete(moduleKey);
+      else next.add(moduleKey);
+      return {
+        ...prev,
+        apply_modules: Array.from(next),
+      };
+    });
+  };
+
+  const handleSaveListingCreateConfig = async () => {
+    setListingCreateSaving(true);
+    setListingCreateError('');
+    setListingCreateNotice('');
+    try {
+      if (!Array.isArray(listingCreateConfig.apply_modules) || listingCreateConfig.apply_modules.length === 0) {
+        setListingCreateError('En az bir modül seçilmelidir.');
+        return;
+      }
+      const payload = { ...listingCreateConfig };
+      const res = await axios.post(`${API}/admin/system-settings/listing-create`, payload, { headers: authHeader });
+      setListingCreateConfig((prev) => ({ ...prev, ...(res.data?.config || {}) }));
+      setListingCreateNotice('İlan ver ayarları kaydedildi.');
+    } catch (e) {
+      setListingCreateError(e.response?.data?.detail || 'İlan ver ayarları kaydedilemedi');
+    } finally {
+      setListingCreateSaving(false);
+    }
+  };
+
   const handleSaveWatermarkSettings = async () => {
     setWatermarkSaving(true);
     setWatermarkError('');
