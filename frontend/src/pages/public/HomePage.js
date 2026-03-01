@@ -242,7 +242,7 @@ export default function HomePage() {
     const query = searchInput.trim().toLowerCase();
 
     return moduleOrder.map((moduleKey) => {
-      const moduleLabel = moduleLabelMap.get(moduleKey) || moduleKey;
+      const moduleLabel = MODULE_LABEL_MAP.get(moduleKey) || moduleKey;
       const categories = categoriesByModule[moduleKey] || [];
       const byParent = new Map();
       categories.forEach((item) => {
