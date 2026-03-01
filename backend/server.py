@@ -8851,6 +8851,188 @@ async def validate_category_selection(
     }
 
 
+@api_router.get("/places/config")
+async def get_places_config(
+    session: AsyncSession = Depends(get_sql_session),
+):
+    api_key, source = await _resolve_google_maps_api_key(session)
+    return {
+        "real_mode": bool(api_key),
+        "mode": "real" if api_key else "fallback",
+        "key_source": source,
+        "manual_key_supported": True,
+        "key_configured": bool(api_key),
+    }
+
+
+@api_router.get("/places/autocomplete")
+async def places_autocomplete(
+    request: Request,
+    q: str,
+    country: Optional[str] = None,
+    x_google_maps_key: Optional[str] = Header(default=None),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    allowed, remaining, retry_after = _check_places_rate_limit(request)
+    if not allowed:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "mode": "fallback",
+                "items": [],
+                "message": "Rate limit aşıldı. Lütfen tekrar deneyin.",
+                "retry_after": retry_after,
+            },
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    query = str(q or "").strip()
+    if len(query) < 2:
+        return {"mode": "fallback", "items": [], "remaining": remaining}
+
+    code = str(country or "").strip().upper()
+    if code and code not in SUPPORTED_COUNTRIES:
+        code = ""
+
+    api_key, source = await _resolve_google_maps_api_key(session, runtime_key=x_google_maps_key, country_code=code or None)
+    if not api_key:
+        return {
+            "mode": "fallback",
+            "key_source": source,
+            "items": [],
+            "remaining": remaining,
+            "message": "GOOGLE_MAPS_API_KEY bulunamadı. Manuel key girin.",
+        }
+
+    params = {
+        "input": query,
+        "key": api_key,
+        "language": "tr",
+        "types": "geocode",
+    }
+    if code:
+        params["components"] = f"country:{code.lower()}"
+
+    url = f"https://maps.googleapis.com/maps/api/place/autocomplete/json?{urllib.parse.urlencode(params)}"
+    try:
+        payload = await _fetch_google_places_json(url)
+    except Exception:
+        return JSONResponse(
+            status_code=502,
+            content={"mode": "fallback", "items": [], "message": "Autocomplete servisine ulaşılamadı."},
+        )
+
+    status = str(payload.get("status") or "")
+    if status in {"REQUEST_DENIED", "INVALID_REQUEST"}:
+        return JSONResponse(
+            status_code=400,
+            content={"mode": "fallback", "items": [], "message": payload.get("error_message") or status},
+        )
+    if status in {"OVER_QUERY_LIMIT"}:
+        return JSONResponse(
+            status_code=429,
+            content={"mode": "fallback", "items": [], "message": "Google Places kota limiti aşıldı."},
+        )
+
+    predictions = payload.get("predictions") if isinstance(payload.get("predictions"), list) else []
+    items: list[dict] = []
+    for row in predictions:
+        structured = row.get("structured_formatting") if isinstance(row.get("structured_formatting"), dict) else {}
+        items.append(
+            {
+                "place_id": row.get("place_id"),
+                "description": row.get("description"),
+                "main_text": structured.get("main_text") or row.get("description"),
+                "secondary_text": structured.get("secondary_text") or "",
+            }
+        )
+
+    return {
+        "mode": "real",
+        "key_source": source,
+        "status": status or "OK",
+        "remaining": remaining,
+        "items": items,
+    }
+
+
+@api_router.get("/places/details")
+async def places_details(
+    request: Request,
+    place_id: str,
+    country: Optional[str] = None,
+    x_google_maps_key: Optional[str] = Header(default=None),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    allowed, remaining, retry_after = _check_places_rate_limit(request)
+    if not allowed:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "mode": "fallback",
+                "item": None,
+                "message": "Rate limit aşıldı. Lütfen tekrar deneyin.",
+                "retry_after": retry_after,
+            },
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    place_value = str(place_id or "").strip()
+    if not place_value:
+        raise HTTPException(status_code=400, detail="place_id gerekli")
+
+    code = str(country or "").strip().upper()
+    if code and code not in SUPPORTED_COUNTRIES:
+        code = ""
+
+    api_key, source = await _resolve_google_maps_api_key(session, runtime_key=x_google_maps_key, country_code=code or None)
+    if not api_key:
+        return {
+            "mode": "fallback",
+            "key_source": source,
+            "remaining": remaining,
+            "item": None,
+            "message": "GOOGLE_MAPS_API_KEY bulunamadı. Manuel key girin.",
+        }
+
+    params = {
+        "place_id": place_value,
+        "key": api_key,
+        "language": "tr",
+        "fields": "place_id,formatted_address,address_component,geometry,name",
+    }
+    url = f"https://maps.googleapis.com/maps/api/place/details/json?{urllib.parse.urlencode(params)}"
+
+    try:
+        payload = await _fetch_google_places_json(url)
+    except Exception:
+        return JSONResponse(
+            status_code=502,
+            content={"mode": "fallback", "item": None, "message": "Place details servisine ulaşılamadı."},
+        )
+
+    status = str(payload.get("status") or "")
+    if status in {"REQUEST_DENIED", "INVALID_REQUEST", "NOT_FOUND"}:
+        return JSONResponse(
+            status_code=400,
+            content={"mode": "fallback", "item": None, "message": payload.get("error_message") or status},
+        )
+    if status in {"OVER_QUERY_LIMIT"}:
+        return JSONResponse(
+            status_code=429,
+            content={"mode": "fallback", "item": None, "message": "Google Places kota limiti aşıldı."},
+        )
+
+    normalized = _normalize_google_place_details(payload)
+    return {
+        "mode": "real",
+        "key_source": source,
+        "status": status or "OK",
+        "remaining": remaining,
+        "item": normalized,
+    }
+
+
 class ListingFlowEventPayload(BaseModel):
     event_name: str
     session_id: Optional[str] = None
