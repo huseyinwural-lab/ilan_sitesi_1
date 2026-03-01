@@ -20696,6 +20696,117 @@ async def admin_get_cloudflare_config(
     }
 
 
+@api_router.get("/admin/system-settings/google-maps")
+async def admin_get_google_maps_settings(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    api_setting = await _get_system_setting_by_key(session, GOOGLE_MAPS_API_KEY_SETTING_KEY, None)
+    country_setting = await _get_system_setting_by_key(session, GOOGLE_MAPS_COUNTRY_OPTIONS_SETTING_KEY, None)
+
+    key_value = ""
+    if api_setting:
+        if isinstance(api_setting.value, dict):
+            key_value = str(api_setting.value.get("api_key") or "").strip()
+        elif isinstance(api_setting.value, str):
+            key_value = api_setting.value.strip()
+
+    country_codes = _normalize_country_code_list(country_setting.value if country_setting else None)
+    country_options = await _resolve_google_maps_country_options(session)
+
+    return {
+        "key_configured": bool(key_value),
+        "api_key_masked": _mask_api_key(key_value),
+        "api_key_source": "system_setting" if key_value else "none",
+        "country_codes": country_codes,
+        "country_options": country_options,
+        "api_setting_id": str(api_setting.id) if api_setting else None,
+        "country_setting_id": str(country_setting.id) if country_setting else None,
+    }
+
+
+@api_router.post("/admin/system-settings/google-maps")
+async def admin_save_google_maps_settings(
+    payload: GoogleMapsSettingsPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    normalized_codes = _normalize_country_code_list(payload.country_codes)
+    if not normalized_codes:
+        raise HTTPException(status_code=400, detail="En az bir ülke kodu zorunlu")
+
+    now_ts = datetime.now(timezone.utc)
+
+    api_setting = await _get_system_setting_by_key(session, GOOGLE_MAPS_API_KEY_SETTING_KEY, None)
+    api_key_value = str(payload.api_key or "").strip()
+    if api_setting:
+        if api_key_value:
+            api_setting.value = {"api_key": api_key_value}
+        api_setting.description = api_setting.description or "Google Maps API key"
+        api_setting.updated_at = now_ts
+    elif api_key_value:
+        api_setting = SystemSetting(
+            key=GOOGLE_MAPS_API_KEY_SETTING_KEY,
+            value={"api_key": api_key_value},
+            country_code=None,
+            is_readonly=False,
+            description="Google Maps API key",
+            created_at=now_ts,
+            updated_at=now_ts,
+        )
+        session.add(api_setting)
+        await session.flush()
+
+    country_setting = await _get_system_setting_by_key(session, GOOGLE_MAPS_COUNTRY_OPTIONS_SETTING_KEY, None)
+    country_payload = {"country_codes": normalized_codes}
+    if country_setting:
+        country_setting.value = country_payload
+        country_setting.description = country_setting.description or "Address flow country options"
+        country_setting.updated_at = now_ts
+    else:
+        country_setting = SystemSetting(
+            key=GOOGLE_MAPS_COUNTRY_OPTIONS_SETTING_KEY,
+            value=country_payload,
+            country_code=None,
+            is_readonly=False,
+            description="Address flow country options",
+            created_at=now_ts,
+            updated_at=now_ts,
+        )
+        session.add(country_setting)
+        await session.flush()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="GOOGLE_MAPS_SETTINGS_UPDATED",
+        actor=current_user,
+        resource_type="system_setting",
+        resource_id=str(country_setting.id),
+        metadata={
+            "api_key_configured": bool(api_key_value or (api_setting and api_setting.value)),
+            "country_codes": normalized_codes,
+        },
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    country_options = await _resolve_google_maps_country_options(session)
+    resolved_key, _ = await _resolve_google_maps_api_key(session)
+    return {
+        "ok": True,
+        "key_configured": bool(resolved_key),
+        "api_key_masked": _mask_api_key(resolved_key or ""),
+        "country_codes": normalized_codes,
+        "country_options": country_options,
+    }
+
+
 @api_router.post("/admin/system-settings/cloudflare")
 async def admin_update_cloudflare_config(
     payload: CloudflareConfigPayload,
