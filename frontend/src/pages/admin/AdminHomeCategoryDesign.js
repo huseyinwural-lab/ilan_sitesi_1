@@ -222,6 +222,7 @@ export default function AdminHomeCategoryDesign() {
   };
 
   const handleL1Move = (moduleKey, index, direction) => {
+    if (config.module_l1_order_mode?.[moduleKey] === 'alphabetical') return;
     setConfig((prev) => {
       const roots = (categoriesByModule[moduleKey] || []).filter((item) => !item.parent_id);
       const orderList = Array.isArray(prev.module_l1_order?.[moduleKey]) ? prev.module_l1_order[moduleKey] : [];
