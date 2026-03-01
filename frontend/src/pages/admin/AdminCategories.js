@@ -3851,101 +3851,209 @@ const AdminCategories = () => {
                     </div>
                   </div>
 
-                  {form.module === 'vehicle' ? (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3" data-testid="categories-vehicle-subcategory-lock">
-                      <div className="text-xs text-amber-700" data-testid="categories-vehicle-segment-hint">
-                        Vasıta modülünde alt kategori ağacı açılmaz. Segment seçimi master data sistemine bağlanır.
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3" data-testid="categories-vehicle-segment-grid">
-                        <div className="space-y-1">
-                          <label className={labelClassName}>Segment (Serbest Metin)</label>
-                          <input
-                            className={inputClassName}
-                            value={vehicleSegment}
-                            disabled={isHierarchyLocked}
-                            onChange={(e) => {
-                              setVehicleSegment(e.target.value);
-                              setVehicleSegmentError("");
-                            }}
-                            placeholder="Örn: Otomobil"
-                            data-testid="categories-vehicle-segment-select"
-                          />
-                          {vehicleSegmentError && (
-                            <div className="text-xs text-rose-600" data-testid="categories-vehicle-segment-error">
-                              {vehicleSegmentError}
-                            </div>
-                          )}
-                        </div>
-                        <div className="rounded-md border border-amber-300 bg-white/70 px-3 py-2 text-xs" data-testid="categories-vehicle-link-status">
-                          <div className="flex items-center justify-between gap-2" data-testid="categories-vehicle-link-status-title-row">
-                            <div className="font-semibold text-amber-900" data-testid="categories-vehicle-link-status-title">
-                              Master Data Linked
-                            </div>
-                            {vehicleLinkStatus.linked && (
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700" data-testid="categories-vehicle-linked-badge">
-                                Master Data Linked
-                              </span>
-                            )}
-                          </div>
-                          <div
-                            className={`mt-1 ${vehicleLinkStatus.linked ? 'text-emerald-700' : 'text-amber-800'}`}
-                            data-testid="categories-vehicle-link-status-message"
-                          >
-                            {vehicleLinkStatus.checking ? 'Kontrol ediliyor...' : (vehicleLinkStatus.message || 'Segment adı giriniz.')}
-                          </div>
-                        </div>
+                  <div className="rounded-lg border p-4 space-y-4" data-testid="categories-subcategory-section">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-md font-semibold">Kademeli Hiyerarşi</h3>
+                        <p className="text-xs text-slate-600" data-testid="categories-subcategory-hint">
+                          Seviye listesini doldurun → Onayla → seçili kategori için bir sonraki seviye açılır. Leaf seçilirse dal kapanır.
+                        </p>
                       </div>
                     </div>
-                  ) : (
-                    <div className="rounded-lg border p-4 space-y-3" data-testid="categories-subcategory-section">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="text-md font-semibold">Alt Kategoriler</h3>
-                          <p className="text-xs text-slate-600" data-testid="categories-subcategory-hint">
-                            1.1 ile başlayın; 1. grup bitince otomatik 2. grup açılır. Her grupta 1.x / 2.x / 3.x alt kategorileri sınırsız ekleyebilirsiniz.
-                          </p>
+
+                    {form.module === 'vehicle' && (
+                      <div className="rounded-md border border-amber-200 bg-amber-50 p-3 space-y-3" data-testid="categories-vehicle-master-panel">
+                        <div className="text-xs text-amber-700" data-testid="categories-vehicle-master-hint">
+                          Vasıta modülünde önerilen seviye akışı: Level 1 (Araç Tipi) → Level 2 (Model Yılı) → Level 3 (Marka) → Level 4 (Model) → Level 5 (Yakıt) → Level 6 (Kasa) → Level 7 (Vites) → Level 8 (Alt Model/Detay).
                         </div>
-                      </div>
-                      {subcategories.length === 0 ? (
-                        <div className="text-sm text-slate-700" data-testid="categories-subcategory-empty">Henüz alt kategori başlatılmadı.</div>
-                      ) : (
-                        <div className="flex gap-4 overflow-x-auto pb-2" data-testid="categories-subcategory-levels">
-                          {renderLevelColumns()}
+                        <div className="flex flex-wrap items-center gap-2" data-testid="categories-vehicle-master-actions">
+                          <button
+                            type="button"
+                            className="text-xs border rounded px-3 py-1"
+                            onClick={handleApplyVehicleTemplate}
+                            data-testid="categories-vehicle-template-apply"
+                          >
+                            Vasıta Şablonunu Uygula
+                          </button>
+                          <button
+                            type="button"
+                            className={`text-xs border rounded px-3 py-1 ${vehicleImportMode === 'api' ? 'bg-white text-slate-900' : 'text-slate-700'}`}
+                            onClick={() => setVehicleImportMode(vehicleImportMode === 'api' ? '' : 'api')}
+                            data-testid="categories-vehicle-import-api"
+                          >
+                            API'den Yükle
+                          </button>
+                          <button
+                            type="button"
+                            className={`text-xs border rounded px-3 py-1 ${vehicleImportMode === 'json' ? 'bg-white text-slate-900' : 'text-slate-700'}`}
+                            onClick={() => setVehicleImportMode(vehicleImportMode === 'json' ? '' : 'json')}
+                            data-testid="categories-vehicle-import-json"
+                          >
+                            JSON Yükle
+                          </button>
+                          <button
+                            type="button"
+                            className={`text-xs border rounded px-3 py-1 ${vehicleImportMode === 'excel' ? 'bg-white text-slate-900' : 'text-slate-700'}`}
+                            onClick={() => setVehicleImportMode(vehicleImportMode === 'excel' ? '' : 'excel')}
+                            data-testid="categories-vehicle-import-excel"
+                          >
+                            Excel Yükle
+                          </button>
                         </div>
-                      )}
-                      <div className="rounded-md border border-dashed border-slate-300 bg-white p-3" data-testid="categories-hierarchy-live-preview">
-                        <div className="mb-2 text-xs font-semibold text-slate-700">Canlı Hiyerarşi Önizleme</div>
-                        {hierarchyLiveRows.length === 0 ? (
-                          <div className="text-xs text-slate-500" data-testid="categories-hierarchy-live-preview-empty">
-                            Önizleme için kategori ekleyin.
+
+                        {vehicleImportMode === 'api' && (
+                          <div className="space-y-2" data-testid="categories-vehicle-import-api-panel">
+                            <textarea
+                              className="w-full min-h-[120px] rounded border p-2 text-xs"
+                              value={vehicleImportPayload}
+                              onChange={(e) => setVehicleImportPayload(e.target.value)}
+                              data-testid="categories-vehicle-import-api-payload"
+                            />
+                            <label className="flex items-center gap-2 text-xs" data-testid="categories-vehicle-import-api-dryrun">
+                              <input
+                                type="checkbox"
+                                checked={vehicleImportDryRun}
+                                onChange={(e) => setVehicleImportDryRun(e.target.checked)}
+                                data-testid="categories-vehicle-import-api-dryrun-input"
+                              />
+                              Dry-run (önizleme)
+                            </label>
+                            <button
+                              type="button"
+                              className="text-xs text-white bg-[var(--brand-navy-deep)] rounded px-3 py-1 disabled:opacity-60"
+                              onClick={handleVehicleImportApi}
+                              disabled={vehicleImportLoading}
+                              data-testid="categories-vehicle-import-api-submit"
+                            >
+                              {vehicleImportLoading ? 'Başlatılıyor...' : 'API Import Başlat'}
+                            </button>
                           </div>
-                        ) : (
-                          <div className="space-y-1" data-testid="categories-hierarchy-live-preview-tree">
-                            {hierarchyLiveRows.map((row) => (
-                              <div
-                                key={row.key}
-                                className="flex items-center gap-2 text-xs"
-                                style={{ paddingLeft: `${Math.min(row.level - 1, 8) * 14}px` }}
-                                data-testid={`categories-hierarchy-live-preview-row-${row.key}`}
-                              >
-                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700" data-testid={`categories-hierarchy-live-preview-level-${row.key}`}>
-                                  L{row.level}
-                                </span>
-                                <span className={`${row.missing ? "text-rose-600" : "text-slate-800"}`} data-testid={`categories-hierarchy-live-preview-name-${row.key}`}>
-                                  {row.label}
-                                </span>
-                                {row.is_leaf ? (
-                                  <span className="text-[10px] text-amber-600" data-testid={`categories-hierarchy-live-preview-leaf-${row.key}`}>
-                                    Leaf
-                                  </span>
-                                ) : null}
-                              </div>
-                            ))}
+                        )}
+
+                        {(vehicleImportMode === 'json' || vehicleImportMode === 'excel') && (
+                          <div className="space-y-2" data-testid="categories-vehicle-import-upload-panel">
+                            <input
+                              type="file"
+                              accept={vehicleImportMode === 'excel' ? '.xls,.xlsx' : 'application/json'}
+                              onChange={(e) => setVehicleImportFile(e.target.files?.[0] || null)}
+                              data-testid="categories-vehicle-import-upload-input"
+                            />
+                            <label className="flex items-center gap-2 text-xs" data-testid="categories-vehicle-import-upload-dryrun">
+                              <input
+                                type="checkbox"
+                                checked={vehicleImportDryRun}
+                                onChange={(e) => setVehicleImportDryRun(e.target.checked)}
+                                data-testid="categories-vehicle-import-upload-dryrun-input"
+                              />
+                              Dry-run (önizleme)
+                            </label>
+                            <button
+                              type="button"
+                              className="text-xs text-white bg-[var(--brand-navy-deep)] rounded px-3 py-1 disabled:opacity-60"
+                              onClick={() => handleVehicleImportUpload(vehicleImportMode)}
+                              disabled={vehicleImportLoading}
+                              data-testid="categories-vehicle-import-upload-submit"
+                            >
+                              {vehicleImportLoading ? 'Başlatılıyor...' : 'Dosya Import Başlat'}
+                            </button>
+                          </div>
+                        )}
+
+                        {vehicleImportStatus && (
+                          <div className="text-xs text-emerald-700" data-testid="categories-vehicle-import-status">
+                            {vehicleImportStatus}
+                          </div>
+                        )}
+                        {vehicleImportError && (
+                          <div className="text-xs text-rose-600" data-testid="categories-vehicle-import-error">
+                            {vehicleImportError}
                           </div>
                         )}
                       </div>
+                    )}
+
+                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3 space-y-2" data-testid="categories-level-navigator">
+                      <div className="text-xs font-semibold text-slate-700" data-testid="categories-level-navigator-title">
+                        Level Navigator
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2" data-testid="categories-level-navigator-path">
+                        <button
+                          type="button"
+                          className="text-xs border rounded px-2 py-1"
+                          onClick={() => {
+                            setLevelSelections([]);
+                            resetLevelCompletionFrom(0);
+                          }}
+                          data-testid="categories-level-nav-root"
+                        >
+                          Level 0 (Modül)
+                        </button>
+                        {levelBreadcrumbs.map((crumb) => (
+                          <button
+                            key={`crumb-${crumb.levelIndex}`}
+                            type="button"
+                            className="text-xs border rounded px-2 py-1"
+                            onClick={() => handleLevelJump(crumb.levelIndex)}
+                            data-testid={`categories-level-nav-${crumb.levelIndex}`}
+                          >
+                            {`Level ${crumb.levelIndex + 1}: ${crumb.label}`}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2" data-testid="categories-level-navigator-actions">
+                        <button
+                          type="button"
+                          className="text-xs border rounded px-3 py-1"
+                          onClick={handleLevelBack}
+                          data-testid="categories-level-nav-back"
+                        >
+                          Bir üst seviyeye dön
+                        </button>
+                        <button
+                          type="button"
+                          className="text-xs border rounded px-3 py-1"
+                          onClick={handleCreateNextLevel}
+                          data-testid="categories-level-nav-next"
+                        >
+                          Yeni seviye oluştur
+                        </button>
+                      </div>
                     </div>
-                  )}
+
+                    {renderLevelColumns()}
+
+                    <div className="rounded-md border border-dashed border-slate-300 bg-white p-3" data-testid="categories-hierarchy-live-preview">
+                      <div className="mb-2 text-xs font-semibold text-slate-700">Canlı Hiyerarşi Önizleme</div>
+                      {hierarchyLiveRows.length === 0 ? (
+                        <div className="text-xs text-slate-500" data-testid="categories-hierarchy-live-preview-empty">
+                          Önizleme için kategori ekleyin.
+                        </div>
+                      ) : (
+                        <div className="space-y-1" data-testid="categories-hierarchy-live-preview-tree">
+                          {hierarchyLiveRows.map((row) => (
+                            <div
+                              key={row.key}
+                              className="flex items-center gap-2 text-xs"
+                              style={{ paddingLeft: `${Math.min(row.level - 1, 8) * 14}px` }}
+                              data-testid={`categories-hierarchy-live-preview-row-${row.key}`}
+                            >
+                              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700" data-testid={`categories-hierarchy-live-preview-level-${row.key}`}>
+                                L{row.level}
+                              </span>
+                              <span className={`${row.missing ? "text-rose-600" : "text-slate-800"}`} data-testid={`categories-hierarchy-live-preview-name-${row.key}`}>
+                                {row.label}
+                              </span>
+                              {row.is_leaf ? (
+                                <span className="text-[10px] text-amber-600" data-testid={`categories-hierarchy-live-preview-leaf-${row.key}`}>
+                                  Leaf
+                                </span>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                   {editing && (
                     <div className="rounded-lg border border-dashed p-4 text-sm text-slate-700" data-testid="categories-hierarchy-locked">
