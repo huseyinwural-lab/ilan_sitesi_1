@@ -5,6 +5,28 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const FORM_STORAGE_KEY = 'ilan_ver_listing_form';
 const AUTOCOMPLETE_DEBOUNCE_MS = 450;
 
+const DEFAULT_LISTING_SITE_DESIGN = {
+  step3: {
+    media: {
+      max_photos: 20,
+      max_videos: 1,
+      max_file_size_mb: 2,
+      accepted_types: ['image/png', 'image/jpeg', 'image/webp'],
+    },
+    contact: {
+      allow_phone_toggle: true,
+      allow_message_toggle: true,
+    },
+    duration: {
+      show_discount_strike: true,
+    },
+    terms: {
+      text: 'İlan verme kurallarını okudum, kabul ediyorum.',
+      required: true,
+    },
+  },
+};
+
 const getToken = () => localStorage.getItem('access_token') || localStorage.getItem('token') || '';
 
 const getOrCreateSessionId = () => {
