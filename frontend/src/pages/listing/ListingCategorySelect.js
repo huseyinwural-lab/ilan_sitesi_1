@@ -199,7 +199,7 @@ const ListingCategorySelect = () => {
     const sorted = sortCategories(normalized);
     childrenCacheRef.current.set(cacheKey, sorted);
     return sorted;
-  }, [country, getCacheKey]);
+  }, [country, getCacheKey, sortCategories]);
 
   const loadRootCategories = useCallback(async (moduleKey) => {
     if (!moduleKey) {
