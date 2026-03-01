@@ -136,6 +136,8 @@ const VEHICLE_LEVEL0_TEMPLATES = [
   "Oto Kurtarıcı & Taşıyıcı",
 ];
 
+const INHERITANCE_START_LEVEL = 1;
+
 const WIZARD_STEPS = [
   { id: "hierarchy", label: "Kategori" },
   { id: "core", label: "Çekirdek Alanlar" },
