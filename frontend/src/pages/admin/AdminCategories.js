@@ -1600,7 +1600,6 @@ const AdminCategories = () => {
     }
 
     const nextFieldErrors = {};
-    const sortOrders = new Set();
     const slugs = new Set();
 
     items.forEach((item, itemIndex) => {
@@ -1611,13 +1610,13 @@ const AdminCategories = () => {
       if (!item?.slug?.trim()) {
         nextFieldErrors[`level-${pathKey}-slug`] = "Slug zorunludur.";
       }
-      const sortValue = Number(item?.sort_order);
-      if (!Number.isFinite(sortValue) || sortValue <= 0) {
-        nextFieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
-      } else if (sortOrders.has(sortValue)) {
-        nextFieldErrors[`level-${pathKey}-sort`] = "Bu seviyede sıra numarası tekrar edemez.";
-      } else {
-        sortOrders.add(sortValue);
+      const rawSort = item?.sort_order;
+      const hasSort = rawSort !== "" && rawSort !== null && rawSort !== undefined;
+      if (hasSort) {
+        const sortValue = Number(rawSort);
+        if (!Number.isFinite(sortValue) || sortValue <= 0) {
+          nextFieldErrors[`level-${pathKey}-sort`] = "Sıra 1 veya daha büyük olmalıdır.";
+        }
       }
 
       const slugKey = (item?.slug || "").trim().toLowerCase();
