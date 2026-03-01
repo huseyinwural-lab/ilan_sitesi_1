@@ -720,6 +720,7 @@ export default function ListingDetails() {
 
   const runPostalLookup = useCallback(async () => {
     if (!addressBlockEnabled) return;
+    if (!listingCreateConfig.map_required) return;
     if (!googleAutocompleteEnabled) {
       setPlacesError('Admin ayarlarında Google Maps API key tanımlı değil.');
       return;
@@ -765,10 +766,11 @@ export default function ListingDetails() {
     } finally {
       setPlacesLoading(false);
     }
-  }, [API, addressBlockEnabled, form.address_country, form.postal_code, googleAutocompleteEnabled, saveFormLocal]);
+  }, [API, addressBlockEnabled, form.address_country, form.postal_code, googleAutocompleteEnabled, listingCreateConfig.map_required, saveFormLocal]);
 
   useEffect(() => {
     if (!addressBlockEnabled) return;
+    if (!listingCreateConfig.map_required) return;
     const postalCode = String(form.postal_code || '').trim();
     if (postalCode.length < 3) {
       setPostalLookupItem(null);
@@ -779,7 +781,7 @@ export default function ListingDetails() {
       void runPostalLookup();
     }, AUTOCOMPLETE_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [addressBlockEnabled, form.address_country, form.postal_code, runPostalLookup]);
+  }, [addressBlockEnabled, form.address_country, form.postal_code, listingCreateConfig.map_required, runPostalLookup]);
 
   const handleSelectAddressSuggestion = useCallback(async (suggestion) => {
     if (!suggestion?.place_id) return;
