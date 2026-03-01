@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-02-28 23:10:00 UTC (P105c Root-Only Admin Liste + /ilan-ver N-Kolon Finalizasyonu)
+**Son güncelleme:** 2026-03-01 00:45:00 UTC (P106 State Machine + Dopingli Submit Akışı)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -67,6 +67,11 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P106 Listing Flow (Draft → Preview → Doping → Submit) Canlı (2026-03-01):** Backend’e yeni gerçek akış endpointleri eklendi: `POST /api/v1/listings/vehicle/{id}/preview-ready`, `GET /api/v1/listings/vehicle/{id}/preview`, `GET /api/v1/listings/doping/options`, `POST /api/v1/listings/vehicle/{id}/doping`, `POST /api/v1/listings/vehicle/{id}/submit-review`.
+- **P106 State Machine + Idempotency (2026-03-01):** Akış state’leri canlı: `draft -> preview_ready -> doping_selected (opsiyonel) -> submitted_for_review`. `submit-review` endpointinde `Idempotency-Key` zorunlu; aynı key ile tekrar submit duplicate üretmeden aynı sonucu döndürüyor, farklı key ile tekrar deneme `409`.
+- **P106 Admin Queue + Audit Eventleri (2026-03-01):** Submit edilen ilanlar admin moderation queue’da `PENDING` olarak görünür. Audit eventleri yazılıyor: `LISTING_PREVIEW_READY`, `LISTING_DOPING_SELECTED`, `LISTING_SUBMITTED_FOR_REVIEW` (metadata: user/listing/draft/category_path/doping_selection/idempotency_key).
+- **P106 Frontend Akış Sayfaları (2026-03-01):** `/ilan-ver/detaylar` gerçek draft kaydı + preview-ready doğrulaması ile çalışır hale getirildi. Yeni sayfalar eklendi: `/ilan-ver/onizleme` (backend snapshot), `/ilan-ver/doping` (none/urgent/showcase seçimi). Doping kartı preview ekranında yalnızca doping aktifse gösteriliyor.
+- **P106 Test Doğrulama (2026-03-01):** `/app/test_reports/iteration_66.json` ile backend+frontend **%100 PASS**. Ek hızlı UI doğrulaması `auto_frontend_testing_agent` ile tamamlandı.
 - **P105c Admin Kategori Liste Sadeleştirme (2026-02-28):** `AdminCategories` liste tablosu root-only moda alındı (`parent_id` dolu alt kategoriler tablo satırı olarak gösterilmiyor). Böylece admin ekran şişmesi engellendi; alt kategori düzeni sadece kategori düzenleme/oluşturma akışı içinde yönetiliyor.
 - **P105c Home Kategori Kolonu İnce Ayar (2026-02-28):** Sol blokta modül > ana kategori > 1. seviye alt kategori (adet) standardı korunurken ana kategori satırındaki adet etiketi kaldırıldı; adet gösterimi alt kategori satırlarına odaklandı.
 - **P105c /ilan-ver Kategori Kolonları Final (2026-02-28):**
