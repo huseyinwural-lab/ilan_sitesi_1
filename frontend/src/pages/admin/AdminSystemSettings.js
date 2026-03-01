@@ -715,6 +715,7 @@ export default function AdminSystemSettingsPage() {
     fetchWatermarkPreview();
     fetchWatermarkPerf();
     fetchGoogleMapsSettings();
+    fetchListingCreateConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCountry]);
 
