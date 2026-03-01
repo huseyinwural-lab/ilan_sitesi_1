@@ -233,7 +233,11 @@ const ListingCategorySelect = () => {
 
   const updateUrlState = useCallback((moduleKey, pathIds = []) => {
     const params = new URLSearchParams();
-    if (moduleKey) params.set('module', moduleKey);
+    if (moduleKey) {
+      params.set('module', moduleKey);
+      const moduleMeta = MODULE_OPTIONS.find((item) => item.key === moduleKey);
+      if (moduleMeta?.id) params.set('module_id', moduleMeta.id);
+    }
     if (pathIds.length) params.set('path', pathIds.join(','));
     setSearchParams(params);
   }, [setSearchParams]);
