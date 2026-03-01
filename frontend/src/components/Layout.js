@@ -614,6 +614,7 @@ export default function Layout({ children }) {
       '/admin/site-design/footer',
       '/admin/site-design/theme',
       '/admin/site-design/showcase',
+      '/admin/site-design/home-category',
       '/admin/user-interface-design',
       '/admin/ops/publish-health',
       '/admin/info-pages',
