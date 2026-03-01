@@ -110,6 +110,21 @@ export default function AdminSystemSettingsPage() {
   const [watermarkPreviewUrl, setWatermarkPreviewUrl] = useState(null);
   const [watermarkPerf, setWatermarkPerf] = useState(null);
   const [healthDetail, setHealthDetail] = useState(null);
+  const [googleMapsLoading, setGoogleMapsLoading] = useState(true);
+  const [googleMapsSaving, setGoogleMapsSaving] = useState(false);
+  const [googleMapsError, setGoogleMapsError] = useState('');
+  const [googleMapsNotice, setGoogleMapsNotice] = useState('');
+  const [googleMapsConfig, setGoogleMapsConfig] = useState({
+    key_configured: false,
+    api_key_masked: '',
+    country_codes: [],
+    country_options: [],
+  });
+  const [googleMapsForm, setGoogleMapsForm] = useState({
+    api_key: '',
+    country_codes: [],
+    custom_country_code: '',
+  });
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
