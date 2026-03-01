@@ -3856,7 +3856,7 @@ const AdminCategories = () => {
                       <div>
                         <h3 className="text-md font-semibold">Kademeli Hiyerarşi</h3>
                         <p className="text-xs text-slate-600" data-testid="categories-subcategory-hint">
-                          Seviye listesini doldurun → Onayla → seçili kategori için bir sonraki seviye açılır. Leaf seçilirse dal kapanır.
+                          Seviye listesini doldurun → Onayla → seçili kategori için bir sonraki seviye açılır. Leaf seçilirse dal kapanır.
                         </p>
                       </div>
                     </div>
