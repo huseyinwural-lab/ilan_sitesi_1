@@ -101,6 +101,11 @@ const ListingCategorySelect = () => {
     return unique.length ? unique : MODULE_OPTIONS.map((item) => item.key);
   }, [language, listingLayout.module_order, listingLayout.module_order_mode, moduleLabelByKey]);
 
+  const orderedModules = useMemo(
+    () => moduleOrder.map((key) => MODULE_OPTIONS.find((item) => item.key === key)).filter(Boolean),
+    [moduleOrder]
+  );
+
   const selectedModuleLabel = useMemo(() => {
     const match = MODULE_OPTIONS.find((item) => item.key === selectedModule);
     return match ? match.label : '';
