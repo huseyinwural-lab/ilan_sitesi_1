@@ -29365,8 +29365,8 @@ def _default_home_category_layout_config() -> dict:
         "module_l1_order_mode": {},
         "module_l1_order": {},
         "listing_module_grid_rows": 2,
-        "listing_module_grid_columns": 3,
-        "listing_lx_limit": 10,
+        "listing_module_grid_columns": 4,
+        "listing_lx_limit": 5,
     }
 
 
