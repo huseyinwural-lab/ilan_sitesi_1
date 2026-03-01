@@ -170,3 +170,17 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - İlan 2 continue limit step2 konfiginden okunuyor.
   - İlan 3 medya/contact/terms kuralları step3 konfiginden uygulanıyor.
 - Test raporu: `/app/test_reports/iteration_75.json` (backend/frontend PASS)
+
+### 2026-03-01 (Faz 0 / İş 1 — Draft/Publish/Rollback)
+- Yeni model eklendi: `listing_design_configs` (`backend/app/models/listing_design_config.py`)
+  - Alanlar: `id`, `payload`, `status(draft|published|archived)`, `version`, `published_at`, `created_at`, `updated_at`
+- Migration eklendi: `backend/migrations/versions/p72_listing_design_configs.py`
+- Endpoint davranışı güncellendi:
+  - `PUT /api/admin/site/listing-design` => sadece **draft** oluşturur (her kayıtta `version` artar)
+  - `POST /api/admin/site/listing-design/publish` => draft’ı **published** yapar (yeni published sürüm oluşturur, `version` artar)
+  - `POST /api/admin/site/listing-design/rollback` => önceki published payload ile yeni **published** sürüm üretir (`version` artar)
+  - `GET /api/site/listing-design` => yalnızca **published** konfig okur
+- Doğrulanan 3 senaryo (curl): PASS
+  1) Admin save -> draft, public değişmedi
+  2) Publish -> public live güncellendi
+  3) Rollback -> public önceki live sürüme döndü
