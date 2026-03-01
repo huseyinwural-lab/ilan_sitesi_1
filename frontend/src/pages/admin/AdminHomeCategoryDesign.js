@@ -121,7 +121,13 @@ export default function AdminHomeCategoryDesign() {
     const roots = categories.filter((item) => !item.parent_id);
     const orderList = Array.isArray(config.module_l1_order?.[moduleKey]) ? config.module_l1_order[moduleKey] : [];
     const orderIndex = new Map(orderList.map((item, index) => [item, index]));
+    const l1Mode = config.module_l1_order_mode?.[moduleKey] || 'manual';
     const orderedRoots = [...roots].sort((a, b) => {
+      if (l1Mode === 'alphabetical') {
+        const nameA = (a.name || a.slug || '').toString();
+        const nameB = (b.name || b.slug || '').toString();
+        return nameA.localeCompare(nameB, LANGUAGE_LOCALE_MAP[language] || 'tr-TR');
+      }
       const ai = resolveOrderIndex(orderIndex, a);
       const bi = resolveOrderIndex(orderIndex, b);
       if (ai !== null || bi !== null) {
@@ -133,8 +139,9 @@ export default function AdminHomeCategoryDesign() {
       moduleKey,
       moduleLabel,
       roots: orderedRoots,
+      l1Mode,
     };
-  }), [categoriesByModule, config.module_l1_order, moduleLabelMap, moduleOrder]);
+  }), [categoriesByModule, config.module_l1_order, config.module_l1_order_mode, language, moduleLabelMap, moduleOrder]);
 
   const fetchConfig = async () => {
     try {
