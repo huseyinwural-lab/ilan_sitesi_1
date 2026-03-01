@@ -402,6 +402,14 @@ const AdminCategories = () => {
   const hierarchyPreviewRows = useMemo(() => {
     if (!Array.isArray(items) || items.length === 0) return [];
 
+    const normalizeNameKey = (value) => String(value || '').trim().toLowerCase();
+    const realEstateSchema = {
+      1: new Set(['emlak']),
+      2: new Set(['konut', 'ticari alan', 'arsa']),
+      3: new Set(['satılık', 'kiralık', 'günlük kiralık']),
+      4: new Set(['daire', 'müstakil ev', 'köşk & konak', 'bina', 'çiftlik evi']),
+    };
+
     const byParent = new Map();
     items.forEach((item) => {
       const parentKey = item.parent_id || "__root__";
@@ -419,6 +427,13 @@ const AdminCategories = () => {
 
     const rows = [];
     const walk = (node, level) => {
+      if (node.module === 'real_estate' && level <= 4) {
+        const allowed = realEstateSchema[level];
+        if (allowed && !allowed.has(normalizeNameKey(node.name))) {
+          return;
+        }
+      }
+
       rows.push({
         id: node.id,
         name: node.name,
