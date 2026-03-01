@@ -536,7 +536,7 @@ const ListingCategorySelect = () => {
   const handleSearchSelect = async (item) => {
     const path = (item?.path || []).map((entry) => ({
       id: entry.id,
-      name: entry.name,
+      name: getCategoryLabel(entry),
       slug: entry.slug,
     }));
     setSearchTerm('');
