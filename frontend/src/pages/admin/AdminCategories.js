@@ -2794,14 +2794,17 @@ const AdminCategories = () => {
     }));
   };
 
-  const moveGroup = (fromIndex, toIndex) => {
+  const moveLevelItem = (levelIndex, fromIndex, toIndex) => {
     if (fromIndex === toIndex || fromIndex === null || toIndex === null) return;
-    setSubcategories((prev) => reorderArray(prev, fromIndex, toIndex));
-  };
-
-  const moveChild = (groupIndex, fromIndex, toIndex) => {
-    if (fromIndex === toIndex || fromIndex === null || toIndex === null) return;
-    setSubcategories((prev) => updateNodeByPath(prev, [groupIndex], (node) => {
+    if (levelIndex === 0) {
+      setSubcategories((prev) => reorderArray(prev, fromIndex, toIndex).map((item, idx) => ({
+        ...item,
+        sort_order: Number(item.sort_order || idx + 1),
+      })));
+      return;
+    }
+    const parentPath = getParentPathForLevel(levelIndex);
+    setSubcategories((prev) => updateNodeByPath(prev, parentPath, (node) => {
       const reordered = reorderArray(node.children || [], fromIndex, toIndex).map((child, idx) => ({
         ...child,
         sort_order: Number(child.sort_order || idx + 1),
