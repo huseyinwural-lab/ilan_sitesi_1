@@ -1664,16 +1664,23 @@ const AdminCategories = () => {
       const siblings = parentLevel === 0
         ? subcategories
         : (getNodeByPath(subcategories, siblingParentPath)?.children || []);
+      const currentParent = siblings[currentParentIndex];
+      const currentInherits = Boolean(currentParent?.inherit_children)
+        && currentParent?.inherit_group_key === groupKey;
       const inheritingSiblings = siblings.filter((sibling, idx) => idx !== currentParentIndex
         && sibling.inherit_children
         && sibling.inherit_group_key === groupKey);
 
-      if (existingGroup && inheritingSiblings.length > 0) {
+      if (existingGroup && currentInherits && inheritingSiblings.length > 0) {
         applyToSiblings = window.confirm("Bu değişikliği aynı seviyedeki diğer kardeş kategorilere de uygula mı?");
         detachCurrent = !applyToSiblings;
       }
 
-      if (!existingGroup || applyToSiblings) {
+      if (existingGroup && !currentInherits) {
+        detachCurrent = true;
+      }
+
+      if (!existingGroup || (currentInherits && (applyToSiblings || inheritingSiblings.length === 0))) {
         shouldSetTemplate = true;
         template = cloneHierarchyTemplate(normalizedItems);
       }
