@@ -28331,6 +28331,7 @@ async def submit_vehicle_listing_for_review(
                 "id": str(listing.id),
                 "status": listing.status,
                 "flow_state": LISTING_FLOW_SUBMITTED,
+                "detail_url": f"/ilan/{listing.id}?preview=1",
                 "idempotency_reused": True,
             }
             return {**previous, "idempotency_reused": True}
@@ -28361,6 +28362,7 @@ async def submit_vehicle_listing_for_review(
         "flow_state": LISTING_FLOW_SUBMITTED,
         "queue_status": "PENDING",
         "idempotency_reused": False,
+        "detail_url": f"/ilan/{listing.id}?preview=1",
         "doping_selection": flow.get("doping_selection") or {"enabled": False, "doping_type": "none"},
     }
 
@@ -28376,7 +28378,7 @@ async def submit_vehicle_listing_for_review(
 
     await _write_audit_log_sql(
         session=session,
-        action="LISTING_SUBMITTED_FOR_REVIEW",
+        action="LISTING_SUBMITTED",
         actor=current_user,
         resource_type="listing",
         resource_id=str(listing.id),
