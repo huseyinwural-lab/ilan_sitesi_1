@@ -3209,15 +3209,17 @@ const AdminCategories = () => {
                       ) : null}
 
                       <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          className="text-xs text-white bg-[var(--brand-navy-deep)] rounded px-3 py-1 disabled:opacity-60"
-                          onClick={() => handleLevelSelect(levelIndex, itemIndex)}
-                          disabled={!canFill}
-                          data-testid={`categories-level-item-fill-${levelIndex}-${itemIndex}`}
-                        >
-                          Altını Doldur
-                        </button>
+                        {!item.is_leaf ? (
+                          <button
+                            type="button"
+                            className="text-xs text-white bg-[var(--brand-navy-deep)] rounded px-3 py-1 disabled:opacity-60"
+                            onClick={() => handleLevelSelect(levelIndex, itemIndex)}
+                            disabled={!canFill}
+                            data-testid={`categories-level-item-fill-${levelIndex}-${itemIndex}`}
+                          >
+                            Altını Doldur
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           className="text-xs text-rose-600 border rounded px-2 py-1 disabled:opacity-60"
