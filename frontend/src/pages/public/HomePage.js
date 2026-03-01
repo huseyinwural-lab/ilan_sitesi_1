@@ -16,6 +16,8 @@ const MODULE_CONFIG = [
   { key: 'other', label: 'Diğer' },
 ];
 
+const MODULE_LABEL_MAP = new Map(MODULE_CONFIG.map((item) => [item.key, item.label]));
+
 const DEFAULT_HOME_CATEGORY_LAYOUT = {
   column_width: 286,
   l1_initial_limit: 5,
@@ -216,8 +218,8 @@ export default function HomePage() {
       return MODULE_CONFIG
         .map((item) => item.key)
         .sort((a, b) => {
-          const labelA = moduleLabelMap.get(a) || a;
-          const labelB = moduleLabelMap.get(b) || b;
+          const labelA = MODULE_LABEL_MAP.get(a) || a;
+          const labelB = MODULE_LABEL_MAP.get(b) || b;
           return labelA.localeCompare(labelB, LANGUAGE_LOCALE_MAP[language] || 'tr-TR');
         });
     }
