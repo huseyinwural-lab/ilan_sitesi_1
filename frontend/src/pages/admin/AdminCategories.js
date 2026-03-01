@@ -1764,6 +1764,7 @@ const AdminCategories = () => {
     setSubcategories(initialSubcategories);
     setLevelSelections([]);
     setLevelCompletion({});
+    setInheritanceGroups({});
     setDynamicDraft({
       label: "",
       key: "",
