@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, Search } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const MODULE_OPTIONS = [
   { key: 'vehicle', label: 'Vasıta' },
