@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-03-01 00:45:00 UTC (P106 State Machine + Dopingli Submit Akışı)
+**Son güncelleme:** 2026-03-01 01:20:00 UTC (P105d L1-L6 Emlak Şeması Seed + Home/Admin Hiyerarşi Eşitleme)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
@@ -67,6 +67,10 @@ Mongo **kullanılmayacak**; tüm yeni geliştirmeler PostgreSQL + SQLAlchemy üz
 - /app/memory/ADR.md (tek kaynak)
 
 ## Uygulanan Özellikler
+- **P105d Standart Emlak Hiyerarşi Seed (2026-03-01):** Backend’e `POST /api/admin/categories/seed/real-estate-standard` endpointi eklendi. Şema otomatik ve idempotent kuruluyor: **L1 Emlak → L2 (Konut, Ticari Alan, Arsa) → L3 (Satılık, Kiralık, Günlük Kiralık) → L4 (Daire, Müstakil Ev, Köşk & Konak, Bina, Çiftlik Evi)**.
+- **P105d Home Kategori Görünümü (2026-03-01):** Ana sayfa sol blok L1/L2 kuralına göre filtrelendi; üstte L1, altında bağlı L2 satırları ve yanında ilan adetleri. Sol kolon genişliği daraltılıp kart görsel dili netleştirildi.
+- **P105d Admin Hiyerarşi Görünümü (2026-03-01):** Admin kategori ekranına L1→L6 hiyerarşi önizleme paneli eklendi (seviye rozetleri + adet). Üst aksiyona “Standart Emlak Şeması” butonu eklendi.
+- **P105d Test Doğrulama (2026-03-01):** `/app/test_reports/iteration_67.json` PASS (**backend 100% / frontend 100%**). Seed endpoint, idempotency, admin hiyerarşi paneli ve home L1/L2 render doğrulandı.
 - **P106 Listing Flow (Draft → Preview → Doping → Submit) Canlı (2026-03-01):** Backend’e yeni gerçek akış endpointleri eklendi: `POST /api/v1/listings/vehicle/{id}/preview-ready`, `GET /api/v1/listings/vehicle/{id}/preview`, `GET /api/v1/listings/doping/options`, `POST /api/v1/listings/vehicle/{id}/doping`, `POST /api/v1/listings/vehicle/{id}/submit-review`.
 - **P106 State Machine + Idempotency (2026-03-01):** Akış state’leri canlı: `draft -> preview_ready -> doping_selected (opsiyonel) -> submitted_for_review`. `submit-review` endpointinde `Idempotency-Key` zorunlu; aynı key ile tekrar submit duplicate üretmeden aynı sonucu döndürüyor, farklı key ile tekrar deneme `409`.
 - **P106 Admin Queue + Audit Eventleri (2026-03-01):** Submit edilen ilanlar admin moderation queue’da `PENDING` olarak görünür. Audit eventleri yazılıyor: `LISTING_PREVIEW_READY`, `LISTING_DOPING_SELECTED`, `LISTING_SUBMITTED_FOR_REVIEW` (metadata: user/listing/draft/category_path/doping_selection/idempotency_key).
