@@ -27653,6 +27653,9 @@ async def create_vehicle_draft(
     session.add(listing)
     await session.commit()
     await session.refresh(listing)
+    _set_listing_flow(listing, state=LISTING_FLOW_DRAFT, patch={"draft_id": str(listing.id)})
+    await session.commit()
+    await session.refresh(listing)
     await _schedule_listing_sync_job(
         session,
         listing_id=listing.id,
