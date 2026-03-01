@@ -301,14 +301,7 @@
 
 @layer utilities {
   .dark .bg-white {
-    --tw-bg-opacity: 1;
-    background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1));
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .bg-white {
-    --tw-bg-opacity: 1;
-    background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1));
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
   }
 }
