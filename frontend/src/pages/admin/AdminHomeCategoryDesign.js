@@ -192,6 +192,7 @@ export default function AdminHomeCategoryDesign() {
   };
 
   const handleModuleMove = (index, direction) => {
+    if (config.module_order_mode === 'alphabetical') return;
     setConfig((prev) => {
       const order = moduleOrder;
       const nextIndex = index + direction;
@@ -201,6 +202,23 @@ export default function AdminHomeCategoryDesign() {
         module_order: moveItem(order, index, nextIndex),
       };
     });
+  };
+
+  const handleModuleOrderMode = (value) => {
+    setConfig((prev) => ({
+      ...prev,
+      module_order_mode: value === 'alphabetical' ? 'alphabetical' : 'manual',
+    }));
+  };
+
+  const handleL1ModeChange = (moduleKey, value) => {
+    setConfig((prev) => ({
+      ...prev,
+      module_l1_order_mode: {
+        ...prev.module_l1_order_mode,
+        [moduleKey]: value === 'alphabetical' ? 'alphabetical' : 'manual',
+      },
+    }));
   };
 
   const handleL1Move = (moduleKey, index, direction) => {
