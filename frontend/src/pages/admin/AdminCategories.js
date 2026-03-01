@@ -2812,6 +2812,8 @@ const AdminCategories = () => {
       applyCategoryFromServer(updatedParent, { clearEditMode: editModeStep === "hierarchy" });
       const nextSubcategories = savedSubs.length ? savedSubs : [createSubcategoryDraft()];
       setSubcategories(nextSubcategories);
+      setLevelSelections([]);
+      setLevelCompletion({});
       setHierarchyFieldErrors({});
       fetchItems();
       return { success: true, category: updatedParent };
