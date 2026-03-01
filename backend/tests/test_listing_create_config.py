@@ -17,12 +17,12 @@ BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 def admin_token():
     """Get admin auth token"""
     login_res = requests.post(
-        f"{BASE_URL}/api/auth/admin/login",
+        f"{BASE_URL}/api/auth/login",
         json={"email": "admin@platform.com", "password": "Admin123!"},
     )
     if login_res.status_code == 200:
         return login_res.json().get("access_token")
-    pytest.skip("Admin login failed")
+    pytest.skip(f"Admin login failed: {login_res.status_code} {login_res.text}")
 
 
 class TestListingCreateConfigEndpoints:
