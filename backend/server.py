@@ -11615,6 +11615,7 @@ class CloudflareConfigPayload(BaseModel):
 class GoogleMapsSettingsPayload(BaseModel):
     api_key: Optional[str] = None
     country_codes: List[str] = Field(default_factory=list)
+    clear_api_key: bool = False
 
 
 class MeiliSearchConfigCreatePayload(BaseModel):
