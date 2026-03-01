@@ -1685,7 +1685,7 @@ export default function ListingDetails() {
                   <div className="text-xs font-semibold text-slate-700" data-testid={`ilan-ver-duration-option-label-${item.id}`}>{item.label}</div>
                   <div className="mt-1 text-sm font-bold text-slate-900" data-testid={`ilan-ver-duration-option-days-${item.id}`}>{item.days} gün</div>
                   <div className="mt-1 text-xs text-slate-500" data-testid={`ilan-ver-duration-option-pricing-${item.id}`}>
-                    <span className="line-through">€{item.old_price_eur}</span>
+                    <span className={durationConfig.show_discount_strike ? 'line-through' : ''}>€{item.old_price_eur}</span>
                     <span className="ml-2 font-semibold text-emerald-700">€{item.price_eur}</span>
                   </div>
                 </button>
