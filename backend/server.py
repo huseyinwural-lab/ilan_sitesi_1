@@ -27439,11 +27439,21 @@ async def vehicle_selector_trims(
             continue
         filtered.append(trim)
 
+    serialized_items: list[dict] = []
+    seen_trim_keys: set[str] = set()
+    for trim in filtered:
+        item = _serialize_vehicle_trim(trim)
+        dedupe_key = f"{item.get('key') or ''}::{item.get('year') or ''}"
+        if dedupe_key in seen_trim_keys:
+            continue
+        seen_trim_keys.add(dedupe_key)
+        serialized_items.append(item)
+
     return {
         "year": year,
         "make": make_obj.slug,
         "model": model_obj.slug,
-        "items": [_serialize_vehicle_trim(trim) for trim in filtered],
+        "items": serialized_items,
     }
 
 @api_router.get("/v1/admin/vehicle-master/status")
