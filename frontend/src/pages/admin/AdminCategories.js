@@ -3614,7 +3614,7 @@ const AdminCategories = () => {
                 <div className="space-y-4" data-testid="category-hierarchy-step">
                   <div className="rounded-lg border p-4 space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-md font-semibold">Ana Kategori</h3>
+                      ch3 className="text-md font-semibold">Modül (Root Node)</h3>
                       {isHierarchyLocked && (
                         <button
                           type="button"
