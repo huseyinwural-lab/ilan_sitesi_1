@@ -712,13 +712,40 @@ export default function ListingDetails() {
         listing_id: listingId || null,
         source: 'google_places',
       });
-      await saveAddressBlock();
+
+      await patchDraft('address', {
+        location: {
+          city: location.city || form.city,
+          country: (localStorage.getItem('selected_country') || 'DE').toUpperCase(),
+          postal_code: location.postal_code || form.postal_code,
+          district: location.district || form.district,
+          neighborhood: location.neighborhood || form.neighborhood,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          address_line: location.formatted_address || form.address_line,
+        },
+        selected_category_path: selectedPath,
+      }, { silent: true });
     } catch (err) {
       setPlacesError(err.message || 'Adres seçimi tamamlanamadı');
     } finally {
       setPlacesLoading(false);
     }
-  }, [API, listingId, manualGoogleKey, saveAddressBlock, saveFormLocal, selectedCategory?.id, trackEvent]);
+  }, [
+    API,
+    form.address_line,
+    form.city,
+    form.district,
+    form.neighborhood,
+    form.postal_code,
+    listingId,
+    manualGoogleKey,
+    patchDraft,
+    saveFormLocal,
+    selectedCategory?.id,
+    selectedPath,
+    trackEvent,
+  ]);
 
   const handleUploadMedia = async (event) => {
     if (!photoBlockEnabled) return;
