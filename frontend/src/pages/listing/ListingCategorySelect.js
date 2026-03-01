@@ -354,6 +354,10 @@ const ListingCategorySelect = () => {
   }, [fetchRecentCategory]);
 
   useEffect(() => {
+    fetchListingLayout();
+  }, [fetchListingLayout]);
+
+  useEffect(() => {
     const onResize = () => setIsMobileView(window.innerWidth < 768);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
