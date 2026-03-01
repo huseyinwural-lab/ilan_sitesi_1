@@ -1573,6 +1573,11 @@ const AdminCategories = () => {
     updateSubcategory(path, normalizedPatch);
   };
 
+  const handleBreakInheritance = (levelIndex, itemIndex) => {
+    const path = [...getParentPathForLevel(levelIndex), itemIndex];
+    updateSubcategory(path, { inherit_children: false, inherit_group_key: "" });
+  };
+
   const removeLevelItem = (levelIndex, itemIndex) => {
     resetLevelCompletionFrom(levelIndex);
     const path = [...getParentPathForLevel(levelIndex), itemIndex];
