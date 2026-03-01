@@ -1021,7 +1021,7 @@ const ListingCategorySelect = () => {
           >
             <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700" data-testid="ilan-ver-complete-message">
               <CheckCircle2 size={18} />
-              Kategori seçimi tamamlandı: {activeCategory.name}
+              Kategori seçimi tamamlandı: {getCategoryLabel(activeCategory)}
             </div>
           </div>
         )}
