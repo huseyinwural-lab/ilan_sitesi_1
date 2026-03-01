@@ -238,7 +238,7 @@ export default function AdminVehicleMasterImport() {
       formData.append('file', prepared.file);
       formData.append('dry_run', uploadDryRun ? 'true' : 'false');
       const res = await axios.post(`${API}/admin/vehicle-master-import/jobs/upload`, formData, {
-        headers: { ...authHeader, 'Content-Type': 'multipart/form-data' },
+        headers: { ...authHeader },
       });
       setUploadStatus(`Job oluşturuldu: ${res.data?.job?.id || ''}`);
       setUploadMeta(prepared.meta || null);
