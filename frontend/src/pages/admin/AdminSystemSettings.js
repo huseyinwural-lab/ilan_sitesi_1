@@ -434,6 +434,40 @@ export default function AdminSystemSettingsPage() {
     }
   };
 
+  const handleClearGoogleMapsKey = async () => {
+    setGoogleMapsSaving(true);
+    setGoogleMapsError('');
+    setGoogleMapsNotice('');
+    try {
+      if (!Array.isArray(googleMapsForm.country_codes) || googleMapsForm.country_codes.length === 0) {
+        setGoogleMapsError('Key temizlemek için en az bir ülke kodu seçili olmalı.');
+        return;
+      }
+      const payload = {
+        api_key: null,
+        clear_api_key: true,
+        country_codes: googleMapsForm.country_codes,
+      };
+      const res = await axios.post(`${API}/admin/system-settings/google-maps`, payload, { headers: authHeader });
+      setGoogleMapsNotice('Google Maps key temizlendi.');
+      setGoogleMapsConfig((prev) => ({
+        ...prev,
+        key_configured: Boolean(res.data?.key_configured),
+        api_key_masked: res.data?.api_key_masked || '',
+        country_codes: Array.isArray(res.data?.country_codes) ? res.data.country_codes : prev.country_codes,
+        country_options: Array.isArray(res.data?.country_options) ? res.data.country_options : prev.country_options,
+      }));
+      setGoogleMapsForm((prev) => ({
+        ...prev,
+        api_key: '',
+      }));
+    } catch (e) {
+      setGoogleMapsError(e.response?.data?.detail || 'Google Maps key temizlenemedi');
+    } finally {
+      setGoogleMapsSaving(false);
+    }
+  };
+
   const handleSaveWatermarkSettings = async () => {
     setWatermarkSaving(true);
     setWatermarkError('');
