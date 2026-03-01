@@ -33818,21 +33818,6 @@ async def save_admin_listing_design(
         session.add(setting)
         await session.flush()
 
-    await _write_audit_log_sql(
-        session=session,
-        action="LISTING_SITE_DESIGN_UPDATED",
-        actor=current_user,
-        resource_type="system_setting",
-        resource_id=str(setting.id),
-        metadata={
-            "rows": normalized["step1"]["rows"],
-            "columns": normalized["step1"]["columns"],
-            "cards": len(normalized["step1"]["cards"]),
-            "continue_limit": normalized["step2"]["continue_limit"],
-        },
-        request=request,
-        country_code=None,
-    )
     await session.commit()
 
     return {
