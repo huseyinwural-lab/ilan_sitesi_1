@@ -27680,6 +27680,10 @@ async def save_vehicle_draft(
         raise HTTPException(status_code=400, detail="Listing not editable")
 
     _apply_listing_payload_sql(listing, payload)
+    attrs = dict(listing.attributes or {})
+    flow = _normalize_listing_flow(attrs, str(listing.id))
+    if flow.get("state") not in {LISTING_FLOW_PREVIEW_READY, LISTING_FLOW_DOPING_SELECTED, LISTING_FLOW_SUBMITTED}:
+        _set_listing_flow(listing, state=LISTING_FLOW_DRAFT)
     await _validate_listing_vehicle_foreign_keys(session, listing)
     listing.updated_at = datetime.now(timezone.utc)
     await session.commit()
@@ -27690,7 +27694,13 @@ async def save_vehicle_draft(
         trigger="listing_update_draft",
     )
 
-    return {"id": listing_id, "status": listing.status, "updated_at": listing.updated_at.isoformat() if listing.updated_at else None}
+    current_flow = _normalize_listing_flow(listing.attributes or {}, str(listing.id))
+    return {
+        "id": listing_id,
+        "status": listing.status,
+        "flow_state": current_flow.get("state") or LISTING_FLOW_DRAFT,
+        "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
+    }
 
 
 @api_router.get("/v1/listings/vehicle/{listing_id}/draft")
