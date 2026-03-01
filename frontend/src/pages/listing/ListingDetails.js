@@ -1289,7 +1289,7 @@ export default function ListingDetails() {
               </div>
             ) : null}
 
-            {!googleAutocompleteEnabled ? (
+            {listingCreateConfig.map_required && !googleAutocompleteEnabled ? (
               <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800" data-testid="ilan-ver-address-autocomplete-warning">
                 Admin panelde Google Maps API key tanımlı değil. Harita/sokak seçimi pasif.
               </div>
