@@ -153,6 +153,18 @@ export default function HomePage() {
         byParent.get(key).push(item);
       });
 
+      const descendantCountMemo = new Map();
+      const resolveDescendantCount = (node) => {
+        if (!node) return 0;
+        if (descendantCountMemo.has(node.id)) return descendantCountMemo.get(node.id);
+        const children = byParent.get(node.id) || [];
+        const ownCount = Number(node.listing_count || 0);
+        const childrenSum = children.reduce((sum, child) => sum + resolveDescendantCount(child), 0);
+        const total = children.length > 0 ? Math.max(ownCount, childrenSum) : ownCount;
+        descendantCountMemo.set(node.id, total);
+        return total;
+      };
+
       const roots = (byParent.get('root') || [])
         .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
         .map((root) => {
@@ -167,7 +179,7 @@ export default function HomePage() {
 
           if (query && !rootMatches && children.length === 0) return null;
 
-          const rootTotalCount = Number(root.listing_count || 0) || children.reduce((sum, child) => sum + Number(child.listing_count || 0), 0);
+          const rootTotalCount = resolveDescendantCount(root);
           return {
             id: root.id,
             name: rootName,
@@ -176,7 +188,7 @@ export default function HomePage() {
             children_level1: children.map((child) => ({
               id: child.id,
               name: normalizeLabel(child),
-              listing_count: Number(child.listing_count || 0),
+              listing_count: resolveDescendantCount(child),
               url: `/search?category=${encodeURIComponent(child.slug || child.id)}`,
             })),
           };
