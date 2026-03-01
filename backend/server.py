@@ -29233,6 +29233,68 @@ def _normalize_showcase_layout_config(config: Optional[dict]) -> dict:
     }
 
 
+def _default_home_category_layout_config() -> dict:
+    return {
+        "column_width": 286,
+        "l1_initial_limit": 5,
+        "module_order": list(HOME_CATEGORY_MODULES),
+        "module_l1_order": {},
+    }
+
+
+def _normalize_home_category_layout_config(config: Optional[dict]) -> dict:
+    defaults = _default_home_category_layout_config()
+    if not isinstance(config, dict):
+        return defaults
+
+    source = config if isinstance(config, dict) else {}
+    width = _safe_int(source.get("column_width"), defaults["column_width"])
+    width = max(HOME_CATEGORY_MIN_WIDTH, min(HOME_CATEGORY_MAX_WIDTH, width))
+
+    limit = _safe_int(source.get("l1_initial_limit"), defaults["l1_initial_limit"])
+    limit = max(HOME_CATEGORY_MIN_L1_LIMIT, min(HOME_CATEGORY_MAX_L1_LIMIT, limit))
+
+    raw_module_order = source.get("module_order") if isinstance(source.get("module_order"), list) else []
+    module_order = []
+    seen = set()
+    for item in raw_module_order:
+        value = str(item or "").strip()
+        if not value or value in seen:
+            continue
+        module_order.append(value)
+        seen.add(value)
+
+    if not module_order:
+        module_order = list(defaults["module_order"])
+    else:
+        for module in defaults["module_order"]:
+            if module not in module_order:
+                module_order.append(module)
+
+    raw_l1 = source.get("module_l1_order") if isinstance(source.get("module_l1_order"), dict) else {}
+    module_l1_order = {}
+    for key, items in raw_l1.items():
+        if not key:
+            continue
+        order_list = []
+        seen_order = set()
+        for item in items or []:
+            value = str(item or "").strip()
+            if not value or value in seen_order:
+                continue
+            order_list.append(value)
+            seen_order.add(value)
+        if order_list:
+            module_l1_order[key] = order_list
+
+    return {
+        "column_width": width,
+        "l1_initial_limit": limit,
+        "module_order": module_order,
+        "module_l1_order": module_l1_order,
+    }
+
+
 def _validate_showcase_layout_config(config: Optional[dict]) -> List[dict]:
     errors: List[dict] = []
     if not isinstance(config, dict):
