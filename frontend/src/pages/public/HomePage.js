@@ -409,7 +409,7 @@ export default function HomePage() {
                       onClick={() => setExpandedModules((prev) => ({ ...prev, [moduleGroup.module_key]: !moduleExpanded }))}
                       data-testid={`home-v2-module-toggle-${moduleGroup.module_key}`}
                     >
-                      {moduleExpanded ? 'Daha az göster' : 'Tümünü Göster'}
+                      {moduleExpanded ? 'Daha az göster' : 'Devamını Gör'}
                     </button>
                   ) : null}
                 </section>
