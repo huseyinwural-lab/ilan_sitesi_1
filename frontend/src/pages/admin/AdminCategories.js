@@ -2435,11 +2435,9 @@ const AdminCategories = () => {
       return { success: false };
     }
 
-    const hasCompletedSubcategory = subcategories.some((group) =>
-      Array.isArray(group.children) && group.children.some((child) => child.name?.trim() && child.slug?.trim())
-    );
+    const hasCompletedSubcategory = subcategories.some((node) => node.name?.trim() && node.slug?.trim());
     if (!isVehicleModule && !hasCompletedSubcategory) {
-      setHierarchyError("En az 1 alt kategori tamamlanmalıdır.");
+      setHierarchyError("En az 1 seviye kategorisi tamamlanmalıdır.");
       return { success: false };
     }
 
