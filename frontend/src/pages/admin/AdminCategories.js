@@ -401,6 +401,7 @@ const AdminCategories = () => {
   const [hierarchyError, setHierarchyError] = useState("");
   const [hierarchyFieldErrors, setHierarchyFieldErrors] = useState({});
   const [subcategories, setSubcategories] = useState([createSubcategoryDraft()]);
+  const [inheritanceGroups, setInheritanceGroups] = useState({});
   const [levelSelections, setLevelSelections] = useState([]);
   const [levelCompletion, setLevelCompletion] = useState({});
   const [draggingLevelIndex, setDraggingLevelIndex] = useState(null);
