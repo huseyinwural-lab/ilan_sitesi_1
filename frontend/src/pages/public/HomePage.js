@@ -352,7 +352,7 @@ export default function HomePage() {
               <div className="home-v2-empty" data-testid="home-v2-category-empty">Kategori bulunamadı</div>
             ) : moduleGroups.map((moduleGroup) => {
               const moduleExpanded = !!expandedModules[moduleGroup.module_key];
-              const visibleRoots = moduleExpanded ? moduleGroup.roots : moduleGroup.roots.slice(0, MODULE_ROOT_LIMIT);
+              const visibleRoots = moduleExpanded ? moduleGroup.roots : moduleGroup.roots.slice(0, moduleRootLimit);
 
               return (
                 <section key={moduleGroup.module_key} className="home-v2-module-group" data-testid={`home-v2-module-group-${moduleGroup.module_key}`}>
