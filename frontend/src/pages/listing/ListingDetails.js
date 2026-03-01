@@ -658,10 +658,11 @@ export default function ListingDetails() {
           mode: data?.mode || 'fallback',
           key_source: data?.key_source || 'none',
           country_options: Array.isArray(data?.country_options) ? data.country_options : [],
+          listing_create_config: data?.listing_create_config || null,
         });
       } catch (_err) {
         if (!active) return;
-        setPlacesConfig({ real_mode: false, mode: 'fallback', key_source: 'none', country_options: [] });
+        setPlacesConfig({ real_mode: false, mode: 'fallback', key_source: 'none', country_options: [], listing_create_config: null });
       } finally {
         if (active) setPlacesConfigLoading(false);
       }
