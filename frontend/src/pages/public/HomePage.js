@@ -120,7 +120,7 @@ const normalizeLabel = (category, language = 'tr') => {
 
 const normalizeNameKey = (value) => String(value || '').trim().toLowerCase();
 
-const fetchJsonWithTimeout = async (url, fallback, options = {}, timeoutMs = 12000) => {
+const fetchJsonWithTimeout = async (url, fallback, options = {}, timeoutMs = 6000) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
