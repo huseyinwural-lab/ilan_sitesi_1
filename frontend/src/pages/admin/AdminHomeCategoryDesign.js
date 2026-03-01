@@ -417,7 +417,7 @@ export default function AdminHomeCategoryDesign() {
             min={5}
             max={50}
             value={config.listing_lx_limit}
-            onChange={(event) => setConfig((prev) => ({ ...prev, listing_lx_limit: Number(event.target.value) || 10 }))}
+            onChange={(event) => setConfig((prev) => ({ ...prev, listing_lx_limit: Number(event.target.value) || 5 }))}
             className="h-9 w-24 rounded-md border px-2 text-sm"
             data-testid="home-category-listing-limit-input"
           />
