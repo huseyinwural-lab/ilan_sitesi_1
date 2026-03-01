@@ -125,6 +125,23 @@ export default function AdminSystemSettingsPage() {
     country_codes: [],
     custom_country_code: '',
   });
+  const [listingCreateLoading, setListingCreateLoading] = useState(true);
+  const [listingCreateSaving, setListingCreateSaving] = useState(false);
+  const [listingCreateError, setListingCreateError] = useState('');
+  const [listingCreateNotice, setListingCreateNotice] = useState('');
+  const [listingCreateConfig, setListingCreateConfig] = useState({
+    apply_modules: ['vehicle', 'real_estate', 'other'],
+    country_selector_mode: 'radio',
+    postal_code_required: true,
+    map_required: true,
+    street_selection_required: true,
+    require_city: true,
+    require_district: false,
+    require_neighborhood: false,
+    require_latitude: false,
+    require_longitude: false,
+    require_address_line: true,
+  });
   const googleMapsCardRef = useRef(null);
 
   const authHeader = useMemo(() => ({
