@@ -1310,40 +1310,39 @@ const AdminCategories = () => {
     const children = items
       .filter((child) => child.parent_id === parentId)
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-    return children.map((child) => ({
-      id: child.id,
-      name: child.name || "",
-      slug: child.slug || "",
-      active_flag: child.active_flag ?? true,
-      sort_order: child.sort_order || 0,
-      transaction_type: child.form_schema?.category_meta?.transaction_type || "",
-      is_complete: true,
-      children: buildSubcategoryTree(child.id),
-    }));
-  };
-
-  const mapTreeToGroupRows = (treeNodes = []) => {
-    if (!Array.isArray(treeNodes) || treeNodes.length === 0) {
-      return [createSubcategoryDraft()];
-    }
-    return treeNodes.map((node) => {
-      const directChildren = Array.isArray(node.children) ? node.children : [];
-      const normalizedChildren = (directChildren.length > 0 ? directChildren : [node]).map((child) => ({
+    return children.map((child) => {
+      const nestedChildren = buildSubcategoryTree(child.id);
+      return {
         id: child.id,
         name: child.name || "",
         slug: child.slug || "",
         active_flag: child.active_flag ?? true,
         sort_order: child.sort_order || 0,
-        transaction_type: child.transaction_type || "",
+        transaction_type: child.form_schema?.category_meta?.transaction_type || "",
         is_complete: true,
-        children: [],
-      }));
-      return {
-        ...createSubcategoryDraft(),
-        is_complete: true,
-        children: normalizedChildren,
+        is_leaf: nestedChildren.length === 0,
+        children: nestedChildren,
       };
     });
+  };
+
+  const mapTreeToGroupRows = (treeNodes = []) => {
+    const normalizeNode = (node) => ({
+      id: node.id,
+      name: node.name || "",
+      slug: node.slug || "",
+      active_flag: node.active_flag ?? true,
+      sort_order: node.sort_order || 1,
+      transaction_type: node.transaction_type || "",
+      is_complete: true,
+      is_leaf: node.is_leaf ?? ((node.children || []).length === 0),
+      children: (node.children || []).map(normalizeNode),
+    });
+
+    if (!Array.isArray(treeNodes) || treeNodes.length === 0) {
+      return [createSubcategoryDraft()];
+    }
+    return treeNodes.map(normalizeNode);
   };
 
   const getParentPathForLevel = (levelIndex) => {
