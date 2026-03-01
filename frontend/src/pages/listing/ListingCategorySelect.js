@@ -399,7 +399,7 @@ const ListingCategorySelect = () => {
   }, [columns]);
 
   const breadcrumbLabel = selectedPath.length
-    ? selectedPath.map((item) => item.name).join(' > ')
+    ? selectedPath.map((item) => getCategoryLabel(item)).join(' > ')
     : selectedModuleLabel
       ? `${selectedModuleLabel} seçildi, kategori bekleniyor`
       : 'Modül seçimi bekleniyor';
