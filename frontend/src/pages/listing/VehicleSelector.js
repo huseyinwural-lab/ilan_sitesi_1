@@ -102,7 +102,16 @@ export default function VehicleSelector() {
       params.set('country', getCountry());
       const res = await fetch(`${API}/vehicle/trims?${params.toString()}`);
       const data = await res.json();
-      setTrims(data?.items || []);
+      const incoming = Array.isArray(data?.items) ? data.items : [];
+      const deduped = [];
+      const seen = new Set();
+      incoming.forEach((item) => {
+        const key = `${item?.key || ''}::${item?.year || ''}`;
+        if (!item?.id || seen.has(key)) return;
+        seen.add(key);
+        deduped.push(item);
+      });
+      setTrims(deduped);
     } catch (err) {
       setTrims([]);
     } finally {
@@ -194,6 +203,7 @@ export default function VehicleSelector() {
       drive: selectedDrive || null,
       engine_type: selectedEngineType || null,
       trim_id: selectedTrim?.id || null,
+      trim_key: selectedTrim?.key || null,
       trim_label: selectedTrim?.label || null,
       manual_trim_flag: manualTrimAllowed && manualTrimEnabled,
       manual_trim: manualTrimEnabled ? manualTrimValue.trim() : null,
@@ -201,6 +211,7 @@ export default function VehicleSelector() {
 
     localStorage.setItem('ilan_ver_vehicle_selection', JSON.stringify(payload));
     localStorage.setItem('ilan_ver_vehicle_trim_id', selectedTrim?.id || '');
+    localStorage.setItem('ilan_ver_vehicle_trim_key', selectedTrim?.key || '');
     localStorage.setItem('ilan_ver_manual_trim_flag', payload.manual_trim_flag ? 'true' : 'false');
     localStorage.setItem('ilan_ver_manual_trim', payload.manual_trim || '');
 
