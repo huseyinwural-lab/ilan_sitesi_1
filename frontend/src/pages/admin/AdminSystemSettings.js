@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/toaster';
@@ -125,6 +125,7 @@ export default function AdminSystemSettingsPage() {
     country_codes: [],
     custom_country_code: '',
   });
+  const googleMapsCardRef = useRef(null);
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
