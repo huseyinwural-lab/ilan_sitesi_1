@@ -11,7 +11,9 @@ const MODULES = [
 const DEFAULT_CONFIG = {
   column_width: 286,
   l1_initial_limit: 5,
+  module_order_mode: 'manual',
   module_order: MODULES.map((item) => item.key),
+  module_l1_order_mode: {},
   module_l1_order: {},
 };
 

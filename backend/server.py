@@ -29242,7 +29242,9 @@ def _default_home_category_layout_config() -> dict:
     return {
         "column_width": 286,
         "l1_initial_limit": 5,
+        "module_order_mode": "manual",
         "module_order": list(HOME_CATEGORY_MODULES),
+        "module_l1_order_mode": {},
         "module_l1_order": {},
     }
 
@@ -29258,6 +29260,8 @@ def _normalize_home_category_layout_config(config: Optional[dict]) -> dict:
 
     limit = _safe_int(source.get("l1_initial_limit"), defaults["l1_initial_limit"])
     limit = max(HOME_CATEGORY_MIN_L1_LIMIT, min(HOME_CATEGORY_MAX_L1_LIMIT, limit))
+
+    module_order_mode = source.get("module_order_mode") if source.get("module_order_mode") in ("manual", "alphabetical") else defaults["module_order_mode"]
 
     raw_module_order = source.get("module_order") if isinstance(source.get("module_order"), list) else []
     module_order = []
@@ -29275,6 +29279,14 @@ def _normalize_home_category_layout_config(config: Optional[dict]) -> dict:
         for module in defaults["module_order"]:
             if module not in module_order:
                 module_order.append(module)
+
+    raw_l1_mode = source.get("module_l1_order_mode") if isinstance(source.get("module_l1_order_mode"), dict) else {}
+    module_l1_order_mode = {}
+    for key, value in raw_l1_mode.items():
+        if not key:
+            continue
+        if value in ("manual", "alphabetical"):
+            module_l1_order_mode[key] = value
 
     raw_l1 = source.get("module_l1_order") if isinstance(source.get("module_l1_order"), dict) else {}
     module_l1_order = {}
@@ -29295,7 +29307,9 @@ def _normalize_home_category_layout_config(config: Optional[dict]) -> dict:
     return {
         "column_width": width,
         "l1_initial_limit": limit,
+        "module_order_mode": module_order_mode,
         "module_order": module_order,
+        "module_l1_order_mode": module_l1_order_mode,
         "module_l1_order": module_l1_order,
     }
 
