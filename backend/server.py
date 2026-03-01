@@ -10890,6 +10890,159 @@ async def _resolve_listing_create_config(session: AsyncSession) -> dict:
     return _normalize_listing_create_config(setting.value)
 
 
+def _default_listing_site_design_config() -> dict:
+    return {
+        "step1": {
+            "rows": 2,
+            "columns": 4,
+            "cards": [
+                {
+                    "id": "vehicle-default",
+                    "title": "Vasıta",
+                    "description": "Araç ilanı ver",
+                    "module_key": "vehicle",
+                    "border_color": "#2563eb",
+                    "image_url": "",
+                },
+                {
+                    "id": "real-estate-default",
+                    "title": "Emlak",
+                    "description": "Emlak ilanı ver",
+                    "module_key": "real_estate",
+                    "border_color": "#059669",
+                    "image_url": "",
+                },
+                {
+                    "id": "other-default",
+                    "title": "Diğer",
+                    "description": "Genel ilan ver",
+                    "module_key": "other",
+                    "border_color": "#7c3aed",
+                    "image_url": "",
+                },
+            ],
+        },
+        "step2": {
+            "show_search": True,
+            "show_breadcrumb": True,
+            "mobile_stepper": True,
+            "continue_limit": 5,
+            "require_leaf_before_continue": True,
+        },
+        "step3": {
+            "block_order": ["core", "params", "address", "details", "media", "contact", "duration", "terms"],
+            "media": {
+                "max_photos": 20,
+                "max_videos": 1,
+                "max_file_size_mb": 2,
+                "accepted_types": ["image/png", "image/jpeg", "image/webp"],
+            },
+            "contact": {
+                "allow_phone_toggle": True,
+                "allow_message_toggle": True,
+            },
+            "duration": {
+                "show_discount_strike": True,
+            },
+            "terms": {
+                "text": "İlan verme kurallarını okudum, kabul ediyorum.",
+                "required": True,
+            },
+        },
+    }
+
+
+def _normalize_listing_site_design_config(raw: Any) -> dict:
+    defaults = _default_listing_site_design_config()
+    if not isinstance(raw, dict):
+        return defaults
+
+    step1_raw = raw.get("step1") if isinstance(raw.get("step1"), dict) else {}
+    rows = max(1, min(6, int(step1_raw.get("rows") or defaults["step1"]["rows"])))
+    columns = max(1, min(8, int(step1_raw.get("columns") or defaults["step1"]["columns"])))
+
+    cards_input = step1_raw.get("cards") if isinstance(step1_raw.get("cards"), list) else defaults["step1"]["cards"]
+    cards: List[dict] = []
+    for idx, card in enumerate(cards_input[:24]):
+        if not isinstance(card, dict):
+            continue
+        module_key = str(card.get("module_key") or "").strip().lower()
+        if module_key not in {"vehicle", "real_estate", "other"}:
+            module_key = "other"
+        cards.append(
+            {
+                "id": str(card.get("id") or f"card-{idx+1}"),
+                "title": str(card.get("title") or f"Modül {idx+1}"),
+                "description": str(card.get("description") or ""),
+                "module_key": module_key,
+                "border_color": str(card.get("border_color") or "#334155"),
+                "image_url": str(card.get("image_url") or ""),
+            }
+        )
+    if not cards:
+        cards = defaults["step1"]["cards"]
+
+    step2_raw = raw.get("step2") if isinstance(raw.get("step2"), dict) else {}
+    step2 = {
+        "show_search": bool(step2_raw.get("show_search", defaults["step2"]["show_search"])),
+        "show_breadcrumb": bool(step2_raw.get("show_breadcrumb", defaults["step2"]["show_breadcrumb"])),
+        "mobile_stepper": bool(step2_raw.get("mobile_stepper", defaults["step2"]["mobile_stepper"])),
+        "continue_limit": max(3, min(20, int(step2_raw.get("continue_limit") or defaults["step2"]["continue_limit"]))),
+        "require_leaf_before_continue": bool(step2_raw.get("require_leaf_before_continue", defaults["step2"]["require_leaf_before_continue"])),
+    }
+
+    step3_raw = raw.get("step3") if isinstance(raw.get("step3"), dict) else {}
+    block_order_input = step3_raw.get("block_order") if isinstance(step3_raw.get("block_order"), list) else defaults["step3"]["block_order"]
+    allowed_blocks = ["core", "params", "address", "details", "media", "contact", "duration", "terms"]
+    block_order = [item for item in block_order_input if item in allowed_blocks]
+    for block in allowed_blocks:
+        if block not in block_order:
+            block_order.append(block)
+
+    media_raw = step3_raw.get("media") if isinstance(step3_raw.get("media"), dict) else {}
+    contact_raw = step3_raw.get("contact") if isinstance(step3_raw.get("contact"), dict) else {}
+    duration_raw = step3_raw.get("duration") if isinstance(step3_raw.get("duration"), dict) else {}
+    terms_raw = step3_raw.get("terms") if isinstance(step3_raw.get("terms"), dict) else {}
+
+    step3 = {
+        "block_order": block_order,
+        "media": {
+            "max_photos": max(1, min(40, int(media_raw.get("max_photos") or defaults["step3"]["media"]["max_photos"]))),
+            "max_videos": max(0, min(5, int(media_raw.get("max_videos") or defaults["step3"]["media"]["max_videos"]))),
+            "max_file_size_mb": max(1, min(20, int(media_raw.get("max_file_size_mb") or defaults["step3"]["media"]["max_file_size_mb"]))),
+            "accepted_types": media_raw.get("accepted_types") if isinstance(media_raw.get("accepted_types"), list) else defaults["step3"]["media"]["accepted_types"],
+        },
+        "contact": {
+            "allow_phone_toggle": bool(contact_raw.get("allow_phone_toggle", defaults["step3"]["contact"]["allow_phone_toggle"])),
+            "allow_message_toggle": bool(contact_raw.get("allow_message_toggle", defaults["step3"]["contact"]["allow_message_toggle"])),
+        },
+        "duration": {
+            "show_discount_strike": bool(duration_raw.get("show_discount_strike", defaults["step3"]["duration"]["show_discount_strike"])),
+        },
+        "terms": {
+            "text": str(terms_raw.get("text") or defaults["step3"]["terms"]["text"]),
+            "required": bool(terms_raw.get("required", defaults["step3"]["terms"]["required"])),
+        },
+    }
+
+    return {
+        "step1": {
+            "rows": rows,
+            "columns": columns,
+            "cards": cards,
+        },
+        "step2": step2,
+        "step3": step3,
+    }
+
+
+async def _resolve_listing_site_design_config(session: AsyncSession) -> dict:
+    setting = await _get_system_setting_by_key(session, LISTING_SITE_DESIGN_SETTING_KEY, None)
+    if not setting:
+        return _default_listing_site_design_config()
+    return _normalize_listing_site_design_config(setting.value)
+
+
 def _check_places_rate_limit(request: Request) -> tuple[bool, int, int]:
     if request.client and request.client.host:
         client_key = request.client.host
