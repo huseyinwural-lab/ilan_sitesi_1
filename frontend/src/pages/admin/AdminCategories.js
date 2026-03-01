@@ -1642,19 +1642,117 @@ const AdminCategories = () => {
       children: item.is_leaf ? [] : (item.children || []),
     }));
 
+    const parentLevel = levelIndex - 1;
+    const parentPath = getParentPathForLevel(levelIndex);
+    const inheritanceEnabled = parentLevel >= INHERITANCE_START_LEVEL;
+    let applyToSiblings = false;
+    let detachCurrent = false;
+    let shouldSetTemplate = false;
+    let groupKey = "";
+    let template = [];
+    let siblingParentPath = [];
+    let currentParentIndex = null;
+
+    if (inheritanceEnabled) {
+      siblingParentPath = getParentPathForLevel(parentLevel);
+      groupKey = buildInheritanceGroupKey(siblingParentPath, parentLevel);
+      currentParentIndex = parentPath[parentPath.length - 1];
+      const existingGroup = inheritanceGroups[groupKey];
+      const siblings = parentLevel === 0
+        ? subcategories
+        : (getNodeByPath(subcategories, siblingParentPath)?.children || []);
+      const inheritingSiblings = siblings.filter((sibling, idx) => idx !== currentParentIndex
+        && sibling.inherit_children
+        && sibling.inherit_group_key === groupKey);
+
+      if (existingGroup && inheritingSiblings.length > 0) {
+        applyToSiblings = window.confirm("Bu değişikliği aynı seviyedeki diğer kardeş kategorilere de uygula mı?");
+        detachCurrent = !applyToSiblings;
+      }
+
+      if (!existingGroup || applyToSiblings) {
+        shouldSetTemplate = true;
+        template = cloneHierarchyTemplate(normalizedItems);
+      }
+    }
+
     if (levelIndex === 0) {
       setSubcategories(normalizedItems);
-    } else {
-      const parentPath = getParentPathForLevel(levelIndex);
-      if (parentPath.length === 0) {
+    } else if (!inheritanceEnabled) {
+      const parentPathLocal = getParentPathForLevel(levelIndex);
+      if (parentPathLocal.length === 0) {
         setHierarchyError("Önce üst seviyeden bir kategori seçin.");
         return;
       }
-      setSubcategories((prev) => updateNodeByPath(prev, parentPath, (node) => ({
+      setSubcategories((prev) => updateNodeByPath(prev, parentPathLocal, (node) => ({
         ...node,
         is_leaf: false,
         children: normalizedItems,
       })));
+    } else {
+      const templateToApply = template.length ? template : (inheritanceGroups[groupKey]?.template || []);
+      const parentPathLocal = parentPath;
+      if (parentPathLocal.length === 0) {
+        setHierarchyError("Önce üst seviyeden bir kategori seçin.");
+        return;
+      }
+
+      setSubcategories((prev) => {
+        const updateSiblings = (siblingsList = []) => siblingsList.map((sibling, idx) => {
+          const isCurrent = idx === currentParentIndex;
+          if (isCurrent) {
+            return {
+              ...sibling,
+              is_leaf: false,
+              inherit_children: !detachCurrent,
+              inherit_group_key: detachCurrent ? "" : groupKey,
+              children: normalizedItems,
+            };
+          }
+
+          if (applyToSiblings && sibling.inherit_children && sibling.inherit_group_key === groupKey) {
+            return {
+              ...sibling,
+              is_leaf: false,
+              inherit_children: true,
+              inherit_group_key: groupKey,
+              children: cloneHierarchyTemplate(templateToApply),
+            };
+          }
+
+          if (!inheritanceGroups[groupKey]
+            && templateToApply.length > 0
+            && !sibling.is_leaf
+            && (!Array.isArray(sibling.children) || sibling.children.length === 0)) {
+            return {
+              ...sibling,
+              is_leaf: false,
+              inherit_children: true,
+              inherit_group_key: groupKey,
+              children: cloneHierarchyTemplate(templateToApply),
+            };
+          }
+          return sibling;
+        });
+
+        if (parentLevel === 0) {
+          return updateSiblings(prev);
+        }
+        return updateNodeByPath(prev, siblingParentPath, (node) => ({
+          ...node,
+          children: updateSiblings(node.children || []),
+        }));
+      });
+    }
+
+    if (inheritanceEnabled && shouldSetTemplate) {
+      setInheritanceGroups((prev) => ({
+        ...prev,
+        [groupKey]: {
+          template,
+          sourcePath: parentPath,
+        },
+      }));
     }
 
     setHierarchyError("");
