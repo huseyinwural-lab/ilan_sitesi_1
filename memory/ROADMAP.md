@@ -14,8 +14,7 @@
 - Kategori import scheduler / batch publish planlayıcı
 
 ## Next Action Items
-- Ana Site Kategorisi panelinde modül/L1 sıralamasını kaydedip ana sayfada doğrula
+- Ana Site Kategorisi panelinde modül/L1 sıralamasını (manuel/alfabetik) kaydedip ana sayfada doğrula
 - Kategori leaf seviyeleri için form şablonu bağlama kurallarını netleştir ve uygula
-- Kardeş mirası akışında onay diyalogunu gerçek veriyle manuel doğrula
 - “Modül oluşturulamadı” hatasını yeni hata mesajıyla tekrar doğrula (Diğer modül)
 - Vasıta import payload şablonunu admin içinde dokümante et (örnek JSON/Excel başlıkları)
