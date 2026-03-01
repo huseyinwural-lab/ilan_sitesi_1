@@ -49,6 +49,28 @@ const normalizeShowcaseLayout = (raw) => {
   };
 };
 
+const normalizeHomeCategoryLayout = (raw) => {
+  const source = raw || {};
+  const moduleOrderRaw = Array.isArray(source.module_order) ? source.module_order : [];
+  const moduleOrder = [];
+  const seen = new Set();
+  moduleOrderRaw.forEach((item) => {
+    const value = String(item || '').trim();
+    if (!value || seen.has(value)) return;
+    moduleOrder.push(value);
+    seen.add(value);
+  });
+  MODULE_CONFIG.forEach((item) => {
+    if (!moduleOrder.includes(item.key)) moduleOrder.push(item.key);
+  });
+  return {
+    column_width: clamp(source.column_width, 220, 520, DEFAULT_HOME_CATEGORY_LAYOUT.column_width),
+    l1_initial_limit: clamp(source.l1_initial_limit, 1, 20, DEFAULT_HOME_CATEGORY_LAYOUT.l1_initial_limit),
+    module_order: moduleOrder,
+    module_l1_order: typeof source.module_l1_order === 'object' && source.module_l1_order ? source.module_l1_order : {},
+  };
+};
+
 const resolveEffectiveCount = (block) => Math.min(Number(block?.listing_count || 0), Number(block?.rows || 0) * Number(block?.columns || 0));
 const normalizeGridColumns = (value, fallback = 4) => clamp(value, 1, 8, fallback);
 
