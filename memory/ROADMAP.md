@@ -15,4 +15,6 @@
 
 ## Next Action Items
 - Kategori leaf seviyeleri için form şablonu bağlama kurallarını netleştir ve uygula
+- Kardeş mirası akışında onay diyalogunu gerçek veriyle manuel doğrula
+- “Modül oluşturulamadı” hatasını yeni hata mesajıyla tekrar doğrula (Diğer modül)
 - Vasıta import payload şablonunu admin içinde dokümante et (örnek JSON/Excel başlıkları)
