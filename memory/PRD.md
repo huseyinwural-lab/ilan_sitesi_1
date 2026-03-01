@@ -153,3 +153,20 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Canlı E2E doğrulaması tamamlandı:
   - Posta Kodu -> Harita alanı -> Sokak listesi -> Place details -> Draft save -> submit
   - Test raporu: `/app/test_reports/iteration_73.json`
+
+
+### 2026-03-01 (İlan Tasarım eksikleri tamamlama)
+- Yeni admin sayfası: **/admin/site-design/listing** (`AdminListingDesign.js`)
+  - İlan 1: satır/sütun + modül kutuları (başlık/açıklama/görsel/modül eşleme)
+  - İlan 2: arama/breadcrumb/stepper + continue limit + leaf zorunluluğu
+  - İlan 3: medya/iletişim/süre/onay metni ve adres zorunlulukları
+- Yeni backend endpointleri:
+  - `GET /api/admin/site/listing-design`
+  - `PUT /api/admin/site/listing-design`
+  - `GET /api/site/listing-design`
+- Site Tasarım menüsüne **İlan Tasarım** eklendi ve RBAC route izni açıldı.
+- Web entegrasyonu:
+  - `/ilan-ver` modül gridi admin listing-design step1 konfigini okuyor.
+  - İlan 2 continue limit step2 konfiginden okunuyor.
+  - İlan 3 medya/contact/terms kuralları step3 konfiginden uygulanıyor.
+- Test raporu: `/app/test_reports/iteration_75.json` (backend/frontend PASS)
