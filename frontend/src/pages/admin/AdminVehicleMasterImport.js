@@ -112,7 +112,9 @@ export default function AdminVehicleMasterImport() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobLoading, setJobLoading] = useState(false);
 
-  const authHeader = useMemo(() => ({ Authorization: `Bearer ${localStorage.getItem('token')}` }), []);
+  const authHeader = useMemo(() => ({
+    Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token') || ''}`,
+  }), []);
 
   const fetchJobs = async () => {
     try {
@@ -177,45 +179,48 @@ export default function AdminVehicleMasterImport() {
     }
   };
 
-  const handleUploadSubmit = async () => {
+  const handleUploadModeChange = (value) => {
+    setUploadMode(value);
+    setUploadFile(null);
+    setUploadMeta(null);
+    setUploadError('');
+    setUploadErrorInfo(null);
+    setUploadStatus('');
+  };
+
+  const prepareUploadFile = async () => {
     if (!uploadFile) {
-      setUploadError('JSON dosyası seçin.');
-      setUploadErrorInfo({ error_code: 'JSON_SCHEMA_ERROR', message: 'JSON dosyası seçin.', field_errors: [] });
-      return;
+      return { error: 'Dosya seçin.' };
     }
     if (uploadFile.size > 50 * 1024 * 1024) {
-      setUploadError('Dosya 50MB limitini aşıyor.');
-      setUploadErrorInfo({ error_code: 'JSON_SCHEMA_ERROR', message: 'Dosya 50MB limitini aşıyor.', field_errors: [] });
-      return;
+      return { error: 'Dosya 50MB limitini aşıyor.' };
     }
-    setUploadLoading(true);
-    setUploadError('');
-    setUploadStatus('');
-    setUploadErrorInfo(null);
-    try {
-      const formData = new FormData();
-      formData.append('file', uploadFile);
-      formData.append('dry_run', uploadDryRun ? 'true' : 'false');
-      const res = await axios.post(`${API}/admin/vehicle-master-import/jobs/upload`, formData, {
-        headers: { ...authHeader, 'Content-Type': 'multipart/form-data' },
-      });
-      setUploadStatus(`Job oluşturuldu: ${res.data?.job?.id || ''}`);
-      setSelectedJob(res.data?.job || null);
-      fetchJobs();
-    } catch (error) {
-      const detail = error?.response?.data;
-      if (detail?.error_code) {
-        setUploadErrorInfo(detail);
-        setUploadError(detail.message || 'Upload başarısız.');
-      } else {
-        const message = detail?.message || detail || 'Upload başarısız.';
-        setUploadErrorInfo({ error_code: 'UPLOAD_ERROR', message, field_errors: detail?.field_errors || [] });
-        setUploadError(message);
+
+    if (uploadMode === 'excel') {
+      const buffer = await uploadFile.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      if (!sheetName) {
+        return { error: 'Excel dosyasında sayfa bulunamadı.' };
       }
-    } finally {
-      setUploadLoading(false);
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+      if (!Array.isArray(rows) || rows.length === 0) {
+        return { error: 'Excel dosyasında kayıt bulunamadı.' };
+      }
+      const blob = new Blob([JSON.stringify(rows)], { type: 'application/json' });
+      const jsonFile = new File([
+        blob,
+      ], uploadFile.name.replace(/\.[^.]+$/, '') + '.json', { type: 'application/json' });
+      return { file: jsonFile, meta: { record_count: rows.length, mode: 'excel' } };
     }
+
+    if (!uploadFile.name.toLowerCase().endsWith('.json')) {
+      return { error: 'JSON yüklemesi için .json uzantılı dosya seçin.' };
+    }
+    return { file: uploadFile, meta: { mode: 'json' } };
   };
+
 
   const summary = selectedJob?.summary || {};
   const errorLog = selectedJob?.error_log || {};
