@@ -406,7 +406,7 @@ const ListingCategorySelect = () => {
 
   const recentBreadcrumb = useMemo(() => {
     if (!recentCategory?.path?.length) return '';
-    return recentCategory.path.map((item) => item.name).join(' > ');
+    return recentCategory.path.map((item) => getCategoryLabel(item)).join(' > ');
   }, [recentCategory]);
 
   const recentModuleLabel = useMemo(() => {
