@@ -10978,9 +10978,9 @@ def _normalize_listing_site_design_config(raw: Any) -> dict:
             module_key = "other"
         cards.append(
             {
-                "id": str(card.get("id") or f"card-{idx+1}"),
-                "title": str(card.get("title") or f"Modül {idx+1}"),
-                "description": str(card.get("description") or ""),
+                "id": _ascii_safe_text(card.get("id") or f"card-{idx+1}"),
+                "title": _ascii_safe_text(card.get("title") or f"Modul {idx+1}"),
+                "description": _ascii_safe_text(card.get("description") or ""),
                 "module_key": module_key,
                 "border_color": str(card.get("border_color") or "#334155"),
                 "image_url": str(card.get("image_url") or ""),
@@ -11027,7 +11027,7 @@ def _normalize_listing_site_design_config(raw: Any) -> dict:
             "show_discount_strike": bool(duration_raw.get("show_discount_strike", defaults["step3"]["duration"]["show_discount_strike"])),
         },
         "terms": {
-            "text": str(terms_raw.get("text") or defaults["step3"]["terms"]["text"]),
+            "text": _ascii_safe_text(terms_raw.get("text") or defaults["step3"]["terms"]["text"]),
             "required": bool(terms_raw.get("required", defaults["step3"]["terms"]["required"])),
         },
     }
