@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
 import AdSlot from '@/components/public/AdSlot';
@@ -120,6 +120,20 @@ const normalizeLabel = (category, language = 'tr') => {
 
 const normalizeNameKey = (value) => String(value || '').trim().toLowerCase();
 
+const fetchJsonWithTimeout = async (url, fallback, options = {}, timeoutMs = 12000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    const payload = await response.json().catch(() => fallback);
+    return payload ?? fallback;
+  } catch (_err) {
+    return fallback;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
 export default function HomePage() {
   const { language } = useLanguage();
   const [loading, setLoading] = useState(true);
@@ -131,6 +145,8 @@ export default function HomePage() {
   const [urgentTotal, setUrgentTotal] = useState(0);
   const [expandedModules, setExpandedModules] = useState({});
   const [expandedRoots, setExpandedRoots] = useState({});
+  const initialLoadDoneRef = useRef(false);
+  const urgentTotalRef = useRef(0);
 
   const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
@@ -138,58 +154,41 @@ export default function HomePage() {
     let active = true;
 
     const loadData = async () => {
-      setLoading(true);
+      if (!initialLoadDoneRef.current) {
+        setLoading(true);
+      }
       try {
-        const categoryRequests = MODULE_CONFIG.map((moduleItem) => fetch(`${API}/categories?module=${moduleItem.key}&country=${countryCode}`));
-        const [layoutResult, homeCategoryResult, ...categoryResults] = await Promise.allSettled([
-          fetch(`${API}/site/showcase-layout?_ts=${Date.now()}`, { cache: 'no-store' }),
-          fetch(`${API}/site/home-category-layout?country=${countryCode}&_ts=${Date.now()}`, { cache: 'no-store' }),
+        const categoryRequests = MODULE_CONFIG.map((moduleItem) =>
+          fetchJsonWithTimeout(`${API}/categories?module=${moduleItem.key}&country=${countryCode}`, [])
+        );
+
+        const [layoutPayload, homeCategoryPayload, ...categoryPayloads] = await Promise.all([
+          fetchJsonWithTimeout(`${API}/site/showcase-layout?_ts=${Date.now()}`, {}, { cache: 'no-store' }),
+          fetchJsonWithTimeout(`${API}/site/home-category-layout?country=${countryCode}&_ts=${Date.now()}`, {}, { cache: 'no-store' }),
           ...categoryRequests,
         ]);
 
         const nextCategoriesByModule = {};
-        for (let index = 0; index < MODULE_CONFIG.length; index += 1) {
-          const moduleKey = MODULE_CONFIG[index].key;
-          const result = categoryResults[index];
-          if (result?.status === 'fulfilled') {
-            const payload = await result.value.json().catch(() => []);
-            nextCategoriesByModule[moduleKey] = Array.isArray(payload) ? payload : [];
-          } else {
-            nextCategoriesByModule[moduleKey] = [];
-          }
-        }
+        MODULE_CONFIG.forEach((moduleItem, index) => {
+          const payload = categoryPayloads[index];
+          nextCategoriesByModule[moduleItem.key] = Array.isArray(payload) ? payload : [];
+        });
 
-        let nextLayout = DEFAULT_SHOWCASE_LAYOUT;
-        if (layoutResult.status === 'fulfilled') {
-          const layoutPayload = await layoutResult.value.json().catch(() => ({}));
-          nextLayout = normalizeShowcaseLayout(layoutPayload?.config);
-        }
-
-        let nextHomeCategoryLayout = DEFAULT_HOME_CATEGORY_LAYOUT;
-        if (homeCategoryResult.status === 'fulfilled') {
-          const categoryLayoutPayload = await homeCategoryResult.value.json().catch(() => ({}));
-          nextHomeCategoryLayout = normalizeHomeCategoryLayout(categoryLayoutPayload?.config);
-        }
+        const nextLayout = normalizeShowcaseLayout(layoutPayload?.config);
+        const nextHomeCategoryLayout = normalizeHomeCategoryLayout(homeCategoryPayload?.config);
 
         const homeLimit = Math.max(1, resolveEffectiveCount(nextLayout.homepage));
 
-        let showcaseItemsPayload = [];
-        try {
-          const showcaseRes = await fetch(`${API}/v2/search?country=${countryCode}&limit=${homeLimit}&page=1&doping_type=showcase`);
-          const showcasePayload = await showcaseRes.json().catch(() => ({}));
-          showcaseItemsPayload = Array.isArray(showcasePayload?.items) ? showcasePayload.items : [];
-        } catch (_err) {
-          showcaseItemsPayload = [];
-        }
+        const showcasePayload = await fetchJsonWithTimeout(`${API}/v2/search?country=${countryCode}&size=${homeLimit}&page=1&doping_type=showcase`, {});
+        const showcaseItemsPayload = Array.isArray(showcasePayload?.items) ? showcasePayload.items : [];
 
-        let urgentPayloadTotal = 0;
-        try {
-          const urgentRes = await fetch(`${API}/v2/search?country=${countryCode}&limit=1&page=1&doping_type=urgent`);
-          const urgentPayload = await urgentRes.json().catch(() => ({}));
-          urgentPayloadTotal = Number(urgentPayload?.pagination?.total || 0);
-        } catch (_err) {
-          urgentPayloadTotal = 0;
-        }
+        const urgentPayload = await fetchJsonWithTimeout(`${API}/v2/search?country=${countryCode}&size=1&page=1&doping_type=urgent`, {});
+        const urgentPayloadTotal = Number(
+          urgentPayload?.pagination?.total
+          ?? urgentPayload?.total
+          ?? urgentTotalRef.current
+          ?? 0
+        );
 
         if (!active) return;
         setCategoriesByModule(nextCategoriesByModule);
@@ -197,8 +196,12 @@ export default function HomePage() {
         setShowcaseLayout(nextLayout);
         setHomeCategoryLayout(nextHomeCategoryLayout);
         setUrgentTotal(urgentPayloadTotal);
+        urgentTotalRef.current = urgentPayloadTotal;
       } finally {
-        if (active) setLoading(false);
+        if (active) {
+          setLoading(false);
+          initialLoadDoneRef.current = true;
+        }
       }
     };
 
