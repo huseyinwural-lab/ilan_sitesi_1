@@ -27481,6 +27481,29 @@ def _apply_listing_payload_sql(listing: Listing, payload: dict) -> None:
     if payload.get("payment_options") is not None:
         attrs["payment_options"] = payload.get("payment_options")
 
+    if payload.get("selected_category_path") is not None:
+        selected_path = payload.get("selected_category_path")
+        attrs["selected_category_path"] = selected_path if isinstance(selected_path, list) else []
+
+    location_payload = payload.get("location")
+    if isinstance(location_payload, dict):
+        location_data = dict(attrs.get("location") or {})
+        location_data.update({k: v for k, v in location_payload.items() if v is not None})
+        attrs["location"] = location_data
+        city_value = location_payload.get("city")
+        if city_value is not None:
+            listing.city = str(city_value).strip()
+
+    contact_payload = payload.get("contact")
+    if isinstance(contact_payload, dict):
+        contact_data = dict(attrs.get("contact") or {})
+        contact_data.update({k: v for k, v in contact_payload.items() if v is not None})
+        attrs["contact"] = contact_data
+        if "allow_phone" in contact_payload:
+            listing.contact_option_phone = bool(contact_payload.get("allow_phone"))
+        if "allow_message" in contact_payload:
+            listing.contact_option_message = bool(contact_payload.get("allow_message"))
+
     listing.attributes = attrs
 
 
