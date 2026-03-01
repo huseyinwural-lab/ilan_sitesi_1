@@ -1202,6 +1202,10 @@ export default function ListingDetails() {
           <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800" data-testid="ilan-ver-block-address-disabled">
             Adres bloğu admin konfigürasyonunda pasif.
           </div>
+        ) : !listingAddressConfigActive ? (
+          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800" data-testid="ilan-ver-block-address-module-disabled">
+            Bu modül için adres bloğu admin ayarlarında devre dışı.
+          </div>
         ) : (
           <div className="space-y-4" data-testid="ilan-ver-address-fields">
             <div className="rounded-md border bg-slate-50 p-3 text-xs text-slate-700" data-testid="ilan-ver-google-mode-info">
@@ -1213,29 +1217,42 @@ export default function ListingDetails() {
 
             <div className="space-y-2" data-testid="ilan-ver-address-country-radio-group">
               <div className="text-xs font-semibold text-slate-700" data-testid="ilan-ver-address-country-radio-label">Ülke Seçimi *</div>
-              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4" data-testid="ilan-ver-address-country-radio-options">
-                {countryRadioOptions.map((option) => (
-                  <label
-                    key={option.code}
-                    className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${form.address_country === option.code ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200'}`}
-                    data-testid={`ilan-ver-address-country-option-wrap-${option.code}`}
-                  >
-                    <input
-                      type="radio"
-                      name="ilan-ver-address-country"
-                      checked={form.address_country === option.code}
-                      onChange={() => saveFormLocal({ address_country: option.code })}
-                      data-testid={`ilan-ver-address-country-option-${option.code}`}
-                    />
-                    <span>{option.name} ({option.code})</span>
-                  </label>
-                ))}
-              </div>
+              {listingCreateConfig.country_selector_mode === 'select' ? (
+                <select
+                  value={form.address_country}
+                  onChange={(e) => saveFormLocal({ address_country: e.target.value })}
+                  className="h-10 w-full rounded-md border px-3 text-sm"
+                  data-testid="ilan-ver-address-country-select"
+                >
+                  {countryRadioOptions.map((option) => (
+                    <option key={option.code} value={option.code}>{option.name} ({option.code})</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4" data-testid="ilan-ver-address-country-radio-options">
+                  {countryRadioOptions.map((option) => (
+                    <label
+                      key={option.code}
+                      className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${form.address_country === option.code ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200'}`}
+                      data-testid={`ilan-ver-address-country-option-wrap-${option.code}`}
+                    >
+                      <input
+                        type="radio"
+                        name="ilan-ver-address-country"
+                        checked={form.address_country === option.code}
+                        onChange={() => saveFormLocal({ address_country: option.code })}
+                        data-testid={`ilan-ver-address-country-option-${option.code}`}
+                      />
+                      <span>{option.name} ({option.code})</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid gap-3 md:grid-cols-[1fr_auto]" data-testid="ilan-ver-postal-lookup-row">
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-postal-code-wrap">
-                <span>Posta Kodu *</span>
+                <span>Posta Kodu {listingCreateConfig.postal_code_required ? '*' : ''}</span>
                 <input
                   value={form.postal_code}
                   onChange={(e) => saveFormLocal({ postal_code: e.target.value })}
@@ -1249,6 +1266,7 @@ export default function ListingDetails() {
                   onClick={() => {
                     void runPostalLookup();
                   }}
+                  disabled={!listingCreateConfig.map_required}
                   className="h-10 rounded-md border px-4 text-xs font-semibold"
                   data-testid="ilan-ver-postal-lookup-button"
                 >
@@ -1275,7 +1293,7 @@ export default function ListingDetails() {
               </div>
             ) : null}
 
-            {postalLookupItem?.map_embed_url ? (
+            {listingCreateConfig.map_required && postalLookupItem?.map_embed_url ? (
               <div className="space-y-2" data-testid="ilan-ver-postal-map-section">
                 <div className="text-xs font-semibold text-slate-700" data-testid="ilan-ver-postal-map-title">Posta Koduna Göre Harita Alanı</div>
                 <iframe
@@ -1303,6 +1321,7 @@ export default function ListingDetails() {
                         name="ilan-ver-street-selection"
                         checked={selectedStreetPlaceId === item.place_id}
                         onChange={() => handleSelectAddressSuggestion(item)}
+                        disabled={!listingCreateConfig.street_selection_required && !listingCreateConfig.map_required}
                         data-testid={`ilan-ver-address-suggestion-${item.place_id}`}
                       />
                       <div>
@@ -1327,7 +1346,7 @@ export default function ListingDetails() {
                 />
               </label>
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-district-wrap">
-                <span>Ilce</span>
+                <span>Ilce {listingCreateConfig.require_district ? '*' : ''}</span>
                 <input
                   value={form.district}
                   onChange={(e) => saveFormLocal({ district: e.target.value })}
@@ -1337,7 +1356,7 @@ export default function ListingDetails() {
                 />
               </label>
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-neighborhood-wrap">
-                <span>Mahalle</span>
+                <span>Mahalle {listingCreateConfig.require_neighborhood ? '*' : ''}</span>
                 <input
                   value={form.neighborhood}
                   onChange={(e) => saveFormLocal({ neighborhood: e.target.value })}
@@ -1350,7 +1369,7 @@ export default function ListingDetails() {
 
             <div className="grid gap-4 md:grid-cols-2" data-testid="ilan-ver-field-latlng-row">
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-latitude-wrap">
-                <span>Lat</span>
+                <span>Lat {listingCreateConfig.require_latitude ? '*' : ''}</span>
                 <input
                   value={form.latitude}
                   onChange={(e) => saveFormLocal({ latitude: e.target.value })}
@@ -1360,7 +1379,7 @@ export default function ListingDetails() {
                 />
               </label>
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-longitude-wrap">
-                <span>Lng</span>
+                <span>Lng {listingCreateConfig.require_longitude ? '*' : ''}</span>
                 <input
                   value={form.longitude}
                   onChange={(e) => saveFormLocal({ longitude: e.target.value })}
@@ -1372,7 +1391,7 @@ export default function ListingDetails() {
             </div>
 
             <label className="space-y-1 text-xs" data-testid="ilan-ver-field-address-line-wrap">
-              <span>Acik Adres</span>
+              <span>Acik Adres {listingCreateConfig.require_address_line ? '*' : ''}</span>
               <input
                 value={form.address_line}
                 onChange={(e) => saveFormLocal({ address_line: e.target.value })}
