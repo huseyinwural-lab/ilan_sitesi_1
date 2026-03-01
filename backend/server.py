@@ -27155,6 +27155,75 @@ def _listing_media_meta(listing: Listing) -> list[dict]:
     return attrs.get("media") or []
 
 
+LISTING_FLOW_DRAFT = "draft"
+LISTING_FLOW_PREVIEW_READY = "preview_ready"
+LISTING_FLOW_DOPING_SELECTED = "doping_selected"
+LISTING_FLOW_SUBMITTED = "submitted_for_review"
+
+
+def _normalize_listing_flow(attrs: dict, listing_id: str) -> dict:
+    flow = attrs.get("listing_flow") if isinstance(attrs.get("listing_flow"), dict) else {}
+    draft_id = str(flow.get("draft_id") or listing_id)
+    state = str(flow.get("state") or LISTING_FLOW_DRAFT)
+    return {
+        **flow,
+        "draft_id": draft_id,
+        "state": state,
+    }
+
+
+def _set_listing_flow(listing: Listing, *, state: str, patch: Optional[dict] = None) -> dict:
+    attrs = dict(listing.attributes or {})
+    flow = _normalize_listing_flow(attrs, str(listing.id))
+    flow["state"] = state
+    flow["updated_at"] = datetime.now(timezone.utc).isoformat()
+    if patch:
+        flow.update(patch)
+    attrs["listing_flow"] = flow
+    listing.attributes = attrs
+    return flow
+
+
+def _listing_preview_validation_errors(listing: Listing) -> list[dict]:
+    errors: list[dict] = []
+    attrs = listing.attributes or {}
+    core = attrs.get("core_fields") or {}
+    location = attrs.get("location") or {}
+
+    title = (listing.title or core.get("title") or "").strip()
+    if len(title) < 3:
+        errors.append({"code": "TITLE_REQUIRED", "field": "title", "message": "Başlık en az 3 karakter olmalı."})
+
+    if not listing.category_id:
+        errors.append({"code": "CATEGORY_REQUIRED", "field": "category_id", "message": "Kategori zorunludur."})
+
+    if listing.price_type == "FIXED" and not listing.price:
+        errors.append({"code": "PRICE_REQUIRED", "field": "price", "message": "Fiyat zorunludur."})
+
+    city = (listing.city or location.get("city") or "").strip()
+    if not city:
+        errors.append({"code": "CITY_REQUIRED", "field": "location.city", "message": "Şehir zorunludur."})
+
+    return errors
+
+
+async def _build_listing_category_path_payload(session: AsyncSession, listing: Listing) -> list[dict]:
+    if not listing.category_id:
+        return []
+    category = await _load_category_with_translations(session, listing.category_id)
+    if not category:
+        return []
+    path_nodes = await _build_category_path(session, category)
+    return [
+        {
+            "id": str(node.id),
+            "name": _pick_category_name(list(node.translations or []), _pick_category_slug(node.slug)),
+            "slug": _pick_category_slug(node.slug),
+        }
+        for node in path_nodes
+    ]
+
+
 def _listing_featured_active(listing: Listing, *, now: Optional[datetime] = None) -> bool:
     ref = now or datetime.now(timezone.utc)
     if listing.featured_until and listing.featured_until > ref:
