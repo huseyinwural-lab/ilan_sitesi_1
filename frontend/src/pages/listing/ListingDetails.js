@@ -135,6 +135,28 @@ export default function ListingDetails() {
     localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify({ ...raw, accepted_terms: checked }));
   }, []);
 
+  const trackEvent = useCallback(async (eventName, metadata = {}) => {
+    try {
+      const token = getToken();
+      const sessionId = getOrCreateSessionId();
+      await fetch(`${API}/analytics/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          event_name: String(eventName || '').toLowerCase(),
+          session_id: sessionId,
+          page: 'listing_details',
+          metadata,
+        }),
+      });
+    } catch (_err) {
+      // ignore analytics errors
+    }
+  }, []);
+
   const pathLabel = useMemo(() => {
     if (selectedPath.length > 0) {
       return selectedPath.map((item) => item?.name).filter(Boolean).join(' > ');
