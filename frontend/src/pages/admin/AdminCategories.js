@@ -2784,15 +2784,19 @@ const AdminCategories = () => {
     }
 
     const normalizeTree = (nodes = []) => (nodes || [])
-      .map((node, index) => ({
-        ...node,
-        name: node.name ? node.name.trim() : "",
-        slug: node.slug ? node.slug.trim().toLowerCase() : "",
-        sort_order: Number(node.sort_order || index + 1),
-        is_complete: true,
-        is_leaf: Boolean(node.is_leaf),
-        children: node.is_leaf ? [] : normalizeTree(node.children || []),
-      }));
+      .map((node, index) => {
+        const parsedSort = Number(node.sort_order);
+        const resolvedSort = Number.isFinite(parsedSort) && parsedSort > 0 ? parsedSort : index + 1;
+        return {
+          ...node,
+          name: node.name ? node.name.trim() : "",
+          slug: node.slug ? node.slug.trim().toLowerCase() : "",
+          sort_order: resolvedSort,
+          is_complete: true,
+          is_leaf: Boolean(node.is_leaf),
+          children: node.is_leaf ? [] : normalizeTree(node.children || []),
+        };
+      });
 
     const treeFieldErrors = {};
     const validateTree = (nodes, levelIndex = 0) => {
@@ -2800,7 +2804,6 @@ const AdminCategories = () => {
         return "Seviye 1 için en az bir kategori eklenmelidir.";
       }
 
-      const sortOrders = new Set();
       const slugKeys = new Set();
 
       for (let index = 0; index < nodes.length; index += 1) {
