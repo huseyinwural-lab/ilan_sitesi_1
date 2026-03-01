@@ -638,6 +638,14 @@ export default function ListingDetails() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!Array.isArray(countryRadioOptions) || countryRadioOptions.length === 0) return;
+    const current = String(form.address_country || '').toUpperCase();
+    const exists = countryRadioOptions.some((option) => option.code === current);
+    if (exists) return;
+    saveFormLocal({ address_country: countryRadioOptions[0].code });
+  }, [countryRadioOptions, form.address_country, saveFormLocal]);
+
   const runPostalLookup = useCallback(async () => {
     if (!addressBlockEnabled) return;
     const postalCode = String(form.postal_code || '').trim();
