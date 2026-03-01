@@ -23,6 +23,30 @@ const DEFAULT_LISTING_LAYOUT = {
   listing_lx_limit: 10,
 };
 
+const normalizeListingLayout = (raw) => {
+  const source = raw || {};
+  const orderMode = source.module_order_mode === 'alphabetical' ? 'alphabetical' : 'manual';
+  const rawOrder = Array.isArray(source.module_order) ? source.module_order : [];
+  const unique = [];
+  const seen = new Set();
+  rawOrder.forEach((item) => {
+    const value = String(item || '').trim();
+    if (!value || seen.has(value)) return;
+    unique.push(value);
+    seen.add(value);
+  });
+  MODULE_OPTIONS.forEach((item) => {
+    if (!unique.includes(item.key)) unique.push(item.key);
+  });
+  return {
+    module_order_mode: orderMode,
+    module_order: unique.length ? unique : DEFAULT_LISTING_LAYOUT.module_order,
+    listing_module_grid_rows: Math.min(6, Math.max(1, Number(source.listing_module_grid_rows) || DEFAULT_LISTING_LAYOUT.listing_module_grid_rows)),
+    listing_module_grid_columns: Math.min(6, Math.max(1, Number(source.listing_module_grid_columns) || DEFAULT_LISTING_LAYOUT.listing_module_grid_columns)),
+    listing_lx_limit: Math.min(50, Math.max(5, Number(source.listing_lx_limit) || DEFAULT_LISTING_LAYOUT.listing_lx_limit)),
+  };
+};
+
 const ListingCategorySelect = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
