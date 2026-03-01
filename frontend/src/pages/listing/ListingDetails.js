@@ -773,6 +773,28 @@ export default function ListingDetails() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    const loadListingSiteDesign = async () => {
+      try {
+        const res = await fetch(`${API}/site/listing-design`);
+        const data = await res.json().catch(() => ({}));
+        if (!active) return;
+        if (res.ok && data?.config) {
+          setListingSiteDesign(data.config);
+        } else {
+          setListingSiteDesign(DEFAULT_LISTING_SITE_DESIGN);
+        }
+      } catch (_err) {
+        if (active) setListingSiteDesign(DEFAULT_LISTING_SITE_DESIGN);
+      }
+    };
+    loadListingSiteDesign();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!Array.isArray(countryRadioOptions) || countryRadioOptions.length === 0) return;
     const current = String(form.address_country || '').toUpperCase();
     const exists = countryRadioOptions.some((option) => option.code === current);
