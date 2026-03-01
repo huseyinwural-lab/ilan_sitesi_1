@@ -1116,43 +1116,62 @@ export default function ListingDetails() {
           </div>
         ) : (
           <div className="space-y-4" data-testid="ilan-ver-address-fields">
-            <div className="grid gap-3 md:grid-cols-2" data-testid="ilan-ver-google-key-row">
-              <label className="space-y-1 text-xs" data-testid="ilan-ver-google-maps-key-wrap">
-                <span>GOOGLE_MAPS_API_KEY (manuel)</span>
-                <input
-                  value={form.google_maps_api_key}
-                  onChange={(e) => {
-                    const keyValue = e.target.value;
-                    saveFormLocal({ google_maps_api_key: keyValue });
-                    localStorage.setItem(GOOGLE_MAPS_KEY_STORAGE, keyValue);
-                  }}
-                  placeholder="AIza..."
-                  className="h-10 w-full rounded-md border px-3"
-                  data-testid="ilan-ver-google-maps-key-input"
-                />
-              </label>
-              <div className="rounded-md border bg-slate-50 p-3 text-xs text-slate-700" data-testid="ilan-ver-google-mode-info">
-                <div className="font-semibold">Adres Servis Modu</div>
-                <div className="mt-1">Mod: {googleModeLabel}</div>
-                <div className="mt-1">Kaynak: {placesConfig.key_source || 'none'}</div>
-                {placesConfigLoading ? <div className="mt-1 text-slate-500">Config yükleniyor...</div> : null}
+            <div className="rounded-md border bg-slate-50 p-3 text-xs text-slate-700" data-testid="ilan-ver-google-mode-info">
+              <div className="font-semibold">Adres Servis Modu</div>
+              <div className="mt-1">Mod: {googleModeLabel}</div>
+              <div className="mt-1">Kaynak: {placesConfig.key_source || 'none'}</div>
+              {placesConfigLoading ? <div className="mt-1 text-slate-500">Config yükleniyor...</div> : null}
+            </div>
+
+            <div className="space-y-2" data-testid="ilan-ver-address-country-radio-group">
+              <div className="text-xs font-semibold text-slate-700" data-testid="ilan-ver-address-country-radio-label">Ülke Seçimi *</div>
+              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4" data-testid="ilan-ver-address-country-radio-options">
+                {countryRadioOptions.map((option) => (
+                  <label
+                    key={option.code}
+                    className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${form.address_country === option.code ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200'}`}
+                    data-testid={`ilan-ver-address-country-option-wrap-${option.code}`}
+                  >
+                    <input
+                      type="radio"
+                      name="ilan-ver-address-country"
+                      checked={form.address_country === option.code}
+                      onChange={() => saveFormLocal({ address_country: option.code })}
+                      data-testid={`ilan-ver-address-country-option-${option.code}`}
+                    />
+                    <span>{option.name} ({option.code})</span>
+                  </label>
+                ))}
               </div>
             </div>
 
-            <label className="space-y-1 text-xs" data-testid="ilan-ver-address-autocomplete-wrap">
-              <span>Google Autocomplete Araması</span>
-              <input
-                value={form.google_autocomplete_query}
-                onChange={(e) => saveFormLocal({ google_autocomplete_query: e.target.value })}
-                placeholder={googleAutocompleteEnabled ? 'Adres yazın...' : 'GOOGLE_MAPS_API_KEY girin'}
-                className="h-10 w-full rounded-md border px-3 disabled:bg-slate-100"
-                data-testid="ilan-ver-address-autocomplete-input"
-              />
-            </label>
+            <div className="grid gap-3 md:grid-cols-[1fr_auto]" data-testid="ilan-ver-postal-lookup-row">
+              <label className="space-y-1 text-xs" data-testid="ilan-ver-field-postal-code-wrap">
+                <span>Posta Kodu *</span>
+                <input
+                  value={form.postal_code}
+                  onChange={(e) => saveFormLocal({ postal_code: e.target.value })}
+                  className="h-10 w-full rounded-md border px-3"
+                  data-testid="ilan-ver-field-postal-code"
+                />
+              </label>
+              <div className="flex items-end" data-testid="ilan-ver-postal-lookup-action-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void runPostalLookup();
+                  }}
+                  className="h-10 rounded-md border px-4 text-xs font-semibold"
+                  data-testid="ilan-ver-postal-lookup-button"
+                >
+                  Haritada Aç
+                </button>
+              </div>
+            </div>
 
             {placesLoading ? (
               <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600" data-testid="ilan-ver-address-autocomplete-loading">
-                Öneriler getiriliyor...
+                Posta koduna göre alan ve sokaklar yükleniyor...
               </div>
             ) : null}
 
@@ -1162,32 +1181,55 @@ export default function ListingDetails() {
               </div>
             ) : null}
 
-            {placeSuggestions.length > 0 ? (
-              <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border bg-white p-2" data-testid="ilan-ver-address-suggestions-list">
-                {placeSuggestions.map((item) => (
-                  <button
-                    key={item.place_id}
-                    type="button"
-                    onClick={() => handleSelectAddressSuggestion(item)}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-left text-xs hover:border-blue-400 hover:bg-blue-50"
-                    data-testid={`ilan-ver-address-suggestion-${item.place_id}`}
-                  >
-                    <div className="font-semibold text-slate-800">{item.main_text || item.description}</div>
-                    <div className="text-slate-500">{item.secondary_text || item.description}</div>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-
             {!googleAutocompleteEnabled ? (
               <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800" data-testid="ilan-ver-address-autocomplete-warning">
-                Google Places key tanımlı değil. Manuel giriş alanı ile key girip real moda geçebilirsiniz.
+                Admin panelde Google Maps API key tanımlı değil. Harita/sokak seçimi pasif.
               </div>
             ) : null}
 
-            <div className="grid gap-4 md:grid-cols-4">
+            {postalLookupItem?.map_embed_url ? (
+              <div className="space-y-2" data-testid="ilan-ver-postal-map-section">
+                <div className="text-xs font-semibold text-slate-700" data-testid="ilan-ver-postal-map-title">Posta Koduna Göre Harita Alanı</div>
+                <iframe
+                  src={postalLookupItem.map_embed_url}
+                  title="Posta kodu haritasi"
+                  className="h-64 w-full rounded-md border"
+                  loading="lazy"
+                  data-testid="ilan-ver-postal-map-iframe"
+                />
+              </div>
+            ) : null}
+
+            {placeSuggestions.length > 0 ? (
+              <div className="space-y-2" data-testid="ilan-ver-address-street-list">
+                <div className="text-xs font-semibold text-slate-700" data-testid="ilan-ver-address-street-list-title">Harita alanindaki sokaklardan secin</div>
+                <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border bg-white p-2" data-testid="ilan-ver-address-suggestions-list">
+                  {placeSuggestions.map((item) => (
+                    <label
+                      key={item.place_id}
+                      className={`flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-xs ${selectedStreetPlaceId === item.place_id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300'}`}
+                      data-testid={`ilan-ver-address-suggestion-wrap-${item.place_id}`}
+                    >
+                      <input
+                        type="radio"
+                        name="ilan-ver-street-selection"
+                        checked={selectedStreetPlaceId === item.place_id}
+                        onChange={() => handleSelectAddressSuggestion(item)}
+                        data-testid={`ilan-ver-address-suggestion-${item.place_id}`}
+                      />
+                      <div>
+                        <div className="font-semibold text-slate-800">{item.main_text || item.description}</div>
+                        <div className="text-slate-500">{item.secondary_text || item.description}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="grid gap-4 md:grid-cols-3">
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-city-wrap">
-                <span>İl *</span>
+                <span>Il *</span>
                 <input
                   value={form.city}
                   onChange={(e) => saveFormLocal({ city: e.target.value })}
@@ -1196,18 +1238,8 @@ export default function ListingDetails() {
                   data-testid="ilan-ver-field-city"
                 />
               </label>
-              <label className="space-y-1 text-xs" data-testid="ilan-ver-field-postal-code-wrap">
-                <span>Posta Kodu</span>
-                <input
-                  value={form.postal_code}
-                  onChange={(e) => saveFormLocal({ postal_code: e.target.value })}
-                  onBlur={saveAddressBlock}
-                  className="h-10 w-full rounded-md border px-3"
-                  data-testid="ilan-ver-field-postal-code"
-                />
-              </label>
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-district-wrap">
-                <span>İlçe</span>
+                <span>Ilce</span>
                 <input
                   value={form.district}
                   onChange={(e) => saveFormLocal({ district: e.target.value })}
@@ -1252,7 +1284,7 @@ export default function ListingDetails() {
             </div>
 
             <label className="space-y-1 text-xs" data-testid="ilan-ver-field-address-line-wrap">
-              <span>Açık Adres</span>
+              <span>Acik Adres</span>
               <input
                 value={form.address_line}
                 onChange={(e) => saveFormLocal({ address_line: e.target.value })}
