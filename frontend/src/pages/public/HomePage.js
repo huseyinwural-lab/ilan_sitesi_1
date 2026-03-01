@@ -347,7 +347,7 @@ export default function HomePage() {
         roots,
       };
     });
-  }, [categoriesByModule, homeCategoryLayout.module_l1_order, homeCategoryLayout.module_l1_order_mode, language, moduleLabelMap, moduleOrder, searchInput]);
+  }, [categoriesByModule, homeCategoryLayout.module_l1_order, homeCategoryLayout.module_l1_order_mode, language, moduleOrder, searchInput]);
 
   const moduleRootLimit = useMemo(
     () => clamp(homeCategoryLayout.l1_initial_limit, 1, 20, MODULE_ROOT_LIMIT),
