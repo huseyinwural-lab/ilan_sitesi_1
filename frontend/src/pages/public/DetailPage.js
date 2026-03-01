@@ -226,7 +226,19 @@ const DetailPage = () => {
               )}
               {showAddress && (
                 <div className="text-gray-500 mt-1" data-testid="listing-address-section">
-                  {location.city || ''} {location.country || ''}
+                  <div data-testid="listing-address-main">
+                    {[location.city, location.district, location.neighborhood].filter(Boolean).join(' / ')}
+                    {location.country ? ` (${location.country})` : ''}
+                  </div>
+                  {location.address_line ? (
+                    <div className="text-gray-500" data-testid="listing-address-line">{location.address_line}</div>
+                  ) : null}
+                  {(location.latitude || location.longitude) ? (
+                    <div className="text-xs text-gray-400" data-testid="listing-address-latlng">
+                      {location.latitude ? `lat: ${location.latitude}` : ''}
+                      {location.longitude ? ` lng: ${location.longitude}` : ''}
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>
