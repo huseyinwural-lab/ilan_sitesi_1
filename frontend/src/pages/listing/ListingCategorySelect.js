@@ -975,7 +975,7 @@ const ListingCategorySelect = () => {
                 className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left text-sm hover:border-blue-500 hover:bg-blue-50"
                 data-testid={`ilan-ver-search-result-${item.category.id}`}
               >
-                <div className="font-semibold text-slate-800">{item.category.name}</div>
+                <div className="font-semibold text-slate-800">{getCategoryLabel(item.category)}</div>
                 <div className="text-xs text-slate-500">{(item.path || []).map((p) => p.name).join(' > ')}</div>
               </button>
             ))}
