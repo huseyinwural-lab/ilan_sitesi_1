@@ -185,13 +185,23 @@ const AdminVehicleModels = () => {
           <h1 className="text-2xl font-semibold" data-testid="vehicle-models-title">Araç Modelleri</h1>
           <p className="text-sm text-muted-foreground" data-testid="vehicle-models-country">Country: {urlCountry || 'Global'}</p>
         </div>
-        <button
-          onClick={openCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md"
-          data-testid="vehicle-models-create-open"
-        >
-          Yeni Model
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleBulkDelete}
+            className="border px-3 py-2 rounded-md text-sm disabled:opacity-50"
+            disabled={selectedIds.size === 0}
+            data-testid="vehicle-models-bulk-delete"
+          >
+            Seçili ({selectedIds.size}) Pasifleştir
+          </button>
+          <button
+            onClick={openCreate}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md"
+            data-testid="vehicle-models-create-open"
+          >
+            Yeni Model
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-3" data-testid="vehicle-models-filters">
