@@ -147,24 +147,51 @@ export default function HomePage() {
   const [expandedRoots, setExpandedRoots] = useState({});
   const initialLoadDoneRef = useRef(false);
   const urgentTotalRef = useRef(0);
+  const activeLoadRequestRef = useRef(0);
+  const lastRevalidateTokenRef = useRef(localStorage.getItem('homepage_revalidate_token') || '0');
 
   const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
   useEffect(() => {
     let active = true;
 
-    const loadData = async () => {
+    const applyHomeState = ({
+      nextCategoriesByModule,
+      nextLayout,
+      nextHomeCategoryLayout,
+      showcaseItemsPayload,
+      urgentPayloadTotal,
+    }) => {
+      setCategoriesByModule(nextCategoriesByModule);
+      setShowcaseLayout(nextLayout);
+      setShowcaseItems(showcaseItemsPayload);
+      setHomeCategoryLayout(nextHomeCategoryLayout);
+      setUrgentTotal(urgentPayloadTotal);
+      urgentTotalRef.current = urgentPayloadTotal;
+    };
+
+    const loadData = async (reason = 'default') => {
+      const requestId = Date.now();
+      activeLoadRequestRef.current = requestId;
+      const revalidateToken = localStorage.getItem('homepage_revalidate_token') || '0';
+
+      if (reason === 'revalidate' && revalidateToken !== lastRevalidateTokenRef.current) {
+        lastRevalidateTokenRef.current = revalidateToken;
+        setShowcaseItems([]);
+      }
+
       if (!initialLoadDoneRef.current) {
         setLoading(true);
       }
       try {
+        const cacheBuster = `_ts=${Date.now()}&rt=${encodeURIComponent(revalidateToken)}`;
         const categoryRequests = MODULE_CONFIG.map((moduleItem) =>
-          fetchJsonWithTimeout(`${API}/categories?module=${moduleItem.key}&country=${countryCode}`, [])
+          fetchJsonWithTimeout(`${API}/categories?module=${moduleItem.key}&country=${countryCode}&${cacheBuster}`, [], { cache: 'no-store' })
         );
 
         const [layoutPayload, homeCategoryPayload, ...categoryPayloads] = await Promise.all([
-          fetchJsonWithTimeout(`${API}/site/showcase-layout?_ts=${Date.now()}`, {}, { cache: 'no-store' }),
-          fetchJsonWithTimeout(`${API}/site/home-category-layout?country=${countryCode}&_ts=${Date.now()}`, {}, { cache: 'no-store' }),
+          fetchJsonWithTimeout(`${API}/site/showcase-layout?${cacheBuster}`, {}, { cache: 'no-store' }),
+          fetchJsonWithTimeout(`${API}/site/home-category-layout?country=${countryCode}&${cacheBuster}`, {}, { cache: 'no-store' }),
           ...categoryRequests,
         ]);
 
@@ -179,10 +206,18 @@ export default function HomePage() {
 
         const homeLimit = Math.max(1, resolveEffectiveCount(nextLayout.homepage));
 
-        const showcasePayload = await fetchJsonWithTimeout(`${API}/v2/search?country=${countryCode}&size=${homeLimit}&page=1&doping_type=showcase`, {});
+        const showcasePayload = await fetchJsonWithTimeout(
+          `${API}/v2/search?country=${countryCode}&size=${homeLimit}&page=1&doping_type=showcase&${cacheBuster}`,
+          {},
+          { cache: 'no-store' },
+        );
         const showcaseItemsPayload = Array.isArray(showcasePayload?.items) ? showcasePayload.items : [];
 
-        const urgentPayload = await fetchJsonWithTimeout(`${API}/v2/search?country=${countryCode}&size=1&page=1&doping_type=urgent`, {});
+        const urgentPayload = await fetchJsonWithTimeout(
+          `${API}/v2/search?country=${countryCode}&size=1&page=1&doping_type=urgent&${cacheBuster}`,
+          {},
+          { cache: 'no-store' },
+        );
         const urgentPayloadTotal = Number(
           urgentPayload?.pagination?.total
           ?? urgentPayload?.total
@@ -190,15 +225,16 @@ export default function HomePage() {
           ?? 0
         );
 
-        if (!active) return;
-        setCategoriesByModule(nextCategoriesByModule);
-        setShowcaseItems(showcaseItemsPayload);
-        setShowcaseLayout(nextLayout);
-        setHomeCategoryLayout(nextHomeCategoryLayout);
-        setUrgentTotal(urgentPayloadTotal);
-        urgentTotalRef.current = urgentPayloadTotal;
+        if (!active || requestId !== activeLoadRequestRef.current) return;
+        applyHomeState({
+          nextCategoriesByModule,
+          nextLayout,
+          nextHomeCategoryLayout,
+          showcaseItemsPayload,
+          urgentPayloadTotal,
+        });
       } finally {
-        if (active) {
+        if (active && requestId === activeLoadRequestRef.current) {
           setLoading(false);
           initialLoadDoneRef.current = true;
         }
@@ -209,22 +245,22 @@ export default function HomePage() {
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        loadData();
+        loadData('focus');
       }
     };
 
     const handleFocus = () => {
-      loadData();
+      loadData('focus');
     };
 
     const handleStorage = (event) => {
       if (event.key === 'showcase_layout_updated_at' || event.key === 'homepage_revalidate_token') {
-        loadData();
+        loadData('revalidate');
       }
     };
 
     const handleShowcaseUpdate = () => {
-      loadData();
+      loadData('revalidate');
     };
 
     window.addEventListener('focus', handleFocus);
