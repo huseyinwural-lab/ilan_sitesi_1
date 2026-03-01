@@ -1,6 +1,6 @@
 # FAZ EU Panel — PRD
 
-**Son güncelleme:** 2026-03-01 01:20:00 UTC (P105d L1-L6 Emlak Şeması Seed + Home/Admin Hiyerarşi Eşitleme)
+**Son güncelleme:** 2026-03-01 04:22:00 UTC (P106 Admin Kategori Kademeli Hiyerarşi Editörü + Vasıta paneli)
 
 ## Orijinal Problem Tanımı
 EU uyumlu **Consumer** ve **Dealer** panellerinin tasarlanması ve geliştirilmesi.
