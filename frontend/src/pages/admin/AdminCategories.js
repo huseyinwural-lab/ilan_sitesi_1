@@ -1574,6 +1574,15 @@ const AdminCategories = () => {
     }
 
     setHierarchyError("");
+    setHierarchyFieldErrors((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((key) => {
+        if (key.startsWith(`level-${levelIndex}-`)) {
+          delete next[key];
+        }
+      });
+      return next;
+    });
     setLevelCompletion((prev) => ({ ...prev, [levelIndex]: true }));
     if (levelSelections[levelIndex] === undefined) {
       setLevelSelections((prev) => {
