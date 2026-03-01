@@ -1,10 +1,12 @@
 # CHANGELOG
 
 ## Uygulanan Özellikler
-- **P107 Ana Site Kategorisi Tasarım Paneli (2026-03-01):** Admin >e Site İç Tasarımı >e Ana Site Kategorisi ekranı eklendi; modül ve L1 sırası yukarı/aşağı ile belirleniyor, kolon genişliği ayarlanıyor.
+- **P107 L0/L1 Alfabetik Sıralama Modu (2026-03-01):** Ana Site Kategorisi paneline L0 (modül) ve L1 için manuel/alfabetik sıralama modu eklendi. Alfabetik modda yukarı/aşağı butonları devre dışı.
+- **P106 Kardeş Güncelleme Onayı Kaldırıldı (2026-03-01):** Kademeli hiyerarşide “kardeşlere uygula” onayı kaldırıldı; otomatik klonlama devam eder, güncellemeler yalnız seçili dalı etkiler.
+- **P107 Ana Site Kategorisi Tasarım Paneli (2026-03-01):** Admin → Site İç Tasarımı → Ana Site Kategorisi ekranı eklendi; modül ve L1 sırası yukarı/aşağı ile belirleniyor, kolon genişliği ayarlanıyor.
 - **P107 Homepage Kategori Kolonu (2026-03-01):** Ana sayfa kategori kolonu artık admin config’ten geliyor; modül/L1 sırası, kolon genişliği ve “Devamını Gör” (ilk 5 L1) davranışı uygulanıyor.
 - **P106 Modül/L1 Sıra Zorunluluğu Kaldı (2026-03-01):** Yeni kategori üretiminde sıra numarası zorunluluğu ve çakışma engeli kaldırıldı.
-- **P106 Kardeş Mirası (2026-03-01):** Kademeli hiyerarşide Level 1→2’den itibaren kardeş yapı mirası eklendi; ilk kardeşin alt listesi şablon oluyor, yeni kardeşler otomatik klonlanıyor. Güncellemede “kardeşlere uygula mı?” onayı ve “Mirası Kopar” override butonu aktif.
+- **P106 Kardeş Mirası (2026-03-01):** Kademeli hiyerarşide Level 1→2’den itibaren kardeş yapı mirası eklendi; ilk kardeşin alt listesi şablon oluyor, yeni kardeşler otomatik klonlanıyor. “Mirası Kopar” override butonu aktif.
 - **P106 Modül Kayıt Hatası Netleştirme (2026-03-01):** Kategori oluşturma hatalarında safe JSON parse + HTTP status fallback eklendi; “Modül oluşturulamadı” yerine gerçek hata mesajı görülebilecek.
 - **P106 Admin Kategori Kademeli Hiyerarşi Editörü (2026-03-01):** Yeni kategori modalı "level builder" mantığına taşındı: Root modül alanları, Level Navigator (root/back/next), sınırsız seviye kolonları, leaf işaretleme ve drag-sıra. Vasıta modülü için şablon + API/JSON/Excel import paneli eklendi.
 - **P106 Test Doğrulama (2026-03-01):** `/app/test_reports/iteration_68.json` ve `auto_frontend_testing_agent` PASS. Leaf işaretlendiğinde "Altını Doldur" butonu gizleniyor (self-test screenshot: `admin_categories_leaf.png`).
