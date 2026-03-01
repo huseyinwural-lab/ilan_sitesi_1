@@ -66,6 +66,14 @@ export default function AdminShowcaseManagement() {
   const authHeader = useMemo(() => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }), []);
   const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
+  const notifyShowcaseLayoutUpdated = () => {
+    const versionValue = String(Date.now());
+    localStorage.setItem('showcase_layout_updated_at', versionValue);
+    localStorage.setItem('homepage_revalidate_token', versionValue);
+    window.dispatchEvent(new CustomEvent('showcase-layout-updated', { detail: { version: versionValue } }));
+    window.dispatchEvent(new CustomEvent('homepage-revalidate-requested', { detail: { version: versionValue } }));
+  };
+
   const categoryOptions = useMemo(
     () => categories
       .filter((item) => !item.parent_id)
