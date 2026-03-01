@@ -440,7 +440,11 @@ export default function ListingDetails() {
     const rows = [
       { key: 'core', label: 'Çekirdek alanlar', complete: Boolean(form.title.trim() && Number(form.price || 0) > 0) },
       { key: 'dynamic', label: 'Parametre alanları', complete: !dynamicBlockEnabled || !dynamicRequiredMissing },
-      { key: 'address', label: 'Adres formu', complete: !addressBlockEnabled || Boolean(form.city.trim()) },
+      {
+        key: 'address',
+        label: 'Adres formu',
+        complete: !addressBlockEnabled || Boolean(form.address_country && form.postal_code.trim() && form.city.trim()),
+      },
       { key: 'details', label: 'Detay grupları', complete: !detailBlockEnabled || !detailRequiredMissing },
       { key: 'media', label: 'Foto + Video', complete: !photoBlockEnabled || mediaItems.length > 0 },
       { key: 'contact', label: 'İletişim bilgileri', complete: !contactBlockEnabled || Boolean(form.contact_name.trim() && form.contact_phone.trim()) },
@@ -451,6 +455,7 @@ export default function ListingDetails() {
   }, [
     acceptedTerms,
     addressBlockEnabled,
+    form.address_country,
     contactBlockEnabled,
     detailBlockEnabled,
     detailGroups,
@@ -463,6 +468,7 @@ export default function ListingDetails() {
     form.detail_values,
     form.duration_key,
     form.dynamic_values,
+    form.postal_code,
     form.price,
     form.title,
     mediaItems.length,
