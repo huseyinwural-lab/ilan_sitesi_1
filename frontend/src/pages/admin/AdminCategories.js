@@ -1362,6 +1362,68 @@ const AdminCategories = () => {
     return parent?.children || [];
   };
 
+  const levelBreadcrumbs = useMemo(() => {
+    const crumbs = [];
+    let currentNodes = subcategories;
+    for (let levelIndex = 0; levelIndex < levelSelections.length; levelIndex += 1) {
+      const selectedIndex = levelSelections[levelIndex];
+      if (selectedIndex === undefined) break;
+      const node = currentNodes[selectedIndex];
+      if (!node) break;
+      crumbs.push({ levelIndex, label: node.name?.trim() || `Seviye ${levelIndex + 1}` });
+      currentNodes = node.children || [];
+    }
+    return crumbs;
+  }, [subcategories, levelSelections]);
+
+  const handleLevelBack = () => {
+    setLevelSelections((prev) => {
+      const next = prev.slice(0, Math.max(prev.length - 1, 0));
+      resetLevelCompletionFrom(next.length);
+      return next;
+    });
+  };
+
+  const handleLevelJump = (targetLevel) => {
+    setLevelSelections((prev) => {
+      const next = prev.slice(0, targetLevel + 1);
+      resetLevelCompletionFrom(targetLevel + 1);
+      return next;
+    });
+  };
+
+  const handleCreateNextLevel = () => {
+    if (levelSelections.length === 0) {
+      setHierarchyError("Önce seviye 1 kategorisi seçin.");
+      return;
+    }
+    const currentLevel = levelSelections.length - 1;
+    if (!levelCompletion[currentLevel]) {
+      setHierarchyError("Önce bu seviyeyi onaylayın.");
+      return;
+    }
+    const selectedPath = levelSelections.slice(0, currentLevel + 1);
+    const selectedNode = getNodeByPath(subcategories, selectedPath);
+    if (!selectedNode) return;
+    if (selectedNode.is_leaf) {
+      setHierarchyError("Leaf işaretli kategorinin altı açılamaz.");
+      return;
+    }
+    if (!Array.isArray(selectedNode.children) || selectedNode.children.length === 0) {
+      setSubcategories((prev) => updateNodeByPath(prev, selectedPath, (node) => ({
+        ...node,
+        is_leaf: false,
+        children: [...(node.children || []), createSubcategoryDraft()],
+      })));
+    }
+    setLevelSelections((prev) => {
+      const next = prev.slice(0, currentLevel + 1);
+      next[currentLevel + 1] = 0;
+      return next;
+    });
+    setHierarchyError("");
+  };
+
   const resetLevelCompletionFrom = (levelIndex) => {
     setLevelCompletion((prev) => {
       const next = { ...prev };
