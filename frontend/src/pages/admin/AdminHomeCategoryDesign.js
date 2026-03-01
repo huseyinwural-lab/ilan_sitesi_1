@@ -351,6 +351,24 @@ export default function AdminHomeCategoryDesign() {
         </div>
       </div>
 
+      <div className="rounded-xl border bg-white p-4" data-testid="home-category-module-order-card">
+        <div className="flex flex-wrap items-center justify-between gap-4" data-testid="home-category-module-order-header">
+          <div>
+            <div className="text-sm font-semibold" data-testid="home-category-module-order-title">Modül Sıralama Modu (L0)</div>
+            <div className="text-xs text-slate-500" data-testid="home-category-module-order-hint">L0 modüllerini manuel ya da alfabetik sıralayın.</div>
+          </div>
+          <select
+            className="h-10 rounded-md border px-3 text-sm"
+            value={config.module_order_mode}
+            onChange={(event) => handleModuleOrderMode(event.target.value)}
+            data-testid="home-category-module-order-select"
+          >
+            <option value="manual">Manuel</option>
+            <option value="alphabetical">Alfabetik</option>
+          </select>
+        </div>
+      </div>
+
       <div className="grid gap-4" data-testid="home-category-module-list">
         {loading ? (
           <div className="rounded-md border bg-white p-4 text-sm text-slate-600" data-testid="home-category-loading">Yükleniyor...</div>
