@@ -79,6 +79,10 @@ const ListingCategorySelect = () => {
     return match ? match.label : moduleKey;
   }, []);
 
+  const moduleMetaByKey = useCallback((moduleKey) => {
+    return MODULE_OPTIONS.find((item) => item.key === moduleKey) || null;
+  }, []);
+
   const moduleOrder = useMemo(() => {
     if (listingLayout.module_order_mode === 'alphabetical') {
       const locale = LANGUAGE_LOCALE_MAP[language] || 'tr-TR';
@@ -101,10 +105,26 @@ const ListingCategorySelect = () => {
     return unique.length ? unique : MODULE_OPTIONS.map((item) => item.key);
   }, [language, listingLayout.module_order, listingLayout.module_order_mode, moduleLabelByKey]);
 
-  const orderedModules = useMemo(
-    () => moduleOrder.map((key) => MODULE_OPTIONS.find((item) => item.key === key)).filter(Boolean),
-    [moduleOrder]
-  );
+  const moduleSortOrderLookup = useMemo(() => {
+    const lookup = {};
+    moduleOrder.forEach((key, index) => {
+      lookup[key] = index + 1;
+    });
+    MODULE_OPTIONS.forEach((item) => {
+      if (!lookup[item.key]) lookup[item.key] = item.sort_order || 999;
+    });
+    return lookup;
+  }, [moduleOrder]);
+
+  const orderedModules = useMemo(() => {
+    const locale = LANGUAGE_LOCALE_MAP[language] || 'tr-TR';
+    return [...MODULE_OPTIONS].sort((a, b) => {
+      const aSort = Number(moduleSortOrderLookup[a.key] || a.sort_order || 999);
+      const bSort = Number(moduleSortOrderLookup[b.key] || b.sort_order || 999);
+      if (aSort !== bSort) return aSort - bSort;
+      return a.label.localeCompare(b.label, locale);
+    });
+  }, [language, moduleSortOrderLookup]);
 
   const selectedModuleLabel = useMemo(() => {
     const match = MODULE_OPTIONS.find((item) => item.key === selectedModule);
