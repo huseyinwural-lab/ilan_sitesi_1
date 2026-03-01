@@ -1705,7 +1705,7 @@ export default function ListingDetails() {
             className="mt-1 h-4 w-4"
             data-testid="ilan-ver-terms-checkbox"
           />
-          <span className="text-sm text-slate-700" data-testid="ilan-ver-terms-text">İlan verme kurallarını okudum, kabul ediyorum.</span>
+          <span className="text-sm text-slate-700" data-testid="ilan-ver-terms-text">{termsConfig.text}</span>
         </label>
       </section>
 
@@ -1751,7 +1751,7 @@ export default function ListingDetails() {
         <button
           type="button"
           onClick={handleContinue}
-          disabled={loadingContinue}
+          disabled={loadingContinue || (termsConfig.required && !acceptedTerms)}
           className="rounded-md bg-blue-600 px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
           data-testid="ilan-ver-details-continue"
         >
