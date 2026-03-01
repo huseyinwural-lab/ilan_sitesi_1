@@ -176,7 +176,19 @@ const ListingCategorySelect = () => {
     });
   }, [language, moduleSortOrderLookup]);
 
+  const moduleCards = useMemo(() => {
+    const cards = Array.isArray(listingSiteDesign?.step1?.cards) ? listingSiteDesign.step1.cards : [];
+    return [...cards].sort((a, b) => {
+      const aSort = Number(moduleSortOrderLookup[a.module_key] || 999);
+      const bSort = Number(moduleSortOrderLookup[b.module_key] || 999);
+      if (aSort !== bSort) return aSort - bSort;
+      return String(a.title || '').localeCompare(String(b.title || ''), LANGUAGE_LOCALE_MAP[language] || 'tr-TR');
+    });
+  }, [language, listingSiteDesign?.step1?.cards, moduleSortOrderLookup]);
+
   const selectedModuleLabel = useMemo(() => {
+    const selectedCardTitle = localStorage.getItem('ilan_ver_module_card_title') || '';
+    if (selectedCardTitle && selectedModule) return selectedCardTitle;
     const match = MODULE_OPTIONS.find((item) => item.key === selectedModule);
     return match ? match.label : '';
   }, [selectedModule]);
