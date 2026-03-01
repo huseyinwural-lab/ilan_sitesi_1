@@ -927,7 +927,10 @@ const ListingCategorySelect = () => {
                   data-testid={`ilan-ver-module-card-image-${item.id}`}
                 />
               ) : null}
-              <div className="font-semibold" data-testid={`ilan-ver-module-card-title-${item.id}`}>{item.title}</div>
+              <div className="font-semibold" data-testid={`ilan-ver-module-card-title-${item.id}`}>{moduleLabelByKey(item.module_key)}</div>
+              {item.title && item.title !== moduleLabelByKey(item.module_key) ? (
+                <div className="text-[11px] text-slate-400" data-testid={`ilan-ver-module-card-custom-title-${item.id}`}>{item.title}</div>
+              ) : null}
               {item.description ? (
                 <div className="mt-1 text-xs text-slate-500" data-testid={`ilan-ver-module-card-description-${item.id}`}>{item.description}</div>
               ) : null}
