@@ -539,7 +539,8 @@ class TestAdminModerationQueue:
         assert response.status_code == 200, f"Moderation queue failed: {response.text}"
         data = response.json()
         
-        items = data.get("items", [])
+        # API returns list directly, not {"items": [...]}
+        items = data if isinstance(data, list) else data.get("items", [])
         print(f"Pending items in queue: {len(items)}")
         
         # Check structure of items
