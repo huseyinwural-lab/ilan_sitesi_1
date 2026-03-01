@@ -437,8 +437,12 @@ const ListingCategorySelect = () => {
     setMobileColumnIndex(0);
     setSearchTerm('');
     setSearchResults([]);
+    setExpandedColumns({});
+    const taxonomySource = moduleKey === 'vehicle' ? 'vehicle_master' : 'category_tree';
+    localStorage.setItem('ilan_ver_taxonomy_source', taxonomySource);
+    localStorage.setItem('ilan_ver_module', moduleKey);
     updateUrlState(moduleKey, []);
-    trackEvent('step_select_module', { module: moduleKey });
+    trackEvent('step_select_module', { module: moduleKey, taxonomy_source: taxonomySource });
   };
 
   const handleSelectCategory = async (columnIndex, category) => {
