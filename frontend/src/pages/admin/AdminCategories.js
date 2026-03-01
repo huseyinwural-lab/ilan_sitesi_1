@@ -1031,7 +1031,7 @@ const AdminCategories = () => {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json().catch(() => ({}));
+      const data = await safeParseJson(res);
       if (res.ok) {
         return { ok: true, data, payload, autoAdjusted: attempt > 0 };
       }
