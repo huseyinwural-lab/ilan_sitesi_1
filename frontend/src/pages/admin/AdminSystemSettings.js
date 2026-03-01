@@ -874,7 +874,7 @@ export default function AdminSystemSettingsPage() {
 
       </div>
 
-      <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-google-maps-card">
+      <div ref={googleMapsCardRef} className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-google-maps-card">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h2 className="text-lg font-semibold" data-testid="system-settings-google-maps-title">Google Maps (İlan Adres Akışı)</h2>
