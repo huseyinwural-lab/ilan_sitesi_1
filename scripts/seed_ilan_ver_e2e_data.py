@@ -278,7 +278,7 @@ async def main():
             ]),
             ("arsa", "Arsa", [
                 ("imara-acik", "Imara Acik Arsa", leaf_schema("Parsel No", "Tapu Bilgileri")),
-                ("tarla", "Tarla", leaf_schema("Arazi Tipi", "Tarla Özellik")),
+                ("tarla", "Tarla", leaf_schema("Arazi Tipi", "Tarla Ozellik")),
             ]),
         ]
 
