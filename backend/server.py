@@ -10864,12 +10864,13 @@ def _normalize_google_place_details(raw: dict) -> dict:
     result = raw.get("result") if isinstance(raw.get("result"), dict) else {}
     components = result.get("address_components") if isinstance(result.get("address_components"), list) else []
 
-    def _find_component(*component_types: str) -> Optional[str]:
+    def _find_component(*component_types: str, use_short_name: bool = False) -> Optional[str]:
         expected = set(component_types)
         for comp in components:
             c_types = set(comp.get("types") or [])
             if expected.issubset(c_types):
-                value = str(comp.get("long_name") or "").strip()
+                source_key = "short_name" if use_short_name else "long_name"
+                value = str(comp.get(source_key) or comp.get("long_name") or "").strip()
                 if value:
                     return value
         return None
@@ -10890,7 +10891,7 @@ def _normalize_google_place_details(raw: dict) -> dict:
         "district": district,
         "neighborhood": neighborhood,
         "postal_code": _find_component("postal_code"),
-        "country_code": (_find_component("country") or "")[:2].upper() or None,
+        "country_code": (_find_component("country", use_short_name=True) or "")[:2].upper() or None,
         "latitude": float(lat) if isinstance(lat, (int, float)) else None,
         "longitude": float(lng) if isinstance(lng, (int, float)) else None,
         "components": components,
