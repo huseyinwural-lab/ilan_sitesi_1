@@ -10831,6 +10831,62 @@ async def _resolve_google_maps_country_options(session: AsyncSession) -> List[di
     return options
 
 
+def _default_listing_create_config() -> dict:
+    return {
+        "apply_modules": ["vehicle", "real_estate", "other"],
+        "country_selector_mode": "radio",
+        "postal_code_required": True,
+        "map_required": True,
+        "street_selection_required": True,
+        "require_city": True,
+        "require_district": False,
+        "require_neighborhood": False,
+        "require_latitude": False,
+        "require_longitude": False,
+        "require_address_line": True,
+    }
+
+
+def _normalize_listing_create_config(raw: Any) -> dict:
+    base = _default_listing_create_config()
+    if not isinstance(raw, dict):
+        return base
+
+    modules = raw.get("apply_modules") if isinstance(raw.get("apply_modules"), list) else base["apply_modules"]
+    normalized_modules: List[str] = []
+    for item in modules:
+        key = str(item or "").strip().lower()
+        if key in {"vehicle", "real_estate", "other"} and key not in normalized_modules:
+            normalized_modules.append(key)
+    if not normalized_modules:
+        normalized_modules = base["apply_modules"]
+
+    mode = str(raw.get("country_selector_mode") or base["country_selector_mode"]).strip().lower()
+    if mode not in {"radio", "select"}:
+        mode = "radio"
+
+    return {
+        "apply_modules": normalized_modules,
+        "country_selector_mode": mode,
+        "postal_code_required": bool(raw.get("postal_code_required", base["postal_code_required"])),
+        "map_required": bool(raw.get("map_required", base["map_required"])),
+        "street_selection_required": bool(raw.get("street_selection_required", base["street_selection_required"])),
+        "require_city": bool(raw.get("require_city", base["require_city"])),
+        "require_district": bool(raw.get("require_district", base["require_district"])),
+        "require_neighborhood": bool(raw.get("require_neighborhood", base["require_neighborhood"])),
+        "require_latitude": bool(raw.get("require_latitude", base["require_latitude"])),
+        "require_longitude": bool(raw.get("require_longitude", base["require_longitude"])),
+        "require_address_line": bool(raw.get("require_address_line", base["require_address_line"])),
+    }
+
+
+async def _resolve_listing_create_config(session: AsyncSession) -> dict:
+    setting = await _get_system_setting_by_key(session, LISTING_CREATE_CONFIG_SETTING_KEY, None)
+    if not setting:
+        return _default_listing_create_config()
+    return _normalize_listing_create_config(setting.value)
+
+
 def _check_places_rate_limit(request: Request) -> tuple[bool, int, int]:
     if request.client and request.client.host:
         client_key = request.client.host
