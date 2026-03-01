@@ -84,6 +84,10 @@ export default function ListingPreview() {
       }
       setSuccess('İlan başarıyla admin onay kuyruğuna gönderildi.');
       setPreview((prev) => (prev ? { ...prev, status: data.status, flow_state: data.flow_state } : prev));
+      const targetDetailUrl = data?.detail_url || `/ilan/${listingId}?preview=1`;
+      setTimeout(() => {
+        navigate(targetDetailUrl);
+      }, 700);
     } catch (err) {
       setError(err.message || 'Onaya gönderim sırasında hata oluştu');
     } finally {
