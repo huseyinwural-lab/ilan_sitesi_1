@@ -20807,6 +20807,229 @@ async def admin_list_categories(
     }
 
 
+REAL_ESTATE_STANDARD_LEVELS = {
+    "l1": ["Emlak"],
+    "l2": ["Konut", "Ticari Alan", "Arsa"],
+    "l3": ["Satılık", "Kiralık", "Günlük Kiralık"],
+    "l4": ["Daire", "Müstakil Ev", "Köşk & Konak", "Bina", "Çiftlik Evi"],
+}
+
+
+def _normalize_category_name_key(name: str) -> str:
+    return (name or "").strip().lower()
+
+
+async def _list_category_siblings(
+    session: AsyncSession,
+    *,
+    parent_id: Optional[uuid.UUID],
+    module_value: str,
+    country_code: Optional[str],
+) -> list[Category]:
+    query = (
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(
+            Category.is_deleted.is_(False),
+            Category.module == module_value,
+        )
+    )
+    if parent_id:
+        query = query.where(Category.parent_id == parent_id)
+    else:
+        query = query.where(Category.parent_id.is_(None))
+    if country_code:
+        query = query.where(Category.country_code == country_code)
+    else:
+        query = query.where(Category.country_code.is_(None))
+    result = await session.execute(query.order_by(Category.sort_order.asc(), Category.created_at.asc()))
+    return result.scalars().all()
+
+
+async def _ensure_category_node(
+    session: AsyncSession,
+    *,
+    parent: Optional[Category],
+    module_value: str,
+    country_code: Optional[str],
+    name: str,
+    sort_order: int,
+) -> tuple[Category, bool]:
+    siblings = await _list_category_siblings(
+        session,
+        parent_id=parent.id if parent else None,
+        module_value=module_value,
+        country_code=country_code,
+    )
+
+    name_key = _normalize_category_name_key(name)
+    for sibling in siblings:
+        sibling_name = _pick_category_name(list(sibling.translations or []), _pick_category_slug(sibling.slug))
+        if _normalize_category_name_key(sibling_name) == name_key:
+            return sibling, False
+
+    base_slug = slugify(name) or _slugify_value(name) or f"cat-{uuid.uuid4().hex[:6]}"
+    used_slugs = {_pick_category_slug(item.slug) for item in siblings}
+    candidate_slug = base_slug
+    seq = 2
+    while candidate_slug in used_slugs:
+        candidate_slug = f"{base_slug}-{seq}"
+        seq += 1
+
+    now = datetime.now(timezone.utc)
+    path = f"{parent.path}.{candidate_slug}" if parent and parent.path else candidate_slug
+    depth = (parent.depth + 1) if parent else 0
+    allowed_countries = [country_code] if country_code else sorted(SUPPORTED_COUNTRIES)
+
+    category = Category(
+        id=uuid.uuid4(),
+        parent_id=parent.id if parent else None,
+        path=path,
+        depth=depth,
+        sort_order=sort_order,
+        module=module_value,
+        slug={"tr": candidate_slug, "en": candidate_slug, "de": candidate_slug},
+        icon=None,
+        image_url=None,
+        is_enabled=True,
+        is_visible_on_home=False,
+        is_deleted=False,
+        inherit_enabled=True,
+        override_enabled=None,
+        inherit_countries=True,
+        override_countries=None,
+        allowed_countries=allowed_countries,
+        listing_count=0,
+        country_code=country_code,
+        hierarchy_complete=True,
+        form_schema=None,
+        wizard_progress={"state": "draft"},
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(category)
+    await session.flush()
+
+    for lang in ("tr", "en", "de"):
+        session.add(
+            CategoryTranslation(
+                category_id=category.id,
+                language=lang,
+                name=name,
+                description=None,
+                meta_title=None,
+                meta_description=None,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+    await session.flush()
+    return category, True
+
+
+@api_router.post("/admin/categories/seed/real-estate-standard")
+async def admin_seed_real_estate_standard_hierarchy(
+    request: Request,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    country_code = (country or "DE").upper()
+    _assert_country_scope(country_code, current_user)
+
+    module_value = "real_estate"
+    created_count = 0
+    reused_count = 0
+
+    level_nodes = {}
+
+    for level1_index, level1_name in enumerate(REAL_ESTATE_STANDARD_LEVELS["l1"], start=1):
+        l1, created = await _ensure_category_node(
+            session,
+            parent=None,
+            module_value=module_value,
+            country_code=country_code,
+            name=level1_name,
+            sort_order=level1_index,
+        )
+        created_count += int(created)
+        reused_count += int(not created)
+        level_nodes.setdefault("l1", []).append(l1)
+
+        for level2_index, level2_name in enumerate(REAL_ESTATE_STANDARD_LEVELS["l2"], start=1):
+            l2, created = await _ensure_category_node(
+                session,
+                parent=l1,
+                module_value=module_value,
+                country_code=country_code,
+                name=level2_name,
+                sort_order=level2_index,
+            )
+            created_count += int(created)
+            reused_count += int(not created)
+
+            for level3_index, level3_name in enumerate(REAL_ESTATE_STANDARD_LEVELS["l3"], start=1):
+                l3, created = await _ensure_category_node(
+                    session,
+                    parent=l2,
+                    module_value=module_value,
+                    country_code=country_code,
+                    name=level3_name,
+                    sort_order=level3_index,
+                )
+                created_count += int(created)
+                reused_count += int(not created)
+
+                for level4_index, level4_name in enumerate(REAL_ESTATE_STANDARD_LEVELS["l4"], start=1):
+                    _node, created = await _ensure_category_node(
+                        session,
+                        parent=l3,
+                        module_value=module_value,
+                        country_code=country_code,
+                        name=level4_name,
+                        sort_order=level4_index,
+                    )
+                    created_count += int(created)
+                    reused_count += int(not created)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="CATEGORY_STANDARD_SCHEMA_SEEDED",
+        actor=current_user,
+        resource_type="category",
+        resource_id=None,
+        metadata={
+            "country_code": country_code,
+            "module": module_value,
+            "created_count": created_count,
+            "reused_count": reused_count,
+            "levels": REAL_ESTATE_STANDARD_LEVELS,
+        },
+        request=request,
+        country_code=country_code,
+    )
+    await session.commit()
+
+    result = await session.execute(
+        _build_admin_category_query(
+            country_code=country_code,
+            module_value=module_value,
+            active_flag=True,
+        ).order_by(Category.depth.asc(), Category.sort_order.asc(), Category.created_at.asc())
+    )
+    items = result.scalars().all()
+
+    return {
+        "ok": True,
+        "country": country_code,
+        "module": module_value,
+        "created_count": created_count,
+        "reused_count": reused_count,
+        "items": [_serialize_category_sql(item, include_schema=False, include_translations=False) for item in items],
+    }
+
+
 def _build_admin_category_query(
     *,
     country_code: Optional[str],
