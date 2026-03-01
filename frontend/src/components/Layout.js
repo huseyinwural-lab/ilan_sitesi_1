@@ -517,6 +517,7 @@ export default function Layout({ children }) {
     { path: '/admin/countries', icon: Globe, label: 'Ülkeler', roles: roles.system, testId: 'system-countries' },
     { path: '/admin/audit', icon: Clock, label: 'Denetim Kayıtları', roles: roles.auditViewer, testId: 'system-audit-logs' },
     { path: '/admin/system-settings', icon: Settings, label: 'Sistem Ayarları', roles: roles.system, testId: 'system-settings' },
+    { path: '/admin/system-settings?focus=google-maps', icon: Settings, label: 'Google Maps Ayarları', roles: roles.system, testId: 'system-google-maps-settings' },
   ];
 
   const filteredNavItems = navItems.filter(item => 
