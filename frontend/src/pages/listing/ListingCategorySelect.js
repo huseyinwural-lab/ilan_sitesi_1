@@ -578,7 +578,7 @@ const ListingCategorySelect = () => {
           module: moduleKey,
           country,
           path: path || [],
-          category_name: category.name,
+          category_name: getCategoryLabel(category),
         }),
       });
       if (!res.ok) return;
