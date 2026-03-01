@@ -116,6 +116,7 @@ const normalizeLabel = (category, language = 'tr') => {
 const normalizeNameKey = (value) => String(value || '').trim().toLowerCase();
 
 export default function HomePage() {
+  const { language } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [categoriesByModule, setCategoriesByModule] = useState({});
