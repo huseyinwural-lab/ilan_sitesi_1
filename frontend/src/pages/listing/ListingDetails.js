@@ -647,6 +647,7 @@ export default function ListingDetails() {
       setPlacesError('');
       try {
         const params = new URLSearchParams({ q: query, country });
+        if (manualGoogleKey) params.set('manual_key', manualGoogleKey);
         const headers = {};
         if (manualGoogleKey) headers['X-Google-Maps-Key'] = manualGoogleKey;
         const res = await fetch(`${API}/places/autocomplete?${params.toString()}`, {
@@ -684,6 +685,7 @@ export default function ListingDetails() {
     setPlacesError('');
     try {
       const params = new URLSearchParams({ place_id: suggestion.place_id, country });
+      if (manualGoogleKey) params.set('manual_key', manualGoogleKey);
       const headers = {};
       if (manualGoogleKey) headers['X-Google-Maps-Key'] = manualGoogleKey;
       const res = await fetch(`${API}/places/details?${params.toString()}`, { headers });
