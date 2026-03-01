@@ -123,6 +123,19 @@ const TRANSACTION_TYPE_OPTIONS = [
   { value: "gunluk", label: "Günlük Kiralık" },
 ];
 
+const VEHICLE_LEVEL0_TEMPLATES = [
+  "Otomobil",
+  "SUV",
+  "Pickup",
+  "Motosiklet",
+  "Minibüs & Midibüs",
+  "Otobüs",
+  "Kamyon & Kamyonet",
+  "Çekici",
+  "Dorse Römork",
+  "Oto Kurtarıcı & Taşıyıcı",
+];
+
 const WIZARD_STEPS = [
   { id: "hierarchy", label: "Kategori" },
   { id: "core", label: "Çekirdek Alanlar" },
