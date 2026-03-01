@@ -675,9 +675,9 @@ const ListingCategorySelect = () => {
       localStorage.removeItem('ilan_ver_manual_trim_flag');
       localStorage.removeItem('ilan_ver_manual_trim');
     }
-    await saveRecentCategory(category, path, selectedModule);
     const targetRoute = selectedModule === 'vehicle' ? '/ilan-ver/arac-sec' : '/ilan-ver/detaylar';
     navigate(targetRoute);
+    void saveRecentCategory(category, path, selectedModule);
   }, [activeCategory, country, navigate, persistRecentToStorage, persistWizardSelection, saveRecentCategory, selectedModule, selectedModuleLabel, selectedPath]);
 
   const handleRecentContinue = () => {
