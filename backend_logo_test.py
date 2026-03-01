@@ -15,7 +15,7 @@ from typing import Dict, List, Any
 from PIL import Image
 
 # Use the environment variable from frontend/.env
-BASE_URL = "https://category-fix-8.preview.emergentagent.com/api"
+BASE_URL = "https://ad-posting-flow.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {"email": "admin@platform.com", "password": "Admin123!"}

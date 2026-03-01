@@ -1,7 +1,7 @@
 # TWO_FACTOR_CHALLENGE_EVIDENCE
 
 **Tarih:** 2026-02-24 12:50:30 UTC
-**Ortam URL:** https://category-fix-8.preview.emergentagent.com
+**Ortam URL:** https://ad-posting-flow.preview.emergentagent.com
 
 ## Akış
 - 2FA enable (user2@platform.com)

@@ -1,7 +1,7 @@
 # FINAL_520_ZERO_REPORT
 
 **Tarih:** 2026-02-24 11:21:40 UTC
-**Ortam URL:** https://category-fix-8.preview.emergentagent.com
+**Ortam URL:** https://ad-posting-flow.preview.emergentagent.com
 **Commit Ref:** 33a58b0d
 **Durum:** CLOSED
 **P0 Kapsam Notu:** P0 = Mongo runtime 0-iz + 520=0 + Dealer/Consumer E2E

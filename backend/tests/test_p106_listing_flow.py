@@ -13,7 +13,7 @@ import uuid
 import pytest
 import requests
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://category-fix-8.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ad-posting-flow.preview.emergentagent.com')
 
 class TestAdminCategoriesRootOnly:
     """Test Admin Categories list returns only root categories (parent_id null)"""

@@ -20,7 +20,7 @@ import json
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://category-fix-8.preview.emergentagent.com"
+    BASE_URL = "https://ad-posting-flow.preview.emergentagent.com"
 
 ADMIN_EMAIL = "admin@platform.com"
 ADMIN_PASSWORD = "Admin123!"

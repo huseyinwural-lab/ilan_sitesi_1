@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 class Sprint4APITester:
-    def __init__(self, base_url="https://category-fix-8.preview.emergentagent.com"):
+    def __init__(self, base_url="https://ad-posting-flow.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.admin_token = None
