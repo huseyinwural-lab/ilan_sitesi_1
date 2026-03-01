@@ -220,7 +220,7 @@ export default function ListingDetails() {
 
     const payload = {
       category_id: selectedCategory.id,
-      country: (localStorage.getItem('selected_country') || 'DE').toUpperCase(),
+      country: (form.address_country || localStorage.getItem('selected_country') || 'DE').toUpperCase(),
       selected_category_path: selectedPath,
     };
     const vehiclePayload = buildVehiclePayload();
@@ -244,7 +244,7 @@ export default function ListingDetails() {
     setListingId(nextId);
     localStorage.setItem('ilan_ver_listing_id', nextId);
     return nextId;
-  }, [buildVehiclePayload, listingId, selectedCategory?.id, selectedPath]);
+  }, [buildVehiclePayload, form.address_country, listingId, selectedCategory?.id, selectedPath]);
 
   const patchDraft = useCallback(async (blockKey, payload, options = {}) => {
     const { silent = false } = options;
