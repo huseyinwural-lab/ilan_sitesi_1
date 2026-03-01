@@ -13,6 +13,8 @@ import AdminDealerPortalConfig from '@/pages/admin/AdminDealerPortalConfigDraft'
 import AdminVehicleMakes from '@/pages/admin/AdminVehicleMakes';
 import AdminVehicleModels from '@/pages/admin/AdminVehicleModels';
 import AdminVehicleMasterImport from '@/pages/admin/AdminVehicleMasterImport';
+import AdminVehicleMakes from '@/pages/admin/AdminVehicleMakes';
+import AdminVehicleModels from '@/pages/admin/AdminVehicleModels';
 
 import AuditLogs from '@/pages/AuditLogs';
 import ModerationQueue from '@/pages/ModerationQueue';
