@@ -464,6 +464,13 @@ const ListingCategorySelect = () => {
     setSelectionComplete(false);
     setActiveCategory(null);
     setColumns(trimmedColumns);
+    setExpandedColumns((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((key) => {
+        if (Number(key) >= columnIndex + 1) delete next[key];
+      });
+      return next;
+    });
 
     const nextPathIds = nextPath.map((item) => item.id);
     updateUrlState(selectedModule, nextPathIds);
