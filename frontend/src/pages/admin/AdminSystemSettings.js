@@ -831,6 +831,112 @@ export default function AdminSystemSettingsPage() {
 
       </div>
 
+      <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-google-maps-card">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-lg font-semibold" data-testid="system-settings-google-maps-title">Google Maps (İlan Adres Akışı)</h2>
+            <div className="text-xs text-muted-foreground" data-testid="system-settings-google-maps-subtitle">
+              Key: {GOOGLE_MAPS_SETTINGS_KEY} · Ülke seçenekleri: {GOOGLE_MAPS_COUNTRY_OPTIONS_KEY}
+            </div>
+          </div>
+          <div className={`text-xs font-semibold px-2 py-1 rounded-full ${googleMapsConfig.key_configured ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`} data-testid="system-settings-google-maps-key-status">
+            {googleMapsConfig.key_configured ? 'Key Tanımlı' : 'Key Eksik'}
+          </div>
+        </div>
+
+        {googleMapsLoading ? (
+          <div className="text-xs text-muted-foreground" data-testid="system-settings-google-maps-loading">Yükleniyor…</div>
+        ) : (
+          <>
+            <div className="space-y-1" data-testid="system-settings-google-maps-key-wrap">
+              <label className="text-xs text-slate-600" data-testid="system-settings-google-maps-key-label">GOOGLE_MAPS_API_KEY</label>
+              <input
+                type="password"
+                value={googleMapsForm.api_key}
+                onChange={(e) => setGoogleMapsForm((prev) => ({ ...prev, api_key: e.target.value }))}
+                placeholder={googleMapsConfig.api_key_masked || 'AIza...'}
+                className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                data-testid="system-settings-google-maps-key-input"
+              />
+              <div className="text-[11px] text-slate-500" data-testid="system-settings-google-maps-key-hint">
+                Yeni key girmezseniz mevcut kayıt korunur.
+              </div>
+            </div>
+
+            <div className="space-y-2" data-testid="system-settings-google-maps-country-options">
+              <div className="text-xs font-medium text-slate-700" data-testid="system-settings-google-maps-country-options-title">Web tarafında radio olarak gösterilecek ülkeler</div>
+              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3" data-testid="system-settings-google-maps-country-grid">
+                {(googleMapsConfig.country_options || []).map((country) => {
+                  const code = country?.code;
+                  const checked = (googleMapsForm.country_codes || []).includes(code);
+                  return (
+                    <label key={code} className="inline-flex items-center gap-2 rounded-md border px-2 py-2 text-xs" data-testid={`system-settings-google-maps-country-wrap-${code}`}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleGoogleMapsCountryCode(code)}
+                        data-testid={`system-settings-google-maps-country-${code}`}
+                      />
+                      <span>{country?.name || code} ({code})</span>
+                    </label>
+                  );
+                })}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2" data-testid="system-settings-google-maps-country-custom-row">
+                <input
+                  value={googleMapsForm.custom_country_code}
+                  onChange={(e) => setGoogleMapsForm((prev) => ({ ...prev, custom_country_code: e.target.value.toUpperCase() }))}
+                  placeholder="Örn: FR"
+                  maxLength={2}
+                  className="h-9 w-24 rounded-md border bg-background px-3 text-sm"
+                  data-testid="system-settings-google-maps-country-custom-input"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddGoogleMapsCountryCode}
+                  className="h-9 px-3 rounded-md border text-sm"
+                  data-testid="system-settings-google-maps-country-custom-add"
+                >
+                  Ülke Ekle
+                </button>
+              </div>
+
+              <div className="text-xs text-slate-500" data-testid="system-settings-google-maps-country-selected">
+                Seçilen kodlar: {(googleMapsForm.country_codes || []).join(', ') || '-'}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2" data-testid="system-settings-google-maps-actions">
+              <button
+                type="button"
+                onClick={handleSaveGoogleMapsSettings}
+                disabled={googleMapsSaving}
+                className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
+                data-testid="system-settings-google-maps-save"
+              >
+                {googleMapsSaving ? 'Kaydediliyor…' : 'Google Maps Ayarlarını Kaydet'}
+              </button>
+              <button
+                type="button"
+                onClick={fetchGoogleMapsSettings}
+                className="h-9 px-3 rounded-md border text-sm"
+                data-testid="system-settings-google-maps-refresh"
+              >
+                Yenile
+              </button>
+            </div>
+
+            {googleMapsError ? (
+              <div className="text-xs text-rose-600" data-testid="system-settings-google-maps-error">{googleMapsError}</div>
+            ) : null}
+            {googleMapsNotice ? (
+              <div className="text-xs text-emerald-700" data-testid="system-settings-google-maps-notice">{googleMapsNotice}</div>
+            ) : null}
+          </>
+        )}
+      </div>
+
       {isSystemAdmin && (
         <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-meili-card">
           <div className="flex items-start justify-between gap-3 flex-wrap">
