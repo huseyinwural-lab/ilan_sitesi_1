@@ -1,5 +1,5 @@
 # FAZ EU Panel — Ürün Gereksinimleri
-**Son güncelleme:** 2026-03-01 12:20:00 UTC (Vehicle Master Import JSON/Excel düzeltmeleri)
+**Son güncelleme:** 2026-03-01 13:05:00 UTC (Araç master görünürlük + toplu silme)
 
 ## Orijinal Problem
 Avrupa odaklı ilan platformu için full-stack (React + FastAPI + PostgreSQL) bir sistem isteniyor. Yönetici panelinde kategori hiyerarşisi, ilan oluşturma akışı ve vitrin/doping yönetimi; public tarafta ise kategori + vitrin listeleri ve ilan verme akışı uçtan uca çalışmalı.
