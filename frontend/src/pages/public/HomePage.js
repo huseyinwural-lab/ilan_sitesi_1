@@ -273,7 +273,7 @@ export default function HomePage() {
         return null;
       };
 
-      const l1OrderMode = homeCategoryLayout.module_l1_order_mode?.[moduleKey] || 'manual';
+      const l1OrderMode = homeCategoryLayout.module_l1_order_mode?.[moduleKey] || 'alphabetical';
 
       const level1Allowed = new Set(REAL_ESTATE_DISPLAY_SCHEMA.l1.map((name) => normalizeNameKey(name)));
       const level2Allowed = new Set(REAL_ESTATE_DISPLAY_SCHEMA.l2.map((name) => normalizeNameKey(name)));
