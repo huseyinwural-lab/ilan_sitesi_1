@@ -20886,6 +20886,70 @@ async def admin_save_google_maps_settings(
     }
 
 
+@api_router.get("/admin/system-settings/listing-create")
+async def admin_get_listing_create_config(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    config = await _resolve_listing_create_config(session)
+    setting = await _get_system_setting_by_key(session, LISTING_CREATE_CONFIG_SETTING_KEY, None)
+    return {
+        "config": config,
+        "setting_id": str(setting.id) if setting else None,
+        "key": LISTING_CREATE_CONFIG_SETTING_KEY,
+    }
+
+
+@api_router.post("/admin/system-settings/listing-create")
+async def admin_save_listing_create_config(
+    payload: ListingCreateConfigPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    normalized = _normalize_listing_create_config(payload.model_dump())
+    now_ts = datetime.now(timezone.utc)
+
+    setting = await _get_system_setting_by_key(session, LISTING_CREATE_CONFIG_SETTING_KEY, None)
+    if setting:
+        setting.value = normalized
+        setting.description = setting.description or "Listing create flow config"
+        setting.updated_at = now_ts
+    else:
+        setting = SystemSetting(
+            key=LISTING_CREATE_CONFIG_SETTING_KEY,
+            value=normalized,
+            country_code=None,
+            is_readonly=False,
+            description="Listing create flow config",
+            created_at=now_ts,
+            updated_at=now_ts,
+        )
+        session.add(setting)
+        await session.flush()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="LISTING_CREATE_CONFIG_UPDATED",
+        actor=current_user,
+        resource_type="system_setting",
+        resource_id=str(setting.id),
+        metadata=normalized,
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "config": normalized,
+        "setting_id": str(setting.id),
+    }
+
+
 @api_router.post("/admin/system-settings/cloudflare")
 async def admin_update_cloudflare_config(
     payload: CloudflareConfigPayload,
