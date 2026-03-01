@@ -33683,6 +33683,20 @@ async def get_site_home_category_layout(
     return JSONResponse(content=content, headers={"Cache-Control": "no-store"})
 
 
+@api_router.get("/site/listing-design")
+async def get_site_listing_design(
+    session: AsyncSession = Depends(get_sql_session),
+):
+    config = await _resolve_listing_site_design_config(session)
+    return JSONResponse(
+        content={
+            "config": config,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        },
+        headers={"Cache-Control": "no-store"},
+    )
+
+
 @api_router.get("/admin/site/home-category-layout")
 async def get_home_category_layout_admin(
     request: Request,
@@ -33754,6 +33768,76 @@ async def save_home_category_layout_admin(
     return {
         "ok": True,
         "id": str(setting.id),
+        "config": normalized,
+        "updated_at": setting.updated_at.isoformat() if setting.updated_at else None,
+    }
+
+
+@api_router.get("/admin/site/listing-design")
+async def get_admin_listing_design(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    setting = await _get_system_setting_by_key(session, LISTING_SITE_DESIGN_SETTING_KEY, None)
+    config = await _resolve_listing_site_design_config(session)
+    return {
+        "config": config,
+        "setting_id": str(setting.id) if setting else None,
+        "updated_at": setting.updated_at.isoformat() if setting and setting.updated_at else None,
+    }
+
+
+@api_router.put("/admin/site/listing-design")
+async def save_admin_listing_design(
+    payload: ListingSiteDesignPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    normalized = _normalize_listing_site_design_config(payload.config)
+    setting = await _get_system_setting_by_key(session, LISTING_SITE_DESIGN_SETTING_KEY, None)
+    now_ts = datetime.now(timezone.utc)
+
+    if setting:
+        setting.value = normalized
+        setting.updated_at = now_ts
+        setting.description = setting.description or "Listing site design config"
+    else:
+        setting = SystemSetting(
+            key=LISTING_SITE_DESIGN_SETTING_KEY,
+            value=normalized,
+            country_code=None,
+            is_readonly=False,
+            description="Listing site design config",
+            created_at=now_ts,
+            updated_at=now_ts,
+        )
+        session.add(setting)
+        await session.flush()
+
+    await _write_audit_log_sql(
+        session=session,
+        action="LISTING_SITE_DESIGN_UPDATED",
+        actor=current_user,
+        resource_type="system_setting",
+        resource_id=str(setting.id),
+        metadata={
+            "rows": normalized["step1"]["rows"],
+            "columns": normalized["step1"]["columns"],
+            "cards": len(normalized["step1"]["cards"]),
+            "continue_limit": normalized["step2"]["continue_limit"],
+        },
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "setting_id": str(setting.id),
         "config": normalized,
         "updated_at": setting.updated_at.isoformat() if setting.updated_at else None,
     }
