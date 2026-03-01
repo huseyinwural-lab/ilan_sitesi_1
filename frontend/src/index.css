@@ -304,4 +304,35 @@
     background-color: var(--bg-surface);
     color: var(--text-primary);
   }
+
+  .dark .bg-slate-50,
+  .dark .bg-slate-100 {
+    background-color: var(--bg-surface-muted);
+  }
+
+  .dark .border-slate-50,
+  .dark .border-slate-100,
+  .dark .border-slate-200,
+  .dark .border-slate-300 {
+    border-color: var(--border-subtle);
+  }
+
+  .dark .text-slate-900,
+  .dark .text-slate-800,
+  .dark .text-zinc-900,
+  .dark .text-zinc-800 {
+    color: var(--text-primary);
+  }
+
+  .dark .text-slate-700,
+  .dark .text-slate-600,
+  .dark .text-zinc-700,
+  .dark .text-zinc-600 {
+    color: var(--text-secondary);
+  }
+
+  .dark .text-slate-500,
+  .dark .text-zinc-500 {
+    color: var(--text-muted);
+  }
 }
