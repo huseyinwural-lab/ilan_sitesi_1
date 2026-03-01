@@ -157,7 +157,7 @@ export default function AdminHomeCategoryDesign() {
 
   const handleModuleMove = (index, direction) => {
     setConfig((prev) => {
-      const order = Array.isArray(prev.module_order) ? prev.module_order : moduleOrder;
+      const order = moduleOrder;
       const nextIndex = index + direction;
       if (nextIndex < 0 || nextIndex >= order.length) return prev;
       return {
