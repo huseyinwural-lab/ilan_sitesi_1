@@ -1,123 +1,112 @@
-# PRD — İlan Ver Overhaul (Canlı Çalışma Dokümanı)
+# PRD — İlan Ver Overhaul + Stabilizasyon
 
-## 1) Orijinal Problem Tanımı
-Kullanıcı, mevcut full-stack uygulamada (React + FastAPI + PostgreSQL) özellikle **İlan Ver** akışını PDF standardına göre yeniden inşa etmek ve admin kontrollü kategori/modül yönetimi ile entegre etmek istedi.
+## Problem Özeti
+Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin kontrollü, deterministik, uçtan uca çalışır hale getirmekti.
+Öncelik: P0 (İlan Ver), ardından P1 stabilizasyon (Vitrin yansıma + urgent sayfa), sonra P2 UX güçlendirme.
 
-Ana hedefler:
-- İlan 1: Modül grid seçimi (admin config kontrollü)
-- İlan 2: Sonsuz seviye kategori seçimi + Vasıta master data entegrasyonu
-- İlan 3: 8 bloklu form + autosave + doğrulama + preview/submit
-- Backend: Draft -> Preview Ready -> Submitted state machine + idempotency + audit
-
----
-
-## 2) Mevcut Mimari
-- **Frontend:** React (route tabanlı ilan akışı)
-  - `/ilan-ver` -> `ListingCategorySelect.js`
-  - `/ilan-ver/arac-sec` -> `VehicleSelector.js`
-  - `/ilan-ver/detaylar` -> `ListingDetails.js`
-  - `/ilan-ver/onizleme` -> `ListingPreview.js`
-- **Backend:** FastAPI (monolith `backend/server.py`)
-  - İlan draft/patch/preview-ready/submit endpoints
-  - Kategori children endpoint
-  - Vehicle years/makes/models/trims endpoint
-  - Home category layout config endpoint
-- **DB:** PostgreSQL
+## Mimari
+- Frontend: React
+  - `/ilan-ver` (kategori/modül)
+  - `/ilan-ver/arac-sec` (vasıta)
+  - `/ilan-ver/detaylar` (8 blok form)
+  - `/ilan-ver/onizleme` (submit)
+- Backend: FastAPI (`backend/server.py`)
+  - listing flow state machine
+  - places/autocomplete proxy + guard
+  - homepage/showcase/search uçları
+- DB: PostgreSQL
 
 ---
 
-## 3) Bu Iterasyonda Tamamlananlar (2026-03-01)
+## 2026-03-01 Tamamlananlar
 
-### P0 — İlan 1 (Module Grid)
-- Modül grid fallback değerleri **2x4** olacak şekilde güncellendi.
-  - Backend default: `listing_module_grid_columns=4`
-  - Frontend default: `listing_module_grid_columns=4`
-- `listing_lx_limit` fallback **5** olacak şekilde güncellendi (Devamını Gör için).
-- Modüller deterministik sıralama mantığıyla render ediliyor (config order + stable fallback).
-- Modül context persist iyileştirildi:
-  - `ilan_ver_module`
-  - `ilan_ver_module_id`
-  - URL query `module_id`
+### P0 — Google Autocomplete Real Mode (manuel key destekli)
+- Backend eklendi:
+  - `GET /api/places/config`
+  - `GET /api/places/autocomplete`
+  - `GET /api/places/details`
+- Guard davranışı:
+  - Env key varsa real mode
+  - Env key yoksa fallback
+  - Kullanıcı manuel key girdiğinde (`manual_key` / header) runtime real çağrı
+- Rate limit eklendi (endpoint bazlı koruma)
+- Frontend adres bloğu:
+  - `GOOGLE_MAPS_API_KEY` manuel giriş alanı
+  - Debounce autocomplete
+  - Suggestion list + detay seçimi
+  - Normalize alanlar: **il, ilçe, mahalle, lat/lng**
+  - Draft PATCH ile adres bloğu autosave
 
-### P0 — İlan 2 (Kategori + Vasıta)
-- Kolonlarda **Devamını Gör / Daha Az Göster** eklendi (varsayılan 5, config override destekli).
-- Vehicle trim listesinde duplicate önleme eklendi:
-  - Backend `/api/vehicle/trims` dedupe
-  - Frontend `VehicleSelector` dedupe
-- Vehicle seçim payload’ına `trim_key` eklendi ve localStorage persist edildi.
-- Vehicle modülde Continue routing davranışı stabil hale getirildi (`/ilan-ver/arac-sec`).
+### P0 — Zengin Seed Data + E2E Hazırlığı
+- Yeni script: `/app/scripts/seed_ilan_ver_e2e_data.py`
+- Seed kapsamı:
+  - Emlak: 3 root, her root altında 2 leaf
+  - Leaf bazlı farklı `form_schema` (dynamic/detail/module config)
+  - Vasıta: 3 marka + marka başına 2 model + model başına 2 trim
+- Trim uniqueness backend+frontend dedupe ile korundu.
 
-### P0 — İlan 3 (8 Blok Form)
-`ListingDetails.js` 8 blok yapısına genişletildi:
-1. Çekirdek alanlar
-2. Parametre alanları (schema/dynamic)
-3. Adres formu
-4. Detay grupları
-5. Fotoğraf (20 limit) + 1 video URL
-6. İletişim bilgileri
-7. İlan süresi (fiyat + indirim çizgisi kartları)
-8. Onay kutusu
+### P0 — İlan 3 UX Güçlendirme (P2 maddesi önden alındı)
+- Completion panel eklendi:
+  - Blok bazlı completion rule
+  - Global % tamamlanma barı
+  - Eksik blok checklist
+- Submit davranışı:
+  - %100 değilse submit bloklanır + uyarı
+- Analytics event akışı:
+  - `block_completed`
+  - `submit_blocked_incomplete`
 
-Ekler:
-- Blok bazlı autosave (PATCH draft)
-- Draft hydrate (var olan draft geri doldurma)
-- Client-side doğrulama
-- Eksik config durumunda blok bazlı disabled + admin uyarısı
+### P1 — Vitrin yansımama stabilizasyonu
+- Admin publish sonrası frontend revalidation eventleri eklendi:
+  - `showcase-layout-updated`
+  - `homepage-revalidate-requested`
+  - localStorage token set
+- HomePage revalidation:
+  - focus / visibility / storage / custom event dinleyicileri
+- Backend publish response zenginleştirildi:
+  - `published_at`
+  - `revalidate_token`
 
-> Not: Google autocomplete API key olmadığı durumda blok otomatik fallback ile manuel girişe düşer ve uyarı gösterir.
-
-### P0 — Backend State/Audit/Idempotency
-- Draft create için audit: `LISTING_DRAFT_CREATED`
-- Draft patch için audit: `LISTING_UPDATED`
-- Submit için audit: `LISTING_SUBMITTED`
-- Submit response’a `detail_url` eklendi: `/ilan/{id}?preview=1`
-- Idempotency tekrar çağrılarında `detail_url` korunuyor.
-
-### P0 — Preview + Detay Yönlendirme
-- `ListingPreview.js` submit sonrası `detail_url`’e redirect ediyor.
-
----
-
-## 4) Test Durumu
-
-### Yapılan Doğrulamalar
-- Backend curl/python testleri:
-  - create draft ✅
-  - patch draft ✅
-  - preview-ready ✅
-  - submit-review + idempotency ✅
-  - submit response `detail_url` ✅
-  - vehicle trims uniqueness ✅
-- Frontend smoke/playwright:
-  - `/ilan-ver` yüklenme ✅
-  - vehicle continue ile `/ilan-ver/arac-sec` yönlendirme ✅
-
-### Testing Agent Çıktısı
-- `/app/test_reports/iteration_69.json`
-- Agent bulgusu: vehicle continue routing medium issue
-- Bu issue bu iterasyonda düzeltildi ve self-test ile doğrulandı.
+### P1 — Urgent sayfa doğrulama
+- `doping_type=urgent` filtre + pagination test edildi
+- Performans için 50+ kayıt seviyesi doğrulandı (urgent total > 70)
 
 ---
 
-## 5) Açık İşler / Backlog
+## Test Durumu
 
-### P0 (devam eden)
-- İlan 3’te gerçek Google autocomplete entegrasyonu (API key sağlanırsa)
-- Emlak tarafında zengin seed/category verisi ile E2E senaryo genişletme
-- Leaf lock davranışının admin/create tarafında kapsamlı doğrulaması
+### Testing Agent
+- `/app/test_reports/iteration_70.json`
+- Backend: 20/20 PASS
+- Frontendde HomePage loading/urgent sorunları raporlandı, bu iterasyonda düzeltildi.
 
-### P1
-- Vitrin değişikliği anasayfaya yansımama bug fix
-- Acil ilanlar sayfası canlı veri + pagination doğrulama
+### Self-Test Sonuçları (fix sonrası)
+- HomePage:
+  - loading state 9sn içinde kapanıyor
+  - urgent sayaç `ACİL (70)`
+- Places config:
+  - key yokken fallback güvenli dönüş
+- Search urgent:
+  - pagination doğru (total/pages doğru)
+
+---
+
+## Kalan İşler
+
+### P0 kalan
+- Kullanıcı gerçek GOOGLE_MAPS_API_KEY girdiğinde canlı autocomplete doğrulamasını birlikte final PASS (network/key doğrulaması).
+- Adres seç -> kaydet -> detail sayfasında gerçek canlı yer seçimi ile final acceptance testi.
+
+### P1 kalan
+- Vitrin bug’i için farklı admin senaryolarında (çoklu tab/çoklu ülke) regresyon turu.
+- Urgent listede empty-state metni UX iyileştirmesi (API yerine UI metin standardizasyonu).
 
 ### P2
-- Category Builder drag&drop sıralama
-- Batch publish scheduler
-- Slack/SMTP/PagerDuty alert entegrasyonları
-- PDF piksel uyum polish
+- Category Builder drag&drop + batch reorder API + `CATEGORY_REORDERED` audit.
+- Batch publish scheduler + Slack/SMTP/PagerDuty entegrasyonları + ops health metriği.
 
 ---
 
-## 6) Mock Durumu
+## Mock Durumu
 - MOCKED API: **Yok**
-
+- Google autocomplete şu an gerçek mod/fallback guard ile hazır; gerçek sonuçlar kullanıcı key girişiyle çalışacak şekilde implement edildi.
