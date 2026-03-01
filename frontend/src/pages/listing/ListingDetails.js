@@ -478,7 +478,18 @@ export default function ListingDetails() {
       {
         key: 'address',
         label: 'Adres formu',
-        complete: !addressBlockEnabled || Boolean(form.address_country && form.postal_code.trim() && form.city.trim()),
+        complete: !addressBlockEnabled || !listingAddressConfigActive || Boolean(
+          form.address_country
+          && (!listingCreateConfig.postal_code_required || form.postal_code.trim())
+          && (!listingCreateConfig.require_city || form.city.trim())
+          && (!listingCreateConfig.require_district || form.district.trim())
+          && (!listingCreateConfig.require_neighborhood || form.neighborhood.trim())
+          && (!listingCreateConfig.require_latitude || form.latitude !== '')
+          && (!listingCreateConfig.require_longitude || form.longitude !== '')
+          && (!listingCreateConfig.require_address_line || form.address_line.trim())
+          && (!listingCreateConfig.map_required || postalLookupItem?.map_embed_url)
+          && (!listingCreateConfig.street_selection_required || selectedStreetPlaceId)
+        ),
       },
       { key: 'details', label: 'Detay grupları', complete: !detailBlockEnabled || !detailRequiredMissing },
       { key: 'media', label: 'Foto + Video', complete: !photoBlockEnabled || mediaItems.length > 0 },
@@ -490,7 +501,18 @@ export default function ListingDetails() {
   }, [
     acceptedTerms,
     addressBlockEnabled,
+    listingAddressConfigActive,
+    listingCreateConfig.map_required,
+    listingCreateConfig.postal_code_required,
+    listingCreateConfig.require_address_line,
+    listingCreateConfig.require_city,
+    listingCreateConfig.require_district,
+    listingCreateConfig.require_latitude,
+    listingCreateConfig.require_longitude,
+    listingCreateConfig.require_neighborhood,
+    listingCreateConfig.street_selection_required,
     form.address_country,
+    form.address_line,
     contactBlockEnabled,
     detailBlockEnabled,
     detailGroups,
@@ -503,11 +525,17 @@ export default function ListingDetails() {
     form.detail_values,
     form.duration_key,
     form.dynamic_values,
+    form.district,
+    form.latitude,
+    form.longitude,
+    form.neighborhood,
     form.postal_code,
     form.price,
     form.title,
     mediaItems.length,
+    postalLookupItem?.map_embed_url,
     photoBlockEnabled,
+    selectedStreetPlaceId,
   ]);
 
   const completionScore = useMemo(() => {
