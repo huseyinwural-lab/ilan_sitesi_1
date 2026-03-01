@@ -375,6 +375,55 @@ export default function AdminHomeCategoryDesign() {
         </div>
       </div>
 
+      <div className="rounded-xl border bg-white p-4" data-testid="home-category-listing-grid-card">
+        <div className="flex flex-wrap items-center justify-between gap-4" data-testid="home-category-listing-grid-header">
+          <div>
+            <div className="text-sm font-semibold" data-testid="home-category-listing-grid-title">İlan 1 Modül Grid</div>
+            <div className="text-xs text-slate-500" data-testid="home-category-listing-grid-hint">İlan ver sayfasındaki modül kutucuklarının satır/sütun sayısı.</div>
+          </div>
+          <div className="flex items-center gap-3" data-testid="home-category-listing-grid-controls">
+            <label className="text-xs text-slate-500">Satır</label>
+            <input
+              type="number"
+              min={1}
+              max={6}
+              value={config.listing_module_grid_rows}
+              onChange={(event) => setConfig((prev) => ({ ...prev, listing_module_grid_rows: Number(event.target.value) || 1 }))}
+              className="h-9 w-20 rounded-md border px-2 text-sm"
+              data-testid="home-category-listing-grid-rows"
+            />
+            <label className="text-xs text-slate-500">Sütun</label>
+            <input
+              type="number"
+              min={1}
+              max={6}
+              value={config.listing_module_grid_columns}
+              onChange={(event) => setConfig((prev) => ({ ...prev, listing_module_grid_columns: Number(event.target.value) || 1 }))}
+              className="h-9 w-20 rounded-md border px-2 text-sm"
+              data-testid="home-category-listing-grid-columns"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border bg-white p-4" data-testid="home-category-listing-limit-card">
+        <div className="flex flex-wrap items-center justify-between gap-4" data-testid="home-category-listing-limit-header">
+          <div>
+            <div className="text-sm font-semibold" data-testid="home-category-listing-limit-title">İlan 2 “Devamını Gör” Eşiği</div>
+            <div className="text-xs text-slate-500" data-testid="home-category-listing-limit-hint">Kategori listelerinde kaç öğeden sonra “Devamını Gör” çıkacağını belirler.</div>
+          </div>
+          <input
+            type="number"
+            min={5}
+            max={50}
+            value={config.listing_lx_limit}
+            onChange={(event) => setConfig((prev) => ({ ...prev, listing_lx_limit: Number(event.target.value) || 10 }))}
+            className="h-9 w-24 rounded-md border px-2 text-sm"
+            data-testid="home-category-listing-limit-input"
+          />
+        </div>
+      </div>
+
       <div className="grid gap-4" data-testid="home-category-module-list">
         {loading ? (
           <div className="rounded-md border bg-white p-4 text-sm text-slate-600" data-testid="home-category-loading">Yükleniyor...</div>
