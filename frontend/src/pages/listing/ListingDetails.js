@@ -236,6 +236,45 @@ export default function ListingDetails() {
     () => (listingCreateConfig.apply_modules || []).includes(activeModuleKey),
     [activeModuleKey, listingCreateConfig.apply_modules]
   );
+  const mediaConfig = useMemo(() => {
+    const raw = listingSiteDesign?.step3?.media && typeof listingSiteDesign.step3.media === 'object'
+      ? listingSiteDesign.step3.media
+      : {};
+    return {
+      max_photos: Math.max(1, Number(raw.max_photos) || 20),
+      max_videos: Math.max(0, Number(raw.max_videos) || 1),
+      max_file_size_mb: Math.max(1, Number(raw.max_file_size_mb) || 2),
+      accepted_types: Array.isArray(raw.accepted_types) && raw.accepted_types.length > 0
+        ? raw.accepted_types
+        : ['image/png', 'image/jpeg', 'image/webp'],
+    };
+  }, [listingSiteDesign?.step3?.media]);
+  const contactConfig = useMemo(() => {
+    const raw = listingSiteDesign?.step3?.contact && typeof listingSiteDesign.step3.contact === 'object'
+      ? listingSiteDesign.step3.contact
+      : {};
+    return {
+      allow_phone_toggle: raw.allow_phone_toggle !== false,
+      allow_message_toggle: raw.allow_message_toggle !== false,
+    };
+  }, [listingSiteDesign?.step3?.contact]);
+  const durationConfig = useMemo(() => {
+    const raw = listingSiteDesign?.step3?.duration && typeof listingSiteDesign.step3.duration === 'object'
+      ? listingSiteDesign.step3.duration
+      : {};
+    return {
+      show_discount_strike: raw.show_discount_strike !== false,
+    };
+  }, [listingSiteDesign?.step3?.duration]);
+  const termsConfig = useMemo(() => {
+    const raw = listingSiteDesign?.step3?.terms && typeof listingSiteDesign.step3.terms === 'object'
+      ? listingSiteDesign.step3.terms
+      : {};
+    return {
+      text: String(raw.text || 'İlan verme kurallarını okudum, kabul ediyorum.'),
+      required: raw.required !== false,
+    };
+  }, [listingSiteDesign?.step3?.terms]);
 
   const buildVehiclePayload = useCallback(() => {
     if (!selectedVehicle) return null;
