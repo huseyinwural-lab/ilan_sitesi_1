@@ -310,11 +310,25 @@ export default function ListingDetails() {
         country: (localStorage.getItem('selected_country') || 'DE').toUpperCase(),
         postal_code: form.postal_code,
         district: form.district,
+        neighborhood: form.neighborhood,
+        latitude: form.latitude === '' ? null : Number(form.latitude),
+        longitude: form.longitude === '' ? null : Number(form.longitude),
         address_line: form.address_line,
       },
       selected_category_path: selectedPath,
     }, { silent: true });
-  }, [addressBlockEnabled, form.address_line, form.city, form.district, form.postal_code, patchDraft, selectedPath]);
+  }, [
+    addressBlockEnabled,
+    form.address_line,
+    form.city,
+    form.district,
+    form.latitude,
+    form.longitude,
+    form.neighborhood,
+    form.postal_code,
+    patchDraft,
+    selectedPath,
+  ]);
 
   const saveDetailGroupsBlock = useCallback(async (overrideMap) => {
     if (!detailBlockEnabled) return;
