@@ -339,6 +339,13 @@ const AdminCategories = () => {
     model_count: 0,
     message: "",
   });
+  const [vehicleImportMode, setVehicleImportMode] = useState("");
+  const [vehicleImportPayload, setVehicleImportPayload] = useState("{\n  \"dry_run\": true\n}");
+  const [vehicleImportFile, setVehicleImportFile] = useState(null);
+  const [vehicleImportDryRun, setVehicleImportDryRun] = useState(true);
+  const [vehicleImportStatus, setVehicleImportStatus] = useState("");
+  const [vehicleImportError, setVehicleImportError] = useState("");
+  const [vehicleImportLoading, setVehicleImportLoading] = useState(false);
   const [orderPreview, setOrderPreview] = useState({
     checking: false,
     available: true,
