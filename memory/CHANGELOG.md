@@ -1,7 +1,7 @@
 # CHANGELOG
 
 ## Uygulanan Özellikler
-- **P107 Ana Site Kategorisi Tasarım Paneli (2026-03-01):** Admin e Site İç Tasarımı e Ana Site Kategorisi ekranı eklendi; modül ve L1 sırası yukarı/aşağı ile belirleniyor, kolon genişliği ayarlanıyor.
+- **P107 Ana Site Kategorisi Tasarım Paneli (2026-03-01):** Admin >e Site İç Tasarımı >e Ana Site Kategorisi ekranı eklendi; modül ve L1 sırası yukarı/aşağı ile belirleniyor, kolon genişliği ayarlanıyor.
 - **P107 Homepage Kategori Kolonu (2026-03-01):** Ana sayfa kategori kolonu artık admin config’ten geliyor; modül/L1 sırası, kolon genişliği ve “Devamını Gör” (ilk 5 L1) davranışı uygulanıyor.
 - **P106 Modül/L1 Sıra Zorunluluğu Kaldı (2026-03-01):** Yeni kategori üretiminde sıra numarası zorunluluğu ve çakışma engeli kaldırıldı.
 - **P106 Kardeş Mirası (2026-03-01):** Kademeli hiyerarşide Level 1→2’den itibaren kardeş yapı mirası eklendi; ilk kardeşin alt listesi şablon oluyor, yeni kardeşler otomatik klonlanıyor. Güncellemede “kardeşlere uygula mı?” onayı ve “Mirası Kopar” override butonu aktif.
