@@ -103,10 +103,11 @@ const formatPrice = (value, currency = 'EUR') => {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency, maximumFractionDigits: 0 }).format(numeric);
 };
 
-const normalizeLabel = (category) => {
+const normalizeLabel = (category, language = 'tr') => {
   if (!category) return '';
   const translated = Array.isArray(category.translations)
-    ? category.translations.find((item) => item?.language === 'tr')?.name
+    ? category.translations.find((item) => item?.language === language)?.name
+      || category.translations.find((item) => item?.language === 'tr')?.name
       || category.translations[0]?.name
     : '';
   return translated || category.name || category.slug || '';
