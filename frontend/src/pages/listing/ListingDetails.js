@@ -179,7 +179,9 @@ export default function ListingDetails() {
   const photoBlockEnabled = schemaReady && (moduleConfig.photos?.enabled !== false);
   const contactBlockEnabled = schemaReady && (moduleConfig.contact?.enabled !== false);
   const durationBlockEnabled = schemaReady && (moduleConfig.payment?.enabled !== false);
-  const googleAutocompleteEnabled = Boolean(process.env.REACT_APP_GOOGLE_MAPS_API_KEY);
+  const manualGoogleKey = String(form.google_maps_api_key || '').trim();
+  const googleAutocompleteEnabled = Boolean(placesConfig.real_mode || manualGoogleKey);
+  const googleModeLabel = placesConfig.real_mode ? 'Real API (Backend Key)' : manualGoogleKey ? 'Real API (Manuel Key)' : 'Fallback';
 
   const buildVehiclePayload = useCallback(() => {
     if (!selectedVehicle) return null;
