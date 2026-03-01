@@ -203,10 +203,42 @@ export default function HomePage() {
     };
 
     loadData();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadData();
+      }
+    };
+
+    const handleFocus = () => {
+      loadData();
+    };
+
+    const handleStorage = (event) => {
+      if (event.key === 'showcase_layout_updated_at' || event.key === 'homepage_revalidate_token') {
+        loadData();
+      }
+    };
+
+    const handleShowcaseUpdate = () => {
+      loadData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('showcase-layout-updated', handleShowcaseUpdate);
+    window.addEventListener('homepage-revalidate-requested', handleShowcaseUpdate);
+    document.addEventListener('visibilitychange', handleVisibility);
+
     const interval = setInterval(loadData, 5 * 60 * 1000);
     return () => {
       active = false;
       clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('showcase-layout-updated', handleShowcaseUpdate);
+      window.removeEventListener('homepage-revalidate-requested', handleShowcaseUpdate);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [countryCode]);
 
