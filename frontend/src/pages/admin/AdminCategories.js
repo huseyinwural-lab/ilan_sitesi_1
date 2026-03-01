@@ -378,6 +378,7 @@ const AdminCategories = () => {
   const [versions, setVersions] = useState([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [versionsError, setVersionsError] = useState("");
+  const [seedLoading, setSeedLoading] = useState(false);
   const [selectedVersions, setSelectedVersions] = useState([]);
   const [versionDetails, setVersionDetails] = useState({});
   const [lastSavedAt, setLastSavedAt] = useState("");
@@ -398,6 +399,41 @@ const AdminCategories = () => {
   }), []);
 
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const hierarchyPreviewRows = useMemo(() => {
+    if (!Array.isArray(items) || items.length === 0) return [];
+
+    const byParent = new Map();
+    items.forEach((item) => {
+      const parentKey = item.parent_id || "__root__";
+      if (!byParent.has(parentKey)) byParent.set(parentKey, []);
+      byParent.get(parentKey).push(item);
+    });
+
+    const sortItems = (arr) => [...arr].sort((a, b) => {
+      const depthCmp = Number(a.depth || 0) - Number(b.depth || 0);
+      if (depthCmp !== 0) return depthCmp;
+      const sortCmp = Number(a.sort_order || 0) - Number(b.sort_order || 0);
+      if (sortCmp !== 0) return sortCmp;
+      return String(a.name || "").localeCompare(String(b.name || ""), 'tr');
+    });
+
+    const rows = [];
+    const walk = (node, level) => {
+      rows.push({
+        id: node.id,
+        name: node.name,
+        level,
+        listing_count: Number(node.listing_count || 0),
+        module: node.module,
+      });
+      const children = sortItems(byParent.get(node.id) || []);
+      children.forEach((child) => walk(child, level + 1));
+    };
+
+    const roots = sortItems(byParent.get("__root__") || []);
+    roots.forEach((root) => walk(root, 1));
+    return rows;
+  }, [items]);
   const visibleItems = useMemo(() => {
     const rootOnlyItems = items.filter((item) => !item.parent_id);
 
@@ -738,6 +774,39 @@ const AdminCategories = () => {
       setSelectedIds([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSeedRealEstateStandard = async () => {
+    if (seedLoading) return;
+    setSeedLoading(true);
+    try {
+      const country = selectedCountry || 'DE';
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/seed/real-estate-standard?country=${encodeURIComponent(country)}`,
+        {
+          method: 'POST',
+          headers: authHeader,
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.detail?.message || data?.detail || 'Standart şema uygulanamadı.');
+      }
+      toast({
+        title: 'Standart Emlak Şeması Uygulandı',
+        description: `Oluşturulan: ${data?.created_count || 0}, mevcut: ${data?.reused_count || 0}`,
+      });
+      setListFilters((prev) => ({ ...prev, module: 'real_estate' }));
+      await fetchItems();
+    } catch (error) {
+      toast({
+        title: 'Şema uygulama hatası',
+        description: error.message || 'Bilinmeyen hata.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSeedLoading(false);
     }
   };
 
@@ -2983,13 +3052,24 @@ const AdminCategories = () => {
           <h1 className="text-2xl font-semibold text-slate-900">Kategoriler</h1>
           <p className="text-sm text-slate-700">İlan form şablonlarını yönetin.</p>
         </div>
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-          onClick={handleCreate}
-          data-testid="categories-create-open"
-        >
-          Yeni Kategori
-        </button>
+        <div className="flex items-center gap-2" data-testid="categories-header-actions">
+          <button
+            type="button"
+            className="px-4 py-2 border border-emerald-300 text-emerald-700 bg-emerald-50 rounded"
+            onClick={handleSeedRealEstateStandard}
+            disabled={seedLoading}
+            data-testid="categories-seed-real-estate-standard"
+          >
+            {seedLoading ? 'Uygulanıyor...' : 'Standart Emlak Şeması'}
+          </button>
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+            onClick={handleCreate}
+            data-testid="categories-create-open"
+          >
+            Yeni Kategori
+          </button>
+        </div>
       </div>
 
       <div className="bg-white border rounded-lg text-slate-900">
@@ -3065,6 +3145,40 @@ const AdminCategories = () => {
             )}
           </div>
         )}
+
+        <div className="border-b px-4 py-3 bg-slate-50" data-testid="categories-hierarchy-preview-wrap">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm font-semibold text-slate-900" data-testid="categories-hierarchy-preview-title">
+              Hiyerarşi Önizleme (L1 → L6)
+            </div>
+            <div className="text-xs text-slate-500" data-testid="categories-hierarchy-preview-meta">
+              Toplam düğüm: {hierarchyPreviewRows.length}
+            </div>
+          </div>
+
+          <div className="mt-2 max-h-52 overflow-auto rounded border bg-white p-2" data-testid="categories-hierarchy-preview-list">
+            {hierarchyPreviewRows.length === 0 ? (
+              <div className="text-xs text-slate-500" data-testid="categories-hierarchy-preview-empty">Önizleme için kategori bulunamadı.</div>
+            ) : hierarchyPreviewRows.map((row) => (
+              <div
+                key={row.id}
+                className="flex items-center justify-between gap-2 py-1 text-xs"
+                style={{ paddingLeft: `${Math.min(row.level - 1, 6) * 16}px` }}
+                data-testid={`categories-hierarchy-preview-row-${row.id}`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700" data-testid={`categories-hierarchy-preview-level-${row.id}`}>
+                    L{row.level}
+                  </span>
+                  <span className="truncate text-slate-800" data-testid={`categories-hierarchy-preview-name-${row.id}`}>{row.name}</span>
+                </div>
+                <span className="text-slate-500 whitespace-nowrap" data-testid={`categories-hierarchy-preview-count-${row.id}`}>
+                  ({row.listing_count})
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {selectedIds.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-4 py-3" data-testid="categories-bulk-actions-bar">
