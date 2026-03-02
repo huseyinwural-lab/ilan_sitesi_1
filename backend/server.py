@@ -3333,10 +3333,10 @@ DB_POOL_RECYCLE_RAW = os.environ.get("DB_POOL_RECYCLE")
 DB_POOL_DEBUG = os.environ.get("DB_POOL_DEBUG", "").lower() in {"1", "true", "yes"}
 DB_SSL_MODE = (os.environ.get("DB_SSL_MODE") or ("require" if APP_ENV in {"prod", "preview"} else "disable")).lower()
 
-STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
+STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY") or STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
-STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY") or STRIPE_API_KEY
-STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY")
+STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY") or os.environ.get("REACT_APP_STRIPE_PUBLIC_KEY")
 
 EMAIL_PROVIDER = (os.environ.get("EMAIL_PROVIDER") or "mock").lower()
 EMAIL_PROVIDER_OPTIONS = {"mock", "sendgrid"}
