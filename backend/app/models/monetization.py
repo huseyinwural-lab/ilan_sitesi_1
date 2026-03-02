@@ -38,7 +38,7 @@ class UserSubscription(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
     plan_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("plans.id"), nullable=False)
 
-    status: Mapped[str] = mapped_column(String(20), default="trial", index=True)
+    status: Mapped[str] = mapped_column(String(20), default="trialing", index=True)
 
     current_period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     current_period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)

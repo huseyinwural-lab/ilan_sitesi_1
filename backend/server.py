@@ -54,6 +54,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.dialects.postgresql.asyncpg import AsyncAdapt_asyncpg_dbapi
 import html
 import stripe
+from decimal import Decimal, ROUND_HALF_UP
 
 from app.core.config import settings
 
@@ -95,6 +96,14 @@ from app.models.billing import VatRate
 from app.models.monetization import UserSubscription
 from app.models.admin_invoice import AdminInvoice
 from app.models.payment import Payment, PaymentTransaction, ListingPayment, ProcessedWebhookEvent
+from app.models.finance_v2 import (
+    FinanceProduct,
+    FinanceProductPrice,
+    TaxProfile,
+    FinanceInvoiceSequence,
+    LedgerAccount,
+    LedgerEntry,
+)
 from app.models.message_report import MessageReport
 from app.models.webhook_event_log import WebhookEventLog
 from app.models.category import Category, CategoryTranslation
@@ -1708,6 +1717,7 @@ async def lifespan(app: FastAPI):
             await _ensure_wizard_progress_column(conn)
             await _ensure_listing_doping_columns(conn)
             await _ensure_pricing_campaign_item_columns(conn)
+            await _ensure_finance_v2_columns(conn)
     except Exception as exc:
         logging.getLogger("sql_config").warning("SQL init skipped: %s", exc)
 
@@ -1720,6 +1730,7 @@ async def lifespan(app: FastAPI):
             await _ensure_individual_fixtures(session)
             await _ensure_country_admin_user(session)
             await _ensure_dealer_portal_config_seed(session)
+            await _seed_finance_defaults(session)
     except Exception as exc:
         logging.getLogger("runtime").warning("Seed users skipped: %s", exc)
 
@@ -2160,6 +2171,121 @@ async def _ensure_pricing_campaign_item_columns(conn) -> None:
         logging.getLogger("sql_config").warning("Pricing campaign item columns check failed: %s", exc)
 
 
+async def _ensure_finance_v2_columns(conn) -> None:
+    try:
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS amount_minor INTEGER"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS net_minor INTEGER"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS tax_minor INTEGER"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS gross_minor INTEGER"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS tax_profile_id UUID"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS product_id UUID"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS product_price_id UUID"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS sequence_no INTEGER"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS sequence_key VARCHAR(40)"))
+        await conn.execute(text("UPDATE admin_invoices SET amount_minor = ROUND(COALESCE(amount_total, 0) * 100) WHERE amount_minor IS NULL"))
+        await conn.execute(text("UPDATE admin_invoices SET gross_minor = COALESCE(amount_minor, 0) WHERE gross_minor IS NULL"))
+        await conn.execute(text("UPDATE admin_invoices SET net_minor = COALESCE(amount_minor, 0) WHERE net_minor IS NULL"))
+        await conn.execute(text("UPDATE admin_invoices SET tax_minor = 0 WHERE tax_minor IS NULL"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_admin_invoices_sequence_key_no ON admin_invoices (sequence_key, sequence_no)"))
+
+        await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_minor INTEGER"))
+        await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS country_code VARCHAR(10)"))
+        await conn.execute(text("UPDATE payments SET amount_minor = ROUND(COALESCE(amount_total, 0) * 100) WHERE amount_minor IS NULL"))
+        await conn.execute(text("UPDATE payments p SET country_code = i.country_code FROM admin_invoices i WHERE p.invoice_id = i.id AND p.country_code IS NULL"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_payments_country_code ON payments (country_code)"))
+
+        await conn.execute(text("ALTER TABLE payment_transactions ADD COLUMN IF NOT EXISTS amount_minor INTEGER"))
+        await conn.execute(text("UPDATE payment_transactions SET amount_minor = ROUND(COALESCE(amount, 0) * 100) WHERE amount_minor IS NULL"))
+
+        await conn.execute(text("ALTER TABLE listing_payments ADD COLUMN IF NOT EXISTS amount_minor INTEGER"))
+        await conn.execute(text("UPDATE listing_payments SET amount_minor = ROUND(COALESCE(amount, 0) * 100) WHERE amount_minor IS NULL"))
+
+        await conn.execute(text("ALTER TABLE user_subscriptions ADD COLUMN IF NOT EXISTS status VARCHAR(20)"))
+        await conn.execute(text("UPDATE user_subscriptions SET status = 'trialing' WHERE status IS NULL OR status = ''"))
+        await conn.execute(text("UPDATE user_subscriptions SET status = 'trialing' WHERE status = 'trial'"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_subscriptions_status ON user_subscriptions (status)"))
+    except Exception as exc:
+        logging.getLogger("sql_config").warning("Finance v2 columns check failed: %s", exc)
+
+
+async def _seed_finance_defaults(session: AsyncSession) -> None:
+    now = datetime.now(timezone.utc)
+
+    tax_profiles = [
+        ("TR_VAT_20", "TR", "KDV", 2000),
+        ("DE_VAT_19", "DE", "VAT", 1900),
+    ]
+    for code, country_code, tax_name, tax_rate_bps in tax_profiles:
+        existing = (
+            await session.execute(select(TaxProfile).where(TaxProfile.code == code))
+        ).scalar_one_or_none()
+        if not existing:
+            session.add(
+                TaxProfile(
+                    code=code,
+                    country_code=country_code,
+                    tax_name=tax_name,
+                    tax_rate_bps=tax_rate_bps,
+                    rounding_mode="HALF_UP",
+                    active_flag=True,
+                    created_at=now,
+                    updated_at=now,
+                )
+            )
+
+    product = (
+        await session.execute(select(FinanceProduct).where(FinanceProduct.code == "SUBSCRIPTION_STANDARD"))
+    ).scalar_one_or_none()
+    if not product:
+        product = FinanceProduct(
+            code="SUBSCRIPTION_STANDARD",
+            name="Abonelik Paketi",
+            description="Varsayılan kurumsal abonelik ürünü",
+            active_flag=True,
+            meta_json={"seed": True},
+            created_at=now,
+            updated_at=now,
+        )
+        session.add(product)
+        await session.flush()
+
+    default_prices = [
+        ("EUR", 1999),
+        ("TRY", 79900),
+    ]
+    for currency, amount_minor in default_prices:
+        existing_price = (
+            await session.execute(
+                select(FinanceProductPrice).where(
+                    FinanceProductPrice.product_id == product.id,
+                    FinanceProductPrice.currency == currency,
+                    FinanceProductPrice.active_flag.is_(True),
+                )
+            )
+        ).scalars().first()
+        if not existing_price:
+            session.add(
+                FinanceProductPrice(
+                    product_id=product.id,
+                    country_code=None,
+                    currency=currency,
+                    amount_minor=amount_minor,
+                    active_from=now,
+                    active_to=None,
+                    active_flag=True,
+                    created_at=now,
+                    updated_at=now,
+                )
+            )
+
+    await _get_or_create_ledger_account(session, "AR", "Alacaklar", "asset")
+    await _get_or_create_ledger_account(session, "REVENUE", "Gelir", "income")
+    await _get_or_create_ledger_account(session, "TAX_PAYABLE", "Ödenecek Vergi", "liability")
+    await _get_or_create_ledger_account(session, "CASH", "Nakit", "asset")
+
+    await session.commit()
+
+
 def _get_masked_db_target() -> Dict[str, Optional[str]]:
     try:
         parsed = urllib.parse.urlparse(DATABASE_URL)
@@ -2314,10 +2440,116 @@ def _slugify_value(value: str) -> str:
     return cleaned
 
 
-def _generate_invoice_no() -> str:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
-    short = uuid.uuid4().hex[:6].upper()
-    return f"INV-{stamp}-{short}"
+def _normalize_currency_code(value: Optional[str]) -> str:
+    code = (value or "").upper().strip()
+    if not ISO_CURRENCY_REGEX.match(code):
+        raise HTTPException(status_code=400, detail="Invalid currency code")
+    return code
+
+
+def _to_minor_units(amount: Optional[float], currency: str) -> int:
+    if amount is None:
+        return 0
+    quantized = Decimal(str(amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return int((quantized * Decimal("100")).to_integral_value(rounding=ROUND_HALF_UP))
+
+
+def _minor_to_major_units(amount_minor: Optional[int]) -> float:
+    return float((Decimal(int(amount_minor or 0)) / Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+def _format_money_display(amount_minor: Optional[int], currency: Optional[str]) -> str:
+    major = _minor_to_major_units(amount_minor)
+    return f"{major:,.2f} {currency or ''}".replace(",", "X").replace(".", ",").replace("X", ".").strip()
+
+
+async def _next_invoice_sequence(session: AsyncSession, country_code: str) -> Tuple[str, int, str]:
+    now = datetime.now(timezone.utc)
+    year_month = now.strftime("%Y%m")
+    prefix = (country_code or "GLOBAL").upper()
+    sequence_key = f"{prefix}-{year_month}"
+
+    for _ in range(3):
+        row = (
+            await session.execute(
+                select(FinanceInvoiceSequence).where(FinanceInvoiceSequence.sequence_key == sequence_key).with_for_update()
+            )
+        ).scalar_one_or_none()
+
+        if not row:
+            row = FinanceInvoiceSequence(
+                sequence_key=sequence_key,
+                last_value=1,
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(row)
+            try:
+                await session.flush()
+                sequence_no = 1
+                return sequence_key, sequence_no, f"{prefix}-{year_month}-{sequence_no:06d}"
+            except IntegrityError:
+                await session.rollback()
+                continue
+
+        row.last_value = int(row.last_value or 0) + 1
+        row.updated_at = now
+        await session.flush()
+        sequence_no = int(row.last_value)
+        return sequence_key, sequence_no, f"{prefix}-{year_month}-{sequence_no:06d}"
+
+    raise HTTPException(status_code=500, detail="Invoice sequence generation failed")
+
+
+async def _resolve_tax_profile(session: AsyncSession, country_code: Optional[str]) -> TaxProfile:
+    country = (country_code or "TR").upper()
+    profile = (
+        await session.execute(
+            select(TaxProfile)
+            .where(TaxProfile.country_code == country, TaxProfile.active_flag.is_(True))
+            .order_by(TaxProfile.updated_at.desc())
+        )
+    ).scalars().first()
+    if profile:
+        return profile
+
+    fallback = (
+        await session.execute(
+            select(TaxProfile)
+            .where(TaxProfile.country_code == "TR", TaxProfile.active_flag.is_(True))
+            .order_by(TaxProfile.updated_at.desc())
+        )
+    ).scalars().first()
+    if not fallback:
+        raise HTTPException(status_code=500, detail="Tax profiles are not configured")
+    return fallback
+
+
+def _calculate_tax_snapshot(gross_minor: int, tax_rate_bps: int) -> Dict[str, int]:
+    if gross_minor < 0:
+        raise HTTPException(status_code=400, detail="amount_total must be >= 0")
+
+    gross = Decimal(gross_minor)
+    rate = Decimal(tax_rate_bps) / Decimal(10000)
+    divisor = Decimal("1") + rate
+    if divisor <= 0:
+        raise HTTPException(status_code=500, detail="Invalid tax divisor")
+
+    net = (gross / divisor).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    tax = gross - net
+    return {
+        "net_minor": int(net),
+        "tax_minor": int(tax),
+        "gross_minor": int(gross),
+    }
+
+
+def _assert_invoice_transition(current_status: str, next_status: str) -> None:
+    if next_status not in INVOICE_STATUS_SET:
+        raise HTTPException(status_code=400, detail="Invalid invoice status")
+    allowed = INVOICE_STATUS_TRANSITIONS.get(current_status or "", set())
+    if next_status not in allowed:
+        raise HTTPException(status_code=400, detail=f"Transition not allowed: {current_status} -> {next_status}")
 
 
 def _is_payment_enabled_for_country(country_code: Optional[str]) -> bool:
@@ -2459,6 +2691,10 @@ def _plan_to_dict(plan: Plan) -> Dict[str, Any]:
 
 
 def _admin_invoice_to_dict(invoice: AdminInvoice, dealer: Optional[SqlUser] = None, plan: Optional[Plan] = None) -> Dict[str, Any]:
+    amount_minor = int(invoice.amount_minor or _to_minor_units(float(invoice.amount_total or 0), invoice.currency or "EUR"))
+    net_minor = int(invoice.net_minor or 0)
+    tax_minor = int(invoice.tax_minor or 0)
+    gross_minor = int(invoice.gross_minor or amount_minor)
     return {
         "id": str(invoice.id),
         "invoice_no": invoice.invoice_no,
@@ -2469,10 +2705,20 @@ def _admin_invoice_to_dict(invoice: AdminInvoice, dealer: Optional[SqlUser] = No
         "plan_id": str(invoice.plan_id) if invoice.plan_id else None,
         "plan_name": plan.name if plan else None,
         "campaign_id": str(invoice.campaign_id) if invoice.campaign_id else None,
-        "amount_total": float(invoice.amount_total) if invoice.amount_total is not None else None,
-        "amount": float(invoice.amount_total) if invoice.amount_total is not None else None,
+        "amount_total": _minor_to_major_units(amount_minor),
+        "amount": _minor_to_major_units(amount_minor),
+        "amount_minor": amount_minor,
+        "net_minor": net_minor,
+        "tax_minor": tax_minor,
+        "gross_minor": gross_minor,
+        "money_display": _format_money_display(amount_minor, invoice.currency),
         "currency": invoice.currency,
         "currency_code": invoice.currency,
+        "tax_profile_id": str(invoice.tax_profile_id) if invoice.tax_profile_id else None,
+        "product_id": str(invoice.product_id) if invoice.product_id else None,
+        "product_price_id": str(invoice.product_price_id) if invoice.product_price_id else None,
+        "sequence_no": invoice.sequence_no,
+        "sequence_key": invoice.sequence_key,
         "status": invoice.status,
         "payment_status": invoice.payment_status,
         "issued_at": invoice.issued_at.isoformat() if invoice.issued_at else None,
@@ -2490,6 +2736,7 @@ def _admin_invoice_to_dict(invoice: AdminInvoice, dealer: Optional[SqlUser] = No
 
 
 def _payment_to_dict(payment: Payment, invoice: Optional[AdminInvoice] = None, user: Optional[SqlUser] = None) -> Dict[str, Any]:
+    amount_minor = int(payment.amount_minor or _to_minor_units(float(payment.amount_total or 0), payment.currency or "EUR"))
     return {
         "id": str(payment.id),
         "provider": payment.provider,
@@ -2499,12 +2746,172 @@ def _payment_to_dict(payment: Payment, invoice: Optional[AdminInvoice] = None, u
         "user_id": str(payment.user_id),
         "user_email": user.email if user else None,
         "status": payment.status,
-        "amount_total": float(payment.amount_total) if payment.amount_total is not None else None,
+        "amount_total": _minor_to_major_units(amount_minor),
+        "amount_minor": amount_minor,
+        "money_display": _format_money_display(amount_minor, payment.currency),
         "currency": payment.currency,
+        "country_code": payment.country_code,
         "meta_json": payment.meta_json or {},
         "created_at": payment.created_at.isoformat() if payment.created_at else None,
         "updated_at": payment.updated_at.isoformat() if payment.updated_at else None,
     }
+
+
+def _ledger_entry_to_dict(entry: LedgerEntry, account: Optional[LedgerAccount] = None) -> Dict[str, Any]:
+    return {
+        "id": str(entry.id),
+        "entry_group_id": entry.entry_group_id,
+        "account_id": str(entry.account_id),
+        "account_code": account.code if account else None,
+        "account_name": account.name if account else None,
+        "debit_minor": int(entry.debit_minor or 0),
+        "credit_minor": int(entry.credit_minor or 0),
+        "currency": entry.currency,
+        "debit_display": _format_money_display(entry.debit_minor, entry.currency),
+        "credit_display": _format_money_display(entry.credit_minor, entry.currency),
+        "reference_type": entry.reference_type,
+        "reference_id": entry.reference_id,
+        "description": entry.description,
+        "reversal_of_entry_id": str(entry.reversal_of_entry_id) if entry.reversal_of_entry_id else None,
+        "created_by": entry.created_by,
+        "created_at": entry.created_at.isoformat() if entry.created_at else None,
+    }
+
+
+async def _get_or_create_ledger_account(
+    session: AsyncSession,
+    code: str,
+    name: str,
+    category: str,
+) -> LedgerAccount:
+    row = (
+        await session.execute(
+            select(LedgerAccount).where(LedgerAccount.code == code)
+        )
+    ).scalar_one_or_none()
+    if row:
+        return row
+
+    now = datetime.now(timezone.utc)
+    row = LedgerAccount(
+        code=code,
+        name=name,
+        category=category,
+        active_flag=True,
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(row)
+    await session.flush()
+    return row
+
+
+async def _post_double_entry_ledger(
+    session: AsyncSession,
+    *,
+    currency: str,
+    reference_type: str,
+    reference_id: str,
+    debit_account_code: str,
+    debit_account_name: str,
+    credit_account_code: str,
+    credit_account_name: str,
+    amount_minor: int,
+    tax_credit_account_code: Optional[str] = None,
+    tax_credit_account_name: Optional[str] = None,
+    tax_minor: int = 0,
+    description: str,
+    created_by: Optional[str],
+) -> str:
+    if amount_minor <= 0:
+        return ""
+
+    debit_account = await _get_or_create_ledger_account(session, debit_account_code, debit_account_name, "asset")
+    credit_account = await _get_or_create_ledger_account(session, credit_account_code, credit_account_name, "income")
+    tax_account = None
+    if tax_credit_account_code and tax_minor > 0:
+        tax_account = await _get_or_create_ledger_account(session, tax_credit_account_code, tax_credit_account_name or "Vergi Borcu", "liability")
+
+    debit_total = int(amount_minor)
+    tax_credit_total = int(max(0, tax_minor))
+    revenue_credit_total = int(amount_minor) - tax_credit_total
+    credit_total = revenue_credit_total + tax_credit_total
+    if debit_total != credit_total or revenue_credit_total < 0:
+        raise HTTPException(status_code=500, detail="Ledger entry is not balanced")
+
+    now = datetime.now(timezone.utc)
+    entry_group_id = f"{reference_type}-{reference_id}-{uuid.uuid4().hex[:10]}"
+
+    session.add(
+        LedgerEntry(
+            entry_group_id=entry_group_id,
+            account_id=debit_account.id,
+            debit_minor=debit_total,
+            credit_minor=0,
+            currency=currency,
+            reference_type=reference_type,
+            reference_id=reference_id,
+            description=description,
+            reversal_of_entry_id=None,
+            created_by=created_by,
+            created_at=now,
+        )
+    )
+    session.add(
+        LedgerEntry(
+            entry_group_id=entry_group_id,
+            account_id=credit_account.id,
+            debit_minor=0,
+            credit_minor=revenue_credit_total,
+            currency=currency,
+            reference_type=reference_type,
+            reference_id=reference_id,
+            description=description,
+            reversal_of_entry_id=None,
+            created_by=created_by,
+            created_at=now,
+        )
+    )
+    if tax_account and tax_credit_total > 0:
+        session.add(
+            LedgerEntry(
+                entry_group_id=entry_group_id,
+                account_id=tax_account.id,
+                debit_minor=0,
+                credit_minor=tax_credit_total,
+                currency=currency,
+                reference_type=reference_type,
+                reference_id=reference_id,
+                description=f"{description} - vergi",
+                reversal_of_entry_id=None,
+                created_by=created_by,
+                created_at=now,
+            )
+        )
+    await session.flush()
+    return entry_group_id
+
+
+async def _ledger_reference_exists(session: AsyncSession, reference_type: str, reference_id: str) -> bool:
+    row = (
+        await session.execute(
+            select(LedgerEntry.id).where(
+                LedgerEntry.reference_type == reference_type,
+                LedgerEntry.reference_id == reference_id,
+            ).limit(1)
+        )
+    ).first()
+    return bool(row)
+
+
+def _assert_subscription_transition(current_status: str, next_status: str) -> None:
+    current = (current_status or "trialing").lower().strip()
+    target = (next_status or "").lower().strip()
+    if target not in SUBSCRIPTION_STATUS_SET:
+        raise HTTPException(status_code=400, detail="Invalid subscription status")
+    allowed = SUBSCRIPTION_STATUS_TRANSITIONS.get(current, set())
+    if target not in allowed and target != current:
+        raise HTTPException(status_code=400, detail=f"Transition not allowed: {current} -> {target}")
 
 
 async def _activate_subscription_from_invoice(session: AsyncSession, invoice: AdminInvoice) -> None:
@@ -2556,13 +2963,13 @@ async def _activate_subscription_from_invoice(session: AsyncSession, invoice: Ad
 async def _invoice_totals_by_currency(
     session: AsyncSession, conditions: List[Any]
 ) -> Dict[str, float]:
-    query = select(AdminInvoice.currency, func.sum(AdminInvoice.amount_total)).group_by(AdminInvoice.currency)
+    query = select(AdminInvoice.currency, func.sum(AdminInvoice.amount_minor)).group_by(AdminInvoice.currency)
     if conditions:
         query = query.where(*conditions)
     rows = (await session.execute(query)).all()
     totals: Dict[str, float] = {}
     for currency, amount in rows:
-        totals[currency or "UNKNOWN"] = float(amount or 0)
+        totals[currency or "UNKNOWN"] = _minor_to_major_units(int(amount or 0))
     return totals
 
 
@@ -3310,6 +3717,17 @@ INVOICE_STATUS_TRANSITIONS = {
     "paid": {"refunded"},
     "void": set(),
     "refunded": set(),
+}
+FINANCE_SUPPORTED_CURRENCIES = {"EUR", "TRY"}
+ISO_CURRENCY_REGEX = re.compile(r"^[A-Z]{3}$")
+
+SUBSCRIPTION_STATUS_SET = {"trialing", "active", "past_due", "canceled", "unpaid"}
+SUBSCRIPTION_STATUS_TRANSITIONS = {
+    "trialing": {"active", "past_due", "canceled", "unpaid"},
+    "active": {"past_due", "canceled", "unpaid"},
+    "past_due": {"active", "canceled", "unpaid"},
+    "unpaid": {"active", "canceled"},
+    "canceled": set(),
 }
 
 APPLICATION_TYPES = {"individual", "dealer"}
@@ -12118,6 +12536,8 @@ class InvoiceCreatePayload(BaseModel):
     subscription_id: Optional[str] = None
     plan_id: Optional[str] = None
     campaign_id: Optional[str] = None
+    product_id: Optional[str] = None
+    product_price_id: Optional[str] = None
     amount_total: Optional[float] = None
     amount: Optional[float] = None
     currency: Optional[str] = None
@@ -12153,6 +12573,40 @@ class PaymentIntentCreatePayload(BaseModel):
     description: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
     idempotency_key: Optional[str] = None
+
+
+class TaxProfileCreatePayload(BaseModel):
+    code: str
+    country_code: str
+    tax_name: str = "VAT"
+    tax_rate_bps: int = Field(..., ge=0, le=10000)
+    active_flag: Optional[bool] = True
+
+
+class TaxProfileUpdatePayload(BaseModel):
+    tax_name: Optional[str] = None
+    tax_rate_bps: Optional[int] = Field(default=None, ge=0, le=10000)
+    active_flag: Optional[bool] = None
+
+
+class FinanceProductCreatePayload(BaseModel):
+    code: str
+    name: str
+    description: Optional[str] = None
+    active_flag: Optional[bool] = True
+
+
+class FinanceProductPriceCreatePayload(BaseModel):
+    currency: str
+    amount_minor: int = Field(..., ge=0)
+    country_code: Optional[str] = None
+    active_from: Optional[str] = None
+    active_to: Optional[str] = None
+
+
+class FinanceSubscriptionStatusUpdatePayload(BaseModel):
+    target_status: str
+    reason: Optional[str] = None
 
 
 class TaxRateCreatePayload(BaseModel):
@@ -15307,6 +15761,28 @@ async def admin_create_invoice(
         if not plan:
             raise HTTPException(status_code=404, detail="Plan not found")
 
+    product_uuid = None
+    product_price_uuid = None
+    product_price = None
+    if payload.product_id:
+        try:
+            product_uuid = uuid.UUID(payload.product_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="product_id invalid") from exc
+        product = await session.get(FinanceProduct, product_uuid)
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+    if payload.product_price_id:
+        try:
+            product_price_uuid = uuid.UUID(payload.product_price_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="product_price_id invalid") from exc
+        product_price = await session.get(FinanceProductPrice, product_price_uuid)
+        if not product_price:
+            raise HTTPException(status_code=404, detail="Product price not found")
+        if product_uuid and product_price.product_id != product_uuid:
+            raise HTTPException(status_code=400, detail="Product price does not belong to product")
+
     user = await session.get(SqlUser, user_uuid)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -15316,14 +15792,19 @@ async def admin_create_invoice(
         currency_value = (plan.currency_code or "").upper().strip()
     if not currency_value:
         raise HTTPException(status_code=400, detail="currency is required")
+    currency_value = _normalize_currency_code(currency_value)
 
     amount_value = payload.amount_total if payload.amount_total is not None else payload.amount
     if amount_value is None and plan:
         amount_value = plan.price_amount
+    if amount_value is None and product_price:
+        amount_value = _minor_to_major_units(int(product_price.amount_minor or 0))
     if amount_value is None:
         raise HTTPException(status_code=400, detail="amount_total is required")
     if amount_value < 0:
         raise HTTPException(status_code=400, detail="amount_total must be >= 0")
+
+    amount_minor = _to_minor_units(float(amount_value), currency_value)
 
     due_at = _parse_iso_datetime(payload.due_at, "due_at") if payload.due_at else None
     issue_now = True if payload.issue_now is None else payload.issue_now
@@ -15333,22 +15814,54 @@ async def admin_create_invoice(
     issued_at = now if issue_now else None
 
     scope_value = "country" if user.country_code else "global"
-    country_code = user.country_code or None
+    country_code = user.country_code or "GLOBAL"
+    tax_profile = await _resolve_tax_profile(session, country_code)
+    tax_snapshot = _calculate_tax_snapshot(amount_minor, int(tax_profile.tax_rate_bps or 0))
+    sequence_key, sequence_no, invoice_no = await _next_invoice_sequence(session, country_code)
+    meta_json = payload.meta_json or {}
+    meta_json.update(
+        {
+            "money_v2": {
+                "amount_minor": amount_minor,
+                "currency": currency_value,
+                "net_minor": tax_snapshot["net_minor"],
+                "tax_minor": tax_snapshot["tax_minor"],
+                "gross_minor": tax_snapshot["gross_minor"],
+                "rounding": "HALF_UP",
+            },
+            "tax_profile": {
+                "id": str(tax_profile.id),
+                "code": tax_profile.code,
+                "country_code": tax_profile.country_code,
+                "tax_name": tax_profile.tax_name,
+                "tax_rate_bps": int(tax_profile.tax_rate_bps or 0),
+            },
+        }
+    )
 
     invoice = AdminInvoice(
-        invoice_no=_generate_invoice_no(),
+        invoice_no=invoice_no,
         user_id=user_uuid,
         subscription_id=subscription_uuid,
         plan_id=plan_uuid,
         campaign_id=None,
-        amount_total=amount_value,
+        amount_total=_minor_to_major_units(amount_minor),
+        amount_minor=amount_minor,
+        net_minor=tax_snapshot["net_minor"],
+        tax_minor=tax_snapshot["tax_minor"],
+        gross_minor=tax_snapshot["gross_minor"],
         currency=currency_value,
+        tax_profile_id=tax_profile.id,
+        product_id=product_uuid,
+        product_price_id=product_price_uuid,
+        sequence_no=sequence_no,
+        sequence_key=sequence_key,
         status=status_value,
         payment_status="requires_payment_method",
         issued_at=issued_at,
-                due_at=due_at,
+        due_at=due_at,
         provider_customer_id=payload.provider_customer_id,
-        meta_json=payload.meta_json,
+        meta_json=meta_json,
         scope=scope_value,
         country_code=country_code,
         payment_method=None,
@@ -15367,12 +15880,22 @@ async def admin_create_invoice(
 async def admin_list_invoices(
     request: Request,
     status: Optional[str] = None,
+    country: Optional[str] = None,
+    dealer: Optional[str] = None,
+    plan_id: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    amount_min: Optional[float] = None,
+    amount_max: Optional[float] = None,
+    currency: Optional[str] = None,
+    product_id: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
-    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     conditions = []
 
@@ -15383,6 +15906,42 @@ async def admin_list_invoices(
         if status_value not in INVOICE_STATUS_SET:
             raise HTTPException(status_code=400, detail="Invalid status")
         conditions.append(AdminInvoice.status == status_value)
+
+    if country:
+        conditions.append(AdminInvoice.country_code == country.upper().strip())
+    elif getattr(ctx, "mode", "global") == "country" and ctx.country:
+        conditions.append(AdminInvoice.country_code == ctx.country)
+
+    if dealer:
+        try:
+            conditions.append(AdminInvoice.user_id == uuid.UUID(dealer))
+        except ValueError:
+            pass
+
+    if plan_id and plan_id != "all":
+        try:
+            conditions.append(AdminInvoice.plan_id == uuid.UUID(plan_id))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="plan_id invalid") from exc
+
+    if date_from:
+        conditions.append(AdminInvoice.created_at >= _parse_iso_datetime(f"{date_from}T00:00:00+00:00", "date_from"))
+    if date_to:
+        conditions.append(AdminInvoice.created_at <= _parse_iso_datetime(f"{date_to}T23:59:59+00:00", "date_to"))
+
+    if amount_min is not None:
+        conditions.append(AdminInvoice.amount_minor >= _to_minor_units(float(amount_min), currency or "EUR"))
+    if amount_max is not None:
+        conditions.append(AdminInvoice.amount_minor <= _to_minor_units(float(amount_max), currency or "EUR"))
+
+    if currency:
+        conditions.append(AdminInvoice.currency == _normalize_currency_code(currency))
+
+    if product_id:
+        try:
+            conditions.append(AdminInvoice.product_id == uuid.UUID(product_id))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="product_id invalid") from exc
 
     limit = min(100, max(1, int(limit)))
     skip = max(0, int(skip))
@@ -15440,11 +15999,29 @@ async def admin_invoice_detail(
 
     user = await session.get(SqlUser, invoice.user_id)
     plan = await session.get(Plan, invoice.plan_id) if invoice.plan_id else None
+    payments = (
+        await session.execute(select(Payment).where(Payment.invoice_id == invoice.id).order_by(Payment.created_at.desc()))
+    ).scalars().all()
+    ledger_rows = (
+        await session.execute(
+            select(LedgerEntry).where(
+                or_(
+                    and_(LedgerEntry.reference_type == "invoice", LedgerEntry.reference_id == str(invoice.id)),
+                    and_(LedgerEntry.reference_type == "invoice_refund", LedgerEntry.reference_id == str(invoice.id)),
+                )
+            ).order_by(LedgerEntry.created_at.desc())
+        )
+    ).scalars().all()
+    ledger_account_ids = {row.account_id for row in ledger_rows}
+    ledger_accounts = (await session.execute(select(LedgerAccount).where(LedgerAccount.id.in_(ledger_account_ids)))).scalars().all() if ledger_account_ids else []
+    ledger_account_map = {row.id: row for row in ledger_accounts}
 
     return {
         "invoice": _admin_invoice_to_dict(invoice, user, plan),
         "dealer": {"id": str(user.id), "email": user.email} if user else None,
         "plan": {"id": str(plan.id), "name": plan.name} if plan else None,
+        "payments": [_payment_to_dict(row, invoice, user) for row in payments],
+        "ledger_entries": [_ledger_entry_to_dict(row, ledger_account_map.get(row.account_id)) for row in ledger_rows],
     }
 
 
@@ -15469,8 +16046,7 @@ async def admin_invoice_mark_paid(
     if invoice.country_code and invoice.country_code != "GLOBAL":
         _assert_country_scope(invoice.country_code, current_user)
 
-    if invoice.status not in {"issued"}:
-        raise HTTPException(status_code=400, detail="Only issued invoices can be marked paid")
+    _assert_invoice_transition(invoice.status, "paid")
 
     if not payload.reason:
         raise HTTPException(status_code=400, detail="reason is required")
@@ -15482,6 +16058,33 @@ async def admin_invoice_mark_paid(
     if payload.payment_method:
         invoice.payment_method = payload.payment_method
     invoice.updated_at = now
+    await _activate_subscription_from_invoice(session, invoice)
+    await _post_double_entry_ledger(
+        session,
+        currency=invoice.currency,
+        reference_type="invoice",
+        reference_id=str(invoice.id),
+        debit_account_code="CASH",
+        debit_account_name="Nakit",
+        credit_account_code="REVENUE",
+        credit_account_name="Gelir",
+        amount_minor=int(invoice.gross_minor or invoice.amount_minor or 0),
+        tax_credit_account_code="TAX_PAYABLE",
+        tax_credit_account_name="Ödenecek Vergi",
+        tax_minor=int(invoice.tax_minor or 0),
+        description=f"Invoice paid ({invoice.invoice_no})",
+        created_by=current_user.get("id"),
+    )
+    await _write_audit_log_sql(
+        session=session,
+        action="invoice_manual_mark_paid",
+        actor=current_user,
+        resource_type="invoice",
+        resource_id=str(invoice.id),
+        metadata={"reason": payload.reason, "payment_method": payload.payment_method},
+        request=request,
+        country_code=invoice.country_code,
+    )
     await session.commit()
     await session.refresh(invoice)
 
@@ -15510,13 +16113,22 @@ async def admin_invoice_cancel(
     if invoice.country_code and invoice.country_code != "GLOBAL":
         _assert_country_scope(invoice.country_code, current_user)
 
-    if invoice.status != "issued":
-        raise HTTPException(status_code=400, detail="Only issued invoices can be voided")
+    _assert_invoice_transition(invoice.status, "void")
 
     now = datetime.now(timezone.utc)
     invoice.status = "void"
     invoice.payment_status = "canceled"
     invoice.updated_at = now
+    await _write_audit_log_sql(
+        session=session,
+        action="invoice_manual_void",
+        actor=current_user,
+        resource_type="invoice",
+        resource_id=str(invoice.id),
+        metadata={"from_status": "issued", "to_status": "void"},
+        request=request,
+        country_code=invoice.country_code,
+    )
     await session.commit()
     await session.refresh(invoice)
 
@@ -15545,13 +16157,35 @@ async def admin_invoice_refund(
     if invoice.country_code and invoice.country_code != "GLOBAL":
         _assert_country_scope(invoice.country_code, current_user)
 
-    if invoice.status != "paid":
-        raise HTTPException(status_code=400, detail="Only paid invoices can be refunded")
+    _assert_invoice_transition(invoice.status, "refunded")
 
     now = datetime.now(timezone.utc)
     invoice.status = "refunded"
     invoice.payment_status = "refunded"
     invoice.updated_at = now
+    await _post_double_entry_ledger(
+        session,
+        currency=invoice.currency,
+        reference_type="invoice_refund",
+        reference_id=str(invoice.id),
+        debit_account_code="REVENUE",
+        debit_account_name="Gelir",
+        credit_account_code="CASH",
+        credit_account_name="Nakit",
+        amount_minor=int(invoice.gross_minor or invoice.amount_minor or 0),
+        description=f"Invoice refunded ({invoice.invoice_no})",
+        created_by=current_user.get("id"),
+    )
+    await _write_audit_log_sql(
+        session=session,
+        action="invoice_manual_refund",
+        actor=current_user,
+        resource_type="invoice",
+        resource_id=str(invoice.id),
+        metadata={"from_status": "paid", "to_status": "refunded"},
+        request=request,
+        country_code=invoice.country_code,
+    )
     await session.commit()
     await session.refresh(invoice)
 
@@ -18886,6 +19520,8 @@ async def _apply_payment_status(
         payment.provider_ref = provider_ref
 
     if status_value == "succeeded":
+        if invoice.status != "paid":
+            _assert_invoice_transition(invoice.status, "paid")
         invoice.payment_status = "succeeded"
         invoice.status = "paid"
         if not invoice.paid_at:
@@ -18893,8 +19529,28 @@ async def _apply_payment_status(
         payment.status = "succeeded"
         transaction.status = "succeeded"
         transaction.payment_status = "succeeded"
+        payment.country_code = invoice.country_code
+        payment.amount_minor = int(invoice.amount_minor or _to_minor_units(float(invoice.amount_total or 0), invoice.currency or "EUR"))
+        transaction.amount_minor = int(invoice.amount_minor or _to_minor_units(float(invoice.amount_total or 0), invoice.currency or "EUR"))
 
         if session:
+            if not await _ledger_reference_exists(session, "invoice", str(invoice.id)):
+                await _post_double_entry_ledger(
+                    session,
+                    currency=invoice.currency,
+                    reference_type="invoice",
+                    reference_id=str(invoice.id),
+                    debit_account_code="CASH",
+                    debit_account_name="Nakit",
+                    credit_account_code="REVENUE",
+                    credit_account_name="Gelir",
+                    amount_minor=int(invoice.gross_minor or invoice.amount_minor or 0),
+                    tax_credit_account_code="TAX_PAYABLE",
+                    tax_credit_account_name="Ödenecek Vergi",
+                    tax_minor=int(invoice.tax_minor or 0),
+                    description=f"Invoice paid ({invoice.invoice_no})",
+                    created_by=str(invoice.user_id),
+                )
             await _write_audit_log_sql(
                 session=session,
                 action="payment_succeeded",
@@ -18918,16 +19574,39 @@ async def _apply_payment_status(
             await _activate_subscription_from_invoice(session, invoice)
 
     elif status_value == "refunded":
+        if invoice.status == "paid":
+            _assert_invoice_transition(invoice.status, "refunded")
         invoice.payment_status = "refunded"
         invoice.status = "refunded"
         payment.status = "refunded"
         transaction.status = "refunded"
         transaction.payment_status = "refunded"
+        if session and not await _ledger_reference_exists(session, "invoice_refund", str(invoice.id)):
+            await _post_double_entry_ledger(
+                session,
+                currency=invoice.currency,
+                reference_type="invoice_refund",
+                reference_id=str(invoice.id),
+                debit_account_code="REVENUE",
+                debit_account_name="Gelir",
+                credit_account_code="CASH",
+                credit_account_name="Nakit",
+                amount_minor=int(invoice.gross_minor or invoice.amount_minor or 0),
+                description=f"Invoice refunded ({invoice.invoice_no})",
+                created_by=str(invoice.user_id),
+            )
     elif status_value in {"failed", "canceled"}:
         invoice.payment_status = status_value
         payment.status = status_value
         transaction.status = status_value
         transaction.payment_status = status_value
+        if session and invoice.subscription_id:
+            subscription = await session.get(UserSubscription, invoice.subscription_id)
+            if subscription and subscription.status in {"trialing", "active", "past_due"}:
+                next_status = "past_due" if status_value == "failed" else "unpaid"
+                _assert_subscription_transition(subscription.status, next_status)
+                subscription.status = next_status
+                subscription.updated_at = now
     else:
         invoice.payment_status = status_value
         payment.status = status_value
@@ -18974,7 +19653,9 @@ async def _process_webhook_payment(
                 provider_ref=provider_ref or f"pi_{invoice.id}",
                 status=_resolve_payment_status(payment_status),
                 amount_total=invoice.amount_total,
+                amount_minor=int(invoice.amount_minor or _to_minor_units(float(invoice.amount_total or 0), invoice.currency or "EUR")),
                 currency=invoice.currency,
+                country_code=invoice.country_code,
                 meta_json=metadata,
                 created_at=now,
                 updated_at=now,
@@ -19001,7 +19682,9 @@ async def _process_webhook_payment(
                         provider_ref=provider_ref or f"pi_{invoice.id}",
                         status=_resolve_payment_status(payment_status),
                         amount_total=invoice.amount_total,
+                        amount_minor=int(invoice.amount_minor or _to_minor_units(float(invoice.amount_total or 0), invoice.currency or "EUR")),
                         currency=invoice.currency,
+                        country_code=invoice.country_code,
                         meta_json=metadata,
                         created_at=now,
                         updated_at=now,
@@ -19016,6 +19699,7 @@ async def _process_webhook_payment(
                         invoice_id=invoice.id,
                         dealer_id=invoice.user_id,
                         amount=invoice.amount_total,
+                        amount_minor=int(invoice.amount_minor or _to_minor_units(float(invoice.amount_total or 0), invoice.currency or "EUR")),
                         currency=invoice.currency,
                         status=_resolve_payment_status(payment_status),
                         payment_status=_resolve_payment_status(payment_status),
@@ -19148,6 +19832,7 @@ async def _sync_subscription_from_invoice_event(
         return False
 
     if mapped_status == "succeeded":
+        _assert_subscription_transition(subscription.status or "trialing", "active")
         subscription.status = "active"
         period_start = _coerce_unix_ts_to_datetime(event_data.get("period_start"))
         period_end = _coerce_unix_ts_to_datetime(event_data.get("period_end"))
@@ -19167,7 +19852,9 @@ async def _sync_subscription_from_invoice_event(
             user.showcase_quota_limit = plan.showcase_quota
             user.updated_at = now
     elif mapped_status == "failed" and subscription.status != "canceled":
-        subscription.status = "grace_period"
+        next_status = "past_due" if (subscription.status or "").lower() in {"trialing", "active", "past_due"} else "unpaid"
+        _assert_subscription_transition(subscription.status or "trialing", next_status)
+        subscription.status = next_status
         if not subscription.current_period_end or subscription.current_period_end < now:
             subscription.current_period_end = now + timedelta(days=7)
 
@@ -19376,6 +20063,7 @@ async def create_listing_payment_intent(
         listing_id=listing.id,
         stripe_payment_intent_id=intent.get("id"),
         amount=float(payload.amount),
+        amount_minor=amount_cents,
         currency=currency,
         status="processing",
         idempotency_key=safe_idempotency_key,
@@ -19838,7 +20526,9 @@ async def create_checkout_session(
         provider_ref=checkout_session.session_id,
         status="requires_payment_method",
         amount_total=invoice.amount_total,
+        amount_minor=int(invoice.amount_minor or _to_minor_units(float(invoice.amount_total or 0), invoice.currency or "EUR")),
         currency=invoice.currency,
+        country_code=invoice.country_code,
         meta_json=payment_meta,
         created_at=now,
         updated_at=now,
@@ -19850,6 +20540,7 @@ async def create_checkout_session(
         invoice_id=invoice.id,
         dealer_id=invoice.user_id,
         amount=invoice.amount_total,
+        amount_minor=int(invoice.amount_minor or _to_minor_units(float(invoice.amount_total or 0), invoice.currency or "EUR")),
         currency=invoice.currency,
         status="requires_payment_method",
         payment_status="requires_payment_method",
@@ -19918,7 +20609,9 @@ async def get_checkout_status(
             provider_ref=provider_payment_id or f"pi_{invoice.id}",
             status=_resolve_payment_status(payment_status),
             amount_total=invoice.amount_total,
+            amount_minor=int(invoice.amount_minor or _to_minor_units(float(invoice.amount_total or 0), invoice.currency or "EUR")),
             currency=invoice.currency,
+            country_code=invoice.country_code,
             meta_json={"source": "status_check"},
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -20233,7 +20926,9 @@ async def admin_list_payments(
             "user_id": str(row.user_id),
             "user_email": user_obj.email if user_obj else None,
             "listing_id": resolved_listing_id,
-            "amount_total": float(row.amount_total) if row.amount_total is not None else None,
+            "amount_total": _minor_to_major_units(int(row.amount_minor or _to_minor_units(float(row.amount_total or 0), row.currency or "EUR"))),
+            "amount_minor": int(row.amount_minor or _to_minor_units(float(row.amount_total or 0), row.currency or "EUR")),
+            "money_display": _format_money_display(int(row.amount_minor or _to_minor_units(float(row.amount_total or 0), row.currency or "EUR")), row.currency),
             "currency": row.currency,
             "status": row.status,
             "provider": row.provider,
@@ -20253,10 +20948,11 @@ async def admin_export_payments_csv(
     q: Optional[str] = None,
     user_id: Optional[str] = None,
     listing_id: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
+    _enforce_export_rate_limit(request, current_user.get("id"))
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     conditions = []
@@ -20299,7 +20995,7 @@ async def admin_export_payments_csv(
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["transaction_id", "user_id", "listing_id", "provider_ref", "amount", "currency", "status", "created_at"])
+    writer.writerow(["transaction_id", "user_id", "listing_id", "provider_ref", "amount_minor", "amount", "currency", "status", "created_at"])
     for row in rows:
         invoice = invoice_map.get(row.invoice_id)
         resolved_listing_id = _extract_listing_id_from_payment_row(row, invoice)
@@ -20310,7 +21006,8 @@ async def admin_export_payments_csv(
             str(row.user_id),
             resolved_listing_id or "",
             row.provider_ref or "",
-            float(row.amount_total) if row.amount_total is not None else "",
+            int(row.amount_minor or _to_minor_units(float(row.amount_total or 0), row.currency or "EUR")),
+            _minor_to_major_units(int(row.amount_minor or _to_minor_units(float(row.amount_total or 0), row.currency or "EUR"))),
             row.currency or "",
             row.status or "",
             row.created_at.isoformat() if row.created_at else "",
@@ -20343,6 +21040,683 @@ async def admin_export_payments_csv(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+@api_router.get("/admin/invoices/export/csv")
+async def admin_export_invoices_csv(
+    request: Request,
+    status: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    _enforce_export_rate_limit(request, current_user.get("id"))
+    conditions: List[Any] = []
+    if status:
+        conditions.append(AdminInvoice.status == status.strip().lower())
+    if start_date:
+        conditions.append(AdminInvoice.created_at >= _parse_iso_datetime(start_date, "start_date"))
+    if end_date:
+        conditions.append(AdminInvoice.created_at <= _parse_iso_datetime(end_date, "end_date"))
+
+    query = select(AdminInvoice)
+    if conditions:
+        query = query.where(*conditions)
+    rows = (await session.execute(query.order_by(AdminInvoice.created_at.desc()).limit(5000))).scalars().all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "invoice_id",
+        "invoice_no",
+        "user_id",
+        "status",
+        "payment_status",
+        "amount_minor",
+        "currency",
+        "tax_minor",
+        "net_minor",
+        "gross_minor",
+        "country_code",
+        "created_at",
+    ])
+    for row in rows:
+        writer.writerow([
+            str(row.id),
+            row.invoice_no,
+            str(row.user_id),
+            row.status,
+            row.payment_status,
+            int(row.amount_minor or 0),
+            row.currency,
+            int(row.tax_minor or 0),
+            int(row.net_minor or 0),
+            int(row.gross_minor or 0),
+            row.country_code,
+            row.created_at.isoformat() if row.created_at else "",
+        ])
+
+    await _write_audit_log_sql(
+        session=session,
+        action="INVOICES_CSV_EXPORT",
+        actor=current_user,
+        resource_type="invoice",
+        resource_id="invoices",
+        metadata={"rows": len(rows), "status": status},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    filename = f"invoices-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.csv"
+    return Response(content=output.getvalue(), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@api_router.get("/admin/ledger/export/csv")
+async def admin_export_ledger_csv(
+    request: Request,
+    currency: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    _enforce_export_rate_limit(request, current_user.get("id"))
+    query = select(LedgerEntry)
+    if currency:
+        query = query.where(LedgerEntry.currency == _normalize_currency_code(currency))
+    rows = (await session.execute(query.order_by(LedgerEntry.created_at.desc()).limit(5000))).scalars().all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["entry_id", "group_id", "account_id", "debit_minor", "credit_minor", "currency", "reference_type", "reference_id", "created_at"])
+    for row in rows:
+        writer.writerow([
+            str(row.id),
+            row.entry_group_id,
+            str(row.account_id),
+            int(row.debit_minor or 0),
+            int(row.credit_minor or 0),
+            row.currency,
+            row.reference_type,
+            row.reference_id,
+            row.created_at.isoformat() if row.created_at else "",
+        ])
+
+    await _write_audit_log_sql(
+        session=session,
+        action="LEDGER_CSV_EXPORT",
+        actor=current_user,
+        resource_type="ledger",
+        resource_id="ledger_entries",
+        metadata={"rows": len(rows), "currency": currency},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    filename = f"ledger-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.csv"
+    return Response(content=output.getvalue(), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@api_router.get("/admin/finance/overview")
+async def admin_finance_overview(
+    request: Request,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    country: Optional[str] = None,
+    currency: Optional[str] = None,
+    product_id: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    start_dt = _parse_iso_datetime(start_date, "start_date") if start_date else datetime.now(timezone.utc) - timedelta(days=30)
+    end_dt = _parse_iso_datetime(end_date, "end_date") if end_date else datetime.now(timezone.utc)
+    if end_dt < start_dt:
+        raise HTTPException(status_code=400, detail="end_date must be after start_date")
+
+    invoice_filters: List[Any] = [AdminInvoice.created_at >= start_dt, AdminInvoice.created_at <= end_dt]
+    payment_filters: List[Any] = [Payment.created_at >= start_dt, Payment.created_at <= end_dt]
+
+    if country:
+        country_code = country.upper().strip()
+        invoice_filters.append(AdminInvoice.country_code == country_code)
+        payment_filters.append(Payment.country_code == country_code)
+    elif getattr(ctx, "mode", "global") == "country" and ctx.country:
+        invoice_filters.append(AdminInvoice.country_code == ctx.country)
+        payment_filters.append(Payment.country_code == ctx.country)
+
+    if currency:
+        currency_code = _normalize_currency_code(currency)
+        invoice_filters.append(AdminInvoice.currency == currency_code)
+        payment_filters.append(Payment.currency == currency_code)
+
+    if product_id:
+        try:
+            product_uuid = uuid.UUID(product_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="product_id invalid") from exc
+        invoice_filters.append(AdminInvoice.product_id == product_uuid)
+
+    paid_totals_rows = (
+        await session.execute(
+            select(AdminInvoice.currency, func.sum(AdminInvoice.amount_minor))
+            .where(*invoice_filters, AdminInvoice.status == "paid")
+            .group_by(AdminInvoice.currency)
+        )
+    ).all()
+    revenue_by_currency = {row[0] or "UNKNOWN": _minor_to_major_units(int(row[1] or 0)) for row in paid_totals_rows}
+
+    payment_total = (
+        await session.execute(select(func.count()).select_from(Payment).where(*payment_filters))
+    ).scalar() or 0
+    payment_failed = (
+        await session.execute(select(func.count()).select_from(Payment).where(*payment_filters, Payment.status.in_(["failed", "canceled"])))
+    ).scalar() or 0
+    failed_payment_rate = round((float(payment_failed) / float(payment_total)) * 100, 2) if payment_total else 0.0
+
+    paid_invoice_count = (
+        await session.execute(select(func.count()).select_from(AdminInvoice).where(*invoice_filters, AdminInvoice.status == "paid"))
+    ).scalar() or 0
+    refunded_invoice_count = (
+        await session.execute(select(func.count()).select_from(AdminInvoice).where(*invoice_filters, AdminInvoice.status == "refunded"))
+    ).scalar() or 0
+    refund_rate = round((float(refunded_invoice_count) / float(paid_invoice_count)) * 100, 2) if paid_invoice_count else 0.0
+
+    subscriptions = (
+        await session.execute(select(UserSubscription).where(UserSubscription.status.in_(["trialing", "active", "past_due", "canceled", "unpaid"])))
+    ).scalars().all()
+    plan_ids = {sub.plan_id for sub in subscriptions if sub.plan_id}
+    plan_rows = (await session.execute(select(Plan).where(Plan.id.in_(plan_ids)))).scalars().all() if plan_ids else []
+    plan_map = {row.id: row for row in plan_rows}
+    mrr_minor_by_currency: Dict[str, int] = defaultdict(int)
+    for sub in subscriptions:
+        if sub.status in {"active", "past_due"} and sub.plan_id and sub.plan_id in plan_map:
+            plan = plan_map[sub.plan_id]
+            code = (plan.currency_code or "EUR").upper().strip()
+            mrr_minor_by_currency[code] += _to_minor_units(float(plan.price_amount or 0), code)
+
+    mrr_by_currency = {code: _minor_to_major_units(minor) for code, minor in mrr_minor_by_currency.items()}
+
+    return {
+        "range": {"start_date": start_dt.isoformat(), "end_date": end_dt.isoformat()},
+        "filters": {"country": country, "currency": currency, "product_id": product_id},
+        "cards": {
+            "revenue_by_currency": revenue_by_currency,
+            "mrr_by_currency": mrr_by_currency,
+            "failed_payment_rate": failed_payment_rate,
+            "refund_rate": refund_rate,
+            "active_subscription_count": len([sub for sub in subscriptions if sub.status == "active"]),
+        },
+    }
+
+
+@api_router.get("/admin/finance/subscriptions")
+async def admin_finance_subscriptions(
+    request: Request,
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    limit = min(100, max(1, int(limit)))
+    skip = max(0, int(skip))
+
+    query = select(UserSubscription)
+    if status:
+        value = status.strip().lower()
+        if value not in SUBSCRIPTION_STATUS_SET:
+            raise HTTPException(status_code=400, detail="Invalid subscription status")
+        query = query.where(UserSubscription.status == value)
+
+    rows = (await session.execute(query.order_by(UserSubscription.updated_at.desc()).offset(skip).limit(limit))).scalars().all()
+    total = (await session.execute(select(func.count()).select_from(UserSubscription))).scalar() or 0
+
+    user_ids = {row.user_id for row in rows}
+    plan_ids = {row.plan_id for row in rows if row.plan_id}
+    users = (await session.execute(select(SqlUser).where(SqlUser.id.in_(user_ids)))).scalars().all() if user_ids else []
+    plans = (await session.execute(select(Plan).where(Plan.id.in_(plan_ids)))).scalars().all() if plan_ids else []
+    user_map = {row.id: row for row in users}
+    plan_map = {row.id: row for row in plans}
+
+    items = []
+    for row in rows:
+        user = user_map.get(row.user_id)
+        plan = plan_map.get(row.plan_id)
+        items.append(
+            {
+                "id": str(row.id),
+                "user_id": str(row.user_id),
+                "user_email": user.email if user else None,
+                "status": row.status,
+                "plan_id": str(row.plan_id) if row.plan_id else None,
+                "plan_name": plan.name if plan else None,
+                "plan_price": float(plan.price_amount) if plan and plan.price_amount is not None else None,
+                "plan_currency": plan.currency_code if plan else None,
+                "current_period_start": row.current_period_start.isoformat() if row.current_period_start else None,
+                "current_period_end": row.current_period_end.isoformat() if row.current_period_end else None,
+                "provider": row.provider,
+                "provider_subscription_id": row.provider_subscription_id,
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+            }
+        )
+    return {"items": items, "pagination": {"total": total, "skip": skip, "limit": limit}}
+
+
+@api_router.get("/admin/finance/subscriptions/{subscription_id}")
+async def admin_finance_subscription_detail(
+    subscription_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    try:
+        subscription_uuid = uuid.UUID(subscription_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="subscription_id invalid") from exc
+
+    sub = await session.get(UserSubscription, subscription_uuid)
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+
+    user = await session.get(SqlUser, sub.user_id)
+    plan = await session.get(Plan, sub.plan_id) if sub.plan_id else None
+    invoices = (
+        await session.execute(
+            select(AdminInvoice).where(AdminInvoice.subscription_id == sub.id).order_by(AdminInvoice.created_at.desc()).limit(20)
+        )
+    ).scalars().all()
+
+    return {
+        "subscription": {
+            "id": str(sub.id),
+            "status": sub.status,
+            "provider": sub.provider,
+            "provider_subscription_id": sub.provider_subscription_id,
+            "provider_customer_id": sub.provider_customer_id,
+            "current_period_start": sub.current_period_start.isoformat() if sub.current_period_start else None,
+            "current_period_end": sub.current_period_end.isoformat() if sub.current_period_end else None,
+            "canceled_at": sub.canceled_at.isoformat() if sub.canceled_at else None,
+            "meta_json": sub.meta_json or {},
+        },
+        "user": {"id": str(user.id), "email": user.email} if user else None,
+        "plan": {
+            "id": str(plan.id),
+            "name": plan.name,
+            "price_amount": float(plan.price_amount) if plan.price_amount is not None else None,
+            "currency_code": plan.currency_code,
+        } if plan else None,
+        "invoices": [_admin_invoice_to_dict(row, user, plan) for row in invoices],
+    }
+
+
+@api_router.patch("/admin/finance/subscriptions/{subscription_id}/status")
+async def admin_finance_update_subscription_status(
+    subscription_id: str,
+    payload: FinanceSubscriptionStatusUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        subscription_uuid = uuid.UUID(subscription_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="subscription_id invalid") from exc
+
+    sub = await session.get(UserSubscription, subscription_uuid)
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+
+    target = payload.target_status.strip().lower()
+    _assert_subscription_transition(sub.status or "trialing", target)
+    sub.status = target
+    sub.updated_at = datetime.now(timezone.utc)
+    if target == "canceled":
+        sub.canceled_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="subscription_status_override",
+        actor=current_user,
+        resource_type="subscription",
+        resource_id=str(sub.id),
+        metadata={"target_status": target, "reason": payload.reason},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True, "id": str(sub.id), "status": sub.status}
+
+
+@api_router.get("/admin/finance/ledger")
+async def admin_finance_ledger_list(
+    request: Request,
+    reference_type: Optional[str] = None,
+    reference_id: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    query = select(LedgerEntry)
+    if reference_type:
+        query = query.where(LedgerEntry.reference_type == reference_type.strip())
+    if reference_id:
+        query = query.where(LedgerEntry.reference_id == reference_id.strip())
+
+    rows = (await session.execute(query.order_by(LedgerEntry.created_at.desc()).offset(max(0, int(skip))).limit(min(500, max(1, int(limit)))))).scalars().all()
+    account_ids = {row.account_id for row in rows}
+    accounts = (await session.execute(select(LedgerAccount).where(LedgerAccount.id.in_(account_ids)))).scalars().all() if account_ids else []
+    account_map = {row.id: row for row in accounts}
+    items = [_ledger_entry_to_dict(row, account_map.get(row.account_id)) for row in rows]
+    return {"items": items}
+
+
+@api_router.post("/admin/finance/ledger/{entry_id}/reverse")
+async def admin_finance_reverse_ledger_entry(
+    entry_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        entry_uuid = uuid.UUID(entry_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="entry_id invalid") from exc
+
+    entry = await session.get(LedgerEntry, entry_uuid)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Ledger entry not found")
+
+    reversed_exists = (
+        await session.execute(
+            select(LedgerEntry).where(LedgerEntry.reversal_of_entry_id == entry.id)
+        )
+    ).scalars().first()
+    if reversed_exists:
+        raise HTTPException(status_code=400, detail="Entry already reversed")
+
+    now = datetime.now(timezone.utc)
+    reversal = LedgerEntry(
+        entry_group_id=f"reversal-{entry.entry_group_id}",
+        account_id=entry.account_id,
+        debit_minor=int(entry.credit_minor or 0),
+        credit_minor=int(entry.debit_minor or 0),
+        currency=entry.currency,
+        reference_type=f"{entry.reference_type}_reversal",
+        reference_id=entry.reference_id,
+        description=f"Reversal of {entry.id}",
+        reversal_of_entry_id=entry.id,
+        created_by=current_user.get("id"),
+        created_at=now,
+    )
+    session.add(reversal)
+    await _write_audit_log_sql(
+        session=session,
+        action="ledger_entry_reversed",
+        actor=current_user,
+        resource_type="ledger_entry",
+        resource_id=str(entry.id),
+        metadata={"reversal_entry_id": None},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True, "reversal_id": str(reversal.id)}
+
+
+@api_router.get("/admin/finance/tax-profiles")
+async def admin_finance_tax_profiles(
+    request: Request,
+    country: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    query = select(TaxProfile)
+    if country:
+        query = query.where(TaxProfile.country_code == country.upper().strip())
+    rows = (await session.execute(query.order_by(TaxProfile.updated_at.desc()))).scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(row.id),
+                "code": row.code,
+                "country_code": row.country_code,
+                "tax_name": row.tax_name,
+                "tax_rate_bps": int(row.tax_rate_bps or 0),
+                "active_flag": bool(row.active_flag),
+                "rounding_mode": row.rounding_mode,
+            }
+            for row in rows
+        ]
+    }
+
+
+@api_router.post("/admin/finance/tax-profiles")
+async def admin_finance_create_tax_profile(
+    payload: TaxProfileCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    code = payload.code.strip().upper()
+    if not code:
+        raise HTTPException(status_code=400, detail="code is required")
+    country_code = payload.country_code.strip().upper()
+    now = datetime.now(timezone.utc)
+    row = TaxProfile(
+        code=code,
+        country_code=country_code,
+        tax_name=payload.tax_name.strip() or "VAT",
+        tax_rate_bps=int(payload.tax_rate_bps),
+        active_flag=bool(payload.active_flag),
+        rounding_mode="HALF_UP",
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(row)
+    await session.commit()
+    return {"id": str(row.id)}
+
+
+@api_router.patch("/admin/finance/tax-profiles/{profile_id}")
+async def admin_finance_update_tax_profile(
+    profile_id: str,
+    payload: TaxProfileUpdatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        profile_uuid = uuid.UUID(profile_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="profile_id invalid") from exc
+    row = await session.get(TaxProfile, profile_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Tax profile not found")
+    if payload.tax_name is not None:
+        row.tax_name = payload.tax_name.strip() or row.tax_name
+    if payload.tax_rate_bps is not None:
+        row.tax_rate_bps = int(payload.tax_rate_bps)
+    if payload.active_flag is not None:
+        row.active_flag = bool(payload.active_flag)
+    row.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.get("/admin/finance/products")
+async def admin_finance_products(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    rows = (await session.execute(select(FinanceProduct).order_by(FinanceProduct.created_at.desc()))).scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(row.id),
+                "code": row.code,
+                "name": row.name,
+                "description": row.description,
+                "active_flag": bool(row.active_flag),
+            }
+            for row in rows
+        ]
+    }
+
+
+@api_router.post("/admin/finance/products")
+async def admin_finance_create_product(
+    payload: FinanceProductCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    now = datetime.now(timezone.utc)
+    row = FinanceProduct(
+        code=payload.code.strip().upper(),
+        name=payload.name.strip(),
+        description=(payload.description or "").strip() or None,
+        active_flag=bool(payload.active_flag),
+        meta_json={"created_by": current_user.get("id")},
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(row)
+    await session.commit()
+    return {"id": str(row.id)}
+
+
+@api_router.get("/admin/finance/product-prices")
+async def admin_finance_product_prices(
+    request: Request,
+    product_id: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    query = select(FinanceProductPrice)
+    if product_id:
+        query = query.where(FinanceProductPrice.product_id == uuid.UUID(product_id))
+    rows = (await session.execute(query.order_by(FinanceProductPrice.active_from.desc()))).scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(row.id),
+                "product_id": str(row.product_id),
+                "currency": row.currency,
+                "amount_minor": int(row.amount_minor or 0),
+                "amount_display": _format_money_display(row.amount_minor, row.currency),
+                "country_code": row.country_code,
+                "active_from": row.active_from.isoformat() if row.active_from else None,
+                "active_to": row.active_to.isoformat() if row.active_to else None,
+                "active_flag": bool(row.active_flag),
+            }
+            for row in rows
+        ]
+    }
+
+
+@api_router.post("/admin/finance/products/{product_id}/prices")
+async def admin_finance_create_product_price(
+    product_id: str,
+    payload: FinanceProductPriceCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        product_uuid = uuid.UUID(product_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="product_id invalid") from exc
+
+    product = await session.get(FinanceProduct, product_uuid)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    currency_code = _normalize_currency_code(payload.currency)
+    active_from = _parse_iso_datetime(payload.active_from, "active_from") if payload.active_from else datetime.now(timezone.utc)
+    active_to = _parse_iso_datetime(payload.active_to, "active_to") if payload.active_to else None
+    if active_to and active_to <= active_from:
+        raise HTTPException(status_code=400, detail="active_to must be after active_from")
+
+    now = datetime.now(timezone.utc)
+    if active_to is None:
+        existing_active = (
+            await session.execute(
+                select(FinanceProductPrice).where(
+                    FinanceProductPrice.product_id == product_uuid,
+                    FinanceProductPrice.currency == currency_code,
+                    FinanceProductPrice.active_flag.is_(True),
+                    FinanceProductPrice.active_to.is_(None),
+                )
+            )
+        ).scalars().all()
+        for row in existing_active:
+            row.active_flag = False
+            row.active_to = active_from
+            row.updated_at = now
+
+    row = FinanceProductPrice(
+        product_id=product_uuid,
+        country_code=payload.country_code.upper().strip() if payload.country_code else None,
+        currency=currency_code,
+        amount_minor=int(payload.amount_minor),
+        active_from=active_from,
+        active_to=active_to,
+        active_flag=True,
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(row)
+    await session.commit()
+    return {"id": str(row.id)}
+
+
+@api_router.get("/admin/finance/trace/{invoice_id}")
+async def admin_finance_trace(
+    invoice_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invoice_id invalid") from exc
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    payments = (
+        await session.execute(select(Payment).where(Payment.invoice_id == invoice.id).order_by(Payment.created_at.desc()))
+    ).scalars().all()
+    ledgers = (
+        await session.execute(
+            select(LedgerEntry).where(
+                or_(
+                    and_(LedgerEntry.reference_type == "invoice", LedgerEntry.reference_id == str(invoice.id)),
+                    and_(LedgerEntry.reference_type == "invoice_refund", LedgerEntry.reference_id == str(invoice.id)),
+                )
+            ).order_by(LedgerEntry.created_at.desc())
+        )
+    ).scalars().all()
+    account_ids = {row.account_id for row in ledgers}
+    accounts = (await session.execute(select(LedgerAccount).where(LedgerAccount.id.in_(account_ids)))).scalars().all() if account_ids else []
+    account_map = {row.id: row for row in accounts}
+
+    return {
+        "invoice": _admin_invoice_to_dict(invoice),
+        "payments": [_payment_to_dict(row, invoice) for row in payments],
+        "ledger_entries": [_ledger_entry_to_dict(row, account_map.get(row.account_id)) for row in ledgers],
+    }
 
 
 @api_router.get("/admin/finance/revenue")
@@ -34766,7 +36140,7 @@ async def create_pricing_checkout_session(
         raise HTTPException(status_code=403, detail="Payments disabled for this country")
 
     amount = float(quote.get("amount") or 0)
-    currency = quote.get("currency") or "EUR"
+    currency = _normalize_currency_code(quote.get("currency") or "EUR")
     publish_days = quote.get("publish_days") or 90
 
     if amount <= 0:
@@ -34778,14 +36152,27 @@ async def create_pricing_checkout_session(
     await session.flush()
 
     now = datetime.now(timezone.utc)
+    amount_minor = _to_minor_units(amount, currency)
+    tax_profile = await _resolve_tax_profile(session, country_code)
+    tax_snapshot = _calculate_tax_snapshot(amount_minor, int(tax_profile.tax_rate_bps or 0))
+    sequence_key, sequence_no, invoice_no = await _next_invoice_sequence(session, country_code or "GLOBAL")
     invoice = AdminInvoice(
-        invoice_no=_generate_invoice_no(),
+        invoice_no=invoice_no,
         user_id=uuid.UUID(current_user.get("id")),
         subscription_id=None,
         plan_id=None,
         campaign_id=None,
-        amount_total=amount,
+        amount_total=_minor_to_major_units(amount_minor),
+        amount_minor=amount_minor,
+        net_minor=tax_snapshot["net_minor"],
+        tax_minor=tax_snapshot["tax_minor"],
+        gross_minor=tax_snapshot["gross_minor"],
         currency=currency,
+        tax_profile_id=tax_profile.id,
+        product_id=None,
+        product_price_id=None,
+        sequence_no=sequence_no,
+        sequence_key=sequence_key,
         status="issued",
         payment_status="requires_payment_method",
         issued_at=now,
@@ -34800,6 +36187,20 @@ async def create_pricing_checkout_session(
             "pricing_campaign_item_id": quote.get("campaign_item_id"),
             "pricing_listing_quota": quote.get("listing_quota"),
             "pricing_listing_type": quote.get("listing_type"),
+            "money_v2": {
+                "amount_minor": amount_minor,
+                "currency": currency,
+                "net_minor": tax_snapshot["net_minor"],
+                "tax_minor": tax_snapshot["tax_minor"],
+                "gross_minor": tax_snapshot["gross_minor"],
+                "rounding": "HALF_UP",
+            },
+            "tax_profile": {
+                "id": str(tax_profile.id),
+                "code": tax_profile.code,
+                "country_code": tax_profile.country_code,
+                "tax_rate_bps": int(tax_profile.tax_rate_bps or 0),
+            },
         },
         scope="country" if country_code else "global",
         country_code=country_code,
@@ -34840,7 +36241,9 @@ async def create_pricing_checkout_session(
         provider_ref=checkout_session.session_id,
         status="requires_payment_method",
         amount_total=amount,
+        amount_minor=amount_minor,
         currency=currency,
+        country_code=country_code,
         meta_json={"checkout_session_id": checkout_session.session_id},
         created_at=now,
         updated_at=now,
@@ -34852,6 +36255,7 @@ async def create_pricing_checkout_session(
         invoice_id=invoice.id,
         dealer_id=invoice.user_id,
         amount=amount,
+        amount_minor=amount_minor,
         currency=currency,
         status="requires_payment_method",
         payment_status="requires_payment_method",

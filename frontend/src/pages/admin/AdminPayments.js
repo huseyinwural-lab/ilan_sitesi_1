@@ -33,6 +33,7 @@ export default function AdminPaymentsPage() {
   const [query, setQuery] = useState('');
   const [userId, setUserId] = useState('');
   const [listingId, setListingId] = useState('');
+  const [role, setRole] = useState('');
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -84,6 +85,15 @@ export default function AdminPaymentsPage() {
   };
 
   useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem('user');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        setRole(parsed?.role || '');
+      }
+    } catch {
+      setRole('');
+    }
     fetchPayments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, startDate, endDate]);
@@ -95,13 +105,15 @@ export default function AdminPaymentsPage() {
           <h1 className="text-2xl font-semibold" data-testid="admin-transactions-title">Transactions Log</h1>
           <p className="text-sm text-muted-foreground" data-testid="admin-transactions-subtitle">Read-only monetization kayıtları.</p>
         </div>
-        <button
-          onClick={handleExportCsv}
-          className="h-9 px-3 rounded-md border text-sm"
-          data-testid="admin-transactions-export-csv"
-        >
-          CSV Export
-        </button>
+        {role === 'super_admin' ? (
+          <button
+            onClick={handleExportCsv}
+            className="h-9 px-3 rounded-md border text-sm"
+            data-testid="admin-transactions-export-csv"
+          >
+            CSV Export
+          </button>
+        ) : null}
       </div>
 
       {error && (

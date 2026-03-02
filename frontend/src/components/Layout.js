@@ -525,9 +525,12 @@ export default function Layout({ children }) {
     { path: '/admin/vehicle-master-import', icon: UploadCloud, label: 'Araç Master Data Import', roles: roles.vehicleAdmin, testId: 'vehicle-master-import' },
 
     { divider: true, label: 'Finans', roles: roles.finance },
+    { path: '/admin/finance-overview', icon: Activity, label: 'Finans Overview', roles: roles.finance, testId: 'finance-overview' },
     { path: '/admin/plans', icon: Star, label: 'Planlar', roles: roles.finance, testId: 'finance-plans' },
     { path: '/admin/invoices', icon: FileText, label: 'Faturalar', roles: roles.finance, testId: 'finance-invoices' },
     { path: '/admin/payments', icon: Activity, label: 'Transactions Log', roles: roles.finance, testId: 'finance-transactions-log' },
+    { path: '/admin/subscriptions', icon: Users, label: 'Subscriptions', roles: roles.finance, testId: 'finance-subscriptions' },
+    { path: '/admin/ledger', icon: FileText, label: 'Ledger', roles: roles.finance, testId: 'finance-ledger' },
     { path: '/admin/tax-rates', icon: Percent, label: 'Vergi Oranları', roles: roles.finance, testId: 'finance-tax-rates' },
 
     { divider: true, label: 'Sistem', roles: roles.system },
@@ -652,7 +655,10 @@ export default function Layout({ children }) {
       '/admin/vehicle-master-import',
       '/admin/audit',
       '/admin/plans',
+      '/admin/finance-overview',
       '/admin/payments',
+      '/admin/subscriptions',
+      '/admin/ledger',
       '/admin/moderation',
       '/admin/reports',
       '/admin/listings',

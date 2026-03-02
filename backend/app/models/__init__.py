@@ -63,3 +63,11 @@ from app.models.pricing_campaign_item import PricingCampaignItem
 from app.models.pricing_tier_rule import PricingTierRule
 from app.models.pricing_package import PricingPackage, UserPackageSubscription
 from app.models.pricing_snapshot import PricingPriceSnapshot
+from app.models.finance_v2 import (
+    FinanceProduct,
+    FinanceProductPrice,
+    TaxProfile,
+    FinanceInvoiceSequence,
+    LedgerAccount,
+    LedgerEntry,
+)

@@ -24,6 +24,9 @@ import AdminInvoicesPage from '@/pages/admin/AdminInvoices';
 import AdminPaymentsPage from '@/pages/admin/AdminPayments';
 import AdminTaxRatesPage from '@/pages/admin/AdminTaxRates';
 import AdminPlansPage from '@/pages/admin/AdminPlans';
+import AdminFinanceOverviewPage from '@/pages/admin/AdminFinanceOverview';
+import AdminSubscriptionsPage from '@/pages/admin/AdminSubscriptions';
+import AdminLedgerPage from '@/pages/admin/AdminLedger';
 import AdminDealerDetailPage from '@/pages/admin/AdminDealerDetail';
 import AdminCountriesPage from '@/pages/admin/AdminCountries';
 import AdminSystemSettingsPage from '@/pages/admin/AdminSystemSettings';
@@ -229,6 +232,9 @@ export default function BackofficePortalApp() {
       <Route path="/listings" element={<AdminLayout><AdminListingsPage /></AdminLayout>} />
       <Route path="/invoices" element={<AdminLayout><AdminInvoicesPage /></AdminLayout>} />
       <Route path="/payments" element={<AdminLayout><AdminPaymentsPage /></AdminLayout>} />
+      <Route path="/finance-overview" element={<AdminLayout><AdminFinanceOverviewPage /></AdminLayout>} />
+      <Route path="/subscriptions" element={<AdminLayout><AdminSubscriptionsPage /></AdminLayout>} />
+      <Route path="/ledger" element={<AdminLayout><AdminLedgerPage /></AdminLayout>} />
       <Route path="/billing" element={<AdminLayout><BillingPlaceholderPage /></AdminLayout>} />
       <Route path="/tax-rates" element={<AdminLayout><AdminTaxRatesPage /></AdminLayout>} />
       <Route path="/plans" element={<AdminLayout><AdminPlansPage /></AdminLayout>} />

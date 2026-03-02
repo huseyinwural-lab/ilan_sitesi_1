@@ -16,7 +16,16 @@ class AdminInvoice(Base):
     plan_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("plans.id"), nullable=True, index=True)
     campaign_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("campaigns.id"), nullable=True)
     amount_total: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
+    amount_minor: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    net_minor: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    tax_minor: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    gross_minor: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     currency: Mapped[str] = mapped_column(String(5), nullable=False, server_default="EUR")
+    tax_profile_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("tax_profiles.id"), nullable=True)
+    product_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("finance_products.id"), nullable=True)
+    product_price_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("finance_product_prices.id"), nullable=True)
+    sequence_no: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sequence_key: Mapped[str | None] = mapped_column(String(40), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="draft")
     payment_status: Mapped[str] = mapped_column(String(40), nullable=False, server_default="requires_payment_method")
     issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -34,5 +43,6 @@ class AdminInvoice(Base):
     __table_args__ = (
         Index("ix_admin_invoices_user", "user_id"),
         Index("ix_admin_invoices_status", "status"),
+        Index("ix_admin_invoices_sequence", "sequence_key", "sequence_no"),
         Index("ix_admin_invoices_created", "created_at"),
     )
