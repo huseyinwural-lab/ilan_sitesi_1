@@ -693,3 +693,8 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Güncel durum
 - P0-04 tam kaldırma ve konsolidasyon kriterleri sağlandı.
 - Finans tarafında aktif tek giriş seti: güncel Stripe tabanlı canonical endpointler.
+
+## 2026-03-02 (P0-05 — Kategori Leaf → Form Template Final Doğrulama)
+- Kanıt dosyaları üretildi: `/app/test_reports/p0_05_leaf_template_inventory.json`, `/app/test_reports/p0_05_leaf_template_e2e_matrix.json`, `/app/test_reports/iteration_89.json`.
+- Sonuç: `unmapped_publishable_count=0` (PASS), 12 leaf E2E matrisi `12/12 PASS` (6 emlak + 6 vasıta), negatif API 4xx + UI kontrollü hata doğrulandı (blank screen yok).
+- Kapsam: DE+FR ülke kapsamı ve leaf bazlı adım matrisi (select→schema→draft→validation→preview→submit_publish_request→publish_admin_approve→public detail) tamamlandı.

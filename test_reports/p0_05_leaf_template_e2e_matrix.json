@@ -608,7 +608,10 @@
       }
     },
     "ui_controlled_error": {
-      "status": "PENDING_TESTING_AGENT"
+      "status": "PASS",
+      "scenario": "Navigate to /ilan-ver/detaylar with fake category ID in localStorage",
+      "expected_behavior": "Controlled error messages, not blank screen",
+      "actual_behavior": "Shows 'Kategori şeması alınamadı' warning + disabled blocks for each form section"
     }
   }
 }
