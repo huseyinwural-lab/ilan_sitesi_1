@@ -15,30 +15,30 @@
     {
       "ok": true,
       "initial_url": "http://marketplace-finance-3.preview.emergentagent.com/",
-      "final_url": "https://marketplace-finance-3.preview.emergentagent.com:443/",
+      "final_url": "https://billing-cleanup.preview.emergentagent.com:443/",
       "hop_count": 1,
       "chain": [
         {
           "status": 301,
           "url": "http://marketplace-finance-3.preview.emergentagent.com/",
-          "location": "https://marketplace-finance-3.preview.emergentagent.com:443/"
+          "location": "https://billing-cleanup.preview.emergentagent.com:443/"
         },
         {
           "status": 200,
-          "url": "https://marketplace-finance-3.preview.emergentagent.com:443/",
+          "url": "https://billing-cleanup.preview.emergentagent.com:443/",
           "location": null
         }
       ]
     },
     {
       "ok": true,
-      "initial_url": "https://marketplace-finance-3.preview.emergentagent.com/",
-      "final_url": "https://marketplace-finance-3.preview.emergentagent.com/",
+      "initial_url": "https://billing-cleanup.preview.emergentagent.com/",
+      "final_url": "https://billing-cleanup.preview.emergentagent.com/",
       "hop_count": 0,
       "chain": [
         {
           "status": 200,
-          "url": "https://marketplace-finance-3.preview.emergentagent.com/",
+          "url": "https://billing-cleanup.preview.emergentagent.com/",
           "location": null
         }
       ]
@@ -48,28 +48,28 @@
   "canonical_checks": {
     "rows": [
       {
-        "url": "https://marketplace-finance-3.preview.emergentagent.com/",
-        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/"
+        "url": "https://billing-cleanup.preview.emergentagent.com/",
+        "canonical": "https://billing-cleanup.preview.emergentagent.com/"
       },
       {
-        "url": "https://marketplace-finance-3.preview.emergentagent.com/trust",
-        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/trust"
+        "url": "https://billing-cleanup.preview.emergentagent.com/trust",
+        "canonical": "https://billing-cleanup.preview.emergentagent.com/trust"
       },
       {
-        "url": "https://marketplace-finance-3.preview.emergentagent.com/kurumsal",
-        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/kurumsal"
+        "url": "https://billing-cleanup.preview.emergentagent.com/kurumsal",
+        "canonical": "https://billing-cleanup.preview.emergentagent.com/kurumsal"
       },
       {
-        "url": "https://marketplace-finance-3.preview.emergentagent.com/seo",
-        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/seo"
+        "url": "https://billing-cleanup.preview.emergentagent.com/seo",
+        "canonical": "https://billing-cleanup.preview.emergentagent.com/seo"
       },
       {
-        "url": "https://marketplace-finance-3.preview.emergentagent.com/bilgi/gizlilik-politikasi",
-        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/bilgi/gizlilik-politikasi"
+        "url": "https://billing-cleanup.preview.emergentagent.com/bilgi/gizlilik-politikasi",
+        "canonical": "https://billing-cleanup.preview.emergentagent.com/bilgi/gizlilik-politikasi"
       },
       {
-        "url": "https://marketplace-finance-3.preview.emergentagent.com/kategori/tarla",
-        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/kategori/tarla"
+        "url": "https://billing-cleanup.preview.emergentagent.com/kategori/tarla",
+        "canonical": "https://billing-cleanup.preview.emergentagent.com/kategori/tarla"
       }
     ],
     "mismatch_count": 0,
@@ -80,26 +80,26 @@
       "url_count": 1219,
       "wrong_host_count": 0,
       "sample_20": [
-        "https://marketplace-finance-3.preview.emergentagent.com/",
-        "https://marketplace-finance-3.preview.emergentagent.com/search",
-        "https://marketplace-finance-3.preview.emergentagent.com/trust",
-        "https://marketplace-finance-3.preview.emergentagent.com/kurumsal",
-        "https://marketplace-finance-3.preview.emergentagent.com/seo",
-        "https://marketplace-finance-3.preview.emergentagent.com/maintenance",
-        "https://marketplace-finance-3.preview.emergentagent.com/500",
-        "https://marketplace-finance-3.preview.emergentagent.com/DE/vasita",
-        "https://marketplace-finance-3.preview.emergentagent.com/DE/vasita/otomobil",
-        "https://marketplace-finance-3.preview.emergentagent.com/kategori/maps-acceptance-fr",
-        "https://marketplace-finance-3.preview.emergentagent.com/kategori/maps-acceptance-tr",
-        "https://marketplace-finance-3.preview.emergentagent.com/kategori/maps-acceptance-de",
-        "https://marketplace-finance-3.preview.emergentagent.com/kategori/tarla",
-        "https://marketplace-finance-3.preview.emergentagent.com/kategori/imara-acik",
-        "https://marketplace-finance-3.preview.emergentagent.com/kategori/arsa",
-        "https://marketplace-finance-3.preview.emergentagent.com/kategori/kiralik-ofis",
-        "https://marketplace-finance-3.preview.emergentagent.com/kategori/satilik-dukkan",
-        "https://marketplace-finance-3.preview.emergentagent.com/kategori/ticari",
-        "https://marketplace-finance-3.preview.emergentagent.com/kategori/kiralik-daire",
-        "https://marketplace-finance-3.preview.emergentagent.com/kategori/satilik-daire"
+        "https://billing-cleanup.preview.emergentagent.com/",
+        "https://billing-cleanup.preview.emergentagent.com/search",
+        "https://billing-cleanup.preview.emergentagent.com/trust",
+        "https://billing-cleanup.preview.emergentagent.com/kurumsal",
+        "https://billing-cleanup.preview.emergentagent.com/seo",
+        "https://billing-cleanup.preview.emergentagent.com/maintenance",
+        "https://billing-cleanup.preview.emergentagent.com/500",
+        "https://billing-cleanup.preview.emergentagent.com/DE/vasita",
+        "https://billing-cleanup.preview.emergentagent.com/DE/vasita/otomobil",
+        "https://billing-cleanup.preview.emergentagent.com/kategori/maps-acceptance-fr",
+        "https://billing-cleanup.preview.emergentagent.com/kategori/maps-acceptance-tr",
+        "https://billing-cleanup.preview.emergentagent.com/kategori/maps-acceptance-de",
+        "https://billing-cleanup.preview.emergentagent.com/kategori/tarla",
+        "https://billing-cleanup.preview.emergentagent.com/kategori/imara-acik",
+        "https://billing-cleanup.preview.emergentagent.com/kategori/arsa",
+        "https://billing-cleanup.preview.emergentagent.com/kategori/kiralik-ofis",
+        "https://billing-cleanup.preview.emergentagent.com/kategori/satilik-dukkan",
+        "https://billing-cleanup.preview.emergentagent.com/kategori/ticari",
+        "https://billing-cleanup.preview.emergentagent.com/kategori/kiralik-daire",
+        "https://billing-cleanup.preview.emergentagent.com/kategori/satilik-daire"
       ]
     },
     "simulated_hosts": [

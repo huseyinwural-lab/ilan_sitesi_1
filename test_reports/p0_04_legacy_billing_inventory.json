@@ -1,0 +1,151 @@
+{
+  "task": "P0-04 Legacy Billing Cleanup — Envanter",
+  "generated_at": "2026-03-02T00:00:00Z",
+  "scope": {
+    "frontend": "/app/frontend/src",
+    "backend": "/app/backend/app,/app/backend/server.py",
+    "keywords": [
+      "admin/Billing.js",
+      "billing",
+      "mock",
+      "fallback payment",
+      "legacy payment endpoints"
+    ]
+  },
+  "summary": {
+    "legacy_frontend_entries": 6,
+    "legacy_backend_route_files": 3,
+    "active_stub_payment_entrypoints": 1,
+    "live_v1_billing_endpoints": "not_found"
+  },
+  "live_probe": [
+    {
+      "method": "GET",
+      "url": "/api/v1/billing/subscription",
+      "http_status": 404,
+      "response_excerpt": "{\"detail\":\"Not Found\"}",
+      "interpretation": "Legacy v1 billing endpoint runtime'da aktif değil"
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/billing/checkout",
+      "http_status": 404,
+      "response_excerpt": "{\"detail\":\"Not Found\"}",
+      "interpretation": "Legacy v1 checkout runtime'da aktif değil"
+    },
+    {
+      "method": "POST",
+      "url": "/api/payments/create-checkout-session/stub",
+      "http_status": 200,
+      "response_excerpt": "{\"mode\":\"stub\",\"checkout_url\":\"https://checkout.stripe.com/...\"}",
+      "interpretation": "Stub ödeme girişi aktif; prod dışı test amaçlı kalmış yol"
+    }
+  ],
+  "inventory": {
+    "frontend_legacy_candidates": [
+      {
+        "path": "/app/frontend/src/portals/backoffice/BackofficePortalApp.jsx:41,238",
+        "type": "route+import",
+        "evidence": "BillingPlaceholder import + /billing route",
+        "remove_recommendation": "REMOVE"
+      },
+      {
+        "path": "/app/frontend/src/pages/admin/BillingPlaceholder.js",
+        "type": "component",
+        "evidence": "P1 placeholder sayfa, gerçek finans akışı değil",
+        "remove_recommendation": "REMOVE"
+      },
+      {
+        "path": "/app/frontend/src/pages/admin/Billing.js",
+        "type": "component (dead)",
+        "evidence": "'/api/v1/billing/*' endpointlerini çağırıyor, runtime'da endpoint yok",
+        "remove_recommendation": "REMOVE"
+      },
+      {
+        "path": "/app/frontend/src/pages/admin/Plans.js",
+        "type": "component (dead)",
+        "evidence": "'/api/v1/billing/checkout' çağrısı var; import referansı yok",
+        "remove_recommendation": "REMOVE"
+      },
+      {
+        "path": "/app/frontend/src/shared/adminRbac.js:66",
+        "type": "rbac rule",
+        "evidence": "^/admin/billing$ route policy kalıntısı",
+        "remove_recommendation": "REMOVE"
+      },
+      {
+        "path": "/app/frontend/src/components/admin/AdminBreadcrumbs.jsx:21",
+        "type": "ui label",
+        "evidence": "billing breadcrumb label kalıntısı",
+        "remove_recommendation": "REMOVE"
+      }
+    ],
+    "backend_legacy_candidates": [
+      {
+        "path": "/app/backend/app/routers/billing_routes.py",
+        "type": "route file",
+        "evidence": "APIRouter(prefix='/v1/billing'), default key fallback ('sk_test_mock')",
+        "runtime_state": "not_mounted_in_server",
+        "remove_recommendation": "REMOVE"
+      },
+      {
+        "path": "/app/backend/app/routers/billing_read_routes.py",
+        "type": "route file",
+        "evidence": "APIRouter(prefix='/v1/billing')",
+        "runtime_state": "not_mounted_in_server",
+        "remove_recommendation": "REMOVE"
+      },
+      {
+        "path": "/app/backend/app/routers/billing_webhook.py",
+        "type": "route file",
+        "evidence": "APIRouter(prefix='/v1/billing'), legacy webhook flow",
+        "runtime_state": "not_mounted_in_server",
+        "remove_recommendation": "REMOVE"
+      },
+      {
+        "path": "/app/backend/server.py:21573-21615",
+        "type": "active endpoint",
+        "evidence": "POST /payments/create-checkout-session/stub => mode=stub",
+        "runtime_state": "active",
+        "remove_recommendation": "REMOVE_OR_HARD_DISABLE_NON_TEST"
+      },
+      {
+        "path": "/app/backend/server.py:21829",
+        "type": "naming debt",
+        "evidence": "RateLimiter scope='stripe_legacy_webhook' (isimlendirme legacy)",
+        "remove_recommendation": "RENAME"
+      }
+    ],
+    "notes_non_removal": [
+      {
+        "path": "/app/backend/app/models/billing.py",
+        "reason": "Dosya içinde VatRate/Invoice/InvoiceItem aktif finans akışında kullanılıyor; dosyanın tamamı silinmemeli.",
+        "action": "Selective cleanup only"
+      }
+    ]
+  },
+  "proposed_removal_list": {
+    "frontend_routes": [
+      "/admin/billing"
+    ],
+    "frontend_components": [
+      "frontend/src/pages/admin/BillingPlaceholder.js",
+      "frontend/src/pages/admin/Billing.js",
+      "frontend/src/pages/admin/Plans.js"
+    ],
+    "frontend_refs": [
+      "frontend/src/portals/backoffice/BackofficePortalApp.jsx (billing import/route)",
+      "frontend/src/shared/adminRbac.js (billing rule)",
+      "frontend/src/components/admin/AdminBreadcrumbs.jsx (billing label)"
+    ],
+    "backend_routes": [
+      "backend/app/routers/billing_routes.py",
+      "backend/app/routers/billing_read_routes.py",
+      "backend/app/routers/billing_webhook.py"
+    ],
+    "backend_endpoints": [
+      "POST /api/payments/create-checkout-session/stub"
+    ]
+  },
+  "status": "READY_FOR_REMOVAL_PHASE"
+}

@@ -1,7 +1,7 @@
 ## FAZ-7 Admin Login Kapanış Kontrolleri — Closeout Raporu
 
 **Tarih:** 2026-02-19
-**Ortam:** https://marketplace-finance-3.preview.emergentagent.com
+**Ortam:** https://billing-cleanup.preview.emergentagent.com
 **Kullanıcı:** admin@platform.com / Admin123!
 
 ---

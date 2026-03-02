@@ -16,7 +16,7 @@ from datetime import datetime
 import uuid
 
 # Backend URL from environment
-BACKEND_URL = "https://marketplace-finance-3.preview.emergentagent.com"
+BACKEND_URL = "https://billing-cleanup.preview.emergentagent.com"
 
 # Test credentials
 ADMIN_CREDENTIALS = {
