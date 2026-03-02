@@ -323,8 +323,9 @@ const DetailPage = () => {
   const seller = listing.seller || {};
   const location = listing.location || {};
   const modules = listing.modules || {};
-  const media = Array.isArray(listing.media) ? listing.media : [];
-  const coverMedia = media[0];
+  const media = Array.isArray(listing.media) ? listing.media.filter(Boolean) : [];
+  const coverMedia = media[0] || null;
+  const coverMediaUrl = coverMedia?.url || coverMedia?.thumbnail_url || null;
   const showPhotos = modules.photos?.enabled !== false;
   const showAddress = modules.address?.enabled !== false;
   const showContact = modules.contact?.enabled !== false;
@@ -339,19 +340,25 @@ const DetailPage = () => {
             {showPhotos && coverMedia ? (
               <div className="space-y-3" data-testid="listing-gallery">
                 <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden" data-testid="listing-gallery-cover">
-                  <img
-                    src={coverMedia.url}
-                    alt={listing.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    data-testid="listing-gallery-cover-image"
-                  />
+                  {coverMediaUrl ? (
+                    <img
+                      src={coverMediaUrl}
+                      alt={listing.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      data-testid="listing-gallery-cover-image"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100" data-testid="listing-gallery-cover-placeholder" />
+                  )}
                 </div>
                 {media.length > 1 ? (
                   <div className="grid grid-cols-4 gap-2" data-testid="listing-gallery-thumbnails">
-                    {media.slice(1, 5).map((item) => (
+                    {media.slice(1, 5).filter(Boolean).map((item) => (
                       <div key={item.media_id || item.url} className="aspect-video rounded-lg overflow-hidden bg-gray-100" data-testid={`listing-gallery-thumb-${item.media_id || 'item'}`}>
-                        <img src={item.thumbnail_url || item.url} alt={listing.title} className="w-full h-full object-cover" loading="lazy" />
+                        {(item.thumbnail_url || item.url) ? (
+                          <img src={item.thumbnail_url || item.url} alt={listing.title} className="w-full h-full object-cover" loading="lazy" />
+                        ) : null}
                       </div>
                     ))}
                   </div>
