@@ -1,0 +1,9 @@
+{
+  "base": "https://marketplace-finance-3.preview.emergentagent.com",
+  "invoice_id": "41324cc6-49cb-4869-9e7b-c1f51bb3e7bc",
+  "invoice_no": "INV-20260302-B6D594",
+  "amount_minor": 8888,
+  "currency": "EUR",
+  "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_a1SrHaKbnTQK674lAHf2JDXi37GfUgJkjVrzRXASiNGoe3669BqB0Z3hNk#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blpxYHZxWjA0UTNTRmxCakJJPXJmZ3ZCf0dwVlBhRE9wR1JXXzFTY0JqTTNhNl9jPG9tNDZAX2hmdkxuZ182QlNVfDxHU0g8TmxIQXZPNHdvMUJ8NDVCMUBfcWNvSDRoNTVmMXN3PEAyaicpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl",
+  "session_id": "cs_test_a1SrHaKbnTQK674lAHf2JDXi37GfUgJkjVrzRXASiNGoe3669BqB0Z3hNk"
+}

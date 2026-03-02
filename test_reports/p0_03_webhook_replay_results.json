@@ -1,0 +1,20 @@
+[
+  {
+    "event_id": "evt_1T6cqFGoGL8wcbsGGHGSE57m",
+    "event_type": "checkout.session.completed",
+    "status_code": 200,
+    "body": "{\"status\":\"processed\"}"
+  },
+  {
+    "event_id": "evt_3T6cqEGoGL8wcbsG14uEwHo2",
+    "event_type": "payment_intent.succeeded",
+    "status_code": 200,
+    "body": "{\"status\":\"ignored\"}"
+  },
+  {
+    "event_id": "evt_3T6YQlGoGL8wcbsG1QxJu0l0",
+    "event_type": "payment_intent.succeeded",
+    "status_code": 200,
+    "body": "{\"status\":\"ignored\"}"
+  }
+]

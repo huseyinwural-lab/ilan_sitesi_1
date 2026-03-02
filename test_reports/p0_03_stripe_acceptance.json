@@ -1,0 +1,188 @@
+{
+  "context": {
+    "base": "https://marketplace-finance-3.preview.emergentagent.com",
+    "invoice_id": "41324cc6-49cb-4869-9e7b-c1f51bb3e7bc",
+    "invoice_no": "INV-20260302-B6D594",
+    "amount_minor": 8888,
+    "currency": "EUR",
+    "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_a1SrHaKbnTQK674lAHf2JDXi37GfUgJkjVrzRXASiNGoe3669BqB0Z3hNk#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blpxYHZxWjA0UTNTRmxCakJJPXJmZ3ZCf0dwVlBhRE9wR1JXXzFTY0JqTTNhNl9jPG9tNDZAX2hmdkxuZ182QlNVfDxHU0g8TmxIQXZPNHdvMUJ8NDVCMUBfcWNvSDRoNTVmMXN3PEAyaicpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl",
+    "session_id": "cs_test_a1SrHaKbnTQK674lAHf2JDXi37GfUgJkjVrzRXASiNGoe3669BqB0Z3hNk"
+  },
+  "stripe": {
+    "session_id": "cs_test_a1SrHaKbnTQK674lAHf2JDXi37GfUgJkjVrzRXASiNGoe3669BqB0Z3hNk",
+    "session_status": "complete",
+    "payment_status": "paid",
+    "payment_intent_id": "pi_3T6cqEGoGL8wcbsG1lWxSLVX",
+    "subscription_id": null,
+    "amount_total": 8888,
+    "currency": "eur",
+    "related_events": [
+      {
+        "id": "evt_1T6cqFGoGL8wcbsGGHGSE57m",
+        "type": "checkout.session.completed",
+        "created": 1772482403
+      },
+      {
+        "id": "evt_3T6cqEGoGL8wcbsG14uEwHo2",
+        "type": "payment_intent.succeeded",
+        "created": 1772482403
+      },
+      {
+        "id": "evt_3T6YQlGoGL8wcbsG1QxJu0l0",
+        "type": "payment_intent.succeeded",
+        "created": 1772465450
+      },
+      {
+        "id": "evt_3T6WzVGoGL8wcbsG1X8tTPNG",
+        "type": "payment_intent.succeeded",
+        "created": 1772459916
+      },
+      {
+        "id": "evt_3T6WyTGoGL8wcbsG0Brzn8OX",
+        "type": "payment_intent.succeeded",
+        "created": 1772459852
+      },
+      {
+        "id": "evt_3T6WwMGoGL8wcbsG0jpQpbbl",
+        "type": "payment_intent.succeeded",
+        "created": 1772459721
+      },
+      {
+        "id": "evt_3T6WvBGoGL8wcbsG0lXJvdXs",
+        "type": "payment_intent.succeeded",
+        "created": 1772459648
+      },
+      {
+        "id": "evt_3T6WsjGoGL8wcbsG0sJbaA60",
+        "type": "payment_intent.succeeded",
+        "created": 1772459496
+      },
+      {
+        "id": "evt_3T6WrIGoGL8wcbsG0fPxombZ",
+        "type": "payment_intent.succeeded",
+        "created": 1772459407
+      },
+      {
+        "id": "evt_1T6WDjGoGL8wcbsGrD7iQoMH",
+        "type": "invoice.paid",
+        "created": 1772456950
+      },
+      {
+        "id": "evt_3T6WDgGoGL8wcbsG1a51Vt2w",
+        "type": "payment_intent.succeeded",
+        "created": 1772456950
+      },
+      {
+        "id": "evt_3T6VquGoGL8wcbsG1ygyPLnl",
+        "type": "payment_intent.succeeded",
+        "created": 1772455537
+      }
+    ],
+    "configured_webhook_endpoints": [
+      {
+        "id": "we_1T6WhlGoGL8wcbsG0jbOBcow",
+        "url": "https://announceia.com/api/payments/stripe/webhook",
+        "status": "enabled",
+        "events": [
+          "checkout.session.completed",
+          "payment_intent.succeeded"
+        ]
+      }
+    ]
+  },
+  "backend": {
+    "invoice": {
+      "id": "41324cc6-49cb-4869-9e7b-c1f51bb3e7bc",
+      "invoice_no": "INV-20260302-B6D594",
+      "status": "paid",
+      "payment_status": "succeeded",
+      "pdf_url": null,
+      "amount_minor": 8888,
+      "currency": "EUR",
+      "updated_at": "2026-03-02 23:19:14.715801+03:00"
+    },
+    "payments": [
+      {
+        "id": "fb343ec7-eb18-47cb-a4fd-2a1b13a076d3",
+        "provider_ref": "cs_test_a1SrHaKbnTQK674lAHf2JDXi37GfUgJkjVrzRXASiNGoe3669BqB0Z3hNk",
+        "status": "succeeded",
+        "amount_minor": 8888,
+        "currency": "EUR",
+        "provider": "stripe",
+        "created_at": "2026-03-02 23:11:18.751676+03:00",
+        "meta_json": {
+          "dealer_id": "cf049c3f-12c7-43fc-96f5-5f71902c6dc9",
+          "invoice_id": "41324cc6-49cb-4869-9e7b-c1f51bb3e7bc",
+          "invoice_no": "INV-20260302-B6D594",
+          "webhook_url": "https://marketplace-finance-3.preview.emergentagent.com/api/webhook/stripe"
+        }
+      }
+    ],
+    "webhook_logs": [
+      {
+        "event_id": "evt_3T6cqEGoGL8wcbsG14uEwHo2",
+        "event_type": "payment_intent.succeeded",
+        "status": "ignored",
+        "signature_valid": true,
+        "processed_at": "2026-03-02 23:19:21.044236+03:00",
+        "received_at": "2026-03-02 23:19:20.750337+03:00"
+      },
+      {
+        "event_id": "evt_1T6cqFGoGL8wcbsGGHGSE57m",
+        "event_type": "checkout.session.completed",
+        "status": "processed",
+        "signature_valid": true,
+        "processed_at": "2026-03-02 23:19:13.830834+03:00",
+        "received_at": "2026-03-02 23:19:13.537542+03:00"
+      }
+    ],
+    "ledger_groups": [
+      {
+        "entry_group_id": "invoice-41324cc6-49cb-4869-9e7b-c1f51bb3e7bc-be70ac16d9",
+        "debit_total": 8888,
+        "credit_total": 8888,
+        "entry_count": 2,
+        "balanced": true
+      }
+    ],
+    "subscription_state": {
+      "id": "1c18b19e-daf4-4af7-a455-a412fe552be7",
+      "status": "active",
+      "current_period_end": "2026-04-01 16:59:24+03:00",
+      "meta_json": {
+        "source": "e2e_script"
+      },
+      "plan_name": "DryRun Plan"
+    }
+  },
+  "webhook_replay_results": [
+    {
+      "event_id": "evt_1T6cqFGoGL8wcbsGGHGSE57m",
+      "event_type": "checkout.session.completed",
+      "status_code": 200,
+      "body": "{\"status\":\"processed\"}"
+    },
+    {
+      "event_id": "evt_3T6cqEGoGL8wcbsG14uEwHo2",
+      "event_type": "payment_intent.succeeded",
+      "status_code": 200,
+      "body": "{\"status\":\"ignored\"}"
+    },
+    {
+      "event_id": "evt_3T6YQlGoGL8wcbsG1QxJu0l0",
+      "event_type": "payment_intent.succeeded",
+      "status_code": 200,
+      "body": "{\"status\":\"ignored\"}"
+    }
+  ],
+  "acceptance_summary": {
+    "payment_status_succeeded": true,
+    "invoice_status_paid": true,
+    "ledger_balanced": true,
+    "webhook_processed": true,
+    "webhook_http_200_proof": true,
+    "has_payment_intent_succeeded_event": true,
+    "has_checkout_session_completed_event": true,
+    "has_invoice_paid_event": true
+  }
+}

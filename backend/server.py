@@ -21817,7 +21817,7 @@ async def get_checkout_status(
         await session.refresh(invoice)
 
     return {
-        "session_id": status_response.session_id,
+        "session_id": session_id,
         "status": status_response.status,
         "payment_status": status_response.payment_status,
     }
