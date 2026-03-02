@@ -19515,8 +19515,45 @@ async def stripe_payment_intent_webhook(
     payment_intent_id = event_data.get("payment_intent")
     if event_name.startswith("payment_intent."):
         payment_intent_id = event_data.get("id") or payment_intent_id
+
     mapped_status = map_stripe_event_to_payment_status(event_name)
+    if event_name == "checkout.session.completed":
+        mapped_status = _resolve_checkout_session_status(event_data)
+
     safe_event_id = str(event_id or f"stripe-event-{uuid.uuid4()}")
+    livemode = bool(getattr(event, "livemode", None) or (event.get("livemode") if isinstance(event, dict) else False))
+    request_id = _resolve_webhook_request_id(request, event_data)
+
+    processed_marker = ProcessedWebhookEvent(
+        provider="stripe",
+        event_id=safe_event_id,
+        event_type=event_name,
+        livemode=livemode,
+        request_id=request_id,
+        created_at=datetime.now(timezone.utc),
+        processed_at=datetime.now(timezone.utc),
+    )
+    session.add(processed_marker)
+    try:
+        await session.flush()
+    except IntegrityError:
+        await session.rollback()
+        logging.getLogger("payments.webhook").info(
+            "stripe_webhook_duplicate event_id=%s event_type=%s livemode=%s request_id=%s",
+            safe_event_id,
+            event_name,
+            str(livemode).lower(),
+            request_id,
+        )
+        return {"status": "duplicate", "processed": False}
+
+    logging.getLogger("payments.webhook").info(
+        "stripe_webhook_received event_id=%s event_type=%s livemode=%s request_id=%s",
+        safe_event_id,
+        event_name,
+        str(livemode).lower(),
+        request_id,
+    )
 
     now = datetime.now(timezone.utc)
     event_log = WebhookEventLog(
@@ -19531,6 +19568,8 @@ async def stripe_payment_intent_webhook(
             "stripe_invoice_id": event_data.get("id") if event_name.startswith("invoice.") else None,
             "metadata": metadata,
             "event_type": event_name,
+            "livemode": livemode,
+            "request_id": request_id,
             "raw_payload": event_data,
         },
         signature_valid=True,
@@ -19542,7 +19581,7 @@ async def stripe_payment_intent_webhook(
         await session.flush()
     except IntegrityError:
         await session.rollback()
-        return {"status": "duplicate"}
+        return {"status": "duplicate", "processed": False}
 
     if not mapped_status:
         event_log.status = "ignored"
@@ -19606,12 +19645,25 @@ async def stripe_payment_intent_webhook(
     if not handled:
         event_log.status = "ignored"
         event_log.processed_at = now
+        processed_marker.processed_at = now
         await session.commit()
+        logging.getLogger("payments.webhook").info(
+            "stripe_webhook_ignored event_id=%s event_type=%s",
+            safe_event_id,
+            event_name,
+        )
         return {"status": "ignored"}
 
     event_log.status = "processed"
     event_log.processed_at = now
+    processed_marker.processed_at = now
     await session.commit()
+    logging.getLogger("payments.webhook").info(
+        "stripe_webhook_processed event_id=%s event_type=%s payment_status=%s",
+        safe_event_id,
+        event_name,
+        mapped_status,
+    )
 
     return {
         "status": "processed",
