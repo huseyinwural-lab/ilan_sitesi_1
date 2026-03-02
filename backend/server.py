@@ -28748,6 +28748,125 @@ def _listing_media_meta(listing: Listing) -> list[dict]:
     return attrs.get("media") or []
 
 
+def _listing_versions_meta(listing: Listing) -> list[dict]:
+    attrs = listing.attributes or {}
+    versions = attrs.get("version_history") if isinstance(attrs.get("version_history"), list) else []
+    normalized: list[dict] = []
+    for item in versions:
+        if not isinstance(item, dict):
+            continue
+        version_no = int(item.get("version_no") or 0)
+        if version_no <= 0:
+            continue
+        normalized.append(item)
+    normalized.sort(key=lambda row: int(row.get("version_no") or 0))
+    return normalized
+
+
+def _listing_lifecycle_state(listing: Listing) -> str:
+    attrs = listing.attributes or {}
+    state = str((attrs.get("lifecycle_state") or "")).strip().lower()
+    if state:
+        return state
+    if listing.status == "published":
+        return "active"
+    if listing.status == "unpublished":
+        return "inactive"
+    if listing.status == "pending_review":
+        return "pending_review"
+    return "draft"
+
+
+def _set_listing_lifecycle_state(listing: Listing, state: str) -> None:
+    attrs = dict(listing.attributes or {})
+    attrs["lifecycle_state"] = str(state or "draft")
+    listing.attributes = attrs
+
+
+def _serialize_listing_version_snapshot(listing: Listing) -> dict:
+    attrs = dict(listing.attributes or {})
+    return {
+        "title": listing.title,
+        "description": listing.description,
+        "status": listing.status,
+        "lifecycle_state": _listing_lifecycle_state(listing),
+        "price": listing.price,
+        "price_type": listing.price_type,
+        "hourly_rate": listing.hourly_rate,
+        "currency": listing.currency,
+        "category_id": str(listing.category_id) if listing.category_id else None,
+        "make_id": str(listing.make_id) if listing.make_id else None,
+        "model_id": str(listing.model_id) if listing.model_id else None,
+        "city": listing.city,
+        "country": listing.country,
+        "contact_option_phone": bool(listing.contact_option_phone),
+        "contact_option_message": bool(listing.contact_option_message),
+        "images": list(listing.images or []),
+        "attributes": json.loads(json.dumps(attrs)),
+        "expires_at": listing.expires_at.isoformat() if listing.expires_at else None,
+        "published_at": listing.published_at.isoformat() if listing.published_at else None,
+    }
+
+
+def _parse_iso_datetime(value: Any) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _apply_listing_version_snapshot(listing: Listing, snapshot: dict) -> None:
+    listing.title = snapshot.get("title") or ""
+    listing.description = snapshot.get("description") or ""
+    listing.status = snapshot.get("status") or listing.status
+    listing.price = snapshot.get("price")
+    listing.price_type = snapshot.get("price_type") or listing.price_type
+    listing.hourly_rate = snapshot.get("hourly_rate")
+    listing.currency = snapshot.get("currency") or listing.currency
+    listing.city = snapshot.get("city") or listing.city
+    listing.country = snapshot.get("country") or listing.country
+    listing.contact_option_phone = bool(snapshot.get("contact_option_phone"))
+    listing.contact_option_message = bool(snapshot.get("contact_option_message"))
+    listing.images = list(snapshot.get("images") or [])
+    listing.expires_at = _parse_iso_datetime(snapshot.get("expires_at"))
+    listing.published_at = _parse_iso_datetime(snapshot.get("published_at"))
+
+    category_value = snapshot.get("category_id")
+    listing.category_id = uuid.UUID(category_value) if category_value else None
+    make_value = snapshot.get("make_id")
+    listing.make_id = uuid.UUID(make_value) if make_value else None
+    model_value = snapshot.get("model_id")
+    listing.model_id = uuid.UUID(model_value) if model_value else None
+
+    attrs = json.loads(json.dumps(snapshot.get("attributes") or {}))
+    listing.attributes = attrs
+    _set_listing_lifecycle_state(listing, snapshot.get("lifecycle_state") or _listing_lifecycle_state(listing))
+
+
+def _append_listing_version_history(listing: Listing, *, publish_state: str, source: str) -> dict:
+    attrs = dict(listing.attributes or {})
+    versions = _listing_versions_meta(listing)
+    next_version = (int(versions[-1].get("version_no")) + 1) if versions else 1
+    now_iso = datetime.now(timezone.utc).isoformat()
+    row = {
+        "version_no": next_version,
+        "updated_at": now_iso,
+        "publish_state": publish_state,
+        "source": source,
+        "snapshot": _serialize_listing_version_snapshot(listing),
+    }
+    versions.append(row)
+    attrs["version_history"] = versions
+    attrs["version_latest"] = next_version
+    listing.attributes = attrs
+    return row
+
+
 LISTING_FLOW_DRAFT = "draft"
 LISTING_FLOW_PREVIEW_READY = "preview_ready"
 LISTING_FLOW_DOPING_SELECTED = "doping_selected"
