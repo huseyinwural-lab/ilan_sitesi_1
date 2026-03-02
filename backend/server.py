@@ -19135,7 +19135,9 @@ async def _sync_subscription_from_invoice_event(
             user.showcase_quota_limit = plan.showcase_quota
             user.updated_at = now
     elif mapped_status == "failed" and subscription.status != "canceled":
-        subscription.status = "past_due"
+        subscription.status = "grace_period"
+        if not subscription.current_period_end or subscription.current_period_end < now:
+            subscription.current_period_end = now + timedelta(days=7)
 
     subscription.updated_at = now
     return True
