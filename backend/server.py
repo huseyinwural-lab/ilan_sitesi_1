@@ -19481,12 +19481,18 @@ async def reconcile_listing_payment(
 
 
 @api_router.post("/payments/webhook")
+@api_router.post("/payments/stripe/webhook")
 async def stripe_payment_intent_webhook(
     request: Request,
+    _webhook_rate_limit: None = Depends(RateLimiter(limit=120, window_seconds=60, scope="stripe_webhook")),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=503, detail="Stripe secret key not configured")
     if not STRIPE_WEBHOOK_SECRET:
         raise HTTPException(status_code=503, detail="Stripe webhook secret not configured")
+
+    _stripe_client_setup()
 
     signature = request.headers.get("stripe-signature")
     if not signature:
