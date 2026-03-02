@@ -1,7 +1,7 @@
 # Moderation Parity Report (Mongo → SQL)
 
 **Tarih:** 2026-02-24 12:55:00 UTC
-**Ortam URL:** https://listing-design-draft.preview.emergentagent.com
+**Ortam URL:** https://stripe-foundation.preview.emergentagent.com
 
 ## Scope
 - SQL moderation state machine parity (pending_moderation → approved/rejected)

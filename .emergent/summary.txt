@@ -1,79 +1,84 @@
 <analysis>**original_problem_statement:**
-The user's initial goal was to refine a full-stack application (React/FastAPI/PostgreSQL) by fixing a hierarchical category system and building a multi-step İlan ver (Post Ad) page.
+The user's primary goal is to build a full-stack application similar to sahibinden.com, with a heavy focus on admin-configurable features. The project follows a strict, phase-based development plan (bitirme planı) provided by the user, aiming to implement a comprehensive inventory of over 30 page templates and features.
 
-However, the project's scope has massively expanded based on a series of detailed user requests. The core requirements now are:
-1.  **New Category System (Level Builder):** Build a completely new admin interface for creating an infinitely deep category hierarchy (). This system must support a special, pre-defined structure for the Vasıta (Vehicle) module, which involves loading master data.
-2.  **Sibling Category Inheritance:** When creating categories, new siblings should automatically inherit the child structure of the first sibling in the same level.
-3.  **Vehicle Master Data Import:** Implement a system in the admin panel to import vehicle brands, models, and trims from JSON, Excel, or API sources. This includes providing UIs to view and bulk-manage the imported data.
-4.  **Homepage Category Designer:** Create a new admin tool to let the user visually design the category section on the homepage. This includes manually reordering modules (L0) and their sub-categories (L1), choosing between manual and alphabetical sorting for L1 items, and controlling the layout's width.
-5.  **Complete İlan ver (Post Ad) Page Overhaul:** Rebuild the entire Post Ad page from scratch to match a new, detailed PDF (). This is a complex, multi-stage process:
-    *   **İlan 1:** A grid-based module selection screen.
-    *   **İlan 2:** An infinitely-scrolling category selector that uses the Level Builder data and, for vehicles, the imported master data.
-    *   **İlan 3:** A new 8-step form for filling in listing details.
+PRODUCT REQUIREMENTS:
+1.  **Phase 0 - Stabilization:**
+    *   Implement a Draft/Publish/Rollback system for the İlan Tasarım (Ad Design) admin configurations.
+    *   Fix a persistent bug where Vitrin Yönetimi (Showcase Management) changes don't reflect on the homepage.
+    *   Stabilize the light/dark mode theming across all components and viewports.
+2.  **Phase 1 - Core Public Features:**
+    *   Build Template #2: Category Landing Page.
+    *   Build Template #5: Polish Listing Detail Page (add seller card, similar listings, sticky CTA).
+    *   Build Template #4: Implement Map View Search with list/map synchronization and clustering.
+    *   Build Template #8: Create a full-featured Listing Edit page with version history and rollback.
+    *   Build Template #16: Implement Saved Searches functionality for users.
+3.  **Phase 2 - Transactions & Content:**
+    *   Build out a complete secure checkout flow (Template #17) and payment result pages (Template #18) using Stripe.
+    *   Implement all legal, policy, corporate, and SEO page templates.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application has undergone significant evolution from the initial problem statement.
-- **New Category System:** The entire category management has been rebuilt. There is a new Category Builder page () that allows creating modules (Level 0) and then adding infinite child levels in a multi-column UI. The backend supports this with new  and  models and corresponding APIs.
-- **Vehicle Master Data:** A system for importing vehicle master data is complete. It supports JSON/Excel/API uploads, and the agent fixed an Nginx  error to support large files. There are now admin pages to view (, ) and bulk-delete this data.
-- **Homepage Layout Editor:** A new page () allows the user to reorder modules and their L1 children for the homepage display. It also supports setting a sorting preference (manual or alphabetical) for each module's L1 list. The homepage now renders its category list based on this configuration.
-- **İlan Ver Page Overhaul:** The process of rebuilding this page has begun. The old page has been deconstructed, and the agent has started implementing the new multi-step flow inside . The first step,  (İlan 1), is partially built.
+The agent has successfully completed all tasks for Phase 0 (Stabilization) and Phase 1 (Core Public Features).
+- **Phase 0:** A robust draft/publish/rollback system for ad design configurations is in place. The long-standing showcase update bug has been fixed. Dark mode is now stable and consistent.
+- **Phase 1:** The following features have been implemented and verified by the user:
+    - Category-specific landing pages ().
+    - A polished listing detail page with a seller card, similar listings, and a sticky mobile CTA.
+    - A synchronized map and list view on the search page with pin clustering.
+    - A complete listing edit page with version history and rollback capabilities.
+    - A full CRUD system for user-saved searches in their account area.
+The agent has now started work on Phase 2, beginning with the foundational setup for Stripe payments.
 
 **Last working item**:
--   **Last item agent was working:** The agent was actively rebuilding the İlan ver (Post Ad) page () based on the user's new, highly detailed specifications and PDF file. The immediate task was the implementation of the first step, , which involves fetching modules and displaying them in a configurable grid layout as the entry point to the ad creation process.
+-   **Last item agent was working:** The agent started the **Stripe Foundation Setup**, which is the first task of Phase 2 (Transactions). The goal is to establish the core backend infrastructure for processing payments, including creating PaymentIntents, handling subscriptions, and processing webhooks.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both. The frontend UI for each step of the İlan Ver page needs to be verified visually using the  against the provided PDF (). The backend endpoints that will be created to support this new flow (e.g., creating draft listings, fetching form configurations) will need to be tested with .
+-   **Which testing method agent to use?** both
+    -   Backend: Use  to test the new payment endpoints (, ) with Stripe test card data. Verify idempotency and correct status updates in the database.
+    -   Frontend: After backend is ready, create a basic payment form to trigger the  flow and redirect to the Stripe checkout page. Test the  and  redirect pages.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Showcase Management Not Reflecting Changes (P1)**
-    -   **Description:** An issue carried over from the previous fork. The user reported that after saving a new showcase configuration in Vitrin Yönetimi, the changes are not visible on the homepage. This was never addressed.
-    -   **Attempted fixes:** None in this session.
-    -   **Next debug checklist:**
-        1.  Use  to call the backend endpoint () and verify it returns the latest active configuration from the database.
-        2.  Inspect the code in  to confirm it is fetching data from this endpoint on page load.
-        3.  Check browser network tools to see if the API call is being made and what data is being returned.
-        4.  Investigate the backend logic to ensure the  flag is being correctly managed when a new configuration is saved.
-    -   **Why fix this issue and what will be achieved with the fix?** It's a core feature for the admin to control homepage content. Fixing it restores expected functionality.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on other issue:** None
+*No active issues. The previously pending Showcase Management and Dark Mode bugs were resolved in this session.*
 
 **In progress Task List**:
--   **Task 1: Complete the İlan Ver Page Overhaul (P0 - CRITICAL)**
-    -   **Description:** This is the current, highest-priority task. The goal is to fully implement the new multi-stage ad creation flow as defined by the user in messages #1167, #1170, #1171, and the  artifact.
-    -   **Where to resume:** The work is centered in .
-        1.  Finalize the UI and logic for  (İlan 1).
-        2.  Create and implement  (İlan 2), which must handle the infinite-level category selection and also integrate the  for the Vasıta module.
-        3.  Create and implement the 8-step form detailed in the PDF (İlan 3), including steps for parameters, address, media, etc.
-        4.  Implement the backend logic and API endpoints for creating, updating, and submitting the listing for admin review.
-        5.  Ensure the Preview and final redirection to the Listing Detail page work correctly.
-    -   **What will be achieved with this?** A core user journey will be completely rebuilt to the user's exact specifications, replacing a major source of previous issues.
+-   **Task 1: Implement Stripe Foundation (P0 - CRITICAL)**
+    -   **Where to resume:** The agent has installed the  Python package. The next step is to implement the backend logic as per the user's detailed task order (Message #795).
+        1.  Create environment variables for Stripe keys (, , ).
+        2.  Create a new  domain in the backend.
+        3.  Implement the  endpoint.
+        4.  Implement the  endpoint with signature verification and idempotency checks.
+        5.  Define the database model for .
+        6.  Define logic for updating  and  statuses based on webhook events (, , etc.).
+    -   **What will be achieved with this?** This will create the fundamental infrastructure required for all future payment-related features, such as one-time listing fees, doping (featured listing) purchases, and corporate subscriptions.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
--   **Upcoming Tasks:**
-    -   **P1 - Live Data for Urgent Listings Page:** Validate the  page with real data and ensure filtering and pagination work correctly.
-    -   **P1 - Dynamic Homepage Content:** Connect the campaign cards and other sections on the homepage to backend services as per user's earlier task lists (e.g., P107).
--   **Future Tasks:**
-    -   **P2 - Drag-and-Drop** for category reordering in the Category Builder.
-    -   **P2 - Batch Publish Scheduler**.
-    -   **P2 - Alerting Channel Integration** (Slack, SMTP, PagerDuty).
+**Upcoming Tasks (Phase 2):**
+-   **P1 - Template #17 & #18: Transactional Pages:** Build the full secure checkout flow and payment result pages (, ) on the frontend, integrating with the new Stripe backend.
+-   **P1 - Trust & Policy Templates (#20, #21, #22):** Finalize and link all legal and policy pages.
+-   **P1 - Corporate & SEO Templates (#23-28):** Implement corporate profiles, store pages, and marketing/SEO landing pages.
+-   **P2 - System Templates (#30, #31):** Create standard 500 error and maintenance pages.
+
+**Future Tasks (Phase 3):**
+-   **P2 - Category Builder Drag & Drop:** Add drag-and-drop reordering to the category management UI.
 
 **Completed work in this session**
--   **Category System Overhaul:** The entire category system was scrapped and rebuilt into a Category Builder with infinite levels, new models (, ), APIs, and a new multi-panel admin UI ().
--   **Vehicle Master Data Import:** A full pipeline for importing vehicle data from files (JSON, Excel) was implemented, including new database tables (, , ), backend processing logic, and a fix for Nginx's file size limit.
--   **Vehicle Data Management UI:** New admin pages were created to view, search, and bulk-delete the imported vehicle brands and models.
--   **Homepage Category Designer:** A new admin feature was built to allow manual reordering and sorting (manual/alphabetical) of categories displayed on the homepage, with corresponding database models (, etc.) and API endpoints.
--   **Initial work on İlan Ver Overhaul:** The agent has started rebuilding the  and has created the first step component, .
+-   **Phase 0: Stabilization**
+    -   **Draft/Publish System for İlan Tasarım:** Implemented backend models (), APIs, and frontend UI for a complete versioning system. (DONE)
+    -   **Showcase Management Bug Fix:** Reworked the showcase publishing logic to use events and cache-busting, ensuring homepage updates immediately. (DONE)
+    -   **Theme/Dark Mode Stabilization:** Refactored theme handling to a single source of truth (), fixed component-level inconsistencies, and ensured correct override behavior. (DONE)
+-   **Phase 1: Core Features**
+    -   **Category Landing Page (Template #2):** Created the  route, backend endpoint, and frontend page to display sub-categories. (DONE)
+    -   **Listing Detail Page Polish (Template #5):** Added , , and  components to the listing detail page. (DONE)
+    -   **Map View Search (Template #4):** Integrated a synchronized map/list view on the search page with marker clustering and viewport-based filtering. (DONE)
+    -   **Full Listing Edit Page (Template #8):** Built the  page with version history, rollback, and correct state management (publish/unpublish, pending review). (DONE)
+    -   **Saved Searches (Template #16):** Implemented full CRUD functionality for users to save, view, and delete search queries from their account page. (DONE)
 
 **Earlier issues found/mentioned but not fixed**
--   **React Hydration Warnings:** Noted in the previous fork related to  and . This technical debt has not been addressed.
+-   **React Hydration Warnings:** Technical debt from a previous fork related to  and . This has not been prioritized by the user.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Platform failure to inject  secret.
@@ -84,86 +89,69 @@ The application has undergone significant evolution from the initial problem sta
 
 
 **Key Technical Concepts**
--   **Complex Dynamic Admin UIs:** Building multi-column, stateful interfaces for managing hierarchical data ().
--   **Data Import Pipelines:** Handling large file uploads (JSON/Excel), parsing them in the backend, and populating multiple database tables.
--   **Nginx Configuration:** Modifying  to increase  to handle large file uploads.
--   **Multi-Step Form Architecture:** Deconstructing a complex user flow into separate, manageable React components/steps with a shared parent state ().
--   **Config-Driven UI:** Building UIs where elements (like grid layout or sorting behavior) are determined by settings configured by an admin in another part of the app.
+-   **Config-Driven Architecture:** The İlan Ver flow is dynamically rendered based on a JSON config from the admin.
+-   **Draft/Publish/Rollback Workflow:** A versioning system for critical configurations () and content ().
+-   **Event-Driven Cache Invalidation:** Using  events to trigger data re-fetching across browser tabs (e.g., showcase updates).
+-   **Synchronized UI (Map/List):** Bi-directional state updates between a map viewport and a search result list.
+-   **Stripe Integration:** Using PaymentIntents for one-time payments and Webhooks for reliable, asynchronous order fulfillment.
+-   **Idempotency:** Ensuring payment creation and webhook processing are safe from duplicate requests.
 
 **key DB schema**
--   **modules:** 
--   **categories:** 
--   **vehicle_brands:** 
--   **vehicle_models:** 
--   **vehicle_trims:** 
--   **homepage_category_layouts:** 
--   **homepage_category_modules:** 
--   **homepage_category_items:** 
+-   **listing_design_configs:** 
+-   **listing_versions:** 
+-   **saved_searches:** 
+-   **(IN-PROGRESS) payments:** 
 
 **All files of reference**
--   **Critical for İlan Ver task:**
-    -    (User artifact)
-    -   
--   **New Admin Features:**
-    -   
-    -   
-    -   
-    -   
--   **Configuration:**
-    -    (for payload size)
-    -    (for Starlette request size)
-
-**Areas that need refactoring**:
--    is currently in a transitional state and needs to be fully built out into the new multi-step architecture. The old code is being replaced.
-
-**key api endpoints**
--   : Create a new module (L0).
--   : Endpoint for the sibling inheritance feature.
--   : To save the homepage category design.
--   : To upload vehicle data files.
--   : For bulk deletion of brands.
+-    (To be created)
+-    (To be modified to include payment router)
+-    (To be created for success/fail pages)
+-    (Modified for map view)
+-    (Created)
+-    (Created)
+-    (Created)
 
 **Critical Info for New Agent**
--   **Follow the User's Görev Listesi.** The user now provides extremely detailed, structured task lists and architectural decisions (e.g., messages #1170, #1171, #1173). Treat these as the absolute source of truth. Do not deviate or make assumptions.
--   **The İlan Ver page is the #1 priority.** All work should be focused on completing the overhaul of this page according to the user's new PDF and instructions.
--   **The old category hierarchy problem is obsolete.** The entire system was rebuilt at the user's request. The focus is now on the new Category Builder and its integration into the İlan Ver page.
--   **Communicate exclusively in Turkish.** This is non-negotiable.
+-   **Follow User GÖREV EMRİ (Task Orders) Exactly:** The user provides very specific, non-negotiable task lists. Do not deviate, add features, or change the scope.
+-   **Use the PASS Raporu Format:** Upon completing all tests for a given task, respond ONLY with the PASS/FAIL status for each required test case, as demonstrated by the previous agent. Do not add extra explanations or summaries.
+-   **One Task at a Time:** Focus exclusively on the current active task (e.g., FAZ 2 / İŞ 1 — Stripe Foundation). Do not work on anything else until the user gives the next order.
+-   **Communication is in Turkish ONLY.**
 
 **documents and test reports created in this job**
--   User uploaded artifact: 
+-   No new documents or reports were created in this session.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **#1226 (devam):** continue. User asking agent to proceed with the current task.
-2.  **#1173 (İlan 1 grid boyutlandırma...):** User provides another set of detailed architectural decisions and assumptions for the İlan Ver page, including fallback behaviors, form policies, and URL structures. **[CRITICAL PRD]**
-3.  **#1171 (Görev Listesi...):** User provides a detailed list of architectural decisions to lock in the scope for the İlan Ver page update, confirming that all three parts (İlan 1, 2, 3) should be updated together. **[CRITICAL PRD]**
-4.  **#1170 (Görev Listesi...):** User provides the main task list for the İlan Ver page overhaul, breaking it down into İlan 1, 2, 3 and specifying the end-to-end testing scope. **[CRITICAL PRD]**
-5.  **#1167 (ilan sayfasını buna göre...):** User uploads a new PDF () and asks if the İlan Ver page should be updated according to it. This message triggers the entire page overhaul task.
-6.  **#938 (otomobil ve diğer araçlar için...):** User reports that imported vehicle data is not visible and requests bulk delete functionality.
-7.  **#872 (Araç Master Data Import kısmına...):** User reports an error (implied ) when trying to upload a large JSON file for vehicle data.
-8.  **#717 (1. hiç bir şık...):** User clarifies requirements for the homepage category sorting, confirming they want both manual and alphabetical options per-module, and cancels the apply to siblings feature.
-9.  **#714 (L1 sıralaması bence alfabetik olsun...):** User requests that L1 sorting be alphabetical and cancels a previous implementation. This leads to the more nuanced request in #717.
-10. **#469 (1. Admin Panel...):** User provides detailed requirements for the new Homepage Category Designer feature.
+1.  **#798 (User):**  (Confirmation to proceed with Stripe setup).
+2.  **#796 (Agent):**  proposing the plan for Stripe foundation setup.
+3.  **#795 (User):** GÖREV EMRİ (Task Order) for the Stripe Foundation setup, detailing all backend requirements, endpoints, webhook handling, and test criteria. (COMPLETED - work started)
+4.  **#794 (Agent):** PASS report for the Saved Searches task.
+5.  **#791 (Agent):**  confirming the plan for the Saved Searches task.
+6.  **#675 (User):**  (Confirmation to proceed).
+7.  **#673 (Agent):**  proposing the plan for Saved Searches.
+8.  **#672 (User):** GÖREV EMRİ (Task Order) for Saved Searches Full feature. (COMPLETED)
+9.  **#671 (Agent):** PASS report for the Listing Edit Full task.
+10. **#512 (User):**  (Confirmation to proceed).
 
 **Project Health Check:**
--   **Broken:** The İlan ver page is intentionally broken as it is in the middle of a complete overhaul.
--   **Mocked:** None currently. The new İlan ver form steps are being built but are not yet mocked with data.
+-   **Broken:** None. The application's core features are stable.
+-   **Mocked:** None.
 
 **3rd Party Integrations**
 -   PostgreSQL
 -   Meilisearch
--   Stripe
--   react-beautiful-dnd (Used for sorting in Homepage Category Editor)
--   **Pending (from original request):** Slack, PagerDuty, SMTP for alerts.
+-   Stripe (Implementation in progress)
+-   Google Places API
+-   react-beautiful-dnd
 
 **Testing status**
--   **Testing agent used after significant changes:** NO
+-   **Testing agent used after significant changes:** NO (Agent performed manual testing as per user's strict reporting format).
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None
--   **Known regressions:** The İlan ver page is temporarily non-functional due to the ongoing overhaul.
+-   **Known regressions:** None.
 
 **Credentials to test flow:**
 -   **Admin:**  / 
+-   **User:**  / 
 
 **What agent forgot to execute**
--   The pre-existing bug regarding Vitrin Yönetimi (Showcase Management) changes not appearing on the homepage was not addressed during this session and remains pending.
--   The React Hydration warnings mentioned in the previous fork summary were also not addressed.</analysis>
+-   The long-standing React Hydration Warnings issue has not been addressed, as it has not been prioritized by the user in any of the task orders. The agent has correctly followed the user's priorities.</analysis>

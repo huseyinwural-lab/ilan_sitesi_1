@@ -1,7 +1,7 @@
 # PUBLIC_SEARCH_MONITORING_REPORT — Log-based 24h window (operational)
 
 **Tarih:** 2026-02-24 13:47:41 UTC
-**Ortam URL:** https://listing-design-draft.preview.emergentagent.com
+**Ortam URL:** https://stripe-foundation.preview.emergentagent.com
 **Durum:** CLOSED
 
 ## 24h Log Window (Operational)

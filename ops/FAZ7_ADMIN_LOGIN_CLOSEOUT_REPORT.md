@@ -1,7 +1,7 @@
 ## FAZ-7 Admin Login Kapanış Kontrolleri — Closeout Raporu
 
 **Tarih:** 2026-02-19
-**Ortam:** https://listing-design-draft.preview.emergentagent.com
+**Ortam:** https://stripe-foundation.preview.emergentagent.com
 **Kullanıcı:** admin@platform.com / Admin123!
 
 ---

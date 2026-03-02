@@ -24,9 +24,9 @@ class TestFAZFinal02SecurityAudit:
                         self.base_url = line.split('=', 1)[1].strip()
                         break
                 else:
-                    self.base_url = "https://listing-design-draft.preview.emergentagent.com"
+                    self.base_url = "https://stripe-foundation.preview.emergentagent.com"
         except FileNotFoundError:
-            self.base_url = "https://listing-design-draft.preview.emergentagent.com"
+            self.base_url = "https://stripe-foundation.preview.emergentagent.com"
         
         self.api_url = f"{self.base_url}/api"
         self.admin_token = None
