@@ -19210,6 +19210,12 @@ async def create_listing_payment_intent(
             except Exception:
                 client_secret = None
 
+            processing_status = map_payment_status_to_listing_status("processing")
+            if processing_status and listing.status != "active":
+                listing.status = processing_status
+                listing.updated_at = datetime.now(timezone.utc)
+                await session.commit()
+
             return {
                 "payment_id": str(existing_payment.id),
                 "payment_intent_id": existing_payment.stripe_payment_intent_id,
