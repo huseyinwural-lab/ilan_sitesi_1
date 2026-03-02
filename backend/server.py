@@ -30483,7 +30483,7 @@ async def public_vehicle_media(
 ):
     listing_uuid = uuid.UUID(listing_id)
     listing = await session.get(Listing, listing_uuid)
-    if not listing or listing.status != "published":
+    if not listing or listing.status not in {"published", "active"}:
         raise HTTPException(status_code=404, detail="Not found")
 
     media = _listing_media_meta(listing)
