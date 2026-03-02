@@ -23,6 +23,8 @@ const resolveStatus = (listing) => {
       return { label: 'Yayında', color: 'bg-emerald-100 text-emerald-700' };
     case 'pending_moderation':
       return { label: 'Moderasyon', color: 'bg-amber-100 text-amber-700' };
+    case 'pending_review':
+      return { label: 'İnceleme Bekliyor', color: 'bg-amber-100 text-amber-700' };
     case 'needs_revision':
       return { label: 'Revize', color: 'bg-amber-100 text-amber-700' };
     case 'rejected':
@@ -105,7 +107,7 @@ export default function MyListings() {
 
   const handlePublish = async (listingId) => {
     if (!window.confirm('İlanı yayına almak istiyor musunuz?')) return;
-    await fetch(`${API}/v1/listings/vehicle/${listingId}/request-publish`, {
+    await fetch(`${API}/v1/listings/vehicle/${listingId}/publish`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
     });
@@ -212,7 +214,7 @@ export default function MyListings() {
           <tbody>
             {items.map((listing) => {
               const status = resolveStatus(listing);
-              const canPublish = ['draft', 'needs_revision', 'unpublished'].includes(listing.status);
+              const canPublish = ['draft', 'needs_revision', 'unpublished', 'pending_review', 'pending_moderation'].includes(listing.status);
               const moderationText = listing.moderation_note || listing.moderation_reason;
               return (
                 <tr key={listing.id} className="border-t" data-testid={`account-listings-row-${listing.id}`}>
@@ -242,7 +244,7 @@ export default function MyListings() {
                     <div className="flex flex-wrap items-center justify-end gap-2">
                       <button
                         type="button"
-                        onClick={() => navigate(`/account/create/vehicle-wizard?edit=${listing.id}`)}
+                        onClick={() => navigate(`/ilan-duzenle/${listing.id}`)}
                         className="h-8 px-3 rounded-md border text-xs"
                         data-testid={`account-listings-edit-${listing.id}`}
                       >
