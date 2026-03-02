@@ -1,0 +1,171 @@
+{
+  "country_selector_update": {
+    "country_codes": [
+      "DE",
+      "FR",
+      "CH",
+      "AT"
+    ],
+    "country_selector_mode": "radio",
+    "tr_removed": true,
+    "allowed_exact_set": true,
+    "radio_mode": true
+  },
+  "redirect_checks": [
+    {
+      "ok": true,
+      "initial_url": "http://marketplace-finance-3.preview.emergentagent.com/",
+      "final_url": "https://marketplace-finance-3.preview.emergentagent.com:443/",
+      "hop_count": 1,
+      "chain": [
+        {
+          "status": 301,
+          "url": "http://marketplace-finance-3.preview.emergentagent.com/",
+          "location": "https://marketplace-finance-3.preview.emergentagent.com:443/"
+        },
+        {
+          "status": 200,
+          "url": "https://marketplace-finance-3.preview.emergentagent.com:443/",
+          "location": null
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "initial_url": "https://marketplace-finance-3.preview.emergentagent.com/",
+      "final_url": "https://marketplace-finance-3.preview.emergentagent.com/",
+      "hop_count": 0,
+      "chain": [
+        {
+          "status": 200,
+          "url": "https://marketplace-finance-3.preview.emergentagent.com/",
+          "location": null
+        }
+      ]
+    }
+  ],
+  "redirect_max_1_hop": true,
+  "canonical_checks": {
+    "rows": [
+      {
+        "url": "https://marketplace-finance-3.preview.emergentagent.com/",
+        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/"
+      },
+      {
+        "url": "https://marketplace-finance-3.preview.emergentagent.com/trust",
+        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/trust"
+      },
+      {
+        "url": "https://marketplace-finance-3.preview.emergentagent.com/kurumsal",
+        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/kurumsal"
+      },
+      {
+        "url": "https://marketplace-finance-3.preview.emergentagent.com/seo",
+        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/seo"
+      },
+      {
+        "url": "https://marketplace-finance-3.preview.emergentagent.com/bilgi/gizlilik-politikasi",
+        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/bilgi/gizlilik-politikasi"
+      },
+      {
+        "url": "https://marketplace-finance-3.preview.emergentagent.com/kategori/tarla",
+        "canonical": "https://marketplace-finance-3.preview.emergentagent.com/kategori/tarla"
+      }
+    ],
+    "mismatch_count": 0,
+    "wrong_host_count": 0
+  },
+  "sitemap_checks": {
+    "preview": {
+      "url_count": 1219,
+      "wrong_host_count": 0,
+      "sample_20": [
+        "https://marketplace-finance-3.preview.emergentagent.com/",
+        "https://marketplace-finance-3.preview.emergentagent.com/search",
+        "https://marketplace-finance-3.preview.emergentagent.com/trust",
+        "https://marketplace-finance-3.preview.emergentagent.com/kurumsal",
+        "https://marketplace-finance-3.preview.emergentagent.com/seo",
+        "https://marketplace-finance-3.preview.emergentagent.com/maintenance",
+        "https://marketplace-finance-3.preview.emergentagent.com/500",
+        "https://marketplace-finance-3.preview.emergentagent.com/DE/vasita",
+        "https://marketplace-finance-3.preview.emergentagent.com/DE/vasita/otomobil",
+        "https://marketplace-finance-3.preview.emergentagent.com/kategori/maps-acceptance-fr",
+        "https://marketplace-finance-3.preview.emergentagent.com/kategori/maps-acceptance-tr",
+        "https://marketplace-finance-3.preview.emergentagent.com/kategori/maps-acceptance-de",
+        "https://marketplace-finance-3.preview.emergentagent.com/kategori/tarla",
+        "https://marketplace-finance-3.preview.emergentagent.com/kategori/imara-acik",
+        "https://marketplace-finance-3.preview.emergentagent.com/kategori/arsa",
+        "https://marketplace-finance-3.preview.emergentagent.com/kategori/kiralik-ofis",
+        "https://marketplace-finance-3.preview.emergentagent.com/kategori/satilik-dukkan",
+        "https://marketplace-finance-3.preview.emergentagent.com/kategori/ticari",
+        "https://marketplace-finance-3.preview.emergentagent.com/kategori/kiralik-daire",
+        "https://marketplace-finance-3.preview.emergentagent.com/kategori/satilik-daire"
+      ]
+    },
+    "simulated_hosts": [
+      {
+        "host": "www.annoncia.com",
+        "url_count": 1219,
+        "wrong_host_count": 0,
+        "wrong_examples": [],
+        "sample_20": [
+          "https://www.annoncia.com/",
+          "https://www.annoncia.com/search",
+          "https://www.annoncia.com/trust",
+          "https://www.annoncia.com/kurumsal",
+          "https://www.annoncia.com/seo",
+          "https://www.annoncia.com/maintenance",
+          "https://www.annoncia.com/500",
+          "https://www.annoncia.com/DE/vasita",
+          "https://www.annoncia.com/DE/vasita/otomobil",
+          "https://www.annoncia.com/kategori/maps-acceptance-fr",
+          "https://www.annoncia.com/kategori/maps-acceptance-tr",
+          "https://www.annoncia.com/kategori/maps-acceptance-de",
+          "https://www.annoncia.com/kategori/tarla",
+          "https://www.annoncia.com/kategori/imara-acik",
+          "https://www.annoncia.com/kategori/arsa",
+          "https://www.annoncia.com/kategori/kiralik-ofis",
+          "https://www.annoncia.com/kategori/satilik-dukkan",
+          "https://www.annoncia.com/kategori/ticari",
+          "https://www.annoncia.com/kategori/kiralik-daire",
+          "https://www.annoncia.com/kategori/satilik-daire"
+        ]
+      },
+      {
+        "host": "annoncia.com",
+        "url_count": 1219,
+        "wrong_host_count": 0,
+        "wrong_examples": [],
+        "sample_20": [
+          "https://annoncia.com/",
+          "https://annoncia.com/search",
+          "https://annoncia.com/trust",
+          "https://annoncia.com/kurumsal",
+          "https://annoncia.com/seo",
+          "https://annoncia.com/maintenance",
+          "https://annoncia.com/500",
+          "https://annoncia.com/DE/vasita",
+          "https://annoncia.com/DE/vasita/otomobil",
+          "https://annoncia.com/kategori/maps-acceptance-fr",
+          "https://annoncia.com/kategori/maps-acceptance-tr",
+          "https://annoncia.com/kategori/maps-acceptance-de",
+          "https://annoncia.com/kategori/tarla",
+          "https://annoncia.com/kategori/imara-acik",
+          "https://annoncia.com/kategori/arsa",
+          "https://annoncia.com/kategori/kiralik-ofis",
+          "https://annoncia.com/kategori/satilik-dukkan",
+          "https://annoncia.com/kategori/ticari",
+          "https://annoncia.com/kategori/kiralik-daire",
+          "https://annoncia.com/kategori/satilik-daire"
+        ]
+      }
+    ]
+  },
+  "summary": {
+    "country_selector_pass": true,
+    "preview_http_to_https_pass": true,
+    "canonical_mismatch_zero": true,
+    "sitemap_preview_host_100": true,
+    "sitemap_simulated_hosts_100": true
+  }
+}

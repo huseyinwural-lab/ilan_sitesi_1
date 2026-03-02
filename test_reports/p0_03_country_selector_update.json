@@ -1,0 +1,66 @@
+{
+  "listing_create_save": 200,
+  "listing_create_get": {
+    "config": {
+      "apply_modules": [
+        "vehicle",
+        "real_estate",
+        "other"
+      ],
+      "country_selector_mode": "radio",
+      "postal_code_required": true,
+      "map_required": true,
+      "street_selection_required": true,
+      "require_city": true,
+      "require_district": false,
+      "require_neighborhood": false,
+      "require_latitude": false,
+      "require_longitude": false,
+      "require_address_line": true
+    },
+    "setting_id": "da00fe4c-76e9-4fe8-98d0-b2403aab1634",
+    "key": "listing.create.config"
+  },
+  "places_config": {
+    "real_mode": true,
+    "mode": "real",
+    "key_source": "system_setting",
+    "manual_key_supported": true,
+    "key_configured": true,
+    "country_options": [
+      {
+        "code": "DE",
+        "name": "Germany"
+      },
+      {
+        "code": "FR",
+        "name": "FR"
+      },
+      {
+        "code": "CH",
+        "name": "CH"
+      },
+      {
+        "code": "AT",
+        "name": "AT"
+      }
+    ],
+    "listing_create_config": {
+      "apply_modules": [
+        "vehicle",
+        "real_estate",
+        "other"
+      ],
+      "country_selector_mode": "radio",
+      "postal_code_required": true,
+      "map_required": true,
+      "street_selection_required": true,
+      "require_city": true,
+      "require_district": false,
+      "require_neighborhood": false,
+      "require_latitude": false,
+      "require_longitude": false,
+      "require_address_line": true
+    }
+  }
+}

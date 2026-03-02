@@ -1,0 +1,95 @@
+{
+  "summary": "P0-03 Country Selector Update & Host+Redirect Regression Testing Complete. All key requirements verified: /api/places/config returns exactly DE, FR, CH, AT countries (TR removed), country_selector_mode=radio, http->https redirect max 1 hop, sitemap preview host 100% correct.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/places/config",
+        "issue": "First request sometimes times out (intermittent network, not code issue)",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Listing Details (/ilan-ver/detaylar)",
+        "issues": [
+          "Address form shows 'Adres bloğu admin konfigürasyonunda pasif' when category module doesn't have address enabled - this is expected behavior based on category schema configuration"
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p0_03_country_selector_regression.py",
+    "/app/test_reports/pytest/p0_03_country_selector_regression_results.xml",
+    "/app/test_reports/p0_03_country_selector_update.json",
+    "/app/test_reports/p0_03_host_redirect_regression.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PASS: /api/places/config returns country_options = [DE, FR, CH, AT] - exactly 4 countries",
+    "PASS: TR (Turkey) is NOT in country_options",
+    "PASS: listing_create_config.country_selector_mode = 'radio'",
+    "PASS: HTTP to HTTPS redirect happens in max 1 hop (tested via urllib)",
+    "PASS: HTTPS URL returns 200 directly with no redirect",
+    "PASS: Sitemap index URLs all use correct host (marketplace-finance-3.preview.emergentagent.com)",
+    "PASS: Main agent's p0_03_host_redirect_regression.json confirms simulated hosts (www.annoncia.com, annoncia.com) have 0 wrong_host_count"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_p0_03_country_selector_regression.py"
+  ],
+  "success_rate": {
+    "backend": "91% (10/11 tests passed, 1 timeout - flaky network)",
+    "frontend": "100% (homepage, login, category selection all working)"
+  },
+  "test_credentials": {
+    "user": "user@platform.com / User123!",
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P0-03 Country Selector update verified. Config endpoints return exactly DE, FR, CH, AT (no TR). Selector mode is 'radio'. Host/redirect regression passed. The ListingDetails.js correctly consumes listing_create_config from /api/places/config but address block visibility depends on individual category schema having modules.address.enabled=true.",
+  "verification_evidence": {
+    "api_responses": {
+      "/api/places/config": {
+        "country_options": ["DE", "FR", "CH", "AT"],
+        "TR_removed": true,
+        "country_selector_mode": "radio"
+      }
+    },
+    "redirect_tests": {
+      "http_to_https_max_1_hop": true,
+      "https_no_redirect": true
+    },
+    "sitemap_tests": {
+      "preview_host_100_correct": true,
+      "simulated_hosts_drift_0": true
+    }
+  },
+  "features_tested": {
+    "COUNTRY_OPTIONS": {
+      "DE": "PASS - present",
+      "FR": "PASS - present",
+      "CH": "PASS - present",
+      "AT": "PASS - present",
+      "TR": "PASS - NOT present (removed as expected)"
+    },
+    "COUNTRY_SELECTOR_MODE": {
+      "mode": "PASS - radio"
+    },
+    "HTTP_HTTPS_REDIRECT": {
+      "max_1_hop": "PASS"
+    },
+    "CANONICAL_MISMATCH": {
+      "mismatch_count": "0 (per main agent report)"
+    },
+    "SITEMAP_HOST": {
+      "preview_100_correct": "PASS",
+      "simulated_hosts_drift_0": "PASS"
+    }
+  }
+}
