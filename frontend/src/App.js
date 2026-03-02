@@ -52,6 +52,7 @@ import VehicleSelector from '@/pages/listing/VehicleSelector';
 import ListingDetails from '@/pages/listing/ListingDetails';
 import ListingPreview from '@/pages/listing/ListingPreview';
 import ListingDoping from '@/pages/listing/ListingDoping';
+import ListingEditEntry from '@/pages/listing/ListingEditEntry';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
@@ -219,6 +220,14 @@ function App() {
                     element={
                       <ProtectedRoute portalScope="account">
                         <ListingDetails />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/ilan-duzenle/:id"
+                    element={
+                      <ProtectedRoute portalScope="account">
+                        <ListingEditEntry />
                       </ProtectedRoute>
                     }
                   />
