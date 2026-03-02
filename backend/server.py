@@ -28785,6 +28785,8 @@ def _set_listing_lifecycle_state(listing: Listing, state: str) -> None:
 
 def _serialize_listing_version_snapshot(listing: Listing) -> dict:
     attrs = dict(listing.attributes or {})
+    attrs.pop("version_history", None)
+    attrs.pop("version_latest", None)
     return {
         "title": listing.title,
         "description": listing.description,
@@ -28844,6 +28846,8 @@ def _apply_listing_version_snapshot(listing: Listing, snapshot: dict) -> None:
     listing.model_id = uuid.UUID(model_value) if model_value else None
 
     attrs = json.loads(json.dumps(snapshot.get("attributes") or {}))
+    attrs.pop("version_history", None)
+    attrs.pop("version_latest", None)
     listing.attributes = attrs
     _set_listing_lifecycle_state(listing, snapshot.get("lifecycle_state") or _listing_lifecycle_state(listing))
 
