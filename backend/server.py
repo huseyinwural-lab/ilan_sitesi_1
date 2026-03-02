@@ -28983,6 +28983,8 @@ def _listing_to_dict(listing: Listing) -> dict:
     attrs = listing.attributes or {}
     flow = _normalize_listing_flow(attrs, str(listing.id))
     media_meta = _listing_media_meta(listing)
+    versions = _listing_versions_meta(listing)
+    lifecycle_state = _listing_lifecycle_state(listing)
     now = datetime.now(timezone.utc)
     is_featured = _listing_featured_active(listing, now=now)
     is_urgent = _listing_urgent_active(listing, now=now)
@@ -29017,6 +29019,9 @@ def _listing_to_dict(listing: Listing) -> dict:
         "selected_category_path": attrs.get("selected_category_path") or [],
         "flow": flow,
         "flow_state": flow.get("state") or LISTING_FLOW_DRAFT,
+        "lifecycle_state": lifecycle_state,
+        "version_latest": int(versions[-1].get("version_no")) if versions else 0,
+        "version_count": len(versions),
         "is_featured": is_featured,
         "is_urgent": is_urgent,
         "is_paid": is_paid,
