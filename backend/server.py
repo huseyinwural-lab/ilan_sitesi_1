@@ -8865,6 +8865,23 @@ async def get_category_by_slug_v2(
             target = category
             break
 
+    if not target and normalized_slug == "emlak":
+        top_level_real_estate = [
+            cat for cat in category_rows
+            if cat.module == "real_estate" and cat.parent_id is None
+        ]
+        preferred = None
+        for cat in top_level_real_estate:
+            name_value = (_pick_category_name(list(cat.translations or []), _pick_category_slug(cat.slug)) or "").strip().lower()
+            slug_value = (_pick_category_slug(cat.slug) or "").strip().lower()
+            if slug_value in {"emlak", "real-estate", "gayrimenkul", "konut"} or "emlak" in name_value:
+                preferred = cat
+                break
+        if not preferred and top_level_real_estate:
+            top_level_real_estate.sort(key=lambda item: (item.sort_order or 0, -(item.listing_count or 0)))
+            preferred = top_level_real_estate[0]
+        target = preferred
+
     if not target:
         raise HTTPException(status_code=404, detail="Category not found")
 
