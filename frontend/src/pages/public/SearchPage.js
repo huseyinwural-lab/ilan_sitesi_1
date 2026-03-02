@@ -355,6 +355,22 @@ export default function SearchPage() {
     }
   }, [selectedListingId, data.items]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.__searchMapDebug = {
+      selectFromPin: (listingId) => {
+        setSelectedListingId(listingId);
+        setHoveredListingId(listingId);
+      },
+      getMapItemIds: () => mapItems.map((item) => item.id),
+    };
+    return () => {
+      if (window.__searchMapDebug) {
+        delete window.__searchMapDebug;
+      }
+    };
+  }, [mapItems]);
+
   const mapItems = useMemo(() => {
     return (data.items || [])
       .map((item) => ({
