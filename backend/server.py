@@ -1723,6 +1723,18 @@ async def lifespan(app: FastAPI):
         logging.getLogger("sql_config").warning("SQL init skipped: %s", exc)
 
     try:
+        async with health_sql_engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception as exc:
+        logging.getLogger("sql_config").warning("Health DB warmup skipped: %s", exc)
+
+    try:
+        async with sql_engine.connect() as conn:
+            await _get_migration_state(conn)
+    except Exception as exc:
+        logging.getLogger("sql_config").warning("Migration cache warmup skipped: %s", exc)
+
+    try:
         async with AsyncSessionLocal() as session:
             await _ensure_admin_user(session)
             await _ensure_dealer_user(session)
@@ -1755,6 +1767,7 @@ async def lifespan(app: FastAPI):
             await batch_publish_task
         except asyncio.CancelledError:
             pass
+    await health_sql_engine.dispose()
     await sql_engine.dispose()
 
 
@@ -2374,6 +2387,55 @@ def _set_last_db_error(message: Optional[str]) -> None:
         _last_db_error = None
         return
     _last_db_error = _sanitize_db_error_message(str(message))
+
+
+async def _probe_health_db_connectivity() -> Dict[str, Any]:
+    now_ts = time.time()
+    cached_at = _health_db_probe_cache.get("checked_at", 0) or 0
+    cached_data = _health_db_probe_cache.get("data")
+    if cached_data and cached_at and (now_ts - cached_at) < HEALTH_DB_PROBE_CACHE_TTL_SECONDS:
+        return {**cached_data, "cached": True, "checked_at": cached_at}
+
+    started_at = time.perf_counter()
+
+    async def _run_probe() -> None:
+        async with health_sql_engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+
+    try:
+        await asyncio.wait_for(_run_probe(), timeout=HEALTH_DB_TIMEOUT_SECONDS)
+        latency_ms = int((time.perf_counter() - started_at) * 1000)
+        _set_last_db_error(None)
+        result = {
+            "ok": True,
+            "db_status": "ok",
+            "reason": None,
+            "latency_ms": latency_ms,
+        }
+        _health_db_probe_cache.update({"checked_at": now_ts, "data": result})
+        return {**result, "cached": False, "checked_at": now_ts}
+    except asyncio.TimeoutError:
+        latency_ms = int((time.perf_counter() - started_at) * 1000)
+        _set_last_db_error(f"health_db_timeout_{HEALTH_DB_TIMEOUT_MS}ms")
+        result = {
+            "ok": False,
+            "db_status": "fail",
+            "reason": "db_timeout",
+            "latency_ms": latency_ms,
+        }
+        _health_db_probe_cache.update({"checked_at": now_ts, "data": result})
+        return {**result, "cached": False, "checked_at": now_ts}
+    except Exception as exc:
+        latency_ms = int((time.perf_counter() - started_at) * 1000)
+        _set_last_db_error(str(exc))
+        result = {
+            "ok": False,
+            "db_status": "fail",
+            "reason": "db_unreachable",
+            "latency_ms": latency_ms,
+        }
+        _health_db_probe_cache.update({"checked_at": now_ts, "data": result})
+        return {**result, "cached": False, "checked_at": now_ts}
 
 
 def _sanitize_text(value: str) -> str:
@@ -3946,6 +4008,8 @@ if DB_SSL_MODE == "require":
 
 SAFE_DATABASE_URL = _sanitize_database_url(DATABASE_URL)
 ASYNC_DATABASE_URL = SAFE_DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+HEALTH_DB_TIMEOUT_MS = 500
+HEALTH_DB_TIMEOUT_SECONDS = HEALTH_DB_TIMEOUT_MS / 1000
 
 sql_engine = create_async_engine(
     ASYNC_DATABASE_URL,
@@ -3958,6 +4022,18 @@ sql_engine = create_async_engine(
     pool_pre_ping=True,
     connect_args=connect_args,
 )
+
+health_sql_engine = create_async_engine(
+    ASYNC_DATABASE_URL,
+    echo=False,
+    future=True,
+    pool_size=1,
+    max_overflow=0,
+    pool_timeout=1,
+    pool_recycle=DB_POOL_RECYCLE,
+    pool_pre_ping=True,
+    connect_args=connect_args,
+)
 sql_logger.info(
     "Effective DB pool config: pool_size=%s max_overflow=%s pool_timeout=%s pool_recycle=%s pool_pre_ping=%s",
     DB_POOL_SIZE,
@@ -3965,6 +4041,13 @@ sql_logger.info(
     DB_POOL_TIMEOUT,
     DB_POOL_RECYCLE,
     True,
+)
+sql_logger.info(
+    "Health DB pool config: pool_size=%s max_overflow=%s pool_timeout=%s timeout_ms=%s",
+    1,
+    0,
+    1,
+    HEALTH_DB_TIMEOUT_MS,
 )
 
 
@@ -4061,9 +4144,11 @@ _db_error_events = deque(maxlen=5000)
 _db_latency_events = deque(maxlen=5000)
 _system_health_cache: Dict[str, Any] = {"checked_at": 0, "data": None}
 _system_health_detail_cache: Dict[str, Any] = {"checked_at": 0, "data": None}
+_health_db_probe_cache: Dict[str, Any] = {"checked_at": 0, "data": None}
 cloudflare_metrics_service = CloudflareMetricsService()
 SYSTEM_HEALTH_CACHE_TTL_SECONDS = 60
 SYSTEM_HEALTH_DETAIL_CACHE_TTL_SECONDS = 60
+HEALTH_DB_PROBE_CACHE_TTL_SECONDS = 30
 _ecb_rates_fallback: Optional[Dict[str, Any]] = None
 _dashboard_cache_hits = 0
 _dashboard_cache_misses = 0
@@ -4146,47 +4231,109 @@ async def health_db():
                 "database": "postgres",
                 "target": target,
                 "reason": "db_config_missing",
-                "db_status": "config_missing",
-                "migration_state": "unknown",
-                "migration_head": None,
-                "migration_current": None,
+                "db_status": "fail",
+                "migration_state": _migration_state_cache.get("state", "unknown") or "unknown",
+                "migration_head": _migration_state_cache.get("head"),
+                "migration_current": _migration_state_cache.get("current"),
+                "db_timeout_ms": HEALTH_DB_TIMEOUT_MS,
+                "db_latency_ms": None,
                 "config_state": config_state,
                 "last_migration_check_at": last_migration_check_at,
                 "last_db_error": last_db_error,
             },
         )
 
+    probe = await _probe_health_db_connectivity()
+    migration_state = _migration_state_cache.get("state", "unknown") or "unknown"
+    migration_head = _migration_state_cache.get("head")
+    migration_current = _migration_state_cache.get("current")
+
+    status_value = "ok" if probe.get("ok") else "degraded"
+    reason: Optional[str] = probe.get("reason")
+    if migration_state == "migration_required":
+        status_value = "degraded"
+        reason = "migration_required"
+    elif migration_state == "unknown" and not reason:
+        reason = "migration_state_unknown"
+
+    response_content: Dict[str, Any] = {
+        "status": status_value,
+        "database": "postgres",
+        "target": target,
+        "db_status": probe.get("db_status", "fail"),
+        "migration_state": migration_state,
+        "migration_head": migration_head,
+        "migration_current": migration_current,
+        "db_timeout_ms": HEALTH_DB_TIMEOUT_MS,
+        "db_latency_ms": probe.get("latency_ms"),
+        "db_probe_cached": bool(probe.get("cached")),
+        "db_probe_checked_at": datetime.fromtimestamp(probe.get("checked_at") or time.time(), tz=timezone.utc).isoformat(),
+        "config_state": config_state,
+        "last_migration_check_at": last_migration_check_at,
+        "last_db_error": _last_db_error,
+    }
+    if reason:
+        response_content["reason"] = reason
+
+    return JSONResponse(status_code=200, content=response_content)
+
+
+@api_router.get("/health/migrations")
+async def health_migrations():
+    try:
+        target = _get_masked_db_target()
+    except Exception:
+        target = {"host": None, "database": None}
+
+    config_state = "missing_database_url" if not RAW_DATABASE_URL else "ok"
+    if not RAW_DATABASE_URL:
+        _set_last_db_error("CONFIG_MISSING: DATABASE_URL")
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "degraded",
+                "database": "postgres",
+                "target": target,
+                "migration_state": "unknown",
+                "migration_required": None,
+                "reason": "db_config_missing",
+                "db_status": "fail",
+                "migration_head": None,
+                "migration_current": None,
+                "last_migration_check_at": _format_migration_checked_at(),
+                "last_db_error": _last_db_error,
+                "config_state": config_state,
+            },
+        )
+
     try:
         async with sql_engine.connect() as conn:
-            await conn.execute(select(1))
             migration_info = await _get_migration_state(conn)
-            last_migration_check_at = _format_migration_checked_at()
 
         migration_state = migration_info.get("state") or "unknown"
-        response_content = {
-            "status": "healthy" if migration_state == "ok" else "degraded",
-            "database": "postgres",
-            "target": target,
-            "db_status": "ok",
-            "migration_state": migration_state,
-            "migration_head": migration_info.get("head"),
-            "migration_current": migration_info.get("current"),
-            "config_state": config_state,
-            "last_migration_check_at": last_migration_check_at,
-            "last_db_error": None,
-        }
-
+        reason = None
         if migration_state == "migration_required":
-            response_content["reason"] = "migration_required"
-            if APP_ENV in {"preview", "prod"}:
-                return JSONResponse(status_code=503, content=response_content)
-            return JSONResponse(status_code=200, content=response_content)
+            reason = "migration_required"
+        elif migration_state != "ok":
+            reason = "migration_state_unknown"
 
-        if migration_state == "unknown":
-            response_content["reason"] = "migration_state_unknown"
-
-        _set_last_db_error(None)
-        return JSONResponse(status_code=200, content=response_content)
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "ok" if migration_state == "ok" else "degraded",
+                "database": "postgres",
+                "target": target,
+                "migration_state": migration_state,
+                "migration_required": migration_state == "migration_required",
+                "reason": reason,
+                "db_status": "ok",
+                "migration_head": migration_info.get("head"),
+                "migration_current": migration_info.get("current"),
+                "last_migration_check_at": _format_migration_checked_at(),
+                "last_db_error": _last_db_error,
+                "config_state": config_state,
+            },
+        )
     except Exception as exc:
         _set_last_db_error(str(exc))
         return JSONResponse(
@@ -4195,14 +4342,15 @@ async def health_db():
                 "status": "degraded",
                 "database": "postgres",
                 "target": target,
-                "reason": "db_unreachable",
-                "db_status": "unreachable",
                 "migration_state": "unknown",
+                "migration_required": None,
+                "reason": "db_unreachable",
+                "db_status": "fail",
                 "migration_head": None,
                 "migration_current": None,
-                "config_state": config_state,
-                "last_migration_check_at": last_migration_check_at,
+                "last_migration_check_at": _format_migration_checked_at(),
                 "last_db_error": _last_db_error,
+                "config_state": config_state,
             },
         )
 

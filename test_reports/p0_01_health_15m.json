@@ -1,0 +1,17 @@
+{
+  "started_at_epoch": 1772478084.9548569,
+  "ended_at_epoch": 1772478985.0245662,
+  "duration_sec": 900.07,
+  "total_requests": 900,
+  "errors": 0,
+  "http_code_counts": {
+    "200": 900
+  },
+  "count_503": 0,
+  "p95_ms": 3.54,
+  "avg_ms": 19.27,
+  "max_ms": 505.01,
+  "status_reason_counts": {
+    "degraded|migration_required": 900
+  }
+}
