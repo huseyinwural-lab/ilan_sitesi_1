@@ -30015,9 +30015,9 @@ async def upload_vehicle_media(
     session: AsyncSession = Depends(get_sql_session),
 ):
     listing = await _get_owned_listing(session, listing_id, current_user)
-    if listing.status not in ["draft", "needs_revision", "unpublished", "published", "pending_review"]:
+    if listing.status not in ["draft", "needs_revision", "unpublished", "inactive", "published", "active", "pending_review"]:
         raise HTTPException(status_code=400, detail="Listing not editable for media")
-    was_published = listing.status == "published"
+    was_published = listing.status in {"published", "active"}
 
     media_meta = _listing_media_meta(listing)
     watermark_config = await _get_watermark_pipeline_config(session, country_code=listing.country)
@@ -30101,7 +30101,7 @@ async def reorder_vehicle_media(
     session: AsyncSession = Depends(get_sql_session),
 ):
     listing = await _get_owned_listing(session, listing_id, current_user)
-    was_published = listing.status == "published"
+    was_published = listing.status in {"published", "active"}
     media_meta = _listing_media_meta(listing)
     if not media_meta:
         return {"id": listing_id, "status": listing.status, "media": []}
