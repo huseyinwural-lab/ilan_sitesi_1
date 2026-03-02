@@ -19042,6 +19042,127 @@ def _extract_stripe_event_object(event: Any) -> Dict[str, Any]:
     return payload
 
 
+def _coerce_unix_ts_to_datetime(value: Any) -> Optional[datetime]:
+    if value in (None, ""):
+        return None
+    try:
+        return datetime.fromtimestamp(int(value), timezone.utc)
+    except (TypeError, ValueError, OSError):
+        return None
+
+
+async def _resolve_admin_invoice_from_webhook(
+    session: AsyncSession,
+    metadata: Dict[str, Any],
+    payment_intent_id: Optional[str],
+) -> Optional[AdminInvoice]:
+    invoice_ref = metadata.get("invoice_id")
+    if invoice_ref:
+        try:
+            invoice_uuid = uuid.UUID(str(invoice_ref))
+            return await session.get(AdminInvoice, invoice_uuid)
+        except ValueError:
+            pass
+
+    if payment_intent_id:
+        payment_row = (
+            await session.execute(
+                select(Payment).where(
+                    Payment.provider == "stripe",
+                    Payment.provider_ref == str(payment_intent_id),
+                )
+            )
+        ).scalar_one_or_none()
+        if payment_row:
+            return await session.get(AdminInvoice, payment_row.invoice_id)
+
+        transaction_row = (
+            await session.execute(
+                select(PaymentTransaction).where(
+                    PaymentTransaction.provider == "stripe",
+                    PaymentTransaction.provider_payment_id == str(payment_intent_id),
+                )
+            )
+        ).scalar_one_or_none()
+        if transaction_row:
+            return await session.get(AdminInvoice, transaction_row.invoice_id)
+
+    return None
+
+
+async def _sync_subscription_from_invoice_event(
+    session: AsyncSession,
+    event_data: Dict[str, Any],
+    mapped_status: str,
+    now: datetime,
+) -> bool:
+    provider_subscription_id = event_data.get("subscription")
+    provider_customer_id = event_data.get("customer")
+
+    subscription_query = select(UserSubscription)
+    if provider_subscription_id:
+        subscription_query = subscription_query.where(
+            UserSubscription.provider_subscription_id == str(provider_subscription_id)
+        )
+    elif provider_customer_id:
+        subscription_query = subscription_query.where(
+            UserSubscription.provider_customer_id == str(provider_customer_id)
+        )
+    else:
+        return False
+
+    subscription = (await session.execute(subscription_query)).scalar_one_or_none()
+    if not subscription:
+        return False
+
+    if mapped_status == "succeeded":
+        subscription.status = "active"
+        period_start = _coerce_unix_ts_to_datetime(event_data.get("period_start"))
+        period_end = _coerce_unix_ts_to_datetime(event_data.get("period_end"))
+        if period_start:
+            subscription.current_period_start = period_start
+        elif not subscription.current_period_start:
+            subscription.current_period_start = now
+        if period_end:
+            subscription.current_period_end = period_end
+        elif not subscription.current_period_end:
+            subscription.current_period_end = now + timedelta(days=30)
+
+        user = await session.get(SqlUser, subscription.user_id)
+        plan = await session.get(Plan, subscription.plan_id)
+        if user and plan:
+            user.listing_quota_limit = plan.listing_quota
+            user.showcase_quota_limit = plan.showcase_quota
+            user.updated_at = now
+    elif mapped_status == "failed" and subscription.status != "canceled":
+        subscription.status = "past_due"
+
+    subscription.updated_at = now
+    return True
+
+
+async def _apply_listing_state_for_payment(
+    session: AsyncSession,
+    payment_record: ListingPayment,
+    mapped_status: str,
+    now: datetime,
+) -> bool:
+    payment_record.status = mapped_status
+    payment_record.updated_at = now
+
+    listing_status = map_payment_status_to_listing_status(mapped_status)
+    if not listing_status:
+        return False
+
+    listing = await session.get(Listing, payment_record.listing_id)
+    if not listing:
+        return False
+
+    listing.status = listing_status
+    listing.updated_at = now
+    return True
+
+
 @api_router.post("/payments/create-intent")
 async def create_listing_payment_intent(
     payload: PaymentIntentCreatePayload,
