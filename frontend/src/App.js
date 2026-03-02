@@ -33,6 +33,10 @@ import RedirectToCountry from '@/pages/public/RedirectToCountry';
 import InfoPage from '@/pages/public/InfoPage';
 import NotFoundPage from '@/pages/public/NotFoundPage';
 import ServerErrorPage from '@/pages/public/ServerErrorPage';
+import MaintenancePage from '@/pages/public/MaintenancePage';
+import TrustCenterPage from '@/pages/public/TrustCenterPage';
+import CorporateHubPage from '@/pages/public/CorporateHubPage';
+import SeoHubPage from '@/pages/public/SeoHubPage';
 // Login moved under portal-specific paths
 
 // Admin/Dealer Portal (lazy)
@@ -147,7 +151,11 @@ function App() {
                     <Route path="/vasita" element={<RedirectToCountry to="/{country}/vasita" />} />
                     <Route path="/info/:slug" element={<InfoPage />} />
                     <Route path="/bilgi/:slug" element={<InfoPage />} />
+                    <Route path="/trust" element={<TrustCenterPage />} />
+                    <Route path="/kurumsal" element={<CorporateHubPage />} />
+                    <Route path="/seo" element={<SeoHubPage />} />
                     <Route path="/500" element={<ServerErrorPage />} />
+                    <Route path="/maintenance" element={<MaintenancePage />} />
                     <Route path="*" element={<NotFoundPage />} />
                   </Route>
 

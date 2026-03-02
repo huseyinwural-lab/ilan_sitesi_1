@@ -9,6 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { FinanceStatusBadge } from '../../components/finance/FinanceStatusBadge';
+import { formatMoneyMinor, resolveLocaleByCountry } from '../../utils/financeFormat';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -47,42 +49,6 @@ const formatDateTime = (value) => {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return '-';
   return parsed.toLocaleString('tr-TR');
-};
-
-const resolveStatusBadgeClass = (value) => {
-  switch ((value || '').toLowerCase()) {
-    case 'paid':
-      return 'bg-green-100 text-green-700';
-    case 'issued':
-      return 'bg-orange-100 text-orange-700';
-    case 'void':
-      return 'bg-red-100 text-red-700';
-    case 'refunded':
-      return 'bg-blue-100 text-blue-700';
-    case 'draft':
-      return 'bg-slate-100 text-slate-700';
-    default:
-      return 'bg-slate-100 text-slate-700';
-  }
-};
-
-const resolvePaymentBadgeClass = (value) => {
-  switch ((value || '').toLowerCase()) {
-    case 'paid':
-    case 'succeeded':
-      return 'bg-green-100 text-green-700';
-    case 'requires_payment_method':
-    case 'requires_confirmation':
-    case 'processing':
-      return 'bg-orange-100 text-orange-700';
-    case 'refunded':
-      return 'bg-blue-100 text-blue-700';
-    case 'failed':
-    case 'canceled':
-      return 'bg-red-100 text-red-700';
-    default:
-      return 'bg-slate-100 text-slate-700';
-  }
 };
 
 const resolveInvoiceTooltip = (inv) => {
@@ -158,6 +124,7 @@ export default function AdminInvoicesPage() {
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
   }), []);
+  const locale = resolveLocaleByCountry(urlCountry || user?.country_code || 'TR');
 
   const toTestId = (value) => String(value || 'all')
     .toLowerCase()
@@ -586,7 +553,9 @@ export default function AdminInvoicesPage() {
                 </div>
                 <div>
                   <div className="text-xs uppercase text-muted-foreground lg:hidden">Amount</div>
-                  <div className="font-medium" data-testid={`invoice-amount-${inv.id}`}>{inv.amount} </div>
+                  <div className="font-medium" data-testid={`invoice-amount-${inv.id}`}>
+                    {formatMoneyMinor(inv.amount_minor, inv.currency_code || inv.currency, locale)}
+                  </div>
                 </div>
                 <div>
                   <div className="text-xs uppercase text-muted-foreground lg:hidden">Currency</div>
@@ -595,20 +564,12 @@ export default function AdminInvoicesPage() {
                 <div data-testid={`invoice-status-${inv.id}`}>
                   <div className="text-xs uppercase text-muted-foreground lg:hidden">Status</div>
                   <div className="flex flex-col gap-1">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolveStatusBadgeClass(inv.status)}`}
-                      data-testid={`invoice-status-badge-${inv.id}`}
-                      title={resolveInvoiceTooltip(inv)}
-                    >
-                      {inv.status}
-                    </span>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolvePaymentBadgeClass(inv.payment_status)}`}
-                      data-testid={`invoice-payment-badge-${inv.id}`}
-                      title={resolvePaymentTooltip(inv)}
-                    >
-                      {inv.payment_status || '-'}
-                    </span>
+                    <div title={resolveInvoiceTooltip(inv)} data-testid={`invoice-status-badge-wrap-${inv.id}`}>
+                      <FinanceStatusBadge status={inv.status} testId={`invoice-status-badge-${inv.id}`} />
+                    </div>
+                    <div title={resolvePaymentTooltip(inv)} data-testid={`invoice-payment-badge-wrap-${inv.id}`}>
+                      <FinanceStatusBadge status={inv.payment_status || '-'} testId={`invoice-payment-badge-${inv.id}`} />
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -739,25 +700,19 @@ export default function AdminInvoicesPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <h4 className="text-sm font-semibold">Amount</h4>
-                      <div className="text-xs text-muted-foreground" data-testid="invoice-detail-amount">{detailData.invoice.amount} {detailData.invoice.currency_code}</div>
+                      <div className="text-xs text-muted-foreground" data-testid="invoice-detail-amount">
+                        {formatMoneyMinor(detailData.invoice.amount_minor, detailData.invoice.currency_code || detailData.invoice.currency, locale)}
+                      </div>
                     </div>
                     <div>
                       <h4 className="text-sm font-semibold">Status</h4>
                       <div className="flex flex-col gap-2" data-testid="invoice-detail-status-group">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolveStatusBadgeClass(detailData.invoice.status)}`}
-                          data-testid="invoice-detail-status"
-                          title={resolveInvoiceTooltip(detailData.invoice)}
-                        >
-                          {detailData.invoice.status}
-                        </span>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolvePaymentBadgeClass(detailData.invoice.payment_status)}`}
-                          data-testid="invoice-detail-payment-status"
-                          title={resolvePaymentTooltip(detailData.invoice)}
-                        >
-                          {detailData.invoice.payment_status || '-'}
-                        </span>
+                        <div title={resolveInvoiceTooltip(detailData.invoice)} data-testid="invoice-detail-status-wrap">
+                          <FinanceStatusBadge status={detailData.invoice.status} testId="invoice-detail-status" />
+                        </div>
+                        <div title={resolvePaymentTooltip(detailData.invoice)} data-testid="invoice-detail-payment-status-wrap">
+                          <FinanceStatusBadge status={detailData.invoice.payment_status || '-'} testId="invoice-detail-payment-status" />
+                        </div>
                         <span
                           className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${detailData.invoice.pdf_url ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}
                           data-testid="invoice-detail-pdf-status"

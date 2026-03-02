@@ -36,8 +36,40 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
   if (!layout) {
     return (
       <footer className="border-t bg-[var(--footer-bg)] text-[var(--footer-text)]" data-testid="site-footer">
-        <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-[var(--footer-text)]">
-          © 2026 Annoncia
+        <div className="mx-auto max-w-6xl px-4 py-10 space-y-6">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4" data-testid="site-footer-fallback-links">
+            <div data-testid="site-footer-fallback-trust">
+              <div className="text-sm font-semibold">Güven & Politika</div>
+              <ul className="mt-2 space-y-2 text-sm">
+                <li><Link to="/trust" className="text-[var(--link)] hover:text-[var(--link-hover)]" data-testid="site-footer-fallback-link-trust">Merkez</Link></li>
+                <li><Link to="/bilgi/gizlilik-politikasi" className="text-[var(--link)] hover:text-[var(--link-hover)]" data-testid="site-footer-fallback-link-privacy">Gizlilik Politikası</Link></li>
+              </ul>
+            </div>
+            <div data-testid="site-footer-fallback-corporate">
+              <div className="text-sm font-semibold">Kurumsal</div>
+              <ul className="mt-2 space-y-2 text-sm">
+                <li><Link to="/kurumsal" className="text-[var(--link)] hover:text-[var(--link-hover)]" data-testid="site-footer-fallback-link-corporate">Kurumsal Sayfalar</Link></li>
+                <li><Link to="/bilgi/magaza-cozumleri" className="text-[var(--link)] hover:text-[var(--link-hover)]" data-testid="site-footer-fallback-link-store">Mağaza Çözümleri</Link></li>
+              </ul>
+            </div>
+            <div data-testid="site-footer-fallback-seo">
+              <div className="text-sm font-semibold">Bilgi Merkezi</div>
+              <ul className="mt-2 space-y-2 text-sm">
+                <li><Link to="/seo" className="text-[var(--link)] hover:text-[var(--link-hover)]" data-testid="site-footer-fallback-link-seo">SEO Merkezi</Link></li>
+                <li><Link to="/bilgi/yardim-merkezi" className="text-[var(--link)] hover:text-[var(--link-hover)]" data-testid="site-footer-fallback-link-help">Yardım Merkezi</Link></li>
+              </ul>
+            </div>
+            <div data-testid="site-footer-fallback-system">
+              <div className="text-sm font-semibold">Sistem</div>
+              <ul className="mt-2 space-y-2 text-sm">
+                <li><Link to="/500" className="text-[var(--link)] hover:text-[var(--link-hover)]" data-testid="site-footer-fallback-link-500">500 Hata Sayfası</Link></li>
+                <li><Link to="/maintenance" className="text-[var(--link)] hover:text-[var(--link-hover)]" data-testid="site-footer-fallback-link-maintenance">Bakım Sayfası</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="text-sm text-[var(--footer-text)]" data-testid="site-footer-fallback-copyright">
+            © 2026 Annoncia
+          </div>
         </div>
       </footer>
     );

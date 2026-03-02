@@ -38261,13 +38261,135 @@ async def update_info_page(
     return {"ok": True}
 
 
+INFO_PAGE_FALLBACKS: Dict[str, Dict[str, str]] = {
+    "kullanim-kosullari": {
+        "title_tr": "Kullanım Koşulları",
+        "title_de": "Nutzungsbedingungen",
+        "title_fr": "Conditions d'utilisation",
+        "content_tr": "Bu platformu kullanırken yürürlükteki mevzuata uygun davranmanız gerekmektedir. Hizmeti kullanan tüm hesaplar, yayın politikaları ve topluluk kurallarına tabidir.",
+        "content_de": "Bei der Nutzung der Plattform müssen Sie die geltenden gesetzlichen Vorschriften einhalten. Alle Konten unterliegen den Veröffentlichungsrichtlinien und Community-Regeln.",
+        "content_fr": "En utilisant la plateforme, vous devez respecter la législation en vigueur. Tous les comptes sont soumis aux politiques de publication et aux règles de la communauté.",
+    },
+    "gizlilik-politikasi": {
+        "title_tr": "Gizlilik Politikası",
+        "title_de": "Datenschutzerklärung",
+        "title_fr": "Politique de confidentialité",
+        "content_tr": "Kişisel verileriniz, hizmet sunumu ve güvenlik amaçlarıyla sınırlı olarak işlenir. Veri işleme süreçleri şeffaflık, minimizasyon ve güvenlik ilkeleriyle yürütülür.",
+        "content_de": "Personenbezogene Daten werden nur für die Bereitstellung des Dienstes und Sicherheitszwecke verarbeitet. Die Verarbeitung erfolgt nach Transparenz-, Datenminimierungs- und Sicherheitsprinzipien.",
+        "content_fr": "Vos données personnelles sont traitées uniquement pour la fourniture du service et la sécurité. Les traitements suivent les principes de transparence, minimisation et sécurité.",
+    },
+    "cerez-politikasi": {
+        "title_tr": "Çerez Politikası",
+        "title_de": "Cookie-Richtlinie",
+        "title_fr": "Politique relative aux cookies",
+        "content_tr": "Çerezler, oturum yönetimi, güvenlik ve performans ölçümü için kullanılır. Tercihlerinizi tarayıcı ayarlarınızdan yönetebilirsiniz.",
+        "content_de": "Cookies werden für Sitzungsverwaltung, Sicherheit und Performance-Messung verwendet. Sie können Ihre Präferenzen in den Browsereinstellungen verwalten.",
+        "content_fr": "Les cookies sont utilisés pour la gestion de session, la sécurité et la mesure des performances. Vous pouvez gérer vos préférences dans les paramètres du navigateur.",
+    },
+    "kvkk-aydinlatma": {
+        "title_tr": "KVKK Aydınlatma Metni",
+        "title_de": "Hinweistext zum Datenschutz",
+        "title_fr": "Texte d'information sur la protection des données",
+        "content_tr": "Veri sorumlusu olarak, kişisel verilerinizi hukuka uygun şekilde toplar, işler ve saklarız. Veri sahibi haklarınız için destek kanallarımızı kullanabilirsiniz.",
+        "content_de": "Als Verantwortlicher erheben, verarbeiten und speichern wir personenbezogene Daten rechtmäßig. Für Betroffenenrechte können Sie unsere Support-Kanäle nutzen.",
+        "content_fr": "En tant que responsable du traitement, nous collectons, traitons et stockons les données conformément à la loi. Vous pouvez utiliser nos canaux de support pour vos droits.",
+    },
+    "mesafeli-satis-sozlesmesi": {
+        "title_tr": "Mesafeli Satış Sözleşmesi",
+        "title_de": "Fernabsatzvertrag",
+        "title_fr": "Contrat de vente à distance",
+        "content_tr": "Mesafeli satışa konu dijital hizmetler, satın alma öncesinde kullanıcıya açık şekilde sunulur. İade ve iptal koşulları ilgili mevzuata göre uygulanır.",
+        "content_de": "Digitale Dienste im Fernabsatz werden dem Nutzer vor dem Kauf transparent dargestellt. Rückgabe- und Stornobedingungen gelten gemäß den gesetzlichen Vorschriften.",
+        "content_fr": "Les services numériques vendus à distance sont présentés de manière transparente avant l'achat. Les conditions d'annulation et de remboursement suivent la réglementation applicable.",
+    },
+    "hakkimizda": {
+        "title_tr": "Hakkımızda",
+        "title_de": "Über uns",
+        "title_fr": "À propos de nous",
+        "content_tr": "Annoncia, bireysel ve kurumsal kullanıcıların güvenle ilan oluşturabildiği çok kategorili bir pazar yeri altyapısı sunar.",
+        "content_de": "Annoncia bietet eine Multi-Kategorie-Marktplatzinfrastruktur, auf der private und geschäftliche Nutzer sicher Anzeigen erstellen können.",
+        "content_fr": "Annoncia fournit une infrastructure de place de marché multi-catégories où les particuliers et les entreprises peuvent publier des annonces en toute confiance.",
+    },
+    "iletisim": {
+        "title_tr": "İletişim",
+        "title_de": "Kontakt",
+        "title_fr": "Contact",
+        "content_tr": "Destek talepleriniz ve kurumsal iş birliği başvurularınız için iletişim formunu kullanabilirsiniz. Yanıt sürecimiz kayıt önceliğine göre yürütülür.",
+        "content_de": "Für Supportanfragen und geschäftliche Kooperationen nutzen Sie bitte das Kontaktformular. Antworten erfolgen gemäß Prioritätsreihenfolge.",
+        "content_fr": "Pour les demandes de support et les partenariats, veuillez utiliser le formulaire de contact. Les réponses sont traitées selon l'ordre de priorité.",
+    },
+    "magaza-cozumleri": {
+        "title_tr": "Mağaza Çözümleri",
+        "title_de": "Shop-Lösungen",
+        "title_fr": "Solutions vitrine",
+        "content_tr": "Kurumsal mağaza sayfaları ile marka görünürlüğünüzü artırabilir, ürün ve ilan portföyünüzü merkezi bir vitrinde sunabilirsiniz.",
+        "content_de": "Mit Unternehmens-Shop-Seiten steigern Sie Ihre Markenpräsenz und präsentieren Ihr Portfolio in einem zentralen Schaufenster.",
+        "content_fr": "Avec les pages vitrine entreprise, vous augmentez votre visibilité de marque et présentez votre portefeuille dans un espace centralisé.",
+    },
+    "kurumsal-ilan-cozumleri": {
+        "title_tr": "Kurumsal İlan Çözümleri",
+        "title_de": "Unternehmensanzeigen-Lösungen",
+        "title_fr": "Solutions d'annonces entreprise",
+        "content_tr": "Kurumsal kullanıcılar için toplu ilan yönetimi, görünürlük paketleri ve finansal raporlama özellikleri sunulur.",
+        "content_de": "Für Geschäftskunden werden Massenanzeigenverwaltung, Sichtbarkeitspakete und Finanzberichte bereitgestellt.",
+        "content_fr": "Pour les entreprises, nous proposons la gestion d'annonces en volume, des packs de visibilité et des fonctions de reporting financier.",
+    },
+    "nasil-calisir": {
+        "title_tr": "Nasıl Çalışır?",
+        "title_de": "Wie funktioniert es?",
+        "title_fr": "Comment ça marche ?",
+        "content_tr": "Kategori seçimi, ilan detay girişi, önizleme ve yayınlama adımlarıyla ilanlarınızı hızlıca oluşturabilirsiniz.",
+        "content_de": "Sie können Anzeigen schnell über die Schritte Kategorieauswahl, Detaileingabe, Vorschau und Veröffentlichung erstellen.",
+        "content_fr": "Vous pouvez créer des annonces rapidement via les étapes sélection de catégorie, saisie des détails, prévisualisation et publication.",
+    },
+    "guvenli-alisveris": {
+        "title_tr": "Güvenli Alışveriş Rehberi",
+        "title_de": "Leitfaden für sicheres Einkaufen",
+        "title_fr": "Guide d'achat sécurisé",
+        "content_tr": "İşlem öncesi kimlik/doğrulama kontrolleri yapın, platform dışı yönlendirmelere karşı dikkatli olun ve şüpheli içerikleri raporlayın.",
+        "content_de": "Führen Sie vor Transaktionen Identitäts-/Verifizierungsprüfungen durch, seien Sie vorsichtig bei Off-Platform-Anfragen und melden Sie verdächtige Inhalte.",
+        "content_fr": "Avant toute transaction, vérifiez l'identité, soyez vigilant face aux redirections hors plateforme et signalez tout contenu suspect.",
+    },
+    "yardim-merkezi": {
+        "title_tr": "Yardım Merkezi",
+        "title_de": "Hilfezentrum",
+        "title_fr": "Centre d'aide",
+        "content_tr": "Sık sorulan sorular, üyelik, ilan ve ödeme süreçleri hakkında güncel dokümantasyona Yardım Merkezi üzerinden erişebilirsiniz.",
+        "content_de": "Über das Hilfezentrum erhalten Sie aktuelle Dokumentation zu FAQs, Mitgliedschaft, Anzeigen- und Zahlungsprozessen.",
+        "content_fr": "Le centre d'aide donne accès à la documentation à jour sur les FAQ, l'adhésion, les annonces et les paiements.",
+    },
+    "site-haritasi": {
+        "title_tr": "Site Haritası",
+        "title_de": "Sitemap",
+        "title_fr": "Plan du site",
+        "content_tr": "Site haritası; kategori, ilan, bilgi sayfaları ve sistem sayfalarına hızlı erişim için yapılandırılmış bağlantılar içerir.",
+        "content_de": "Die Sitemap enthält strukturierte Links zu Kategorien, Anzeigen, Informations- und Systemseiten für schnellen Zugriff.",
+        "content_fr": "Le plan du site contient des liens structurés vers les catégories, annonces, pages d'information et pages système.",
+    },
+}
+
+
 @api_router.get("/info/{slug}")
 async def get_info_page(slug: str, session: AsyncSession = Depends(get_sql_session)):
     slug_value = slug.strip().lower()
     result = await session.execute(select(InfoPage).where(InfoPage.slug == slug_value, InfoPage.is_published.is_(True)))
     page = result.scalar_one_or_none()
     if not page:
-        raise HTTPException(status_code=404, detail="Page not found")
+        fallback = INFO_PAGE_FALLBACKS.get(slug_value)
+        if not fallback:
+            raise HTTPException(status_code=404, detail="Page not found")
+        return {
+            "slug": slug_value,
+            "title_tr": fallback["title_tr"],
+            "title_de": fallback["title_de"],
+            "title_fr": fallback["title_fr"],
+            "content_tr": fallback["content_tr"],
+            "content_de": fallback["content_de"],
+            "content_fr": fallback["content_fr"],
+            "created_at": None,
+            "updated_at": None,
+            "source": "fallback",
+        }
     return {
         "slug": page.slug,
         "title_tr": page.title_tr,
