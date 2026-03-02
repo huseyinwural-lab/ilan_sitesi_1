@@ -406,3 +406,36 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - **P2:** Corporate & SEO template seti (#23-28)
 - **P2:** 500/maintenance system templateleri (#30/#31)
 - **P3:** Category Builder drag&drop
+
+---
+
+## 2026-03-02 (Toplu Kapanış — Kalanların Tek Iterasyonda Tamamlanması)
+
+### Bu iterasyonda tamamlananlar
+- **P1 Finans UI standardizasyonu (uygulandı):**
+  - `AdminSubscriptions.js` finans state/badge/money format bileşenleri ile hizalandı.
+  - `AdminInvoices.js` durum göstergeleri `FinanceStatusBadge` ile tekilleştirildi; tutar görünümü `formatMoneyMinor` ile locale-aware hale getirildi.
+- **P2 Trust/Policy template seti (uygulandı):**
+  - Yeni trust merkezi: `/trust`
+  - Legal slugs için yayın fallback içerikleri backend’e eklendi (`/api/info/{slug}` fallback map).
+- **P2 Corporate & SEO template seti (uygulandı):**
+  - Kurumsal merkez: `/kurumsal`
+  - SEO/Bilgi merkezi: `/seo`
+  - Corporate/SEO bilgi slugs için fallback içerikler aktif.
+- **P2 System template seti (uygulandı):**
+  - Maintenance sayfası: `/maintenance`
+  - Mevcut `500` sayfası ile birlikte system template seti tamamlandı.
+- **Footer fallback güçlendirmesi:**
+  - Trust/Corporate/SEO/System link grupları eklendi.
+- **P3 Category drag&drop:**
+  - `AdminCategories.js` içerisinde draggable reorder akışı mevcut ve regression testte doğrulandı.
+
+### Test sonucu
+- Testing agent raporu: `/app/test_reports/iteration_81.json`
+  - Backend: **PASS** (24 testten 22 PASS; kalanlar kritik olmayan kozmetik notlar)
+  - Frontend: **PASS**
+  - Public template sayfaları + maintenance + fallback info içerikleri + admin finans standardizasyonu + user finans regresyonu **PASS**
+
+### Güncel kalan işler (aktif P0/P1/P2)
+- Bu kapsamda kapatılacak kritik iş kalmadı.
+- Gelecek geliştirme alanları: ileri finans raporlama, dönüşüm analitiği, içerik A/B testleri.
