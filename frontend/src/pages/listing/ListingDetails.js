@@ -1307,6 +1307,79 @@ export default function ListingDetails() {
         </div>
       </div>
 
+      <section className="rounded-xl border bg-white p-4 space-y-4" data-testid="ilan-ver-version-history-panel">
+        <div className="flex flex-wrap items-center justify-between gap-3" data-testid="ilan-ver-version-history-header">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900" data-testid="ilan-ver-version-history-title">Versiyon Geçmişi</h2>
+            <p className="text-xs text-slate-500" data-testid="ilan-ver-version-history-status">
+              Durum: {listingStatus} • State: {lifecycleState}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2" data-testid="ilan-ver-version-history-actions">
+            <button
+              type="button"
+              onClick={handlePublishListing}
+              disabled={versionActionLoading === 'publish'}
+              className="rounded-md border px-3 py-1 text-xs font-semibold"
+              data-testid="ilan-ver-version-publish"
+            >
+              {versionActionLoading === 'publish' ? 'Yayınlanıyor...' : 'Publish (active)'}
+            </button>
+            <button
+              type="button"
+              onClick={handleUnpublishListing}
+              disabled={versionActionLoading === 'unpublish'}
+              className="rounded-md border px-3 py-1 text-xs font-semibold"
+              data-testid="ilan-ver-version-unpublish"
+            >
+              {versionActionLoading === 'unpublish' ? 'Kaldırılıyor...' : 'Unpublish (inactive)'}
+            </button>
+            <button
+              type="button"
+              onClick={handleRenewListing}
+              disabled={versionActionLoading === 'renew'}
+              className="rounded-md border px-3 py-1 text-xs"
+              data-testid="ilan-ver-version-renew"
+            >
+              {versionActionLoading === 'renew' ? 'Uzatılıyor...' : 'Süre Uzat (30 gün)'}
+            </button>
+          </div>
+        </div>
+
+        {versionMessage ? (
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700" data-testid="ilan-ver-version-message">
+            {versionMessage}
+          </div>
+        ) : null}
+
+        {versionLoading ? (
+          <div className="text-xs text-slate-500" data-testid="ilan-ver-version-loading">Versiyon geçmişi yükleniyor...</div>
+        ) : versionHistory.length === 0 ? (
+          <div className="text-xs text-slate-500" data-testid="ilan-ver-version-empty">Henüz publish versiyonu bulunmuyor.</div>
+        ) : (
+          <div className="space-y-2" data-testid="ilan-ver-version-list">
+            {versionHistory.map((version) => (
+              <div key={version.version_no} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-2" data-testid={`ilan-ver-version-item-${version.version_no}`}>
+                <div className="text-xs text-slate-700" data-testid={`ilan-ver-version-meta-${version.version_no}`}>
+                  <span className="font-semibold">v{version.version_no}</span>
+                  <span className="ml-2">{version.updated_at ? new Date(version.updated_at).toLocaleString('tr-TR') : '-'}</span>
+                  <span className="ml-2 rounded bg-slate-100 px-2 py-0.5">{version.publish_state || '-'}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRollbackVersion(version.version_no)}
+                  disabled={versionActionLoading === `rollback-${version.version_no}`}
+                  className="rounded-md border px-3 py-1 text-xs"
+                  data-testid={`ilan-ver-version-rollback-${version.version_no}`}
+                >
+                  {versionActionLoading === `rollback-${version.version_no}` ? 'Geri alınıyor...' : 'Bu versiyona geri dön'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {schemaError ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800" data-testid="ilan-ver-details-schema-warning">
           {schemaError}
