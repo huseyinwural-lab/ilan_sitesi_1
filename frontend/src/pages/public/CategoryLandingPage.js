@@ -64,8 +64,8 @@ export default function CategoryLandingPage() {
     };
   }, [slug, selectedCountry, language, navigate]);
 
-  const seoTitle = category?.seo_meta?.title || category?.name || 'Kategori';
-  const seoDescription = category?.seo_meta?.description || category?.description || 'Kategori ilanlarını keşfedin.';
+  const seoTitle = String(category?.seo_meta?.title || category?.name || 'Kategori');
+  const seoDescription = String(category?.seo_meta?.description || category?.description || 'Kategori ilanlarını keşfedin.');
 
   if (loading) {
     return <div className="py-10 text-sm" data-testid="category-landing-loading">Yükleniyor...</div>;
