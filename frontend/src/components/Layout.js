@@ -384,8 +384,11 @@ export default function Layout({ children }) {
     return {
       payments_enabled: Boolean(runtime.payments_enabled),
       stripe_secret_key_present: Boolean(runtime.stripe_secret_key_present),
+      stripe_secret_key_valid: Boolean(runtime.stripe_secret_key_valid),
       stripe_publishable_key_present: Boolean(runtime.stripe_publishable_key_present),
+      stripe_publishable_key_valid: Boolean(runtime.stripe_publishable_key_valid),
       stripe_webhook_secret_present: Boolean(runtime.stripe_webhook_secret_present),
+      stripe_webhook_secret_valid: Boolean(runtime.stripe_webhook_secret_valid),
       disabled_reason: runtime.disabled_reason || 'missing_stripe_secret_or_publishable_key',
     };
   }, [systemHealth]);
@@ -1260,8 +1263,11 @@ export default function Layout({ children }) {
               <span data-testid="admin-payments-runtime-banner-reason">({paymentsRuntime.disabled_reason})</span>
               <span data-testid="admin-payments-runtime-banner-flags">
                 secret={paymentsRuntime.stripe_secret_key_present ? 'true' : 'false'} ·
+                secret_valid={paymentsRuntime.stripe_secret_key_valid ? 'true' : 'false'} ·
                 publishable={paymentsRuntime.stripe_publishable_key_present ? 'true' : 'false'} ·
-                webhook={paymentsRuntime.stripe_webhook_secret_present ? 'true' : 'false'}
+                publishable_valid={paymentsRuntime.stripe_publishable_key_valid ? 'true' : 'false'} ·
+                webhook={paymentsRuntime.stripe_webhook_secret_present ? 'true' : 'false'} ·
+                webhook_valid={paymentsRuntime.stripe_webhook_secret_valid ? 'true' : 'false'}
               </span>
             </div>
           </div>
