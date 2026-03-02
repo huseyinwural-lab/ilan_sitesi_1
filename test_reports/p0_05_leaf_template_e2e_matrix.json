@@ -1,0 +1,614 @@
+{
+  "generated_at": "2026-03-02T23:07:09.233749+00:00",
+  "base_url": "https://billing-cleanup.preview.emergentagent.com",
+  "selected_leaf_target": 12,
+  "selected_real_estate": [
+    {
+      "slug": "imara-acik",
+      "country": "DE",
+      "module": "real_estate",
+      "leaf_id": "b0e222dd-8166-421e-bbe3-d1b5a3c9f742",
+      "schema_http_status": 200
+    },
+    {
+      "slug": "satilik-daire",
+      "country": "DE",
+      "module": "real_estate",
+      "leaf_id": "ea8f47d4-1e9a-44f1-b2f7-4b3d4171a44c",
+      "schema_http_status": 200
+    },
+    {
+      "slug": "satilik-dukkan",
+      "country": "DE",
+      "module": "real_estate",
+      "leaf_id": "f7cad7f6-0537-4061-b3c5-2c4e10601cbd",
+      "schema_http_status": 200
+    },
+    {
+      "slug": "kiralik-daire",
+      "country": "FR",
+      "module": "real_estate",
+      "leaf_id": "4c45f419-8a1a-443a-b208-f0db0058c33a",
+      "schema_http_status": 200
+    },
+    {
+      "slug": "kiralik-ofis",
+      "country": "FR",
+      "module": "real_estate",
+      "leaf_id": "87bd7847-7892-4566-a832-15d5e86b79fc",
+      "schema_http_status": 200
+    },
+    {
+      "slug": "tarla",
+      "country": "FR",
+      "module": "real_estate",
+      "leaf_id": "9afeaea1-f4ce-43fc-a23d-936c7fc06f55",
+      "schema_http_status": 200
+    }
+  ],
+  "selected_vehicle": [
+    {
+      "slug": "maps-acceptance-de",
+      "country": "DE",
+      "module": "vehicle",
+      "leaf_id": "16b781b2-a80d-4f87-846c-8c1be0cc8fa3",
+      "schema_http_status": 200
+    },
+    {
+      "slug": "maps-acceptance-fr",
+      "country": "FR",
+      "module": "vehicle",
+      "leaf_id": "41cf3693-104a-4428-b4b7-a58b21540dc1",
+      "schema_http_status": 200
+    },
+    {
+      "slug": "p0-05-oto-genel",
+      "country": "DE",
+      "module": "vehicle",
+      "leaf_id": "3c1599fb-62a6-43c3-97fa-8be8ed6c9ae9",
+      "schema_http_status": 200
+    },
+    {
+      "slug": "p0-05-motosiklet-genel",
+      "country": "FR",
+      "module": "vehicle",
+      "leaf_id": "3b315098-5fd4-4fc8-a052-59cc8cfef793",
+      "schema_http_status": 200
+    },
+    {
+      "slug": "p0-05-ticari-genel",
+      "country": "DE",
+      "module": "vehicle",
+      "leaf_id": "a3489c99-6e36-4b1e-930a-749c83afc718",
+      "schema_http_status": 200
+    },
+    {
+      "slug": "p0-05-minibus-genel",
+      "country": "FR",
+      "module": "vehicle",
+      "leaf_id": "5faaa4a5-846b-43ed-a80e-85d2ba0d21d0",
+      "schema_http_status": 200
+    }
+  ],
+  "results": [
+    {
+      "leaf_id": "b0e222dd-8166-421e-bbe3-d1b5a3c9f742",
+      "slug": "imara-acik",
+      "country": "DE",
+      "module": "real_estate",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "0587a273-24e5-4fab-b83d-6a4d24e87de3"
+    },
+    {
+      "leaf_id": "ea8f47d4-1e9a-44f1-b2f7-4b3d4171a44c",
+      "slug": "satilik-daire",
+      "country": "DE",
+      "module": "real_estate",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "e880e12b-5bde-468f-b36c-ed74d1fae9e8"
+    },
+    {
+      "leaf_id": "f7cad7f6-0537-4061-b3c5-2c4e10601cbd",
+      "slug": "satilik-dukkan",
+      "country": "DE",
+      "module": "real_estate",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "36b2a572-4eca-4427-8b40-47f412e5e6d0"
+    },
+    {
+      "leaf_id": "4c45f419-8a1a-443a-b208-f0db0058c33a",
+      "slug": "kiralik-daire",
+      "country": "FR",
+      "module": "real_estate",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "4bd59f8e-974f-428c-95af-89a20150c61c"
+    },
+    {
+      "leaf_id": "87bd7847-7892-4566-a832-15d5e86b79fc",
+      "slug": "kiralik-ofis",
+      "country": "FR",
+      "module": "real_estate",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "6686fcea-d463-474e-872e-314b4fb25510"
+    },
+    {
+      "leaf_id": "9afeaea1-f4ce-43fc-a23d-936c7fc06f55",
+      "slug": "tarla",
+      "country": "FR",
+      "module": "real_estate",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "af901476-7184-4284-ad4f-b426b20fe9c9"
+    },
+    {
+      "leaf_id": "16b781b2-a80d-4f87-846c-8c1be0cc8fa3",
+      "slug": "maps-acceptance-de",
+      "country": "DE",
+      "module": "vehicle",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "0c879714-d66b-4c06-bb7b-5e74196eb69a"
+    },
+    {
+      "leaf_id": "41cf3693-104a-4428-b4b7-a58b21540dc1",
+      "slug": "maps-acceptance-fr",
+      "country": "FR",
+      "module": "vehicle",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "144c273b-0d58-499e-93e8-314f54774019"
+    },
+    {
+      "leaf_id": "3c1599fb-62a6-43c3-97fa-8be8ed6c9ae9",
+      "slug": "p0-05-oto-genel",
+      "country": "DE",
+      "module": "vehicle",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "f0ddc89f-13ca-4b49-9692-f332b1333b2f"
+    },
+    {
+      "leaf_id": "3b315098-5fd4-4fc8-a052-59cc8cfef793",
+      "slug": "p0-05-motosiklet-genel",
+      "country": "FR",
+      "module": "vehicle",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "bbc676b5-588e-43c9-888e-53ebfb30d88c"
+    },
+    {
+      "leaf_id": "a3489c99-6e36-4b1e-930a-749c83afc718",
+      "slug": "p0-05-ticari-genel",
+      "country": "DE",
+      "module": "vehicle",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "7652dc64-9512-48ab-bf15-5cd8f2470829"
+    },
+    {
+      "leaf_id": "5faaa4a5-846b-43ed-a80e-85d2ba0d21d0",
+      "slug": "p0-05-minibus-genel",
+      "country": "FR",
+      "module": "vehicle",
+      "status": "PASS",
+      "steps": {
+        "leaf_select_validate": {
+          "status": 200
+        },
+        "form_render_schema": {
+          "status": 200
+        },
+        "create_draft": {
+          "status": 200
+        },
+        "validation_enforcement": {
+          "status": 422,
+          "expected": 422
+        },
+        "save_valid_draft": {
+          "status": 200
+        },
+        "preview_ready": {
+          "status": 200
+        },
+        "preview_fetch": {
+          "status": 200
+        },
+        "submit_publish_request": {
+          "status": 200
+        },
+        "publish_admin_approve": {
+          "status": 200
+        },
+        "public_detail": {
+          "status": 200
+        }
+      },
+      "listing_id": "424a7863-0bad-47f9-969b-8ea05051733d"
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "pass": 12,
+    "fail": 0,
+    "acceptance_12_of_12": "PASS",
+    "negative_backend_test": "PASS"
+  },
+  "negative_tests": {
+    "api_mapping_missing_leaf": {
+      "fake_leaf_id": "b716537e-1462-4609-8d65-2dbffa5f784f",
+      "catalog_schema": {
+        "status": 404,
+        "detail": {
+          "detail": "Kategori bulunamadı"
+        }
+      },
+      "category_validate": {
+        "status": 404,
+        "detail": {
+          "detail": "Category not found"
+        }
+      }
+    },
+    "ui_controlled_error": {
+      "status": "PENDING_TESTING_AGENT"
+    }
+  }
+}

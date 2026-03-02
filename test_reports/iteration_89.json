@@ -1,0 +1,124 @@
+{
+  "summary": "P0-05 Kategori Leaf -> Form Template Final Doğrulama COMPLETE. All acceptance criteria verified: Inventory unmapped_publishable_count=0, 12/12 E2E matrix PASS, Negative API tests return 404 with meaningful detail, UI controlled error shows schema warning messages (not blank screen).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p0_05_leaf_template.py",
+    "/app/test_reports/pytest/p0_05_leaf_template_results.xml",
+    "/app/test_reports/p0_05_leaf_template_inventory.json",
+    "/app/test_reports/p0_05_leaf_template_e2e_matrix.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PASS: Inventory unmapped_publishable_count = 0 (22 publishable leaves all mapped)",
+    "PASS: E2E Matrix 12/12 PASS (6 real_estate + 6 vehicle leaves)",
+    "PASS: All 10 E2E steps per leaf verified (leaf_select_validate, form_render_schema, create_draft, validation_enforcement, save_valid_draft, preview_ready, preview_fetch, submit_publish_request, publish_admin_approve, public_detail)",
+    "PASS: Negative API /api/catalog/schema with fake leaf returns 404 + 'Kategori bulunamadı'",
+    "PASS: Negative API /api/categories/validate with fake leaf returns 404 + 'Category not found'",
+    "PASS: UI Controlled Error - fake leaf on /ilan-ver/detaylar shows 'Kategori şeması alınamadı' warning + disabled blocks (NOT blank screen)",
+    "PASS: DE + FR country coverage maintained in inventory",
+    "PASS: acceptance_mapping_missing = PASS",
+    "PASS: acceptance_12_of_12 = PASS",
+    "PASS: negative_backend_test = PASS"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_p0_05_leaf_template.py"
+  ],
+  "success_rate": {
+    "backend": "100% (19/19 tests passed)",
+    "frontend": "100% (UI controlled error verified via Playwright)"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "user": "user@platform.com / User123!"
+  },
+  "seed_data_creation": "None (used existing P0-05 report data)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P0-05 Leaf Template Final Doğrulama verified complete. All 22 publishable leaves across DE+FR are mapped. 12 representative leaves tested through full E2E flow (leaf selection -> schema -> draft -> validation -> preview -> publish -> admin approve -> public detail). Negative API tests confirm 404 responses with meaningful Turkish/English error messages. UI shows controlled error messages when schema fetch fails for unmapped/fake categories.",
+  "p0_05_verification_evidence": {
+    "inventory_verification": {
+      "total_rows": 27,
+      "publishable_rows": 22,
+      "mapped_publishable_count": 22,
+      "unmapped_publishable_count": 0,
+      "acceptance_mapping_missing": "PASS",
+      "countries_targeted": ["DE", "FR"]
+    },
+    "e2e_matrix_verification": {
+      "total_leaves_tested": 12,
+      "real_estate_leaves": 6,
+      "vehicle_leaves": 6,
+      "pass_count": 12,
+      "fail_count": 0,
+      "acceptance_12_of_12": "PASS",
+      "steps_verified": [
+        "leaf_select_validate (200)",
+        "form_render_schema (200)",
+        "create_draft (200)",
+        "validation_enforcement (422 expected)",
+        "save_valid_draft (200)",
+        "preview_ready (200)",
+        "preview_fetch (200)",
+        "submit_publish_request (200)",
+        "publish_admin_approve (200)",
+        "public_detail (200)"
+      ]
+    },
+    "negative_api_tests": {
+      "catalog_schema_fake_leaf": {
+        "fake_leaf_id": "9853f177-a280-4966-8e91-e01ff9ab5e58",
+        "expected_status": 404,
+        "actual_status": 404,
+        "detail": "Kategori bulunamadı",
+        "status": "PASS"
+      },
+      "categories_validate_fake_leaf": {
+        "fake_leaf_id": "9853f177-a280-4966-8e91-e01ff9ab5e58",
+        "expected_status": 404,
+        "actual_status": 404,
+        "detail": "Category not found",
+        "status": "PASS"
+      },
+      "invalid_uuid_format": {
+        "test_id": "not-a-valid-uuid",
+        "expected_status": "4xx",
+        "actual_status": 400,
+        "status": "PASS"
+      }
+    },
+    "ui_controlled_error_test": {
+      "scenario": "Navigate to /ilan-ver/detaylar with fake category ID in localStorage",
+      "fake_leaf_id": "9853f177-a280-4966-8e91-e01ff9ab5e58",
+      "expected_behavior": "Controlled error messages, not blank screen",
+      "actual_behavior": "Shows 'Kategori şeması alınamadı' warning + disabled blocks for each form section",
+      "disabled_blocks_shown": [
+        "Parametre bloğu admin konfigürasyonu eksik/pasif olduğu için devre dışı",
+        "Adres bloğu admin konfigürasyonunda pasif",
+        "Detay grubu admin konfigürasyonunda pasif/eksik",
+        "Medya bloğu admin konfigürasyonunda pasif"
+      ],
+      "status": "PASS"
+    },
+    "de_fr_country_coverage": {
+      "DE_real_estate_publishable": 6,
+      "DE_vehicle_publishable": 5,
+      "FR_real_estate_publishable": 6,
+      "FR_vehicle_publishable": 5,
+      "status": "PASS"
+    }
+  },
+  "excluded_non_publishable_leaf_slugs": [
+    "arsa",
+    "konut",
+    "ticari-alan",
+    "uncategorized"
+  ]
+}
