@@ -69,3 +69,26 @@ class PaymentEventLog(Base):
     __table_args__ = (
         Index("ix_payment_event_logs_type", "event_type"),
     )
+
+
+class ListingPayment(Base):
+    __tablename__ = "listing_payments"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    listing_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("listings.id"), nullable=False)
+    stripe_payment_intent_id: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
+    amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
+    currency: Mapped[str] = mapped_column(String(5), nullable=False, server_default="EUR")
+    status: Mapped[str] = mapped_column(String(40), nullable=False, server_default="created")
+    idempotency_key: Mapped[str | None] = mapped_column(String(120), nullable=True, unique=True)
+    meta_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        Index("ix_listing_payments_user", "user_id"),
+        Index("ix_listing_payments_listing", "listing_id"),
+        Index("ix_listing_payments_status", "status"),
+        Index("ix_listing_payments_created", "created_at"),
+    )
