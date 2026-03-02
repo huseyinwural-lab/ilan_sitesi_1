@@ -31,7 +31,7 @@ from app.models.application import Application
 from app.models.campaign import Campaign
 from app.models.plan import Plan
 from app.models.admin_invoice import AdminInvoice
-from app.models.payment import Payment, PaymentTransaction, PaymentEventLog, ListingPayment
+from app.models.payment import Payment, PaymentTransaction, PaymentEventLog, ListingPayment, ProcessedWebhookEvent
 from app.models.auth import Role, UserRole, UserCredential, RefreshToken, EmailVerificationToken
 from app.models.favorite import Favorite
 from app.models.saved_search import SavedSearch
