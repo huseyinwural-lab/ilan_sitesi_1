@@ -372,8 +372,15 @@ export default function ListingDetails() {
       });
       return ensuredId;
     } catch (err) {
-      setAutosaveInfo({ status: 'error', block: blockKey, message: err.message || 'Kaydedilemedi' });
-      if (!silent) setError(err.message || 'Kaydedilemedi');
+      const errMessage = err?.message || '';
+      setAutosaveInfo({ status: 'error', block: blockKey, message: errMessage || 'Kaydedilemedi' });
+      if (!silent) {
+        if (errMessage.includes('postMessage') && errMessage.includes('Request object could not be cloned')) {
+          setError('');
+        } else {
+          setError(errMessage || 'Kaydedilemedi');
+        }
+      }
       throw err;
     }
   }, [ensureDraft, navigate]);
