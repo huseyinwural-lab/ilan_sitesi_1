@@ -19947,6 +19947,7 @@ async def get_checkout_status(
 @api_router.post("/webhook/stripe")
 async def stripe_webhook(
     request: Request,
+    _webhook_rate_limit: None = Depends(RateLimiter(limit=120, window_seconds=60, scope="stripe_legacy_webhook")),
     session: AsyncSession = Depends(get_sql_session),
 ):
     _ensure_payments_runtime_enabled()
