@@ -19582,7 +19582,7 @@ async def stripe_payment_intent_webhook(
 
     now = datetime.now(timezone.utc)
     event_log = WebhookEventLog(
-        provider="stripe_payment_intent",
+        provider="stripe",
         event_id=safe_event_id,
         event_type=event_name,
         received_at=now,
