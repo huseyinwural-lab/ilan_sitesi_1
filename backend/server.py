@@ -19009,6 +19009,252 @@ async def _process_webhook_payment(
     return "ignored"
 
 
+def _resolve_current_user_id(current_user: Any) -> Optional[str]:
+    if hasattr(current_user, "get"):
+        return current_user.get("id")
+    if hasattr(current_user, "id"):
+        return str(current_user.id)
+    return None
+
+
+def _extract_stripe_event_object(event: Any) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {}
+    data_object: Any = None
+    if isinstance(event, dict):
+        data_object = (event.get("data") or {}).get("object")
+    else:
+        event_data = getattr(event, "data", None)
+        data_object = getattr(event_data, "object", None)
+
+    if isinstance(data_object, dict):
+        payload = data_object
+    elif hasattr(data_object, "to_dict_recursive"):
+        payload = data_object.to_dict_recursive()
+
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        payload["metadata"] = {}
+
+    return payload
+
+
+@api_router.post("/payments/create-intent")
+async def create_listing_payment_intent(
+    payload: PaymentIntentCreatePayload,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=503, detail="Stripe secret key not configured")
+
+    user_id_raw = _resolve_current_user_id(current_user)
+    if not user_id_raw:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        user_uuid = uuid.UUID(str(user_id_raw))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
+
+    try:
+        listing_uuid = uuid.UUID(payload.listing_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="listing_id invalid") from exc
+
+    listing = await session.get(Listing, listing_uuid)
+    if not listing or listing.user_id != user_uuid:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    safe_idempotency_key = (idempotency_key or payload.idempotency_key or "").strip() or None
+    if safe_idempotency_key:
+        existing_payment = (
+            await session.execute(
+                select(ListingPayment).where(
+                    ListingPayment.user_id == user_uuid,
+                    ListingPayment.idempotency_key == safe_idempotency_key,
+                )
+            )
+        ).scalar_one_or_none()
+        if existing_payment:
+            stripe.api_key = STRIPE_SECRET_KEY
+            client_secret = None
+            try:
+                existing_intent = stripe.PaymentIntent.retrieve(existing_payment.stripe_payment_intent_id)
+                client_secret = existing_intent.get("client_secret")
+            except Exception:
+                client_secret = None
+
+            return {
+                "payment_id": str(existing_payment.id),
+                "payment_intent_id": existing_payment.stripe_payment_intent_id,
+                "client_secret": client_secret,
+                "status": existing_payment.status,
+                "amount": float(existing_payment.amount),
+                "currency": existing_payment.currency,
+                "publishable_key": STRIPE_PUBLIC_KEY,
+                "idempotency_reused": True,
+            }
+
+    amount_cents = int(round(float(payload.amount) * 100))
+    if amount_cents <= 0:
+        raise HTTPException(status_code=400, detail="amount must be greater than 0")
+
+    currency = payload.currency.upper().strip()
+    if len(currency) < 3:
+        raise HTTPException(status_code=400, detail="currency invalid")
+
+    metadata = {
+        "listing_id": str(listing.id),
+        "user_id": str(user_uuid),
+        "source": "listing_payment_intent",
+    }
+    if payload.metadata:
+        for key, value in payload.metadata.items():
+            metadata[str(key)] = str(value)
+
+    stripe.api_key = STRIPE_SECRET_KEY
+    try:
+        intent = stripe.PaymentIntent.create(
+            amount=amount_cents,
+            currency=currency.lower(),
+            automatic_payment_methods={"enabled": True},
+            description=payload.description,
+            metadata=metadata,
+            idempotency_key=safe_idempotency_key,
+        )
+    except stripe.error.StripeError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    now = datetime.now(timezone.utc)
+    payment_record = ListingPayment(
+        user_id=user_uuid,
+        listing_id=listing.id,
+        stripe_payment_intent_id=intent.get("id"),
+        amount=float(payload.amount),
+        currency=currency,
+        status="created",
+        idempotency_key=safe_idempotency_key,
+        meta_json={
+            "description": payload.description,
+            "metadata": metadata,
+        },
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(payment_record)
+    await session.commit()
+    await session.refresh(payment_record)
+
+    return {
+        "payment_id": str(payment_record.id),
+        "payment_intent_id": payment_record.stripe_payment_intent_id,
+        "client_secret": intent.get("client_secret"),
+        "status": payment_record.status,
+        "amount": float(payment_record.amount),
+        "currency": payment_record.currency,
+        "publishable_key": STRIPE_PUBLIC_KEY,
+        "idempotency_reused": False,
+    }
+
+
+@api_router.post("/payments/webhook")
+async def stripe_payment_intent_webhook(
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if not STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="Stripe webhook secret not configured")
+
+    signature = request.headers.get("stripe-signature")
+    if not signature:
+        raise HTTPException(status_code=400, detail="Missing Stripe signature")
+
+    raw_body = await request.body()
+
+    try:
+        event = stripe.Webhook.construct_event(raw_body, signature, STRIPE_WEBHOOK_SECRET)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid payload") from exc
+    except stripe.error.SignatureVerificationError as exc:
+        raise HTTPException(status_code=400, detail="Invalid signature") from exc
+
+    event_id = getattr(event, "id", None) or (event.get("id") if isinstance(event, dict) else None)
+    event_type = getattr(event, "type", None) or (event.get("type") if isinstance(event, dict) else None)
+    event_data = _extract_stripe_event_object(event)
+    metadata = event_data.get("metadata") or {}
+    payment_intent_id = event_data.get("id") or event_data.get("payment_intent")
+    mapped_status = map_stripe_event_to_payment_status(event_type or "")
+
+    now = datetime.now(timezone.utc)
+    event_log = WebhookEventLog(
+        provider="stripe_payment_intent",
+        event_id=str(event_id),
+        event_type=str(event_type),
+        received_at=now,
+        processed_at=None,
+        status="received",
+        payload_json={
+            "payment_intent_id": payment_intent_id,
+            "metadata": metadata,
+            "event_type": event_type,
+            "raw_payload": event_data,
+        },
+        signature_valid=True,
+        error_message=None,
+        created_at=now,
+    )
+    session.add(event_log)
+    try:
+        await session.flush()
+    except IntegrityError:
+        await session.rollback()
+        return {"status": "duplicate"}
+
+    if not mapped_status or not payment_intent_id:
+        event_log.status = "ignored"
+        event_log.processed_at = now
+        await session.commit()
+        return {"status": "ignored"}
+
+    payment_record = (
+        await session.execute(
+            select(ListingPayment).where(ListingPayment.stripe_payment_intent_id == str(payment_intent_id))
+        )
+    ).scalar_one_or_none()
+
+    if not payment_record:
+        event_log.status = "ignored"
+        event_log.processed_at = now
+        await session.commit()
+        return {"status": "ignored"}
+
+    payment_record.status = mapped_status
+    payment_record.updated_at = now
+    next_meta = payment_record.meta_json or {}
+    next_meta["last_event_id"] = event_id
+    next_meta["last_event_type"] = event_type
+    next_meta["last_event_at"] = now.isoformat()
+    payment_record.meta_json = next_meta
+
+    listing_status = map_payment_status_to_listing_status(mapped_status)
+    if listing_status:
+        listing = await session.get(Listing, payment_record.listing_id)
+        if listing and listing.status not in {"active", "published"}:
+            listing.status = listing_status
+            listing.updated_at = now
+
+    event_log.status = "processed"
+    event_log.processed_at = now
+    await session.commit()
+
+    return {
+        "status": "processed",
+        "payment_status": mapped_status,
+        "payment_intent_id": payment_record.stripe_payment_intent_id,
+    }
+
+
 @api_router.post("/payments/create-checkout-session/stub")
 async def create_checkout_session_stub(
     payload: PaymentCheckoutStubPayload,
