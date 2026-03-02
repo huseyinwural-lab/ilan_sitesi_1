@@ -565,3 +565,34 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ### Güncel durum
 - P0-02 hedefi tamamlandı: sitemap/canonical host drift giderildi, deterministik URL standardı sağlandı.
+
+---
+
+## 2026-03-02 (P0-03 — Stripe Final Acceptance / Faz-1 Tamam)
+
+### Stripe acceptance kapsamı (tamamlanan)
+- Gerçek Stripe test-mode checkout akışı tetiklendi ve ödeme başarıyla tamamlandı.
+- Session doğrulaması:
+  - `session_status=complete`
+  - `payment_status=paid`
+- Backend doğrulaması:
+  - `payments.status=succeeded`
+  - `admin_invoices.status=paid`, `payment_status=succeeded`
+  - ledger double-entry dengesi: debit=credit
+- Webhook doğrulaması:
+  - `checkout.session.completed` işlendi
+  - `payment_intent.succeeded` valid signature ile loglandı
+  - webhook replay çağrıları HTTP 200 kanıtı üretildi
+
+### Kanıt dosyaları
+- `/app/test_reports/p0_03_stripe_checkout_context.json`
+- `/app/test_reports/p0_03_webhook_replay_results.json`
+- `/app/test_reports/p0_03_stripe_acceptance.json`
+- Testing agent sonucu: `/app/test_reports/iteration_85.json` (12/12 PASS)
+
+### Not
+- Stripe account webhook endpoint listesinde legacy URL de tespit edildi; yine de bu acceptance turunda valid-signature + 200 replay + DB state senkronu kanıtlandı.
+
+### P0-03 kalan
+- Google Maps canlı acceptance (3 şehir: TR + DE + rastgele 1)
+- Host/redirect son regresyon paketi

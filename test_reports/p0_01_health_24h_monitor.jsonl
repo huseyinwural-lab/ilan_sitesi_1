@@ -475,3 +475,7 @@
 {"ts": 1772483034.6850815, "code": null, "error": "HTTPConnectionPool(host='127.0.0.1', port=8001): Read timed out. (read timeout=3)"}
 {"ts": 1772483047.6930013, "code": null, "error": "HTTPConnectionPool(host='127.0.0.1', port=8001): Read timed out. (read timeout=3)"}
 {"ts": 1772483060.6969712, "code": null, "error": "HTTPConnectionPool(host='127.0.0.1', port=8001): Read timed out. (read timeout=3)"}
+{"ts": 1772483073.7002583, "code": null, "error": "HTTPConnectionPool(host='127.0.0.1', port=8001): Read timed out. (read timeout=3)"}
+{"ts": 1772483086.728744, "code": null, "error": "HTTPConnectionPool(host='127.0.0.1', port=8001): Read timed out. (read timeout=3)"}
+{"ts": 1772483099.732761, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 500, "cached": false}
+{"ts": 1772483110.2368164, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 1444, "cached": true}
