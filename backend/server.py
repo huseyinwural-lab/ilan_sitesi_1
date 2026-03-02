@@ -53,6 +53,7 @@ from sqlalchemy.orm import Mapped, mapped_column, selectinload
 from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.dialects.postgresql.asyncpg import AsyncAdapt_asyncpg_dbapi
 import html
+import stripe
 
 from app.core.config import settings
 
@@ -92,7 +93,7 @@ from app.models.plan import Plan
 from app.models.billing import VatRate
 from app.models.monetization import UserSubscription
 from app.models.admin_invoice import AdminInvoice
-from app.models.payment import Payment, PaymentTransaction
+from app.models.payment import Payment, PaymentTransaction, ListingPayment
 from app.models.message_report import MessageReport
 from app.models.webhook_event_log import WebhookEventLog
 from app.models.category import Category, CategoryTranslation
@@ -151,6 +152,7 @@ from app.models.menu_item import MenuItem
 from app.models.report import Report
 from app.models.menu import TopMenuItem
 from app.models.support_message import SupportMessage
+from app.domains.payments import map_payment_status_to_listing_status, map_stripe_event_to_payment_status
 from app.services.audit import log_action
 from app.services.cloudflare_metrics import (
     CloudflareCredentials,
