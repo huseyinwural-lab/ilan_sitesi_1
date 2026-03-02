@@ -177,6 +177,13 @@ export default function SearchPage() {
   const [debouncedMapBbox, setDebouncedMapBbox] = useState('');
   const [hoveredListingId, setHoveredListingId] = useState(null);
   const [selectedListingId, setSelectedListingId] = useState(null);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [saveName, setSaveName] = useState('');
+  const [saveEmailEnabled, setSaveEmailEnabled] = useState(true);
+  const [savePushEnabled, setSavePushEnabled] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState('');
   const listRefs = useRef({});
 
   const isMapView = useMemo(() => {
@@ -416,6 +423,75 @@ export default function SearchPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleOpenSaveSearch = () => {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    setSaveName(searchState.q ? `"${searchState.q}" araması` : 'Yeni kayıtlı arama');
+    setSaveEmailEnabled(true);
+    setSavePushEnabled(false);
+    setSaveError('');
+    setSaveSuccess('');
+    setSaveModalOpen(true);
+  };
+
+  const handleSaveSearch = async () => {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    const payload = {
+      name: (saveName || '').trim(),
+      filters_json: {
+        q: searchState.q || '',
+        category: searchState.category || null,
+        make: searchState.make || null,
+        model: searchState.model || null,
+        sort: searchState.sort || null,
+        page: searchState.page || 1,
+        limit: searchState.limit || 20,
+        filters: searchState.filters || {},
+        country: (localStorage.getItem('selected_country') || 'DE').toUpperCase(),
+      },
+      query_string: location.search.startsWith('?') ? location.search.slice(1) : location.search,
+      email_enabled: saveEmailEnabled,
+      push_enabled: savePushEnabled,
+    };
+
+    if (!payload.name || payload.name.length < 2) {
+      setSaveError('Arama adı en az 2 karakter olmalı.');
+      return;
+    }
+
+    setSaveLoading(true);
+    setSaveError('');
+    setSaveSuccess('');
+    try {
+      const res = await fetch(`${API}/v1/saved-searches`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.detail || 'Arama kaydedilemedi');
+      }
+      setSaveSuccess('Arama kaydedildi.');
+      setTimeout(() => setSaveModalOpen(false), 600);
+    } catch (err) {
+      setSaveError(err.message || 'Arama kaydedilemedi');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
   const toggleMapView = (enableMap) => {
     const params = new URLSearchParams(location.search);
     if (enableMap) {
@@ -595,6 +671,10 @@ export default function SearchPage() {
                 <SelectItem value="price_desc">Fiyat (Azalan)</SelectItem>
               </SelectContent>
             </Select>
+
+            <Button type="button" onClick={handleOpenSaveSearch} data-testid="search-save-open-button">
+              Aramayı Kaydet
+            </Button>
           </div>
         </div>
 
@@ -710,6 +790,57 @@ export default function SearchPage() {
             </div>
           </div>
         )}
+
+        {saveModalOpen ? (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" data-testid="search-save-modal">
+            <div className="w-full max-w-md rounded-xl border bg-white p-5 space-y-4">
+              <h3 className="text-lg font-semibold" data-testid="search-save-modal-title">Aramayı Kaydet</h3>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium" htmlFor="saved-search-name">Ad</label>
+                <input
+                  id="saved-search-name"
+                  value={saveName}
+                  onChange={(e) => setSaveName(e.target.value)}
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  data-testid="search-save-name-input"
+                />
+              </div>
+
+              <label className="inline-flex items-center gap-2 text-sm" data-testid="search-save-email-toggle-wrap">
+                <input
+                  type="checkbox"
+                  checked={saveEmailEnabled}
+                  onChange={(e) => setSaveEmailEnabled(e.target.checked)}
+                  data-testid="search-save-email-toggle"
+                />
+                Email bildirimi
+              </label>
+
+              <label className="inline-flex items-center gap-2 text-sm" data-testid="search-save-push-toggle-wrap">
+                <input
+                  type="checkbox"
+                  checked={savePushEnabled}
+                  onChange={(e) => setSavePushEnabled(e.target.checked)}
+                  data-testid="search-save-push-toggle"
+                />
+                Push bildirimi
+              </label>
+
+              {saveError ? <div className="text-sm text-rose-600" data-testid="search-save-error">{saveError}</div> : null}
+              {saveSuccess ? <div className="text-sm text-emerald-600" data-testid="search-save-success">{saveSuccess}</div> : null}
+
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setSaveModalOpen(false)} data-testid="search-save-cancel-button">
+                  Vazgeç
+                </Button>
+                <Button type="button" onClick={handleSaveSearch} disabled={saveLoading} data-testid="search-save-submit-button">
+                  {saveLoading ? 'Kaydediliyor...' : 'Kaydet'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
