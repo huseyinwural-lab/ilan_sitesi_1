@@ -3341,6 +3341,13 @@ DB_POOL_RECYCLE_RAW = os.environ.get("DB_POOL_RECYCLE")
 DB_POOL_DEBUG = os.environ.get("DB_POOL_DEBUG", "").lower() in {"1", "true", "yes"}
 DB_SSL_MODE = (os.environ.get("DB_SSL_MODE") or ("require" if APP_ENV in {"prod", "preview"} else "disable")).lower()
 
+
+def _looks_like_stripe_key(value: Optional[str], prefixes: Tuple[str, ...], min_len: int) -> bool:
+    if not value:
+        return False
+    normalized = value.strip()
+    return len(normalized) >= min_len and any(normalized.startswith(prefix) for prefix in prefixes)
+
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY") or STRIPE_SECRET_KEY
 STRIPE_API_VERSION = os.environ.get("STRIPE_API_VERSION")
@@ -3353,7 +3360,10 @@ STRIPE_PUBLIC_KEY = (
 STRIPE_SECRET_KEY_PRESENT = bool(STRIPE_SECRET_KEY)
 STRIPE_PUBLIC_KEY_PRESENT = bool(STRIPE_PUBLIC_KEY)
 STRIPE_WEBHOOK_SECRET_PRESENT = bool(STRIPE_WEBHOOK_SECRET)
-PAYMENTS_RUNTIME_ENABLED = STRIPE_SECRET_KEY_PRESENT and STRIPE_PUBLIC_KEY_PRESENT
+STRIPE_SECRET_KEY_VALID = _looks_like_stripe_key(STRIPE_SECRET_KEY, ("sk_test_", "sk_live_"), 30)
+STRIPE_PUBLIC_KEY_VALID = _looks_like_stripe_key(STRIPE_PUBLIC_KEY, ("pk_test_", "pk_live_"), 30)
+STRIPE_WEBHOOK_SECRET_VALID = _looks_like_stripe_key(STRIPE_WEBHOOK_SECRET, ("whsec_",), 20)
+PAYMENTS_RUNTIME_ENABLED = STRIPE_SECRET_KEY_VALID and STRIPE_PUBLIC_KEY_VALID
 PAYMENTS_RUNTIME_STATUS = "enabled" if PAYMENTS_RUNTIME_ENABLED else "disabled"
 
 EMAIL_PROVIDER = (os.environ.get("EMAIL_PROVIDER") or "mock").lower()
