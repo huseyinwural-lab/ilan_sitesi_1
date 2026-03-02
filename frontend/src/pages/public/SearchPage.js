@@ -112,6 +112,9 @@ const SearchMapPanel = ({
         zoom={10}
         onLoad={(map) => {
           mapRef.current = map;
+          if (typeof window !== 'undefined') {
+            window.__searchMapRef = map;
+          }
         }}
         onIdle={handleIdle}
         options={{
