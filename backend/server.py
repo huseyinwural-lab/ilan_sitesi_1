@@ -19176,6 +19176,53 @@ async def _apply_listing_state_for_payment(
     return True
 
 
+def _stripe_client_setup() -> None:
+    stripe.api_key = STRIPE_SECRET_KEY
+    if STRIPE_API_VERSION:
+        stripe.api_version = STRIPE_API_VERSION
+
+
+def _payments_runtime_snapshot() -> Dict[str, Any]:
+    return {
+        "status": PAYMENTS_RUNTIME_STATUS,
+        "payments_enabled": PAYMENTS_RUNTIME_ENABLED,
+        "stripe_secret_key_present": STRIPE_SECRET_KEY_PRESENT,
+        "stripe_publishable_key_present": STRIPE_PUBLIC_KEY_PRESENT,
+        "stripe_webhook_secret_present": STRIPE_WEBHOOK_SECRET_PRESENT,
+        "disabled_reason": None if PAYMENTS_RUNTIME_ENABLED else "missing_stripe_secret_or_publishable_key",
+    }
+
+
+def _ensure_payments_runtime_enabled() -> None:
+    if not PAYMENTS_RUNTIME_ENABLED:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "payments_disabled",
+                "message": "Stripe configuration missing",
+                "runtime": _payments_runtime_snapshot(),
+            },
+        )
+
+
+def _resolve_checkout_session_status(event_data: Dict[str, Any]) -> str:
+    payment_status = str(event_data.get("payment_status") or "").strip().lower()
+    if payment_status == "paid":
+        return "succeeded"
+    if payment_status in {"unpaid", "no_payment_required"}:
+        return "processing"
+    return "processing"
+
+
+def _resolve_webhook_request_id(request: Request, event_data: Dict[str, Any]) -> Optional[str]:
+    request_id = request.headers.get("request-id") or request.headers.get("stripe-request-id")
+    if request_id:
+        return request_id
+    if isinstance(event_data.get("request"), dict):
+        return event_data.get("request", {}).get("id")
+    return None
+
+
 @api_router.post("/payments/create-intent")
 async def create_listing_payment_intent(
     payload: PaymentIntentCreatePayload,
