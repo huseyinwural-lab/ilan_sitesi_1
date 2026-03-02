@@ -102,6 +102,12 @@ export default function ListingDetails() {
   const [loadingContinue, setLoadingContinue] = useState(false);
   const [error, setError] = useState('');
   const [autosaveInfo, setAutosaveInfo] = useState({ status: 'idle', block: '', message: '' });
+  const [listingStatus, setListingStatus] = useState('draft');
+  const [lifecycleState, setLifecycleState] = useState('draft');
+  const [versionHistory, setVersionHistory] = useState([]);
+  const [versionLoading, setVersionLoading] = useState(false);
+  const [versionActionLoading, setVersionActionLoading] = useState('');
+  const [versionMessage, setVersionMessage] = useState('');
   const [placesConfig, setPlacesConfig] = useState({ real_mode: false, mode: 'fallback', key_source: 'none', country_options: [], listing_create_config: null });
   const [listingSiteDesign, setListingSiteDesign] = useState(DEFAULT_LISTING_SITE_DESIGN);
   const [placesConfigLoading, setPlacesConfigLoading] = useState(false);
