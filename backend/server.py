@@ -120,6 +120,7 @@ from app.models.user_recent_category import UserRecentCategory
 from app.models.analytics import ListingView, UserInteraction
 from app.models.messaging import Conversation, Message
 from app.models.favorite import Favorite
+from app.models.saved_search import SavedSearch
 from app.models.notification import Notification
 from app.models.gdpr_export import GDPRExport
 from app.models.site_header import SiteHeaderSetting
