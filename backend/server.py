@@ -19727,6 +19727,7 @@ async def create_checkout_session(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
+    _ensure_payments_runtime_enabled()
 
     if not STRIPE_API_KEY:
         raise HTTPException(status_code=503, detail="Stripe not configured")
@@ -19856,6 +19857,7 @@ async def get_checkout_status(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
+    _ensure_payments_runtime_enabled()
 
     if not STRIPE_API_KEY:
         raise HTTPException(status_code=503, detail="Stripe not configured")
@@ -19924,6 +19926,7 @@ async def stripe_webhook(
     request: Request,
     session: AsyncSession = Depends(get_sql_session),
 ):
+    _ensure_payments_runtime_enabled()
     if not STRIPE_API_KEY:
         raise HTTPException(status_code=503, detail="Stripe not configured")
     if not STRIPE_WEBHOOK_SECRET:
