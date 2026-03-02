@@ -132,17 +132,61 @@ class PaymentEndpointTester:
         """Test 1: POST /api/auth/login with user@platform.com/User123!"""
         self.log("\n=== TEST 1: User Login Authentication ===")
         
-        result = self.test_endpoint(
-            "POST", 
-            "/auth/login", 
-            200, 
-            headers={"Content-Type": "application/json"},
-            json_data=USER_CREDENTIALS,
-            description="User login with user@platform.com / User123!"
-        )
-        
-        self.results.append(result)
-        return result["success"]
+        # Test the login first to get detailed info
+        try:
+            response = requests.post(f"{BASE_URL}/auth/login", json=USER_CREDENTIALS, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                self.user_token = data.get("access_token")
+                user_info = data.get("user", {})
+                self.log(f"✅ User login successful")
+                self.log(f"   User ID: {user_info.get('id')}")
+                self.log(f"   Email: {user_info.get('email')}")
+                self.log(f"   Role: {user_info.get('role')}")  
+                self.log(f"   Portal Scope: {user_info.get('portal_scope')}")
+                self.log(f"   Is Verified: {user_info.get('is_verified')}")
+                
+                # Now record the test result
+                result = {
+                    "endpoint": "/auth/login",
+                    "method": "POST", 
+                    "expected_status": 200,
+                    "actual_status": 200,
+                    "success": True,
+                    "description": "User login with user@platform.com / User123!",
+                    "response_data": data,
+                    "error": None
+                }
+                self.results.append(result)
+                return True
+            else:
+                self.log(f"❌ User login failed: {response.status_code} - {response.text}", "ERROR")
+                result = {
+                    "endpoint": "/auth/login",
+                    "method": "POST",
+                    "expected_status": 200,
+                    "actual_status": response.status_code,
+                    "success": False,
+                    "description": "User login with user@platform.com / User123!",
+                    "response_data": response.text,
+                    "error": None
+                }
+                self.results.append(result)
+                return False
+        except Exception as e:
+            self.log(f"❌ User login exception: {e}", "ERROR")
+            result = {
+                "endpoint": "/auth/login", 
+                "method": "POST",
+                "expected_status": 200,
+                "actual_status": None,
+                "success": False,
+                "description": "User login with user@platform.com / User123!",
+                "response_data": None,
+                "error": str(e)
+            }
+            self.results.append(result)
+            return False
 
     def get_existing_listing_id(self) -> str:
         """Try to get an existing listing ID from the user's listings"""
