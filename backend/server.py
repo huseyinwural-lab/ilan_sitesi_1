@@ -152,7 +152,11 @@ from app.models.menu_item import MenuItem
 from app.models.report import Report
 from app.models.menu import TopMenuItem
 from app.models.support_message import SupportMessage
-from app.domains.payments import map_payment_status_to_listing_status, map_stripe_event_to_payment_status
+from app.domains.payments import (
+    map_payment_status_to_listing_status,
+    map_stripe_event_to_payment_status,
+    map_stripe_intent_status_to_payment_status,
+)
 from app.services.audit import log_action
 from app.services.cloudflare_metrics import (
     CloudflareCredentials,
