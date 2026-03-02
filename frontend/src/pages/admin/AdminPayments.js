@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -23,6 +24,7 @@ const formatDateTime = (value) => {
 };
 
 export default function AdminPaymentsPage() {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,7 +35,6 @@ export default function AdminPaymentsPage() {
   const [query, setQuery] = useState('');
   const [userId, setUserId] = useState('');
   const [listingId, setListingId] = useState('');
-  const [role, setRole] = useState('');
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -85,15 +86,6 @@ export default function AdminPaymentsPage() {
   };
 
   useEffect(() => {
-    try {
-      const rawUser = localStorage.getItem('user');
-      if (rawUser) {
-        const parsed = JSON.parse(rawUser);
-        setRole(parsed?.role || '');
-      }
-    } catch {
-      setRole('');
-    }
     fetchPayments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, startDate, endDate]);
@@ -105,7 +97,7 @@ export default function AdminPaymentsPage() {
           <h1 className="text-2xl font-semibold" data-testid="admin-transactions-title">Transactions Log</h1>
           <p className="text-sm text-muted-foreground" data-testid="admin-transactions-subtitle">Read-only monetization kayıtları.</p>
         </div>
-        {role === 'super_admin' ? (
+        {user?.role === 'super_admin' ? (
           <button
             onClick={handleExportCsv}
             className="h-9 px-3 rounded-md border text-sm"

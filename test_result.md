@@ -21343,3 +21343,133 @@ Backend smoke test + payment endpoint validation as per Turkish review request: 
 ---
 
 ---
+
+
+
+## Admin Payments CSV Export Button Regression Test (Mar 2, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Regression test for admin payments page CSV export button visibility as per review request: "Regresyon testi: /admin/payments sayfasında super_admin için CSV export butonu görünür mü kontrol et. 1) admin@platform.com / Admin123! ile giriş. 2) /admin/payments sayfasına git. 3) data-testid='admin-transactions-export-csv' öğesi görünürlüğünü doğrula. 4) PASS/FAIL dön."
+
+### Test Flow Executed:
+1. ✅ Login with admin@platform.com / Admin123! → authentication successful, redirected to /admin
+2. ✅ Navigate to /admin/payments → page loads correctly
+3. ✅ Verify page container (data-testid="admin-transactions-page") → VERIFIED
+4. ✅ Verify page title "Transactions Log" → VERIFIED
+5. ✅ Verify CSV export button (data-testid="admin-transactions-export-csv") → FOUND and VISIBLE
+6. ✅ No console errors detected → CLEAN
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
+
+**1. Admin Login**: ✅ WORKING PERFECTLY
+  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - **Credentials**: admin@platform.com / Admin123!
+  - **Login Result**: ✅ SUCCESS - redirected to /admin
+  - **No Errors**: No authentication errors detected
+
+**2. Navigate to /admin/payments**: ✅ WORKING
+  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/payments
+  - **Page Container**: data-testid="admin-transactions-page" ✅ PRESENT and VISIBLE
+  - **Page Title**: "Transactions Log" ✅ DISPLAYED
+  - **Page Subtitle**: "Read-only monetization kayıtları." ✅ DISPLAYED
+
+**3. CSV Export Button Visibility**: ✅ VERIFIED - CRITICAL SUCCESS
+  - **Button Element**: data-testid="admin-transactions-export-csv"
+  - **Visibility**: ✅ TRUE - Button is visible on the page
+  - **Button Text**: "CSV Export" ✅ CORRECT
+  - **Button Location**: Top-right corner of the page header
+  - **User Role Check**: super_admin (confirmed by conditional rendering in code)
+  - **CRITICAL**: CSV export button is visible for super_admin users as required
+
+### UI Elements Verified:
+
+#### ✅ ADMIN PAYMENTS PAGE (/admin/payments):
+- ✅ Page container (data-testid="admin-transactions-page")
+- ✅ Page header section (data-testid="admin-transactions-header")
+- ✅ Page title: "Transactions Log" (data-testid="admin-transactions-title")
+- ✅ Page subtitle: "Read-only monetization kayıtları." (data-testid="admin-transactions-subtitle")
+- ✅ **CSV Export button** (data-testid="admin-transactions-export-csv") - VISIBLE for super_admin
+- ✅ Filters section (data-testid="admin-transactions-filters")
+  - Status dropdown (data-testid="admin-transactions-filter-status")
+  - Start date picker (data-testid="admin-transactions-filter-start-date")
+  - End date picker (data-testid="admin-transactions-filter-end-date")
+  - Query input (data-testid="admin-transactions-filter-query")
+  - User ID input (data-testid="admin-transactions-filter-user-id")
+  - Listing ID input (data-testid="admin-transactions-filter-listing-id")
+  - Apply button (data-testid="admin-transactions-apply-filters")
+- ✅ Transactions table (data-testid="admin-transactions-table")
+  - Table headers: transaction_id, user_id, listing_id, provider_ref, amount, currency, status, created_at
+  - Loading state showing "Yükleniyor..."
+
+### Code Implementation Verification:
+
+**AdminPayments.js** (/app/frontend/src/pages/admin/AdminPayments.js):
+- **Lines 100-108**: Conditional rendering of CSV export button
+  ```javascript
+  {user?.role === 'super_admin' ? (
+    <button
+      onClick={handleExportCsv}
+      className="h-9 px-3 rounded-md border text-sm"
+      data-testid="admin-transactions-export-csv"
+    >
+      CSV Export
+    </button>
+  ) : null}
+  ```
+- **Role Check**: Button only renders when `user?.role === 'super_admin'`
+- **Data-testid**: Correct data-testid attribute present: "admin-transactions-export-csv"
+- **Click Handler**: Button triggers `handleExportCsv` function (lines 68-86)
+- **Export Logic**: Function calls `/api/admin/payments/export/csv` endpoint with filters
+- **CRITICAL**: Implementation correctly restricts CSV export to super_admin users only
+
+### Screenshots Captured:
+1. **admin-payments-csv-button-visible.png**: Admin payments page showing CSV Export button visible in top-right corner
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (3/3 requirements verified)
+- **Admin Login**: ✅ WORKING (admin@platform.com / Admin123!)
+- **Navigate to /admin/payments**: ✅ WORKING (page loads correctly)
+- **CSV Export Button Visibility**: ✅ VERIFIED (data-testid="admin-transactions-export-csv" is visible)
+- **No Console Errors**: ✅ CONFIRMED
+- **Overall Test Result**: ✅ **PASS**
+
+### Security Analysis:
+
+**Role-Based Access Control (RBAC)**:
+- ✅ CSV export button only visible to super_admin role
+- ✅ Frontend conditional rendering based on user.role
+- ✅ Backend endpoint `/api/admin/payments/export/csv` protected (requires admin authentication)
+- ✅ Non-admin users will not see the button
+
+**Implementation Security**:
+- ✅ Button rendering controlled by role check in React component
+- ✅ API endpoint protected by authentication middleware
+- ✅ Export function includes authorization headers
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - All requirements satisfied 100%
+- **Login**: ✅ SUCCESS (admin@platform.com / Admin123!)
+- **Page Navigation**: ✅ SUCCESS (/admin/payments loaded)
+- **CSV Export Button**: ✅ VISIBLE (data-testid="admin-transactions-export-csv")
+- **Role-Based Access**: ✅ WORKING (super_admin only)
+- **UI State**: ✅ CLEAN (no visible errors)
+- **Regression Test**: ✅ PRODUCTION-READY
+
+### Review Request Compliance:
+✅ **Review Request**: "Regresyon testi: /admin/payments sayfasında super_admin için CSV export butonu görünür mü kontrol et. 1) admin@platform.com / Admin123! ile giriş. 2) /admin/payments sayfasına git. 3) data-testid='admin-transactions-export-csv' öğesi görünürlüğünü doğrula. 4) PASS/FAIL dön."
+
+**Results**:
+- ✅ Step 1: Admin login successful with admin@platform.com / Admin123!
+- ✅ Step 2: Navigated to /admin/payments page successfully
+- ✅ Step 3: data-testid='admin-transactions-export-csv' element visibility VERIFIED - Button is VISIBLE
+- ✅ Step 4: **TEST RESULT: PASS** ✅
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Mar 2, 2026 (LATEST)
+- **Message**: Admin Payments CSV Export Button regression test SUCCESSFULLY COMPLETED with 100% PASS rate. CRITICAL VERIFICATION: CSV export button is VISIBLE for super_admin on /admin/payments page. FLOW VERIFICATION: 1) CRITICAL FINDING 1: Admin login with admin@platform.com / Admin123! successful, redirected to /admin dashboard ✅. 2) CRITICAL FINDING 2: Navigation to /admin/payments successful, page loads correctly with "Transactions Log" title and all page elements rendered ✅. 3) CRITICAL FINDING 3: CSV export button (data-testid="admin-transactions-export-csv") is PRESENT and VISIBLE on the page with button text "CSV Export" in the top-right corner of the page header ✅. Code review confirms proper RBAC implementation - button only renders when user.role === 'super_admin' (lines 100-108 in AdminPayments.js). No console errors detected. Screenshot captured as evidence. **REGRESSION TEST RESULT: ✅ PASS** - CSV export button is visible for super_admin users on /admin/payments page as required.
+
+---
+
