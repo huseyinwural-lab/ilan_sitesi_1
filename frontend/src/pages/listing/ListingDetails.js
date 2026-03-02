@@ -710,6 +710,9 @@ export default function ListingDetails() {
         const item = data?.item;
         if (!item) return;
 
+        setListingStatus(item?.status || 'draft');
+        setLifecycleState(item?.lifecycle_state || item?.status || 'draft');
+
         const detailMap = {};
         (item.detail_groups || []).forEach((group) => {
           if (!group?.id) return;
