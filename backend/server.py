@@ -19231,6 +19231,28 @@ def _resolve_webhook_request_id(request: Request, event_data: Dict[str, Any]) ->
     return None
 
 
+@api_router.get("/payments/runtime-config")
+async def get_payments_runtime_config():
+    runtime = _payments_runtime_snapshot()
+    return {
+        "payments_enabled": runtime["payments_enabled"],
+        "status": runtime["status"],
+        "disabled_reason": runtime["disabled_reason"],
+        "publishable_key": STRIPE_PUBLIC_KEY if runtime["payments_enabled"] else None,
+    }
+
+
+@api_router.get("/admin/payments/runtime-health")
+async def get_admin_payments_runtime_health(
+    current_user=Depends(check_permissions(list(ADMIN_ROLE_OPTIONS))),
+):
+    runtime = _payments_runtime_snapshot()
+    return {
+        **runtime,
+        "stripe_api_version": STRIPE_API_VERSION,
+    }
+
+
 @api_router.post("/payments/create-intent")
 async def create_listing_payment_intent(
     payload: PaymentIntentCreatePayload,
