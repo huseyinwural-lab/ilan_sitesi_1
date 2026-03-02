@@ -397,6 +397,8 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Regression: Admin finance + PDF + export akışları **PASS**
 - Ek self-test:
   - account endpoint contract doğrulamaları (200/403/PDF content-type) başarılı.
+ - Test kapanış temizliği:
+   - Testing sırasında oluşturulan `user@platform.com` abonelik kaydı silinerek kullanıcı free-state'e geri alındı.
 
 ### Güncel kalan işler
 - **P1 (bir sonraki iş):** Finans UI standardizasyonu (tekil locale money formatter + ortak badge dili)
