@@ -1,4 +1,193 @@
 ## Frontend Smoke Test (Mar 2, 2026 - LATEST) ✅ COMPLETE PASS
+## AdminInvoices DB Banner Regression Test (Mar 2, 2026 - LATEST) ❌ FAIL
+
+### Test Summary
+Regression test to verify AdminInvoices DB banner bugfix as per review request: "Regresyon testi: AdminInvoices DB banner yanlış görünme bugfix doğrulaması. 1) admin@platform.com / Admin123! ile giriş yap. 2) /admin/invoices sayfasına git. 3) Eğer /api/health/db dönen db_status=ok ise `data-testid='invoice-db-banner'` görünmemeli. 4) Invoice list render ve `data-testid='admin-invoices-page'` mevcut olmalı. 5) PASS/FAIL dön."
+
+### Test Flow Executed:
+1. ✅ Admin login with admin@platform.com / Admin123! → authentication successful
+2. ✅ Navigate to /admin/invoices?country=DE → page loads correctly
+3. ✅ Check /api/health/db endpoint → db_status=ok (but HTTP 503)
+4. ✅ Verify admin-invoices-page element → PRESENT and VISIBLE
+5. ❌ Check invoice-db-banner visibility → **INCORRECTLY VISIBLE** (BUG)
+6. ✅ Verify invoice table renders → table present (empty state)
+
+### Critical Findings:
+
+#### ❌ REGRESSION TEST FAILED - BUG STILL PRESENT:
+
+**1. DB Health Status**: ✅ VERIFIED BUT PROBLEMATIC
+  - **API Endpoint**: /api/health/db
+  - **HTTP Status**: 503 (Service Unavailable)
+  - **Response Body**: db_status="ok", migration_state="migration_required"
+  - **Database Connection**: ✅ WORKING (db_status=ok)
+  - **Issue**: HTTP 503 status causes frontend to treat response as error
+  - **Top-right Indicator**: Shows "DB OK" (green dot) - correctly reading db_status
+  - **CRITICAL**: Database is healthy but endpoint returns 503 due to pending migrations
+
+**2. Invoice DB Banner Visibility**: ❌ **BUG CONFIRMED**
+  - **Element**: data-testid="invoice-db-banner"
+  - **Expected Behavior**: Should NOT be visible when db_status=ok
+  - **Actual Behavior**: ✅ IS VISIBLE (banner incorrectly showing)
+  - **Banner Text**: "DB hazır değil → işlemler devre dışı. Ops ekibine DATABASE_URL + migration kontrolü gerekiyor."
+  - **Element Count in DOM**: 1
+  - **Visibility Status**: TRUE
+  - **CRITICAL BUG**: Banner is incorrectly displayed despite db_status=ok
+
+**3. Admin Invoices Page**: ✅ WORKING CORRECTLY
+  - **Element**: data-testid="admin-invoices-page"
+  - **Visibility**: ✅ PRESENT and VISIBLE
+  - **Page Title**: "Invoices" displayed correctly
+  - **Page Context**: Country: DE, Scope: Global
+  - **CRITICAL**: Main page container renders correctly
+
+**4. Invoice Table**: ✅ WORKING CORRECTLY
+  - **Element**: data-testid="invoice-table"
+  - **Visibility**: ✅ PRESENT and VISIBLE
+  - **Table State**: Empty (no records found - "Kayıt yok")
+  - **Table Headers**: All headers present (Invoice No, Dealer, Plan, Amount, etc.)
+  - **CRITICAL**: Invoice table renders correctly with proper empty state
+
+### Root Cause Analysis:
+
+**Backend Issue** (/app/backend/server.py, lines 4163-4167):
+```python
+if migration_state == "migration_required":
+    response_content["reason"] = "migration_required"
+    if APP_ENV in {"preview", "prod"}:
+        return JSONResponse(status_code=503, content=response_content)  # ← 503 status
+    return JSONResponse(status_code=200, content=response_content)
+```
+- In preview/prod environments, endpoint returns HTTP 503 when migrations are pending
+- Response body correctly contains db_status="ok"
+- HTTP 503 status causes axios to throw an error in frontend
+
+**Frontend Issue** (/app/frontend/src/pages/admin/AdminInvoices.js, lines 184-193):
+```javascript
+const checkDb = async () => {
+  try {
+    const res = await axios.get(`${API}/health/db`);
+    const isReady = res.data?.db_status === 'ok';  // ← Never reached with 503 status
+    setDbReady(isReady);
+    if (isReady) setError('');
+  } catch (err) {
+    setDbReady(false);  // ← BUG: Sets false even if db_status=ok in response
+  }
+};
+```
+- Axios throws error on 503 status, jumping to catch block
+- Catch block sets dbReady=false without checking response body
+- This causes banner to show incorrectly
+
+**Banner Rendering Logic** (lines 429-433):
+```javascript
+{!dbReady && (
+  <div data-testid="invoice-db-banner">
+    DB hazır değil → işlemler devre dışı...
+  </div>
+)}
+```
+- Banner shows when dbReady=false
+- Due to bug above, dbReady is false even when db_status=ok
+
+### Console Errors:
+
+**Browser Console Logs**:
+- ❌ `Failed to load resource: the server responded with a status of 503 () at /api/health/db` (3 occurrences)
+- Multiple ERR_ABORTED requests for other endpoints
+- No JavaScript errors in application code
+
+### Screenshots Captured:
+1. **admin-invoices-db-banner-test-final.png**: Shows invoice page with INCORRECTLY VISIBLE yellow banner despite "DB OK" indicator in top-right
+
+### UI Elements Verified:
+
+#### ✅ ADMIN INVOICES PAGE:
+- ✅ Page container (data-testid="admin-invoices-page")
+- ✅ Page title "Invoices"
+- ✅ Country selector showing "DE"
+- ✅ Scope indicator "Global"
+- ✅ "Yeni Invoice" button (disabled due to dbReady=false)
+
+#### ❌ DB WARNING BANNER (INCORRECTLY VISIBLE):
+- ❌ Banner container (data-testid="invoice-db-banner") - VISIBLE when it should be HIDDEN
+- ❌ Banner text: "DB hazır değil → işlemler devre dışı..."
+- ❌ Yellow/amber styling (border-amber-200, bg-amber-50, text-amber-900)
+
+#### ✅ INVOICE TABLE:
+- ✅ Table container (data-testid="invoice-table")
+- ✅ Table headers (12 columns)
+- ✅ Empty state message "Kayıt yok"
+- ✅ Filter inputs (Dealer User ID, status dropdown, plan filter)
+- ✅ Date preset buttons (Son 7 Gün, Son 30 Gün, Temizle)
+- ✅ Pagination controls (Prev/Next buttons)
+
+#### ✅ TOP HEADER INDICATORS:
+- ✅ "DB OK" indicator (green dot) showing database is healthy
+- ✅ Country selector (DE flag)
+- ✅ Global/Country toggle
+
+### Test Results Summary:
+- **Test Success Rate**: 60% (3/5 critical checks passed)
+- **Admin Login**: ✅ SUCCESS
+- **Navigate to /admin/invoices**: ✅ SUCCESS
+- **DB Health Check**: ⚠️ db_status=ok but HTTP 503
+- **Admin Invoices Page Present**: ✅ PASS
+- **DB Banner Visibility**: ❌ **FAIL** - Banner IS visible when it should NOT be
+- **Invoice Table Rendered**: ✅ PASS
+- **Overall Test Result**: ❌ **FAIL** - Bugfix not working correctly
+
+### Recommended Fix:
+
+**Option 1: Frontend Fix** (Preferred for immediate resolution):
+```javascript
+const checkDb = async () => {
+  try {
+    const res = await axios.get(`${API}/health/db`, {
+      validateStatus: (status) => status < 600  // Accept all status codes
+    });
+    const isReady = res.data?.db_status === 'ok';
+    setDbReady(isReady);
+    if (isReady) setError('');
+  } catch (err) {
+    // Only set false if no response or no db_status field
+    const dbStatus = err.response?.data?.db_status;
+    setDbReady(dbStatus === 'ok');
+  }
+};
+```
+
+**Option 2: Backend Fix** (More comprehensive):
+- Change HTTP status to 200 even when migrations are pending
+- Use response body fields to indicate warnings
+- Keep 503 only for actual database connection failures
+
+### Final Status:
+- **Overall Result**: ❌ **REGRESSION TEST FAILED** - Bug still present
+- **DB Health API**: ⚠️ Returns db_status=ok but HTTP 503
+- **Banner Visibility**: ❌ INCORRECTLY VISIBLE when db_status=ok
+- **Frontend Logic**: ❌ BUG: Does not check response body on 503 status
+- **User Impact**: HIGH - Users see incorrect "DB not ready" warning even when DB is healthy
+- **Invoice Operations**: BLOCKED - Actions disabled due to incorrect dbReady=false state
+
+### Review Request Compliance:
+❌ **Review Request**: "Regresyon testi: AdminInvoices DB banner yanlış görünme bugfix doğrulaması. 1) admin@platform.com / Admin123! ile giriş yap. 2) /admin/invoices sayfasına git. 3) Eğer /api/health/db dönen db_status=ok ise `data-testid='invoice-db-banner'` görünmemeli. 4) Invoice list render ve `data-testid='admin-invoices-page'` mevcut olmalı. 5) PASS/FAIL dön."
+
+**Results**:
+- ✅ Step 1: Admin login successful (admin@platform.com / Admin123!)
+- ✅ Step 2: Navigated to /admin/invoices page successfully
+- ❌ Step 3: **FAIL** - /api/health/db returns db_status=ok BUT banner (data-testid='invoice-db-banner') IS VISIBLE (should NOT be visible)
+- ✅ Step 4: Invoice list renders and admin-invoices-page (data-testid='admin-invoices-page') is present
+- ❌ Step 5: **TEST RESULT: ❌ FAIL** - Bugfix not working, banner incorrectly visible
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Mar 2, 2026 (LATEST)
+- **Message**: AdminInvoices DB banner regression test FAILED. CRITICAL BUG DETECTED: The DB banner (data-testid='invoice-db-banner') is INCORRECTLY VISIBLE on /admin/invoices page even though /api/health/db returns db_status=ok. ROOT CAUSE: Backend returns HTTP 503 status when migrations are pending (even though DB connection is healthy). Frontend axios catches 503 as error and sets dbReady=false without checking response body's db_status field. VERIFICATION: Admin login successful ✅, navigated to /admin/invoices ✅, admin-invoices-page element present ✅, invoice table renders correctly ✅, BUT DB banner is visible ❌ when it should be hidden. The top-right header correctly shows "DB OK" indicator, proving the system knows the database is healthy, but the checkDb() function incorrectly interprets the 503 status as DB failure. RECOMMENDED FIX: Update checkDb() function in AdminInvoices.js to handle 503 status and check response body's db_status field, OR change backend to return 200 status when DB is connected but migrations pending. USER IMPACT: High - invoice management actions are incorrectly disabled, users see misleading "DB not ready" warning. Screenshot captured showing the bug. **REGRESSION TEST VERDICT: ❌ FAIL** - Bugfix was not successfully applied or has regressed.
+
+---
+
+
 
 ### Test Summary
 Frontend smoke test to verify application is up and running as per review request: "Frontend smoke testi yap: https://stripe-foundation.preview.emergentagent.com adresini aç, sayfanın boş olmadığını doğrula, temel header ve ana içerik alanının render edildiğini kontrol et. Bu iterasyonda frontend kod değişmedi; sadece uygulamanın ayakta olduğunu doğrulayan kısa smoke test yeterli."

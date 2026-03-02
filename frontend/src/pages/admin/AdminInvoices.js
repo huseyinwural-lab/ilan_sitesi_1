@@ -184,7 +184,7 @@ export default function AdminInvoicesPage() {
   const checkDb = async () => {
     try {
       const res = await axios.get(`${API}/health/db`);
-      const isReady = res.data?.db_status === 'ok' || res.data?.status === 'healthy';
+      const isReady = res.data?.db_status === 'ok';
       setDbReady(isReady);
       if (isReady) setError('');
     } catch (err) {
