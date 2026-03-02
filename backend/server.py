@@ -8717,6 +8717,21 @@ def _filter_categories_for_country(categories: list[Category], code: str) -> lis
     return filtered
 
 
+def _pick_category_translation_for_lang(translations: list[CategoryTranslation], lang: Optional[str]) -> Optional[CategoryTranslation]:
+    normalized_lang = (lang or "").strip().lower()
+    if normalized_lang:
+        exact = next((t for t in translations if (t.language or "").lower() == normalized_lang), None)
+        if exact:
+            return exact
+
+    for fallback_lang in ("tr", "en", "de", "fr"):
+        item = next((t for t in translations if (t.language or "").lower() == fallback_lang), None)
+        if item:
+            return item
+
+    return translations[0] if translations else None
+
+
 @api_router.get("/categories/children")
 async def list_category_children(
     request: Request,
@@ -8813,6 +8828,93 @@ async def search_categories(
 
     items.sort(key=lambda item: (len(item.get("path") or []), item["category"].get("name") or ""))
     return {"items": items}
+
+
+@api_router.get("/v2/categories/{slug}")
+async def get_category_by_slug_v2(
+    slug: str,
+    country: Optional[str] = None,
+    lang: Optional[str] = None,
+    response: Response = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    normalized_slug = (slug or "").strip().lower()
+    if not normalized_slug:
+        raise HTTPException(status_code=400, detail="slug is required")
+
+    category_query = (
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.is_deleted.is_(False), Category.is_enabled.is_(True))
+    )
+    category_rows = (await session.execute(category_query)).scalars().all()
+
+    code = (country or "").upper().strip()
+    if code:
+        category_rows = _filter_categories_for_country(category_rows, code)
+
+    target = None
+    for category in category_rows:
+        slug_value = _pick_category_slug(category.slug)
+        all_slugs: list[str] = []
+        if isinstance(category.slug, dict):
+            all_slugs = [str(value).strip().lower() for value in category.slug.values() if value]
+        if slug_value:
+            all_slugs.append(str(slug_value).strip().lower())
+        if normalized_slug in set(all_slugs):
+            target = category
+            break
+
+    if not target:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    target_name = _pick_category_name(list(target.translations or []), _pick_category_slug(target.slug))
+    selected_translation = _pick_category_translation_for_lang(list(target.translations or []), lang)
+    description_value = selected_translation.description if selected_translation and selected_translation.description else None
+
+    children_query = (
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(
+            Category.parent_id == target.id,
+            Category.is_deleted.is_(False),
+            Category.is_enabled.is_(True),
+        )
+        .order_by(Category.sort_order.asc(), Category.created_at.asc())
+    )
+    children_rows = (await session.execute(children_query)).scalars().all()
+    if code:
+        children_rows = _filter_categories_for_country(children_rows, code)
+
+    children_payload = []
+    for child in children_rows:
+        children_payload.append(
+            {
+                "id": str(child.id),
+                "name": _pick_category_name(list(child.translations or []), _pick_category_slug(child.slug)),
+                "icon": child.icon,
+                "listing_count": int(child.listing_count or 0),
+            }
+        )
+
+    seo_title = selected_translation.meta_title if selected_translation and selected_translation.meta_title else target_name
+    seo_description = selected_translation.meta_description if selected_translation and selected_translation.meta_description else (description_value or target_name)
+
+    if response is not None:
+        response.headers["Cache-Control"] = "no-store"
+
+    return {
+        "id": str(target.id),
+        "name": target_name,
+        "description": description_value,
+        "parent_id": str(target.parent_id) if target.parent_id else None,
+        "children": children_payload,
+        "listing_count": int(target.listing_count or 0),
+        "seo_meta": {
+            "title": seo_title,
+            "description": seo_description,
+        },
+    }
 
 
 @api_router.get("/categories/validate")
