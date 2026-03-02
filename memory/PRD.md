@@ -485,3 +485,44 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ### Güncel durum
 - Kurumsal kullanıcı tarafında bu kapsam için kritik açık bulunmuyor.
+
+---
+
+## 2026-03-02 (P0-01 — Health Stabilizasyonu)
+
+### Yapılan teknik değişiklikler
+- `/api/health/db` kontratı düzeltildi:
+  - **HTTP 503 kaldırıldı**, endpoint artık her durumda **HTTP 200** döner.
+  - Response standardı sabitlendi:
+    - `status`: `ok | degraded`
+    - `db_status`: `ok | fail`
+    - `reason`: (`migration_required`, `db_timeout`, `db_unreachable`, `db_config_missing`)
+- Health DB check hafifletildi:
+  - request path sadece **`SELECT 1`** kullanır
+  - kısa timeout: `db_timeout_ms = 500`
+  - health için ayrı mini pool (`health_sql_engine`, pool 1/0, kısa pool_timeout)
+  - probe cache eklendi (`HEALTH_DB_PROBE_CACHE_TTL_SECONDS=30`) — health spam altında p95 korunur
+- Migration sinyali ayrıştırıldı:
+  - yeni endpoint: **`/api/health/migrations`**
+  - migration_required takibi bu endpointten yapılır
+  - `/api/health/db` migration introspection yapmaz, cache sinyalini taşır
+
+### Kanıt/test çıktıları
+- 15 dk loop raporu: `/app/test_reports/p0_01_health_15m.json`
+  - toplam istek: 900
+  - `count_503`: **0**
+  - `p95`: **3.54ms**
+- Testing agent doğrulaması: `/app/test_reports/iteration_83.json`
+  - health/db contract: **PASS**
+  - health/migrations endpoint: **PASS**
+  - concurrency stress: **PASS** (20 worker altında 0 adet 503)
+
+### 24 saat kabul penceresi
+- 24h izleme başlatıldı (arka plan monitor):
+  - process: `p0_01_health_24h_monitor.py`
+  - progress: `/app/test_reports/p0_01_health_24h.progress`
+  - stream: `/app/test_reports/p0_01_health_24h_monitor.jsonl`
+
+### Güncel durum
+- P0-01 teknik düzeltmesi uygulandı ve kısa/orta süre kanıtları PASS.
+- 24 saatlik pencere tamamlanınca P0-01 kapanışı finalize edilecek.

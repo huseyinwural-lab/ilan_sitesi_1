@@ -121,3 +121,6 @@
 {"ts": 1772479318.2128592, "code": 200, "status": "degraded", "db_status": "ok", "reason": "migration_required", "latency_ms": 2149, "cached": true}
 {"ts": 1772479328.2174532, "code": 200, "status": "degraded", "db_status": "ok", "reason": "migration_required", "latency_ms": 2149, "cached": true}
 {"ts": 1772479338.221881, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 1391, "cached": false}
+{"ts": 1772479349.6205251, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 1391, "cached": true}
+{"ts": 1772479359.6236236, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 1391, "cached": true}
+{"ts": 1772479369.6262047, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 501, "cached": false}
