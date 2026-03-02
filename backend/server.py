@@ -27363,6 +27363,7 @@ async def public_search_v2(
             if lat is None or lng is None:
                 lat, lng = _extract_hit_lat_lng(hit)
             if lat is None or lng is None:
+                filtered_hits.append(hit)
                 continue
             min_lng, min_lat, max_lng, max_lat = bbox_tuple
             if min_lat <= lat <= max_lat and min_lng <= lng <= max_lng:
