@@ -7003,6 +7003,164 @@ async def mark_notification_read(
     return {"ok": True, "notification": _build_notification_payload(notification)}
 
 
+def _build_saved_search_payload(item: SavedSearch) -> dict:
+    return {
+        "id": str(item.id),
+        "name": item.name,
+        "filters_json": item.filters_json or {},
+        "query_string": item.query_string or "",
+        "email_enabled": bool(item.email_enabled),
+        "push_enabled": bool(item.push_enabled),
+        "created_at": item.created_at.isoformat() if item.created_at else None,
+        "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+    }
+
+
+class SavedSearchCreatePayload(BaseModel):
+    name: str
+    filters_json: Dict[str, Any] = Field(default_factory=dict)
+    query_string: str = ""
+    email_enabled: bool = True
+    push_enabled: bool = False
+
+
+class SavedSearchNotificationPayload(BaseModel):
+    email_enabled: Optional[bool] = None
+    push_enabled: Optional[bool] = None
+
+
+@api_router.get("/v1/saved-searches")
+async def list_saved_searches(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_id = uuid.UUID(current_user.get("id"))
+    rows = (
+        await session.execute(
+            select(SavedSearch)
+            .where(SavedSearch.user_id == user_id)
+            .order_by(desc(SavedSearch.created_at))
+        )
+    ).scalars().all()
+    return {"items": [_build_saved_search_payload(row) for row in rows]}
+
+
+@api_router.get("/v1/saved-searches/count")
+async def saved_searches_count(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_id = uuid.UUID(current_user.get("id"))
+    count = (
+        await session.execute(
+            select(func.count()).select_from(SavedSearch).where(SavedSearch.user_id == user_id)
+        )
+    ).scalar_one()
+    return {"count": int(count or 0)}
+
+
+@api_router.post("/v1/saved-searches")
+async def create_saved_search(
+    payload: SavedSearchCreatePayload,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_id = uuid.UUID(current_user.get("id"))
+    name = (payload.name or "").strip()
+    if len(name) < 2:
+        raise HTTPException(status_code=422, detail="Arama adı en az 2 karakter olmalı")
+
+    current_count = (
+        await session.execute(
+            select(func.count()).select_from(SavedSearch).where(SavedSearch.user_id == user_id)
+        )
+    ).scalar_one()
+    if int(current_count or 0) >= 50:
+        raise HTTPException(status_code=409, detail="Maksimum 50 kayıtlı arama limitine ulaşıldı")
+
+    query_string = str(payload.query_string or "").strip()
+    if query_string.startswith("?"):
+        query_string = query_string[1:]
+    if len(query_string) > 5000:
+        raise HTTPException(status_code=422, detail="Arama sorgusu çok uzun")
+
+    item = SavedSearch(
+        user_id=user_id,
+        name=name[:120],
+        filters_json=payload.filters_json or {},
+        query_string=query_string,
+        email_enabled=bool(payload.email_enabled),
+        push_enabled=bool(payload.push_enabled),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    session.add(item)
+    await session.commit()
+    await session.refresh(item)
+    return {"ok": True, "item": _build_saved_search_payload(item)}
+
+
+@api_router.patch("/v1/saved-searches/{saved_search_id}/notifications")
+async def update_saved_search_notifications(
+    saved_search_id: str,
+    payload: SavedSearchNotificationPayload,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        saved_search_uuid = uuid.UUID(saved_search_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid saved search id")
+
+    user_id = uuid.UUID(current_user.get("id"))
+    row = (
+        await session.execute(
+            select(SavedSearch).where(
+                SavedSearch.id == saved_search_uuid,
+                SavedSearch.user_id == user_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if not row:
+        raise HTTPException(status_code=404, detail="Saved search not found")
+
+    if payload.email_enabled is not None:
+        row.email_enabled = bool(payload.email_enabled)
+    if payload.push_enabled is not None:
+        row.push_enabled = bool(payload.push_enabled)
+    row.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+    return {"ok": True, "item": _build_saved_search_payload(row)}
+
+
+@api_router.delete("/v1/saved-searches/{saved_search_id}")
+async def delete_saved_search(
+    saved_search_id: str,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        saved_search_uuid = uuid.UUID(saved_search_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid saved search id")
+
+    user_id = uuid.UUID(current_user.get("id"))
+    row = (
+        await session.execute(
+            select(SavedSearch).where(
+                SavedSearch.id == saved_search_uuid,
+                SavedSearch.user_id == user_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if not row:
+        raise HTTPException(status_code=404, detail="Saved search not found")
+
+    await session.delete(row)
+    await session.commit()
+    return {"ok": True}
+
+
 @api_router.get("/v1/favorites")
 async def list_favorites(
     current_user=Depends(require_portal_scope("account")),
