@@ -1139,6 +1139,139 @@ export default function ListingDetails() {
     }
   };
 
+  const fetchVersionHistory = useCallback(async () => {
+    const token = getToken();
+    if (!token || !listingId) return;
+    setVersionLoading(true);
+    try {
+      const res = await fetch(`${API}/v1/listings/vehicle/${listingId}/versions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error('Versiyon geçmişi alınamadı');
+      setVersionHistory(Array.isArray(data?.items) ? data.items : []);
+    } catch (_err) {
+      setVersionHistory([]);
+    } finally {
+      setVersionLoading(false);
+    }
+  }, [listingId]);
+
+  useEffect(() => {
+    fetchVersionHistory();
+  }, [fetchVersionHistory]);
+
+  const handlePublishListing = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    try {
+      setVersionActionLoading('publish');
+      setVersionMessage('');
+      const ensuredId = await ensureDraft(token);
+      const res = await fetch(`${API}/v1/listings/vehicle/${ensuredId}/publish`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = data?.detail;
+        if (detail?.renewal_required) {
+          setVersionMessage('İlan süresi dolmuş. Önce süre uzatın.');
+          return;
+        }
+        throw new Error(detail?.message || detail || 'Yayına alma başarısız');
+      }
+      setListingStatus(data?.status || 'published');
+      setLifecycleState(data?.state || 'active');
+      setVersionMessage('İlan aktif duruma alındı.');
+      await fetchVersionHistory();
+    } catch (err) {
+      setVersionMessage(err.message || 'Yayına alma başarısız');
+    } finally {
+      setVersionActionLoading('');
+    }
+  }, [ensureDraft, fetchVersionHistory, navigate]);
+
+  const handleUnpublishListing = useCallback(async () => {
+    const token = getToken();
+    if (!token || !listingId) {
+      if (!token) navigate('/login');
+      return;
+    }
+    try {
+      setVersionActionLoading('unpublish');
+      setVersionMessage('');
+      const res = await fetch(`${API}/v1/listings/vehicle/${listingId}/unpublish`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.detail?.message || data?.detail || 'Yayından kaldırma başarısız');
+      setListingStatus(data?.status || 'unpublished');
+      setLifecycleState(data?.state || 'inactive');
+      setVersionMessage('İlan inactive duruma alındı.');
+      await fetchVersionHistory();
+    } catch (err) {
+      setVersionMessage(err.message || 'Yayından kaldırma başarısız');
+    } finally {
+      setVersionActionLoading('');
+    }
+  }, [fetchVersionHistory, listingId, navigate]);
+
+  const handleRenewListing = useCallback(async () => {
+    const token = getToken();
+    if (!token || !listingId) {
+      if (!token) navigate('/login');
+      return;
+    }
+    try {
+      setVersionActionLoading('renew');
+      setVersionMessage('');
+      const res = await fetch(`${API}/v1/listings/vehicle/${listingId}/extend`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ days: 30 }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.detail || 'Süre uzatma başarısız');
+      setVersionMessage('Yenileme akışı hazır: Süre 30 gün uzatıldı.');
+    } catch (err) {
+      setVersionMessage(err.message || 'Süre uzatma başarısız');
+    } finally {
+      setVersionActionLoading('');
+    }
+  }, [listingId, navigate]);
+
+  const handleRollbackVersion = useCallback(async (versionNo) => {
+    const token = getToken();
+    if (!token || !listingId) {
+      if (!token) navigate('/login');
+      return;
+    }
+    try {
+      setVersionActionLoading(`rollback-${versionNo}`);
+      setVersionMessage('');
+      const res = await fetch(`${API}/v1/listings/vehicle/${listingId}/versions/${versionNo}/rollback`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.detail || 'Rollback başarısız');
+      setVersionMessage(`Versiyon ${versionNo} yüklendi.`);
+      navigate(`/ilan-duzenle/${listingId}`, { replace: true });
+    } catch (err) {
+      setVersionMessage(err.message || 'Rollback başarısız');
+    } finally {
+      setVersionActionLoading('');
+    }
+  }, [listingId, navigate]);
+
   const autosaveTone = autosaveInfo.status === 'error'
     ? 'text-rose-600'
     : autosaveInfo.status === 'saved'
