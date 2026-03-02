@@ -29890,6 +29890,38 @@ async def get_vehicle_detail(listing_id: str, preview: bool = False, session: As
     v = attrs.get("vehicle") or {}
     title = listing.title or f"{v.get('make_key','').upper()} {v.get('model_key','')} {v.get('year','')}".strip()
 
+    seller_user = await session.get(SqlUser, listing.user_id)
+    seller_name = ""
+    seller_profile_type = "bireysel"
+    seller_total_listings = 0
+    seller_member_since = None
+    seller_verified = False
+    seller_phone = None
+
+    if seller_user:
+        seller_name = (
+            seller_user.full_name
+            or " ".join([part for part in [seller_user.first_name, seller_user.last_name] if part]).strip()
+            or (seller_user.email.split("@")[0] if seller_user.email else "")
+        )
+        seller_profile_type = "kurumsal" if (seller_user.user_type in {"corporate", "dealer"} or bool(listing.is_dealer_listing)) else "bireysel"
+        seller_member_since = seller_user.created_at.isoformat() if seller_user.created_at else None
+        seller_verified = bool(seller_user.is_verified or seller_user.is_phone_verified)
+        seller_phone = seller_user.phone_e164
+
+        seller_total_listings = int(
+            (
+                await session.execute(
+                    select(func.count(Listing.id)).where(
+                        Listing.user_id == seller_user.id,
+                        Listing.status == "published",
+                        Listing.deleted_at.is_(None),
+                    )
+                )
+            ).scalar_one()
+            or 0
+        )
+
     return {
         "id": listing_id,
         "status": listing.status,
@@ -29909,13 +29941,118 @@ async def get_vehicle_detail(listing_id: str, preview: bool = False, session: As
         "currency": listing.currency or "EUR",
         "secondary_price": None,
         "secondary_currency": None,
+        "published_at": listing.published_at.isoformat() if listing.published_at else None,
+        "created_at": listing.created_at.isoformat() if listing.created_at else None,
         "location": {"city": listing.city or "", "country": listing.country},
         "description": listing.description or "",
-        "seller": {"name": "", "is_verified": False},
+        "seller": {
+            "id": str(seller_user.id) if seller_user else None,
+            "name": seller_name,
+            "profile_type": seller_profile_type,
+            "total_listings": seller_total_listings,
+            "member_since": seller_member_since,
+            "is_verified": seller_verified,
+            "phone": seller_phone,
+        },
         "modules": attrs.get("modules") or {},
         "contact_option_phone": listing.contact_option_phone,
         "contact_option_message": listing.contact_option_message,
         "contact": {"phone_protected": not listing.contact_option_phone},
+    }
+
+
+@api_router.get("/v1/listings/vehicle/{listing_id}/similar")
+async def get_vehicle_similar_listings(
+    listing_id: str,
+    limit: int = 8,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    listing_uuid = uuid.UUID(listing_id)
+    source = await session.get(Listing, listing_uuid)
+    if not source:
+        raise HTTPException(status_code=404, detail="Not found")
+    if source.status != "published":
+        raise HTTPException(status_code=404, detail="Not found")
+
+    safe_limit = max(1, min(int(limit or 8), 8))
+    base_conditions = [
+        Listing.status == "published",
+        Listing.deleted_at.is_(None),
+        Listing.id != source.id,
+        Listing.category_id == source.category_id,
+    ]
+
+    price_filter_applied = False
+    source_price = int(source.price or 0)
+    if source_price > 0:
+        min_price = int(source_price * 0.8)
+        max_price = int(source_price * 1.2)
+        base_conditions.extend(
+            [
+                Listing.price.is_not(None),
+                Listing.price >= min_price,
+                Listing.price <= max_price,
+            ]
+        )
+        price_filter_applied = True
+
+    similar_rows = (
+        (
+            await session.execute(
+                select(Listing)
+                .where(*base_conditions)
+                .order_by(desc(Listing.published_at), desc(Listing.created_at))
+                .limit(safe_limit)
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    fallback_used = False
+    if not similar_rows and price_filter_applied:
+        fallback_used = True
+        similar_rows = (
+            (
+                await session.execute(
+                    select(Listing)
+                    .where(
+                        Listing.status == "published",
+                        Listing.deleted_at.is_(None),
+                        Listing.id != source.id,
+                        Listing.category_id == source.category_id,
+                    )
+                    .order_by(desc(Listing.published_at), desc(Listing.created_at))
+                    .limit(safe_limit)
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    items = []
+    for row in similar_rows:
+        media_meta = _listing_media_meta(row)
+        cover = media_meta[0] if media_meta else None
+        attrs = row.attributes or {}
+        vehicle = attrs.get("vehicle") or {}
+        row_title = row.title or f"{vehicle.get('make_key', '').upper()} {vehicle.get('model_key', '')} {vehicle.get('year', '')}".strip()
+
+        items.append(
+            {
+                "id": str(row.id),
+                "title": row_title,
+                "price": row.price,
+                "currency": row.currency or "EUR",
+                "city": row.city or "",
+                "published_at": row.published_at.isoformat() if row.published_at else None,
+                "image_url": f"/media/listings/{row.id}/{cover['file']}" if cover and cover.get("file") else None,
+            }
+        )
+
+    return {
+        "items": items,
+        "fallback_used": fallback_used,
     }
 
 
