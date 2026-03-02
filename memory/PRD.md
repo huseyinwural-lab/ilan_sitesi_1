@@ -184,3 +184,43 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   1) Admin save -> draft, public değişmedi
   2) Publish -> public live güncellendi
   3) Rollback -> public önceki live sürüme döndü
+
+---
+
+## 2026-03-02 (Faz 2 / İş 1 — Stripe Foundation Devam)
+
+### Bu iterasyonda tamamlananlar
+- Backend Stripe foundation için yeni ödeme intent akışı eklendi:
+  - `POST /api/payments/create-intent`
+  - `POST /api/payments/webhook`
+- Yeni domain katmanı eklendi:
+  - `app/domains/payments/service.py`
+  - Event -> payment status ve payment status -> listing status eşlemeleri
+- Yeni model eklendi:
+  - `listing_payments` (`ListingPayment`)
+  - Alanlar: `id`, `user_id`, `listing_id`, `stripe_payment_intent_id`, `amount`, `currency`, `status`, `idempotency_key`, `meta_json`, `created_at`, `updated_at`
+- Webhook tarafında imza doğrulama + event idempotency (`WebhookEventLog` provider=`stripe_payment_intent`) aktif.
+- Listing status güncelleme kuralı:
+  - `succeeded` -> `pending_moderation`
+  - `failed` -> `draft`
+  - `processing` -> listing status değişmez
+
+### Ortam / konfigürasyon
+- `backend/.env` güncellendi:
+  - `STRIPE_SECRET_KEY`
+  - `STRIPE_PUBLIC_KEY`
+  - Mevcut `STRIPE_WEBHOOK_SECRET` korundu.
+
+### Test durumu
+- Testing agent raporu: `/app/test_reports/iteration_76.json`
+  - Kritik/minor bug: **Yok**
+  - Endpoint guard/validation senaryoları: **PASS**
+- Ek backend smoke: `deep_testing_backend_v2` PASS
+- Frontend smoke: `auto_frontend_testing_agent` PASS
+- Not: Pozitif canlı Stripe intent testi, ortamda kullanılan placeholder key (`sk_test_emergent`) nedeniyle gerçek charge akışında doğrulanamadı; guard ve hata yönetimi senaryoları doğrulandı.
+
+### Önceliklendirilmiş kalan işler
+- **P0 (aktif):** Stripe gerçek test key ile `create-intent` başarılı senaryo + webhook `payment_intent.succeeded` uçtan uca canlı doğrulama.
+- **P1:** Template #17/#18 checkout sayfaları (`/payment/success`, `/payment/fail`) ve frontend entegrasyonu.
+- **P1:** Trust/Policy ve Corporate/SEO template setlerinin tamamlanması.
+- **P2:** 500/maintenance sistem sayfaları + kategori builder drag&drop.
