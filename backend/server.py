@@ -8993,6 +8993,18 @@ async def get_places_config(
     }
 
 
+@api_router.get("/places/map-runtime")
+async def get_places_map_runtime(
+    session: AsyncSession = Depends(get_sql_session),
+):
+    api_key, source = await _resolve_google_maps_api_key(session)
+    return {
+        "key_configured": bool(api_key),
+        "api_key": api_key,
+        "key_source": source,
+    }
+
+
 @api_router.get("/places/autocomplete")
 async def places_autocomplete(
     request: Request,
