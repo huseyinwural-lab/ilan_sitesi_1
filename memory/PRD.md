@@ -661,3 +661,35 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ### Güncel durum
 - P0-03 (Stripe + Maps + Host/Redirect) kapanış kriterleri sağlandı.
+
+---
+
+## 2026-03-02 (P0-04 — Legacy Billing Cleanup / Tam Kaldırma + Konsolidasyon)
+
+### Uygulanan kaldırmalar
+- **Stub ödeme endpoint kaldırıldı:**
+  - `POST /api/payments/create-checkout-session/stub` server router’ından fiziksel olarak çıkarıldı.
+  - Canlı doğrulama: endpoint artık **404 Not Found**.
+- **Legacy admin billing UI entrypoint kaldırıldı:**
+  - `BackofficePortalApp.jsx` içinden `/billing` route ve `BillingPlaceholder` import’u kaldırıldı.
+  - `adminRbac.js` içinden `/admin/billing` kuralı kaldırıldı.
+  - `AdminBreadcrumbs.jsx` içinden `billing` label kaldırıldı.
+- **Legacy backend billing namespace temizlendi:**
+  - `backend/app/routers/billing_routes.py`, `billing_read_routes.py`, `billing_webhook.py` legacy route taşımaz hale getirildi.
+  - `APIRouter(prefix="/v1/billing")` kalıntıları temizlendi.
+- **İsimlendirme temizliği:**
+  - `RateLimiter` scope: `stripe_legacy_webhook` -> `stripe_webhook`.
+
+### Kanıt ve regresyon
+- İlk kontrol noktası: `/api/payments/create-checkout-session/stub` => **404 PASS**.
+- Grep kanıt dosyası:
+  - `/app/test_reports/p0_04_legacy_billing_removed_grep.txt`
+  - Sonuç: `create-checkout-session/stub`, `/admin/billing`, Billing.js/Plans.js legacy referansları **0 match**.
+- Testing agent raporu:
+  - `/app/test_reports/iteration_88.json`
+  - Sonuç: **Backend 23/23 PASS**, frontend finans regresyon PASS.
+  - Doğrulananlar: checkout/webhook canonical akış erişilebilirliği, admin finance (overview/invoices/payments/subscriptions/ledger), PDF generate/download/export, account finance endpointleri, sitemap/health spot-check.
+
+### Güncel durum
+- P0-04 tam kaldırma ve konsolidasyon kriterleri sağlandı.
+- Finans tarafında aktif tek giriş seti: güncel Stripe tabanlı canonical endpointler.

@@ -1,0 +1,11 @@
+P0-04 Legacy Billing Removed Grep Evidence
+Generated: 2026-03-02T22:00:51Z
+
+[1] create-checkout-session/stub bulunmuyor
+PASS - 0 match
+
+[2] /admin/billing route bulunmuyor
+PASS - 0 match
+
+[3] Billing.js, Plans.js legacy referansları bulunmuyor
+PASS - 0 match
