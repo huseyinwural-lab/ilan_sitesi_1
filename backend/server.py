@@ -29521,10 +29521,20 @@ async def rollback_vehicle_listing_version(
     if not snapshot:
         raise HTTPException(status_code=422, detail="Version snapshot unavailable")
 
+    history_before = _listing_versions_meta(listing)
     _apply_listing_version_snapshot(listing, snapshot)
+    attrs_after = dict(listing.attributes or {})
+    attrs_after["version_history"] = history_before
+    attrs_after["version_latest"] = int(history_before[-1].get("version_no") or 0) if history_before else 0
+    listing.attributes = attrs_after
     if listing.status in {"published", "active"}:
         listing.status = "pending_review"
         _set_listing_lifecycle_state(listing, "pending_review")
+    rollback_row = _append_listing_version_history(
+        listing,
+        publish_state=_listing_lifecycle_state(listing),
+        source=f"rollback:v{version_no}",
+    )
     listing.updated_at = datetime.now(timezone.utc)
     await session.commit()
 
@@ -29541,6 +29551,7 @@ async def rollback_vehicle_listing_version(
         "status": listing.status,
         "state": _listing_lifecycle_state(listing),
         "rolled_back_version": int(version_no),
+        "version_no": int(rollback_row.get("version_no") or 0),
     }
 
 
