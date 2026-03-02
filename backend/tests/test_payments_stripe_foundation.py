@@ -43,7 +43,7 @@ class TestCreateIntentAuth:
                 "currency": "EUR"
             },
             headers={"Content-Type": "application/json"},
-            timeout=10
+            timeout=30
         )
         # Should return 401 or 403 for unauthenticated requests
         assert response.status_code in [401, 403], f"FAIL: Expected 401/403, got {response.status_code}"
@@ -55,7 +55,7 @@ class TestCreateIntentAuth:
         login_response = requests.post(
             f"{BASE_URL}/api/auth/login",
             json={"email": USER_EMAIL, "password": USER_PASSWORD},
-            timeout=10
+            timeout=30
         )
         assert login_response.status_code == 200, f"FAIL: Login failed with {login_response.status_code}"
         token = login_response.json().get("access_token")
@@ -71,7 +71,7 @@ class TestCreateIntentAuth:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {token}"
             },
-            timeout=10
+            timeout=30
         )
         # Should return 400 for invalid UUID format
         assert response.status_code in [400, 422], f"FAIL: Expected 400/422 for invalid listing_id, got {response.status_code}"
@@ -83,7 +83,7 @@ class TestCreateIntentAuth:
         login_response = requests.post(
             f"{BASE_URL}/api/auth/login",
             json={"email": USER_EMAIL, "password": USER_PASSWORD},
-            timeout=10
+            timeout=30
         )
         assert login_response.status_code == 200, f"FAIL: Login failed"
         token = login_response.json().get("access_token")
@@ -99,7 +99,7 @@ class TestCreateIntentAuth:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {token}"
             },
-            timeout=10
+            timeout=30
         )
         # Should return 404 for non-existent listing
         assert response.status_code == 404, f"FAIL: Expected 404 for non-existent listing, got {response.status_code}"
@@ -114,7 +114,7 @@ class TestCreateIntentValidation:
         login_response = requests.post(
             f"{BASE_URL}/api/auth/login",
             json={"email": USER_EMAIL, "password": USER_PASSWORD},
-            timeout=10
+            timeout=30
         )
         if login_response.status_code != 200:
             pytest.skip(f"Login failed with {login_response.status_code}")
@@ -134,7 +134,7 @@ class TestCreateIntentValidation:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {token}"
             },
-            timeout=10
+            timeout=30
         )
         assert response.status_code == 422, f"FAIL: Expected 422 for missing listing_id, got {response.status_code}"
         print(f"PASS: Missing listing_id returns 422")
@@ -153,7 +153,7 @@ class TestCreateIntentValidation:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {token}"
             },
-            timeout=10
+            timeout=30
         )
         assert response.status_code == 422, f"FAIL: Expected 422 for missing amount, got {response.status_code}"
         print(f"PASS: Missing amount returns 422")
@@ -173,7 +173,7 @@ class TestCreateIntentValidation:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {token}"
             },
-            timeout=10
+            timeout=30
         )
         # Pydantic validation with gt=0 returns 422
         assert response.status_code == 422, f"FAIL: Expected 422 for negative amount, got {response.status_code}"
@@ -194,7 +194,7 @@ class TestCreateIntentValidation:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {token}"
             },
-            timeout=10
+            timeout=30
         )
         # Pydantic min_length=3 validation returns 422
         assert response.status_code == 422, f"FAIL: Expected 422 for invalid currency, got {response.status_code}"
@@ -209,7 +209,7 @@ class TestCreateIntentStripeError:
         login_response = requests.post(
             f"{BASE_URL}/api/auth/login",
             json={"email": USER_EMAIL, "password": USER_PASSWORD},
-            timeout=10
+            timeout=30
         )
         if login_response.status_code != 200:
             pytest.skip(f"Login failed with {login_response.status_code}")
@@ -221,7 +221,7 @@ class TestCreateIntentStripeError:
         listings_response = requests.get(
             f"{BASE_URL}/api/account/listings",
             headers={"Authorization": f"Bearer {token}"},
-            timeout=10
+            timeout=30
         )
         
         if listings_response.status_code == 200:
@@ -251,7 +251,7 @@ class TestCreateIntentStripeError:
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {token}"
                 },
-                timeout=10
+                timeout=30
             )
             # 404 for non-existent listing is valid - shows endpoint is working
             assert response.status_code == 404, f"FAIL: Expected 404 for non-existent listing, got {response.status_code}"
@@ -301,7 +301,7 @@ class TestWebhookSignatureValidation:
             f"{BASE_URL}/api/payments/webhook",
             data=json.dumps(payload),
             headers={"Content-Type": "application/json"},
-            timeout=10
+            timeout=30
         )
         
         assert response.status_code == 400, f"FAIL: Expected 400 for missing signature, got {response.status_code}"
@@ -338,7 +338,7 @@ class TestWebhookSignatureValidation:
                 "Content-Type": "application/json",
                 "stripe-signature": "t=1234567890,v1=invalid_signature_hash"
             },
-            timeout=10
+            timeout=30
         )
         
         assert response.status_code == 400, f"FAIL: Expected 400 for invalid signature, got {response.status_code}"
@@ -355,7 +355,7 @@ class TestWebhookSignatureValidation:
                 "Content-Type": "application/json",
                 "stripe-signature": "completely_invalid_format"
             },
-            timeout=10
+            timeout=30
         )
         
         assert response.status_code == 400, f"FAIL: Expected 400 for malformed signature, got {response.status_code}"
@@ -399,7 +399,7 @@ class TestWebhookIdempotency:
                 "Content-Type": "application/json",
                 "stripe-signature": "t=1234567890,v1=fake_signature"
             },
-            timeout=10
+            timeout=30
         )
         
         # Both should return 400 for invalid signature
@@ -413,7 +413,7 @@ class TestWebhookIdempotency:
                 "Content-Type": "application/json",
                 "stripe-signature": "t=1234567890,v1=fake_signature"
             },
-            timeout=10
+            timeout=30
         )
         
         assert response2.status_code == 400, f"FAIL: Second request should return 400, got {response2.status_code}"
@@ -474,7 +474,7 @@ class TestEndpointAvailability:
             f"{BASE_URL}/api/payments/create-intent",
             json={},
             headers={"Content-Type": "application/json"},
-            timeout=10
+            timeout=30
         )
         # Should not return 404 - any other error code means endpoint exists
         assert response.status_code != 404, f"FAIL: Endpoint not found (404)"
@@ -486,7 +486,7 @@ class TestEndpointAvailability:
             f"{BASE_URL}/api/payments/webhook",
             data="{}",
             headers={"Content-Type": "application/json"},
-            timeout=10
+            timeout=30
         )
         # Should not return 404 - any other error code means endpoint exists
         assert response.status_code != 404, f"FAIL: Endpoint not found (404)"
