@@ -45,7 +45,6 @@ export default function AccountSavedSearches() {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Bu kayıtlı arama silinsin mi?')) return;
     setActionLoading(`delete-${id}`);
     try {
       const res = await fetch(`${API}/v1/saved-searches/${id}`, {
