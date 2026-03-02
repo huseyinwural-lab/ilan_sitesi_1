@@ -379,6 +379,19 @@ export default function Layout({ children }) {
     user && ['super_admin', 'country_admin'].includes(user.role) && location.pathname.startsWith('/admin')
   );
 
+  const paymentsRuntime = useMemo(() => {
+    const runtime = systemHealth?.payments_runtime || {};
+    return {
+      payments_enabled: Boolean(runtime.payments_enabled),
+      stripe_secret_key_present: Boolean(runtime.stripe_secret_key_present),
+      stripe_publishable_key_present: Boolean(runtime.stripe_publishable_key_present),
+      stripe_webhook_secret_present: Boolean(runtime.stripe_webhook_secret_present),
+      disabled_reason: runtime.disabled_reason || 'missing_stripe_secret_or_publishable_key',
+    };
+  }, [systemHealth]);
+
+  const showPaymentsRuntimeBanner = Boolean(canViewSystemHealth && !paymentsRuntime.payments_enabled);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // NOTE: Side effects (localStorage / URL normalization) should live in effects,
@@ -1236,6 +1249,23 @@ export default function Layout({ children }) {
             </div>
           </div>
         </header>
+
+        {showPaymentsRuntimeBanner ? (
+          <div
+            className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-amber-800 lg:px-8"
+            data-testid="admin-payments-runtime-banner"
+          >
+            <div className="flex flex-wrap items-center gap-2 text-sm" data-testid="admin-payments-runtime-banner-content">
+              <span className="font-semibold" data-testid="admin-payments-runtime-banner-title">Ödeme Modülü Devre Dışı</span>
+              <span data-testid="admin-payments-runtime-banner-reason">({paymentsRuntime.disabled_reason})</span>
+              <span data-testid="admin-payments-runtime-banner-flags">
+                secret={paymentsRuntime.stripe_secret_key_present ? 'true' : 'false'} ·
+                publishable={paymentsRuntime.stripe_publishable_key_present ? 'true' : 'false'} ·
+                webhook={paymentsRuntime.stripe_webhook_secret_present ? 'true' : 'false'}
+              </span>
+            </div>
+          </div>
+        ) : null}
 
         {/* Page Content */}
         <main className="p-4 lg:p-8">
