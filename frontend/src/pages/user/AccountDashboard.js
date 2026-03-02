@@ -475,14 +475,13 @@ export default function AccountDashboard() {
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              className="text-xs font-semibold text-slate-400"
+            <Link
+              to="/account/saved-searches"
+              className="text-xs font-semibold text-[var(--color-primary)]"
               data-testid="account-saved-searches-viewall"
-              disabled
             >
               Tümünü gör
-            </button>
+            </Link>
           </div>
         </div>
       </div>
