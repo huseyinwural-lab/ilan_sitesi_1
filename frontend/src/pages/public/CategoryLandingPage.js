@@ -1,10 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { useCountry } from '@/contexts/CountryContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const setMetaTag = (key, value) => {
+  if (!value) return;
+  let tag = document.querySelector(`meta[name="${key}"]`);
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute('name', key);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute('content', value);
+};
+
+const setCanonical = (url) => {
+  if (!url) return;
+  let link = document.querySelector('link[rel="canonical"]');
+  if (!link) {
+    link = document.createElement('link');
+    link.setAttribute('rel', 'canonical');
+    document.head.appendChild(link);
+  }
+  link.setAttribute('href', url);
+};
 
 export default function CategoryLandingPage() {
   const { slug } = useParams();
@@ -67,6 +88,13 @@ export default function CategoryLandingPage() {
   const seoTitle = String(category?.seo_meta?.title || category?.name || 'Kategori');
   const seoDescription = String(category?.seo_meta?.description || category?.description || 'Kategori ilanlarını keşfedin.');
 
+  useEffect(() => {
+    if (!category) return;
+    document.title = seoTitle;
+    setMetaTag('description', seoDescription);
+    setCanonical(canonicalUrl);
+  }, [category, seoTitle, seoDescription, canonicalUrl]);
+
   if (loading) {
     return <div className="py-10 text-sm" data-testid="category-landing-loading">Yükleniyor...</div>;
   }
@@ -81,12 +109,6 @@ export default function CategoryLandingPage() {
 
   return (
     <div className="space-y-8" data-testid="category-landing-page">
-      <Helmet>
-        <title>{seoTitle}</title>
-        <meta name="description" content={seoDescription} />
-        <link rel="canonical" href={canonicalUrl} />
-      </Helmet>
-
       <nav className="text-sm text-muted-foreground" aria-label="Breadcrumb" data-testid="category-landing-breadcrumb">
         <ol className="flex items-center gap-2">
           <li>
