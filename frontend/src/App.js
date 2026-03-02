@@ -8,6 +8,7 @@ import WizardContainer from './pages/user/wizard/WizardContainer';
 import CreateListing from './pages/user/CreateListing';
 import AccountDashboard from './pages/user/AccountDashboard';
 import AccountFavorites from './pages/user/AccountFavorites';
+import AccountSavedSearches from './pages/user/AccountSavedSearches';
 import AccountMessages from './pages/user/AccountMessages';
 import AccountSupportList from './pages/user/AccountSupportList';
 import AccountSupportDetail from './pages/user/AccountSupportDetail';
@@ -184,6 +185,7 @@ function App() {
                     <Route index element={<AccountDashboard />} />
                     <Route path="listings" element={<MyListings />} />
                     <Route path="favorites" element={<AccountFavorites />} />
+                    <Route path="saved-searches" element={<AccountSavedSearches />} />
                     <Route path="messages" element={<AccountMessages />} />
                     <Route path="support" element={<AccountSupportList />} />
                     <Route path="support/:id" element={<AccountSupportDetail />} />
