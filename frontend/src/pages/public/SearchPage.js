@@ -60,7 +60,6 @@ const SearchMapPanel = ({
   onPinHover,
   onViewportBboxChange,
   resultCount,
-  mapKeyError,
 }) => {
   const mapRef = useRef(null);
   const lastBboxRef = useRef('');
@@ -87,14 +86,6 @@ const SearchMapPanel = ({
       onViewportBboxChange(bboxValue);
     }
   }, [onViewportBboxChange]);
-
-  if (mapKeyError) {
-    return (
-      <div className="h-[70vh] rounded-xl border bg-muted/20 p-6 text-sm text-amber-700" data-testid="search-map-key-error">
-        {mapKeyError}
-      </div>
-    );
-  }
 
   if (loading || !isLoaded) {
     return (
@@ -649,21 +640,30 @@ export default function SearchPage() {
             </div>
 
             <div className="lg:col-span-7 lg:sticky lg:top-4 h-fit" data-testid="search-map-right-panel">
-              <SearchMapPanel
-                apiKey={mapKey}
-                loading={loading}
-                mapItems={mapItems}
-                selectedListingId={selectedListingId}
-                hoveredListingId={hoveredListingId}
-                onPinClick={(listingId) => {
-                  setSelectedListingId(listingId);
-                  setHoveredListingId(listingId);
-                }}
-                onPinHover={(listingId) => setHoveredListingId(listingId)}
-                onViewportBboxChange={(bboxValue) => setMapBbox(bboxValue)}
-                resultCount={data.items.length}
-                mapKeyError={mapKeyError}
-              />
+              {mapKeyError ? (
+                <div className="h-[70vh] rounded-xl border bg-muted/20 p-6 text-sm text-amber-700" data-testid="search-map-key-error">
+                  {mapKeyError}
+                </div>
+              ) : !mapKey ? (
+                <div className="h-[70vh] rounded-xl border bg-muted/20 flex items-center justify-center" data-testid="search-map-runtime-loading">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : (
+                <SearchMapPanel
+                  apiKey={mapKey}
+                  loading={loading}
+                  mapItems={mapItems}
+                  selectedListingId={selectedListingId}
+                  hoveredListingId={hoveredListingId}
+                  onPinClick={(listingId) => {
+                    setSelectedListingId(listingId);
+                    setHoveredListingId(listingId);
+                  }}
+                  onPinHover={(listingId) => setHoveredListingId(listingId)}
+                  onViewportBboxChange={(bboxValue) => setMapBbox(bboxValue)}
+                  resultCount={data.items.length}
+                />
+              )}
             </div>
           </div>
         ) : (
