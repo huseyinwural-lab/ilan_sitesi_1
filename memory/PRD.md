@@ -526,3 +526,42 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Güncel durum
 - P0-01 teknik düzeltmesi uygulandı ve kısa/orta süre kanıtları PASS.
 - 24 saatlik pencere tamamlanınca P0-01 kapanışı finalize edilecek.
+
+---
+
+## 2026-03-02 (P0-02 — Sitemap Production Hardening)
+
+### Uygulanan değişiklikler
+- Hardcoded sitemap host kaldırıldı; sitemap/canonical host üretimi tek resolver üzerinden yapıldı:
+  - `_resolve_public_base_url(request)`
+  - öncelik: `PUBLIC_BASE_URL` env -> `x-forwarded-host`/`host`
+- Yeni/sertleştirilen sitemap endpointleri:
+  - `/api/sitemap.xml`
+  - `/api/sitemaps/core.xml`
+  - `/api/sitemaps/categories.xml`
+  - `/api/sitemaps/listings.xml`
+  - `/api/sitemaps/info.xml`
+  - backend root eşleri: `/sitemap.xml`, `/sitemaps/*.xml`
+- Canonical deterministik kuralı uygulandı:
+  - Trailing slash standardı (root hariç slash yok)
+  - Route değişiminde canonical senkronu (`CanonicalRouteSync`)
+  - `normalizeCanonicalUrl` ile query/hash temizliği
+- Kapsam ve filtre:
+  - Home/static + trust/corporate/seo
+  - Category landing (`/kategori/*`)
+  - Active+published listing detay (`/ilan/{id}`)
+  - Bilgi sayfaları (`/bilgi/*`) + fallback info slugs
+
+### Doğrulama ve kanıt
+- Test raporu: `/app/test_reports/iteration_84.json`
+  - Backend: PASS (sitemap XML, host çözümü, kapsam)
+  - Frontend: PASS (canonical deterministik)
+- Host doğruluk raporu (20'şer örnek dahil):
+  - `/app/test_reports/p0_02_sitemap_host_report.json`
+  - preview `wrong_host_count=0`, prod `wrong_host_count=0`
+- Pytest artifacts:
+  - `/app/backend/tests/test_p0_02_sitemap_production_hardening.py`
+  - `/app/test_reports/pytest/p0_02_sitemap_production_hardening_results.xml`
+
+### Güncel durum
+- P0-02 hedefi tamamlandı: sitemap/canonical host drift giderildi, deterministik URL standardı sağlandı.
