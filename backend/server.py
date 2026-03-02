@@ -29891,12 +29891,24 @@ async def get_vehicle_detail(listing_id: str, preview: bool = False, session: As
     title = listing.title or f"{v.get('make_key','').upper()} {v.get('model_key','')} {v.get('year','')}".strip()
 
     seller_user = await session.get(SqlUser, listing.user_id)
-    seller_name = ""
-    seller_profile_type = "bireysel"
-    seller_total_listings = 0
-    seller_member_since = None
+    seller_name = "İlan Sahibi"
+    seller_profile_type = "kurumsal" if (listing.user_type_snapshot in {"corporate", "dealer"} or bool(listing.is_dealer_listing)) else "bireysel"
+    seller_member_since = listing.created_at.isoformat() if listing.created_at else None
     seller_verified = False
     seller_phone = None
+
+    seller_total_listings = int(
+        (
+            await session.execute(
+                select(func.count(Listing.id)).where(
+                    Listing.user_id == listing.user_id,
+                    Listing.status == "published",
+                    Listing.deleted_at.is_(None),
+                )
+            )
+        ).scalar_one()
+        or 0
+    )
 
     if seller_user:
         seller_name = (
@@ -29908,19 +29920,6 @@ async def get_vehicle_detail(listing_id: str, preview: bool = False, session: As
         seller_member_since = seller_user.created_at.isoformat() if seller_user.created_at else None
         seller_verified = bool(seller_user.is_verified or seller_user.is_phone_verified)
         seller_phone = seller_user.phone_e164
-
-        seller_total_listings = int(
-            (
-                await session.execute(
-                    select(func.count(Listing.id)).where(
-                        Listing.user_id == seller_user.id,
-                        Listing.status == "published",
-                        Listing.deleted_at.is_(None),
-                    )
-                )
-            ).scalar_one()
-            or 0
-        )
 
     return {
         "id": listing_id,
@@ -29946,7 +29945,7 @@ async def get_vehicle_detail(listing_id: str, preview: bool = False, session: As
         "location": {"city": listing.city or "", "country": listing.country},
         "description": listing.description or "",
         "seller": {
-            "id": str(seller_user.id) if seller_user else None,
+            "id": str(seller_user.id) if seller_user else str(listing.user_id),
             "name": seller_name,
             "profile_type": seller_profile_type,
             "total_listings": seller_total_listings,
