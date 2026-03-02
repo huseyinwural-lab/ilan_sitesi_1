@@ -19260,8 +19260,8 @@ async def create_listing_payment_intent(
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    if not STRIPE_SECRET_KEY:
-        raise HTTPException(status_code=503, detail="Stripe secret key not configured")
+    _ensure_payments_runtime_enabled()
+    _stripe_client_setup()
 
     user_id_raw = _resolve_current_user_id(current_user)
     if not user_id_raw:
@@ -19292,7 +19292,6 @@ async def create_listing_payment_intent(
             )
         ).scalar_one_or_none()
         if existing_payment:
-            stripe.api_key = STRIPE_SECRET_KEY
             client_secret = None
             try:
                 existing_intent = stripe.PaymentIntent.retrieve(existing_payment.stripe_payment_intent_id)
@@ -19334,7 +19333,6 @@ async def create_listing_payment_intent(
         for key, value in payload.metadata.items():
             metadata[str(key)] = str(value)
 
-    stripe.api_key = STRIPE_SECRET_KEY
     try:
         intent = stripe.PaymentIntent.create(
             amount=amount_cents,
