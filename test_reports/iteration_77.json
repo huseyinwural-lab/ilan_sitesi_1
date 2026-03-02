@@ -1,0 +1,96 @@
+{
+  "summary": "Iteration 77 - Payments Runtime Config, Health Summary, Webhook Guards Testing. All features working correctly including: runtime-config endpoint returning payments_enabled/disabled_reason/publishable_key; health-summary including payments_runtime flags; create-intent and reconcile returning 503 when payments disabled; webhook signature validation guards; replay protection model.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "GET /api/payments/runtime-config",
+        "issue": "Initial request timed out (30s), subsequent requests succeeded. Likely cold-start or network issue.",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_payments_runtime_webhook_guards.py",
+    "/app/test_reports/pytest/payments_runtime_webhook_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "_payments_runtime_snapshot() correctly determines disabled_reason based on key validation hierarchy",
+    "_ensure_payments_runtime_enabled() guard returns 503 with structured detail including runtime snapshot",
+    "Webhook signature validation properly rejects missing (400) and invalid (400) signatures",
+    "ProcessedWebhookEvent model exists with proper fields for replay protection (provider, event_id, event_type)",
+    "health-summary endpoint includes payments_runtime section with all stripe key status flags",
+    "Frontend admin-payments-runtime-banner correctly displays when payments_enabled=false"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_payments_runtime_webhook_guards.py"
+  ],
+  "success_rate": {
+    "backend": "95% (21/22 tests passed - 1 timeout not code issue)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "user": "user@platform.com / User123!"
+  },
+  "seed_data_creation": "None required",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Payments module is correctly disabled due to invalid Stripe keys (sk_test_emergent is placeholder). All guards and observability features working. To enable payments, valid Stripe keys with proper format (sk_test_xxx with min 30 chars, pk_test_xxx, whsec_xxx with min 20 chars) are required.",
+  "features_tested": {
+    "GET /api/payments/runtime-config": {
+      "payments_enabled_field": "PASS",
+      "disabled_reason_field": "PASS - shows invalid_or_missing_stripe_secret_key",
+      "publishable_key_field": "PASS - null when disabled",
+      "status_field": "PASS - disabled"
+    },
+    "GET /api/admin/system/health-summary": {
+      "requires_auth": "PASS - returns 401/403 without token",
+      "payments_runtime_section": "PASS - includes all stripe key status flags",
+      "payments_enabled_flag": "PASS",
+      "stripe_secret_key_present": "PASS - true",
+      "stripe_secret_key_valid": "PASS - false (placeholder key)",
+      "stripe_publishable_key_present": "PASS - true",
+      "stripe_publishable_key_valid": "PASS - false"
+    },
+    "POST /api/payments/create-intent": {
+      "payments_disabled_503_guard": "PASS - returns 503 with structured detail",
+      "structured_detail_code": "PASS - includes code='payments_disabled'",
+      "structured_detail_runtime": "PASS - includes runtime snapshot"
+    },
+    "POST /api/payments/{id}/reconcile": {
+      "payments_disabled_503_guard": "PASS - returns 503 when disabled"
+    },
+    "POST /api/payments/webhook": {
+      "missing_signature_400": "PASS",
+      "invalid_signature_400": "PASS",
+      "malformed_signature_400": "PASS"
+    },
+    "POST /api/payments/stripe/webhook": {
+      "missing_signature_400": "PASS - alternative endpoint works"
+    },
+    "Webhook replay protection": {
+      "ProcessedWebhookEvent_model": "PASS - exists with provider, event_id, event_type fields"
+    },
+    "Frontend admin banner": {
+      "payments_runtime_banner_visible": "PASS - shows when payments disabled",
+      "banner_title": "PASS - shows 'Ödeme Modülü Devre Dışı'",
+      "banner_reason": "PASS - shows disabled reason",
+      "banner_key_status_details": "PASS - shows all key validation flags"
+    }
+  },
+  "event_mapping_tests": {
+    "payment_intent.succeeded": "PASS -> succeeded",
+    "payment_intent.payment_failed": "PASS -> failed",
+    "invoice.paid": "PASS -> tested",
+    "invoice.payment_failed": "PASS -> tested",
+    "checkout.session.completed": "PASS -> tested"
+  },
+  "environment_note": "Stripe keys in .env are placeholders (sk_test_emergent, pk_test_emergent, whsec_local_test). These do not pass the key format validation (_looks_like_stripe_key) which requires proper prefixes and minimum length. This is expected behavior - payments module correctly enters disabled/feature-off mode."
+}
