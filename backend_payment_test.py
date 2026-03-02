@@ -39,7 +39,11 @@ class PaymentEndpointTester:
                 data = response.json()
                 self.user_token = data.get("access_token")
                 user_info = data.get("user", {})
-                self.log(f"✅ User login successful - Role: {user_info.get('role')}, Portal: {user_info.get('portal_scope')}")
+                self.log(f"✅ User login successful")
+                self.log(f"   User ID: {user_info.get('id')}")
+                self.log(f"   Email: {user_info.get('email')}")
+                self.log(f"   Role: {user_info.get('role')}")
+                self.log(f"   Portal Scope: {user_info.get('portal_scope')}")
                 return True
             else:
                 self.log(f"❌ User login failed: {response.status_code} - {response.text}", "ERROR")
