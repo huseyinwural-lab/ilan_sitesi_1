@@ -439,3 +439,49 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Güncel kalan işler (aktif P0/P1/P2)
 - Bu kapsamda kapatılacak kritik iş kalmadı.
 - Gelecek geliştirme alanları: ileri finans raporlama, dönüşüm analitiği, içerik A/B testleri.
+
+---
+
+## 2026-03-02 (Kurumsal Kullanıcı Tarafı Eksiklerin Tamamlanması + PDF Detay İnceleme)
+
+### Kullanıcı onaylı kapsam
+- `1b`: `/dealer/*` + kurumsal public tarafıyla ilişkili eksikleri kapat
+- `2c`: Placeholder + API/integration eksiklerini birlikte tamamla
+- `3b`: Mevcut finans akışını bozma
+- `4b`: Detaylı polish + test-id
+
+### Uygulanan geliştirmeler
+- **Dealer route kapanışları:**
+  - `/dealer/invoices` gerçek sayfaya bağlandı (redirect kaldırıldı)
+  - `/dealer/company` ve `/dealer/privacy` aktif route olarak bağlandı
+- **Dealer finance backend genişletmesi:**
+  - `GET /api/dealer/payments` eklendi (status filtre + normalized message)
+  - `GET /api/dealer/invoices/{id}/download-pdf` eklendi (ownership enforced)
+  - `GET /api/dealer/invoices/{id}` response'una `payments` listesi eklendi
+  - Dealer invoice list sıralaması `coalesce(issued_at, created_at) DESC` olarak güncellendi
+- **DealerInvoices sayfası kapsamlı yenileme:**
+  - Tab yapısı: `Faturalarım` + `Hesap Hareketlerim`
+  - Durum + tarih filtreleri
+  - Fatura detay paneli (ödeme satırlarıyla)
+  - PDF indirme aksiyonu
+  - Kurumsal dilde empty/error metinleri ve kapsamlı `data-testid`
+- **Kurumsal erişilebilirlik iyileştirmeleri:**
+  - `DealerSettings` içine hızlı linkler: Şirket Profili / Gizlilik Merkezi / Faturalar-Hareketler
+  - `DealerLayout` üst aksiyonlara `Yardım Merkezi` butonu eklendi (`/bilgi/yardim-merkezi`)
+
+### PDF inceleme notu
+- Test sırasında dealer faturası için admin tarafından PDF regenerate edildi ve dealer panelinden indirme akışı uçtan uca doğrulandı.
+- Doğrulamalar:
+  - content-type `application/pdf`
+  - owner invoice download: `200`
+  - foreign invoice download: `403`
+
+### Test sonucu
+- Testing agent raporu: `/app/test_reports/iteration_82.json`
+  - Backend: **PASS**
+  - Frontend: **PASS**
+  - Dealer invoice/payments/detail/pdf + company/privacy/settings quick links + yardım merkezi navigasyonu **PASS**
+  - Admin/account finance regression **PASS**
+
+### Güncel durum
+- Kurumsal kullanıcı tarafında bu kapsam için kritik açık bulunmuyor.
