@@ -19426,8 +19426,8 @@ async def reconcile_listing_payment(
     current_user=Depends(require_portal_scope("account")),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    if not STRIPE_SECRET_KEY:
-        raise HTTPException(status_code=503, detail="Stripe secret key not configured")
+    _ensure_payments_runtime_enabled()
+    _stripe_client_setup()
 
     try:
         payment_uuid = uuid.UUID(payment_id)
@@ -19446,7 +19446,6 @@ async def reconcile_listing_payment(
     if not payment_record or payment_record.user_id != user_uuid:
         raise HTTPException(status_code=404, detail="Payment not found")
 
-    stripe.api_key = STRIPE_SECRET_KEY
     try:
         intent = stripe.PaymentIntent.retrieve(payment_record.stripe_payment_intent_id)
     except stripe.error.StripeError as exc:
