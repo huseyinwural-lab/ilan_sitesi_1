@@ -3759,6 +3759,7 @@ async def admin_system_health_summary(
         "error_count_5m": error_count,
         "error_rate_per_min_5m": error_rate,
         "last_db_error": _last_db_error,
+        "payments_runtime": _payments_runtime_snapshot(),
     }
     _system_health_cache.update({"checked_at": now_ts, "data": payload})
     return payload
