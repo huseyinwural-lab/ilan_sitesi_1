@@ -30290,7 +30290,7 @@ async def get_vehicle_detail(listing_id: str, preview: bool = False, session: As
     listing = await session.get(Listing, listing_uuid)
     if not listing:
         raise HTTPException(status_code=404, detail="Not found")
-    if listing.status != "published" and not preview:
+    if listing.status not in {"published", "active"} and not preview:
         raise HTTPException(status_code=404, detail="Not found")
 
     media_meta = _listing_media_meta(listing)
@@ -30322,7 +30322,7 @@ async def get_vehicle_detail(listing_id: str, preview: bool = False, session: As
             await session.execute(
                 select(func.count(Listing.id)).where(
                     Listing.user_id == listing.user_id,
-                    Listing.status == "published",
+                    Listing.status.in_(["published", "active"]),
                     Listing.deleted_at.is_(None),
                 )
             )
@@ -30390,12 +30390,12 @@ async def get_vehicle_similar_listings(
     source = await session.get(Listing, listing_uuid)
     if not source:
         raise HTTPException(status_code=404, detail="Not found")
-    if source.status != "published":
+    if source.status not in {"published", "active"}:
         raise HTTPException(status_code=404, detail="Not found")
 
     safe_limit = max(1, min(int(limit or 8), 8))
     base_conditions = [
-        Listing.status == "published",
+        Listing.status.in_(["published", "active"]),
         Listing.deleted_at.is_(None),
         Listing.id != source.id,
         Listing.category_id == source.category_id,
@@ -30436,7 +30436,7 @@ async def get_vehicle_similar_listings(
                 await session.execute(
                     select(Listing)
                     .where(
-                        Listing.status == "published",
+                        Listing.status.in_(["published", "active"]),
                         Listing.deleted_at.is_(None),
                         Listing.id != source.id,
                         Listing.category_id == source.category_id,
