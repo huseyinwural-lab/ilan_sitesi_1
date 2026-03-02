@@ -12110,6 +12110,15 @@ class PaymentCheckoutStubPayload(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class PaymentIntentCreatePayload(BaseModel):
+    listing_id: str
+    amount: float = Field(..., gt=0)
+    currency: str = Field(default="EUR", min_length=3, max_length=5)
+    description: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+    idempotency_key: Optional[str] = None
+
+
 class TaxRateCreatePayload(BaseModel):
     country_code: str
     rate: float
