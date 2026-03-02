@@ -27187,6 +27187,7 @@ async def public_search_v2(
     sort: str = "date_desc",
     page: int = 1,
     limit: int = 20,
+    bbox: Optional[str] = None,
     price_min: Optional[int] = None,
     price_max: Optional[int] = None,
     session: AsyncSession = Depends(get_sql_session),
@@ -27198,8 +27199,15 @@ async def public_search_v2(
         raise HTTPException(status_code=400, detail="country is required")
 
     page = max(1, int(page))
-    limit = min(100, max(1, int(limit)))
+    limit = min(300, max(1, int(limit)))
     offset = (page - 1) * limit
+    bbox_tuple = _parse_bbox_param(bbox)
+
+    query_limit = limit
+    query_offset = offset
+    if bbox_tuple is not None:
+        query_limit = min(300, max(limit, 300))
+        query_offset = 0
 
     try:
         runtime = await get_active_meili_runtime(session)
@@ -27273,8 +27281,8 @@ async def public_search_v2(
         result = await meili_search_documents(
             runtime,
             query=(q or "").strip(),
-            limit=limit,
-            offset=offset,
+            limit=query_limit,
+            offset=query_offset,
             sort=sort_fields,
             filter_query=filter_expr,
             facets=facets_requested,
@@ -27284,8 +27292,8 @@ async def public_search_v2(
             result = await meili_search_documents(
                 runtime,
                 query=(q or "").strip(),
-                limit=limit,
-                offset=offset,
+                limit=query_limit,
+                offset=query_offset,
                 sort=sort_fields,
                 filter_query=base_filter_expr,
                 facets=None,
@@ -27294,8 +27302,13 @@ async def public_search_v2(
             raise HTTPException(status_code=502, detail=f"MEILI_SEARCH_FAILED: {exc}") from exc
 
     raw_hits = result.get("hits", [])
+    if bbox_tuple is not None:
+        filtered_hits = [hit for hit in raw_hits if _hit_inside_bbox(hit, bbox_tuple)]
+        raw_hits = filtered_hits[offset: offset + limit]
+
     items = []
     for hit in raw_hits:
+        lat, lng = _extract_hit_lat_lng(hit)
         items.append(
             {
                 "id": hit.get("listing_id"),
@@ -27314,6 +27327,8 @@ async def public_search_v2(
                 "featured_until": hit.get("featured_until"),
                 "urgent_until": hit.get("urgent_until"),
                 "premium_score": hit.get("premium_score") or 0,
+                "lat": lat,
+                "lng": lng,
             }
         )
 
@@ -27372,7 +27387,10 @@ async def public_search_v2(
             facets_payload[key] = {"min": float(min_val), "max": float(max_val), "step": 1}
             continue
 
-    total = int(result.get("estimatedTotalHits") or 0)
+    if bbox_tuple is not None:
+        total = len(filtered_hits)
+    else:
+        total = int(result.get("estimatedTotalHits") or 0)
     pages = (total + limit - 1) // limit if total else 0
     response.headers["Cache-Control"] = "no-store"
     return {
