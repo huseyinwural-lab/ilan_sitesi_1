@@ -1,470 +1,401 @@
 #!/usr/bin/env python3
 """
-Backend API test for P1.2 search sync domain functionality.
-Tests Meili config-driven endpoints, listing lifecycle hooks, error handling, and response contracts.
+Backend Smoke Test + Validation for Turkish Review Request
+Testing:
+1. Admin login ve user login çalışıyor mu
+2. /api/admin/finance/overview endpoint 200 ve cards alanları dönüyor mu
+3. /api/admin/finance/subscriptions ve /api/admin/finance/ledger endpointleri 200 veriyor mu
+4. /api/admin/payments/export/csv, /api/admin/invoices/export/csv, /api/admin/ledger/export/csv 
+   sadece super_admin için 200; normal user için 403 doğrula
+5. /api/admin/invoices create ile amount_minor/net_minor/tax_minor/gross_minor alanları dolu dönüyor mu
 """
 
-import json
-import time
 import requests
-import uuid
+import json
+import sys
 from datetime import datetime
-from typing import Dict, List, Any
+import uuid
 
-BASE_URL = "https://stripe-foundation.preview.emergentagent.com/api"
+# Backend URL from environment
+BACKEND_URL = "https://stripe-foundation.preview.emergentagent.com"
 
 # Test credentials
-ADMIN_CREDENTIALS = {"email": "admin@platform.com", "password": "Admin123!"}
-USER_CREDENTIALS = {"email": "user@platform.com", "password": "User123!"}
+ADMIN_CREDENTIALS = {
+    "email": "admin@platform.com",
+    "password": "Admin123!"
+}
 
-class SearchSyncTester:
+USER_CREDENTIALS = {
+    "email": "user@platform.com", 
+    "password": "User123!"
+}
+
+class BackendTester:
     def __init__(self):
         self.admin_token = None
         self.user_token = None
-        self.results = []
+        self.results = {
+            "admin_login": False,
+            "user_login": False,
+            "finance_overview": False,
+            "finance_subscriptions": False,
+            "finance_ledger": False,
+            "csv_exports_admin": False,
+            "csv_exports_user_403": False,
+            "invoice_create": False
+        }
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Backend-Test/1.0',
+            'Content-Type': 'application/json'
+        })
 
-    def log(self, message: str, level: str = "INFO"):
-        """Log test messages with timestamp"""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        print(f"[{timestamp}] {level}: {message}")
+    def log(self, message):
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] {message}")
 
-    def login_admin(self) -> bool:
-        """Login as admin and get token"""
+    def test_admin_login(self):
+        """Test 1: Admin login çalışıyor mu"""
+        self.log("🔐 Testing Admin Login...")
         try:
-            response = requests.post(f"{BASE_URL}/auth/login", json=ADMIN_CREDENTIALS, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                self.admin_token = data.get("access_token")
-                self.log("✅ Admin login successful")
-                return True
-            else:
-                self.log(f"❌ Admin login failed: {response.status_code} - {response.text}", "ERROR")
-                return False
-        except Exception as e:
-            self.log(f"❌ Admin login exception: {e}", "ERROR")
-            return False
-
-    def login_user(self) -> bool:
-        """Login as user and get token"""
-        try:
-            response = requests.post(f"{BASE_URL}/auth/login", json=USER_CREDENTIALS, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                self.user_token = data.get("access_token")
-                self.log("✅ User login successful")
-                return True
-            else:
-                self.log(f"❌ User login failed: {response.status_code} - {response.text}", "ERROR")
-                return False
-        except Exception as e:
-            self.log(f"❌ User login exception: {e}", "ERROR")
-            return False
-
-    def get_headers(self, admin: bool = True) -> Dict[str, str]:
-        """Get authorization headers"""
-        token = self.admin_token if admin else self.user_token
-        return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-
-    def test_endpoint(self, method: str, endpoint: str, expected_status: int, 
-                     admin: bool = True, json_data: Dict = None, description: str = "") -> Dict[str, Any]:
-        """Test a single endpoint and return result"""
-        url = f"{BASE_URL}{endpoint}"
-        headers = self.get_headers(admin)
-        
-        try:
-            if method.upper() == "GET":
-                response = requests.get(url, headers=headers, timeout=10)
-            elif method.upper() == "POST":
-                response = requests.post(url, headers=headers, json=json_data or {}, timeout=10)
-            else:
-                raise ValueError(f"Unsupported method: {method}")
-            
-            success = response.status_code == expected_status
-            result = {
-                "endpoint": endpoint,
-                "method": method,
-                "expected_status": expected_status,
-                "actual_status": response.status_code,
-                "success": success,
-                "description": description,
-                "response_data": None,
-                "error": None
-            }
-            
-            try:
-                result["response_data"] = response.json()
-            except:
-                result["response_data"] = response.text
-            
-            status_emoji = "✅" if success else "❌"
-            self.log(f"{status_emoji} {method} {endpoint} - Expected: {expected_status}, Got: {response.status_code} - {description}")
-            
-            if not success:
-                self.log(f"Response: {response.text[:200]}{'...' if len(response.text) > 200 else ''}", "DEBUG")
-            
-            return result
-            
-        except Exception as e:
-            result = {
-                "endpoint": endpoint,
-                "method": method,
-                "expected_status": expected_status,
-                "actual_status": None,
-                "success": False,
-                "description": description,
-                "response_data": None,
-                "error": str(e)
-            }
-            self.log(f"❌ {method} {endpoint} - Exception: {e}", "ERROR")
-            return result
-
-    def test_admin_rbac_endpoints(self):
-        """Test 1: Meili config-driven endpoints (admin only RBAC)"""
-        self.log("\n=== TEST 1: Admin RBAC for Meili endpoints ===")
-        
-        admin_endpoints = [
-            ("GET", "/admin/search/meili/contract", "Meili contract endpoint"),
-            ("GET", "/admin/search/meili/health", "Meili health endpoint"),
-            ("GET", "/admin/search/meili/stage-smoke", "Meili stage-smoke endpoint"),
-            ("POST", "/admin/search/meili/reindex", "Meili reindex endpoint"),
-            ("GET", "/admin/search/meili/sync-jobs", "Meili sync jobs list endpoint"),
-            ("POST", "/admin/search/meili/sync-jobs/process", "Meili sync jobs process endpoint"),
-        ]
-        
-        # Test admin access
-        self.log("Testing admin access (should be 200/400, not 403):")
-        for method, endpoint, description in admin_endpoints:
-            if method == "POST" and "reindex" in endpoint:
-                json_data = {"chunk_size": 100, "max_docs": 10, "reset_index": False}
-            elif method == "POST" and "process" in endpoint:
-                json_data = {"limit": 10}
-            else:
-                json_data = None
-            
-            # Admin should get 200 or 400 (for missing config), NOT 403
-            result = self.test_endpoint(method, endpoint, 200, admin=True, json_data=json_data, 
-                                      description=f"Admin {description}")
-            
-            # If we get 400, check if it's ACTIVE_CONFIG_REQUIRED (expected for missing config)
-            if result["actual_status"] == 400 and result["response_data"]:
-                if "ACTIVE_CONFIG_REQUIRED" in str(result["response_data"]):
-                    result["success"] = True
-                    self.log(f"✅ {method} {endpoint} - Got expected ACTIVE_CONFIG_REQUIRED error")
-            
-            self.results.append(result)
-        
-        # Test non-admin access (should get 403)
-        self.log("\nTesting non-admin access (should be 403):")
-        for method, endpoint, description in admin_endpoints[:3]:  # Test first 3 endpoints
-            result = self.test_endpoint(method, endpoint, 403, admin=False, 
-                                      description=f"Non-admin {description}")
-            self.results.append(result)
-
-    def create_test_listing(self) -> str:
-        """Create a test listing for lifecycle testing"""
-        try:
-            listing_data = {
-                "title": "Test Search Sync Listing for Backend API Testing",
-                "description": "This is a test listing created specifically for testing search sync functionality in the backend API. It includes all required fields to test the lifecycle hooks and queue behavior.",
-                "price": 15000,
-                "currency": "EUR",
-                "category_id": "1debb8f9-cb41-47bf-8e6a-4fcc0423b9ec",  # uncategorized category
-                "country": "DE",
-                "city": "Berlin",
-                "attributes": {
-                    "vehicle": {
-                        "make": "Test Make",
-                        "model": "Test Model", 
-                        "year": 2020,
-                        "fuel_type": "gasoline"
-                    }
-                }
-            }
-            
-            response = requests.post(
-                f"{BASE_URL}/v1/listings/vehicle",
-                headers=self.get_headers(admin=False),
-                json=listing_data,
-                timeout=10
+            response = self.session.post(
+                f"{BACKEND_URL}/api/auth/login",
+                json=ADMIN_CREDENTIALS,
+                timeout=30
             )
             
             if response.status_code == 200:
                 data = response.json()
-                listing_id = data.get("id")
-                self.log(f"✅ Created test listing: {listing_id}")
-                return listing_id
-            else:
-                self.log(f"❌ Failed to create test listing: {response.status_code} - {response.text}", "ERROR")
-                return None
-        except Exception as e:
-            self.log(f"❌ Exception creating test listing: {e}", "ERROR")
-            return None
-
-    def test_listing_lifecycle_hooks(self):
-        """Test 2: Listing lifecycle hooks create queue behavior"""
-        self.log("\n=== TEST 2: Listing lifecycle hooks and queue behavior ===")
-        
-        # Get initial sync jobs count to verify sync system is working
-        initial_jobs = self.get_sync_jobs_count()
-        self.log(f"Current sync jobs in queue: {initial_jobs}")
-        
-        # Try to create a test listing (may fail but we can still test sync jobs)
-        listing_id = self.create_test_listing()
-        
-        if not listing_id:
-            self.log("⚠️  Cannot create test listing to verify lifecycle hooks", "WARN")
-            # But we can still verify the sync job system is accessible
-            if initial_jobs is not None:
-                self.log("✅ Sync job system is accessible and working")
-                self.results.append({
-                    "endpoint": "listing_lifecycle",
-                    "success": True,
-                    "description": "Sync job system accessible, lifecycle hooks implementation verified by code review",
-                    "error": None
-                })
-            else:
-                self.results.append({
-                    "endpoint": "listing_lifecycle", 
-                    "success": False,
-                    "description": "Cannot verify sync job system",
-                    "error": "Sync job endpoint not accessible"
-                })
-            return
-        
-        # Test lifecycle transitions that should create sync jobs
-        lifecycle_tests = [
-            # Request publish (draft -> pending)
-            ("POST", f"/v1/listings/vehicle/{listing_id}/request-publish", "Request publish"),
-        ]
-        
-        for method, endpoint, description in lifecycle_tests:
-            result = self.test_endpoint(method, endpoint, 200, admin=False, 
-                                      description=f"Lifecycle: {description}")
-            self.results.append(result)
-            
-            # Small delay to allow job creation
-            time.sleep(0.5)
-        
-        # Check if sync jobs were created
-        final_jobs = self.get_sync_jobs_count()
-        jobs_created = final_jobs - initial_jobs if final_jobs and initial_jobs else 0
-        
-        self.log(f"Sync jobs before lifecycle: {initial_jobs}")
-        self.log(f"Sync jobs after lifecycle: {final_jobs}")
-        self.log(f"New sync jobs created: {jobs_created}")
-        
-        if jobs_created > 0:
-            self.log("✅ Listing lifecycle created search sync jobs")
-        else:
-            self.log("❌ Listing lifecycle did not create expected sync jobs", "WARN")
-
-    def get_sync_jobs_count(self) -> int:
-        """Get current count of sync jobs"""
-        try:
-            response = requests.get(
-                f"{BASE_URL}/admin/search/meili/sync-jobs",
-                headers=self.get_headers(admin=True),
-                timeout=10
-            )
-            if response.status_code == 200:
-                data = response.json()
-                return len(data.get("items", []))
-            else:
-                self.log(f"❌ Failed to get sync jobs: {response.status_code}", "DEBUG")
-                return None
-        except:
-            return None
-
-    def test_error_handling(self):
-        """Test 3: Error handling - no active meili config"""
-        self.log("\n=== TEST 3: Error handling for no active meili config ===")
-        
-        # These endpoints should fail-fast with ACTIVE_CONFIG_REQUIRED when no config
-        error_test_endpoints = [
-            ("GET", "/admin/search/meili/stage-smoke", "Stage-smoke should fail-fast"),
-            ("POST", "/admin/search/meili/reindex", "Reindex should fail-fast"),
-        ]
-        
-        for method, endpoint, description in error_test_endpoints:
-            json_data = {"chunk_size": 100, "reset_index": False} if "reindex" in endpoint else None
-            
-            result = self.test_endpoint(method, endpoint, 400, admin=True, json_data=json_data,
-                                      description=description)
-            
-            # Verify the error message contains ACTIVE_CONFIG_REQUIRED
-            if result["success"] and result["response_data"]:
-                error_detail = str(result["response_data"])
-                if "ACTIVE_CONFIG_REQUIRED" in error_detail:
-                    self.log(f"✅ {endpoint} returned expected ACTIVE_CONFIG_REQUIRED error")
-                    result["description"] += " (correct error detail)"
+                if 'token' in data or 'access_token' in data:
+                    # Try both possible token fields
+                    self.admin_token = data.get('token') or data.get('access_token')
+                    
+                    # Check if user has admin role
+                    user_role = data.get('role', 'unknown')
+                    self.log(f"✅ Admin login SUCCESS - Token received (length: {len(self.admin_token)}), Role: {user_role}")
+                    self.results["admin_login"] = True
                 else:
-                    result["success"] = False
-                    self.log(f"❌ {endpoint} returned 400 but without ACTIVE_CONFIG_REQUIRED detail", "WARN")
-                    result["description"] += " (wrong error detail)"
-            
-            self.results.append(result)
+                    self.log(f"❌ Admin login FAILED - No token in response: {data}")
+            else:
+                self.log(f"❌ Admin login FAILED - Status: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log(f"❌ Admin login ERROR: {str(e)}")
 
-    def test_response_contracts(self):
-        """Test 4: Response contracts for reindex and stage-smoke"""
-        self.log("\n=== TEST 4: Response contracts verification ===")
-        
-        # Test reindex response contract (should have indexed_docs + elapsed_seconds)
-        reindex_data = {"chunk_size": 50, "max_docs": 5, "reset_index": False}
-        reindex_result = self.test_endpoint("POST", "/admin/search/meili/reindex", 400, admin=True, 
-                                          json_data=reindex_data, 
-                                          description="Reindex response contract check")
-        
-        # Even though it fails due to no config, check if we can verify response structure
-        if reindex_result["response_data"]:
-            # When config is available, response should have indexed_docs and elapsed_seconds
-            self.log("ℹ️  Reindex response contract: Should return {indexed_docs, elapsed_seconds} when successful")
-        
-        # Test stage-smoke response contract (should have ranking_sort)
-        smoke_result = self.test_endpoint("GET", "/admin/search/meili/stage-smoke", 400, admin=True,
-                                        description="Stage-smoke response contract check")
-        
-        # When config is available, response should have ranking_sort with premium_score:desc, published_at:desc  
-        if smoke_result["response_data"]:
-            self.log("ℹ️  Stage-smoke response contract: Should return {ranking_sort: ['premium_score:desc', 'published_at:desc']} when successful")
-        
-        # Check the contract endpoint for expected response structures
-        contract_result = self.test_endpoint("GET", "/admin/search/meili/contract", 200, admin=True,
-                                           description="Verify contract response structure")
-        
-        if contract_result["success"] and contract_result["response_data"]:
-            contract = contract_result["response_data"]
-            # Verify response contract fields are documented
-            expected_operations = contract.get("operations", {})
-            if "upsert" in str(expected_operations) and "delete" in str(expected_operations):
-                self.log("✅ Contract documents expected upsert/delete operations")
-            if contract.get("primary_key") == "listing_id":
-                self.log("✅ Contract specifies correct primary_key: listing_id")
+    def test_user_login(self):
+        """Test 1: User login çalışıyor mu"""
+        self.log("🔐 Testing User Login...")
+        try:
+            response = self.session.post(
+                f"{BACKEND_URL}/api/auth/login",
+                json=USER_CREDENTIALS,
+                timeout=30
+            )
             
-        self.results.append(reindex_result)
-        self.results.append(smoke_result)
-        self.results.append(contract_result)
+            if response.status_code == 200:
+                data = response.json()
+                if 'token' in data or 'access_token' in data:
+                    self.user_token = data.get('token') or data.get('access_token')
+                    self.log(f"✅ User login SUCCESS - Token received (length: {len(self.user_token)})")
+                    self.results["user_login"] = True
+                else:
+                    self.log(f"❌ User login FAILED - No token in response: {data}")
+            else:
+                self.log(f"❌ User login FAILED - Status: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log(f"❌ User login ERROR: {str(e)}")
 
-    def test_contract_endpoint(self):
-        """Test the contract endpoint for detailed response structure"""
-        self.log("\n=== BONUS: Testing contract endpoint ===")
+    def test_finance_overview(self):
+        """Test 2: /api/admin/finance/overview endpoint 200 ve cards alanları dönüyor mu"""
+        if not self.admin_token:
+            self.log("⏭️ Skipping finance overview - no admin token")
+            return
+            
+        self.log("💰 Testing Finance Overview Endpoint...")
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = self.session.get(
+                f"{BACKEND_URL}/api/admin/finance/overview",
+                headers=headers,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'cards' in data:
+                    cards = data['cards']
+                    self.log(f"✅ Finance Overview SUCCESS - Status: 200, Cards field present with {len(cards)} cards")
+                    
+                    # Log some card details for verification
+                    try:
+                        for i, card in enumerate(cards[:3]):  # Show first 3 cards
+                            if isinstance(card, dict):
+                                title = card.get('title', 'No title')
+                                value = card.get('value', 'No value')
+                            else:
+                                title = str(card)
+                                value = "N/A"
+                            self.log(f"   📊 Card {i+1}: {title} = {value}")
+                    except Exception as card_error:
+                        self.log(f"   📊 Cards present but structure differs: {type(cards)} with {len(cards)} items")
+                    
+                    self.results["finance_overview"] = True
+                else:
+                    self.log(f"❌ Finance Overview FAILED - No 'cards' field in response: {list(data.keys())}")
+            else:
+                self.log(f"❌ Finance Overview FAILED - Status: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log(f"❌ Finance Overview ERROR: {str(e)}")
+
+    def test_finance_subscriptions(self):
+        """Test 3: /api/admin/finance/subscriptions endpoint 200 veriyor mu"""
+        if not self.admin_token:
+            self.log("⏭️ Skipping finance subscriptions - no admin token")
+            return
+            
+        self.log("📊 Testing Finance Subscriptions Endpoint...")
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = self.session.get(
+                f"{BACKEND_URL}/api/admin/finance/subscriptions",
+                headers=headers,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log(f"✅ Finance Subscriptions SUCCESS - Status: 200, Response size: {len(str(data))} chars")
+                self.results["finance_subscriptions"] = True
+            else:
+                self.log(f"❌ Finance Subscriptions FAILED - Status: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log(f"❌ Finance Subscriptions ERROR: {str(e)}")
+
+    def test_finance_ledger(self):
+        """Test 3: /api/admin/finance/ledger endpoint 200 veriyor mu"""
+        if not self.admin_token:
+            self.log("⏭️ Skipping finance ledger - no admin token")
+            return
+            
+        self.log("📋 Testing Finance Ledger Endpoint...")
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = self.session.get(
+                f"{BACKEND_URL}/api/admin/finance/ledger",
+                headers=headers,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log(f"✅ Finance Ledger SUCCESS - Status: 200, Response size: {len(str(data))} chars")
+                self.results["finance_ledger"] = True
+            else:
+                self.log(f"❌ Finance Ledger FAILED - Status: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log(f"❌ Finance Ledger ERROR: {str(e)}")
+
+    def test_csv_exports(self):
+        """Test 4: CSV export endpoints - super_admin için 200, normal user için 403"""
+        if not self.admin_token:
+            self.log("⏭️ Skipping CSV exports - no admin token")
+            return
+            
+        export_endpoints = [
+            "/api/admin/payments/export/csv",
+            "/api/admin/invoices/export/csv", 
+            "/api/admin/ledger/export/csv"
+        ]
         
-        result = self.test_endpoint("GET", "/admin/search/meili/contract", 200, admin=True,
-                                  description="Meili contract specification")
+        self.log("📤 Testing CSV Export Endpoints for Admin (expect 200)...")
+        admin_success_count = 0
         
-        if result["success"] and result["response_data"]:
-            contract = result["response_data"]
-            self.log("📋 Meili Contract Details:")
-            self.log(f"   Primary Key: {contract.get('primary_key')}")
-            self.log(f"   Document Fields: {len(contract.get('document_fields', []))} fields")
-            self.log(f"   Operations: {contract.get('operations', {})}")
-            self.log(f"   Queue Strategy: {contract.get('queue', {})}")
+        for endpoint in export_endpoints:
+            try:
+                headers = {"Authorization": f"Bearer {self.admin_token}"}
+                response = self.session.get(
+                    f"{BACKEND_URL}{endpoint}",
+                    headers=headers,
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    self.log(f"✅ Admin CSV Export SUCCESS - {endpoint}: 200")
+                    admin_success_count += 1
+                else:
+                    self.log(f"❌ Admin CSV Export FAILED - {endpoint}: {response.status_code}")
+            except Exception as e:
+                self.log(f"❌ Admin CSV Export ERROR - {endpoint}: {str(e)}")
         
-        self.results.append(result)
+        if admin_success_count == len(export_endpoints):
+            self.results["csv_exports_admin"] = True
+            self.log(f"✅ All {len(export_endpoints)} CSV exports work for admin")
+        
+        # Test with user token (expect 403)
+        if self.user_token:
+            self.log("📤 Testing CSV Export Endpoints for User (expect 403)...")
+            user_403_count = 0
+            
+            for endpoint in export_endpoints:
+                try:
+                    headers = {"Authorization": f"Bearer {self.user_token}"}
+                    response = self.session.get(
+                        f"{BACKEND_URL}{endpoint}",
+                        headers=headers,
+                        timeout=30
+                    )
+                    
+                    if response.status_code == 403:
+                        self.log(f"✅ User CSV Export BLOCKED - {endpoint}: 403 (correct)")
+                        user_403_count += 1
+                    else:
+                        self.log(f"❌ User CSV Export SECURITY ISSUE - {endpoint}: {response.status_code} (should be 403)")
+                except Exception as e:
+                    self.log(f"❌ User CSV Export ERROR - {endpoint}: {str(e)}")
+            
+            if user_403_count == len(export_endpoints):
+                self.results["csv_exports_user_403"] = True
+                self.log(f"✅ All {len(export_endpoints)} CSV exports correctly blocked for user")
+        else:
+            self.log("⏭️ Skipping user CSV export test - no user token")
+
+    def test_invoice_create(self):
+        """Test 5: /api/admin/invoices create ile amount_minor/net_minor/tax_minor/gross_minor alanları dolu dönüyor mu"""
+        if not self.admin_token:
+            self.log("⏭️ Skipping invoice create - no admin token")
+            return
+            
+        self.log("🧾 Testing Invoice Create Endpoint...")
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            
+            # First, try to get current user info to use existing user_id
+            user_response = self.session.get(
+                f"{BACKEND_URL}/api/auth/me",
+                headers=headers,
+                timeout=30
+            )
+            
+            user_id = None
+            if user_response.status_code == 200:
+                user_data = user_response.json()
+                user_id = user_data.get('id') or user_data.get('user_id')
+            
+            # If no user_id found, use a known test user email
+            if not user_id:
+                user_id = "admin@platform.com"  # Use email as fallback
+            
+            # Create a test invoice with existing user_id
+            invoice_data = {
+                "user_id": user_id,
+                "customer_name": "Test Customer",
+                "customer_email": "test@example.com",
+                "amount": 12500,  # 125.00 in minor units (cents)
+                "currency": "EUR",
+                "due_date": "2024-03-15",
+                "description": "Backend test invoice"
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/api/admin/invoices",
+                headers=headers,
+                json=invoice_data,
+                timeout=30
+            )
+            
+            if response.status_code in [200, 201]:
+                data = response.json()
+                
+                # The response might have an 'invoice' wrapper object
+                invoice_data = data.get('invoice', data)
+                
+                # Check for required minor amount fields
+                required_fields = ['amount_minor', 'net_minor', 'tax_minor', 'gross_minor']
+                found_fields = []
+                missing_fields = []
+                
+                for field in required_fields:
+                    if field in invoice_data and invoice_data[field] is not None:
+                        found_fields.append(f"{field}={invoice_data[field]}")
+                    else:
+                        missing_fields.append(field)
+                
+                if not missing_fields:
+                    self.log(f"✅ Invoice Create SUCCESS - All minor amount fields present: {', '.join(found_fields)}")
+                    self.results["invoice_create"] = True
+                else:
+                    self.log(f"❌ Invoice Create FAILED - Missing fields: {missing_fields}")
+                    self.log(f"   Found fields: {found_fields}")
+                    self.log(f"   Response keys: {list(data.keys())}")
+                    if 'invoice' in data:
+                        self.log(f"   Invoice keys: {list(invoice_data.keys())}")
+                    
+            else:
+                self.log(f"❌ Invoice Create FAILED - Status: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log(f"❌ Invoice Create ERROR: {str(e)}")
 
     def run_all_tests(self):
-        """Run all tests in sequence"""
-        self.log("🚀 Starting Search Sync Domain Backend Tests")
-        self.log("=" * 60)
+        """Run all backend smoke tests"""
+        self.log("🚀 Starting Backend Smoke + Validation Tests")
+        self.log(f"Backend URL: {BACKEND_URL}")
         
-        # Login
-        if not self.login_admin():
-            self.log("❌ Failed to login as admin, aborting tests", "ERROR")
-            return
+        # Test 1: Login functionality 
+        self.test_admin_login()
+        self.test_user_login()
         
-        if not self.login_user():
-            self.log("❌ Failed to login as user, aborting tests", "ERROR")
-            return
+        # Test 2: Finance overview
+        self.test_finance_overview()
         
-        # Run test suites
-        self.test_admin_rbac_endpoints()
-        self.test_listing_lifecycle_hooks()
-        self.test_error_handling()
-        self.test_response_contracts()
-        self.test_contract_endpoint()
+        # Test 3: Finance subscriptions and ledger
+        self.test_finance_subscriptions()
+        self.test_finance_ledger()
         
-        # Summary
-        self.print_summary()
+        # Test 4: CSV exports
+        self.test_csv_exports()
+        
+        # Test 5: Invoice creation
+        self.test_invoice_create()
+        
+        return self.generate_report()
 
-    def print_summary(self):
-        """Print test results summary"""
-        self.log("\n" + "=" * 60)
-        self.log("📊 TEST RESULTS SUMMARY")
-        self.log("=" * 60)
+    def generate_report(self):
+        """Generate final test report"""
+        self.log("\n" + "="*60)
+        self.log("📋 BACKEND SMOKE + VALIDATION REPORT")
+        self.log("="*60)
         
         total_tests = len(self.results)
-        passed_tests = sum(1 for r in self.results if r["success"])
-        failed_tests = total_tests - passed_tests
+        passed_tests = sum(1 for result in self.results.values() if result)
         
-        self.log(f"Total Tests: {total_tests}")
-        self.log(f"✅ Passed: {passed_tests}")
-        self.log(f"❌ Failed: {failed_tests}")
-        self.log(f"Success Rate: {(passed_tests/total_tests*100):.1f}%" if total_tests > 0 else "0%")
-        
-        # Group results by test category
-        categories = {
-            "RBAC Admin Endpoints": [],
-            "Lifecycle Hooks": [],
-            "Error Handling": [],
-            "Response Contracts": [],
-            "Other": []
+        # Individual test results
+        test_descriptions = {
+            "admin_login": "1️⃣ Admin Login",
+            "user_login": "1️⃣ User Login", 
+            "finance_overview": "2️⃣ Finance Overview (/api/admin/finance/overview) - 200 + cards field",
+            "finance_subscriptions": "3️⃣ Finance Subscriptions (/api/admin/finance/subscriptions) - 200",
+            "finance_ledger": "3️⃣ Finance Ledger (/api/admin/finance/ledger) - 200",
+            "csv_exports_admin": "4️⃣ CSV Exports for Super Admin - 200",
+            "csv_exports_user_403": "4️⃣ CSV Exports for Normal User - 403",
+            "invoice_create": "5️⃣ Invoice Create - amount_minor/net_minor/tax_minor/gross_minor fields"
         }
         
-        for result in self.results:
-            endpoint = result.get("endpoint", "")
-            if "/admin/search/meili/" in endpoint:
-                if result.get("description", "").startswith("Admin"):
-                    categories["RBAC Admin Endpoints"].append(result)
-                elif "error" in result.get("description", "").lower():
-                    categories["Error Handling"].append(result)
-                elif "contract" in result.get("description", "").lower():
-                    categories["Response Contracts"].append(result)
-                else:
-                    categories["Other"].append(result)
-            elif "lifecycle" in result.get("endpoint", "").lower():
-                categories["Lifecycle Hooks"].append(result)
-            else:
-                categories["Other"].append(result)
+        for test_key, description in test_descriptions.items():
+            status = "✅ PASS" if self.results[test_key] else "❌ FAIL"
+            self.log(f"{status} - {description}")
         
-        # Print detailed results by category
-        for category, results in categories.items():
-            if not results:
-                continue
-                
-            self.log(f"\n📋 {category}:")
-            for result in results:
-                status = "✅ PASS" if result["success"] else "❌ FAIL"
-                endpoint = result.get("endpoint", "N/A")
-                method = result.get("method", "")
-                desc = result.get("description", "")
-                self.log(f"   {status} {method} {endpoint} - {desc}")
-                
-                if not result["success"] and result.get("error"):
-                    self.log(f"     Error: {result['error']}")
+        self.log("-" * 60)
+        self.log(f"📊 SUMMARY: {passed_tests}/{total_tests} tests passed ({(passed_tests/total_tests)*100:.1f}%)")
         
-        # High-level assessment
-        self.log(f"\n🎯 ASSESSMENT:")
-        
-        rbac_results = categories["RBAC Admin Endpoints"]
-        rbac_passed = sum(1 for r in rbac_results if r["success"])
-        if rbac_passed == len(rbac_results) and len(rbac_results) > 0:
-            self.log("   ✅ RBAC: Admin endpoints properly protected")
+        if passed_tests == total_tests:
+            self.log("🎉 ALL TESTS PASSED - Backend is functioning correctly!")
+            return "PASS"
         else:
-            self.log("   ❌ RBAC: Issues with admin endpoint protection")
-        
-        error_results = categories["Error Handling"]
-        error_passed = sum(1 for r in error_results if r["success"])
-        if error_passed == len(error_results) and len(error_results) > 0:
-            self.log("   ✅ ERROR HANDLING: Proper fail-fast with ACTIVE_CONFIG_REQUIRED")
-        else:
-            self.log("   ❌ ERROR HANDLING: Issues with error responses")
-        
-        if failed_tests == 0:
-            self.log("   🎉 ALL TESTS PASSED - Search sync domain is working correctly")
-        elif failed_tests <= 2:
-            self.log("   ⚠️  MOSTLY WORKING - Few minor issues detected")
-        else:
-            self.log("   ❌ MULTIPLE ISSUES - Search sync domain needs attention")
+            failed_count = total_tests - passed_tests
+            self.log(f"⚠️  {failed_count} TEST(S) FAILED - Issues detected in backend")
+            return "FAIL"
 
 if __name__ == "__main__":
-    tester = SearchSyncTester()
-    tester.run_all_tests()
+    tester = BackendTester()
+    result = tester.run_all_tests()
+    
+    # Exit with appropriate code
+    sys.exit(0 if result == "PASS" else 1)
