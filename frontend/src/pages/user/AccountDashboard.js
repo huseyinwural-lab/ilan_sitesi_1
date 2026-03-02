@@ -60,6 +60,7 @@ export default function AccountDashboard() {
         fetch(`${API}/v1/listings/my?status=pending_moderation&limit=1`, { headers }),
         fetch(`${API}/v1/favorites/count`, { headers }),
         fetch(`${API}/v1/messages/unread-count`, { headers }),
+        fetch(`${API}/v1/saved-searches/count`, { headers }),
         fetch(`${API}/v1/listings/my?limit=5`, { headers }),
         fetch(`${API}/auth/me`, { headers }),
         fetch(`${API}/v1/users/me/2fa/status`, { headers }),
@@ -69,7 +70,7 @@ export default function AccountDashboard() {
       const nextMetrics = { ...metrics };
       let successCount = 0;
 
-      const [activeRes, pendingRes, favRes, msgRes, listingsRes, meRes, twoFaRes] = results;
+      const [activeRes, pendingRes, favRes, msgRes, savedRes, listingsRes, meRes, twoFaRes] = results;
 
       if (activeRes.status === 'fulfilled' && activeRes.value.ok) {
         const data = await activeRes.value.json();
@@ -101,6 +102,14 @@ export default function AccountDashboard() {
         successCount += 1;
       } else {
         nextMetrics.messages = buildMetric(0, false);
+      }
+
+      if (savedRes.status === 'fulfilled' && savedRes.value.ok) {
+        const data = await savedRes.value.json();
+        nextMetrics.savedSearches = buildMetric(data.count || 0, true);
+        successCount += 1;
+      } else {
+        nextMetrics.savedSearches = buildMetric(0, false);
       }
 
       if (listingsRes.status === 'fulfilled' && listingsRes.value.ok) {
