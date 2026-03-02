@@ -19296,6 +19296,97 @@ async def create_listing_payment_intent(
     }
 
 
+@api_router.get("/payments/{payment_id}/status")
+async def get_listing_payment_status(
+    payment_id: str,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        payment_uuid = uuid.UUID(payment_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="payment_id invalid") from exc
+
+    user_id_raw = _resolve_current_user_id(current_user)
+    if not user_id_raw:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    user_uuid = uuid.UUID(str(user_id_raw))
+
+    payment_record = await session.get(ListingPayment, payment_uuid)
+    if not payment_record or payment_record.user_id != user_uuid:
+        raise HTTPException(status_code=404, detail="Payment not found")
+
+    listing = await session.get(Listing, payment_record.listing_id)
+    return {
+        "payment_id": str(payment_record.id),
+        "payment_intent_id": payment_record.stripe_payment_intent_id,
+        "payment_status": payment_record.status,
+        "listing_id": str(payment_record.listing_id),
+        "listing_status": listing.status if listing else None,
+        "amount": float(payment_record.amount),
+        "currency": payment_record.currency,
+        "updated_at": payment_record.updated_at.isoformat() if payment_record.updated_at else None,
+    }
+
+
+@api_router.post("/payments/{payment_id}/reconcile")
+async def reconcile_listing_payment(
+    payment_id: str,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=503, detail="Stripe secret key not configured")
+
+    try:
+        payment_uuid = uuid.UUID(payment_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="payment_id invalid") from exc
+
+    user_id_raw = _resolve_current_user_id(current_user)
+    if not user_id_raw:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    user_uuid = uuid.UUID(str(user_id_raw))
+
+    payment_record = await session.get(ListingPayment, payment_uuid)
+    if not payment_record or payment_record.user_id != user_uuid:
+        raise HTTPException(status_code=404, detail="Payment not found")
+
+    stripe.api_key = STRIPE_SECRET_KEY
+    try:
+        intent = stripe.PaymentIntent.retrieve(payment_record.stripe_payment_intent_id)
+    except stripe.error.StripeError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    mapped_status = map_stripe_intent_status_to_payment_status(intent.get("status"))
+    if not mapped_status:
+        mapped_status = "processing"
+
+    now = datetime.now(timezone.utc)
+    await _apply_listing_state_for_payment(
+        session=session,
+        payment_record=payment_record,
+        mapped_status=mapped_status,
+        now=now,
+    )
+
+    next_meta = payment_record.meta_json or {}
+    next_meta["reconciled_at"] = now.isoformat()
+    next_meta["reconciled_intent_status"] = intent.get("status")
+    payment_record.meta_json = next_meta
+
+    await session.commit()
+    listing = await session.get(Listing, payment_record.listing_id)
+
+    return {
+        "status": "reconciled",
+        "payment_id": str(payment_record.id),
+        "payment_intent_id": payment_record.stripe_payment_intent_id,
+        "payment_status": payment_record.status,
+        "listing_status": listing.status if listing else None,
+    }
+
+
 @api_router.post("/payments/webhook")
 async def stripe_payment_intent_webhook(
     request: Request,
