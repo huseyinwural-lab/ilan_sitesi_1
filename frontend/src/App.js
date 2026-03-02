@@ -21,6 +21,7 @@ import MainLayout from '@/layouts/MainLayout';
 import HomePage from '@/pages/public/HomePage';
 import SearchPage from '@/pages/public/SearchPage';
 import DetailPage from '@/pages/public/DetailPage';
+import CategoryLandingPage from '@/pages/public/CategoryLandingPage';
 import VehicleLandingPage from '@/pages/public/VehicleLandingPage';
 import VehicleMakeModelPage from '@/pages/public/VehicleMakeModelPage';
 import VehicleSegmentPage from '@/pages/public/VehicleSegmentPage';
@@ -129,6 +130,7 @@ function App() {
                   <Route element={<MainLayout />}>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/search" element={<SearchPage />} />
+                    <Route path="/kategori/:slug" element={<CategoryLandingPage />} />
                     <Route path="/ilan/:id" element={<ErrorBoundary><DetailPage /></ErrorBoundary>} />
                     <Route path="/vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />
                     <Route path="/:country/vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />
