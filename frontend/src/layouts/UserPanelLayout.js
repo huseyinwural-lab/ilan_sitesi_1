@@ -37,6 +37,13 @@ const topNavItems = [
     testId: 'account-top-nav-favorites',
   },
   {
+    key: 'saved-searches',
+    path: '/account/saved-searches',
+    labelKey: 'nav_favorite_searches',
+    match: ['/account/saved-searches'],
+    testId: 'account-top-nav-saved-searches',
+  },
+  {
     key: 'services',
     path: '/account/support',
     labelKey: 'nav_services',
@@ -57,7 +64,7 @@ const UserPanelLayout = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { t, language, setLanguage } = useLanguage();
-  const [counts, setCounts] = useState({ favorites: 0, messages: 0 });
+  const [counts, setCounts] = useState({ favorites: 0, messages: 0, savedSearches: 0 });
   const { logoUrl: individualLogoUrl } = useUIHeaderConfig({ segment: 'individual', authRequired: true });
 
   const sideMenuGroups = useMemo(
@@ -85,6 +92,7 @@ const UserPanelLayout = () => {
         testId: 'account-side-group-favorites',
         items: [
           { path: '/account/favorites', labelKey: 'nav_favorite_listings', testId: 'account-side-favorites' },
+          { path: '/account/saved-searches', labelKey: 'nav_favorite_searches', testId: 'account-side-saved-searches' },
         ],
       },
       {
@@ -113,18 +121,20 @@ const UserPanelLayout = () => {
     const fetchCounts = async () => {
       try {
         const headers = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
-        const [favRes, msgRes] = await Promise.all([
+        const [favRes, msgRes, savedRes] = await Promise.all([
           fetch(`${API}/v1/favorites/count`, { headers }),
           fetch(`${API}/v1/messages/unread-count`, { headers }),
+          fetch(`${API}/v1/saved-searches/count`, { headers }),
         ]);
         const favData = favRes.ok ? await favRes.json() : { count: 0 };
         const msgData = msgRes.ok ? await msgRes.json() : { count: 0 };
+        const savedData = savedRes.ok ? await savedRes.json() : { count: 0 };
         if (active) {
-          setCounts({ favorites: favData.count || 0, messages: msgData.count || 0 });
+          setCounts({ favorites: favData.count || 0, messages: msgData.count || 0, savedSearches: savedData.count || 0 });
         }
       } catch (err) {
         if (active) {
-          setCounts({ favorites: 0, messages: 0 });
+          setCounts({ favorites: 0, messages: 0, savedSearches: 0 });
         }
       }
     };
@@ -263,6 +273,8 @@ const UserPanelLayout = () => {
                         <span>{resolveLabel(item)}</span>
                         {item.path === '/account/favorites' &&
                           renderBadge(counts.favorites, 'account-side-favorites-badge')}
+                        {item.path === '/account/saved-searches' &&
+                          renderBadge(counts.savedSearches, 'account-side-saved-searches-badge')}
                         {item.path === '/account/messages' &&
                           renderBadge(counts.messages, 'account-side-messages-badge')}
                       </NavLink>
