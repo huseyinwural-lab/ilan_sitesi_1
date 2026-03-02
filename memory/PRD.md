@@ -224,3 +224,80 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - **P1:** Template #17/#18 checkout sayfaları (`/payment/success`, `/payment/fail`) ve frontend entegrasyonu.
 - **P1:** Trust/Policy ve Corporate/SEO template setlerinin tamamlanması.
 - **P2:** 500/maintenance sistem sayfaları + kategori builder drag&drop.
+
+---
+
+## 2026-03-02 (FIN-P2 Sprint — P0 + Admin Read-only Finans Ekranları)
+
+### Sprint Scope Kilidi (uygulandı)
+- P0 çekirdek domain/API + Admin read-only finans görünürlüğü tamamlandı.
+- Migrasyon stratejisi: **backward-compatible dual-write** (legacy alanlar korunuyor, yeni `amount_minor` alanları yazılıyor).
+- Invoice PDF bu sprintte **bilinçli olarak dışarıda** bırakıldı (P1).
+- CSV export RBAC: **yalnız `super_admin`**.
+
+### Backend (P0) — Tamamlananlar
+- Money v2: `Payment`, `AdminInvoice`, `ListingPayment`, `PaymentTransaction` için `amount_minor + currency` akışı aktif.
+- Yeni finans domain modelleri eklendi:
+  - `FinanceProduct`, `FinanceProductPrice` (currency bazlı fiyat + etkinlik aralığı)
+  - `TaxProfile` (TR %20 KDV, DE %19 VAT seed)
+  - `FinanceInvoiceSequence` (race-safe invoice no üretimi)
+  - `LedgerAccount`, `LedgerEntry` (immutable double-entry)
+- Deterministik vergi pipeline:
+  - Snapshot alanları: `net_minor`, `tax_minor`, `gross_minor`
+  - Rounding policy: `HALF_UP`
+  - `meta_json.money_v2` + `meta_json.tax_profile` snapshot yazımı
+- Invoice state machine güçlendirildi (`draft -> issued -> paid -> void/refunded`) ve manuel override audit log eklendi.
+- Race-safe invoice numbering:
+  - Format: `{COUNTRY}-{YYYYMM}-{SEQUENCE:06d}`
+  - `FOR UPDATE` lock + sequence tablosu.
+- Ledger:
+  - Ödeme/iadede çift taraflı kayıt (denge kontrolü)
+  - Reversal endpoint (update yerine düzeltme hareketi)
+- Subscription lifecycle genişletmesi:
+  - `trialing/active/past_due/canceled/unpaid` geçiş doğrulaması.
+
+### Yeni / güncellenen admin endpointleri
+- `GET /api/admin/finance/overview`
+- `GET /api/admin/finance/subscriptions`
+- `GET /api/admin/finance/subscriptions/{id}`
+- `PATCH /api/admin/finance/subscriptions/{id}/status`
+- `GET /api/admin/finance/ledger`
+- `POST /api/admin/finance/ledger/{entry_id}/reverse`
+- `GET /api/admin/finance/tax-profiles`
+- `POST /api/admin/finance/tax-profiles`
+- `PATCH /api/admin/finance/tax-profiles/{profile_id}`
+- `GET /api/admin/finance/products`
+- `POST /api/admin/finance/products`
+- `GET /api/admin/finance/product-prices`
+- `POST /api/admin/finance/products/{product_id}/prices`
+- `GET /api/admin/finance/trace/{invoice_id}`
+- CSV export:
+  - `GET /api/admin/payments/export/csv` (super_admin)
+  - `GET /api/admin/invoices/export/csv` (super_admin)
+  - `GET /api/admin/ledger/export/csv` (super_admin)
+
+### Admin UI (Sprint içi temel read-only)
+- Yeni sayfalar:
+  - `/admin/finance-overview`
+  - `/admin/subscriptions`
+  - `/admin/ledger`
+- Route/nav/rbac güncellendi (finance menüsü + guard kuralları).
+- Kritik UI elemanlarında `data-testid` eklendi.
+
+### Test Durumu
+- Testing agent raporu: `/app/test_reports/iteration_78.json`
+  - Backend: **18/18 PASS**
+  - Frontend: **3/3 PASS**
+- Doğrulanan ana başlıklar:
+  - Money v2 dual-write PASS
+  - Tax profile deterministic pipeline PASS
+  - Race-safe invoice numbering PASS
+  - Finance overview/subscriptions/ledger endpointleri PASS
+  - CSV RBAC (super_admin only) PASS
+  - Webhook signature + idempotency PASS
+
+### Kalanlar (P1/P2)
+- **P1:** Invoice PDF üretimi + storage + admin download akışı.
+- **P1:** Country admin scoped export + row-level filters (gerektiğinde).
+- **P2:** Kullanıcı tarafı Faturalarım/Ödeme Geçmişi/Abonelik self-serve.
+- **P2:** Finans UI standardizasyonu (locale/badge/empty-loading-error iyileştirmeleri).
