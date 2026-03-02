@@ -17635,7 +17635,13 @@ async def account_list_invoices(
     if end_date:
         conditions.append(AdminInvoice.created_at <= _parse_iso_datetime(end_date, "end_date"))
 
-    rows = (await session.execute(select(AdminInvoice).where(*conditions).order_by(AdminInvoice.created_at.desc()))).scalars().all()
+    rows = (
+        await session.execute(
+            select(AdminInvoice)
+            .where(*conditions)
+            .order_by(func.coalesce(AdminInvoice.issued_at, AdminInvoice.created_at).desc(), AdminInvoice.created_at.desc())
+        )
+    ).scalars().all()
     return {"items": [_admin_invoice_to_dict(row) for row in rows]}
 
 
@@ -17798,7 +17804,7 @@ async def account_subscription_cancel_at_period_end(
     if sub.status not in {"trialing", "active", "past_due"}:
         raise HTTPException(status_code=400, detail="Subscription cannot be cancelled in current state")
 
-    meta = sub.meta_json or {}
+    meta = dict(sub.meta_json or {})
     meta["cancel_at_period_end"] = True
     meta["cancel_requested_at"] = datetime.now(timezone.utc).isoformat()
     sub.meta_json = meta
@@ -17833,7 +17839,7 @@ async def account_subscription_reactivate(
     if sub.status not in {"trialing", "active", "past_due", "unpaid"}:
         raise HTTPException(status_code=400, detail="Subscription cannot be reactivated")
 
-    meta = sub.meta_json or {}
+    meta = dict(sub.meta_json or {})
     if not meta.get("cancel_at_period_end"):
         return {"ok": True, "status": sub.status, "cancel_at_period_end": False}
 

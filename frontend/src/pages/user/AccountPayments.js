@@ -23,7 +23,7 @@ export default function AccountPaymentsPage() {
       setItems(res.data.items || []);
       setError('');
     } catch {
-      setError('Ödeme geçmişi yüklenemedi');
+      setError('Ödeme geçmişi yüklenemedi. Lütfen daha sonra tekrar deneyiniz.');
     } finally {
       setLoading(false);
     }
@@ -39,14 +39,15 @@ export default function AccountPaymentsPage() {
       <div className="flex items-center justify-between gap-3" data-testid="account-payments-header">
         <div>
           <h1 className="text-2xl font-bold" data-testid="account-payments-title">Ödeme Geçmişi</h1>
-          <p className="text-sm text-muted-foreground" data-testid="account-payments-subtitle">Ödemelerinizin durumunu ve sonuçlarını görüntüleyin.</p>
+          <p className="text-sm text-muted-foreground" data-testid="account-payments-subtitle">Ödeme kayıtlarınızı ve işlem durumlarını görüntüleyebilirsiniz.</p>
         </div>
+        <div className="text-xs text-muted-foreground" data-testid="account-payments-count">Toplam kayıt: {items.length}</div>
         <select className="h-9 rounded-md border px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value)} data-testid="account-payments-filter-status">
           <option value="all">Tümü</option>
-          <option value="succeeded">succeeded</option>
-          <option value="failed">failed</option>
-          <option value="processing">processing</option>
-          <option value="pending">pending</option>
+          <option value="succeeded">Başarılı</option>
+          <option value="failed">Başarısız</option>
+          <option value="processing">İşleniyor</option>
+          <option value="pending">Beklemede</option>
         </select>
       </div>
 
@@ -67,7 +68,7 @@ export default function AccountPaymentsPage() {
             {loading ? (
               <tr><td colSpan="5" className="p-3"><FinanceLoadingState testId="account-payments-loading" /></td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan="5" className="p-3"><FinanceEmptyState testId="account-payments-empty" message="Ödeme kaydı bulunamadı" /></td></tr>
+              <tr><td colSpan="5" className="p-3"><FinanceEmptyState testId="account-payments-empty" message="Henüz ödeme kaydı bulunmamaktadır." /></td></tr>
             ) : items.map((item) => (
               <tr key={item.id} className="border-t" data-testid={`account-payments-row-${item.id}`}>
                 <td className="p-3 font-mono text-xs" data-testid={`account-payments-id-${item.id}`}>{item.provider_ref || item.id}</td>

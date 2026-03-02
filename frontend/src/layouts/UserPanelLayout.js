@@ -104,6 +104,16 @@ const UserPanelLayout = () => {
         ],
       },
       {
+        key: 'finance',
+        title: 'Finans',
+        testId: 'account-side-group-finance',
+        items: [
+          { path: '/account/invoices', label: 'Faturalarım', testId: 'account-side-invoices' },
+          { path: '/account/payments', label: 'Ödeme Geçmişi', testId: 'account-side-payments' },
+          { path: '/account/subscription', label: 'Aboneliğim', testId: 'account-side-subscription' },
+        ],
+      },
+      {
         key: 'account',
         title: 'Hesap & Güvenlik',
         testId: 'account-side-group-account',

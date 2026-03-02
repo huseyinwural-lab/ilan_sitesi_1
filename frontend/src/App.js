@@ -187,6 +187,9 @@ function App() {
                   >
                     <Route index element={<AccountDashboard />} />
                     <Route path="listings" element={<MyListings />} />
+                    <Route path="invoices" element={<AccountInvoicesPage />} />
+                    <Route path="payments" element={<AccountPaymentsPage />} />
+                    <Route path="subscription" element={<AccountSubscriptionPage />} />
                     <Route path="favorites" element={<AccountFavorites />} />
                     <Route path="saved-searches" element={<AccountSavedSearches />} />
                     <Route path="messages" element={<AccountMessages />} />
