@@ -4,7 +4,7 @@ import time
 import uuid
 
 def test_token_based_rate_limit():
-    api_url = "https://stripe-foundation.preview.emergentagent.com/api"
+    api_url = "https://marketplace-finance-3.preview.emergentagent.com/api"
     
     # First get an admin token
     print("Getting admin token...")
@@ -69,7 +69,7 @@ def test_token_based_rate_limit():
 
 def test_different_tokens():
     """Test that different tokens have separate rate limits"""
-    api_url = "https://stripe-foundation.preview.emergentagent.com/api"
+    api_url = "https://marketplace-finance-3.preview.emergentagent.com/api"
     
     print("\n🔍 Testing token separation...")
     

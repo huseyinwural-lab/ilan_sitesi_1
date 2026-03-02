@@ -406,10 +406,10 @@ const checkDb = async () => {
 
 
 ### Test Summary
-Frontend smoke test to verify application is up and running as per review request: "Frontend smoke testi yap: https://stripe-foundation.preview.emergentagent.com adresini aç, sayfanın boş olmadığını doğrula, temel header ve ana içerik alanının render edildiğini kontrol et. Bu iterasyonda frontend kod değişmedi; sadece uygulamanın ayakta olduğunu doğrulayan kısa smoke test yeterli."
+Frontend smoke test to verify application is up and running as per review request: "Frontend smoke testi yap: https://marketplace-finance-3.preview.emergentagent.com adresini aç, sayfanın boş olmadığını doğrula, temel header ve ana içerik alanının render edildiğini kontrol et. Bu iterasyonda frontend kod değişmedi; sadece uygulamanın ayakta olduğunu doğrulayan kısa smoke test yeterli."
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com
+1. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com
 2. ✅ Verify page is not empty
 3. ✅ Verify header element renders
 4. ✅ Verify main content area renders
@@ -422,7 +422,7 @@ Frontend smoke test to verify application is up and running as per review reques
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Application Up and Running**: ✅ VERIFIED
-  - **URL**: https://stripe-foundation.preview.emergentagent.com
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com
   - **Status**: Application is accessible and loads successfully
   - **Page Title**: "Emergent | Fullstack App"
   - **DOM Load Time**: <3 seconds
@@ -475,7 +475,7 @@ Frontend smoke test to verify application is up and running as per review reques
 
 **8. Console Logs**: ⚠️ MINOR ISSUE (NON-CRITICAL)
   - **Network Error**: One failed request detected:
-    - `REQUEST FAILED: https://stripe-foundation.preview.emergentagent.com/api/ui/header?segment=individual - net::ERR_ABORTED`
+    - `REQUEST FAILED: https://marketplace-finance-3.preview.emergentagent.com/api/ui/header?segment=individual - net::ERR_ABORTED`
   - **Impact**: MINIMAL - Page still renders correctly despite this network error
   - **Severity**: LOW - This appears to be a non-blocking request
   - **Note**: Application functions properly despite this error
@@ -522,7 +522,7 @@ Frontend smoke test to verify application is up and running as per review reques
 **Frontend Stack Verification**:
 - **Framework**: React (confirmed by #root element and React rendering)
 - **Page Title**: "Emergent | Fullstack App"
-- **Base URL**: https://stripe-foundation.preview.emergentagent.com
+- **Base URL**: https://marketplace-finance-3.preview.emergentagent.com
 - **Viewport**: Desktop (1920x1080)
 - **Load Performance**: Fast (<3 seconds for DOM content loaded)
 
@@ -547,10 +547,10 @@ Frontend smoke test to verify application is up and running as per review reques
 - **Recommendation**: ✅ Application is stable and ready for use
 
 ### Review Request Compliance:
-✅ **Review Request**: "Frontend smoke testi yap: https://stripe-foundation.preview.emergentagent.com adresini aç, sayfanın boş olmadığını doğrula, temel header ve ana içerik alanının render edildiğini kontrol et. Bu iterasyonda frontend kod değişmedi; sadece uygulamanın ayakta olduğunu doğrulayan kısa smoke test yeterli."
+✅ **Review Request**: "Frontend smoke testi yap: https://marketplace-finance-3.preview.emergentagent.com adresini aç, sayfanın boş olmadığını doğrula, temel header ve ana içerik alanının render edildiğini kontrol et. Bu iterasyonda frontend kod değişmedi; sadece uygulamanın ayakta olduğunu doğrulayan kısa smoke test yeterli."
 
 **Results**:
-- ✅ Opened URL: https://stripe-foundation.preview.emergentagent.com - SUCCESS
+- ✅ Opened URL: https://marketplace-finance-3.preview.emergentagent.com - SUCCESS
 - ✅ Page not empty verified: 185 characters of content visible
 - ✅ Header renders: "annoncela.com" logo + navigation buttons visible
 - ✅ Main content area renders: Categories, listings, and search functionality visible
@@ -560,7 +560,7 @@ Frontend smoke test to verify application is up and running as per review reques
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Mar 2, 2026 (LATEST)
-- **Message**: Frontend smoke test SUCCESSFULLY COMPLETED with 100% PASS rate. CRITICAL VERIFICATION: Application at https://stripe-foundation.preview.emergentagent.com is UP AND RUNNING. Page loads successfully and is NOT EMPTY (185 characters of content). HEADER renders correctly with brand logo, search bar, login and register buttons visible. MAIN CONTENT AREA renders correctly showing categories section, featured listings section, and loading states for dynamic content. React root element successfully rendered with 2 child components. All critical UI elements (logo, login, register, search, categories) are present and accessible. NO visible errors detected on page. MINOR: One non-critical network request failed (/api/ui/header?segment=individual - ERR_ABORTED) but this does NOT impact page rendering or functionality. Frontend code unchanged in this iteration as expected. Application is stable and production-ready.
+- **Message**: Frontend smoke test SUCCESSFULLY COMPLETED with 100% PASS rate. CRITICAL VERIFICATION: Application at https://marketplace-finance-3.preview.emergentagent.com is UP AND RUNNING. Page loads successfully and is NOT EMPTY (185 characters of content). HEADER renders correctly with brand logo, search bar, login and register buttons visible. MAIN CONTENT AREA renders correctly showing categories section, featured listings section, and loading states for dynamic content. React root element successfully rendered with 2 child components. All critical UI elements (logo, login, register, search, categories) are present and accessible. NO visible errors detected on page. MINOR: One non-critical network request failed (/api/ui/header?segment=individual - ERR_ABORTED) but this does NOT impact page rendering or functionality. Frontend code unchanged in this iteration as expected. Application is stable and production-ready.
 
 ---
 
@@ -568,7 +568,7 @@ Frontend smoke test to verify application is up and running as per review reques
 ## Dealer Sidebar Favorites Toggle Re-test (Feb 27, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Re-test of dealer sidebar accordion favorites toggle functionality as per review request: "Re-test only this bug on dealer sidebar accordion: URL: https://stripe-foundation.preview.emergentagent.com/dealer/overview - Validate `dealer-sidebar-tree-toggle-favorites` now toggles correctly: expanded -> collapsed and collapsed -> expanded. Also confirm text readability remains high (not faded) for active/inactive states. Return concise pass/fail."
+Re-test of dealer sidebar accordion favorites toggle functionality as per review request: "Re-test only this bug on dealer sidebar accordion: URL: https://marketplace-finance-3.preview.emergentagent.com/dealer/overview - Validate `dealer-sidebar-tree-toggle-favorites` now toggles correctly: expanded -> collapsed and collapsed -> expanded. Also confirm text readability remains high (not faded) for active/inactive states. Return concise pass/fail."
 
 ### Test Flow Executed:
 1. ✅ Dealer login with dealer@platform.com / Dealer123! → authentication successful
@@ -673,7 +673,7 @@ Re-test of dealer sidebar accordion favorites toggle functionality as per review
 ## Backend API Search Sync Domain Test (Feb 25, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Comprehensive backend API test for P1.2 search sync domain functionality covering Meili config-driven endpoints, RBAC protection, error handling, response contracts, and listing lifecycle hooks as per review request: "Backend/API focused validation for P1.2 search sync domain. Base URL: https://stripe-foundation.preview.emergentagent.com. Credentials: Admin: admin@platform.com / Admin123!, User: user@platform.com / User123!. Please test: 1) Meili config-driven endpoints (admin only RBAC): GET /api/admin/search/meili/contract, GET /api/admin/search/meili/health, GET /api/admin/search/meili/stage-smoke, POST /api/admin/search/meili/reindex, GET /api/admin/search/meili/sync-jobs, POST /api/admin/search/meili/sync-jobs/process. Confirm non-admin gets 403 on these endpoints. 2) Listing lifecycle hooks create queue behavior: create/update listing draft, request publish, approve/unpublish path. Verify search sync jobs are created and status transitions are sensible. 3) Error handling: when no active meili config, stage-smoke and reindex should fail-fast with clear ACTIVE_CONFIG_REQUIRED detail (not 500). 4) Response contracts: reindex returns indexed_docs + elapsed_seconds, stage-smoke returns ranking_sort including premium_score:desc and published_at:desc."
+Comprehensive backend API test for P1.2 search sync domain functionality covering Meili config-driven endpoints, RBAC protection, error handling, response contracts, and listing lifecycle hooks as per review request: "Backend/API focused validation for P1.2 search sync domain. Base URL: https://marketplace-finance-3.preview.emergentagent.com. Credentials: Admin: admin@platform.com / Admin123!, User: user@platform.com / User123!. Please test: 1) Meili config-driven endpoints (admin only RBAC): GET /api/admin/search/meili/contract, GET /api/admin/search/meili/health, GET /api/admin/search/meili/stage-smoke, POST /api/admin/search/meili/reindex, GET /api/admin/search/meili/sync-jobs, POST /api/admin/search/meili/sync-jobs/process. Confirm non-admin gets 403 on these endpoints. 2) Listing lifecycle hooks create queue behavior: create/update listing draft, request publish, approve/unpublish path. Verify search sync jobs are created and status transitions are sensible. 3) Error handling: when no active meili config, stage-smoke and reindex should fail-fast with clear ACTIVE_CONFIG_REQUIRED detail (not 500). 4) Response contracts: reindex returns indexed_docs + elapsed_seconds, stage-smoke returns ranking_sort including premium_score:desc and published_at:desc."
 
 ### Test Flow Executed:
 1. ✅ Admin login (admin@platform.com / Admin123!) and User login (user@platform.com / User123!) → both successful
@@ -845,13 +845,13 @@ Comprehensive theme stabilization test for admin session with focus on dark mode
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
   - **No Login Errors**: No authentication errors detected
 
 **2. Footer Builder Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/site-design/footer loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/site-design/footer loads successfully
   - **Admin Footer Builder**: data-testid="admin-footer-builder" ✅ VISIBLE
   - **Page Title**: "Footer Yönetimi" displayed correctly
   - **Builder Section**: Full footer builder interface rendered with all controls
@@ -1103,7 +1103,7 @@ Comprehensive E2E frontend verification test for role-based access control and r
   - **Credentials**: user@platform.com / User123!
   - **Expected Role**: individual with portal_scope='account'
   - **Login Result**: ✅ SUCCESS - redirected to /account
-  - **Current URL After Login**: https://stripe-foundation.preview.emergentagent.com/account
+  - **Current URL After Login**: https://marketplace-finance-3.preview.emergentagent.com/account
   - **Page Content**: Consumer dashboard with "BIREYSEL PORTAL" header, "Test User" shown
   - **Menu Items**: İlan Yönetimi (Listings), Favoriler (Favorites), Mesajlar & Bildirimler (Messages), Servisler (Services), Hesabım (Account)
   - **CRITICAL**: AccountRoute component correctly identifies portal_scope='account' and allows access to /account
@@ -1119,7 +1119,7 @@ Comprehensive E2E frontend verification test for role-based access control and r
   - **Test**: Navigated to /admin while logged in as consumer
   - **Expected Behavior**: PortalGate should detect portal_scope mismatch and redirect to /account
   - **Actual Result**: ✅ Redirected to /account
-  - **Final URL**: https://stripe-foundation.preview.emergentagent.com/account
+  - **Final URL**: https://marketplace-finance-3.preview.emergentagent.com/account
   - **Redirect Mechanism**: PortalGate component (PortalGate.jsx lines 32-35)
     - Checks: `eligiblePortal !== portal`
     - Action: `<Navigate to={defaultHomeForScope(portalScope)} />`
@@ -1131,7 +1131,7 @@ Comprehensive E2E frontend verification test for role-based access control and r
   - **Credentials**: dealer@platform.com / Dealer123!
   - **Expected Role**: dealer with portal_scope='dealer'
   - **Login Result**: ✅ SUCCESS - redirected to /dealer
-  - **Current URL After Login**: https://stripe-foundation.preview.emergentagent.com/dealer
+  - **Current URL After Login**: https://marketplace-finance-3.preview.emergentagent.com/dealer
   - **Page Content**: Dealer dashboard with "TICARI PORTAL" header, "Dealer Demo" shown
   - **Menu Items**: Panel (Dashboard), İlan Yönetimi (Listings), Faturalar (Invoices), Şirket (Company), Gizlilik Merkezi (Privacy)
   - **CRITICAL**: PortalGate component correctly identifies portal_scope='dealer' and allows access to /dealer portal
@@ -1140,7 +1140,7 @@ Comprehensive E2E frontend verification test for role-based access control and r
   - **Test**: Navigated to /admin while logged in as dealer
   - **Expected Behavior**: PortalGate should detect portal mismatch and redirect to /dealer
   - **Actual Result**: ✅ Redirected to /dealer
-  - **Final URL**: https://stripe-foundation.preview.emergentagent.com/dealer
+  - **Final URL**: https://marketplace-finance-3.preview.emergentagent.com/dealer
   - **Redirect Mechanism**: PortalGate component
     - Checks: dealer portal_scope does not match admin portal
     - Action: Redirects to defaultHomeForScope('dealer') = '/dealer'
@@ -1148,7 +1148,7 @@ Comprehensive E2E frontend verification test for role-based access control and r
 
 **6. Public Search Page**: ✅ WORKING
   - **Search URL**: /search?q=Mongo%20Zero%20Vehicle%20Listing
-  - **Full URL**: https://stripe-foundation.preview.emergentagent.com/search?q=Mongo%20Zero%20Vehicle%20Listing
+  - **Full URL**: https://marketplace-finance-3.preview.emergentagent.com/search?q=Mongo%20Zero%20Vehicle%20Listing
   - **Page Load**: ✅ SUCCESS - SearchPage component rendered
   - **Search Results**: 1 listing found: "Mongo Zero Vehicle Listing"
   - **Listing Card Content**:
@@ -1162,7 +1162,7 @@ Comprehensive E2E frontend verification test for role-based access control and r
 **7. Detail Page Navigation with Slug-ID**: ✅ WORKING
   - **Action**: Clicked on "Mongo Zero Vehicle Listing" card from search results
   - **Navigation**: ✅ SUCCESS - navigated to detail page
-  - **Detail URL**: https://stripe-foundation.preview.emergentagent.com/ilan/mongo-zero-vehicle-listing-7b3419e4-a144-42d5-9b28-d137628ad8b8
+  - **Detail URL**: https://marketplace-finance-3.preview.emergentagent.com/ilan/mongo-zero-vehicle-listing-7b3419e4-a144-42d5-9b28-d137628ad8b8
   - **Route Pattern**: /ilan/:id (defined in App.js line 123)
   - **Slug-ID Format**: `{slug}-{uuid}`
     - Slug: "mongo-zero-vehicle-listing"
@@ -1178,7 +1178,7 @@ Comprehensive E2E frontend verification test for role-based access control and r
 
 **8. Admin Login Page Accessibility**: ✅ WORKING
   - **Admin Login URL**: /admin/login
-  - **Full URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - **Full URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login
   - **Page Load**: ✅ SUCCESS - BackofficeLogin component rendered
   - **Page Title**: "Giriş yap" (Login)
   - **Page Subtitle**: "Hesabınıza giriş yapın." (Login to your account)
@@ -1373,7 +1373,7 @@ Comprehensive E2E frontend verification test for role-based access control and r
 ## Admin System Settings Cloudflare Card Test - Successful Configuration (Feb 23, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Comprehensive test for Admin System Settings Cloudflare card with successful canary test as per review request: "Test the Admin System Settings Cloudflare card in the preview UI. Base URL: https://stripe-foundation.preview.emergentagent.com. Login: /admin/login with admin@platform.com / Admin123!. Steps to validate: 1) Login successfully and navigate to /admin/system-settings. 2) Verify Cloudflare card is visible (data-testid=system-settings-cloudflare-card). 3) Verify status row is visible (data-testid=system-settings-cloudflare-status). 4) Verify masked Account/Zone IDs are shown (data-testid system-settings-cloudflare-account-hint / zone-hint). 5) Click 'Test Connection (Canary)' (data-testid=system-settings-cloudflare-canary). 6) Confirm canary status text shows 'Başarılı' (data-testid=system-settings-cloudflare-canary-status). 7) Expand details (data-testid=system-settings-cloudflare-canary-details) and confirm canary_status=OK is shown."
+Comprehensive test for Admin System Settings Cloudflare card with successful canary test as per review request: "Test the Admin System Settings Cloudflare card in the preview UI. Base URL: https://marketplace-finance-3.preview.emergentagent.com. Login: /admin/login with admin@platform.com / Admin123!. Steps to validate: 1) Login successfully and navigate to /admin/system-settings. 2) Verify Cloudflare card is visible (data-testid=system-settings-cloudflare-card). 3) Verify status row is visible (data-testid=system-settings-cloudflare-status). 4) Verify masked Account/Zone IDs are shown (data-testid system-settings-cloudflare-account-hint / zone-hint). 5) Click 'Test Connection (Canary)' (data-testid=system-settings-cloudflare-canary). 6) Confirm canary status text shows 'Başarılı' (data-testid=system-settings-cloudflare-canary-status). 7) Expand details (data-testid=system-settings-cloudflare-canary-details) and confirm canary_status=OK is shown."
 
 ### Test Flow Executed:
 1. ✅ Login at /admin/login with admin@platform.com / Admin123! → authentication successful
@@ -1392,13 +1392,13 @@ Comprehensive test for Admin System Settings Cloudflare card with successful can
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
   - **No Errors**: No login errors detected
 
 **2. System Settings Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/system-settings loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/system-settings loads successfully
   - **Page Container**: data-testid="admin-system-settings-page" present and visible
   - **Page Title**: "System Settings" displayed correctly
 
@@ -1577,7 +1577,7 @@ Previous tests (earlier in test_result.md) showed:
 - **UI**: ✅ PRODUCTION-READY (all elements render correctly, no errors, proper success states)
 
 ### Review Request Compliance:
-✅ **Review Request**: "Test the Admin System Settings Cloudflare card in the preview UI. Base URL: https://stripe-foundation.preview.emergentagent.com. Login: /admin/login with admin@platform.com / Admin123!. Steps to validate: 1) Login successfully and navigate to /admin/system-settings. 2) Verify Cloudflare card is visible (data-testid=system-settings-cloudflare-card). 3) Verify status row is visible (data-testid=system-settings-cloudflare-status). 4) Verify masked Account/Zone IDs are shown (data-testid system-settings-cloudflare-account-hint / zone-hint). 5) Click 'Test Connection (Canary)' (data-testid=system-settings-cloudflare-canary). 6) Confirm canary status text shows 'Başarılı' (data-testid=system-settings-cloudflare-canary-status). 7) Expand details (data-testid=system-settings-cloudflare-canary-details) and confirm canary_status=OK is shown."
+✅ **Review Request**: "Test the Admin System Settings Cloudflare card in the preview UI. Base URL: https://marketplace-finance-3.preview.emergentagent.com. Login: /admin/login with admin@platform.com / Admin123!. Steps to validate: 1) Login successfully and navigate to /admin/system-settings. 2) Verify Cloudflare card is visible (data-testid=system-settings-cloudflare-card). 3) Verify status row is visible (data-testid=system-settings-cloudflare-status). 4) Verify masked Account/Zone IDs are shown (data-testid system-settings-cloudflare-account-hint / zone-hint). 5) Click 'Test Connection (Canary)' (data-testid=system-settings-cloudflare-canary). 6) Confirm canary status text shows 'Başarılı' (data-testid=system-settings-cloudflare-canary-status). 7) Expand details (data-testid=system-settings-cloudflare-canary-details) and confirm canary_status=OK is shown."
 
 **Results**:
 - ✅ Step 1: Login successful with admin@platform.com / Admin123!, navigated to /admin/system-settings
@@ -1605,7 +1605,7 @@ Previous tests (earlier in test_result.md) showed:
 ## Cloudflare Settings UX Guard Test (Feb 23, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Comprehensive UX guard test for Cloudflare Settings as per review request: "Cloudflare Settings UX Guard — PASS. Base URL: https://stripe-foundation.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!) → /admin/system-settings. 2) Cloudflare kartında tek bir 'Durum' satırı görünüyor mu? (Tek mesaj, öncelikli blokaj) Metin şu formatta mı: '🔒 Güvenlik anahtarı tanımlı değil. Bu nedenle Cloudflare bilgileri kaydedilemez. (CONFIG_ENCRYPTION_KEY)' Alt satır: 'Lütfen sistem yöneticinizden bu anahtarı ortam değişkeni/secret olarak eklemesini isteyin.' 3) Save + Canary butonları disabled mı? Hover tooltip: 'Önce güvenlik anahtarı tanımlanmalı.' 4) Canary sonucu inline: 'Bağlantı testi yapılamadı / Başarılı' metni + Detaylar altında canary_status, reason, cf_ids_source görünüyor mu? PASS/FAIL raporu ver."
+Comprehensive UX guard test for Cloudflare Settings as per review request: "Cloudflare Settings UX Guard — PASS. Base URL: https://marketplace-finance-3.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!) → /admin/system-settings. 2) Cloudflare kartında tek bir 'Durum' satırı görünüyor mu? (Tek mesaj, öncelikli blokaj) Metin şu formatta mı: '🔒 Güvenlik anahtarı tanımlı değil. Bu nedenle Cloudflare bilgileri kaydedilemez. (CONFIG_ENCRYPTION_KEY)' Alt satır: 'Lütfen sistem yöneticinizden bu anahtarı ortam değişkeni/secret olarak eklemesini isteyin.' 3) Save + Canary butonları disabled mı? Hover tooltip: 'Önce güvenlik anahtarı tanımlanmalı.' 4) Canary sonucu inline: 'Bağlantı testi yapılamadı / Başarılı' metni + Detaylar altında canary_status, reason, cf_ids_source görünüyor mu? PASS/FAIL raporu ver."
 
 ### Test Flow Executed:
 1. ✅ Admin login at /admin/login with admin@platform.com / Admin123! → authentication successful
@@ -1623,13 +1623,13 @@ Comprehensive UX guard test for Cloudflare Settings as per review request: "Clou
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
   - **No Errors**: No login errors detected
 
 **2. System Settings Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/system-settings loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/system-settings loads successfully
   - **Page Container**: data-testid="admin-system-settings-page" present and visible
   - **Page Title**: "System Settings" displayed correctly
 
@@ -1781,7 +1781,7 @@ Comprehensive UX guard test for Cloudflare Settings as per review request: "Clou
 ## Frontend Verification: Cloudflare Encryption Key & CDN Flag (Feb 23, 2026) ✅ COMPLETE PASS
 
 ### Test Summary
-Frontend verification test for Cloudflare CONFIG_ENCRYPTION_KEY banner, Save button state, inline canary status, System Health CDN "Flag Off" badge, and canary tooltip as per review request: "Frontend verification: Base URL: https://stripe-foundation.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!) → /admin/system-settings. Cloudflare kartında banner 'CONFIG_ENCRYPTION_KEY tanımlı değil…' görünüyor mu? Save butonu disabled mı? 2) Cloudflare kartında canary status inline görünüyor mu? (toast yerine) 3) System Health paneli aç: CDN bölümünde 'Flag Off' rozeti görünüyor mu? Canary tooltip var mı? PASS/FAIL raporu ver."
+Frontend verification test for Cloudflare CONFIG_ENCRYPTION_KEY banner, Save button state, inline canary status, System Health CDN "Flag Off" badge, and canary tooltip as per review request: "Frontend verification: Base URL: https://marketplace-finance-3.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!) → /admin/system-settings. Cloudflare kartında banner 'CONFIG_ENCRYPTION_KEY tanımlı değil…' görünüyor mu? Save butonu disabled mı? 2) Cloudflare kartında canary status inline görünüyor mu? (toast yerine) 3) System Health paneli aç: CDN bölümünde 'Flag Off' rozeti görünüyor mu? Canary tooltip var mı? PASS/FAIL raporu ver."
 
 ### Test Flow Executed:
 1. ✅ Admin login at /admin/login with admin@platform.com / Admin123! → authentication successful
@@ -1798,13 +1798,13 @@ Frontend verification test for Cloudflare CONFIG_ENCRYPTION_KEY banner, Save but
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
   - **No Errors**: No login errors detected
 
 **2. System Settings Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/system-settings loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/system-settings loads successfully
   - **Page Container**: data-testid="admin-system-settings-page" present and visible
   - **Page Title**: "System Settings" displayed correctly
 
@@ -1983,7 +1983,7 @@ Frontend verification test for Cloudflare CONFIG_ENCRYPTION_KEY banner, Save but
 ## Admin System Settings Cloudflare Card Test (Feb 23, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Comprehensive UI test for Admin System Settings Cloudflare card as per review request: "Admin System Settings Cloudflare kartı testi: Base URL: https://stripe-foundation.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!) ve /admin/system-settings sayfasına git. 2) 'Cloudflare (CDN & Analytics)' kartı görünüyor mu? Account/Zone inputları masked (password) mi? Placeholder'da •••• var mı? 3) 'Test Connection (Canary)' ve 'Kaydet' butonları görünüyor mu? (super_admin olarak aktif) 4) Canary status metni ve tooltip title attribute görünür mü? (mouse over)"
+Comprehensive UI test for Admin System Settings Cloudflare card as per review request: "Admin System Settings Cloudflare kartı testi: Base URL: https://marketplace-finance-3.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!) ve /admin/system-settings sayfasına git. 2) 'Cloudflare (CDN & Analytics)' kartı görünüyor mu? Account/Zone inputları masked (password) mi? Placeholder'da •••• var mı? 3) 'Test Connection (Canary)' ve 'Kaydet' butonları görünüyor mu? (super_admin olarak aktif) 4) Canary status metni ve tooltip title attribute görünür mü? (mouse over)"
 
 ### Test Flow Executed:
 1. ✅ Login at /admin/login with admin@platform.com / Admin123! → authentication successful
@@ -2002,13 +2002,13 @@ Comprehensive UI test for Admin System Settings Cloudflare card as per review re
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
   - **No Errors**: No login errors detected
 
 **2. System Settings Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/system-settings loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/system-settings loads successfully
   - **Page Container**: data-testid="admin-system-settings-page" present and visible
   - **Page Title**: "System Settings" displayed correctly
 
@@ -2185,7 +2185,7 @@ Comprehensive UI smoke test for Admin System Health Detail Panel as per review r
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
   - **Admin Layout**: data-testid="admin-layout" present and loaded
@@ -2408,13 +2408,13 @@ Comprehensive E2E test for new drill-down category selection UI and admin sample
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. User Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/login loads successfully
   - **Credentials**: user@platform.com / User123!
   - **Login Result**: ✅ SUCCESS - redirected to /account
   - **No Errors**: No login errors detected
 
 **2. Category Selection Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/ilan-ver/kategori-secimi loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/ilan-ver/kategori-secimi loads successfully
   - **Page Container**: data-testid="ilan-ver-category-page" present and visible
   - **Page Title**: data-testid="ilan-ver-title" - "Adım Adım Kategori Seç"
   - **Page Subtitle**: data-testid="ilan-ver-subtitle" - "Önce modül seçin, ardından kategoriyi adım adım seçin."
@@ -2603,13 +2603,13 @@ Comprehensive E2E test for Admin Categories Import/Export UI as per review reque
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No login errors detected
 
 **2. Import/Export Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/categories/import-export loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/categories/import-export loads successfully
   - **Page Container**: data-testid="admin-categories-import-export-page" present and visible
   - **Page Title**: data-testid="categories-import-export-title" - "Import / Export"
   - **Page Subtitle**: data-testid="categories-import-export-subtitle" - "Kategori master verisini CSV/XLSX formatlarıyla içe/dışa aktar."
@@ -2850,13 +2850,13 @@ Comprehensive E2E test for Admin Category Wizard flow as per review request: "Ad
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No login errors detected
 
 **2. Categories Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/categories loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/categories loads successfully
   - **Page Container**: data-testid="admin-categories-page" present and visible
   - **"Yeni Kategori" Button**: data-testid="categories-create-open" found with correct text "Yeni Kategori"
 
@@ -3036,13 +3036,13 @@ Comprehensive UI test for Admin Categories page subcategory workflow as per revi
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No login errors detected
 
 **2. Categories Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/categories loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/categories loads successfully
   - **Page Container**: data-testid="admin-categories-page" present and visible
   - **"Yeni Kategori" Button**: data-testid="categories-create-open" found with correct text "Yeni Kategori"
   - **Page Title**: "Kategoriler" displayed correctly
@@ -3175,7 +3175,7 @@ Comprehensive UI test for Admin Categories page subcategory workflow as per revi
 Re-tested admin UI moderation queue as per review request: "Re-test admin UI: login at /admin/login with admin@platform.com / Admin123!, go to /admin/moderation and confirm at least 1 row in moderation queue is visible."
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/admin/login
+1. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/admin/login
 2. ✅ Login with admin@platform.com / Admin123! → authentication successful
 3. ✅ Navigate to /admin/moderation → page loads successfully
 4. ✅ Verify moderation queue list → **1 item found** ✅ (requirement met: at least 1 row)
@@ -3185,13 +3185,13 @@ Re-tested admin UI moderation queue as per review request: "Re-test admin UI: lo
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No login errors detected
 
 **2. Moderation Queue Page**: ✅ LOADS SUCCESSFULLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/moderation loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/moderation loads successfully
   - **Page Container**: data-testid="moderation-queue-page" present and visible
   - **Page Title**: "Moderation Queue" displayed correctly
   - **Filter Controls**: ✅ PRESENT (All Countries, All Modules dropdowns visible)
@@ -3268,10 +3268,10 @@ Re-tested admin UI moderation queue as per review request: "Re-test admin UI: lo
 ## Admin UI Test - Moderation Queue (Feb 22, 2026 - CURRENT) ⚠️ EMPTY QUEUE
 
 ### Test Summary
-Admin UI test verification as per review request: "Admin UI test: 1) go to https://stripe-foundation.preview.emergentagent.com/admin/login, login with admin@platform.com / Admin123!. 2) After login, navigate to /admin/moderation (or moderation queue) and confirm list loads (at least 1 row). Report result."
+Admin UI test verification as per review request: "Admin UI test: 1) go to https://marketplace-finance-3.preview.emergentagent.com/admin/login, login with admin@platform.com / Admin123!. 2) After login, navigate to /admin/moderation (or moderation queue) and confirm list loads (at least 1 row). Report result."
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/admin/login
+1. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/admin/login
 2. ✅ Login with admin@platform.com / Admin123! → authentication successful
 3. ✅ Navigate to /admin/moderation → page loads successfully
 4. ❌ Verify moderation queue list → 0 items found (requirement: at least 1 row)
@@ -3281,7 +3281,7 @@ Admin UI test verification as per review request: "Admin UI test: 1) go to https
 #### ✅ UI AND AUTHENTICATION WORKING:
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Page Container**: data-testid="login-page" present and visible
   - **Form Elements**: Email input, password input, and submit button all found
   - **Credentials**: admin@platform.com / Admin123!
@@ -3289,7 +3289,7 @@ Admin UI test verification as per review request: "Admin UI test: 1) go to https
   - **No Errors**: No "Giriş başarısız" or error messages detected
 
 **2. Moderation Queue Page**: ✅ LOADS SUCCESSFULLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/moderation loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/moderation loads successfully
   - **Page Container**: data-testid="moderation-queue-page" present and visible
   - **Page Title**: "Moderation Queue" displayed (data-testid="moderation-queue-title")
   - **Page Description**: "Review pending listings and apply moderation decisions. · 0"
@@ -3386,7 +3386,7 @@ All required data-testids present and functional on moderation page:
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 22, 2026 (CURRENT)
-- **Message**: Admin UI test COMPLETED with findings. Login successful: admin@platform.com / Admin123! works correctly at https://stripe-foundation.preview.emergentagent.com/admin/login and redirects to /admin. Navigation to /admin/moderation successful - page loads with title "Moderation Queue", filters (country, module), and proper UI structure (all data-testids present). However, moderation queue is EMPTY (0 items found). Page displays clean empty state: "All caught up! No listings pending moderation". UI is fully functional (no errors, no crashes, empty state handled properly), but TEST REQUIREMENT NOT MET: need at least 1 row, found 0 rows. ROOT CAUSE: Database has no listings with status="pending_moderation" - this is a DATA/SEEDING issue, not a UI/code issue. All frontend and backend components are working correctly. RECOMMENDATION: Seed test database with listings in "pending_moderation" status to verify full moderation workflow.
+- **Message**: Admin UI test COMPLETED with findings. Login successful: admin@platform.com / Admin123! works correctly at https://marketplace-finance-3.preview.emergentagent.com/admin/login and redirects to /admin. Navigation to /admin/moderation successful - page loads with title "Moderation Queue", filters (country, module), and proper UI structure (all data-testids present). However, moderation queue is EMPTY (0 items found). Page displays clean empty state: "All caught up! No listings pending moderation". UI is fully functional (no errors, no crashes, empty state handled properly), but TEST REQUIREMENT NOT MET: need at least 1 row, found 0 rows. ROOT CAUSE: Database has no listings with status="pending_moderation" - this is a DATA/SEEDING issue, not a UI/code issue. All frontend and backend components are working correctly. RECOMMENDATION: Seed test database with listings in "pending_moderation" status to verify full moderation workflow.
 
 ---
 
@@ -3397,9 +3397,9 @@ All required data-testids present and functional on moderation page:
 ## Admin Demo Page UI Smoke Test (Feb 22, 2026 - CURRENT) ✅ COMPLETE PASS
 
 ### Test Summary
-UI smoke test verification for /admin-demo page as per review request: "UI smoke: https://stripe-foundation.preview.emergentagent.com/admin-demo sayfası yükleniyor mu? Başlık ve moderasyon formu görünüyor mu? (Auth gerekmemeli)"
+UI smoke test verification for /admin-demo page as per review request: "UI smoke: https://marketplace-finance-3.preview.emergentagent.com/admin-demo sayfası yükleniyor mu? Başlık ve moderasyon formu görünüyor mu? (Auth gerekmemeli)"
 
-Translation: "UI smoke: Is the https://stripe-foundation.preview.emergentagent.com/admin-demo page loading? Are the title and moderation form visible? (Should not require auth)"
+Translation: "UI smoke: Is the https://marketplace-finance-3.preview.emergentagent.com/admin-demo page loading? Are the title and moderation form visible? (Should not require auth)"
 
 ### Test Flow Executed:
 1. ✅ Navigate to /admin-demo → verify page loads without authentication
@@ -3411,9 +3411,9 @@ Translation: "UI smoke: Is the https://stripe-foundation.preview.emergentagent.c
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Page Loading**: ✅ WORKING PERFECTLY
-  - **Page Load**: ✅ https://stripe-foundation.preview.emergentagent.com/admin-demo loads successfully
+  - **Page Load**: ✅ https://marketplace-finance-3.preview.emergentagent.com/admin-demo loads successfully
   - **No Redirect**: ✅ Page does NOT redirect to login - publicly accessible
-  - **Current URL**: https://stripe-foundation.preview.emergentagent.com/admin-demo
+  - **Current URL**: https://marketplace-finance-3.preview.emergentagent.com/admin-demo
   - **Page Container**: data-testid="admin-demo" present and visible (True)
   - **No Errors**: No error messages found on page, no console errors
 
@@ -3482,7 +3482,7 @@ Translation: "UI smoke: Is the https://stripe-foundation.preview.emergentagent.c
 - **Production Ready**: ✅ CONFIRMED for public demo access
 
 ### Review Request Compliance:
-✅ **Review Request**: "UI smoke: https://stripe-foundation.preview.emergentagent.com/admin-demo sayfası yükleniyor mu? Başlık ve moderasyon formu görünüyor mu? (Auth gerekmemeli)"
+✅ **Review Request**: "UI smoke: https://marketplace-finance-3.preview.emergentagent.com/admin-demo sayfası yükleniyor mu? Başlık ve moderasyon formu görünüyor mu? (Auth gerekmemeli)"
   - **Result**: 
     - ✅ Sayfa yükleniyor (Page is loading)
     - ✅ Başlık görünüyor (Title is visible: "İlan Moderasyon İncelemesi")
@@ -3511,7 +3511,7 @@ UI smoke test verification as per review request: "UI smoke (backend 520 olabili
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. /login Page Rendering**: ✅ WORKING PERFECTLY
-  - **Page Load**: ✅ https://stripe-foundation.preview.emergentagent.com/login loads successfully
+  - **Page Load**: ✅ https://marketplace-finance-3.preview.emergentagent.com/login loads successfully
   - **Page Container**: data-testid="login-page" present and visible
   - **Login Form**: data-testid="login-form" rendered correctly
   - **Email Input**: data-testid="login-email" visible (True)
@@ -3523,7 +3523,7 @@ UI smoke test verification as per review request: "UI smoke (backend 520 olabili
 **2. /account/create/vehicle-wizard Accessibility**: ✅ PROPERLY PROTECTED
   - **Route Protection**: ✅ Route requires authentication (as expected)
   - **Redirect Behavior**: When accessed without login, redirects to /login page
-  - **Final URL**: https://stripe-foundation.preview.emergentagent.com/login
+  - **Final URL**: https://marketplace-finance-3.preview.emergentagent.com/login
   - **Expected Behavior**: ✅ CONFIRMED - Protected route correctly enforces authentication
   - **No Errors**: No error messages or console errors during redirect
   - **Portal Pages**: CANNOT be tested without authentication (as mentioned in review request)
@@ -3569,16 +3569,16 @@ UI smoke test verification as per review request: "UI smoke (backend 520 olabili
 Re-verified UI smoke test for all three login pages (/login, /dealer/login, /admin/login) at preview URL as per review request: "UI smoke (backend 520 olabilir): /login, /dealer/login ve /admin/login sayfaları render oluyor mu? Menü/portallar için sadece UI load kontrolü yeterli."
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/login → UI renders correctly
-2. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/dealer/login → UI renders correctly
-3. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/admin/login → UI renders correctly
+1. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/login → UI renders correctly
+2. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/dealer/login → UI renders correctly
+3. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/admin/login → UI renders correctly
 
 ### Critical Findings:
 
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **Main Login Page (/login)**: ✅ WORKING
-  - **Page Load**: ✅ https://stripe-foundation.preview.emergentagent.com/login loads successfully
+  - **Page Load**: ✅ https://marketplace-finance-3.preview.emergentagent.com/login loads successfully
   - **Page Container**: data-testid="login-page" present and visible
   - **Login Form**: data-testid="login-form" rendered correctly
   - **Email Input**: data-testid="login-email" visible (True)
@@ -3588,7 +3588,7 @@ Re-verified UI smoke test for all three login pages (/login, /dealer/login, /adm
   - **No Errors**: No error messages found on page, no console errors
 
 **Dealer Login Page (/dealer/login)**: ✅ WORKING
-  - **Page Load**: ✅ https://stripe-foundation.preview.emergentagent.com/dealer/login loads successfully
+  - **Page Load**: ✅ https://marketplace-finance-3.preview.emergentagent.com/dealer/login loads successfully
   - **Page Container**: data-testid="login-page" present and visible
   - **Login Form**: data-testid="login-form" rendered correctly
   - **Email Input**: data-testid="login-email" visible (True) - placeholder: "E-posta adresi"
@@ -3598,7 +3598,7 @@ Re-verified UI smoke test for all three login pages (/login, /dealer/login, /adm
   - **No Errors**: No error messages found on page, no console errors
 
 **Admin Login Page (/admin/login)**: ✅ WORKING
-  - **Page Load**: ✅ https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **Page Load**: ✅ https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Page Container**: data-testid="login-page" present and visible
   - **Login Form**: data-testid="login-form" rendered correctly
   - **Email Input**: data-testid="login-email" visible (True) - placeholder: "E-posta adresi"
@@ -3623,7 +3623,7 @@ Re-verified UI smoke test for all three login pages (/login, /dealer/login, /adm
 ### Final Status:
 - **Overall Result**: ✅ **PASS** - All three login pages render correctly
 - **Frontend Health**: ✅ HEALTHY (UI rendering without issues on all portals)
-- **All Pages Load**: ✅ SUCCESSFUL at preview URL (https://stripe-foundation.preview.emergentagent.com)
+- **All Pages Load**: ✅ SUCCESSFUL at preview URL (https://marketplace-finance-3.preview.emergentagent.com)
 - **Form Elements**: ✅ PRESENT and visible on all pages (email input, password input, submit button)
 - **UI Consistency**: ✅ CONFIRMED (shared login component across all three portals with consistent data-testids)
 - **Production Ready**: ✅ CONFIRMED for login UI rendering
@@ -3649,9 +3649,9 @@ Re-verified UI smoke test for all three login pages (/login, /dealer/login, /adm
 Quick UI smoke test to verify all three login pages load and render correctly at preview URL. Tested: /login, /dealer/login, and /admin/login as requested. Backend may be 520, but frontend UI renders correctly on all pages.
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/login → page loads, all UI elements present
-2. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/dealer/login → page loads, login form renders
-3. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/admin/login → page loads, login form renders
+1. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/login → page loads, all UI elements present
+2. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/dealer/login → page loads, login form renders
+3. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/admin/login → page loads, login form renders
 
 ### Critical Findings:
 
@@ -3729,10 +3729,10 @@ Quick UI smoke test to verify all three login pages load and render correctly at
 ## Login Page UI Smoke Test (Feb 22, 2026) ✅ COMPLETE PASS
 
 ### Test Summary
-Quick UI smoke test to verify login page loads and renders at https://stripe-foundation.preview.emergentagent.com/login as requested. Backend may be CONFIG_MISSING, but frontend UI renders correctly.
+Quick UI smoke test to verify login page loads and renders at https://marketplace-finance-3.preview.emergentagent.com/login as requested. Backend may be CONFIG_MISSING, but frontend UI renders correctly.
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/login
+1. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/login
 2. ✅ Verify page loads without errors
 3. ✅ Verify all login form UI elements present and visible
 
@@ -3781,12 +3781,12 @@ Quick UI smoke test to verify login page loads and renders at https://stripe-fou
 - **Overall Result**: ✅ **PASS** - Login page UI loads and renders correctly
 - **Frontend Status**: ✅ HEALTHY (UI rendering without issues)
 - **All UI Elements**: ✅ PRESENT and properly styled
-- **Page Load**: ✅ SUCCESSFUL at https://stripe-foundation.preview.emergentagent.com/login
+- **Page Load**: ✅ SUCCESSFUL at https://marketplace-finance-3.preview.emergentagent.com/login
 
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 22, 2026
-- **Message**: Login page UI smoke test SUCCESSFULLY COMPLETED. Frontend UI at https://stripe-foundation.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit" with text "E-posta ile giriş yap") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, login type selector, remember me checkbox, forgot password link, alternative login options (Google, Apple), and theme/language toggles all present. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be CONFIG_MISSING). Frontend UI rendering is healthy.
+- **Message**: Login page UI smoke test SUCCESSFULLY COMPLETED. Frontend UI at https://marketplace-finance-3.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit" with text "E-posta ile giriş yap") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, login type selector, remember me checkbox, forgot password link, alternative login options (Google, Apple), and theme/language toggles all present. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be CONFIG_MISSING). Frontend UI rendering is healthy.
 
 ---
 
@@ -3796,10 +3796,10 @@ Quick UI smoke test to verify login page loads and renders at https://stripe-fou
 ## Register Page UI Loading Test (Feb 22, 2026) ✅ COMPLETE PASS
 
 ### Test Summary
-Quick frontend UI loading verification for /register page at https://stripe-foundation.preview.emergentagent.com/register as requested. Backend may be experiencing 520 errors, but frontend UI renders correctly. Honeypot field is properly hidden from users.
+Quick frontend UI loading verification for /register page at https://marketplace-finance-3.preview.emergentagent.com/register as requested. Backend may be experiencing 520 errors, but frontend UI renders correctly. Honeypot field is properly hidden from users.
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/register
+1. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/register
 2. ✅ Verify page loads without errors
 3. ✅ Verify all registration form UI elements present and visible
 4. ✅ Verify honeypot field is properly hidden (CRITICAL REQUIREMENT)
@@ -3858,12 +3858,12 @@ Quick frontend UI loading verification for /register page at https://stripe-foun
 - **Frontend Status**: ✅ HEALTHY (UI rendering without issues)
 - **All UI Elements**: ✅ PRESENT and properly styled
 - **Honeypot Field**: ✅ CORRECTLY HIDDEN (anti-bot protection working)
-- **Page Load**: ✅ SUCCESSFUL at https://stripe-foundation.preview.emergentagent.com/register
+- **Page Load**: ✅ SUCCESSFUL at https://marketplace-finance-3.preview.emergentagent.com/register
 
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 22, 2026
-- **Message**: Registration page UI loading test SUCCESSFULLY COMPLETED. Frontend UI at https://stripe-foundation.preview.emergentagent.com/register loads correctly with all expected elements: registration form (data-testid="register-form"), full name input (data-testid="register-full-name"), email input (data-testid="register-email"), password input (data-testid="register-password"), country dropdown (data-testid="register-country-button" showing "Almanya"), and submit button (data-testid="register-submit" with text "Hesap Oluştur") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, page header "Bireysel Kayıt", login link, and theme/language toggles all present. CRITICAL: Honeypot field (data-testid="register-honeypot-wrapper") is correctly hidden from users using CSS positioning (position: absolute, left: -10000px) - anti-bot protection working as designed. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be 520). Frontend UI rendering is healthy.
+- **Message**: Registration page UI loading test SUCCESSFULLY COMPLETED. Frontend UI at https://marketplace-finance-3.preview.emergentagent.com/register loads correctly with all expected elements: registration form (data-testid="register-form"), full name input (data-testid="register-full-name"), email input (data-testid="register-email"), password input (data-testid="register-password"), country dropdown (data-testid="register-country-button" showing "Almanya"), and submit button (data-testid="register-submit" with text "Hesap Oluştur") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, page header "Bireysel Kayıt", login link, and theme/language toggles all present. CRITICAL: Honeypot field (data-testid="register-honeypot-wrapper") is correctly hidden from users using CSS positioning (position: absolute, left: -10000px) - anti-bot protection working as designed. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be 520). Frontend UI rendering is healthy.
 
 ---
 
@@ -3873,7 +3873,7 @@ Quick frontend UI loading verification for /register page at https://stripe-foun
 ## Listing Entry Flow Re-Test (Feb 23, 2026 - LATEST) ✅ PASS (2/3 REQUIREMENTS)
 
 ### Test Summary
-Re-tested Listing Entry Flow after fixes as per review request: "Re-test Listing Entry Flow after fixes: Base URL: https://stripe-foundation.preview.emergentagent.com. 1) User login (user@platform.com / User123!) → /ilan-ver/kategori-secimi. Emlak modülü seçildiğinde fallback mesajı 'Kategori bulunamadı – yöneticiye başvurun.' ve 'Modül seçimine dön' CTA'sı görünür mü? 2) Vasıta modülü seçildiğinde L1 listeler görünür mü? L1 seçildiğinde eğer alt kategori yoksa otomatik Çekirdek Alanlar'a yönleniyor mu; alt kategori varsa L2 sütunu görünüyor mu? (Her iki durumdan biri PASS). 3) Geri/ileri (browser back/forward) state korunuyor mu? (L1 seçimi sonrası back ile geri gidip state'in korunduğunu doğrula.)"
+Re-tested Listing Entry Flow after fixes as per review request: "Re-test Listing Entry Flow after fixes: Base URL: https://marketplace-finance-3.preview.emergentagent.com. 1) User login (user@platform.com / User123!) → /ilan-ver/kategori-secimi. Emlak modülü seçildiğinde fallback mesajı 'Kategori bulunamadı – yöneticiye başvurun.' ve 'Modül seçimine dön' CTA'sı görünür mü? 2) Vasıta modülü seçildiğinde L1 listeler görünür mü? L1 seçildiğinde eğer alt kategori yoksa otomatik Çekirdek Alanlar'a yönleniyor mu; alt kategori varsa L2 sütunu görünüyor mu? (Her iki durumdan biri PASS). 3) Geri/ileri (browser back/forward) state korunuyor mu? (L1 seçimi sonrası back ile geri gidip state'in korunduğunu doğrula.)"
 
 ### Test Flow Executed:
 1. ✅ Login at /login with user@platform.com / User123! → authentication successful
@@ -4039,10 +4039,10 @@ All required data-testids present and functional:
 ## Login Page UI Loading Test (Feb 21, 2026) ✅ COMPLETE PASS
 
 ### Test Summary
-Quick frontend UI loading verification for /login page at https://stripe-foundation.preview.emergentagent.com/login as requested. Backend may be experiencing 520 errors, but frontend UI renders correctly.
+Quick frontend UI loading verification for /login page at https://marketplace-finance-3.preview.emergentagent.com/login as requested. Backend may be experiencing 520 errors, but frontend UI renders correctly.
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/login
+1. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/login
 2. ✅ Verify page loads without errors
 3. ✅ Verify all login form UI elements present and visible
 
@@ -4093,12 +4093,12 @@ Quick frontend UI loading verification for /login page at https://stripe-foundat
 - **Overall Result**: ✅ **PASS** - Login page UI loads and renders correctly
 - **Frontend Status**: ✅ HEALTHY (UI rendering without issues)
 - **All UI Elements**: ✅ PRESENT and properly styled
-- **Page Load**: ✅ SUCCESSFUL at https://stripe-foundation.preview.emergentagent.com/login
+- **Page Load**: ✅ SUCCESSFUL at https://marketplace-finance-3.preview.emergentagent.com/login
 
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 21, 2026
-- **Message**: Login page UI loading test SUCCESSFULLY COMPLETED. Frontend UI at https://stripe-foundation.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit") all visible and properly rendered. Orange background, welcome banner, login type selector (Bireysel/Ticari), remember me checkbox, forgot password link, sign up link, and alternative login options (Google, Apple, QR code) all present. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be 520). Frontend UI rendering is healthy.
+- **Message**: Login page UI loading test SUCCESSFULLY COMPLETED. Frontend UI at https://marketplace-finance-3.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit") all visible and properly rendered. Orange background, welcome banner, login type selector (Bireysel/Ticari), remember me checkbox, forgot password link, sign up link, and alternative login options (Google, Apple, QR code) all present. No error messages or console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend may be 520). Frontend UI rendering is healthy.
 
 ---
 
@@ -4656,7 +4656,7 @@ All required data-testids present and functional:
 Verified all 5 NEW requirements from review request for Individual Users page updates (phone field, CSV export).
 
 ### Test Flow Executed:
-1. ✅ Login as admin (admin@platform.com / Admin123!) → https://stripe-foundation.preview.emergentagent.com/admin/login
+1. ✅ Login as admin (admin@platform.com / Admin123!) → https://marketplace-finance-3.preview.emergentagent.com/admin/login
 2. ✅ Navigate to /admin/individual-users → verify page renders
 3. ✅ Verify search placeholder mentions phone ("telefon")
 4. ✅ Verify result count label is visible
@@ -4670,7 +4670,7 @@ Verified all 5 NEW requirements from review request for Individual Users page up
 **1. Admin Login**: ✅ WORKING
   - Login successful with admin@platform.com / Admin123!
   - Successfully authenticated and accessed admin panel
-  - Preview URL: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - Preview URL: https://marketplace-finance-3.preview.emergentagent.com/admin/login
 
 **2. Page Rendering**: ✅ VERIFIED
   - **URL**: /admin/individual-users loads successfully
@@ -4924,13 +4924,13 @@ Verified all 5 requirements from review request for admin IA cleanup and admin d
 
 **2. URL Redirects Verification**: ✅ BOTH WORKING
   - **/admin/users → /admin/admin-users**: ✅ Redirect confirmed
-    - Navigated to https://stripe-foundation.preview.emergentagent.com/admin/users
-    - URL changed to https://stripe-foundation.preview.emergentagent.com/admin/admin-users
+    - Navigated to https://marketplace-finance-3.preview.emergentagent.com/admin/users
+    - URL changed to https://marketplace-finance-3.preview.emergentagent.com/admin/admin-users
     - React Router redirect working correctly (BackofficePortalApp.jsx line 43)
   
   - **/admin/user-management → /admin/admin-users**: ✅ Redirect confirmed
-    - Navigated to https://stripe-foundation.preview.emergentagent.com/admin/user-management
-    - URL changed to https://stripe-foundation.preview.emergentagent.com/admin/admin-users
+    - Navigated to https://marketplace-finance-3.preview.emergentagent.com/admin/user-management
+    - URL changed to https://marketplace-finance-3.preview.emergentagent.com/admin/admin-users
     - React Router redirect working correctly (BackofficePortalApp.jsx line 44)
 
 **3. Sidebar Navigation Cleanup**: ✅ VERIFIED
@@ -5381,7 +5381,7 @@ Frontend smoke test requested to verify: 1) Login page loads, 2) Consumer login 
 #### ✅ FRONTEND UI WORKING:
 
 **1. Login Page Loading**: ✅ VERIFIED
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/login loads successfully
   - **UI Rendering**: Login form renders properly with orange background
   - **Form Elements**: Email input, password input, and submit button all visible
   - **data-testid**: "login-page" container present
@@ -5880,7 +5880,7 @@ All required data-testids present and functional:
 Verified all 5 requirements from smoke test review request: Ana sayfa (homepage), /login, /dealer/login, /register, and /dealer/register pages accessibility and basic UI elements.
 
 ### Test Flow Executed:
-1. ✅ Ana sayfa (Homepage) - https://stripe-foundation.preview.emergentagent.com → page loads successfully
+1. ✅ Ana sayfa (Homepage) - https://marketplace-finance-3.preview.emergentagent.com → page loads successfully
 2. ✅ /login sayfası → page opens with all form elements
 3. ✅ /dealer/login sayfası → page opens with all form elements
 4. ✅ /register sayfası → page opens with all form elements
@@ -5891,7 +5891,7 @@ Verified all 5 requirements from smoke test review request: Ana sayfa (homepage)
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Ana Sayfa (Homepage)**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com loads successfully
   - **HTTP Status**: 200 OK
   - **Page Title**: "Emergent | Fullstack App"
   - **UI Elements**:
@@ -6002,7 +6002,7 @@ Verified all 5 requirements from smoke test review request: Ana sayfa (homepage)
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 21, 2026
-- **Message**: Frontend smoke test SUCCESSFULLY COMPLETED. All 5 requirements verified and passing (100% success rate). 1) Ana sayfa (homepage) loads successfully at https://stripe-foundation.preview.emergentagent.com with HTTP 200 status, displaying welcome banner, navigation, and action buttons. 2) /login sayfası opens correctly with all form elements present (email, password, submit button) and Bireysel/Ticari tabs. 3) /dealer/login sayfası opens correctly with identical form elements. 4) /register sayfası opens correctly with individual registration form (full name, email, password, country, submit button). 5) /dealer/register sayfası opens correctly with dealer-specific form fields (company name, contact name, email, password, country, optional tax ID, submit button). All pages use orange background theme, display Annoncia branding, and have proper data-testids. Screenshots captured for all 5 pages. No critical errors found. IMPORTANT NOTE: As mentioned in review request, /api/auth/login endpoint currently returns 520 errors - this is expected and does not affect page loading. All frontend pages are production-ready.
+- **Message**: Frontend smoke test SUCCESSFULLY COMPLETED. All 5 requirements verified and passing (100% success rate). 1) Ana sayfa (homepage) loads successfully at https://marketplace-finance-3.preview.emergentagent.com with HTTP 200 status, displaying welcome banner, navigation, and action buttons. 2) /login sayfası opens correctly with all form elements present (email, password, submit button) and Bireysel/Ticari tabs. 3) /dealer/login sayfası opens correctly with identical form elements. 4) /register sayfası opens correctly with individual registration form (full name, email, password, country, submit button). 5) /dealer/register sayfası opens correctly with dealer-specific form fields (company name, contact name, email, password, country, optional tax ID, submit button). All pages use orange background theme, display Annoncia branding, and have proper data-testids. Screenshots captured for all 5 pages. No critical errors found. IMPORTANT NOTE: As mentioned in review request, /api/auth/login endpoint currently returns 520 errors - this is expected and does not affect page loading. All frontend pages are production-ready.
 
 ---
 
@@ -6152,7 +6152,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ### Backend Testing Results (Feb 17, 2026)
 - **Test Suite**: FAZ-FINAL-02 Security & Permission Audit
 - **Test File**: `/app/backend/tests/test_faz_final_02_security_audit.py`
-- **Base URL**: https://stripe-foundation.preview.emergentagent.com/api
+- **Base URL**: https://marketplace-finance-3.preview.emergentagent.com/api
 - **Credentials**: admin@platform.com / Admin123!
 
 #### Test Results Summary:
@@ -6605,7 +6605,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 
 ### Network Analysis:
 - **All API Endpoints**: Return successful HTTP responses as expected
-- **Base URL**: https://stripe-foundation.preview.emergentagent.com/api (from frontend/.env)
+- **Base URL**: https://marketplace-finance-3.preview.emergentagent.com/api (from frontend/.env)
 - **Authentication**: admin@platform.com / Admin123! login successful
 - **No Network Errors**: All requests completed successfully
 
@@ -6896,7 +6896,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ## Portal Split v1 No-Chunk-Load Acceptance Verification Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com
 
 **Credentials Tested**:
 - Admin: admin@platform.com / Admin123! ✅ WORKING
@@ -6981,7 +6981,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ## Portal Split v1 No-Chunk-Load Re-Test Results (Feb 17, 2026) - MAJOR IMPROVEMENT
 
 ### Test Flow Re-executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com
 
 **Credentials Tested**:
 - Admin: admin@platform.com / Admin123! ✅ WORKING
@@ -7166,7 +7166,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ## Sprint 1.2 Dealer Applications UI E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 **Target Route**: /admin/dealer-applications
 
@@ -7218,7 +7218,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ## Sprint 1.2 Dealer Applications Backend E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 **Country Admin**: country_admin_fr@test.com / CountryAdmin123! ✅ WORKING
 
@@ -7277,7 +7277,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 
 ### Network Analysis:
 - **All API Calls**: Successful HTTP responses
-- **Base URL**: https://stripe-foundation.preview.emergentagent.com/api (from frontend/.env)
+- **Base URL**: https://marketplace-finance-3.preview.emergentagent.com/api (from frontend/.env)
 - **Authentication**: Bearer token authentication working
 - **Country Context**: Scope enforcement via ?country= query parameter working
 
@@ -7301,7 +7301,7 @@ Quick verification that /login and /register pages are loading correctly for doc
 ## Admin Dealers Module Testing Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 1. ✅ **Admin Login** - Authentication successful, redirected to /admin
@@ -7361,7 +7361,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## Dealer Portal Positive Smoke + Chunk Assertions Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com
 **Credentials**: dealer@platform.com / Dealer123! ✅ WORKING
 
 1. ✅ **Dealer Login Page Access** - /dealer/login loads successfully with login form
@@ -7493,7 +7493,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-01 P0 Backend Regression Tests (Feb 17, 2026) - ALL PASSED
 
 ### Test Flow Executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com/api
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com/api
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 ### Critical Findings:
@@ -7559,7 +7559,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-01 Frontend E2E Smoke Test Results (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com
 **Credentials**: admin@platform.com / Admin123!
 
 ### Critical Findings:
@@ -7610,8 +7610,8 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## FAZ-FINAL-02 (P1) UI Changes - Audit Logs Filters Frontend E2E Test Results (Feb 17, 2026)
 
 ### Test Flow Attempted:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
-**Target URL**: https://stripe-foundation.preview.emergentagent.com/admin/audit-logs?country=DE
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login
+**Target URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/audit-logs?country=DE
 **Credentials**: admin@platform.com / Admin123!
 
 ### Critical Findings:
@@ -7693,9 +7693,9 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 
 ### Test Flow Executed:
 **Base URLs Tested**:
-- Public: https://stripe-foundation.preview.emergentagent.com/login
-- Dealer: https://stripe-foundation.preview.emergentagent.com/dealer/login  
-- Admin: https://stripe-foundation.preview.emergentagent.com/admin/login
+- Public: https://marketplace-finance-3.preview.emergentagent.com/login
+- Dealer: https://marketplace-finance-3.preview.emergentagent.com/dealer/login  
+- Admin: https://marketplace-finance-3.preview.emergentagent.com/admin/login
 
 **Test Credentials**: admin@platform.com with wrong passwords + test@example.com
 
@@ -7770,7 +7770,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## Sprint 1.1 Dealer Management Backend API Tests (Feb 17, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com/api
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com/api
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
 ### Test Cases Executed:
@@ -7829,7 +7829,7 @@ INFO: GET /api/admin/dealers?skip=0&limit=20 HTTP/1.1" 200 OK
 ## Category Wizard UI Regression Test Results (Feb 19, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com
 **Route**: /admin/categories
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
@@ -8194,7 +8194,7 @@ All required data-testids present and functional:
 ## Admin UI Routing and Labels Test (Feb 20, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com
 **Route Tested**: /admin/users → /admin/admin-users redirect
 **Credentials**: admin@platform.com / Admin123! ✅ WORKING
 
@@ -8210,7 +8210,7 @@ All required data-testids present and functional:
 **2. URL Redirect Test**: ✅ WORKING PERFECTLY
   - **Test**: Navigate to `/admin/users`
   - **Expected**: Redirect/alias to `/admin/admin-users`
-  - **Result**: ✅ Redirect confirmed - URL changed to `https://stripe-foundation.preview.emergentagent.com/admin/admin-users`
+  - **Result**: ✅ Redirect confirmed - URL changed to `https://marketplace-finance-3.preview.emergentagent.com/admin/admin-users`
   - **Implementation**: React Router redirect in BackofficePortalApp.jsx line 43: `<Route path="/users" element={<Navigate to="/admin/admin-users" replace />} />`
 
 **3. Sidebar Label Verification**: ✅ CORRECT
@@ -8558,7 +8558,7 @@ Verified all 6 requirements from review request for dashboard regression test on
 **1. Admin Login → /admin Dashboard**: ✅ WORKING
   - Login successful with admin@platform.com / Admin123!
   - Dashboard page loads with title "Kontrol Paneli"
-  - URL after login: https://stripe-foundation.preview.emergentagent.com/admin
+  - URL after login: https://marketplace-finance-3.preview.emergentagent.com/admin
   - No errors during login/navigation
 
 **2. Dashboard Cards (Kartlar) - Real Values Verification**: ✅ ALL 4 CARDS WORKING
@@ -9028,7 +9028,7 @@ All required data-testids present and functional:
 ## Admin Country Compare Feature Testing Results (Feb 19, 2026)
 
 ### Test Flow Executed:
-**Base URL**: https://stripe-foundation.preview.emergentagent.com
+**Base URL**: https://marketplace-finance-3.preview.emergentagent.com
 **Test Date**: February 19, 2026
 **Tester**: Frontend Testing Subagent
 
@@ -10293,7 +10293,7 @@ Verified all 4 requirements from review request for Campaigns V1 UI in DB not re
     - `<span>` cannot be child of `<tbody>` (in table body)
     - These are existing hydration issues present across admin panel, not specific to campaigns
   - **API Health Endpoint**: ✅ Returns 520 as expected
-    - Error: "Failed to load resource: the server responded with a status of 520 () at https://stripe-foundation.preview.emergentagent.com/api/health/db"
+    - Error: "Failed to load resource: the server responded with a status of 520 () at https://marketplace-finance-3.preview.emergentagent.com/api/health/db"
     - Appears twice (once for each campaigns page)
     - Note from review request: "backend /admin/campaigns returns 503 (DB_NOT_READY) and external proxy may show 520"
   - **UI Handling**: ✅ UI gracefully handles 520/503 error
@@ -10734,8 +10734,8 @@ Re-verified all Turkish UI functionality from review request "Tekrar UI doğrula
   - **Test Scenario**: Dealer user attempting to access /admin route
   - **Expected Behavior**: Redirect to /dealer (access denied)
   - **Actual Result**: 
-    - Attempted URL: https://stripe-foundation.preview.emergentagent.com/admin
-    - Final URL: https://stripe-foundation.preview.emergentagent.com/dealer
+    - Attempted URL: https://marketplace-finance-3.preview.emergentagent.com/admin
+    - Final URL: https://marketplace-finance-3.preview.emergentagent.com/dealer
     - ✅ Successfully redirected to dealer portal
     - ✅ Admin layout NOT visible to dealer user
   - **Guard Mechanism**: ✅ ENFORCED CORRECTLY
@@ -11857,7 +11857,7 @@ Verified all 4 requirements from review request for new register pages UI across
 
 **3. /admin/register Does Not Exist**: ✅ CORRECT
   - **Navigation Result**: Attempting to access /admin/register redirects to /admin/login
-  - **Current URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - **Current URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login
   - **Redirect Behavior**: ✅ WORKING CORRECTLY
   - **Register Page**: ✅ DOES NOT RENDER (correct - admin accounts must be invited)
   - Implementation: App.js routes (no /admin/register route defined)
@@ -12425,7 +12425,7 @@ const handleHelpToggle = async () => {
 Verified frontend accessibility for campaigns and plans pages as requested. Backend Campaigns V1 + Plans period seed reportedly completed, but period field NOT visible in frontend UI.
 
 ### Test Flow Executed:
-1. ✅ Login page loads - https://stripe-foundation.preview.emergentagent.com/admin/login
+1. ✅ Login page loads - https://marketplace-finance-3.preview.emergentagent.com/admin/login
 2. ✅ Admin login successful - admin@platform.com / Admin123!
 3. ✅ Individual campaigns page loads - /admin/individual-campaigns
 4. ✅ Corporate campaigns page loads - /admin/corporate-campaigns
@@ -12438,7 +12438,7 @@ Verified frontend accessibility for campaigns and plans pages as requested. Back
 #### ✅ WORKING FEATURES:
 
 **1. Login Page**: ✅ ACCESSIBLE
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Form Elements**: Email, password, and submit button all present
   - **Authentication**: Login with admin@platform.com / Admin123! works correctly
 
@@ -12590,7 +12590,7 @@ Verified all 4 requirements from Turkish review request for admin panel routes a
   - **Status**: ✅ REDIRECT WORKING
     - Navigated to /admin/campaigns
     - Successfully redirected to /admin/individual-campaigns
-    - Final URL confirmed: https://stripe-foundation.preview.emergentagent.com/admin/individual-campaigns
+    - Final URL confirmed: https://marketplace-finance-3.preview.emergentagent.com/admin/individual-campaigns
     - Implementation: BackofficePortalApp.jsx line 75
       ```jsx
       <Route path="/campaigns" element={<Navigate to="/admin/individual-campaigns" replace />} />
@@ -12824,7 +12824,7 @@ Verified all 4 requirements from review request after CampaignsManager update: a
   - **URL**: /admin/campaigns successfully redirects to /admin/individual-campaigns
   - **Route Configuration**: BackofficePortalApp.jsx line 75
   - **Redirect Type**: React Router Navigate with replace flag
-  - **Final URL**: https://stripe-foundation.preview.emergentagent.com/admin/individual-campaigns
+  - **Final URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/individual-campaigns
 
 **3. Individual Campaigns List**: ✅ ALL ELEMENTS VERIFIED
   - **URL**: /admin/individual-campaigns loads successfully
@@ -13207,10 +13207,10 @@ All required data-testids present and functional:
 ## Login Page UI Smoke Test (Feb 22, 2026 - 01:31) ✅ COMPLETE PASS
 
 ### Test Summary
-Frontend smoke test to verify login page UI renders at https://stripe-foundation.preview.emergentagent.com/login. Backend changed to local (may show 520), but test focused ONLY on UI rendering per review request.
+Frontend smoke test to verify login page UI renders at https://marketplace-finance-3.preview.emergentagent.com/login. Backend changed to local (may show 520), but test focused ONLY on UI rendering per review request.
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/login
+1. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/login
 2. ✅ Verify page loads without critical frontend errors
 3. ✅ Verify all login form UI elements present and visible
 
@@ -13261,12 +13261,12 @@ Frontend smoke test to verify login page UI renders at https://stripe-foundation
 - **Overall Result**: ✅ **PASS** - Login page UI loads and renders correctly
 - **Frontend Status**: ✅ HEALTHY (UI rendering without issues)
 - **All UI Elements**: ✅ PRESENT and properly styled
-- **Page Load**: ✅ SUCCESSFUL at https://stripe-foundation.preview.emergentagent.com/login
+- **Page Load**: ✅ SUCCESSFUL at https://marketplace-finance-3.preview.emergentagent.com/login
 
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 22, 2026 - 01:31
-- **Message**: Login page UI smoke test SUCCESSFULLY COMPLETED. Frontend UI at https://stripe-foundation.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit" with text "E-posta ile giriş yap") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, login type selector (Bireysel/Ticari), remember me checkbox, forgot password link, sign up link, alternative login options (Google, Apple, QR code), and theme/language toggles all present. No error messages or critical console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend changed to local). Frontend UI rendering is healthy.
+- **Message**: Login page UI smoke test SUCCESSFULLY COMPLETED. Frontend UI at https://marketplace-finance-3.preview.emergentagent.com/login loads correctly with all expected elements: login form (data-testid="login-form"), email input (data-testid="login-email"), password input (data-testid="login-password"), and submit button (data-testid="login-submit" with text "E-posta ile giriş yap") all visible and properly rendered. Orange background (rgb(247, 194, 122)), welcome banner with "Annoncia" text, login type selector (Bireysel/Ticari), remember me checkbox, forgot password link, sign up link, alternative login options (Google, Apple, QR code), and theme/language toggles all present. No error messages or critical console errors detected. Screenshot confirms visual rendering is correct. Note: Backend connectivity not tested per review request (backend changed to local). Frontend UI rendering is healthy.
 
 ---
 
@@ -13279,10 +13279,10 @@ Frontend smoke test to verify login page UI renders at https://stripe-foundation
 Verified all 3 requirements from review request for /portal-demo page UI smoke test: page loading, Bireysel/Ticari toggle with menu title changes, and TR/DE/FR language toggle clickability.
 
 ### Review Request (Turkish):
-"UI smoke: https://stripe-foundation.preview.emergentagent.com/portal-demo sayfası yükleniyor mu? Bireysel/Ticari toggle'ına tıklayıp menü başlıklarının değiştiğini kontrol et; TR/DE/FR dil toggle'ı tıklanabiliyor mu? Backend gerekmiyor, sadece UI kontrol."
+"UI smoke: https://marketplace-finance-3.preview.emergentagent.com/portal-demo sayfası yükleniyor mu? Bireysel/Ticari toggle'ına tıklayıp menü başlıklarının değiştiğini kontrol et; TR/DE/FR dil toggle'ı tıklanabiliyor mu? Backend gerekmiyor, sadece UI kontrol."
 
 ### Test Flow Executed:
-1. ✅ Navigate to https://stripe-foundation.preview.emergentagent.com/portal-demo → page loads successfully
+1. ✅ Navigate to https://marketplace-finance-3.preview.emergentagent.com/portal-demo → page loads successfully
 2. ✅ Verify initial state shows Consumer (Bireysel) portal with correct navigation menu
 3. ✅ Click Ticari (dealer) toggle → verify top and side navigation menus change
 4. ✅ Click back to Bireysel (consumer) toggle → verify menus return to original state
@@ -13293,7 +13293,7 @@ Verified all 3 requirements from review request for /portal-demo page UI smoke t
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Page Load**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/portal-demo loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/portal-demo loads successfully
   - **data-testid**: "portal-demo" present and visible
   - **Background**: Orange background (#f6c27a) rendering correctly
   - **Header**: ANNONCIA logo, portal label, language toggles, user info all visible
@@ -13416,7 +13416,7 @@ Verified all 3 requirements from review request for /portal-demo page UI smoke t
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Current test run
-- **Message**: Portal Demo UI smoke test SUCCESSFULLY COMPLETED with 100% pass rate. All 3 requirements from review request verified: 1) Page loads successfully at https://stripe-foundation.preview.emergentagent.com/portal-demo with data-testid="portal-demo" visible. 2) Bireysel/Ticari toggle fully functional - clicking Ticari changes top navigation from "İlan Yönetimi, Favoriler, Mesajlar & Bildirimler, Servisler, Hesabım" to "Panel, İlan Yönetimi, Faturalar, Şirket, Gizlilik Merkezi", and side navigation from "Özet, İlanlarım, Yeni İlan" to "Özet, Plan ve Kota". Toggle works bidirectionally. 3) TR/DE/FR language toggle buttons all clickable and functional - verified German ("Privater Kontrollbereich", "Anzeigenverwaltung") and French ("Espace personnel", "Gestion des annonces") translations applied correctly. No console errors, no page errors. Backend not required as requested. Portal Demo page is production-ready.
+- **Message**: Portal Demo UI smoke test SUCCESSFULLY COMPLETED with 100% pass rate. All 3 requirements from review request verified: 1) Page loads successfully at https://marketplace-finance-3.preview.emergentagent.com/portal-demo with data-testid="portal-demo" visible. 2) Bireysel/Ticari toggle fully functional - clicking Ticari changes top navigation from "İlan Yönetimi, Favoriler, Mesajlar & Bildirimler, Servisler, Hesabım" to "Panel, İlan Yönetimi, Faturalar, Şirket, Gizlilik Merkezi", and side navigation from "Özet, İlanlarım, Yeni İlan" to "Özet, Plan ve Kota". Toggle works bidirectionally. 3) TR/DE/FR language toggle buttons all clickable and functional - verified German ("Privater Kontrollbereich", "Anzeigenverwaltung") and French ("Espace personnel", "Gestion des annonces") translations applied correctly. No console errors, no page errors. Backend not required as requested. Portal Demo page is production-ready.
 
 ---
 
@@ -13440,7 +13440,7 @@ Verified user and dealer login flows as per review request: "Preview user/dealer
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. User Login (Bireysel)**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/login loads successfully
   - **Credentials**: user@platform.com / User123!
   - **Portal Selection**: Bireysel radio button (data-testid="login-portal-account") checked by default
   - **Login Result**: ✅ SUCCESS - no errors detected
@@ -13467,7 +13467,7 @@ Verified user and dealer login flows as per review request: "Preview user/dealer
   - **Session**: User session established correctly
 
 **2. Dealer Login (Ticari)**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/dealer/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/dealer/login loads successfully
   - **Credentials**: dealer@platform.com / Dealer123!
   - **Portal Selection**: Ticari radio button (data-testid="login-portal-dealer") checked by default on /dealer/login
   - **Login Result**: ✅ SUCCESS - no errors detected
@@ -13889,7 +13889,7 @@ Re-tested vehicle wizard Step3 price type toggle persistence after backend fixes
 ### Test Execution Details:
 
 **Test Environment**:
-- Frontend URL: https://stripe-foundation.preview.emergentagent.com
+- Frontend URL: https://marketplace-finance-3.preview.emergentagent.com
 - Browser: Chromium (Playwright)
 - Viewport: 1920x1080 (Desktop)
 - User: user@platform.com / User123!
@@ -13928,7 +13928,7 @@ Re-tested vehicle wizard Step3 price type toggle persistence after backend fixes
 ## Premium Automobile Ad Posting Wizard E2E Test (Feb 23, 2026 - CURRENT) ❌ CRITICAL FAILURE
 
 ### Test Summary
-Comprehensive E2E test for premium automobile ad posting wizard as per review request: "Test the premium automobile ad posting wizard end-to-end. Context: App URL: https://stripe-foundation.preview.emergentagent.com, Login: user@platform.com / User123!, Wizard route: /account/create/vehicle-wizard. Key flows to test: 1) Step1 Category selection -> click a category and complete; verify Next becomes enabled and advances. 2) Step2 Brand grid: search (if available), select brand card, complete, persist selection when going back. 3) Step3 Model grid: search, select model, complete, persist selection when going back. 4) Step4 Year/Versiyon: year dropdown 2010–2026, optional trim text; validate year required; verify save+next works. 5) Step5 Core Fields (auto-specific): mileage, fuel, transmission, drive, body, engine cc/hp, color, damage, trade, city required; verify validation; save and advance. 6) Step6 Features/Media: upload min 3 photos, set cover, reorder; save and advance. 7) Step7 Review: confirm summary shows brand/model/year, price type, km, fuel, transmission, body, engine cc/hp, color, damage, trade, location, cover + gallery thumbnails, description, feature summaries. Also verify data-testid coverage for the new fields (trim-input, core-engine-cc-input, core-engine-hp-input, core-address-city, wizard-review-gallery, etc.)."
+Comprehensive E2E test for premium automobile ad posting wizard as per review request: "Test the premium automobile ad posting wizard end-to-end. Context: App URL: https://marketplace-finance-3.preview.emergentagent.com, Login: user@platform.com / User123!, Wizard route: /account/create/vehicle-wizard. Key flows to test: 1) Step1 Category selection -> click a category and complete; verify Next becomes enabled and advances. 2) Step2 Brand grid: search (if available), select brand card, complete, persist selection when going back. 3) Step3 Model grid: search, select model, complete, persist selection when going back. 4) Step4 Year/Versiyon: year dropdown 2010–2026, optional trim text; validate year required; verify save+next works. 5) Step5 Core Fields (auto-specific): mileage, fuel, transmission, drive, body, engine cc/hp, color, damage, trade, city required; verify validation; save and advance. 6) Step6 Features/Media: upload min 3 photos, set cover, reorder; save and advance. 7) Step7 Review: confirm summary shows brand/model/year, price type, km, fuel, transmission, body, engine cc/hp, color, damage, trade, location, cover + gallery thumbnails, description, feature summaries. Also verify data-testid coverage for the new fields (trim-input, core-engine-cc-input, core-engine-hp-input, core-address-city, wizard-review-gallery, etc.)."
 
 ### Test Flow Attempted:
 1. ✅ Login at /login with user@platform.com / User123! → authentication successful
@@ -14025,7 +14025,7 @@ const loadCategorySchema = async (categoryId) => {
 **Console Errors Observed**:
 ```
 error: Failed to load resource: the server responded with a status of 409 () 
-  at https://stripe-foundation.preview.emergentagent.com/api/catalog/schema?category_id=...
+  at https://marketplace-finance-3.preview.emergentagent.com/api/catalog/schema?category_id=...
 error: TypeError: Failed to execute 'json' on 'Response': body stream already read
   at loadCategorySchema (bundle.js:29046:30)
   at async createDraft (bundle.js:29242:7)
@@ -14211,7 +14211,7 @@ Due to Step1 blocking issue, could not proceed to test:
 ## P1 Regression Smoke Test - DB Stabilization (Feb 23, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-P1 regression smoke test after DB stabilization as per review request: "P1 regresyon smoke testi (DB stabilize sonrası): 1) Auth/Login - Base URL: https://stripe-foundation.preview.emergentagent.com - Kullanıcı login: user@platform.com / User123! - Login sonrası account dashboard veya profile sayfasının yüklendiğini doğrula. 2) Wizard Smoke (Vehicle) - Kullanıcı login sonrası direkt /account/create/vehicle-wizard sayfasına git. - İlk adımın (marka/model seçimi) render olduğunu ve sayfa kırılmadığını doğrula. - 'İleri/Devam' benzeri buton görünürlüğünü kontrol et (gerekiyorsa minimal seçim yapıp ilerle). 3) Admin Categories Edit‑Mode Smoke - Admin login: admin@platform.com / Admin123! - Admin kategori yönetimi sayfasına git (CategoryManager). - Bir kategori üzerinde 'Düzenle/Edit' modalını aç ve modalın render edildiğini doğrula. - Dirty CTA butonunun görünür olduğunu kontrol et (data-testid varsa onu kullan)."
+P1 regression smoke test after DB stabilization as per review request: "P1 regresyon smoke testi (DB stabilize sonrası): 1) Auth/Login - Base URL: https://marketplace-finance-3.preview.emergentagent.com - Kullanıcı login: user@platform.com / User123! - Login sonrası account dashboard veya profile sayfasının yüklendiğini doğrula. 2) Wizard Smoke (Vehicle) - Kullanıcı login sonrası direkt /account/create/vehicle-wizard sayfasına git. - İlk adımın (marka/model seçimi) render olduğunu ve sayfa kırılmadığını doğrula. - 'İleri/Devam' benzeri buton görünürlüğünü kontrol et (gerekiyorsa minimal seçim yapıp ilerle). 3) Admin Categories Edit‑Mode Smoke - Admin login: admin@platform.com / Admin123! - Admin kategori yönetimi sayfasına git (CategoryManager). - Bir kategori üzerinde 'Düzenle/Edit' modalını aç ve modalın render edildiğini doğrula. - Dirty CTA butonunun görünür olduğunu kontrol et (data-testid varsa onu kullan)."
 
 ### Test Flow Executed:
 1. ✅ User login with user@platform.com / User123! → authentication successful, redirected to /account
@@ -14226,7 +14226,7 @@ P1 regression smoke test after DB stabilization as per review request: "P1 regre
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. User Authentication & Dashboard**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/login
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/login
   - **Credentials**: user@platform.com / User123!
   - **Login API**: POST /api/auth/login → 200 OK ✅
   - **Token Storage**: Access token saved to localStorage ✅
@@ -14236,7 +14236,7 @@ P1 regression smoke test after DB stabilization as per review request: "P1 regre
   - **CRITICAL**: User authentication flow is production-ready
 
 **2. Vehicle Wizard Smoke Test**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/account/create/vehicle-wizard
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/account/create/vehicle-wizard
   - **Wizard Progress**: data-testid="wizard-progress" present and visible ✅
   - **Step 1 Element**: data-testid="wizard-step-1" found ✅
   - **Step Labels**: All 7 wizard steps visible (Kategori/Segment, Marka, Model, Yıl/Versiyon, Çekirdek Alanlar, Özellikler + Medya, Önizleme) ✅
@@ -14249,7 +14249,7 @@ P1 regression smoke test after DB stabilization as per review request: "P1 regre
 **3. Admin Categories Edit Modal & Dirty CTA**: ✅ WORKING PERFECTLY
   - **Admin Login**: admin@platform.com / Admin123! → 200 OK ✅
   - **Admin URL**: Redirected to /admin successfully ✅
-  - **Categories Page**: https://stripe-foundation.preview.emergentagent.com/admin/categories
+  - **Categories Page**: https://marketplace-finance-3.preview.emergentagent.com/admin/categories
   - **Page Container**: data-testid="admin-categories-page" present ✅
   - **Categories Count**: 33 category edit buttons found ✅
   - **Edit Button**: data-testid="categories-edit-{id}" pattern working ✅
@@ -14393,7 +14393,7 @@ Comprehensive regression test after database cutover covering critical user and 
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. User Authentication**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/login loads successfully
   - **Credentials**: user@platform.com / User123!
   - **Login Result**: ✅ SUCCESS - redirected to /account
   - **No Errors**: No login errors detected
@@ -14423,7 +14423,7 @@ Comprehensive regression test after database cutover covering critical user and 
   - **CRITICAL**: User wizard flow working end-to-end from category selection to brand step
 
 **4. Admin Authentication**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No login errors detected
@@ -14620,13 +14620,13 @@ Comprehensive UI test for Admin Moderation Queue flow as per review request: "Te
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No login errors detected
 
 **2. Moderation Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/moderation loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/moderation loads successfully
   - **HTTP Status**: 200 OK
   - **Page Container**: data-testid="moderation-queue-page" present and visible
   - **No Redirect**: Successfully accessed without redirect to login
@@ -14820,7 +14820,7 @@ All required data-testids present and functional:
 ## Health Panel CDN Status Retest (Feb 23, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Health panel CDN status retest with focus on config missing label verification as per review request: "Health panel CDN status retest (config missing label): Base URL: https://stripe-foundation.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!). 2) System Health panelini aç (üst menüdeki sağlık paneli butonu). 3) CDN bölümünde status etiketini kontrol et: CF_METRICS_ENABLED false iken "Kapalı" görünüyor mu? Canary satırı ve source bilgisi görünüyor mu? PASS/FAIL raporu ver."
+Health panel CDN status retest with focus on config missing label verification as per review request: "Health panel CDN status retest (config missing label): Base URL: https://marketplace-finance-3.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!). 2) System Health panelini aç (üst menüdeki sağlık paneli butonu). 3) CDN bölümünde status etiketini kontrol et: CF_METRICS_ENABLED false iken "Kapalı" görünüyor mu? Canary satırı ve source bilgisi görünüyor mu? PASS/FAIL raporu ver."
 
 ### Test Flow Executed:
 1. ✅ Login at /admin/login with admin@platform.com / Admin123! → authentication successful
@@ -14835,7 +14835,7 @@ Health panel CDN status retest with focus on config missing label verification a
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No login errors detected
@@ -15059,7 +15059,7 @@ Health panel CDN status retest with focus on config missing label verification a
 
 ### Review Request Compliance:
 
-✅ **Review Request**: "Health panel CDN status retest (config missing label): Base URL: https://stripe-foundation.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!). 2) System Health panelini aç (üst menüdeki sağlık paneli butonu). 3) CDN bölümünde status etiketini kontrol et: CF_METRICS_ENABLED false iken "Kapalı" görünüyor mu? Canary satırı ve source bilgisi görünüyor mu? PASS/FAIL raporu ver."
+✅ **Review Request**: "Health panel CDN status retest (config missing label): Base URL: https://marketplace-finance-3.preview.emergentagent.com. 1) Admin login (admin@platform.com / Admin123!). 2) System Health panelini aç (üst menüdeki sağlık paneli butonu). 3) CDN bölümünde status etiketini kontrol et: CF_METRICS_ENABLED false iken "Kapalı" görünüyor mu? Canary satırı ve source bilgisi görünüyor mu? PASS/FAIL raporu ver."
 
 **Compliance Results**:
   - ✅ **Step 1**: Admin login works perfectly with admin@platform.com / Admin123! at /admin/login
@@ -15095,7 +15095,7 @@ Health panel CDN status retest with focus on config missing label verification a
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
 ║  Test Date: Feb 23, 2026                                         ║
-║  Base URL: https://stripe-foundation.preview.emergentagent.com    ║
+║  Base URL: https://marketplace-finance-3.preview.emergentagent.com    ║
 ║  Login: admin@platform.com / Admin123!                           ║
 ║                                                                   ║
 ╠═══════════════════════════════════════════════════════════════════╣
@@ -15131,7 +15131,7 @@ Health panel CDN status retest with focus on config missing label verification a
 ## RBAC UI and Admin Route Guard Test - Phase B (Feb 23, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Comprehensive test of updated RBAC UI and admin route guard after Phase B kickoff as per review request: "Test updated RBAC UI and admin route guard after Phase B kickoff. Base URL: https://stripe-foundation.preview.emergentagent.com. Login: /admin/login with admin@platform.com / Admin123!. Steps: 1) Login and navigate to /admin/roles. 2) Verify Admin Roles page loads and table rows exist (data-testid=admin-roles-page, admin-role-row-super_admin, admin-role-row-admin). 3) Navigate to /admin/rbac-matrix. 4) Verify RBAC matrix page loads (data-testid=rbac-matrix-page) and new columns exist (Dealer Portal, Consumer Portal). 5) Navigate to /admin/system-settings to confirm admin route guard doesn't block for super_admin. Capture screenshots if possible."
+Comprehensive test of updated RBAC UI and admin route guard after Phase B kickoff as per review request: "Test updated RBAC UI and admin route guard after Phase B kickoff. Base URL: https://marketplace-finance-3.preview.emergentagent.com. Login: /admin/login with admin@platform.com / Admin123!. Steps: 1) Login and navigate to /admin/roles. 2) Verify Admin Roles page loads and table rows exist (data-testid=admin-roles-page, admin-role-row-super_admin, admin-role-row-admin). 3) Navigate to /admin/rbac-matrix. 4) Verify RBAC matrix page loads (data-testid=rbac-matrix-page) and new columns exist (Dealer Portal, Consumer Portal). 5) Navigate to /admin/system-settings to confirm admin route guard doesn't block for super_admin. Capture screenshots if possible."
 
 ### Test Flow Executed:
 1. ✅ Admin login at /admin/login with admin@platform.com / Admin123! → authentication successful
@@ -15147,7 +15147,7 @@ Comprehensive test of updated RBAC UI and admin route guard after Phase B kickof
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
   - **No Errors**: No login errors detected
@@ -15373,7 +15373,7 @@ Comprehensive test of updated RBAC UI and admin route guard after Phase B kickof
    - ✅ No unauthorized access messages for super_admin
 
 ### Review Request Compliance:
-✅ **Review Request**: "Test updated RBAC UI and admin route guard after Phase B kickoff. Base URL: https://stripe-foundation.preview.emergentagent.com. Login: /admin/login with admin@platform.com / Admin123!. Steps: 1) Login and navigate to /admin/roles. 2) Verify Admin Roles page loads and table rows exist (data-testid=admin-roles-page, admin-role-row-super_admin, admin-role-row-admin). 3) Navigate to /admin/rbac-matrix. 4) Verify RBAC matrix page loads (data-testid=rbac-matrix-page) and new columns exist (Dealer Portal, Consumer Portal). 5) Navigate to /admin/system-settings to confirm admin route guard doesn't block for super_admin. Capture screenshots if possible."
+✅ **Review Request**: "Test updated RBAC UI and admin route guard after Phase B kickoff. Base URL: https://marketplace-finance-3.preview.emergentagent.com. Login: /admin/login with admin@platform.com / Admin123!. Steps: 1) Login and navigate to /admin/roles. 2) Verify Admin Roles page loads and table rows exist (data-testid=admin-roles-page, admin-role-row-super_admin, admin-role-row-admin). 3) Navigate to /admin/rbac-matrix. 4) Verify RBAC matrix page loads (data-testid=rbac-matrix-page) and new columns exist (Dealer Portal, Consumer Portal). 5) Navigate to /admin/system-settings to confirm admin route guard doesn't block for super_admin. Capture screenshots if possible."
 
 **Results**:
 - ✅ Step 1: Login successful with admin@platform.com / Admin123!, navigated to /admin/roles
@@ -15395,7 +15395,7 @@ Comprehensive test of updated RBAC UI and admin route guard after Phase B kickof
 ## Mongo->SQL P0 Migration Verification (Feb 23, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Post-migration verification test for Admin System Settings after Mongo->SQL P0 migration as per review request: "Verify admin system settings page after Mongo->SQL P0 migration. Base URL: https://stripe-foundation.preview.emergentagent.com. Login: /admin/login with admin@platform.com / Admin123!. Steps: 1) Login and navigate to /admin/system-settings. 2) Confirm page loads (data-testid=system-settings-cloudflare-card). 3) Confirm settings table renders (data-testid=system-settings-table) if present; otherwise ensure no 520 errors in console. 4) Capture screenshot of system settings page. 5) Navigate to /admin/roles and /admin/rbac-matrix quickly to ensure RBAC guard still works for super_admin."
+Post-migration verification test for Admin System Settings after Mongo->SQL P0 migration as per review request: "Verify admin system settings page after Mongo->SQL P0 migration. Base URL: https://marketplace-finance-3.preview.emergentagent.com. Login: /admin/login with admin@platform.com / Admin123!. Steps: 1) Login and navigate to /admin/system-settings. 2) Confirm page loads (data-testid=system-settings-cloudflare-card). 3) Confirm settings table renders (data-testid=system-settings-table) if present; otherwise ensure no 520 errors in console. 4) Capture screenshot of system settings page. 5) Navigate to /admin/roles and /admin/rbac-matrix quickly to ensure RBAC guard still works for super_admin."
 
 ### Test Flow Executed:
 1. ✅ Login at /admin/login with admin@platform.com / Admin123! → authentication successful
@@ -15413,14 +15413,14 @@ Post-migration verification test for Admin System Settings after Mongo->SQL P0 m
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area after authentication
   - **Session**: Valid access token received and session established
   - **No Errors**: No login errors detected
 
 **2. System Settings Page Load**: ✅ VERIFIED
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/system-settings loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/system-settings loads successfully
   - **Page Container**: data-testid="admin-system-settings-page" present and visible
   - **Page Title**: "System Settings" displayed correctly
   - **Breadcrumb**: Admin > system-settings
@@ -15463,7 +15463,7 @@ Post-migration verification test for Admin System Settings after Mongo->SQL P0 m
   - **Quality**: All screenshots captured at quality=40, viewport 1920x1080
 
 **7. RBAC Guard - /admin/roles Page**: ✅ ACCESSIBLE AND WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/roles
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/roles
   - **Page Load**: Successfully loaded
   - **Page Element**: data-testid="admin-roles-page" ✅ PRESENT (count=1)
   - **Title Element**: data-testid="admin-roles-title" ✅ PRESENT (count=1)
@@ -15485,7 +15485,7 @@ Post-migration verification test for Admin System Settings after Mongo->SQL P0 m
   - **CRITICAL**: RBAC guard correctly allows super_admin access to roles page
 
 **8. RBAC Guard - /admin/rbac-matrix Page**: ✅ ACCESSIBLE AND WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/rbac-matrix
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/rbac-matrix
   - **Page Load**: Successfully loaded
   - **Page Element**: data-testid="rbac-matrix-page" ✅ PRESENT (count=1)
   - **Title Element**: data-testid="rbac-matrix-title" ✅ PRESENT (count=1)
@@ -15609,7 +15609,7 @@ Post-migration verification test for Admin System Settings after Mongo->SQL P0 m
 ## Admin Login Flow Test (Feb 25, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Comprehensive admin login flow test as per review request: "Admin giriş akışını test et: https://stripe-foundation.preview.emergentagent.com/admin/login. admin@platform.com / Admin123! ile giriş, /admin panelinin yüklendiğini doğrula (sidebar ve üst sağlık rozeti görünmeli). Ayrıca logout sonrası /admin/login'e dönmeyi kontrol et."
+Comprehensive admin login flow test as per review request: "Admin giriş akışını test et: https://marketplace-finance-3.preview.emergentagent.com/admin/login. admin@platform.com / Admin123! ile giriş, /admin panelinin yüklendiğini doğrula (sidebar ve üst sağlık rozeti görünmeli). Ayrıca logout sonrası /admin/login'e dönmeyi kontrol et."
 
 ### Test Flow Executed:
 1. ✅ Navigate to /admin/login → admin login page loads successfully
@@ -15629,7 +15629,7 @@ Comprehensive admin login flow test as per review request: "Admin giriş akış�
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login Page (/admin/login)**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login
   - **Page Load**: ✅ SUCCESS - login page renders correctly
   - **Login Form Elements**:
     - ✅ data-testid="login-page" present
@@ -15654,7 +15654,7 @@ Comprehensive admin login flow test as per review request: "Admin giriş akış�
 
 **3. Redirect to /admin Panel**: ✅ WORKING PERFECTLY
   - **Expected URL**: /admin
-  - **Actual URL After Login**: https://stripe-foundation.preview.emergentagent.com/admin
+  - **Actual URL After Login**: https://marketplace-finance-3.preview.emergentagent.com/admin
   - **Redirect Time**: ~3 seconds after form submission
   - **Redirect Mechanism**: Login.js line 60 - `navigate(defaultHomeForRole(u?.role))`
   - **defaultHomeForRole**: Returns '/admin' for admin roles (super_admin, country_admin, moderator)
@@ -15705,7 +15705,7 @@ Comprehensive admin login flow test as per review request: "Admin giriş akış�
   - **Button Location**: Bottom of sidebar, below user profile
   - **Click Action**: ✅ Button clicked successfully
   - **Logout Process**: Clears session and redirects to login page
-  - **Post-Logout URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - **Post-Logout URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login
   - **Redirect Time**: ~3 seconds after logout
   - **CRITICAL**: Logout works correctly and redirects back to /admin/login as required
 
@@ -15879,7 +15879,7 @@ Comprehensive admin login flow test as per review request: "Admin giriş akış�
 - **No Errors**: ✅ PRODUCTION-READY (no console errors or UI issues detected)
 
 ### Review Request Compliance:
-✅ **Review Request**: "Admin giriş akışını test et: https://stripe-foundation.preview.emergentagent.com/admin/login. admin@platform.com / Admin123! ile giriş, /admin panelinin yüklendiğini doğrula (sidebar ve üst sağlık rozeti görünmeli). Ayrıca logout sonrası /admin/login'e dönmeyi kontrol et."
+✅ **Review Request**: "Admin giriş akışını test et: https://marketplace-finance-3.preview.emergentagent.com/admin/login. admin@platform.com / Admin123! ile giriş, /admin panelinin yüklendiğini doğrula (sidebar ve üst sağlık rozeti görünmeli). Ayrıca logout sonrası /admin/login'e dönmeyi kontrol et."
 
 **Results**:
 - ✅ Admin login page accessible at /admin/login
@@ -15892,7 +15892,7 @@ Comprehensive admin login flow test as per review request: "Admin giriş akış�
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 25, 2026 (LATEST)
-- **Message**: Admin login flow test SUCCESSFULLY COMPLETED with 100% PASS rate. All requirements from review request satisfied with screenshot proof. FLOW VERIFICATION: 1) CRITICAL FINDING 1: Admin login page at /admin/login loads perfectly with all form elements (email input, password input, submit button, remember me checkbox, forgot password link) ✅. 2) CRITICAL FINDING 2: Login with admin@platform.com / Admin123! works successfully, no authentication errors, form submission completes in ~3 seconds ✅. 3) CRITICAL FINDING 3: After successful login, user is redirected to /admin panel (https://stripe-foundation.preview.emergentagent.com/admin), admin layout loads with data-testid="admin-layout" ✅. 4) CRITICAL FINDING 4: SIDEBAR (kenar çubuğu) is VISIBLE on left side with all navigation sections and menu items, 26 admin navigation links found including Kontrol Paneli, Genel Bakış, Admin Kullanıcıları, Rol Tanımları, etc., user profile "System Administrator (Super Admin)" shown at bottom ✅. 5) CRITICAL FINDING 5: HEALTH BADGE (sağlık rozeti) is VISIBLE in top right header (data-testid="admin-system-health-badge") showing "DB -- --:-- --/5dk", located next to theme toggle and language selector ✅. 6) CRITICAL FINDING 6: LOGOUT functionality works perfectly, clicking "Çıkış" button at bottom of sidebar successfully redirects user back to /admin/login page in ~3 seconds ✅. All data-testids present and functional. No console errors detected. All 3 screenshots captured as proof (admin-login-page.png, admin-panel-logged-in.png, admin-after-logout.png). Admin login flow is production-ready and fully functional. Every requirement from review request has been verified and passed successfully.
+- **Message**: Admin login flow test SUCCESSFULLY COMPLETED with 100% PASS rate. All requirements from review request satisfied with screenshot proof. FLOW VERIFICATION: 1) CRITICAL FINDING 1: Admin login page at /admin/login loads perfectly with all form elements (email input, password input, submit button, remember me checkbox, forgot password link) ✅. 2) CRITICAL FINDING 2: Login with admin@platform.com / Admin123! works successfully, no authentication errors, form submission completes in ~3 seconds ✅. 3) CRITICAL FINDING 3: After successful login, user is redirected to /admin panel (https://marketplace-finance-3.preview.emergentagent.com/admin), admin layout loads with data-testid="admin-layout" ✅. 4) CRITICAL FINDING 4: SIDEBAR (kenar çubuğu) is VISIBLE on left side with all navigation sections and menu items, 26 admin navigation links found including Kontrol Paneli, Genel Bakış, Admin Kullanıcıları, Rol Tanımları, etc., user profile "System Administrator (Super Admin)" shown at bottom ✅. 5) CRITICAL FINDING 5: HEALTH BADGE (sağlık rozeti) is VISIBLE in top right header (data-testid="admin-system-health-badge") showing "DB -- --:-- --/5dk", located next to theme toggle and language selector ✅. 6) CRITICAL FINDING 6: LOGOUT functionality works perfectly, clicking "Çıkış" button at bottom of sidebar successfully redirects user back to /admin/login page in ~3 seconds ✅. All data-testids present and functional. No console errors detected. All 3 screenshots captured as proof (admin-login-page.png, admin-panel-logged-in.png, admin-after-logout.png). Admin login flow is production-ready and fully functional. Every requirement from review request has been verified and passed successfully.
 
 ---
 
@@ -15900,7 +15900,7 @@ Comprehensive admin login flow test as per review request: "Admin giriş akış�
 ## Admin Login UX Toast Verification (Feb 24, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Comprehensive UX toast verification test for admin login flow as per review request: "Admin login UX toast doğrulaması: https://stripe-foundation.preview.emergentagent.com/admin/login. admin@platform.com / Admin123! ile giriş; login sonrası kısa süreli "Oturum doğrulandı" ve "Admin paneli yükleniyor..." toastlarının göründüğünü doğrula; ardından /admin panelinin yüklendiğini teyit et."
+Comprehensive UX toast verification test for admin login flow as per review request: "Admin login UX toast doğrulaması: https://marketplace-finance-3.preview.emergentagent.com/admin/login. admin@platform.com / Admin123! ile giriş; login sonrası kısa süreli "Oturum doğrulandı" ve "Admin paneli yükleniyor..." toastlarının göründüğünü doğrula; ardından /admin panelinin yüklendiğini teyit et."
 
 ### Test Flow Executed:
 1. ✅ Navigate to /admin/login page → page loads successfully
@@ -15915,7 +15915,7 @@ Comprehensive UX toast verification test for admin login flow as per review requ
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login Page Load**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login
   - **Page Load**: ✅ SUCCESS - page loads without errors
   - **Login Form**: ✅ VISIBLE - data-testid="login-form" present
   - **Form Elements**: Email input, password input, submit button all present
@@ -16119,7 +16119,7 @@ Comprehensive UX toast verification test for admin login flow as per review requ
 ### Agent Communication:
 - **Agent**: testing
 - **Date**: Feb 24, 2026 (LATEST)
-- **Message**: Admin login UX toast verification SUCCESSFULLY COMPLETED with 100% PASS rate. All requirements from review request satisfied with screenshot proof. FLOW VERIFICATION: 1) CRITICAL FINDING 1: Admin login at https://stripe-foundation.preview.emergentagent.com/admin/login works perfectly with credentials admin@platform.com / Admin123! ✅. 2) CRITICAL FINDING 2: First toast "Oturum doğrulandı" (Session verified) appears immediately after successful login (1200ms duration, data-testid='admin-login-toast-verified') - CAPTURED in screenshot admin-toast-1-verified.png ✅. 3) CRITICAL FINDING 3: Second toast "Admin paneli yükleniyor..." (Admin panel loading...) appears ~300ms after first toast (1400ms duration, data-testid='admin-login-toast-loading') - CAPTURED in screenshot admin-toast-2-loading.png ✅. 4) CRITICAL FINDING 4: Admin panel loads successfully after toast sequence (~700ms after first toast), full dashboard interface visible with left sidebar navigation, menu sections (DASHBOARD, YÖNETIM, ÜYELER, İLAN & MODERASYON, KAMPANYALAR, KATALOG & İÇERİK), user profile "System Administrator (Super Admin)", and logout option - VERIFIED in screenshot admin-panel-loaded.png ✅. Toast implementation uses Radix UI primitives with [role="status"] for accessibility, positioned in bottom-right corner (mobile: top), with slide-in/slide-out animations. Toast timing is well-orchestrated: first toast provides immediate authentication feedback, second toast indicates loading state, navigation occurs smoothly at 700ms. UX flow is professional and informative. No console errors detected. All 4 screenshots captured as proof. Admin login UX toast flow is production-ready and provides excellent user feedback during authentication and panel loading process.
+- **Message**: Admin login UX toast verification SUCCESSFULLY COMPLETED with 100% PASS rate. All requirements from review request satisfied with screenshot proof. FLOW VERIFICATION: 1) CRITICAL FINDING 1: Admin login at https://marketplace-finance-3.preview.emergentagent.com/admin/login works perfectly with credentials admin@platform.com / Admin123! ✅. 2) CRITICAL FINDING 2: First toast "Oturum doğrulandı" (Session verified) appears immediately after successful login (1200ms duration, data-testid='admin-login-toast-verified') - CAPTURED in screenshot admin-toast-1-verified.png ✅. 3) CRITICAL FINDING 3: Second toast "Admin paneli yükleniyor..." (Admin panel loading...) appears ~300ms after first toast (1400ms duration, data-testid='admin-login-toast-loading') - CAPTURED in screenshot admin-toast-2-loading.png ✅. 4) CRITICAL FINDING 4: Admin panel loads successfully after toast sequence (~700ms after first toast), full dashboard interface visible with left sidebar navigation, menu sections (DASHBOARD, YÖNETIM, ÜYELER, İLAN & MODERASYON, KAMPANYALAR, KATALOG & İÇERİK), user profile "System Administrator (Super Admin)", and logout option - VERIFIED in screenshot admin-panel-loaded.png ✅. Toast implementation uses Radix UI primitives with [role="status"] for accessibility, positioned in bottom-right corner (mobile: top), with slide-in/slide-out animations. Toast timing is well-orchestrated: first toast provides immediate authentication feedback, second toast indicates loading state, navigation occurs smoothly at 700ms. UX flow is professional and informative. No console errors detected. All 4 screenshots captured as proof. Admin login UX toast flow is production-ready and provides excellent user feedback during authentication and panel loading process.
 
 ---
 
@@ -16128,7 +16128,7 @@ Comprehensive UX toast verification test for admin login flow as per review requ
 ## Ad Analytics UI Verification Test (Feb 24, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Comprehensive UI verification test for Ad Analytics and Ad Slots as per review request: "Yeni Ad Analytics UI kontrolü: https://stripe-foundation.preview.emergentagent.com/admin/login üzerinden admin@platform.com / Admin123! ile giriş yap, /admin/ads ekranına git, "Reklam Performans" sekmesini aç, 30g varsayılan metrikleri (Toplam Gösterim/Tıklama/CTR) ve placement kırılım listesinin render edildiğini doğrula. Ayrıca public / ve /search sayfalarında AD_HOME_TOP ve AD_SEARCH_TOP slotlarının (placeholder olsa bile) göründüğünü kontrol et."
+Comprehensive UI verification test for Ad Analytics and Ad Slots as per review request: "Yeni Ad Analytics UI kontrolü: https://marketplace-finance-3.preview.emergentagent.com/admin/login üzerinden admin@platform.com / Admin123! ile giriş yap, /admin/ads ekranına git, "Reklam Performans" sekmesini aç, 30g varsayılan metrikleri (Toplam Gösterim/Tıklama/CTR) ve placement kırılım listesinin render edildiğini doğrula. Ayrıca public / ve /search sayfalarında AD_HOME_TOP ve AD_SEARCH_TOP slotlarının (placeholder olsa bile) göründüğünü kontrol et."
 
 ### Test Flow Executed:
 1. ✅ Admin login with admin@platform.com / Admin123! → authentication successful
@@ -16145,13 +16145,13 @@ Comprehensive UI verification test for Ad Analytics and Ad Slots as per review r
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
   - **No Errors**: No login errors detected
 
 **2. Ads Management Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/ads loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/ads loads successfully
   - **Page Container**: data-testid="admin-ads-management" present and visible
   - **Page Title**: "Reklam Yönetimi" (Ads Management) displayed correctly
   - **Tabs Present**: "Reklam Yönetimi" and "Reklam Performans" tabs visible
@@ -16193,7 +16193,7 @@ Comprehensive UI verification test for Ad Analytics and Ad Slots as per review r
   - **CRITICAL**: Placement breakdown table renders correctly with all placement data
 
 **6. AD_HOME_TOP Slot on Public Homepage**: ✅ VERIFIED
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/
   - **Slot Container**: data-testid="home-ad-slot" ✅ VISIBLE
   - **Ad Slot Element**: data-testid="ad-slot-AD_HOME_TOP" present
   - **Ad Content**: 
@@ -16203,7 +16203,7 @@ Comprehensive UI verification test for Ad Analytics and Ad Slots as per review r
   - **CRITICAL**: AD_HOME_TOP slot is visible on homepage (with placeholder)
 
 **7. AD_SEARCH_TOP Slot on Search Page**: ✅ VERIFIED
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/search
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/search
   - **Slot Container**: data-testid="search-ad-slot" ✅ VISIBLE
   - **Ad Slot Element**: data-testid="ad-slot-AD_SEARCH_TOP" present
   - **Placement**: Located at top of search page, above search results
@@ -16400,7 +16400,7 @@ Comprehensive UI verification test for Ad Analytics and Ad Slots as per review r
 - **UI Rendering**: ✅ PRODUCTION-READY (all elements render correctly, no errors)
 
 ### Review Request Compliance:
-✅ **Review Request**: "Yeni Ad Analytics UI kontrolü: https://stripe-foundation.preview.emergentagent.com/admin/login üzerinden admin@platform.com / Admin123! ile giriş yap, /admin/ads ekranına git, "Reklam Performans" sekmesini aç, 30g varsayılan metrikleri (Toplam Gösterim/Tıklama/CTR) ve placement kırılım listesinin render edildiğini doğrula. Ayrıca public / ve /search sayfalarında AD_HOME_TOP ve AD_SEARCH_TOP slotlarının (placeholder olsa bile) göründüğünü kontrol et."
+✅ **Review Request**: "Yeni Ad Analytics UI kontrolü: https://marketplace-finance-3.preview.emergentagent.com/admin/login üzerinden admin@platform.com / Admin123! ile giriş yap, /admin/ads ekranına git, "Reklam Performans" sekmesini aç, 30g varsayılan metrikleri (Toplam Gösterim/Tıklama/CTR) ve placement kırılım listesinin render edildiğini doğrula. Ayrıca public / ve /search sayfalarında AD_HOME_TOP ve AD_SEARCH_TOP slotlarının (placeholder olsa bile) göründüğünü kontrol et."
 
 **Results**:
 - ✅ Admin login successful: admin@platform.com / Admin123! → /admin area
@@ -16449,7 +16449,7 @@ Comprehensive retest for campaign-based analytics in /admin/ads Performance tab 
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login and Navigation**: ✅ WORKING PERFECTLY
-  - **Login URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - **Login URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
   - **Navigation to /admin/ads**: ✅ SUCCESS
@@ -16499,7 +16499,7 @@ Comprehensive retest for campaign-based analytics in /admin/ads Performance tab 
   - **Note**: Campaign row shows target_url instead of campaign_name, which suggests campaigns may be identified by their target URL or the campaign_name field is not set
 
 **5. AD_HOME_TOP Slot (Homepage)**: ✅ VERIFIED
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/
   - **Container**: data-testid="home-ad-slot" ✅ VISIBLE
   - **Ad Slot**: data-testid="ad-slot-AD_HOME_TOP" ✅ VISIBLE
   - **Content**: Placeholder "Reklam alanı" displayed (no active ad for this slot)
@@ -16507,7 +16507,7 @@ Comprehensive retest for campaign-based analytics in /admin/ads Performance tab 
   - **CRITICAL**: AD_HOME_TOP slot is rendering correctly on homepage with placeholder
 
 **6. AD_SEARCH_TOP Slot (Search Page)**: ✅ VERIFIED (after frontend restart)
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/search
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/search
   - **Container**: data-testid="search-ad-slot" ✅ VISIBLE
   - **Ad Slot**: data-testid="ad-slot-AD_SEARCH_TOP" ✅ VISIBLE
   - **Content**: Placeholder "Reklam alanı" displayed (no active ad for this slot)
@@ -16660,7 +16660,7 @@ Comprehensive UI test for Ad Rules enforcement and Campaign CRUD functionality a
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to admin area
   - **No Errors**: No login errors detected
@@ -16932,13 +16932,13 @@ Comprehensive UI test for Campaign Warnings MVP as per review request: "Kampanya
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No login errors detected
 
 **2. Campaign Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/ads/campaigns loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/ads/campaigns loads successfully
   - **Page Container**: data-testid="admin-ads-campaigns" present and visible
   - **Page Title**: "Reklam Kampanyaları" displayed correctly
 
@@ -17201,10 +17201,10 @@ Comprehensive UI test for Pricing scaffolding pages as per review request: "Par�
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
-  - **Current URL**: https://stripe-foundation.preview.emergentagent.com/admin
+  - **Current URL**: https://marketplace-finance-3.preview.emergentagent.com/admin
   - **Admin Layout**: data-testid="admin-layout" present and visible
   - **No Errors**: No login errors detected
 
@@ -17242,7 +17242,7 @@ Comprehensive UI test for Pricing scaffolding pages as per review request: "Par�
     - **CRITICAL**: Kurumsal Paketler menu item fully functional
 
 **4. /admin/pricing/campaign Page**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/pricing/campaign loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/pricing/campaign loads successfully
   - **Page Container**: data-testid="admin-pricing-campaign-page" ✅ VISIBLE
   - **Page Title**: data-testid="admin-pricing-campaign-title" ✅ VISIBLE
     - Text: "Lansman Kampanyası Modu"
@@ -17254,7 +17254,7 @@ Comprehensive UI test for Pricing scaffolding pages as per review request: "Par�
   - **CRITICAL**: Campaign page loads with all scaffolding elements and proper data-testids
 
 **5. /admin/pricing/tiers Page**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/pricing/tiers loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/pricing/tiers loads successfully
   - **Page Container**: data-testid="admin-pricing-tiers-page" ✅ VISIBLE
   - **Page Title**: data-testid="admin-pricing-tiers-title" ✅ VISIBLE
     - Text: "Bireysel Tier Pricing"
@@ -17266,7 +17266,7 @@ Comprehensive UI test for Pricing scaffolding pages as per review request: "Par�
   - **CRITICAL**: Tiers page loads with all scaffolding elements and proper data-testids
 
 **6. /admin/pricing/packages Page**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/pricing/packages loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/pricing/packages loads successfully
   - **Page Container**: data-testid="admin-pricing-packages-page" ✅ VISIBLE
   - **Page Title**: data-testid="admin-pricing-packages-title" ✅ VISIBLE
     - Text: "Kurumsal Paketler"
@@ -17736,7 +17736,7 @@ Comprehensive UI test for Admin Pricing Campaign CRUD screens as per review requ
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login loads successfully
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to admin panel
   - **No Errors**: No login errors detected
@@ -18046,7 +18046,7 @@ Comprehensive UI test for Header domain components as per review request: "Heade
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Guest Public Header**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/
   - **site-header Element**: data-testid="site-header" ✅ VISIBLE
   - **Guest Container**: data-testid="site-header-guest" ✅ VISIBLE
   - **Login Link**: data-testid="site-header-login" ✅ VISIBLE
@@ -18094,7 +18094,7 @@ Comprehensive UI test for Header domain components as per review request: "Heade
     - Credentials: admin@platform.com / Admin123!
     - Login: ✅ SUCCESS
   - **Page Navigation**: /admin/site-design/header ✅ ACCESSIBLE
-  - **Current URL**: https://stripe-foundation.preview.emergentagent.com/admin/site-design/header
+  - **Current URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/site-design/header
   - **Page Container**: data-testid="admin-header-management" ✅ VISIBLE
   - **Page Title**: "Header Yönetimi" ✅
   - **Page Subtitle**: "PNG/SVG logo yükleyin ve guest/auth görünümlerini doğrulayın." ✅
@@ -18207,7 +18207,7 @@ Comprehensive UI test for Header domain components as per review request: "Heade
 
 **Error Details**:
 1. **Logo Asset 404**: 
-   - URL: https://stripe-foundation.preview.emergentagent.com/api/site/assets/header/02adf947-809a-4347-adee-1085f77ca0e1.png?v=1
+   - URL: https://marketplace-finance-3.preview.emergentagent.com/api/site/assets/header/02adf947-809a-4347-adee-1085f77ca0e1.png?v=1
    - Status: 404 Not Found
    - Impact: ⚠️ Minor - Logo image file not found on server
    - Fallback: SiteHeader component correctly displays text logo "ANNONCIA" when image fails to load
@@ -18398,13 +18398,13 @@ Testing Footer Management and Info Pages admin UI as per review request: "Footer
 #### ✅ INFO PAGES - ALL TESTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
   - **No Login Errors**: Clean authentication flow
 
 **2. Info Pages Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/info-pages
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/info-pages
   - **Page Load**: ✅ SUCCESS - page rendered correctly
   - **Page Title**: "Bilgi Sayfaları" displayed
   - **Page Subtitle**: "Bilgi sayfalarını oluşturun, taslakta tutun veya yayınlayın."
@@ -18471,7 +18471,7 @@ Testing Footer Management and Info Pages admin UI as per review request: "Footer
 #### ❌ FOOTER MANAGEMENT - BLOCKING BUG (CRITICAL):
 
 **1. Footer Management Page Navigation**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/site-design/footer
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/site-design/footer
   - **Page Load**: ✅ SUCCESS - page rendered
   - **Page Title**: "Footer Yönetimi" displayed
   - **Page Subtitle**: "Footer satır/sütun düzenini oluşturun ve yayınlamadan önce önizleyin."
@@ -18702,13 +18702,13 @@ Footer admin builder test as per review request: "Footer admin builder yeniden t
 #### ❌ CRITICAL BLOCKING ERROR - APPLICATION CRASH:
 
 **1. Admin Login**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin area
-  - **Current URL After Login**: https://stripe-foundation.preview.emergentagent.com/admin
+  - **Current URL After Login**: https://marketplace-finance-3.preview.emergentagent.com/admin
 
 **2. Footer Management Page Load**: ✅ WORKING INITIALLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/site-design/footer
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/site-design/footer
   - **Page Container**: data-testid="admin-footer-management" ✅ VISIBLE
   - **Page Title**: "Footer Yönetimi" ✅ DISPLAYED
   - **Page Subtitle**: "Footer satır/sütun düzenini oluşturun ve yayınlamadan önce önizleyin." ✅ DISPLAYED
@@ -18895,7 +18895,7 @@ SEO/404/500 UI verification test as per review request: "SEO/404/500 UI doğrula
 
 #### ✅ TEST 1: Info Page (/bilgi/hakkimizda) - PASS
 **Status**: ✅ **WORKING PERFECTLY**
-- **URL**: https://stripe-foundation.preview.emergentagent.com/bilgi/hakkimizda
+- **URL**: https://marketplace-finance-3.preview.emergentagent.com/bilgi/hakkimizda
 - **Page Load**: ✅ SUCCESS - InfoPage component rendered
 - **Container Element**: data-testid="info-page" ✅ VISIBLE
 - **Title Element**: data-testid="info-page-title" ✅ VISIBLE
@@ -18907,7 +18907,7 @@ SEO/404/500 UI verification test as per review request: "SEO/404/500 UI doğrula
 
 #### ❌ TEST 2: 404 Page for Non-Existent Info Slug - FAIL
 **Status**: ❌ **FAIL - Wrong Component Rendered**
-- **URL**: https://stripe-foundation.preview.emergentagent.com/bilgi/olmayan-sayfa
+- **URL**: https://marketplace-finance-3.preview.emergentagent.com/bilgi/olmayan-sayfa
 - **Expected Behavior**: NotFoundPage component with data-testid="not-found-page" and data-testid="not-found-cta"
 - **Actual Behavior**: InfoPage component renders with inline error message
 - **Error Message**: "Sayfa bulunamadı" (shown via data-testid="info-page-error")
@@ -18924,7 +18924,7 @@ SEO/404/500 UI verification test as per review request: "SEO/404/500 UI doğrula
 
 #### ✅ TEST 3: Server Error Page (/500) - PASS
 **Status**: ✅ **WORKING PERFECTLY**
-- **URL**: https://stripe-foundation.preview.emergentagent.com/500
+- **URL**: https://marketplace-finance-3.preview.emergentagent.com/500
 - **Page Load**: ✅ SUCCESS - ServerErrorPage component rendered
 - **Container Element**: data-testid="server-error-page" ✅ VISIBLE
 - **Title Element**: data-testid="server-error-title" ✅ VISIBLE
@@ -19048,7 +19048,7 @@ Keep current behavior but ensure InfoPage uses NotFoundPage data-testids when sh
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. NotFoundPage Component Rendering**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/bilgi/olmayan-sayfa
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/bilgi/olmayan-sayfa
   - **Component**: NotFoundPage component correctly renders when API returns 404
   - **Implementation**: InfoPage.js lines 103-105 now returns `<NotFoundPage />` when error state is set
   - **Previous Issue**: Previously showed inline error message (data-testid="info-page-error")
@@ -19642,7 +19642,7 @@ Mobile responsiveness re-test for /admin/ops/publish-health page at 390px viewpo
   - **Test Environment**: Chrome mobile viewport emulation
 
 **2. Page Load at Mobile Viewport**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/ops/publish-health
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/ops/publish-health
   - **Page Title**: "Publish Health & Alert Reliability"
   - **Content Rendering**: All sections properly contained within 390px width
   - **CRITICAL**: Page loads correctly at mobile viewport
@@ -19745,7 +19745,7 @@ Mobile responsiveness re-test for /admin/ops/publish-health page at 390px viewpo
 ## Corporate Menu Row Structure Test - Dealer View (Feb 27, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary
-Comprehensive test of new corporate menu row structure in dealer view as per review request: "Yeni kurumsal menü satır yapısını test et. URL: https://stripe-foundation.preview.emergentagent.com. Beklenenler: 1) Dealer görünümünde 1. satır kurumsal header (logo/kurumsal alan) görünmeli. 2) 2. satır yatay ana menü görünmeli: Özet, İlanlar, Sanal Turlar, Mesajlar, Müşteri Yönetimi, Favoriler, Raporlar, Danışman Takibi, Satın Al, Hesabım. 3) 2. satırda çocuk menüsü olan başlıklar tıklanınca aşağı doğru alt menü paneli açılmalı (ör. Raporlar/Favoriler). 4) Metin kontrastı silik olmamalı (aktif ve pasif okunaklı). 5) Sol dikey sidebar artık olmamalı. Kısa PASS/FAIL raporu ver."
+Comprehensive test of new corporate menu row structure in dealer view as per review request: "Yeni kurumsal menü satır yapısını test et. URL: https://marketplace-finance-3.preview.emergentagent.com. Beklenenler: 1) Dealer görünümünde 1. satır kurumsal header (logo/kurumsal alan) görünmeli. 2) 2. satır yatay ana menü görünmeli: Özet, İlanlar, Sanal Turlar, Mesajlar, Müşteri Yönetimi, Favoriler, Raporlar, Danışman Takibi, Satın Al, Hesabım. 3) 2. satırda çocuk menüsü olan başlıklar tıklanınca aşağı doğru alt menü paneli açılmalı (ör. Raporlar/Favoriler). 4) Metin kontrastı silik olmamalı (aktif ve pasif okunaklı). 5) Sol dikey sidebar artık olmamalı. Kısa PASS/FAIL raporu ver."
 
 ### Test Flow Executed:
 1. ✅ Dealer login with dealer@platform.com / Dealer123! → authentication successful
@@ -19994,7 +19994,7 @@ Comprehensive test of new corporate menu row structure in dealer view as per rev
 ## Dealer Iteration Validation Test (Feb 27, 2026 - LATEST) ✅ PASS (3/4 requirements, 1 verified via code)
 
 ### Test Summary
-Comprehensive dealer iteration validation as per review request: "Yeni iterasyonu doğrula: URL: https://stripe-foundation.preview.emergentagent.com. Dealer login: dealer@platform.com / Dealer123!. Kontrol listesi: 1) /dealer/messages ekranında okunma bilgisi var mı? (Okunma kolonu + Okundu/Okunmadı badge) 2) Okunmamış varsa 'Okundu İşaretle' aksiyonu görünmeli. 3) /dealer/customers ekranı PDF yapısına göre: başlık Müşteri Yönetimi, tablar (Kullanıcı Listesi / Mağaza Kullanıcısı Olmayanlar), filtreler (Ad Soyad, E-Posta, Durumu), tablo kolonları (Ad Soyad, E-Posta, Durumu, İşlemler). 4) Row2 menüde Sanal Turlar halen olmamalı. Kısa PASS/FAIL döndür."
+Comprehensive dealer iteration validation as per review request: "Yeni iterasyonu doğrula: URL: https://marketplace-finance-3.preview.emergentagent.com. Dealer login: dealer@platform.com / Dealer123!. Kontrol listesi: 1) /dealer/messages ekranında okunma bilgisi var mı? (Okunma kolonu + Okundu/Okunmadı badge) 2) Okunmamış varsa 'Okundu İşaretle' aksiyonu görünmeli. 3) /dealer/customers ekranı PDF yapısına göre: başlık Müşteri Yönetimi, tablar (Kullanıcı Listesi / Mağaza Kullanıcısı Olmayanlar), filtreler (Ad Soyad, E-Posta, Durumu), tablo kolonları (Ad Soyad, E-Posta, Durumu, İşlemler). 4) Row2 menüde Sanal Turlar halen olmamalı. Kısa PASS/FAIL döndür."
 
 ### Test Flow Executed:
 1. ✅ Dealer login with dealer@platform.com / Dealer123! → authentication successful
@@ -20188,7 +20188,7 @@ Comprehensive dealer iteration validation as per review request: "Yeni iterasyon
 - **UI**: ✅ PRODUCTION-READY (all pages functional, no errors, proper styling)
 
 ### Review Request Compliance:
-✅ **Review Request**: "Yeni iterasyonu doğrula: URL: https://stripe-foundation.preview.emergentagent.com. Dealer login: dealer@platform.com / Dealer123!. Kontrol listesi: 1) /dealer/messages ekranında okunma bilgisi var mı? (Okunma kolonu + Okundu/Okunmadı badge) 2) Okunmamış varsa 'Okundu İşaretle' aksiyonu görünmeli. 3) /dealer/customers ekranı PDF yapısına göre: başlık Müşteri Yönetimi, tablar (Kullanıcı Listesi / Mağaza Kullanıcısı Olmayanlar), filtreler (Ad Soyad, E-Posta, Durumu), tablo kolonları (Ad Soyad, E-Posta, Durumu, İşlemler). 4) Row2 menüde Sanal Turlar halen olmamalı. Kısa PASS/FAIL döndür."
+✅ **Review Request**: "Yeni iterasyonu doğrula: URL: https://marketplace-finance-3.preview.emergentagent.com. Dealer login: dealer@platform.com / Dealer123!. Kontrol listesi: 1) /dealer/messages ekranında okunma bilgisi var mı? (Okunma kolonu + Okundu/Okunmadı badge) 2) Okunmamış varsa 'Okundu İşaretle' aksiyonu görünmeli. 3) /dealer/customers ekranı PDF yapısına göre: başlık Müşteri Yönetimi, tablar (Kullanıcı Listesi / Mağaza Kullanıcısı Olmayanlar), filtreler (Ad Soyad, E-Posta, Durumu), tablo kolonları (Ad Soyad, E-Posta, Durumu, İşlemler). 4) Row2 menüde Sanal Turlar halen olmamalı. Kısa PASS/FAIL döndür."
 
 **Short PASS/FAIL Answer**:
 ✅ **PASS** - All 4 requirements satisfied:
@@ -20211,7 +20211,7 @@ Comprehensive dealer iteration validation as per review request: "Yeni iterasyon
 ## Dealer Latest Developments Test - Code Review & Backend Verification (Feb 27, 2026 - LATEST) ⚠️ BLOCKER FOUND
 
 ### Test Summary
-Comprehensive test of dealer latest developments focusing on 5 requirements: Row2 menu order (no Sanal Turlar), Favorites screen structure, Reports screen filters/tabs/metrics, Messages read status, and Customer Management screen as per Turkish review request: "Sıralamayı bozmadan yapılan son geliştirmeleri test et. URL: https://stripe-foundation.preview.emergentagent.com. Dealer login: dealer@platform.com / Dealer123!. Test maddeleri: 1) Row2 menüde sıra korunmalı ve Sanal Turlar görünmemeli. 2) Favoriler ekranı (/dealer/favorites): başlık, 3 tab (Favori İlanlar/Favori Aramalar/Favori Satıcılar), arama inputu, her tabda tablo render (boş olsa bile kolon ve boş durum). 3) Raporlar ekranı (/dealer/reports): pencere filtreleri (7/14/30/90), bölüm tabları (listing/views/favorites/messages/mobile/package/doping), en az 1 bölümde seri/metrik kartları görünmeli. 4) Mesajlar ekranında okunma bilgisi: Okunma kolonu, Okundu/Okunmadı badge, okunmamış satır varsa Okundu İşaretle butonu. 5) Müşteri Yönetimi ekranı: tablar (Kullanıcı Listesi, Mağaza Kullanıcısı Olmayanlar), filtreler ve tablo kolonları. Kısa PASS/FAIL + blocker döndür."
+Comprehensive test of dealer latest developments focusing on 5 requirements: Row2 menu order (no Sanal Turlar), Favorites screen structure, Reports screen filters/tabs/metrics, Messages read status, and Customer Management screen as per Turkish review request: "Sıralamayı bozmadan yapılan son geliştirmeleri test et. URL: https://marketplace-finance-3.preview.emergentagent.com. Dealer login: dealer@platform.com / Dealer123!. Test maddeleri: 1) Row2 menüde sıra korunmalı ve Sanal Turlar görünmemeli. 2) Favoriler ekranı (/dealer/favorites): başlık, 3 tab (Favori İlanlar/Favori Aramalar/Favori Satıcılar), arama inputu, her tabda tablo render (boş olsa bile kolon ve boş durum). 3) Raporlar ekranı (/dealer/reports): pencere filtreleri (7/14/30/90), bölüm tabları (listing/views/favorites/messages/mobile/package/doping), en az 1 bölümde seri/metrik kartları görünmeli. 4) Mesajlar ekranında okunma bilgisi: Okunma kolonu, Okundu/Okunmadı badge, okunmamış satır varsa Okundu İşaretle butonu. 5) Müşteri Yönetimi ekranı: tablar (Kullanıcı Listesi, Mağaza Kullanıcısı Olmayanlar), filtreler ve tablo kolonları. Kısa PASS/FAIL + blocker döndür."
 
 ### Test Approach
 **CRITICAL BLOCKER DETECTED DURING TESTING**: Playwright automation unable to load dealer portal - React app shows "You need to enable JavaScript to run this app" message despite JavaScript being enabled. Investigation revealed this is likely a frontend rendering/initialization issue specific to the test automation environment.
@@ -20767,7 +20767,7 @@ Comprehensive test for Admin Categories page with focus on "Yeni Kategori" modal
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. /admin/categories Page Load**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/categories loads successfully
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/categories loads successfully
   - **Admin Login**: admin@platform.com / Admin123! works correctly
   - **Page Access**: Successfully navigated to categories page after login
   - **CRITICAL**: Admin categories page is accessible and functional
@@ -21384,7 +21384,7 @@ Comprehensive test for Admin site design category sorting controls and homepage 
 #### ⚠️ HOMEPAGE - LIMITED TEST DATA:
 
 **1. Homepage Load**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/
   - **Page Load**: ✅ SUCCESS (domcontentloaded)
   - **No Console Errors**: ✅ VERIFIED
 
@@ -21696,7 +21696,7 @@ Backend smoke test + payment endpoint validation as per Turkish review request: 
 ### Environment Configuration:
 
 **Backend Configuration**: ✅ VERIFIED
-- ✅ BASE_URL: https://stripe-foundation.preview.emergentagent.com/api
+- ✅ BASE_URL: https://marketplace-finance-3.preview.emergentagent.com/api
 - ✅ Authentication system working correctly
 - ✅ Portal scope validation functional
 - ✅ Stripe webhook validation configured
@@ -21768,13 +21768,13 @@ Regression test for admin payments page CSV export button visibility as per revi
 #### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS):
 
 **1. Admin Login**: ✅ WORKING PERFECTLY
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/login
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/login
   - **Credentials**: admin@platform.com / Admin123!
   - **Login Result**: ✅ SUCCESS - redirected to /admin
   - **No Errors**: No authentication errors detected
 
 **2. Navigate to /admin/payments**: ✅ WORKING
-  - **URL**: https://stripe-foundation.preview.emergentagent.com/admin/payments
+  - **URL**: https://marketplace-finance-3.preview.emergentagent.com/admin/payments
   - **Page Container**: data-testid="admin-transactions-page" ✅ PRESENT and VISIBLE
   - **Page Title**: "Transactions Log" ✅ DISPLAYED
   - **Page Subtitle**: "Read-only monetization kayıtları." ✅ DISPLAYED

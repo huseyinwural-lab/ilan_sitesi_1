@@ -2778,6 +2778,22 @@ def _payment_to_dict(payment: Payment, invoice: Optional[AdminInvoice] = None, u
     }
 
 
+def _normalized_payment_message(status: str, meta_json: Optional[Dict[str, Any]]) -> str:
+    state = (status or "").lower().strip()
+    if state == "succeeded":
+        return "Ödeme başarıyla tamamlandı."
+    if state in {"processing", "pending", "requires_action", "requires_payment_method"}:
+        return "Ödeme işleminiz devam ediyor."
+    if state in {"failed", "canceled", "cancelled"}:
+        return "Ödeme tamamlanamadı. Lütfen kart bilgilerinizi kontrol edip tekrar deneyin."
+    if state == "refunded":
+        return "Ödeme iade edildi."
+    error_hint = (meta_json or {}).get("error") or (meta_json or {}).get("message")
+    if error_hint:
+        return "Ödeme sırasında bir sorun oluştu. Lütfen tekrar deneyin."
+    return "Ödeme durumu güncelleniyor."
+
+
 def _ledger_entry_to_dict(entry: LedgerEntry, account: Optional[LedgerAccount] = None) -> Dict[str, Any]:
     return {
         "id": str(entry.id),
@@ -12635,6 +12651,10 @@ class FinanceSubscriptionStatusUpdatePayload(BaseModel):
     reason: Optional[str] = None
 
 
+class AccountSubscriptionPlanPreviewPayload(BaseModel):
+    target_plan_id: str
+
+
 class TaxRateCreatePayload(BaseModel):
     country_code: str
     rate: float
@@ -17586,6 +17606,327 @@ async def admin_dealer_portal_module_update(
     _dealer_dashboard_summary_cache.clear()
     await session.commit()
     return {"ok": True}
+
+
+@api_router.get("/account/invoices")
+async def account_list_invoices(
+    status: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+    try:
+        user_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="user invalid") from exc
+
+    conditions: List[Any] = [AdminInvoice.user_id == user_uuid]
+    if status:
+        value = status.strip().lower()
+        if value == "cancelled":
+            value = "void"
+        if value not in INVOICE_STATUS_SET:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        conditions.append(AdminInvoice.status == value)
+    if start_date:
+        conditions.append(AdminInvoice.created_at >= _parse_iso_datetime(start_date, "start_date"))
+    if end_date:
+        conditions.append(AdminInvoice.created_at <= _parse_iso_datetime(end_date, "end_date"))
+
+    rows = (await session.execute(select(AdminInvoice).where(*conditions).order_by(AdminInvoice.created_at.desc()))).scalars().all()
+    return {"items": [_admin_invoice_to_dict(row) for row in rows]}
+
+
+@api_router.get("/account/invoices/{invoice_id}")
+async def account_invoice_detail(
+    invoice_id: str,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+        user_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid id") from exc
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    if invoice.user_id != user_uuid:
+        raise HTTPException(status_code=403, detail="Invoice access denied")
+
+    payments = (
+        await session.execute(select(Payment).where(Payment.invoice_id == invoice.id).order_by(Payment.created_at.desc()))
+    ).scalars().all()
+    return {
+        "invoice": _admin_invoice_to_dict(invoice),
+        "payments": [_payment_to_dict(row, invoice) for row in payments],
+    }
+
+
+@api_router.get("/account/invoices/{invoice_id}/download-pdf")
+async def account_invoice_download_pdf(
+    invoice_id: str,
+    request: Request,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+        user_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid id") from exc
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    if invoice.user_id != user_uuid:
+        raise HTTPException(status_code=403, detail="Invoice access denied")
+    if not invoice.pdf_url:
+        raise HTTPException(status_code=404, detail="PDF not generated")
+
+    storage_key = _extract_storage_key_from_url(invoice.pdf_url)
+    pdf_bytes = _storage_get_object(storage_key)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PDF_DOWNLOADED",
+        actor=current_user,
+        resource_type="invoice",
+        resource_id=str(invoice.id),
+        metadata={"storage_key": storage_key, "scope": "account"},
+        request=request,
+        country_code=invoice.country_code,
+    )
+    await session.commit()
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={invoice.invoice_no}.pdf"},
+    )
+
+
+@api_router.get("/account/payments")
+async def account_payment_history(
+    status: Optional[str] = None,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+    try:
+        user_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="user invalid") from exc
+
+    conditions: List[Any] = [Payment.user_id == user_uuid]
+    if status:
+        conditions.append(Payment.status == status.strip().lower())
+
+    rows = (await session.execute(select(Payment).where(*conditions).order_by(Payment.created_at.desc()))).scalars().all()
+    dedup: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        dedupe_key = row.provider_ref or str(row.id)
+        if dedupe_key in dedup:
+            continue
+        item = _payment_to_dict(row)
+        item["normalized_message"] = _normalized_payment_message(row.status, row.meta_json)
+        dedup[dedupe_key] = item
+
+    return {"items": list(dedup.values())}
+
+
+@api_router.get("/account/subscription")
+async def account_subscription_status(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        user_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="user invalid") from exc
+
+    sub = (
+        await session.execute(
+            select(UserSubscription)
+            .where(UserSubscription.user_id == user_uuid)
+            .order_by(UserSubscription.updated_at.desc())
+        )
+    ).scalars().first()
+    if not sub:
+        return {
+            "has_subscription": False,
+            "status": "free",
+            "plan": None,
+            "current_period_end": None,
+            "cancel_at_period_end": False,
+        }
+
+    plan = await session.get(Plan, sub.plan_id) if sub.plan_id else None
+    cancel_at_period_end = bool((sub.meta_json or {}).get("cancel_at_period_end"))
+    return {
+        "has_subscription": True,
+        "id": str(sub.id),
+        "status": sub.status,
+        "current_period_start": sub.current_period_start.isoformat() if sub.current_period_start else None,
+        "current_period_end": sub.current_period_end.isoformat() if sub.current_period_end else None,
+        "cancel_at_period_end": cancel_at_period_end,
+        "plan": {
+            "id": str(plan.id),
+            "name": plan.name,
+            "price_amount": float(plan.price_amount) if plan and plan.price_amount is not None else None,
+            "currency_code": plan.currency_code if plan else None,
+        } if plan else None,
+    }
+
+
+@api_router.post("/account/subscription/cancel")
+async def account_subscription_cancel_at_period_end(
+    request: Request,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(current_user.get("id"))
+    sub = (
+        await session.execute(select(UserSubscription).where(UserSubscription.user_id == user_uuid).order_by(UserSubscription.updated_at.desc()))
+    ).scalars().first()
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+    if sub.status not in {"trialing", "active", "past_due"}:
+        raise HTTPException(status_code=400, detail="Subscription cannot be cancelled in current state")
+
+    meta = sub.meta_json or {}
+    meta["cancel_at_period_end"] = True
+    meta["cancel_requested_at"] = datetime.now(timezone.utc).isoformat()
+    sub.meta_json = meta
+    sub.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="account_subscription_cancel_scheduled",
+        actor=current_user,
+        resource_type="subscription",
+        resource_id=str(sub.id),
+        metadata={"effective_at": sub.current_period_end.isoformat() if sub.current_period_end else None},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True, "status": sub.status, "cancel_at_period_end": True}
+
+
+@api_router.post("/account/subscription/reactivate")
+async def account_subscription_reactivate(
+    request: Request,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(current_user.get("id"))
+    sub = (
+        await session.execute(select(UserSubscription).where(UserSubscription.user_id == user_uuid).order_by(UserSubscription.updated_at.desc()))
+    ).scalars().first()
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+    if sub.status not in {"trialing", "active", "past_due", "unpaid"}:
+        raise HTTPException(status_code=400, detail="Subscription cannot be reactivated")
+
+    meta = sub.meta_json or {}
+    if not meta.get("cancel_at_period_end"):
+        return {"ok": True, "status": sub.status, "cancel_at_period_end": False}
+
+    meta["cancel_at_period_end"] = False
+    meta["reactivated_at"] = datetime.now(timezone.utc).isoformat()
+    sub.meta_json = meta
+    sub.updated_at = datetime.now(timezone.utc)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="account_subscription_reactivated",
+        actor=current_user,
+        resource_type="subscription",
+        resource_id=str(sub.id),
+        metadata={},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True, "status": sub.status, "cancel_at_period_end": False}
+
+
+@api_router.post("/account/subscription/plan-change-preview")
+async def account_subscription_plan_change_preview(
+    payload: AccountSubscriptionPlanPreviewPayload,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    user_uuid = uuid.UUID(current_user.get("id"))
+    sub = (
+        await session.execute(select(UserSubscription).where(UserSubscription.user_id == user_uuid).order_by(UserSubscription.updated_at.desc()))
+    ).scalars().first()
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+
+    try:
+        target_plan_uuid = uuid.UUID(payload.target_plan_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="target_plan_id invalid") from exc
+
+    current_plan = await session.get(Plan, sub.plan_id) if sub.plan_id else None
+    target_plan = await session.get(Plan, target_plan_uuid)
+    if not target_plan:
+        raise HTTPException(status_code=404, detail="Target plan not found")
+
+    current_price = float(current_plan.price_amount) if current_plan and current_plan.price_amount is not None else 0.0
+    target_price = float(target_plan.price_amount) if target_plan.price_amount is not None else 0.0
+    delta = target_price - current_price
+
+    return {
+        "current_plan": {
+            "id": str(current_plan.id) if current_plan else None,
+            "name": current_plan.name if current_plan else None,
+            "price_amount": current_price,
+            "currency_code": current_plan.currency_code if current_plan else target_plan.currency_code,
+        },
+        "target_plan": {
+            "id": str(target_plan.id),
+            "name": target_plan.name,
+            "price_amount": target_price,
+            "currency_code": target_plan.currency_code,
+        },
+        "proration_preview": {
+            "immediate_delta_amount": round(delta, 2),
+            "next_cycle_amount": round(target_price, 2),
+            "note": "Bu değer bilgilendirme amaçlıdır. Kesin tutar ödeme sağlayıcı eventleri ile netleşir.",
+        },
+    }
+
+
+@api_router.get("/account/subscription/plans")
+async def account_subscription_plans(
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    rows = (
+        await session.execute(
+            select(Plan).where(Plan.active_flag.is_(True)).order_by(Plan.price_amount.asc())
+        )
+    ).scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(row.id),
+                "name": row.name,
+                "price_amount": float(row.price_amount) if row.price_amount is not None else 0,
+                "currency_code": row.currency_code,
+                "listing_quota": row.listing_quota,
+                "showcase_quota": row.showcase_quota,
+            }
+            for row in rows
+        ]
+    }
 
 
 @api_router.get("/dealer/invoices")

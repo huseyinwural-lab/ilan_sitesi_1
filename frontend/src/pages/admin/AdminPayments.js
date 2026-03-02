@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { FinanceStatusBadge } from '../../components/finance/FinanceStatusBadge';
+import { FinanceEmptyState, FinanceErrorState, FinanceLoadingState } from '../../components/finance/FinanceStateView';
+import { formatMoneyMinor, resolveLocaleByCountry } from '../../utils/financeFormat';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -111,11 +114,7 @@ export default function AdminPaymentsPage() {
         ) : null}
       </div>
 
-      {error && (
-        <div className="border border-red-200 bg-red-50 text-red-700 rounded-md p-3" data-testid="admin-transactions-error">
-          {error}
-        </div>
-      )}
+      {error ? <FinanceErrorState testId="admin-transactions-error" message={error} /> : null}
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6" data-testid="admin-transactions-filters">
         <select
@@ -195,9 +194,9 @@ export default function AdminPaymentsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td className="px-3 py-4" colSpan="8" data-testid="admin-transactions-loading">Yükleniyor...</td></tr>
+              <tr><td className="px-3 py-4" colSpan="8"><FinanceLoadingState testId="admin-transactions-loading" /></td></tr>
             ) : items.length === 0 ? (
-              <tr><td className="px-3 py-4" colSpan="8" data-testid="admin-transactions-empty">Kayıt yok</td></tr>
+              <tr><td className="px-3 py-4" colSpan="8"><FinanceEmptyState testId="admin-transactions-empty" message="Kayıt yok" /></td></tr>
             ) : (
               items.map((item) => (
                 <tr key={item.id} className="border-t" data-testid={`admin-transactions-row-${item.id}`}>
@@ -205,9 +204,9 @@ export default function AdminPaymentsPage() {
                   <td className="px-3 py-2 font-mono text-xs" data-testid={`admin-transactions-user-${item.id}`}>{item.user_id}</td>
                   <td className="px-3 py-2 font-mono text-xs" data-testid={`admin-transactions-listing-${item.id}`}>{item.listing_id || '-'}</td>
                   <td className="px-3 py-2 font-mono text-xs" data-testid={`admin-transactions-provider-ref-${item.id}`}>{item.provider_ref || '-'}</td>
-                  <td className="px-3 py-2" data-testid={`admin-transactions-amount-${item.id}`}>{item.amount_total}</td>
+                  <td className="px-3 py-2" data-testid={`admin-transactions-amount-${item.id}`}>{formatMoneyMinor(item.amount_minor, item.currency, resolveLocaleByCountry(user?.country_code))}</td>
                   <td className="px-3 py-2" data-testid={`admin-transactions-currency-${item.id}`}>{item.currency}</td>
-                  <td className="px-3 py-2" data-testid={`admin-transactions-status-${item.id}`}>{item.status}</td>
+                  <td className="px-3 py-2" data-testid={`admin-transactions-status-${item.id}`}><FinanceStatusBadge status={item.status} testId={`admin-transactions-status-badge-${item.id}`} /></td>
                   <td className="px-3 py-2" data-testid={`admin-transactions-created-${item.id}`}>{formatDateTime(item.created_at)}</td>
                 </tr>
               ))
