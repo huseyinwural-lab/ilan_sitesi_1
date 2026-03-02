@@ -27330,13 +27330,51 @@ async def public_search_v2(
             raise HTTPException(status_code=502, detail=f"MEILI_SEARCH_FAILED: {exc}") from exc
 
     raw_hits = result.get("hits", [])
+
+    listing_coords: dict[str, tuple[Optional[float], Optional[float]]] = {}
+    listing_uuid_map: dict[str, uuid.UUID] = {}
+    for hit in raw_hits:
+        listing_id = str(hit.get("listing_id") or "").strip()
+        if not listing_id:
+            continue
+        try:
+            listing_uuid_map[listing_id] = uuid.UUID(listing_id)
+        except ValueError:
+            continue
+
+    if listing_uuid_map:
+        listing_rows = (
+            (
+                await session.execute(
+                    select(Listing.id, Listing.attributes).where(Listing.id.in_(list(listing_uuid_map.values())))
+                )
+            )
+            .all()
+        )
+        for row in listing_rows:
+            lat, lng = _extract_attrs_lat_lng(row.attributes)
+            listing_coords[str(row.id)] = (lat, lng)
+
     if bbox_tuple is not None:
-        filtered_hits = [hit for hit in raw_hits if _hit_inside_bbox(hit, bbox_tuple)]
+        filtered_hits = []
+        for hit in raw_hits:
+            listing_id = str(hit.get("listing_id") or "")
+            lat, lng = listing_coords.get(listing_id, (None, None))
+            if lat is None or lng is None:
+                lat, lng = _extract_hit_lat_lng(hit)
+            if lat is None or lng is None:
+                continue
+            min_lng, min_lat, max_lng, max_lat = bbox_tuple
+            if min_lat <= lat <= max_lat and min_lng <= lng <= max_lng:
+                filtered_hits.append(hit)
         raw_hits = filtered_hits[offset: offset + limit]
 
     items = []
     for hit in raw_hits:
-        lat, lng = _extract_hit_lat_lng(hit)
+        listing_id = str(hit.get("listing_id") or "")
+        lat, lng = listing_coords.get(listing_id, (None, None))
+        if lat is None or lng is None:
+            lat, lng = _extract_hit_lat_lng(hit)
         items.append(
             {
                 "id": hit.get("listing_id"),
