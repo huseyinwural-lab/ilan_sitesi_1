@@ -301,3 +301,54 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - **P1:** Country admin scoped export + row-level filters (gerektiğinde).
 - **P2:** Kullanıcı tarafı Faturalarım/Ödeme Geçmişi/Abonelik self-serve.
 - **P2:** Finans UI standardizasyonu (locale/badge/empty-loading-error iyileştirmeleri).
+
+---
+
+## 2026-03-02 (FIN-P2 P1 — Invoice PDF + Scoped Export Tamamlama)
+
+### Kapsam (yalnız 2 madde)
+- Invoice PDF üretim + storage + admin download
+- Country-admin scoped export (finance listeleri)
+
+### Backend tamamlananlar
+- `AdminInvoice` snapshot genişletildi (immutable kullanım):
+  - `net_amount_minor`, `tax_amount_minor`, `gross_amount_minor`, `currency`, `tax_rate`, `billing_info_snapshot`
+  - `pdf_url`, `pdf_generated_at`
+- PDF endpointleri eklendi:
+  - `POST /api/admin/invoices/{id}/generate-pdf` (idempotent; ikinci çağrı mevcut path döner)
+  - `POST /api/admin/invoices/{id}/regenerate-pdf` (yalnız super_admin; versiyon suffix ile yeni dosya)
+  - `GET /api/admin/invoices/{id}/download-pdf` (super_admin + country_admin scope kontrol)
+- Storage path standardı aktif:
+  - `{app_prefix}/invoices/{year}/{country}/{invoice_no}.pdf`
+- Audit eventleri:
+  - `PDF_GENERATED`, `PDF_REGENERATED`, `PDF_DOWNLOADED`
+  - Export tarafında `EXPORT_TRIGGERED` (type, record_count, country_scope)
+
+### Scoped export (backend-enforced)
+- Yeni unified endpoint:
+  - `GET /api/admin/finance/export?type=payments|invoices|ledger`
+- RBAC:
+  - `super_admin`: global
+  - `country_admin`: otomatik country scope (query ile bypass yok)
+- Eski export endpointleri de scope/audit kurallarıyla hizalandı.
+
+### Admin UI tamamlananlar
+- Invoice detail:
+  - `PDF: Available / Not Generated` badge
+  - `Generate PDF` + `Regenerate PDF` (yalnız super_admin)
+  - `Download PDF` (super_admin + country_admin)
+- Scope görünürlüğü eklendi:
+  - Invoices / Payments / Subscriptions / Ledger / Finance Overview sayfalarında scope badge
+- Finance overview’a export aksiyonları eklendi (payments/invoices/ledger).
+
+### Test sonucu
+- Testing agent raporu: `/app/test_reports/iteration_79.json`
+  - Backend: kritik/minor issue yok
+  - Frontend: minor banner bug fixlendi
+- Ek doğrulama:
+  - Auto frontend retest PASS (invoice DB banner false-positive giderildi)
+  - Deep backend smoke PASS (PDF flow + scoped export + RBAC)
+
+### Kalan işler
+- P2: User-side billing screens (Faturalarım/Ödeme Geçmişi/Abonelik self-serve)
+- P2: Finans UI standardizasyonu ve ileri raporlama
