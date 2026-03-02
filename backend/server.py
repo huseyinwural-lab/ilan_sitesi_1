@@ -27101,6 +27101,34 @@ def _hit_inside_bbox(hit: dict, bbox_tuple: tuple[float, float, float, float]) -
     return min_lat <= lat <= max_lat and min_lng <= lng <= max_lng
 
 
+def _extract_attrs_lat_lng(attributes: Any) -> tuple[Optional[float], Optional[float]]:
+    if not isinstance(attributes, dict):
+        return None, None
+    location = attributes.get("location") if isinstance(attributes.get("location"), dict) else {}
+
+    lat = (
+        _safe_float(location.get("latitude"))
+        if location
+        else None
+    )
+    if lat is None and location:
+        lat = _safe_float(location.get("lat"))
+
+    lng = (
+        _safe_float(location.get("longitude"))
+        if location
+        else None
+    )
+    if lng is None and location:
+        lng = _safe_float(location.get("lng"))
+
+    if lat is None or lng is None:
+        return None, None
+    if lat < -90 or lat > 90 or lng < -180 or lng > 180:
+        return None, None
+    return lat, lng
+
+
 @api_router.get("/search/suggest")
 async def public_search_suggest(
     session: AsyncSession = Depends(get_sql_session),
