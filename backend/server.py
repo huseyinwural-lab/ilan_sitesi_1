@@ -30015,8 +30015,9 @@ async def upload_vehicle_media(
     session: AsyncSession = Depends(get_sql_session),
 ):
     listing = await _get_owned_listing(session, listing_id, current_user)
-    if listing.status not in ["draft", "needs_revision"]:
-        raise HTTPException(status_code=400, detail="Only draft/needs_revision can accept media")
+    if listing.status not in ["draft", "needs_revision", "unpublished", "published", "pending_review"]:
+        raise HTTPException(status_code=400, detail="Listing not editable for media")
+    was_published = listing.status == "published"
 
     media_meta = _listing_media_meta(listing)
     watermark_config = await _get_watermark_pipeline_config(session, country_code=listing.country)
@@ -30065,6 +30066,9 @@ async def upload_vehicle_media(
     listing.attributes = {**(listing.attributes or {}), "media": media_meta}
     listing.images = [f"/media/listings/{listing_id}/{m['file']}" for m in media_meta]
     listing.updated_at = datetime.now(timezone.utc)
+    if was_published:
+        listing.status = "pending_review"
+        _set_listing_lifecycle_state(listing, "pending_review")
     await session.commit()
 
     resp_media = [
@@ -30097,6 +30101,7 @@ async def reorder_vehicle_media(
     session: AsyncSession = Depends(get_sql_session),
 ):
     listing = await _get_owned_listing(session, listing_id, current_user)
+    was_published = listing.status == "published"
     media_meta = _listing_media_meta(listing)
     if not media_meta:
         return {"id": listing_id, "status": listing.status, "media": []}
@@ -30128,6 +30133,9 @@ async def reorder_vehicle_media(
     listing.attributes = {**(listing.attributes or {}), "media": next_media}
     listing.images = [f"/media/listings/{listing_id}/{m['file']}" for m in next_media]
     listing.updated_at = datetime.now(timezone.utc)
+    if was_published:
+        listing.status = "pending_review"
+        _set_listing_lifecycle_state(listing, "pending_review")
     await session.commit()
 
     resp_media = [
