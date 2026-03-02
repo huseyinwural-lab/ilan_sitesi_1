@@ -19264,16 +19264,23 @@ async def create_listing_payment_intent(
         stripe_payment_intent_id=intent.get("id"),
         amount=float(payload.amount),
         currency=currency,
-        status="created",
+        status="processing",
         idempotency_key=safe_idempotency_key,
         meta_json={
             "description": payload.description,
             "metadata": metadata,
+            "stripe_status": intent.get("status"),
         },
         created_at=now,
         updated_at=now,
     )
     session.add(payment_record)
+
+    processing_status = map_payment_status_to_listing_status("processing")
+    if processing_status and listing.status != "active":
+        listing.status = processing_status
+        listing.updated_at = now
+
     await session.commit()
     await session.refresh(payment_record)
 
