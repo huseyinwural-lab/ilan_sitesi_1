@@ -29421,14 +29421,23 @@ async def save_vehicle_draft(
     session: AsyncSession = Depends(get_sql_session),
 ):
     listing = await _get_owned_listing(session, listing_id, current_user)
-    if listing.status not in ["draft", "needs_revision", "unpublished"]:
+    editable_statuses = ["draft", "needs_revision", "unpublished", "published", "pending_review"]
+    if listing.status not in editable_statuses:
         raise HTTPException(status_code=400, detail="Listing not editable")
 
+    was_published = listing.status == "published"
     _apply_listing_payload_sql(listing, payload)
     attrs = dict(listing.attributes or {})
     flow = _normalize_listing_flow(attrs, str(listing.id))
     if flow.get("state") not in {LISTING_FLOW_PREVIEW_READY, LISTING_FLOW_DOPING_SELECTED, LISTING_FLOW_SUBMITTED}:
         _set_listing_flow(listing, state=LISTING_FLOW_DRAFT)
+
+    if was_published:
+        listing.status = "pending_review"
+        _set_listing_lifecycle_state(listing, "pending_review")
+    elif listing.status == "draft":
+        _set_listing_lifecycle_state(listing, "draft")
+
     await _validate_listing_vehicle_foreign_keys(session, listing)
     listing.updated_at = datetime.now(timezone.utc)
     await session.commit()
@@ -29461,8 +29470,73 @@ async def save_vehicle_draft(
     return {
         "id": listing_id,
         "status": listing.status,
+        "state": _listing_lifecycle_state(listing),
         "flow_state": current_flow.get("state") or LISTING_FLOW_DRAFT,
         "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
+    }
+
+
+@api_router.get("/v1/listings/vehicle/{listing_id}/versions")
+async def get_vehicle_listing_versions(
+    listing_id: str,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    versions = _listing_versions_meta(listing)
+    versions = sorted(versions, key=lambda row: int(row.get("version_no") or 0), reverse=True)
+
+    return {
+        "items": [
+            {
+                "version_no": int(item.get("version_no") or 0),
+                "updated_at": item.get("updated_at"),
+                "publish_state": item.get("publish_state") or "unknown",
+                "source": item.get("source") or "publish",
+            }
+            for item in versions
+        ],
+        "latest_version": int(versions[0].get("version_no") or 0) if versions else 0,
+    }
+
+
+@api_router.post("/v1/listings/vehicle/{listing_id}/versions/{version_no}/rollback")
+async def rollback_vehicle_listing_version(
+    listing_id: str,
+    version_no: int,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    versions = _listing_versions_meta(listing)
+    target = next((row for row in versions if int(row.get("version_no") or 0) == int(version_no)), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Version not found")
+
+    snapshot = target.get("snapshot") if isinstance(target.get("snapshot"), dict) else {}
+    if not snapshot:
+        raise HTTPException(status_code=422, detail="Version snapshot unavailable")
+
+    _apply_listing_version_snapshot(listing, snapshot)
+    if listing.status == "published":
+        listing.status = "pending_review"
+        _set_listing_lifecycle_state(listing, "pending_review")
+    listing.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger="listing_version_rollback",
+    )
+
+    return {
+        "ok": True,
+        "id": str(listing.id),
+        "status": listing.status,
+        "state": _listing_lifecycle_state(listing),
+        "rolled_back_version": int(version_no),
     }
 
 
