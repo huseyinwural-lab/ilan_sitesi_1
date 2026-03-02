@@ -19310,7 +19310,10 @@ async def get_listing_payment_status(
     user_id_raw = _resolve_current_user_id(current_user)
     if not user_id_raw:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    user_uuid = uuid.UUID(str(user_id_raw))
+    try:
+        user_uuid = uuid.UUID(str(user_id_raw))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
 
     payment_record = await session.get(ListingPayment, payment_uuid)
     if not payment_record or payment_record.user_id != user_uuid:
@@ -19346,7 +19349,10 @@ async def reconcile_listing_payment(
     user_id_raw = _resolve_current_user_id(current_user)
     if not user_id_raw:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    user_uuid = uuid.UUID(str(user_id_raw))
+    try:
+        user_uuid = uuid.UUID(str(user_id_raw))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid user id") from exc
 
     payment_record = await session.get(ListingPayment, payment_uuid)
     if not payment_record or payment_record.user_id != user_uuid:
