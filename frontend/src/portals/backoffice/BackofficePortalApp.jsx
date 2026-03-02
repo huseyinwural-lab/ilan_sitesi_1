@@ -38,7 +38,6 @@ import IndividualUsersPage from '@/pages/admin/IndividualUsers';
 import IndividualApplicationsPage from '@/pages/admin/IndividualApplications';
 import IndividualListingApplicationsPage from '@/pages/admin/IndividualListingApplications';
 import CorporateListingApplicationsPage from '@/pages/admin/CorporateListingApplications';
-import BillingPlaceholderPage from '@/pages/admin/BillingPlaceholder';
 import AdminAdsManagement from '@/pages/admin/AdminAdsManagement';
 import AdminAdsCampaigns from '@/pages/admin/AdminAdsCampaigns';
 import AdminPricingCampaign from '@/pages/admin/AdminPricingCampaign';
@@ -235,7 +234,6 @@ export default function BackofficePortalApp() {
       <Route path="/finance-overview" element={<AdminLayout><AdminFinanceOverviewPage /></AdminLayout>} />
       <Route path="/subscriptions" element={<AdminLayout><AdminSubscriptionsPage /></AdminLayout>} />
       <Route path="/ledger" element={<AdminLayout><AdminLedgerPage /></AdminLayout>} />
-      <Route path="/billing" element={<AdminLayout><BillingPlaceholderPage /></AdminLayout>} />
       <Route path="/tax-rates" element={<AdminLayout><AdminTaxRatesPage /></AdminLayout>} />
       <Route path="/plans" element={<AdminLayout><AdminPlansPage /></AdminLayout>} />
       <Route path="/dealers/:dealerId" element={<AdminLayout><AdminDealerDetailPage /></AdminLayout>} />

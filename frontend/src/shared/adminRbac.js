@@ -63,7 +63,6 @@ export const ADMIN_ROUTE_RULES = [
   { pattern: /^\/admin\/ledger$/, roles: ADMIN_ROLE_GROUPS.finance },
   { pattern: /^\/admin\/tax-rates$/, roles: ADMIN_ROLE_GROUPS.finance },
   { pattern: /^\/admin\/plans$/, roles: ADMIN_ROLE_GROUPS.finance },
-  { pattern: /^\/admin\/billing$/, roles: ADMIN_ROLE_GROUPS.finance },
   { pattern: /^\/admin\/countries$/, roles: ADMIN_ROLE_GROUPS.system },
   { pattern: /^\/admin\/system-settings$/, roles: ADMIN_ROLE_GROUPS.system },
   { pattern: /^\/admin\/audit$/, roles: ADMIN_ROLE_GROUPS.auditViewer },

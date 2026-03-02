@@ -46,9 +46,9 @@ async def test_runtime_flow():
     
     async with AsyncSessionLocal() as session:
         # Cleanup
-        await session.execute(text(f"DELETE FROM coupon_redemptions WHERE coupon_id IN (SELECT id FROM coupons WHERE code = 'RUN50')"))
-        await session.execute(text(f"DELETE FROM coupons WHERE code = 'RUN50'"))
-        await session.execute(text(f"DELETE FROM promotions WHERE name = 'Runtime Promo'"))
+        await session.execute(text("DELETE FROM coupon_redemptions WHERE coupon_id IN (SELECT id FROM coupons WHERE code = 'RUN50')"))
+        await session.execute(text("DELETE FROM coupons WHERE code = 'RUN50'"))
+        await session.execute(text("DELETE FROM promotions WHERE name = 'Runtime Promo'"))
         await session.execute(text(f"DELETE FROM users WHERE email = '{email}'"))
         await session.commit()
 
@@ -74,7 +74,7 @@ async def test_runtime_flow():
     
     token = create_access_token({"sub": user_id, "email": email, "role": "individual"})
     headers = {"Authorization": f"Bearer {token}"}
-    base_url = "http://localhost:8001/api/v1/billing"
+    base_url = "http://localhost:8001/api"
 
     async with httpx.AsyncClient() as client:
         # 2. Checkout with Valid Coupon
@@ -87,7 +87,11 @@ async def test_runtime_flow():
         # But we can check if it passed VALIDATION (which happens before).
         # If we get 502, validation passed!
         # If we get 400/404, validation failed.
-        resp = await client.post(f"{base_url}/checkout", json=payload, headers=headers)
+        resp = await client.post(
+            f"{base_url}/payments/create-checkout-session",
+            json={"invoice_id": "legacy-script-update-required", "origin_url": "http://localhost:3000"},
+            headers=headers,
+        )
         
         if resp.status_code == 200:
             print("✅ Checkout Session Created")
@@ -100,7 +104,11 @@ async def test_runtime_flow():
         # 3. Checkout with Invalid Coupon
         print("\n🔹 2. Checkout with Invalid Coupon...")
         payload["coupon_code"] = "INVALID99"
-        resp = await client.post(f"{base_url}/checkout", json=payload, headers=headers)
+        resp = await client.post(
+            f"{base_url}/payments/create-checkout-session",
+            json={"invoice_id": "legacy-script-update-required", "origin_url": "http://localhost:3000"},
+            headers=headers,
+        )
         
         if resp.status_code == 404:
             print("✅ Invalid Coupon Rejected (404)")
@@ -118,7 +126,11 @@ async def test_runtime_flow():
     async with httpx.AsyncClient() as client:
         print("\n🔹 4. Checkout Again (User Limit Reached)...")
         payload["coupon_code"] = "RUN50"
-        resp = await client.post(f"{base_url}/checkout", json=payload, headers=headers)
+        resp = await client.post(
+            f"{base_url}/payments/create-checkout-session",
+            json={"invoice_id": "legacy-script-update-required", "origin_url": "http://localhost:3000"},
+            headers=headers,
+        )
         
         if resp.status_code == 400 and "already used" in resp.text:
             print("✅ User Limit Enforced")

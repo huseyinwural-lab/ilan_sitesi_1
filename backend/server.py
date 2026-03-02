@@ -13015,13 +13015,6 @@ class PaymentCheckoutPayload(BaseModel):
     origin_url: str
 
 
-class PaymentCheckoutStubPayload(BaseModel):
-    amount: float = Field(..., gt=0)
-    currency: str = "EUR"
-    origin_url: str
-    metadata: Optional[Dict[str, Any]] = None
-
-
 class PaymentIntentCreatePayload(BaseModel):
     listing_id: str
     amount: float = Field(..., gt=0)
@@ -21570,51 +21563,6 @@ async def stripe_payment_intent_webhook(
     }
 
 
-@api_router.post("/payments/create-checkout-session/stub")
-async def create_checkout_session_stub(
-    payload: PaymentCheckoutStubPayload,
-    request: Request,
-):
-    if APP_ENV == "prod":
-        raise HTTPException(status_code=404, detail="Not found")
-    if not STRIPE_API_KEY:
-        return JSONResponse(
-            status_code=200,
-            content={
-                "status": "blocked",
-                "reason": "stripe_not_configured",
-                "checkout_url": None,
-            },
-        )
-
-    origin = payload.origin_url.strip().rstrip("/")
-    if not origin:
-        raise HTTPException(status_code=400, detail="origin_url required")
-
-    webhook_url = f"{origin}/api/webhook/stripe"
-    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
-
-    success_url = f"{origin}/dealer/payments/success?session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{origin}/dealer/payments/cancel"
-
-    session_request = CheckoutSessionRequest(
-        amount=float(payload.amount),
-        currency=payload.currency,
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata=payload.metadata or {"stub": "true"},
-    )
-
-    checkout_session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(session_request)
-
-    return {
-        "checkout_url": checkout_session.url,
-        "session_id": checkout_session.session_id,
-        "payment_intent_id": None,
-        "mode": "stub",
-    }
-
-
 @api_router.post("/payments/create-checkout-session")
 async def create_checkout_session(
     payload: PaymentCheckoutPayload,
@@ -21826,7 +21774,7 @@ async def get_checkout_status(
 @api_router.post("/webhook/stripe")
 async def stripe_webhook(
     request: Request,
-    _webhook_rate_limit: None = Depends(RateLimiter(limit=120, window_seconds=60, scope="stripe_legacy_webhook")),
+    _webhook_rate_limit: None = Depends(RateLimiter(limit=120, window_seconds=60, scope="stripe_webhook")),
     session: AsyncSession = Depends(get_sql_session),
 ):
     _ensure_payments_runtime_enabled()

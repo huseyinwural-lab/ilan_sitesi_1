@@ -18,7 +18,6 @@ const LABELS = {
   'feature-flags': 'Özellik Bayrakları',
   'audit-logs': 'Denetim Kayıtları',
   plans: 'Plans',
-  billing: 'Billing',
   'master-data': 'Master Data',
   vehicles: 'Vehicle Makes',
 };
