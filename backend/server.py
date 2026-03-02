@@ -29890,6 +29890,54 @@ async def request_publish_vehicle_listing(
     return {"ok": True, "status": listing.status}
 
 
+@api_router.post("/v1/listings/vehicle/{listing_id}/publish")
+async def publish_vehicle_listing(
+    listing_id: str,
+    current_user=Depends(require_portal_scope("account")),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    listing = await _get_owned_listing(session, listing_id, current_user)
+    if listing.status not in ["draft", "needs_revision", "unpublished", "pending_review", "pending_moderation"]:
+        raise HTTPException(status_code=400, detail="Listing not eligible for publish")
+
+    now_ts = datetime.now(timezone.utc)
+    if listing.expires_at and listing.expires_at.tzinfo is None:
+        listing.expires_at = listing.expires_at.replace(tzinfo=timezone.utc)
+    if listing.expires_at and listing.expires_at < now_ts:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "RENEWAL_REQUIRED",
+                "message": "Süresi dolan ilanı önce yenileyin",
+                "renewal_required": True,
+                "next_action": "extend",
+            },
+        )
+
+    if not listing.expires_at:
+        listing.expires_at = now_ts + timedelta(days=30)
+
+    listing.status = "published"
+    listing.published_at = now_ts
+    listing.updated_at = now_ts
+    _set_listing_lifecycle_state(listing, "active")
+    version_row = _append_listing_version_history(listing, publish_state="active", source="publish")
+
+    await session.commit()
+    await _schedule_listing_sync_job(
+        session,
+        listing_id=listing.id,
+        operation="upsert",
+        trigger="listing_publish_active",
+    )
+    return {
+        "ok": True,
+        "status": listing.status,
+        "state": _listing_lifecycle_state(listing),
+        "version_no": int(version_row.get("version_no") or 0),
+    }
+
+
 @api_router.post("/v1/listings/vehicle/{listing_id}/unpublish")
 async def unpublish_vehicle_listing(
     listing_id: str,
@@ -29897,11 +29945,13 @@ async def unpublish_vehicle_listing(
     session: AsyncSession = Depends(get_sql_session),
 ):
     listing = await _get_owned_listing(session, listing_id, current_user)
-    if listing.status != "published":
+    if listing.status not in ["published", "pending_review", "pending_moderation"]:
         raise HTTPException(status_code=400, detail="Only published listings can be unpublished")
 
     listing.status = "unpublished"
     listing.updated_at = datetime.now(timezone.utc)
+    _set_listing_lifecycle_state(listing, "inactive")
+    version_row = _append_listing_version_history(listing, publish_state="inactive", source="unpublish")
     await session.commit()
     await _schedule_listing_sync_job(
         session,
@@ -29909,7 +29959,12 @@ async def unpublish_vehicle_listing(
         operation="upsert",
         trigger="listing_unpublish",
     )
-    return {"ok": True, "status": listing.status}
+    return {
+        "ok": True,
+        "status": listing.status,
+        "state": _listing_lifecycle_state(listing),
+        "version_no": int(version_row.get("version_no") or 0),
+    }
 
 
 @api_router.post("/v1/listings/vehicle/{listing_id}/archive")
