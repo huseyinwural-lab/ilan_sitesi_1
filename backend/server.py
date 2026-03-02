@@ -19319,23 +19319,28 @@ async def stripe_payment_intent_webhook(
 
     event_id = getattr(event, "id", None) or (event.get("id") if isinstance(event, dict) else None)
     event_type = getattr(event, "type", None) or (event.get("type") if isinstance(event, dict) else None)
+    event_name = str(event_type or "").strip().lower()
     event_data = _extract_stripe_event_object(event)
     metadata = event_data.get("metadata") or {}
-    payment_intent_id = event_data.get("id") or event_data.get("payment_intent")
-    mapped_status = map_stripe_event_to_payment_status(event_type or "")
+    payment_intent_id = event_data.get("payment_intent")
+    if event_name.startswith("payment_intent."):
+        payment_intent_id = event_data.get("id") or payment_intent_id
+    mapped_status = map_stripe_event_to_payment_status(event_name)
+    safe_event_id = str(event_id or f"stripe-event-{uuid.uuid4()}")
 
     now = datetime.now(timezone.utc)
     event_log = WebhookEventLog(
         provider="stripe_payment_intent",
-        event_id=str(event_id),
-        event_type=str(event_type),
+        event_id=safe_event_id,
+        event_type=event_name,
         received_at=now,
         processed_at=None,
         status="received",
         payload_json={
             "payment_intent_id": payment_intent_id,
+            "stripe_invoice_id": event_data.get("id") if event_name.startswith("invoice.") else None,
             "metadata": metadata,
-            "event_type": event_type,
+            "event_type": event_name,
             "raw_payload": event_data,
         },
         signature_valid=True,
@@ -19349,38 +19354,70 @@ async def stripe_payment_intent_webhook(
         await session.rollback()
         return {"status": "duplicate"}
 
-    if not mapped_status or not payment_intent_id:
+    if not mapped_status:
         event_log.status = "ignored"
         event_log.processed_at = now
         await session.commit()
         return {"status": "ignored"}
 
-    payment_record = (
-        await session.execute(
-            select(ListingPayment).where(ListingPayment.stripe_payment_intent_id == str(payment_intent_id))
+    handled = False
+    payment_record = None
+
+    if payment_intent_id:
+        payment_record = (
+            await session.execute(
+                select(ListingPayment).where(ListingPayment.stripe_payment_intent_id == str(payment_intent_id))
+            )
+        ).scalar_one_or_none()
+
+    if payment_record:
+        await _apply_listing_state_for_payment(
+            session=session,
+            payment_record=payment_record,
+            mapped_status=mapped_status,
+            now=now,
         )
-    ).scalar_one_or_none()
+        next_meta = payment_record.meta_json or {}
+        next_meta["last_event_id"] = safe_event_id
+        next_meta["last_event_type"] = event_name
+        next_meta["last_event_at"] = now.isoformat()
+        payment_record.meta_json = next_meta
+        handled = True
 
-    if not payment_record:
+    invoice_record = None
+    if event_name in {"invoice.paid", "invoice.payment_failed"}:
+        invoice_record = await _resolve_admin_invoice_from_webhook(
+            session=session,
+            metadata=metadata,
+            payment_intent_id=str(payment_intent_id) if payment_intent_id else None,
+        )
+        if invoice_record:
+            if mapped_status == "succeeded":
+                invoice_record.status = "paid"
+                invoice_record.payment_status = "succeeded"
+                if not invoice_record.paid_at:
+                    invoice_record.paid_at = now
+                await _activate_subscription_from_invoice(session, invoice_record)
+            elif mapped_status == "failed":
+                if invoice_record.status != "paid":
+                    invoice_record.status = "issued"
+                invoice_record.payment_status = "failed"
+            invoice_record.updated_at = now
+            handled = True
+
+        subscription_synced = await _sync_subscription_from_invoice_event(
+            session=session,
+            event_data=event_data,
+            mapped_status=mapped_status,
+            now=now,
+        )
+        handled = handled or subscription_synced
+
+    if not handled:
         event_log.status = "ignored"
         event_log.processed_at = now
         await session.commit()
         return {"status": "ignored"}
-
-    payment_record.status = mapped_status
-    payment_record.updated_at = now
-    next_meta = payment_record.meta_json or {}
-    next_meta["last_event_id"] = event_id
-    next_meta["last_event_type"] = event_type
-    next_meta["last_event_at"] = now.isoformat()
-    payment_record.meta_json = next_meta
-
-    listing_status = map_payment_status_to_listing_status(mapped_status)
-    if listing_status:
-        listing = await session.get(Listing, payment_record.listing_id)
-        if listing and listing.status not in {"active", "published"}:
-            listing.status = listing_status
-            listing.updated_at = now
 
     event_log.status = "processed"
     event_log.processed_at = now
@@ -19389,7 +19426,8 @@ async def stripe_payment_intent_webhook(
     return {
         "status": "processed",
         "payment_status": mapped_status,
-        "payment_intent_id": payment_record.stripe_payment_intent_id,
+        "payment_intent_id": payment_record.stripe_payment_intent_id if payment_record else payment_intent_id,
+        "invoice_id": str(invoice_record.id) if invoice_record else metadata.get("invoice_id"),
     }
 
 
