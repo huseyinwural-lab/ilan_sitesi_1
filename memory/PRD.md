@@ -629,3 +629,35 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Güncel durum
 - P0-03 Stripe + Maps acceptance kanıtları tamamlandı.
 - P0-03 içinde yalnız host/redirect son regresyon kapanışı kaldı.
+
+---
+
+## 2026-03-02 (P0-03 — Country Selector Kısıtlama + Host/Redirect Son Regresyon)
+
+### Uygulanan istek (öncelikli)
+- Listing adres ülke seçeneğinden **TR kaldırıldı**.
+- Ülke seçenekleri yalnızca: **DE, FR, CH, AT**.
+- Country selector modu **radio** olarak sabitlendi.
+
+### Teknik doğrulama
+- Config güncellemesi:
+  - `/api/admin/system-settings/google-maps` -> country_codes `[DE, FR, CH, AT]`
+  - `/api/admin/system-settings/listing-create` -> `country_selector_mode=radio`
+- Doğrulama endpointleri:
+  - `/api/places/config` country_options: `[DE, FR, CH, AT]`, `TR` yok
+  - `listing_create_config.country_selector_mode = radio`
+
+### Host/Redirect regresyon sonucu
+- `http://preview` -> `https://preview` redirect: **max 1 hop PASS**
+- Canonical örnek sayfalarda preview host ile deterministik: **mismatch 0 PASS**
+- Sitemap host doğruluğu:
+  - preview: **%100 doğru host PASS**
+  - simulated `www.annoncia.com` ve `annoncia.com`: **drift 0 PASS**
+
+### Kanıt dosyaları
+- `/app/test_reports/p0_03_country_selector_update.json`
+- `/app/test_reports/p0_03_host_redirect_regression.json`
+- Testing agent: `/app/test_reports/iteration_87.json` (PASS)
+
+### Güncel durum
+- P0-03 (Stripe + Maps + Host/Redirect) kapanış kriterleri sağlandı.

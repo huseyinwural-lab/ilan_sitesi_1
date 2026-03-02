@@ -855,3 +855,8 @@
 {"ts": 1772486955.7455795, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 500, "cached": true}
 {"ts": 1772486965.748338, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 502, "cached": false}
 {"ts": 1772486976.2533574, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 502, "cached": true}
+{"ts": 1772486986.2561297, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 502, "cached": true}
+{"ts": 1772486996.259529, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 501, "cached": false}
+{"ts": 1772487006.7639577, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 501, "cached": true}
+{"ts": 1772487016.766651, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 501, "cached": true}
+{"ts": 1772487026.7697694, "code": 200, "status": "degraded", "db_status": "fail", "reason": "migration_required", "latency_ms": 501, "cached": false}
