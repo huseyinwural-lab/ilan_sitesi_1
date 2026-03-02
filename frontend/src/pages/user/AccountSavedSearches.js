@@ -124,7 +124,6 @@ export default function AccountSavedSearches() {
                       type="checkbox"
                       checked={Boolean(item.email_enabled)}
                       onChange={(e) => handleToggle(item.id, { email_enabled: e.target.checked })}
-                      disabled={actionLoading === `toggle-${item.id}`}
                       data-testid={`account-saved-search-email-toggle-${item.id}`}
                     />
                     Email
@@ -135,7 +134,6 @@ export default function AccountSavedSearches() {
                       type="checkbox"
                       checked={Boolean(item.push_enabled)}
                       onChange={(e) => handleToggle(item.id, { push_enabled: e.target.checked })}
-                      disabled={actionLoading === `toggle-${item.id}`}
                       data-testid={`account-saved-search-push-toggle-${item.id}`}
                     />
                     Push
