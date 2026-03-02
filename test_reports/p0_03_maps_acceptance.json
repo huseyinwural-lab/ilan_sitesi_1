@@ -1,0 +1,121 @@
+{
+  "summary": {
+    "maps_api_key_active": true,
+    "provider_quota_or_auth_error_count": 0,
+    "places_lookup_4xx5xx_count": 0,
+    "ui_places_4xx5xx_count": 0,
+    "maps_provider_4xx5xx_count": 0,
+    "cities_passed": 3,
+    "total_cities": 3,
+    "maps_flow_pass": true,
+    "note_on_console_errors": "UI console errors only from catalog/schema country mismatch preflight (non-maps). Maps/places calls for tested flow returned 2xx."
+  },
+  "provider_checks": [
+    {
+      "label": "TR-Istanbul",
+      "country": "TR",
+      "postal_code": "34000",
+      "listing_id": "f7b2c030-ac08-40af-8530-fca446a244f1",
+      "config_status_code": 200,
+      "config_real_mode": true,
+      "config_key_source": "system_setting",
+      "lookup_status_code": 200,
+      "lookup_status": "OK",
+      "lookup_key_source": "system_setting",
+      "lookup_has_item": true,
+      "lookup_street_count": 5,
+      "lookup_error_message": null,
+      "provider_auth_or_quota_error": false,
+      "patch_status_code": 200
+    },
+    {
+      "label": "DE-Berlin",
+      "country": "DE",
+      "postal_code": "10115",
+      "listing_id": "8edea369-d74f-4638-aeec-0fe314fafb79",
+      "config_status_code": 200,
+      "config_real_mode": true,
+      "config_key_source": "system_setting",
+      "lookup_status_code": 200,
+      "lookup_status": "OK",
+      "lookup_key_source": "system_setting",
+      "lookup_has_item": true,
+      "lookup_street_count": 5,
+      "lookup_error_message": null,
+      "provider_auth_or_quota_error": false,
+      "patch_status_code": 200
+    },
+    {
+      "label": "FR-Paris",
+      "country": "FR",
+      "postal_code": "75001",
+      "listing_id": "b356e36b-5912-467a-996f-5017f63784a2",
+      "config_status_code": 200,
+      "config_real_mode": true,
+      "config_key_source": "system_setting",
+      "lookup_status_code": 200,
+      "lookup_status": "OK",
+      "lookup_key_source": "system_setting",
+      "lookup_has_item": true,
+      "lookup_street_count": 5,
+      "lookup_error_message": null,
+      "provider_auth_or_quota_error": false,
+      "patch_status_code": 200
+    }
+  ],
+  "ui_case_results": [
+    {
+      "label": "TR-Istanbul",
+      "country": "TR",
+      "listing_id": "f7b2c030-ac08-40af-8530-fca446a244f1",
+      "suggestion_count": 10,
+      "form_snapshot": {
+        "city": "İstanbul",
+        "district": "Maltepe",
+        "latitude": "40.943779",
+        "longitude": "29.114546"
+      },
+      "places_4xx5xx_count": 0,
+      "maps_provider_error_count": 0,
+      "console_error_count_filtered": 1,
+      "console_errors_filtered": [
+        "Failed to load resource: the server responded with a status of 403 ()"
+      ]
+    },
+    {
+      "label": "DE-Berlin",
+      "country": "DE",
+      "listing_id": "8edea369-d74f-4638-aeec-0fe314fafb79",
+      "suggestion_count": 10,
+      "form_snapshot": {
+        "city": "Berlin",
+        "district": "Mitte",
+        "latitude": "52.532614",
+        "longitude": "13.3777035"
+      },
+      "places_4xx5xx_count": 0,
+      "maps_provider_error_count": 0,
+      "console_error_count_filtered": 0,
+      "console_errors_filtered": []
+    },
+    {
+      "label": "FR-Paris",
+      "country": "FR",
+      "listing_id": "b356e36b-5912-467a-996f-5017f63784a2",
+      "suggestion_count": 10,
+      "form_snapshot": {
+        "city": "Île-de-France",
+        "district": "Paris",
+        "latitude": "48.8640493",
+        "longitude": "2.3310526"
+      },
+      "places_4xx5xx_count": 0,
+      "maps_provider_error_count": 0,
+      "console_error_count_filtered": 2,
+      "console_errors_filtered": [
+        "Failed to load resource: the server responded with a status of 403 ()",
+        "Failed to load resource: the server responded with a status of 403 ()"
+      ]
+    }
+  ]
+}

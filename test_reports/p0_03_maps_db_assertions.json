@@ -1,0 +1,59 @@
+{
+  "summary": {
+    "all_required_fields_populated": true,
+    "rows": 3
+  },
+  "rows": [
+    {
+      "label": "TR-Istanbul",
+      "country": "TR",
+      "listing_id": "f7b2c030-ac08-40af-8530-fca446a244f1",
+      "status": "draft",
+      "required_field_missing_count": 0,
+      "missing_fields": [],
+      "db_snapshot_masked": {
+        "country": "TR",
+        "city": "İ***",
+        "district": "M***",
+        "postal_code": "34000",
+        "latitude": 40.943779,
+        "longitude": 29.114546,
+        "address": "Trabzo***desi"
+      }
+    },
+    {
+      "label": "DE-Berlin",
+      "country": "DE",
+      "listing_id": "8edea369-d74f-4638-aeec-0fe314fafb79",
+      "status": "draft",
+      "required_field_missing_count": 0,
+      "missing_fields": [],
+      "db_snapshot_masked": {
+        "country": "DE",
+        "city": "B***",
+        "district": "M***",
+        "postal_code": "10115",
+        "latitude": 52.532614,
+        "longitude": 13.3777035,
+        "address": "An der***ücke"
+      }
+    },
+    {
+      "label": "FR-Paris",
+      "country": "FR",
+      "listing_id": "b356e36b-5912-467a-996f-5017f63784a2",
+      "status": "draft",
+      "required_field_missing_count": 0,
+      "missing_fields": [],
+      "db_snapshot_masked": {
+        "country": "FR",
+        "city": "Île-de***ance",
+        "district": "P***",
+        "postal_code": "75001",
+        "latitude": 48.8640493,
+        "longitude": 2.3310526,
+        "address": "Rue Fr***aise"
+      }
+    }
+  ]
+}
