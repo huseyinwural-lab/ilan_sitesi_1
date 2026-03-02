@@ -1,0 +1,74 @@
+{
+  "preview": {
+    "host": "marketplace-finance-3.preview.emergentagent.com",
+    "index_sections": [
+      "https://marketplace-finance-3.preview.emergentagent.com/sitemaps/core.xml",
+      "https://marketplace-finance-3.preview.emergentagent.com/sitemaps/categories.xml",
+      "https://marketplace-finance-3.preview.emergentagent.com/sitemaps/listings.xml",
+      "https://marketplace-finance-3.preview.emergentagent.com/sitemaps/info.xml"
+    ],
+    "total_urls": 1213,
+    "sample_20": [
+      "https://marketplace-finance-3.preview.emergentagent.com/",
+      "https://marketplace-finance-3.preview.emergentagent.com/search",
+      "https://marketplace-finance-3.preview.emergentagent.com/trust",
+      "https://marketplace-finance-3.preview.emergentagent.com/kurumsal",
+      "https://marketplace-finance-3.preview.emergentagent.com/seo",
+      "https://marketplace-finance-3.preview.emergentagent.com/maintenance",
+      "https://marketplace-finance-3.preview.emergentagent.com/500",
+      "https://marketplace-finance-3.preview.emergentagent.com/DE/vasita",
+      "https://marketplace-finance-3.preview.emergentagent.com/DE/vasita/otomobil",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/tarla",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/imara-acik",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/arsa",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/kiralik-ofis",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/satilik-dukkan",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/ticari",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/kiralik-daire",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/satilik-daire",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/konut",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/ciftlik-evi",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/bina"
+    ],
+    "wrong_host_count": 0,
+    "wrong_host_examples": [],
+    "bad_trailing_slash_count": 0,
+    "bad_trailing_slash_examples": []
+  },
+  "prod": {
+    "host": "www.annoncia.com",
+    "index_sections": [
+      "https://www.annoncia.com/sitemaps/core.xml",
+      "https://www.annoncia.com/sitemaps/categories.xml",
+      "https://www.annoncia.com/sitemaps/listings.xml",
+      "https://www.annoncia.com/sitemaps/info.xml"
+    ],
+    "total_urls": 1213,
+    "sample_20": [
+      "https://www.annoncia.com/",
+      "https://www.annoncia.com/search",
+      "https://www.annoncia.com/trust",
+      "https://www.annoncia.com/kurumsal",
+      "https://www.annoncia.com/seo",
+      "https://www.annoncia.com/maintenance",
+      "https://www.annoncia.com/500",
+      "https://www.annoncia.com/DE/vasita",
+      "https://www.annoncia.com/DE/vasita/otomobil",
+      "https://www.annoncia.com/kategori/tarla",
+      "https://www.annoncia.com/kategori/imara-acik",
+      "https://www.annoncia.com/kategori/arsa",
+      "https://www.annoncia.com/kategori/kiralik-ofis",
+      "https://www.annoncia.com/kategori/satilik-dukkan",
+      "https://www.annoncia.com/kategori/ticari",
+      "https://www.annoncia.com/kategori/kiralik-daire",
+      "https://www.annoncia.com/kategori/satilik-daire",
+      "https://www.annoncia.com/kategori/konut",
+      "https://www.annoncia.com/kategori/ciftlik-evi",
+      "https://www.annoncia.com/kategori/bina"
+    ],
+    "wrong_host_count": 0,
+    "wrong_host_examples": [],
+    "bad_trailing_slash_count": 0,
+    "bad_trailing_slash_examples": []
+  }
+}

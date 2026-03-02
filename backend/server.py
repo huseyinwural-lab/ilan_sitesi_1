@@ -2381,6 +2381,106 @@ def _format_migration_checked_at() -> Optional[str]:
     return datetime.fromtimestamp(checked_at, tz=timezone.utc).isoformat()
 
 
+SITEMAP_MAX_LISTINGS = 20000
+SITEMAP_MAX_CATEGORIES = 5000
+SITEMAP_STATIC_PATHS = [
+    "/",
+    "/search",
+    "/trust",
+    "/kurumsal",
+    "/seo",
+    "/maintenance",
+    "/500",
+]
+SITEMAP_ALLOWED_SECTIONS = {"core", "categories", "listings", "info"}
+
+
+def _normalize_public_base_url(raw_url: Optional[str]) -> Optional[str]:
+    value = (raw_url or "").strip()
+    if not value:
+        return None
+    parsed = urllib.parse.urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
+
+
+def _resolve_public_base_url(request: Request) -> Tuple[Optional[str], str]:
+    env_url = _normalize_public_base_url(os.environ.get("PUBLIC_BASE_URL"))
+    if env_url:
+        return env_url, "PUBLIC_BASE_URL"
+
+    forwarded_proto = (request.headers.get("x-forwarded-proto") or request.url.scheme or "https").split(",")[0].strip()
+    forwarded_host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").split(",")[0].strip()
+    if forwarded_host:
+        request_url = _normalize_public_base_url(f"{forwarded_proto}://{forwarded_host}")
+        if request_url:
+            return request_url, "request_host"
+
+    return None, "missing"
+
+
+def _canonicalize_path(path: str) -> str:
+    normalized = "/" + (path or "").lstrip("/")
+    normalized = re.sub(r"/+", "/", normalized)
+    if normalized != "/" and normalized.endswith("/"):
+        normalized = normalized.rstrip("/")
+    return normalized or "/"
+
+
+def _build_canonical_url(base_url: str, path: str) -> str:
+    return f"{base_url}{_canonicalize_path(path)}"
+
+
+def _render_sitemap_index_xml(locations: List[str]) -> str:
+    nodes = []
+    for loc in locations:
+        nodes.append("  <sitemap>")
+        nodes.append(f"    <loc>{html.escape(loc)}</loc>")
+        nodes.append("  </sitemap>")
+    return "\n".join([
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+        *nodes,
+        '</sitemapindex>',
+    ])
+
+
+def _render_urlset_xml(url_items: List[Dict[str, Optional[str]]]) -> str:
+    nodes = []
+    for item in url_items:
+        loc = item.get("loc")
+        if not loc:
+            continue
+        nodes.append("  <url>")
+        nodes.append(f"    <loc>{html.escape(loc)}</loc>")
+        if item.get("lastmod"):
+            nodes.append(f"    <lastmod>{html.escape(item['lastmod'])}</lastmod>")
+        nodes.append("  </url>")
+    return "\n".join([
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+        *nodes,
+        '</urlset>',
+    ])
+
+
+def _pick_category_slug(slug_payload: Any) -> Optional[str]:
+    if isinstance(slug_payload, str):
+        return slug_payload.strip() or None
+    if not isinstance(slug_payload, dict):
+        return None
+    for key in ["de", "tr", "fr", "en"]:
+        value = (slug_payload.get(key) or "").strip()
+        if value:
+            return value
+    for raw_value in slug_payload.values():
+        value = str(raw_value or "").strip()
+        if value:
+            return value
+    return None
+
+
 def _set_last_db_error(message: Optional[str]) -> None:
     global _last_db_error
     if not message:
@@ -4354,6 +4454,172 @@ async def health_migrations():
             },
         )
 
+
+def _misconfigured_sitemap_response(reason: str, detail: str) -> JSONResponse:
+    return JSONResponse(
+        status_code=200,
+        content={
+            "status": "degraded",
+            "reason": reason,
+            "detail": detail,
+            "misconfigured": True,
+        },
+    )
+
+
+async def _build_sitemap_section_items(section: str, base_url: str, session: AsyncSession) -> List[Dict[str, Optional[str]]]:
+    rows: List[Dict[str, Optional[str]]] = []
+
+    if section == "core":
+        seen: set[str] = set()
+        for path in SITEMAP_STATIC_PATHS:
+            loc = _build_canonical_url(base_url, path)
+            if loc in seen:
+                continue
+            seen.add(loc)
+            rows.append({"loc": loc, "lastmod": None})
+
+        countries = (
+            await session.execute(select(Country.code).where(Country.is_enabled.is_(True)).order_by(Country.code.asc()))
+        ).scalars().all()
+        for country_code in countries:
+            code = (country_code or "").upper().strip()
+            if not code:
+                continue
+            country_paths = [
+                f"/{code}/vasita",
+                f"/{code}/vasita/otomobil",
+            ]
+            for path in country_paths:
+                loc = _build_canonical_url(base_url, path)
+                if loc in seen:
+                    continue
+                seen.add(loc)
+                rows.append({"loc": loc, "lastmod": None})
+        return rows
+
+    if section == "categories":
+        categories = (
+            await session.execute(
+                select(Category.slug, Category.updated_at)
+                .where(Category.is_enabled.is_(True), Category.is_deleted.is_(False))
+                .order_by(Category.updated_at.desc())
+                .limit(SITEMAP_MAX_CATEGORIES)
+            )
+        ).all()
+        seen: set[str] = set()
+        for slug_payload, updated_at in categories:
+            slug = _pick_category_slug(slug_payload)
+            if not slug:
+                continue
+            loc = _build_canonical_url(base_url, f"/kategori/{urllib.parse.quote(slug)}")
+            if loc in seen:
+                continue
+            seen.add(loc)
+            rows.append({"loc": loc, "lastmod": updated_at.date().isoformat() if updated_at else None})
+        return rows
+
+    if section == "listings":
+        listings = (
+            await session.execute(
+                select(Listing.id, Listing.updated_at)
+                .where(
+                    Listing.status == "active",
+                    Listing.deleted_at.is_(None),
+                    Listing.published_at.is_not(None),
+                )
+                .order_by(Listing.updated_at.desc())
+                .limit(SITEMAP_MAX_LISTINGS)
+            )
+        ).all()
+        for listing_id, updated_at in listings:
+            rows.append(
+                {
+                    "loc": _build_canonical_url(base_url, f"/ilan/{listing_id}"),
+                    "lastmod": updated_at.date().isoformat() if updated_at else None,
+                }
+            )
+        return rows
+
+    if section == "info":
+        published_slugs = (
+            await session.execute(
+                select(InfoPage.slug).where(InfoPage.is_published.is_(True)).order_by(InfoPage.slug.asc())
+            )
+        ).scalars().all()
+        fallback_slugs = list((globals().get("INFO_PAGE_FALLBACKS") or {}).keys())
+        all_slugs = sorted({slug for slug in [*(published_slugs or []), *fallback_slugs] if slug})
+
+        seen: set[str] = set()
+        static_info_paths = ["/trust", "/kurumsal", "/seo"]
+        for path in static_info_paths:
+            loc = _build_canonical_url(base_url, path)
+            if loc in seen:
+                continue
+            seen.add(loc)
+            rows.append({"loc": loc, "lastmod": None})
+
+        for slug in all_slugs:
+            loc = _build_canonical_url(base_url, f"/bilgi/{urllib.parse.quote(slug)}")
+            if loc in seen:
+                continue
+            seen.add(loc)
+            rows.append({"loc": loc, "lastmod": None})
+        return rows
+
+    return rows
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+@api_router.get("/sitemap.xml")
+async def sitemap_index_endpoint(request: Request):
+    base_url, source = _resolve_public_base_url(request)
+    if not base_url:
+        return _misconfigured_sitemap_response("public_base_url_missing", "PUBLIC_BASE_URL veya request host algılanamadı")
+
+    locations = [
+        _build_canonical_url(base_url, "/sitemaps/core.xml"),
+        _build_canonical_url(base_url, "/sitemaps/categories.xml"),
+        _build_canonical_url(base_url, "/sitemaps/listings.xml"),
+        _build_canonical_url(base_url, "/sitemaps/info.xml"),
+    ]
+    xml = _render_sitemap_index_xml(locations)
+    return Response(
+        content=xml,
+        media_type="application/xml",
+        headers={
+            "X-Sitemap-Base-Source": source,
+            "X-Sitemap-Base-Url": base_url,
+        },
+    )
+
+
+@app.get("/sitemaps/{section}.xml", include_in_schema=False)
+@api_router.get("/sitemaps/{section}.xml")
+async def sitemap_section_endpoint(
+    section: str,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    normalized_section = (section or "").strip().lower()
+    if normalized_section not in SITEMAP_ALLOWED_SECTIONS:
+        raise HTTPException(status_code=404, detail="Sitemap section not found")
+
+    base_url, source = _resolve_public_base_url(request)
+    if not base_url:
+        return _misconfigured_sitemap_response("public_base_url_missing", "PUBLIC_BASE_URL veya request host algılanamadı")
+
+    items = await _build_sitemap_section_items(normalized_section, base_url, session)
+    xml = _render_urlset_xml(items)
+    return Response(
+        content=xml,
+        media_type="application/xml",
+        headers={
+            "X-Sitemap-Section": normalized_section,
+            "X-Sitemap-Base-Source": source,
+            "X-Sitemap-Base-Url": base_url,
+        },
+    )
 
 @api_router.get("/admin/system/health-summary")
 async def admin_system_health_summary(

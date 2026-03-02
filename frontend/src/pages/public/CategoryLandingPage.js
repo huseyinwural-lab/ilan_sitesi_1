@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useCountry } from '@/contexts/CountryContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { buildCanonicalFromPath, normalizeCanonicalUrl } from '@/utils/seoCanonical';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -24,7 +25,7 @@ const setCanonical = (url) => {
     link.setAttribute('rel', 'canonical');
     document.head.appendChild(link);
   }
-  link.setAttribute('href', url);
+  link.setAttribute('href', normalizeCanonicalUrl(url));
 };
 
 export default function CategoryLandingPage() {
@@ -38,8 +39,7 @@ export default function CategoryLandingPage() {
   const [category, setCategory] = useState(null);
 
   const canonicalUrl = useMemo(() => {
-    const origin = window.location.origin;
-    return `${origin}/kategori/${encodeURIComponent(slug || '')}`;
+    return buildCanonicalFromPath(`/kategori/${encodeURIComponent(slug || '')}`);
   }, [slug]);
 
   useEffect(() => {

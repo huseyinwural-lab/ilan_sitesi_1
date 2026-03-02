@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { normalizeCanonicalUrl } from '@/utils/seoCanonical';
 
 export const SEO = ({ 
   title, 
@@ -12,13 +13,14 @@ export const SEO = ({
 }) => {
   const siteName = 'Admin Panel'; // Should be config
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
+  const canonicalUrl = normalizeCanonicalUrl(canonical || window.location.href);
 
   return (
     <Helmet>
       {/* Standard */}
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
-      <link rel="canonical" href={canonical || window.location.href} />
+      <link rel="canonical" href={canonicalUrl} />
 
       {/* Open Graph */}
       <meta property="og:type" content={type} />

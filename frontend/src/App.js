@@ -1,5 +1,5 @@
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 
 import AccountLayout from './layouts/AccountLayout';
@@ -126,6 +126,29 @@ const AccountRoute = ({ children }) => {
   return children;
 };
 
+const CanonicalRouteSync = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const canonicalElement = document.querySelector('link[rel="canonical"]') || document.createElement('link');
+    canonicalElement.setAttribute('rel', 'canonical');
+
+    let pathname = location.pathname || '/';
+    pathname = pathname.replace(/\/+/g, '/');
+    if (pathname !== '/' && pathname.endsWith('/')) {
+      pathname = pathname.slice(0, -1);
+    }
+    const canonicalHref = `${window.location.origin}${pathname || '/'}`;
+    canonicalElement.setAttribute('href', canonicalHref);
+
+    if (!canonicalElement.parentNode) {
+      document.head.appendChild(canonicalElement);
+    }
+  }, [location.pathname]);
+
+  return null;
+};
+
 function App() {
   return (
     <HelmetProvider>
@@ -134,6 +157,7 @@ function App() {
           <CountryProvider>
             <ThemeProvider>
               <BrowserRouter>
+                <CanonicalRouteSync />
                 <Routes>
                   {/* Public Routes */}
                   <Route element={<MainLayout />}>

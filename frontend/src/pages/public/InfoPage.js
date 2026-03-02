@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { normalizeCanonicalUrl } from '@/utils/seoCanonical';
 
 import NotFoundPage from '@/pages/public/NotFoundPage';
 
@@ -31,7 +32,7 @@ const setCanonical = (url) => {
     link.setAttribute('rel', 'canonical');
     document.head.appendChild(link);
   }
-  link.setAttribute('href', url);
+  link.setAttribute('href', normalizeCanonicalUrl(url));
 };
 
 const setStructuredData = (data) => {
@@ -79,7 +80,7 @@ export default function InfoPage() {
     if (!page) return;
     const summarySource = page.content_tr || '';
     const summary = summarySource.replace(/\s+/g, ' ').trim().slice(0, 160);
-    const canonicalUrl = `${window.location.origin}${window.location.pathname}`;
+    const canonicalUrl = normalizeCanonicalUrl(`${window.location.origin}${window.location.pathname}`);
 
     document.title = page.title_tr || 'Bilgi';
     setMetaTag('description', summary);

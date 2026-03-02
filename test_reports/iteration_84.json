@@ -1,0 +1,101 @@
+{
+  "summary": "P0-02 Sitemap Production Hardening Testing Complete. Backend sitemap routes return 200 + valid XML with correct host resolution from request/env. Sitemap covers home, categories, listings, info/trust/corporate pages. Host report shows wrong_host=0 for both preview and prod. Frontend canonical meta working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/sitemap.xml", "issue": "Transient 502 gateway errors during pytest run (resolved on retry)", "priority": "LOW"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p0_02_sitemap_production_hardening.py",
+    "/app/test_reports/pytest/p0_02_sitemap_production_hardening_results.xml",
+    "/app/test_reports/p0_02_sitemap_host_report.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PASS: _resolve_public_base_url() correctly resolves host from PUBLIC_BASE_URL env or x-forwarded-host header - no hardcoded hosts",
+    "PASS: _canonicalize_path() removes trailing slashes consistently (except root /)",
+    "PASS: CanonicalRouteSync in App.js updates link[rel=canonical] on route changes",
+    "PASS: normalizeCanonicalUrl in seoCanonical.js handles path normalization correctly"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_p0_02_sitemap_production_hardening.py"
+  ],
+  "success_rate": {
+    "backend": "89% (17/19 tests passed, 2 failed due to transient 502)",
+    "frontend": "100% (canonical tests all passed)"
+  },
+  "test_credentials": {},
+  "seed_data_creation": "None required",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P0-02 Sitemap hardening verified. Sitemap routes use request-based host resolution (no hardcoding). Sitemap sections: core (static pages + vasita), categories (/kategori/*), listings (/ilan/*), info (/bilgi/* + /trust + /kurumsal + /seo). Frontend canonical synced via CanonicalRouteSync component.",
+  "features_tested": {
+    "SITEMAP_ROUTES_200_XML": {
+      "/api/sitemap.xml": "PASS - Returns sitemapindex XML with 4 sections",
+      "/api/sitemaps/core.xml": "PASS - Returns urlset with static paths + vasita",
+      "/api/sitemaps/categories.xml": "PASS - Returns urlset with /kategori/* paths",
+      "/api/sitemaps/listings.xml": "PASS - Returns urlset with /ilan/* paths for active listings",
+      "/api/sitemaps/info.xml": "PASS - Returns urlset with /trust, /kurumsal, /seo, /bilgi/* paths"
+    },
+    "HARDCODED_HOST_REMOVED": {
+      "no_localhost": "PASS - No localhost or 127.0.0.1 in sitemap output",
+      "no_hardcoded_domain": "PASS - No hardcoded annoncia.com or emergentagent.com in code",
+      "host_from_request": "PASS - Host resolved from PUBLIC_BASE_URL env or x-forwarded-host header"
+    },
+    "SITEMAP_CONTENT_COVERAGE": {
+      "home": "PASS - / included in core.xml",
+      "category_landing": "PASS - /kategori/* included in categories.xml",
+      "active_listings": "PASS - /ilan/* for active+published listings in listings.xml",
+      "info_trust_corporate_seo": "PASS - /trust, /kurumsal, /seo, /bilgi/* in info.xml"
+    },
+    "HOST_REPORT_VERIFICATION": {
+      "preview_wrong_host_count": "PASS - 0",
+      "prod_wrong_host_count": "PASS - 0",
+      "preview_total_urls": "1213",
+      "prod_total_urls": "1213"
+    },
+    "CANONICAL_DETERMINISTIC": {
+      "home_page": "PASS - https://marketplace-finance-3.preview.emergentagent.com/",
+      "category_page": "PASS - https://marketplace-finance-3.preview.emergentagent.com/kategori/{slug}",
+      "info_page": "PASS - https://marketplace-finance-3.preview.emergentagent.com/bilgi/{slug}",
+      "trust_page": "PASS - https://marketplace-finance-3.preview.emergentagent.com/trust",
+      "trailing_slash_standard": "PASS - No trailing slashes except root"
+    }
+  },
+  "verification_evidence": {
+    "sitemap_index_sample": {
+      "sections": [
+        "https://marketplace-finance-3.preview.emergentagent.com/sitemaps/core.xml",
+        "https://marketplace-finance-3.preview.emergentagent.com/sitemaps/categories.xml",
+        "https://marketplace-finance-3.preview.emergentagent.com/sitemaps/listings.xml",
+        "https://marketplace-finance-3.preview.emergentagent.com/sitemaps/info.xml"
+      ]
+    },
+    "core_xml_sample_urls": [
+      "https://marketplace-finance-3.preview.emergentagent.com/",
+      "https://marketplace-finance-3.preview.emergentagent.com/search",
+      "https://marketplace-finance-3.preview.emergentagent.com/trust",
+      "https://marketplace-finance-3.preview.emergentagent.com/kurumsal",
+      "https://marketplace-finance-3.preview.emergentagent.com/DE/vasita"
+    ],
+    "categories_xml_sample_urls": [
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/tarla",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/konut",
+      "https://marketplace-finance-3.preview.emergentagent.com/kategori/ticari"
+    ],
+    "listings_xml_sample_urls": [
+      "https://marketplace-finance-3.preview.emergentagent.com/ilan/5d2a45b9-51c4-4c25-9bc5-51493975f203"
+    ],
+    "info_xml_sample_urls": [
+      "https://marketplace-finance-3.preview.emergentagent.com/trust",
+      "https://marketplace-finance-3.preview.emergentagent.com/kurumsal",
+      "https://marketplace-finance-3.preview.emergentagent.com/bilgi/gizlilik-politikasi"
+    ]
+  }
+}
