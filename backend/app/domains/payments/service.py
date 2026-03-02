@@ -9,6 +9,7 @@ STRIPE_EVENT_TO_PAYMENT_STATUS = {
     "payment_intent.succeeded": "succeeded",
     "payment_intent.payment_failed": "failed",
     "payment_intent.canceled": "failed",
+    "checkout.session.completed": "processing",
     "invoice.paid": "succeeded",
     "invoice.payment_failed": "failed",
 }
