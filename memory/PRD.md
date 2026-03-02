@@ -352,3 +352,55 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Kalan işler
 - P2: User-side billing screens (Faturalarım/Ödeme Geçmişi/Abonelik self-serve)
 - P2: Finans UI standardizasyonu ve ileri raporlama
+
+---
+
+## 2026-03-02 (P2 — Kullanıcı Finans Ekranları Tamamlama, Scope Lock: 1a 2a 3a 4a)
+
+### Scope kilidi (uygulandı)
+- **1a:** Yalnız P2 kullanıcı finans ekranları + test (UI standardizasyonu yok)
+- **2a:** Fatura listesi varsayılan sıralama en yeni önce (issued_at/create fallback DESC)
+- **3a:** Abonelik aksiyonları modal onaylı (cancel/reactivate/plan preview)
+- **4a:** Empty-state metin tonu resmi/kurumsal
+
+### Frontend tamamlananlar
+- Route bağlama tamamlandı:
+  - `/account/invoices`
+  - `/account/payments`
+  - `/account/subscription`
+- Account side menüye finans bölümü eklendi (Faturalarım / Ödeme Geçmişi / Aboneliğim).
+- `AccountInvoices.js`:
+  - API binding + durum/tarih filtreleri
+  - liste + tarih kolonu + PDF indirme aksiyonu
+  - resmi empty/error metinleri ve data-testid kapsamı
+- `AccountPayments.js`:
+  - ödeme geçmişi listeleme + durum filtreleme
+  - normalize kullanıcı mesajı gösterimi
+  - resmi empty/error metinleri ve data-testid kapsamı
+- `AccountSubscription.js`:
+  - aktif plan/ücret/yenileme bilgisi
+  - cancel/reactivate işlemlerinde onay modalı
+  - plan change preview için onay modalı
+  - pending/success state görünürlüğü ve data-testid kapsamı
+
+### Backend tamamlananlar
+- `GET /api/account/invoices` sıralama güncellendi:
+  - `coalesce(issued_at, created_at) DESC`, fallback `created_at DESC`
+- Subscription self-serve kalıcılık düzeltmesi:
+  - `cancel/reactivate` endpointlerinde `meta_json` değişiklikleri için dict copy uygulanarak persist bug fixlendi.
+
+### Test sonucu
+- Testing agent raporu: `/app/test_reports/iteration_80.json`
+  - Backend: **PASS**
+  - Frontend: **PASS**
+  - E2E: Invoice PDF download **PASS**, Subscription cancel/reactivate **PASS**
+  - Regression: Admin finance + PDF + export akışları **PASS**
+- Ek self-test:
+  - account endpoint contract doğrulamaları (200/403/PDF content-type) başarılı.
+
+### Güncel kalan işler
+- **P1 (bir sonraki iş):** Finans UI standardizasyonu (tekil locale money formatter + ortak badge dili)
+- **P2:** Trust/Policy template seti (#20/#21/#22)
+- **P2:** Corporate & SEO template seti (#23-28)
+- **P2:** 500/maintenance system templateleri (#30/#31)
+- **P3:** Category Builder drag&drop
