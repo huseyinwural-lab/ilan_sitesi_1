@@ -363,6 +363,8 @@ export default function ListingDetails() {
       if (!res.ok) {
         throw new Error(data?.detail?.message || data?.detail || 'Draft kaydı başarısız');
       }
+      if (data?.status) setListingStatus(data.status);
+      if (data?.state) setLifecycleState(data.state);
       setAutosaveInfo({
         status: 'saved',
         block: blockKey,
