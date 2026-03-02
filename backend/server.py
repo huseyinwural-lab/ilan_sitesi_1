@@ -28768,9 +28768,9 @@ def _listing_lifecycle_state(listing: Listing) -> str:
     state = str((attrs.get("lifecycle_state") or "")).strip().lower()
     if state:
         return state
-    if listing.status == "published":
+    if listing.status in {"published", "active"}:
         return "active"
-    if listing.status == "unpublished":
+    if listing.status in {"unpublished", "inactive"}:
         return "inactive"
     if listing.status == "pending_review":
         return "pending_review"
@@ -29421,11 +29421,11 @@ async def save_vehicle_draft(
     session: AsyncSession = Depends(get_sql_session),
 ):
     listing = await _get_owned_listing(session, listing_id, current_user)
-    editable_statuses = ["draft", "needs_revision", "unpublished", "published", "pending_review"]
+    editable_statuses = ["draft", "needs_revision", "unpublished", "inactive", "published", "active", "pending_review"]
     if listing.status not in editable_statuses:
         raise HTTPException(status_code=400, detail="Listing not editable")
 
-    was_published = listing.status == "published"
+    was_published = listing.status in {"published", "active"}
     _apply_listing_payload_sql(listing, payload)
     attrs = dict(listing.attributes or {})
     flow = _normalize_listing_flow(attrs, str(listing.id))
@@ -29518,7 +29518,7 @@ async def rollback_vehicle_listing_version(
         raise HTTPException(status_code=422, detail="Version snapshot unavailable")
 
     _apply_listing_version_snapshot(listing, snapshot)
-    if listing.status == "published":
+    if listing.status in {"published", "active"}:
         listing.status = "pending_review"
         _set_listing_lifecycle_state(listing, "pending_review")
     listing.updated_at = datetime.now(timezone.utc)
@@ -29897,7 +29897,7 @@ async def publish_vehicle_listing(
     session: AsyncSession = Depends(get_sql_session),
 ):
     listing = await _get_owned_listing(session, listing_id, current_user)
-    if listing.status not in ["draft", "needs_revision", "unpublished", "pending_review", "pending_moderation"]:
+    if listing.status not in ["draft", "needs_revision", "unpublished", "inactive", "pending_review", "pending_moderation", "active", "published"]:
         raise HTTPException(status_code=400, detail="Listing not eligible for publish")
 
     now_ts = datetime.now(timezone.utc)
@@ -29917,7 +29917,7 @@ async def publish_vehicle_listing(
     if not listing.expires_at:
         listing.expires_at = now_ts + timedelta(days=30)
 
-    listing.status = "published"
+    listing.status = "active"
     listing.published_at = now_ts
     listing.updated_at = now_ts
     _set_listing_lifecycle_state(listing, "active")
@@ -29945,10 +29945,10 @@ async def unpublish_vehicle_listing(
     session: AsyncSession = Depends(get_sql_session),
 ):
     listing = await _get_owned_listing(session, listing_id, current_user)
-    if listing.status not in ["published", "pending_review", "pending_moderation"]:
+    if listing.status not in ["published", "active", "pending_review", "pending_moderation"]:
         raise HTTPException(status_code=400, detail="Only published listings can be unpublished")
 
-    listing.status = "unpublished"
+    listing.status = "inactive"
     listing.updated_at = datetime.now(timezone.utc)
     _set_listing_lifecycle_state(listing, "inactive")
     version_row = _append_listing_version_history(listing, publish_state="inactive", source="unpublish")
