@@ -19204,13 +19204,23 @@ def _stripe_client_setup() -> None:
 
 
 def _payments_runtime_snapshot() -> Dict[str, Any]:
+    if not STRIPE_SECRET_KEY_VALID:
+        disabled_reason = "invalid_or_missing_stripe_secret_key"
+    elif not STRIPE_PUBLIC_KEY_VALID:
+        disabled_reason = "invalid_or_missing_stripe_publishable_key"
+    else:
+        disabled_reason = None
+
     return {
         "status": PAYMENTS_RUNTIME_STATUS,
         "payments_enabled": PAYMENTS_RUNTIME_ENABLED,
         "stripe_secret_key_present": STRIPE_SECRET_KEY_PRESENT,
+        "stripe_secret_key_valid": STRIPE_SECRET_KEY_VALID,
         "stripe_publishable_key_present": STRIPE_PUBLIC_KEY_PRESENT,
+        "stripe_publishable_key_valid": STRIPE_PUBLIC_KEY_VALID,
         "stripe_webhook_secret_present": STRIPE_WEBHOOK_SECRET_PRESENT,
-        "disabled_reason": None if PAYMENTS_RUNTIME_ENABLED else "missing_stripe_secret_or_publishable_key",
+        "stripe_webhook_secret_valid": STRIPE_WEBHOOK_SECRET_VALID,
+        "disabled_reason": disabled_reason,
     }
 
 
