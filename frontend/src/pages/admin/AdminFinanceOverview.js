@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -9,6 +10,7 @@ const asMoney = (value, currency) => `${Number(value || 0).toLocaleString('tr-TR
 
 export default function AdminFinanceOverviewPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [country, setCountry] = useState('');
@@ -37,6 +39,23 @@ export default function AdminFinanceOverviewPage() {
     }
   };
 
+  const exportFinanceCsv = async (type) => {
+    const params = new URLSearchParams({ type });
+    if (country) params.set('country', country);
+    if (currency) params.set('currency', currency);
+    if (startDate) params.set('start_date', `${startDate}T00:00:00+00:00`);
+    if (endDate) params.set('end_date', `${endDate}T23:59:59+00:00`);
+    const res = await axios.get(`${API}/admin/finance/export?${params.toString()}`, { headers: authHeader, responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${type}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     loadOverview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -51,6 +70,9 @@ export default function AdminFinanceOverviewPage() {
         <div>
           <h1 className="text-2xl font-semibold" data-testid="admin-finance-overview-title">Finans Overview</h1>
           <p className="text-sm text-muted-foreground" data-testid="admin-finance-overview-subtitle">Read-only metrik görünümü</p>
+          <p className="text-xs text-muted-foreground" data-testid="admin-finance-overview-scope-badge">
+            Scope: {user?.role === 'country_admin' ? (user?.country_code || 'COUNTRY') : 'Global'}
+          </p>
         </div>
         <div className="flex gap-2 flex-wrap" data-testid="admin-finance-overview-links">
           <button className="h-9 px-3 rounded-md border text-sm" data-testid="admin-finance-link-payments" onClick={() => navigate('/admin/payments')}>Payments</button>
@@ -69,6 +91,14 @@ export default function AdminFinanceOverviewPage() {
         <input className="h-9 px-3 rounded-md border bg-background text-sm" value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} placeholder="currency" data-testid="admin-finance-filter-currency" />
         <button className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm" onClick={loadOverview} data-testid="admin-finance-filter-apply">Uygula</button>
       </div>
+
+      {['super_admin', 'country_admin'].includes(user?.role) ? (
+        <div className="flex gap-2 flex-wrap" data-testid="admin-finance-overview-export-actions">
+          <button className="h-9 px-3 rounded-md border text-sm" onClick={() => exportFinanceCsv('payments')} data-testid="admin-finance-export-payments">Export Payments</button>
+          <button className="h-9 px-3 rounded-md border text-sm" onClick={() => exportFinanceCsv('invoices')} data-testid="admin-finance-export-invoices">Export Invoices</button>
+          <button className="h-9 px-3 rounded-md border text-sm" onClick={() => exportFinanceCsv('ledger')} data-testid="admin-finance-export-ledger">Export Ledger</button>
+        </div>
+      ) : null}
 
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3" data-testid="admin-finance-overview-cards">
         <div className="rounded-lg border p-4" data-testid="admin-finance-card-revenue">

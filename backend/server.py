@@ -19,6 +19,7 @@ from datetime import datetime, timezone, timedelta
 import uuid
 from typing import List, Optional, Dict, Any, Tuple, Literal
 import time
+import requests
 
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
@@ -217,7 +218,7 @@ from app.vehicle_master_admin_file import validate_upload, rollback as vehicle_m
 
 
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / ".env")
+load_dotenv(ROOT_DIR / ".env", override=True)
 load_dotenv(ROOT_DIR / ".env.local", override=False)
 
 SUPPORTED_COUNTRIES = {"DE", "CH", "FR", "AT"}
@@ -2174,9 +2175,16 @@ async def _ensure_pricing_campaign_item_columns(conn) -> None:
 async def _ensure_finance_v2_columns(conn) -> None:
     try:
         await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS amount_minor INTEGER"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS net_amount_minor INTEGER"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS tax_amount_minor INTEGER"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS gross_amount_minor INTEGER"))
         await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS net_minor INTEGER"))
         await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS tax_minor INTEGER"))
         await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS gross_minor INTEGER"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(8,4)"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS billing_info_snapshot JSON"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS pdf_url TEXT"))
+        await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS pdf_generated_at TIMESTAMPTZ"))
         await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS tax_profile_id UUID"))
         await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS product_id UUID"))
         await conn.execute(text("ALTER TABLE admin_invoices ADD COLUMN IF NOT EXISTS product_price_id UUID"))
@@ -2186,6 +2194,9 @@ async def _ensure_finance_v2_columns(conn) -> None:
         await conn.execute(text("UPDATE admin_invoices SET gross_minor = COALESCE(amount_minor, 0) WHERE gross_minor IS NULL"))
         await conn.execute(text("UPDATE admin_invoices SET net_minor = COALESCE(amount_minor, 0) WHERE net_minor IS NULL"))
         await conn.execute(text("UPDATE admin_invoices SET tax_minor = 0 WHERE tax_minor IS NULL"))
+        await conn.execute(text("UPDATE admin_invoices SET gross_amount_minor = COALESCE(gross_minor, amount_minor, 0) WHERE gross_amount_minor IS NULL"))
+        await conn.execute(text("UPDATE admin_invoices SET net_amount_minor = COALESCE(net_minor, amount_minor, 0) WHERE net_amount_minor IS NULL"))
+        await conn.execute(text("UPDATE admin_invoices SET tax_amount_minor = COALESCE(tax_minor, 0) WHERE tax_amount_minor IS NULL"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_admin_invoices_sequence_key_no ON admin_invoices (sequence_key, sequence_no)"))
 
         await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_minor INTEGER"))
@@ -2695,6 +2706,9 @@ def _admin_invoice_to_dict(invoice: AdminInvoice, dealer: Optional[SqlUser] = No
     net_minor = int(invoice.net_minor or 0)
     tax_minor = int(invoice.tax_minor or 0)
     gross_minor = int(invoice.gross_minor or amount_minor)
+    net_amount_minor = int(invoice.net_amount_minor or net_minor)
+    tax_amount_minor = int(invoice.tax_amount_minor or tax_minor)
+    gross_amount_minor = int(invoice.gross_amount_minor or gross_minor)
     return {
         "id": str(invoice.id),
         "invoice_no": invoice.invoice_no,
@@ -2708,6 +2722,9 @@ def _admin_invoice_to_dict(invoice: AdminInvoice, dealer: Optional[SqlUser] = No
         "amount_total": _minor_to_major_units(amount_minor),
         "amount": _minor_to_major_units(amount_minor),
         "amount_minor": amount_minor,
+        "net_amount_minor": net_amount_minor,
+        "tax_amount_minor": tax_amount_minor,
+        "gross_amount_minor": gross_amount_minor,
         "net_minor": net_minor,
         "tax_minor": tax_minor,
         "gross_minor": gross_minor,
@@ -2715,6 +2732,8 @@ def _admin_invoice_to_dict(invoice: AdminInvoice, dealer: Optional[SqlUser] = No
         "currency": invoice.currency,
         "currency_code": invoice.currency,
         "tax_profile_id": str(invoice.tax_profile_id) if invoice.tax_profile_id else None,
+        "tax_rate": float(invoice.tax_rate or 0),
+        "billing_info_snapshot": invoice.billing_info_snapshot or {},
         "product_id": str(invoice.product_id) if invoice.product_id else None,
         "product_price_id": str(invoice.product_price_id) if invoice.product_price_id else None,
         "sequence_no": invoice.sequence_no,
@@ -2723,6 +2742,8 @@ def _admin_invoice_to_dict(invoice: AdminInvoice, dealer: Optional[SqlUser] = No
         "payment_status": invoice.payment_status,
         "issued_at": invoice.issued_at.isoformat() if invoice.issued_at else None,
         "paid_at": invoice.paid_at.isoformat() if invoice.paid_at else None,
+        "pdf_url": invoice.pdf_url,
+        "pdf_generated_at": invoice.pdf_generated_at.isoformat() if invoice.pdf_generated_at else None,
         "due_at": invoice.due_at.isoformat() if invoice.due_at else None,
         "provider_customer_id": invoice.provider_customer_id,
         "meta_json": invoice.meta_json or {},
@@ -3786,6 +3807,11 @@ STRIPE_PUBLIC_KEY_VALID = _looks_like_stripe_key(STRIPE_PUBLIC_KEY, ("pk_test_",
 STRIPE_WEBHOOK_SECRET_VALID = _looks_like_stripe_key(STRIPE_WEBHOOK_SECRET, ("whsec_",), 20)
 PAYMENTS_RUNTIME_ENABLED = STRIPE_SECRET_KEY_VALID and STRIPE_PUBLIC_KEY_VALID and STRIPE_WEBHOOK_SECRET_VALID
 PAYMENTS_RUNTIME_STATUS = "enabled" if PAYMENTS_RUNTIME_ENABLED else "disabled"
+
+OBJECT_STORAGE_API_URL = "https://integrations.emergentagent.com/objstore/api/v1/storage"
+EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY")
+OBJECT_STORAGE_APP_PREFIX = os.environ.get("OBJECT_STORAGE_APP_PREFIX")
+OBJECT_STORAGE_RUNTIME_KEY: Optional[str] = None
 
 EMAIL_PROVIDER = (os.environ.get("EMAIL_PROVIDER") or "mock").lower()
 EMAIL_PROVIDER_OPTIONS = {"mock", "sendgrid"}
@@ -15847,10 +15873,26 @@ async def admin_create_invoice(
         campaign_id=None,
         amount_total=_minor_to_major_units(amount_minor),
         amount_minor=amount_minor,
+        net_amount_minor=tax_snapshot["net_minor"],
+        tax_amount_minor=tax_snapshot["tax_minor"],
+        gross_amount_minor=tax_snapshot["gross_minor"],
         net_minor=tax_snapshot["net_minor"],
         tax_minor=tax_snapshot["tax_minor"],
         gross_minor=tax_snapshot["gross_minor"],
         currency=currency_value,
+        tax_rate=float(Decimal(int(tax_profile.tax_rate_bps or 0)) / Decimal(10000)),
+        billing_info_snapshot={
+            "user_id": str(user.id),
+            "email": user.email,
+            "full_name": f"{(getattr(user, 'first_name', '') or '').strip()} {(getattr(user, 'last_name', '') or '').strip()}".strip() or None,
+            "company_name": getattr(user, "company_name", None),
+            "country_code": user.country_code,
+            "city": getattr(user, "city", None),
+            "district": getattr(user, "district", None),
+            "address": getattr(user, "address", None),
+            "phone": getattr(user, "phone", None),
+            "captured_at": now.isoformat(),
+        },
         tax_profile_id=tax_profile.id,
         product_id=product_uuid,
         product_price_id=product_price_uuid,
@@ -15866,6 +15908,8 @@ async def admin_create_invoice(
         country_code=country_code,
         payment_method=None,
         notes=payload.notes,
+        pdf_url=None,
+        pdf_generated_at=None,
         created_at=now,
         updated_at=now,
     )
@@ -15981,10 +16025,11 @@ async def admin_list_invoices(
 async def admin_invoice_detail(
     invoice_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     try:
         invoice_uuid = uuid.UUID(invoice_id)
@@ -15996,6 +16041,9 @@ async def admin_invoice_detail(
         raise HTTPException(status_code=404, detail="Invoice not found")
     if invoice.country_code and invoice.country_code != "GLOBAL":
         _assert_country_scope(invoice.country_code, current_user)
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        if (invoice.country_code or "GLOBAL") != ctx.country:
+            raise HTTPException(status_code=403, detail="Country scope violation")
 
     user = await session.get(SqlUser, invoice.user_id)
     plan = await session.get(Plan, invoice.plan_id) if invoice.plan_id else None
@@ -16023,6 +16071,172 @@ async def admin_invoice_detail(
         "payments": [_payment_to_dict(row, invoice, user) for row in payments],
         "ledger_entries": [_ledger_entry_to_dict(row, ledger_account_map.get(row.account_id)) for row in ledger_rows],
     }
+
+
+@api_router.post("/admin/invoices/{invoice_id}/generate-pdf")
+async def admin_invoice_generate_pdf(
+    invoice_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invoice_id invalid") from exc
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    if invoice.pdf_url:
+        return {
+            "status": "already_generated",
+            "pdf_url": invoice.pdf_url,
+            "pdf_generated_at": invoice.pdf_generated_at.isoformat() if invoice.pdf_generated_at else None,
+        }
+
+    user = await session.get(SqlUser, invoice.user_id)
+    plan = await session.get(Plan, invoice.plan_id) if invoice.plan_id else None
+    pdf_bytes = _render_invoice_pdf_bytes(invoice, user, plan)
+
+    storage_key = _build_invoice_pdf_storage_key(invoice)
+    uploaded = _storage_put_object(storage_key, pdf_bytes, "application/pdf")
+    pdf_url = uploaded.get("path") or uploaded.get("download_url") or uploaded.get("url") or storage_key
+
+    now = datetime.now(timezone.utc)
+    invoice.pdf_url = pdf_url
+    invoice.pdf_generated_at = now
+    invoice.updated_at = now
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PDF_GENERATED",
+        actor=current_user,
+        resource_type="invoice",
+        resource_id=str(invoice.id),
+        metadata={"storage_key": storage_key},
+        request=request,
+        country_code=invoice.country_code,
+    )
+    await session.commit()
+    return {
+        "status": "generated",
+        "pdf_url": pdf_url,
+        "pdf_generated_at": now.isoformat(),
+    }
+
+
+@api_router.post("/admin/invoices/{invoice_id}/regenerate-pdf")
+async def admin_invoice_regenerate_pdf(
+    invoice_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invoice_id invalid") from exc
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    meta_json = invoice.meta_json or {}
+    pdf_versions = list(meta_json.get("pdf_versions") or [])
+    version_no = len(pdf_versions) + 1
+    suffix = f"v{version_no:02d}"
+
+    user = await session.get(SqlUser, invoice.user_id)
+    plan = await session.get(Plan, invoice.plan_id) if invoice.plan_id else None
+    pdf_bytes = _render_invoice_pdf_bytes(invoice, user, plan)
+
+    storage_key = _build_invoice_pdf_storage_key(invoice, regenerate_suffix=suffix)
+    uploaded = _storage_put_object(storage_key, pdf_bytes, "application/pdf")
+    pdf_url = uploaded.get("path") or uploaded.get("download_url") or uploaded.get("url") or storage_key
+
+    if invoice.pdf_url:
+        pdf_versions.append(
+            {
+                "url": invoice.pdf_url,
+                "generated_at": invoice.pdf_generated_at.isoformat() if invoice.pdf_generated_at else None,
+            }
+        )
+
+    now = datetime.now(timezone.utc)
+    invoice.meta_json = {**meta_json, "pdf_versions": pdf_versions}
+    invoice.pdf_url = pdf_url
+    invoice.pdf_generated_at = now
+    invoice.updated_at = now
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PDF_REGENERATED",
+        actor=current_user,
+        resource_type="invoice",
+        resource_id=str(invoice.id),
+        metadata={"storage_key": storage_key, "version": suffix},
+        request=request,
+        country_code=invoice.country_code,
+    )
+    await session.commit()
+    return {
+        "status": "regenerated",
+        "pdf_url": pdf_url,
+        "pdf_generated_at": now.isoformat(),
+        "version": suffix,
+    }
+
+
+@api_router.get("/admin/invoices/{invoice_id}/download-pdf")
+async def admin_invoice_download_pdf(
+    invoice_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invoice_id invalid") from exc
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        if (invoice.country_code or "GLOBAL") != ctx.country:
+            raise HTTPException(status_code=403, detail="Country scope violation")
+
+    if not invoice.pdf_url:
+        raise HTTPException(status_code=404, detail="PDF not generated")
+
+    key = _extract_storage_key_from_url(invoice.pdf_url)
+    pdf_bytes = _storage_get_object(key)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PDF_DOWNLOADED",
+        actor=current_user,
+        resource_type="invoice",
+        resource_id=str(invoice.id),
+        metadata={"storage_key": key},
+        request=request,
+        country_code=invoice.country_code,
+    )
+    await session.commit()
+
+    filename = f"{invoice.invoice_no}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
 
 @api_router.post("/admin/invoices/{invoice_id}/mark-paid")
@@ -19943,6 +20157,127 @@ def _resolve_webhook_request_id(request: Request, event_data: Dict[str, Any]) ->
     return None
 
 
+def _ensure_object_storage_ready() -> None:
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=503, detail="Object storage key not configured")
+    if not OBJECT_STORAGE_APP_PREFIX:
+        raise HTTPException(status_code=503, detail="Object storage app prefix not configured")
+
+
+def _init_object_storage_key() -> str:
+    global OBJECT_STORAGE_RUNTIME_KEY
+    if OBJECT_STORAGE_RUNTIME_KEY:
+        return OBJECT_STORAGE_RUNTIME_KEY
+
+    _ensure_object_storage_ready()
+    response = requests.post(
+        f"{OBJECT_STORAGE_API_URL}/init",
+        json={"emergent_key": EMERGENT_LLM_KEY},
+        timeout=30,
+    )
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail=f"Object storage init failed: {response.text[:200]}")
+    OBJECT_STORAGE_RUNTIME_KEY = response.json().get("storage_key")
+    if not OBJECT_STORAGE_RUNTIME_KEY:
+        raise HTTPException(status_code=502, detail="Object storage init failed: storage key missing")
+    return OBJECT_STORAGE_RUNTIME_KEY
+
+
+def _storage_put_object(path: str, data: bytes, content_type: str = "application/pdf") -> Dict[str, Any]:
+    storage_key = _init_object_storage_key()
+    response = requests.put(
+        f"{OBJECT_STORAGE_API_URL}/objects/{path}",
+        headers={
+            "X-Storage-Key": storage_key,
+            "Content-Type": content_type,
+        },
+        data=data,
+        timeout=120,
+    )
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail=f"Object storage upload failed: {response.text[:200]}")
+    return response.json()
+
+
+def _storage_get_object(path: str) -> bytes:
+    storage_key = _init_object_storage_key()
+    response = requests.get(
+        f"{OBJECT_STORAGE_API_URL}/objects/{path}",
+        headers={"X-Storage-Key": storage_key},
+        timeout=30,
+    )
+    if response.status_code >= 400:
+        raise HTTPException(status_code=404, detail="PDF file not found in storage")
+    return response.content
+
+
+def _extract_storage_key_from_url(url_or_path: str) -> str:
+    if not url_or_path:
+        raise HTTPException(status_code=400, detail="PDF URL missing")
+    if url_or_path.startswith(f"{OBJECT_STORAGE_APP_PREFIX}/"):
+        return url_or_path
+    if "&key=" in url_or_path:
+        return url_or_path.split("&key=", 1)[1]
+    return url_or_path
+
+
+def _build_invoice_pdf_storage_key(invoice: AdminInvoice, regenerate_suffix: Optional[str] = None) -> str:
+    created = invoice.created_at or datetime.now(timezone.utc)
+    year = created.strftime("%Y")
+    country = (invoice.country_code or "GLOBAL").upper()
+    base_name = f"{invoice.invoice_no}.pdf"
+    if regenerate_suffix:
+        base_name = f"{invoice.invoice_no}-{regenerate_suffix}.pdf"
+    return f"{OBJECT_STORAGE_APP_PREFIX}/invoices/{year}/{country}/{base_name}"
+
+
+def _render_invoice_pdf_bytes(invoice: AdminInvoice, dealer: Optional[SqlUser], plan: Optional[Plan]) -> bytes:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    billing = invoice.billing_info_snapshot or {}
+    net_minor = int(invoice.net_amount_minor or invoice.net_minor or 0)
+    tax_minor = int(invoice.tax_amount_minor or invoice.tax_minor or 0)
+    gross_minor = int(invoice.gross_amount_minor or invoice.gross_minor or invoice.amount_minor or 0)
+
+    line_y = height - 50
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawString(40, line_y, "FATURA")
+    line_y -= 24
+
+    pdf.setFont("Helvetica", 10)
+    rows = [
+        f"Fatura No: {invoice.invoice_no}",
+        f"Tarih: {(invoice.issued_at or invoice.created_at).strftime('%Y-%m-%d') if (invoice.issued_at or invoice.created_at) else '-'}",
+        f"Durum: {invoice.status}",
+        f"Para Birimi: {invoice.currency}",
+        f"Vergi Oranı: %{float(invoice.tax_rate or 0) * 100:.2f}",
+        f"Net: {_format_money_display(net_minor, invoice.currency)}",
+        f"Vergi: {_format_money_display(tax_minor, invoice.currency)}",
+        f"Brüt: {_format_money_display(gross_minor, invoice.currency)}",
+        f"Müşteri E-posta: {billing.get('email') or (dealer.email if dealer else '-')}",
+        f"Müşteri Adı: {billing.get('full_name') or '-'}",
+        f"Firma: {billing.get('company_name') or '-'}",
+        f"Ülke: {billing.get('country_code') or invoice.country_code or '-'}",
+        f"Adres: {billing.get('address') or '-'}",
+        f"Plan: {(plan.name if plan else '-')}",
+    ]
+    for row in rows:
+        pdf.drawString(40, line_y, row)
+        line_y -= 16
+
+    pdf.setFont("Helvetica-Oblique", 8)
+    pdf.drawString(40, 30, "Bu PDF yalnızca invoice snapshot verisinden deterministik üretilmiştir.")
+    pdf.showPage()
+    pdf.save()
+    buffer.seek(0)
+    return buffer.read()
+
+
 @api_router.get("/payments/runtime-config")
 async def get_payments_runtime_config():
     runtime = _payments_runtime_snapshot()
@@ -20948,7 +21283,7 @@ async def admin_export_payments_csv(
     q: Optional[str] = None,
     user_id: Optional[str] = None,
     listing_id: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
@@ -21015,11 +21350,12 @@ async def admin_export_payments_csv(
 
     await _write_audit_log_sql(
         session=session,
-        action="TRANSACTIONS_CSV_EXPORT",
+        action="EXPORT_TRIGGERED",
         actor=current_user,
         resource_type="payment",
         resource_id="transactions",
         metadata={
+            "type": "payments",
             "status": status,
             "start_date": start_date,
             "end_date": end_date,
@@ -21027,6 +21363,8 @@ async def admin_export_payments_csv(
             "user_id": user_id,
             "listing_id": listing_id,
             "rows": len(rows),
+            "record_count": len(rows),
+            "country_scope": ctx.country if getattr(ctx, "mode", "global") == "country" else "GLOBAL",
         },
         request=request,
         country_code=getattr(ctx, "country", None),
@@ -21048,10 +21386,11 @@ async def admin_export_invoices_csv(
     status: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     _enforce_export_rate_limit(request, current_user.get("id"))
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     conditions: List[Any] = []
     if status:
         conditions.append(AdminInvoice.status == status.strip().lower())
@@ -21059,6 +21398,8 @@ async def admin_export_invoices_csv(
         conditions.append(AdminInvoice.created_at >= _parse_iso_datetime(start_date, "start_date"))
     if end_date:
         conditions.append(AdminInvoice.created_at <= _parse_iso_datetime(end_date, "end_date"))
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        conditions.append(AdminInvoice.country_code == ctx.country)
 
     query = select(AdminInvoice)
     if conditions:
@@ -21099,11 +21440,17 @@ async def admin_export_invoices_csv(
 
     await _write_audit_log_sql(
         session=session,
-        action="INVOICES_CSV_EXPORT",
+        action="EXPORT_TRIGGERED",
         actor=current_user,
         resource_type="invoice",
         resource_id="invoices",
-        metadata={"rows": len(rows), "status": status},
+        metadata={
+            "type": "invoices",
+            "rows": len(rows),
+            "record_count": len(rows),
+            "status": status,
+            "country_scope": ctx.country if getattr(ctx, "mode", "global") == "country" else "GLOBAL",
+        },
         request=request,
         country_code=current_user.get("country_code"),
     )
@@ -21116,13 +21463,24 @@ async def admin_export_invoices_csv(
 async def admin_export_ledger_csv(
     request: Request,
     currency: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     _enforce_export_rate_limit(request, current_user.get("id"))
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     query = select(LedgerEntry)
     if currency:
         query = query.where(LedgerEntry.currency == _normalize_currency_code(currency))
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        country_invoice_ids = (
+            await session.execute(
+                select(cast(AdminInvoice.id, String)).where(AdminInvoice.country_code == ctx.country)
+            )
+        ).scalars().all()
+        if country_invoice_ids:
+            query = query.where(LedgerEntry.reference_id.in_(country_invoice_ids))
+        else:
+            query = query.where(text("1=0"))
     rows = (await session.execute(query.order_by(LedgerEntry.created_at.desc()).limit(5000))).scalars().all()
 
     output = io.StringIO()
@@ -21143,16 +21501,164 @@ async def admin_export_ledger_csv(
 
     await _write_audit_log_sql(
         session=session,
-        action="LEDGER_CSV_EXPORT",
+        action="EXPORT_TRIGGERED",
         actor=current_user,
         resource_type="ledger",
         resource_id="ledger_entries",
-        metadata={"rows": len(rows), "currency": currency},
+        metadata={
+            "type": "ledger",
+            "rows": len(rows),
+            "record_count": len(rows),
+            "currency": currency,
+            "country_scope": ctx.country if getattr(ctx, "mode", "global") == "country" else "GLOBAL",
+        },
         request=request,
         country_code=current_user.get("country_code"),
     )
     await session.commit()
     filename = f"ledger-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.csv"
+    return Response(content=output.getvalue(), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@api_router.get("/admin/finance/export")
+async def admin_finance_export(
+    request: Request,
+    type: str,
+    status: Optional[str] = None,
+    country: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    currency: Optional[str] = None,
+    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    _enforce_export_rate_limit(request, current_user.get("id"))
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    export_type = (type or "").strip().lower()
+    if export_type not in {"payments", "invoices", "ledger"}:
+        raise HTTPException(status_code=400, detail="type must be one of payments,invoices,ledger")
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    row_count = 0
+
+    if export_type == "payments":
+        conditions: List[Any] = []
+        if status:
+            conditions.append(Payment.status == status.strip().lower())
+        if start_date:
+            conditions.append(Payment.created_at >= _parse_iso_datetime(start_date, "start_date"))
+        if end_date:
+            conditions.append(Payment.created_at <= _parse_iso_datetime(end_date, "end_date"))
+        if currency:
+            conditions.append(Payment.currency == _normalize_currency_code(currency))
+        if getattr(ctx, "mode", "global") == "country" and ctx.country:
+            conditions.append(Payment.country_code == ctx.country)
+        elif country:
+            conditions.append(Payment.country_code == country.upper().strip())
+
+        rows = (await session.execute(select(Payment).where(*conditions).order_by(Payment.created_at.desc()).limit(5000))).scalars().all()
+        writer.writerow(["transaction_id", "invoice_id", "user_id", "amount_minor", "currency", "status", "country_code", "created_at"])
+        for row in rows:
+            writer.writerow([
+                str(row.id),
+                str(row.invoice_id),
+                str(row.user_id),
+                int(row.amount_minor or 0),
+                row.currency,
+                row.status,
+                row.country_code,
+                row.created_at.isoformat() if row.created_at else "",
+            ])
+        row_count = len(rows)
+
+    elif export_type == "invoices":
+        conditions = []
+        if status:
+            conditions.append(AdminInvoice.status == status.strip().lower())
+        if start_date:
+            conditions.append(AdminInvoice.created_at >= _parse_iso_datetime(start_date, "start_date"))
+        if end_date:
+            conditions.append(AdminInvoice.created_at <= _parse_iso_datetime(end_date, "end_date"))
+        if currency:
+            conditions.append(AdminInvoice.currency == _normalize_currency_code(currency))
+        if getattr(ctx, "mode", "global") == "country" and ctx.country:
+            conditions.append(AdminInvoice.country_code == ctx.country)
+        elif country:
+            conditions.append(AdminInvoice.country_code == country.upper().strip())
+
+        rows = (await session.execute(select(AdminInvoice).where(*conditions).order_by(AdminInvoice.created_at.desc()).limit(5000))).scalars().all()
+        writer.writerow(["invoice_id", "invoice_no", "user_id", "status", "payment_status", "amount_minor", "currency", "country_code", "created_at"])
+        for row in rows:
+            writer.writerow([
+                str(row.id),
+                row.invoice_no,
+                str(row.user_id),
+                row.status,
+                row.payment_status,
+                int(row.amount_minor or 0),
+                row.currency,
+                row.country_code,
+                row.created_at.isoformat() if row.created_at else "",
+            ])
+        row_count = len(rows)
+
+    else:
+        query = select(LedgerEntry)
+        if currency:
+            query = query.where(LedgerEntry.currency == _normalize_currency_code(currency))
+        if getattr(ctx, "mode", "global") == "country" and ctx.country:
+            country_invoice_ids = (
+                await session.execute(
+                    select(cast(AdminInvoice.id, String)).where(AdminInvoice.country_code == ctx.country)
+                )
+            ).scalars().all()
+            if country_invoice_ids:
+                query = query.where(LedgerEntry.reference_id.in_(country_invoice_ids))
+            else:
+                query = query.where(text("1=0"))
+        elif country:
+            country_invoice_ids = (
+                await session.execute(
+                    select(cast(AdminInvoice.id, String)).where(AdminInvoice.country_code == country.upper().strip())
+                )
+            ).scalars().all()
+            if country_invoice_ids:
+                query = query.where(LedgerEntry.reference_id.in_(country_invoice_ids))
+            else:
+                query = query.where(text("1=0"))
+        rows = (await session.execute(query.order_by(LedgerEntry.created_at.desc()).limit(5000))).scalars().all()
+        writer.writerow(["entry_id", "group_id", "reference_type", "reference_id", "debit_minor", "credit_minor", "currency", "created_at"])
+        for row in rows:
+            writer.writerow([
+                str(row.id),
+                row.entry_group_id,
+                row.reference_type,
+                row.reference_id,
+                int(row.debit_minor or 0),
+                int(row.credit_minor or 0),
+                row.currency,
+                row.created_at.isoformat() if row.created_at else "",
+            ])
+        row_count = len(rows)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="EXPORT_TRIGGERED",
+        actor=current_user,
+        resource_type="finance_export",
+        resource_id=export_type,
+        metadata={
+            "type": export_type,
+            "record_count": row_count,
+            "country_scope": ctx.country if getattr(ctx, "mode", "global") == "country" else "GLOBAL",
+        },
+        request=request,
+        country_code=getattr(ctx, "country", None),
+    )
+    await session.commit()
+
+    filename = f"{export_type}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.csv"
     return Response(content=output.getvalue(), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
@@ -21399,12 +21905,23 @@ async def admin_finance_ledger_list(
     current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     query = select(LedgerEntry)
     if reference_type:
         query = query.where(LedgerEntry.reference_type == reference_type.strip())
     if reference_id:
         query = query.where(LedgerEntry.reference_id == reference_id.strip())
+
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        country_invoice_ids = (
+            await session.execute(
+                select(cast(AdminInvoice.id, String)).where(AdminInvoice.country_code == ctx.country)
+            )
+        ).scalars().all()
+        if country_invoice_ids:
+            query = query.where(LedgerEntry.reference_id.in_(country_invoice_ids))
+        else:
+            query = query.where(text("1=0"))
 
     rows = (await session.execute(query.order_by(LedgerEntry.created_at.desc()).offset(max(0, int(skip))).limit(min(500, max(1, int(limit)))))).scalars().all()
     account_ids = {row.account_id for row in rows}
@@ -21685,7 +22202,7 @@ async def admin_finance_trace(
     current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     try:
         invoice_uuid = uuid.UUID(invoice_id)
     except ValueError as exc:
@@ -21694,6 +22211,9 @@ async def admin_finance_trace(
     invoice = await session.get(AdminInvoice, invoice_uuid)
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
+    if getattr(ctx, "mode", "global") == "country" and ctx.country:
+        if (invoice.country_code or "GLOBAL") != ctx.country:
+            raise HTTPException(status_code=403, detail="Country scope violation")
 
     payments = (
         await session.execute(select(Payment).where(Payment.invoice_id == invoice.id).order_by(Payment.created_at.desc()))
@@ -36164,10 +36684,19 @@ async def create_pricing_checkout_session(
         campaign_id=None,
         amount_total=_minor_to_major_units(amount_minor),
         amount_minor=amount_minor,
+        net_amount_minor=tax_snapshot["net_minor"],
+        tax_amount_minor=tax_snapshot["tax_minor"],
+        gross_amount_minor=tax_snapshot["gross_minor"],
         net_minor=tax_snapshot["net_minor"],
         tax_minor=tax_snapshot["tax_minor"],
         gross_minor=tax_snapshot["gross_minor"],
         currency=currency,
+        tax_rate=float(Decimal(int(tax_profile.tax_rate_bps or 0)) / Decimal(10000)),
+        billing_info_snapshot={
+            "user_id": current_user.get("id"),
+            "country_code": country_code,
+            "captured_at": now.isoformat(),
+        },
         tax_profile_id=tax_profile.id,
         product_id=None,
         product_price_id=None,
@@ -36177,6 +36706,8 @@ async def create_pricing_checkout_session(
         payment_status="requires_payment_method",
         issued_at=now,
         due_at=None,
+        pdf_url=None,
+        pdf_generated_at=None,
         provider_customer_id=None,
         meta_json={
             "listing_id": str(listing.id),

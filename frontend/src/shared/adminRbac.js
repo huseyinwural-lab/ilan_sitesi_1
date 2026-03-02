@@ -8,7 +8,7 @@ export const ADMIN_ROLE_GROUPS = {
   catalogView: ['super_admin', 'country_admin', 'moderator'],
   catalogAdmin: ['super_admin', 'country_admin'],
   vehicleAdmin: ['super_admin', 'country_admin'],
-  finance: ['super_admin', 'finance'],
+  finance: ['super_admin', 'country_admin', 'finance'],
   adsManager: ['super_admin', 'ads_manager'],
   pricingManager: ['super_admin', 'pricing_manager'],
   masterdataManager: ['super_admin', 'masterdata_manager'],

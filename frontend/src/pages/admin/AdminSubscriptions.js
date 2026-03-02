@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -7,6 +8,7 @@ const API = `${BACKEND_URL}/api`;
 const STATUS_OPTIONS = ['all', 'trialing', 'active', 'past_due', 'canceled', 'unpaid'];
 
 export default function AdminSubscriptionsPage() {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [selectedDetail, setSelectedDetail] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -50,6 +52,9 @@ export default function AdminSubscriptionsPage() {
         <div>
           <h1 className="text-2xl font-semibold" data-testid="admin-subscriptions-title">Subscriptions</h1>
           <p className="text-sm text-muted-foreground" data-testid="admin-subscriptions-subtitle">Read-only abonelik listesi</p>
+          <p className="text-xs text-muted-foreground" data-testid="admin-subscriptions-scope-badge">
+            Scope: {user?.role === 'country_admin' ? (user?.country_code || 'COUNTRY') : 'Global'}
+          </p>
         </div>
         <select className="h-9 px-3 rounded-md border bg-background text-sm" value={status} onChange={(e) => setStatus(e.target.value)} data-testid="admin-subscriptions-status-filter">
           {STATUS_OPTIONS.map((item) => <option key={item} value={item}>{item}</option>)}

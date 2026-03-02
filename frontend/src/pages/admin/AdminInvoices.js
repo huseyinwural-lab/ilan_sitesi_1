@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Select,
   SelectContent,
@@ -113,6 +114,7 @@ const toDateInputValue = (date) => {
 };
 
 export default function AdminInvoicesPage() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const urlCountry = (searchParams.get('country') || '').toUpperCase();
 
@@ -135,6 +137,7 @@ export default function AdminInvoicesPage() {
   const [detailData, setDetailData] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [statusError, setStatusError] = useState(null);
+  const [pdfActionLoading, setPdfActionLoading] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createPayload, setCreatePayload] = useState({
@@ -304,6 +307,41 @@ export default function AdminInvoicesPage() {
     }
   };
 
+  const generatePdf = async (invoiceId, regenerate = false) => {
+    if (disabledActions) return;
+    setPdfActionLoading(true);
+    setStatusError(null);
+    try {
+      const endpoint = regenerate ? `/admin/invoices/${invoiceId}/regenerate-pdf` : `/admin/invoices/${invoiceId}/generate-pdf`;
+      await axios.post(`${API}${endpoint}`, {}, { headers: authHeader });
+      await Promise.all([fetchInvoices(), fetchDetail(invoiceId)]);
+    } catch (err) {
+      setStatusError(err?.response?.data?.detail || 'PDF işlemi başarısız');
+    } finally {
+      setPdfActionLoading(false);
+    }
+  };
+
+  const downloadPdf = async (invoiceId, invoiceNo) => {
+    setPdfActionLoading(true);
+    setStatusError(null);
+    try {
+      const res = await axios.get(`${API}/admin/invoices/${invoiceId}/download-pdf`, { headers: authHeader, responseType: 'blob' });
+      const blobUrl = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${invoiceNo || 'invoice'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      setStatusError(err?.response?.data?.detail || 'PDF indirme başarısız');
+    } finally {
+      setPdfActionLoading(false);
+    }
+  };
+
   const openCreate = () => {
     if (createDisabled) return;
     setCreateOpen(true);
@@ -371,16 +409,21 @@ export default function AdminInvoicesPage() {
           <div className="text-xs text-muted-foreground" data-testid="admin-invoices-context">
             Country: <span className="font-semibold">{urlCountry || 'Seçilmedi'}</span>
           </div>
+          <div className="text-xs text-muted-foreground" data-testid="admin-invoices-scope-badge">
+            Scope: {user?.role === 'country_admin' ? (user?.country_code || urlCountry || 'COUNTRY') : 'Global'}
+          </div>
         </div>
-        <button
-          onClick={openCreate}
-          className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm disabled:opacity-60"
-          data-testid="invoice-create-open-button"
-          disabled={createDisabled}
-          title={!urlCountry ? 'Önce ülke seçin' : 'DB hazır değil'}
-        >
-          Yeni Invoice
-        </button>
+        {user?.role !== 'country_admin' ? (
+          <button
+            onClick={openCreate}
+            className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm disabled:opacity-60"
+            data-testid="invoice-create-open-button"
+            disabled={createDisabled}
+            title={!urlCountry ? 'Önce ülke seçin' : 'DB hazır değil'}
+          >
+            Yeni Invoice
+          </button>
+        ) : null}
       </div>
 
       {!dbReady && (
@@ -712,6 +755,12 @@ export default function AdminInvoicesPage() {
                         >
                           {detailData.invoice.payment_status || '-'}
                         </span>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${detailData.invoice.pdf_url ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}
+                          data-testid="invoice-detail-pdf-status"
+                        >
+                          PDF: {detailData.invoice.pdf_url ? 'Available' : 'Not Generated'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -759,6 +808,36 @@ export default function AdminInvoicesPage() {
                         Refund
                       </button>
                     )}
+                    {detailData.invoice.pdf_url ? (
+                      <button
+                        onClick={() => downloadPdf(detailData.invoice.id, detailData.invoice.invoice_no)}
+                        className="h-9 px-3 rounded-md border text-sm"
+                        data-testid="invoice-detail-download-pdf"
+                        disabled={pdfActionLoading}
+                      >
+                        Download PDF
+                      </button>
+                    ) : null}
+                    {!detailData.invoice.pdf_url && user?.role === 'super_admin' ? (
+                      <button
+                        onClick={() => generatePdf(detailData.invoice.id, false)}
+                        className="h-9 px-3 rounded-md border text-sm"
+                        data-testid="invoice-detail-generate-pdf"
+                        disabled={pdfActionLoading}
+                      >
+                        Generate PDF
+                      </button>
+                    ) : null}
+                    {detailData.invoice.pdf_url && user?.role === 'super_admin' ? (
+                      <button
+                        onClick={() => generatePdf(detailData.invoice.id, true)}
+                        className="h-9 px-3 rounded-md border text-sm"
+                        data-testid="invoice-detail-regenerate-pdf"
+                        disabled={pdfActionLoading}
+                      >
+                        Regenerate PDF
+                      </button>
+                    ) : null}
                   </div>
                 </>
               ) : (

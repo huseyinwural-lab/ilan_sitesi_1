@@ -96,8 +96,11 @@ export default function AdminPaymentsPage() {
         <div>
           <h1 className="text-2xl font-semibold" data-testid="admin-transactions-title">Transactions Log</h1>
           <p className="text-sm text-muted-foreground" data-testid="admin-transactions-subtitle">Read-only monetization kayıtları.</p>
+          <p className="text-xs text-muted-foreground" data-testid="admin-transactions-scope-badge">
+            Scope: {user?.role === 'country_admin' ? (user?.country_code || 'COUNTRY') : 'Global'}
+          </p>
         </div>
-        {user?.role === 'super_admin' ? (
+        {['super_admin', 'country_admin'].includes(user?.role) ? (
           <button
             onClick={handleExportCsv}
             className="h-9 px-3 rounded-md border text-sm"

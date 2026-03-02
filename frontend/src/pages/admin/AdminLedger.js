@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 export default function AdminLedgerPage() {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -40,6 +42,9 @@ export default function AdminLedgerPage() {
         <div>
           <h1 className="text-2xl font-semibold" data-testid="admin-ledger-title">Ledger Entries</h1>
           <p className="text-sm text-muted-foreground" data-testid="admin-ledger-subtitle">Immutable çift taraflı kayıt görünümü</p>
+          <p className="text-xs text-muted-foreground" data-testid="admin-ledger-scope-badge">
+            Scope: {user?.role === 'country_admin' ? (user?.country_code || 'COUNTRY') : 'Global'}
+          </p>
         </div>
       </div>
 
