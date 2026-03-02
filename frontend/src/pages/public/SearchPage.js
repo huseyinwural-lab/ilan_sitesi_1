@@ -362,14 +362,20 @@ export default function SearchPage() {
         setSelectedListingId(listingId);
         setHoveredListingId(listingId);
       },
-      getMapItemIds: () => mapItems.map((item) => item.id),
+      getMapItemIds: () => {
+        return (data.items || [])
+          .map((item) => ({ id: item.id, lat: parseCoordinate(item.lat), lng: parseCoordinate(item.lng) }))
+          .filter((item) => item.lat !== null && item.lng !== null)
+          .slice(0, 300)
+          .map((item) => item.id);
+      },
     };
     return () => {
       if (window.__searchMapDebug) {
         delete window.__searchMapDebug;
       }
     };
-  }, [mapItems]);
+  }, [data.items]);
 
   const mapItems = useMemo(() => {
     return (data.items || [])
