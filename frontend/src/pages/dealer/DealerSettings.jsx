@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -339,6 +339,21 @@ export default function DealerSettings() {
         >
           Yenile
         </button>
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-white p-4" data-testid="dealer-settings-quick-links-card">
+        <div className="text-xs font-semibold text-slate-700" data-testid="dealer-settings-quick-links-title">Kurumsal Kısayollar</div>
+        <div className="mt-2 flex flex-wrap items-center gap-2" data-testid="dealer-settings-quick-links">
+          <Link to="/dealer/company" className="h-9 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-900 inline-flex items-center" data-testid="dealer-settings-quick-link-company">
+            Şirket Profili
+          </Link>
+          <Link to="/dealer/privacy" className="h-9 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-900 inline-flex items-center" data-testid="dealer-settings-quick-link-privacy">
+            Gizlilik Merkezi
+          </Link>
+          <Link to="/dealer/invoices" className="h-9 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-900 inline-flex items-center" data-testid="dealer-settings-quick-link-invoices">
+            Faturalar ve Hareketler
+          </Link>
+        </div>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-4" data-testid="dealer-settings-sections-card">

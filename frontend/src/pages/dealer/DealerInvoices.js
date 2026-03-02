@@ -1,258 +1,407 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { FinanceStatusBadge } from '@/components/finance/FinanceStatusBadge';
+import { FinanceEmptyState, FinanceErrorState, FinanceLoadingState } from '@/components/finance/FinanceStateView';
+import { formatMoneyMinor, normalizePaymentMessage, resolveLocaleByCountry } from '@/utils/financeFormat';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const statusOptions = [
+const invoiceStatusOptions = [
   { value: 'all', label: 'Tümü' },
-  { value: 'draft', label: 'draft' },
-  { value: 'issued', label: 'issued' },
-  { value: 'paid', label: 'paid' },
-  { value: 'cancelled', label: 'cancelled' },
-  { value: 'refunded', label: 'refunded' },
-  { value: 'overdue', label: 'overdue' },
+  { value: 'draft', label: 'Taslak' },
+  { value: 'issued', label: 'Düzenlendi' },
+  { value: 'paid', label: 'Ödendi' },
+  { value: 'void', label: 'İptal' },
+  { value: 'refunded', label: 'İade' },
+  { value: 'overdue', label: 'Gecikmiş' },
 ];
 
-const formatDate = (value) => {
+const paymentStatusOptions = [
+  { value: 'all', label: 'Tümü' },
+  { value: 'succeeded', label: 'Başarılı' },
+  { value: 'processing', label: 'İşleniyor' },
+  { value: 'pending', label: 'Beklemede' },
+  { value: 'failed', label: 'Başarısız' },
+  { value: 'refunded', label: 'İade' },
+];
+
+const formatDate = (value, locale) => {
   if (!value) return '-';
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return '-';
-  return parsed.toLocaleDateString('tr-TR');
+  return parsed.toLocaleDateString(locale || 'tr-TR');
 };
 
-const formatDateTime = (value) => {
-  if (!value) return '-';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '-';
-  return parsed.toLocaleString('tr-TR');
-};
-
-const resolveStatusBadgeClass = (value) => {
-  switch ((value || '').toLowerCase()) {
-    case 'paid':
-      return 'bg-green-100 text-green-700';
-    case 'issued':
-      return 'bg-orange-100 text-orange-700';
-    case 'overdue':
-      return 'bg-red-200 text-red-800';
-    case 'cancelled':
-      return 'bg-red-100 text-red-700';
-    case 'refunded':
-      return 'bg-blue-100 text-blue-700';
-    case 'draft':
-      return 'bg-slate-100 text-slate-700';
-    default:
-      return 'bg-slate-100 text-slate-700';
-  }
-};
-
-const resolvePaymentBadgeClass = (value) => {
-  switch ((value || '').toLowerCase()) {
-    case 'paid':
-    case 'succeeded':
-      return 'bg-green-100 text-green-700';
-    case 'pending':
-      return 'bg-orange-100 text-orange-700';
-    case 'refunded':
-    case 'partially_refunded':
-      return 'bg-blue-100 text-blue-700';
-    case 'failed':
-    case 'cancelled':
-      return 'bg-red-100 text-red-700';
-    case 'overdue':
-      return 'bg-red-200 text-red-800';
-    case 'unpaid':
-    default:
-      return 'bg-slate-100 text-slate-700';
-  }
-};
-
-const resolveInvoiceTooltip = (inv) => {
-  if (!inv) return '';
-  if (inv.status === 'issued') return `Invoice issued at ${formatDateTime(inv.issued_at)}`;
-  if (inv.status === 'overdue') return `Overdue since ${formatDateTime(inv.due_at)}`;
-  if (inv.status === 'paid') return `Invoice paid at ${formatDateTime(inv.paid_at)}`;
-  if (inv.status === 'refunded') return `Refund processed at ${formatDateTime(inv.updated_at)}`;
-  if (inv.status === 'cancelled') return 'Invoice cancelled';
-  return '';
-};
-
-const resolvePaymentTooltip = (inv) => {
-  if (!inv) return '';
-  const paymentStatus = (inv.payment_status || '').toLowerCase();
-  if (paymentStatus === 'paid') return `Payment received at ${formatDateTime(inv.paid_at)}`;
-  if (paymentStatus === 'refunded') return `Refund processed at ${formatDateTime(inv.updated_at)}`;
-  if (paymentStatus === 'partially_refunded') return `Partial refund processed at ${formatDateTime(inv.updated_at)}`;
-  if (paymentStatus === 'pending') return 'Payment pending';
-  if (paymentStatus === 'failed') return 'Payment failed';
-  if (paymentStatus === 'unpaid') return 'Payment unpaid';
-  return '';
-};
+const resolveDateSource = (item) => item.issued_at || item.created_at;
 
 export default function DealerInvoices() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('invoices');
+  const [invoiceStatus, setInvoiceStatus] = useState('all');
+  const [paymentStatus, setPaymentStatus] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const [invoices, setInvoices] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [checkoutLoadingId, setCheckoutLoadingId] = useState('');
+  const [downloadLoadingId, setDownloadLoadingId] = useState('');
   const [error, setError] = useState('');
-  const [dbReady, setDbReady] = useState(false);
-  const [status, setStatus] = useState('all');
+
+  const [detailData, setDetailData] = useState(null);
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
   }), []);
 
-  const checkDb = async () => {
+  const locale = resolveLocaleByCountry(localStorage.getItem('selectedCountry') || 'TR');
+
+  const parseError = (err, fallback) => {
+    const detail = err?.response?.data?.detail;
+    if (typeof detail === 'string' && detail.trim()) return detail;
+    return fallback;
+  };
+
+  const loadInvoices = async () => {
+    setLoadingInvoices(true);
+    setError('');
     try {
-      const res = await axios.get(`${API}/health/db`);
-      const isReady = res.data?.db_status === 'ok' || res.data?.status === 'healthy';
-      setDbReady(isReady);
-      if (isReady) setError('');
+      const params = new URLSearchParams();
+      if (invoiceStatus !== 'all') params.set('status', invoiceStatus);
+      const res = await axios.get(`${API}/dealer/invoices?${params.toString()}`, { headers: authHeader });
+      const rows = Array.isArray(res.data?.items) ? res.data.items : [];
+      setInvoices(rows);
     } catch (err) {
-      setDbReady(false);
+      setError(parseError(err, 'Fatura kayıtları alınamadı. Lütfen daha sonra tekrar deneyiniz.'));
+      setInvoices([]);
+    } finally {
+      setLoadingInvoices(false);
     }
   };
 
-  const fetchInvoices = async () => {
-    if (!dbReady) {
-      setItems([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+  const loadPayments = async () => {
+    setLoadingPayments(true);
+    setError('');
     try {
       const params = new URLSearchParams();
-      if (status !== 'all') params.set('status', status);
-      const res = await axios.get(`${API}/dealer/invoices?${params.toString()}`, { headers: authHeader });
-      setItems(res.data.items || []);
-      setError('');
-    } catch (e) {
-      setError('Faturalar yüklenemedi');
+      if (paymentStatus !== 'all') params.set('status', paymentStatus);
+      const res = await axios.get(`${API}/dealer/payments?${params.toString()}`, { headers: authHeader });
+      setPayments(Array.isArray(res.data?.items) ? res.data.items : []);
+    } catch (err) {
+      setError(parseError(err, 'Hesap hareketleri alınamadı. Lütfen daha sonra tekrar deneyiniz.'));
+      setPayments([]);
     } finally {
-      setLoading(false);
+      setLoadingPayments(false);
+    }
+  };
+
+  const loadInvoiceDetail = async (invoiceId) => {
+    setDetailLoading(true);
+    setError('');
+    try {
+      const res = await axios.get(`${API}/dealer/invoices/${invoiceId}`, { headers: authHeader });
+      setDetailData(res.data || null);
+    } catch (err) {
+      setError(parseError(err, 'Fatura detayı alınamadı.'));
+      setDetailData(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const downloadPdf = async (invoice) => {
+    if (!invoice?.id) return;
+    setDownloadLoadingId(invoice.id);
+    setError('');
+    try {
+      const res = await axios.get(`${API}/dealer/invoices/${invoice.id}/download-pdf`, {
+        headers: authHeader,
+        responseType: 'blob',
+      });
+      const blobUrl = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${invoice.invoice_no || `invoice-${invoice.id}`}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      setError(parseError(err, 'PDF indirilemedi.'));
+    } finally {
+      setDownloadLoadingId('');
     }
   };
 
   const startCheckout = async (invoice) => {
-    if (!dbReady) return;
+    if (!invoice?.id) return;
     if (invoice.country_code !== 'DE') {
-      setError('Ödeme sadece DE için aktif.');
+      setError('Ödeme işlemi yalnızca DE kapsamındaki faturalar için aktiftir.');
       return;
     }
+    setCheckoutLoadingId(invoice.id);
+    setError('');
     try {
       const res = await axios.post(
         `${API}/payments/create-checkout-session`,
-        {
-          invoice_id: invoice.id,
-          origin_url: window.location.origin,
-        },
-        { headers: authHeader }
+        { invoice_id: invoice.id, origin_url: window.location.origin },
+        { headers: authHeader },
       );
+      if (!res.data?.checkout_url) throw new Error('Ödeme oturumu başlatılamadı.');
       window.location.href = res.data.checkout_url;
-    } catch (e) {
-      setError(e.response?.data?.detail || 'Ödeme başlatılamadı');
+    } catch (err) {
+      setError(parseError(err, 'Ödeme başlatılamadı.'));
+      setCheckoutLoadingId('');
     }
   };
 
   useEffect(() => {
-    checkDb();
+    loadInvoices();
+    loadPayments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    fetchInvoices();
-  }, [dbReady, status]);
+    loadInvoices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoiceStatus]);
+
+  useEffect(() => {
+    loadPayments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentStatus]);
+
+  const filteredInvoices = useMemo(() => {
+    const start = startDate ? new Date(`${startDate}T00:00:00`) : null;
+    const end = endDate ? new Date(`${endDate}T23:59:59`) : null;
+    return invoices.filter((item) => {
+      const sourceDate = resolveDateSource(item);
+      if (!sourceDate || (!start && !end)) return true;
+      const date = new Date(sourceDate);
+      if (Number.isNaN(date.getTime())) return true;
+      if (start && date < start) return false;
+      if (end && date > end) return false;
+      return true;
+    });
+  }, [invoices, startDate, endDate]);
 
   return (
-    <div className="p-6 space-y-4" data-testid="dealer-invoices-page">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4" data-testid="dealer-invoices-page">
+      <div className="flex flex-wrap items-center justify-between gap-3" data-testid="dealer-invoices-header">
         <div>
-          <h1 className="text-2xl font-semibold" data-testid="dealer-invoices-title">Faturalarım</h1>
-          <p className="text-sm text-muted-foreground" data-testid="dealer-invoices-subtitle">Ödeme durumunu buradan takip edin.</p>
+          <h1 className="text-2xl font-semibold" data-testid="dealer-invoices-title">Faturalar ve Hesap Hareketleri</h1>
+          <p className="text-sm text-muted-foreground" data-testid="dealer-invoices-subtitle">
+            Fatura kayıtlarınızı ve ödeme hareketlerinizi kurumsal panelden yönetebilirsiniz.
+          </p>
+        </div>
+        <div className="text-xs text-muted-foreground" data-testid="dealer-invoices-counts">
+          Fatura: {filteredInvoices.length} • Hareket: {payments.length}
         </div>
       </div>
 
-      {!dbReady && (
-        <div className="border border-amber-200 bg-amber-50 text-amber-900 rounded-md p-4" data-testid="dealer-invoices-db-banner">
-          DB hazır değil → işlemler devre dışı.
-        </div>
-      )}
+      {error ? <FinanceErrorState testId="dealer-invoices-error" message={error} /> : null}
 
-      {error && (
-        <div className="border border-red-200 bg-red-50 text-red-700 rounded-md p-3" data-testid="dealer-invoices-error">
-          {error}
+      <div className="rounded-lg border bg-white p-4 space-y-3" data-testid="dealer-finance-tabs-card">
+        <div className="flex flex-wrap items-center gap-2" data-testid="dealer-finance-tabs">
+          <button
+            type="button"
+            onClick={() => setActiveTab('invoices')}
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${activeTab === 'invoices' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
+            data-testid="dealer-finance-tab-invoices"
+          >
+            Faturalarım
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('movements')}
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${activeTab === 'movements' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
+            data-testid="dealer-finance-tab-movements"
+          >
+            Hesap Hareketlerim
+          </button>
         </div>
-      )}
 
-      <div className="flex items-center gap-3" data-testid="dealer-invoices-filters">
-        <select
-          className="border rounded p-2"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          data-testid="dealer-invoices-status-filter"
-        >
-          {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+        {activeTab === 'invoices' ? (
+          <>
+            <div className="flex flex-wrap items-center gap-2" data-testid="dealer-invoices-filters">
+              <select
+                className="h-9 rounded-md border px-3 text-sm"
+                value={invoiceStatus}
+                onChange={(event) => setInvoiceStatus(event.target.value)}
+                data-testid="dealer-invoices-status-filter"
+              >
+                {invoiceStatusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+              <input type="date" className="h-9 rounded-md border px-3 text-sm" value={startDate} onChange={(event) => setStartDate(event.target.value)} data-testid="dealer-invoices-start-date" />
+              <input type="date" className="h-9 rounded-md border px-3 text-sm" value={endDate} onChange={(event) => setEndDate(event.target.value)} data-testid="dealer-invoices-end-date" />
+              <button
+                type="button"
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                className="h-9 rounded-md border px-3 text-sm"
+                data-testid="dealer-invoices-clear-date-filters"
+              >
+                Tarihi Temizle
+              </button>
+            </div>
+
+            <div className="rounded-md border overflow-hidden" data-testid="dealer-invoices-table-wrap">
+              <table className="w-full text-sm" data-testid="dealer-invoices-table">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="text-left px-3 py-2" data-testid="dealer-invoices-col-no">Fatura No</th>
+                    <th className="text-left px-3 py-2" data-testid="dealer-invoices-col-status">Durum</th>
+                    <th className="text-left px-3 py-2" data-testid="dealer-invoices-col-payment">Ödeme</th>
+                    <th className="text-left px-3 py-2" data-testid="dealer-invoices-col-amount">Tutar</th>
+                    <th className="text-left px-3 py-2" data-testid="dealer-invoices-col-date">Tarih</th>
+                    <th className="text-right px-3 py-2" data-testid="dealer-invoices-col-actions">İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingInvoices ? (
+                    <tr><td colSpan={6} className="px-3 py-4"><FinanceLoadingState testId="dealer-invoices-loading" /></td></tr>
+                  ) : filteredInvoices.length === 0 ? (
+                    <tr><td colSpan={6} className="px-3 py-4"><FinanceEmptyState testId="dealer-invoices-empty" message="Bu kriterlere uygun fatura kaydı bulunmamaktadır." /></td></tr>
+                  ) : (
+                    filteredInvoices.map((invoice) => {
+                      const payable = invoice.status === 'issued' && ['unpaid', 'requires_payment_method', 'pending'].includes((invoice.payment_status || '').toLowerCase());
+                      return (
+                        <tr key={invoice.id} className="border-t" data-testid={`dealer-invoice-row-${invoice.id}`}>
+                          <td className="px-3 py-2" data-testid={`dealer-invoice-no-${invoice.id}`}>{invoice.invoice_no || '-'}</td>
+                          <td className="px-3 py-2" data-testid={`dealer-invoice-status-${invoice.id}`}><FinanceStatusBadge status={invoice.status} testId={`dealer-invoice-status-badge-${invoice.id}`} /></td>
+                          <td className="px-3 py-2" data-testid={`dealer-invoice-payment-${invoice.id}`}><FinanceStatusBadge status={invoice.payment_status || '-'} testId={`dealer-invoice-payment-badge-${invoice.id}`} /></td>
+                          <td className="px-3 py-2 font-semibold" data-testid={`dealer-invoice-amount-${invoice.id}`}>{formatMoneyMinor(invoice.amount_minor, invoice.currency_code || invoice.currency || 'EUR', locale)}</td>
+                          <td className="px-3 py-2" data-testid={`dealer-invoice-date-${invoice.id}`}>{formatDate(resolveDateSource(invoice), locale)}</td>
+                          <td className="px-3 py-2 text-right" data-testid={`dealer-invoice-actions-${invoice.id}`}>
+                            <div className="inline-flex items-center gap-2">
+                              <button type="button" className="h-8 rounded-md border px-2 text-xs" onClick={() => loadInvoiceDetail(invoice.id)} data-testid={`dealer-invoice-detail-${invoice.id}`}>Detay</button>
+                              {invoice.pdf_url ? (
+                                <button
+                                  type="button"
+                                  className="h-8 rounded-md border px-2 text-xs"
+                                  onClick={() => downloadPdf(invoice)}
+                                  disabled={downloadLoadingId === invoice.id}
+                                  data-testid={`dealer-invoice-download-${invoice.id}`}
+                                >
+                                  {downloadLoadingId === invoice.id ? 'İndiriliyor...' : 'PDF İndir'}
+                                </button>
+                              ) : null}
+                              <button
+                                type="button"
+                                className="h-8 rounded-md border px-2 text-xs"
+                                onClick={() => startCheckout(invoice)}
+                                disabled={!payable || checkoutLoadingId === invoice.id}
+                                data-testid={`dealer-invoice-pay-${invoice.id}`}
+                                title={invoice.country_code !== 'DE' ? 'Ödeme yalnızca DE faturaları için aktiftir.' : ''}
+                              >
+                                {checkoutLoadingId === invoice.id ? 'Yönlendiriliyor...' : 'Öde'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-2" data-testid="dealer-payments-filters">
+              <select
+                className="h-9 rounded-md border px-3 text-sm"
+                value={paymentStatus}
+                onChange={(event) => setPaymentStatus(event.target.value)}
+                data-testid="dealer-payments-status-filter"
+              >
+                {paymentStatusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="rounded-md border overflow-hidden" data-testid="dealer-payments-table-wrap">
+              <table className="w-full text-sm" data-testid="dealer-payments-table">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="text-left px-3 py-2" data-testid="dealer-payments-col-ref">İşlem No</th>
+                    <th className="text-left px-3 py-2" data-testid="dealer-payments-col-status">Durum</th>
+                    <th className="text-left px-3 py-2" data-testid="dealer-payments-col-amount">Tutar</th>
+                    <th className="text-left px-3 py-2" data-testid="dealer-payments-col-message">Açıklama</th>
+                    <th className="text-left px-3 py-2" data-testid="dealer-payments-col-date">Tarih</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingPayments ? (
+                    <tr><td colSpan={5} className="px-3 py-4"><FinanceLoadingState testId="dealer-payments-loading" /></td></tr>
+                  ) : payments.length === 0 ? (
+                    <tr><td colSpan={5} className="px-3 py-4"><FinanceEmptyState testId="dealer-payments-empty" message="Hesap hareketi kaydı bulunmamaktadır." /></td></tr>
+                  ) : (
+                    payments.map((payment) => (
+                      <tr key={payment.id} className="border-t" data-testid={`dealer-payment-row-${payment.id}`}>
+                        <td className="px-3 py-2 font-mono text-xs" data-testid={`dealer-payment-ref-${payment.id}`}>{payment.provider_ref || payment.id}</td>
+                        <td className="px-3 py-2" data-testid={`dealer-payment-status-${payment.id}`}><FinanceStatusBadge status={payment.status} testId={`dealer-payment-status-badge-${payment.id}`} /></td>
+                        <td className="px-3 py-2 font-semibold" data-testid={`dealer-payment-amount-${payment.id}`}>{formatMoneyMinor(payment.amount_minor, payment.currency || 'EUR', locale)}</td>
+                        <td className="px-3 py-2" data-testid={`dealer-payment-message-${payment.id}`}>{payment.normalized_message || normalizePaymentMessage(payment.status)}</td>
+                        <td className="px-3 py-2" data-testid={`dealer-payment-date-${payment.id}`}>{formatDate(payment.created_at, locale)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="border rounded-lg overflow-hidden" data-testid="dealer-invoices-table">
-        <table className="w-full text-sm">
-          <thead className="bg-muted">
-            <tr>
-              <th className="text-left px-3 py-2" data-testid="dealer-invoices-header-no">Invoice No</th>
-              <th className="text-left px-3 py-2" data-testid="dealer-invoices-header-amount">Amount</th>
-              <th className="text-left px-3 py-2" data-testid="dealer-invoices-header-status">Status</th>
-              <th className="text-left px-3 py-2" data-testid="dealer-invoices-header-payment">Payment</th>
-              <th className="text-left px-3 py-2" data-testid="dealer-invoices-header-due">Due</th>
-              <th className="text-right px-3 py-2" data-testid="dealer-invoices-header-actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td className="px-3 py-4" colSpan="6">Yükleniyor...</td></tr>
-            ) : items.length === 0 ? (
-              <tr><td className="px-3 py-4" colSpan="6">Kayıt yok</td></tr>
-            ) : (
-              items.map((inv) => (
-                <tr key={inv.id} className="border-t" data-testid={`dealer-invoices-row-${inv.id}`}>
-                  <td className="px-3 py-2" data-testid={`dealer-invoices-no-${inv.id}`}>{inv.invoice_no || '-'}</td>
-                  <td className="px-3 py-2" data-testid={`dealer-invoices-amount-${inv.id}`}>{inv.amount} {inv.currency_code}</td>
-                  <td className="px-3 py-2" data-testid={`dealer-invoices-status-${inv.id}`}>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolveStatusBadgeClass(inv.status)}`}
-                      data-testid={`dealer-invoices-status-badge-${inv.id}`}
-                      title={resolveInvoiceTooltip(inv)}
-                    >
-                      {inv.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2" data-testid={`dealer-invoices-payment-${inv.id}`}>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${resolvePaymentBadgeClass(inv.payment_status)}`}
-                      data-testid={`dealer-invoices-payment-badge-${inv.id}`}
-                      title={resolvePaymentTooltip(inv)}
-                    >
-                      {inv.payment_status || '-'}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2" data-testid={`dealer-invoices-due-${inv.id}`}>{formatDate(inv.due_at)}</td>
-                  <td className="px-3 py-2 text-right" data-testid={`dealer-invoices-actions-${inv.id}`}>
-                    <button
-                      className="px-3 py-1 border rounded text-sm"
-                      onClick={() => startCheckout(inv)}
-                      disabled={!dbReady || inv.status !== 'issued' || inv.payment_status !== 'unpaid'}
-                      title={inv.country_code !== 'DE' ? 'Ödeme sadece DE için aktif' : ''}
-                      data-testid={`dealer-invoices-pay-${inv.id}`}
-                    >
-                      Öde
-                    </button>
-                  </td>
+      {detailLoading ? <FinanceLoadingState testId="dealer-invoice-detail-loading" /> : null}
+      {detailData?.invoice ? (
+        <section className="rounded-lg border bg-white p-4 space-y-3" data-testid="dealer-invoice-detail-card">
+          <div className="flex items-center justify-between" data-testid="dealer-invoice-detail-header">
+            <h2 className="text-base font-semibold" data-testid="dealer-invoice-detail-title">Fatura Detayı • {detailData.invoice.invoice_no || '-'}</h2>
+            <button type="button" className="h-8 rounded-md border px-2 text-xs" onClick={() => setDetailData(null)} data-testid="dealer-invoice-detail-close">Kapat</button>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3" data-testid="dealer-invoice-detail-grid">
+            <div className="rounded-md border p-3" data-testid="dealer-invoice-detail-status"><div className="text-xs text-muted-foreground">Durum</div><div className="mt-1"><FinanceStatusBadge status={detailData.invoice.status} testId="dealer-invoice-detail-status-badge" /></div></div>
+            <div className="rounded-md border p-3" data-testid="dealer-invoice-detail-payment-status"><div className="text-xs text-muted-foreground">Ödeme Durumu</div><div className="mt-1"><FinanceStatusBadge status={detailData.invoice.payment_status || '-'} testId="dealer-invoice-detail-payment-status-badge" /></div></div>
+            <div className="rounded-md border p-3" data-testid="dealer-invoice-detail-total"><div className="text-xs text-muted-foreground">Toplam Tutar</div><div className="mt-1 font-semibold">{formatMoneyMinor(detailData.invoice.amount_minor, detailData.invoice.currency_code || detailData.invoice.currency, locale)}</div></div>
+          </div>
+
+          <div className="rounded-md border overflow-hidden" data-testid="dealer-invoice-detail-payments-table-wrap">
+            <table className="w-full text-sm" data-testid="dealer-invoice-detail-payments-table">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="text-left px-3 py-2">İşlem Ref</th>
+                  <th className="text-left px-3 py-2">Durum</th>
+                  <th className="text-left px-3 py-2">Tutar</th>
+                  <th className="text-left px-3 py-2">Tarih</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {(detailData.payments || []).length === 0 ? (
+                  <tr><td colSpan={4} className="px-3 py-3"><FinanceEmptyState testId="dealer-invoice-detail-payments-empty" message="Bu faturaya bağlı ödeme kaydı bulunmamaktadır." /></td></tr>
+                ) : (
+                  (detailData.payments || []).map((payment) => (
+                    <tr key={payment.id} className="border-t" data-testid={`dealer-invoice-detail-payment-row-${payment.id}`}>
+                      <td className="px-3 py-2 font-mono text-xs" data-testid={`dealer-invoice-detail-payment-ref-${payment.id}`}>{payment.provider_ref || payment.id}</td>
+                      <td className="px-3 py-2" data-testid={`dealer-invoice-detail-payment-status-${payment.id}`}><FinanceStatusBadge status={payment.status} testId={`dealer-invoice-detail-payment-status-badge-${payment.id}`} /></td>
+                      <td className="px-3 py-2" data-testid={`dealer-invoice-detail-payment-amount-${payment.id}`}>{formatMoneyMinor(payment.amount_minor, payment.currency, locale)}</td>
+                      <td className="px-3 py-2" data-testid={`dealer-invoice-detail-payment-date-${payment.id}`}>{formatDate(payment.created_at, locale)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

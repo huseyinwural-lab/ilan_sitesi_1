@@ -17958,7 +17958,13 @@ async def dealer_list_invoices(
             raise HTTPException(status_code=400, detail="Invalid status")
         conditions.append(AdminInvoice.status == status_value)
 
-    rows = (await session.execute(select(AdminInvoice).where(*conditions).order_by(AdminInvoice.created_at.desc()))).scalars().all()
+    rows = (
+        await session.execute(
+            select(AdminInvoice)
+            .where(*conditions)
+            .order_by(func.coalesce(AdminInvoice.issued_at, AdminInvoice.created_at).desc(), AdminInvoice.created_at.desc())
+        )
+    ).scalars().all()
     items = [_admin_invoice_to_dict(row) for row in rows]
     return {"items": items}
 
@@ -17985,7 +17991,89 @@ async def dealer_invoice_detail(
         raise HTTPException(status_code=403, detail="Invoice access denied")
 
     plan = await session.get(Plan, invoice.plan_id) if invoice.plan_id else None
-    return {"invoice": _admin_invoice_to_dict(invoice, None, plan)}
+    payments = (
+        await session.execute(
+            select(Payment).where(Payment.invoice_id == invoice.id).order_by(Payment.created_at.desc())
+        )
+    ).scalars().all()
+    return {
+        "invoice": _admin_invoice_to_dict(invoice, None, plan),
+        "payments": [_payment_to_dict(row, invoice) for row in payments],
+    }
+
+
+@api_router.get("/dealer/invoices/{invoice_id}/download-pdf")
+async def dealer_invoice_download_pdf(
+    invoice_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+    try:
+        invoice_uuid = uuid.UUID(invoice_id)
+        dealer_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid id") from exc
+
+    invoice = await session.get(AdminInvoice, invoice_uuid)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    if invoice.user_id != dealer_uuid:
+        raise HTTPException(status_code=403, detail="Invoice access denied")
+    if not invoice.pdf_url:
+        raise HTTPException(status_code=404, detail="PDF not generated")
+
+    storage_key = _extract_storage_key_from_url(invoice.pdf_url)
+    pdf_bytes = _storage_get_object(storage_key)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PDF_DOWNLOADED",
+        actor=current_user,
+        resource_type="invoice",
+        resource_id=str(invoice.id),
+        metadata={"storage_key": storage_key, "scope": "dealer"},
+        request=request,
+        country_code=invoice.country_code,
+    )
+    await session.commit()
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={invoice.invoice_no}.pdf"},
+    )
+
+
+@api_router.get("/dealer/payments")
+async def dealer_payment_history(
+    status: Optional[str] = None,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await _ensure_invoices_db_ready(session)
+    try:
+        dealer_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="dealer invalid") from exc
+
+    conditions: List[Any] = [Payment.user_id == dealer_uuid]
+    if status:
+        conditions.append(Payment.status == status.strip().lower())
+
+    rows = (
+        await session.execute(select(Payment).where(*conditions).order_by(Payment.created_at.desc()))
+    ).scalars().all()
+    dedup: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        dedupe_key = row.provider_ref or str(row.id)
+        if dedupe_key in dedup:
+            continue
+        item = _payment_to_dict(row)
+        item["normalized_message"] = _normalized_payment_message(row.status, row.meta_json)
+        dedup[dedupe_key] = item
+
+    return {"items": list(dedup.values())}
 
 
 class DealerListingCreatePayload(BaseModel):

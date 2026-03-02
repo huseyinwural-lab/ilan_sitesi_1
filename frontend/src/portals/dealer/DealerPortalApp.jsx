@@ -9,6 +9,9 @@ import DealerReports from '@/pages/dealer/DealerReports';
 import DealerConsultantTracking from '@/pages/dealer/DealerConsultantTracking';
 import DealerPurchase from '@/pages/dealer/DealerPurchase';
 import DealerSettings from '@/pages/dealer/DealerSettings';
+import DealerInvoices from '@/pages/dealer/DealerInvoices';
+import DealerCompanyProfile from '@/pages/dealer/DealerCompanyProfile';
+import DealerPrivacyCenter from '@/pages/dealer/DealerPrivacyCenter';
 import PaymentSuccess from '@/pages/dealer/PaymentSuccess';
 import PaymentCancel from '@/pages/dealer/PaymentCancel';
 import DealerLayout from '@/layouts/DealerLayout';
@@ -27,9 +30,9 @@ export default function DealerPortalApp() {
         <Route path="consultant-tracking" element={<DealerConsultantTracking />} />
         <Route path="purchase" element={<DealerPurchase />} />
         <Route path="settings" element={<DealerSettings />} />
-        <Route path="invoices" element={<Navigate to="/dealer/purchase" replace />} />
-        <Route path="company" element={<Navigate to="/dealer/settings" replace />} />
-        <Route path="privacy" element={<Navigate to="/dealer/settings" replace />} />
+        <Route path="invoices" element={<DealerInvoices />} />
+        <Route path="company" element={<DealerCompanyProfile />} />
+        <Route path="privacy" element={<DealerPrivacyCenter />} />
         <Route path="payments/success" element={<PaymentSuccess />} />
         <Route path="payments/cancel" element={<PaymentCancel />} />
       </Route>

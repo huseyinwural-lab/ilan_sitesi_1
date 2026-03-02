@@ -653,6 +653,15 @@ export default function DealerLayout() {
                   </div>
                 ) : null}
 
+                <button
+                  type="button"
+                  onClick={() => navigate('/bilgi/yardim-merkezi')}
+                  className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900"
+                  data-testid="dealer-layout-row3-help-button"
+                >
+                  Yardım Merkezi
+                </button>
+
                 {headerRow3Controls?.page_edit_enabled !== false ? (
                   <button
                     type="button"
