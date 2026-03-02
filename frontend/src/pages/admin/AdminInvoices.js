@@ -183,12 +183,15 @@ export default function AdminInvoicesPage() {
 
   const checkDb = async () => {
     try {
-      const res = await axios.get(`${API}/health/db`);
+      const res = await axios.get(`${API}/health/db`, {
+        validateStatus: (status) => status >= 200 && status < 600,
+      });
       const isReady = res.data?.db_status === 'ok';
       setDbReady(isReady);
       if (isReady) setError('');
     } catch (err) {
-      setDbReady(false);
+      const fallbackReady = err?.response?.data?.db_status === 'ok';
+      setDbReady(Boolean(fallbackReady));
     }
   };
 
