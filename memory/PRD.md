@@ -596,3 +596,36 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### P0-03 kalan
 - Google Maps canlı acceptance (3 şehir: TR + DE + rastgele 1)
 - Host/redirect son regresyon paketi
+
+---
+
+## 2026-03-02 (P0-03 — Google Maps Canlı Acceptance / Faz-2 Tamam)
+
+### Uygulanan acceptance kapsamı
+- Gerçek `MAPS_API_KEY` (system setting) ile `/api/places/config` doğrulandı:
+  - `real_mode=true`
+  - `key_source=system_setting`
+- 3 şehir için postal lookup + suggestion + kayıt + DB doğrulaması tamamlandı:
+  - TR: İstanbul (`34000`)
+  - DE: Berlin (`10115`)
+  - FR: Paris (`75001`)  *(rastgele 3. şehir)*
+- `/ilan-ver` adres blok akışı test edildi; suggestion seçimi sonrası location verisi draft’a yazıldı.
+
+### Üretilen kanıt dosyaları
+- `/app/test_reports/p0_03_maps_acceptance.json`
+- `/app/test_reports/p0_03_maps_db_assertions.json`
+- Testing agent raporu: `/app/test_reports/iteration_86.json` (**PASS**)
+
+### Doğrulama özeti
+- Provider/API:
+  - `/api/places/postal-lookup` tüm şehirlerde `200` + `status=OK`
+  - `REQUEST_DENIED`, `API_KEY_INVALID`, `OVER_QUERY_LIMIT` görülmedi
+  - Maps/Places provider 4xx/5xx: **0**
+- DB assertions:
+  - Her listing için location alanları dolu:
+    - `country`, `city`, `district`, `postal_code`, `latitude`, `longitude`, `address_line`
+  - `all_required_fields_populated=true`
+
+### Güncel durum
+- P0-03 Stripe + Maps acceptance kanıtları tamamlandı.
+- P0-03 içinde yalnız host/redirect son regresyon kapanışı kaldı.
