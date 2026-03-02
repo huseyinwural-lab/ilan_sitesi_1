@@ -19208,6 +19208,8 @@ def _payments_runtime_snapshot() -> Dict[str, Any]:
         disabled_reason = "invalid_or_missing_stripe_secret_key"
     elif not STRIPE_PUBLIC_KEY_VALID:
         disabled_reason = "invalid_or_missing_stripe_publishable_key"
+    elif not STRIPE_WEBHOOK_SECRET_VALID:
+        disabled_reason = "invalid_or_missing_stripe_webhook_secret"
     else:
         disabled_reason = None
 
