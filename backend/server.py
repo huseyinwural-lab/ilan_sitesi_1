@@ -27039,6 +27039,68 @@ def _build_meili_filter_expression(
     return " AND ".join(filters)
 
 
+def _safe_float(value: Any) -> Optional[float]:
+    try:
+        if value is None or value == "":
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _extract_hit_lat_lng(hit: dict) -> tuple[Optional[float], Optional[float]]:
+    attr_map = hit.get("attribute_flat_map") if isinstance(hit.get("attribute_flat_map"), dict) else {}
+
+    candidate_lat = [
+        hit.get("latitude"),
+        hit.get("lat"),
+        attr_map.get("location_latitude"),
+        attr_map.get("location_lat"),
+        attr_map.get("latitude"),
+    ]
+    candidate_lng = [
+        hit.get("longitude"),
+        hit.get("lng"),
+        attr_map.get("location_longitude"),
+        attr_map.get("location_lng"),
+        attr_map.get("longitude"),
+    ]
+
+    lat = next((_safe_float(item) for item in candidate_lat if _safe_float(item) is not None), None)
+    lng = next((_safe_float(item) for item in candidate_lng if _safe_float(item) is not None), None)
+
+    if lat is None or lng is None:
+        return None, None
+    if lat < -90 or lat > 90 or lng < -180 or lng > 180:
+        return None, None
+    return lat, lng
+
+
+def _parse_bbox_param(bbox: Optional[str]) -> Optional[tuple[float, float, float, float]]:
+    if not bbox:
+        return None
+    parts = [part.strip() for part in str(bbox).split(",")]
+    if len(parts) != 4:
+        return None
+    min_lng = _safe_float(parts[0])
+    min_lat = _safe_float(parts[1])
+    max_lng = _safe_float(parts[2])
+    max_lat = _safe_float(parts[3])
+    if None in (min_lng, min_lat, max_lng, max_lat):
+        return None
+    if min_lng > max_lng or min_lat > max_lat:
+        return None
+    return float(min_lng), float(min_lat), float(max_lng), float(max_lat)
+
+
+def _hit_inside_bbox(hit: dict, bbox_tuple: tuple[float, float, float, float]) -> bool:
+    lat, lng = _extract_hit_lat_lng(hit)
+    if lat is None or lng is None:
+        return False
+    min_lng, min_lat, max_lng, max_lat = bbox_tuple
+    return min_lat <= lat <= max_lat and min_lng <= lng <= max_lng
+
+
 @api_router.get("/search/suggest")
 async def public_search_suggest(
     session: AsyncSession = Depends(get_sql_session),
