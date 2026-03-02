@@ -1692,10 +1692,13 @@ async def lifespan(app: FastAPI):
         "true" if encryption_key_present else "false",
     )
     logging.getLogger("runtime").warning(
-        "stripe_runtime stripe_key_present=%s stripe_publishable_present=%s stripe_webhook_present=%s payments_enabled=%s",
+        "stripe_runtime stripe_key_present=%s stripe_key_valid=%s stripe_publishable_present=%s stripe_publishable_valid=%s stripe_webhook_present=%s stripe_webhook_valid=%s payments_enabled=%s",
         "true" if STRIPE_SECRET_KEY_PRESENT else "false",
+        "true" if STRIPE_SECRET_KEY_VALID else "false",
         "true" if STRIPE_PUBLIC_KEY_PRESENT else "false",
+        "true" if STRIPE_PUBLIC_KEY_VALID else "false",
         "true" if STRIPE_WEBHOOK_SECRET_PRESENT else "false",
+        "true" if STRIPE_WEBHOOK_SECRET_VALID else "false",
         "true" if PAYMENTS_RUNTIME_ENABLED else "false",
     )
 
