@@ -796,3 +796,21 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Sonraki Önerilen Adımlar (P1)
 - Permission CRUD ekranına toplu atama (bulk grant/revoke) ve dry-run etki analizi eklenmesi.
 - Audit ekranında permission aksiyonları için hazır filtre preset'leri (grant/revoke actor/target/reason) eklenmesi.
+
+## 2026-03-03 (GÖREV 2 — Audit / Permissions UX Genişletme)
+- Audit + Permissions uçlarında server-side pagination standardı uygulandı: `?page=`, `?size=`, `?q=`, `?sort=created_at:desc`.
+- Audit filtreleri genişletildi: `actor`, `role`, `country`, `event_type`, `date_from/date_to`.
+- Permissions filtreleri genişletildi: `q`, `actor(created_by)`, `role`, `country_scope`, `sort`.
+- Permissions CSV export eklendi: `GET /api/admin/permissions/overrides/export` (super_admin-only, mevcut permission modeline uyumlu).
+- Audit export route conflict düzeltildi: `/api/admin/audit-logs/export` static route, `/{log_id}` dynamic route önüne taşındı.
+- Performans/indeks çalışması:
+  - Audit sorgu indeksleri doğrulandı (`created_at`, `user_id+created_at`, `action+created_at`, `country_scope+created_at`).
+  - 100k gerçek DB seed ile pagination/perf testi çalıştırıldı.
+
+### GÖREV 2 Kanıt Dosyaları
+- `/app/test_reports/p1_audit_filter_perf.json` (PASS)
+- `/app/test_reports/iteration_100.json` (PASS, route-order fix sonrası kritik bulgu kapatıldı)
+
+### Güncel Sonraki Adımlar (P1)
+- Audit ve Permissions ekranları için preset filtre setleri (Ops/Fraud/Compliance) ve kaydedilmiş görünüm desteği.
+- Pagination akışına cursor-mode opsiyonu (yüksek write trafik senaryolarında overlap toleransını azaltmak için).
