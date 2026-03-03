@@ -854,3 +854,30 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Logo tıklama davranışı güncellendi: ana sayfaya (`/`) yönlendirme.
 - Dealer settings sayfası iki kolonlu, beyaz zemin/siyah metin yapısına geçirildi; footer eklendi.
 - Frontend doğrulama PASS: satır yapısı, sağ panel menü, logo yönlendirme, white/black tema ve console error=0.
+
+## 2026-03-03 (Kurumsal Portal PDF Refactor — V2 Tamamlama)
+- Kullanıcı seçimi **A** uygulanarak PDF menülerinin tamamı tıklanabilir ve veri bağlı hale getirildi.
+- Yeni dealer layout bileşeni eklendi: `frontend/src/layouts/DealerLayoutV2.js`
+  - 5 satır düzen netleştirildi: row1 header, row2 üst menü, row3 kullanıcı/aksiyon, row4 sol ince menü + içerik, row5 footer.
+  - PDF üst menü 10/10 ve sol menü 10/10 + `Çıkış Yap` uygulandı.
+  - `Hesabım` alt menüsü sağ panelde açılacak şekilde davranış korundu.
+- Yeni sayfalar:
+  - `frontend/src/pages/dealer/DealerVirtualTours.jsx` (`/dealer/virtual-tours`)
+  - `frontend/src/pages/dealer/DealerAcademy.jsx` (`/dealer/academy`)
+- Backend desteği (3C) eklendi:
+  - `GET /api/dealer/dashboard/navigation-summary`
+  - `GET /api/dealer/virtual-tours`
+  - Menü sayaçları/özetler backend’den besleniyor.
+
+### Test ve Kanıt
+- Self-test curl PASS:
+  - `/api/dealer/dashboard/navigation-summary` auth + kontrat doğru
+  - `/api/dealer/virtual-tours` auth + kontrat doğru
+- Smoke screenshot PASS: dealer login sonrası yeni layout render doğrulandı.
+- Testing agent PASS: `/app/test_reports/iteration_102.json`
+  - Backend: 16/16 PASS
+  - Frontend: PDF menü/route/layout doğrulaması PASS
+
+### Mock Durumu
+- **MOCKED:** `GET /api/dealer/dashboard/navigation-summary -> academy.modules`
+- Not: Kullanıcı 2B onayı kapsamında mock kullanımını kabul etti; diğer sayaçlar gerçek DB verisinden geliyor.

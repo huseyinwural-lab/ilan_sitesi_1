@@ -1,6 +1,9 @@
 # CHANGELOG
 
 ## Uygulanan Özellikler
+- **Kurumsal Portal Dashboard PDF Refactor (2026-03-03):** Dealer portal layout V2 uygulandı. 5 satır yapı (`row1 header`, `row2 üst menü`, `row3 kullanıcı/aksiyon`, `row4 sol ince menü + içerik`, `row5 footer`) canlıya alındı. PDF menüleri tam kapsandı: üst menüde 10/10 öğe, sol menüde 10/10 + çıkış. Yeni route’lar eklendi: `/dealer/virtual-tours`, `/dealer/academy`.
+- **Kurumsal Portal Backend Data Support (2026-03-03):** Yeni endpointler eklendi: `GET /api/dealer/dashboard/navigation-summary` (badges + left_menu + academy), `GET /api/dealer/virtual-tours` (summary + items). UI menü sayaçları backend verisine bağlandı. Academy modülleri kullanıcı onayı (2B) kapsamında **MOCKED** döndürülüyor.
+- **Kurumsal Portal Test Kapanışı (2026-03-03):** `/app/test_reports/iteration_102.json` ile backend ve frontend doğrulaması PASS (100%). PDF menü varlığı, route erişimi, endpoint kontratları ve data-testid kapsamı doğrulandı.
 - **P109 Araç Master Görünürlük + Toplu Silme (2026-03-01):** Araç Markaları/Modelleri listelerine çoklu seçim ve toplu pasifleştirme eklendi. Import ekranına “nerede görünür?” notu eklendi. JSON import artık `vehicle_type` alanını destekliyor.
 - **P108 Araç Master Import JSON/Excel Düzeltmesi (2026-03-01):** JSON/Excel yükleme seçici eklendi, Excel → JSON dönüşümü yapılıyor, upload auth başlığı erişim token’ına geçirildi ve hata mesajları HTTP durumuyla netleşti.
 - **P107 L0/L1 Alfabetik Sıralama Modu (2026-03-01):** Ana Site Kategorisi paneline L0 (modül) ve L1 için manuel/alfabetik sıralama modu eklendi. Alfabetik modda yukarı/aşağı butonları devre dışı.
