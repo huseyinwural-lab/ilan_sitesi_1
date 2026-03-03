@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-03T09:20:21.556589+00:00",
+  "generated_at": "2026-03-03T09:43:29.581306+00:00",
   "baseline_created": true,
   "added_allowlist_routes": [
     "DELETE /api/admin/ads/campaigns/{campaign_id}/ads/{ad_id}",

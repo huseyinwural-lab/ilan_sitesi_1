@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-03-03T09:44:01.000438+00:00",
+  "checks": [
+    {
+      "path": "/api/health",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "path": "/api/health/db",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "path": "/api/sitemap.xml",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "path": "/api/admin/system/health-summary",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "path": "/api/admin/system/health-detail",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    }
+  ],
+  "summary": {
+    "total": 5,
+    "pass": 5,
+    "fail": 0
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "phase": "C-1",
+  "title": "ops + health + sitemap modular delegation",
+  "strategy": "new router modules + temporary delegation from server.py",
+  "moved_modules": [
+    {
+      "module": "app/routers/system/health_routes.py",
+      "routes": ["/api/health", "/api/health/db", "/api/health/migrations"],
+      "delegates_to": ["health_check", "health_db", "health_migrations"]
+    },
+    {
+      "module": "app/routers/system/sitemap_routes.py",
+      "routes": ["/api/sitemap.xml", "/api/sitemaps/{section}.xml"],
+      "delegates_to": ["sitemap_index_endpoint", "sitemap_section_endpoint"]
+    },
+    {
+      "module": "app/routers/system/ops_routes.py",
+      "routes": ["/api/admin/system/health-summary", "/api/admin/system/health-detail"],
+      "delegates_to": ["admin_system_health_summary", "admin_system_health_detail"]
+    }
+  ],
+  "compatibility": {
+    "endpoint_paths_changed": false,
+    "auth_contract_changed": false,
+    "response_shape_changed": false
+  },
+  "next_cuts": [
+    "C-2: content + category routes",
+    "C-3: finance + webhook routes"
+  ]
+}

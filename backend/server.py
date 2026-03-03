@@ -205,6 +205,9 @@ from app.services.meilisearch_index import (
     sync_listing_to_meili,
 )
 from app.routers.ui_designer_routes import router as ui_designer_router
+from app.routers.system import health_routes as system_health_routes
+from app.routers.system import ops_routes as system_ops_routes
+from app.routers.system import sitemap_routes as system_sitemap_routes
 
 
 from fastapi import UploadFile, File, BackgroundTasks, Form
@@ -4373,7 +4376,6 @@ _dashboard_cache_misses = 0
 ALLOWED_MODERATION_ROLES = {"moderator", "country_admin", "super_admin"}
 
 
-@api_router.get("/health")
 async def health_check():
     config_state = "missing_database_url" if not RAW_DATABASE_URL else "ok"
     last_migration_check_at = _format_migration_checked_at()
@@ -4427,7 +4429,6 @@ async def health_check():
         }
 
 
-@api_router.get("/health/db")
 async def health_db():
     try:
         target = _get_masked_db_target()
@@ -4495,7 +4496,6 @@ async def health_db():
     return JSONResponse(status_code=200, content=response_content)
 
 
-@api_router.get("/health/migrations")
 async def health_migrations():
     try:
         target = _get_masked_db_target()
@@ -4687,8 +4687,6 @@ async def _build_sitemap_section_items(section: str, base_url: str, session: Asy
     return rows
 
 
-@app.get("/sitemap.xml", include_in_schema=False)
-@api_router.get("/sitemap.xml")
 async def sitemap_index_endpoint(request: Request):
     base_url, source = _resolve_public_base_url(request)
     if not base_url:
@@ -4711,8 +4709,6 @@ async def sitemap_index_endpoint(request: Request):
     )
 
 
-@app.get("/sitemaps/{section}.xml", include_in_schema=False)
-@api_router.get("/sitemaps/{section}.xml")
 async def sitemap_section_endpoint(
     section: str,
     request: Request,
@@ -4738,7 +4734,6 @@ async def sitemap_section_endpoint(
         },
     )
 
-@api_router.get("/admin/system/health-summary")
 async def admin_system_health_summary(
     current_user=Depends(check_permissions(list(ADMIN_ROLE_OPTIONS))),
 ):
@@ -4776,7 +4771,6 @@ async def admin_system_health_summary(
     return payload
 
 
-@api_router.get("/admin/system/health-detail")
 async def admin_system_health_detail(
     request: Request,
     current_user=Depends(check_permissions(list(ADMIN_ROLE_OPTIONS))),
@@ -4949,6 +4943,25 @@ async def admin_system_health_detail(
     payload[storage_flag_key] = True
     _system_health_detail_cache.update({"checked_at": now_ts, "data": payload})
     return payload
+
+
+system_health_routes.register_handlers(
+    health_handler=health_check,
+    health_db_handler=health_db,
+    health_migrations_handler=health_migrations,
+)
+system_sitemap_routes.register_handlers(
+    sitemap_index_handler=sitemap_index_endpoint,
+    sitemap_section_handler=sitemap_section_endpoint,
+)
+system_ops_routes.register_handlers(
+    health_summary_handler=admin_system_health_summary,
+    health_detail_handler=admin_system_health_detail,
+)
+
+api_router.include_router(system_health_routes.router)
+api_router.include_router(system_sitemap_routes.router)
+api_router.include_router(system_ops_routes.router)
 
 
 @api_router.post("/auth/login", response_model=TokenResponse)

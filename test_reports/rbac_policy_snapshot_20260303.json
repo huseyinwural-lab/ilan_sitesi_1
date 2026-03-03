@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-03T09:20:21.553848+00:00",
+  "generated_at": "2026-03-03T09:43:29.578605+00:00",
   "rbac_allowlist": {
     "GET /api/admin/ui/permissions": [
       "super_admin",
@@ -112,32 +112,32 @@
       "country_admin"
     ],
     "GET /api/admin/system/health-summary": [
-      "moderator",
-      "masterdata_manager",
-      "ads_manager",
-      "support",
-      "campaigns_admin",
-      "pricing_manager",
-      "admin",
-      "ROLE_AUDIT_VIEWER",
       "super_admin",
-      "finance",
+      "admin",
       "country_admin",
-      "campaigns_supervisor"
+      "finance",
+      "support",
+      "moderator",
+      "campaigns_admin",
+      "campaigns_supervisor",
+      "ROLE_AUDIT_VIEWER",
+      "ads_manager",
+      "pricing_manager",
+      "masterdata_manager"
     ],
     "GET /api/admin/system/health-detail": [
-      "moderator",
-      "masterdata_manager",
-      "ads_manager",
-      "support",
-      "campaigns_admin",
-      "pricing_manager",
-      "admin",
-      "ROLE_AUDIT_VIEWER",
       "super_admin",
-      "finance",
+      "admin",
       "country_admin",
-      "campaigns_supervisor"
+      "finance",
+      "support",
+      "moderator",
+      "campaigns_admin",
+      "campaigns_supervisor",
+      "ROLE_AUDIT_VIEWER",
+      "ads_manager",
+      "pricing_manager",
+      "masterdata_manager"
     ],
     "GET /api/admin/users": [
       "super_admin"
@@ -345,44 +345,44 @@
       "audit_viewer"
     ],
     "GET /api/admin/moderation/queue": [
-      "country_admin",
       "super_admin",
-      "moderator"
+      "moderator",
+      "country_admin"
     ],
     "GET /api/admin/moderation/queue/count": [
-      "country_admin",
       "super_admin",
-      "moderator"
+      "moderator",
+      "country_admin"
     ],
     "GET /api/admin/moderation/listings/{listing_id}": [
-      "country_admin",
       "super_admin",
-      "moderator"
+      "moderator",
+      "country_admin"
     ],
     "POST /api/admin/listings/{listing_id}/approve": [
-      "country_admin",
       "super_admin",
-      "moderator"
+      "moderator",
+      "country_admin"
     ],
     "POST /api/admin/listings/{listing_id}/reject": [
-      "country_admin",
       "super_admin",
-      "moderator"
+      "moderator",
+      "country_admin"
     ],
     "POST /api/admin/listings/{listing_id}/needs_revision": [
-      "country_admin",
       "super_admin",
-      "moderator"
+      "moderator",
+      "country_admin"
     ],
     "POST /api/admin/moderation/bulk-approve": [
-      "country_admin",
       "super_admin",
-      "moderator"
+      "moderator",
+      "country_admin"
     ],
     "POST /api/admin/moderation/bulk-reject": [
-      "country_admin",
       "super_admin",
-      "moderator"
+      "moderator",
+      "country_admin"
     ],
     "GET /api/admin/listings": [
       "super_admin",
@@ -508,18 +508,18 @@
       "country_admin"
     ],
     "GET /api/admin/payments/runtime-health": [
-      "moderator",
+      "super_admin",
       "masterdata_manager",
+      "finance",
       "ads_manager",
-      "support",
-      "campaigns_admin",
       "pricing_manager",
       "admin",
+      "campaigns_admin",
       "ROLE_AUDIT_VIEWER",
-      "super_admin",
-      "finance",
       "country_admin",
-      "campaigns_supervisor"
+      "campaigns_supervisor",
+      "moderator",
+      "support"
     ],
     "POST /api/admin/webhooks/events/{event_id}/replay": [
       "super_admin",
@@ -1012,18 +1012,18 @@
       "finance"
     ],
     "GET /api/admin/session/health": [
-      "moderator",
+      "super_admin",
       "masterdata_manager",
+      "finance",
       "ads_manager",
-      "support",
-      "campaigns_admin",
       "pricing_manager",
       "admin",
+      "campaigns_admin",
       "ROLE_AUDIT_VIEWER",
-      "super_admin",
-      "finance",
       "country_admin",
-      "campaigns_supervisor"
+      "campaigns_supervisor",
+      "moderator",
+      "support"
     ],
     "POST /api/admin/vehicle-master-import/jobs/api": [
       "super_admin",
