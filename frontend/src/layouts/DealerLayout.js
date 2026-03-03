@@ -26,6 +26,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useDealerPortalConfig } from '@/hooks/useDealerPortalConfig';
 import { useUIHeaderConfig } from '@/hooks/useUIHeaderConfig';
 import { trackDealerEvent } from '@/lib/dealerAnalytics';
+import SiteFooter from '@/components/public/SiteFooter';
 
 const languageOptions = [
   { key: 'tr', label: 'TR' },
@@ -202,12 +203,25 @@ const mergeCorporateMenuRoutes = (nodes, routeOverrides) =>
       : [],
   }));
 
-const isCorporateMenuActive = (node, pathname) => {
+const isCorporateMenuActive = (node, pathname, search = '') => {
   const routePath = node.route ? node.route.split('?')[0] : null;
-  const isCurrent = routePath && (pathname === routePath || pathname.startsWith(`${routePath}/`));
+  const routeQueryRaw = node.route && node.route.includes('?') ? node.route.split('?')[1] : '';
+
+  let isCurrent = false;
+  if (routePath) {
+    if (routeQueryRaw) {
+      const currentParams = new URLSearchParams(search || '');
+      const expectedParams = new URLSearchParams(routeQueryRaw);
+      const queryMatch = Array.from(expectedParams.entries()).every(([key, value]) => currentParams.get(key) === value);
+      isCurrent = pathname === routePath && queryMatch;
+    } else {
+      isCurrent = pathname === routePath || pathname.startsWith(`${routePath}/`);
+    }
+  }
+
   if (isCurrent) return true;
   if (!Array.isArray(node.children) || node.children.length === 0) return false;
-  return node.children.some((child) => isCorporateMenuActive(child, pathname));
+  return node.children.some((child) => isCorporateMenuActive(child, pathname, search));
 };
 
 const labelMap = {
@@ -301,6 +315,7 @@ export default function DealerLayout() {
   const showRow3UserMenu = hasCorporateBlock('row3', 'user_menu', true);
 
   const activePath = useMemo(() => location.pathname, [location.pathname]);
+  const activeSearch = useMemo(() => location.search, [location.search]);
   const row1Actions = useMemo(
     () => (headerRow1Items?.length ? headerRow1Items : headerItems),
     [headerRow1Items, headerItems],
@@ -342,8 +357,8 @@ export default function DealerLayout() {
   );
 
   const activePrimaryMenu = useMemo(
-    () => primaryMenuItems.find((item) => isCorporateMenuActive(item, activePath)) || null,
-    [primaryMenuItems, activePath],
+    () => primaryMenuItems.find((item) => isCorporateMenuActive(item, activePath, activeSearch)) || null,
+    [primaryMenuItems, activePath, activeSearch],
   );
 
   useEffect(() => {
@@ -409,7 +424,7 @@ export default function DealerLayout() {
 
   const renderSecondaryMenuItem = (item, depth = 0) => {
     const Icon = iconMap[item.icon] || LayoutDashboard;
-    const isActive = isCorporateMenuActive(item, activePath);
+    const isActive = isCorporateMenuActive(item, activePath, activeSearch);
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
     const depthClass = getSecondaryDepthClass(depth);
     const itemClass = isActive ? 'bg-slate-800 text-white' : 'text-slate-900 hover:bg-slate-100';
@@ -703,16 +718,9 @@ export default function DealerLayout() {
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white" data-testid="dealer-layout-footer">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm text-black lg:px-6" data-testid="dealer-layout-footer-content">
-          <span data-testid="dealer-layout-footer-copyright">© {new Date().getFullYear()} Kurumsal Portal</span>
-          <div className="flex items-center gap-3" data-testid="dealer-layout-footer-links">
-            <a href="/bilgi/kullanim-kosullari" className="hover:underline" data-testid="dealer-layout-footer-link-terms">Kullanım Koşulları</a>
-            <a href="/bilgi/gizlilik-politikasi" className="hover:underline" data-testid="dealer-layout-footer-link-privacy">Gizlilik</a>
-            <a href="/bilgi/yardim-merkezi" className="hover:underline" data-testid="dealer-layout-footer-link-help">Yardım</a>
-          </div>
-        </div>
-      </footer>
+      <div data-testid="dealer-layout-footer-row">
+        <SiteFooter />
+      </div>
     </div>
   );
 }
