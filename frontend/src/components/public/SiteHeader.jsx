@@ -3,14 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Bell, Heart, Mail, Search, User, ChevronDown, Menu } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUIHeaderConfig } from '@/hooks/useUIHeaderConfig';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 export default function SiteHeader({ mode, refreshToken }) {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
-  const [logoUrl, setLogoUrl] = useState(null);
+  const [headerData, setHeaderData] = useState({ logo_url: null, items: [] });
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
@@ -20,32 +22,35 @@ export default function SiteHeader({ mode, refreshToken }) {
   const { logoUrl: individualUiLogoUrl } = useUIHeaderConfig({ segment: 'individual' });
 
   const isAuthenticated = mode ? mode === 'auth' : Boolean(user);
+  const headerMode = isAuthenticated ? 'auth' : 'guest';
   const displayName = useMemo(() => {
     if (isAuthenticated) {
-      return user?.full_name || user?.email || 'Kullanıcı';
+      return user?.full_name || user?.email || t('header_user_fallback');
     }
     return '';
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, t]);
+
+  const logoUrl = individualUiLogoUrl || headerData.logo_url;
+  const dynamicItems = useMemo(() => {
+    if (!Array.isArray(headerData.items)) return [];
+    return headerData.items.filter((item) => item?.label && item?.url);
+  }, [headerData.items]);
 
   useEffect(() => {
     let active = true;
-    if (individualUiLogoUrl) {
-      setLogoUrl(individualUiLogoUrl);
-      return () => {
-        active = false;
-      };
-    }
-
     const loadHeader = () => {
-      fetch(`${API}/site/header`)
+      fetch(`${API}/site/header?mode=${encodeURIComponent(headerMode)}`)
         .then((res) => res.json())
         .then((data) => {
           if (!active) return;
-          setLogoUrl(data?.logo_url || null);
+          setHeaderData({
+            logo_url: data?.logo_url || null,
+            items: Array.isArray(data?.items) ? data.items : [],
+          });
         })
         .catch(() => {
           if (!active) return;
-          setLogoUrl(null);
+          setHeaderData({ logo_url: null, items: [] });
         });
     };
     loadHeader();
@@ -54,7 +59,7 @@ export default function SiteHeader({ mode, refreshToken }) {
       active = false;
       clearInterval(interval);
     };
-  }, [refreshToken, individualUiLogoUrl]);
+  }, [refreshToken, headerMode]);
 
   const handleSearch = (evt) => {
     evt.preventDefault();
@@ -100,6 +105,39 @@ export default function SiteHeader({ mode, refreshToken }) {
     navigate(`/search?q=${encodeURIComponent(normalized)}`);
   };
 
+  const handleDynamicItemClick = (item) => {
+    const href = (item?.url || '').trim();
+    if (!href) return;
+    const external = href.startsWith('http://') || href.startsWith('https://');
+    if (item?.open_in_new_tab || external) {
+      window.open(href, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    navigate(href);
+    setMenuOpen(false);
+  };
+
+  const renderDynamicItems = (items, testPrefix) => (
+    <div className="flex flex-wrap items-center gap-2" data-testid={`site-header-${testPrefix}-dynamic-list`}>
+      {items.map((item, idx) => {
+        const isSolid = item.style === 'solid';
+        return (
+          <button
+            key={`${item.id || item.label}-${idx}`}
+            type="button"
+            onClick={() => handleDynamicItemClick(item)}
+            className={isSolid
+              ? 'rounded-full bg-[var(--button-primary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--color-primary-hover)]'
+              : 'text-sm font-semibold text-[var(--header-text)]/80 hover:text-[var(--header-text)]'}
+            data-testid={`site-header-${testPrefix}-dynamic-item-${idx}`}
+          >
+            {item.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <header className="sticky top-0 z-40 border-b bg-[var(--header-bg)] text-[var(--header-text)]" data-testid="site-header">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3" data-testid="site-header-container">
@@ -124,7 +162,7 @@ export default function SiteHeader({ mode, refreshToken }) {
                 setSuggestions([...suggestions]);
               }
             }}
-            placeholder="Arama yap"
+            placeholder={t('header_search_placeholder')}
             className="h-10 w-full rounded-full border bg-[var(--bg-surface-muted)] px-4 pr-10 text-sm"
             data-testid="site-header-search-input"
           />
@@ -139,7 +177,7 @@ export default function SiteHeader({ mode, refreshToken }) {
           {(suggestions.length > 0 || suggestLoading) && (
             <div className="absolute left-0 right-0 mt-2 rounded-xl border bg-white shadow-lg overflow-hidden z-20" data-testid="site-header-suggest-dropdown">
               {suggestLoading ? (
-                <div className="px-3 py-2 text-xs text-slate-500" data-testid="site-header-suggest-loading">Öneriler yükleniyor…</div>
+                <div className="px-3 py-2 text-xs text-slate-500" data-testid="site-header-suggest-loading">{t('header_suggestions_loading')}</div>
               ) : (
                 suggestions.map((item, idx) => (
                   <button
@@ -166,7 +204,7 @@ export default function SiteHeader({ mode, refreshToken }) {
               className="inline-flex h-9 items-center rounded-full bg-[var(--button-primary-bg)] px-3 text-xs font-semibold text-[var(--button-primary-text)] hover:bg-[var(--color-primary-hover)] sm:px-4 sm:text-sm"
               data-testid="site-header-create-listing"
             >
-              İlan Ver
+              {t('header_create_listing')}
             </button>
           )}
           <button
@@ -193,25 +231,32 @@ export default function SiteHeader({ mode, refreshToken }) {
         >
           {!isAuthenticated && (
             <div className="flex items-center gap-2" data-testid="site-header-guest">
-              <Link
-                to="/login"
-                className="text-sm font-semibold text-[var(--header-text)]/70"
-                data-testid="site-header-login"
-              >
-                Giriş Yap
-              </Link>
-              <Link
-                to="/register"
-                className="rounded-full bg-[var(--button-primary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--color-primary-hover)]"
-                data-testid="site-header-register"
-              >
-                Üye Ol
-              </Link>
+              {dynamicItems.length > 0 ? (
+                renderDynamicItems(dynamicItems, 'guest')
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="text-sm font-semibold text-[var(--header-text)]/70"
+                    data-testid="site-header-login"
+                  >
+                    {t('header_login')}
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="rounded-full bg-[var(--button-primary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--color-primary-hover)]"
+                    data-testid="site-header-register"
+                  >
+                    {t('header_register')}
+                  </Link>
+                </>
+              )}
             </div>
           )}
 
           {isAuthenticated && (
             <div className="flex items-center gap-3" data-testid="site-header-auth">
+              {dynamicItems.length > 0 ? renderDynamicItems(dynamicItems, 'auth') : null}
               <button
                 type="button"
                 onClick={() => navigate('/account/messages')}
@@ -219,7 +264,7 @@ export default function SiteHeader({ mode, refreshToken }) {
                 data-testid="site-header-messages"
               >
                 <Mail size={18} />
-                <span className="sr-only">Mesajlar</span>
+                <span className="sr-only">{t('header_messages')}</span>
               </button>
               <button
                 type="button"
@@ -228,7 +273,7 @@ export default function SiteHeader({ mode, refreshToken }) {
                 data-testid="site-header-notifications"
               >
                 <Bell size={18} />
-                <span className="sr-only">Bildirimler</span>
+                <span className="sr-only">{t('header_notifications')}</span>
               </button>
               <button
                 type="button"
@@ -237,7 +282,7 @@ export default function SiteHeader({ mode, refreshToken }) {
                 data-testid="site-header-favorites"
               >
                 <Heart size={18} />
-                <span className="sr-only">Favoriler</span>
+                <span className="sr-only">{t('header_favorites')}</span>
               </button>
 
               <div className="relative" data-testid="site-header-profile">
@@ -265,7 +310,7 @@ export default function SiteHeader({ mode, refreshToken }) {
                       className="block w-full px-4 py-2 text-left text-sm hover:bg-slate-100"
                       data-testid="site-header-profile-dashboard"
                     >
-                      Profil
+                      {t('header_profile')}
                     </button>
                     <button
                       type="button"
@@ -276,7 +321,7 @@ export default function SiteHeader({ mode, refreshToken }) {
                       className="block w-full px-4 py-2 text-left text-sm hover:bg-slate-100"
                       data-testid="site-header-profile-settings"
                     >
-                      Ayarlar
+                      {t('header_settings')}
                     </button>
                     <button
                       type="button"
@@ -284,7 +329,7 @@ export default function SiteHeader({ mode, refreshToken }) {
                       className="block w-full px-4 py-2 text-left text-sm hover:bg-slate-100"
                       data-testid="site-header-profile-logout"
                     >
-                      Çıkış
+                      {t('header_logout')}
                     </button>
                   </div>
                 )}

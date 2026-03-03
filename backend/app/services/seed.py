@@ -75,6 +75,7 @@ async def seed_default_data(db: AsyncSession):
         {"key": "gdpr", "name": {"tr": "GDPR", "de": "DSGVO", "fr": "RGPD"}, "scope": FeatureScope.FEATURE, "is_enabled": True, "enabled_countries": ["DE", "CH", "FR", "AT"]},
         {"key": "tax", "name": {"tr": "Vergi", "de": "Steuer", "fr": "Taxe"}, "scope": FeatureScope.FEATURE, "is_enabled": True, "enabled_countries": ["DE", "CH", "FR", "AT"]},
         {"key": "billing", "name": {"tr": "Faturalandırma", "de": "Abrechnung", "fr": "Facturation"}, "scope": FeatureScope.FEATURE, "is_enabled": True, "enabled_countries": ["DE", "CH", "FR", "AT"]},
+        {"key": "academy.enabled", "name": {"tr": "Akademi", "de": "Akademie", "fr": "Académie"}, "scope": FeatureScope.FEATURE, "is_enabled": False, "enabled_countries": ["DE", "CH", "FR", "AT"]},
     ]
     
     for flag_data in modules + features:

@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
 
 const translations = {
   tr: {
@@ -107,6 +109,34 @@ const translations = {
     card_messages: 'Mesaj',
     card_quota: 'Kota Kullanımı',
     card_balance: 'Fatura Toplamı',
+    header_user_fallback: 'Kullanıcı',
+    header_search_placeholder: 'Arama yap',
+    header_suggestions_loading: 'Öneriler yükleniyor…',
+    header_create_listing: 'İlan Ver',
+    header_login: 'Giriş Yap',
+    header_register: 'Üye Ol',
+    header_messages: 'Mesajlar',
+    header_notifications: 'Bildirimler',
+    header_favorites: 'Favoriler',
+    header_profile: 'Profil',
+    header_settings: 'Ayarlar',
+    header_logout: 'Çıkış',
+    admin_header_title: 'Header Yönetimi',
+    admin_header_subtitle: 'Guest, authenticated ve kurumsal header içeriğini yönetin.',
+    admin_header_upload_hint: 'Maksimum logo boyutu:',
+    admin_header_upload_button: 'Logo Yükle',
+    admin_header_save_button: 'Header Değişikliklerini Kaydet',
+    admin_header_saving: 'Kaydediliyor...',
+    admin_header_saved: 'Header yapılandırması kaydedildi.',
+    admin_header_save_error: 'Header kaydedilemedi',
+    admin_header_logo_updated: 'Logo güncellendi',
+    admin_header_upload_error: 'Logo yükleme başarısız',
+    admin_header_select_file: 'Dosya seçin',
+    admin_header_links_title: 'Link Yönetimi',
+    admin_header_add_link: 'Link Ekle',
+    admin_header_links_empty: 'Bu header için link bulunmuyor.',
+    admin_header_link_label_placeholder: 'Link etiketi',
+    admin_header_link_url_placeholder: 'URL (örn: /search)',
   },
   de: {
     dashboard: 'Dashboard',
@@ -208,6 +238,34 @@ const translations = {
     card_messages: 'Nachrichten',
     card_quota: 'Kontingent',
     card_balance: 'Rechnungsbetrag',
+    header_user_fallback: 'Benutzer',
+    header_search_placeholder: 'Suche',
+    header_suggestions_loading: 'Vorschläge werden geladen…',
+    header_create_listing: 'Anzeige aufgeben',
+    header_login: 'Anmelden',
+    header_register: 'Registrieren',
+    header_messages: 'Nachrichten',
+    header_notifications: 'Benachrichtigungen',
+    header_favorites: 'Favoriten',
+    header_profile: 'Profil',
+    header_settings: 'Einstellungen',
+    header_logout: 'Abmelden',
+    admin_header_title: 'Header-Verwaltung',
+    admin_header_subtitle: 'Verwalten Sie Guest-, Auth- und Corporate-Header.',
+    admin_header_upload_hint: 'Maximale Logogröße:',
+    admin_header_upload_button: 'Logo hochladen',
+    admin_header_save_button: 'Header-Änderungen speichern',
+    admin_header_saving: 'Speichert...',
+    admin_header_saved: 'Header-Konfiguration gespeichert.',
+    admin_header_save_error: 'Header konnte nicht gespeichert werden',
+    admin_header_logo_updated: 'Logo aktualisiert',
+    admin_header_upload_error: 'Logo-Upload fehlgeschlagen',
+    admin_header_select_file: 'Datei auswählen',
+    admin_header_links_title: 'Link-Verwaltung',
+    admin_header_add_link: 'Link hinzufügen',
+    admin_header_links_empty: 'Keine Links für diesen Header.',
+    admin_header_link_label_placeholder: 'Link-Titel',
+    admin_header_link_url_placeholder: 'URL (z.B. /search)',
   },
   fr: {
     dashboard: 'Tableau de bord',
@@ -309,22 +367,80 @@ const translations = {
     card_messages: 'Messages',
     card_quota: 'Quota utilisé',
     card_balance: 'Montant facturé',
+    header_user_fallback: 'Utilisateur',
+    header_search_placeholder: 'Rechercher',
+    header_suggestions_loading: 'Suggestions en chargement…',
+    header_create_listing: 'Publier une annonce',
+    header_login: 'Connexion',
+    header_register: 'S’inscrire',
+    header_messages: 'Messages',
+    header_notifications: 'Notifications',
+    header_favorites: 'Favoris',
+    header_profile: 'Profil',
+    header_settings: 'Paramètres',
+    header_logout: 'Déconnexion',
+    admin_header_title: 'Gestion du header',
+    admin_header_subtitle: 'Gérez les headers invité, connecté et corporate.',
+    admin_header_upload_hint: 'Taille maximale du logo :',
+    admin_header_upload_button: 'Téléverser le logo',
+    admin_header_save_button: 'Enregistrer les modifications',
+    admin_header_saving: 'Enregistrement...',
+    admin_header_saved: 'Configuration du header enregistrée.',
+    admin_header_save_error: 'Échec de l’enregistrement du header',
+    admin_header_logo_updated: 'Logo mis à jour',
+    admin_header_upload_error: 'Échec du téléversement du logo',
+    admin_header_select_file: 'Sélectionnez un fichier',
+    admin_header_links_title: 'Gestion des liens',
+    admin_header_add_link: 'Ajouter un lien',
+    admin_header_links_empty: 'Aucun lien pour ce header.',
+    admin_header_link_label_placeholder: 'Libellé du lien',
+    admin_header_link_url_placeholder: 'URL (ex: /search)',
   }
 };
+
+if (!i18n.isInitialized) {
+  i18n
+    .use(initReactI18next)
+    .init({
+      resources: {
+        tr: { translation: translations.tr },
+        de: { translation: translations.de },
+        fr: { translation: translations.fr },
+      },
+      lng: localStorage.getItem('language') || 'tr',
+      fallbackLng: 'tr',
+      interpolation: {
+        escapeValue: false,
+      },
+    })
+    .catch(() => undefined);
+}
 
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('language') || 'tr';
+    return localStorage.getItem('language') || i18n.resolvedLanguage || 'tr';
   });
 
   useEffect(() => {
     localStorage.setItem('language', language);
+    i18n.changeLanguage(language).catch(() => undefined);
+    document.documentElement.lang = language;
   }, [language]);
 
+  useEffect(() => {
+    const handleLanguageChange = (nextLanguage) => {
+      setLanguage(nextLanguage || 'tr');
+    };
+    i18n.on('languageChanged', handleLanguageChange);
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, []);
+
   const t = (key) => {
-    return translations[language]?.[key] || translations.tr[key] || key;
+    return i18n.t(key, { defaultValue: key });
   };
 
   const getTranslated = (obj) => {

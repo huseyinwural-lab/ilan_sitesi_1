@@ -4,6 +4,8 @@ import os
 import re
 import io
 import csv
+import base64
+from copy import deepcopy
 import urllib.request
 import urllib.parse
 import json
@@ -334,6 +336,7 @@ GOOGLE_MAPS_API_KEY_SETTING_KEY = "integrations.google_maps.api_key"
 GOOGLE_MAPS_COUNTRY_OPTIONS_SETTING_KEY = "listing.address.country_options"
 LISTING_CREATE_CONFIG_SETTING_KEY = "listing.create.config"
 LISTING_SITE_DESIGN_SETTING_KEY = "listing.site.design"
+SITE_HEADER_VARIANTS_SETTING_KEY = "site.header.variants.v1"
 PLACES_RATE_LIMIT_WINDOW_SECONDS = 60
 PLACES_RATE_LIMIT_MAX_REQUESTS = 45
 _places_rate_limit_tracker: Dict[str, deque] = defaultdict(deque)
@@ -20974,36 +20977,15 @@ async def dealer_dashboard_navigation_summary(
             )
         )
     ).scalar_one()
-
-    academy_modules = [
-        {
-            "id": "academy-listing-optimization",
-            "title": "İlan Optimizasyonu",
-            "description": "Başlık, fotoğraf ve açıklama kalite skoru için 10 dakikalık rehber.",
-            "progress": 0,
-            "duration_minutes": 10,
-            "tag": "Başlangıç",
-            "source": "mocked",
-        },
-        {
-            "id": "academy-conversion-playbook",
-            "title": "Lead Dönüşüm Playbook",
-            "description": "Mesaj dönüş oranını artırmak için cevap şablonları ve akış önerileri.",
-            "progress": 0,
-            "duration_minutes": 14,
-            "tag": "Satış",
-            "source": "mocked",
-        },
-        {
-            "id": "academy-reporting-basics",
-            "title": "Rapor Okuma Temelleri",
-            "description": "Ziyaret, favori ve mesaj metriklerinin yorumlanması için mini eğitim.",
-            "progress": 0,
-            "duration_minutes": 8,
-            "tag": "Analitik",
-            "source": "mocked",
-        },
-    ]
+    academy_flag_row = (
+        await session.execute(select(FeatureFlag).where(FeatureFlag.key == "academy.enabled").limit(1))
+    ).scalar_one_or_none()
+    academy_enabled = bool(academy_flag_row and academy_flag_row.is_enabled)
+    academy_data = {
+        "enabled": academy_enabled,
+        "data_source": "feature_flag_enabled" if academy_enabled else "feature_flag_disabled",
+        "modules": [],
+    }
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -21025,8 +21007,9 @@ async def dealer_dashboard_navigation_summary(
             "duyurular": int(announcement_count or 0),
         },
         "academy": {
-            "data_source": "mocked",
-            "modules": academy_modules,
+            "enabled": academy_data["enabled"],
+            "data_source": academy_data["data_source"],
+            "modules": academy_data["modules"],
         },
     }
 
@@ -37768,6 +37751,8 @@ async def _expire_doping(session: AsyncSession) -> None:
 HEADER_LOGO_MAX_BYTES = 2 * 1024 * 1024
 HEADER_CACHE_SECONDS = 600
 ASSET_CACHE_SECONDS = 900
+HEADER_MODES = ("guest", "auth", "corporate")
+HEADER_ITEM_STYLES = {"text", "solid"}
 
 
 def _header_logo_exists(logo_path: Optional[str]) -> bool:
@@ -37781,14 +37766,162 @@ def _header_logo_exists(logo_path: Optional[str]) -> bool:
     return True
 
 
+def _append_header_version(url: Optional[str], version: int) -> Optional[str]:
+    if not url:
+        return None
+    if not _header_logo_exists(url):
+        return None
+    separator = "&" if "?" in url else "?"
+    safe_version = max(int(version or 1), 1)
+    return f"{url}{separator}v={safe_version}"
+
+
 def _build_header_logo_url(config: SiteHeaderConfig | None) -> Optional[str]:
-    if not config or not config.logo_path:
+    if not config:
         return None
-    if not _header_logo_exists(config.logo_path):
+    return _append_header_version(config.logo_path, config.version or 1)
+
+
+def _normalize_header_mode(mode: Optional[str]) -> str:
+    normalized = (mode or "guest").strip().lower()
+    if normalized not in HEADER_MODES:
+        raise HTTPException(status_code=400, detail="Invalid header mode")
+    return normalized
+
+
+def _default_header_items(mode: str) -> list[dict[str, Any]]:
+    if mode == "auth":
+        return [
+            {"id": "auth-account", "label": "Hesabım", "url": "/account", "style": "text", "open_in_new_tab": False},
+            {"id": "auth-listings", "label": "İlanlarım", "url": "/account/listings", "style": "text", "open_in_new_tab": False},
+        ]
+    if mode == "corporate":
+        return [
+            {"id": "corp-overview", "label": "Özet", "url": "/dealer/overview", "style": "text", "open_in_new_tab": False},
+            {"id": "corp-listings", "label": "İlanlar", "url": "/dealer/listings", "style": "text", "open_in_new_tab": False},
+            {"id": "corp-messages", "label": "Mesajlar", "url": "/dealer/messages", "style": "text", "open_in_new_tab": False},
+        ]
+    return [
+        {"id": "guest-home", "label": "Ana Sayfa", "url": "/", "style": "text", "open_in_new_tab": False},
+        {"id": "guest-search", "label": "İlan Ara", "url": "/search", "style": "text", "open_in_new_tab": False},
+        {"id": "guest-login", "label": "Giriş Yap", "url": "/login", "style": "text", "open_in_new_tab": False},
+        {"id": "guest-register", "label": "Üye Ol", "url": "/register", "style": "solid", "open_in_new_tab": False},
+    ]
+
+
+def _default_header_variants_payload(legacy_logo_path: Optional[str], version: int) -> dict[str, Any]:
+    payload = {
+        "version": max(int(version or 1), 1),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "modes": {},
+    }
+    for mode in HEADER_MODES:
+        payload["modes"][mode] = {
+            "logo_url": legacy_logo_path if mode == "guest" else None,
+            "items": _default_header_items(mode),
+        }
+    return payload
+
+
+def _coerce_positive_int(value: Any, fallback: int = 1) -> int:
+    try:
+        parsed = int(value)
+        return max(parsed, 1)
+    except (TypeError, ValueError):
+        return max(int(fallback or 1), 1)
+
+
+def _normalize_header_item(item: Any, mode: str, index: int) -> Optional[dict[str, Any]]:
+    if not isinstance(item, dict):
         return None
-    separator = "&" if "?" in config.logo_path else "?"
-    version = config.version or 1
-    return f"{config.logo_path}{separator}v={version}"
+    label = str(item.get("label") or "").strip()
+    url = str(item.get("url") or "").strip()
+    if not label or not url:
+        return None
+    if not (url.startswith("/") or url.startswith("http://") or url.startswith("https://")):
+        return None
+
+    item_id = str(item.get("id") or "").strip() or f"{mode}-item-{index + 1}"
+    style = str(item.get("style") or "text").strip().lower()
+    if style not in HEADER_ITEM_STYLES:
+        style = "text"
+
+    return {
+        "id": item_id,
+        "label": label,
+        "url": url,
+        "style": style,
+        "open_in_new_tab": bool(item.get("open_in_new_tab", False)),
+    }
+
+
+def _normalize_header_variants_payload(
+    payload: dict[str, Any],
+    *,
+    legacy_logo_path: Optional[str],
+    fallback_version: int,
+) -> dict[str, Any]:
+    defaults = _default_header_variants_payload(legacy_logo_path=legacy_logo_path, version=fallback_version)
+    source_modes = payload.get("modes") if isinstance(payload.get("modes"), dict) else {}
+
+    normalized_modes: dict[str, dict[str, Any]] = {}
+    for mode in HEADER_MODES:
+        source_mode = source_modes.get(mode) if isinstance(source_modes.get(mode), dict) else {}
+        logo_raw = source_mode.get("logo_url")
+        logo_url = str(logo_raw).strip() if isinstance(logo_raw, str) else None
+        if not logo_url:
+            logo_url = defaults["modes"][mode]["logo_url"]
+
+        items_raw = source_mode.get("items")
+        if isinstance(items_raw, list):
+            normalized_items = [
+                normalized
+                for idx, raw_item in enumerate(items_raw)
+                for normalized in [_normalize_header_item(raw_item, mode, idx)]
+                if normalized
+            ]
+        else:
+            normalized_items = defaults["modes"][mode]["items"]
+
+        normalized_modes[mode] = {
+            "logo_url": logo_url,
+            "items": normalized_items,
+        }
+
+    updated_at = payload.get("updated_at")
+    if not isinstance(updated_at, str) or not updated_at.strip():
+        updated_at = datetime.now(timezone.utc).isoformat()
+
+    version_value = payload.get("version")
+    try:
+        version = max(int(version_value), 1)
+    except (TypeError, ValueError):
+        version = max(int(fallback_version or 1), 1)
+
+    return {
+        "version": version,
+        "updated_at": updated_at,
+        "modes": normalized_modes,
+    }
+
+
+def _serialize_header_variants_response(payload: dict[str, Any]) -> dict[str, Any]:
+    version = _coerce_positive_int(payload.get("version"), 1)
+    modes = payload.get("modes") if isinstance(payload.get("modes"), dict) else {}
+    serialized_modes: dict[str, dict[str, Any]] = {}
+    for mode in HEADER_MODES:
+        mode_payload = modes.get(mode) if isinstance(modes.get(mode), dict) else {}
+        serialized_modes[mode] = {
+            "logo_url": _append_header_version(mode_payload.get("logo_url"), version),
+            "items": mode_payload.get("items") if isinstance(mode_payload.get("items"), list) else [],
+        }
+
+    return {
+        "version": version,
+        "updated_at": payload.get("updated_at"),
+        "modes": serialized_modes,
+        "logo_url": serialized_modes["guest"].get("logo_url"),
+    }
 
 
 async def _get_active_header_config(
@@ -37820,37 +37953,152 @@ async def _get_active_header_config(
     return config
 
 
+async def _load_header_variants_payload(session: AsyncSession) -> dict[str, Any]:
+    legacy_config = await _get_active_header_config(session, create_from_legacy=True)
+    legacy_logo_path = legacy_config.logo_path if legacy_config else None
+    if legacy_logo_path and not _header_logo_exists(legacy_logo_path):
+        legacy_logo_path = None
+    legacy_version = int(legacy_config.version or 1) if legacy_config else 1
+
+    row = (
+        await session.execute(
+            select(SystemSetting)
+            .where(SystemSetting.key == SITE_HEADER_VARIANTS_SETTING_KEY, SystemSetting.country_code.is_(None))
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    stored_value_raw = row.value if row and isinstance(row.value, dict) else {}
+    stored_value = stored_value_raw
+    if isinstance(stored_value_raw, dict) and isinstance(stored_value_raw.get("payload_b64"), str):
+        try:
+            decoded_json = base64.b64decode(stored_value_raw["payload_b64"]).decode("utf-8")
+            stored_value = json.loads(decoded_json)
+        except Exception:
+            stored_value = {}
+
+    stored_version = _coerce_positive_int(stored_value.get("version") if isinstance(stored_value, dict) else 1, 1)
+    return _normalize_header_variants_payload(
+        stored_value,
+        legacy_logo_path=legacy_logo_path,
+        fallback_version=max(legacy_version, stored_version),
+    )
+
+
+async def _save_header_variants_payload(session: AsyncSession, payload: dict[str, Any]) -> None:
+    row = (
+        await session.execute(
+            select(SystemSetting)
+            .where(SystemSetting.key == SITE_HEADER_VARIANTS_SETTING_KEY, SystemSetting.country_code.is_(None))
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    if not row:
+        row = SystemSetting(
+            key=SITE_HEADER_VARIANTS_SETTING_KEY,
+            country_code=None,
+            value={
+                "encoding": "b64json_utf8",
+                "payload_b64": base64.b64encode(json.dumps(payload, ensure_ascii=False).encode("utf-8")).decode("ascii"),
+            },
+            description="Guest/Auth/Corporate header configuration",
+        )
+        session.add(row)
+    else:
+        row.value = {
+            "encoding": "b64json_utf8",
+            "payload_b64": base64.b64encode(json.dumps(payload, ensure_ascii=False).encode("utf-8")).decode("ascii"),
+        }
+        row.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+
+
 @api_router.get("/site/header")
-async def get_site_header(session: AsyncSession = Depends(get_sql_session)):
-    config = await _get_active_header_config(session, create_from_legacy=True)
+async def get_site_header(
+    mode: str = Query(default="guest"),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    normalized_mode = _normalize_header_mode(mode)
+    payload = await _load_header_variants_payload(session)
+    serialized = _serialize_header_variants_response(payload)
+    mode_payload = serialized["modes"].get(normalized_mode) or {"logo_url": None, "items": []}
     content = {
-        "logo_url": _build_header_logo_url(config),
-        "version": config.version if config else None,
-        "updated_at": config.updated_at.isoformat() if config else None,
+        "mode": normalized_mode,
+        "logo_url": mode_payload.get("logo_url"),
+        "items": mode_payload.get("items") or [],
+        "version": serialized.get("version"),
+        "updated_at": serialized.get("updated_at"),
     }
     return JSONResponse(content=content, headers={"Cache-Control": f"public, max-age={HEADER_CACHE_SECONDS}"})
 
 
 @api_router.get("/admin/site/header")
 async def admin_get_site_header(
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    config = await _get_active_header_config(session, create_from_legacy=True)
-    return {
-        "id": str(config.id) if config else None,
-        "logo_url": _build_header_logo_url(config),
-        "version": config.version if config else None,
-        "updated_at": config.updated_at.isoformat() if config else None,
-    }
+    del current_user
+    payload = await _load_header_variants_payload(session)
+    return _serialize_header_variants_response(payload)
+
+
+@api_router.put("/admin/site/header")
+async def admin_update_site_header(
+    payload: Dict[str, Any] = Body(...),
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    del current_user
+    current_payload = await _load_header_variants_payload(session)
+    next_payload = deepcopy(current_payload)
+
+    incoming_modes = payload.get("modes") if isinstance(payload.get("modes"), dict) else {}
+    for mode in HEADER_MODES:
+        mode_payload = incoming_modes.get(mode)
+        if not isinstance(mode_payload, dict):
+            continue
+
+        if "logo_url" in mode_payload:
+            logo_url = mode_payload.get("logo_url")
+            if isinstance(logo_url, str):
+                logo_url = logo_url.strip() or None
+            else:
+                logo_url = None
+            next_payload["modes"][mode]["logo_url"] = logo_url
+
+        if "items" in mode_payload:
+            raw_items = mode_payload.get("items")
+            if isinstance(raw_items, list):
+                next_payload["modes"][mode]["items"] = [
+                    normalized
+                    for idx, raw_item in enumerate(raw_items)
+                    for normalized in [_normalize_header_item(raw_item, mode, idx)]
+                    if normalized
+                ]
+
+    next_payload["version"] = int(current_payload.get("version") or 1) + 1
+    next_payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+    normalized = _normalize_header_variants_payload(
+        next_payload,
+        legacy_logo_path=current_payload.get("modes", {}).get("guest", {}).get("logo_url"),
+        fallback_version=int(next_payload.get("version") or 1),
+    )
+    try:
+        await _save_header_variants_payload(session, normalized)
+    except Exception as exc:
+        logging.getLogger("site_header").exception("admin_update_site_header_failed: %s", exc)
+        raise
+    return _serialize_header_variants_response(normalized)
 
 
 @api_router.post("/admin/site/header/logo")
 async def upload_site_header_logo(
+    mode: str = Query(default="guest"),
     file: UploadFile = File(...),
-    current_user=Depends(check_permissions(["super_admin", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    del current_user
+    normalized_mode = _normalize_header_mode(mode)
     if not file:
         raise HTTPException(status_code=400, detail="File is required")
     data = await file.read()
@@ -37863,20 +38111,45 @@ async def upload_site_header_logo(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    config = await _get_active_header_config(session, create_from_legacy=True)
-    if not config:
-        config = SiteHeaderConfig(logo_path=None, version=0, is_active=True)
-        session.add(config)
-        await session.flush()
+    stored_logo_path = f"/api/site/assets/{asset_key}"
 
-    config.logo_path = f"/api/site/assets/{asset_key}"
-    config.version = (config.version or 0) + 1
-    config.updated_at = datetime.now(timezone.utc)
-    config.is_active = True
-    await session.commit()
-    await session.refresh(config)
+    legacy_config = await _get_active_header_config(session, create_from_legacy=True)
+    if normalized_mode == "guest":
+        if not legacy_config:
+            legacy_config = SiteHeaderConfig(logo_path=None, version=0, is_active=True)
+            session.add(legacy_config)
+            await session.flush()
+        legacy_config.logo_path = stored_logo_path
+        legacy_config.version = (legacy_config.version or 0) + 1
+        legacy_config.updated_at = datetime.now(timezone.utc)
+        legacy_config.is_active = True
 
-    return {"ok": True, "logo_url": _build_header_logo_url(config), "version": config.version}
+    payload = await _load_header_variants_payload(session)
+    payload["modes"][normalized_mode]["logo_url"] = stored_logo_path
+    payload["version"] = max(
+        int(payload.get("version") or 1) + 1,
+        int(legacy_config.version or 1) if normalized_mode == "guest" and legacy_config else 1,
+    )
+    payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+    normalized = _normalize_header_variants_payload(
+        payload,
+        legacy_logo_path=(legacy_config.logo_path if legacy_config else None),
+        fallback_version=int(payload.get("version") or 1),
+    )
+    try:
+        await _save_header_variants_payload(session, normalized)
+    except Exception as exc:
+        logging.getLogger("site_header").exception("upload_site_header_logo_failed: %s", exc)
+        raise
+
+    serialized = _serialize_header_variants_response(normalized)
+    return {
+        "ok": True,
+        "mode": normalized_mode,
+        "logo_url": serialized["modes"][normalized_mode]["logo_url"],
+        "version": serialized.get("version"),
+        "updated_at": serialized.get("updated_at"),
+    }
 
 
 @api_router.get("/site/assets/{asset_key:path}")

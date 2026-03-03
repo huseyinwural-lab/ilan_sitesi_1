@@ -318,8 +318,8 @@ export default function DealerLayoutV2() {
     sidebarItems,
   } = useDealerPortalConfig();
 
-  const { configData: corporateHeaderConfig, logoUrl: corporateLogoUrl } = useUIHeaderConfig({
-    segment: 'individual',
+  const { configData: corporateHeaderConfig, logoUrl: corporateUiLogoUrl } = useUIHeaderConfig({
+    segment: 'corporate',
     authRequired: true,
   });
 
@@ -346,6 +346,7 @@ export default function DealerLayoutV2() {
     },
     left_menu: {},
   });
+  const [corporateHeaderData, setCorporateHeaderData] = useState({ logo_url: null, items: [] });
 
   const corporateRowMap = useMemo(() => {
     const rows = Array.isArray(corporateHeaderConfig?.rows) ? corporateHeaderConfig.rows : [];
@@ -409,6 +410,12 @@ export default function DealerLayoutV2() {
     () => (Array.isArray(headerRow1Items) && headerRow1Items.length ? headerRow1Items : headerItems || []),
     [headerItems, headerRow1Items],
   );
+
+  const corporateLogoUrl = corporateHeaderData.logo_url || corporateUiLogoUrl || null;
+  const corporateDynamicLinks = useMemo(() => {
+    if (!Array.isArray(corporateHeaderData.items)) return [];
+    return corporateHeaderData.items.filter((item) => item?.label && item?.url);
+  }, [corporateHeaderData.items]);
 
   const row3Stores = useMemo(() => {
     const stores = headerRow3Controls?.stores;
@@ -536,6 +543,27 @@ export default function DealerLayoutV2() {
   }, [headerRow3Controls?.default_store_key]);
 
   useEffect(() => {
+    let active = true;
+    fetch(`${API}/site/header?mode=corporate`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return;
+        setCorporateHeaderData({
+          logo_url: data?.logo_url || null,
+          items: Array.isArray(data?.items) ? data.items : [],
+        });
+      })
+      .catch(() => {
+        if (!active) return;
+        setCorporateHeaderData({ logo_url: null, items: [] });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (activeTopMenu?.key && activeTopMenu.key !== openMenuKey) {
       setOpenMenuKey(activeTopMenu.key);
     }
@@ -584,6 +612,17 @@ export default function DealerLayoutV2() {
       route: item.route,
       location: zone,
     });
+  };
+
+  const handleCorporateDynamicLink = (item) => {
+    const href = (item?.url || '').trim();
+    if (!href) return;
+    const external = href.startsWith('http://') || href.startsWith('https://');
+    if (item?.open_in_new_tab || external) {
+      window.open(href, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    navigate(href);
   };
 
   const handleLogout = () => {
@@ -676,6 +715,22 @@ export default function DealerLayoutV2() {
             </form>
 
             <div className="ml-auto flex items-center gap-2" data-testid="dealer-layout-v2-row1-actions">
+              {corporateDynamicLinks.length > 0 ? (
+                <div className="hidden items-center gap-2 xl:flex" data-testid="dealer-layout-v2-row1-dynamic-links">
+                  {corporateDynamicLinks.map((item, index) => (
+                    <button
+                      key={`${item.id || item.label}-${index}`}
+                      type="button"
+                      onClick={() => handleCorporateDynamicLink(item)}
+                      className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${item.style === 'solid' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'}`}
+                      data-testid={`dealer-layout-v2-row1-dynamic-link-${index}`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
               {showRow1QuickActions ? row1Actions.slice(0, 2).map((item) => {
                 const Icon = iconMap[item.icon] || LayoutDashboard;
                 return (
