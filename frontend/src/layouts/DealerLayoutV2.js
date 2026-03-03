@@ -14,10 +14,13 @@ import {
   ListChecks,
   LogOut,
   MessageCircle,
+  Pencil,
   Search,
   Shield,
   ShoppingCart,
   Sparkles,
+  Star,
+  StarOff,
   Store,
   UserRound,
   UserSquare2,
@@ -33,6 +36,7 @@ import SiteFooter from '@/components/public/SiteFooter';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const QUICK_MENU_STORAGE_KEY = 'dealer-v2-quick-menu-usage';
+const QUICK_MENU_FAVORITES_KEY = 'dealer-v2-quick-menu-favorites';
 const QUICK_MENU_LIMIT = 6;
 const QUICK_MENU_DEFAULT_KEYS = [
   'listings_active',
@@ -326,6 +330,10 @@ export default function DealerLayoutV2() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isPageEditMode, setIsPageEditMode] = useState(false);
   const [quickMenuUsage, setQuickMenuUsage] = useState({});
+  const [quickMenuFavorites, setQuickMenuFavorites] = useState([]);
+  const [quickMenuTab, setQuickMenuTab] = useState('recent');
+  const [quickMenuEditOpen, setQuickMenuEditOpen] = useState(false);
+  const [quickMenuSearch, setQuickMenuSearch] = useState('');
   const [navSummary, setNavSummary] = useState({
     badges: {
       active_listings: 0,
@@ -429,9 +437,13 @@ export default function DealerLayoutV2() {
   };
 
   const quickMenuCandidates = useMemo(() => flattenMenuNodes(topMenuItems), [topMenuItems]);
+  const quickMenuCandidateMap = useMemo(
+    () => new Map(quickMenuCandidates.map((item) => [item.key, item])),
+    [quickMenuCandidates],
+  );
 
-  const quickMenuItems = useMemo(() => {
-    const byKey = new Map(quickMenuCandidates.map((item) => [item.key, item]));
+  const quickRecentItems = useMemo(() => {
+    const byKey = quickMenuCandidateMap;
     const selected = [];
     const selectedSet = new Set();
 
@@ -464,7 +476,26 @@ export default function DealerLayoutV2() {
     });
 
     return selected.slice(0, QUICK_MENU_LIMIT);
-  }, [quickMenuCandidates, quickMenuUsage]);
+  }, [quickMenuCandidates, quickMenuUsage, quickMenuCandidateMap]);
+
+  const quickFavoriteItems = useMemo(() => {
+    return (quickMenuFavorites || [])
+      .map((key) => quickMenuCandidateMap.get(key))
+      .filter(Boolean)
+      .slice(0, QUICK_MENU_LIMIT);
+  }, [quickMenuFavorites, quickMenuCandidateMap]);
+
+  const quickMenuItems = quickMenuTab === 'favorites' ? quickFavoriteItems : quickRecentItems;
+
+  const quickMenuManageItems = useMemo(() => {
+    const normalizedQuery = quickMenuSearch.trim().toLowerCase();
+    const rows = quickMenuCandidates.filter((item) => {
+      if (!normalizedQuery) return true;
+      const hay = `${item.label || ''} ${item.parentKey || ''}`.toLowerCase();
+      return hay.includes(normalizedQuery);
+    });
+    return rows.slice(0, 30);
+  }, [quickMenuCandidates, quickMenuSearch]);
 
   useEffect(() => {
     try {
@@ -478,6 +509,27 @@ export default function DealerLayoutV2() {
       setQuickMenuUsage({});
     }
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(QUICK_MENU_FAVORITES_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setQuickMenuFavorites(parsed.filter((item) => typeof item === 'string'));
+      }
+    } catch (_) {
+      setQuickMenuFavorites([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(QUICK_MENU_FAVORITES_KEY, JSON.stringify(quickMenuFavorites));
+    } catch (_) {
+      // ignore storage write errors
+    }
+  }, [quickMenuFavorites]);
 
   useEffect(() => {
     setSelectedStore(headerRow3Controls?.default_store_key || 'all');
@@ -538,6 +590,18 @@ export default function DealerLayoutV2() {
     trackDealerEvent('dealer_logout_click', { route: location.pathname });
     logout();
     navigate('/dealer/login');
+  };
+
+  const isFavoriteQuickMenuItem = (key) => (quickMenuFavorites || []).includes(key);
+
+  const toggleQuickMenuFavorite = (key) => {
+    if (!key) return;
+    setQuickMenuFavorites((prev) => {
+      if ((prev || []).includes(key)) {
+        return (prev || []).filter((row) => row !== key);
+      }
+      return [key, ...(prev || [])].slice(0, 30);
+    });
   };
 
   const renderContextSidebarNode = (item, depth = 0) => {
@@ -681,6 +745,7 @@ export default function DealerLayoutV2() {
                 </div>
               ) : null}
             </div>
+
           </div>
 
           <div className="relative border-t border-slate-200 py-2" data-testid="dealer-layout-v2-row2">
@@ -815,30 +880,107 @@ export default function DealerLayoutV2() {
       <main className="mx-auto grid w-full max-w-[1440px] grid-cols-1 gap-4 px-4 py-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-6" data-testid="dealer-layout-v2-row4-main">
         <aside className="rounded-2xl border border-slate-200 bg-white p-3" data-testid="dealer-layout-v2-row4-sidebar">
           <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-2" data-testid="dealer-layout-v2-row4-quick-menu-wrap">
-            <div className="mb-2 text-xs font-semibold text-slate-700" data-testid="dealer-layout-v2-row4-quick-menu-title">Kişisel Hızlı Menü</div>
+            <div className="mb-2 flex items-center justify-between gap-2" data-testid="dealer-layout-v2-row4-quick-menu-header">
+              <div className="text-xs font-semibold text-slate-700" data-testid="dealer-layout-v2-row4-quick-menu-title">Kişisel Hızlı Menü</div>
+              <button
+                type="button"
+                onClick={() => setQuickMenuEditOpen((prev) => !prev)}
+                className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[11px] font-semibold ${quickMenuEditOpen ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+                data-testid="dealer-layout-v2-row4-quick-menu-edit-toggle"
+              >
+                <Pencil size={11} />
+                {quickMenuEditOpen ? 'Kapat' : 'Düzenle'}
+              </button>
+            </div>
+
+            <div className="mb-2 flex items-center gap-1" data-testid="dealer-layout-v2-row4-quick-menu-tabs">
+              <button
+                type="button"
+                onClick={() => setQuickMenuTab('recent')}
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${quickMenuTab === 'recent' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+                data-testid="dealer-layout-v2-row4-quick-menu-tab-recent"
+              >
+                Son Kullanılanlar
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuickMenuTab('favorites')}
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${quickMenuTab === 'favorites' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+                data-testid="dealer-layout-v2-row4-quick-menu-tab-favorites"
+              >
+                Favorilerim
+              </button>
+            </div>
+
             <div className="space-y-1" data-testid="dealer-layout-v2-row4-quick-menu-list">
-              {quickMenuItems.map((item) => {
+              {quickMenuItems.length === 0 ? (
+                <div className="rounded border border-dashed border-slate-300 bg-white px-2.5 py-2 text-[11px] text-slate-600" data-testid="dealer-layout-v2-row4-quick-menu-empty">
+                  Bu sekmede öğe yok. Düzenle ile favori ekleyebilirsiniz.
+                </div>
+              ) : quickMenuItems.map((item) => {
                 const Icon = iconMap[item.icon] || ChevronRight;
                 const isActive = isRouteActive(item.route, location.pathname, location.search);
+                const isFavorite = isFavoriteQuickMenuItem(item.key);
                 return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => {
-                      if (item.parentKey) setOpenMenuKey(item.parentKey);
-                      navigate(item.route);
-                      handleNavClick(item, 'row4-quick-menu');
-                    }}
-                    className={`flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs font-semibold transition ${isActive ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-100'}`}
-                    data-testid={`dealer-layout-v2-row4-quick-menu-item-${item.key}`}
-                  >
-                    <Icon size={13} />
-                    <span data-testid={`dealer-layout-v2-row4-quick-menu-label-${item.key}`}>{item.label}</span>
-                  </button>
+                  <div key={item.key} className="flex items-center gap-1" data-testid={`dealer-layout-v2-row4-quick-menu-row-${item.key}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (item.parentKey) setOpenMenuKey(item.parentKey);
+                        navigate(item.route);
+                        handleNavClick(item, 'row4-quick-menu');
+                      }}
+                      className={`flex min-w-0 flex-1 items-center gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs font-semibold transition ${isActive ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-100'}`}
+                      data-testid={`dealer-layout-v2-row4-quick-menu-item-${item.key}`}
+                    >
+                      <Icon size={13} />
+                      <span className="truncate" data-testid={`dealer-layout-v2-row4-quick-menu-label-${item.key}`}>{item.label}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleQuickMenuFavorite(item.key)}
+                      className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border ${isFavorite ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-slate-300 bg-white text-slate-600'}`}
+                      data-testid={`dealer-layout-v2-row4-quick-menu-favorite-toggle-${item.key}`}
+                    >
+                      {isFavorite ? <Star size={12} /> : <StarOff size={12} />}
+                    </button>
+                  </div>
                 );
               })}
             </div>
-          </div>
+
+            {quickMenuEditOpen ? (
+              <div className="mt-2 rounded border border-slate-200 bg-white p-2" data-testid="dealer-layout-v2-row4-quick-menu-edit-panel">
+                <input
+                  value={quickMenuSearch}
+                  onChange={(event) => setQuickMenuSearch(event.target.value)}
+                  placeholder="Menü ara..."
+                  className="h-8 w-full rounded border border-slate-300 px-2 text-xs"
+                  data-testid="dealer-layout-v2-row4-quick-menu-edit-search"
+                />
+                <div className="mt-2 max-h-44 space-y-1 overflow-auto" data-testid="dealer-layout-v2-row4-quick-menu-edit-list">
+                  {quickMenuManageItems.map((item) => {
+                    const isFavorite = isFavoriteQuickMenuItem(item.key);
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => toggleQuickMenuFavorite(item.key)}
+                        className={`flex w-full items-center justify-between rounded border px-2 py-1 text-left text-[11px] ${isFavorite ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-slate-200 bg-white text-slate-700'}`}
+                        data-testid={`dealer-layout-v2-row4-quick-menu-edit-item-${item.key}`}
+                      >
+                        <span className="truncate">
+                          {item.label}
+                          <span className="ml-1 text-[10px] text-slate-500">({item.parentKey})</span>
+                        </span>
+                        {isFavorite ? <Star size={11} /> : <StarOff size={11} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+            </div>
 
           <div className="mb-3 border-b border-slate-100 pb-2" data-testid="dealer-layout-v2-row4-sidebar-header">
             <div className="text-sm font-semibold text-slate-900" data-testid="dealer-layout-v2-row4-sidebar-title">
