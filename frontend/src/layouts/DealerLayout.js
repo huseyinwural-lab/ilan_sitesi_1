@@ -420,16 +420,16 @@ export default function DealerLayout() {
           <NavLink
             to={item.route}
             onClick={() => handleNavClick({ key: item.key, route: item.route }, 'row2_submenu')}
-            className={`flex items-center gap-2 rounded-xl px-3 py-2 transition ${itemClass}`}
+            className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 transition ${itemClass}`}
             data-testid={`dealer-row2-submenu-link-${item.key}`}
           >
-            <Icon size={15} />
-            <span className="text-sm font-medium" data-testid={`dealer-row2-submenu-label-${item.key}`}>{item.label}</span>
+            <Icon size={14} />
+            <span className="text-[13px] font-medium" data-testid={`dealer-row2-submenu-label-${item.key}`}>{item.label}</span>
           </NavLink>
         ) : (
-          <div className="flex items-center gap-2 rounded-xl px-3 py-2 text-slate-900" data-testid={`dealer-row2-submenu-link-${item.key}`}>
-            <Icon size={15} />
-            <span className="text-sm font-medium" data-testid={`dealer-row2-submenu-label-${item.key}`}>{item.label}</span>
+          <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-slate-900" data-testid={`dealer-row2-submenu-link-${item.key}`}>
+            <Icon size={14} />
+            <span className="text-[13px] font-medium" data-testid={`dealer-row2-submenu-label-${item.key}`}>{item.label}</span>
           </div>
         )}
 
@@ -451,7 +451,7 @@ export default function DealerLayout() {
               {showRow1Logo ? (
                 <button
                   type="button"
-                  onClick={() => navigate('/dealer/overview')}
+                  onClick={() => navigate('/')}
                   className="flex h-10 min-w-28 shrink-0 items-center justify-center rounded bg-yellow-400 px-2 text-sm font-bold text-slate-900"
                   data-testid="dealer-layout-brand-button"
                 >
@@ -492,7 +492,7 @@ export default function DealerLayout() {
                       to={item.route}
                       onClick={() => handleNavClick(item, 'header_row1')}
                       className={({ isActive }) =>
-                        `inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                        `inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                           isActive ? 'border-[var(--brand-navy)] text-[var(--brand-navy)]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
                         }`
                       }
@@ -525,48 +525,50 @@ export default function DealerLayout() {
 
           {showRow2Modules ? (
             <div className="border-t border-slate-200 pt-2" data-testid="dealer-layout-header-row2">
-              <div className="flex items-center gap-1 overflow-x-auto pb-1" data-testid="dealer-layout-row2-primary-menu">
-                {primaryMenuItems.map((item) => {
-                  const Icon = iconMap[item.icon] || LayoutDashboard;
-                  const hasChildren = Array.isArray(item.children) && item.children.length > 0;
-                  const isActive = activePrimaryMenu?.key === item.key;
-                  const isOpen = openMenuKey === item.key;
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-start" data-testid="dealer-layout-row2-combined">
+                <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pb-1" data-testid="dealer-layout-row2-primary-menu">
+                  {primaryMenuItems.map((item) => {
+                    const Icon = iconMap[item.icon] || LayoutDashboard;
+                    const hasChildren = Array.isArray(item.children) && item.children.length > 0;
+                    const isActive = activePrimaryMenu?.key === item.key;
+                    const isOpen = openMenuKey === item.key;
 
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => {
-                        if (hasChildren) {
-                          setOpenMenuKey((prev) => (prev === item.key ? null : item.key));
-                          trackDealerEvent('dealer_nav_expand_toggle', { key: item.key, location: 'header_row2' });
-                        } else if (item.route) {
-                          navigate(item.route);
-                          handleNavClick({ key: item.key, route: item.route }, 'header_row2');
-                        }
-                      }}
-                      className={`inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                        isActive || isOpen ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 text-slate-900 hover:bg-slate-100'
-                      }`}
-                      data-testid={`dealer-row2-primary-menu-item-${item.key}`}
-                    >
-                      <Icon size={15} />
-                      <span data-testid={`dealer-row2-primary-menu-label-${item.key}`}>{item.label}</span>
-                      {hasChildren ? (
-                        isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {openPrimaryMenu?.children?.length ? (
-                <div className="mt-2 rounded-xl border border-slate-200 bg-white p-2" data-testid={`dealer-layout-row2-submenu-${openPrimaryMenu.key}`}>
-                  <div className="space-y-1" data-testid="dealer-layout-row2-submenu-items">
-                    {openPrimaryMenu.children.map((child) => renderSecondaryMenuItem(child, 0))}
-                  </div>
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => {
+                          if (hasChildren) {
+                            setOpenMenuKey((prev) => (prev === item.key ? null : item.key));
+                            trackDealerEvent('dealer_nav_expand_toggle', { key: item.key, location: 'header_row2' });
+                          } else if (item.route) {
+                            navigate(item.route);
+                            handleNavClick({ key: item.key, route: item.route }, 'header_row2');
+                          }
+                        }}
+                        className={`inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                          isActive || isOpen ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 text-slate-900 hover:bg-slate-100'
+                        }`}
+                        data-testid={`dealer-row2-primary-menu-item-${item.key}`}
+                      >
+                        <Icon size={15} />
+                        <span data-testid={`dealer-row2-primary-menu-label-${item.key}`}>{item.label}</span>
+                        {hasChildren ? (
+                          isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+                        ) : null}
+                      </button>
+                    );
+                  })}
                 </div>
-              ) : null}
+
+                {openPrimaryMenu?.children?.length ? (
+                  <div className="w-full rounded-xl border border-slate-200 bg-white p-2 lg:ml-auto lg:w-[360px]" data-testid={`dealer-layout-row2-submenu-${openPrimaryMenu.key}`}>
+                    <div className="space-y-1" data-testid="dealer-layout-row2-submenu-items">
+                      {openPrimaryMenu.children.map((child) => renderSecondaryMenuItem(child, 0))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
           ) : null}
 
